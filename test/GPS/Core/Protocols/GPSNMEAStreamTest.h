@@ -27,10 +27,11 @@ private slots:
     void _awaitedSentenceLaterThanMetadataAge_data();
     void _awaitedSentenceLaterThanMetadataAge();
     void _fixLossWhileWaiting();
+    void _timeDoesNotAdvance_data();
+    void _timeDoesNotAdvance();
     void _timeStepsBack();
     void _vdopEpoch_data();
     void _vdopEpoch();
-    void _vdopReceiptIsNotRenewed();
     void _unassociatedGsa_data();
     void _unassociatedGsa();
     void _boundedFields_data();

@@ -112,15 +112,15 @@ void NavigationEpochAssembler::_resetExpiredEpoch(StoredEpoch& stored, uint64_t 
 }
 
 NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_positionEpoch(std::optional<int> timeMs,
-                                                                                uint64_t receivedAtUs, bool gga,
+                                                                                uint64_t receivedAtUs,
+                                                                                Position position,
                                                                                 std::optional<NavigationEpoch>& overdue)
 {
-    const bool current = _holds(_current, timeMs);
-    // A GGA of the same time again is a new report from a receiver whose time does not advance.
-    if (_current.active && (!current || (gga && _current.epoch.ggaQuality))) {
-        overdue = _end(_current);
-    }
-    if (!current) {
+    // The same sentence of the same time again is the next report of a receiver whose time does not advance.
+    if (!_holds(_current, timeMs) || _current.positions.testFlag(position)) {
+        if (_current.active) {
+            overdue = _end(_current);
+        }
         if (_holds(_ahead, timeMs)) {
             _current = _ahead;
         } else {
@@ -129,6 +129,7 @@ NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_positionEpoch(
         _ahead = {};
     }
     _resetExpiredEpoch(_current, receivedAtUs);
+    _current.positions |= position;
     return _current;
 }
 
@@ -175,7 +176,8 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
 {
     // Position sentences reach here only with a receiver-declared valid fix; ingest() reports fix loss first.
     if (const auto ggaFix = gga(sentence)) {
-        auto& stored = _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), receivedAtUs, true, overdue);
+        auto& stored =
+            _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), receivedAtUs, Position::GGA, overdue);
         auto& epoch = stored.epoch;
         epoch.ggaQuality = ggaFix->quality;
         epoch.fixQuality = fixQuality(ggaFix->quality, GPSFixQuality::Fix3D);
@@ -194,8 +196,6 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
         epoch.positionReceivedAtUs = receivedAtUs;
         epoch.sequence = _sequence;
         markReceipt(epoch, receivedAtUs);
-        stored.published = false;
-        stored.followers = {};
         _ggaInterval = MonotonicClock::age(_ggaReceivedAtUs, receivedAtUs).value_or(std::chrono::microseconds::zero());
         _ggaReceivedAtUs = receivedAtUs;
         return &stored;
@@ -211,7 +211,7 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
     if (!timeMs) {
         return nullptr;
     }
-    auto& stored = _positionEpoch(timeMs, receivedAtUs, false, overdue);
+    auto& stored = _positionEpoch(timeMs, receivedAtUs, rmcFix ? Position::RMC : Position::GLL, overdue);
     auto& epoch = stored.epoch;
     if (!epoch.ggaQuality) {
         // Only the GGA's position is published; until it arrives, GSA and VTG join the epoch from this receipt.
@@ -238,7 +238,10 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(c
     if (!timeMs) {
         return nullptr;
     }
-    auto& stored = _holds(_current, timeMs) ? _current : _ahead;
+    // A GST of another time than the current epoch's is ahead of the GGA, RMC or GLL that begins its own. So is a
+    // second one of that time: the next report of a receiver whose time does not advance.
+    const bool current = _holds(_current, timeMs) && !_current.additions.testFlag(Addition::GST);
+    auto& stored = current ? _current : _ahead;
     if (!_holds(stored, timeMs)) {
         _resetEpoch(stored, timeMs);
     }

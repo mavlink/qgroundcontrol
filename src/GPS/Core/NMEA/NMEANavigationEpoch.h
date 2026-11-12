@@ -66,6 +66,10 @@ struct NavigationUpdate
 /// is not waited for in the epochs to come. An epoch that still waits when the next one begins is published then as
 /// it stands, unless the same sentence publishes the next one.
 ///
+/// An epoch has one GGA, one RMC, one GLL and one GST. A GGA, RMC or GLL that comes again with the same time begins
+/// another epoch, which takes nothing from the one before it: the next report of a receiver that prints whole seconds
+/// at a faster rate, or whose time stands still. A GST that comes again is kept for that epoch.
+///
 /// Two epochs are kept, the only ones a sentence can join: the current one, which the last GGA, RMC or GLL belongs
 /// to, and one that a GST began ahead of the GGA, RMC or GLL of its time. An epoch that ended is forgotten, so a time
 /// of day that comes again, as from a receiver whose time stepped back, begins an epoch that takes nothing from it.
@@ -90,11 +94,21 @@ private:
     };
     Q_DECLARE_FLAGS(Additions, Addition)
 
+    /// The sentences that place an epoch in time and make it the current one.
+    enum class Position : uint8_t
+    {
+        GGA = 0x1,
+        RMC = 0x2,
+        GLL = 0x4,
+    };
+    Q_DECLARE_FLAGS(Positions, Position)
+
     struct StoredEpoch
     {
         bool active = false;
         int key = 0;
         NavigationEpoch epoch;
+        Positions positions;
         /// The additions received, before or after the GGA.
         Additions additions;
         /// The additions received soon after the GGA.
@@ -107,9 +121,9 @@ private:
     static bool _holds(const StoredEpoch& stored, std::optional<int> timeMs);
     void _resetEpoch(StoredEpoch& stored, std::optional<int> timeMs);
     void _resetExpiredEpoch(StoredEpoch& stored, uint64_t receivedAtUs);
-    /// The epoch of @a timeMs as the current one. Ends the current epoch when it is another one or, for a GGA, when
-    /// it already has its GGA; @a overdue is that epoch when it was still waiting.
-    StoredEpoch& _positionEpoch(std::optional<int> timeMs, uint64_t receivedAtUs, bool gga,
+    /// The epoch of @a timeMs as the current one. Ends the current epoch when it is of another time or already has
+    /// @a position; @a overdue is that epoch when it was still waiting.
+    StoredEpoch& _positionEpoch(std::optional<int> timeMs, uint64_t receivedAtUs, Position position,
                                 std::optional<NavigationEpoch>& overdue);
     std::optional<NavigationEpoch> _end(StoredEpoch& stored);
     bool _hiddenByFixLoss(const NavigationEpoch& epoch) const;
