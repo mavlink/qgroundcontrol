@@ -862,9 +862,10 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(QMetaObject::invokeMethod(baud, "activated", Q_ARG(int, 0)));
     QCOMPARE(settings->serialBaudRate()->rawValue().toInt(), 0);
     QCOMPARE(baud->property("currentText").toString(), QCoreApplication::translate("GPSReceiverSerialPort", "Auto"));
-    // Passive roles need the receiver's existing rate, so Auto is not offered.
+    // A passive receiver's rate is found by listening, so Auto stays selected for that role.
     settings->receiverRole()->setRawValue(RTKSettings::Passive);
-    QVERIFY(custom->property("visible").toBool());
+    QVERIFY(!custom->property("visible").toBool());
+    QCOMPARE(baud->property("currentText").toString(), QCoreApplication::translate("GPSReceiverSerialPort", "Auto"));
     settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
     settings->serialBaudRate()->setRawValue(230400);
     QVERIFY(receiver.connectReceiver());
@@ -910,11 +911,7 @@ void GPSReceiverSettingsTest::_serialSelectionSurvivesChoiceChanges()
     panel.settings.autoConnect->setRawValue(true);
     QCOMPARE(selection(device), QStringLiteral("3: /test/other (unavailable)"));
 
-    // A passive receiver is not offered Auto, and a receiver may list other rates.
-    settings->receiverRole()->setRawValue(RTKSettings::Passive);
-    QCOMPARE(selection(baud), QStringLiteral("1: 230400"));
-    settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
-    QCOMPARE(selection(baud), QStringLiteral("2: 230400"));
+    // A receiver may list other rates.
     QVERIFY(panel.item->setProperty("serialBaudRates", QVariant::fromValue(QList<int>{57600, 115200, 230400})));
     QCOMPARE(selection(baud), QStringLiteral("3: 230400"));
     QCOMPARE(settings->serialDevice()->rawValue().toString(), other);

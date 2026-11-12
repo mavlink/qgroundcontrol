@@ -86,11 +86,22 @@ constexpr GPSFrameKinds inputFrames()
 /// Decodes whichever protocol of INPUTS the receiver sends, each with a decode-only runtime of its own, and forwards
 /// RTCM3. Positions, satellites and integrity come from one protocol only: the first one recognised, until another
 /// delivers a position while it has delivered none for SOURCE_TIMEOUT. It never sends anything: the decode-only
-/// runtimes have no transport, and configuration only sets the local link's rate.
+/// runtimes have no transport, and configuration only sets the local link's rate. Without a rate to set, it finds the
+/// receiver's by listening: the link runs at each of LISTEN_RATES for up to LISTEN_WINDOW, until a frame of one of
+/// INPUTS or an RTCM3 frame arrives.
 class PassiveProtocol final : public GPSFamilyProtocol
 {
 public:
     static constexpr std::chrono::milliseconds SOURCE_TIMEOUT{3000};
+    /// The rates a receiver is listened for at, the likeliest first: 115200 (most current receivers, and a u-blox one
+    /// that QGroundControl configured), 9600 (most NMEA receivers, older u-blox), 38400 (u-blox F9, NMEA 0183-HS) and
+    /// 4800 (NMEA 0183), then the other rates in use.
+    static constexpr std::array<unsigned, 9> LISTEN_RATES{115200, 9600,   38400,  4800,  57600,
+                                                          19200,  230400, 460800, 921600};
+    /// How long each rate is listened at: a receiver that reports every two seconds, as older handheld ones do,
+    /// completes a sentence within it at 4800 baud, where the longest sentence takes 0.17 s. A receiver that reports
+    /// less often may be missed. All rates together take 19.8 s.
+    static constexpr std::chrono::milliseconds LISTEN_WINDOW{2200};
 
     PassiveProtocol()
     {
@@ -108,7 +119,12 @@ public:
 
     bool configure(GPSCommandChannel& channel, GPSConfig, unsigned& baud) override
     {
-        if (!channel.setBaudRate(baud)) {
+        if (!baud) {
+            baud = _listenForRate(channel);
+            if (!baud) {
+                return false;
+            }
+        } else if (!channel.setBaudRate(baud)) {
             channel.failControl(QStringLiteral("The link cannot run at %1 baud").arg(baud));
             return false;
         }
@@ -120,6 +136,7 @@ public:
     {
         _context = &context;
         if (frame.kind == GPSFrameKind::RTCM3) {
+            _heard = true;
             context.publishRTCM(frame.bytes);
             return {};
         }
@@ -127,11 +144,13 @@ public:
         if (!input) {
             return {};
         }
+        _heard = true;
         if (!_followed) {
             _follow(*input);
         }
         (void) _inputs[*input].runtime->consumeFrame(frame);
-        return {};
+        // A frame ends the receive cycle that listens for it, whether or not its decoder reports an update.
+        return _listening ? GPSReceiveUpdates(GPSReceiveUpdate::Activity) : GPSReceiveUpdates{};
     }
 
     void flush(GPSDecodeContext& context) override
@@ -143,6 +162,12 @@ public:
     }
 
     bool receiverReady() const override { return _ready; }
+
+    /// A passive receiver is never asked what it is. What listening learned of it is its rate.
+    QString identity() const override
+    {
+        return _listenedRate ? QStringLiteral("Found at %1 baud").arg(_listenedRate) : QString();
+    }
 
     GPSReceiveUpdates receive(GPSCommandChannel& channel, std::chrono::milliseconds timeout) override
     {
@@ -156,6 +181,34 @@ private:
         std::unique_ptr<GPSProtocolRuntime> runtime;
         uint64_t lastPositionUs = 0;
     };
+
+    /// Runs the link at each of LISTEN_RATES until the receiver's output arrives, without writing. @return the rate it
+    /// arrived at; zero, with the failure recorded, when it arrived at none.
+    unsigned _listenForRate(GPSCommandChannel& channel)
+    {
+        _listening = true;
+        const GPSBaudDetection listened = channel.detectBaud(LISTEN_RATES, 0, [this, &channel] {
+            // What the receiver sent at another rate is noise, which may have left a framer inside a frame.
+            channel.stream().reset();
+            _heard = false;
+            return channel.receiveUntil([this] { return _heard; }, LISTEN_WINDOW) ? GPSBaudProbe::Found
+                                                                                  : GPSBaudProbe::TryNext;
+        });
+        _listening = false;
+        if (!listened.found) {
+            // A link failure or a stop is already recorded, and stays.
+            channel.failControl(
+                listened.probed.empty()
+                    ? QStringLiteral("The link cannot run at any rate a passive receiver is listened for at")
+                    : QStringLiteral("No NMEA, UBX, SBF or RTCM output arrived at %1 baud. Select the receiver's baud "
+                                     "rate if it reports less often than every two seconds")
+                          .arg(gpsRateList(listened.probed)));
+            return 0;
+        }
+        _listenedRate = listened.baud;
+        qCDebug(PassiveProtocolLog) << "Passive input found at" << _listenedRate << "baud";
+        return _listenedRate;
+    }
 
     static std::optional<size_t> _inputOf(const GPSFrame& frame)
     {
@@ -200,6 +253,11 @@ private:
     std::optional<size_t> _followed;
     GPSDecodeContext* _context = nullptr;
     bool _ready = false;
+    bool _listening = false;
+    /// A frame arrived at the rate that is listened at.
+    bool _heard = false;
+    /// The rate listening found the receiver at; zero for a rate that was given.
+    unsigned _listenedRate = 0;
 };
 
 }  // namespace

@@ -28,7 +28,7 @@ GPSReceiverSettingsGroup {
         comboBox.enabled: root._editable
         note: root.configuredBase
               ? qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
-              : qsTr("QGroundControl never configures this receiver. Its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
+              : qsTr("QGroundControl never configures this receiver. Its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position. Configure the receiver's output externally and select its baud rate, or Auto to find the rate by listening, which takes up to 20 seconds. No survey-in status is inferred.")
     }
 
     GPSFactSwitchField {
@@ -101,7 +101,6 @@ GPSReceiverSettingsGroup {
         serialPorts: root.serialPorts
         serialBaudRates: root.serialBaudRates
         anyDeviceLabel: root.configuredBase && root.autoConnectFact.rawValue ? qsTr("Any RTK receiver on USB") : ""
-        allowAutoBaud: !root.presentation.passive
         editable: root._editable
     }
 

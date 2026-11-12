@@ -137,7 +137,12 @@ The _Passive_ role uses the receiver's existing output without configuring it or
   A position that the receiver marks as dead-reckoned is shown with the fix type _DR_, not as a lost fix.
   The position of a receiver that sends RMC or GST after GGA is used once it has sent them, which at 4800 baud can be most of a second later; a higher baud rate shortens that.
 - Turn off **Forward receiver RTCM** to use the receiver only for the ground station position.
-- Select the connection (**Serial** with the receiver's existing baud rate, **TCP**, or **UDP** with the port QGC listens on).
+- Select the connection (**Serial** with the receiver's baud rate, **TCP**, or **UDP** with the port QGC listens on).
+  With the baud rate on **Auto**, QGC listens at 115200, 9600, 38400, 4800, 57600, 19200, 230400, 460800 and 921600 baud, for up to 2.2 seconds each, until NMEA, UBX, SBF or RTCM data arrives.
+  It sends nothing to the receiver, and the receiver status shows the rate it found as _Receiver_.
+  The status reads _Connecting to receiver..._ while QGC listens.
+  When no rate carries such data, connecting fails after about 20 seconds and names the rates that were tried.
+  Listening can miss a receiver that reports less often than every two seconds, so select the rate of such a receiver.
 
 A passive receiver stays connected while it reports no position, and after a few seconds the [receiver status](#status) explains why: no data at all (wrong device, or another program uses it), data that isn't GNSS output (wrong device or baud rate), or a recognized protocol without position messages (enable NMEA GGA, u-blox NAV-PVT or Septentrio PVTGeodetic output).
 A u-blox receiver that QGC configured as a base station keeps its USB NMEA output, so it also works as a passive receiver afterwards.

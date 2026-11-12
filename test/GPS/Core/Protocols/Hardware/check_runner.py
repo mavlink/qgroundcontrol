@@ -515,7 +515,10 @@ def main() -> None:
         assert "base_mode" not in report["requested"]
         run(binary, [*endpoint, "--family", "unicore"], 2)
         run(binary, [*endpoint, "--family", "quectel", "--base-mode", "receiver-averaging"], 2)
-        run(binary, [*endpoint, "--family", "passive", "--role", "passive"], 2)
+        # Without a rate, a passive receiver's is found by listening; a rate no receiver has is refused.
+        report = run(binary, [*endpoint, "--family", "passive", "--role", "passive"], 0)
+        assert report["requested"]["role"] == "passive"
+        run(binary, [*endpoint, "--family", "passive", "--role", "passive", "--baud", "100"], 2)
         run(binary, [*endpoint, "--family", "unicore", "--base-mode", "fixed"], 2)
         report = run(binary, [*endpoint, "--family", "quectel", "--allow-save"], 0)
         assert report["requested"]["allow_persistent_changes"] is True

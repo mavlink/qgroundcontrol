@@ -58,7 +58,7 @@ struct GPSReceiverFamily
     GPSLogCategory logCategory = nullptr;
     GPSStreamConfig stream{};
     /// Baud rates receiver detection probes the family at (GPSFamilyProtocol::probe()), in probing order; empty for a
-    /// family it never detects, which then needs an explicit rate.
+    /// family it never detects.
     std::span<const unsigned> baudCandidates{};
     /// Rate passed to configure() when none is selected; zero requests detection.
     unsigned autoBaudRate = 0;

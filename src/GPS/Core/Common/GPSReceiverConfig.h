@@ -60,7 +60,7 @@ struct GPSBaseStationConfig
 struct GPSReceiverConfig
 {
     GPSBaseStationConfig base{};
-    /// Zero lets a configurable receiver detect the rate; passive serial input requires an explicit rate.
+    /// Zero finds the receiver's rate: a configurable receiver is probed for it, passive serial input listened for.
     uint32_t baudRate = 0;
     /// Per-connection consent to persistent receiver settings and the required restart.
     bool allowPersistentChanges = false;
@@ -83,8 +83,8 @@ enum class GPSReceiverConfigError
 inline constexpr uint32_t GPS_MIN_BAUD_RATE = 1200;
 inline constexpr uint32_t GPS_MAX_BAUD_RATE = 4000000;
 
-/// An explicit serial rate within the receivers' range. Zero, which asks a configurable receiver to detect the rate,
-/// is not one.
+/// An explicit serial rate within the receivers' range. Zero, which asks for the receiver's rate to be found, is not
+/// one.
 [[nodiscard]] constexpr bool gpsValidExplicitBaudRate(uint32_t baudRate)
 {
     return baudRate >= GPS_MIN_BAUD_RATE && baudRate <= GPS_MAX_BAUD_RATE;

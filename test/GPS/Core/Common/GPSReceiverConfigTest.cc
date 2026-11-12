@@ -218,7 +218,10 @@ void GPSReceiverConfigTest::_receiverValidation_data()
     QTest::newRow("passive-rejects-base")
         << GPSType::Passive << GPSReceiverConfig{.base = VALID_SURVEY, .baudRate = 115200}
         << Error::UnsupportedBaseMode;
-    QTest::newRow("passive-requires-baud") << GPSType::Passive << GPSReceiverConfig{} << Error::InvalidBaudRate;
+    // Without a rate, a passive receiver's is found by listening.
+    QTest::newRow("passive-finds-baud") << GPSType::Passive << GPSReceiverConfig{} << Error::None;
+    QTest::newRow("passive-invalid-baud")
+        << GPSType::Passive << GPSReceiverConfig{.baudRate = 1} << Error::InvalidBaudRate;
     QTest::newRow("unsupported-persistent")
         << GPSType::UBlox << GPSReceiverConfig{.base = VALID_SURVEY, .allowPersistentChanges = true}
         << Error::UnsupportedPersistentConfiguration;

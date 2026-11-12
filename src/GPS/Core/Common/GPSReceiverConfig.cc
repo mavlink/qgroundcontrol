@@ -64,9 +64,8 @@ GPSReceiverConfigError validateOptions(const GPSReceiverConfig& config, const GP
     if (passive && config.base != GPSBaseStationConfig{}) {
         return GPSReceiverConfigError::UnsupportedBaseMode;
     }
-    // A passive receiver is never configured, so it cannot detect the rate and needs its existing one.
-    const bool detectsRate = config.baudRate == 0 && !passive;
-    if (!detectsRate && !gpsValidExplicitBaudRate(config.baudRate)) {
+    // Zero asks for the receiver's rate, which a configurable receiver is probed for and a passive one listened for.
+    if (config.baudRate != 0 && !gpsValidExplicitBaudRate(config.baudRate)) {
         return GPSReceiverConfigError::InvalidBaudRate;
     }
     return GPSReceiverConfigError::None;
@@ -104,8 +103,7 @@ QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)
                 .arg(GPSBaseStationConfig::ReceiverAveraging::MIN_DURATION.count())
                 .arg(GPSBaseStationConfig::ReceiverAveraging::MAX_DURATION.count());
         case GPSReceiverConfigError::InvalidBaudRate:
-            return QCoreApplication::translate(
-                "GPSReceiverConfig", "Select a valid serial baud rate; passive input requires an explicit rate");
+            return QCoreApplication::translate("GPSReceiverConfig", "Select a valid serial baud rate");
         case GPSReceiverConfigError::UnsupportedPersistentConfiguration:
             return QCoreApplication::translate("GPSReceiverConfig",
                                                "This driver does not support persistent receiver configuration");

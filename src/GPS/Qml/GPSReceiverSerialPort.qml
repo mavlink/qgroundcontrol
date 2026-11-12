@@ -15,12 +15,10 @@ ColumnLayout {
     required property Fact baudFact
     /// The ports to offer.
     property list<gpsSerialPortEntry> serialPorts
-    /// The explicit rates to offer, which the receiver accepts.
+    /// The explicit rates to offer, which the receiver accepts. Rate 0 is offered before them as "Auto".
     property list<int> serialBaudRates
     /// When set, offers an empty device under this label for consumers that can find the receiver themselves.
     property string anyDeviceLabel
-    /// Offers rate 0 as "Auto" for consumers that can detect the baud rate.
-    property bool allowAutoBaud: false
     property bool editable: true
 
     readonly property string _device: String(deviceFact.rawValue)
@@ -34,7 +32,7 @@ ColumnLayout {
             devices.push({ value: "", label: qsTr("<none available>") })
         return devices
     }
-    readonly property list<int> _rates: root.allowAutoBaud ? [0, ...root.serialBaudRates] : root.serialBaudRates
+    readonly property list<int> _rates: [0, ...root.serialBaudRates]
     readonly property int _baudIndex: _rates.indexOf(Number(baudFact.rawValue))
     readonly property bool customBaud: _customRequested || _baudIndex < 0
     readonly property int _baudComboIndex: customBaud ? _rates.length : _baudIndex

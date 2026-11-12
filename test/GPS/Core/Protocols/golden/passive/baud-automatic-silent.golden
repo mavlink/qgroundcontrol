@@ -1,0 +1,13 @@
+about Nothing arrives at any usual rate: each is listened at once
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=0
+configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=19800ms
+  error "No NMEA, UBX, SBF or RTCM output arrived at 115200, 9600, 38400, 4800, 57600, 19200, 230400, 460800, 921600 baud. Select the receiver's baud rate if it reports less often than every two seconds"
+  baud 115200 configured
+  baud 9600 configured
+  baud 38400 configured
+  baud 4800 configured
+  baud 57600 configured
+  baud 19200 configured
+  baud 230400 configured
+  baud 460800 configured
+  baud 921600 configured

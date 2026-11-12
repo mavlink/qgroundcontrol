@@ -1,0 +1,10 @@
+about NMEA at 9600 is found by listening at the usual rates, without a write
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=0
+configure configured=1 baud=0->9600 failure=none ready=1 elapsed=2200ms
+  identity "Found at 9600 baud"
+  baud 115200 configured
+  baud 9600 configured
+  input type=passive
+  usage used=12 receipt=1
+  position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
+stream failure=none ready=1

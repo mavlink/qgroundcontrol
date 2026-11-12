@@ -94,8 +94,9 @@ void GPSReceiverSessionTest::_settingsDiagnostics_data()
     QTest::newRow("excess-averaging") << GPSType::Unicore << 2 << 3601U << 115200U << invalidAveraging;
     QTest::newRow("minimum-averaging") << GPSType::Unicore << 2 << 1U << 115200U << QString();
     QTest::newRow("maximum-averaging") << GPSType::Unicore << 2 << 3600U << 115200U << QString();
-    QTest::newRow("passive-needs-baud") << GPSType::Passive << 0 << 60U << 0U
-                                        << gpsReceiverConfigErrorText(Error::InvalidBaudRate);
+    QTest::newRow("passive-finds-baud") << GPSType::Passive << 0 << 60U << 0U << QString();
+    QTest::newRow("passive-invalid-baud")
+        << GPSType::Passive << 0 << 60U << 1U << gpsReceiverConfigErrorText(Error::InvalidBaudRate);
     QTest::newRow("passive-ignores-base-settings") << GPSType::Passive << 2 << 0U << 115200U << QString();
 }
 

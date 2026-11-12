@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cmath>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "GPSProtocolRuntime.h"
@@ -18,6 +19,16 @@ using namespace std::chrono_literals;
 using namespace GPSTest;
 
 namespace {
+/// The protocols a passive input reported its positions to come from, in order.
+std::vector<GPSType> inputProtocols(const EventLog& log)
+{
+    std::vector<GPSType> result;
+    for (const auto& input : log.reports<GPSInputProtocol>()) {
+        result.push_back(input.family);
+    }
+    return result;
+}
+
 /// The passive family on the runtime, with a link that counts every operation and never delivers data.
 struct Receiver : LoggedRuntime
 {
@@ -41,14 +52,7 @@ struct Receiver : LoggedRuntime
         (void) runtime.consume({reinterpret_cast<const uint8_t*>(bytes.constData()), size_t(bytes.size())});
     }
 
-    std::vector<GPSType> inputs() const
-    {
-        std::vector<GPSType> result;
-        for (const auto& input : reports<GPSInputProtocol>()) {
-            result.push_back(input.family);
-        }
-        return result;
-    }
+    std::vector<GPSType> inputs() const { return inputProtocols(*this); }
 
     GPSTestClock& clock;
     int writes = 0;
@@ -78,6 +82,82 @@ private:
         return io;
     }
 };
+
+/// The passive family on a link whose receiver sends its stream at one rate and line noise at every other, in a read
+/// every 100 ms. The link counts every write.
+struct ListenedReceiver : LoggedRuntime
+{
+    ListenedReceiver(GPSTestClock& testClock, unsigned receiverRate, QByteArray receiverStream)
+        : LoggedRuntime(Passive::FAMILY, _link(this, testClock))
+        , clock(testClock)
+        , rate(receiverRate)
+        , stream(std::move(receiverStream))
+    {}
+
+    ListenedReceiver(const ListenedReceiver&) = delete;
+    ListenedReceiver& operator=(const ListenedReceiver&) = delete;
+
+    /// Listens for the receiver's rate. @return the rate found, or zero.
+    unsigned listen()
+    {
+        unsigned baud = 0;
+        const uint64_t start = clock.nowUs();
+        const bool found = runtime.configure({}, baud);
+        elapsed =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::microseconds(clock.nowUs() - start));
+        return found ? baud : 0;
+    }
+
+    GPSTestClock& clock;
+    unsigned rate;
+    QByteArray stream;
+    /// What arrives at every other rate: the start of an RTCM3 frame of the greatest length, which a window of these
+    /// reads does not fill. A framer left inside it would take what arrives at the next rate.
+    QByteArray noise = QByteArray::fromHex("d303ff") + QByteArray(30, 'U');
+    /// The rates the link refuses.
+    std::vector<unsigned> unsupported;
+    /// The rates the link was set to, in order.
+    std::vector<unsigned> rates;
+    GPSReadStatus failure = GPSReadStatus::TimedOut;
+    std::chrono::milliseconds elapsed{0};
+    int writes = 0;
+
+private:
+    static GPSRuntimeIO _link(ListenedReceiver* self, GPSTestClock& clock)
+    {
+        constexpr uint64_t READ_INTERVAL_US = 100000;
+        clock.reset(GPSTestClock::START_US);
+        GPSRuntimeIO io = makeGPSRuntimeTestIO(clock);
+        io.write = [self](std::span<const uint8_t> bytes, GPSDeadline) {
+            ++self->writes;
+            return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
+        };
+        io.read = [self, &clock](std::span<uint8_t> buffer, GPSDeadline deadline) {
+            if (self->failure != GPSReadStatus::TimedOut) {
+                return GPSReadResult{self->failure};
+            }
+            const QByteArray& bytes = self->rates.back() == self->rate ? self->stream : self->noise;
+            if (bytes.isEmpty() || clock.nowUs() + READ_INTERVAL_US > deadline.untilUs) {
+                clock.advanceTo(deadline.untilUs);
+                return GPSReadResult{GPSReadStatus::TimedOut};
+            }
+            clock.advanceBy(READ_INTERVAL_US);
+            const auto count = std::min(buffer.size(), static_cast<size_t>(bytes.size()));
+            std::copy_n(bytes.cbegin(), count, buffer.begin());
+            return GPSReadResult{GPSReadStatus::Data, static_cast<int>(count)};
+        };
+        io.setBaudRate = [self](unsigned value) {
+            if (std::ranges::find(self->unsupported, value) != self->unsupported.end()) {
+                return GPSBaudStatus::Unsupported;
+            }
+            self->rates.push_back(value);
+            return GPSBaudStatus::Configured;
+        };
+        return io;
+    }
+};
+
+const std::vector<unsigned> LISTEN_RATES{115200, 9600, 38400, 4800, 57600, 19200, 230400, 460800, 921600};
 
 void configuration(GPSTestClock& clock)
 {
@@ -317,8 +397,97 @@ void protocolSwitch(GPSTestClock& clock)
     QCOMPARE(receiver.writes, 0);
 }
 
+/// Without a rate, the receiver's is found by listening at each usual rate for 2.2 s, and nothing is written.
+void listensForRate(GPSTestClock& clock)
+{
+    const QByteArray gga = nmeaBytes("GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,");
+
+    const struct
+    {
+        unsigned rate;
+        QByteArray stream;
+        std::vector<GPSType> inputs;
+    } receivers[] = {
+        {115200, gga, {GPSType::Passive}},
+        {9600, gga, {GPSType::Passive}},
+        {38400, toByteArray(ubxNavigationEpoch(ubxFix3D(), 1000)), {GPSType::UBlox}},
+        {230400, SBFReceiverModel::pvt(12, 1000), {GPSType::Septentrio}},
+        // A receiver that only sends corrections has no protocol to name.
+        {921600, toByteArray(rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0})), {}},
+    };
+
+    for (const auto& sent : receivers) {
+        const GPSProtocolLogCapture log;
+        ListenedReceiver receiver(clock, sent.rate, sent.stream);
+        QCOMPARE(receiver.listen(), sent.rate);
+        QVERIFY(receiver.runtime.receiverReady());
+        const auto tried = std::ranges::find(LISTEN_RATES, sent.rate) - LISTEN_RATES.begin() + 1;
+        QCOMPARE(receiver.rates, std::vector<unsigned>(LISTEN_RATES.begin(), LISTEN_RATES.begin() + tried));
+        // A window for each rate that only carried noise, and the read that delivered the stream.
+        QCOMPARE(receiver.elapsed, std::chrono::milliseconds((tried - 1) * 2200 + 100));
+        QCOMPARE(receiver.runtime.identity(), QStringLiteral("Found at %1 baud").arg(sent.rate));
+        QCOMPARE(inputProtocols(receiver), sent.inputs);
+        QCOMPARE(receiver.writes, 0);
+        QVERIFY2(log.warnings().isEmpty(), qPrintable(log.warnings().join(u'\n')));
+    }
+}
+
+/// Listening ends without a rate when nothing a passive input reads arrives at any, when the link runs at none, and
+/// when the link fails.
+void listensInVain(GPSTestClock& clock)
+{
+    const GPSProtocolLogCapture log;
+    {
+        // A device that is no GNSS receiver, or one that sends at a rate that is not listened at.
+        ListenedReceiver receiver(clock, 1200,
+                                  nmeaBytes("GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"));
+        QCOMPARE(receiver.listen(), 0U);
+        QVERIFY(!receiver.runtime.receiverReady());
+        QCOMPARE(receiver.runtime.error(), GPSProtocolError::Protocol);
+        QCOMPARE(receiver.runtime.errorDetail(),
+                 QStringLiteral("No NMEA, UBX, SBF or RTCM output arrived at 115200, 9600, 38400, 4800, 57600, 19200, "
+                                "230400, 460800, 921600 baud. Select the receiver's baud rate if it reports less often "
+                                "than every two seconds"));
+        QCOMPARE(receiver.rates, LISTEN_RATES);
+        QCOMPARE(receiver.elapsed, std::chrono::milliseconds(9 * 2200));
+        QVERIFY(receiver.runtime.identity().isEmpty());
+        QVERIFY(receiver.events.empty());
+        QCOMPARE(receiver.writes, 0);
+    }
+    {
+        // A silent link takes as long, and a rate the link refuses is left out.
+        ListenedReceiver receiver(clock, 0, {});
+        receiver.noise.clear();
+        receiver.unsupported = {115200, 4800, 921600};
+        QCOMPARE(receiver.listen(), 0U);
+        QCOMPARE(receiver.rates, (std::vector<unsigned>{9600, 38400, 57600, 19200, 230400, 460800}));
+        QVERIFY2(receiver.runtime.errorDetail().contains(
+                     QStringLiteral("arrived at 9600, 38400, 57600, 19200, 230400, 460800 baud.")),
+                 qPrintable(receiver.runtime.errorDetail()));
+        QCOMPARE(receiver.elapsed, std::chrono::milliseconds(6 * 2200));
+    }
+    {
+        ListenedReceiver receiver(clock, 0, {});
+        receiver.unsupported = LISTEN_RATES;
+        QCOMPARE(receiver.listen(), 0U);
+        QCOMPARE(receiver.runtime.errorDetail(),
+                 QStringLiteral("The link cannot run at any rate a passive receiver is listened for at"));
+        QCOMPARE(receiver.elapsed, std::chrono::milliseconds::zero());
+    }
+    {
+        ListenedReceiver receiver(clock, 0, {});
+        receiver.failure = GPSReadStatus::Cancelled;
+        QCOMPARE(receiver.listen(), 0U);
+        QCOMPARE(receiver.runtime.error(), GPSProtocolError::Cancelled);
+        QCOMPARE(receiver.rates, std::vector<unsigned>{115200});
+        QCOMPARE(receiver.writes, 0);
+    }
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"configuration", configuration},
+    {"listens-for-rate", listensForRate},
+    {"listens-in-vain", listensInVain},
     {"navigation", navigation},
     {"corrections", corrections},
     {"satellites", satellites},

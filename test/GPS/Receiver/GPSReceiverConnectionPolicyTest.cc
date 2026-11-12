@@ -188,7 +188,6 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors_data()
     row("serial-missing", serialDevice);
     row("serial-bootloader", serialDevice);
     row("invalid-baud", baudRate);
-    row("passive-auto-baud", baudRate);
     // Where only one serial device can be open at a time, as with Android's USB serial driver.
     row("single-port-in-use", GPSReceiverConnectionPolicy::tr("The selected serial device is already in use."));
     row("single-port-other-in-use",
@@ -236,10 +235,6 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
         inventory.first().bootloader = true;
     } else if (reason == QStringLiteral("invalid-baud")) {
         configuration.serialBaudRate = 1000;
-    } else if (reason == QStringLiteral("passive-auto-baud")) {
-        configuration = savedSerialConfiguration(false);
-        configuration.serialBaudRate = 0;
-        inventory = {serialPort(configuration.serialDevice)};
     }
     PolicyHarness harness(configuration, inventory);
     // Another connection, such as a vehicle link, holds the selected device or another one.
@@ -1175,16 +1170,22 @@ void GPSReceiverConnectionPolicyTest::_disconnectPausesAutomaticConnection()
 void GPSReceiverConnectionPolicyTest::_savedSerialWaitsForReturningPort_data()
 {
     QTest::addColumn<bool>("autoConnect");
-    QTest::newRow("connect-automatically") << true;
-    QTest::newRow("manual-only") << false;
+    QTest::addColumn<uint>("baud");
+    QTest::newRow("connect-automatically") << true << 4800U;
+    QTest::newRow("manual-only") << false << 4800U;
+    // Without a rate, the session of a passive receiver listens for it.
+    QTest::newRow("listens-for-baud-rate") << true << 0U;
 }
 
 void GPSReceiverConnectionPolicyTest::_savedSerialWaitsForReturningPort()
 {
     QFETCH(bool, autoConnect);
+    QFETCH(uint, baud);
     const QString device = QStringLiteral("/test/saved");
     const QList<SerialPortManager::Port> present{serialPort(QStringLiteral("/test/other")), serialPort(device)};
-    PolicyHarness harness(savedSerialConfiguration(autoConnect));
+    auto configuration = savedSerialConfiguration(autoConnect);
+    configuration.serialBaudRate = baud;
+    PolicyHarness harness(configuration);
     GPSReceiver& receiver = harness.receiver;
 
     // At startup the absent receiver is waited for.
@@ -1210,7 +1211,7 @@ void GPSReceiverConnectionPolicyTest::_savedSerialWaitsForReturningPort()
     QVERIFY(harness.ports.isPortReserved(device));
     QVERIFY(!harness.ports.isPortReserved(QStringLiteral("/test/other")));
     QCOMPARE(harness.worker()->type(), GPSType::Passive);
-    QCOMPARE(harness.worker()->capturedConfig().baudRate, 4800U);
+    QCOMPARE(harness.worker()->capturedConfig().baudRate, baud);
     QVERIFY(!harness.worker()->capturedConfig().allowPersistentChanges);
     harness.worker()->ready();
     QVERIFY(receiver.errorMessage().isEmpty());

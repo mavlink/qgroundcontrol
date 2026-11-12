@@ -75,6 +75,15 @@ void addPassive(Table& table)
     const auto stream = passiveStream();
     table.add(type, "baud-115200", "NMEA and RTCM input at 115200", passive(), passiveInput(115200), stream);
     table.add(type, "baud-9600", "NMEA and RTCM input at 9600", passive(), passiveInput(9600));
+    table.add(type, "baud-automatic", "NMEA at 9600 is found by listening at the usual rates, without a write",
+              passive([](PassiveBench& b) {
+                  b.setReceiverBaudRate(9600);
+                  // The dialect is that of the commands the receiver would answer, and it gets none.
+                  b.detect(GPSTest::Dialect::UBX).stream = gga("123519.00");
+              }),
+              passiveInput(0));
+    table.add(type, "baud-automatic-silent", "Nothing arrives at any usual rate: each is listened at once",
+              passive([](PassiveBench& b) { b.setFixedBaudRate(0); }), passiveInput(0));
     table.add(type, "baud-unsupported", "Transport cannot change its baud",
               passive([](PassiveBench& b) { b.setBaudRateHandler([](unsigned) { return std::optional(false); }); }),
               passiveInput(115200));

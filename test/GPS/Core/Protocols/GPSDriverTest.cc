@@ -400,9 +400,8 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
     QTest::addColumn<QString>("message");
     QTest::newRow("unknown-receiver") << 255 << GPSReceiverConfig{} << 0u
                                       << QStringLiteral("Unsupported GPS receiver type");
-    QTest::newRow("passive-missing-baud")
-        << int(GPSType::Passive) << GPSReceiverConfig{} << 0u
-        << QStringLiteral("Select a valid serial baud rate; passive input requires an explicit rate");
+    QTest::newRow("passive-invalid-baud") << int(GPSType::Passive) << GPSReceiverConfig{.baudRate = 1} << 0u
+                                          << QStringLiteral("Select a valid serial baud rate");
     QTest::newRow("fixed-baud-mismatch")
         << int(GPSType::UBlox)
         << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}},
