@@ -18,7 +18,7 @@
 #include "SerialLink.h"
 #include "SerialPortManager.h"
 #ifdef Q_OS_ANDROID
-#include "AndroidSerial.h"
+#include "AndroidSerialPorts.h"
 #include "AppSettings.h"
 #endif
 #endif
@@ -28,6 +28,7 @@
 #endif
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 #include <QtCore/QApplicationStatic>
@@ -51,6 +52,11 @@ LinkManager::LinkManager(QObject *parent)
     (void) qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
     (void) connect(SerialPortManager::instance(), &SerialPortManager::portsEnumerated, this,
                    &LinkManager::_updateSerialPorts);
+#ifdef Q_OS_ANDROID
+    // A grant of USB permission starts a scan of the ports.
+    (void) connect(SerialPortManager::instance(), &SerialPortManager::portsEnumerated, this,
+                   &LinkManager::_connectLinkAwaitingUsbPermission);
+#endif
 #endif
 }
 
@@ -71,9 +77,8 @@ void LinkManager::init()
 #ifndef QGC_NO_SERIAL_LINK
 #ifdef Q_OS_ANDROID
     // The serial backend is fixed at startup. Changing the setting requires an app restart.
-    AndroidSerial::setUsePosixSerial(
+    AndroidSerialPorts::setUsePosixSerial(
         SettingsManager::instance()->appSettings()->androidUsePosixSerial()->rawValue().toBool());
-    SerialPortManager::instance()->setSinglePortOnly(!AndroidSerial::usePosixSerial());
 #endif
     if (!_serialAutoConnect) {
         _serialAutoConnect = std::make_unique<SerialAutoConnect>(
@@ -105,6 +110,16 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
         if (sharedConfig.get() == config) {
             sharedConfig->setAutoConnectStarted(true);
             sharedConfig->resetReconnectBackoff();
+#ifndef QGC_NO_SERIAL_LINK
+            if (_serialPortInUseMsg(*sharedConfig)) {
+                continue;
+            }
+#ifdef Q_OS_ANDROID
+            if (_awaitUsbPermission(sharedConfig)) {
+                continue;
+            }
+#endif
+#endif
             createConnectedLink(sharedConfig);
         }
     }
@@ -123,6 +138,94 @@ void LinkManager::disconnectLink(LinkInterface *link)
 
     link->disconnect();
 }
+
+#ifndef QGC_NO_SERIAL_LINK
+bool LinkManager::_serialPortInUseMsg(const LinkConfiguration& config)
+{
+    const auto* serialConfig = qobject_cast<const SerialConfiguration*>(&config);
+    const QString port = serialConfig ? serialConfig->portName().trimmed() : QString();
+    if (port.isEmpty() || SerialPortManager::instance()->canReservePort(port)) {
+        return false;
+    }
+
+    // A link that has the port can be named for the user to disconnect. What else reserves a port, as the GPS
+    // does, is named if it said what it is.
+    const QList<SharedLinkInterfacePtr> currentLinks = links();
+    for (const SharedLinkInterfacePtr& link : currentLinks) {
+        const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
+        const auto* linkSerialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
+        if (!linkSerialConfig) {
+            continue;
+        }
+        if (SerialPortManager::instance()->isSamePort(linkSerialConfig->portName(), port)) {
+            // Said in so many words: a link that was connected automatically is named after what QGC takes the
+            // device for, which the user may not know it by.
+            QGC::showAppMessage(
+                tr("Cannot connect '%1': its serial port is already open as the link '%2'. Disconnect that link first.")
+                    .arg(config.name(), linkConfig->name()));
+            return true;
+        }
+    }
+
+    const QString owner = SerialPortManager::instance()->reservationOwner(port);
+    if (owner.isEmpty()) {
+        QGC::showAppMessage(tr("Cannot connect '%1': the serial port is in use.").arg(config.name()));
+    } else {
+        //: %2 is what has the port open, such as "the GPS receiver"
+        QGC::showAppMessage(tr("Cannot connect '%1': the serial port is in use by %2.").arg(config.name(), owner));
+    }
+    return true;
+}
+#endif
+
+#if !defined(QGC_NO_SERIAL_LINK) && defined(Q_OS_ANDROID)
+bool LinkManager::_awaitUsbPermission(const SharedLinkConfigurationPtr& config)
+{
+    // The user asked for this connection, so they are asked again for a USB device that they have denied QGC:
+    // opening the port asks only once for each time the device is attached. The port cannot be opened until
+    // they answer, so the link is connected once they have allowed it.
+    const auto* serialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+    if (!serialConfig || !AndroidSerialPorts::requestUsbPermission(serialConfig->portName())) {
+        // A link that waits for its permission goes on waiting: this connection has nothing to ask for.
+        return false;
+    }
+
+    qCDebug(LinkManagerLog) << "Connecting" << config->name() << "once the user allows its USB device";
+    // As when a link is connected at once: the user wants this link, whatever they stopped before.
+    config->setSuppressAutoReconnect(false);
+    _configAwaitingUsbPermission = config;
+    // A permission that the user grants later than this, by other means, connects nothing by itself.
+    _usbPermissionDeadline.setRemainingTime(std::chrono::minutes(1));
+    return true;
+}
+
+void LinkManager::_connectLinkAwaitingUsbPermission()
+{
+    SharedLinkConfigurationPtr config = _configAwaitingUsbPermission.lock();
+    if (!config) {
+        return;
+    }
+    if (_usbPermissionDeadline.hasExpired()) {
+        _configAwaitingUsbPermission.reset();
+        return;
+    }
+
+    const auto* serialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+    if (_connectionsSuspended || !serialConfig || !AndroidSerialPorts::hasUsbPermission(serialConfig->portName())) {
+        return;
+    }
+
+    // Not if the link was connected or stopped by other means since the user asked for it.
+    if (!config->link() && !config->suppressAutoReconnect()) {
+        qCDebug(LinkManagerLog) << "USB device allowed, connecting" << config->name();
+        if (!createConnectedLink(config)) {
+            // An automatic connection may be trying the port at this moment. The next scan tries again.
+            return;
+        }
+    }
+    _configAwaitingUsbPermission.reset();
+}
+#endif
 
 void LinkManager::disconnectLinkConfiguration(LinkConfiguration *config)
 {
@@ -664,13 +767,17 @@ LinkConfiguration *LinkManager::startConfigurationEditing(LinkConfiguration *con
         return nullptr;
     }
 
+    LinkConfiguration* const editedConfig = LinkConfiguration::duplicateSettings(config);
 #ifndef QGC_NO_SERIAL_LINK
-    if (config->type() == LinkConfiguration::TypeSerial) {
+    if (auto* const serialConfig = qobject_cast<SerialConfiguration*>(editedConfig)) {
         _updateSerialPorts();
+        // The editor lists ports by their persistent names, so a link saved by the system location of its port
+        // takes that name here.
+        serialConfig->setPortName(SerialPortManager::instance()->persistentName(serialConfig->portName()));
     }
 #endif
 
-    return LinkConfiguration::duplicateSettings(config);
+    return editedConfig;
 }
 
 void LinkManager::removeConfiguration(LinkConfiguration *config)
@@ -848,8 +955,7 @@ void LinkManager::_updateSerialPorts()
     QStringList displayList;
     const auto inventory = SerialPortManager::instance()->availablePorts();
     for (const SerialPortManager::Port& info : inventory) {
-        const QString port = info.systemLocation;
-        portList += port;
+        portList += SerialPortManager::instance()->persistentName(info.systemLocation);
         displayList += info.displayName.isEmpty() ? info.portName : info.displayName;
     }
     const bool portsChanged = _commPortList != portList;

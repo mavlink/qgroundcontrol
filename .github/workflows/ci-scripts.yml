@@ -22,6 +22,13 @@ on:
       - 'tools/**'
       - 'deploy/**'
       - 'android/build.gradle'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialManager.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialPortInfo.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialReader.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResourceError.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResult.java'
+      - 'src/Android/qtandroidserialport/AndroidSerial.cc'
+      - 'src/Android/qtandroidserialport/AndroidSerial.h'
       - 'src/Settings/**'
       - 'src/AppSettings/pages/**'
       - 'src/**/*.VehicleConfig.json'
@@ -83,6 +90,8 @@ jobs:
             docs/.vitepress/config.mjs
             docs/en/qgc-user-guide/getting_started/download_and_install.md
             justfile
+            src/Android/qtandroidserialport/AndroidSerial.cc
+            src/Android/qtandroidserialport/AndroidSerial.h
             src/AppSettings/pages
             src/Settings
             src/**/*.VehicleConfig.json
@@ -92,6 +101,11 @@ jobs:
             tools
             deploy
             android/build.gradle
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialManager.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialPortInfo.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialReader.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResourceError.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResult.java
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

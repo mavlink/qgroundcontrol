@@ -70,6 +70,20 @@ _LAUNCH_PATTERN = re.compile(r"ActivityManager.*START.*qgroundcontrol")
 _CRASH_SIG = re.compile(r"FATAL EXCEPTION")
 _CRASH_CTX = re.compile(r"qgroundcontrol")
 _CRASH_LOG = re.compile(r"FATAL|qgroundcontrol")
+# What QGC logs, and logcat shows, when its C++ and Java disagree on a JNI method or field.
+_METHOD_NOT_FOUND = (
+    "11-11 02:10:44.101 E/QGroundControl_unittest_9653( 9653):      0.412 Critical: Java method "
+    "not found: open (Ljava/lang/String;J)I - Android.AndroidSerial - (cacheMethodIds:270)"
+)
+_FIELD_NOT_FOUND = (
+    "11-11 02:10:44.102 E/QGroundControl_unittest_9653( 9653):      0.413 Critical: Java field "
+    "not found: stableName Ljava/lang/String; - Android.AndroidSerial - (cachePortInfoFieldIds:311)"
+)
+_NATIVES_NOT_REGISTERED = (
+    "11-11 02:10:44.100 W/QGroundControl_unittest_9653( 9653):      0.411 Warning: Failed to "
+    "register native methods for org/mavlink/qgroundcontrol/serial/QGCUsbSerialManager - "
+    "Android.AndroidSerial - (AndroidSerial::setNativeMethods:356)"
+)
 
 
 def _make_run_command(
@@ -211,6 +225,42 @@ class TestRunBootAttempt:
         assert (ok, reason) == (False, "QGroundControl's simple boot test failed")
         assert "Video.GStreamer.SelfTest" in content
 
+    def test_fails_when_cpp_cannot_find_a_java_method(self) -> None:
+        # QGC binds while it loads, so the marker can reach logcat within the same poll.
+        ok, reason, notice, _, _ = self._run(
+            ["QGroundControl launch", f"{_METHOD_NOT_FOUND}\nSimple boot test completed - Main"],
+            [True, True, True],
+        )
+        assert (ok, reason, notice) == (False, mod.JNI_BINDING_MESSAGE, None)
+
+    def test_fails_when_cpp_cannot_find_a_java_field(self) -> None:
+        ok, reason, _, _, _ = self._run(
+            ["QGroundControl launch", _FIELD_NOT_FOUND, "Simple boot test completed - Main"],
+            [True, True, True],
+        )
+        assert (ok, reason) == (False, mod.JNI_BINDING_MESSAGE)
+
+    def test_fails_when_cpp_cannot_register_its_native_methods(self) -> None:
+        ok, reason, _, _, _ = self._run(
+            ["QGroundControl launch", _NATIVES_NOT_REGISTERED, "Simple boot test completed - Main"],
+            [True, True, True],
+        )
+        assert (ok, reason) == (False, mod.JNI_BINDING_MESSAGE)
+
+    def test_passes_when_the_jni_methods_are_bound(self) -> None:
+        ok, reason, _, _, _ = self._run(
+            [
+                "QGroundControl launch",
+                "Debug: Cached JNI method IDs, 0 missing - Android.AndroidSerial - "
+                "(cacheMethodIds:277)\n"
+                "Debug: Native Functions Registered Successfully - Android.AndroidSerial - "
+                "(setNativeMethods:365)\n"
+                "Simple boot test completed - Main",
+            ],
+            [True, True, True],
+        )
+        assert (ok, reason) == (True, None)
+
     def test_fails_when_the_app_exits_without_the_completion_marker(self) -> None:
         kwargs = self._kwargs()
         kwargs["timeout"] = 10
@@ -327,6 +377,15 @@ def test_boot_test_report_keeps_the_last_failure_and_self_test_lines() -> None:
     assert mod.boot_test_report("QGroundControl launch\nStarting application event loop") == []
 
 
+def test_boot_test_report_quotes_the_serial_self_test() -> None:
+    finding = (
+        "Critical: Java echoed 3 of 5 bytes - Android.AndroidSerial.SelfTest - (selfTest:1040)"
+    )
+    failed = "Critical: Simple boot test failed - Main - (main:48)"
+    logcat = "\n".join(["QGroundControl launch", finding, failed])
+    assert mod.boot_test_report(logcat) == [finding, failed]
+
+
 def test_failure_annotation_quotes_the_boot_test_report(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -356,6 +415,27 @@ def test_failure_annotation_quotes_the_boot_test_report(
         "10-31 03:21:22.449 E/QGroundControl( 1234): Critical: Simple boot test failed - Main - "
         "(main:48)\n"
     ) in out
+    assert (tmp_path / "boot.log").read_text() == logcat
+
+
+def test_failure_annotation_quotes_the_jni_binding_failures(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    logcat = "\n".join(["QGroundControl launch", _NATIVES_NOT_REGISTERED, _METHOD_NOT_FOUND])
+    attempt = (False, mod.JNI_BINDING_MESSAGE, None, logcat, _APP_PATTERN)
+    with (
+        patch.object(mod, "wait_for_adb_ready", return_value=True),
+        patch.object(mod, "install_with_retries", return_value=True),
+        patch.object(mod, "grant_all_files_access"),
+        patch.object(mod, "run_boot_attempt", return_value=attempt),
+        patch.object(mod.time, "sleep", lambda *_: None),
+    ):
+        exit_code = mod.main(["--apk", "qgc.apk", "--log-output", str(tmp_path / "boot.log")])
+    assert exit_code == 1
+    assert (
+        "::error::QGroundControl could not bind a JNI method or field (C++ and Java disagree)%0A"
+        f"{_NATIVES_NOT_REGISTERED}%0A{_METHOD_NOT_FOUND}\n"
+    ) in capsys.readouterr().out
     assert (tmp_path / "boot.log").read_text() == logcat
 
 

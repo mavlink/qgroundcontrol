@@ -121,4 +121,21 @@ void QGCSerialPortInfoTest::_testFallbackRegexesCompile()
     }
 }
 
+void QGCSerialPortInfoTest::_testFallbackNamesABoardByItsClassUnlessGivenAName()
+{
+    QVERIFY(QGCSerialPortInfo::_loadJsonData());
+    const auto nameOfRule = [](const QString& pattern) {
+        for (const auto& fallback : std::as_const(QGCSerialPortInfo::_boardDescriptionFallbackList)) {
+            if (fallback.regExp.pattern() == pattern) {
+                return QGCSerialPortInfo::_fallbackBoardName(fallback);
+            }
+        }
+        return QString();
+    };
+
+    QCOMPARE(nameOfRule(QStringLiteral("^FT231X USB UART$")), QStringLiteral("SiK Radio"));
+    // Too broad a rule to tell that the device is a radio, though it is taken for one.
+    QCOMPARE(nameOfRule(QStringLiteral("USB UART$")), QStringLiteral("USB serial adapter"));
+}
+
 UT_REGISTER_TEST(QGCSerialPortInfoTest, TestLabel::Unit, TestLabel::Comms)

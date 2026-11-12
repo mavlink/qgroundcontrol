@@ -16,18 +16,28 @@
 // We mean it.
 //
 
-#include <QtCore/qstring.h>
 #include <QtCore/private/qglobal_p.h>
+#include <QtCore/qlist.h>
+#include <QtCore/qstring.h>
 
 QT_BEGIN_NAMESPACE
+
+class QSerialPortInfo;
 
 class Q_AUTOTEST_EXPORT QSerialPortInfoPrivate
 {
 public:
     static QString portNameToSystemLocation(const QString &source);
     static QString portNameFromSystemLocation(const QString &source);
+    /// Whether a system location names a port of a USB device, which Java opens: the name that Android gives the
+    /// device, or the one that survives a replug. Any other location is a device node.
+    static bool isUsbLocation(const QString& location);
+    /// The serial device nodes in devDir that QGC may read and write: the device's own UARTs and the USB serial
+    /// adapters that the kernel drives. sysTtyDir is the kernel's /sys/class/tty, which describes the adapters.
+    static QList<QSerialPortInfo> posixPorts(const QString& devDir, const QString& sysTtyDir);
 
     QString portName;
+    QString stableName;
     QString device;
     QString description;
     QString manufacturer;

@@ -142,7 +142,7 @@
         { "regExp": "^PX4 MR-TROPIC",       "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL MR-TROPIC",    "boardClass": "Pixhawk" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
-        { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
+        { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "name": "USB serial adapter", "comment": "Very broad fallback, too dangerous for non-android. Named for what is known of the device: it is only taken for a radio" }
     ],
 
     "boardManufacturerFallback": [

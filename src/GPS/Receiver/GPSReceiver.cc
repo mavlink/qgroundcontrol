@@ -347,7 +347,9 @@ QStringList GPSReceiver::rtkReceiverPorts() const
 
 GPSSerialClaim GPSReceiver::claimSerialPort(const QString& device)
 {
-    GPSSerialClaim claim = _serialPorts ? _serialPorts->reservePort(device) : nullptr;
+    //: Ends the sentence "Cannot connect the link: the serial port is in use by ..."
+    const QString owner = tr("the GPS receiver");
+    GPSSerialClaim claim = _serialPorts ? _serialPorts->reservePort(device, owner) : nullptr;
     if (claim) {
         _serialClaims.insert(device, claim);
     }

@@ -1,7 +1,5 @@
 #include "AndroidInterface.h"
-#ifndef QGC_NO_SERIAL_LINK
 #include "AndroidSerial.h"
-#endif
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #include <QtCore/QLoggingCategory>
@@ -111,9 +109,12 @@ jint JNI_OnLoad(JavaVM* vm, void*)
 
     AndroidInterface::setNativeMethods();
 
-#ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::setNativeMethods();
-#endif
+    // Without them the first USB serial callback would throw on a Java thread, and take the app down then. Also
+    // in a build without serial links: its Java side tracks the USB serial devices all the same, and tells of
+    // each that is attached or detached.
+    if (!AndroidSerial::setNativeMethods()) {
+        return JNI_ERR;
+    }
 
     QNativeInterface::QAndroidApplication::hideSplashScreen(333);
 
@@ -125,8 +126,4 @@ void JNI_OnUnload(JavaVM* vm, void*)
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
     VideoBackend::instance().setAndroidJniState(vm, nullptr, nullptr);
-
-#ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::cleanupJniCache();
-#endif
 }

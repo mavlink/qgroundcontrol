@@ -13,6 +13,8 @@ private slots:
 #ifndef QGC_NO_SERIAL_LINK
     void _testOccupiedSerialAutoConnectRecovers();
     void _testReservedSerialPortNotOpened();
+    void _testManualConnectToSerialPortInUseSaysWhy();
+    void _testSerialLinkSavedByStableName();
     void _testSerialReservationFollowsLink();
 #endif
     void _testReconnectsDroppedAutoConnectLink();

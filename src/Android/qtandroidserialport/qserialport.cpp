@@ -473,9 +473,9 @@ void QSerialPort::close()
         return;
     }
 
-    // Buffered writes were accepted by write(); try to send them unless writing already failed.
-    if (d->error != QSerialPort::WriteError) {
-        (void) d->flushBeforeClose();
+    // Buffered writes were accepted by write(); try to send them unless the port can no longer write.
+    if (d->error != QSerialPort::WriteError && d->error != QSerialPort::ResourceError) {
+        d->flushBeforeClose();
     }
     d->close();
     d->isBreakEnabled.setValue(false);
@@ -930,10 +930,9 @@ bool QSerialPort::clear(Directions directions)
     }
 
     if (directions & Input) {
-        QMutexLocker locker(&d->_readMutex);
+        QMutexLocker locker(&d->_arrivalMutex);
         d->buffer.clear();
-        d->_pendingData.clear();
-        d->_bufferBytesEstimate.store(0, std::memory_order_relaxed);
+        d->_discardPendingDataLocked();
     }
     if (directions & Output)
         d->writeBuffer.clear();
@@ -1013,7 +1012,11 @@ qint64 QSerialPort::readBufferSize() const
 void QSerialPort::setReadBufferSize(qint64 size)
 {
     Q_D(QSerialPort);
-    d->readBufferMaxSize = size;
+    {
+        // The thread that delivers input reads the limit.
+        QMutexLocker locker(&d->_arrivalMutex);
+        d->readBufferMaxSize = size;
+    }
     if (isReadable())
         d->startAsyncRead();
 }
@@ -1051,8 +1054,8 @@ qint64 QSerialPort::bytesAvailable() const
 */
 qint64 QSerialPort::bytesToWrite() const
 {
-    qint64 pendingBytes = QIODevice::bytesToWrite();
-    return pendingBytes;
+    // Output that the backend has taken is not written until it says so.
+    return QIODevice::bytesToWrite() + d_func()->_bytesInFlight;
 }
 
 /*!
@@ -1178,10 +1181,6 @@ qint64 QSerialPort::readData(char* data, qint64 maxSize)
 {
     Q_UNUSED(data);
     Q_UNUSED(maxSize);
-
-    // QIODevice drains from d->buffer before calling here; refresh estimate so
-    // Android read-backpressure tracks current buffered bytes.
-    d_func()->_bufferBytesEstimate.store(d_func()->buffer.size(), std::memory_order_relaxed);
 
     // In any case we need to start the notifications if they were
     // disabled by the read handler. If enabled, next call does nothing.

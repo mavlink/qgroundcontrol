@@ -235,6 +235,12 @@ jobs:
           ARTIFACT_URL: ${{ steps.upload-lint.outputs.artifact-url }}
         run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Android Lint reports"
 
+      - name: Android Unit Tests
+        if: ${{ matrix.host == 'linux' }}
+        shell: bash
+        working-directory: ${{ runner.temp }}/build/android-build
+        run: ./gradlew testDebugUnitTest --no-daemon
+
       - name: Prepare Artifact
         shell: bash
         run: |

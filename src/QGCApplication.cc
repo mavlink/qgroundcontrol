@@ -44,6 +44,9 @@
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
+#ifdef Q_OS_ANDROID
+#include "AndroidSerial.h"
+#endif
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
@@ -251,6 +254,10 @@ void QGCApplication::init()
         const bool videoInitialized = _initVideo() && VideoBackend::instance().selfTest();
         const bool qmlRootLoaded = _initQmlRootWindow();
         _bootTestPassed = videoInitialized && qmlRootLoaded;
+#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+        // Java and C++ are bound to each other only as the app runs, so the boot test also proves that binding.
+        _bootTestPassed = AndroidSerial::selfTest() && _bootTestPassed;
+#endif
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
@@ -688,9 +695,11 @@ void QGCApplication::shutdown()
             }
         }
 
+        // Only directories that are this run's own. Android gives the app the same ones under any application
+        // name, so there they also hold the settings and caches of its normal runs.
         for (const auto location : {QStandardPaths::AppConfigLocation, QStandardPaths::CacheLocation}) {
             QDir dir(QStandardPaths::writableLocation(location));
-            if (dir.exists()) {
+            if (dir.exists() && dir.absolutePath().contains(applicationName())) {
                 if (dir.removeRecursively()) {
                     qCDebug(QGCApplicationLog) << "Removed test run directory:" << dir.absolutePath();
                 } else {

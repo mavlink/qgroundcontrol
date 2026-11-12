@@ -1,6 +1,7 @@
 #include "LinkManagerTest.h"
 
 #include <algorithm>
+#include <memory>
 
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QUdpSocket>
@@ -404,6 +405,134 @@ void LinkManagerTest::_testReservedSerialPortNotOpened()
     QVERIFY(!linkManager()->createConnectedLink(sharedConfig));
     QVERIFY(!config->link());
     QVERIFY(SerialPortManager::instance()->isPortReserved(port));
+}
+
+void LinkManagerTest::_testManualConnectToSerialPortInUseSaysWhy()
+{
+    const auto addSerialConfig = [this](const QString& name, const QString& port) {
+        auto* const serialConfig = new SerialConfiguration(name);
+        serialConfig->setPortName(port);
+        return linkManager()->addConfiguration(serialConfig);
+    };
+
+    // Not every port in use has a link: the GPS reserves its port too, and says what it is.
+    const QString reservedPort = QStringLiteral("/test/in-use");
+    auto reservation = SerialPortManager::instance()->reservePort(reservedPort);
+    QVERIFY(reservation);
+    const SharedLinkConfigurationPtr config = addSerialConfig(QStringLiteral("Manual link"), reservedPort);
+    const auto removeConfig = qScopeGuard([this, &config] { linkManager()->_removeConfiguration(config.get()); });
+
+    expectAppMessage(QRegularExpression(QStringLiteral("Cannot connect 'Manual link': the serial port is in use\\.")));
+    linkManager()->createConnectedLink(config.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!config->link());
+
+    reservation.reset();
+    reservation = SerialPortManager::instance()->reservePort(reservedPort, QStringLiteral("the GPS receiver"));
+    QVERIFY(reservation);
+    expectAppMessage(QRegularExpression(
+        QStringLiteral("Cannot connect 'Manual link': the serial port is in use by the GPS receiver\\.")));
+    linkManager()->createConnectedLink(config.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!config->link());
+    reservation.reset();
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    const int master = ::posix_openpt(O_RDWR | O_NOCTTY);
+    QVERIFY(master >= 0);
+    const auto closeMaster = qScopeGuard([master] { ::close(master); });
+    QCOMPARE(::grantpt(master), 0);
+    QCOMPARE(::unlockpt(master), 0);
+    const char* name = ::ptsname(master);
+    QVERIFY(name);
+    const QString location = QString::fromLocal8Bit(name);
+
+    SharedLinkConfigurationPtr holder = addSerialConfig(QStringLiteral("Holder"), location);
+    const SharedLinkConfigurationPtr second = addSerialConfig(QStringLiteral("Second link"), location);
+    const auto removeLinks = qScopeGuard([this, &holder, &second] {
+        if (holder->link()) {
+            linkManager()->disconnectLink(holder->link());
+            (void) QTest::qWaitFor([&holder] { return !holder->link(); }, TestTimeout::shortMs());
+        }
+        linkManager()->_removeConfiguration(second.get());
+        linkManager()->_removeConfiguration(holder.get());
+    });
+    QVERIFY(linkManager()->createConnectedLink(holder));
+    QTRY_VERIFY_WITH_TIMEOUT(holder->link() && holder->link()->isConnected(), TestTimeout::shortMs());
+
+    expectAppMessage(QRegularExpression(
+        QStringLiteral("Cannot connect 'Second link': its serial port is already open as the link 'Holder'")));
+    linkManager()->createConnectedLink(second.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!second->link());
+
+    linkManager()->disconnectLink(holder->link());
+    QTRY_VERIFY_WITH_TIMEOUT(!holder->link(), TestTimeout::shortMs());
+#endif
+}
+
+void LinkManagerTest::_testSerialLinkSavedByStableName()
+{
+    SerialPortManager* const ports = SerialPortManager::instance();
+    const auto restoreInventory = qScopeGuard([ports, enumerator = ports->_enumerator] {
+        ports->_enumerator = enumerator;
+        ports->rescan();
+    });
+    QString location = QStringLiteral("/test/usb/001/004");
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    // A port that opens, for a link to have it.
+    const int master = ::posix_openpt(O_RDWR | O_NOCTTY);
+    QVERIFY(master >= 0);
+    const auto closeMaster = qScopeGuard([master] { ::close(master); });
+    QCOMPARE(::grantpt(master), 0);
+    QCOMPARE(::unlockpt(master), 0);
+    const char* name = ::ptsname(master);
+    QVERIFY(name);
+    location = QString::fromLocal8Bit(name);
+#endif
+    SerialPortManager::Port port{location, location, QGCSerialPortInfo::BoardTypeUnknown, QString()};
+    port.stableName = QStringLiteral("usb:0403:6015:R1");
+    ports->_enumerator = [&port] { return QList<SerialPortManager::Port>{port}; };
+    ports->rescan();
+
+    // What the link editor lists is what it saves a link by.
+    QCOMPARE(linkManager()->serialPorts(), QStringList{port.stableName});
+
+    const auto addSerialConfig = [this](const QString& configName, const QString& portName) {
+        auto* const serialConfig = new SerialConfiguration(configName);
+        serialConfig->setPortName(portName);
+        return linkManager()->addConfiguration(serialConfig);
+    };
+    SharedLinkConfigurationPtr holder = addSerialConfig(QStringLiteral("Holder"), location);
+    const SharedLinkConfigurationPtr second = addSerialConfig(QStringLiteral("Second link"), port.stableName);
+    const auto removeLinks = qScopeGuard([this, &holder, &second] {
+        if (holder->link()) {
+            linkManager()->disconnectLink(holder->link());
+            (void) QTest::qWaitFor([&holder] { return !holder->link(); }, TestTimeout::shortMs());
+        }
+        linkManager()->_removeConfiguration(second.get());
+        linkManager()->_removeConfiguration(holder.get());
+    });
+
+    // A link saved by the system location of its port is saved by the stable name once it has been edited.
+    const std::unique_ptr<LinkConfiguration> edited(linkManager()->startConfigurationEditing(holder.get()));
+    const auto* const editedSerialConfig = qobject_cast<const SerialConfiguration*>(edited.get());
+    QVERIFY(editedSerialConfig);
+    QCOMPARE(editedSerialConfig->portName(), port.stableName);
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    // The link that has the port under one of its names is named to a link that wants it under another.
+    QVERIFY(linkManager()->createConnectedLink(holder));
+    QTRY_VERIFY_WITH_TIMEOUT(holder->link() && holder->link()->isConnected(), TestTimeout::shortMs());
+    expectAppMessage(QRegularExpression(
+        QStringLiteral("Cannot connect 'Second link': its serial port is already open as the link 'Holder'")));
+    linkManager()->createConnectedLink(second.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!second->link());
+
+    linkManager()->disconnectLink(holder->link());
+    QTRY_VERIFY_WITH_TIMEOUT(!holder->link(), TestTimeout::shortMs());
+#endif
 }
 
 void LinkManagerTest::_testOccupiedSerialAutoConnectRecovers()
