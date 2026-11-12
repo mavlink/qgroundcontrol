@@ -17,6 +17,9 @@
 class QGCMapTask;
 class QGCTileCacheDatabase;
 
+// The slots take tasks: moc needs the type, whichever of the two headers it reads first
+Q_MOC_INCLUDE("QGCMapTask.h")
+
 #ifdef QGC_UNITTEST_BUILD
 struct QGCCacheTile;
 #endif
