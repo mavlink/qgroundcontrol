@@ -15,8 +15,7 @@ namespace NMEA {
 struct NavigationEpoch
 {
     std::optional<int> timeMs;
-    uint64_t receivedAtUs = 0;
-    /// Receipt of the GGA.
+    /// Receipt of the GGA, or of the sentence that declared a fix loss.
     uint64_t positionReceivedAtUs = 0;
     GPSFixQuality fixQuality = GPSFixQuality::Unknown;
     std::optional<unsigned> ggaQuality;

@@ -203,7 +203,7 @@ void NMEASentenceTest::_navigationFixLoss()
     QVERIFY(update);
     QVERIFY(update->type == NMEA::NavigationUpdate::Type::FixLoss);
     QCOMPARE(update->epoch.fixQuality, GPSFixQuality::NoFix);
-    QCOMPARE(update->epoch.receivedAtUs, quint64(42));
+    QCOMPARE(update->epoch.positionReceivedAtUs, quint64(42));
     QCOMPARE(update->epoch.satellitesUsed, satellitesUsed < 0 ? std::nullopt : std::optional<unsigned>(satellitesUsed));
 }
 
