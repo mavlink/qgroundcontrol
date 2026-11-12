@@ -207,6 +207,8 @@ std::vector<Seed> seeds()
                                    detected<SBFReceiverModel>(Dialect::SBF, 115200)),
         recorded<AshtechReceiverModel>("automatic-trimble", GPSType::Automatic, 0,
                                        detected<AshtechReceiverModel>(Dialect::Ashtech, 115200)),
+        recorded<FemtoReceiverModel>("automatic-femto", GPSType::Automatic, FixedBase,
+                                     detected<FemtoReceiverModel>(Dialect::Femto, 115200)),
     };
     for (const auto& [label, directory] : {std::pair{"corpus", CORPUS_DIR}, std::pair{"fixtures", FIXTURE_DIR}}) {
         const QStringList suffixes{QStringLiteral("ascii"), QStringLiteral("bin"),  QStringLiteral("cap"),

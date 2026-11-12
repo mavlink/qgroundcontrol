@@ -53,7 +53,7 @@ inline bool parsesCommand(Dialect dialect, QByteArrayView write)
         case Dialect::SBF:
             return textCommand(write);
         case Dialect::Femto:
-            for (const QByteArrayView command : {"UNLOGALL ", "VERSION\r", "LOG ", "POSAVE ", "FIX "}) {
+            for (const QByteArrayView command : {"UNLOGALL ", "VERSION\r", "LOG ", "POSAVE ", "UNDULATION ", "FIX "}) {
                 if (write.startsWith(command)) {
                     return textCommand(write);
                 }
