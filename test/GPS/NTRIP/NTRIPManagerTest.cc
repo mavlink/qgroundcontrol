@@ -19,6 +19,7 @@
 #include "NTRIPVehiclePresence.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCNetworkAvailabilityMonitor.h"
+#include "RTCM/Support/RTCMTestFrames.h"
 #include "RTCMFramer.h"
 #include "Support/GPSTestHelpers.h"
 
@@ -1208,7 +1209,7 @@ void NTRIPManagerTest::_mountpointChangeReconnects()
     QCOMPARE(second->startCount, 1);
     QCOMPARE(stops, 1);
     QCOMPARE(second->stopCount, 0);
-    const auto frame = GPSTest::rtcmMessage(1077);
+    const auto frame = GPSTest::rtcmMsmFrame(1077, 8);
     second->simulateRtcmData(frame, 1077, scheduler.nowMs() - 10);
     deliverQueuedCalls();
     QCOMPARE(routed.size(), 2);
@@ -1242,7 +1243,7 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
     const auto accepted = GPSTest::rtcmMessage(1005);
-    const auto filtered = GPSTest::rtcmMessage(1077);
+    const auto filtered = GPSTest::rtcmMsmFrame(1077, 8);
     auto rejected = GPSTest::rtcmMessage(1087);
     rejected.back() ^= 1;
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid RTCM frame")));

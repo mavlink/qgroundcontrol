@@ -248,13 +248,14 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
     QVERIFY(position && distance);
     // The RTCM 1005 frame of the recording Core/Protocols/fixtures/mixed.gps.
     const QByteArray stationFrame = QByteArray::fromHex("d300133ed000038a58d9493c872f34109d07d6af48205ad7f7");
-    const QByteArray observations = GPSTest::rtcmMessage(1077, 20);
+    const QByteArray observations = GPSTest::rtcmMsmFrame(1077, 8);
 
     // A stream shows no base station before it announces one.
     const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
     ntrip->submit(observations, scheduler.nowMs());
     QVERIFY(scheduler.advanceBy(100ms));
     QCOMPARE(corrections.state(), State::Fresh);
+    QCOMPARE(corrections.streamContent(), QStringLiteral(u"GPS\u00a08"));
     QVERIFY(!position->property("visible").toBool());
 
     // A repeated announcement of the same position does not notify again.
@@ -418,7 +419,7 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsVehicles()
 
     // The corrections queued to vehicle links are counted whatever source they come from.
     const auto udp = corrections.openSource(GPSCorrectionSettings::Udp, QStringLiteral("192.0.2.1"));
-    const QByteArray frame = GPSTest::rtcmMessage(1077, 20);
+    const QByteArray frame = GPSTest::rtcmMsmFrame(1077, 8);
     udp->submit(frame, scheduler.nowMs());
     QCOMPARE(corrections.vehicleBytesSubmitted(), quint64(frame.size()));
     QCOMPARE(rowTexts("correctionsQueuedToVehicles"),

@@ -327,7 +327,7 @@ void GPSCorrectionManagerTest::_settingsOwnRouting()
     const auto localSource = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
     const auto ntripSource = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
     const auto local = GPSTest::rtcmMessage(1005, 20);
-    const auto ntrip = GPSTest::rtcmMessage(1077, 20);
+    const auto ntrip = GPSTest::rtcmMsmFrame(1077, 8);
     submitNow(localSource, local);
     submitNow(ntripSource, ntrip);
     QCOMPARE(sent, QList<QByteArray>{ntrip});
@@ -405,7 +405,7 @@ void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
     captureVehicleFrames(corrections, sent);
     GPSSettingsBindings::bindCorrections(settings, &corrections);
     const QByteArray taken = GPSTest::rtcmMessage(1005, 20);
-    const QByteArray dropped = GPSTest::rtcmMessage(1077, 30);
+    const QByteArray dropped = GPSTest::rtcmMsmFrame(1077, 8);
     const auto submit = [&scheduler](const auto& source, const QByteArray& frame) {
         source->submit(frame, scheduler.nowMs());
         return advanceDiagnostics(scheduler);
@@ -669,7 +669,7 @@ void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
 {
     TestFixtures::TempDirFixture directory;
     const QString folder = directory.path();
-    const QByteArray frame = GPSTest::rtcmMessage(1077, 100);
+    const QByteArray frame = GPSTest::rtcmMsmFrame(1077, 8);
     ManualScheduler scheduler;
     // Room for two frames and part of a third.
     GPSCorrectionManager corrections(
@@ -727,7 +727,7 @@ void GPSCorrectionManagerTest::_logStopsAfterWriteError()
     QList<QByteArray> sent;
     captureVehicleFrames(corrections, sent);
     const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
-    const QByteArray frame = GPSTest::rtcmMessage(1077, 100);
+    const QByteArray frame = GPSTest::rtcmMsmFrame(1077, 8);
     corrections.setLogToFile(true);
     const QString file = corrections.logFile();
     source->submit(frame, scheduler.nowMs());
@@ -781,7 +781,7 @@ void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
     const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
     const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
     const auto localData = GPSTest::rtcmMessage(1005, 20);
-    const auto ntripData = GPSTest::rtcmMessage(1077, 30);
+    const auto ntripData = GPSTest::rtcmMsmFrame(1077, 8);
     const auto receive = [&destination]() {
         return destination.waitForReadyRead(TestTimeout::mediumMs()) ? destination.receiveDatagram().data()
                                                                      : QByteArray();
@@ -1027,7 +1027,7 @@ void GPSCorrectionManagerTest::_tellsUserWhenVehiclesLoseCorrections()
     const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
     const auto streamFor = [&](int seconds) {
         for (int second = 0; second < seconds; ++second) {
-            source->submit(rtcmMessage(1077, 20), scheduler.nowMs());
+            source->submit(rtcmMsmFrame(1077, 8), scheduler.nowMs());
             if (!advanceTick(scheduler)) {
                 return false;
             }
@@ -1038,6 +1038,7 @@ void GPSCorrectionManagerTest::_tellsUserWhenVehiclesLoseCorrections()
     // Vehicle 3 has an RTK fix from the stream. The vehicles asked about are those of the configured selection.
     QVERIFY(streamFor(3));
     QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+    QCOMPARE(corrections.streamContent(), QStringLiteral(u"GPS\u00a08"));
     QVERIFY(!selections.isEmpty());
     QCOMPARE(selections.count(GPSCorrectionSettings::ActiveVehicle), selections.size());
 
@@ -1104,7 +1105,7 @@ void GPSCorrectionManagerTest::_lossIsAVehicleAlert()
                                          return QList<GPSCorrectionLossAlert::Vehicle>{{.id = 1, .rtkFix = true}};
                                      }});
     const auto source = corrections.openSource(GPSCorrectionSettings::Udp, QStringLiteral("192.0.2.1"));
-    source->submit(rtcmMessage(1077, 20), scheduler.nowMs());
+    source->submit(rtcmMsmFrame(1077, 8), scheduler.nowMs());
     QVERIFY(advanceTick(scheduler));
     QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
 
@@ -1115,7 +1116,7 @@ void GPSCorrectionManagerTest::_lossIsAVehicleAlert()
     QCOMPARE(debugMessages(dialogs), QStringList());
 
     // The return is spoken only.
-    source->submit(rtcmMessage(1077, 20), scheduler.nowMs());
+    source->submit(rtcmMsmFrame(1077, 8), scheduler.nowMs());
     QVERIFY(advanceTick(scheduler));
     QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
     QCOMPARE(shownAsCriticalVehicleMessage(QStringLiteral("RTK corrections resumed.")), 0);
