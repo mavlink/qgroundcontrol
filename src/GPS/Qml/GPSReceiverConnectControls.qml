@@ -6,12 +6,12 @@ import QtQuick.Layouts
 import QGroundControl.Controls
 import QGroundControl.GPS
 
-/// How and when the receiver connects: the corrections format and the consent to save to its flash, automatic
+/// The options of a connection: the corrections format and the consent to save to the receiver's flash, automatic
 /// connection and recording. Connect itself is GPSReceiverConnectionRow's, with the receiver's state and problem.
 GPSReceiverSettingsGroup {
     id: root
 
-    heading: qsTr("Connect")
+    heading: qsTr("Connection Options")
 
     GPSFactSwitchField {
         fact: root.settings.compactRtcmCorrections

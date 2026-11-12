@@ -39,8 +39,8 @@
         },
         {
             "component": "GPSReceiverConnectControls",
-            "sectionName": "Connect",
-            "keywords": ["automatic", "startup", "auto connect"]
+            "sectionName": "Connection Options",
+            "keywords": ["automatic", "startup", "auto connect", "compact rtcm", "msm4", "flash save", "record"]
         },
         {
             "component": "GcsPositionStatus",

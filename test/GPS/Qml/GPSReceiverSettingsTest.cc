@@ -1027,7 +1027,7 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
     if (baseSites) {
         sections.append(QStringLiteral("Saved Base Sites"));
     }
-    sections.append({QStringLiteral("Connect"), QStringLiteral("GCS Position")});
+    sections.append({QStringLiteral("Connection Options"), QStringLiteral("GCS Position")});
     QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(), sections);
 
     // The page's group of a control: the child of the page layout that holds it.
@@ -1042,11 +1042,16 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
     auto* connection = group("rtkReceiverRole");
     auto* baseStationGroup = group("rtkFixedMode");
     auto* baseSitesGroup = group("rtkBaseSiteName");
-    auto* connect = group("rtkAutoConnect");
-    QVERIFY(status && connection && baseStationGroup && baseSitesGroup && connect);
+    auto* options = group("rtkAutoConnect");
+    QVERIFY(status && connection && baseStationGroup && baseSitesGroup && options);
     // Connect is in the status group, which the page always shows.
     QCOMPARE(status, group("rtkReceiverStatus"));
-    QVERIFY(status->isVisible() && connection->isVisible() && connect->isVisible());
+    QVERIFY(status->isVisible() && connection->isVisible() && options->isVisible());
+    // The group of the remaining options is headed as the sidebar lists it, not after the button that left it.
+    const auto headed = TestFixtures::findItems(
+        options, [](QQuickItem* item) { return !item->property("heading").toString().isEmpty(); });
+    QCOMPARE(headed.size(), 1);
+    QCOMPARE(headed.first()->property("heading").toString(), QStringLiteral("Connection Options"));
     QCOMPARE(baseStationGroup->isVisible(), baseStation);
     QCOMPARE(baseSitesGroup->isVisible(), baseSites);
     for (const auto& [file, shown] :

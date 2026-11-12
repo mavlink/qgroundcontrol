@@ -32,7 +32,7 @@ Each is a section of **GNSS Receiver** in the settings sidebar, and the settings
 - **GNSS Receiver:** The receiver role, manufacturer and connection.
 - **RTK Base Station** (_Configured base_ only): The base mode and its settings.
 - **Saved Base Sites** (_Fixed position_ only): The [saved base sites](#base_sites).
-- **Connect:** How and when the receiver connects: the remaining settings.
+- **Connection Options:** The remaining settings: the corrections format, the permission to save to the receiver's flash, automatic connection and recording.
 
 The **Connect** button is not among them: it is in the [receiver status](#status), the first group of the page.
 The GNSS indicator's drop-down shows the same settings as one form when expanded, and the receiver status with **Connect** once a receiver is set up, so a saved receiver connects without opening the settings. Beside a vehicle's GPS status, a receiver that is not set up is shown only while the settings are open.
