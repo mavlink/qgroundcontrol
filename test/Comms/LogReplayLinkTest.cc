@@ -104,6 +104,39 @@ void LogReplayLinkTest::_testClosedWhilePlayingAllowsConnections()
     QVERIFY(!LinkManager::instance()->connectionsSuspended());
 }
 
+void LogReplayLinkTest::_testSpeedChangeWhilePausedStaysPaused()
+{
+    // 30 seconds of log: at the speed set below it plays within the timeout, at the default speed it does not
+    const QString filename = _writeLogFile(buildTlogBytes(31, 1700000000000000ULL));
+    QVERIFY(!filename.isEmpty());
+
+    LogReplayConfiguration config(QStringLiteral("LogReplayLinkTest"));
+    config.setLogFilename(filename);
+
+    LogReplayWorker worker(&config);
+    worker.setup();
+    worker.connectToLog();
+    worker.pause();
+    QVERIFY(!worker.isPlaying());
+
+    QSignalSpy startedSpy(&worker, &LogReplayWorker::playbackStarted);
+    QSignalSpy atEndSpy(&worker, &LogReplayWorker::playbackAtEnd);
+
+    worker.setPlaybackSpeed(100);
+    QVERIFY(!worker.isPlaying());
+    QVERIFY(!LinkManager::instance()->connectionsSuspended());
+    QCOMPARE(startedSpy.count(), 0);
+
+    // The replay resumes at the speed chosen while it was paused
+    worker.play();
+    QCOMPARE(startedSpy.count(), 1);
+    QVERIFY(LinkManager::instance()->connectionsSuspended());
+    QVERIFY_SIGNAL_COUNT_WAIT(atEndSpy, 1, TestTimeout::mediumMs());
+    QVERIFY(!LinkManager::instance()->connectionsSuspended());
+
+    worker.disconnectFromLog();
+}
+
 void LogReplayLinkTest::_testTrailingBytesIgnored_data()
 {
     QTest::addColumn<int>("cTrailingBytes");

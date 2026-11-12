@@ -180,6 +180,12 @@ void LogReplayWorker::pause()
 void LogReplayWorker::setPlaybackSpeed(qreal playbackSpeed)
 {
     _playbackSpeed = playbackSpeed;
+
+    // A paused replay stays paused: play() suspends connections and logging, and resumes at this speed
+    if (!isPlaying()) {
+        return;
+    }
+
     _playbackStartTimeMSecs = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
     _playbackStartLogTimeUSecs = _logCurrentTimeUSecs;
     _readTickTimer->start(1);

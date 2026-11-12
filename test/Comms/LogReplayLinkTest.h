@@ -16,6 +16,7 @@ class LogReplayLinkTest : public UnitTest
 private slots:
     void _testCleanLogLoads();
     void _testClosedWhilePlayingAllowsConnections();
+    void _testSpeedChangeWhilePausedStaysPaused();
     void _testTrailingBytesIgnored_data();
     void _testTrailingBytesIgnored();
     void _testGarbageOnlyLogFails();
