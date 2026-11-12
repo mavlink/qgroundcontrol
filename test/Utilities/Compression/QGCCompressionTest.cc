@@ -1141,6 +1141,100 @@ void QGCCompressionTest::_testDecompressRejectsStreamWithoutData()
     QCOMPARE(_entriesBelow(tempDir.path()), QStringList{QStringLiteral("nothing.gz")});
 }
 
+void QGCCompressionTest::_testDecompressPlainInput_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<bool>("refused");
+
+    // A function that is asked to decompress refuses an input that is not compressed
+    QTest::newRow("decompressFile") << "decompressFile" << true;
+    QTest::newRow("decompressData") << "decompressData" << true;
+    QTest::newRow("decompressFromDevice-file") << "decompressFromDevice-file" << true;
+    QTest::newRow("decompressFromDevice-memory") << "decompressFromDevice-memory" << true;
+    // One that decompresses a file if it has to hands on the file that it does not have to
+    QTest::newRow("decompressIfNeeded") << "decompressIfNeeded" << false;
+    QTest::newRow("decompressIfNeeded with an output") << "decompressIfNeeded-output" << false;
+    // And those that read through compression read what is there
+    QTest::newRow("QGCDecompressDevice") << "QGCDecompressDevice" << false;
+    QTest::newRow("readFile") << "readFile" << false;
+    QTest::newRow("computeFileHash") << "computeFileHash" << false;
+}
+
+void QGCCompressionTest::_testDecompressPlainInput()
+{
+    QFETCH(QString, api);
+    QFETCH(bool, refused);
+    using QGCCompression::Error;
+
+    // Only its name says that this file is compressed, as after a download that was decompressed on the way
+    const QByteArray plain("{\"name\": \"not compressed\"}\n");
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("plain.json.gz");
+    const QString outputPath = tempDir.filePath("output.json");
+    QVERIFY(_writeFile(inputPath, plain));
+    QBuffer device;
+    device.setData(plain);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    const auto expectNotCompressed = [this]() {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Input is not compressed"));
+    };
+
+    if (api == "decompressFile") {
+        expectNotCompressed();
+        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
+        verifyExpectedLogMessage();
+    } else if (api == "decompressData") {
+        // The data has no signature to detect a format by, so the caller says what it is taken for
+        expectNotCompressed();
+        QVERIFY(QGCCompression::decompressData(plain, QGCCompression::Format::GZIP).isEmpty());
+        verifyExpectedLogMessage();
+    } else if (api == "decompressFromDevice-file") {
+        expectNotCompressed();
+        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
+        verifyExpectedLogMessage();
+    } else if (api == "decompressFromDevice-memory") {
+        expectNotCompressed();
+        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
+        verifyExpectedLogMessage();
+    } else if (api == "decompressIfNeeded") {
+        expectNotCompressed();
+        QCOMPARE(QGCCompression::decompressIfNeeded(inputPath), inputPath);
+        verifyExpectedLogMessage();
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+    } else if (api == "decompressIfNeeded-output") {
+        // The file is the result, so it is not removed as a compressed file is once it has been decompressed
+        expectNotCompressed();
+        QCOMPARE(QGCCompression::decompressIfNeeded(inputPath, outputPath, true), inputPath);
+        verifyExpectedLogMessage();
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+    } else if (api == "QGCDecompressDevice") {
+        QGCDecompressDevice decompressor(inputPath);
+        QVERIFY2(decompressor.open(QIODevice::ReadOnly), qPrintable(decompressor.errorString()));
+        QCOMPARE(decompressor.filterName(), QStringLiteral("none"));
+        QCOMPARE(decompressor.readAll(), plain);
+    } else if (api == "readFile") {
+        QString readError;
+        QCOMPARE(QGCCompression::readFile(inputPath, &readError), plain);
+        QVERIFY2(readError.isEmpty(), qPrintable(readError));
+    } else if (api == "computeFileHash") {
+        QCOMPARE(QGCCompression::computeFileHash(inputPath),
+                 QString::fromLatin1(QCryptographicHash::hash(plain, QCryptographicHash::Sha256).toHex()));
+    } else {
+        QFAIL("Unknown row");
+    }
+
+    if (refused) {
+        QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+        QVERIFY2(QGCCompression::lastErrorString().endsWith(": the input is not compressed"),
+                 qPrintable(QGCCompression::lastErrorString()));
+        // What was read is on record: the input as it is, which no decompression filter took
+        QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("none"));
+    }
+    // A copy of the input is not a decompressed file: nothing is written, and the input stays
+    QCOMPARE(_entriesBelow(tempDir.path()), QStringList{QStringLiteral("plain.json.gz")});
+    QCOMPARE(_readFile(inputPath), plain);
+}
+
 // ============================================================================
 // Progress Callback Tests
 // ============================================================================

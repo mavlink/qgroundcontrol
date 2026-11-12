@@ -930,9 +930,10 @@ QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qi
 /// What the header of a single compressed stream says of it
 enum class StreamHeader
 {
-    Data,   ///< The stream is read as one entry, whose data can now be read
-    Empty,  ///< The stream decompresses to nothing: it has no entry, and nothing can be read from the reader
-    Failed  ///< The stream cannot be read (a warning has been logged)
+    Data,           ///< The stream is read as one entry, whose data can now be read
+    Empty,          ///< The stream decompresses to nothing: it has no entry, and nothing can be read from the reader
+    NotCompressed,  ///< The input is not a compressed stream (a warning has been logged)
+    Failed          ///< The stream cannot be read (a warning has been logged)
 };
 
 /// Read the header of the one entry that a single compressed stream is read as
@@ -942,6 +943,12 @@ StreamHeader readStreamHeader(struct archive* a)
     const int header = archive_read_next_header(a, &entry);
     if (header == ARCHIVE_OK) {
         updateFormatState(a);
+        // The raw format takes any input that has bytes, also one that no decompression filter is in the chain
+        // for, which it hands through as it is
+        if (archive_filter_count(a) <= 1) {
+            qCWarning(QGClibarchiveLog) << "Input is not compressed: no decompression filter recognizes it";
+            return StreamHeader::NotCompressed;
+        }
         return StreamHeader::Data;
     }
     if (QGClibarchive::isEmptyStream(a, header)) {
@@ -967,26 +974,31 @@ QGClibarchive::ReadResult writeEmptyFile(const QString& outputPath)
 
 /// Decompress the single stream of a RawFormat reader into a QByteArray
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param completed If not null, receives whether the stream was read to its end: it may hold no data
-/// @return Decompressed data, or empty QByteArray on error or size limit exceeded
-QByteArray readStreamToMemory(struct archive* a, qint64 maxBytes, bool* completed)
+/// @param result Receives how the decompression ended: a stream that was read to its end may hold no data
+/// @return Decompressed data, or empty QByteArray unless @a result is Completed
+QByteArray readStreamToMemory(struct archive* a, qint64 maxBytes, QGClibarchive::ReadResult& result)
 {
-    if (completed != nullptr) {
-        *completed = false;
-    }
+    result = QGClibarchive::ReadResult::Failed;
 
     switch (readStreamHeader(a)) {
         case StreamHeader::Data:
             break;
         case StreamHeader::Empty:
-            if (completed != nullptr) {
-                *completed = true;
-            }
+            result = QGClibarchive::ReadResult::Completed;
+            return {};
+        case StreamHeader::NotCompressed:
+            result = QGClibarchive::ReadResult::NotCompressed;
             return {};
         case StreamHeader::Failed:
             return {};
     }
-    return readArchiveToMemory(a, 0, maxBytes, completed);
+
+    bool completed = false;
+    QByteArray data = readArchiveToMemory(a, 0, maxBytes, &completed);
+    if (completed) {
+        result = QGClibarchive::ReadResult::Completed;
+    }
+    return data;
 }
 
 }  // namespace
@@ -1928,6 +1940,10 @@ bool decompressSingleFile(const QString& inputPath, const QString& outputPath, P
     if (header == StreamHeader::Failed) {
         return false;
     }
+    if (header == StreamHeader::NotCompressed) {
+        outcome = ReadResult::NotCompressed;
+        return false;
+    }
 
     QGCFileHelper::ensureParentExists(outputPath);
 
@@ -1939,11 +1955,11 @@ bool decompressSingleFile(const QString& inputPath, const QString& outputPath, P
     return outcome == ReadResult::Completed;
 }
 
-QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes, bool* ok)
+QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes, ReadResult* result)
 {
-    if (ok != nullptr) {
-        *ok = false;
-    }
+    ReadResult unused = ReadResult::Failed;
+    ReadResult& outcome = (result != nullptr) ? *result : unused;
+    outcome = ReadResult::Failed;
 
     if (data.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Cannot decompress empty data";
@@ -1955,9 +1971,9 @@ QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes, boo
         return {};
     }
 
-    QByteArray result = readStreamToMemory(reader.handle(), maxBytes, ok);
-    qCDebug(QGClibarchiveLog) << "Decompressed" << data.size() << "bytes to" << result.size() << "bytes";
-    return result;
+    QByteArray decompressed = readStreamToMemory(reader.handle(), maxBytes, outcome);
+    qCDebug(QGClibarchiveLog) << "Decompressed" << data.size() << "bytes to" << decompressed.size() << "bytes";
+    return decompressed;
 }
 
 // ----------------------------------------------------------------------------
@@ -2029,28 +2045,31 @@ bool decompressFromDevice(QIODevice* device, const QString& outputPath, Progress
         case StreamHeader::Empty:
             outcome = writeEmptyFile(outputPath);
             break;
+        case StreamHeader::NotCompressed:
+            outcome = ReadResult::NotCompressed;
+            break;
         case StreamHeader::Failed:
             break;
     }
     return outcome == ReadResult::Completed;
 }
 
-QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes, bool* ok)
+QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes, ReadResult* result)
 {
-    if (ok != nullptr) {
-        *ok = false;
-    }
+    ReadResult unused = ReadResult::Failed;
+    ReadResult& outcome = (result != nullptr) ? *result : unused;
+    outcome = ReadResult::Failed;
 
     ArchiveReader reader;
     if (!reader.open(device, ReaderMode::RawFormat)) {
         return {};
     }
 
-    QByteArray result = readStreamToMemory(reader.handle(), maxBytes, ok);
-    if (!result.isEmpty()) {
-        qCDebug(QGClibarchiveLog) << "Decompressed from device:" << result.size() << "bytes";
+    QByteArray decompressed = readStreamToMemory(reader.handle(), maxBytes, outcome);
+    if (!decompressed.isEmpty()) {
+        qCDebug(QGClibarchiveLog) << "Decompressed from device:" << decompressed.size() << "bytes";
     }
-    return result;
+    return decompressed;
 }
 
 }  // namespace QGClibarchive

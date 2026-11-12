@@ -290,6 +290,8 @@ enum class ReadResult
     WriteFailed,    ///< The output directory or a file in it could not be written
     WriteDenied,    ///< As WriteFailed, and the reason is that the output may not be written to
     Cancelled,      ///< The progress callback returned false
+    NotCompressed,  ///< What was to be decompressed as a single stream is not compressed: no decompression filter
+                    ///< recognizes it (a warning has been logged)
     Failed          ///< The input cannot be read or is damaged, or what it holds is larger than maxBytes
 };
 
@@ -426,10 +428,10 @@ bool decompressSingleFile(const QString& inputPath, const QString& outputPath, P
 /// Decompress data in memory
 /// @param data Compressed input data
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param ok If not null, receives whether the data was decompressed: a stream of an empty file gives
-///        nothing too
+/// @param result If not null, receives how the decompression ended: a stream of an empty file gives nothing
+///        too
 /// @return Decompressed data, or empty on failure or size limit exceeded
-QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes = 0, bool* ok = nullptr);
+QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes = 0, ReadResult* result = nullptr);
 
 // ============================================================================
 // QIODevice-based Operations (streaming)
@@ -467,9 +469,10 @@ bool decompressFromDevice(QIODevice* device, const QString& outputPath, Progress
 /// Decompress single-file format from QIODevice to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param ok If not null, receives whether the stream was decompressed: one of an empty file gives nothing too
+/// @param result If not null, receives how the decompression ended: a stream of an empty file gives nothing
+///        too
 /// @return Decompressed data, or empty QByteArray on failure or size limit exceeded
-QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes = 0, bool* ok = nullptr);
+QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes = 0, ReadResult* result = nullptr);
 
 // ============================================================================
 // Format Detection (Thread-Local State)

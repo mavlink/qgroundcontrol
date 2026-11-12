@@ -156,7 +156,9 @@ constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
 
 /// Decompress a single file
 /// A compressed file that holds no data, as a compressor writes for an empty file, gives an empty output file.
-/// A file without any bytes is not a compressed file, and is refused.
+/// A file without any bytes is not a compressed file, and is refused. So is a file that is taken for a
+/// compressed one, by its name or by the format passed, and is not compressed: nothing is written, and
+/// lastError() is Error::UnsupportedFormat.
 /// @param inputPath Path to compressed file (or Qt resource path :/)
 /// @param outputPath Path for decompressed output. If empty: inputPath without the extension of the format
 ///        (for GZIP .gz or .gzip), or with ".decompressed" appended if it does not end in one
@@ -172,6 +174,7 @@ bool decompressFile(const QString &inputPath, const QString &outputPath = QStrin
                     qint64 maxDecompressedBytes = 0);
 
 /// Decompress file if it's a compressed format, otherwise return original path
+/// The original path is also returned for a file that has the name of a compressed one and is not compressed.
 /// @param filePath Input file (may or may not be compressed)
 /// @param outputPath Output path (if empty, uses strippedPath)
 /// @param removeOriginal Remove compressed file after successful decompression (default: false)
@@ -185,7 +188,8 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath = 
 /// @param format Kind of input, a single-stream format here: see Format (Auto = detect from magic bytes)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
 /// @return Decompressed data. It is empty for a stream that holds no data, and also on failure or if the
-///         size limit is exceeded: lastError() is Error::None for the first
+///         size limit is exceeded: lastError() is Error::None for the first. Data that is not compressed is
+///         not returned as it is: that is a failure, with Error::UnsupportedFormat
 QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
                           qint64 maxDecompressedBytes = 0);
 
@@ -345,6 +349,8 @@ bool extractByPattern(const QString &archivePath, const QStringList &patterns,
 
 /// Decompress from QIODevice to file
 /// Enables streaming decompression from QNetworkReply, QBuffer, etc.
+/// What is read has to be a compressed stream, as for decompressFile(): one that is not compressed is refused
+/// with Error::UnsupportedFormat.
 /// @param device QIODevice to read from (must be open and readable)
 /// @param outputPath Output file path
 /// @param progress Optional progress callback
@@ -358,7 +364,8 @@ bool decompressFromDevice(QIODevice *device, const QString &outputPath,
 /// @param device QIODevice to read from (must be open and readable)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
 /// @return Decompressed data. It is empty for a stream that holds no data, and also on failure or if the
-///         size limit is exceeded: lastError() is Error::None for the first
+///         size limit is exceeded: lastError() is Error::None for the first, and Error::UnsupportedFormat for
+///         a stream that is not compressed
 QByteArray decompressFromDevice(QIODevice *device, qint64 maxDecompressedBytes = 0);
 
 /// Extract archive from QIODevice to directory
@@ -426,6 +433,7 @@ int lastCompressionRatio();
 
 /// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
 /// A compressed file that is truncated or corrupt yields nothing, not the part that could be read.
+/// A file with such a name that is not compressed is read as it is.
 /// @param errorString Receives the reason if the file cannot be read, and is left as it is otherwise: pass an
 ///        empty string to tell a file without content from a failure
 /// @param maxBytes Read at most this many bytes of the (decompressed) content (0 = all of it)
