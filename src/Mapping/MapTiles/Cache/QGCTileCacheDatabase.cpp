@@ -1272,7 +1272,8 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
     const QString migratedPath = _databasePath + QStringLiteral(".import");
     const auto removeMigrated = qScopeGuard([&migratedPath] { removeDatabaseFiles(migratedPath); });
     if (*importVersion < kSchemaVersion) {
-        (void) QFile::remove(migratedPath);
+        // An import that died can have left the write-ahead log of its copy, which SQLite would apply to this one
+        removeDatabaseFiles(migratedPath);
         if (!QFile::copy(path, migratedPath)) {
             result.errorString = "Failed to copy import database";
             return result;

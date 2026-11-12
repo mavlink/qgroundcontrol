@@ -1216,13 +1216,16 @@ void QGCTileCacheDatabaseTest::_testResetFailureFailsInit()
 void QGCTileCacheDatabaseTest::_testImportVersion1_data()
 {
     QTest::addColumn<bool>("replace");
-    QTest::newRow("replace") << true;
-    QTest::newRow("merge") << false;
+    QTest::addColumn<bool>("afterDeadImport");
+    QTest::newRow("replace") << true << false;
+    QTest::newRow("merge") << false << false;
+    QTest::newRow("merge after an import that died") << false << true;
 }
 
 void QGCTileCacheDatabaseTest::_testImportVersion1()
 {
     QFETCH(bool, replace);
+    QFETCH(bool, afterDeadImport);
 
     QTemporaryDir tempDir;
     const QString importPath = tempDir.filePath("version1.db");
@@ -1234,6 +1237,26 @@ void QGCTileCacheDatabaseTest::_testImportVersion1()
     db.setLegacyMapIds(shiftedLegacyMapIds());
     QVERIFY(db.init());
     QVERIFY(db.connectDB());
+
+    if (afterDeadImport) {
+        // A merge that dies with its copy of a file open leaves the write-ahead log of that copy, next to where the
+        // next merge puts its copy. SQLite applies a log to whatever file it finds it next to: here the log has a
+        // tile of another file.
+        const QString otherPath = tempDir.filePath("other.db");
+        QCOMPARE(createVersion1TileCache(otherPath, {}), QString());
+        const QGCSqlHelper::ScopedConnection other(otherPath, /*readOnly=*/false, QStringLiteral("TileCacheTestOther"));
+        QSqlQuery query(other.database());
+        QVERIFY2(query.exec(QStringLiteral("INSERT INTO Tiles(tileID, hash, format, tile, size, type) "
+                                           "VALUES(1, '%1', 'png', X'DD', 1, 1)")
+                                .arg(tileCacheHash(1, 7, 8, 9))),
+                 qPrintable(query.lastError().text()));
+        QVERIFY2(query.exec(QStringLiteral("INSERT INTO SetTiles(setID, tileID) VALUES(1, 1)")),
+                 qPrintable(query.lastError().text()));
+        // Before the connection closes, which removes the log
+        for (const QString& suffix : {QStringLiteral("-wal"), QStringLiteral("-shm")}) {
+            QVERIFY(QFile::copy(otherPath + suffix, path + QStringLiteral(".import") + suffix));
+        }
+    }
 
     const DatabaseResult result =
         replace ? db.importSetsReplace(importPath, nullptr) : db.importSetsMerge(importPath, nullptr);
