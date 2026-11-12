@@ -180,6 +180,7 @@ void QGCMapEngineManager::_createTileSet(const QString& name, const QString& map
     set->setTotalTileSize(tiles.tileSize);
     set->setTotalTileCount(static_cast<quint32>(tiles.tileCount));
     set->setType(mapType);
+    set->setManager(this);
 
     QGCCreateTileSetTask* const task = new QGCCreateTileSetTask(set);
     (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);

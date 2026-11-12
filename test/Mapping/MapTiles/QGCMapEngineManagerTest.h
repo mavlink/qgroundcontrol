@@ -10,6 +10,7 @@ private slots:
     void _testTerrainSet_data();
     void _testTerrainSet();
     void _testTerrainSetServedFromCache();
+    void _testNewSetTellsManagerOfItsSelection();
     void _testMapAttribution_data();
     void _testMapAttribution();
     void _testProviderAndTypeSelectEveryMap();

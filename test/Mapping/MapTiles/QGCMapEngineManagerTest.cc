@@ -4,6 +4,7 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtTest/QSignalSpy>
 
 #include "ElevationMapProvider.h"
 #include "Fact.h"
@@ -256,6 +257,28 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
         QTRY_VERIFY_WITH_TIMEOUT(heightField.hasTile(key), TestTimeout::mediumMs());
     }
     QCOMPARE(sets.networkManager.requestCount, kRequestCount);
+}
+
+// A set tells its manager that it was selected: also a set that the manager created for a download, not only one that
+// it loaded from the cache database
+void QGCMapEngineManagerTest::_testNewSetTellsManagerOfItsSelection()
+{
+    getQGCMapEngine()->ensureInitialized();
+
+    constexpr double kLeftLon = 8.4991;
+    constexpr int kZoom = 12;
+    const QString mapType = QGCMapEngineManager::mapList().constFirst();
+
+    OfflineSetsFixture sets;
+    sets.manager.updateForCurrentView(kLeftLon, kOfflineRegionTopLat, kLeftLon + kOfflineRegionLonSpan,
+                                      kOfflineRegionBottomLat, kZoom, kZoom, mapType);
+    const QString name = QStringLiteral("selection test");
+    sets.manager.startDownload(name, mapType);
+    QTRY_VERIFY_WITH_TIMEOUT(sets.tileSet(name), TestTimeout::mediumMs());
+
+    QSignalSpy selectedCountSpy(&sets.manager, &QGCMapEngineManager::selectedCountChanged);
+    sets.tileSet(name)->setSelected(true);
+    QCOMPARE(selectedCountSpy.count(), 1);
 }
 
 void QGCMapEngineManagerTest::_testMapAttribution_data()
