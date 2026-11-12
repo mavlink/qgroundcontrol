@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import os
 import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -73,6 +75,25 @@ def test_required_version_reads_the_pyproject_floor(tmp_path):
     pyproject.write_text('[tool.uv]\nrequired-version = ">=0.13"\n')
     with pytest.raises(ValueError, match="required-version"):
         install_uv.required_version(pyproject)
+
+
+def test_bootstrap_runs_on_a_host_python_older_than_the_tools_python():
+    # The host's python3 runs this script before uv exists: 3.10 on Ubuntu 22.04, which has no
+    # tomllib. A None entry in sys.modules makes its import fail as it does there.
+    script = Path(install_uv.__file__)
+    ast.parse(script.read_text(encoding="utf-8"), feature_version=(3, 10))
+    probe = (
+        "import runpy, sys; sys.modules['tomllib'] = None; "
+        "print(runpy.run_path(sys.argv[1])['required_version']())"
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", probe, str(script)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == install_uv.required_version()
 
 
 def test_missing_required_version_reports_failure(tmp_path, capsys):
