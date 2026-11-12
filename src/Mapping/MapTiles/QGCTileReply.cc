@@ -221,6 +221,13 @@ void QGCTileReply::_networkReplyFinished()
     reply->deleteLater();
 
     const QVariant httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    // A server answers 404 where it has no tile. Where the user sets the source, a wrong URL is the likelier cause:
+    // that stays an error.
+    const bool notFound = httpStatus.toInt() == static_cast<int>(QGCNetworkHelper::HttpStatusCode::NotFound);
+    if (notFound && _provider->sourceSettings().isEmpty()) {
+        _finish(Error::NoTileError, QStringLiteral("the server has no tile here: http 404"));
+        return;
+    }
     if (reply->error() != QNetworkReply::NoError) {
         _finish(Error::NetworkError,
                 QStringLiteral("network error: %1 (http %2)").arg(reply->errorString()).arg(httpStatus.toInt()));

@@ -346,6 +346,7 @@ void QGCCachedTileSetTest::_testDownload_data()
     QTest::addColumn<double>("longitude");  // a region of its own for every row
     QTest::addColumn<int>("maxZoom");
     QTest::addColumn<QByteArray>("serverBody");
+    QTest::addColumn<int>("httpStatus");
     QTest::addColumn<bool>("stored");
     QTest::addColumn<bool>("failed");
     QTest::addColumn<bool>("lastTileFails");
@@ -354,17 +355,19 @@ void QGCCachedTileSetTest::_testDownload_data()
     const QString mapType = tileSetTestMapType();
 
     QTest::newRow("tiles stored in the set")
-        << mapType << 8.50 << 16 << tileReplyPngBody() << true << false << false << QString();
-    // The two rows below download one tile, for the one warning each.
+        << mapType << 8.50 << 16 << tileReplyPngBody() << 200 << true << false << false << QString();
+    // The three rows below download one tile, for the one warning each.
     // A bad answer must count as an error and must not stall the download.
-    QTest::newRow("server answers without a tile")
-        << mapType << 8.60 << 14 << QByteArray() << false << true << false << QStringLiteral("Error fetching tile");
+    QTest::newRow("server answers without a tile") << mapType << 8.60 << 14 << QByteArray() << 200 << false << true
+                                                   << false << QStringLiteral("Error fetching tile");
     // The set is done, without an error, when its provider has no tile to give
     QTest::newRow("provider has no tile") << QStringLiteral("Bing Hybrid") << 8.70 << 14 << tileReplyBingPlaceholder()
-                                          << false << false << false << QStringLiteral("_savedTileCount=0");
+                                          << 200 << false << false << false << QStringLiteral("_savedTileCount=0");
+    QTest::newRow("server has no tile: http 404") << mapType << 9.30 << 14 << QByteArray() << 404 << false << false
+                                                  << false << QStringLiteral("_savedTileCount=0");
     // The set is not done while a tile is being fetched: that tile can fail. Few enough tiles to be fetched at once.
     QTest::newRow("last tile fails after the others are stored")
-        << mapType << 8.80 << 15 << tileReplyPngBody() << true << false << true
+        << mapType << 8.80 << 15 << tileReplyPngBody() << 200 << true << false << true
         << QStringLiteral("Error fetching tile");
 }
 
@@ -374,6 +377,7 @@ void QGCCachedTileSetTest::_testDownload()
     QFETCH(double, longitude);
     QFETCH(int, maxZoom);
     QFETCH(QByteArray, serverBody);
+    QFETCH(int, httpStatus);
     QFETCH(bool, stored);
     QFETCH(bool, failed);
     QFETCH(bool, lastTileFails);
@@ -391,6 +395,10 @@ void QGCCachedTileSetTest::_testDownload()
 
     TileReplyMockNam nam;
     nam.body = serverBody;
+    nam.httpStatus = httpStatus;
+    if (httpStatus == 404) {
+        nam.error = QNetworkReply::ContentNotFoundError;  // as Qt reports that status
+    }
     nam.holdReplies = lastTileFails;
     set->setNetworkManager(&nam);
     // What a view bound to downloadStatus shows: the text it read when the property last notified

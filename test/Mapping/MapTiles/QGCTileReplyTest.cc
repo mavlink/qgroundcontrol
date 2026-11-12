@@ -118,14 +118,21 @@ void QGCTileReplyTest::_serverFailure_data()
     QTest::addColumn<QGCTileReply::Error>("expectedError");
 
     const QString mapType = UrlFactory::getProviderTypeFromMapId(tileReplyMapId());
-    QTest::newRow("network error") << mapType << (kTileX + 10) << QByteArray() << QNetworkReply::ContentNotFoundError
-                                   << 404 << QGCTileReply::Error::NetworkError;
+    QTest::newRow("network error") << mapType << (kTileX + 10) << QByteArray() << QNetworkReply::TimeoutError << 0
+                                   << QGCTileReply::Error::NetworkError;
     QTest::newRow("http error status") << mapType << (kTileX + 11) << tileReplyPngBody() << QNetworkReply::NoError
                                        << 500 << QGCTileReply::Error::NetworkError;
     QTest::newRow("empty body") << mapType << (kTileX + 12) << QByteArray() << QNetworkReply::NoError << 200
                                 << QGCTileReply::Error::DataError;
     QTest::newRow("Bing placeholder") << QStringLiteral("Bing Hybrid") << (kTileX + 13) << tileReplyBingPlaceholder()
                                       << QNetworkReply::NoError << 200 << QGCTileReply::Error::NoTileError;
+    // A server answers 404, which Qt reports as this error, where it has no tile
+    QTest::newRow("http 404") << mapType << (kTileX + 14) << QByteArray() << QNetworkReply::ContentNotFoundError << 404
+                              << QGCTileReply::Error::NoTileError;
+    // A URL that the user typed wrong is answered the same way: that must not pass for a place without a tile
+    QTest::newRow("http 404 of the Custom URL map")
+        << kTileReplyCustomUrlType << (kTileX + 15) << QByteArray() << QNetworkReply::ContentNotFoundError << 404
+        << QGCTileReply::Error::NetworkError;
 }
 
 void QGCTileReplyTest::_serverFailure()
@@ -138,6 +145,12 @@ void QGCTileReplyTest::_serverFailure()
     QFETCH(QGCTileReply::Error, expectedError);
 
     const int mapId = UrlFactory::getMapIdFromProviderType(providerType);
+
+    // The Custom URL map fetches from the URL that the user set
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    customUrl->setRawValue(kTileReplySourceA);
 
     TileReplyMockNam nam;
     nam.body = body;

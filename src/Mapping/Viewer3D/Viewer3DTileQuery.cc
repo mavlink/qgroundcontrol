@@ -202,6 +202,12 @@ void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 
 void Viewer3DTileQuery::_tileEmpty(Viewer3DTileInfo tileData)
 {
+    if ((tileData.zoomLevel == 0) && (_zoomLevel == 0)) {
+        // No coarser zoom is left to load: the map is done without the tile
+        _tileGiveUp(tileData);
+        return;
+    }
+
     auto* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
     _cleanupReply(reply);
 

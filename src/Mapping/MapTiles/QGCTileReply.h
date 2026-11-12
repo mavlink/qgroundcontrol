@@ -33,7 +33,7 @@ public:
     {
         NoError,
         NetworkError,  ///< The server could not be reached, or it reported an error
-        NoTileError,   ///< The provider has no tile at this position
+        NoTileError,   ///< The provider has no tile at this position: asking again gets none
         DataError,     ///< The server answered with something that is not a tile
         RequestError,  ///< The request names no map provider
     };
