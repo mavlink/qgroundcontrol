@@ -26,8 +26,9 @@ ColumnLayout {
         const devices = root.serialPorts.slice()
         if (root.anyDeviceLabel !== "")
             devices.unshift({ value: "", label: root.anyDeviceLabel })
+        // The mark comes first, as those of the listed ports do: the picker cuts a long label at the end.
         if (root._device !== "" && !root._listed(root._device))
-            devices.push({ value: root._device, label: qsTr("%1 (unavailable)").arg(root._device) })
+            devices.push({ value: root._device, label: qsTr("(unavailable) %1").arg(root._device) })
         if (devices.length === 0)
             devices.push({ value: "", label: qsTr("<none available>") })
         return devices

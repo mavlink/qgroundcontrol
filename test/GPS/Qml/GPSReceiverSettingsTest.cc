@@ -8,6 +8,8 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QColor>
+#include <QtGui/QFont>
+#include <QtGui/QFontMetricsF>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
@@ -125,6 +127,22 @@ struct Panel
     std::unique_ptr<QObject> item;
     std::unique_ptr<QObject> status;
 };
+
+/// Whether @a label, a text item, shows @a mark whole. A text wider than its item is cut on the right: the device
+/// picker elides its button's there, and its popup clips an entry's.
+bool showsWhole(const QQuickItem* label, const QString& mark)
+{
+    const QString text = label->property("text").toString();
+    const qsizetype at = text.indexOf(mark);
+    if (at < 0) {
+        return false;
+    }
+    if (label->implicitWidth() <= label->width()) {
+        return true;
+    }
+    const QFontMetricsF metrics(label->property("font").value<QFont>());
+    return metrics.horizontalAdvance(text.left(at + mark.size()) + QChar(0x2026)) <= label->width();
+}
 
 QStringList siteNames(const RTKSettings* settings)
 {
@@ -906,16 +924,86 @@ void GPSReceiverSettingsTest::_serialSelectionSurvivesChoiceChanges()
     QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other, plugged})));
     QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
     QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, plugged})));
-    QCOMPARE(selection(device), QStringLiteral("2: /test/other (unavailable)"));
+    QCOMPARE(selection(device), QStringLiteral("2: (unavailable) /test/other"));
     // Connect automatically lists USB discovery above the ports.
     panel.settings.autoConnect->setRawValue(true);
-    QCOMPARE(selection(device), QStringLiteral("3: /test/other (unavailable)"));
+    QCOMPARE(selection(device), QStringLiteral("3: (unavailable) /test/other"));
 
     // A receiver may list other rates.
     QVERIFY(panel.item->setProperty("serialBaudRates", QVariant::fromValue(QList<int>{57600, 115200, 230400})));
     QCOMPARE(selection(baud), QStringLiteral("3: 230400"));
     QCOMPARE(settings->serialDevice()->rawValue().toString(), other);
     QCOMPARE(settings->serialBaudRate()->rawValue().toInt(), 230400);
+}
+
+void GPSReceiverSettingsTest::_serialDeviceMarkOnNarrowPanel_data()
+{
+    QTest::addColumn<QString>("mark");
+    // A device another connection holds, one that stays closed where only one can be open at a time, and a saved
+    // device that is not listed.
+    for (const auto* mark : {"(in use)", "(another is in use)", "(unavailable)"}) {
+        QTest::newRow(mark) << QString::fromLatin1(mark);
+    }
+}
+
+void GPSReceiverSettingsTest::_serialDeviceMarkOnNarrowPanel()
+{
+#ifdef QGC_NO_SERIAL_LINK
+    QSKIP("Serial selection requires serial link support");
+#else
+    QFETCH(QString, mark);
+    constexpr int width = 320;
+    TestFixtures::QmlWindowFixture window(width, 800);
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    // A device whose name and path are longer than the panel is wide.
+    const QString device = QStringLiteral("/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver-if00");
+    const QString other = QStringLiteral("/test/other");
+    SerialPortManager::Port port = serialPort(device);
+    port.description = QStringLiteral("u-blox GNSS receiver");
+    TestSerialPorts& serial = panel.receiver.serial;
+    SerialPortManager::ReservationPtr vehicleLink;
+    if (mark == QStringLiteral("(unavailable)")) {
+        serial.plug({serialPort(other)});
+    } else {
+        serial.plug({port, serialPort(other)});
+        const bool singlePort = mark == QStringLiteral("(another is in use)");
+        serial.manager.setSinglePortOnly(singlePort);
+        vehicleLink = serial.manager.reservePort(singlePort ? other : device);
+        QVERIFY(vehicleLink);
+    }
+    GPSReceiver& receiver = panel.receiver.gps;
+    receiver.tick();
+    panel.settings.settings->serialDevice()->setRawValue(device);
+    QVERIFY(panel.item->setProperty("serialPorts", QVariant::fromValue(receiver.serialPortEntries())));
+    auto* item = qobject_cast<QQuickItem*>(panel.item.get());
+    QVERIFY(item);
+    item->setParentItem(window.contentItem());
+    item->setWidth(width);
+    QVERIFY(window.show());
+    auto* picker = panel.find("rtkSerialDevice");
+    QVERIFY(picker);
+    QVERIFY2(picker->property("currentText").toString().contains(mark),
+             qPrintable(picker->property("currentText").toString()));
+
+    // The picker's button shows the selected device, and its popup lists the devices as wide as the button.
+    auto* button = picker->property("contentItem").value<QQuickItem*>();
+    QVERIFY(button);
+    QTRY_VERIFY_WITH_TIMEOUT(button->width() > 0 && picker->width() <= width, TestTimeout::mediumMs());
+    QVERIFY(button->implicitWidth() > button->width());
+    QVERIFY2(showsWhole(button, mark), qPrintable(button->property("text").toString()));
+    auto* popup = picker->property("popup").value<QObject*>();
+    QVERIFY(popup);
+    QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+    QTRY_VERIFY_WITH_TIMEOUT(popup->property("opened").toBool(), TestTimeout::mediumMs());
+    const auto entries =
+        TestFixtures::findItems(popup->property("contentItem").value<QQuickItem*>(), [&mark](QQuickItem* entry) {
+            return entry->inherits("QQuickText") && entry->property("text").toString().contains(mark);
+        });
+    QCOMPARE(entries.size(), 1);
+    QVERIFY(entries.first()->implicitWidth() > entries.first()->width());
+    QVERIFY2(showsWhole(entries.first(), mark), qPrintable(entries.first()->property("text").toString()));
+#endif
 }
 
 void GPSReceiverSettingsTest::_horizontalAccuracyLabel()

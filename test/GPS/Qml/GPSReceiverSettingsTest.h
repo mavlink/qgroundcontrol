@@ -27,6 +27,8 @@ private slots:
     void _warningWidth();
     void _serialSelectionTracksFacts();
     void _serialSelectionSurvivesChoiceChanges();
+    void _serialDeviceMarkOnNarrowPanel_data();
+    void _serialDeviceMarkOnNarrowPanel();
     void _horizontalAccuracyLabel();
     void _settingsPageListsGroups_data();
     void _settingsPageListsGroups();

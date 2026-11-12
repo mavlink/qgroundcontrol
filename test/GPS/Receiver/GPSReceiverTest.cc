@@ -1447,7 +1447,7 @@ void GPSReceiverTest::_serialPortEntries()
         QStringLiteral("/dev/ttyS0"),
     };
     QStringList linkPortMarked = unmarked;
-    linkPortMarked[1] = QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)");
+    linkPortMarked[1] = QStringLiteral("(in use) CubeOrange+ – /dev/ttyACM1");
     QCOMPARE(entries(&GPSSerialPortEntry::label), linkPortMarked);
     QCOMPARE(entries(&GPSSerialPortEntry::value).first(), QStringLiteral("/dev/ttyACM0"));
 
@@ -1470,11 +1470,11 @@ void GPSReceiverTest::_serialPortEntries()
     changes.clear();
     receiver.tick();
     const QStringList everyPortMarked{
-        QStringLiteral("u-blox GNSS receiver – /dev/ttyACM0 (another is in use)"),
-        QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)"),
-        QStringLiteral("STLINK-V3 – /dev/ttyACM2 (another is in use)"),
-        QStringLiteral("SiK Radio – /dev/ttyUSB0 (another is in use)"),
-        QStringLiteral("/dev/ttyS0 (another is in use)"),
+        QStringLiteral("(another is in use) u-blox GNSS receiver – /dev/ttyACM0"),
+        QStringLiteral("(in use) CubeOrange+ – /dev/ttyACM1"),
+        QStringLiteral("(another is in use) STLINK-V3 – /dev/ttyACM2"),
+        QStringLiteral("(another is in use) SiK Radio – /dev/ttyUSB0"),
+        QStringLiteral("(another is in use) /dev/ttyS0"),
     };
     QCOMPARE(entries(&GPSSerialPortEntry::label), everyPortMarked);
     QCOMPARE(changes.size(), 1);

@@ -54,9 +54,9 @@ public:
     virtual QList<int> baudRates() const { return {}; }
 
     /// The serial device picker's entries, of the devices the last scan listed: "value" is the system location,
-    /// "label" the device's description and path, marked when another QGroundControl connection, such as a vehicle
-    /// link, holds the port. Where only one serial device can be open at a time, the other ports are marked too
-    /// while such a connection holds one, since none of them can be opened until then.
+    /// "label" the device's description and path, marked in front when another QGroundControl connection, such as a
+    /// vehicle link, holds the port. Where only one serial device can be open at a time, the other ports are marked
+    /// too while such a connection holds one, since none of them can be opened until then.
     QList<GPSSerialPortEntry> entries() const { return _entries; }
 
     /// Scans the devices when a scan is due. A scan notifies, as scanned() describes.
