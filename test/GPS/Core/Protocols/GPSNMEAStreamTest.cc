@@ -649,6 +649,63 @@ void GPSNMEAStreamTest::_epochLongerThanTwoSeconds()
     }
 }
 
+void GPSNMEAStreamTest::_fixLossOncePerEpoch_data()
+{
+    QTest::addColumn<QByteArrayList>("epoch");
+    QTest::addColumn<QByteArray>("utc");
+    QTest::addColumn<int>("satellites");
+    // One epoch without a fix of each receiver as gpsd's regression logs have it, without its GSV sentences.
+    QTest::newRow("sirf-trig") << QByteArrayList{"GNGGA,074150.799,,,,,0,00,,,M,0.0,M,,0000,",
+                                                 "GNGNS,074150.799,,,,,NNNN,00,,,0.0,,0000",
+                                                 "GPGSA,A,1,,,,,,,,,,,,,,,,", "BDGSA,A,1,,,,,,,,,,,,,,,,",
+                                                 "GNRMC,074150.799,V,,,,,,,250215,,,N"}
+                               << QByteArray("074150.799") << 0;
+    // The GGA counts the three satellites the receiver tracks. It follows the RMC, which declared the loss without a
+    // count, as the GSA after it lists them without a fix.
+    QTest::newRow("ublox-lea-4h") << QByteArrayList{"GPRMC,030851.00,V,,,,,,,100806,,,N", "GPVTG,,,,,,,,,N",
+                                                    "GPGGA,030851.00,,,,,0,03,9.93,,,,,,",
+                                                    "GPGSA,A,1,28,04,02,,,,,,,,,,9.98,9.93,1.00",
+                                                    "GPGLL,,,,,030851.00,V,N"}
+                                  << QByteArray("030851.00") << 0;
+    // The GGA is the first to declare the loss, so the loss has its count.
+    const QByteArrayList countFirst{"GPGGA,081434.590,5212.978993,N,00653.097906,E,0,3,,102.907,M,47.093,M,,",
+                                    "GPRMC,081434.590,V,5212.978993,N,00653.097906,E,0.052,0.00,230808,,,N"};
+    QTest::newRow("mtk-3301") << countFirst << QByteArray("081434.590") << 3;
+    // Only the GNS has the time: the GGA and the RMC without one belong to its epoch.
+    QTest::newRow("quectel-eg25-g") << QByteArrayList{"GNGNS,191434.96,,,,,NNN,,,,,,", "GPVTG,,T,,M,,N,,K,N",
+                                                      "GPGSA,A,1,,,,,,,,,,,,,,,,",     "GNGSA,A,1,,,,,,,,,,,,,,,,",
+                                                      "GPGGA,,,,,,0,,,,,,,,",          "GPRMC,,V,,,,,,,,,,N"}
+                                    << QByteArray("191434.96") << 0;
+    // No sentence has a time: the first one to come again begins the next epoch.
+    QTest::newRow("bt-451") << QByteArrayList{"GPRMC,,V,,,,,,,,,,N", "GPVTG,,,,,,,,,N", "GPGGA,,,,,,0,00,99.99,,,,,,",
+                                              "GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99", "GPGLL,,,,,,V,N"}
+                            << QByteArray() << 0;
+}
+
+void GPSNMEAStreamTest::_fixLossOncePerEpoch()
+{
+    QFETCH(QByteArrayList, epoch);
+    QFETCH(QByteArray, utc);
+    QFETCH(int, satellites);
+    NMEAReceiver receiver;
+    for (int report = 1; report <= 3; ++report) {
+        // The receiver's time, a second later for each report.
+        QByteArray time = utc;
+        if (!utc.isEmpty()) {
+            time.replace(4, 2, QByteArray::number(utc.mid(4, 2).toInt() + report));
+        }
+        receiver.now += EPOCH_INTERVAL_US;
+        for (QByteArray sentence : epoch) {
+            receiver.now += SENTENCE_INTERVAL_US;
+            receiver.feed(utc.isEmpty() ? sentence : sentence.replace(utc, time));
+        }
+        // An epoch without a fix is one report, however many of its sentences declare the loss.
+        QCOMPARE(receiver.positions, report);
+        QCOMPARE(receiver.published->navigation.fixType, GPSFixQuality::NoFix);
+        QCOMPARE(receiver.published->navigation.satellitesUsed, std::optional<uint8_t>(satellites));
+    }
+}
+
 void GPSNMEAStreamTest::_fixLossWhileWaiting()
 {
     NMEAReceiver receiver;

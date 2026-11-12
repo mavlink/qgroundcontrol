@@ -30,6 +30,8 @@ private slots:
     void _awaitedSentenceAfterTwoSeconds();
     void _epochLongerThanTwoSeconds_data();
     void _epochLongerThanTwoSeconds();
+    void _fixLossOncePerEpoch_data();
+    void _fixLossOncePerEpoch();
     void _fixLossWhileWaiting();
     void _fixLossKeepsSentenceOrder_data();
     void _fixLossKeepsSentenceOrder();

@@ -49,6 +49,9 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::ingest(const Sentence&
         if (!navigation->valid) {
             _navigationValid = false;
             _invalidThroughSequence = sequence;
+            if (_repeatsFixLoss(sentence, navigation->utcMilliseconds)) {
+                return std::nullopt;
+            }
             NavigationEpoch loss;
             loss.timeMs = navigation->utcMilliseconds;
             loss.positionReceivedAtUs = receivedAtUs;
@@ -133,6 +136,38 @@ std::optional<NavigationEpoch> NavigationEpochAssembler::_end(StoredEpoch& store
     }
     stored.published = true;
     return overdue;
+}
+
+bool NavigationEpochAssembler::_repeatsFixLoss(const Sentence& sentence, std::optional<int> timeMs)
+{
+    const auto type = sentence.type();
+    std::optional<Position> position;
+    if (type == "GGA") {
+        position = Position::GGA;
+    } else if (type == "GNS") {
+        position = Position::GNS;
+    } else if (type == "RMC") {
+        position = Position::RMC;
+    } else if (type == "GLL") {
+        position = Position::GLL;
+    }
+    if (position) {
+        auto& held = _current.positions[static_cast<size_t>(*position)];
+        if (!timeMs && _current.active && !held) {
+            // Without a time of its own the sentence belongs to the current epoch, which does not have it yet.
+            Talker sender{};
+            sentence.talker().copy(sender.data(), sender.size());
+            held = sender;
+        } else {
+            // The loss hides an epoch that was still waiting.
+            std::optional<NavigationEpoch> hidden;
+            (void) _positionEpoch(timeMs, *position, sentence.talker(), hidden);
+        }
+    } else if (!_current.active) {
+        // A GSA before any epoch.
+        return false;
+    }
+    return std::exchange(_current.fixLost, true);
 }
 
 bool NavigationEpochAssembler::_hiddenByFixLoss(const StoredEpoch& stored) const

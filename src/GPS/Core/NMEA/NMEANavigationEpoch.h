@@ -87,6 +87,13 @@ struct NavigationUpdate
 /// come. An epoch that still waits when the next one begins is published then as it stands, unless the same sentence
 /// publishes the next one.
 ///
+/// A fix loss is published as soon as a sentence declares it, and once for an epoch: a GGA of quality 0, a GNS that
+/// uses no constellation, an RMC or GLL with a void status and a GSA without a fix may all declare it, and those
+/// after the first repeat it. The GSA has no time, and a receiver without a fix may leave the time of the others
+/// empty: such a sentence belongs to the current epoch. The loss has the satellite count of the GGA or GNS that
+/// declares it, and none when another sentence does: the count of a GGA that follows is that of the satellites the
+/// receiver tracks, which the epoch's GSA lists without a fix.
+///
 /// An epoch has one GGA, one GNS, one RMC, one GLL and one GST. A GGA, GNS, RMC or GLL that comes again with the same
 /// time from the same talker begins another epoch, which takes nothing from the one before it: the next report of a
 /// receiver that prints whole seconds at a faster rate, or whose time stands still. From another talker it repeats
@@ -102,7 +109,8 @@ class NavigationEpochAssembler
 {
 public:
     void reset();
-    /// @return a fix loss as soon as a sentence declares it, or the epoch this sentence completed or ended.
+    /// @return a fix loss when the first sentence of an epoch declares it, or the epoch this sentence completed or
+    /// ended.
     std::optional<NavigationUpdate> ingest(const Sentence& sentence, uint64_t receivedAtUs);
 
 private:
@@ -144,6 +152,8 @@ private:
         /// The additions received after the GGA that the epochs to come wait for.
         Additions followers;
         bool published = false;
+        /// A sentence of the epoch declared a fix loss, which was published.
+        bool fixLost = false;
     };
 
     static constexpr int NO_TIME_KEY = -1;
@@ -156,6 +166,9 @@ private:
     StoredEpoch* _positionEpoch(std::optional<int> timeMs, Position position, std::string_view talker,
                                 std::optional<NavigationEpoch>& overdue);
     std::optional<NavigationEpoch> _end(StoredEpoch& stored);
+    /// Places a @a sentence that declares a fix loss in its epoch, of @a timeMs when it has a time. @return whether
+    /// the epoch's loss was published before.
+    bool _repeatsFixLoss(const Sentence& sentence, std::optional<int> timeMs);
     bool _hiddenByFixLoss(const StoredEpoch& stored) const;
     void _add(StoredEpoch& stored, Addition addition, uint64_t receivedAtUs) const;
     bool _complete(const StoredEpoch& stored) const;
