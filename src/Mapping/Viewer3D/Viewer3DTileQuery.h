@@ -1,6 +1,9 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPoint>
 #include <QtCore/QSize>
@@ -12,8 +15,9 @@
 #include "Viewer3DTileInfo.h"
 #include "Viewer3DTileStatistics.h"
 
-class Viewer3DTileReply;
+class QGCTileReply;
 class QNetworkAccessManager;
+class QTimer;
 
 class Viewer3DTileQuery : public QObject
 {
@@ -41,10 +45,13 @@ private:
     void _loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileMaxIndex);
     TileStatistics_t _findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate& coordinateMin,
                                           const QGeoCoordinate& coordinateMax);
+    void _requestTile(const Viewer3DTileInfo& tile);
+    void _abortRequests();
+    void _tileReplyFinished(QGCTileReply* reply);
+    void _retryUnansweredTiles();
     void _tileDone(Viewer3DTileInfo tileData);
     void _tileGiveUp(Viewer3DTileInfo tileData);
     void _tileEmpty(Viewer3DTileInfo tileData);
-    void _cleanupReply(Viewer3DTileReply* reply);
     static QString _tileKey(int mapId, int x, int y, int zoomLevel);
 
     struct MapTileContainer_t
@@ -68,7 +75,17 @@ private:
         void clear();
     };
 
+    /// The tiles of a load that are not answered after this time are asked for again, kMaxRetries times: they are
+    /// requested all at once, so one can wait this long for its turn at the server. Shorter than the transfer
+    /// timeout of a request (QGCTileReply, 10 s), which would end such a request with an error before it is asked
+    /// again.
+    static constexpr std::chrono::seconds kAnswerTimeout{9};
+    static constexpr int kMaxRetries = 6;
+
     QNetworkAccessManager* _networkManager = nullptr;  ///< null: the network manager of the map engine
+    QHash<QGCTileReply*, Viewer3DTileInfo> _requests;  ///< the tiles of the load that are not answered yet
+    QTimer* _answerTimer = nullptr;
+    int _retryCount = 0;
     MapTileContainer_t _mapToBeLoaded;
     QGeoCoordinate _textureCoordinateMin;
     QGeoCoordinate _textureCoordinateMax;

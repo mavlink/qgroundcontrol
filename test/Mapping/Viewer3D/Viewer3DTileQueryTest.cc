@@ -1,6 +1,10 @@
 #include "Viewer3DTileQueryTest.h"
 
+#include <utility>
+
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
@@ -9,6 +13,22 @@
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 #include "Viewer3DTileQuery.h"
+
+namespace {
+
+const QString kTileQueryMapType = QStringLiteral("Street Map");
+
+/// Under unit tests UnitTestTileGenerator serves a tile that the cache lacks, unless a miss is forced. More misses
+/// than a test has cache lookups: every one of them misses, also when a lookup of an earlier test is still queued.
+constexpr int kTileQueryEveryLookupMisses = 10000;
+
+/// A region within one tile at every zoom, and in a tile of its own at the finest zoom for every \a index
+QGeoCoordinate tileQueryPosition(int index)
+{
+    return QGeoCoordinate(47.41 + (index * 0.01), 8.5456);
+}
+
+}  // namespace
 
 void Viewer3DTileQueryTest::initTestCase()
 {
@@ -117,6 +137,91 @@ void Viewer3DTileQueryTest::_testCoarserZoomWhereServerHasNoTile()
     }
     QCOMPARE(zoomLevels, expectedZoomLevels);
     QCOMPARE(nam.requestCount, tileAtNextZoom ? 1 : static_cast<int>(expectedZoomLevels.count()));
+}
+
+void Viewer3DTileQueryTest::_testLoadOutcome_data()
+{
+    QTest::addColumn<int>("positionIndex");  // a tile of its own for every row
+    QTest::addColumn<bool>("cached");
+    QTest::addColumn<QByteArray>("serverBody");
+    QTest::addColumn<bool>("tileInTexture");
+
+    QTest::newRow("cached tile") << 0 << true << QByteArray() << true;
+    QTest::newRow("server tile") << 1 << false << tileReplyPngBody() << true;
+    // The load ends without a tile that cannot be fetched: it must not wait for the tile for ever
+    QTest::newRow("empty server answer") << 2 << false << QByteArray() << false;
+}
+
+void Viewer3DTileQueryTest::_testLoadOutcome()
+{
+    QFETCH(int, positionIndex);
+    QFETCH(bool, cached);
+    QFETCH(QByteArray, serverBody);
+    QFETCH(bool, tileInTexture);
+
+    TileReplyMockNam nam;
+    nam.body = serverBody;
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(cached ? 0 : kTileQueryEveryLookupMisses);
+
+    if (!tileInTexture) {
+        expectLogMessage("Viewer3d.Viewer3DTileQuery", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Request error for tile")));
+    }
+
+    Viewer3DTileQuery query;
+    query._networkManager = &nam;
+    QSignalSpy completedSpy(&query, &Viewer3DTileQuery::loadingMapCompleted);
+
+    const QGeoCoordinate position = tileQueryPosition(positionIndex);
+    query.adaptiveMapTilesLoader(UrlFactory::getMapIdFromProviderType(kTileQueryMapType), position, position);
+    // No tile is answered from within the call
+    const QByteArray textureWithoutTile = query.mapData();
+    QVERIFY(!textureWithoutTile.isEmpty());
+
+    QVERIFY_SIGNAL_COUNT_WAIT(completedSpy, 1, TestTimeout::mediumMs());
+    if (!tileInTexture) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(query.mapData() != textureWithoutTile, tileInTexture);
+    QCOMPARE(nam.requestCount, cached ? 0 : 1);
+}
+
+// The tiles of a load are requested all at once, so one can wait for its turn at the server for longer than a request
+// may take: it is asked for again, and the load ends without it only when the retries are used up
+void Viewer3DTileQueryTest::_testUnansweredTileAskedAgainThenGivenUp()
+{
+    TileReplyMockNam nam;
+    nam.holdReplies = true;
+
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(kTileQueryEveryLookupMisses);
+
+    Viewer3DTileQuery query;
+    query._networkManager = &nam;
+    QSignalSpy completedSpy(&query, &Viewer3DTileQuery::loadingMapCompleted);
+
+    const QGeoCoordinate position = tileQueryPosition(3);
+    query.adaptiveMapTilesLoader(UrlFactory::getMapIdFromProviderType(kTileQueryMapType), position, position);
+
+    // The test stands in for the timer that tells when the tile is not answered
+    for (int request = 1; request <= Viewer3DTileQuery::kMaxRetries; request++) {
+        query._answerTimer->stop();
+        QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, request, TestTimeout::mediumMs());
+        query._retryUnansweredTiles();
+    }
+    query._answerTimer->stop();
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, Viewer3DTileQuery::kMaxRetries + 1, TestTimeout::mediumMs());
+    QVERIFY(completedSpy.isEmpty());
+
+    expectLogMessage("Viewer3d.Viewer3DTileQuery", QtWarningMsg, QRegularExpression(QStringLiteral("timed out")));
+    query._retryUnansweredTiles();
+    verifyExpectedLogMessage();
+    QCOMPARE(completedSpy.count(), 1);
+    QCOMPARE(nam.requestCount, Viewer3DTileQuery::kMaxRetries + 1);
+
+    // A request that is asked again, or given up, is not left open
+    for (const QPointer<TileReplyCannedReply>& networkReply : std::as_const(nam.replies)) {
+        QTRY_VERIFY_WITH_TIMEOUT(networkReply.isNull(), TestTimeout::mediumMs());
+    }
 }
 
 UT_REGISTER_TEST(Viewer3DTileQueryTest, TestLabel::Unit)

@@ -15,4 +15,7 @@ private slots:
     void _testTileCoordinateRoundTrip();
     void _testCoarserZoomWhereServerHasNoTile_data();
     void _testCoarserZoomWhereServerHasNoTile();
+    void _testLoadOutcome_data();
+    void _testLoadOutcome();
+    void _testUnansweredTileAskedAgainThenGivenUp();
 };
