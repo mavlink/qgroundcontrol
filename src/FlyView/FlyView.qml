@@ -48,8 +48,11 @@ Item {
     property var    _layerOccluders:        widgetLayer.occluders
     property var    _mapOccluders:          _layerOccluders.all.concat(customOverlay.customOccluders).map(r => Qt.rect(r.x + widgetLayer.x, r.y + widgetLayer.y, r.width, r.height))
     // Margins which keep what the map shows in its bottom left corner clear of the tool strip, and of the PiP window and the virtual joystick
-    property real   _mapCornerLeftMargin:   widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
-    property real   _mapCornerBottomMargin: mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+    // of the main window. A map that is popped out to a window of its own has that corner free.
+    property real   _mapCornerLeftMargin:   _mainWindowIsMap ? widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
+                                                             : _margins
+    property real   _mapCornerBottomMargin: _mainWindowIsMap ? mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+                                                             : _margins
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets

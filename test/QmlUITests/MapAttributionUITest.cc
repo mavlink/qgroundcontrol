@@ -3,6 +3,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
+#include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
 #include "Fact.h"
@@ -82,6 +83,32 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
     QTRY_VERIFY_WITH_TIMEOUT(!_sceneRect(credit).intersects(pipRect()), TestTimeout::shortMs());
     QVERIFY(!_sceneRect(credit).intersects(_sceneRect(toolStrip)));
     QVERIFY(_sceneRect(map).contains(_sceneRect(credit)));
+
+    // Swapped into the PiP window, the map is too small for a credit
+    const QString pipName = QStringLiteral("flyViewPipView");
+    QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+    QTRY_VERIFY_WITH_TIMEOUT(!credit->isVisible(), TestTimeout::shortMs());
+
+    // Popped out into a window of its own, the map has the corner to itself: the credit keeps none of the room it
+    // leaves for the tool strip and the PiP window of the main window
+    QObject* const pipState = map->property("pipState").value<QObject*>();
+    QVERIFY(pipState);
+    QVERIFY(pipState->setProperty("state", pipState->property("windowState")));
+    QTRY_VERIFY_WITH_TIMEOUT(credit->isVisible(), TestTimeout::shortMs());
+    const auto creditInMap = [credit, map] {
+        return credit->mapRectToItem(map, QRectF(0, 0, credit->width(), credit->height()));
+    };
+    QTRY_COMPARE_LT_WITH_TIMEOUT(creditInMap().left(), toolStrip->width(), TestTimeout::shortMs());
+    QTRY_COMPARE_LT_WITH_TIMEOUT(map->height() - creditInMap().bottom(), 2 * credit->height(), TestTimeout::shortMs());
+
+    // Closing that window puts the map back into the PiP window, and a click there back into the main window
+    QQuickWindow* const mapWindow = map->window();
+    QVERIFY(mapWindow && (mapWindow != _window));
+    mapWindow->close();
+    QTRY_COMPARE_WITH_TIMEOUT(pipState->property("state"), pipState->property("pipState"), TestTimeout::shortMs());
+    QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+    QTRY_COMPARE_WITH_TIMEOUT(pipState->property("state"), pipState->property("fullState"), TestTimeout::shortMs());
+    QTRY_VERIFY_WITH_TIMEOUT(credit->isVisible(), TestTimeout::shortMs());
 
     // The credit follows the map that the user chooses
     mapProviderFact->setRawValue(QStringLiteral("Mapbox"));
