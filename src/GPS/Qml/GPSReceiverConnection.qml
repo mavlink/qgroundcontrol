@@ -77,7 +77,11 @@ GPSReceiverSettingsGroup {
         fact: root.settings.tcpPort
         enabled: root._editable
         shown: root._tcp
-        note: qsTr("Connect to a receiver's TCP port or a serial-to-TCP bridge. A bridge must already run the receiver link at 115200 baud; QGroundControl cannot change a bridge's rate.")
+        // The drivers configure a receiver at 115200 baud and cannot set a bridge's rate. A receiver that is only
+        // listened to is taken at its own.
+        note: root.configuredBase
+              ? qsTr("Connect to a receiver's TCP port or a serial-to-TCP bridge. A bridge must already run the receiver link at 115200 baud; QGroundControl cannot change a bridge's rate.")
+              : qsTr("Connect to a receiver's TCP port, or to a serial-to-TCP bridge that already runs the receiver link at the receiver's baud rate.")
     }
 
     GPSFactTextField {
@@ -113,6 +117,7 @@ GPSReceiverSettingsGroup {
         // Asked for only once a Bluetooth connection is selected, as the receiver creates it then.
         discovery: root._bluetooth ? root.receiver.bluetoothDiscovery : null
         editable: root._editable
+        configured: root.configuredBase
     }
 
     QGCNoteLabel {

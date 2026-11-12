@@ -92,7 +92,7 @@ QGCGroupBox {
         discovery: root._inUse && root._bluetooth ? root.receiver.bluetoothDiscovery : null
         editable: root._editable
         // Nothing is sent to this receiver, so no rate is asked of an adapter but the receiver's own.
-        connectionNote: qsTr("The receiver connects over the Bluetooth serial port profile. A Bluetooth serial adapter must already run the receiver link at the receiver's baud rate.")
+        configured: false
     }
 
     QGCNoteLabel {

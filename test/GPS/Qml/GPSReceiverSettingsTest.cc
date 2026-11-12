@@ -922,6 +922,13 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     QVERIFY(host->isVisible() && port->isVisible());
     QVERIFY(!device->isVisible());
     QVERIFY(!tcpOnly->isVisible());
+    // A bridge in front of a receiver that is configured has to run at the rate the drivers use. One in front of a
+    // receiver that is only listened to runs at that receiver's rate, whatever it is.
+    const auto bridgeNote = [port] { return port->property("note").toString(); };
+    QVERIFY2(bridgeNote().contains(QStringLiteral("115200 baud")), qPrintable(bridgeNote()));
+    settings->receiverRole()->setRawValue(RTKSettings::Passive);
+    QVERIFY2(bridgeNote().contains(QStringLiteral("at the receiver's baud rate")), qPrintable(bridgeNote()));
+    settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
     settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->property("visible").toBool());
     // Which settings withdraw the permission is GPSReceiverTest's; the checkbox follows the receiver.
@@ -1007,7 +1014,12 @@ void GPSReceiverSettingsTest::_bluetoothDevicePicker()
     QCOMPARE(entries(), (QStringList{QStringLiteral("Base – 00:11:22:33:44:01"), QStringLiteral("00:11:22:33:44:03"),
                                      QStringLiteral("Rover – 00:11:22:33:44:02")}));
     QCOMPARE(device->property("currentText").toString(), QStringLiteral("Base – 00:11:22:33:44:01"));
-    QVERIFY(text(note).contains(QStringLiteral("115200")));
+    // An adapter in front of this receiver, which is only listened to, runs at the receiver's rate. In front of a
+    // receiver that is configured it has to run at the rate the drivers use.
+    QVERIFY2(text(note).contains(QStringLiteral("at the receiver's baud rate")), qPrintable(text(note)));
+    settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
+    QVERIFY2(text(note).contains(QStringLiteral("115200 baud")), qPrintable(text(note)));
+    settings->receiverRole()->setRawValue(RTKSettings::Passive);
     QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
     QCOMPARE(bluetooth.discovery->scans, 2);
     QCOMPARE(entries(), QStringList{QStringLiteral("Base – 00:11:22:33:44:01")});
