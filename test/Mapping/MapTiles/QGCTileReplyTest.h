@@ -17,4 +17,6 @@ private slots:
     void _networkManagerDestroyedFirst();
     void _tileOfOtherSourceNotServed();
     void _sourceChangedDuringRequest();
+    void _requestIdentity_data();
+    void _requestIdentity();
 };

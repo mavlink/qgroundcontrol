@@ -111,20 +111,25 @@ private:
     const QString _mapUrl = QStringLiteral("https://api.tiles.openaip.net/api/data/openaip/%1/%2/%3.png");
 };
 
+/// The tile usage policy of the OpenStreetMap servers (https://operations.osmfoundation.org/policies/tiles/) asks for
+/// HTTPS, for the name of the application as the user agent and, of an application, for no Referer. The servers
+/// answer other requests with a picture of a refusal.
 class OpenStreetMapProvider : public MapProvider
 {
 public:
     OpenStreetMapProvider()
-        : MapProvider(QStringLiteral("Street Map"), QStringLiteral("https://www.openstreetmap.org"),
-                      QStringLiteral("png"), QGC_AVERAGE_TILE_SIZE, MapProvider::StreetMap)
+        : MapProvider(QStringLiteral("Street Map"), QString(), QStringLiteral("png"), QGC_AVERAGE_TILE_SIZE,
+                      MapProvider::StreetMap)
     {}
+
+    bool requiresApplicationUserAgent() const final { return true; }
 
     QString attribution() const final { return QStringLiteral("© OpenStreetMap contributors"); }
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapUrl = QStringLiteral("http://tile.openstreetmap.org/%1/%2/%3.png");
+    const QString _mapUrl = QStringLiteral("https://tile.openstreetmap.org/%1/%2/%3.png");
 };
 
 class StatkartMapProvider : public MapProvider

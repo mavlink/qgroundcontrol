@@ -7,6 +7,7 @@
 #include "AppSettings.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCNetworkHelper.h"
 #include "QGCTileReply.h"
 #include "SettingsManager.h"
 #include "TileReplyNetworkMock.h"
@@ -327,6 +328,45 @@ void QGCTileReplyTest::_sourceChangedDuringRequest()
     QVERIFY(cached.isCached());
     QCOMPARE(cached.data(), nam.body);
     QCOMPARE(nam.requestCount, 1);
+}
+
+void QGCTileReplyTest::_requestIdentity_data()
+{
+    QTest::addColumn<QString>("providerType");
+    QTest::addColumn<int>("tileX");  // a tile of its own for every row
+    QTest::addColumn<bool>("namesApplication");
+
+    // OpenStreetMap answers with a picture of a refusal when a request poses as a browser's or as one of its own
+    // web site: its tile usage policy asks for the application's name, and for HTTPS
+    QTest::newRow("OpenStreetMap") << QStringLiteral("Street Map") << (kTileX + 30) << true;
+    QTest::newRow("Bing") << QStringLiteral("Bing Road") << (kTileX + 31) << false;
+}
+
+void QGCTileReplyTest::_requestIdentity()
+{
+    QFETCH(QString, providerType);
+    QFETCH(int, tileX);
+    QFETCH(bool, namesApplication);
+
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
+
+    UnitTestTileGenerator::setForcedMissCount(1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    QGCTileReply reply(&nam, UrlFactory::getMapIdFromProviderType(providerType), tileX, kTileY, kTileZoom);
+    QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);
+    QVERIFY(reply.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(nam.replies.count(), 1);
+
+    const QNetworkRequest request = nam.replies.constFirst()->request();
+    const QString userAgent = request.header(QNetworkRequest::UserAgentHeader).toString();
+    QCOMPARE(userAgent == QGCNetworkHelper::defaultUserAgent(), namesApplication);
+    QCOMPARE(request.hasRawHeader("Referer"), !namesApplication);
+    if (namesApplication) {
+        QCOMPARE(request.url().scheme(), QStringLiteral("https"));
+    }
 }
 
 UT_REGISTER_TEST(QGCTileReplyTest, TestLabel::Unit)

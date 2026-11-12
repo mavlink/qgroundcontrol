@@ -52,7 +52,12 @@ public:
     /// not in that table.
     int getMapId() const { return _mapId; }
 
+    /// Sent as the Referer of a tile request, unless it is empty
     const QString& getReferrer() const { return _referrer; }
+
+    /// True for a provider whose terms ask a request to name the application that sends it: its tile requests carry
+    /// the user agent of the application, not that of a browser
+    virtual bool requiresApplicationUserAgent() const { return false; }
 
     virtual QByteArray getToken() const { return QByteArray(); }
 

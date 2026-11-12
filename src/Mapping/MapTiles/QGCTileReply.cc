@@ -48,7 +48,9 @@ QNetworkRequest tileRequest(const MapProvider& provider, int x, int y, int zoom)
 
     // Headers
     request.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("*/*"));
-    request.setHeader(QNetworkRequest::UserAgentHeader, kUserAgent);
+    request.setHeader(QNetworkRequest::UserAgentHeader, provider.requiresApplicationUserAgent()
+                                                            ? QGCNetworkHelper::defaultUserAgent()
+                                                            : QString::fromLatin1(kUserAgent));
     const QByteArray referrer = provider.getReferrer().toUtf8();
     if (!referrer.isEmpty()) {
         request.setRawHeader(QByteArrayLiteral("Referer"), referrer);
