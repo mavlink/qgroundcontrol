@@ -46,12 +46,17 @@ void logConnectionError(GPSConnectionError error, const QString& detail)
     }
 }
 
+GPSReceiverSerialPorts* createSerialSide(const GPSReceiver::Dependencies& dependencies, QObject* parent)
+{
+    GPSReceiverSerialPorts* const serial = dependencies.serial ? dependencies.serial(parent) : nullptr;
+    return serial ? serial : GPSReceiverSerialPorts::create(nullptr, parent);
+}
+
 }  // namespace
 
 GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dependencies& dependencies)
     : QObject(parent)
-    , _serial(dependencies.serialLinks ? GPSReceiverSerialPorts::create(dependencies.serialPorts, this)
-                                       : new GPSReceiverSerialPorts(this))
+    , _serial(createSerialSide(dependencies, this))
     , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration, _serial->supported()))
     , _correctionManager(dependencies.corrections)
     , _positionManager(dependencies.positions)

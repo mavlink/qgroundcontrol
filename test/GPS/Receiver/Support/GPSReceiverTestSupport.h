@@ -61,6 +61,13 @@ inline bool connectOverTcp(GPSReceiver& receiver, GPSReceiver::Configuration con
     return receiver.connectReceiver();
 }
 
+/// The serial side of a build without serial links, for GPSReceiver::Dependencies::serial: tests run that build's
+/// behaviour with it on any build.
+inline GPSReceiverSerialPorts* withoutSerialLinks(QObject* parent)
+{
+    return new GPSReceiverSerialPorts(parent);
+}
+
 /// Real workers whose transports come from @a transportFactory instead of the connection's address.
 inline GPSReceiver::WorkerFactory workerFactory(GPSReceiverWorker::TransportFactory transportFactory)
 {
@@ -150,6 +157,12 @@ struct TestSerialPorts
     {
         listed = std::move(ports);
         manager.rescan();
+    }
+
+    /// A receiver's serial side over these devices, for GPSReceiver::Dependencies::serial.
+    auto side()
+    {
+        return [this](QObject* parent) { return GPSReceiverSerialPorts::create(&manager, parent); };
     }
 
     QList<SerialPortManager::Port> listed;

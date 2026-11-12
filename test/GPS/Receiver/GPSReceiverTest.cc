@@ -1065,7 +1065,7 @@ void GPSReceiverTest::_withoutSerialLinksSerialSelectionUsesTcp()
 {
     // The serial side of a build without serial links, on any build.
     ManualScheduler scheduler;
-    ScriptedGPSReceiver harness(&scheduler, {.serialLinks = false});
+    ScriptedGPSReceiver harness(&scheduler, {.serial = withoutSerialLinks});
     GPSReceiver& receiver = harness.receiver;
     QVERIFY(!receiver.serialSupported());
     QVERIFY(receiver.serialBaudRates().isEmpty());
@@ -1338,7 +1338,8 @@ void GPSReceiverTest::_effectiveConnection()
     QFETCH(int, saved);
     QFETCH(int, effective);
     QFETCH(bool, supported);
-    ScriptedGPSReceiver harness(nullptr, {.serialLinks = serialLinks});
+    ScriptedGPSReceiver harness(
+        nullptr, serialLinks ? GPSReceiver::Dependencies{} : GPSReceiver::Dependencies{.serial = withoutSerialLinks});
     GPSReceiver& receiver = harness.receiver;
     QSignalSpy changed(&receiver, &GPSReceiver::configurationChanged);
     auto configuration = receiverConfiguration();
@@ -1384,7 +1385,7 @@ void GPSReceiverTest::_serialPortEntries()
          .boardName = QStringLiteral("SiK Radio")},
         serialPort(QStringLiteral("/dev/ttyS0")),
     });
-    ScriptedGPSReceiver harness(nullptr, {.serialPorts = &serial.manager});
+    ScriptedGPSReceiver harness(nullptr, {.serial = serial.side()});
     GPSReceiver& receiver = harness.receiver;
     auto configuration = serialConfiguration(kPassiveManufacturer, QStringLiteral("/dev/ttyACM0"), 115200);
     configuration.autoConnect = false;
@@ -1515,7 +1516,7 @@ void GPSReceiverTest::_manualPassiveBaudPreserved()
     QFETCH(uint, baud);
     TestSerialPorts serial({serialPort(QStringLiteral("/test/passive"))});
     auto state = std::make_shared<PassiveTransportState>();
-    GPSReceiver receiver(nullptr, nullptr, {.serialPorts = &serial.manager});
+    GPSReceiver receiver(nullptr, nullptr, {.serial = serial.side()});
     auto configuration = serialConfiguration(kPassiveManufacturer, QStringLiteral("/test/passive"), baud);
     configuration.autoConnect = false;
     receiver.setConfiguration(configuration);

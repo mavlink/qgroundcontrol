@@ -34,7 +34,9 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
 {
     GPSReceiver::Dependencies dependencies{.corrections = corrections, .positions = positions};
 #ifndef QGC_NO_SERIAL_LINK
-    dependencies.serialPorts = SerialPortManager::instance();
+    dependencies.serial = [](QObject* parent) {
+        return GPSReceiverSerialPorts::create(SerialPortManager::instance(), parent);
+    };
 #endif
     // Beside the other files the application saves, and following a save location changed while it runs.
     dependencies.recordingDirectory = []() {

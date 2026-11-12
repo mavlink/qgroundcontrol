@@ -29,7 +29,6 @@ enum class GPSReceiverSessionEnd;
 class GPSSourceHealth;
 class PositionManager;
 class RuntimeScheduler;
-class SerialPortManager;
 
 /// Services a GPSReceiver uses, which must outlive it.
 struct GPSReceiverDependencies
@@ -38,13 +37,11 @@ struct GPSReceiverDependencies
     GPSCorrectionManager* corrections = nullptr;
     /// Ready receivers publish their solution here as the GCS "RTK receiver" position source.
     PositionManager* positions = nullptr;
-    /// The serial devices a receiver may connect or discover, and their claims; without it none is available. A
-    /// session holds its claim until its worker has stopped, and ends unplugged when a scan no longer lists its device.
-    /// Builds without serial links have no such devices and leave it empty.
-    SerialPortManager* serialPorts = nullptr;
-    /// Off gives the receiver the serial side of a build without serial links, GPSReceiverSerialPorts itself, whatever
-    /// the build: tests run that build's behaviour with it.
-    bool serialLinks = true;
+    /// Creates the receiver's serial side as its child: the serial devices it may connect or discover, and their
+    /// claims. A session holds its claim until its worker has stopped, and ends unplugged when a scan no longer lists
+    /// its device. Without it the receiver has the serial side of its build, GPSReceiverSerialPorts::create(), with
+    /// no device available.
+    std::function<GPSReceiverSerialPorts*(QObject* parent)> serial = nullptr;
     /// The folder a recorded session's file goes to, asked as each session starts. Without it, or while it returns
     /// an empty path, sessions are not recorded.
     std::function<QString()> recordingDirectory = nullptr;

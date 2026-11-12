@@ -60,7 +60,7 @@ struct PolicyHarness
 #else
     explicit PolicyHarness(const GPSReceiver::Configuration& configuration, QList<SerialPortManager::Port> listed = {})
         : serial(std::move(listed))
-        , scripted(&scheduler, {.serialPorts = &serial.manager})
+        , scripted(&scheduler, {.serial = serial.side()})
 #endif
     {
         receiver.setConfiguration(configuration);

@@ -45,11 +45,13 @@ struct SettingsReceiver
     // Scripted workers open no link, so a recorded session names a file here and never creates it.
     static QString recordingDirectory() { return QStringLiteral("/test/recordings"); }
 
-    GPSReceiver::Dependencies dependencies(bool serialLinks)
+    GPSReceiver::Dependencies dependencies([[maybe_unused]] bool serialLinks)
     {
-        GPSReceiver::Dependencies dependencies{.serialLinks = serialLinks, .recordingDirectory = recordingDirectory};
+        GPSReceiver::Dependencies dependencies{.serial = withoutSerialLinks, .recordingDirectory = recordingDirectory};
 #ifndef QGC_NO_SERIAL_LINK
-        dependencies.serialPorts = &serial.manager;
+        if (serialLinks) {
+            dependencies.serial = serial.side();
+        }
 #endif
         return dependencies;
     }
