@@ -39,7 +39,7 @@ target_sources(
 
 set(_qgc_gps_suites
     GPSManagerTest
-    GPSReceiverSettingsBindingTest
+    GPSSettingsBindingsTest
     Corrections/GPSCorrectionManagerTest
     Corrections/GPSCorrectionSelectorTest
     Corrections/RTCMMAVLinkPacketTest

@@ -103,7 +103,7 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(QString recordingFile READ recordingFile NOTIFY recordingFileChanged FINAL)
 
     friend class GPSReceiverTest;
-    friend class GPSReceiverSettingsBindingTest;
+    friend class GPSSettingsBindingsTest;
     friend class GPSReceiverConnectionPolicyTest;
 
 public:

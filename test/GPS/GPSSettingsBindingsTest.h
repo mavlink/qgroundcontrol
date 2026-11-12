@@ -4,7 +4,7 @@
 
 /// The settings bindings: the receiver's configuration from its settings, the NTRIP configuration and its connection
 /// setting, redacted logging and that every setting is bound.
-class GPSReceiverSettingsBindingTest : public UnitTest
+class GPSSettingsBindingsTest : public UnitTest
 {
     Q_OBJECT
 

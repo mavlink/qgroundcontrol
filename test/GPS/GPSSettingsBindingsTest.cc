@@ -1,4 +1,4 @@
-#include "GPSReceiverSettingsBindingTest.h"
+#include "GPSSettingsBindingsTest.h"
 
 #include <chrono>
 
@@ -23,7 +23,7 @@
 using namespace std::chrono_literals;
 using namespace GPSTest;
 
-void GPSReceiverSettingsBindingTest::_receiverSettingsMapping_data()
+void GPSSettingsBindingsTest::_receiverSettingsMapping_data()
 {
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<int>("baseMode");
@@ -37,7 +37,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping_data()
     }
 }
 
-void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
+void GPSSettingsBindingsTest::_receiverSettingsMapping()
 {
     QFETCH(int, manufacturer);
     QFETCH(int, baseMode);
@@ -87,7 +87,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
     QVERIFY(config.base.compactObservations);
 }
 
-void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
+void GPSSettingsBindingsTest::_receiverSettingsBinding()
 {
     RTKSettings settings;
     GPSReceiver receiver;
@@ -127,7 +127,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 }
 
-void GPSReceiverSettingsBindingTest::_runtimeSettingsDoNotRequireAppRestart()
+void GPSSettingsBindingsTest::_runtimeSettingsDoNotRequireAppRestart()
 {
     RTKSettings settings;
     // The bindings apply every receiver setting to the running receiver.
@@ -137,7 +137,7 @@ void GPSReceiverSettingsBindingTest::_runtimeSettingsDoNotRequireAppRestart()
     }
 }
 
-void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
+void GPSSettingsBindingsTest::_ntripSettingsBinding()
 {
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->ntripSettings();
@@ -180,7 +180,7 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
     QCOMPARE(manager.configuration().gga.source, NTRIPGgaReporter::PositionSource::Auto);
 }
 
-void GPSReceiverSettingsBindingTest::_ntripActionsFollowConnectionSetting()
+void GPSSettingsBindingsTest::_ntripActionsFollowConnectionSetting()
 {
     using Status = NTRIPManager::ConnectionStatus;
     TestFixtures::SettingsFixture saved;
@@ -237,7 +237,7 @@ void GPSReceiverSettingsBindingTest::_ntripActionsFollowConnectionSetting()
     QCOMPARE(manager.connectionStatus(), Status::Disconnected);
 }
 
-void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets_data()
+void GPSSettingsBindingsTest::_settingsLogRedactsSecrets_data()
 {
     QTest::addColumn<Fact*>("fact");
     QTest::addColumn<QVariant>("value");
@@ -258,7 +258,7 @@ void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets_data()
                                << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn)) << false;
 }
 
-void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets()
+void GPSSettingsBindingsTest::_settingsLogRedactsSecrets()
 {
     QFETCH(Fact*, fact);
     QFETCH(QVariant, value);
@@ -291,7 +291,7 @@ void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets()
     }
 }
 
-void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact_data()
+void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact_data()
 {
     QTest::addColumn<SettingsGroup*>("group");
     QTest::addColumn<QList<Fact*>>("bound");
@@ -309,7 +309,7 @@ void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact_data()
                                    << QList<Fact*>{};
 }
 
-void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact()
+void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact()
 {
     QFETCH(SettingsGroup*, group);
     QFETCH(QList<Fact*>, bound);
@@ -327,4 +327,4 @@ void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact()
     }
 }
 
-UT_REGISTER_TEST(GPSReceiverSettingsBindingTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSSettingsBindingsTest, TestLabel::Unit)

@@ -147,7 +147,7 @@ QStringList siteNames(const RTKSettings* settings)
 
 void GPSReceiverSettingsTest::_surveySaveWorkflow()
 {
-    // How each family maps the saved base settings is GPSReceiverSettingsBindingTest's; this is the panel's workflow.
+    // How each family maps the saved base settings is GPSSettingsBindingsTest's; this is the panel's workflow.
     Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* connect = panel.find("rtkConnectButton");

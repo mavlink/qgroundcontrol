@@ -16,7 +16,7 @@ class RTKSettings;
 class GPSSettingsBindings
 {
     friend class GPSManagerTest;
-    friend class GPSReceiverSettingsBindingTest;
+    friend class GPSSettingsBindingsTest;
 
 public:
     GPSSettingsBindings() = delete;
