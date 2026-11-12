@@ -52,7 +52,12 @@ def test_standalone_build_inputs_trigger_the_workflow() -> None:
 
 def test_each_libfuzzer_harness_fuzzes_briefly_and_keeps_a_failing_input() -> None:
     harnesses = _harnesses()
-    assert {"QGCGPSProtocolFuzz", "ntrip_http_decoder_fuzzer"} <= harnesses
+    assert {
+        "QGCGPSProtocolFuzz",
+        "QGCNTRIPSourceTableFuzz",
+        "QGCRTCMStationPositionFuzz",
+        "ntrip_http_decoder_fuzzer",
+    } <= harnesses
     # Without halt_on_error a UBSan report prints and the fuzzer exits 0.
     assert "halt_on_error=1" in JOB["env"]["UBSAN_OPTIONS"].split(":")
 

@@ -701,10 +701,12 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   Clang, `-DQGC_GPS_LIBFUZZER=ON` (ASan and UBSan) and `RelWithDebInfo`: unoptimized,
   `GPSProtocolFuzzSmoke` takes about six times as long. It skips `build-setup`, whose caches and
   full Qt serve the application build: `setup-python` syncs the `build` group for CMake and Ninja,
-  `qt-install` installs only `qtbase`, `icu` and `qtserialport`, CPM clones GeographicLib, and the
-  build's three CPU-minutes need no compiler cache. `cmake-build` and `run-unit-tests` (label
-  `GPS`) report as in the platform jobs. Each harness (`QGCGPSProtocolFuzz`,
-  `QGCGPSReplyFuzz`, `ntrip_http_decoder_fuzzer`) then fuzzes its seeds for 60 s with a new random seed.
+  `qt-install` installs only `qtbase`, `icu`, `qtserialport` and, for the source table fuzzer,
+  `qtpositioning`, CPM clones GeographicLib, and the build's three CPU-minutes need no compiler
+  cache. `cmake-build` and `run-unit-tests` (label `GPS`) report as in the platform jobs. Each
+  harness (`QGCGPSProtocolFuzz`, `QGCGPSReplyFuzz`, `ntrip_http_decoder_fuzzer`,
+  `QGCRTCMStationPositionFuzz`, `QGCNTRIPSourceTableFuzz`) then fuzzes its seeds for 60 s with a
+  new random seed.
   `UBSAN_OPTIONS=halt_on_error=1` makes a UBSan report fail the tests and the fuzzers, which
   otherwise print it and continue, and `-timeout=25` reports a hang. A crash, leak, hang or
   sanitizer report fails the job, and the input libFuzzer saved is uploaded as

@@ -1,0 +1,6 @@
+str; lower ; spaced identifier ;RTCM 3;;;GPS;;DEU; 52.5 ; 13.4 ;;;;;;;abc
+STR;;no name;RTCM 3;;;GPS;;DEU;52.5;13.4
+STR;RANGE;coordinates out of range;RTCM 3;;;GPS;;XXX;90.5;-180.5;0;0;;;;;99999999999
+STR;NAN;not numbers;RTCM 3;;;GPS;;XXX;nan;inf;0;0;;;;;-7
+STR;LATIN;München;;;;;;;;;;;;;;;;;;;;;;
+STX;NOTAROW;x

@@ -417,11 +417,14 @@ The scenarios, the recorder and the checks of each scenario and decoder against 
 `QGCGPSProtocolTestSupport`, and `test/GPS/Standalone` runs them as `GPSGoldenTranscripts`.
 
 `test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with those golden transcripts,
-the receiver qualification runner and the smoke tests of the NTRIP decoder and receiver reply fuzzers. With Clang,
-`-DQGC_GPS_LIBFUZZER=ON` adds the libFuzzer harnesses and builds both libraries with ASan and UBSan:
-`QGCGPSProtocolFuzz` decodes its input, `QGCGPSReplyFuzz` feeds it to the driver as the replies of the receiver it
-configures or detects, on a virtual clock, and `ntrip_http_decoder_fuzzer` decodes it as a caster's response. Build
-them optimized: unoptimized, `GPSProtocolFuzzSmoke`'s 10000 runs take about six times as long:
+the receiver qualification runner and the fuzzers' smoke tests. With Clang, `-DQGC_GPS_LIBFUZZER=ON` adds the
+libFuzzer harnesses and builds both libraries with ASan and UBSan: `QGCGPSProtocolFuzz` decodes its input,
+`QGCGPSReplyFuzz` feeds it to the driver as the replies of the receiver it configures or detects, on a virtual
+clock, and `ntrip_http_decoder_fuzzer` decodes it as a caster's response. `QGCRTCMStationPositionFuzz` decodes it
+as the payload of a base station position message (RTCM 1005 or 1006) and `QGCNTRIPSourceTableFuzz` lists it as a
+caster's source table, which needs Qt Positioning; both check each result against the format, and their smoke
+tests replay the seeds in `test/GPS/Core/Protocols/corpus/station-position/` and `source-table/`. Build them
+optimized: unoptimized, `GPSProtocolFuzzSmoke`'s 10000 runs take about six times as long:
 
 ```bash
 cmake -S test/GPS/Standalone -B build-gps -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang++ \

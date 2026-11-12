@@ -1,0 +1,6 @@
+CAS;caster.example.org;2101;Example;Operator;0;CHE;47.00;8.00;0.0.0.0;0;http://caster.example.org
+NET;EXNET;Operator;B;N;http://example.org;http://example.org/stations;info@example.org;none
+STR;NEAR00;Near;RTCM 3.3;1005(10),1077(1),1087(1),1097(1),1127(1),1230(10);2;GPS+GLO+GAL+BDS;EXNET;CHE;47.38;8.54;0;0;RECEIVER A;none;B;N;9600;
+STR;FAR00;Far;RTCM 3.2;1006(10),1074(1),1084(1);2;GPS+GLO;EXNET;AUS;-33.87;151.21;1;0;RECEIVER B;none;B;Y;4800;misc
+STR;VRS;Network solution;RTCM 3.1;1004(1),1005(5);2;GPS;EXNET;CHE;0.00;0.00;1;1;NETWORK;none;B;N;2400;
+ENDSOURCETABLE

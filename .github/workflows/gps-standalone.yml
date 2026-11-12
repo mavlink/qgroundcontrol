@@ -66,13 +66,13 @@ jobs:
         with:
           groups: build
 
-      # Qt Core, Network and SerialPort are all the standalone project links.
+      # Qt Core, Network and SerialPort are all the standalone project links; the source table fuzzer adds Positioning.
       - name: Install Qt
         uses: ./.github/actions/qt-install
         with:
           host: linux
           arch: linux_gcc_64
-          modules: qtserialport
+          modules: qtserialport qtpositioning
           archives: qtbase icu
 
       # Optimized: unoptimized, GPSProtocolFuzzSmoke's 10000 runs take about six times as long.
@@ -125,6 +125,26 @@ jobs:
           NTRIPHttpFuzz/ntrip_http_decoder_fuzzer -max_total_time=60 -timeout=25 -max_len=65536 \
             -dict="${GITHUB_WORKSPACE}/test/GPS/NTRIP/HTTP/Fuzz/NTRIPHttpDecoderFuzzer.dict" \
             -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/ntrip-" NTRIPHttpFuzz/corpus
+
+      # The harness frames its input, so the seeds are message payloads.
+      - name: Fuzz the RTCM station position decoder
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 5
+        working-directory: ${{ runner.temp }}/build
+        run: >-
+          ProtocolFuzz/QGCRTCMStationPositionFuzz -max_total_time=60 -timeout=25 -max_len=1024
+          -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/station-"
+          ProtocolFuzz/station-corpus "${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/corpus/station-position"
+
+      - name: Fuzz the NTRIP source table
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 5
+        working-directory: ${{ runner.temp }}/build
+        run: >-
+          ProtocolFuzz/QGCNTRIPSourceTableFuzz -max_total_time=60 -timeout=25 -max_len=4096
+          -dict="${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/Fuzz/SourceTableFuzz.dict"
+          -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/source-table-"
+          ProtocolFuzz/source-table-corpus "${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/corpus/source-table"
 
       # Only a failed fuzzer writes an input (crash-, leak-, oom- or timeout-), so passing runs upload nothing.
       - name: Upload fuzzing diagnostics
