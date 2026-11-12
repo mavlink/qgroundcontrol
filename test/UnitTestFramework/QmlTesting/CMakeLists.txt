@@ -11,6 +11,7 @@ endif()
 target_sources(
     QGCUnitTests
     PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/QmlFixtures.h
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTesting.h
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.h

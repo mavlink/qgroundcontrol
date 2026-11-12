@@ -367,6 +367,11 @@ ctest --test-dir build -R QmlQuickTests --output-on-failure
 ctest --test-dir build -R QmlTestFileValidator --output-on-failure
 ```
 
+A C++ suite can also test one QML component outside the main window, with the fixtures in
+`UnitTestFramework/QmlTesting/QmlFixtures.h`. `TestFixtures::QmlEngine` creates the component from inline QML or
+from its source file (`TestFixtures::sourceQmlUrl()`), and `TestFixtures::QmlWindowFixture` shows it for
+assertions that need layout or rendering. The panel suites in `test/GPS/Qml` are written this way.
+
 ## Portable Utility Tests
 
 Windows x64 and the macOS Release CI leg enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal

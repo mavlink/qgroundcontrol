@@ -20,11 +20,11 @@
 #include "GPSSettingsBindings.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
+#include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
-#include "Support/GPSQmlTestHelpers.h"
 #include "UnitsSettings.h"
 
 using namespace GPSTest;
@@ -92,7 +92,7 @@ struct Panel
     /// Creates the panel and the status; false on failure, with the reason in the engine's lastError().
     [[nodiscard]] bool create()
     {
-        item = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverSettings.qml")),
+        item = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverSettings.qml")),
                              {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
                               {QStringLiteral("settings"), QVariant::fromValue(settings.settings)},
                               {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)},
@@ -101,7 +101,7 @@ struct Panel
         if (!item) {
             return false;
         }
-        status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+        status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
                                {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.gps.facts())},
                                 {QStringLiteral("showWhenDisconnected"), true}});
@@ -119,7 +119,7 @@ struct Panel
 
     RTKSettingsFixture settings;
     SettingsReceiver receiver;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> item;
     std::unique_ptr<QObject> status;
 };
@@ -193,9 +193,9 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     AppReceiver base;
     QVERIFY(base.connect());
     QCOMPARE(GPSManager::instance()->receiver()->activeBaseMode(), int(BaseModeDefinition::Mode::BaseSurveyIn));
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     // The status shows the application's receiver, whose position GPSManager saves.
-    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
+    auto status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* prompt = status->findChild<QObject*>(QStringLiteral("rtkSurveyCompletePrompt"));
     auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
@@ -227,7 +227,7 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QVERIFY(settings.settings->baseSites().isEmpty());
 
     // Another view of the receiver knows the position is saved; a new survey offers saving its result again.
-    auto other = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
+    auto other = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
     QVERIFY2(other, qPrintable(engine.lastError()));
     auto* otherSave = other->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
     QVERIFY(otherSave);
@@ -246,8 +246,8 @@ void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
     receiver.facts()->setLiveUpdates(true);
     QVERIFY(connectOverTcp(receiver));
     harness.workers.current()->ready();
-    GPSTest::QmlEngine engine;
-    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+    TestFixtures::QmlEngine engine;
+    auto status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
                                 {{QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
                                  {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
     QVERIFY2(status, qPrintable(engine.lastError()));
@@ -273,8 +273,8 @@ void GPSReceiverSettingsTest::_surveySavedAsSite()
     settings.saved.setFactValue(rtk->savedBaseSites(), QString());
     AppReceiver base;
     QVERIFY(base.connect());
-    GPSTest::QmlEngine engine;
-    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
+    TestFixtures::QmlEngine engine;
+    auto status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* name = status->findChild<QObject*>(QStringLiteral("rtkSurveySiteName"));
     auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
@@ -381,9 +381,9 @@ void GPSReceiverSettingsTest::_statusListsConstellations()
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
     // The panel appears with the receiver, which an item without a parent cannot do.
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
-    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    auto status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
                                 {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                                  {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
                                  {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
@@ -782,7 +782,7 @@ void GPSReceiverSettingsTest::_warningWidth()
 {
     QFETCH(int, width);
     QFETCH(bool, longText);
-    GPSTest::QmlWindowFixture window(width, 800);
+    TestFixtures::QmlWindowFixture window(width, 800);
     Panel panel(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(panel.item.get());
@@ -924,9 +924,9 @@ void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
     TestFixtures::SettingsFixture saved;
     Fact* const units = SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits();
     saved.setFactValue(units, UnitsSettings::HorizontalDistanceUnitsMeters);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> panel =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GcsPositionStatus.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GcsPositionStatus.qml")),
                       {{QStringLiteral("gcsPosition"), QVariant::fromValue(QGeoCoordinate(47.0, 8.0))},
                        {QStringLiteral("horizontalAccuracy"), 5.1}});
     QVERIFY2(panel, qPrintable(engine.lastError()));
@@ -989,7 +989,7 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
     selected.baseReceiverManufacturer = manufacturer;
     selected.autoConnect = false;
     receiver->setConfiguration(selected);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     auto page = engine.create(QByteArrayLiteral(R"(
         import QtQuick
         import QGroundControl
@@ -1051,7 +1051,7 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
     QCOMPARE(baseSitesGroup->isVisible(), baseSites);
     for (const auto& [file, shown] :
          {std::pair{"GPSReceiverBaseStation.qml", baseStation}, std::pair{"GPSReceiverBaseSites.qml", baseSites}}) {
-        auto part = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)));
+        auto part = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)));
         QVERIFY2(part, qPrintable(engine.lastError()));
         QVERIFY2(part->property("visible").toBool() == shown, file);
     }

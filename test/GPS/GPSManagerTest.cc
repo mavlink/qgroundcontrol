@@ -25,10 +25,10 @@
 #include "NTRIPVehicleGgaSource.h"
 #include "PositionManager.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
-#include "Support/GPSQmlTestHelpers.h"
 #include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
 #include "VehicleGPSFactGroup.h"
@@ -277,7 +277,7 @@ void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum()
 
 void GPSManagerTest::_qmlServicesAvailableBeforeInit()
 {
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> root = engine.create(QByteArray(R"(
         import QtQml
         import QGroundControl

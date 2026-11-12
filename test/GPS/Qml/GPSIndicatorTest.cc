@@ -19,11 +19,11 @@
 #include "NTRIPSettings.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
+#include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
-#include "Support/GPSQmlTestHelpers.h"
 #include "Support/GPSTestHelpers.h"
 #include "UnitsSettings.h"
 #include "Vehicle.h"
@@ -35,25 +35,26 @@ using namespace GPSTest;
 namespace {
 /// The toolbar indicator in @a window without a vehicle, with @a inputs replacing the application state it shows; null
 /// on failure, with the reason in the engine's lastError().
-std::unique_ptr<QObject> createIndicator(GPSTest::QmlEngine& engine, const GPSTest::QmlWindowFixture& window,
+std::unique_ptr<QObject> createIndicator(TestFixtures::QmlEngine& engine, const TestFixtures::QmlWindowFixture& window,
                                          QVariantMap inputs = {})
 {
     inputs.insert(QStringLiteral("parent"), QVariant::fromValue(window.contentItem()));
     inputs.insert(QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr)));
-    return engine.create(GPSTest::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicator.qml")), inputs);
+    return engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicator.qml")), inputs);
 }
 
 /// The indicator's drawer page in @a window for @a vehicle, laid out for a 640 pixel drawer unless @a inputs give an
 /// availableWidth; null on failure, with the reason in the engine's lastError().
-std::unique_ptr<QObject> createIndicatorPage(GPSTest::QmlEngine& engine, const GPSTest::QmlWindowFixture& window,
-                                             Vehicle* vehicle, QVariantMap inputs = {})
+std::unique_ptr<QObject> createIndicatorPage(TestFixtures::QmlEngine& engine,
+                                             const TestFixtures::QmlWindowFixture& window, Vehicle* vehicle,
+                                             QVariantMap inputs = {})
 {
     inputs.insert(QStringLiteral("parent"), QVariant::fromValue(window.contentItem()));
     inputs.insert(QStringLiteral("activeVehicle"), QVariant::fromValue(vehicle));
     if (!inputs.contains(QStringLiteral("availableWidth"))) {
         inputs.insert(QStringLiteral("availableWidth"), 640);
     }
-    return engine.create(GPSTest::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")), inputs);
+    return engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")), inputs);
 }
 
 QColor colorOf(const QObject* item)
@@ -83,8 +84,8 @@ void GPSIndicatorTest::_pagePanelUsesApplicationReceiver()
     // GPSReceiverSettingsTest covers the panel; the drawer shows it for the application's receiver and settings.
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Quectel));
     GPSReceiver* const receiver = GPSManager::instance()->receiver();
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr, {{QStringLiteral("expanded"), true}});
     QVERIFY2(page, qPrintable(engine.lastError()));
     auto* consent = page->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
@@ -115,8 +116,8 @@ void GPSIndicatorTest::_pageFitsWidth()
     AppReceiver base;
     GPSReceiverFactGroup* const facts = base.facts();
 
-    GPSTest::QmlWindowFixture window(width, 800);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window(width, 800);
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page =
         createIndicatorPage(engine, window, nullptr, {{QStringLiteral("availableWidth"), width}});
     QVERIFY2(page, qPrintable(engine.lastError()));
@@ -195,8 +196,8 @@ void GPSIndicatorTest::_receiverBesideVehicleGps()
     gps->setLiveUpdates(true);
     gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX, .satellitesVisible = 10}));
 
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &vehicle);
     QVERIFY2(page, qPrintable(engine.lastError()));
     QVERIFY(window.show());
@@ -244,8 +245,8 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     }
     base.survey(0.75);
 
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &vehicle);
     QVERIFY2(page, qPrintable(engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(page.get());
@@ -305,8 +306,8 @@ void GPSIndicatorTest::_pageOffersNtripConnect()
     NTRIPSettings* ntrip = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
     GPSTest::CasterHost caster(GPSManager::instance()->ntrip());
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr);
     QVERIFY2(page, qPrintable(engine.lastError()));
     auto* section = page->findChild<QObject*>(QStringLiteral("gpsIndicatorNtrip"));
@@ -341,8 +342,8 @@ void GPSIndicatorTest::_pageVehicleMeasurements()
     gps->vdop()->setRawValue(1.2);
     gps->horizontalAccuracy()->setRawValue(2.5);
     gps->verticalAccuracy()->setRawValue(4.5);
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &vehicle);
     QVERIFY2(page, qPrintable(engine.lastError()));
     QVERIFY(window.show());
@@ -393,8 +394,8 @@ void GPSIndicatorTest::_pageResilienceGroups()
         mavlink_msg_gnss_integrity_encode(1, 1, &message, &report);
         gps->handleMessage(&vehicle, message);
     };
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &vehicle);
     QVERIFY2(page, qPrintable(engine.lastError()));
     auto* first = page->findChild<QObject*>(QStringLiteral("gps1Resilience"));
@@ -457,8 +458,8 @@ void GPSIndicatorTest::_resilienceIcon()
     gps2.jammingState()->setRawValue(jamming2);
     gps1.authenticationState()->setRawValue(authentication1);
     gps2.authenticationState()->setRawValue(authentication2);
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> indicator = createIndicator(
         engine, window,
         {{QStringLiteral("_gps"), QVariant::fromValue(&gps1)}, {QStringLiteral("_gps2"), QVariant::fromValue(&gps2)}});
@@ -523,8 +524,8 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     QCOMPARE(int(receiver.activeRole()), role);
     GPSReceiverFactGroup& facts = *receiver.facts();
     facts.setLiveUpdates(true);
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> indicator = createIndicator(engine, window,
                                                          {{QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
                                                           {QStringLiteral("_correctionState"), correctionState}});
@@ -557,9 +558,9 @@ void GPSIndicatorTest::_receiverAntennaWarning()
     GPSReceiver& receiver = harness.receiver;
     GPSReceiverFactGroup& facts = *receiver.facts();
     facts.setLiveUpdates(true);
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
-    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    auto status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
                                 {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                                  {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
                                  {QStringLiteral("facts"), QVariant::fromValue(&facts)}});

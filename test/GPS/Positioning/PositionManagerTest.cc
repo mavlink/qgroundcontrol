@@ -11,7 +11,7 @@
 #include "ManualScheduler.h"
 #include "PositionManager.h"
 #include "QGCGeoid.h"
-#include "Support/GPSQmlTestHelpers.h"
+#include "QmlTesting/QmlFixtures.h"
 #include "Support/GPSTestHelpers.h"
 
 using namespace std::chrono_literals;
@@ -666,7 +666,7 @@ void PositionManagerTest::_destructionStopsDevice()
 
 void PositionManagerTest::_qmlPositionProperties()
 {
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     ManualScheduler scheduler;
     PositionManager service(nullptr, &scheduler);
     std::unique_ptr<QObject> object = engine.create(QByteArray(R"(

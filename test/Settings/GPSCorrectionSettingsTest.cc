@@ -11,9 +11,9 @@
 
 #include "GPSCorrectionSettings.h"
 #include "NTRIPSettings.h"
+#include "QmlTesting/QmlFixtures.h"
 #include "SettingsFact.h"
 #include "SettingsManager.h"
-#include "Support/GPSQmlTestHelpers.h"
 
 void GPSCorrectionSettingsTest::_storageNamespace_data()
 {
@@ -129,7 +129,7 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
     auto* settings = SettingsManager::instance();
     QVERIFY(settings->gpsCorrectionSettings());
     QCOMPARE(settings->property("gpsCorrectionSettings").value<QObject*>(), settings->gpsCorrectionSettings());
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> object = engine.create(QByteArray(R"(
         import QtQml
         import QGroundControl

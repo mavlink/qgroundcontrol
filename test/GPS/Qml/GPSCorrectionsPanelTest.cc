@@ -21,8 +21,8 @@
 #include "NTRIPSourceTableController.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCFormat.h"
+#include "QmlTesting/QmlFixtures.h"
 #include "SettingsManager.h"
-#include "Support/GPSQmlTestHelpers.h"
 #include "Support/GPSTestHelpers.h"
 #include "UnitsSettings.h"
 
@@ -42,10 +42,10 @@ struct ScriptedNTRIP
 };
 
 /// The NTRIP connection panel for @a manager inside @a window; null on failure, with the reason in lastError().
-std::unique_ptr<QObject> createConnectionPanel(GPSTest::QmlEngine& engine, const GPSTest::QmlWindowFixture& window,
-                                               NTRIPManager& manager)
+std::unique_ptr<QObject> createConnectionPanel(TestFixtures::QmlEngine& engine,
+                                               const TestFixtures::QmlWindowFixture& window, NTRIPManager& manager)
 {
-    return engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/NTRIPConnectionStatus.qml")),
+    return engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/NTRIPConnectionStatus.qml")),
                          {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                           {QStringLiteral("visible"), true},
                           {QStringLiteral("ntripManager"), QVariant::fromValue(&manager)}});
@@ -54,7 +54,7 @@ std::unique_ptr<QObject> createConnectionPanel(GPSTest::QmlEngine& engine, const
 /// Whether a label of @a panel shows @a text.
 bool showsText(QObject* panel, const QString& text)
 {
-    return !GPSTest::findItems(qobject_cast<QQuickItem*>(panel), [&text](QQuickItem* item) {
+    return !TestFixtures::findItems(qobject_cast<QQuickItem*>(panel), [&text](QQuickItem* item) {
                 return item->property("lineCount").isValid() && item->property("text").toString() == text;
             }).isEmpty();
 }
@@ -65,9 +65,9 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsSelectedStream()
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
     const auto advanceHealthSample = [&scheduler] { return scheduler.advanceBy(std::chrono::seconds(1)); };
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> status =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
                       {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* source = status->findChild<QObject*>(QStringLiteral("correctionsSelectedSource"));
@@ -105,16 +105,16 @@ void GPSCorrectionsPanelTest::_correctionsStatusCountsMessageTypes()
     using namespace std::chrono_literals;
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> status =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
                       {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* types = status->findChild<QQuickItem*>(QStringLiteral("correctionsMessageTypes"));
     QVERIFY(types);
     QVERIFY(!types->property("visible").toBool());
     const auto chips = [types]() {
-        return GPSTest::findItems(types, [](QQuickItem* item) { return item->property("messageId").isValid(); });
+        return TestFixtures::findItems(types, [](QQuickItem* item) { return item->property("messageId").isValid(); });
     };
     const auto chipTexts = [&chips]() {
         QStringList texts;
@@ -165,9 +165,9 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageRates()
     using namespace std::chrono_literals;
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> status =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
                       {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* types = status->findChild<QQuickItem*>(QStringLiteral("correctionsMessageTypes"));
@@ -175,7 +175,7 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageRates()
     const auto chipTexts = [types]() {
         QStringList texts;
         for (const QQuickItem* chip :
-             GPSTest::findItems(types, [](QQuickItem* item) { return item->property("messageId").isValid(); })) {
+             TestFixtures::findItems(types, [](QQuickItem* item) { return item->property("messageId").isValid(); })) {
             texts.append(chip->childItems().constFirst()->property("text").toString());
         }
         return texts;
@@ -219,9 +219,9 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
     QSignalSpy positionChanges(&corrections, &GPSCorrectionManager::basePositionChanged);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> status =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
                       {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)},
                        {QStringLiteral("gcsPosition"), QVariant::fromValue(QGeoCoordinate())}});
     QVERIFY2(status, qPrintable(engine.lastError()));
@@ -283,9 +283,9 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageFilterError()
 {
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> status =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
                       {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* error = status->findChild<QObject*>(QStringLiteral("correctionsMessageFilterError"));
@@ -311,9 +311,9 @@ void GPSCorrectionsPanelTest::_correctionsLogSwitch()
     QString folder = directory.path();
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> log =
-        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsLogSwitch.qml")),
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsLogSwitch.qml")),
                       {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
     QVERIFY2(log, qPrintable(engine.lastError()));
     auto* toggle = log->findChild<QObject*>(QStringLiteral("correctionsLogSwitch"));
@@ -363,8 +363,8 @@ void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
     // What the panel's actions ask the connection setting to be.
     QSignalSpy requests(&ntrip.manager, &NTRIPManager::enabledRequested);
 
-    GPSTest::QmlWindowFixture window(640, 400);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
     QVERIFY2(panel, qPrintable(engine.lastError()));
     QVERIFY(window.show());
@@ -422,8 +422,8 @@ void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
     QCOMPARE(static_cast<int>(ntrip.manager.connectionStatus()), status);
     // A click that started a connection attempt would open this transport.
     QPointer<MockNTRIPTransport> unexpected = ntrip.nextTransport();
-    GPSTest::QmlWindowFixture window(640, 400);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
     // Whether there is a caster to connect to is the manager's to say, whatever the application's settings hold.
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerHostAddress(), QString());
@@ -452,7 +452,7 @@ void GPSCorrectionsPanelTest::_ntripMountpointLockedWhileActive()
     // The application's setting would start its NTRIP connection.
     Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
     enabled.setRawValue(true);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> panel =
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/GPS/NTRIPMountpointBrowser.qml")),
                       {{QStringLiteral("enabledFact"), QVariant::fromValue(&enabled)}});
@@ -480,8 +480,8 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
     ntrip.manager.init();
     fail(first, QStringLiteral("Connection failed"));
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
-    GPSTest::QmlWindowFixture window(640, 400);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* panelItem = qobject_cast<QQuickItem*>(panel.get());
@@ -497,7 +497,7 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(ntrip.manager.statusMessage(), longMessage);
     const auto statusLabel = [&]() -> QQuickItem* {
-        const auto labels = GPSTest::findItems(panelItem, [&](QQuickItem* item) {
+        const auto labels = TestFixtures::findItems(panelItem, [&](QQuickItem* item) {
             return item->property("text").toString() == longMessage && item->property("lineCount").isValid();
         });
         return labels.isEmpty() ? nullptr : labels.first();
@@ -507,7 +507,7 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
     // The message wraps inside the panel instead of widening every settings group on the page.
     QCOMPARE(panelItem->implicitWidth(), shortWidth);
     QVERIFY(statusLabel()->property("lineCount").toInt() > 1);
-    const auto buttons = GPSTest::findItems(
+    const auto buttons = TestFixtures::findItems(
         panelItem, [](QQuickItem* item) { return item->objectName() == QLatin1String("ntripConnectButton"); });
     QCOMPARE(buttons.size(), 1);
     const QPointF buttonRight = buttons.first()->mapToItem(panelItem, QPointF(buttons.first()->width(), 0));
@@ -522,8 +522,8 @@ void GPSCorrectionsPanelTest::_ntripMountpointButtonsAligned()
         "STR;S;Short;RTCM 3.3;1005(1);2;GPS;NET;FRA;0;0;0;0;gen;none;N;N;0;\r\n"
         "ENDSOURCETABLE\r\n"));
     QCOMPARE(model.rowCount(), 2);
-    GPSTest::QmlWindowFixture window(640, 400);
-    GPSTest::QmlEngine engine;
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> list =
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/GPS/NTRIPMountpointList.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
@@ -535,7 +535,7 @@ void GPSCorrectionsPanelTest::_ntripMountpointButtonsAligned()
     QVERIFY(listItem);
     QVERIFY(window.show());
     const auto buttons = [&]() {
-        return GPSTest::findItems(listItem, [](QQuickItem* item) {
+        return TestFixtures::findItems(listItem, [](QQuickItem* item) {
             return item->inherits("QQuickAbstractButton") && item->isVisible() && item->width() > 0;
         });
     };

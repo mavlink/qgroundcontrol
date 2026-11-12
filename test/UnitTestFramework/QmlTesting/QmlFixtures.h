@@ -16,7 +16,10 @@
 #include "ColoredSvgImageProvider.h"
 #include "UnitTest.h"
 
-namespace GPSTest {
+/// @file
+/// @brief Fixtures for C++ tests that load QML components outside the main window
+
+namespace TestFixtures {
 
 /// A QML file in the source tree, for components tested from their source rather than the compiled module.
 inline QUrl sourceQmlUrl(const QString& pathFromSrc)
@@ -113,4 +116,4 @@ inline QList<QQuickItem*> findItems(QQuickItem* root, const std::function<bool(Q
     return found;
 }
 
-}  // namespace GPSTest
+}  // namespace TestFixtures
