@@ -10,7 +10,7 @@
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
 
-QGC_LOGGING_CATEGORY(Viewer3DTerrainGeometryLog, "Viewer3d.Viewer3DTerrainGeometry")
+QGC_LOGGING_CATEGORY(Viewer3DTerrainGeometryLog, "Viewer3D.Viewer3DTerrainGeometry")
 
 static constexpr double kMaxLatitude = 85.05112878;
 

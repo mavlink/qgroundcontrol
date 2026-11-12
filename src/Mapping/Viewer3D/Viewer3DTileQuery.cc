@@ -11,7 +11,7 @@
 #include "QGCTileReply.h"
 #include "UrlFactory.h"
 
-QGC_LOGGING_CATEGORY(Viewer3DTileQueryLog, "Viewer3d.Viewer3DTileQuery")
+QGC_LOGGING_CATEGORY(Viewer3DTileQueryLog, "Viewer3D.Viewer3DTileQuery")
 
 static constexpr int kMaxTileCounts = 200;
 static constexpr int kMaxZoomLevel = 23;

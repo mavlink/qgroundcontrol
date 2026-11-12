@@ -16,7 +16,7 @@
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(OsmParserThreadLog, "Viewer3d.OsmParserThread")
+QGC_LOGGING_CATEGORY(OsmParserThreadLog, "Viewer3D.OsmParserThread")
 
 // ============================================================================
 // OsmBuildingHandler — libosmium streaming handler

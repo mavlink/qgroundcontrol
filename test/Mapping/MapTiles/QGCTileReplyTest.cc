@@ -784,7 +784,7 @@ void QGCTileReplyTest::_tileFetchedWhenCacheRefusesLookup()
     engine->shutdown();
     expectLogMessage("MapTiles.QGCTileCacheDatabase", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("Could not find suitable cache directory")));
-    expectLogMessage("MapTiles.QGCTileCacheWorker", QtWarningMsg,
+    expectLogMessage("MapTiles.QGCCacheWorker", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed To Init Database")));
     engine->init(QString());
     // The worker owns a task it takes, and deletes one it refuses

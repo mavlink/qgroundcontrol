@@ -2,4 +2,4 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(Viewer3DMapProviderLog, "Viewer3d.Viewer3DMapProvider")
+QGC_LOGGING_CATEGORY(Viewer3DMapProviderLog, "Viewer3D.Viewer3DMapProvider")

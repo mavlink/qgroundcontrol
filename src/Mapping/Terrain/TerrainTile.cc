@@ -5,7 +5,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
+QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.TerrainTile");
 
 TerrainTile::TerrainTile(const QByteArray& byteArray)
 {

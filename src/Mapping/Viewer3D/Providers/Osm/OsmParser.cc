@@ -11,7 +11,7 @@
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
 
-QGC_LOGGING_CATEGORY(OsmParserLog, "Viewer3d.OsmParser")
+QGC_LOGGING_CATEGORY(OsmParserLog, "Viewer3D.OsmParser")
 
 OsmParser::OsmParser(QObject* parent)
     : Viewer3DMapProvider{parent}

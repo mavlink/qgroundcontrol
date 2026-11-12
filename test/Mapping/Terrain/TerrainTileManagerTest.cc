@@ -62,7 +62,7 @@ void TerrainTileManagerTest::_testUndecodableCachedTileIsFetchedAgain()
     TerrainQueryInterface query;
     QSignalSpy heightsSpy(&query, &TerrainQueryInterface::coordinateHeightsReceived);
 
-    expectLogMessage("Terrain.terraintile", QtWarningMsg,
+    expectLogMessage("Terrain.TerrainTile", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Terrain tile binary data too small for TileInfo_t header")));
     manager.addCoordinateQuery(&query, {coordinate});
     QVERIFY_SIGNAL_COUNT_WAIT(heightsSpy, 1, TestTimeout::mediumMs());

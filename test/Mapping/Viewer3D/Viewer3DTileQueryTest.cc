@@ -164,7 +164,7 @@ void Viewer3DTileQueryTest::_testLoadOutcome()
     const UnitTestTileGenerator::ForcedMisses forcedMisses(cached ? 0 : kTileQueryEveryLookupMisses);
 
     if (!tileInTexture) {
-        expectLogMessage("Viewer3d.Viewer3DTileQuery", QtWarningMsg,
+        expectLogMessage("Viewer3D.Viewer3DTileQuery", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Request error for tile")));
     }
 
@@ -212,7 +212,7 @@ void Viewer3DTileQueryTest::_testUnansweredTileAskedAgainThenGivenUp()
     QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, Viewer3DTileQuery::kMaxRetries + 1, TestTimeout::mediumMs());
     QVERIFY(completedSpy.isEmpty());
 
-    expectLogMessage("Viewer3d.Viewer3DTileQuery", QtWarningMsg, QRegularExpression(QStringLiteral("timed out")));
+    expectLogMessage("Viewer3D.Viewer3DTileQuery", QtWarningMsg, QRegularExpression(QStringLiteral("timed out")));
     query._retryUnansweredTiles();
     verifyExpectedLogMessage();
     QCOMPARE(completedSpy.count(), 1);

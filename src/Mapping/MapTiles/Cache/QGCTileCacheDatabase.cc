@@ -1108,7 +1108,7 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
 std::optional<int> QGCTileCacheDatabase::_importableVersion(const QString& path, QString& errorString)
 {
     std::optional<int> version;
-    const QGCSqlHelper::ScopedConnection versionDB(path, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
+    const QGCSqlHelper::ScopedConnection versionDB(path, /*readOnly=*/true, QStringLiteral("QGCTileCacheImport"));
     if (versionDB.isValid()) {
         QSqlDatabase db = versionDB.database();
         version = QGCSqlHelper::userVersion(db);
@@ -1227,7 +1227,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
         importPath = migratedPath;
     }
 
-    QGCSqlHelper::ScopedConnection importDB(importPath, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
+    QGCSqlHelper::ScopedConnection importDB(importPath, /*readOnly=*/true, QStringLiteral("QGCTileCacheImport"));
     if (!importDB.isValid()) {
         result.errorString = "Error opening import database";
         return result;
@@ -1342,7 +1342,7 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord>& sets
     }
 
     (void) QFile::remove(path);
-    QGCSqlHelper::ScopedConnection exportDB(path, /*readOnly=*/false, QStringLiteral("QGeoTileExportSession"));
+    QGCSqlHelper::ScopedConnection exportDB(path, /*readOnly=*/false, QStringLiteral("QGCTileCacheExport"));
     if (!exportDB.isValid()) {
         qCCritical(QGCTileCacheDatabaseLog)
             << "Map Cache SQL error (create export database):" << exportDB.database().lastError();

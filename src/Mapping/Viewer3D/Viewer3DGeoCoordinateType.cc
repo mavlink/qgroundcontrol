@@ -3,7 +3,7 @@
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(Viewer3DGeoCoordinateTypeLog, "Viewer3d.Viewer3DGeoCoordinateType")
+QGC_LOGGING_CATEGORY(Viewer3DGeoCoordinateTypeLog, "Viewer3D.Viewer3DGeoCoordinateType")
 
 void Viewer3DGeoCoordinateType::_gpsToLocal()
 {

@@ -93,7 +93,7 @@ void TileImageSourceTest::_multipleRequestsIndependent()
 void TileImageSourceTest::_unknownProviderFails()
 {
     // Both the provider lookup and the source itself deliberately warn once at construction
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg,
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg,
                      QRegularExpression(QStringLiteral("type not found: \"No Such Provider\"")));
     expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("unknown map type")));
     TileImageSource source(QStringLiteral("No Such Provider"));

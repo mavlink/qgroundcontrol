@@ -10,7 +10,7 @@
 #include "Viewer3DTileQuery.h"
 #include "Viewer3DTileStatistics.h"
 
-QGC_LOGGING_CATEGORY(Viewer3DTerrainTextureLog, "Viewer3d.Viewer3DTerrainTexture")
+QGC_LOGGING_CATEGORY(Viewer3DTerrainTextureLog, "Viewer3D.Viewer3DTerrainTexture")
 
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()
 {

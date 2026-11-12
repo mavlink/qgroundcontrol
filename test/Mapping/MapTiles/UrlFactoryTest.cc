@@ -74,7 +74,7 @@ void UrlFactoryTest::_testMapIdFromEmptyType()
 
 void UrlFactoryTest::_testMapIdFromInvalidType()
 {
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg, QRegularExpression("type not found:"));
     QCOMPARE(UrlFactory::getMapIdFromProviderType(QStringLiteral("Nonexistent")), -1);
     verifyExpectedLogMessage();
 }
@@ -82,7 +82,7 @@ void UrlFactoryTest::_testMapIdFromInvalidType()
 void UrlFactoryTest::_testProviderTypeFromInvalidId()
 {
     QVERIFY(UrlFactory::getProviderTypeFromMapId(-1).isEmpty());
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg, QRegularExpression("map id not found:"));
     QVERIFY(UrlFactory::getProviderTypeFromMapId(99999).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -142,7 +142,7 @@ void UrlFactoryTest::_testGetTileHashWithoutProvider()
 {
     // The key has the id -1. Unlike getMapIdFromProviderType(), an empty name is reported too: the key is all the
     // caller gets.
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found for type:"));
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg, QRegularExpression("provider not found for type:"));
     QCOMPARE(UrlFactory::getTileHash(QString(), 4270, 2917, 13), QStringLiteral("-0000000010000427000002917013"));
     verifyExpectedLogMessage();
 }
@@ -300,7 +300,7 @@ void UrlFactoryTest::_testAverageSizeForKnownProviders()
 
 void UrlFactoryTest::_testAverageSizeForInvalidType()
 {
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg, QRegularExpression("type not found:"));
     QCOMPARE(UrlFactory::averageSizeForType(QStringLiteral("Nonexistent")), QGC_AVERAGE_TILE_SIZE);
     verifyExpectedLogMessage();
 }
@@ -502,7 +502,7 @@ void UrlFactoryTest::_testGetMapProviderInvalid()
 {
     QVERIFY(UrlFactory::getMapProviderFromMapId(-1) == nullptr);
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QString()) == nullptr);
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg, QRegularExpression("type not found:"));
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QStringLiteral("Nonexistent")) == nullptr);
     verifyExpectedLogMessage();
 }

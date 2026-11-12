@@ -14,7 +14,7 @@
 #include "QGCTileSet.h"
 #include "TianDiTuProvider.h"
 
-QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "MapTiles.QGCMapUrlEngine")
+QGC_LOGGING_CATEGORY(UrlFactoryLog, "MapTiles.UrlFactory")
 
 template <typename Provider>
 SharedMapProvider UrlFactory::_provider(int mapId)
@@ -189,7 +189,7 @@ QString UrlFactory::getProviderTypeFromMapId(int mapId)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "map id not found:" << mapId;
+    qCWarning(UrlFactoryLog) << "map id not found:" << mapId;
     return QString();
 }
 
@@ -205,7 +205,7 @@ SharedMapProvider UrlFactory::getMapProviderFromMapId(int mapId)
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "provider not found from id:" << mapId;
+    qCWarning(UrlFactoryLog) << "provider not found from id:" << mapId;
     return nullptr;
 }
 
@@ -228,7 +228,7 @@ SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
 
     SharedMapProvider provider = _findProvider(type);
     if (!provider) {
-        qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
+        qCWarning(UrlFactoryLog) << "type not found:" << type;
     }
 
     return provider;
@@ -297,7 +297,7 @@ QString UrlFactory::_tileHash(const SharedMapProvider& provider, QStringView typ
 {
     if (!provider) {
         // The key is all the caller gets: only this tells that it is the key of no provider
-        qCWarning(QGCMapUrlEngineLog) << "provider not found for type:" << type;
+        qCWarning(UrlFactoryLog) << "provider not found for type:" << type;
     }
 
     const int mapId = provider ? provider->getMapId() : -1;

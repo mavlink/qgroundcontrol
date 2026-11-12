@@ -13,7 +13,7 @@
 #include "AppMessages.h"
 #endif
 
-QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "MapTiles.QGCTileCacheWorker")
+QGC_LOGGING_CATEGORY(QGCCacheWorkerLog, "MapTiles.QGCCacheWorker")
 
 #ifdef QGC_UNITTEST_BUILD
 std::function<QGCCacheTile*(const QString&)> QGCCacheWorker::_unitTestTileGenerator;
@@ -27,14 +27,14 @@ void QGCCacheWorker::setUnitTestTileGenerator(std::function<QGCCacheTile*(const 
 QGCCacheWorker::QGCCacheWorker(QObject* parent)
     : QThread(parent)
 {
-    qCDebug(QGCTileCacheWorkerLog) << this;
+    qCDebug(QGCCacheWorkerLog) << this;
 }
 
 QGCCacheWorker::~QGCCacheWorker()
 {
     stop();
     wait();
-    qCDebug(QGCTileCacheWorkerLog) << this;
+    qCDebug(QGCCacheWorkerLog) << this;
 }
 
 void QGCCacheWorker::stop()
@@ -79,7 +79,7 @@ void QGCCacheWorker::run()
     _database->setCacheVariants(_cacheVariants);
 
     if (!_database->init()) {
-        qCWarning(QGCTileCacheWorkerLog) << "Failed To Init Database";
+        qCWarning(QGCCacheWorkerLog) << "Failed To Init Database";
         _database.reset();
 
         QMutexLocker lock(&_taskQueueMutex);
@@ -191,7 +191,7 @@ void QGCCacheWorker::_runTask(QGCMapTask* task)
             _importSets(task);
             break;
         default:
-            qCWarning(QGCTileCacheWorkerLog) << "given unhandled task type" << task->type();
+            qCWarning(QGCCacheWorkerLog) << "given unhandled task type" << task->type();
             break;
     }
 }

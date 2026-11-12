@@ -7,7 +7,7 @@
 #include "Viewer3DMapProvider.h"
 #include "Viewer3DSettings.h"
 
-QGC_LOGGING_CATEGORY(CityMapGeometryLog, "Viewer3d.CityMapGeometry")
+QGC_LOGGING_CATEGORY(CityMapGeometryLog, "Viewer3D.CityMapGeometry")
 
 CityMapGeometry::CityMapGeometry()
     : _modelName(QStringLiteral("city_map_default_name"))

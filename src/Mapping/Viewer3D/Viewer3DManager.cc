@@ -11,7 +11,7 @@
 #include "Viewer3DMapProvider.h"
 #include "Viewer3DSettings.h"
 
-QGC_LOGGING_CATEGORY(Viewer3DManagerLog, "Viewer3d.Viewer3DManager")
+QGC_LOGGING_CATEGORY(Viewer3DManagerLog, "Viewer3D.Viewer3DManager")
 
 Viewer3DManager::Viewer3DManager(QObject* parent)
     : QObject(parent)
