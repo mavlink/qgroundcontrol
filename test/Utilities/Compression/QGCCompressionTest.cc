@@ -1235,6 +1235,79 @@ void QGCCompressionTest::_testDecompressPlainInput()
     QCOMPARE(_readFile(inputPath), plain);
 }
 
+void QGCCompressionTest::_testDecompressOrCopyFile_data()
+{
+    QTest::addColumn<QString>("input");
+    QTest::addColumn<int>("limitOffset");  // The limit is the size of the content and this; none if negative
+    QTest::addColumn<bool>("cancel");
+    QTest::addColumn<QString>("warning");
+    QTest::addColumn<QGCCompression::Error>("expectedError");
+
+    using QGCCompression::Error;
+    constexpr int noLimit = -1;
+
+    QTest::newRow("compressed") << "compressed" << noLimit << false << "" << Error::None;
+    // What decompressFile() refuses: a file that only has the name of a compressed one
+    QTest::newRow("not compressed") << "plain" << noLimit << false << "" << Error::None;
+    // The copy is held to the limit and can be cancelled, as a decompression is
+    QTest::newRow("not compressed, at the limit") << "plain" << 0 << false << "" << Error::None;
+    QTest::newRow("not compressed, over the limit")
+        << "plain" << -2 << false << "Size limit exceeded" << Error::SizeLimitExceeded;
+    QTest::newRow("not compressed, cancelled") << "plain" << noLimit << true << "" << Error::Cancelled;
+    // Damage is no reason to take a file as it is: it is compressed, as its name says
+    QTest::newRow("compressed and truncated")
+        << "truncated" << noLimit << false << "(?i)truncated gzip input" << Error::InvalidArchive;
+}
+
+void QGCCompressionTest::_testDecompressOrCopyFile()
+{
+    QFETCH(QString, input);
+    QFETCH(int, limitOffset);
+    QFETCH(bool, cancel);
+    QFETCH(QString, warning);
+    QFETCH(QGCCompression::Error, expectedError);
+    using QGCCompression::Error;
+
+    const QByteArray content = QByteArray("{\"name\": \"content of the file\"}\n").repeated(100);
+    const QByteArray compressed = _gzipMember(content);
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("manifest.json.gz");
+    const QString outputPath = tempDir.filePath("manifest.json");
+    if (input == "plain") {
+        QVERIFY(_writeFile(inputPath, content));
+    } else if (input == "compressed") {
+        QVERIFY(_writeFile(inputPath, compressed));
+    } else {
+        QVERIFY(_writeFile(inputPath, compressed.left(compressed.size() / 2)));
+    }
+    const qint64 limit = (limitOffset == -1) ? 0 : (content.size() + 1 + limitOffset);
+    QGCCompression::ProgressCallback progress;
+    if (cancel) {
+        progress = [](qint64, qint64) { return false; };
+    }
+
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
+    }
+    const bool written = QGCCompression::decompressOrCopyFile(inputPath, outputPath, progress, limit);
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(written, expectedError == Error::None);
+    QCOMPARE(QGCCompression::lastError(), expectedError);
+    // The output holds the content, decompressed or as it was, and a failure leaves none. The input stays.
+    const QStringList inputOnly{QStringLiteral("manifest.json.gz")};
+    const QStringList outputAndInput{QStringLiteral("manifest.json"), QStringLiteral("manifest.json.gz")};
+    QCOMPARE(_entriesBelow(tempDir.path()), written ? outputAndInput : inputOnly);
+    if (written) {
+        QCOMPARE(_readFile(outputPath), content);
+        // The filter tells a copy from a decompression
+        QCOMPARE(QGCCompression::detectedFilterName(),
+                 (input == "plain") ? QStringLiteral("none") : QStringLiteral("gzip"));
+    }
+}
+
 // ============================================================================
 // Progress Callback Tests
 // ============================================================================
@@ -2919,6 +2992,50 @@ void QGCCompressionTest::_testCompressionJobErrorString()
 
     QVERIFY(!finishedSpy.first().first().toBool());
     QCOMPARE(job.errorString(), QStringLiteral("Failed to extract archive: ") + corruptZip);
+}
+
+void QGCCompressionTest::_testCompressionJobPlainInput_data()
+{
+    QTest::addColumn<bool>("copy");
+
+    QTest::newRow("decompressFile") << false;
+    QTest::newRow("decompressOrCopyFile") << true;
+}
+
+void QGCCompressionTest::_testCompressionJobPlainInput()
+{
+    QFETCH(bool, copy);
+
+    // A file that only has the name of a compressed one
+    const QByteArray plain("{\"name\": \"not compressed\"}\n");
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("manifest.json.gz");
+    const QString outputPath = tempDir.filePath("manifest.json");
+    QVERIFY(_writeFile(inputPath, plain));
+
+    QGCCompressionJob job;
+    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
+    if (copy) {
+        job.decompressOrCopyFile(inputPath, outputPath);
+    } else {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Input is not compressed"));
+        job.decompressFile(inputPath, outputPath);
+    }
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    if (!copy) {
+        verifyExpectedLogMessage();
+    }
+
+    // Only the job that was asked to takes the file as it is. The one QGCArchiveWatcher runs fails for it.
+    QCOMPARE(finishedSpy.first().first().toBool(), copy);
+    if (copy) {
+        QVERIFY2(job.errorString().isEmpty(), qPrintable(job.errorString()));
+        QCOMPARE(_readFile(outputPath), plain);
+    } else {
+        QVERIFY2(job.errorString().endsWith(": the input is not compressed"), qPrintable(job.errorString()));
+        QVERIFY(!QFileInfo::exists(outputPath));
+    }
+    QCOMPARE(_readFile(inputPath), plain);
 }
 
 // ============================================================================

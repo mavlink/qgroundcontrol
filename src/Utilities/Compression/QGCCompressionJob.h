@@ -148,6 +148,14 @@ public slots:
     void decompressFile(const QString& inputPath, const QString& outputPath = QString(),
                         qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes);
 
+    /// Decompress single file, or copy it if it is not compressed: see QGCCompression::decompressOrCopyFile()
+    /// For a file that only has the name of a compressed one, which decompressFile() fails for
+    /// @param inputPath Path to the file
+    /// @param outputPath Path for the output (empty = auto-detect)
+    /// @param maxBytes Maximum size of the output (0 = unlimited)
+    void decompressOrCopyFile(const QString& inputPath, const QString& outputPath = QString(),
+                              qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes);
+
     /// Extract single file from archive
     /// @param archivePath Path to archive file
     /// @param fileName Name of file inside archive

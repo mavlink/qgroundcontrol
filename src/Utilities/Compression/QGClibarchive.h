@@ -421,9 +421,11 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 /// @param progress Optional progress callback
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
 /// @param result If not null, receives how the decompression ended
+/// @param copyPlainInput Whether an input that is not compressed is written to the output as it is, within
+///        maxBytes, instead of being refused as NotCompressed
 /// @return true on success, false on failure or size limit exceeded
 bool decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress = nullptr,
-                          qint64 maxBytes = 0, ReadResult* result = nullptr);
+                          qint64 maxBytes = 0, ReadResult* result = nullptr, bool copyPlainInput = false);
 
 /// Decompress data in memory
 /// @param data Compressed input data

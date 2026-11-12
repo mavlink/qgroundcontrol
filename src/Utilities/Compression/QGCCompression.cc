@@ -621,11 +621,13 @@ QString strippedPath(const QString& filePath)
 // Single-File Decompression
 // ============================================================================
 
-/// decompressFile(), for decompressIfNeeded() too
-/// @param notCompressed Receives whether it failed because the file, taken for a single compressed stream, is
-///        not compressed
+/// decompressFile(), for decompressIfNeeded() and decompressOrCopyFile() too
+/// @param copyPlainInput Whether a file that is taken for a single compressed stream and is not compressed is
+///        written to the output as it is instead of being refused
+/// @param notCompressed Receives whether it failed because such a file was refused
 static bool decompressFileOrTell(const QString& inputPath, const QString& outputPath, Format format,
-                                 const ProgressCallback& progress, qint64 maxDecompressedBytes, bool& notCompressed)
+                                 const ProgressCallback& progress, qint64 maxDecompressedBytes, bool copyPlainInput,
+                                 bool& notCompressed)
 {
     notCompressed = false;
 
@@ -652,8 +654,8 @@ static bool decompressFileOrTell(const QString& inputPath, const QString& output
     // Single-file compression formats
     if (isCompressionFormat(format)) {
         QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
-        const bool success =
-            QGClibarchive::decompressSingleFile(inputPath, actualOutput, progress, maxDecompressedBytes, &result);
+        const bool success = QGClibarchive::decompressSingleFile(inputPath, actualOutput, progress,
+                                                                 maxDecompressedBytes, &result, copyPlainInput);
         captureFormatInfo();
         if (!success) {
             notCompressed = (result == QGClibarchive::ReadResult::NotCompressed);
@@ -677,7 +679,15 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
                     qint64 maxDecompressedBytes)
 {
     bool notCompressed = false;
-    return decompressFileOrTell(inputPath, outputPath, format, progress, maxDecompressedBytes, notCompressed);
+    return decompressFileOrTell(inputPath, outputPath, format, progress, maxDecompressedBytes, false, notCompressed);
+}
+
+bool decompressOrCopyFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress,
+                          qint64 maxDecompressedBytes)
+{
+    bool notCompressed = false;
+    return decompressFileOrTell(inputPath, outputPath, Format::Auto, progress, maxDecompressedBytes, true,
+                                notCompressed);
 }
 
 QString decompressIfNeeded(const QString& filePath, const QString& outputPath, bool removeOriginal,
@@ -695,7 +705,8 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath, b
 
     // Attempt decompression
     bool notCompressed = false;
-    if (!decompressFileOrTell(filePath, actualOutput, Format::Auto, nullptr, maxDecompressedBytes, notCompressed)) {
+    if (!decompressFileOrTell(filePath, actualOutput, Format::Auto, nullptr, maxDecompressedBytes, false,
+                              notCompressed)) {
         if (notCompressed) {
             // Only its name said that the file is compressed: it is the result as it is, and stays
             clearError();

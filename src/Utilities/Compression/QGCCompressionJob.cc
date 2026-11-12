@@ -104,6 +104,15 @@ void QGCCompressionJob::decompressFile(const QString &inputPath,
     _startOperation(Operation::DecompressFile, inputPath, outputPath, work);
 }
 
+void QGCCompressionJob::decompressOrCopyFile(const QString& inputPath, const QString& outputPath, qint64 maxBytes)
+{
+    auto work = [inputPath, outputPath, maxBytes](QGCCompression::ProgressCallback progress) {
+        return QGCCompression::decompressOrCopyFile(inputPath, outputPath, progress, maxBytes);
+    };
+
+    _startOperation(Operation::DecompressFile, inputPath, outputPath, work);
+}
+
 void QGCCompressionJob::extractFile(const QString &archivePath,
                                      const QString &fileName,
                                      const QString &outputPath)

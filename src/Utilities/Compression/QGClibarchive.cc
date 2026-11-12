@@ -939,7 +939,9 @@ enum class StreamHeader
 };
 
 /// Read the header of the one entry that a single compressed stream is read as
-StreamHeader readStreamHeader(struct archive* a)
+/// @param plainAllowed Whether an input that is not compressed is read as it is (Data) instead of being refused
+///        (NotCompressed)
+StreamHeader readStreamHeader(struct archive* a, bool plainAllowed = false)
 {
     struct archive_entry* entry = nullptr;
     const int header = archive_read_next_header(a, &entry);
@@ -948,8 +950,11 @@ StreamHeader readStreamHeader(struct archive* a)
         // The raw format takes any input that has bytes, also one that no decompression filter is in the chain
         // for, which it hands through as it is
         if (archive_filter_count(a) <= 1) {
-            qCWarning(QGClibarchiveLog) << "Input is not compressed: no decompression filter recognizes it";
-            return StreamHeader::NotCompressed;
+            if (!plainAllowed) {
+                qCWarning(QGClibarchiveLog) << "Input is not compressed: no decompression filter recognizes it";
+                return StreamHeader::NotCompressed;
+            }
+            qCDebug(QGClibarchiveLog) << "Input is not compressed: it is taken as it is";
         }
         return StreamHeader::Data;
     }
@@ -1928,7 +1933,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 // ----------------------------------------------------------------------------
 
 bool decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress,
-                          qint64 maxBytes, ReadResult* result)
+                          qint64 maxBytes, ReadResult* result, bool copyPlainInput)
 {
     ReadResult unused = ReadResult::Failed;
     ReadResult& outcome = (result != nullptr) ? *result : unused;
@@ -1939,7 +1944,7 @@ bool decompressSingleFile(const QString& inputPath, const QString& outputPath, P
         return false;
     }
 
-    const StreamHeader header = readStreamHeader(reader.handle());
+    const StreamHeader header = readStreamHeader(reader.handle(), copyPlainInput);
     if (header == StreamHeader::Failed) {
         return false;
     }

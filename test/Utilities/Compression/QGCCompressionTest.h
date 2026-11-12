@@ -49,6 +49,8 @@ private slots:
     void _testDecompressRejectsStreamWithoutData();
     void _testDecompressPlainInput_data();
     void _testDecompressPlainInput();
+    void _testDecompressOrCopyFile_data();
+    void _testDecompressOrCopyFile();
 
     // Progress callbacks
     void _testProgressCallbackExtract_data();
@@ -100,6 +102,8 @@ private slots:
     void _testCompressionJobAsyncStatic();
     void _testCompressionJobCancelFuture();
     void _testCompressionJobErrorString();
+    void _testCompressionJobPlainInput_data();
+    void _testCompressionJobPlainInput();
 
     // Sparse file handling
     void _testSparseFileExtraction_data();

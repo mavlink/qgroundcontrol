@@ -173,6 +173,21 @@ bool decompressFile(const QString &inputPath, const QString &outputPath = QStrin
                     ProgressCallback progress = nullptr,
                     qint64 maxDecompressedBytes = 0);
 
+/// Decompress a single file, or copy it if it is not compressed
+/// For a file that has the name of a compressed one and can have been decompressed on its way: the body of a
+/// download is, when its server sends it with a content encoding, which the HTTP client takes off. Everything
+/// is as for decompressFile() with Format::Auto, except that a file which is taken for a compressed one and
+/// is not compressed is written to the output as it is, where decompressFile() refuses it. The size limit
+/// holds for the copy too, and the callback can cancel it. detectedFilterName() is "none" after a copy.
+/// A compressed file that is truncated or corrupt fails, as it does for decompressFile().
+/// @param inputPath Path to the file (or Qt resource path :/)
+/// @param outputPath Path for the output. If empty: as for decompressFile()
+/// @param progress Optional progress callback (return false to cancel)
+/// @param maxDecompressedBytes Maximum size of the output in bytes (0 = unlimited)
+/// @return true on success, false on failure or if size limit exceeded
+bool decompressOrCopyFile(const QString& inputPath, const QString& outputPath = QString(),
+                          ProgressCallback progress = nullptr, qint64 maxDecompressedBytes = 0);
+
 /// Decompress file if it's a compressed format, otherwise return original path
 /// The original path is also returned for a file that has the name of a compressed one and is not compressed.
 /// @param filePath Input file (may or may not be compressed)
