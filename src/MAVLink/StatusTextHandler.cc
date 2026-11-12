@@ -333,8 +333,11 @@ void StatusTextHandler::_handleStatusText(const mavlink_message_t &message)
     }
 
     if ((statustext.id == 0) || includesNullTerminator) {
-        m_chunkedStatusTextTimer->stop();
         _chunkedStatusTextCompleted(compId);
+    }
+
+    if (m_chunkedStatusTextInfoMap.empty()) {
+        m_chunkedStatusTextTimer->stop();
     }
 }
 
