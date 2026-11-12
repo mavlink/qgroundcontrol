@@ -121,14 +121,25 @@ void sendEventAsync(GstPad* pad, GstEvent* event)
         gst_event_unref(event);
         return;
     }
+    auto* const pending = new PendingEvent{.pad = adoptPad(GST_PAD(gst_object_ref(pad))), .event = adoptEvent(event)};
+#if GST_CHECK_VERSION(1, 28, 0)
+    // Replaces gst_element_call_async(), deprecated in 1.28. It takes no destroy notify: the call frees its data.
+    gst_object_call_async(
+        GST_OBJECT_CAST(parent.get()),
+        [](GstObject* /*object*/, gpointer data) {
+            const std::unique_ptr<PendingEvent> owned(static_cast<PendingEvent*>(data));
+            (void) gst_pad_send_event(owned->pad.get(), owned->event.release());
+        },
+        pending);
+#else
     gst_element_call_async(
         parent.get(),
         [](GstElement* /*element*/, gpointer data) {
-            auto* const pending = static_cast<PendingEvent*>(data);
-            (void) gst_pad_send_event(pending->pad.get(), pending->event.release());
+            auto* const queued = static_cast<PendingEvent*>(data);
+            (void) gst_pad_send_event(queued->pad.get(), queued->event.release());
         },
-        new PendingEvent{.pad = adoptPad(GST_PAD(gst_object_ref(pad))), .event = adoptEvent(event)},
-        [](gpointer data) { delete static_cast<PendingEvent*>(data); });
+        pending, [](gpointer data) { delete static_cast<PendingEvent*>(data); });
+#endif
 }
 
 GstPadPtr firstSrcPad(GstElement* element)
