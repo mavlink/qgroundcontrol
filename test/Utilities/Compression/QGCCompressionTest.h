@@ -1,5 +1,6 @@
 #pragma once
 
+#include "QGCCompression.h"
 #include "UnitTest.h"
 
 /// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
@@ -159,6 +160,47 @@ private slots:
     void _benchmarkListArchive();
 
 private:
+    /// What a test hands to an entry point of QGCCompression, which takes of it what it has a parameter for
+    struct Inputs
+    {
+        /// The archive or the compressed file. An entry point that reads a device or data is given this file
+        /// as a device, or its content.
+        QString path = {};
+        /// Where to write: the directory to extract into, which a single entry is written to under its own
+        /// name, or the file for a decompressed stream
+        QString output = {};
+        /// The entries asked for by name, or the patterns. An entry point for one entry takes the first.
+        QStringList names = {QStringLiteral("manifest.json")};
+        QGCCompression::EntryFilter filter = [](const QGCCompression::ArchiveEntry&) { return true; };
+        QGCCompression::Format format = QGCCompression::Format::Auto;
+        QGCCompression::ProgressCallback progress = {};
+        qint64 maxBytes = 0;
+    };
+
+    /// What an entry point of QGCCompression returns besides whether it succeeded
+    struct Results
+    {
+        QByteArray data = {};                              ///< Of the entry points that read to memory
+        QStringList names = {};                            ///< Of listArchive
+        QList<QGCCompression::ArchiveEntry> entries = {};  ///< Of listArchiveDetailed
+        QGCCompression::ArchiveStats stats = {};           ///< Of getArchiveStats
+
+        /// Whether nothing came back, which is so for an entry point that gives nothing back
+        bool isEmpty() const
+        {
+            return data.isEmpty() && names.isEmpty() && entries.isEmpty() && (stats.totalEntries == 0);
+        }
+    };
+
+    /// Calls the entry point of QGCCompression that a row of test data names: a function, or
+    /// "decompressFromDevice-file" and "decompressFromDevice-memory" for the two of that name
+    /// @param results If not null, receives what the entry point returned
+    /// @return Whether it succeeded
+    static bool _call(const QString& api, const Inputs& inputs, Results* results = nullptr);
+
+    /// Whether @a api decompresses a single stream, and not an archive
+    static bool _isStreamEntryPoint(const QString& api) { return api.startsWith(QLatin1String("decompress")); }
+
     /// Paths of everything below @a directoryPath, relative to it and sorted
     static QStringList _entriesBelow(const QString& directoryPath);
 
