@@ -311,6 +311,12 @@ int SurfaceModel::memoryStoreTileLimit()
     return qMax(kMinTiles, static_cast<int>(megabytes * kTilesPerMegabyte / 2));
 }
 
+qint64 SurfaceModel::memoryStoreByteLimit()
+{
+    constexpr qint64 kBytesPerTile = 256 * 1024;
+    return memoryStoreTileLimit() * kBytesPerTile;
+}
+
 // GCOVR_EXCL_START — perf-stats instrumentation for the debug overlay/capture
 SurfaceModel::UpdateStats SurfaceModel::takeUpdateStats()
 {

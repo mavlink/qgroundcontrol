@@ -238,9 +238,10 @@ private:
     static constexpr double kSegmentSampleSpacingMeters = 30.0;
     static constexpr int kMaxSegmentSamples = 2000;  ///< full spacing up to GeoMapMissionPath's 50 km pieces
 
-    /// Cap of each of the two in-memory stores sized from the memory cache setting: the images kept after patch
-    /// removal (fallback source) and the height field's decoded tiles. Images of the patches shown are not counted.
-    const int _memoryStoreTileLimit;
+    /// Caps of the two in-memory stores sized from the memory cache setting: the height field's decoded tiles, and
+    /// the images kept after patch removal (fallback source). Images of the patches shown are not counted.
+    const int _elevationTileLimit;
+    const qint64 _retiredImageByteLimit;
     GeoScene* _scene = nullptr;
     HeightSource* _heightSource = nullptr;
     HeightField* _heightField = nullptr;
@@ -256,6 +257,7 @@ private:
     /// a source tile changes (see _invalidateFallbacks), dropped with the row.
     mutable QHash<TileMath::TileKey, QImage> _fallbackCache;
     QList<TileMath::TileKey> _retiredOrder;            ///< retired keys oldest-first, for eviction
+    qint64 _retiredImageBytes = 0;                     ///< QImage::sizeInBytes of the retired images
     QHash<int, TileMath::TileKey> _imageRequestKey;    ///< in-flight image request id -> patch
     QHash<TileMath::TileKey, int> _imageRequestByKey;  ///< reverse map for cancellation
     QSet<TileMath::TileKey> _failedImageKeys;          ///< resident patches awaiting an image retry

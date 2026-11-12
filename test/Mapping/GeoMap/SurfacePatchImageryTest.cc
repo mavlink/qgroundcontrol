@@ -230,20 +230,21 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
 void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting_data()
 {
     QTest::addColumn<int>("megabytes");
+    QTest::addColumn<int>("tileEdgePixels");
     QTest::addColumn<int>("expectedRetired");
 
-    // The store gets half of the setting, and a tile image takes about 256 KB
-    QTest::newRow("halfOfTheSetting") << 20 << 40;
-    QTest::newRow("minimum") << 1 << 32;
+    // The store gets half of the setting, and an image of 256 pixels takes 256 KB
+    QTest::newRow("halfOfTheSetting") << 20 << 256 << 40;
+    QTest::newRow("minimum") << 1 << 256 << 32;
+    // The setting is a budget in bytes: an image of 512 pixels takes four times as much
+    QTest::newRow("largerImages") << 20 << 512 << 10;
 }
 
 void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting()
 {
     QFETCH(int, megabytes);
+    QFETCH(int, tileEdgePixels);
     QFETCH(int, expectedRetired);
-
-    const QString type = mapType();
-    QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     Fact* const setting = SettingsManager::instance()->mapsSettings()->maxCacheMemorySize();
     const QVariant savedValue = setting->rawValue();
@@ -252,17 +253,30 @@ void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting()
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
     setting->setRawValue(megabytes);
 
+    // Every tile comes from the network, as an image of the size of the row with 4 bytes a pixel. A source of its
+    // own for each size keeps these tiles apart in the tile cache of the process.
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    customUrl->setRawValue(QStringLiteral("https://tiles%1.example/{z}/{x}/{y}.png").arg(tileEdgePixels));
+    UnitTestTileGenerator::setForcedMissCount(10000);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    TileReplyMockNam nam;  // must outlive the model: its TileImageSource borrows the manager
+    nam.body = tileReplyPngBody(Qt::darkGreen, tileEdgePixels);
+
     GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
+    model.setTileImageNetworkManager(&nam);
     attach(model, scene, camera);
-    model.setMapType(type);
-    // A view towards the horizon shows more patches than either row keeps images for
+    model.setMapType(QStringLiteral("CustomURL Custom"));
+    // A view towards the horizon shows more patches than any row keeps images for
     camera.setTilt(GeoMapCamera::kMaxTilt);
     model.drainUpdates();
     const int imagedPatches = model.rowCount();
     QCOMPARE_GT(imagedPatches, expectedRetired);
-    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), imagedPatches, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingImageCount(), 0, TestTimeout::mediumMs());
+    QCOMPARE(rowsWithImage(model), imagedPatches);
 
     // Leaving retires every image. Coming back, only the patches whose image was dropped ask for it again
     camera.setCenter(QGeoCoordinate(kCenter.latitude() + 5.0, kCenter.longitude() + 5.0));

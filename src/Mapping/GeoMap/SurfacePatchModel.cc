@@ -35,7 +35,8 @@ QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelVerboseLog, "GeoMap.SurfacePatchMode
 
 SurfacePatchModel::SurfacePatchModel(QObject* parent)
     : QAbstractListModel(parent)
-    , _memoryStoreTileLimit(SurfaceModel::memoryStoreTileLimit())
+    , _elevationTileLimit(SurfaceModel::memoryStoreTileLimit())
+    , _retiredImageByteLimit(SurfaceModel::memoryStoreByteLimit())
     , _imageRetry(new TileRetryPacer(this))
 {
     connect(_imageRetry, &TileRetryPacer::roundDue, this, &SurfacePatchModel::_retryFailedImages);
@@ -155,6 +156,7 @@ void SurfacePatchModel::_resetImagery()
     _missingImageKeys.clear();
     _imageRetry->reset();
     _retiredOrder.clear();
+    _retiredImageBytes = 0;
     _fallbackCache.clear();
     if (!_tileImages.isEmpty()) {
         _tileImages.clear();
@@ -337,7 +339,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
         }
         qCDebug(GeoMapSurfacePatchModelLog) << "rebuilding surface model, height source:"
                                             << (_debugHills ? "debug hills" : (_terrain ? "terrain" : "flat"));
-        _heightField = new HeightField(_memoryStoreTileLimit, this);
+        _heightField = new HeightField(_elevationTileLimit, this);
         connect(_heightField, &HeightField::regionChanged, this, &SurfacePatchModel::terrainDataChanged);
         _heightSource->setHeightField(_heightField);
         _surfaceModel = new SurfaceModel(camera, _heightSource, _heightField, this);
@@ -889,8 +891,12 @@ void SurfacePatchModel::_patchAdded(const TileMath::TileKey& key)
     endInsertRows();
     _statAdds++;
     if (_tileSource) {
-        if (_tileImages.contains(key)) {
-            _retiredOrder.removeOne(key);  // back to live: exempt from eviction again
+        const auto image = _tileImages.constFind(key);
+        if (image != _tileImages.constEnd()) {
+            // back to live: exempt from eviction again
+            if (_retiredOrder.removeOne(key)) {
+                _retiredImageBytes -= image->sizeInBytes();
+            }
         } else {
             _requestTileImage(key);
         }
@@ -934,11 +940,14 @@ void SurfacePatchModel::_patchRemoved(const TileMath::TileKey& key)
 
     // Retire the delivered image instead of dropping it: it seeds the
     // fallback for patches that replace this one across LOD changes
-    if (_tileImages.contains(key)) {
+    const auto image = _tileImages.constFind(key);
+    if (image != _tileImages.constEnd()) {
         _retiredOrder.append(key);
-        while (_retiredOrder.count() > _memoryStoreTileLimit) {
+        _retiredImageBytes += image->sizeInBytes();
+        // By bytes: a provider's images can be larger than the 256 pixel tiles the setting is reckoned in
+        while ((_retiredImageBytes > _retiredImageByteLimit) && !_retiredOrder.isEmpty()) {
             const TileMath::TileKey evicted = _retiredOrder.takeFirst();
-            _tileImages.remove(evicted);
+            _retiredImageBytes -= _tileImages.take(evicted).sizeInBytes();
             _invalidateFallbacks(evicted);
         }
     }

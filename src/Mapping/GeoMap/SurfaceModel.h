@@ -92,11 +92,15 @@ public:
         bool edgeCliff = false;  ///< cliff monitor: edgeStep is steep enough to log as a cliff
     };
 
-    /// Tiles each of the surface's two in-memory stores may keep: the height field's decoded tiles, and the images
-    /// SurfacePatchModel keeps from removed patches. The memory cache setting is split evenly between them, at
-    /// about 256 KB a tile. Neither gets fewer tiles than the setting's mobile default gives, so a very low setting
-    /// still leaves stand-ins for images that are loading.
+    /// Tiles of 256 KB that each of the surface's two in-memory stores may keep: the height field's decoded tiles,
+    /// which have that size, and the images SurfacePatchModel keeps from removed patches, which it counts in bytes
+    /// (see memoryStoreByteLimit). The memory cache setting is split evenly between the stores. Neither gets fewer
+    /// tiles than the setting's mobile default gives, so a very low setting still leaves stand-ins for images that
+    /// are loading.
     static int memoryStoreTileLimit();
+
+    /// memoryStoreTileLimit() in bytes
+    static qint64 memoryStoreByteLimit();
 
     /// Recompute the active patch set from the current camera state. Called
     /// automatically on camera changes; safe to call directly (idempotent).
