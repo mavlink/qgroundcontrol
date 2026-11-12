@@ -11,6 +11,25 @@
 namespace QGCCompression {
 
 // ============================================================================
+// Error Codes
+// ============================================================================
+
+/// Error codes for decompression operations
+enum class Error
+{
+    None,               ///< No error (success)
+    FileNotFound,       ///< Input file does not exist
+    PermissionDenied,   ///< Cannot read input or write output
+    InvalidArchive,     ///< Archive or compressed stream cannot be read or is damaged
+    UnsupportedFormat,  ///< Format not recognized or not supported, or an archive entry that is not extracted
+    SizeLimitExceeded,  ///< Decompressed size exceeded limit
+    Cancelled,          ///< Operation cancelled by progress callback
+    FileNotInArchive,   ///< Requested file not found in archive
+    IoError,            ///< Output cannot be written, or a device to read from is not open
+    InternalError       ///< Unexpected internal error
+};
+
+// ============================================================================
 // Progress Callback
 // ============================================================================
 

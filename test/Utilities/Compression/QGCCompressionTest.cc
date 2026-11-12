@@ -2182,6 +2182,13 @@ void QGCCompressionTest::_testExtractToFileErrors()
 
     QCOMPARE(extracted, expectedError == Error::None);
     QCOMPARE(QGCCompression::lastError(), expectedError);
+    // The message ends with which of the two it is that failed
+    const QString message = QGCCompression::lastErrorString();
+    if (expectedError == Error::IoError) {
+        QVERIFY2(message.endsWith(": the output cannot be written"), qPrintable(message));
+    } else if (expectedError == Error::InvalidArchive) {
+        QVERIFY2(message.endsWith(": the archive cannot be read or is damaged"), qPrintable(message));
+    }
     QCOMPARE(_entriesBelow(tempDir.filePath("output")), entryLeft ? QStringList{entryName} : QStringList());
     QCOMPARE(TestFixtures::readFile(blockerPath), QByteArray("in the way"));
 }
