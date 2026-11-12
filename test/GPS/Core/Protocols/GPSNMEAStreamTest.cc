@@ -473,6 +473,43 @@ void GPSNMEAStreamTest::_lateSentenceCompletesWaitingEpoch()
     QVERIFY(receiver.published->velocityValid);
 }
 
+void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge_data()
+{
+    QTest::addColumn<QByteArray>("type");
+    QTest::newRow("rmc") << QByteArray("RMC");
+    QTest::newRow("gst") << QByteArray("GST");
+}
+
+void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge()
+{
+    QFETCH(QByteArray, type);
+    // A receiver that reports every five seconds at 4800 baud and sends the GSV sentences of four constellations
+    // between its GGA and the sentence that follows: twelve of them put that sentence 1.92 s after the GGA, thirteen
+    // put it 2.07 s after.
+    constexpr uint64_t INTERVAL_US = 5000000;
+    constexpr uint64_t MAX_AGE_US = NMEA::NavigationEpochAssembler::METADATA_MAX_AGE.count();
+    NMEAReceiver receiver;
+    const uint64_t start = receiver.now;
+    int epoch = 0;
+    for (const uint64_t delayUs : {1920000, 1920000, 2070000, 1920000, 1920000, 2070000}) {
+        const QByteArray utc = QByteArray::number(123500 + 5 * epoch);
+        receiver.now = start + epoch * INTERVAL_US;
+        const uint64_t positionReceipt = receiver.now;
+        receiver.feed(gga(utc));
+        receiver.now += delayUs;
+        receiver.feed(sentenceOf(type, utc));
+        ++epoch;
+        QCOMPARE(receiver.positions, epoch);
+        const auto& navigation = receiver.published->navigation;
+        QCOMPARE(navigation.timestampUs, positionReceipt);
+        if (delayUs > MAX_AGE_US) {
+            // Two epochs have shown the sentence, so this one waited for it and is published with it.
+            QVERIFY(type == "RMC" ? receiver.published->velocityValid
+                                  : std::isfinite(navigation.horizontalAccuracyMeters));
+        }
+    }
+}
+
 void GPSNMEAStreamTest::_fixLossWhileWaiting()
 {
     NMEAReceiver receiver;

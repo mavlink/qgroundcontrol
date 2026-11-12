@@ -139,6 +139,11 @@ void NavigationEpochAssembler::_resetEpoch(StoredEpoch& stored, std::optional<in
 
 void NavigationEpochAssembler::_resetExpiredEpoch(StoredEpoch& stored, uint64_t receivedAtUs)
 {
+    // A GGA that waits for the rest of its epoch is not retained metadata: a sentence of its time completes it however
+    // late, and only another GGA replaces it.
+    if (stored.epoch.ggaQuality && !stored.published) {
+        return;
+    }
     if (stored.epoch.receivedAtUs && receivedAtUs > stored.epoch.receivedAtUs &&
         !MonotonicClock::withinAge(stored.epoch.receivedAtUs, receivedAtUs, METADATA_MAX_AGE)) {
         _resetEpoch(stored, stored.epoch.timeMs);

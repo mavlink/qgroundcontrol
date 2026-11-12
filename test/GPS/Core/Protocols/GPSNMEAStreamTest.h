@@ -24,6 +24,8 @@ private slots:
     void _emptyFieldKeepsEpochValue_data();
     void _emptyFieldKeepsEpochValue();
     void _lateSentenceCompletesWaitingEpoch();
+    void _awaitedSentenceLaterThanMetadataAge_data();
+    void _awaitedSentenceLaterThanMetadataAge();
     void _fixLossWhileWaiting();
     void _vdopEpoch_data();
     void _vdopEpoch();
