@@ -10,10 +10,8 @@ from unittest.mock import patch
 
 import analyze
 import pytest
-from analyzers.clang_tidy import FIX_HEADER_DIRS, ClangTidyAnalyzer
+from analyzers.clang_tidy import ClangTidyAnalyzer
 from analyzers.result_cache import ResultCache
-
-from ._helpers import REPO_ROOT
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -157,15 +155,6 @@ def test_fix_mode_is_never_cached(tmp_path: Path) -> None:
     assert analyzer._cacheable()
     analyzer.fixes_dir = tmp_path / "fixes"
     assert not analyzer._cacheable()
-
-
-def test_fix_header_filter_anchors_the_configured_header_filter() -> None:
-    config = (REPO_ROOT / ".clang-tidy").read_text(encoding="utf-8")
-    match = re.search(
-        r"^HeaderFilterRegex: '\^\.\*/\(([^)]*)\)/\.\*\\\.\(h\|hpp\)\$'$", config, re.M
-    )
-    assert match is not None
-    assert tuple(match.group(1).split("|")) == FIX_HEADER_DIRS
 
 
 @pytest.mark.parametrize(

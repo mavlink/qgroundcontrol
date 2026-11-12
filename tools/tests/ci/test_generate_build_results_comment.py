@@ -999,6 +999,65 @@ def test_analysis_reports_warnings_on_changed_lines_once_across_shards(tmp_path:
     assert "Most frequent checks" not in comment
 
 
+def test_analysis_lists_likely_bugs_first_and_counts_every_changed_line_warning_by_check(
+    tmp_path: Path,
+) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    # 46 warnings of 14 checks; the most frequent check is first by path and is not bug-class.
+    tidy = {
+        "src/A.cc": [
+            [line, 1, "warning", "performance-unnecessary-value-param"] for line in range(1, 31)
+        ],
+        "src/M.cc": [[n + 1, 1, "warning", f"performance-x{n:02d}"] for n in range(10)],
+        "src/Z.cc": [
+            [1, 1, "warning", "clang-analyzer-core.CallAndMessage"],
+            *([line, 1, "warning", "bugprone-narrowing-conversions"] for line in (2, 3, 4)),
+        ],
+    }
+    clazy = {"src/B.cc": [[line, 1, "warning", "-Wclazy-range-loop-detach"] for line in (1, 2)]}
+    for report in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
+        report.unlink()
+    shard = "analysis-artifacts/clang-tidy-clazy-output-1"
+    write_files(
+        tmp_path,
+        {
+            f"{shard}/clang-tidy-diagnostics.json": _diagnostics("clang-tidy", tidy, tidy),
+            f"{shard}/clazy-diagnostics.json": _diagnostics("clazy", clazy, clazy),
+        },
+    )
+    collected = mod.collect_report(env, tmp_path, NOW)
+
+    full, smaller, smallest = (mod.render_analysis(collected, limits) for limits in mod.LIMIT_STEPS)
+
+    listed = re.findall(r"^- \[`(src/\S+)`\]\S* `(\S+)` ", full, re.M)
+    assert listed[:5] == [
+        ("src/Z.cc:1", "clang-analyzer-core.CallAndMessage"),
+        ("src/Z.cc:2", "bugprone-narrowing-conversions"),
+        ("src/Z.cc:3", "bugprone-narrowing-conversions"),
+        ("src/Z.cc:4", "bugprone-narrowing-conversions"),
+        ("src/A.cc:1", "performance-unnecessary-value-param"),
+    ]
+    assert len(listed) == 20
+    assert "- …and 26 more\n\n" in full
+    assert (
+        "By check: `performance-unnecessary-value-param` 30, `bugprone-narrowing-conversions` 3,"
+        " `-Wclazy-range-loop-detach` 2, `clang-analyzer-core.CallAndMessage` 1,"
+        " `performance-x00` 1, `performance-x01` 1, `performance-x02` 1, `performance-x03` 1,"
+        " `performance-x04` 1, `performance-x05` 1, …and 4 more checks\n\n"
+    ) in full
+    # The smaller limit sets shorten the list and the counts together.
+    assert "- …and 36 more\n\n" in smaller
+    assert (
+        "`clang-analyzer-core.CallAndMessage` 1, `performance-x00` 1, …and 9 more checks" in smaller
+    )
+    assert "- …and 41 more\n\n" in smallest
+    assert (
+        "By check: `performance-unnecessary-value-param` 30, `bugprone-narrowing-conversions` 3,"
+        " `-Wclazy-range-loop-detach` 2, …and 11 more checks\n\n"
+    ) in smallest
+    assert len(smallest) < len(smaller) < len(full)
+
+
 @pytest.mark.parametrize(
     "commits",
     [

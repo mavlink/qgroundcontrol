@@ -360,9 +360,14 @@ runs only build. `.devcontainer/devcontainer.json` reuses the published layers a
   IWYU runs are advisory (`continue-on-error`); their uploaded report is the result.
   Each tool's job-summary section counts the unique errors and lists the first 20 ahead of its
   diagnostics listing (cut at 300 lines), and the first 10 errors are annotated on their lines.
-  `misc-include-cleaner` is an advisory clang-tidy warning; it leaves
-  Qt, MAVLink, GStreamer/GLib, and Qt-generated includes alone (`IgnoreHeaders` in `.clang-tidy`),
-  because it would suggest their internal headers. Jobs upload `*-timings.json`,
+  clang-tidy runs only the `bugprone-*`, `clang-analyzer-*`, and `performance-*` checks, no style
+  checks ([check policy](../../tools/analyzers/README.md#check-policy)), and reports headers only
+  in the checkout's `src/`, `test/`, and `tools/`
+  (`tools/tests/test_compiler_analysis.py::test_tidy_reports_only_this_checkout_s_headers`). On a
+  pull request, the Build Results comment summarizes the warnings on changed lines and an inline
+  review posts only the bug-class ones (errors, `bugprone-*`, `clang-analyzer-*`), at most 10
+  comments per pull request ([reporting.md](reporting.md#build-results)). Jobs upload
+  `*-timings.json`,
   `*-progress.jsonl`, `*-diagnostics.json` (each unique diagnostic's file, line, column,
   severity, and check, and on pull requests those on changed lines), and `*-raw.txt` (every unit's
   full output; identical diagnostic blocks are shown once in the log).

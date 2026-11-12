@@ -13,7 +13,7 @@ from common.proc import run_captured
 
 | Module | Purpose |
 | ------ | ------- |
-| `analysis_diagnostics.py` | analyze.py's `*-diagnostics.json` reports: each tool's unique warnings across shards, and those on changed lines |
+| `analysis_diagnostics.py` | analyze.py's `*-diagnostics.json` reports: each tool's unique warnings across shards, those on changed lines, and which findings are bug-class |
 | `aws.py` | Allowlisted public S3 object checks and uploads |
 | `build_config.py` | `.github/build-config.json` lookup, validation, and CI export |
 | `cmake.py` | CMake cache variable parsing |

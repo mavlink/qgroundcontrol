@@ -13,6 +13,7 @@ import argparse
 import logging
 import os
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.analysis_diagnostics import (
     AnalysisWarning,
+    is_bug_class,
     load_analysis_commit,
     load_unique_warnings,
 )
@@ -92,12 +94,19 @@ class Limits:
     test_names: int = 10
     artifacts: int = 30
     analysis_warnings: int = 20
+    analysis_checks: int = 10
 
 
 LIMIT_STEPS = (
     Limits(),
     Limits(
-        failed_tests=5, excerpt_lines=4, suites=12, test_names=5, artifacts=12, analysis_warnings=10
+        failed_tests=5,
+        excerpt_lines=4,
+        suites=12,
+        test_names=5,
+        artifacts=12,
+        analysis_warnings=10,
+        analysis_checks=5,
     ),
     Limits(
         failed_jobs=5,
@@ -107,6 +116,7 @@ LIMIT_STEPS = (
         test_names=3,
         artifacts=6,
         analysis_warnings=5,
+        analysis_checks=3,
     ),
 )
 
@@ -1147,6 +1157,18 @@ def _warning_link(report: Report, warning: AnalysisWarning) -> str:
     )
 
 
+def _check_totals(warnings: list[AnalysisWarning], limit: int) -> str:
+    """Count *warnings* by check, most frequent first, naming at most *limit* checks."""
+    ranked = sorted(
+        Counter(warning.check for warning in warnings).items(),
+        key=lambda item: (-item[1], item[0]),
+    )
+    shown = [f"{code_span(check)} {format_count(count)}" for check, count in ranked[:limit]]
+    if len(ranked) > limit:
+        shown.append(f"{more_items(len(ranked) - limit)} checks")
+    return "By check: " + ", ".join(shown)
+
+
 def render_analysis(report: Report, limits: Limits) -> str:
     run = report.analysis_run
     if not run:
@@ -1157,7 +1179,7 @@ def render_analysis(report: Report, limits: Limits) -> str:
     changed_tools = [tool for tool in tools if tool.changed is not None]
     changed = sorted(
         (warning for tool in changed_tools for warning in tool.changed or ()),
-        key=lambda w: (w.file, w.line, w.column, w.tool),
+        key=lambda w: (not is_bug_class(w), w.file, w.line, w.column, w.tool),
     )
     parts: list[str] = []
     if changed:
@@ -1167,7 +1189,11 @@ def render_analysis(report: Report, limits: Limits) -> str:
         ]
         if len(changed) > limits.analysis_warnings:
             listed.append(f"- {more_items(len(changed) - limits.analysis_warnings)}")
-        parts.append("Warnings on lines this pull request changed:\n\n" + "\n".join(listed))
+        parts.append(
+            "Warnings on lines this pull request changed, `bugprone-*` and `clang-analyzer-*`"
+            " first:\n\n" + "\n".join(listed)
+        )
+        parts.append(_check_totals(changed, limits.analysis_checks))
     elif changed_tools:
         parts.append("No warnings on lines this pull request changed.")
     if tools:

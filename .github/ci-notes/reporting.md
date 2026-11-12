@@ -143,7 +143,8 @@ actions after these sections. What each action uploads after a failure is listed
   Codecov, which the section links for the changed lines' coverage); artifact downloads with their
   size change (B, KB, or MB; ⚠️ above 1% and 1 MiB growth) and expiry; pre-commit counts when a
   hook failed; and Code Analysis's warnings on changed lines (`changed` in each
-  `*-diagnostics.json`), linked at the commit the analysis checked out (`commit`, GitHub's merge
+  `*-diagnostics.json`), bug-class ones first and all counted by check, linked at the commit the
+  analysis checked out (`commit`, GitHub's merge
   commit on a pull request, whose line numbers can differ from the head's; the head commit for
   reports without one), with every unique warning counted only in a per-tool table. Lists are
   truncated with "…and N more", and longer reports shrink to stay under GitHub's comment limit.
@@ -156,11 +157,17 @@ actions after these sections. What each action uploads after a failure is listed
 - When the triggering run is Code Analysis, a separate `analysis-review` job (in its own
   `analysis-review-pr-<N>` concurrency group, so a trigger queueing behind the comment job cannot
   cancel it) downloads the triggering run's `clang-tidy-clazy-output` artifacts, and
-  `analysis_review.py` posts their warnings and errors on lines the PR's diff adds as one inline
-  `COMMENT` review on the PR head (at most 25, each finding once, with its escaped message, bare
-  URLs and mentions broken, and fenced source excerpt, and marked so a later run never repeats it,
-  even after its line moves); past 25 the review points to the analysis run for the rest, and it
-  says its results are partial when the analysis run did not succeed. Those rows carry each
+  `analysis_review.py` posts their bug-class findings (`is_bug_class`: errors, and clang-tidy's
+  `bugprone-*` and `clang-analyzer-*` warnings) on lines the PR's diff adds as one inline
+  `COMMENT` review on the PR head (each finding once, with its escaped message, bare URLs and
+  mentions broken, and fenced source excerpt, and marked so a later run never repeats it, even
+  after its line moves). A pull request gets at most 10 such comments over all its reviews,
+  counting those it has, outdated ones too
+  (`tools/tests/ci/test_analysis_review.py::test_a_pull_request_gets_ten_finding_comments_over_all_its_reviews`);
+  errors are posted past that, at most 25 in one review, and warnings take turns by check. Other
+  warnings (`performance-*`, Clazy) are only in the Build Results comment, which the review
+  points to, and it says its results are partial when the analysis run did not succeed. Those
+  rows carry each
   diagnostic's message and excerpt (`changed` in `*-diagnostics.json`); files that one
   `compare/<head>...<merge commit>` call shows the merge changed are skipped, since their line
   numbers can differ (past the 300 files that call lists, each file's blobs are compared instead).

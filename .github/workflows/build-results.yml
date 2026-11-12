@@ -230,8 +230,8 @@ jobs:
             --workflows "Code Analysis" --artifact-prefixes clang-tidy-clazy-output \
             --output-dir analysis-artifacts --only-triggering-run
 
-      # Code Analysis's findings on changed lines become one inline review; the step only warns
-      # on failure.
+      # Code Analysis's bug-class findings on changed lines become one inline review, up to a cap
+      # per pull request; the step only warns on failure.
       - name: Post inline analysis review
         env:
           GH_TOKEN: ${{ github.token }}
