@@ -56,6 +56,9 @@ bool graphicsDeviceLost() noexcept;
 /// otherwise.
 void configureQtGraphics(bool softwareRendering);
 
+/// What configureQtGraphics() was told: the user asked for software rendering (--swrast). Safe off the GUI thread.
+bool softwareRenderingRequested() noexcept;
+
 /// Wire the main QQuickWindow into the RHI-capture path so snapshots, and the EGLDisplay Qt renders with, follow its
 /// QRhi. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window);
@@ -70,6 +73,14 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 /// imports dma-bufs. Null when Qt renders without either or that isn't known yet, an import failure disabled the path
 /// (until resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
 void* dmaBufImportDisplay() noexcept;
+
+/// The DXGI adapter of the Direct3D device Qt Quick renders with, as the decoders' "adapter-luid" names theirs; 0
+/// until the scene graph publishes that device, and for any other renderer. Safe off the GUI thread.
+qint64 graphicsAdapterLuid() noexcept;
+
+/// Has @p handler called each time the scene graph publishes the device Qt Quick renders with, on its render thread:
+/// what depends on that device (the decoder ranks) follows it then. Null for none. No-op when no GPU path is compiled.
+void setGraphicsDevicePublishedHandler(void (*handler)()) noexcept;
 
 /// True when the Direct3D 11 device Qt Quick renders with is known to open a Direct3D 12 device's resources as
 /// textures, which is how the D3D12 path shows a frame there. False until the scene graph publishes that device, and

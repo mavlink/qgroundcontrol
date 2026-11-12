@@ -326,6 +326,14 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
 
 void onMainWindowReady(QQuickWindow* window)
 {
+    // Which decoders rank first depends on the device Qt renders with: its API, its adapter and what it opens. The
+    // render thread publishes it; the ranks are the GUI thread's.
+    HwBuffers::setGraphicsDevicePublishedHandler([] {
+        if (QCoreApplication* const app = QCoreApplication::instance()) {
+            (void) QMetaObject::invokeMethod(
+                app, [] { DecoderRankApplier::instance().reapply(); }, Qt::QueuedConnection);
+        }
+    });
     HwBuffers::connectMainWindow(window);
     const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
     qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)

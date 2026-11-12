@@ -8,6 +8,7 @@
 #include <QtCore/QString>
 
 #include "GstScoped.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_WIN
 #include "gstqgc/GstQgcRenderTarget.h"
@@ -132,16 +133,44 @@ bool rankedByUser(const gchar* featureName)
     });
 }
 
+#ifdef Q_OS_WIN
+/// The adapter the Direct3D decoder @p factory decodes on, 0 when it doesn't tell. GStreamer registers one decoder
+/// per adapter and codec and keeps the adapter in the element's class, which only an element reads ("adapter-luid"):
+/// one is made for it, once per factory. It opens no device before it leaves the NULL state.
+qint64 decoderAdapterLuid(GstElementFactory* factory)
+{
+    static QHash<QByteArray, qint64> s_luids;
+    const QByteArray name(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+    if (const auto known = s_luids.constFind(name); known != s_luids.constEnd()) {
+        return known.value();
+    }
+    gint64 luid = 0;
+    if (const GstElementPtr decoder = makeElement(name.constData());
+        decoder && g_object_class_find_property(G_OBJECT_GET_CLASS(decoder.get()), "adapter-luid")) {
+        g_object_get(decoder.get(), "adapter-luid", &luid, nullptr);
+    }
+    s_luids.insert(name, luid);
+    return luid;
+}
+#endif
+
+/// With the applier's mutex held.
 QList<DecoderInfo> installedDecoders()
 {
     QList<DecoderInfo> decoders;
     forEachVideoDecoderFactory(GST_RANK_NONE, [&decoders](GstElementFactory* factory) {
         GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
         const gchar* const name = gst_plugin_feature_get_name(feature);
-        decoders.append({.name = QByteArray(name),
-                         .rank = gst_plugin_feature_get_rank(feature),
-                         .hardware = isHardwareDecoderFactory(factory),
-                         .family = decoderFamilyForFactory(name)});
+        DecoderInfo decoder{.name = QByteArray(name),
+                            .rank = gst_plugin_feature_get_rank(feature),
+                            .hardware = isHardwareDecoderFactory(factory),
+                            .family = decoderFamilyForFactory(name)};
+#ifdef Q_OS_WIN
+        if (decoder.family == VideoDecoderOption::DirectX3D) {
+            decoder.adapterLuid = decoderAdapterLuid(factory);
+        }
+#endif
+        decoders.append(decoder);
     });
     return decoders;
 }
@@ -173,7 +202,11 @@ RankTraits currentRankTraits()
             break;
     }
     traits.rhiD3DApi = d3d12 ? D3DApi::D3D12 : D3DApi::D3D11;
+    // Both known once the scene graph has published Qt's device, which has the ranks applied again (reapply()).
+    traits.d3d11OpensD3D12 = !d3d12 && HwBuffers::d3d11OpensD3D12();
+    traits.rhiAdapterLuid = HwBuffers::graphicsAdapterLuid();
 #endif
+    traits.softwareRendering = HwBuffers::softwareRenderingRequested();
     return traits;
 }
 
@@ -203,6 +236,14 @@ void DecoderRankApplier::apply(VideoDecoderOption option)
         (void) _setRank(registry, change.feature.constData(), change.rank);
     }
     _applied = option;
+    _appliedTraits = traits;
+}
+
+void DecoderRankApplier::reapply()
+{
+    if (_applied && (currentRankTraits() != _appliedTraits)) {
+        apply(*_applied);
+    }
 }
 
 void DecoderRankApplier::restore()

@@ -54,6 +54,7 @@ DeviceSnapshot s_snapshot;
 std::array<QMetaObject::Connection, 3> s_connections;
 // Qt's EGLDisplay once found; Qt keeps it for the application's lifetime.
 std::atomic<void*> s_qtEglDisplay{nullptr};
+std::atomic<void (*)()> s_publishedHandler{nullptr};
 
 #if defined(QGC_RHI_CAPTURE_PROBES_EGL)
 void* eglDisplayOf(const QOpenGLContext* context)
@@ -186,6 +187,9 @@ void populateSnapshot(QRhi* rhi)
         }
     }
 #endif
+    if (void (*const handler)() = s_publishedHandler.load(std::memory_order_acquire)) {
+        handler();
+    }
 }
 
 /// Publishes @p window's QRhi and its native device handles. Render thread, where rhi() is valid.
@@ -246,6 +250,11 @@ void* qtEglDisplay()
     }
 #endif
     return display;
+}
+
+void setPublishedHandler(void (*handler)()) noexcept
+{
+    s_publishedHandler.store(handler, std::memory_order_release);
 }
 
 void connectWindow(QQuickWindow* window)

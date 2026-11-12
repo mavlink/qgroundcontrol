@@ -53,6 +53,8 @@ public:
 
     /// Restores the original ranks, then applies @p option's plan for the installed decoders and currentRankTraits().
     void apply(VideoDecoderOption option);
+    /// apply() for the option applied last, when currentRankTraits() changed since: Qt's device became known.
+    void reapply();
     /// Restores the original ranks.
     void restore();
 
@@ -80,6 +82,7 @@ private:
     QMutex _mutex;
     QHash<QByteArray, guint> _originalRanks;
     std::optional<VideoDecoderOption> _applied;
+    RankTraits _appliedTraits;
 };
 
 /// Applies @p option for its lifetime, then re-applies the option applied before it, or the original ranks when none

@@ -443,19 +443,38 @@ void GStreamerInitTest::_testUserFeatureRankKept()
 
 namespace {
 
-/// "name rank hw|sw" per decoder; the family comes from the name, as for an installed factory.
+// The adapter Qt renders on, and another one, as the decoders of a machine with two GPUs name theirs.
+constexpr qint64 kQtAdapterLuid = 1;
+constexpr qint64 kOtherAdapterLuid = 2;
+
+/// "name rank hw|sw [qt|other]" per decoder: the family comes from the name, as for an installed factory, and the
+/// last field puts a Direct3D decoder on Qt's adapter or on another.
 QList<GStreamer::DecoderInfo> decoderInfos(const QStringList& specs)
 {
     QList<GStreamer::DecoderInfo> decoders;
     for (const QString& spec : specs) {
         const QStringList fields = spec.split(QLatin1Char(' '));
         const QByteArray name = fields.at(0).toLatin1();
+        const QString adapter = fields.value(3);
         decoders.append({.name = name,
                          .rank = fields.at(1).toUInt(),
                          .hardware = (fields.at(2) == QLatin1String("hw")),
-                         .family = GStreamer::decoderFamilyForFactory(name.constData())});
+                         .family = GStreamer::decoderFamilyForFactory(name.constData()),
+                         .adapterLuid = adapter.isEmpty()
+                                            ? 0
+                                            : ((adapter == QLatin1String("qt")) ? kQtAdapterLuid : kOtherAdapterLuid)});
     }
     return decoders;
+}
+
+/// "name=rank" per change of @p plan, in its order.
+QStringList plannedChanges(const GStreamer::RankPlan& plan)
+{
+    QStringList planned;
+    for (const GStreamer::RankChange& change : plan.changes) {
+        planned.append(QStringLiteral("%1=%2").arg(QString::fromLatin1(change.feature)).arg(change.rank));
+    }
+    return planned;
 }
 
 }  // namespace
@@ -464,7 +483,7 @@ void GStreamerInitTest::_testPlanRanks_data()
 {
     QTest::addColumn<int>("option");
     QTest::addColumn<bool>("zeroCopy");
-    QTest::addColumn<int>("d3d");              // 0: no RHI D3D API, else 11 or 12
+    QTest::addColumn<int>("d3d");              // 0: no RHI D3D API, else 11, 12, or 1112: 11 that opens D3D12 frames
     QTest::addColumn<QStringList>("decoders");
     QTest::addColumn<QStringList>("changes");  // "name=rank", in input order
     QTest::addColumn<QString>("warning");      // a regex one warning must match; empty for none
@@ -473,6 +492,9 @@ void GStreamerInitTest::_testPlanRanks_data()
                                     "avdec_h264 256 sw"};
     const QStringList windowsDecoders{"d3d11h264dec 257 hw", "d3d12h264dec 256 hw", "nvh264dec 256 hw",
                                       "avdec_h264 256 sw"};
+    // With GStreamer's ranks, Qt rendering on the second of two GPUs.
+    const QStringList twoGpuDecoders{"d3d11h264dec 257 hw other", "d3d11h264device1dec 257 hw qt",
+                                     "d3d12h264dec 258 hw other", "d3d12h264device1dec 258 hw qt", "avdec_h264 256 sw"};
 
     QTest::newRow("default without platform rules")
         << int(VideoDecoderOption::Default) << false << 0 << linuxDecoders << QStringList() << QString();
@@ -492,6 +514,21 @@ void GStreamerInitTest::_testPlanRanks_data()
                                           << QStringList{"d3d11h264dec=258", "d3d12h264dec=0"} << QString();
     QTest::newRow("default on D3D12 RHI") << int(VideoDecoderOption::Default) << false << 12 << windowsDecoders
                                           << QStringList{"d3d11h264dec=0", "d3d12h264dec=258"} << QString();
+    // The d3d12 decoders go first, on a device of their own; the d3d11 ones stay behind them at GStreamer's rank.
+    QTest::newRow("default on D3D11 RHI that opens D3D12 frames")
+        << int(VideoDecoderOption::Default) << false << 1112 << windowsDecoders << QStringList{"d3d12h264dec=258"}
+        << QString();
+    QTest::newRow("D3D family on D3D11 RHI that opens D3D12 frames")
+        << int(VideoDecoderOption::DirectX3D) << false << 1112 << windowsDecoders
+        << QStringList{"d3d11h264dec=257", "d3d12h264dec=258"} << QString();
+    // A decoder on the other GPU ranks below the software decoders: its frames reach Qt through the CPU as well.
+    QTest::newRow("default prefers the decoders on Qt's adapter")
+        << int(VideoDecoderOption::Default) << false << 11 << twoGpuDecoders
+        << QStringList{"d3d11h264dec=128", "d3d11h264device1dec=258", "d3d12h264dec=0", "d3d12h264device1dec=0"}
+        << QString();
+    QTest::newRow("default prefers the d3d12 decoder on Qt's adapter")
+        << int(VideoDecoderOption::Default) << false << 1112 << twoGpuDecoders
+        << QStringList{"d3d11h264dec=128", "d3d12h264dec=128", "d3d12h264device1dec=258"} << QString();
     // The software decoders keep the order GStreamer ranks them in.
     QTest::newRow("software lowers autoplugged hardware")
         << int(VideoDecoderOption::Software) << false << 0
@@ -533,19 +570,19 @@ void GStreamerInitTest::_testPlanRanks()
     QFETCH(QStringList, changes);
     QFETCH(QString, warning);
 
+    const QList<GStreamer::DecoderInfo> decoderList = decoderInfos(decoders);
     GStreamer::RankTraits traits;
     traits.preferZeroCopyDecoders = zeroCopy;
     if (d3d != 0) {
         traits.rhiD3DApi = (d3d == 12) ? GStreamer::D3DApi::D3D12 : GStreamer::D3DApi::D3D11;
+        traits.d3d11OpensD3D12 = (d3d == 1112);
     }
-    const GStreamer::RankPlan plan =
-        GStreamer::planRanks(static_cast<VideoDecoderOption>(option), decoderInfos(decoders), traits);
+    if (std::ranges::any_of(decoderList, [](const GStreamer::DecoderInfo& decoder) { return decoder.adapterLuid; })) {
+        traits.rhiAdapterLuid = kQtAdapterLuid;
+    }
+    const GStreamer::RankPlan plan = GStreamer::planRanks(static_cast<VideoDecoderOption>(option), decoderList, traits);
 
-    QStringList planned;
-    for (const GStreamer::RankChange& change : plan.changes) {
-        planned.append(QStringLiteral("%1=%2").arg(QString::fromLatin1(change.feature)).arg(change.rank));
-    }
-    QCOMPARE(planned, changes);
+    QCOMPARE(plannedChanges(plan), changes);
     if (warning.isEmpty()) {
         QVERIFY2(plan.warnings.isEmpty(), qPrintable(plan.warnings.join(QStringLiteral("; "))));
     } else {
@@ -553,6 +590,34 @@ void GStreamerInitTest::_testPlanRanks()
         QVERIFY2(QRegularExpression(warning).match(plan.warnings.first()).hasMatch(),
                  qPrintable(plan.warnings.first()));
     }
+}
+
+void GStreamerInitTest::_testPlanRanksForSoftwareRendering_data()
+{
+    QTest::addColumn<int>("option");
+    QTest::addColumn<QStringList>("changes");
+
+    // GPU Safe Mode keeps off the GPU: the hardware decoders the platform rule raised rank below the software ones.
+    QTest::newRow("default ranks hardware decoders below software ones")
+        << int(VideoDecoderOption::Default) << QStringList{"d3d11h264dec=128", "d3d12h264dec=0", "nvh264dec=128"};
+    // What the user chose in the video settings stays.
+    QTest::newRow("hardware option") << int(VideoDecoderOption::Hardware)
+                                     << QStringList{"d3d11h264dec=258", "d3d12h264dec=0", "avdec_h264=0"};
+    QTest::newRow("forced family") << int(VideoDecoderOption::NVIDIA) << QStringList{"d3d12h264dec=0", "nvh264dec=258"};
+}
+
+void GStreamerInitTest::_testPlanRanksForSoftwareRendering()
+{
+    QFETCH(int, option);
+    QFETCH(QStringList, changes);
+
+    const QList<GStreamer::DecoderInfo> decoders =
+        decoderInfos({"d3d11h264dec 257 hw", "d3d12h264dec 256 hw", "nvh264dec 256 hw", "avdec_h264 256 sw"});
+    const GStreamer::RankTraits traits{.rhiD3DApi = GStreamer::D3DApi::D3D11, .softwareRendering = true};
+    const GStreamer::RankPlan plan = GStreamer::planRanks(static_cast<VideoDecoderOption>(option), decoders, traits);
+
+    QCOMPARE(plannedChanges(plan), changes);
+    QVERIFY2(plan.warnings.isEmpty(), qPrintable(plan.warnings.join(QStringLiteral("; "))));
 }
 
 void GStreamerInitTest::_testScopedDecoderOptionRestoresThePreviousOption()

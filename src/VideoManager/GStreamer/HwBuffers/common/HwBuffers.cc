@@ -1,6 +1,7 @@
 #include "HwBuffers.h"
 
 #include <algorithm>
+#include <atomic>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -48,6 +49,12 @@ void forEachCompiledPath(Fn&& fn)
 
 }  // namespace
 #endif
+
+namespace {
+
+std::atomic<bool> s_softwareRendering{false};
+
+}  // namespace
 
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
 {
@@ -131,8 +138,9 @@ bool graphicsDeviceLost() noexcept
     return false;
 }
 
-void configureQtGraphics([[maybe_unused]] bool softwareRendering)
+void configureQtGraphics(bool softwareRendering)
 {
+    s_softwareRendering.store(softwareRendering, std::memory_order_release);
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
     (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
     // GL takes every desktop-Linux zero-copy path (GLMemory and DMABuf/EGLImage both import into a GL RHI), Vulkan
@@ -155,6 +163,11 @@ void configureQtGraphics([[maybe_unused]] bool softwareRendering)
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     GstDmaBufVulkan::requestDeviceExtensions();
 #endif
+}
+
+bool softwareRenderingRequested() noexcept
+{
+    return s_softwareRendering.load(std::memory_order_acquire);
 }
 
 void connectMainWindow(QQuickWindow* window)
@@ -212,6 +225,22 @@ void* dmaBufImportDisplay() noexcept
     return QGCRhiCapture::qtEglDisplay();
 #else
     return nullptr;
+#endif
+}
+
+qint64 graphicsAdapterLuid() noexcept
+{
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    return QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire);
+#else
+    return 0;
+#endif
+}
+
+void setGraphicsDevicePublishedHandler([[maybe_unused]] void (*handler)()) noexcept
+{
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    QGCRhiCapture::setPublishedHandler(handler);
 #endif
 }
 

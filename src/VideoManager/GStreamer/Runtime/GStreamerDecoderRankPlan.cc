@@ -50,8 +50,8 @@ public:
     }
 
     // @p family's decoders, at least kPrioritizedRank, above every other decoder; those stay as fallbacks for the
-    // codecs the family can't decode.
-    void prioritizeFamily(VideoDecoderOption family)
+    // codecs the family can't decode. Returns the rank the family got.
+    uint16_t prioritizeFamily(VideoDecoderOption family)
     {
         unsigned highestOtherRank = GST_RANK_NONE;
         for (const DecoderInfo& decoder : _decoders) {
@@ -59,8 +59,9 @@ public:
                 highestOtherRank = std::max(highestOtherRank, decoder.rank);
             }
         }
-        const unsigned rank = std::max<unsigned>(kPrioritizedRank, std::min<unsigned>(highestOtherRank, 0xFFFE) + 1);
+        const unsigned rank = std::max<unsigned>(kPrioritizedRank, std::min<unsigned>(highestOtherRank, 0xFFFD) + 1);
         rankFamily(family, static_cast<uint16_t>(rank));
+        return static_cast<uint16_t>(rank);
     }
 
     // Every autoplugged decoder of the other class out of autoplug. Those of the class keep GStreamer's ranks, so its
@@ -92,6 +93,18 @@ public:
         rankPrefix("v4l2sl", kZeroCopyRank);
     }
 
+    // Every hardware decoder that would rank above @p rank, down to it.
+    void lowerHardware(uint16_t rank)
+    {
+        for (qsizetype i = 0; i < _decoders.size(); ++i) {
+            const DecoderInfo& decoder = _decoders.at(i);
+            const unsigned planned = _ranks.at(i) ? *_ranks.at(i) : decoder.rank;
+            if (decoder.hardware && (planned > rank)) {
+                _ranks[i] = rank;
+            }
+        }
+    }
+
     QList<RankChange> changes() const
     {
         QList<RankChange> changes;
@@ -114,6 +127,7 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
 {
     RankPlan plan;
     Planner planner(decoders);
+    uint16_t familyRank = 0;
 
     switch (option) {
         case VideoDecoderOption::Default:
@@ -145,17 +159,50 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
         case VideoDecoderOption::DirectX3D:
         case VideoDecoderOption::VideoToolbox:
         case VideoDecoderOption::Intel:
-            planner.prioritizeFamily(option);
+            familyRank = planner.prioritizeFamily(option);
             break;
     }
 
     if (traits.rhiD3DApi) {
-        const bool d3d12 = (*traits.rhiD3DApi == D3DApi::D3D12);
-        // Forcing the D3D family already ranks it above every other decoder, so only the other API is demoted then.
+        // A Direct3D 12 RHI samples d3d12 frames, a Direct3D 11 one d3d11 frames, and d3d12 ones too when its device
+        // opens them.
+        const bool sampledD3D12 = (*traits.rhiD3DApi == D3DApi::D3D12) || traits.d3d11OpensD3D12;
+        const bool sampledD3D11 = (*traits.rhiD3DApi == D3DApi::D3D11);
+        const char* const preferred = sampledD3D12 ? "d3d12" : "d3d11";
+        const auto onRhiAdapter = [&traits](const DecoderInfo& decoder) {
+            return (traits.rhiAdapterLuid == 0) || (decoder.adapterLuid == 0) ||
+                   (decoder.adapterLuid == traits.rhiAdapterLuid);
+        };
+        const auto prefer = [&](uint16_t rank) {
+            (void) planner.rank(
+                [&](const DecoderInfo& decoder) { return decoder.name.startsWith(preferred) && onRhiAdapter(decoder); },
+                rank);
+        };
+        const bool forced = (option == VideoDecoderOption::DirectX3D);
         if ((option == VideoDecoderOption::Default) || (option == VideoDecoderOption::Hardware)) {
-            planner.rankPrefix(d3d12 ? "d3d12" : "d3d11", kZeroCopyRank);
+            prefer(kZeroCopyRank);
+        } else if (forced && sampledD3D12 && sampledD3D11) {
+            // Forcing the family ranks all of it above every other decoder: the preferred API goes first within it.
+            prefer(static_cast<uint16_t>(familyRank + 1));
         }
-        planner.rankPrefix(d3d12 ? "d3d11" : "d3d12", GST_RANK_NONE);
+        if (forced || (option == VideoDecoderOption::Default) || (option == VideoDecoderOption::Hardware)) {
+            (void) planner.rank(
+                [&](const DecoderInfo& decoder) {
+                    return (decoder.family == VideoDecoderOption::DirectX3D) && !onRhiAdapter(decoder);
+                },
+                GST_RANK_SECONDARY);
+        }
+        if (!sampledD3D12) {
+            planner.rankPrefix("d3d12", GST_RANK_NONE);
+        }
+        if (!sampledD3D11) {
+            planner.rankPrefix("d3d11", GST_RANK_NONE);
+        }
+    }
+
+    if (traits.softwareRendering && (option == VideoDecoderOption::Default)) {
+        // After the platform rules, which raise hardware decoders.
+        planner.lowerHardware(GST_RANK_SECONDARY);
     }
 
     plan.changes = planner.changes();

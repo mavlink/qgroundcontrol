@@ -33,6 +33,8 @@ private slots:
     void _testUserFeatureRankKept();
     void _testPlanRanks_data();
     void _testPlanRanks();
+    void _testPlanRanksForSoftwareRendering_data();
+    void _testPlanRanksForSoftwareRendering();
     void _testScopedDecoderOptionRestoresThePreviousOption();
     void _testSetCodecPrioritiesDefault();
     void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
