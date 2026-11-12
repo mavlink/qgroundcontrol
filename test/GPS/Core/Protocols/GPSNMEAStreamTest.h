@@ -21,6 +21,8 @@ private slots:
     void _missingSentence_data();
     void _missingSentence();
     void _untimedSentenceBeforeItsPosition();
+    void _emptyFieldKeepsEpochValue_data();
+    void _emptyFieldKeepsEpochValue();
     void _lateSentenceCompletesWaitingEpoch();
     void _fixLossWhileWaiting();
     void _vdopEpoch_data();

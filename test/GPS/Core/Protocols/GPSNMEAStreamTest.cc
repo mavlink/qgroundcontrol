@@ -13,6 +13,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QDir>
 #include <QtCore/QStringList>
+#include <QtCore/QtMath>
 
 #include "GPSNMEAStream.h"
 #include "GPSObservation.h"
@@ -420,6 +421,35 @@ void GPSNMEAStreamTest::_untimedSentenceBeforeItsPosition()
         QCOMPARE(receiver.positions, epoch + 1);
         QCOMPARE(receiver.published->navigation.timestampUs, receiver.now);
     }
+}
+
+void GPSNMEAStreamTest::_emptyFieldKeepsEpochValue_data()
+{
+    QTest::addColumn<QByteArrayList>("sentences");
+    const QByteArray utc("123519");
+    // The epoch has its speed, course and VDOP; the last sentence before the GGA leaves those fields empty.
+    QTest::newRow("vtg-after-rmc") << QByteArrayList{rmc(utc), GSA, "GPVTG,,T,,M,,N,,K"};
+    QTest::newRow("rmc-after-vtg") << QByteArrayList{sentenceOf("GLL", utc), VTG, GSA,
+                                                     "GPRMC," + utc + ",A,4807.038,N,01131.000,E,,,230394,,,A"};
+    QTest::newRow("gsa-after-gsa") << QByteArrayList{rmc(utc), GSA, QByteArray("GPGSA,A,3,02") + QByteArray(14, ',')};
+}
+
+void GPSNMEAStreamTest::_emptyFieldKeepsEpochValue()
+{
+    QFETCH(QByteArrayList, sentences);
+    NMEAReceiver receiver;
+    for (const auto& sentence : sentences) {
+        receiver.feed(sentence);
+    }
+    QVERIFY(!receiver.published);
+    receiver.feed(gga("123519"));
+    QVERIFY(receiver.published);
+    const auto& navigation = receiver.published->navigation;
+    QVERIFY(receiver.published->velocityValid);
+    // Two knots in the RMC, 3.7 km/h in the VTG.
+    QVERIFY(qAbs(navigation.speedMetersPerSecond - 1.03f) < 0.01f);
+    QCOMPARE(navigation.courseRadians, qDegreesToRadians(90.0f));
+    QCOMPARE(navigation.verticalDop, 0.6f);
 }
 
 void GPSNMEAStreamTest::_lateSentenceCompletesWaitingEpoch()
