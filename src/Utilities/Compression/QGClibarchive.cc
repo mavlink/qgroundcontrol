@@ -864,6 +864,12 @@ QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qi
             return {};
     }
 
+    // Neither has data to return, which would make it look like a file that is empty
+    if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
+        result = QGClibarchive::ReadResult::EntrySkipped;
+        return {};
+    }
+
     bool completed = false;
     QByteArray data = readEntryToMemory(a, entry, maxBytes, completed);
     result = completed ? QGClibarchive::ReadResult::Completed : QGClibarchive::ReadResult::Failed;
@@ -1185,6 +1191,17 @@ QString streamHeaderError(struct archive* a, int headerResult)
         return QStringLiteral("Unrecognized archive format");
     }
     return QString::fromUtf8(archive_error_string(a));
+}
+
+const char* skippedEntryKind(struct archive_entry* entry)
+{
+    if (archive_entry_hardlink(entry) != nullptr) {
+        return "hard link";
+    }
+    if (archive_entry_filetype(entry) == AE_IFLNK) {
+        return "symbolic link";
+    }
+    return specialFileKind(entry);
 }
 
 bool openArchiveForReading(struct archive* a, const QString& filePath, QByteArray& resourceData)

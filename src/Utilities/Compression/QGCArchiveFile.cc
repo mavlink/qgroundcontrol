@@ -97,9 +97,10 @@ void QGCArchiveFile::resetState()
 bool QGCArchiveFile::seekToEntry()
 {
     _entryFound = false;
+    const char* skippedKind = nullptr;
 
     const QGClibarchive::EntryWalk walk =
-        QGClibarchive::forEachEntry(_reader->handle(), [this](struct archive_entry* entry) {
+        QGClibarchive::forEachEntry(_reader->handle(), [this, &skippedKind](struct archive_entry* entry) {
             // Capture format info on first header
             if (_formatName.isEmpty()) {
                 captureFormatInfo();
@@ -107,6 +108,12 @@ bool QGCArchiveFile::seekToEntry()
 
             if (QString::fromUtf8(archive_entry_pathname(entry)) != _entryName) {
                 return true;
+            }
+
+            // Read as a file, a link or a special file would look like one that is empty
+            skippedKind = QGClibarchive::skippedEntryKind(entry);
+            if (skippedKind != nullptr) {
+                return false;
             }
 
             _entryFound = true;
@@ -126,7 +133,9 @@ bool QGCArchiveFile::seekToEntry()
         return true;
     }
 
-    if (walk == QGClibarchive::EntryWalk::Failed) {
+    if (skippedKind != nullptr) {
+        setError(QStringLiteral("Entry is a %1, which is not read: %2").arg(QLatin1String(skippedKind), _entryName));
+    } else if (walk == QGClibarchive::EntryWalk::Failed) {
         setError(QString::fromUtf8(archive_error_string(_reader->handle())));
     } else {
         setError(QStringLiteral("Entry not found in archive: ") + _entryName);

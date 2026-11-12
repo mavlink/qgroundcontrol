@@ -1821,8 +1821,12 @@ void QGCCompressionTest::_testExtractFileDataErrors()
     QFETCH(bool, fromDevice);
     using QGCCompression::Error;
 
-    const QByteArray tar = _makeTar(
-        {{.name = "empty.txt"}, {.name = "full.txt", .data = QByteArray(600, 'a')}, {.name = "last.txt", .data = "z"}});
+    const QByteArray tar = _makeTar({{.name = "empty.txt"},
+                                     {.name = "full.txt", .data = QByteArray(600, 'a')},
+                                     {.name = "last.txt", .data = "z"},
+                                     {.name = "soft.txt", .type = '2', .linkName = "full.txt"},
+                                     {.name = "hard.txt", .type = '1', .linkName = "full.txt"},
+                                     {.name = "pipe", .type = '6'}});
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("entries.tar");
     QVERIFY(_writeFile(archivePath, tar));
@@ -1870,6 +1874,23 @@ void QGCCompressionTest::_testExtractFileDataErrors()
     QVERIFY(extract(archivePath, "full.txt", 100).isEmpty());
     verifyExpectedLogMessage();
     QCOMPARE(QGCCompression::lastError(), Error::SizeLimitExceeded);
+
+    // A link has no data of its own and a special file has none: neither is extracted, and neither is
+    // an entry without data
+    struct SkippedEntry
+    {
+        const char* name;
+        const char* report;
+    };
+
+    for (const SkippedEntry& skipped : {SkippedEntry{"soft.txt", "Skipping symlink: soft.txt -> full.txt"},
+                                        SkippedEntry{"hard.txt", "Skipping hard link: hard.txt -> full.txt"},
+                                        SkippedEntry{"pipe", "Skipping FIFO: pipe"}}) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(skipped.report));
+        QVERIFY(extract(archivePath, skipped.name).isEmpty());
+        verifyExpectedLogMessage();
+        QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    }
 
     // The error of a failure is gone after the next extraction
     QCOMPARE(extract(archivePath, "last.txt"), QByteArray("z"));
@@ -2297,6 +2318,39 @@ void QGCCompressionTest::_testDeviceAtEnd()
         QVERIFY(emptyDevice->readAll().isEmpty());
         QVERIFY2(emptyDevice->errorString().isEmpty(), qPrintable(emptyDevice->errorString()));
     }
+}
+
+void QGCCompressionTest::_testArchiveFileLeavesOutLinks()
+{
+    QBuffer source;
+    source.setData(_makeTar({{.name = "target.txt", .data = "target"},
+                             {.name = "soft.txt", .type = '2', .linkName = "target.txt"},
+                             {.name = "hard.txt", .type = '1', .linkName = "target.txt"},
+                             {.name = "pipe", .type = '6'}}));
+    QVERIFY(source.open(QIODevice::ReadOnly));
+
+    // Reading one of these as a file without data would hide what it is. The device does not log: the
+    // reason is in its error string.
+    struct SkippedEntry
+    {
+        const char* name;
+        const char* kind;
+    };
+
+    for (const SkippedEntry& skipped : {SkippedEntry{"soft.txt", "symbolic link"},
+                                        SkippedEntry{"hard.txt", "hard link"}, SkippedEntry{"pipe", "FIFO"}}) {
+        QVERIFY(source.seek(0));
+        QGCArchiveFile file(&source, QString::fromLatin1(skipped.name));
+        QVERIFY2(!file.open(QIODevice::ReadOnly), skipped.name);
+        QVERIFY(!file.entryFound());
+        QVERIFY2(file.errorString().contains(QLatin1String(skipped.kind)), qPrintable(file.errorString()));
+        QVERIFY2(file.errorString().contains(QLatin1String(skipped.name)), qPrintable(file.errorString()));
+    }
+
+    QVERIFY(source.seek(0));
+    QGCArchiveFile target(&source, QStringLiteral("target.txt"));
+    QVERIFY2(target.open(QIODevice::ReadOnly), qPrintable(target.errorString()));
+    QCOMPARE(target.readAll(), QByteArray("target"));
 }
 
 // ============================================================================

@@ -252,6 +252,13 @@ EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor);
 // Utility Functions
 // ============================================================================
 
+/// What an entry is, if it is one whose data is neither returned nor written to a file
+/// A hard or symbolic link has no data of its own, and a FIFO, a device node or a socket has none at all.
+/// The functions that extract an entry by name fail for one, and those that walk the archive skip it.
+/// @return "hard link", "symbolic link", "FIFO", "character device", "block device" or "socket"; nullptr for
+///         a regular file or a directory
+const char* skippedEntryKind(struct archive_entry* entry);
+
 /// Convert libarchive entry to ArchiveEntry struct
 /// @param entry libarchive entry pointer (from archive_read_next_header)
 /// @return Populated ArchiveEntry with name, size, modified time, isDirectory, permissions

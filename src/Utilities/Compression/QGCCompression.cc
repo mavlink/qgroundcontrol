@@ -913,6 +913,10 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
         if (QGClibarchive::takeSizeLimitExceeded()) {
             setError(Error::SizeLimitExceeded,
                      QStringLiteral("%1 in %2 exceeds the size limit").arg(fileName, archivePath));
+        } else if (read == QGClibarchive::ReadResult::EntrySkipped) {
+            setError(Error::UnsupportedFormat,
+                     QStringLiteral("%1 in %2 is a link or a special file, which is not extracted")
+                         .arg(fileName, archivePath));
         } else {
             const bool notFound = (read == QGClibarchive::ReadResult::EntryNotFound);
             setError(notFound ? Error::FileNotInArchive : Error::InvalidArchive,
@@ -1033,6 +1037,9 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
     if (read != QGClibarchive::ReadResult::Completed) {
         if (QGClibarchive::takeSizeLimitExceeded()) {
             setError(Error::SizeLimitExceeded, fileName + QStringLiteral(" exceeds the size limit"));
+        } else if (read == QGClibarchive::ReadResult::EntrySkipped) {
+            setError(Error::UnsupportedFormat,
+                     fileName + QStringLiteral(" is a link or a special file, which is not extracted"));
         } else if (read == QGClibarchive::ReadResult::EntryNotFound) {
             setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
         } else {
