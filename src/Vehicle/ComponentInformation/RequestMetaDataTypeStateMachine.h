@@ -26,7 +26,9 @@ public:
         int translation;
     };
 
-    static constexpr Timeouts defaultTimeouts{5000, 30000, 15000};
+    /// Vehicle gives a message request up by itself, after three command attempts and the wait for the message
+    /// at the latest (about 6.7 s). The request timeout is a backstop above that.
+    static constexpr Timeouts defaultTimeouts{8000, 30000, 15000};
 
     explicit RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent = nullptr,
                                              const Timeouts& timeouts = defaultTimeouts);
