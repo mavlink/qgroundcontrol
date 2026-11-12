@@ -21,6 +21,8 @@ private slots:
     void _mountpointSettingDoesNotBlockFetch();
     void _tableWithoutMountpoints_data();
     void _tableWithoutMountpoints();
+    void _tableWithoutTerminator_data();
+    void _tableWithoutTerminator();
     void _sourceTablePublishesSortedRowsOnce();
     void _v1SourceTable_data();
     void _v1SourceTable();

@@ -106,8 +106,9 @@ void NTRIPSourceTableController::_startFetch()
     connect(session, &NTRIPHttpSession::bodyReceived, this, &NTRIPSourceTableController::_readReply);
     connect(session, &NTRIPHttpSession::failed, this,
             [this](const NTRIPFailure& failure) { _finishFetch(failure.detail); });
-    connect(session, &NTRIPHttpSession::finished, this,
-            [this]() { _finishFetch(tr("Response does not contain a valid source table")); });
+    // The response ended where its framing allows, without the terminator: RTKLIB's caster up to 2.4.3 b33 sends
+    // its operator's table file as it is. A response cut off before that end fails instead.
+    connect(session, &NTRIPHttpSession::finished, this, [this]() { _finishFetch({}, false); });
     _armFetchTimeout();
     if (const QString openError = session->open(_lastFetchConfig, _casterVersions); !openError.isEmpty()) {
         _finishFetch(openError);
@@ -140,7 +141,7 @@ void NTRIPSourceTableController::_readReply(const QByteArray& bytes)
     }
 }
 
-void NTRIPSourceTableController::_finishFetch(const QString& error)
+void NTRIPSourceTableController::_finishFetch(const QString& error, bool terminated)
 {
     if (!_attempt) {
         return;
@@ -148,18 +149,20 @@ void NTRIPSourceTableController::_finishFetch(const QString& error)
     const QByteArray body = _attempt->body;
     _abortFetch();
     if (error.isEmpty()) {
-        _onSourceTableReceived(QString::fromUtf8(body));
+        _onSourceTableReceived(QString::fromUtf8(body), terminated);
     } else {
         _onFetchError(error);
     }
 }
 
-void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
+void NTRIPSourceTableController::_onSourceTableReceived(const QString& table, bool terminated)
 {
     _model->parseSourceTable(table, _sortCoord);
     if (_model->count() == 0) {
-        // An empty list alone would look as if nothing had been fetched.
-        _onFetchError(tr("The caster's source table lists no mountpoints"));
+        // An empty list alone would look as if nothing had been fetched. Without the terminator, only a mountpoint
+        // tells a table from what any other server answers.
+        _onFetchError(terminated ? tr("The caster's source table lists no mountpoints")
+                                 : tr("Response does not contain a valid source table"));
         return;
     }
     _cacheStoredAtUs = _scheduler->nowUs();

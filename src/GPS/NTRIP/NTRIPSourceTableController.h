@@ -71,7 +71,9 @@ signals:
 private:
     friend class NTRIPSourceTableControllerTest;
 
-    void _onSourceTableReceived(const QString& table);
+    /// Publishes @a table. One that did not end with ENDSOURCETABLE (@a terminated false) must list a mountpoint to be
+    /// taken for a table.
+    void _onSourceTableReceived(const QString& table, bool terminated);
     void _onFetchError(const QString& error);
     /// Commits the fetch outcome, then emits the change signals.
     void _setFetchState(FetchStatus status, const QString& error);
@@ -79,7 +81,8 @@ private:
     void _startFetch();
     void _armFetchTimeout();
     void _readReply(const QByteArray& bytes);
-    void _finishFetch(const QString& error = {});
+    /// Ends the fetch in progress with @a error or, without one, publishes what it received as the table.
+    void _finishFetch(const QString& error = {}, bool terminated = true);
 
     NTRIPSourceTableModel* _model = nullptr;
     NTRIPSourceTableSortModel* _sortedModel = nullptr;
