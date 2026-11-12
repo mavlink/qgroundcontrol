@@ -846,6 +846,9 @@ LogReplayLink *LinkManager::startLogReplay(const QString &logFile)
         return qobject_cast<LogReplayLink*>(sharedConfig->link());
     }
 
+    // The configuration was made for this replay only
+    _removeConfiguration(linkConfig);
+
     return nullptr;
 }
 

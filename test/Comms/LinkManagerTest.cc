@@ -205,13 +205,8 @@ void LinkManagerTest::_testLogReplayRefusedWithActiveVehicle()
     const qsizetype cLinks = linkManager()->links().count();
 
     const char* const logName = "LogReplayRefused.tlog";
-    const auto cleanup = qScopeGuard([this, logName] {
-        for (const SharedLinkConfigurationPtr& config : _configsNamed(logName)) {
-            linkManager()->removeConfiguration(config.get());
-        }
-    });
 
-    // Refused where the replay is started, which leaves no link behind that never connects
+    // Refused where the replay is started, which leaves neither a link that never connects nor its configuration
     expectLogMessage("Comms.LogReplayLink", QtWarningMsg,
                      QRegularExpression(QStringLiteral("You must close all connections")));
     expectAppMessage(QRegularExpression(QStringLiteral("You must close all connections prior to replaying a log")));
@@ -219,6 +214,7 @@ void LinkManagerTest::_testLogReplayRefusedWithActiveVehicle()
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QCOMPARE(linkManager()->links().count(), cLinks);
+    QVERIFY(_configsNamed(logName).isEmpty());
 }
 
 void LinkManagerTest::_testUdpUnresolvedHostFailsConnect()
