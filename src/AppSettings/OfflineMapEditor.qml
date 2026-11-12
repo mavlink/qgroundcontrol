@@ -25,7 +25,7 @@ Item {
     property var _settings: _settingsManager.offlineMapsSettings
     property var _fmSettings: _settingsManager.flightMapSettings
 
-    property string mapType: _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+    property string mapType: QGroundControl.mapEngineManager.mapName(_fmSettings.mapProvider.value, _fmSettings.mapType.value)
     property bool isMapInteractive: false
     property bool _showPreview: true
     property bool _defaultSet: tileSet && tileSet.defaultSet
@@ -83,7 +83,7 @@ Item {
     function addNewSet() {
         _addNewSetViewObject = addNewSetViewComponent.createObject(_editor)
         isMapInteractive = true
-        mapType = _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+        mapType = QGroundControl.mapEngineManager.mapName(_fmSettings.mapProvider.value, _fmSettings.mapType.value)
         resetMapToDefaults()
         handleChanges()
     }

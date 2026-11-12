@@ -102,6 +102,11 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
         QTRY_COMPARE_WITH_TIMEOUT(creditText(), mapboxCredit, TestTimeout::shortMs());
     }
 
+    // The map of OpenAIP has no type: its provider selects it, whatever type is left of the provider before
+    mapProviderFact->setRawValue(QStringLiteral("OpenAIP"));
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), QGCMapEngineManager::mapAttribution(QStringLiteral("OpenAIP")),
+                              TestTimeout::shortMs());
+
     // The source that the user sets has no one to credit
     mapTypeFact->setRawValue(QStringLiteral("Custom"));
     mapProviderFact->setRawValue(QStringLiteral("CustomURL"));

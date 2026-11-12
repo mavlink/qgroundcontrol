@@ -36,6 +36,8 @@ QGCGroupBox {
     LabelledComboBox {
         label: qsTr("Type")
         model: _mapEngineManager.mapTypeList(_mapProviderFact.rawValue)
+        // The only map of a provider can have no type
+        visible: model.length > 0
 
         onActivated: (index) => { _mapTypeFact.rawValue = comboBox.textAt(index) }
 

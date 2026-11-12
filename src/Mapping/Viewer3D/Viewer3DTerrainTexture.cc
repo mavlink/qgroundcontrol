@@ -6,6 +6,7 @@
 #include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
+#include "QGCMapEngineManager.h"
 #include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 #include "Viewer3DMapProvider.h"
@@ -19,6 +20,9 @@ Viewer3DTerrainTexture::Viewer3DTerrainTexture()
 {
     _onMapTypeChanged();
 
+    // The provider alone can change: to one whose first type has the name of the type before, or to one without types
+    connect(_flightMapSettings->mapProvider(), &Fact::rawValueChanged, this,
+            &Viewer3DTerrainTexture::_onMapTypeChanged);
     connect(_flightMapSettings->mapType(), &Fact::rawValueChanged, this, &Viewer3DTerrainTexture::_onMapTypeChanged);
     connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this, &Viewer3DTerrainTexture::_onTileSourceChanged);
 }
@@ -114,8 +118,13 @@ void Viewer3DTerrainTexture::_updateTexture()
 
 void Viewer3DTerrainTexture::_onMapTypeChanged()
 {
-    _mapType = _flightMapSettings->mapProvider()->rawValue().toString() + QStringLiteral(" ") +
-               _flightMapSettings->mapType()->rawValue().toString();
+    const QString mapType = QGCMapEngineManager::mapName(_flightMapSettings->mapProvider()->rawValue().toString(),
+                                                         _flightMapSettings->mapType()->rawValue().toString());
+    // The provider and the type are set one after the other, and can name no map in between
+    if (!QGCMapEngineManager::mapList().contains(mapType)) {
+        return;
+    }
+    _mapType = mapType;
 
     const int mapId = UrlFactory::getMapIdFromProviderType(_mapType);
 

@@ -236,6 +236,15 @@ QStringList QGCMapEngineManager::mapTypeList(const QString& provider)
     return types;
 }
 
+QString QGCMapEngineManager::mapName(const QString& provider, const QString& type)
+{
+    if (mapTypeList(provider).isEmpty()) {
+        return provider;
+    }
+
+    return provider + QLatin1Char(' ') + type;
+}
+
 void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
 {
     qCDebug(QGCMapEngineManagerLog) << "Deleting tile set" << tileSet->name();

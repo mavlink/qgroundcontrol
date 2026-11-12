@@ -5,7 +5,7 @@ Centralized map configuration — provider selection, offline tile management, A
 ## Map Provider
 
 - **Provider** — select the map tile provider (e.g., Bing, Google, Stamen, Mapbox, Esri, Eniro, VWorld)
-- **Type** — map type for the selected provider (e.g., Hybrid, Satellite, Street, Terrain)
+- **Type** — map type for the selected provider (e.g., Hybrid, Satellite, Street, Terrain). Not shown for a provider with a single map, such as OpenAIP
 - **Elevation Provider** — source for terrain elevation data (e.g., Copernicus)
 
 Every map shows the credit of the selected provider in its bottom left corner. The map of a [Custom Map URL](#custom-map-url) shows none.
