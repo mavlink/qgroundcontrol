@@ -144,6 +144,14 @@ void clearFormatInfo()
     QGClibarchive::clearLastDetectedFormat();
 }
 
+/// Forget what the operation before this one left behind
+/// For an operation that can end before it validates its input, which is where the others do this.
+void beginOperation()
+{
+    clearError();
+    clearFormatInfo();
+}
+
 }  // namespace
 
 // ============================================================================
@@ -617,6 +625,8 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
 QString decompressIfNeeded(const QString& filePath, const QString& outputPath, bool removeOriginal,
                            qint64 maxDecompressedBytes)
 {
+    beginOperation();
+
     // If not a compressed file, return original path unchanged
     if (!isCompressedFile(filePath)) {
         return filePath;
@@ -717,6 +727,8 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
 bool extractArchiveFiltered(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
                             ProgressCallback progress, qint64 maxDecompressedBytes)
 {
+    beginOperation();
+
     if (!filter) {
         setError(Error::InternalError, QStringLiteral("No filter callback provided"));
         return false;
@@ -809,6 +821,8 @@ bool validateArchive(const QString& archivePath, Format format)
 
 bool fileExists(const QString& archivePath, const QString& fileName, Format format)
 {
+    beginOperation();
+
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
         setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
@@ -832,6 +846,8 @@ bool fileExists(const QString& archivePath, const QString& fileName, Format form
 
 bool extractFile(const QString& archivePath, const QString& fileName, const QString& outputPath, Format format)
 {
+    beginOperation();
+
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
         setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
@@ -853,6 +869,8 @@ bool extractFile(const QString& archivePath, const QString& fileName, const QStr
 QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format,
                            qint64 maxDecompressedBytes)
 {
+    beginOperation();
+
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
         setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
@@ -881,6 +899,8 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
 bool extractFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
                   Format format)
 {
+    beginOperation();
+
     if (fileNames.isEmpty()) {
         return true;
     }
@@ -898,6 +918,8 @@ bool extractFiles(const QString& archivePath, const QStringList& fileNames, cons
 bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
                       QStringList* extractedFiles, Format format)
 {
+    beginOperation();
+
     if (patterns.isEmpty()) {
         setError(Error::FileNotInArchive, QStringLiteral("No patterns provided"));
         return false;

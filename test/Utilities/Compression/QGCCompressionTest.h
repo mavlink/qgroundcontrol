@@ -66,6 +66,8 @@ private slots:
     void _testExtractFileDataErrors_data();
     void _testExtractFileDataErrors();
     void _testDecompressDataErrors();
+    void _testOperationStartsWithoutError_data();
+    void _testOperationStartsWithoutError();
 
     // QIODevice-based operations
     void _testDecompressFromDevice();

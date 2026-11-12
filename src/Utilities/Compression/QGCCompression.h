@@ -35,9 +35,11 @@ enum class Error {
 
 /// Get the error code from the last operation (thread-local)
 /// It tells why the last operation of the calling thread failed: read it on that thread, before the next
-/// operation. decompressData(), extractFileData(), the two functions that read a device to memory and the
-/// three that list an archive set it on every call, to Error::None on success, because their result alone
-/// does not tell a failure: an entry without data, and an archive without entries, are returned as empty too.
+/// operation. Every function that reports a failure through it sets it on each call, to Error::None on
+/// success, so it never tells of an earlier operation. The result alone does not tell a failure of
+/// decompressData(), extractFileData(), the two functions that read a device to memory and the three that
+/// list an archive: an entry without data, and an archive without entries, are returned as empty too.
+/// readFile(), computeFileHash() and parseCompressedJson() report in their own way: do not read it after them.
 Error lastError();
 
 /// Get a human-readable error message from the last operation (thread-local)

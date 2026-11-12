@@ -1728,6 +1728,73 @@ void QGCCompressionTest::_testDecompressDataErrors()
     QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
 }
 
+void QGCCompressionTest::_testOperationStartsWithoutError_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QGCCompression::Error>("expectedError");
+
+    using QGCCompression::Error;
+
+    // These return before they look at their input
+    QTest::newRow("decompressIfNeeded of a plain file") << "decompressIfNeeded" << Error::None;
+    QTest::newRow("extractFiles of no files") << "extractFiles" << Error::None;
+    QTest::newRow("fileExists without a name") << "fileExists" << Error::FileNotInArchive;
+    QTest::newRow("extractFile without a name") << "extractFile" << Error::FileNotInArchive;
+    QTest::newRow("extractFileData without a name") << "extractFileData" << Error::FileNotInArchive;
+    QTest::newRow("extractByPattern without a pattern") << "extractByPattern" << Error::FileNotInArchive;
+    QTest::newRow("extractArchiveFiltered without a filter") << "extractArchiveFiltered" << Error::InternalError;
+}
+
+void QGCCompressionTest::_testOperationStartsWithoutError()
+{
+    QFETCH(QString, api);
+    QFETCH(QGCCompression::Error, expectedError);
+    using QGCCompression::Error;
+
+    QTemporaryDir tempDir;
+    const QString zipPath = QStringLiteral(":/unittest/manifest.json.zip");
+    const QString plainPath = tempDir.filePath("plain.txt");
+    QVERIFY(_writeFile(plainPath, "plain text content"));
+
+    // An operation that fails after it has detected a format leaves both an error and a format behind
+    QFile zip(zipPath);
+    QVERIFY(zip.open(QIODevice::ReadOnly));
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
+    QVERIFY(QGCCompression::extractFileDataFromDevice(&zip, QStringLiteral("absent.txt")).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::FileNotInArchive);
+    QVERIFY(QGCCompression::detectedFormatName().startsWith("ZIP"));
+
+    if (api == "decompressIfNeeded") {
+        QCOMPARE(QGCCompression::decompressIfNeeded(plainPath), plainPath);
+    } else if (api == "extractFiles") {
+        QVERIFY(QGCCompression::extractFiles(zipPath, {}, tempDir.filePath("output")));
+    } else if (api == "fileExists") {
+        expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
+        QVERIFY(!QGCCompression::fileExists(zipPath, QString()));
+        verifyExpectedLogMessage();
+    } else if (api == "extractFile") {
+        expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
+        QVERIFY(!QGCCompression::extractFile(zipPath, QString(), tempDir.filePath("output.txt")));
+        verifyExpectedLogMessage();
+    } else if (api == "extractFileData") {
+        expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
+        QVERIFY(QGCCompression::extractFileData(zipPath, QString()).isEmpty());
+        verifyExpectedLogMessage();
+    } else if (api == "extractByPattern") {
+        QVERIFY(!QGCCompression::extractByPattern(zipPath, {}, tempDir.filePath("output")));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(!QGCCompression::extractArchiveFiltered(zipPath, tempDir.filePath("output"), nullptr));
+    } else {
+        QFAIL("Unknown row");
+    }
+
+    // What lastError() and the detected format tell is of this operation, not of the one before it
+    QCOMPARE(QGCCompression::lastError(), expectedError);
+    QCOMPARE(QGCCompression::detectedFormatName(), QString());
+    QCOMPARE(QGCCompression::detectedFilterName(), QString());
+}
+
 // ============================================================================
 // QIODevice-based Operation Tests
 // ============================================================================
