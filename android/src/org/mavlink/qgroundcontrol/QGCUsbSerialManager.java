@@ -286,8 +286,6 @@ public class QGCUsbSerialManager {
                 QGCLogger.e(TAG, "Failed to get UsbManager");
                 return;
             }
-
-            QGCFtdiDriver.initialize(appContext);
             setupUsbPermissionIntent(appContext);
             usbSerialProber = QGCUsbSerialProber.getQGCUsbSerialProber();
             registerUsbReceiver(appContext);
@@ -318,7 +316,6 @@ public class QGCUsbSerialManager {
 
             usbPermissionIntent = null;
             usbSerialProber = null;
-            QGCFtdiDriver.cleanup();
             usbManager = null;
             appContext = null;
             drivers.clear();

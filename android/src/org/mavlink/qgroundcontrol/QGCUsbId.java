@@ -3,11 +3,7 @@ package org.mavlink.qgroundcontrol;
 public final class QGCUsbId {
 
     public static final int VENDOR_FTDI = 0x0403;
-    public static final int DEVICE_FTDI_FT232R = 0x6001;
-    public static final int DEVICE_FTDI_FT2232H = 0x6010;
-    public static final int DEVICE_FTDI_FT4232H = 0x6011;
-    public static final int DEVICE_FTDI_FT232H = 0x6014;
-    public static final int DEVICE_FTDI_FT231X = 0x6015;
+    public static final int DEVICE_FTDI_FT4232HA = 0x6048;
 
     public static final int VENDOR_PX4 = 0x26AC;
     public static final int DEVICE_PX4FMU_V1 = 0x0010;
@@ -73,13 +69,5 @@ public final class QGCUsbId {
     private QGCUsbId()
     {
         throw new IllegalAccessError("Non-instantiable class");
-    }
-
-    public static boolean isSupportedFtdiProductId(final int productId) {
-        return productId == DEVICE_FTDI_FT232R
-            || productId == DEVICE_FTDI_FT2232H
-            || productId == DEVICE_FTDI_FT4232H
-            || productId == DEVICE_FTDI_FT232H
-            || productId == DEVICE_FTDI_FT231X;
     }
 }
