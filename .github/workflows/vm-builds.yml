@@ -87,10 +87,14 @@ jobs:
       - name: Enable KVM
         run: python3 tools/ci/runner/enable_kvm.py
 
+      # An unreachable snap store says nothing about the build: the job then warns and skips the
+      # steps below instead of showing a failure.
       - name: Install Multipass and allow VM bridge networking
-        run: python3 tools/ci/runner/install_multipass.py --allow-bridge-forwarding
+        id: multipass
+        run: python3 tools/ci/runner/install_multipass.py --allow-bridge-forwarding --allow-store-outage
 
       - name: Build QGC in Multipass VM
+        if: steps.multipass.outputs.installed == 'true'
         env:
           QGC_SOURCE_DIR: ${{ github.workspace }}
           # Pin the LTS via the `release:` remote: the bare-launch `lts` alias only promotes at
@@ -108,6 +112,7 @@ jobs:
             python3 deploy/multipass/run_multipass.py
 
       - name: Upload AppImage
+        if: steps.multipass.outputs.installed == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: qgc-multipass-appimage

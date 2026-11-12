@@ -315,7 +315,13 @@ runs only build. `.devcontainer/devcontainer.json` reuses the published layers a
   the source archive and the built AppImage pass through a temporary directory under root's home.
   `install_multipass.py --allow-bridge-forwarding` resets the iptables `FORWARD` policy that Docker
   sets to `DROP`, which would leave the guest without network (libvirt adds its own rules for
-  Vagrant). Cleanup only deletes instances it created. The job stays `continue-on-error`.
+  Vagrant). Cleanup only deletes instances it created. The job stays `continue-on-error`. A
+  job that is `continue-on-error` still shows a failed check on the pull request, so an
+  unreachable snap store is not left to fail it: when `snap install` or `snap refresh` fails three
+  times, `install_multipass.py --allow-store-outage` warns and reports `installed=false`, and the
+  build and upload steps are skipped. Every other failure still fails the job
+  (`tools/tests/ci/test_install_multipass.py::test_a_snap_store_outage_fails_unless_the_job_allows_it`,
+  `tools/tests/ci/test_install_multipass.py::test_the_multipass_job_builds_only_when_multipass_was_installed`).
 - **Vagrant** runs `deploy/vagrant/run_vagrant.py` (`install`, then `build`): `vagrant up` stops
   after 150 minutes (`QGC_VM_UP_TIMEOUT`), the VM is destroyed only after an attempted startup, and a
   failed destroy fails the job; Vagrant failures fail the workflow. Reproduce locally with
