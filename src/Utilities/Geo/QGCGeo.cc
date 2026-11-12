@@ -220,11 +220,17 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord)
 
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
 {
+    const std::string reference = mgrs.simplified().replace(" ", "").toStdString();
+    // GeographicLib refuses this with an exception, which the commonest invalid input then does not need
+    if (reference.empty()) {
+        return false;
+    }
+
     try {
         int zone, prec;
         bool northp;
         double x, y;
-        GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
+        GeographicLib::MGRS::Reverse(reference, zone, northp, x, y, prec);
 
         double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
