@@ -353,6 +353,7 @@ GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous)
             return GPSFixQuality::NoFix;
         case GgaQuality::GPS:
         case GgaQuality::PPS:
+        case GgaQuality::SIMULATION:
             return autonomous;
         case GgaQuality::DIFFERENTIAL:
         case GgaQuality::SBAS:

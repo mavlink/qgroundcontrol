@@ -55,7 +55,7 @@ void NMEASentenceTest::_fixQuality_data()
     const std::array qualities{
         GPSFixQuality::NoFix,    GPSFixQuality::Fix3D,        GPSFixQuality::Differential, GPSFixQuality::Fix3D,
         GPSFixQuality::RTKFixed, GPSFixQuality::RTKFloat,     GPSFixQuality::Extrapolated, GPSFixQuality::Fix3D,
-        GPSFixQuality::Unknown,  GPSFixQuality::Differential,
+        GPSFixQuality::Fix3D,    GPSFixQuality::Differential,
     };
     for (unsigned quality = 0; quality < qualities.size(); ++quality) {
         QTest::addRow("%u", quality) << quality << GPSFixQuality::Fix3D << qualities[quality];
@@ -64,6 +64,7 @@ void NMEASentenceTest::_fixQuality_data()
     QTest::newRow("gps-2d") << unsigned(NMEA::GgaQuality::GPS) << GPSFixQuality::Fix2D << GPSFixQuality::Fix2D;
     QTest::newRow("gps-unknown") << unsigned(NMEA::GgaQuality::GPS) << GPSFixQuality::Unknown << GPSFixQuality::Unknown;
     QTest::newRow("pps-2d") << 3u << GPSFixQuality::Fix2D << GPSFixQuality::Fix2D;
+    QTest::newRow("simulation-2d") << 8u << GPSFixQuality::Fix2D << GPSFixQuality::Fix2D;
     QTest::newRow("sbas-2d") << 9u << GPSFixQuality::Fix2D << GPSFixQuality::Differential;
     QTest::newRow("unsupported") << 255u << GPSFixQuality::Fix3D << GPSFixQuality::Unknown;
 }

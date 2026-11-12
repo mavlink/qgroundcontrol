@@ -83,6 +83,8 @@ constexpr unsigned RTK_FLOAT = 5;
 constexpr unsigned ESTIMATED = 6;
 /// Manual input: the position a base station was fixed at.
 constexpr unsigned MANUAL = 7;
+/// The receiver's simulator supplies the position. It is read as an autonomous fix, as ArduPilot's NMEA driver reads
+/// every quality it does not name; gpsd and Qt's NMEA parser accept the position too.
 constexpr unsigned SIMULATION = 8;
 /// A solution with SBAS corrections as NovAtel receivers report it. Other receivers report it as DIFFERENTIAL.
 constexpr unsigned SBAS = 9;
@@ -97,8 +99,8 @@ constexpr unsigned NO_FIX = 1;
 constexpr unsigned THREE_D = 3;
 }  // namespace FixDimension
 
-/// Autonomous GGA does not distinguish 2D/3D; the caller supplies its independently resolved quality. Simulation and
-/// values beyond MAX_RECEIVED are Unknown, which is not a solution.
+/// Autonomous GGA does not distinguish 2D/3D; the caller supplies its independently resolved quality, which
+/// simulation takes too. Values beyond MAX_RECEIVED are Unknown, which is not a solution.
 [[nodiscard]] GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous);
 
 template <class T>

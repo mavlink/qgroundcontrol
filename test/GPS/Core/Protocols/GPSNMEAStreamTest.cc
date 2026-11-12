@@ -249,6 +249,7 @@ void GPSNMEAStreamTest::_ggaQuality_data()
     QTest::addColumn<bool>("published");
     QTest::addColumn<GPSFixQuality>("fixType");
     QTest::newRow("precise-positioning-service") << QByteArray("3") << true << GPSFixQuality::Fix3D;
+    QTest::newRow("simulation") << QByteArray("8") << true << GPSFixQuality::Fix3D;
     QTest::newRow("novatel-sbas") << QByteArray("9") << true << GPSFixQuality::Differential;
     QTest::newRow("undefined") << QByteArray("10") << false << GPSFixQuality::Unknown;
 }
