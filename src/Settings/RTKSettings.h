@@ -58,7 +58,8 @@ public:
 /// What "Detect automatically" last found on a link, where its next connection on that link looks first.
 struct RTKDetectedReceiver
 {
-    /// Names the link: "serial:" and the serial device, or "tcp:" and the host and port.
+    /// Names the link: "serial:" and the serial device, "tcp:" and the host and port, or "bluetooth:" and the
+    /// device's address.
     QString link;
     /// The receiver family, as a value of baseReceiverManufacturer other than "Detect automatically".
     int manufacturer = 0;
@@ -96,6 +97,7 @@ public:
         Serial = 0,
         Tcp = 1,
         Udp = 2,
+        Bluetooth = 3,
     };
     Q_ENUM(ConnectionType)
 
@@ -181,6 +183,8 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionFormat)
     DEFINE_SETTINGFACT(fixedBaseAntennaHeight)
     DEFINE_SETTINGFACT(baseCorrectionConstellations)
+    DEFINE_SETTINGFACT(bluetoothDeviceAddress)
+    DEFINE_SETTINGFACT(bluetoothDeviceName)
 
 signals:
     void baseSitesChanged();

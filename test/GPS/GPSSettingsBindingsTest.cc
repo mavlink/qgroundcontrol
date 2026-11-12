@@ -4,6 +4,7 @@
 
 #include <QtCore/QMetaProperty>
 #include <QtCore/QRegularExpression>
+#include <QtTest/QSignalSpy>
 
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
@@ -19,6 +20,7 @@
 #include "PositionReceiverSettings.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
+#include "Receiver/Support/ScriptedBluetooth.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 
@@ -117,6 +119,13 @@ void GPSSettingsBindingsTest::_receiverSettingsBinding()
     QCOMPARE(configuration.tcpPort, 2101U);
     QCOMPARE(configuration.serialDevice, QStringLiteral("/test/receiver"));
     QCOMPARE(configuration.serialBaudRate, 230400U);
+    settings.connectionType()->setRawValue(RTKSettings::Bluetooth);
+    settings.bluetoothDeviceAddress()->setRawValue(QStringLiteral("00:11:22:AA:BB:CC"));
+    settings.bluetoothDeviceName()->setRawValue(QStringLiteral("Survey receiver"));
+    QCOMPARE(configuration.connectionType, RTKSettings::Bluetooth);
+    QCOMPARE(configuration.bluetoothAddress, QStringLiteral("00:11:22:AA:BB:CC"));
+    QCOMPARE(configuration.bluetoothName, QStringLiteral("Survey receiver"));
+    settings.connectionType()->setRawValue(RTKSettings::Tcp);
     const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&configuration.base.mode);
     QVERIFY(fixed);
     QCOMPARE(fixed->position.latitudeDegrees, 47.5);
@@ -172,9 +181,6 @@ void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
     QVERIFY(configuration.autoConnect);
     QCOMPARE(positions.configuration().receiver, PositionManager::Receiver::Position);
     QCOMPARE(positions.configuration().sourceMode, PositionManager::SourceMode::ReceiverOnly);
-    // It offers the connections the RTK receiver does.
-    QCOMPARE(settings.connectionType()->enumValues(), rtk.connectionType()->enumValues());
-    QCOMPARE(settings.connectionType()->enumStrings(), rtk.connectionType()->enumStrings());
 
     // Out of use again, it is disconnected, where the RTK receiver's automatic connection only stops reconnecting.
     QVERIFY(receiver.connectReceiver());
@@ -184,6 +190,40 @@ void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
     QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
     QCOMPARE(positions.configuration().receiver, PositionManager::Receiver::Rtk);
     harness.workers.finishRetired();
+}
+
+void GPSSettingsBindingsTest::_bluetoothOfferedWhereReceiversConnectOverIt_data()
+{
+    QTest::addColumn<bool>("supported");
+    QTest::newRow("bluetooth") << true;
+    // A build without Bluetooth sockets, on any build.
+    QTest::newRow("no-bluetooth") << false;
+}
+
+void GPSSettingsBindingsTest::_bluetoothOfferedWhereReceiversConnectOverIt()
+{
+    QFETCH(bool, supported);
+    RTKSettings settings;
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(settings.connectionType(), RTKSettings::Bluetooth);
+    saved.setFactValue(settings.autoConnect(), false);
+    const auto offered = [&settings] {
+        return settings.connectionType()->enumStrings().contains(QStringLiteral("Bluetooth"));
+    };
+    QVERIFY(offered());
+    ScriptedBluetooth bluetooth;
+    bluetooth.supported = supported;
+    GPSReceiver receiver(nullptr, nullptr, {.bluetooth = bluetooth.side()});
+    QSignalSpy enumsChanged(settings.connectionType(), &Fact::enumsChanged);
+    GPSSettingsBindings::bindReceiver(&settings, &receiver);
+
+    // The connection is offered only to a receiver that has it, and a saved selection of it is kept only there.
+    QCOMPARE(offered(), supported);
+    QCOMPARE(enumsChanged.size(), supported ? 0 : 1);
+    QCOMPARE(settings.connectionType()->enumStrings().size(), settings.connectionType()->enumValues().size());
+    QCOMPARE(settings.connectionType()->rawValue().toInt(),
+             supported ? int(RTKSettings::Bluetooth) : int(RTKSettings::Serial));
+    QCOMPARE(receiver.configuration().connectionType, supported ? RTKSettings::Bluetooth : RTKSettings::Serial);
 }
 
 void GPSSettingsBindingsTest::_runtimeSettingsDoNotRequireAppRestart()

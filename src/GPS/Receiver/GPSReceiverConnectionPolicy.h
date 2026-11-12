@@ -9,6 +9,7 @@
 #include "ExponentialBackoff.h"
 #include "GPSReceiverConnector.h"
 
+class GPSReceiverBluetooth;
 class GPSReceiverSerialPorts;
 class RuntimeScheduler;
 
@@ -57,17 +58,18 @@ class GPSReceiverConnectionPolicy
 
 public:
     /// Drives @a receiver as @a configuration, the receiver's, selects. @a connectability is the receiver's check of
-    /// that configuration, renewed before configurationChanged(), and @a serial the receiver's serial devices. All
-    /// five must outlive the policy, and @a scheduler times the retries.
+    /// that configuration, renewed before configurationChanged(), @a serial the receiver's serial devices and
+    /// @a bluetooth its Bluetooth side. All six must outlive the policy, and @a scheduler times the retries.
     GPSReceiverConnectionPolicy(GPSReceiverConnector& receiver, const GPSReceiverConfiguration& configuration,
                                 const GPSReceiverConnectability& connectability, GPSReceiverSerialPorts& serial,
-                                RuntimeScheduler* scheduler);
+                                const GPSReceiverBluetooth& bluetooth, RuntimeScheduler* scheduler);
 
     /// The one place that checks whether @a configuration can connect and builds the request its connection sends,
-    /// for Connect, automatic connection and the settings view. Without @a serialLinks, a serial selection connects
-    /// over TCP. Only the user's Connect passes @a allowPersistentChanges, the flash-save consent.
+    /// for Connect, automatic connection and the settings view. Without serial @a links, a serial selection connects
+    /// over TCP, and without Bluetooth links a Bluetooth selection is one the build does not know, which connects as
+    /// a serial one. Only the user's Connect passes @a allowPersistentChanges, the flash-save consent.
     [[nodiscard]] static GPSReceiverConnectability connectability(const GPSReceiverConfiguration& configuration,
-                                                                  bool serialLinks,
+                                                                  GPSReceiverLinks links,
                                                                   bool allowPersistentChanges = false);
 
     /// The receiver's configuration changed from @a previous.
@@ -106,6 +108,7 @@ private:
         bool discovery = false;
     };
 
+    GPSReceiverLinks _links() const;
     bool _hasSavedReceiver() const;
     bool _discoveryEnabled() const;
     bool _connectConfigured(bool allowPersistentChanges);
@@ -131,6 +134,7 @@ private:
     /// The check of _configuration, without flash-save consent.
     const GPSReceiverConnectability& _connectability;
     GPSReceiverSerialPorts& _serial;
+    const GPSReceiverBluetooth& _bluetooth;
     RuntimeScheduler* const _scheduler;
     Owner _owner = Owner::None;
     /// Connect the saved receiver at the next update: set at startup and when the setting is turned on.

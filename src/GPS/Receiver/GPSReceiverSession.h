@@ -80,9 +80,10 @@ public:
         GPSReceiverConfig config{};
         /// Serial device whose removal ends the session; empty for network receivers.
         QString serialDevice;
-        /// Serial device or network address shown to the user.
+        /// Serial device, network address or Bluetooth device shown to the user.
         QString endpoint;
-        /// Names the link among those receivers are detected on: "serial:" and the device, or "tcp:" and the address.
+        /// Names the link among those receivers are detected on: "serial:" and the device, "tcp:" and the address, or
+        /// "bluetooth:" and the device's address.
         QString link;
         /// Where an Automatic session looks for its receiver first; no hint for any other.
         GPSDetectionHint detectionHint;

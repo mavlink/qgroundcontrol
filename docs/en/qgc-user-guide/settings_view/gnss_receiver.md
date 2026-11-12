@@ -1,6 +1,6 @@
 # GNSS Receiver
 
-The _GNSS Receiver_ settings (**SettingsView > GNSS Receiver**) connect an external GNSS receiver over serial, TCP or UDP.
+The _GNSS Receiver_ settings (**SettingsView > GNSS Receiver**) connect an external GNSS receiver over serial, TCP, UDP or Bluetooth.
 _QGroundControl_ can configure a supported receiver as an RTK base station whose corrections reach vehicles, or use a receiver's existing output for the ground station position.
 Corrections from NTRIP casters and UDP are configured in [RTK Corrections](ntrip_rtk.md).
 
@@ -61,16 +61,24 @@ The settings are:
 - **Receiver manufacturer** (_Configured base_ only): The receiver family QGroundControl configures as a base station.
   _Detect automatically_, the default, identifies the receiver each time it connects: QGroundControl listens to its output and sends read-only identification queries, at each rate the supported receivers use when **Baud rate** is _Auto_.
   Until then the settings of every supported receiver are shown, and connecting reports a base mode the identified receiver does not support.
-  QGroundControl remembers the receiver it found on a serial device or TCP address, with its baud rates, and asks that receiver first the next time it connects there: a receiver that is still there connects without the search.
+  QGroundControl remembers the receiver it found on a serial device, TCP address or Bluetooth device, with its baud rates, and asks that receiver first the next time it connects there: a receiver that is still there connects without the search.
   When it does not answer within a second at a remembered rate, the search runs as before.
   The eight connections used last are remembered, and a [recorded](#receiver) connection always runs the search.
   Meanwhile the [status line](#status) names what is tried: _Identifying receiver: trying u-blox at 115200 baud, as last time..._ for the remembered receiver. For each rate of the search it shows _Identifying receiver at 38400 baud..._ while QGroundControl listens there, and then each manufacturer whose receivers it asks in turn, as in _Identifying receiver: trying Trimble at 38400 baud..._.
   Select a manufacturer to configure only that receiver family.
   A manufacturer saved by a version without receiver roles only filtered the settings shown, so it resets to _Detect automatically_.
 - **Receiver connection:** _Serial_ connects a receiver on a local port, _TCP_ a receiver's network port or a serial-to-TCP bridge, and _UDP_ listens for the output of a passive receiver.
+  _Bluetooth_ connects a receiver, or a Bluetooth serial adapter in front of one, over the serial port profile of classic Bluetooth.
   Builds without serial port support connect a _Serial_ selection over TCP.
+  _Bluetooth_ is offered where the platform has Bluetooth serial connections, which iOS has not.
   - **Receiver host** and **Receiver TCP port:** The receiver or bridge to connect to. A bridge must already run the receiver link at 115200 baud.
   - **Receiver UDP port:** The local port the receiver's output arrives on. The first sender is used until it stops sending.
+  - **Bluetooth device:** The receiver's Bluetooth device. **Scan for Devices** lists the devices it finds by name and address, and the one you choose is saved.
+    The saved device stays first in the list, also when a scan does not find it.
+    Scanning turns Bluetooth on when it is off, and where the platform asks for the Bluetooth permission, QGroundControl asks for it when it scans or connects.
+    Pair a receiver that needs pairing in the operating system's Bluetooth settings first.
+    A Bluetooth serial adapter must already run the receiver link at 115200 baud, as a TCP bridge must.
+    A receiver that offers only Bluetooth Low Energy has no serial port profile and cannot be connected this way.
   - **Serial device:** The receiver's port. The list names each port by its USB description, such as _u-blox GNSS receiver – /dev/ttyACM0_, and marks ports another connection, such as a vehicle link, uses as _(in use)_.
     Where only one serial device can be open at a time, as with Android's USB serial driver, the other ports are marked _(another is in use)_ while another connection has one open, and **Connect** says so: disconnect that connection first.
     A saved device that is not plugged in is marked _(unavailable)_.
@@ -178,7 +186,7 @@ Up to 50 sites are kept; when the list is full, delete a site before you save an
 
 ### Passive Receiver {#passive}
 
-An external GNSS receiver connected over serial, TCP or UDP can provide the ground station position.
+An external GNSS receiver connected over serial, TCP, UDP or Bluetooth can provide the ground station position.
 The _Passive_ role uses the receiver's existing output without configuring it or sending it anything:
 
 - The receiver may output standard NMEA, u-blox UBX or Septentrio SBF; QGC identifies the protocol from the data and shows it as _Detected_ in the receiver status.
@@ -188,7 +196,7 @@ The _Passive_ role uses the receiver's existing output without configuring it or
   A position that the receiver marks as dead-reckoned is shown with the fix type _DR_, not as a lost fix.
   The position of a receiver that sends RMC or GST after GGA is used once it has sent them, which at 4800 baud can be most of a second later; a higher baud rate shortens that.
 - Turn off **Forward receiver RTCM** to use the receiver only for the ground station position.
-- Select the connection (**Serial** with the receiver's baud rate, **TCP**, or **UDP** with the port QGC listens on).
+- Select the connection (**Serial** with the receiver's baud rate, **TCP**, **UDP** with the port QGC listens on, or **Bluetooth** with the receiver's device).
   With the baud rate on **Auto**, QGC listens at 115200, 9600, 38400, 4800, 57600, 19200, 230400, 460800 and 921600 baud, for up to 2.2 seconds each, until NMEA, UBX, SBF or RTCM data arrives.
   It sends nothing to the receiver, and the receiver status shows the rate it found as _Receiver_.
   The status reads _Connecting to receiver..._ while QGC listens.

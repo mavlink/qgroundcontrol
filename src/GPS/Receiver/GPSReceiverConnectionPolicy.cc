@@ -5,6 +5,7 @@
 #include <utility>
 #include <variant>
 
+#include "GPSReceiverBluetooth.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverSerialPorts.h"
 #include "GPSReceiverSession.h"
@@ -17,23 +18,34 @@ QGC_LOGGING_CATEGORY(GPSReceiverConnectionPolicyLog, "GPS.Receiver.GPSReceiverCo
 GPSReceiverConnectionPolicy::GPSReceiverConnectionPolicy(GPSReceiverConnector& receiver,
                                                          const GPSReceiverConfiguration& configuration,
                                                          const GPSReceiverConnectability& connectability,
-                                                         GPSReceiverSerialPorts& serial, RuntimeScheduler* scheduler)
+                                                         GPSReceiverSerialPorts& serial,
+                                                         const GPSReceiverBluetooth& bluetooth,
+                                                         RuntimeScheduler* scheduler)
     : _receiver(receiver)
     , _configuration(configuration)
     , _connectability(connectability)
     , _serial(serial)
+    , _bluetooth(bluetooth)
     , _scheduler(scheduler)
 {}
 
+GPSReceiverLinks GPSReceiverConnectionPolicy::_links() const
+{
+    return {.serial = _serial.supported(), .bluetooth = _bluetooth.supported()};
+}
+
 GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSReceiverConfiguration& configuration,
-                                                                      bool serialLinks, bool allowPersistentChanges)
+                                                                      GPSReceiverLinks links,
+                                                                      bool allowPersistentChanges)
 {
     const bool configuredBase = configuration.receiverRole == RTKSettings::ConfiguredBase;
-    const bool network =
-        configuration.connectionType == RTKSettings::Tcp || configuration.connectionType == RTKSettings::Udp;
-    const auto connection = network       ? configuration.connectionType
-                            : serialLinks ? RTKSettings::Serial
-                                          : RTKSettings::Tcp;
+    // A network connection, or a Bluetooth one where the build has them, is used as selected.
+    const bool selectable = configuration.connectionType == RTKSettings::Tcp ||
+                            configuration.connectionType == RTKSettings::Udp ||
+                            (configuration.connectionType == RTKSettings::Bluetooth && links.bluetooth);
+    const auto connection = selectable     ? configuration.connectionType
+                            : links.serial ? RTKSettings::Serial
+                                           : RTKSettings::Tcp;
     GPSReceiverConnectability result;
     result.connection = connection;
     result.type = configuredBase ? gpsReceiverTypeForManufacturer(configuration.baseReceiverManufacturer)
@@ -54,7 +66,7 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
 
     const auto validPort = [](uint32_t port) { return port != 0 && port <= (std::numeric_limits<quint16>::max)(); };
     QString endpointError;
-    // A network connection runs at its bridge's rate, whatever serial rate is saved.
+    // A network or Bluetooth connection runs at its bridge's rate, whatever serial rate is saved.
     uint32_t baudRate = GPSTransport::BRIDGE_BAUD_RATE;
     switch (connection) {
         case RTKSettings::Serial:
@@ -70,12 +82,16 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
             result.hasEndpoint = validPort(configuration.udpPort);
             endpointError = tr("Enter the UDP port that receives the data.");
             break;
+        case RTKSettings::Bluetooth:
+            result.hasEndpoint = GPSReceiverBluetooth::validAddress(configuration.bluetoothAddress);
+            endpointError = tr("Select the receiver's Bluetooth device.");
+            break;
     }
 
     if (!result.type) {
         result.error = tr("Select a receiver type before connecting.");
     } else if (!result.connectionSupported) {
-        result.error = tr("A configured base needs a serial or TCP connection. UDP only receives data.");
+        result.error = tr("A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data.");
     } else if (!result.hasEndpoint) {
         result.error = endpointError;
     } else if (!result.baseModeSupported) {
@@ -266,8 +282,8 @@ bool GPSReceiverConnectionPolicy::_hasSavedReceiver() const
 
 bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
 {
-    // Discovery configures known base receivers, so it never replaces a saved, network or passive receiver. Without
-    // serial links every connection is a network one.
+    // Discovery configures known base receivers, so it never replaces a saved, network, Bluetooth or passive
+    // receiver. Without serial links no connection is a serial one.
     return _configuration.autoConnect && !_paused && _configuration.receiverRole == RTKSettings::ConfiguredBase &&
            _connectability.connection == RTKSettings::Serial && _configuration.serialDevice.trimmed().isEmpty();
 }
@@ -311,7 +327,7 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
 {
     // The consent is part of the request, so the request with it is built and checked for this attempt.
     const GPSReceiverConnectability check =
-        allowPersistentChanges ? connectability(_configuration, _serial.supported(), true) : _connectability;
+        allowPersistentChanges ? connectability(_configuration, _links(), true) : _connectability;
     if (!check.type || !check.error.isEmpty()) {
         _refuse({.error = check.error, .serialDevice = {}});
         return false;
@@ -326,6 +342,10 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
     if (check.connection == RTKSettings::Udp) {
         // connectability() lets only a passive receiver through.
         return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), check.request);
+    }
+    if (check.connection == RTKSettings::Bluetooth) {
+        return _receiver.connectBluetooth(_configuration.bluetoothAddress.trimmed(),
+                                          _configuration.bluetoothName.trimmed(), type, check.request);
     }
     // What follows depends on the devices present, so automatic connection retries it.
     const QString device = _configuration.serialDevice.trimmed();
@@ -384,7 +404,7 @@ void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
     GPSReceiverConfiguration discovered = _configuration;
     discovered.serialDevice = device;
     discovered.serialBaudRate = 0;
-    const GPSReceiverConnectability check = connectability(discovered, _serial.supported());
+    const GPSReceiverConnectability check = connectability(discovered, _links());
     if (!check.type || !check.error.isEmpty()) {
         _rejectConfiguration(check.error);
         return;

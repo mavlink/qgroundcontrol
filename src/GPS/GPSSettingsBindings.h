@@ -30,8 +30,8 @@ public:
     /// Call before NTRIPManager::init().
     static void bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip);
 
-    /// Supplies the receiver settings to @a receiver now and whenever they change. Call before the receiver is
-    /// allowed to connect.
+    /// Supplies the receiver settings to @a receiver now and whenever they change, and offers a Bluetooth connection
+    /// only where the receiver has one. Call before the receiver is allowed to connect.
     static void bindReceiver(RTKSettings* settings, GPSReceiver* receiver);
 
     /// Supplies the position receiver's settings to @a receiver now and whenever they change: a passive receiver

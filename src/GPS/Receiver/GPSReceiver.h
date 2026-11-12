@@ -23,6 +23,7 @@
 
 struct GPSConstellationSatellites;
 class GPSCorrectionManager;
+class GPSReceiverBluetooth;
 class GPSReceiverConnectionPolicy;
 class GPSReceiverFactGroup;
 class GPSReceiverSession;
@@ -46,12 +47,16 @@ struct GPSReceiverDependencies
     /// its device. Without it the receiver has the serial side of its build, GPSReceiverSerialPorts::create(), with
     /// no device available.
     std::function<GPSReceiverSerialPorts*(QObject* parent)> serial = nullptr;
+    /// Creates the receiver's Bluetooth side as its child: whether receivers connect over Bluetooth, the device
+    /// discovery, and the link of a Bluetooth session. Without it the receiver has the build's, over the
+    /// application's Bluetooth links.
+    std::function<GPSReceiverBluetooth*(QObject* parent)> bluetooth = nullptr;
     /// The folder a recorded session's file goes to, asked as each session starts. Without it, or while it returns
     /// an empty path, sessions are not recorded.
     std::function<QString()> recordingDirectory = nullptr;
-    /// What "Detect automatically" last found on a link, by the link's name: "serial:" and the device, or "tcp:" and
-    /// the address. Asked as each such session starts, which then looks for that receiver first. Without it, and for
-    /// a link it knows nothing of, the session scans.
+    /// What "Detect automatically" last found on a link, by the link's name: "serial:" and the device, "tcp:" and the
+    /// address, or "bluetooth:" and the device's address. Asked as each such session starts, which then looks for
+    /// that receiver first. Without it, and for a link it knows nothing of, the session scans.
     std::function<std::optional<RTKDetectedReceiver>(const QString& link)> detectedReceiver = nullptr;
     /// Told what such a session found once its receiver is ready, to remember it for the link's next session.
     std::function<void(const RTKDetectedReceiver& receiver)> rememberDetectedReceiver = nullptr;
@@ -77,6 +82,10 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(QList<int> serialBaudRates READ serialBaudRates CONSTANT FINAL)
     Q_PROPERTY(State state READ state NOTIFY receiverChanged FINAL)
     Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT FINAL)
+    /// Receivers connect over Bluetooth in this build.
+    Q_PROPERTY(bool bluetoothSupported READ bluetoothSupported CONSTANT FINAL)
+    /// GPSReceiverBluetooth::discovery(): the device discovery the Bluetooth device picker scans with.
+    Q_PROPERTY(QObject* bluetoothDiscovery READ bluetoothDiscovery CONSTANT FINAL)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged FINAL)
     Q_PROPERTY(int activeBaseMode READ activeBaseMode NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString activeEndpoint READ activeEndpoint NOTIFY receiverChanged FINAL)
@@ -101,7 +110,7 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(bool baseModeSupported READ baseModeSupported NOTIFY configurationChanged FINAL)
     /// Connect may start the configured receiver: a selected receiver type, base mode and connection it supports.
     Q_PROPERTY(bool canConnect READ canConnect NOTIFY configurationChanged FINAL)
-    /// The settings name where the receiver is: a serial device, a TCP address or a UDP port.
+    /// The settings name where the receiver is: a serial device, a TCP address, a UDP port or a Bluetooth device.
     Q_PROPERTY(bool hasEndpoint READ hasEndpoint NOTIFY configurationChanged FINAL)
     /// Records the receiver's raw input and output of every session that starts while this is on. Off at startup and
     /// never saved.
@@ -211,13 +220,17 @@ public:
     /// Receivers connect over serial devices; without serial links a serial selection connects over TCP.
     bool serialSupported() const { return _serial->supported(); }
 
+    bool bluetoothSupported() const;
+
+    QObject* bluetoothDiscovery() const;
+
     /// The connection or input problem, else a recent report that the receiver dropped output.
     QString errorMessage() const;
 
     /// BaseModeDefinition::Mode of the connected configured base, or -1 for a passive receiver or without one.
     int activeBaseMode() const;
 
-    /// Serial device or TCP host:port of the active receiver.
+    /// Where the active receiver is: its serial device, TCP host:port, UDP port or Bluetooth device.
     QString activeEndpoint() const;
 
     QString receiverIdentity() const;
@@ -251,7 +264,7 @@ public:
 
     RTKSettings::ConnectionType effectiveConnectionType() const { return _connectability.connection; }
 
-    /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
+    /// UDP only receives, so a receiver QGroundControl configures needs serial, TCP or Bluetooth.
     bool connectionSupported() const { return _connectability.connectionSupported; }
 
     bool baseModeSupported() const { return _connectability.baseModeSupported; }
@@ -335,10 +348,14 @@ private:
     bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) override;
     bool connectUdp(quint16 port, GPSReceiverConfig request) override;
     bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request, GPSSerialClaim claim) override;
+    bool connectBluetooth(const QString& address, const QString& name, GPSType type,
+                          GPSReceiverConfig request) override;
     /// Ends a serial session whose device the scan no longer lists.
     void _onSerialPortsScanned(const QStringList& devices);
     /// Scans the serial ports, when a scan is due, before the connection policy asks for them.
     void _scanSerialPorts();
+    /// The links this receiver connects over, besides the network.
+    GPSReceiverLinks _links() const;
 
     /// Starts a session that sends @a request, which the connection policy has validated.
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
@@ -380,6 +397,8 @@ private:
 
     /// The receiver's serial side: the devices it may connect or discover, their claims and their transport.
     GPSReceiverSerialPorts* const _serial;
+    /// The receiver's Bluetooth side: the device discovery and the link of a Bluetooth session.
+    GPSReceiverBluetooth* const _bluetooth;
     Configuration _configuration;
     /// The check of _configuration, renewed with it, which the connection policy and the properties read.
     GPSReceiverConnectability _connectability;

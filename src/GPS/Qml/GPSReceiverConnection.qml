@@ -18,6 +18,7 @@ GPSReceiverSettingsGroup {
     readonly property bool _udp: receiver.effectiveConnectionType === RTKSettings.Udp
     readonly property bool _tcp: receiver.effectiveConnectionType === RTKSettings.Tcp
     readonly property bool _serial: receiver.effectiveConnectionType === RTKSettings.Serial
+    readonly property bool _bluetooth: receiver.effectiveConnectionType === RTKSettings.Bluetooth
     readonly property bool _connectionSupported: receiver.connectionSupported
 
     heading: qsTr("GNSS Receiver")
@@ -89,7 +90,7 @@ GPSReceiverSettingsGroup {
             objectName: "rtkUdpExplanation"
             warning: !root._connectionSupported
             text: root._connectionSupported ? root.settings.udpPort.shortDescription
-                                            : qsTr("A configured base needs a serial or TCP connection. UDP only receives data.")
+                                            : qsTr("A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data.")
         }
     }
 
@@ -101,6 +102,16 @@ GPSReceiverSettingsGroup {
         serialPorts: root.serialPorts
         serialBaudRates: root.serialBaudRates
         anyDeviceLabel: root.configuredBase && root.autoConnectFact.rawValue ? qsTr("Any RTK receiver on USB") : ""
+        editable: root._editable
+    }
+
+    GPSReceiverBluetoothDevice {
+        Layout.minimumWidth: 0
+        visible: root._bluetooth
+        addressFact: root.settings.bluetoothDeviceAddress
+        nameFact: root.settings.bluetoothDeviceName
+        // Asked for only once a Bluetooth connection is selected, as the receiver creates it then.
+        discovery: root._bluetooth ? root.receiver.bluetoothDiscovery : null
         editable: root._editable
     }
 

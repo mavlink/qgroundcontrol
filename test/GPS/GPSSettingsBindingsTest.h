@@ -13,6 +13,8 @@ private slots:
     void _receiverSettingsMapping();
     void _receiverSettingsBinding();
     void _positionReceiverSettingsBinding();
+    void _bluetoothOfferedWhereReceiversConnectOverIt_data();
+    void _bluetoothOfferedWhereReceiversConnectOverIt();
     void _runtimeSettingsDoNotRequireAppRestart();
     void _ntripSettingsBinding();
     void _ntripActionsFollowConnectionSetting();

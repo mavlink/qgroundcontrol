@@ -61,6 +61,14 @@ inline bool connectOverTcp(GPSReceiver& receiver, GPSReceiver::Configuration con
     return receiver.connectReceiver();
 }
 
+/// Connects @a configuration over Bluetooth; scripted workers never open the device.
+inline void useBluetooth(GPSReceiver::Configuration& configuration)
+{
+    configuration.connectionType = RTKSettings::Bluetooth;
+    configuration.bluetoothAddress = QStringLiteral("00:11:22:AA:BB:CC");
+    configuration.bluetoothName = QStringLiteral("Survey receiver");
+}
+
 /// The serial side of a build without serial links, for GPSReceiver::Dependencies::serial: tests run that build's
 /// behaviour with it on any build.
 inline GPSReceiverSerialPorts* withoutSerialLinks(QObject* parent)

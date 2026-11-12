@@ -27,6 +27,10 @@ struct GPSReceiverConfiguration
     uint32_t udpPort = 0;
     QString serialDevice;
     uint32_t serialBaudRate = 0;
+    /// The address of the receiver's Bluetooth device, such as 00:11:22:AA:BB:CC.
+    QString bluetoothAddress;
+    /// What that device calls itself, which only names it to the user.
+    QString bluetoothName;
     GPSBaseStationConfig base;
     /// Keep the saved receiver connected, or discover a configured base on USB when no device is saved.
     bool autoConnect = true;
@@ -39,23 +43,32 @@ struct GPSReceiverConfiguration
         return receiverRole == other.receiverRole && baseReceiverManufacturer == other.baseReceiverManufacturer &&
                base.mode.index() == other.base.mode.index() && connectionType == other.connectionType &&
                serialDevice == other.serialDevice && serialBaudRate == other.serialBaudRate &&
-               tcpHost == other.tcpHost && tcpPort == other.tcpPort && udpPort == other.udpPort;
+               tcpHost == other.tcpHost && tcpPort == other.tcpPort && udpPort == other.udpPort &&
+               bluetoothAddress == other.bluetoothAddress;
     }
+};
+
+/// The links receivers connect over in this build, besides the network.
+struct GPSReceiverLinks
+{
+    bool serial = false;
+    bool bluetooth = false;
 };
 
 /// Whether a receiver configuration can connect, whatever devices are plugged in or reachable, and the request its
 /// connection sends. GPSReceiverConnectionPolicy::connectability() builds it.
 struct GPSReceiverConnectability
 {
-    /// The connection the configuration uses: without serial links, a serial selection connects over TCP.
+    /// The connection the configuration uses: without serial links, a serial selection connects over TCP, and
+    /// without Bluetooth links a Bluetooth selection connects as a serial one does.
     RTKSettings::ConnectionType connection = RTKSettings::Serial;
     /// The receiver family to connect; empty when no receiver type is selected.
     std::optional<GPSType> type;
     /// The family supports the selected base mode; a passive receiver has none to support.
     bool baseModeSupported = false;
-    /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
+    /// UDP only receives, so a receiver QGroundControl configures needs serial, TCP or Bluetooth.
     bool connectionSupported = false;
-    /// The serial device, TCP address or UDP port to connect is entered, so a receiver is saved.
+    /// The serial device, TCP address, UDP port or Bluetooth device to connect is entered, so a receiver is saved.
     bool hasEndpoint = false;
     /// Why the configuration cannot connect, as shown to the user; empty when it can. Never empty without a type, a
     /// supported base mode, a supported connection and an endpoint.
@@ -73,8 +86,8 @@ using GPSReceiverWorkerFactory =
 /// once its public method or report handler returns. A connection sends the request of the policy's
 /// GPSReceiverConnectability as it is given.
 /// GPSReceiver is its only implementation, as a private base, and no test replaces it. The interface is there to keep
-/// the policy to these six operations: the policy sees neither the receiver's header nor its other members, which a
-/// friend declaration would open to it, and the five operations that change the receiver stay private to it. They are
+/// the policy to these seven operations: the policy sees neither the receiver's header nor its other members, which a
+/// friend declaration would open to it, and the six operations that change the receiver stay private to it. They are
 /// called on a poll, a settings change or the user's request, so what the virtual calls cost does not matter.
 class GPSReceiverConnector
 {
@@ -98,6 +111,9 @@ public:
     /// @a claim is the policy's claim of @a device from the receiver's GPSReceiverSerialPorts.
     virtual bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request,
                                GPSSerialClaim claim) = 0;
+    /// Connects the receiver at the Bluetooth device @a address, which calls itself @a name.
+    virtual bool connectBluetooth(const QString& address, const QString& name, GPSType type,
+                                  GPSReceiverConfig request) = 0;
 
 protected:
     GPSReceiverConnector() = default;

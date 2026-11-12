@@ -178,8 +178,12 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors_data()
     row("tcp-host", tcpAddress);
     row("tcp-port", tcpAddress);
     row("udp-port", GPSReceiverConnectionPolicy::tr("Enter the UDP port that receives the data."));
-    row("base-over-udp",
-        GPSReceiverConnectionPolicy::tr("A configured base needs a serial or TCP connection. UDP only receives data."));
+    row("base-over-udp", GPSReceiverConnectionPolicy::tr(
+                             "A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data."));
+    const QString bluetoothDevice = GPSReceiverConnectionPolicy::tr("Select the receiver's Bluetooth device.");
+    row("bluetooth-device", bluetoothDevice);
+    // An address is six bytes.
+    row("bluetooth-address", bluetoothDevice);
 #ifndef QGC_NO_SERIAL_LINK
     const QString serialDevice =
         GPSReceiverConnectionPolicy::tr("Select an available serial device that is not a bootloader.");
@@ -216,6 +220,11 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
     } else if (reason == QStringLiteral("base-over-udp")) {
         configuration.connectionType = RTKSettings::Udp;
         configuration.udpPort = 14401;
+    } else if (reason == QStringLiteral("bluetooth-device")) {
+        configuration.connectionType = RTKSettings::Bluetooth;
+    } else if (reason == QStringLiteral("bluetooth-address")) {
+        useBluetooth(configuration);
+        configuration.bluetoothAddress = QStringLiteral("00:11:22:AA:BB");
     }
 #ifdef QGC_NO_SERIAL_LINK
     PolicyHarness harness(configuration);
@@ -294,12 +303,16 @@ void GPSReceiverConnectionPolicyTest::_configurationChangeCancelsRetry_data()
     QTest::addColumn<QString>("change");
     QTest::newRow("connection") << QStringLiteral("connection");
     QTest::newRow("auto-connect-off") << QStringLiteral("auto-connect-off");
+    QTest::newRow("bluetooth-device") << QStringLiteral("bluetooth-device");
 }
 
 void GPSReceiverConnectionPolicyTest::_configurationChangeCancelsRetry()
 {
     QFETCH(QString, change);
     auto configuration = tcpConfiguration();
+    if (change == QStringLiteral("bluetooth-device")) {
+        useBluetooth(configuration);
+    }
     PolicyHarness harness(configuration);
     GPSReceiver& receiver = harness.receiver;
     QVERIFY(receiver.connectReceiver());
@@ -312,6 +325,12 @@ void GPSReceiverConnectionPolicyTest::_configurationChangeCancelsRetry()
 
     if (change == QStringLiteral("connection")) {
         ++configuration.tcpPort;
+    } else if (change == QStringLiteral("bluetooth-device")) {
+        // Another device is another receiver; the name alone only names the same one.
+        configuration.bluetoothName = QStringLiteral("Renamed");
+        receiver.setConfiguration(configuration);
+        QVERIFY(receiver.reconnecting());
+        configuration.bluetoothAddress = QStringLiteral("00:11:22:AA:BB:DD");
     } else {
         configuration.autoConnect = false;
     }
@@ -339,6 +358,7 @@ void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried_da
                 << QString::fromLatin1(scenario) << connectRefused;
         };
         row("saved-tcp");
+        row("saved-bluetooth");
         row("saved-base-over-udp");
 #ifndef QGC_NO_SERIAL_LINK
         row("saved-serial-unplugged");
@@ -353,7 +373,12 @@ void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried()
     QFETCH(bool, connectRefused);
     // A u-blox base has no receiver-managed averaging.
     auto fixed = receiverConfiguration();
-    useTcp(fixed);
+    if (scenario == QStringLiteral("saved-bluetooth")) {
+        // A saved device connects at startup and reconnects as a saved address does.
+        useBluetooth(fixed);
+    } else {
+        useTcp(fixed);
+    }
     auto broken = fixed;
     broken.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
     QString error = gpsReceiverConfigErrorText(GPSReceiverConfigError::UnsupportedBaseMode);
@@ -363,7 +388,7 @@ void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried()
         broken = fixed;
         broken.receiverRole = RTKSettings::ConfiguredBase;
         error = GPSReceiverConnectionPolicy::tr(
-            "A configured base needs a serial or TCP connection. UDP only receives data.");
+            "A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data.");
     }
 #ifdef QGC_NO_SERIAL_LINK
     PolicyHarness harness(broken);
@@ -450,6 +475,9 @@ void GPSReceiverConnectionPolicyTest::_configurationChangeWithdrawsRefusal_data(
     // The host is still missing.
     row("tcp-without-host", "port-changed", false);
     row("tcp-without-host", "forwarding-off", false);
+    row("bluetooth-without-device", "bluetooth-device-selected", true);
+    // The device is still missing.
+    row("bluetooth-without-device", "bluetooth-name-entered", false);
     // A saved receiver that still cannot connect: its changed configuration is left to automatic connection, and the
     // message stays all the same.
     row("base-over-udp", "forwarding-off", false);
@@ -472,6 +500,8 @@ void GPSReceiverConnectionPolicyTest::_configurationChangeWithdrawsRefusal()
     auto configuration = tcpConfiguration(false);
     if (refused == QStringLiteral("tcp-without-host")) {
         configuration.tcpHost.clear();
+    } else if (refused == QStringLiteral("bluetooth-without-device")) {
+        configuration.connectionType = RTKSettings::Bluetooth;
     } else if (refused == QStringLiteral("base-over-udp")) {
         configuration = receiverConfiguration();
         configuration.connectionType = RTKSettings::Udp;
@@ -525,6 +555,10 @@ void GPSReceiverConnectionPolicyTest::_configurationChangeWithdrawsRefusal()
         ++configuration.tcpPort;
     } else if (change == QStringLiteral("forwarding-off")) {
         configuration.forwardReceiverRtcm = false;
+    } else if (change == QStringLiteral("bluetooth-device-selected")) {
+        useBluetooth(configuration);
+    } else if (change == QStringLiteral("bluetooth-name-entered")) {
+        configuration.bluetoothName = QStringLiteral("Survey receiver");
     }
 #ifndef QGC_NO_SERIAL_LINK
     if (change == QStringLiteral("device-selected")) {
@@ -968,6 +1002,8 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery_data()
     QTest::newRow("serial") << static_cast<int>(RTKSettings::Serial) << QStringLiteral("/test/ch340")
                             << QStringLiteral("/test/ch340");
     QTest::newRow("tcp") << static_cast<int>(RTKSettings::Tcp) << QString() << QStringLiteral("rtk.test:2101");
+    QTest::newRow("bluetooth") << static_cast<int>(RTKSettings::Bluetooth) << QString()
+                               << QStringLiteral("Survey receiver (00:11:22:AA:BB:CC)");
 }
 
 void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
@@ -980,6 +1016,8 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     configuration.connectionType = static_cast<RTKSettings::ConnectionType>(connection);
     configuration.tcpHost = QStringLiteral("rtk.test");
     configuration.tcpPort = 2101;
+    configuration.bluetoothAddress = QStringLiteral("00:11:22:AA:BB:CC");
+    configuration.bluetoothName = QStringLiteral("Survey receiver");
     const QList<SerialPortManager::Port> inventory{serialPort(QStringLiteral("/test/ch340")),
                                                    serialPort(QStringLiteral("/test/ftdi")),
                                                    rtkPort(QStringLiteral("/test/known"))};

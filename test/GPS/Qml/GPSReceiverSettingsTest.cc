@@ -21,6 +21,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSManager.h"
 #include "GPSReceiver.h"
+#include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
 #include "QGCPalette.h"
@@ -28,6 +29,7 @@
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
+#include "Receiver/Support/ScriptedBluetooth.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
 #include "UnitsSettings.h"
@@ -52,7 +54,8 @@ struct SettingsReceiver
 
     GPSReceiver::Dependencies dependencies([[maybe_unused]] bool serialLinks)
     {
-        GPSReceiver::Dependencies dependencies{.serial = withoutSerialLinks, .recordingDirectory = recordingDirectory};
+        GPSReceiver::Dependencies dependencies{
+            .serial = withoutSerialLinks, .bluetooth = bluetooth.side(), .recordingDirectory = recordingDirectory};
 #ifndef QGC_NO_SERIAL_LINK
         if (serialLinks) {
             dependencies.serial = serial.side();
@@ -66,6 +69,8 @@ struct SettingsReceiver
     TestSerialPorts serial{{serialPort(QStringLiteral("/test/receiver")), serialPort(QStringLiteral("/test/other")),
                             serialPort(QStringLiteral("/test/missing"))}};
 #endif
+    // The form scans with a discovery the tests fill, never with the radio.
+    ScriptedBluetooth bluetooth;
     GPSTest::ScriptedGPSReceiver scripted;
     GPSReceiver& gps = scripted.receiver;
     ScriptedReceiverWorkerFactory& workers = scripted.workers;
@@ -891,6 +896,140 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     QVERIFY(!host->isEnabled() && !port->isEnabled());
 }
 
+void GPSReceiverSettingsTest::_bluetoothDevicePicker()
+{
+    Panel panel(kPassiveManufacturer);
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* type = panel.find<QObject>("rtkConnectionType");
+    auto* device = panel.find("rtkBluetoothDevice");
+    auto* scan = panel.find("rtkBluetoothScan");
+    auto* note = panel.find("rtkBluetoothNote");
+    auto* scanError = panel.find("rtkBluetoothScanError");
+    auto* serialDevice = panel.find("rtkSerialDevice");
+    auto* host = panel.find("rtkTcpHost");
+    auto* udpPort = panel.find("rtkUdpPort");
+    auto* connect = panel.find("rtkConnectButton");
+    QVERIFY(type && device && scan && note && scanError && serialDevice && host && udpPort && connect);
+    RTKSettings* const settings = panel.settings.settings;
+    GPSReceiver& receiver = panel.receiver.gps;
+    ScriptedBluetooth& bluetooth = panel.receiver.bluetooth;
+    const auto entries = [device] { return device->property("model").toStringList(); };
+    const auto text = [](const QQuickItem* item) { return item->property("text").toString(); };
+    const QString none = QCoreApplication::translate("GPSReceiverBluetoothDevice", "<none selected>");
+
+    // The connection is offered with the others, and the picker and its discovery come with its selection.
+    QVERIFY(type->property("model").toStringList().contains(QStringLiteral("Bluetooth")));
+    QVERIFY(!device->isVisible() && !scan->isVisible());
+    QVERIFY(!bluetooth.discovery);
+    settings->connectionType()->setRawValue(RTKSettings::Bluetooth);
+    QVERIFY(device->isVisible() && scan->isVisible() && note->isVisible());
+    QVERIFY(!serialDevice->isVisible() && !host->isVisible() && !udpPort->isVisible());
+    QVERIFY(bluetooth.discovery);
+    QCOMPARE(bluetooth.discovery->scans, 0);
+
+    // Without a device there is nothing to choose, which the picker and Connect say.
+    QCOMPARE(entries(), QStringList{none});
+    QCOMPARE(device->property("currentText").toString(), none);
+    QVERIFY(!device->isEnabled());
+    QVERIFY(text(note).contains(QStringLiteral("No Bluetooth device is selected")));
+    QVERIFY(!scanError->isVisible());
+    QVERIFY(!receiver.hasEndpoint());
+    QVERIFY(connect->isEnabled());
+    QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
+    QVERIFY(!receiver.hasReceiver());
+    QCOMPARE(receiver.errorMessage(), GPSReceiverConnectionPolicy::tr("Select the receiver's Bluetooth device."));
+
+    // A scan lists what it finds, by name.
+    QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
+    QCOMPARE(bluetooth.discovery->scans, 1);
+    QCOMPARE(text(scan), QCoreApplication::translate("GPSReceiverBluetoothDevice", "Stop Scan"));
+    QVERIFY(text(note).contains(QStringLiteral("Scanning")));
+    bluetooth.discovery->find(QStringLiteral("Rover"), QStringLiteral("00:11:22:33:44:02"));
+    bluetooth.discovery->find(QStringLiteral("Base"), QStringLiteral("00:11:22:33:44:01"));
+    bluetooth.discovery->find(QString(), QStringLiteral("00:11:22:33:44:03"));
+    QCOMPARE(entries(),
+             (QStringList{none, QStringLiteral("00:11:22:33:44:03"), QStringLiteral("Base – 00:11:22:33:44:01"),
+                          QStringLiteral("Rover – 00:11:22:33:44:02")}));
+    QVERIFY(device->isEnabled());
+    // The entry that selects nothing changes nothing.
+    QVERIFY(QMetaObject::invokeMethod(device, "activated", Q_ARG(int, 0)));
+    QVERIFY(settings->bluetoothDeviceAddress()->rawValue().toString().isEmpty());
+    QVERIFY(bluetooth.discovery->scanning());
+
+    // A chosen device is saved by its address, with its name, and ends the scan and Connect's complaint.
+    QVERIFY(QMetaObject::invokeMethod(device, "activated", Q_ARG(int, 2)));
+    QCOMPARE(settings->bluetoothDeviceAddress()->rawValue().toString(), QStringLiteral("00:11:22:33:44:01"));
+    QCOMPARE(settings->bluetoothDeviceName()->rawValue().toString(), QStringLiteral("Base"));
+    QVERIFY(!bluetooth.discovery->scanning());
+    QCOMPARE(text(scan), QCoreApplication::translate("GPSReceiverBluetoothDevice", "Scan for Devices"));
+    QVERIFY(receiver.hasEndpoint());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    // It comes first from then on, whether or not a scan lists it.
+    QCOMPARE(entries(), (QStringList{QStringLiteral("Base – 00:11:22:33:44:01"), QStringLiteral("00:11:22:33:44:03"),
+                                     QStringLiteral("Rover – 00:11:22:33:44:02")}));
+    QCOMPARE(device->property("currentText").toString(), QStringLiteral("Base – 00:11:22:33:44:01"));
+    QVERIFY(text(note).contains(QStringLiteral("115200")));
+    QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
+    QCOMPARE(bluetooth.discovery->scans, 2);
+    QCOMPARE(entries(), QStringList{QStringLiteral("Base – 00:11:22:33:44:01")});
+    QVERIFY(!device->isEnabled());
+
+    // A scan that fails says why, until the next one.
+    bluetooth.discovery->fail(QStringLiteral("Device is powered off"));
+    QVERIFY(scanError->isVisible());
+    QCOMPARE(text(scanError), QStringLiteral("Device is powered off"));
+    QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
+    QVERIFY(!scanError->isVisible());
+
+    // Connecting ends the scan and locks the choice, as it locks the rest of the form.
+    QVERIFY(bluetooth.discovery->scanning());
+    QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
+    QVERIFY(receiver.hasReceiver());
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("Base (00:11:22:33:44:01)"));
+    QVERIFY(!bluetooth.discovery->scanning());
+    QVERIFY(!device->isEnabled() && !scan->isEnabled());
+    receiver.disconnectReceiver();
+    QVERIFY(scan->isEnabled());
+
+    // So does leaving the connection for another.
+    QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
+    QVERIFY(bluetooth.discovery->scanning());
+    settings->connectionType()->setRawValue(RTKSettings::Tcp);
+    QVERIFY(!device->isVisible());
+    QVERIFY(!bluetooth.discovery->scanning());
+}
+
+void GPSReceiverSettingsTest::_bluetoothPickerListsLinkConfigurationDevices()
+{
+    // The picker over the discovery of a build with Bluetooth: the configuration of a Bluetooth link, which is given
+    // the devices a scan would find. Nothing scans.
+    const std::unique_ptr<QObject> discovery(GPSBluetoothPlatform::system().createDiscovery(nullptr));
+    QVERIFY(discovery);
+    for (const auto& [name, address] : {std::pair{QStringLiteral("Rover"), QStringLiteral("00:11:22:33:44:02")},
+                                        std::pair{QStringLiteral("Base"), QStringLiteral("00:11:22:33:44:01")}}) {
+        QBluetoothDeviceInfo found(QBluetoothAddress(address), name, 0);
+        found.setCoreConfigurations(QBluetoothDeviceInfo::BaseRateCoreConfiguration);
+        QVERIFY(QMetaObject::invokeMethod(discovery.get(), "_deviceDiscovered", Qt::DirectConnection,
+                                          Q_ARG(QBluetoothDeviceInfo, found)));
+    }
+    RTKSettingsFixture settings(kPassiveManufacturer);
+    TestFixtures::QmlEngine engine;
+    const auto picker = engine.create(
+        TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverBluetoothDevice.qml")),
+        {{QStringLiteral("addressFact"), QVariant::fromValue(settings.settings->bluetoothDeviceAddress())},
+         {QStringLiteral("nameFact"), QVariant::fromValue(settings.settings->bluetoothDeviceName())},
+         {QStringLiteral("discovery"), QVariant::fromValue(discovery.get())}});
+    QVERIFY2(picker, qPrintable(engine.lastError()));
+    auto* const device = picker->findChild<QObject*>(QStringLiteral("rtkBluetoothDevice"));
+    QVERIFY(device);
+    QCOMPARE(device->property("model").toStringList().mid(1),
+             (QStringList{QStringLiteral("Base – 00:11:22:33:44:01"), QStringLiteral("Rover – 00:11:22:33:44:02")}));
+    QVERIFY(QMetaObject::invokeMethod(device, "activated", Q_ARG(int, 2)));
+    QCOMPARE(settings.settings->bluetoothDeviceAddress()->rawValue().toString(), QStringLiteral("00:11:22:33:44:02"));
+    QCOMPARE(settings.settings->bluetoothDeviceName()->rawValue().toString(), QStringLiteral("Rover"));
+    QCOMPARE(device->property("currentText").toString(), QStringLiteral("Rover – 00:11:22:33:44:02"));
+}
+
 void GPSReceiverSettingsTest::_roleSelectsFields()
 {
     Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
@@ -935,7 +1074,7 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
     QVERIFY(udpPort->isVisible());
     QVERIFY(!connect->isEnabled());
-    QVERIFY(udpExplanation->property("text").toString().contains(QStringLiteral("serial or TCP")));
+    QVERIFY(udpExplanation->property("text").toString().contains(QStringLiteral("serial, TCP or Bluetooth")));
     settings->connectionType()->setRawValue(RTKSettings::Serial);
     QVERIFY(!udpPort->isVisible());
     QVERIFY(connect->isEnabled());

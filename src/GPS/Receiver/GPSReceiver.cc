@@ -10,6 +10,7 @@
 
 #include "AppMessages.h"
 #include "GPSCorrectionManager.h"
+#include "GPSReceiverBluetooth.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverDescriptor.h"
@@ -56,12 +57,19 @@ GPSReceiverSerialPorts* createSerialSide(const GPSReceiver::Dependencies& depend
     return serial ? serial : GPSReceiverSerialPorts::create(nullptr, parent);
 }
 
+GPSReceiverBluetooth* createBluetoothSide(const GPSReceiver::Dependencies& dependencies, QObject* parent)
+{
+    GPSReceiverBluetooth* const bluetooth = dependencies.bluetooth ? dependencies.bluetooth(parent) : nullptr;
+    return bluetooth ? bluetooth : new GPSReceiverBluetooth(parent);
+}
+
 }  // namespace
 
 GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dependencies& dependencies)
     : QObject(parent)
     , _serial(createSerialSide(dependencies, this))
-    , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration, _serial->supported()))
+    , _bluetooth(createBluetoothSide(dependencies, this))
+    , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration, _links()))
     , _correctionManager(dependencies.corrections)
     , _positionManager(dependencies.positions)
     , _positionOnly(dependencies.positionOnly)
@@ -81,8 +89,8 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
             _clearStaleSolution();
         }
     });
-    _connection = std::make_unique<GPSReceiverConnectionPolicy>(static_cast<GPSReceiverConnector&>(*this),
-                                                                _configuration, _connectability, *_serial, _scheduler);
+    _connection = std::make_unique<GPSReceiverConnectionPolicy>(
+        static_cast<GPSReceiverConnector&>(*this), _configuration, _connectability, *_serial, *_bluetooth, _scheduler);
     _facts = new GPSReceiverFactGroup(this);
     _notified.receiver = _receiverState();
     connect(_serial, &GPSReceiverSerialPorts::scanned, this, &GPSReceiver::_onSerialPortsScanned);
@@ -102,7 +110,7 @@ void GPSReceiver::setConfiguration(const Configuration& configuration)
         _setPersistentChangesAllowed(false);
     }
     const Configuration previous = std::exchange(_configuration, configuration);
-    _connectability = GPSReceiverConnectionPolicy::connectability(_configuration, _serial->supported());
+    _connectability = GPSReceiverConnectionPolicy::connectability(_configuration, _links());
     _connection->configurationChanged(previous);
     ++_configurationRevision;
     _emitChanges();
@@ -415,6 +423,34 @@ bool GPSReceiver::connectUdp(quint16 port, GPSReceiverConfig request)
         QStringLiteral("udp:%1").arg(port), std::move(request), {}, endpoint);
 }
 
+bool GPSReceiver::connectBluetooth(const QString& address, const QString& name, GPSType type, GPSReceiverConfig request)
+{
+    GPSReceiverWorker::TransportFactory transportFactory = _bluetooth->transportFactory(address, name);
+    if (!transportFactory) {
+        return false;
+    }
+    // The address names the link. The device's own name reads better and is not unique. One pass, so that a name
+    // with a place marker in it stays as it is.
+    const QString endpoint = name.isEmpty() ? address : QStringLiteral("%1 (%2)").arg(name, address);
+    return _connectReceiver(type, std::move(transportFactory), QStringLiteral("bluetooth:%1").arg(address),
+                            std::move(request), {}, endpoint);
+}
+
+bool GPSReceiver::bluetoothSupported() const
+{
+    return _bluetooth->supported();
+}
+
+QObject* GPSReceiver::bluetoothDiscovery() const
+{
+    return _bluetooth->discovery();
+}
+
+GPSReceiverLinks GPSReceiver::_links() const
+{
+    return {.serial = _serial->supported(), .bluetooth = _bluetooth->supported()};
+}
+
 GPSReceiverPresentation GPSReceiver::configuredPresentation() const
 {
     return gpsReceiverPresentation(_configuration.receiverRole == RTKSettings::ConfiguredBase
@@ -707,7 +743,7 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
 QString GPSReceiver::statusText() const
 {
     std::optional<GPSDetectionProgress> detecting = _session ? _session->detecting() : std::nullopt;
-    // A network link has no rate to name.
+    // A network or Bluetooth link has no rate to name.
     if (detecting && _session->serialDevice().isEmpty()) {
         detecting->baud = 0;
     }

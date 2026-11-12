@@ -32,10 +32,10 @@
         {
             "name": "connectionType",
             "shortDesc": "Receiver connection",
-            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for the output of a receiver QGroundControl does not configure.",
+            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for the output of a receiver QGroundControl does not configure. Bluetooth connects a receiver, or a Bluetooth serial adapter in front of one, over the serial port profile.",
             "type": "uint8",
-            "enumStrings": "Serial,TCP,UDP",
-            "enumValues": "0,1,2",
+            "enumStrings": "Serial,TCP,UDP,Bluetooth",
+            "enumValues": "0,1,2,3",
             "default": 0,
             "label": "Receiver connection"
         },
@@ -215,7 +215,7 @@
         {
             "name": "detectedReceivers",
             "shortDesc": "Receivers detected on each connection",
-            "longDesc": "JSON array of what Detect automatically last found on each connection, the most recent first, which its next connection there looks for first. Each entry holds the link (a serial device or a TCP address), the manufacturer, the baud rate the link ran at once the receiver was configured and the baud rate the receiver was found at.",
+            "longDesc": "JSON array of what Detect automatically last found on each connection, the most recent first, which its next connection there looks for first. Each entry holds the link (a serial device, a TCP address or a Bluetooth address), the manufacturer, the baud rate the link ran at once the receiver was configured and the baud rate the receiver was found at.",
             "type": "string",
             "default": "",
             "label": "Detected receivers"
@@ -250,6 +250,22 @@
             "min": 0,
             "max": 15,
             "label": "Constellations in corrections"
+        },
+        {
+            "name": "bluetoothDeviceAddress",
+            "shortDesc": "Bluetooth device",
+            "longDesc": "Address of the receiver's Bluetooth device, such as 00:11:22:AA:BB:CC. The receiver settings select it from the devices a scan finds.",
+            "type": "string",
+            "default": "",
+            "label": "Bluetooth device"
+        },
+        {
+            "name": "bluetoothDeviceName",
+            "shortDesc": "Bluetooth device name",
+            "longDesc": "What the selected Bluetooth device calls itself, which the receiver settings show with its address.",
+            "type": "string",
+            "default": "",
+            "label": "Bluetooth device name"
         }
     ]
 }

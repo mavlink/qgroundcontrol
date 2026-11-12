@@ -49,6 +49,8 @@ struct RTKSettingsFixture
         // Builds without serial links connect the saved serial selection over TCP.
         saved.setFactValue(settings->tcpHost(), QStringLiteral("127.0.0.1"));
         saved.setFactValue(settings->tcpPort(), 2102);
+        saved.setFactValue(settings->bluetoothDeviceAddress(), QString());
+        saved.setFactValue(settings->bluetoothDeviceName(), QString());
     }
 };
 
