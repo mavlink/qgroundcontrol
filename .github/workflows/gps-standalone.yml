@@ -1,7 +1,8 @@
 name: GPS Standalone
 
 # QGCGPSCore and QGCNTRIPHttp must build without the application (test/GPS/Standalone). One Clang build
-# with ASan and UBSan checks that, runs the project's CTest, and fuzzes each libFuzzer harness briefly.
+# with ASan and UBSan checks that, runs the project's CTest, and fuzzes each libFuzzer harness: for a
+# minute when an input of the build changes, and for fifteen every night from the corpus of the night before.
 # ClusterFuzzLite cannot build the harnesses: they link Qt, which its base image does not have.
 on:
   pull_request:
@@ -26,10 +27,19 @@ on:
       - master
       - 'Stable*'
     paths: *standalone-inputs
+  # The default branch, every night. A manual run with `nightly` fuzzes the same way.
+  schedule:
+    - cron: '47 2 * * *'
   workflow_dispatch:
+    inputs:
+      nightly:
+        description: Fuzz as the nightly run does, for longer and from its saved corpus
+        type: boolean
+        default: false
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # The nightly run has its own group: in the group of master's pushes they would wait for it, and cancel it while it waits.
+  group: ${{ github.workflow }}-${{ github.ref }}${{ (github.event_name == 'schedule' || inputs.nightly == true) && '-nightly' || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 permissions:
@@ -39,10 +49,17 @@ jobs:
   standalone:
     name: Build, Test, and Fuzz (Clang ASan+UBSan)
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: ${{ (github.event_name == 'schedule' || inputs.nightly == true) && 120 || 30 }}
+    permissions:
+      contents: read
+      # The nightly run reads the corpus artifact of the one before it.
+      actions: read
     env:
       # As in the application's sanitizer tests (cmake/QGCTest.cmake): a UBSan report otherwise only prints.
       UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+      NIGHTLY: ${{ github.event_name == 'schedule' || inputs.nightly == true }}
+      # Seconds each harness fuzzes.
+      FUZZ_SECONDS: ${{ (github.event_name == 'schedule' || inputs.nightly == true) && 900 || 60 }}
 
     defaults:
       run:
@@ -94,59 +111,85 @@ jobs:
           artifact-name: test-results-gps-standalone
           retention-days: 7
 
+      # Each harness writes the inputs that reach new code into its directory of gps-fuzz-corpus, which it reads
+      # before its seeds. The nightly run starts with what the last one saved there; a failure only warns.
+      - name: Restore the fuzzing corpus
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && env.NIGHTLY == 'true' }}
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/tools/ci/cache/fuzz_corpus_artifact.py"
+          --destination "${RUNNER_TEMP}/gps-fuzz-corpus"
+
       # -timeout turns a hang into a saved input instead of a cancelled step.
       - name: Fuzz the receiver protocols
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        timeout-minutes: 5
+        timeout-minutes: ${{ env.NIGHTLY == 'true' && 20 || 5 }}
         working-directory: ${{ runner.temp }}/build
         run: >-
-          ProtocolFuzz/QGCGPSProtocolFuzz -max_total_time=60 -timeout=25 -max_len=8192
+          ProtocolFuzz/QGCGPSProtocolFuzz -max_total_time="${FUZZ_SECONDS}" -timeout=25 -max_len=8192
           -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/protocol-"
-          ProtocolFuzz/corpus ProtocolFuzz/fixture-seeds
+          "${RUNNER_TEMP}/gps-fuzz-corpus/protocol" ProtocolFuzz/corpus ProtocolFuzz/fixture-seeds
 
       # The smoke test writes the seeds: replies recorded from the receiver models, and every recording as output
       # a receiver sends unasked.
       - name: Fuzz the receiver replies
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        timeout-minutes: 5
+        timeout-minutes: ${{ env.NIGHTLY == 'true' && 20 || 5 }}
         working-directory: ${{ runner.temp }}/build
         run: |
           ProtocolFuzz/QGCGPSReplyFuzzSmoke --write-corpus ProtocolFuzz/reply-corpus
-          ProtocolFuzz/QGCGPSReplyFuzz -max_total_time=60 -timeout=25 -max_len=8192 \
+          ProtocolFuzz/QGCGPSReplyFuzz -max_total_time="${FUZZ_SECONDS}" -timeout=25 -max_len=8192 \
             -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/reply-" \
-            ProtocolFuzz/reply-corpus
+            "${RUNNER_TEMP}/gps-fuzz-corpus/reply" ProtocolFuzz/reply-corpus
 
       - name: Fuzz the NTRIP HTTP decoder
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        timeout-minutes: 5
+        timeout-minutes: ${{ env.NIGHTLY == 'true' && 20 || 5 }}
         working-directory: ${{ runner.temp }}/build
         run: |
           NTRIPHttpFuzz/ntrip_http_decoder_smoke --write-corpus NTRIPHttpFuzz/corpus
-          NTRIPHttpFuzz/ntrip_http_decoder_fuzzer -max_total_time=60 -timeout=25 -max_len=65536 \
+          NTRIPHttpFuzz/ntrip_http_decoder_fuzzer -max_total_time="${FUZZ_SECONDS}" -timeout=25 -max_len=65536 \
             -dict="${GITHUB_WORKSPACE}/test/GPS/NTRIP/HTTP/Fuzz/NTRIPHttpDecoderFuzzer.dict" \
-            -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/ntrip-" NTRIPHttpFuzz/corpus
+            -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/ntrip-" \
+            "${RUNNER_TEMP}/gps-fuzz-corpus/ntrip-http" NTRIPHttpFuzz/corpus
 
       # The harness frames its input, so the seeds are message payloads.
       - name: Fuzz the RTCM station position decoder
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        timeout-minutes: 5
+        timeout-minutes: ${{ env.NIGHTLY == 'true' && 20 || 5 }}
         working-directory: ${{ runner.temp }}/build
         run: >-
-          ProtocolFuzz/QGCRTCMStationPositionFuzz -max_total_time=60 -timeout=25 -max_len=1024
+          ProtocolFuzz/QGCRTCMStationPositionFuzz -max_total_time="${FUZZ_SECONDS}" -timeout=25 -max_len=1024
           -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/station-"
-          ProtocolFuzz/station-corpus "${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/corpus/station-position"
+          "${RUNNER_TEMP}/gps-fuzz-corpus/station-position"
+          "${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/corpus/station-position"
 
       - name: Fuzz the NTRIP source table
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        timeout-minutes: 5
+        timeout-minutes: ${{ env.NIGHTLY == 'true' && 20 || 5 }}
         working-directory: ${{ runner.temp }}/build
         run: >-
-          ProtocolFuzz/QGCNTRIPSourceTableFuzz -max_total_time=60 -timeout=25 -max_len=4096
+          ProtocolFuzz/QGCNTRIPSourceTableFuzz -max_total_time="${FUZZ_SECONDS}" -timeout=25 -max_len=4096
           -dict="${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/Fuzz/SourceTableFuzz.dict"
           -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/source-table-"
-          ProtocolFuzz/source-table-corpus "${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/corpus/source-table"
+          "${RUNNER_TEMP}/gps-fuzz-corpus/source-table"
+          "${GITHUB_WORKSPACE}/test/GPS/Core/Protocols/corpus/source-table"
+
+      # For the next nightly run, also from a fuzzer that failed: that run then starts close to the failure. A new
+      # version in the name, here and in fuzz_corpus_artifact.py, starts over from the seeds.
+      - name: Save the fuzzing corpus
+        if: ${{ !cancelled() && env.NIGHTLY == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: gps-fuzz-corpus-v1
+          path: ${{ runner.temp }}/gps-fuzz-corpus
+          if-no-files-found: ignore
+          retention-days: 30
 
       # Only a failed fuzzer writes an input (crash-, leak-, oom- or timeout-), so passing runs upload nothing.
+      # Nobody may look at a nightly failure for a while, so its input stays longer.
       - name: Upload fuzzing diagnostics
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -154,4 +197,4 @@ jobs:
           name: gps-fuzzing-diagnostics
           path: ${{ runner.temp }}/gps-fuzz-artifacts
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: ${{ env.NIGHTLY == 'true' && '30' || '7' }}

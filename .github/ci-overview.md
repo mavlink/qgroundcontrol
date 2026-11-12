@@ -51,7 +51,7 @@
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
 | `clusterfuzzlite.yml` | MAVLink parser fuzzing on PRs |
-| `gps-standalone.yml` | The [standalone GPS build](#platform-notes) (`test/GPS/Standalone`): `QGCGPSCore` and `QGCNTRIPHttp` without the application, its CTest, and a 60-second run of each libFuzzer harness, when GPS sources or tests change |
+| `gps-standalone.yml` | The [standalone GPS build](#platform-notes) (`test/GPS/Standalone`): `QGCGPSCore` and `QGCNTRIPHttp` without the application, its CTest, and a 60-second run of each libFuzzer harness, when GPS sources or tests change; every night each harness fuzzes `master` for 15 minutes, from the corpus the night before saved |
 | `pre-commit.yml` | pre-commit hooks (run by prek) on changed files, including docs prose and translation placeholders |
 | `ci-scripts.yml` | Runs the CI Python tests on Linux and Windows (see [Tests](#tests)); lint and config validation run in `pre-commit.yml` |
 | `check-links.yml` | Markdown link validation (lychee) |
@@ -714,6 +714,23 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   ClusterFuzzLite targets: they link Qt (`qt.minimum_version`), which its base image lacks, and its
   toolchain compiles against libc++, which cannot link Qt's prebuilt libstdc++ binaries, so every
   run would have to build Qt from source.
+- **GPS nightly fuzzing**: `gps-standalone.yml` also runs every night on the default branch
+  (`schedule`), and a manual run with the `nightly` input does the same on its branch. Each harness
+  then fuzzes for 15 minutes and the run keeps the corpus. A harness writes the inputs that reach
+  new code into its own directory, which it reads before its seeds;
+  `fuzz_corpus_artifact.py` first fills those directories from the `gps-fuzz-corpus-v1` artifact
+  of the newest scheduled or manual run of the workflow on the default branch (other runs are not
+  trusted, and the job needs `actions: read`), and the run uploads them again for 30 days, also
+  when a fuzzer failed, so that the next night starts close to the failure. It is an artifact, not
+  a cache, because GitHub evicts caches from the repository's full pool within hours. Without an
+  artifact the fuzzers start from their seeds, and a new version in the artifact's name, in the
+  workflow and the script, starts over. Runs for a change neither restore nor save. The nightly
+  run has its own concurrency group, so that `master` pushes neither wait for it nor cancel it.
+  Its failure keeps the input for 30 days but appears on no pull request or commit, only in the
+  Actions tab: GitHub notifies the user who last changed the workflow's `cron` line or re-enabled
+  the workflow, as that user's notification settings have it. Forks start with scheduled
+  workflows disabled, and GitHub disables them in a public repository without activity for 60
+  days.
 
 ### Docker
 

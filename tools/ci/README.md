@@ -38,6 +38,7 @@ and Ruff skips `build` directories.
 | `cache/cache_plan.py` | Resolve the cache action's save policy, scope, keys, ccache budget, compiler/moc/CPM environment, and the sccache pilot's selection |
 | `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and plan `save-build-cache`: gate PR saves, pack the snapshot artifact, and choose the cache keys |
 | `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
+| `cache/fuzz_corpus_artifact.py` | Restore the GPS fuzzers' corpus for `gps-standalone.yml`'s nightly run from the newest `gps-fuzz-corpus-v1` artifact of a scheduled or manual default-branch run of that workflow, extracting only `<harness>/<input>` members; a failure only warns |
 | `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches, taking the branch and mode from `cache-cleanup.yml`'s triggering event (`CLEANUP_*` variables override them) |
 | `runner/analysis_tools.py` | Install the clang-tidy wheel hash-pinned in `build-config.json`, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
 | `runner/apt_debs_artifact.py` | Restore a Copilot session's apt downloads from the newest `copilot-apt-debs` artifact of a master `copilot-setup-steps.yml` run, extracting only top-level `.deb` files; a failure only warns |
