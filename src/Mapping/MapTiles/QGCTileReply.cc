@@ -219,6 +219,10 @@ void QGCTileReply::_networkReplyFinished()
         _finish(Error::NoTileError, QStringLiteral("network fetch returned Bing no-tile placeholder"));
         return;
     }
+    if (_provider->isRefusalImage(data)) {
+        _finish(Error::DataError, QStringLiteral("the server refused the request: it sent a notice, not a tile"));
+        return;
+    }
 
     if (_provider->isElevationProvider()) {
         data = std::static_pointer_cast<const ElevationProvider>(_provider)->serialize(data);
@@ -256,7 +260,8 @@ void QGCTileReply::_finish(Error error, const QString& errorString)
 
 bool QGCTileReply::_isUsable(const QByteArray& data) const
 {
-    return !data.isEmpty() && !_isNoTilePlaceholder(data) && (!_validator || _validator(data));
+    return !data.isEmpty() && !_isNoTilePlaceholder(data) && !_provider->isRefusalImage(data) &&
+           (!_validator || _validator(data));
 }
 
 bool QGCTileReply::_isNoTilePlaceholder(const QByteArray& data) const

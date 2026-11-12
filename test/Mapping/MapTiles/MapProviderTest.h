@@ -31,4 +31,5 @@ private slots:
     void _testGetServerNumWrap();
     void _testGettersReturnConstructorValues();
     void _testFixedSourcesHaveAttribution();
+    void _testTileIsNoRefusalImage();
 };

@@ -246,4 +246,13 @@ void MapProviderTest::_testFixedSourcesHaveAttribution()
     }
 }
 
+// --- Refusal images ---
+
+// The refusal that OpenStreetMap sends is told by its content: a tile of the same size is a tile
+void MapProviderTest::_testTileIsNoRefusalImage()
+{
+    constexpr qsizetype kRefusalSize = 6672;
+    QVERIFY(!OpenStreetMapProvider().isRefusalImage(QByteArray(kRefusalSize, 'x')));
+}
+
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)

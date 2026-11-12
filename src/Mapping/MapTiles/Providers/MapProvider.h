@@ -61,6 +61,14 @@ public:
 
     virtual QByteArray getToken() const { return QByteArray(); }
 
+    /// True for an image that the provider's servers send in place of a tile when they refuse a request. It is not
+    /// a tile: one that is fetched is not cached, and one that is in the cache is fetched again.
+    virtual bool isRefusalImage(QByteArrayView image) const
+    {
+        Q_UNUSED(image);
+        return false;
+    }
+
     /// The credit that the provider's terms ask for where its tiles are shown. Empty for a source the user sets.
     virtual QString attribution() const { return QString(); }
 

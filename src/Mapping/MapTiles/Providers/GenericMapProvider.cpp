@@ -1,5 +1,7 @@
 #include "GenericMapProvider.h"
 
+#include <QtCore/QCryptographicHash>
+
 #include "AppSettings.h"
 #include "SettingsManager.h"
 
@@ -39,6 +41,18 @@ QString OpenAIPMapProvider::_getURL(int x, int y, int zoom) const
     }
 
     return url;
+}
+
+bool OpenStreetMapProvider::isRefusalImage(QByteArrayView image) const
+{
+    // The "418 Access blocked" picture, which every tile request got while the requests did not follow the tile
+    // usage policy. The picture is not kept here, only what tells it: its size, which spares hashing other tiles,
+    // and its SHA-256.
+    constexpr qsizetype kAccessBlockedSize = 6672;
+    constexpr QByteArrayView kAccessBlockedSha256("ed65ab236c17a3d866bd5e097c7a79b433b8bba2d590c8e5d3ff1649437c7ff1");
+
+    return (image.size() == kAccessBlockedSize) &&
+           (QCryptographicHash::hash(image, QCryptographicHash::Sha256).toHex() == kAccessBlockedSha256);
 }
 
 QString OpenStreetMapProvider::_getURL(int x, int y, int zoom) const

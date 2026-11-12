@@ -113,7 +113,7 @@ private:
 
 /// The tile usage policy of the OpenStreetMap servers (https://operations.osmfoundation.org/policies/tiles/) asks for
 /// HTTPS, for the name of the application as the user agent and, of an application, for no Referer. The servers
-/// answer other requests with a picture of a refusal.
+/// answer other requests with a picture of a refusal, with the HTTP status of a tile.
 class OpenStreetMapProvider : public MapProvider
 {
 public:
@@ -123,6 +123,8 @@ public:
     {}
 
     bool requiresApplicationUserAgent() const final { return true; }
+
+    bool isRefusalImage(QByteArrayView image) const final;
 
     QString attribution() const final { return QStringLiteral("© OpenStreetMap contributors"); }
 
