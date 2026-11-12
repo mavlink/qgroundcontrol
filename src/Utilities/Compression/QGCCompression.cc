@@ -287,6 +287,29 @@ static void setArchiveReadError(const QString& archivePath)
     setError(Error::InvalidArchive, QStringLiteral("Invalid or corrupt archive: ") + archivePath);
 }
 
+/// Record why a function that writes entries of an archive to files failed
+/// @param message What could not be done, which the reason is appended to
+static void setExtractionError(QGClibarchive::ReadResult result, const QString& message)
+{
+    switch (result) {
+        case QGClibarchive::ReadResult::EntryNotFound:
+            setError(Error::FileNotInArchive, message + QStringLiteral(": not in the archive"));
+            return;
+        case QGClibarchive::ReadResult::EntrySkipped:
+            setError(Error::UnsupportedFormat,
+                     message + QStringLiteral(": a link, a special file or a name that leaves the output directory "
+                                              "is not extracted"));
+            return;
+        case QGClibarchive::ReadResult::WriteFailed:
+            setError(Error::IoError, message + QStringLiteral(": the output cannot be written"));
+            return;
+        case QGClibarchive::ReadResult::Completed:
+        case QGClibarchive::ReadResult::Failed:
+            break;
+    }
+    setError(Error::InvalidArchive, message + QStringLiteral(": the archive cannot be read or is damaged"));
+}
+
 // ============================================================================
 // Format Detection
 // ============================================================================
@@ -861,9 +884,10 @@ bool extractFile(const QString& archivePath, const QString& fileName, const QStr
 
     const QString actualOutput = outputPath.isEmpty() ? QFileInfo(fileName).fileName() : outputPath;
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to" << actualOutput;
-    const bool success = QGClibarchive::extractSingleFile(archivePath, fileName, actualOutput);
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
+    const bool success = QGClibarchive::extractSingleFile(archivePath, fileName, actualOutput, &result);
     if (!success) {
-        setError(Error::FileNotInArchive, QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
+        setExtractionError(result, QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
     }
     return success;
 }
@@ -910,9 +934,10 @@ bool extractFiles(const QString& archivePath, const QStringList& fileNames, cons
         return false;
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileNames.size() << "files from" << archivePath;
-    const bool success = QGClibarchive::extractMultipleFiles(archivePath, fileNames, outputDirectoryPath);
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
+    const bool success = QGClibarchive::extractMultipleFiles(archivePath, fileNames, outputDirectoryPath, &result);
     if (!success) {
-        setError(Error::FileNotInArchive, QStringLiteral("Could not extract all requested files from ") + archivePath);
+        setExtractionError(result, QStringLiteral("Could not extract all requested files from ") + archivePath);
     }
     return success;
 }
@@ -930,9 +955,12 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         return false;
     }
     qCDebug(QGCCompressionLog) << "Extracting files matching patterns" << patterns << "from" << archivePath;
-    const bool success = QGClibarchive::extractByPattern(archivePath, patterns, outputDirectoryPath, extractedFiles);
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
+    const bool success =
+        QGClibarchive::extractByPattern(archivePath, patterns, outputDirectoryPath, extractedFiles, &result);
     if (!success) {
-        setError(Error::FileNotInArchive, QStringLiteral("No files matched patterns"));
+        setExtractionError(result,
+                           QStringLiteral("Could not extract files that match the patterns from ") + archivePath);
     }
     return success;
 }

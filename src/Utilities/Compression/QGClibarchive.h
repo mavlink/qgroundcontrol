@@ -293,22 +293,26 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
                           ProgressCallback progress = nullptr,
                           qint64 maxBytes = 0);
 
+/// How an operation that returns the data of archive entries, or writes it to files, ended
+/// An entry without data is returned as an empty QByteArray, which is also what a failure returns.
+enum class ReadResult
+{
+    Completed,      ///< Every entry asked for was read to its end, and written if it was to be
+    EntryNotFound,  ///< The archive was read to its end without an entry that was asked for
+    EntrySkipped,   ///< An entry asked for by name is one that is not extracted: a link, a special file, or a
+                    ///< name that would be written outside the output directory (a warning has been logged)
+    WriteFailed,    ///< The output directory or a file in it could not be written
+    Failed          ///< The archive cannot be read or is damaged, or the entry is larger than maxBytes
+};
+
 /// Extract a single file from any archive by name
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of file inside archive
 /// @param outputPath Output file path
+/// @param result If not null, receives how the extraction ended
 /// @return true on success, false if not found, a link or a special file, or extraction failed
-bool extractSingleFile(const QString &archivePath, const QString &fileName,
-                       const QString &outputPath);
-
-/// How an operation that returns the data of an archive entry ended
-/// An entry without data is returned as an empty QByteArray, which is also what a failure returns.
-enum class ReadResult
-{
-    Completed,      ///< The entry was read to its end
-    EntryNotFound,  ///< The archive was read to its end and has no entry of that name
-    Failed          ///< The archive cannot be read or is damaged, or the entry is larger than maxBytes
-};
+bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
+                       ReadResult* result = nullptr);
 
 /// Extract a single file from any archive directly to memory
 /// @param archivePath Path to the archive file (or Qt resource path)
@@ -323,9 +327,10 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory
+/// @param result If not null, receives how the extraction ended
 /// @return true if all files found and extracted. A link or a special file is not extracted.
-bool extractMultipleFiles(const QString &archivePath, const QStringList &fileNames,
-                          const QString &outputDirectoryPath);
+bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
+                          ReadResult* result = nullptr);
 
 /// Extract files matching glob patterns from archive (uses libarchive archive_match)
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
@@ -334,10 +339,10 @@ bool extractMultipleFiles(const QString &archivePath, const QStringList &fileNam
 /// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt")
 /// @param outputDirectoryPath Output directory
 /// @param extractedFiles Optional output list of files that were extracted
+/// @param result If not null, receives how the extraction ended: EntryNotFound if no file matched
 /// @return true if at least one file matched and extracted, false on error or no matches
-bool extractByPattern(const QString &archivePath, const QStringList &patterns,
-                      const QString &outputDirectoryPath,
-                      QStringList *extractedFiles = nullptr);
+bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
+                      QStringList* extractedFiles = nullptr, ReadResult* result = nullptr);
 
 /// Validate archive integrity by reading all entries
 /// @param archivePath Path to the archive file

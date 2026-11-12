@@ -1876,6 +1876,91 @@ void QGCCompressionTest::_testExtractFileDataErrors()
     QCOMPARE(QGCCompression::lastError(), Error::None);
 }
 
+void QGCCompressionTest::_testExtractToFileErrors_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("archive");
+    QTest::addColumn<QString>("entryName");
+    QTest::addColumn<bool>("blockedOutput");
+    QTest::addColumn<QString>("warning");
+    QTest::addColumn<QGCCompression::Error>("expectedError");
+
+    using QGCCompression::Error;
+
+    for (const char* api : {"extractFile", "extractFiles", "extractByPattern"}) {
+        const bool byName = (qstrcmp(api, "extractByPattern") != 0);
+        const bool oneFile = (qstrcmp(api, "extractFile") == 0);
+        const auto addRow = [api](const char* name) -> QTestData& { return QTest::addRow("%s %s", api, name) << api; };
+
+        addRow("extracted") << "whole" << "last.txt" << false << "" << Error::None;
+        // A pattern that matches nothing is not worth a warning
+        addRow("absent") << "whole" << "absent.txt" << false << (byName ? "File not found in archive" : "")
+                         << Error::FileNotInArchive;
+        addRow("damaged before the entry")
+            << "damaged" << "absent.txt" << false << "Failed to read archive entry" << Error::InvalidArchive;
+        addRow("damaged inside the entry") << "damaged" << "full.txt" << false << "Read error" << Error::InvalidArchive;
+        addRow("not an archive") << "garbage" << "last.txt" << false << "Unrecognized archive format"
+                                 << Error::InvalidArchive;
+        // The directory that cannot be made is not logged, the file that cannot be opened in it is
+        addRow("output cannot be written")
+            << "whole" << "last.txt" << true << (oneFile ? "Failed to open output file" : "") << Error::IoError;
+        // Asked for by name, the link fails the call. A pattern is left with nothing that matches it.
+        addRow("link") << "whole" << "soft.txt" << false << "Skipping symlink: soft.txt"
+                       << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
+    }
+}
+
+void QGCCompressionTest::_testExtractToFileErrors()
+{
+    QFETCH(QString, api);
+    QFETCH(QString, archive);
+    QFETCH(QString, entryName);
+    QFETCH(bool, blockedOutput);
+    QFETCH(QString, warning);
+    QFETCH(QGCCompression::Error, expectedError);
+    using QGCCompression::Error;
+
+    const QByteArray tar = _makeTar({{.name = "empty.txt"},
+                                     {.name = "full.txt", .data = QByteArray(600, 'a')},
+                                     {.name = "soft.txt", .type = '2', .linkName = "full.txt"},
+                                     {.name = "last.txt", .data = "z"}});
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(archive + ".tar");
+    if (archive == "whole") {
+        QVERIFY(_writeFile(archivePath, tar));
+    } else if (archive == "damaged") {
+        // Cut inside the data of full.txt, which follows the headers of empty.txt and of full.txt itself
+        QVERIFY(_writeFile(archivePath, tar.left(2 * 512 + 100)));
+    } else {
+        QVERIFY(_writeFile(archivePath, "This is not an archive of any format"));
+    }
+    // A directory cannot be made below a file
+    const QString blockerPath = tempDir.filePath("blocker");
+    QVERIFY(_writeFile(blockerPath, "in the way"));
+    const QString outputDir = blockedOutput ? (blockerPath + "/output") : tempDir.filePath("output");
+
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
+    }
+    bool extracted = false;
+    if (api == "extractFile") {
+        extracted = QGCCompression::extractFile(archivePath, entryName, outputDir + QLatin1Char('/') + entryName);
+    } else if (api == "extractFiles") {
+        extracted = QGCCompression::extractFiles(archivePath, {entryName}, outputDir);
+    } else {
+        extracted = QGCCompression::extractByPattern(archivePath, {entryName}, outputDir);
+    }
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(extracted, expectedError == Error::None);
+    QCOMPARE(QGCCompression::lastError(), expectedError);
+    // Nothing is left of an entry that was not extracted
+    QCOMPARE(_entriesBelow(tempDir.filePath("output")), extracted ? QStringList{entryName} : QStringList());
+    QCOMPARE(_readFile(blockerPath), QByteArray("in the way"));
+}
+
 void QGCCompressionTest::_testDecompressDataErrors()
 {
     using QGCCompression::Error;
@@ -3125,6 +3210,7 @@ void QGCCompressionTest::_testExtractRejectsEscapingNames()
     } else {
         // Asked for by name, so refusing the entry fails the call
         QVERIFY(!QGCCompression::extractFiles(archivePath, {"../escape.txt", "good.txt"}, outputDir));
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
     }
     verifyExpectedLogMessage();
 

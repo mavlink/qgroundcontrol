@@ -69,6 +69,8 @@ private slots:
     void _testExtractStreamedZipEntry();
     void _testExtractFileDataErrors_data();
     void _testExtractFileDataErrors();
+    void _testExtractToFileErrors_data();
+    void _testExtractToFileErrors();
     void _testDecompressDataErrors();
     void _testOperationStartsWithoutError_data();
     void _testOperationStartsWithoutError();

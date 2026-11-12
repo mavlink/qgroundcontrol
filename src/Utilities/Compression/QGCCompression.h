@@ -25,7 +25,7 @@ enum class Error {
     FileNotFound,       ///< Input file does not exist
     PermissionDenied,   ///< Cannot read input or write output
     InvalidArchive,     ///< Archive is corrupt or invalid
-    UnsupportedFormat,  ///< Format not recognized or not supported
+    UnsupportedFormat,  ///< Format not recognized or not supported, or an archive entry that is not extracted
     SizeLimitExceeded,  ///< Decompressed size exceeded limit
     Cancelled,          ///< Operation cancelled by progress callback
     FileNotInArchive,   ///< Requested file not found in archive
@@ -286,8 +286,10 @@ bool fileExists(const QString &archivePath, const QString &fileName,
 /// @param fileName Name of file inside archive (as shown by listArchive)
 /// @param outputPath Output file path (if empty, extracts to current directory)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return true on success, false if file not found, is a hard or symbolic link or a special file (FIFO,
-///         device node, socket), or extraction failed
+/// @return true on success. Otherwise lastError() is Error::FileNotInArchive if the archive was read to its
+///         end without the file, Error::UnsupportedFormat if it is a hard or symbolic link or a special file
+///         (FIFO, device node, socket), which are not extracted, Error::InvalidArchive if the archive cannot
+///         be read or is damaged, and Error::IoError if the output cannot be written
 bool extractFile(const QString &archivePath, const QString &fileName,
                  const QString &outputPath = QString(),
                  Format format = Format::Auto);
@@ -310,7 +312,8 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
 /// @return true if all files found and extracted, false otherwise: also if one of them is a hard or symbolic
-///         link or a special file, which is not extracted
+///         link or a special file, which is not extracted, or has a name that leaves the output directory.
+///         lastError() tells which, as for extractFile()
 bool extractFiles(const QString &archivePath, const QStringList &fileNames,
                   const QString &outputDirectoryPath,
                   Format format = Format::Auto);
@@ -324,7 +327,10 @@ bool extractFiles(const QString &archivePath, const QStringList &fileNames,
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param extractedFiles Optional output list of files that were extracted
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return true if at least one file matched and extracted, false on error or no matches
+/// @return true if at least one file matched and extracted, false on error or no matches. lastError() is
+///         Error::FileNotInArchive if the archive was read to its end without a file that matches,
+///         Error::InvalidArchive if it cannot be read or is damaged, and Error::IoError if the output cannot
+///         be written
 bool extractByPattern(const QString &archivePath, const QStringList &patterns,
                       const QString &outputDirectoryPath,
                       QStringList *extractedFiles = nullptr,
