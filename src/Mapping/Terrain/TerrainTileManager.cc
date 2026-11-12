@@ -8,11 +8,11 @@
 #include "FlightMapSettings.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCTileReply.h"
 #include "SettingsManager.h"
 #include "TerrainTile.h"
 #include "TerrainTileCopernicus.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(TerrainTileManagerLog, "Terrain.TerrainTileManager")
 

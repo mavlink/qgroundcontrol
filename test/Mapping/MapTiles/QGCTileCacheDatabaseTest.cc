@@ -15,12 +15,12 @@
 #include <QtSql/QSqlRecord>
 
 #include "QGCCacheTile.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
 #include "QGCTileSet.h"
 #include "TileCacheTestHelpers.h"
+#include "UrlFactory.h"
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 

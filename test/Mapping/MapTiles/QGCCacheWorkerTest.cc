@@ -16,17 +16,17 @@
 #include "ElevationMapProvider.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "QGCCacheTile.h"
+#include "QGCCacheWorker.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCTileCacheDatabase.h"
-#include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
 #include "SettingsManager.h"
 #include "TerrainTile.h"
 #include "TerrainTileCopernicus.h"
 #include "TileCacheTestHelpers.h"
+#include "UrlFactory.h"
 
 static const QString kTestProviderType = QStringLiteral("Bing Road");
 

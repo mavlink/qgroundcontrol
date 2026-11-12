@@ -14,10 +14,10 @@
 
 #include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileSet.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "MapTiles.QGCTileCacheDatabase")
 

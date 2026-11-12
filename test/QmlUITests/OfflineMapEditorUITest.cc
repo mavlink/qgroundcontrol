@@ -24,13 +24,13 @@
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QGroundControlQmlGlobal.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 #include "UnitsSettings.h"
+#include "UrlFactory.h"
 
 UT_REGISTER_TEST(OfflineMapEditorUITest, TestLabel::Integration)
 

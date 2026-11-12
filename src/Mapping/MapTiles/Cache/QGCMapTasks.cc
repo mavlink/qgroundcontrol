@@ -2,7 +2,7 @@
 
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
-#include "QGCMapUrlEngine.h"
+#include "UrlFactory.h"
 
 QGCCreateTileSetTask::QGCCreateTileSetTask(QGCCachedTileSet* tileSet, QObject* parent)
     : QGCMapTask(TaskType::taskCreateTileSet, parent)

@@ -4,10 +4,10 @@
 #include <QtLocation/private/qgeotilespec_p.h>
 
 #include "QGCLoggingCategory.h"
-#include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
-#include "QGeoMapReplyQGC.h"
+#include "QGeoTiledMapReplyQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "QtLocationPlugin.QGeoTileFetcherQGC")
 

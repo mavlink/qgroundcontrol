@@ -13,12 +13,12 @@
 #include "GeoMapCamera.h"
 #include "HeightField.h"
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
 #include "SurfaceModel.h"
 #include "TerrariumTileFetcher.h"
 #include "TileMath.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 // These tests run the production terrarium pipeline: tile cache misses are served
 // synthetic terrarium PNGs built from the UnitTestTerrainData regions (see

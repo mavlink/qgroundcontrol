@@ -6,11 +6,11 @@
 #include <QtTest/QSignalSpy>
 
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
 #include "TileImageSource.h"
 #include "TileMath.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 namespace {
 

@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class QGeoMapReplyQGCTest : public UnitTest
+class QGeoTiledMapReplyQGCTest : public UnitTest
 {
     Q_OBJECT
 

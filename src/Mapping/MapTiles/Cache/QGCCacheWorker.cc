@@ -1,4 +1,4 @@
-#include "QGCTileCacheWorker.h"
+#include "QGCCacheWorker.h"
 
 #include <QtCore/QCoreApplication>
 
@@ -6,8 +6,8 @@
 #include "QGCCachedTileSet.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCTileCacheDatabase.h"
+#include "UrlFactory.h"
 
 #ifdef QGC_UNITTEST_BUILD
 #include "AppMessages.h"

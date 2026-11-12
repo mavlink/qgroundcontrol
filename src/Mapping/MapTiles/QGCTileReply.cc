@@ -13,8 +13,8 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCNetworkHelper.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(QGCTileReplyLog, "MapTiles.QGCTileReply")
 

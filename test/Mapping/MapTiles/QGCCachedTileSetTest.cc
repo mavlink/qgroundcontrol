@@ -12,9 +12,9 @@
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 namespace {
 

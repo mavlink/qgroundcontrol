@@ -6,13 +6,13 @@
 target_sources(
     QGCUnitTests
     PRIVATE
-        QGeoMapReplyQGCTest.cc
-        QGeoMapReplyQGCTest.h
         QGeoTiledMappingManagerEngineQGCTest.cc
         QGeoTiledMappingManagerEngineQGCTest.h
+        QGeoTiledMapReplyQGCTest.cc
+        QGeoTiledMapReplyQGCTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(QGeoMapReplyQGCTest LABELS Unit)
 add_qgc_test(QGeoTiledMappingManagerEngineQGCTest LABELS Unit)
+add_qgc_test(QGeoTiledMapReplyQGCTest LABELS Unit)

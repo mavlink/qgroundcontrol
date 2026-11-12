@@ -14,12 +14,12 @@
 #include "MapProvider.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCNetworkHelper.h"
 #include "QGCTileReply.h"
 #include "SettingsManager.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 namespace {
 

@@ -3,7 +3,7 @@
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QGCMapTaskBase.h"
+#include "QGCMapTask.h"
 #include "QGCTileSet.h"
 
 class EsriAttribution;

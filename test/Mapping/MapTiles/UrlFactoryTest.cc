@@ -10,9 +10,9 @@
 #include "ElevationMapProvider.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
 #include "SettingsManager.h"
+#include "UrlFactory.h"
 
 static const QString kBingRoad = QStringLiteral("Bing Road");
 static const QString kBingSatellite = QStringLiteral("Bing Satellite");

@@ -16,7 +16,7 @@ class MapProvider
 {
 public:
     // Mirrors QGeoMapType::MapStyle so that this class does not need QtLocation.
-    // QGeoTiledMappingManagerEngineQGC.cpp converts the values and asserts that they match.
+    // QGeoTiledMappingManagerEngineQGC.cc converts the values and asserts that they match.
     enum MapStyle
     {
         NoMap = 0,
@@ -53,7 +53,7 @@ public:
 
     const QString& getMapName() const { return _mapName; }
 
-    /// Permanent id of the provider, assigned by the provider table in QGCMapUrlEngine.cpp. 0 for a provider that is
+    /// Permanent id of the provider, assigned by the provider table in UrlFactory.cc. 0 for a provider that is
     /// not in that table.
     int getMapId() const { return _mapId; }
 

@@ -7,8 +7,8 @@
 
 #include "GenericMapProvider.h"
 #include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
+#include "UrlFactory.h"
 
 class TestableMapProvider : public MapProvider
 {

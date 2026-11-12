@@ -7,44 +7,44 @@
 qt_add_library(
     QGCMapTiles STATIC
     Cache/QGCCacheTile.h
-    Cache/QGCMapTaskBase.h
-    Cache/QGCMapTasks.cpp
+    Cache/QGCCacheWorker.cc
+    Cache/QGCCacheWorker.h
+    Cache/QGCMapTask.h
+    Cache/QGCMapTasks.cc
     Cache/QGCMapTasks.h
-    Cache/QGCTileCacheDatabase.cpp
+    Cache/QGCTileCacheDatabase.cc
     Cache/QGCTileCacheDatabase.h
     Cache/QGCTileCacheTypes.h
-    Cache/QGCTileCacheWorker.cpp
-    Cache/QGCTileCacheWorker.h
-    Providers/BingMapProvider.cpp
+    Providers/BingMapProvider.cc
     Providers/BingMapProvider.h
-    Providers/ElevationMapProvider.cpp
+    Providers/ElevationMapProvider.cc
     Providers/ElevationMapProvider.h
-    Providers/EsriMapProvider.cpp
+    Providers/EsriMapProvider.cc
     Providers/EsriMapProvider.h
-    Providers/GenericMapProvider.cpp
+    Providers/GenericMapProvider.cc
     Providers/GenericMapProvider.h
-    Providers/GoogleMapProvider.cpp
+    Providers/GoogleMapProvider.cc
     Providers/GoogleMapProvider.h
-    Providers/MapboxMapProvider.cpp
+    Providers/MapboxMapProvider.cc
     Providers/MapboxMapProvider.h
-    Providers/MapProvider.cpp
+    Providers/MapProvider.cc
     Providers/MapProvider.h
-    Providers/TianDiTuProvider.cpp
+    Providers/TianDiTuProvider.cc
     Providers/TianDiTuProvider.h
     EsriAttribution.cc
     EsriAttribution.h
-    QGCCachedTileSet.cpp
+    QGCCachedTileSet.cc
     QGCCachedTileSet.h
-    QGCMapEngine.cpp
+    QGCMapEngine.cc
     QGCMapEngine.h
     QGCMapEngineManager.cc
     QGCMapEngineManager.h
-    QGCMapUrlEngine.cpp
-    QGCMapUrlEngine.h
     QGCTile.h
     QGCTileReply.cc
     QGCTileReply.h
     QGCTileSet.h
+    UrlFactory.cc
+    UrlFactory.h
 )
 
 if(IOS)

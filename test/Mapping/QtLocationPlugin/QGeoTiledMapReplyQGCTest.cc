@@ -1,4 +1,4 @@
-#include "QGeoMapReplyQGCTest.h"
+#include "QGeoTiledMapReplyQGCTest.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -6,7 +6,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtTest/QSignalSpy>
 
-#include "QGeoMapReplyQGC.h"
+#include "QGeoTiledMapReplyQGC.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 
@@ -21,7 +21,7 @@ QGeoTileSpec mapReplyTileSpec(int x)
 
 }  // namespace
 
-void QGeoMapReplyQGCTest::_testTileDelivered()
+void QGeoTiledMapReplyQGCTest::_testTileDelivered()
 {
     QNetworkAccessManager networkManager;
     QGeoTiledMapReplyQGC mapReply(&networkManager, mapReplyTileSpec(4400));
@@ -35,7 +35,7 @@ void QGeoMapReplyQGCTest::_testTileDelivered()
     QVERIFY(mapReply.isCached());
 }
 
-void QGeoMapReplyQGCTest::_testErrorReported()
+void QGeoTiledMapReplyQGCTest::_testErrorReported()
 {
     const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
@@ -54,7 +54,7 @@ void QGeoMapReplyQGCTest::_testErrorReported()
     QVERIFY(!mapReply.errorString().isEmpty());
 }
 
-void QGeoMapReplyQGCTest::_testAbortFinishesOnce()
+void QGeoTiledMapReplyQGCTest::_testAbortFinishesOnce()
 {
     QNetworkAccessManager networkManager;
     QGeoTiledMapReplyQGC aborted(&networkManager, mapReplyTileSpec(4402));
@@ -73,4 +73,4 @@ void QGeoMapReplyQGCTest::_testAbortFinishesOnce()
     QVERIFY(aborted.mapImageData().isEmpty());
 }
 
-UT_REGISTER_TEST(QGeoMapReplyQGCTest, TestLabel::Unit)
+UT_REGISTER_TEST(QGeoTiledMapReplyQGCTest, TestLabel::Unit)

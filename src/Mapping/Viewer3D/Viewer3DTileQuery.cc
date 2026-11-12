@@ -8,8 +8,8 @@
 
 #include "MapProvider.h"
 #include "QGCLoggingCategory.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCTileReply.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(Viewer3DTileQueryLog, "Viewer3d.Viewer3DTileQuery")
 

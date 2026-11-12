@@ -6,7 +6,7 @@
 #include <QtCore/QString>
 
 #include "QGCCacheTile.h"
-#include "QGCMapTaskBase.h"
+#include "QGCMapTask.h"
 #include "QGCTile.h"
 #include "QGCTileCacheTypes.h"
 

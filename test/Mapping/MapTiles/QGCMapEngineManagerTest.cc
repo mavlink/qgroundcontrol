@@ -16,13 +16,13 @@
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
-#include "QGCMapUrlEngine.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "TerrariumTileFetcher.h"
 #include "TileMath.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 namespace {
 

@@ -9,9 +9,9 @@
 #include <QtTest/QSignalSpy>
 
 #include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 #include "Viewer3DTileQuery.h"
 
 namespace {

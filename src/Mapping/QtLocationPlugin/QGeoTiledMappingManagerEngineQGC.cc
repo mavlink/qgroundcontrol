@@ -15,12 +15,12 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCNetworkHelper.h"
 #include "QGeoFileTileCacheQGC.h"
 #include "QGeoMapIdQGC.h"
 #include "QGeoTileFetcherQGC.h"
 #include "QGeoTiledMapQGC.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "QtLocationPlugin.QGeoTiledMappingManagerEngineQGC")
 

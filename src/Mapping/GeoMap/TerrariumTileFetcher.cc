@@ -18,7 +18,7 @@
 #include "ElevationMapProvider.h"
 #include "HeightField.h"
 #include "QGCLoggingCategory.h"
-#include "QGCMapUrlEngine.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(GeoMapTerrariumTileFetcherLog, "GeoMap.TerrariumTileFetcher")
 QGC_LOGGING_CATEGORY(GeoMapTerrariumTileFetcherVerboseLog, "GeoMap.TerrariumTileFetcher.Verbose")

@@ -16,13 +16,13 @@
 #include "BaseClasses/TerrainTest.h"
 #include "ElevationMapProvider.h"
 #include "QGCCacheTile.h"
+#include "QGCCacheWorker.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
-#include "QGCTileCacheWorker.h"
 #include "TerrainTileCopernicus.h"
 #include "TileMath.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(UnitTestTileGeneratorLog, "Test.UnitTestTileGenerator")
 

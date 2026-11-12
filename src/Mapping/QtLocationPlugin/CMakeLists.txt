@@ -10,19 +10,19 @@ qt_add_plugin(
     QGeoServiceProviderFactoryQGC
     OUTPUT_TARGETS
     QGCLocation_targets
-    QGeoFileTileCacheQGC.cpp
+    QGeoFileTileCacheQGC.cc
     QGeoFileTileCacheQGC.h
-    QGeoMapIdQGC.cpp
+    QGeoMapIdQGC.cc
     QGeoMapIdQGC.h
-    QGeoMapReplyQGC.cpp
-    QGeoMapReplyQGC.h
-    QGeoServiceProviderPluginQGC.cpp
+    QGeoServiceProviderPluginQGC.cc
     QGeoServiceProviderPluginQGC.h
-    QGeoTiledMappingManagerEngineQGC.cpp
+    QGeoTiledMappingManagerEngineQGC.cc
     QGeoTiledMappingManagerEngineQGC.h
-    QGeoTiledMapQGC.cpp
+    QGeoTiledMapQGC.cc
     QGeoTiledMapQGC.h
-    QGeoTileFetcherQGC.cpp
+    QGeoTiledMapReplyQGC.cc
+    QGeoTiledMapReplyQGC.h
+    QGeoTileFetcherQGC.cc
     QGeoTileFetcherQGC.h
 )
 

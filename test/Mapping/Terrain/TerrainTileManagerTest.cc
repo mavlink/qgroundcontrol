@@ -9,11 +9,11 @@
 
 #include "ElevationMapProvider.h"
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
 #include "TerrainQueryInterface.h"
 #include "TerrainTileCopernicus.h"
 #include "TerrainTileManager.h"
 #include "TileReplyNetworkMock.h"
+#include "UrlFactory.h"
 
 namespace {
 

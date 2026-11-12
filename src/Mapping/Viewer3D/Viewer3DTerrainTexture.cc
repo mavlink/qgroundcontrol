@@ -5,7 +5,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
-#include "QGCMapUrlEngine.h"
+#include "UrlFactory.h"
 #include "Viewer3DMapProvider.h"
 #include "Viewer3DTileQuery.h"
 #include "Viewer3DTileStatistics.h"

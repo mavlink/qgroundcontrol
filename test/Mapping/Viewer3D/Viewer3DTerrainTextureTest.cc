@@ -15,8 +15,8 @@
 
 #include "AppSettings.h"
 #include "FlightMapSettings.h"
-#include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
+#include "UrlFactory.h"
 #include "Viewer3DTerrainTexture.h"
 
 void Viewer3DTerrainTextureTest::_testFallbackBoundingBox()

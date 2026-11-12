@@ -12,7 +12,7 @@
 #include "DecodedTileFetcher.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(GeoMapTileImageSourceLog, "GeoMap.TileImageSource")
 QGC_LOGGING_CATEGORY(GeoMapTileImageSourceVerboseLog, "GeoMap.TileImageSource.Verbose")

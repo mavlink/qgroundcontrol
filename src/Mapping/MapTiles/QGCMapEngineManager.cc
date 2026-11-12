@@ -25,9 +25,9 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "UrlFactory.h"
 
 using namespace Qt::StringLiterals;
 

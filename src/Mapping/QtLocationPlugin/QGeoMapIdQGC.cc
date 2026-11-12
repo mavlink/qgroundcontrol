@@ -1,7 +1,7 @@
 #include "QGeoMapIdQGC.h"
 
 #include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
+#include "UrlFactory.h"
 
 namespace QGeoMapIdQGC {
 

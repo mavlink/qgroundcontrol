@@ -12,16 +12,16 @@
 #include "MapProvider.h"
 #include "MapsSettings.h"
 #include "QGCCacheTile.h"
+#include "QGCCacheWorker.h"
 #include "QGCCachedTileSet.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "QGCNetworkHelper.h"
 #include "QGCTile.h"
-#include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
 #include "SettingsManager.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(QGCMapEngineLog, "MapTiles.QGCMapEngine")
 

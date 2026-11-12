@@ -1,4 +1,4 @@
-#include "QGCMapUrlEngine.h"
+#include "UrlFactory.h"
 
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QUrl>

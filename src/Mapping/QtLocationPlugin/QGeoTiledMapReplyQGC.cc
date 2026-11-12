@@ -1,4 +1,4 @@
-#include "QGeoMapReplyQGC.h"
+#include "QGeoTiledMapReplyQGC.h"
 
 #include <QtLocation/private/qgeotilespec_p.h>
 

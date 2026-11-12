@@ -11,13 +11,13 @@
 #include "AppSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
 #include "QGeoServiceProviderPluginQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "SettingsManager.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 namespace {
 
