@@ -1,12 +1,16 @@
-# Local GPS receiver: sessions, connection policy, serial devices, the receiver's status Facts and what its views
-# offer for each receiver family.
+# Local GPS receiver: sessions, connection policy, serial and Bluetooth devices, the receiver's status Facts and what
+# its views offer for each receiver family.
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        GPSBluetoothLink.cc
+        GPSBluetoothLink.h
         GPSFixedBaseEcef.cc
         GPSFixedBaseEcef.h
         GPSReceiver.cc
         GPSReceiver.h
+        GPSReceiverBluetooth.cc
+        GPSReceiverBluetooth.h
         GPSReceiverConnectionPolicy.cc
         GPSReceiverConnectionPolicy.h
         GPSReceiverConnector.h

@@ -33,6 +33,7 @@ target_sources(
         NTRIP/Support/ScriptedNTRIPCaster.h
         Qml/Support/GPSPanelFixtures.h
         Receiver/Support/GPSReceiverTestSupport.h
+        Receiver/Support/ScriptedBluetooth.h
         Receiver/Support/ScriptedReceiverWorker.h
         Support/GPSTestHelpers.h
 )
@@ -69,6 +70,7 @@ set(_qgc_gps_suites
     Qml/GPSSatelliteViewTest
     Qml/NTRIPMountpointBrowserTest
     Qml/NTRIPSavedCastersTest
+    Receiver/GPSBluetoothLinkTest
     Receiver/GPSFixedBaseEcefTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
