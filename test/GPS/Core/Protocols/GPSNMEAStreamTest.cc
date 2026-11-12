@@ -452,17 +452,22 @@ void GPSNMEAStreamTest::_emptyFieldKeepsEpochValue_data()
 {
     QTest::addColumn<QByteArrayList>("sentences");
     const QByteArray utc("123519");
-    // The epoch has its speed, course and VDOP; the last sentence before the GGA leaves those fields empty.
+    // The epoch has its speed, course, VDOP and accuracy; a later sentence before the GGA leaves those fields empty.
     QTest::newRow("vtg-after-rmc") << QByteArrayList{rmc(utc), GSA, "GPVTG,,T,,M,,N,,K"};
     QTest::newRow("rmc-after-vtg") << QByteArrayList{sentenceOf("GLL", utc), VTG, GSA,
                                                      "GPRMC," + utc + ",A,4807.038,N,01131.000,E,,,230394,,,A"};
     QTest::newRow("gsa-after-gsa") << QByteArrayList{rmc(utc), GSA, QByteArray("GPGSA,A,3,02") + QByteArray(14, ',')};
+    // The test's GST precedes the sentence that begins the epoch; the empty one comes before it too, or in the epoch.
+    const QByteArray emptyGst = "GPGST," + utc + QByteArray(7, ',');
+    QTest::newRow("gst-after-gst") << QByteArrayList{emptyGst, rmc(utc), GSA};
+    QTest::newRow("gst-in-epoch-after-gst") << QByteArrayList{rmc(utc), GSA, emptyGst};
 }
 
 void GPSNMEAStreamTest::_emptyFieldKeepsEpochValue()
 {
     QFETCH(QByteArrayList, sentences);
     NMEAReceiver receiver;
+    receiver.feed(gst("123519"));
     for (const auto& sentence : sentences) {
         receiver.feed(sentence);
     }
@@ -475,6 +480,8 @@ void GPSNMEAStreamTest::_emptyFieldKeepsEpochValue()
     QVERIFY(qAbs(navigation.speedMetersPerSecond - 1.03f) < 0.01f);
     QCOMPARE(navigation.courseRadians, qDegreesToRadians(90.0f));
     QCOMPARE(navigation.verticalDop, 0.6f);
+    QCOMPARE(navigation.horizontalAccuracyMeters, 0.5f);
+    QCOMPARE(navigation.verticalAccuracyMeters, 0.6f);
 }
 
 void GPSNMEAStreamTest::_lateSentenceCompletesWaitingEpoch()

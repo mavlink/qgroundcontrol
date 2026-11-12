@@ -56,13 +56,13 @@ struct NavigationUpdate
 ///
 /// The GGA holds the epoch's position. RMC and GST join the epoch of their time; GSA and VTG carry no time and join
 /// the current epoch. The time and the order of the sentences decide what an epoch holds, not how long they take to
-/// arrive: a slow link spreads one epoch over seconds. Speed, course and VDOP come from whichever of these sentences
-/// reports them: an empty field leaves the value an earlier one supplied. An epoch is published when its GGA
-/// arrives, unless the receiver sends more of it after the GGA: the sentences that followed the GGA in both previous
-/// epochs are waited for, so that a receiver that sends GGA first is published with its speed, course, DOP and
-/// accuracy, at the last of those sentences. What arrives after an epoch was published is not published: not with
-/// that epoch, because every published position is a new observation, and not with the next, whose solution it does
-/// not describe.
+/// arrive: a slow link spreads one epoch over seconds. Speed, course, VDOP and accuracy come from whichever of these
+/// sentences reports them: an empty field leaves the value an earlier one supplied. An epoch is published when its
+/// GGA arrives, unless the receiver sends more of it after the GGA: the sentences that followed the GGA in both
+/// previous epochs are waited for, so that a receiver that sends GGA first is published with its speed, course, DOP
+/// and accuracy, at the last of those sentences. What arrives after an epoch was published is not published: not
+/// with that epoch, because every published position is a new observation, and not with the next, whose solution it
+/// does not describe.
 ///
 /// A sentence follows its GGA only in the first half of the interval between the last two GGA; one that arrives later
 /// completes an epoch that waits for it, but is not waited for in the epochs to come. An epoch that still waits when

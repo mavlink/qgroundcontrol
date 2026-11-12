@@ -221,8 +221,8 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(c
         _resetEpoch(stored, timeMs);
     }
     auto& epoch = stored.epoch;
-    epoch.horizontalAccuracyMeters = finiteValue(accuracy->horizontalAccuracy);
-    epoch.verticalAccuracyMeters = finiteValue(accuracy->verticalAccuracy);
+    addReported(epoch.horizontalAccuracyMeters, finiteValue(accuracy->horizontalAccuracy));
+    addReported(epoch.verticalAccuracyMeters, finiteValue(accuracy->verticalAccuracy));
     markReceipt(epoch, receivedAtUs);
     _add(stored, Addition::GST, receivedAtUs);
     return &stored;
