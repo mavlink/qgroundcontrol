@@ -7,6 +7,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
 #include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
@@ -1208,6 +1209,7 @@ void QGCTileCacheDatabaseTest::_testResetFailureFailsInit()
     QVERIFY(!db.init());
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    QVERIFY(!db.isValid());
 
     // The tiles that are left are not marked as tiles of the current version
     QCOMPARE(tileCacheRows(path, kTileCacheVersionSql), QStringList{newerVersion});
@@ -1358,6 +1360,38 @@ void QGCTileCacheDatabaseTest::_testImportMigrateFailureKeepsCache()
     QCOMPARE(db.computeTotals().totalCount, 1U);
     // Neither the copy that was to be migrated nor the backup of the cache is left
     QCOMPARE(QDir(tempDir.path()).entryList({QStringLiteral("*.import*"), QStringLiteral("*.bak")}), QStringList());
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceCopyFailureKeepsCache()
+{
+    QTemporaryDir tempDir;
+    const QString importPath = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(importPath, version1Rows()), QString());
+
+    const QDir cacheDir(tempDir.filePath("cache"));
+    QVERIFY(cacheDir.mkpath(QStringLiteral(".")));
+    QGCTileCacheDatabase db(cacheDir.filePath("tiles.db"));
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+    QVERIFY(db.saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(8, 'K'), kFixedProviderType,
+                        QGCTileCacheDatabase::kInvalidTileSet));
+
+    // A directory that takes no change: the cache can be neither moved aside nor removed, so the file cannot be
+    // copied to where the cache is
+    const QFile::Permissions permissions = QFile::permissions(cacheDir.path());
+    QVERIFY(QFile::setPermissions(cacheDir.path(), QFile::ReadOwner | QFile::ExeOwner));
+    const auto restorePermissions = qScopeGuard([&] { (void) QFile::setPermissions(cacheDir.path(), permissions); });
+    if (QFile(cacheDir.filePath("probe")).open(QIODevice::WriteOnly)) {
+        QSKIP("This user can write to a read-only directory");
+    }
+
+    const DatabaseResult result = db.importSetsReplace(importPath, nullptr);
+    QVERIFY(!result.success);
+    QCOMPARE(result.errorString, QStringLiteral("Failed to copy import database"));
+
+    // The cache is open and has the tile it had, and no tile of the file
+    QVERIFY(db.findTile(QStringLiteral("kept")).has_value());
+    QCOMPARE(db.computeTotals().totalCount, 1U);
 }
 
 void QGCTileCacheDatabaseTest::_testVersion2TilesGetCacheVariant_data()

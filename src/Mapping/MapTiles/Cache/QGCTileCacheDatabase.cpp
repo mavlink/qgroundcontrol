@@ -309,6 +309,7 @@ bool QGCTileCacheDatabase::init()
         qCDebug(QGCTileCacheDatabaseLog) << "Mapping cache directory:" << _databasePath;
         if (connectDB()) {
             if (!_checkSchemaVersion()) {
+                _valid = false;
                 _failed = true;
                 disconnectDB();
                 return false;
@@ -1211,13 +1212,17 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, Prog
     if (!hasBackup) {
         (void) QFile::remove(_databasePath);
     }
-    if (!QFile::copy(path, _databasePath)) {
+    const auto restoreCache = [this, hasBackup, &backupPath] {
         if (hasBackup) {
             (void) QFile::rename(backupPath, _databasePath);
         }
+        if (init()) {
+            connectDB();
+        }
+    };
+    if (!QFile::copy(path, _databasePath)) {
         result.errorString = "Failed to copy import database";
-        _valid = false;
-        _failed = true;
+        restoreCache();
         return result;
     }
     if (progressCb)
@@ -1229,12 +1234,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, Prog
     if (!imported) {
         result.errorString = QStringLiteral("Failed to initialize tile cache database after import");
         removeDatabaseFiles(_databasePath);
-        if (hasBackup) {
-            (void) QFile::rename(backupPath, _databasePath);
-        }
-        if (init()) {
-            connectDB();
-        }
+        restoreCache();
     } else {
         (void) QFile::remove(backupPath);
         if (progressCb)

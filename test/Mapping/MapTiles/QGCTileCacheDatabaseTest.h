@@ -55,6 +55,7 @@ private slots:
     void _testImportRefusesVersion();
     void _testImportMigrateFailureKeepsCache_data();
     void _testImportMigrateFailureKeepsCache();
+    void _testImportReplaceCopyFailureKeepsCache();
     void _testVersion2TilesGetCacheVariant_data();
     void _testVersion2TilesGetCacheVariant();
     void _testVersion1TilesGetCacheVariantOfPermanentId();
