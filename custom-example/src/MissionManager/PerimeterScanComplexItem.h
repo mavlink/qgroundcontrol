@@ -21,7 +21,7 @@ class PerimeterScanComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    /// @param kmlOrShpFile  Optional KML/SHP file to seed the polygon from; empty for blank.
+    /// @param kmlOrShpFile  Optional KML, SHP or GeoJSON file to seed the polygon from; empty for blank.
     explicit PerimeterScanComplexItem(PlanMasterController *masterController,
                                       bool flyView,
                                       const QString &kmlOrShpFile = QString());

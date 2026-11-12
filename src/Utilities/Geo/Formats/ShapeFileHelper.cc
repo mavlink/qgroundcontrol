@@ -1,7 +1,9 @@
 #include "ShapeFileHelper.h"
+
+#include "GeoJsonHelper.h"
 #include "KMLHelper.h"
-#include "SHPFileHelper.h"
 #include "QGCLoggingCategory.h"
+#include "SHPFileHelper.h"
 
 QGC_LOGGING_CATEGORY(ShapeFileHelperLog, "Utilities.ShapeFileHelper")
 
@@ -17,12 +19,16 @@ ShapeFileHelper::ShapeFileType ShapeFileHelper::_getShapeFileType(const QString 
         return ShapeFileType::KML;
     } else if (file.endsWith(shpFileExtension, Qt::CaseInsensitive)) {
         return ShapeFileType::SHP;
+    } else if (file.endsWith(geoJsonFileExtension, Qt::CaseInsensitive)) {
+        return ShapeFileType::GeoJson;
     } else {
         // Strip leading dots for user-friendly error message
         const QString kmlExt = QString(kmlFileExtension).mid(1);
         const QString shpExt = QString(shpFileExtension).mid(1);
-        errorString = tr(_shapeFileErrorPrefix)
-                          .arg(tr("Unsupported file type. Only %1 and %2 are supported.").arg(kmlExt, shpExt));
+        const QString geoJsonExt = QString(geoJsonFileExtension).mid(1);
+        errorString =
+            tr(_shapeFileErrorPrefix)
+                .arg(tr("Unsupported file type. Only %1, %2 and %3 are supported.").arg(kmlExt, shpExt, geoJsonExt));
     }
 
     return ShapeFileType::None;
@@ -37,6 +43,8 @@ ShapeFileHelper::ShapeType ShapeFileHelper::determineShapeType(const QString &fi
         return KMLHelper::determineShapeType(file, errorString);
     case ShapeFileType::SHP:
         return SHPFileHelper::determineShapeType(file, errorString);
+    case ShapeFileType::GeoJson:
+        return GeoJsonHelper::determineShapeType(file, errorString);
     case ShapeFileType::None:
     default:
         return ShapeType::Error;
@@ -52,6 +60,8 @@ int ShapeFileHelper::getEntityCount(const QString &file, QString &errorString)
         return KMLHelper::getEntityCount(file, errorString);
     case ShapeFileType::SHP:
         return SHPFileHelper::getEntityCount(file, errorString);
+    case ShapeFileType::GeoJson:
+        return GeoJsonHelper::getEntityCount(file, errorString);
     case ShapeFileType::None:
     default:
         return 0;
@@ -68,6 +78,8 @@ bool ShapeFileHelper::loadPolygonsFromFile(const QString &file, QList<QList<QGeo
         return KMLHelper::loadPolygonsFromFile(file, polygons, errorString, filterMeters);
     case ShapeFileType::SHP:
         return SHPFileHelper::loadPolygonsFromFile(file, polygons, errorString, filterMeters);
+    case ShapeFileType::GeoJson:
+        return GeoJsonHelper::loadPolygonsFromFile(file, polygons, errorString, filterMeters);
     case ShapeFileType::None:
     default:
         return false;
@@ -84,6 +96,8 @@ bool ShapeFileHelper::loadPolylinesFromFile(const QString &file, QList<QList<QGe
         return KMLHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters);
     case ShapeFileType::SHP:
         return SHPFileHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters);
+    case ShapeFileType::GeoJson:
+        return GeoJsonHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters);
     case ShapeFileType::None:
     default:
         return false;
@@ -100,6 +114,8 @@ bool ShapeFileHelper::loadPointsFromFile(const QString &file, QList<QGeoCoordina
         return KMLHelper::loadPointsFromFile(file, points, errorString);
     case ShapeFileType::SHP:
         return SHPFileHelper::loadPointsFromFile(file, points, errorString);
+    case ShapeFileType::GeoJson:
+        return GeoJsonHelper::loadPointsFromFile(file, points, errorString);
     case ShapeFileType::None:
     default:
         return false;
@@ -114,6 +130,7 @@ QStringList ShapeFileHelper::fileDialogKMLFilters()
 
 QStringList ShapeFileHelper::fileDialogKMLOrSHPFilters()
 {
-    static const QStringList filters = QStringList(tr("KML/SHP Files (*%1 *%2)").arg(kmlFileExtension, shpFileExtension));
+    static const QStringList filters = QStringList(
+        tr("KML/SHP/GeoJSON Files (*%1 *%2 *%3)").arg(kmlFileExtension, shpFileExtension, geoJsonFileExtension));
     return filters;
 }

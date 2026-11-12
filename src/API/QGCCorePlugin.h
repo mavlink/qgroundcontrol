@@ -188,7 +188,7 @@ public:
     ///     @param complexItemType  The canonicalName / jsonComplexItemTypeValue identifying the item
     ///     @param masterController PlanMasterController for the item
     ///     @param flyView          true if creating for fly view (read-only)
-    ///     @param kmlOrShpFile     Optional KML/SHP file to initialize from; QString() if none
+    ///     @param kmlOrShpFile     Optional KML, SHP or GeoJSON file to initialize from; QString() if none
     /// @return New item (caller takes ownership), or nullptr if the type is not handled
     virtual ComplexMissionItem *createComplexMissionItem(
         const QString &complexItemType,

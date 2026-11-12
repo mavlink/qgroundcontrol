@@ -178,6 +178,42 @@ void ShapeTest::_testLoadPolylinesFromKML()
     QVERIFY(polylines.first().count() >= 2);
 }
 
+void ShapeTest::_testLoadPolygonsFromGeoJson()
+{
+    QTemporaryDir tempDir;
+    const QString geoJsonFile = _copyRes(tempDir.path(), "polygon.geojson");
+    QString errorString;
+    QList<QList<QGeoCoordinate>> polygons;
+    QVERIFY2(ShapeFileHelper::loadPolygonsFromFile(geoJsonFile, polygons, errorString, 0), qPrintable(errorString));
+    QVERIFY(errorString.isEmpty());
+    // The ring in the file is closed and counterclockwise: each vertex comes once, in clockwise order
+    const QList<QList<QGeoCoordinate>> expected{{{38.0, -122.0}, {38.0, -121.0}, {37.0, -121.0}, {37.0, -122.0}}};
+    QCOMPARE(polygons, expected);
+}
+
+void ShapeTest::_testLoadPolylinesFromGeoJson()
+{
+    QTemporaryDir tempDir;
+    const QString geoJsonFile = _copyRes(tempDir.path(), "polyline.geojson");
+    QString errorString;
+    QList<QList<QGeoCoordinate>> polylines;
+    QVERIFY2(ShapeFileHelper::loadPolylinesFromFile(geoJsonFile, polylines, errorString, 0), qPrintable(errorString));
+    QVERIFY(errorString.isEmpty());
+    const QList<QList<QGeoCoordinate>> expected{{{46.47522, 11.32613}, {46.47493, 11.32704}, {46.47422, 11.32754}}};
+    QCOMPARE(polylines, expected);
+}
+
+void ShapeTest::_testLoadPointsFromGeoJson()
+{
+    QTemporaryDir tempDir;
+    const QString geoJsonFile = _copyRes(tempDir.path(), "polygon.geojson");
+    QString errorString;
+    QList<QGeoCoordinate> points;
+    QVERIFY2(ShapeFileHelper::loadPointsFromFile(geoJsonFile, points, errorString), qPrintable(errorString));
+    QVERIFY(errorString.isEmpty());
+    QCOMPARE(points, QList<QGeoCoordinate>{QGeoCoordinate(37.5, -121.5)});
+}
+
 void ShapeTest::_testGetEntityCount()
 {
     QTemporaryDir tempDir;
@@ -200,6 +236,11 @@ void ShapeTest::_testGetEntityCount()
     const int kmlPolylineCount = ShapeFileHelper::getEntityCount(kmlPolylineFile, errorString);
     QVERIFY(errorString.isEmpty());
     QCOMPARE(kmlPolylineCount, 1);
+    // Test GeoJSON entity count: a point and a polygon
+    const QString geoJsonFile = _copyRes(tempDir.path(), "polygon.geojson");
+    const int geoJsonCount = ShapeFileHelper::getEntityCount(geoJsonFile, errorString);
+    QVERIFY(errorString.isEmpty());
+    QCOMPARE(geoJsonCount, 2);
 }
 
 void ShapeTest::_testDetermineShapeType()
@@ -224,6 +265,57 @@ void ShapeTest::_testDetermineShapeType()
     const QString kmlFile = _copyRes(tempDir.path(), "polygon.kml");
     QCOMPARE(ShapeFileHelper::determineShapeType(kmlFile, errorString), ShapeFileHelper::ShapeType::Polygon);
     QVERIFY(errorString.isEmpty());
+    // Test GeoJSON type detection
+    const QString geoJsonPolygonFile = _copyRes(tempDir.path(), "polygon.geojson");
+    QCOMPARE(ShapeFileHelper::determineShapeType(geoJsonPolygonFile, errorString), ShapeFileHelper::ShapeType::Polygon);
+    QVERIFY(errorString.isEmpty());
+    const QString geoJsonPolylineFile = _copyRes(tempDir.path(), "polyline.geojson");
+    QCOMPARE(ShapeFileHelper::determineShapeType(geoJsonPolylineFile, errorString),
+             ShapeFileHelper::ShapeType::Polyline);
+    QVERIFY(errorString.isEmpty());
+}
+
+void ShapeTest::_testFileDialogFilters()
+{
+    // QGCFileDialog takes the wildcards from between the parentheses
+    const QStringList filters = ShapeFileHelper::fileDialogKMLOrSHPFilters();
+    QCOMPARE(filters.count(), 1);
+    const QRegularExpressionMatch match = QRegularExpression(QStringLiteral("^.*\\((.*)\\)$")).match(filters.first());
+    QCOMPARE(match.captured(1).split(' '), QStringList({"*.kml", "*.shp", "*.geojson"}));
+}
+
+void ShapeTest::_testUnloadableFile_data()
+{
+    QTest::addColumn<QString>("fileName");
+    QTest::addColumn<QString>("contents");
+    QTest::addColumn<QString>("errorStart");
+
+    QTest::newRow("GeoJSON in a file with an unsupported extension")
+        << QStringLiteral("line.json")
+        << QStringLiteral(R"({"type": "LineString", "coordinates": [[8.5, 47.5], [8.6, 47.6]]})")
+        << QStringLiteral("Shape file load failed. Unsupported file type. Only kml, shp and geojson are supported.");
+    QTest::newRow("GeoJSON file that is no JSON") << QStringLiteral("line.geojson") << QStringLiteral("{not valid json")
+                                                  << QStringLiteral("GeoJSON file load failed. ");
+}
+
+void ShapeTest::_testUnloadableFile()
+{
+    QFETCH(QString, fileName);
+    QFETCH(QString, contents);
+    QFETCH(QString, errorStart);
+
+    QTemporaryDir tempDir;
+    const QString file = _writeKmlFile(tempDir.path(), fileName, contents);
+
+    QString errorString;
+    QCOMPARE(ShapeFileHelper::determineShapeType(file, errorString), ShapeFileHelper::ShapeType::Error);
+    QVERIFY2(errorString.startsWith(errorStart), qPrintable(errorString));
+
+    QList<QList<QGeoCoordinate>> polylines{{QGeoCoordinate(1.0, 2.0)}};
+    errorString.clear();
+    QVERIFY(!ShapeFileHelper::loadPolylinesFromFile(file, polylines, errorString));
+    QVERIFY2(errorString.startsWith(errorStart), qPrintable(errorString));
+    QVERIFY(polylines.isEmpty());
 }
 
 void ShapeTest::_testUnsupportedProjectionError()

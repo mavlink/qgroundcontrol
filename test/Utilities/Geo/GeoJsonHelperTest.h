@@ -9,6 +9,8 @@ class GeoJsonHelperTest : public UnitTest
 private slots:
     void _loadShapes_test_data();
     void _loadShapes_test();
+    void _loadUnusableShapes_test_data();
+    void _loadUnusableShapes_test();
     void _loadUnreadableFile_test_data();
     void _loadUnreadableFile_test();
     void _loadSaveGeoJsonCoordinate_test();

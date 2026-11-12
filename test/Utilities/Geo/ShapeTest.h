@@ -15,8 +15,14 @@ private slots:
     void _testLoadPolylinesFromSHP();
     void _testLoadPolygonsFromKML();
     void _testLoadPolylinesFromKML();
+    void _testLoadPolygonsFromGeoJson();
+    void _testLoadPolylinesFromGeoJson();
+    void _testLoadPointsFromGeoJson();
     void _testGetEntityCount();
     void _testDetermineShapeType();
+    void _testFileDialogFilters();
+    void _testUnloadableFile_data();
+    void _testUnloadableFile();
     void _testUnsupportedProjectionError();
     void _testLoadFromQtResource();
     void _testVertexFiltering();

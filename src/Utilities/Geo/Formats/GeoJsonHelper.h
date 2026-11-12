@@ -11,8 +11,22 @@ class QJsonValue;
 namespace GeoJsonHelper
 {
     ShapeFileHelper::ShapeType determineShapeType(const QString &filePath, QString &errorString);
-    bool loadPolygonFromFile(const QString &filePath, QList<QGeoCoordinate> &vertices, QString &errorString);
-    bool loadPolylineFromFile(const QString &filePath, QList<QGeoCoordinate> &coords, QString &errorString);
+
+    /// Get the number of geometry entities in the GeoJSON file
+    int getEntityCount(const QString& filePath, QString& errorString);
+
+    /// Load all polygon entities: the outer ring of each, without its closing position and wound clockwise
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
+    bool loadPolygonsFromFile(const QString& filePath, QList<QList<QGeoCoordinate>>& polygons, QString& errorString,
+                              double filterMeters = ShapeFileHelper::kDefaultVertexFilterMeters);
+
+    /// Load all polyline entities
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
+    bool loadPolylinesFromFile(const QString& filePath, QList<QList<QGeoCoordinate>>& polylines, QString& errorString,
+                               double filterMeters = ShapeFileHelper::kDefaultVertexFilterMeters);
+
+    /// Load all point entities
+    bool loadPointsFromFile(const QString& filePath, QList<QGeoCoordinate>& points, QString& errorString);
 
     /// Loads a QGeoCoordinate
     ///     Stored as array [ lon, lat, alt ]

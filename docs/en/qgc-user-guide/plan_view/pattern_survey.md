@@ -25,6 +25,7 @@ To create a survey:
 1. On the map drag the vertices to change the shape of the polygon.
 1. Click the `(+)` symbol between existing vertices to create a new vertex.
    The new vertex can then be dragged into a new position.
+1. To use a polygon from a file instead, press **Load KML/SHP/GeoJSON...** in the _Polygon Tools_ at the top of the map and select a KML, SHP or GeoJSON file.
 
 The survey settings are covered in the next section.
 
