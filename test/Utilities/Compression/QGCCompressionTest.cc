@@ -130,11 +130,12 @@ QByteArray QGCCompressionTest::_makeStreamedZip(const QList<ZipEntry>& entries, 
         out.writeRawData(entry.name.constData(), entry.name.size());
         out.writeRawData(deflated.constData(), deflated.size());
         out << quint32(0x08074B50) << _crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size());
-        // Central directory header
-        directory << quint32(0x02014B50) << quint16(20) << quint16(20) << lengthAtEnd << deflate << quint32(0)
+        // Central directory header. An entry made on Unix (3) has its mode in the upper half of the attributes.
+        const quint16 madeBy = (entry.unixMode != 0) ? ((3 << 8) | 20) : 20;
+        directory << quint32(0x02014B50) << madeBy << quint16(20) << lengthAtEnd << deflate << quint32(0)
                   << _crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size())
-                  << quint16(entry.name.size()) << quint16(0) << quint16(0) << quint16(0) << quint16(0) << quint32(0)
-                  << localHeaderOffset;
+                  << quint16(entry.name.size()) << quint16(0) << quint16(0) << quint16(0) << quint16(0)
+                  << quint32(entry.unixMode << 16) << localHeaderOffset;
         directory.writeRawData(entry.name.constData(), entry.name.size());
     }
 
@@ -3263,6 +3264,125 @@ void QGCCompressionTest::_testExtractLeavesOutLinks()
 
     QCOMPARE(_entriesBelow(outputDir), targetOnly);
     QCOMPARE(_readFile(outputDir + "/target.txt"), QByteArray("target"));
+}
+
+void QGCCompressionTest::_testExtractLeavesOutSpecialFiles_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchive", "extractArchiveAtomic", "extractFromDevice", "extractArchiveFiltered",
+                            "extractByPattern", "extractFiles", "extractFile"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
+void QGCCompressionTest::_testExtractLeavesOutSpecialFiles()
+{
+    QFETCH(QString, api);
+
+    // A tar archive can hold a FIFO and device nodes. A ZIP archive made on Unix can say that an entry is a
+    // socket, which a reader that can seek learns from the central directory.
+    QTemporaryDir tempDir;
+    const QString tarPath = tempDir.filePath("special.tar");
+    QVERIFY(_writeFile(tarPath, _makeTar({{.name = "before.txt", .data = "before"},
+                                          {.name = "pipe", .type = '6'},
+                                          {.name = "tty", .type = '3'},
+                                          {.name = "disk", .type = '4'},
+                                          {.name = "after.txt", .data = "after"}})));
+    const QString zipPath = tempDir.filePath("socket.zip");
+    QVERIFY(_writeFile(
+        zipPath,
+        _makeStreamedZip({{.name = "sock", .unixMode = 0140644}, {.name = "file.txt", .data = "file"}}, true)));
+    const QString tarOutput = tempDir.filePath("from-tar");
+    const QString zipOutput = tempDir.filePath("from-zip");
+    const auto expectSkipped = [this](const char* kind, const char* name) {
+        expectLogMessage(
+            "Utilities.QGClibarchive", QtWarningMsg,
+            QRegularExpression(QStringLiteral("Skipping %1: %2").arg(QLatin1String(kind), QLatin1String(name))));
+    };
+    const auto expectTarEntriesSkipped = [&expectSkipped]() {
+        expectSkipped("FIFO", "pipe");
+        expectSkipped("character device", "tty");
+        expectSkipped("block device", "disk");
+    };
+    const auto everyEntry = [](const QGCCompression::ArchiveEntry&) { return true; };
+
+    if (api == "extractFiles") {
+        // Asked for by name, so leaving the entry out fails the call
+        expectSkipped("FIFO", "pipe");
+        QVERIFY(!QGCCompression::extractFiles(tarPath, {"before.txt", "pipe"}, tarOutput));
+        verifyExpectedLogMessage();
+        expectSkipped("character device", "tty");
+        QVERIFY(!QGCCompression::extractFiles(tarPath, {"tty"}, tarOutput));
+        verifyExpectedLogMessage();
+        expectSkipped("block device", "disk");
+        QVERIFY(!QGCCompression::extractFiles(tarPath, {"disk"}, tarOutput));
+        verifyExpectedLogMessage();
+        expectSkipped("socket", "sock");
+        QVERIFY(!QGCCompression::extractFiles(zipPath, {"sock"}, zipOutput));
+        verifyExpectedLogMessage();
+        QCOMPARE(_entriesBelow(tarOutput), QStringList{QStringLiteral("before.txt")});
+        QCOMPARE(_entriesBelow(zipOutput), QStringList());
+        return;
+    }
+    if (api == "extractFile") {
+        expectSkipped("FIFO", "pipe");
+        QVERIFY(!QGCCompression::extractFile(tarPath, "pipe", tarOutput + "/pipe"));
+        verifyExpectedLogMessage();
+        expectSkipped("character device", "tty");
+        QVERIFY(!QGCCompression::extractFile(tarPath, "tty", tarOutput + "/tty"));
+        verifyExpectedLogMessage();
+        expectSkipped("block device", "disk");
+        QVERIFY(!QGCCompression::extractFile(tarPath, "disk", tarOutput + "/disk"));
+        verifyExpectedLogMessage();
+        expectSkipped("socket", "sock");
+        QVERIFY(!QGCCompression::extractFile(zipPath, "sock", zipOutput + "/sock"));
+        verifyExpectedLogMessage();
+        QCOMPARE(_entriesBelow(tarOutput), QStringList());
+        QCOMPARE(_entriesBelow(zipOutput), QStringList());
+        return;
+    }
+
+    // The functions that walk the archive go on with the entries that follow
+    expectTarEntriesSkipped();
+    if (api == "extractArchive") {
+        QVERIFY(QGCCompression::extractArchive(tarPath, tarOutput));
+    } else if (api == "extractArchiveAtomic") {
+        QVERIFY(QGCCompression::extractArchiveAtomic(tarPath, tarOutput));
+    } else if (api == "extractFromDevice") {
+        QFile tar(tarPath);
+        QVERIFY(tar.open(QIODevice::ReadOnly));
+        QVERIFY(QGCCompression::extractFromDevice(&tar, tarOutput));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(QGCCompression::extractArchiveFiltered(tarPath, tarOutput, everyEntry));
+    } else if (api == "extractByPattern") {
+        QVERIFY(QGCCompression::extractByPattern(tarPath, {"*"}, tarOutput));
+    } else {
+        QFAIL("Unknown row");
+    }
+    for (int i = 0; i < 3; ++i) {
+        verifyExpectedLogMessage();
+    }
+    const QStringList regularFiles{QStringLiteral("after.txt"), QStringLiteral("before.txt")};
+    QCOMPARE(_entriesBelow(tarOutput), regularFiles);
+    QCOMPARE(_readFile(tarOutput + "/after.txt"), QByteArray("after"));
+
+    expectSkipped("socket", "sock");
+    if (api == "extractArchive") {
+        QVERIFY(QGCCompression::extractArchive(zipPath, zipOutput));
+    } else if (api == "extractArchiveAtomic") {
+        QVERIFY(QGCCompression::extractArchiveAtomic(zipPath, zipOutput));
+    } else if (api == "extractFromDevice") {
+        QFile zip(zipPath);
+        QVERIFY(zip.open(QIODevice::ReadOnly));
+        QVERIFY(QGCCompression::extractFromDevice(&zip, zipOutput));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(QGCCompression::extractArchiveFiltered(zipPath, zipOutput, everyEntry));
+    } else {
+        QVERIFY(QGCCompression::extractByPattern(zipPath, {"*"}, zipOutput));
+    }
+    verifyExpectedLogMessage();
+    QCOMPARE(_entriesBelow(zipOutput), QStringList{QStringLiteral("file.txt")});
 }
 
 void QGCCompressionTest::_testSpecialCharactersInPath()

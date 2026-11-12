@@ -194,7 +194,8 @@ QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
 
 /// Extract an archive to a directory
 /// Nothing is written outside the output directory: entries whose path leaves it, hard links, and
-/// symbolic links with an absolute target or ".." in it are skipped with a warning.
+/// symbolic links with an absolute target or ".." in it are skipped with a warning. So are special files:
+/// a FIFO, a device node or a socket is not created.
 /// A failed extraction is undone only if it stopped at the size limit or was cancelled: the files and
 /// directories it created are then removed again. If the archive turns out to be truncated or corrupt, or an
 /// entry cannot be written, they stay: the entries before the failure, and the one it happened in, which
@@ -227,7 +228,8 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
 
 /// Extract an archive with per-entry filtering
 /// Only regular files are written, with the directories they are in. Hard and symbolic links are skipped with
-/// a warning, where extractArchive() creates the symbolic links that stay inside the output directory.
+/// a warning, where extractArchive() creates the symbolic links that stay inside the output directory, and so
+/// are special files (FIFO, device node, socket).
 /// A failed extraction keeps the files it wrote before the failure, whatever stopped it, and nothing of the
 /// file it was writing.
 /// @param archivePath Path to archive file (or Qt resource path :/)
@@ -284,7 +286,8 @@ bool fileExists(const QString &archivePath, const QString &fileName,
 /// @param fileName Name of file inside archive (as shown by listArchive)
 /// @param outputPath Output file path (if empty, extracts to current directory)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return true on success, false if file not found, is a hard or symbolic link, or extraction failed
+/// @return true on success, false if file not found, is a hard or symbolic link or a special file (FIFO,
+///         device node, socket), or extraction failed
 bool extractFile(const QString &archivePath, const QString &fileName,
                  const QString &outputPath = QString(),
                  Format format = Format::Auto);
@@ -307,14 +310,15 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
 /// @return true if all files found and extracted, false otherwise: also if one of them is a hard or symbolic
-///         link, which is not extracted
+///         link or a special file, which is not extracted
 bool extractFiles(const QString &archivePath, const QStringList &fileNames,
                   const QString &outputDirectoryPath,
                   Format format = Format::Auto);
 
 /// Extract files matching glob patterns from an archive
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
-/// Only regular files are written: a hard or symbolic link that matches is skipped with a warning.
+/// Only regular files are written: a hard or symbolic link or a special file that matches is skipped with a
+/// warning.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param patterns Glob patterns to match (e.g., "*.json", "subdir/*", "file.txt")
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)

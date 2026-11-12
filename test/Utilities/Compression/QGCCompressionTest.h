@@ -123,6 +123,8 @@ private slots:
     void _testExtractRejectsEscapingLinks();
     void _testExtractLeavesOutLinks_data();
     void _testExtractLeavesOutLinks();
+    void _testExtractLeavesOutSpecialFiles_data();
+    void _testExtractLeavesOutSpecialFiles();
     void _testSpecialCharactersInPath();
     void _testUnicodePaths();
 
@@ -163,7 +165,9 @@ private:
     {
         QByteArray name = {};
         QByteArray data = {};
-        char type = '0';  ///< '0' file, '1' hard link, '2' symbolic link, '5' directory, 'S' old GNU sparse file
+        /// '0' file, '1' hard link, '2' symbolic link, '3' character device, '4' block device, '5' directory,
+        /// '6' FIFO, 'S' old GNU sparse file
+        char type = '0';
         QByteArray linkName = {};
         QList<TarSparseData> sparseData = {};  ///< For 'S': where the data belongs in the file, at most four parts
         qint64 sparseFileSize = 0;             ///< For 'S': size of the file with its holes
@@ -174,6 +178,7 @@ private:
     {
         QByteArray name = {};
         QByteArray data = {};
+        quint32 unixMode = 0;  ///< File type and permissions as Unix has them, for a reader that can seek (0 = none)
     };
 
     /// Builds a ZIP archive as it is written to a stream: the sizes of an entry follow its data instead of being

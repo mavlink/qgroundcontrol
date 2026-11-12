@@ -433,6 +433,38 @@ bool skipLinkEntry(struct archive_entry* entry)
     return false;
 }
 
+/// What kind of special file an entry is, nullptr if it is none
+const char* specialFileKind(struct archive_entry* entry)
+{
+    switch (archive_entry_filetype(entry)) {
+        case AE_IFIFO:
+            return "FIFO";
+        case AE_IFCHR:
+            return "character device";
+        case AE_IFBLK:
+            return "block device";
+        case AE_IFSOCK:
+            return "socket";
+        default:
+            return nullptr;
+    }
+}
+
+/// Whether an entry is a FIFO, a device node or a socket, which is then logged as skipped
+/// No extraction writes one. QGC has no use for a special file: libarchive's disk writer would create the
+/// FIFO or the device node, and a socket as an empty regular file, which is also what QSaveFile makes of
+/// any of them.
+bool skipSpecialEntry(struct archive_entry* entry)
+{
+    const char* kind = specialFileKind(entry);
+    if (kind == nullptr) {
+        return false;
+    }
+    qCWarning(QGClibarchiveLog).noquote()
+        << QStringLiteral("Skipping %1:").arg(QLatin1String(kind)) << archive_entry_pathname(entry);
+    return true;
+}
+
 /// Write current archive entry data to a file atomically
 /// @param a Archive handle (must have entry header already read)
 /// @param outputPath Output file path (parent directory must exist)
@@ -588,6 +620,10 @@ QString diskEntryPath(struct archive_entry* entry, const QString& canonicalOutpu
     // output directory, and writes the entry's data through the link
     if (archive_entry_hardlink(entry) != nullptr) {
         qCWarning(QGClibarchiveLog) << "Skipping hard link:" << currentFile << "->" << archive_entry_hardlink(entry);
+        return {};
+    }
+
+    if (skipSpecialEntry(entry)) {
         return {};
     }
 
@@ -1311,7 +1347,7 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
     if (findEntryToRead(reader.handle(), fileName, &entry) != NextEntry::Found) {
         return false;
     }
-    if (skipLinkEntry(entry)) {
+    if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
         return false;
     }
 
@@ -1373,7 +1409,7 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
         }
 
         // Asked for by name, so an entry that is left out fails the extraction
-        if (skipLinkEntry(entry)) {
+        if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
             failed = true;
             return false;
         }
@@ -1454,7 +1490,7 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
             return true;
         }
 
-        if (skipLinkEntry(entry)) {
+        if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
             return true;
         }
 
@@ -1680,7 +1716,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
             return true;
         }
 
-        if (skipLinkEntry(entry)) {
+        if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
             return true;
         }
 
