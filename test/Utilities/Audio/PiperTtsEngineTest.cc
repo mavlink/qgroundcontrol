@@ -153,6 +153,13 @@ void PiperTtsEngineTest::initTestCase()
     QVERIFY(searchPath.isValid());
     QVERIFY(searchPath.installPiper());
 
+    // Qt 6.12 picks its PipeWire backend unless it is told another, and that one crashes where PipeWire has no
+    // client configuration, as on a CI runner. Nothing here has to be heard, so any backend does: PulseAudio
+    // has no device where no server runs.
+    if (qEnvironmentVariableIsEmpty("QT_AUDIO_BACKEND")) {
+        QVERIFY(qputenv("QT_AUDIO_BACKEND", "pulseaudio"));
+    }
+
     // The first engine's player makes Qt look for an audio service, and a host without one logs warnings about
     // that. Create it here, where the log is not checked.
     const PiperTtsEngine engine;
