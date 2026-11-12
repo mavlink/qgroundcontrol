@@ -15,6 +15,8 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
 #include <QtCore/QtNumeric>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QMouseEvent>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -1390,22 +1392,26 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
 
     const QGeoCoordinate before = targetCoordinate();
     const QPoint start = markerPoint();
-    const QPoint delta(-160, 110);
+    const QPoint cursor = start + QPoint(-160, 110);
     QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
-    // One big step, so the marker's new height has to come from the pick and not from following the cursor
-    QTest::mouseMove(_window, start + delta);
-    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
-
-    QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
-                              QStringLiteral("marker moved")),
-             "Dragging the current marker did not move it");
+    // One big step, so the marker's new height has to come from the pick and not from following the cursor. The move
+    // is delivered directly and the marker read before the event loop runs again: half a second later the terrain
+    // query for a waypoint's new position answers with the terrain of the unit tests, which has none of the hills the
+    // map draws, and the waypoint moves to its height above that
+    QMouseEvent move(QEvent::MouseMove, cursor, _window->mapToGlobal(cursor), Qt::NoButton, Qt::LeftButton,
+                     Qt::NoModifier);
+    QGuiApplication::sendEvent(_window, &move);
+    const QGeoCoordinate after = targetCoordinate();
     const QPoint end = markerPoint();
-    QVERIFY2((end - (start + delta)).manhattanLength() <= 6,
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, cursor);
+
+    QVERIFY2(after.distanceTo(before) > 1.0, "Dragging the current marker did not move it");
+    QVERIFY2((end - cursor).manhattanLength() <= 6,
              qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
                             .arg(end.x())
                             .arg(end.y())
-                            .arg(start.x() + delta.x())
-                            .arg(start.y() + delta.y())));
+                            .arg(cursor.x())
+                            .arg(cursor.y())));
 }
 
 void PlanPanelUITest::_testGeoMapMarkerShowsWhileTerrainAltitudePending()
