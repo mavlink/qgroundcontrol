@@ -3,7 +3,6 @@
 /// @file QGCArchiveDeviceBase.h
 /// @brief Base class for QIODevice wrappers using libarchive
 
-#include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 
@@ -26,6 +25,9 @@ public:
     ~QGCArchiveDeviceBase() override;
 
     // QIODevice interface
+    /// Open the device for reading: initArchive(), then prepareForReading()
+    /// @param mode QIODevice::ReadOnly, the only mode there is
+    bool open(OpenMode mode) override;
     void close() override;
     bool isSequential() const override { return true; }
     qint64 bytesAvailable() const override;
@@ -73,7 +75,7 @@ protected:
     bool initSourceFromPath();
 
     /// Initialize libarchive reader with configured format support
-    /// Subclasses must override to configure format support before calling base
+    /// Subclasses override to configure the formats and then call openArchive()
     /// @return true on success, sets _errorString on failure
     virtual bool initArchive() = 0;
 
@@ -90,7 +92,8 @@ protected:
     /// @param allFormats true for the archive formats (ZIP, TAR, 7z), false for raw (single-file) format
     void configureArchiveFormats(bool allFormats);
 
-    /// Open the source device as an archive of the configured formats
+    /// Open the source, which is the file of the path constructor or the device of the other one, as an
+    /// archive of the configured formats
     /// @return true on success, sets _errorString on failure
     bool openArchive();
 
@@ -116,7 +119,6 @@ protected:
     // libarchive state
     std::unique_ptr<QGClibarchive::ArchiveReader> _reader;  // Null unless the archive is open
     bool _allFormats = false;
-    QByteArray _resourceData;  // For Qt resources (must outlive archive)
     bool _eof = false;
 
     // Decompressed data buffer

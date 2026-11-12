@@ -45,21 +45,10 @@ QString openFailureReason(struct archive* a)
                                                       : QStringLiteral("Truncated or unreadable input");
 }
 
-void updateFormatState(struct archive* a)
+void updateFormatState(const QGClibarchive::ArchiveReader& reader)
 {
-    if (!a) {
-        t_formatState.formatName.clear();
-        t_formatState.filterName.clear();
-        return;
-    }
-
-    // Get format name
-    const char* fmt = archive_format_name(a);
-    t_formatState.formatName = fmt ? QString::fromUtf8(fmt) : QString();
-
-    // Get compression filter name (index 0 is the outermost filter)
-    const char* flt = archive_filter_name(a, 0);
-    t_formatState.filterName = flt ? QString::fromUtf8(flt) : QStringLiteral("none");
+    t_formatState.formatName = reader.formatName();
+    t_formatState.filterName = reader.filterName();
 
     if (!t_formatState.formatName.isEmpty()) {
         qCDebug(QGClibarchiveLog) << "Detected format:" << t_formatState.formatName
@@ -83,7 +72,7 @@ QString lastDetectedFilterName()
 
 void clearLastDetectedFormat()
 {
-    updateFormatState(nullptr);
+    t_formatState = {};
 }
 
 bool takeSizeLimitExceeded()
@@ -204,15 +193,15 @@ NextEntry readNextEntry(struct archive* a, struct archive_entry** entry)
     }
 }
 
-EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor)
+EntryWalk forEachEntry(const ArchiveReader& reader, const EntryVisitor& visitor)
 {
     struct archive_entry* entry = nullptr;
     bool formatKnown = false;
     NextEntry next;
-    while ((next = readNextEntry(a, &entry)) == NextEntry::Found) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         // libarchive knows the format once it has read the first header
         if (!formatKnown) {
-            updateFormatState(a);
+            updateFormatState(reader);
             formatKnown = true;
         }
         if (!visitor(entry)) {
@@ -799,7 +788,7 @@ QGClibarchive::ReadResult extractArchiveEntries(const QGClibarchive::ArchiveRead
     const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     existingDirs.insert(canonicalOutputDir);
 
-    const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(a, [&](struct archive_entry* entry) {
+    const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(reader, [&](struct archive_entry* entry) {
         const QString outputPath = diskEntryPath(entry, canonicalOutputDir);
         if (outputPath.isEmpty()) {
             return true;
@@ -896,9 +885,10 @@ QGClibarchive::ReadResult extractArchiveFrom(const Source& source, const QString
 /// Advance to the entry called @a fileName, whose data can then be read
 /// @param entry If not null, receives the entry when Found is returned
 /// @return Found, End if the archive has no such entry, or Error if the archive is damaged
-QGClibarchive::NextEntry findEntry(struct archive* a, const QString& fileName, struct archive_entry** entry = nullptr)
+QGClibarchive::NextEntry findEntry(const QGClibarchive::ArchiveReader& reader, const QString& fileName,
+                                   struct archive_entry** entry = nullptr)
 {
-    const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(a, [&](struct archive_entry* candidate) {
+    const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(reader, [&](struct archive_entry* candidate) {
         if (QString::fromUtf8(archive_entry_pathname(candidate)) != fileName) {
             return true;
         }
@@ -921,10 +911,10 @@ QGClibarchive::NextEntry findEntry(struct archive* a, const QString& fileName, s
 
 /// As findEntry(), for a caller that reads the entry: a warning is logged if the archive does not have it
 /// @return Found if the reader is on the entry
-QGClibarchive::NextEntry findEntryToRead(struct archive* a, const QString& fileName,
+QGClibarchive::NextEntry findEntryToRead(const QGClibarchive::ArchiveReader& reader, const QString& fileName,
                                          struct archive_entry** entry = nullptr)
 {
-    const QGClibarchive::NextEntry found = findEntry(a, fileName, entry);
+    const QGClibarchive::NextEntry found = findEntry(reader, fileName, entry);
     if (found == QGClibarchive::NextEntry::End) {
         qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
     }
@@ -935,11 +925,11 @@ QGClibarchive::NextEntry findEntryToRead(struct archive* a, const QString& fileN
 /// @param maxBytes Maximum size of the entry (0 = unlimited)
 /// @param result Receives how the read ended
 /// @return Data of the entry, or empty QByteArray unless @a result is Completed
-QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qint64 maxBytes,
+QByteArray readNamedEntryToMemory(const QGClibarchive::ArchiveReader& reader, const QString& fileName, qint64 maxBytes,
                                   QGClibarchive::ReadResult& result)
 {
     struct archive_entry* entry = nullptr;
-    switch (findEntryToRead(a, fileName, &entry)) {
+    switch (findEntryToRead(reader, fileName, &entry)) {
         case QGClibarchive::NextEntry::Found:
             break;
         case QGClibarchive::NextEntry::End:
@@ -957,7 +947,7 @@ QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qi
     }
 
     bool completed = false;
-    QByteArray data = readEntryToMemory(a, entry, maxBytes, completed);
+    QByteArray data = readEntryToMemory(reader.handle(), entry, maxBytes, completed);
     result = completed ? QGClibarchive::ReadResult::Completed : QGClibarchive::ReadResult::Failed;
     return data;
 }
@@ -974,12 +964,13 @@ enum class StreamHeader
 /// Read the header of the one entry that a single compressed stream is read as
 /// @param plainAllowed Whether an input that is not compressed is read as it is (Data) instead of being refused
 ///        (NotCompressed)
-StreamHeader readStreamHeader(struct archive* a, bool plainAllowed = false)
+StreamHeader readStreamHeader(const QGClibarchive::ArchiveReader& reader, bool plainAllowed = false)
 {
+    struct archive* const a = reader.handle();
     struct archive_entry* entry = nullptr;
     const int header = archive_read_next_header(a, &entry);
     if (header == ARCHIVE_OK) {
-        updateFormatState(a);
+        updateFormatState(reader);
         // The raw format takes any input that has bytes, also one that no decompression filter is in the chain
         // for, which it hands through as it is
         if (archive_filter_count(a) <= 1) {
@@ -992,7 +983,7 @@ StreamHeader readStreamHeader(struct archive* a, bool plainAllowed = false)
         return StreamHeader::Data;
     }
     if (QGClibarchive::isEmptyStream(a, header)) {
-        updateFormatState(a);
+        updateFormatState(reader);
         return StreamHeader::Empty;
     }
 
@@ -1022,11 +1013,12 @@ QGClibarchive::ReadResult writeEmptyFile(const QString& outputPath)
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
 /// @param result Receives how the decompression ended: a stream that was read to its end may hold no data
 /// @return Decompressed data, or empty QByteArray unless @a result is Completed
-QByteArray readStreamToMemory(struct archive* a, qint64 maxBytes, QGClibarchive::ReadResult& result)
+QByteArray readStreamToMemory(const QGClibarchive::ArchiveReader& reader, qint64 maxBytes,
+                              QGClibarchive::ReadResult& result)
 {
     result = QGClibarchive::ReadResult::Failed;
 
-    switch (readStreamHeader(a)) {
+    switch (readStreamHeader(reader)) {
         case StreamHeader::Data:
             break;
         case StreamHeader::Empty:
@@ -1040,7 +1032,7 @@ QByteArray readStreamToMemory(struct archive* a, qint64 maxBytes, QGClibarchive:
     }
 
     bool completed = false;
-    QByteArray data = readArchiveToMemory(a, 0, maxBytes, &completed);
+    QByteArray data = readArchiveToMemory(reader.handle(), 0, maxBytes, &completed);
     if (completed) {
         result = QGClibarchive::ReadResult::Completed;
     }
@@ -1087,14 +1079,7 @@ QString ArchiveReader::filterName() const
     if (!_archive) {
         return {};
     }
-    // Get the outermost compression filter (index 0 is the format, 1+ are filters)
-    // archive_filter_count returns total filters including format at index 0
-    const int filterCount = archive_filter_count(_archive.get());
-    if (filterCount <= 1) {
-        return QStringLiteral("none");
-    }
-    // Index 0 is innermost (format), higher indices are outer filters
-    // We want the first compression filter (index 1)
+    // Filter 0 is the one the format reads from: the decompression, or the input itself, which is called "none"
     const char* name = archive_filter_name(_archive.get(), 0);
     return name ? QString::fromUtf8(name) : QStringLiteral("none");
 }
@@ -1516,7 +1501,7 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
     }
 
     struct archive_entry* entry = nullptr;
-    switch (findEntryToRead(reader.handle(), fileName, &entry)) {
+    switch (findEntryToRead(reader, fileName, &entry)) {
         case NextEntry::Found:
             break;
         case NextEntry::End:
@@ -1553,7 +1538,7 @@ QByteArray extractFileToMemory(const Source& source, const QString& fileName, qi
         return QByteArray();
     }
 
-    QByteArray data = readNamedEntryToMemory(reader.handle(), fileName, maxBytes, outcome);
+    QByteArray data = readNamedEntryToMemory(reader, fileName, maxBytes, outcome);
     if (outcome == ReadResult::Completed) {
         qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "to memory:" << data.size() << "bytes";
     }
@@ -1590,7 +1575,7 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
     bool failed = false;
 
     // The walk stops at the last of the files asked for, without reading the rest of the archive
-    const EntryWalk walk = forEachEntry(reader.handle(), [&](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&](struct archive_entry* entry) {
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (!targetFiles.contains(entryName)) {
@@ -1684,7 +1669,7 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     DataTransfer unlimited;
     int matchCount = 0;
 
-    const EntryWalk walk = forEachEntry(reader.handle(), [&](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&](struct archive_entry* entry) {
         if (archive_match_excluded(match.get(), entry)) {
             return true;
         }
@@ -1745,7 +1730,7 @@ bool validateArchive(const QString& archivePath)
 
     // Read through all entries and their data to validate
     DataTransfer unlimited;
-    const EntryWalk walk = forEachEntry(reader.handle(), [&reader, &unlimited](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&reader, &unlimited](struct archive_entry* entry) {
         // Read and discard data to verify it can be decompressed
         const CopyResult copied =
             copyEntryData(reader.handle(), unlimited, [](const char*, qint64, qint64) { return true; });
@@ -1767,7 +1752,7 @@ NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName
         return NextEntry::Error;
     }
 
-    return findEntry(reader.handle(), fileName);
+    return findEntry(reader, fileName);
 }
 
 QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool* ok)
@@ -1782,7 +1767,7 @@ QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool*
     }
 
     QList<ArchiveEntry> entries;
-    const EntryWalk walk = forEachEntry(reader.handle(), [&entries](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&entries](struct archive_entry* entry) {
         entries.append(toArchiveEntry(entry));
         return true;
     });
@@ -1810,7 +1795,7 @@ ArchiveStats getArchiveStats(const QString& archivePath, bool* ok)
 
     ArchiveStats stats;
 
-    const EntryWalk walk = forEachEntry(reader.handle(), [&stats](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&stats](struct archive_entry* entry) {
         addTo(stats, toArchiveEntry(entry));
         return true;
     });
@@ -1862,7 +1847,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
     int extractedCount = 0;
     int skippedCount = 0;
 
-    const EntryWalk walk = forEachEntry(reader.handle(), [&](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&](struct archive_entry* entry) {
         // Build ArchiveEntry for filter callback
         const ArchiveEntry info = toArchiveEntry(entry);
 
@@ -1934,7 +1919,7 @@ bool decompressSingleFile(const Source& source, const QString& outputPath, Progr
         return false;
     }
 
-    const StreamHeader header = readStreamHeader(reader.handle(), copyPlainInput);
+    const StreamHeader header = readStreamHeader(reader, copyPlainInput);
     if (header == StreamHeader::Failed) {
         return false;
     }
@@ -1966,7 +1951,7 @@ QByteArray decompressToMemory(const Source& source, qint64 maxBytes, ReadResult*
         return {};
     }
 
-    QByteArray decompressed = readStreamToMemory(reader.handle(), maxBytes, outcome);
+    QByteArray decompressed = readStreamToMemory(reader, maxBytes, outcome);
     qCDebug(QGClibarchiveLog) << "Decompressed to memory:" << decompressed.size() << "bytes";
     return decompressed;
 }

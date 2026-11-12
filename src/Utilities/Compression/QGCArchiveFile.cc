@@ -28,38 +28,6 @@ QGCArchiveFile::QGCArchiveFile(QIODevice *source, const QString &entryName, QObj
 // QIODevice Interface
 // ============================================================================
 
-bool QGCArchiveFile::open(OpenMode mode)
-{
-    _errorString.clear();
-
-    if (mode != ReadOnly) {
-        setError(QStringLiteral("QGCArchiveFile only supports ReadOnly mode"));
-        return false;
-    }
-
-    if (_entryName.isEmpty()) {
-        setError(QStringLiteral("Entry name cannot be empty"));
-        return false;
-    }
-
-    // Handle file path constructor
-    if (!_filePath.isEmpty()) {
-        if (!initSourceFromPath()) {
-            return false;
-        }
-    }
-
-    if (!initArchive()) {
-        return false;
-    }
-
-    if (!prepareForReading()) {
-        return false;
-    }
-
-    return QIODevice::open(mode);
-}
-
 qint64 QGCArchiveFile::size() const
 {
     return _entrySize >= 0 ? _entrySize : QIODevice::size();
@@ -71,6 +39,11 @@ qint64 QGCArchiveFile::size() const
 
 bool QGCArchiveFile::initArchive()
 {
+    if (_entryName.isEmpty()) {
+        setError(QStringLiteral("Entry name cannot be empty"));
+        return false;
+    }
+
     // All formats for archives
     configureArchiveFormats(true);
 
@@ -100,7 +73,7 @@ bool QGCArchiveFile::seekToEntry()
     const char* skippedKind = nullptr;
 
     const QGClibarchive::EntryWalk walk =
-        QGClibarchive::forEachEntry(_reader->handle(), [this, &skippedKind](struct archive_entry* entry) {
+        QGClibarchive::forEachEntry(*_reader, [this, &skippedKind](struct archive_entry* entry) {
             // Capture format info on first header
             if (_formatName.isEmpty()) {
                 captureFormatInfo();

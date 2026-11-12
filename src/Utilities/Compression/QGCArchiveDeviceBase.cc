@@ -37,6 +37,22 @@ QGCArchiveDeviceBase::~QGCArchiveDeviceBase()
 // QIODevice Interface
 // ============================================================================
 
+bool QGCArchiveDeviceBase::open(OpenMode mode)
+{
+    _errorString.clear();
+
+    if (mode != ReadOnly) {
+        setError(QLatin1StringView(metaObject()->className()) + QStringLiteral(" only supports ReadOnly mode"));
+        return false;
+    }
+
+    if (!initArchive() || !prepareForReading()) {
+        return false;
+    }
+
+    return QIODevice::open(mode);
+}
+
 void QGCArchiveDeviceBase::close()
 {
     _reader.reset();
@@ -125,36 +141,16 @@ bool QGCArchiveDeviceBase::initSourceFromPath()
         return false;
     }
 
-    const bool isResource = QGCFileHelper::isQtResource(_filePath);
-
-    if (isResource) {
-        // Load Qt resource into memory
-        QFile resourceFile(_filePath);
-        if (!resourceFile.open(QIODevice::ReadOnly)) {
-            setError(QStringLiteral("Failed to open resource: ") + _filePath);
-            return false;
-        }
-        _resourceData = resourceFile.readAll();
-        resourceFile.close();
-
-        // Create QBuffer as source
-        auto buffer = std::make_unique<QBuffer>();
-        buffer->setData(_resourceData);
-        if (!buffer->open(QIODevice::ReadOnly)) {
-            setError(QStringLiteral("Failed to open buffer for resource"));
-            return false;
-        }
-        _ownedSource = std::move(buffer);
-        _sourceDevice = _ownedSource.get();
-    } else {
-        auto file = std::make_unique<QFile>(_filePath);
-        if (!file->open(QIODevice::ReadOnly)) {
-            setError(QStringLiteral("Failed to open file: ") + _filePath);
-            return false;
-        }
-        _ownedSource = std::move(file);
-        _sourceDevice = _ownedSource.get();
+    // QFile reads a Qt resource as it reads a file
+    auto file = std::make_unique<QFile>(_filePath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        const bool isResource = QGCFileHelper::isQtResource(_filePath);
+        setError((isResource ? QStringLiteral("Failed to open resource: ") : QStringLiteral("Failed to open file: ")) +
+                 _filePath);
+        return false;
     }
+    _ownedSource = std::move(file);
+    _sourceDevice = _ownedSource.get();
 
     return true;
 }
@@ -166,6 +162,10 @@ void QGCArchiveDeviceBase::configureArchiveFormats(bool allFormats)
 
 bool QGCArchiveDeviceBase::openArchive()
 {
+    if (!_filePath.isEmpty() && !initSourceFromPath()) {
+        return false;
+    }
+
     if (!_sourceDevice || !_sourceDevice->isOpen() || !_sourceDevice->isReadable()) {
         setError(QStringLiteral("Source device is not ready"));
         return false;
@@ -216,11 +216,8 @@ void QGCArchiveDeviceBase::captureFormatInfo()
         return;
     }
 
-    const char* fmt = archive_format_name(_reader->handle());
-    _formatName = fmt ? QString::fromUtf8(fmt) : QString();
-
-    const char* flt = archive_filter_name(_reader->handle(), 0);
-    _filterName = flt ? QString::fromUtf8(flt) : QStringLiteral("none");
+    _formatName = _reader->formatName();
+    _filterName = _reader->filterName();
 }
 
 void QGCArchiveDeviceBase::setError(const QString& reason)

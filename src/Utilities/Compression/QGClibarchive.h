@@ -153,11 +153,12 @@ public:
     qint64 dataSize() const;
 
     /// Get the detected archive format name (after reading first header)
+    /// Everything that tells the format or the filter of an input asks here.
     /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty if not detected
     QString formatName() const;
 
     /// Get the detected compression filter name
-    /// @return Filter name like "gzip", "xz", "zstd", "none", or empty if not detected
+    /// @return Filter name like "gzip", "xz", "zstd", "none", or empty if the reader is not open
     QString filterName() const;
 
 private:
@@ -246,9 +247,9 @@ using EntryVisitor = std::function<bool(struct archive_entry* entry)>;
 /// Every loop over archive entries is this one. Only Completed says that the archive was read to
 /// its end, so a caller cannot take a read error for the end of the archive. The first entry
 /// also sets what lastDetectedFormatName() and lastDetectedFilterName() return.
-/// @param a Archive reader
-/// @param visitor Called with each entry header, when the data of that entry can be read from @a a
-EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor);
+/// @param reader Open archive reader
+/// @param visitor Called with each entry header, when the data of that entry can be read from @a reader
+EntryWalk forEachEntry(const ArchiveReader& reader, const EntryVisitor& visitor);
 
 // ============================================================================
 // Utility Functions

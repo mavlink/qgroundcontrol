@@ -23,37 +23,6 @@ QGCDecompressDevice::QGCDecompressDevice(const QString &filePath, QObject *paren
 }
 
 // ============================================================================
-// QIODevice Interface
-// ============================================================================
-
-bool QGCDecompressDevice::open(OpenMode mode)
-{
-    _errorString.clear();
-
-    if (mode != ReadOnly) {
-        setError(QStringLiteral("QGCDecompressDevice only supports ReadOnly mode"));
-        return false;
-    }
-
-    // Handle file path constructor
-    if (!_filePath.isEmpty()) {
-        if (!initSourceFromPath()) {
-            return false;
-        }
-    }
-
-    if (!initArchive()) {
-        return false;
-    }
-
-    if (!prepareForReading()) {
-        return false;
-    }
-
-    return QIODevice::open(mode);
-}
-
-// ============================================================================
 // Protected Implementation
 // ============================================================================
 
