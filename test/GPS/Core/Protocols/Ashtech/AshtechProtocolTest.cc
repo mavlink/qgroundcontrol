@@ -311,6 +311,21 @@ void ashtechMetadata(GPSTestClock& clock)
         QCOMPARE(driver.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
         QVERIFY(!driver.position.velocityValid);
     }
+    // A receiver without a fix may leave the hemispheres empty with their coordinates, which reports the lost fix; a
+    // coordinate without its hemisphere is malformed.
+    const auto fixPacket = nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,");
+    QVERIFY(hasPosition(driver->consume(fixPacket)));
+    QCOMPARE_NE(driver.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
+    QVERIFY(hasPosition(driver->consume(nmeaPacket("PASHR,POS,0,00,172814.0" + std::string(14, ',')))));
+    QCOMPARE(driver.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
+    QVERIFY(hasPosition(driver->consume(fixPacket)));
+    for (const std::string_view missingHemisphere : {
+             "PASHR,POS,2,12,172814.0,3723.4,,12202.2,W,18.9,0,90,10,0,1,1,1,1,",
+             "PASHR,POS,2,12,172814.0,3723.4,N,12202.2,,18.9,0,90,10,0,1,1,1,1,",
+         }) {
+        QVERIFY(!hasPosition(driver->consume(nmeaPacket(missingHemisphere))));
+        QCOMPARE_NE(driver.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
+    }
     QVERIFY(!hasSatellites(driver->consume(nmeaPacket("GPGSV,1,1,01,01,,,"))));
     clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT);
     QVERIFY(hasSatellites(driver->consume({})));

@@ -160,7 +160,8 @@ std::optional<PositionFix> positionFix(const NMEA::Sentence& sentence)
           *cc Checksum
         */
     // d1 is the third field, after $PASHR and POS. An empty field keeps its default; a malformed one rejects the
-    // sentence. Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix.
+    // sentence. Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix; the
+    // hemisphere of an empty latitude or longitude may be empty too.
     const auto& fields = sentence.fields;
     const auto quality = numberOr(fields[2], 0);
     const auto satellites = numberOr(fields[3], 0);
@@ -178,6 +179,8 @@ std::optional<PositionFix> positionFix(const NMEA::Sentence& sentence)
     }
     const std::string_view northSouth = fields[6];
     const std::string_view eastWest = fields[8];
+    const bool latitudeSector = northSouth == "N" || northSouth == "S" || (northSouth.empty() && fields[5].empty());
+    const bool longitudeSector = eastWest == "E" || eastWest == "W" || (eastWest.empty() && fields[7].empty());
     constexpr int MAX_SATELLITES = 255;
     // 90 and 180 degrees as ddmm.mmmm and dddmm.mmmm.
     constexpr double MAX_LATITUDE = 9000;
@@ -185,7 +188,7 @@ std::optional<PositionFix> positionFix(const NMEA::Sentence& sentence)
     if (!quality || *quality < 0 || *quality > PositionMode::MAXIMUM || !satellites || *satellites < 0 ||
         *satellites > MAX_SATELLITES || !latitude || *latitude < 0 || *latitude > MAX_LATITUDE || !longitude ||
         *longitude < 0 || *longitude > MAX_LONGITUDE || !altitude || !horizontalDop || !verticalDop ||
-        (northSouth != "N" && northSouth != "S") || (eastWest != "E" && eastWest != "W")) {
+        !latitudeSector || !longitudeSector) {
         return std::nullopt;
     }
     return PositionFix{
