@@ -205,20 +205,9 @@ GeoMap {
         }
     }
 
-    QGCPopupDialogFactory {
+    SpecifyMapPositionDialogFactory {
         id: specifyMapPositionDialogFactory
-
-        dialogComponent: specifyMapPositionDialog
-    }
-
-    Component {
-        id: specifyMapPositionDialog
-
-        EditPositionDialog {
-            title: qsTr("Specify Position")
-            coordinate: root.center
-            onCoordinateChanged: root.center = coordinate
-        }
+        map: root
     }
 
     Component.onCompleted: {

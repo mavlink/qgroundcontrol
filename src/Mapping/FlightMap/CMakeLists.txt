@@ -44,6 +44,7 @@ qt_add_qml_module(
         FlightMap.qml
         MapAttribution.qml
         MapScale.qml
+        SpecifyMapPositionDialogFactory.qml
     NO_PLUGIN
 )
 

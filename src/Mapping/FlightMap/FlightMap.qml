@@ -64,19 +64,9 @@ Map {
         }
     }
 
-    QGCPopupDialogFactory {
-        id: specifyMapPositionDialogFactory
-
-        dialogComponent: specifyMapPositionDialog
-    }
-
-    Component {
-        id: specifyMapPositionDialog
-        EditPositionDialog {
-            title:                  qsTr("Specify Position")
-            coordinate:             center
-            onCoordinateChanged:    center = coordinate
-        }
+    SpecifyMapPositionDialogFactory {
+        id:     specifyMapPositionDialogFactory
+        map:    _map
     }
 
     function updateActiveMapType() {
