@@ -180,6 +180,15 @@ void NTRIPHttpCodecTest::_framing_data()
                                            << QByteArray(" Content-Length: 3\r\n\r\n") << true << -1;
     QTest::newRow("icy-missing-separator")
         << QByteArray("ICY 200 OK\r\nContent-Length: 3\r\n") + binary << binary << true << -1;
+    // Without header fields only the close ends a legacy answer, and with it the last line: one that cannot be a
+    // header field is the body, as it is when its line ending arrives.
+    QTest::newRow("icy-unterminated-line") << QByteArray("ICY 200 OK\r\nSTR;MP") << QByteArray("STR;MP") << true << -1;
+    QTest::newRow("icy-half-line-ending")
+        << QByteArray("ICY 200 OK\r\nENDSOURCETABLE\r") << QByteArray("ENDSOURCETABLE\r") << true << -1;
+    QTest::newRow("icy-status-only") << QByteArray("ICY 200 OK\r\n") << QByteArray() << true << -1;
+    // A header field the close cut off is not taken for a body.
+    QTest::newRow("icy-truncated-header")
+        << QByteArray("ICY 200 OK\r\nServer: legacy") << QByteArray() << true << invalid;
     QTest::newRow("source-table") << QByteArray("SOURCETABLE 200 OK\r\nSTR;MP\r\n") << QByteArray() << false
                                   << mountpoint;
     QTest::newRow("source-content-type") << ok + "Content-Type: gnss/sourcetable; charset=utf-8\r\n\r\n"

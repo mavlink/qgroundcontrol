@@ -23,6 +23,14 @@ bool isFieldValue(char ch)
     return ch == '\t' || (byte >= 32 && byte != 127);
 }
 
+/// A header or trailer field: a token, a colon and a value.
+bool isField(QByteArrayView line)
+{
+    const qsizetype colon = line.indexOf(':');
+    return colon > 0 && std::all_of(line.begin(), line.begin() + colon, isToken) &&
+           std::all_of(line.begin() + colon + 1, line.end(), isFieldValue);
+}
+
 /// Unsigned integer in the given base, without the sign, whitespace or "0x" prefix toULongLong() would accept.
 std::optional<quint64> unsignedNumber(QByteArrayView text, int base = 10)
 {
@@ -418,10 +426,8 @@ bool NTRIPHttpDecoder::_acceptContent(Result& result)
 
 void NTRIPHttpDecoder::_fieldReceived(Result& result)
 {
-    const qsizetype colon = _line.indexOf(':');
     const QByteArrayView line(_line);
-    if (colon <= 0 || !std::all_of(line.begin(), line.begin() + colon, isToken) ||
-        !std::all_of(line.begin() + colon + 1, line.end(), isFieldValue)) {
+    if (!isField(line)) {
         if (_state == State::IcyHeaders && _headers.isEmpty()) {
             _line += "\r\n";
             _beginIcyBody(result);
@@ -434,6 +440,7 @@ void NTRIPHttpDecoder::_fieldReceived(Result& result)
         _fail(result, tr("Too many HTTP response headers"), NTRIPError::HeaderTooLarge);
         return;
     }
+    const qsizetype colon = line.indexOf(':');
     const auto name = line.first(colon);
     const auto value = line.sliced(colon + 1);
     if (_state == State::Trailers &&
@@ -468,8 +475,13 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::finish()
     Result result;
     if (_pendingFailure) {
         _finishError(result);
-    } else if ((_state == State::Identity && !_contentLength) ||
-               (_state == State::IcyHeaders && _line.isEmpty() && _headers.isEmpty()) || _state == State::Complete) {
+    } else if (_state == State::IcyHeaders && _headers.isEmpty() && !isField(_line)) {
+        // Without header fields only the close ends a legacy answer, and with it the last line: one that is no header
+        // field is the body, as it is when its line ending arrives.
+        result.body = std::exchange(_line, {});
+        _state = State::Complete;
+        result.complete = true;
+    } else if ((_state == State::Identity && !_contentLength) || _state == State::Complete) {
         _state = State::Complete;
         result.complete = true;
     } else if (_state == State::Identity || _state == State::ChunkSize || _state == State::ChunkData ||

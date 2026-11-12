@@ -329,25 +329,30 @@ void NTRIPSourceTableControllerTest::_tableWithoutTerminator_data()
     QTest::addColumn<bool>("close");
     // The error reported; none when the table is listed.
     QTest::addColumn<QString>("error");
+    QTest::addColumn<int>("mountpoints");
     // RTKLIB's caster up to 2.4.3 b33 sends its operator's table file as it is, often without ENDSOURCETABLE.
     const QByteArray table = "STR;BASE1;Rooftop antenna\r\nSTR;BASE2;Field station\r\n";
     const QByteArray length = "Content-Length: " + QByteArray::number(table.size()) + "\r\n";
     const QByteArray rtklibHeaders =
         "SOURCETABLE 200 OK\r\nServer: RTKLIB 2.4.3 b33\r\nConnection: close\r\nContent-Type: text/plain\r\n";
     const QString listed;
-    QTest::newRow("content-length") << rtklibHeaders + length + "\r\n" + table << false << listed;
-    QTest::newRow("content-length-and-close") << rtklibHeaders + length + "\r\n" + table << true << listed;
-    QTest::newRow("close") << "SOURCETABLE 200 OK\r\n" + table << true << listed;
-    QTest::newRow("chunked") << okChunkedResponse(table) << false << listed;
+    QTest::newRow("content-length") << rtklibHeaders + length + "\r\n" + table << false << listed << 2;
+    QTest::newRow("content-length-and-close") << rtklibHeaders + length + "\r\n" + table << true << listed << 2;
+    QTest::newRow("close") << "SOURCETABLE 200 OK\r\n" + table << true << listed << 2;
+    // Neither a header field nor a line ending: the close ends the only line of the answer.
+    QTest::newRow("close-after-unterminated-row")
+        << QByteArray("SOURCETABLE 200 OK\r\nSTR;BASE1;Rooftop antenna") << true << listed << 1;
+    QTest::newRow("chunked") << okChunkedResponse(table) << false << listed << 2;
     // A table that stops before its announced length or its last chunk may lack rows.
     QTest::newRow("cut-off-before-content-length")
         << rtklibHeaders + length + "\r\n" + table.first(table.size() / 2) << true
-        << QCoreApplication::translate("NTRIPHttpTransport", "Caster closed the connection mid-transfer");
+        << QCoreApplication::translate("NTRIPHttpTransport", "Caster closed the connection mid-transfer") << 0;
     QTest::newRow("cut-off-before-last-chunk")
         << okChunkedResponse(table, false) << true
-        << QCoreApplication::translate("NTRIPHttpTransport", "Caster closed the connection mid-transfer");
+        << QCoreApplication::translate("NTRIPHttpTransport", "Caster closed the connection mid-transfer") << 0;
     QTest::newRow("not-a-table") << okResponse("<html><body>It works!</body></html>") << false
-                                 << NTRIPSourceTableController::tr("Response does not contain a valid source table");
+                                 << NTRIPSourceTableController::tr("Response does not contain a valid source table")
+                                 << 0;
 }
 
 void NTRIPSourceTableControllerTest::_tableWithoutTerminator()
@@ -355,6 +360,7 @@ void NTRIPSourceTableControllerTest::_tableWithoutTerminator()
     QFETCH(QByteArray, response);
     QFETCH(bool, close);
     QFETCH(QString, error);
+    QFETCH(int, mountpoints);
     ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPSourceTableController controller;
@@ -371,7 +377,7 @@ void NTRIPSourceTableControllerTest::_tableWithoutTerminator()
     QCOMPARE(controller.fetchError(), error);
     QCOMPARE(controller.fetchStatus(), error.isEmpty() ? NTRIPSourceTableController::FetchStatus::Success
                                                        : NTRIPSourceTableController::FetchStatus::Error);
-    QCOMPARE(controller.mountpointModel()->rowCount(), error.isEmpty() ? 2 : 0);
+    QCOMPARE(controller.mountpointModel()->rowCount(), mountpoints);
 }
 
 void NTRIPSourceTableControllerTest::_sourceTablePublishesSortedRowsOnce()
