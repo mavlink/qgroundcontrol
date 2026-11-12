@@ -1040,7 +1040,7 @@ QByteArray uncompressData(const QByteArray &data, qint64 maxDecompressedSize)
     if (header == kHeaderCompressed) {
         if (maxDecompressedSize > 0 && payload.size() >= 4) {
             const quint32 declaredSize = qFromBigEndian<quint32>(payload.constData());
-            if (declaredSize > static_cast<quint32>(maxDecompressedSize)) {
+            if (static_cast<qint64>(declaredSize) > maxDecompressedSize) {
                 qCWarning(QGCCompressionLog) << "Rejected decompression: declared size"
                                              << declaredSize << "exceeds limit" << maxDecompressedSize;
                 return {};

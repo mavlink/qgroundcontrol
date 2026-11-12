@@ -2698,6 +2698,40 @@ void QGCCompressionTest::_testExtractFileDataSizeLimit()
     }
 }
 
+void QGCCompressionTest::_testUncompressDataSizeLimit_data()
+{
+    QTest::addColumn<qint64>("limit");
+    QTest::addColumn<bool>("accepted");
+
+    constexpr qint64 fourGiB = Q_INT64_C(1) << 32;
+    QTest::newRow("no limit") << qint64(0) << true;
+    QTest::newRow("one byte less than the data") << qint64(999) << false;
+    QTest::newRow("the size of the data") << qint64(1000) << true;
+    // The size the data declares has 32 bits, the limit has more
+    QTest::newRow("4 GiB") << fourGiB << true;
+    QTest::newRow("4 GiB and 16 bytes") << (fourGiB + 16) << true;
+}
+
+void QGCCompressionTest::_testUncompressDataSizeLimit()
+{
+    QFETCH(qint64, limit);
+    QFETCH(bool, accepted);
+
+    const QByteArray data(1000, 'x');
+    const QByteArray framed = QGCCompression::compressData(data);
+    QVERIFY(QGCCompression::isDataCompressed(framed));
+
+    if (!accepted) {
+        expectLogMessage("Utilities.QGCCompression", QtWarningMsg,
+                         QRegularExpression("declared size 1000 exceeds limit"));
+    }
+    const QByteArray result = QGCCompression::uncompressData(framed, limit);
+    if (!accepted) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(result, accepted ? data : QByteArray());
+}
+
 // ============================================================================
 // Cross-Platform Path Handling Tests
 // ============================================================================
