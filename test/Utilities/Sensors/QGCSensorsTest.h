@@ -22,6 +22,8 @@ private slots:
     void _testSensorFailsToStart();
     void _testSensorReportsReadings_data();
     void _testSensorReportsReadings();
+    void _testRepeatedInit_data();
+    void _testRepeatedInit();
     void _testSensorLogsBackend_data();
     void _testSensorLogsBackend();
     void _testCompassReportsDirection();
@@ -33,6 +35,8 @@ private:
     void _checkSensorFailsToStart();
     template <typename Sensor>
     void _checkSensorReportsReadings();
+    template <typename Sensor>
+    void _checkRepeatedInit();
     template <typename Sensor>
     void _checkSensorLogsBackend();
 };

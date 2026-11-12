@@ -381,6 +381,33 @@ void QGCSensorsTest::_checkSensorReportsReadings()
 }
 
 template <typename Sensor>
+void QGCSensorsTest::_checkRepeatedInit()
+{
+    using Traits = SensorTraits<Sensor>;
+    FakeSensorRegistration<typename Traits::Reading> fake(Traits::qtSensorType());
+
+    // The constructor has started the sensor, so this is the second init().
+    Sensor sensor;
+    auto* const backend = fake.backend();
+    QVERIFY(backend);
+    QVERIFY(sensor.init());
+    QVERIFY(backend->sensor()->isActive());
+
+    QSignalSpy updates(&sensor, Traits::updated);
+    publishReading<Traits>(backend, true);
+    QCOMPARE(updates.count(), 1);
+
+    // One quit() stops the reports, however often the sensor was started.
+    sensor.quit();
+    publishReading<Traits>(backend, true);
+    QCOMPARE(updates.count(), 1);
+
+    QVERIFY(sensor.init());
+    publishReading<Traits>(backend, true);
+    QCOMPARE(updates.count(), 2);
+}
+
+template <typename Sensor>
 void QGCSensorsTest::_checkSensorLogsBackend()
 {
     using Traits = SensorTraits<Sensor>;
@@ -435,6 +462,17 @@ void QGCSensorsTest::_testSensorReportsReadings()
 {
     QFETCH(int, kind);
     forSensorKind(kind, [this]<typename Sensor>(std::type_identity<Sensor>) { _checkSensorReportsReadings<Sensor>(); });
+}
+
+void QGCSensorsTest::_testRepeatedInit_data()
+{
+    addSensorKindRows();
+}
+
+void QGCSensorsTest::_testRepeatedInit()
+{
+    QFETCH(int, kind);
+    forSensorKind(kind, [this]<typename Sensor>(std::type_identity<Sensor>) { _checkRepeatedInit<Sensor>(); });
 }
 
 void QGCSensorsTest::_testSensorLogsBackend_data()

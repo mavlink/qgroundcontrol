@@ -97,6 +97,8 @@ bool QGCAmbientTemperature::init()
         return false;
     }
 
+    // A connection left by an earlier init() would report every reading again
+    (void) disconnect(_readingChangedConnection);
     _readingChangedConnection = connect(_ambientTemperature, &QAmbientTemperatureSensor::readingChanged, this, [this]() {
         QAmbientTemperatureReading* reading = _ambientTemperature->reading();
         if (!reading) {
@@ -174,6 +176,8 @@ bool QGCPressure::init()
         return false;
     }
 
+    // A connection left by an earlier init() would report every reading again
+    (void) disconnect(_readingChangedConnection);
     _readingChangedConnection = connect(_pressure, &QPressureSensor::readingChanged, this, [this]() {
         QPressureReading* reading = _pressure->reading();
         if (!reading) {
@@ -254,6 +258,8 @@ bool QGCCompass::init()
         return false;
     }
 
+    // A connection left by an earlier init() would report every reading again
+    (void) disconnect(_readingChangedConnection);
     _readingChangedConnection = connect(_compass, &QCompass::readingChanged, this, [this]() {
         QCompassReading* const reading = _compass->reading();
         if (!reading) {
