@@ -230,6 +230,25 @@ def check_record_and_replay(binary: str) -> None:
         run(binary, [*dialogue, "--family", "ublox"], 2)
         run(binary, [*dialogue, "--extract", str(Path(directory) / "again.ubx")], 2)
         run(binary, ["--dialogue", "--action", "configure"], 2)
+        # A suite is two sessions of the driver. Each has a recording of its own, which replays as one dialogue.
+        report = run(
+            binary,
+            [
+                "--action",
+                "suite",
+                "--observe-ms",
+                "20",
+                *CANCEL_SLACK,
+                "--record",
+                str(Path(directory) / "suite"),
+            ],
+            3,
+        )
+        sessions = report["recordings"]
+        assert len(sessions) == len(report["stages"]) == len(set(sessions)) == 2, report
+        for session in sessions:
+            replayed = run(binary, ["--replay", session, "--dialogue", "--action", "configure"], 0)
+            assert replayed["outcome"] == "reproduced" and replayed["configured"], replayed
 
     with TemporaryDirectory(prefix="gps-slice-", dir=Path.cwd()) as directory:
         # The NAV-PVT frame at the start of the recording, as in the C++ NAV_PVT slice.

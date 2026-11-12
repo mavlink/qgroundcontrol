@@ -33,8 +33,8 @@ Each record starts with the microseconds from the start of the recording, when t
 opened, to the return of its call, on the clock the session runs on. So a recording holds both
 directions and the baud rate changes with their times, not only what the receiver sent. An `RX`
 record is one read, not one message: frames are split and joined as the session read them. One
-recording holds one session: QGroundControl and the runner on a physical transport start a file
-for each.
+recording holds one session: QGroundControl starts a file for each connection, and the runner
+for each stage, so a `suite` leaves two.
 
 A session goes on after the two refusals, so its recording holds them: detection tries the next
 rate when a serial adapter cannot run at one, and a link that carries no writes, as UDP, refuses

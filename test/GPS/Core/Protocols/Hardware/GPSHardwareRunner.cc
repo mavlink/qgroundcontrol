@@ -802,13 +802,14 @@ int run(const Options& options)
         watchdog.join();
     });
     QJsonArray recordings;
-    // Each physical session gets its own file; the scripted peer keeps one session across stages.
+    GPSFileStartTimes recordingStartTimes;
+    // A recording holds one session of the driver, so the link of each stage gets a file of its own.
     const auto recorded = [&](std::unique_ptr<GPSTransport> transport) -> std::unique_ptr<GPSTransport> {
         if (options.recordDirectory.isEmpty() || !transport) {
             return transport;
         }
-        const QString file = GPSRecordingTransport::sessionFile(options.recordDirectory, options.family,
-                                                                QDateTime::currentDateTimeUtc());
+        const QString file = GPSRecordingTransport::sessionFile(
+            options.recordDirectory, options.family, recordingStartTimes.next(QDateTime::currentDateTimeUtc()));
         recordings.append(file);
         report.insert("recordings", recordings);
         return std::make_unique<GPSRecordingTransport>(std::move(transport), file,
@@ -817,12 +818,10 @@ int run(const Options& options)
     };
     GPSTestClock scriptedClock;
     std::unique_ptr<UBXReceiverModel> receiver;
-    std::unique_ptr<GPSTransport> link;
     if (scripted) {
         receiver = std::make_unique<UBXReceiverModel>(
             options.model == "f9p" ? UBXReceiverModel::Receiver::F9P : UBXReceiverModel::Receiver::M8PBase,
             scriptedClock);
-        link = recorded(std::make_unique<ScriptedReceiver>(stop, receiver.get()));
         if (options.fault == "nak") {
             receiver->disableReply = UBXReceiverModel::DisableReply::Nak;
         } else if (options.fault == "wrong-readback") {
@@ -830,9 +829,15 @@ int run(const Options& options)
         } else if (options.fault == "cancel") {
             receiver->disableReply = UBXReceiverModel::DisableReply::Cancelled;
         }
-    } else {
-        link = recorded(physicalTransport(options, stop.token()));
     }
+    // A new link to the receiver. The scripted receiver is its model, which keeps its state from one link to the next.
+    const auto connect = [&]() -> std::unique_ptr<GPSTransport> {
+        if (scripted) {
+            return recorded(std::make_unique<ScriptedReceiver>(stop, receiver.get()));
+        }
+        return recorded(physicalTransport(options, stop.token()));
+    };
+    std::unique_ptr<GPSTransport> link = connect();
 
     QStringList stages{"configured"};
     if (options.action == "suite") {
@@ -847,9 +852,9 @@ int run(const Options& options)
             return evidenceError(report, error);
         }
         operationDeadline.store(now() + options.timeoutMs);
-        if (name == "reconnected_base" && !scripted) {
+        if (name == "reconnected_base") {
             link.reset();
-            link = recorded(physicalTransport(options, stop.token()));
+            link = connect();
         }
         GPSTransport& transport = *link;
         GPSEvidenceTransport evidence(transport, stop.token());
@@ -866,7 +871,7 @@ int run(const Options& options)
             }
             if (name == "reconnected_base") {
                 checks.append(check("reconnect", "passed",
-                                    scripted ? "Scripted peer reopened; state retained, no "
+                                    scripted ? "Scripted peer reopened on a new link; state retained, no "
                                                "physical reconnect exercised"
                                              : "Transport destroyed and reopened; not a power "
                                                "cycle or physical unplug"));
@@ -1113,7 +1118,9 @@ int main(int argc, char* argv[])
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
         {"compact-rtcm", "Request compact MSM4 instead of MSM7 RTCM observations from a supporting base"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
-        {"record", "Record each receiver session's received and sent bytes and baud changes into this directory",
+        {"record",
+         "Record each session of the driver into a file of its own in this directory, two for a suite: the received "
+         "and sent bytes, the baud changes and what the link refused",
          "directory"},
         {"replay",
          "Decode a session recording, or a file of raw receiver output, with --family, as configured for --role and "
