@@ -1,13 +1,16 @@
 #pragma once
 
+#include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QGCMapTaskBase.h"
 #include "QGCTileSet.h"
 
+class EsriAttribution;
 class QGCCachedTileSet;
 class QGCCompressionJob;
 class QmlObjectListModel;
+class QNetworkAccessManager;
 
 class QGCMapEngineManager : public QObject
 {
@@ -32,6 +35,9 @@ class QGCMapEngineManager : public QObject
     Q_PROPERTY(QStringList mapProviderList READ mapProviderList CONSTANT)
     Q_PROPERTY(QStringList elevationProviderList READ elevationProviderList CONSTANT)
     Q_PROPERTY(QString terrainAttribution READ terrainAttribution CONSTANT FINAL)
+    /// Counts the changes of what areaAttribution() answers, as when the list of a map's credits arrives: a binding
+    /// that reads it beside its call of areaAttribution() is evaluated again
+    Q_PROPERTY(int areaAttributionRevision READ areaAttributionRevision NOTIFY areaAttributionChanged FINAL)
     Q_PROPERTY(quint64 tileCount READ tileCount NOTIFY tileCountChanged)
     Q_PROPERTY(quint64 tileSize READ tileSize NOTIFY tileSizeChanged)
 
@@ -74,6 +80,16 @@ public:
     /// The credit of the provider \a mapType, named as mapList() names it. Empty for a name that is not in that
     /// list, and for a provider without a credit.
     Q_INVOKABLE static QString mapAttribution(const QString& mapType);
+    /// The credits that the provider \a mapType, named as mapList() names it, asks for beside mapAttribution() where
+    /// a view shows its tiles: the sources of what is on screen, which depend on the place and the zoom level. The
+    /// best source there is first, and they are joined with ", ". The view has its centre at \a latitude and
+    /// \a longitude, in degrees, and is \a width by \a height pixels of a map at the zoom level \a zoomLevel, whose
+    /// tiles are 256 pixels wide. The credits are those of the tile zoom level at or below \a zoomLevel, and of the
+    /// area that such a view has from straight above, north up.
+    /// Empty for a provider that publishes no list of such credits, and until its list has arrived:
+    /// areaAttributionRevision changes when it has.
+    Q_INVOKABLE QString areaAttribution(const QString& mapType, double latitude, double longitude, double zoomLevel,
+                                        double width, double height);
     /// True for a map \a mapType, named as mapList() names it, that a map engine can show: one that is not an
     /// elevation provider. False for a name that is not in that list.
     Q_INVOKABLE static bool isImageryMap(const QString& mapType);
@@ -94,6 +110,13 @@ public:
     QString errorMessage() const { return _errorMessage; }
 
     QString chosenMap() const { return _chosenMap; }
+
+    int areaAttributionRevision() const { return _areaAttributionRevision; }
+
+    /// Test seam: the lists that areaAttribution() answers from are fetched through \a networkManager, and those
+    /// fetched before are forgotten. Null restores the network manager of the map engine. Unit tests reach no
+    /// server: under them, a manager that has no network manager from this function fetches no list.
+    void setAreaAttributionNetworkManager(QNetworkAccessManager* networkManager);
 
     QString tileCountStr() const;
     QString tileSizeStr() const;
@@ -137,6 +160,7 @@ public:
 
 signals:
     void actionProgressChanged();
+    void areaAttributionChanged();
     void chosenMapChanged();
     void errorMessageChanged();
     void fetchElevationChanged();
@@ -176,6 +200,10 @@ private:
     static void _repairMapOfSettings();
     /// Stores a set of \a tiles for the region of the current view and starts its download
     void _createTileSet(const QString& name, const QString& mapType, int minZoom, int maxZoom, const QGCTileSet& tiles);
+    /// The reader of the lists that areaAttribution() answers from, created when it is first needed. Null under unit
+    /// tests, unless a test set a network manager for it.
+    EsriAttribution* _areaAttributionLists();
+    void _notifyAreaAttributionChanged();
 
     QmlObjectListModel* _tileSets = nullptr;
     QGCTileSet _imageSet;
@@ -198,6 +226,9 @@ private:
     bool _importReplace = false;
     QGCCompressionJob* _extractionJob = nullptr;
     QString _extractionOutputDir;
+    EsriAttribution* _esriAttribution = nullptr;
+    QPointer<QNetworkAccessManager> _areaAttributionNetworkManager;
+    int _areaAttributionRevision = 0;
 
     /// The zoom in the keys of the tiles of an elevation provider that has no zoom levels: the terrain queries ask
     /// the tile cache for it

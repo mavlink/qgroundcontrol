@@ -21,4 +21,7 @@ QGCMapLabel {
     text: credits.filter(credit => credit !== "").join(" | ")
     font.pointSize: ScreenTools.smallFontPointSize
     wrapMode: Text.WordWrap
+    // The credits of an area can be many: the rest is cut off, so that the credit stays a small part of the map
+    maximumLineCount: 2
+    elide: Text.ElideRight
 }

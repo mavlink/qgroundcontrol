@@ -33,6 +33,17 @@ Map {
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
+    /// What the provider of the map asks to credit for the area shown. The revision changes when its list of those
+    /// credits arrives.
+    readonly property string _areaAttribution: {
+        void(QGroundControl.mapEngineManager.areaAttributionRevision)
+        return _map.showAttribution
+            ? QGroundControl.mapEngineManager.areaAttribution(_map.activeMapType.name, _map.center.latitude,
+                                                              _map.center.longitude, _map.zoomLevel, _map.width,
+                                                              _map.height)
+            : ""
+    }
+
     function setVisibleRegion(region) {
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
         // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there
@@ -259,7 +270,11 @@ Map {
         id:         attribution
         objectName: "mapAttribution"
         map:        _map
-        credits:    [QGroundControl.mapEngineManager.mapAttribution(_map.activeMapType.name), _map.viewAttribution]
+        credits:    [
+            QGroundControl.mapEngineManager.mapAttribution(_map.activeMapType.name),
+            _map._areaAttribution,
+            _map.viewAttribution
+        ]
         visible:    _map.showAttribution && text !== ""
     }
 } // Map

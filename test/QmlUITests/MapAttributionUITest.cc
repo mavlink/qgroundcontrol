@@ -2,6 +2,9 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QSettings>
+#include <QtCore/QStringList>
+#include <QtCore/QVariantMap>
 #include <QtGui/QColor>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
@@ -16,10 +19,47 @@
 #include "PlanViewSettings.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapPalette.h"
+#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "TileReplyNetworkMock.h"
 #include "VideoSettings.h"
 
 UT_REGISTER_TEST(MapAttributionUITest, TestLabel::Integration)
+
+namespace {
+
+/// The contributors of the second place in mapAttributionEsriList(): too many for two lines of credit
+QStringList mapAttributionSecondPlaceContributors()
+{
+    QStringList names;
+    for (int i = 1; i <= 60; i++) {
+        names.append(QStringLiteral("Survey %1 Of The Second Place").arg(i));
+    }
+    return names;
+}
+
+/// A list in the form of Esri's lists of contributors, as Esri's server sends them: one contributor has the whole
+/// world, one a first place around 47.5 north 8.5 east, and many a second place around 35.5 south 149.5 east
+QByteArray mapAttributionEsriList()
+{
+    const QString contributor =
+        QStringLiteral(R"({"attribution":"%1","coverageAreas":[{"zoomMax":23,"zoomMin":0,"score":%2,"bbox":[%3]}]})");
+    QStringList contributors;
+    contributors.append(
+        contributor.arg(QStringLiteral("Everywhere"), QStringLiteral("10"), QStringLiteral("-85,-180,85,180")));
+    contributors.append(contributor.arg(QStringLiteral("Survey Of The First Place"), QStringLiteral("90"),
+                                        QStringLiteral("47,8,48,9")));
+    const QStringList secondPlaceContributors = mapAttributionSecondPlaceContributors();
+    for (const QString& name : secondPlaceContributors) {
+        contributors.append(contributor.arg(name, QStringLiteral("90"), QStringLiteral("-36,149,-35,150")));
+    }
+
+    const QString list = QStringLiteral(R"({"contributors":[%1]})").arg(contributors.join(QLatin1Char(',')));
+    // The byte order mark that Esri's server sends
+    return QByteArray("\xEF\xBB\xBF") + list.toUtf8();
+}
+
+}  // namespace
 
 QRectF MapAttributionUITest::_sceneRect(const QQuickItem* item)
 {
@@ -252,6 +292,111 @@ void MapAttributionUITest::_planViewMapCreditsItsSources()
     // Without the terrain profile, the Plan View draws nothing of the elevation provider
     missionStatusFact->setRawValue(false);
     QTRY_COMPARE_WITH_TIMEOUT(creditText(), imageryCredit, TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void MapAttributionUITest::_flyViewEsriMapCreditsAreaShown_data()
+{
+    QTest::addColumn<bool>("geoMapEngine");
+
+    QTest::newRow("QtLocation") << false;
+    QTest::newRow("GeoMap") << true;
+}
+
+void MapAttributionUITest::_flyViewEsriMapCreditsAreaShown()
+{
+    QFETCH(bool, geoMapEngine);
+
+    SettingsManager* const settings = SettingsManager::instance();
+    Fact* const geoEngineFact = settings->flyViewSettings()->useGeoMapEngine();
+    Fact* const mapProviderFact = settings->flightMapSettings()->mapProvider();
+    Fact* const mapTypeFact = settings->flightMapSettings()->mapType();
+    const auto restoreSettings =
+        qScopeGuard([geoEngineFact, mapProviderFact, mapTypeFact, savedEngine = geoEngineFact->rawValue(),
+                     savedMapProvider = mapProviderFact->rawValue(), savedMapType = mapTypeFact->rawValue()] {
+            geoEngineFact->setRawValue(savedEngine);
+            mapProviderFact->setRawValue(savedMapProvider);
+            mapTypeFact->setRawValue(savedMapType);
+        });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(geoMapEngine);
+    mapProviderFact->setRawValue(QStringLiteral("Esri"));
+    mapTypeFact->setRawValue(QStringLiteral("World Satellite"));
+
+    // The test moves the map of the Fly View, whose view is saved as the view that the maps share
+    const QString sharedViewGroup = QStringLiteral("FlightMapPosition");
+    QVariantMap savedSharedView;
+    {
+        QSettings viewSettings;
+        viewSettings.beginGroup(sharedViewGroup);
+        const QStringList keys = viewSettings.childKeys();
+        for (const QString& key : keys) {
+            savedSharedView.insert(key, viewSettings.value(key));
+        }
+    }
+    const auto restoreSharedView =
+        qScopeGuard([sharedViewGroup, savedSharedView, sharedPosition = QGroundControlQmlGlobal::flightMapPosition(),
+                     sharedZoom = QGroundControlQmlGlobal::flightMapZoom()] {
+            QGroundControlQmlGlobal::setFlightMapViewForTest(sharedPosition, sharedZoom);
+            QSettings viewSettings;
+            viewSettings.beginGroup(sharedViewGroup);
+            viewSettings.remove(QString());
+            for (auto value = savedSharedView.cbegin(); value != savedSharedView.cend(); ++value) {
+                viewSettings.setValue(value.key(), value.value());
+            }
+        });
+
+    // Test seam: a stand-in for Esri's server has the list of the map's contributors, and holds its answer
+    TileReplyMockNam nam;
+    nam.holdReplies = true;
+    nam.body = mapAttributionEsriList();
+    QGCMapEngineManager* const mapEngineManager = QGCMapEngineManager::instance();
+    mapEngineManager->setAreaAttributionNetworkManager(&nam);
+    const auto restoreNetworkManager =
+        qScopeGuard([mapEngineManager] { mapEngineManager->setAreaAttributionNetworkManager(nullptr); });
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    if (geoMapEngine) {
+        QVERIFY2(expectSoftwareBackendWarnings(/*strict*/ false).has_value(),
+                 "No renderer interface on the main window");
+    }
+
+    QQuickItem* const map =
+        findVisibleItem(_rootItem, geoMapEngine ? QStringLiteral("flyViewGeoMapAdapter") : QStringLiteral("flyViewMap"),
+                        TestTimeout::mediumMs());
+    QVERIFY2(map, "Fly View map not visible");
+    QQuickItem* const credit = findVisibleItem(map, QStringLiteral("mapAttribution"), TestTimeout::mediumMs());
+    QVERIFY2(credit, "the map shows no credit");
+    const auto creditText = [credit] { return credit->property("text").toString(); };
+
+    // The map asks for the list of its map service. Until the answer, its credit is that of the map alone.
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, 1, TestTimeout::mediumMs());
+    QCOMPARE(creditText(), QStringLiteral("Powered by Esri"));
+
+    // A zoom level between two tile zoom levels: GeoMap computes its zoom level, which is then not exactly this one
+    const auto showPlace = [map](const QGeoCoordinate& place) {
+        return map->setProperty("zoomLevel", 15.5) && map->setProperty("center", QVariant::fromValue(place));
+    };
+    QVERIFY(showPlace(QGeoCoordinate(47.5, 8.5)));
+    QVERIFY(nam.replies.constFirst());
+    nam.replies.constFirst()->finishNow();
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), QStringLiteral("Powered by Esri | Survey Of The First Place, Everywhere"),
+                              TestTimeout::shortMs());
+
+    // The credit follows the map to another place. Its many contributors there are cut off after two lines.
+    QVERIFY(showPlace(QGeoCoordinate(-35.5, 149.5)));
+    const QString secondPlaceCredit = QStringLiteral("Powered by Esri | %1, Everywhere")
+                                          .arg(mapAttributionSecondPlaceContributors().join(QStringLiteral(", ")));
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), secondPlaceCredit, TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(credit->property("lineCount").toInt(), 2, TestTimeout::shortMs());
+    QVERIFY(credit->property("truncated").toBool());
+    QVERIFY(_sceneRect(map).contains(_sceneRect(credit)));
+    QCOMPARE(nam.requestCount, 1);
 
     stopUI();
 }

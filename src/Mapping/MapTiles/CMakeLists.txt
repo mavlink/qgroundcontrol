@@ -31,6 +31,8 @@ qt_add_library(
     Providers/MapProvider.h
     Providers/TianDiTuProvider.cpp
     Providers/TianDiTuProvider.h
+    EsriAttribution.cc
+    EsriAttribution.h
     QGCCachedTileSet.cpp
     QGCCachedTileSet.h
     QGCMapEngine.cpp

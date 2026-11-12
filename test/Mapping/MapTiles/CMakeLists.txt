@@ -6,6 +6,8 @@
 target_sources(
     QGCUnitTests
     PRIVATE
+        EsriAttributionTest.cc
+        EsriAttributionTest.h
         MapProviderTest.cc
         MapProviderTest.h
         QGCMapEngineManagerArchiveTest.cc
@@ -30,6 +32,7 @@ target_sources(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_qgc_test(EsriAttributionTest LABELS Unit)
 add_qgc_test(MapProviderTest LABELS Unit)
 add_qgc_test(QGCCacheWorkerTest LABELS Unit)
 add_qgc_test(QGCCachedTileSetTest LABELS Unit)

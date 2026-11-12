@@ -16,6 +16,8 @@ private slots:
     void _flyViewMapCreditsItsSources();
     void _planViewMapCreditsItsSources_data();
     void _planViewMapCreditsItsSources();
+    void _flyViewEsriMapCreditsAreaShown_data();
+    void _flyViewEsriMapCreditsAreaShown();
 
 private:
     static QRectF _sceneRect(const QQuickItem* item);

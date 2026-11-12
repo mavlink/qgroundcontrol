@@ -51,6 +51,17 @@ GeoMap {
     // A region to show that was asked for while the view had no size
     property var _pendingVisibleRegion: null
 
+    // What the provider of the map asks to credit for the area shown. The revision changes when its list of those
+    // credits arrives. The area is that of the view from straight above: tilted in 3D, the view also shows ground
+    // beyond it, towards the horizon, whose sources can be missing from the credit.
+    readonly property string _areaAttribution: {
+        void(QGroundControl.mapEngineManager.areaAttributionRevision)
+        return (root.showAttribution && root.center && root.center.isValid)
+            ? QGroundControl.mapEngineManager.areaAttribution(root.mapType, root.center.latitude, root.center.longitude,
+                                                              root.zoomLevel, root.width, root.height)
+            : ""
+    }
+
     // Screen point -> coordinate of the rendered terrain surface under it, invalid on a sky pick.
     // clipToViewPort is accepted for FlightMap parity and ignored: every caller passes false.
     function toCoordinate(point, clipToViewPort) {
@@ -194,6 +205,7 @@ GeoMap {
         map: root
         credits: [
             QGroundControl.mapEngineManager.mapAttribution(root.mapType),
+            root._areaAttribution,
             // The relief is drawn in 3D only
             (root.terrain && root.camera.mode === GeoMapCamera.Mode3D)
                 ? QGroundControl.mapEngineManager.terrainAttribution : "",
