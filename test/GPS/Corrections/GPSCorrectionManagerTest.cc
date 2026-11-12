@@ -18,6 +18,7 @@
 #endif
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSCorrectionLossAlert.h"
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSReceiver.h"
@@ -1003,6 +1004,122 @@ void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()
     QCOMPARE(topology.size(), 2);
     QCOMPARE(corrections.state(), State::Inactive);
     QCOMPARE(corrections.selectedStream(), GPSCorrectionStream{});
+}
+
+void GPSCorrectionManagerTest::_tellsUserWhenVehiclesLoseCorrections()
+{
+    using namespace std::chrono_literals;
+    ManualScheduler scheduler;
+    QList<GPSCorrectionLossAlert::Vehicle> vehicles{{.id = 3, .rtkFix = true}, {.id = 4, .rtkFix = false}};
+    QList<GPSCorrectionSettings::CorrectionVehicles> selections;
+    QStringList shown;
+    QStringList spoken;
+    GPSCorrectionManager corrections(nullptr, &scheduler,
+                                     {.vehicles =
+                                          [&](GPSCorrectionSettings::CorrectionVehicles selection) {
+                                              selections.append(selection);
+                                              return vehicles;
+                                          },
+                                      .showAlert = [&shown](const QString& text) { shown.append(text); },
+                                      .speak = [&spoken](const QString& text) { spoken.append(text); }});
+    corrections.setConfiguration({.vehicles = GPSCorrectionSettings::ActiveVehicle, .udpInput = {}, .udpOutput = {}});
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    const auto streamFor = [&](int seconds) {
+        for (int second = 0; second < seconds; ++second) {
+            source->submit(rtcmMessage(1077, 20), scheduler.nowMs());
+            if (!advanceTick(scheduler)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // Vehicle 3 has an RTK fix from the stream. The vehicles asked about are those of the configured selection.
+    QVERIFY(streamFor(3));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+    QVERIFY(!selections.isEmpty());
+    QCOMPARE(selections.count(GPSCorrectionSettings::ActiveVehicle), selections.size());
+
+    // The stream stops. Its last frame is a second old, so it stops being fresh a second before the freshness
+    // timeout has passed, and the user is shown and told once the hold-off has passed after that: once, whatever
+    // the fix of the vehicle has become.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + GPSCorrectionLossAlert::HOLD_OFF - 2s));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Waiting);
+    QCOMPARE(shown, QStringList());
+    QCOMPARE(spoken, QStringList());
+    vehicles = {{.id = 3, .rtkFix = false}, {.id = 4, .rtkFix = false}};
+    QVERIFY(advanceTick(scheduler));
+    const QString lost = QStringLiteral("RTK corrections stopped. Vehicle 3 no longer receives them.");
+    QCOMPARE(shown, QStringList{lost});
+    QCOMPARE(spoken, QStringList{lost});
+    QVERIFY(scheduler.advanceBy(60s));
+    QCOMPARE(shown.size(), 1);
+    QCOMPARE(spoken.size(), 1);
+
+    // That the stream is back is told and not shown.
+    QVERIFY(streamFor(2));
+    QCOMPARE(spoken, QStringList({lost, QStringLiteral("RTK corrections resumed.")}));
+    QCOMPARE(shown.size(), 1);
+
+    // Both vehicles have an RTK fix now, and an interruption shorter than the hold-off is not told.
+    vehicles = {{.id = 4, .rtkFix = true}, {.id = 3, .rtkFix = true}};
+    QVERIFY(streamFor(2));
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + GPSCorrectionLossAlert::HOLD_OFF - 2s));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Waiting);
+    QVERIFY(streamFor(2));
+    QCOMPARE(shown.size(), 1);
+    QCOMPARE(spoken.size(), 2);
+
+    // The next one that lasts names both.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + GPSCorrectionLossAlert::HOLD_OFF));
+    const QString bothLost = QStringLiteral("RTK corrections stopped. Vehicles 3, 4 no longer receive them.");
+    QCOMPARE(shown, QStringList({lost, bothLost}));
+    QCOMPARE(spoken.size(), 3);
+    QCOMPARE(spoken.constLast(), bothLost);
+
+    // After shutdown nobody is asked or told.
+    corrections.shutdown();
+    const qsizetype asked = selections.size();
+    QVERIFY(scheduler.advanceBy(60s));
+    QCOMPARE(selections.size(), asked);
+}
+
+void GPSCorrectionManagerTest::_lossIsAVehicleAlert()
+{
+    // The message is the application's critical vehicle message, which is not modal, and not its dialog. Without a
+    // main window the application logs the critical vehicle message it would show, and a dialog under a category of
+    // its own.
+    const QString application = QStringLiteral("API.QGCApplication");
+    const QString dialogs = QStringLiteral("API.QGCApplication.AppMessage");
+    const TestFixtures::LoggingCategoryFixture logging(application);
+    ignoreLogMessage("API.QGCApplication", QtDebugMsg, QRegularExpression(QStringLiteral(".*")));
+    const auto shownAsCriticalVehicleMessage = [&application](const QString& text) {
+        return debugMessages(application)
+            .count(QStringLiteral("QGCApplication::showCriticalVehicleMessage unittest \"%1\"").arg(text));
+    };
+    ManualScheduler scheduler;
+    // The application's own channels tell of the loss; the vehicle is given.
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.vehicles = [](GPSCorrectionSettings::CorrectionVehicles) {
+                                         return QList<GPSCorrectionLossAlert::Vehicle>{{.id = 1, .rtkFix = true}};
+                                     }});
+    const auto source = corrections.openSource(GPSCorrectionSettings::Udp, QStringLiteral("192.0.2.1"));
+    source->submit(rtcmMessage(1077, 20), scheduler.nowMs());
+    QVERIFY(advanceTick(scheduler));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+
+    // The loss is a critical vehicle message, which is not modal.
+    const QString lost = QStringLiteral("RTK corrections stopped. Vehicle 1 no longer receives them.");
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + GPSCorrectionLossAlert::HOLD_OFF));
+    QCOMPARE(shownAsCriticalVehicleMessage(lost), 1);
+    QCOMPARE(debugMessages(dialogs), QStringList());
+
+    // The return is spoken only.
+    source->submit(rtcmMessage(1077, 20), scheduler.nowMs());
+    QVERIFY(advanceTick(scheduler));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+    QCOMPARE(shownAsCriticalVehicleMessage(QStringLiteral("RTK corrections resumed.")), 0);
+    QCOMPARE(shownAsCriticalVehicleMessage(lost), 1);
+    QCOMPARE(debugMessages(dialogs), QStringList());
 }
 
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

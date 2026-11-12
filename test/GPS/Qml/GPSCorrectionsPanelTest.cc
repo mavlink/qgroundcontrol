@@ -14,6 +14,7 @@
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
+#include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
@@ -22,10 +23,13 @@
 #include "NTRIPSourceTableController.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCFormat.h"
+#include "QmlObjectListModel.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "UnitsSettings.h"
+#include "Vehicle.h"
+#include "VehicleGPSFactGroup.h"
 
 using namespace GPSTest;
 
@@ -355,6 +359,90 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageFilterError()
 
     corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005,1077")});
     QVERIFY(!error->property("visible").toBool());
+}
+
+void GPSCorrectionsPanelTest::_correctionsStatusShowsVehicles()
+{
+    using namespace std::chrono_literals;
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(),
+                       UnitsSettings::HorizontalDistanceUnitsMeters);
+    Vehicle first(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    Vehicle second(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING);
+    auto* gps = first.gpsFactGroup();
+    QVERIFY(gps && second.gpsFactGroup());
+    gps->setLiveUpdates(true);
+    second.gpsFactGroup()->setLiveUpdates(true);
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> sent;
+    GPSTest::captureVehicleFrames(corrections, sent);
+    QmlObjectListModel vehicles;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)},
+                       {QStringLiteral("vehicles"), QVariant::fromValue(&vehicles)}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* panel = qobject_cast<QQuickItem*>(status.get());
+    const auto rows = [panel](const char* name) {
+        return TestFixtures::findItems(panel, [name](QQuickItem* item) {
+            return item->objectName() == QLatin1String(name) && item->property("visible").toBool();
+        });
+    };
+    const auto rowTexts = [&rows](const char* name) {
+        QStringList texts;
+        for (const QQuickItem* row : rows(name)) {
+            texts.append(row->property("label").toString() + QStringLiteral(": ") +
+                         row->property("labelText").toString());
+        }
+        return texts;
+    };
+
+    // Without a vehicle and before anything is sent, the panel says nothing about vehicles.
+    QVERIFY(rows("correctionsQueuedToVehicles").isEmpty());
+    QVERIFY(rows("correctionsVehicleFix").isEmpty());
+
+    // The corrections queued to vehicle links are counted whatever source they come from.
+    const auto udp = corrections.openSource(GPSCorrectionSettings::Udp, QStringLiteral("192.0.2.1"));
+    const QByteArray frame = GPSTest::rtcmMessage(1077, 20);
+    udp->submit(frame, scheduler.nowMs());
+    QCOMPARE(corrections.vehicleBytesSubmitted(), quint64(frame.size()));
+    QCOMPARE(rowTexts("correctionsQueuedToVehicles"),
+             QStringList{QStringLiteral("Queued to vehicles: %1").arg(QGC::bigSizeToString(frame.size()))});
+
+    // A vehicle is listed with the fix its GPS reports, once it reports one.
+    vehicles.append(&first);
+    QCOMPARE(rowTexts("correctionsVehicleFix"), QStringList{QStringLiteral("Vehicle fix: Not reported")});
+    gps->handleMessage(&first, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_RTK_FIXED, .satellitesVisible = 14}));
+    QCOMPARE(gps->lock()->enumStringValue(), QStringLiteral("3D RTK GPS Lock (fixed)"));
+    QCOMPARE(rowTexts("correctionsVehicleFix"), QStringList{QStringLiteral("Vehicle fix: 3D RTK GPS Lock (fixed)")});
+
+    // The baseline and the correction rate are shown while the vehicle reports them in GPS_RTK.
+    QVERIFY(rows("correctionsVehicleBaseline").isEmpty());
+    QVERIFY(rows("correctionsVehicleCorrectionRate").isEmpty());
+    mavlink_gps_rtk_t rtk{};
+    rtk.baseline_a_mm = 3000;
+    rtk.baseline_b_mm = 4000;
+    rtk.rtk_rate = 1;
+    mavlink_message_t rtkMessage{};
+    mavlink_msg_gps_rtk_encode(1, 1, &rtkMessage, &rtk);
+    gps->handleMessage(&first, rtkMessage);
+    QCOMPARE(rowTexts("correctionsVehicleBaseline"), QStringList{QStringLiteral("RTK Baseline: 5.00 m")});
+    QCOMPARE(rowTexts("correctionsVehicleCorrectionRate"), QStringList{QStringLiteral("RTK Correction Rate: 1 Hz")});
+
+    // Several vehicles are named by their IDs.
+    second.gpsFactGroup()->handleMessage(&second, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX}));
+    vehicles.append(&second);
+    QCOMPARE(rowTexts("correctionsVehicleFix"),
+             QStringList({QStringLiteral("Vehicle %1 fix: 3D RTK GPS Lock (fixed)").arg(first.id()),
+                          QStringLiteral("Vehicle %1 fix: 3D Lock").arg(second.id())}));
+    QCOMPARE(rows("correctionsVehicleBaseline").size(), 1);
+
+    vehicles.removeOne(&first);
+    QCOMPARE(rowTexts("correctionsVehicleFix"), QStringList{QStringLiteral("Vehicle fix: 3D Lock")});
+    QVERIFY(rows("correctionsVehicleBaseline").isEmpty());
+    vehicles.clear();
 }
 
 void GPSCorrectionsPanelTest::_correctionsLogSwitch()

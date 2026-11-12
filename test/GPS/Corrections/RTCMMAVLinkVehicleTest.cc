@@ -20,6 +20,7 @@
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
+#include "VehicleGPSFactGroup.h"
 #include "VehicleLinkManager.h"
 
 void RTCMMAVLinkVehicleTest::_admissionFollowsLinkLifetime()
@@ -233,6 +234,22 @@ void RTCMMAVLinkVehicleTest::_settingSelectsVehicles()
 
     settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::AllVehicles);
     QVERIFY(frameReaches(true, true));
+
+    // The vehicles whose fix tells whether the corrections are used are the ones they are sent to. MockLink reports
+    // a 3D fix; the RTK fix is read at once, before its next report.
+    using Fix = GPSCorrectionLossAlert::Vehicle;
+    const int firstId = static_cast<int>(first->id());
+    const int secondId = static_cast<int>(second->id());
+    QCOMPARE(RTCMMAVLink::vehicleFixes(GPSCorrectionSettings::AllVehicles),
+             QList<Fix>({{.id = firstId, .rtkFix = false}, {.id = secondId, .rtkFix = false}}));
+    QVERIFY(RTCMMAVLink::vehicleFixes(GPSCorrectionSettings::ActiveVehicle).isEmpty());
+    second->gpsFactGroup()->handleMessage(second, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_RTK_FLOAT}));
+    QCOMPARE(RTCMMAVLink::vehicleFixes(GPSCorrectionSettings::AllVehicles),
+             QList<Fix>({{.id = firstId, .rtkFix = false}, {.id = secondId, .rtkFix = true}}));
+    vehicles->setActiveVehicle(first);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicles->activeVehicle(), first, TestTimeout::mediumMs());
+    QCOMPARE(RTCMMAVLink::vehicleFixes(GPSCorrectionSettings::ActiveVehicle),
+             QList<Fix>({{.id = firstId, .rtkFix = false}}));
 }
 
 UT_REGISTER_TEST(RTCMMAVLinkVehicleTest, TestLabel::Integration, TestLabel::Vehicle)

@@ -11,6 +11,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "DataRateTracker.h"
+#include "GPSCorrectionLossAlert.h"
 #include "GPSCorrectionSelector.h"
 #include "RTCMLogFile.h"
 #include "RTCMMAVLink.h"
@@ -22,7 +23,8 @@
 class GPSCorrectionManager;
 class RuntimeScheduler;
 
-/// What a GPSCorrectionManager is given for the log of the routed stream.
+/// What a GPSCorrectionManager is given for the log of the routed stream, and in place of the application's vehicles
+/// and messages.
 struct GPSCorrectionManagerDependencies
 {
     /// The folder a log goes to, asked as each log starts. Without it, or while it returns an empty path, the stream
@@ -30,6 +32,15 @@ struct GPSCorrectionManagerDependencies
     std::function<QString()> logDirectory = nullptr;
     /// A log keeps the frames that fit in this many bytes and then ends.
     qint64 maxLogFileBytes = RTCMLogFile::MAX_FILE_BYTES;
+    /// The vehicles the corrections are sent to with the configured selection, and whether each reports an RTK fix;
+    /// asked every second. Without it, RTCMMAVLink::vehicleFixes().
+    std::function<QList<GPSCorrectionLossAlert::Vehicle>(GPSCorrectionSettings::CorrectionVehicles)> vehicles = nullptr;
+    /// Shows the user that vehicles lost the corrections, without stopping them at it. Without it, the application's
+    /// area for critical vehicle messages, which is not modal.
+    std::function<void(const QString&)> showAlert = nullptr;
+    /// Speaks to the user: that vehicles lost the corrections, and that they have them back. Without it, the
+    /// application's speech.
+    std::function<void(const QString&)> speak = nullptr;
 };
 
 /// A begun correction source and the stream it delivers; destroying it ends the source.
@@ -57,7 +68,8 @@ private:
 /// Owns the shared MAVLink sequence domain and the UDP correction input and output for all GPS sources. The selected
 /// stream, as far as the message filter takes it, goes to vehicles over MAVLink and to UDP forwarding. Receipt times
 /// are on the scheduler's clock; producers on worker threads stamp with the steady clock, which the application's
-/// QtRuntimeScheduler uses.
+/// QtRuntimeScheduler uses. The user is told when the stream stops while a vehicle has an RTK fix from it, as
+/// GPSCorrectionLossAlert decides, and when it is back.
 class GPSCorrectionManager : public QObject
 {
     Q_OBJECT
@@ -234,6 +246,9 @@ private:
 
     void _scheduleRefresh();
     void _refresh();
+    /// Shows and tells the user when the vehicles lost the stream that is no longer fresh, and tells when they have
+    /// it back.
+    void _alertOnLoss();
     /// Starts a log in the Dependencies' log folder. @return why it did not start, for the user; empty when it did.
     [[nodiscard]] QString _startLog();
     /// Publishes why the log ended, which a failed write or flush just closed.
@@ -244,7 +259,8 @@ private:
 
     RuntimeScheduler* const _scheduler;
     ScheduledTask _refreshTask;
-    /// Every second: retries the UDP input, completes the rate window and refreshes the state.
+    /// Every second: retries the UDP input, completes the rate window, refreshes the state and looks whether the
+    /// vehicles lost the stream.
     ScheduledTask _tickTask;
     GPSCorrectionSelector _selector;
     DataRateTracker _selectedRate;
@@ -252,6 +268,10 @@ private:
     RTCMUdpInput _udpInput;
     std::unique_ptr<GPSCorrectionSourceHandle> _udpSource;
     UdpForwarder _udpOutput{this};
+    const std::function<QList<GPSCorrectionLossAlert::Vehicle>(GPSCorrectionSettings::CorrectionVehicles)> _vehicles;
+    const std::function<void(const QString&)> _showAlert;
+    const std::function<void(const QString&)> _speak;
+    GPSCorrectionLossAlert _lossAlert;
     const std::function<QString()> _logDirectory;
     const qint64 _maxLogFileBytes;
     RTCMLogFile _log;

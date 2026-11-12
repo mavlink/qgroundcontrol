@@ -5,6 +5,7 @@
 #include <QtCore/QByteArrayView>
 #include <QtCore/QList>
 
+#include "GPSCorrectionLossAlert.h"
 #include "GPSCorrectionSettings.h"
 #include "RTCMMAVLinkPacket.h"
 
@@ -24,6 +25,11 @@ public:
     /// of the active vehicle alone, which is none while no vehicle is active. Outputs hold their link weakly.
     [[nodiscard]] static OutputProvider vehicleLinkOutputs(
         GPSCorrectionSettings::CorrectionVehicles selection = GPSCorrectionSettings::AllVehicles);
+
+    /// The vehicles vehicleLinkOutputs() sends to with @a selection, and whether the primary GPS of each reports an
+    /// RTK fix. A second GPS is left out: it can have an RTK fix relative to the first one, without corrections.
+    [[nodiscard]] static QList<GPSCorrectionLossAlert::Vehicle> vehicleFixes(
+        GPSCorrectionSettings::CorrectionVehicles selection);
 
     quint64 totalBytesSubmitted() const { return _submittedBytes; }
 

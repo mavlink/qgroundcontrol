@@ -19,6 +19,8 @@ QGCGroupBox {
     property bool showCoordinates: true
     /// Where the distance to the base station is measured from.
     property geoCoordinate gcsPosition: QGroundControl.positionManager.gcsPosition
+    /// The vehicles whose fix is listed.
+    property QmlObjectListModel vehicles: QGroundControl.multiVehicleManager.vehicles
 
     readonly property gpsCorrectionStream _selected: root.corrections.selectedStream
     readonly property bool _active: root.corrections.state !== GPSCorrectionManager.Inactive
@@ -98,6 +100,12 @@ QGCGroupBox {
         label: qsTr("Base distance from GCS")
         labelText: GPSUnits.distanceText(root._basePosition.distanceTo(root.gcsPosition))
         labelTextFormat: Text.PlainText
+    }
+
+    CorrectionsVehicles {
+        objectName: "correctionsVehicles"
+        corrections: root.corrections
+        vehicles: root.vehicles
     }
 
     // Why no stream is routed: the message filter has an entry that is not a message ID, or takes none of the

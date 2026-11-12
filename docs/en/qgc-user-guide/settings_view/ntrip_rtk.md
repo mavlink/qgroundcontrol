@@ -11,6 +11,15 @@ Once a second message of a type has arrived, its entry also says how often the t
 The toolbar GNSS indicator's drop-down shows the distance without the coordinates.
 The toolbar GNSS indicator also offers **Connect** once an NTRIP server is configured.
 
+### What the vehicles make of the corrections {#vehicle_fix}
+
+**Queued to vehicles** counts the corrections handed to vehicle links since QGroundControl started, from whichever source they came. It counts what was queued for sending, not what a vehicle received.
+**Vehicle fix** shows the fix type that a connected vehicle reports for its first GPS; with several vehicles each row names its vehicle, such as **Vehicle 2 fix**. A vehicle that can use the corrections changes to an RTK float fix and then to an RTK fixed fix. Below it are the **RTK Baseline** and the **RTK Correction Rate** of that GPS while the vehicle reports them (MAVLink `GPS_RTK`); not every autopilot does, and MAVLink has no age of the corrections to show.
+
+The label beside the toolbar GNSS indicator's icon follows the active vehicle too: **RTK** while it reports an RTK fixed fix, **Float** for an RTK float fix and **GNSS** otherwise. The label is orange while a correction source is on and the vehicle has no RTK fix, or no stream arrives. While no vehicle reports its GPS, the label says whether a correction source is on.
+
+When the stream stops while a connected vehicle had an RTK fix from it, QGroundControl shows a vehicle alert below the toolbar, which needs no answer and closes by itself, and speaks it: 10 seconds after the stream stopped being fresh, and once for each interruption. When the stream is back, QGroundControl says so without showing anything. A vehicle counts when the corrections are [sent to it](#correction-routing) and it reported an RTK fix while they arrived.
+
 ## NTRIP Connection
 
 Shows the NTRIP connection state with message and byte counters, the age of the last correction, and a Connect/Disconnect button.

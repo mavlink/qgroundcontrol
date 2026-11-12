@@ -9,6 +9,8 @@
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 
+#include "AppMessages.h"
+#include "AudioOutput.h"
 #include "MonotonicClock.h"
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
@@ -34,6 +36,12 @@ bool reachesThisHost(const QHostAddress& target)
             return matches(entry.ip()) || matches(entry.broadcast());
         });
     });
+}
+
+void speakAsWritten(const QString& text)
+{
+    // Lower case would have "RTK" read as a word.
+    AudioOutput::instance()->say(text);
 }
 }  // namespace
 
@@ -69,6 +77,9 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* sc
     , _tickTask(_scheduler, this)
     , _selectedRate([scheduler = _scheduler]() { return scheduler->nowUs(); })
     , _udpInput(this, _scheduler)
+    , _vehicles(dependencies.vehicles ? dependencies.vehicles : RTCMMAVLink::vehicleFixes)
+    , _showAlert(dependencies.showAlert ? dependencies.showAlert : QGC::showCriticalVehicleMessage)
+    , _speak(dependencies.speak ? dependencies.speak : speakAsWritten)
     , _logDirectory(dependencies.logDirectory)
     , _maxLogFileBytes(dependencies.maxLogFileBytes)
     , _log(_maxLogFileBytes)
@@ -84,6 +95,7 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* sc
         _retryUdpInput();
         _selectedRate.refresh();
         _refresh();
+        _alertOnLoss();
         if (_log.isOpen() && !_log.flush()) {
             _reportLogStopped();
         }
@@ -419,6 +431,32 @@ void GPSCorrectionManager::_refresh()
         emit selectedBytesPerSecondChanged();
     }
     _refreshMessageFilterError(selected.has_value(), now);
+}
+
+void GPSCorrectionManager::_alertOnLoss()
+{
+    const auto selection = _configuration ? _configuration->vehicles : GPSCorrectionSettings::AllVehicles;
+    switch (_lossAlert.update(_state == State::Fresh, _vehicles(selection), _scheduler->nowMs())) {
+        case GPSCorrectionLossAlert::Event::Lost: {
+            QStringList ids;
+            for (const int id : _lossAlert.vehicles()) {
+                ids.append(QString::number(id));
+            }
+            //: %1 is the ID of a vehicle
+            const QString one = tr("RTK corrections stopped. Vehicle %1 no longer receives them.");
+            //: %1 is a list of vehicle IDs, such as 1, 2
+            const QString several = tr("RTK corrections stopped. Vehicles %1 no longer receive them.");
+            const QString text = (ids.size() == 1 ? one : several).arg(ids.join(QStringLiteral(", ")));
+            _showAlert(text);
+            _speak(text);
+            break;
+        }
+        case GPSCorrectionLossAlert::Event::Resumed:
+            _speak(tr("RTK corrections resumed."));
+            break;
+        case GPSCorrectionLossAlert::Event::None:
+            break;
+    }
 }
 
 void GPSCorrectionManager::_scheduleRefresh()

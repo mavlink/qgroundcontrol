@@ -39,4 +39,6 @@ private slots:
     void _logEndsAtSizeLimit();
     void _logStopsAfterWriteError_data();
     void _logStopsAfterWriteError();
+    void _tellsUserWhenVehiclesLoseCorrections();
+    void _lossIsAVehicleAlert();
 };

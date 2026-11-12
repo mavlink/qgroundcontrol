@@ -12,6 +12,7 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
+#include "VehicleGPSFactGroup.h"
 #include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(RTCMMAVLinkLog, "GPS.Corrections.RTCMMAVLink")
@@ -46,6 +47,36 @@ RTCMMAVLink::Output makeOutput(const std::shared_ptr<LinkInterface>& link)
     };
 }
 
+/// Calls @a visit with each live vehicle that @a selection sends corrections to, and its primary link: every vehicle,
+/// or the active vehicle alone, whose primary link is connected and neither a log replay nor a high-latency link.
+template <typename Visit>
+void visitCorrectionVehicles(GPSCorrectionSettings::CorrectionVehicles selection, Visit&& visit)
+{
+    auto* manager = MultiVehicleManager::instance();
+    if (!manager) {
+        return;
+    }
+    // Compared, never dereferenced: no vehicle matches while none is active, or while the active one is being
+    // removed and has already left the list.
+    const Vehicle* const activeVehicle = manager->activeVehicle();
+    auto* vehicles = manager->vehicles();
+    for (int index = 0; index < vehicles->count(); ++index) {
+        auto* vehicle = vehicles->value<Vehicle*>(index);
+        if (!vehicle || !vehicle->vehicleLinkManager()) {
+            continue;
+        }
+        if (selection == GPSCorrectionSettings::ActiveVehicle && vehicle != activeVehicle) {
+            continue;
+        }
+        auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
+        // Corrections are kilobytes per second, which a high-latency link such as a satellite modem cannot carry.
+        if (!link || !link->isConnected() || link->isLogReplay() || link->linkConfiguration()->isHighLatency()) {
+            continue;
+        }
+        visit(vehicle, std::move(link));
+    }
+}
+
 }  // namespace
 
 RTCMMAVLink::RTCMMAVLink()
@@ -64,33 +95,26 @@ RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSetting
     return [selection]() {
         QList<std::shared_ptr<LinkInterface>> links;
         QList<Output> outputs;
-        auto* manager = MultiVehicleManager::instance();
-        if (!manager) {
-            return outputs;
-        }
-        // Compared, never dereferenced: no vehicle matches while none is active, or while the active one is being
-        // removed and has already left the list.
-        const Vehicle* const activeVehicle = manager->activeVehicle();
-        auto* vehicles = manager->vehicles();
-        for (int index = 0; index < vehicles->count(); ++index) {
-            auto* vehicle = vehicles->value<Vehicle*>(index);
-            if (!vehicle || !vehicle->vehicleLinkManager()) {
-                continue;
+        visitCorrectionVehicles(selection, [&links, &outputs](const Vehicle*, std::shared_ptr<LinkInterface> link) {
+            if (!links.contains(link)) {
+                outputs.append(makeOutput(link));
+                links.append(std::move(link));
             }
-            if (selection == GPSCorrectionSettings::ActiveVehicle && vehicle != activeVehicle) {
-                continue;
-            }
-            auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
-            // Corrections are kilobytes per second, which a high-latency link such as a satellite modem cannot carry.
-            if (!link || !link->isConnected() || link->isLogReplay() || link->linkConfiguration()->isHighLatency() ||
-                links.contains(link)) {
-                continue;
-            }
-            outputs.append(makeOutput(link));
-            links.append(std::move(link));
-        }
+        });
         return outputs;
     };
+}
+
+QList<GPSCorrectionLossAlert::Vehicle> RTCMMAVLink::vehicleFixes(GPSCorrectionSettings::CorrectionVehicles selection)
+{
+    QList<GPSCorrectionLossAlert::Vehicle> fixes;
+    visitCorrectionVehicles(selection, [&fixes](Vehicle* vehicle, const std::shared_ptr<LinkInterface>&) {
+        auto* gps = vehicle->gpsFactGroup();
+        const int fixType = gps ? gps->lock()->rawValue().toInt() : GPS_FIX_TYPE_NO_GPS;
+        fixes.append({.id = static_cast<int>(vehicle->id()),
+                      .rtkFix = fixType == GPS_FIX_TYPE_RTK_FLOAT || fixType == GPS_FIX_TYPE_RTK_FIXED});
+    });
+    return fixes;
 }
 
 void RTCMMAVLink::setOutputProvider(OutputProvider provider)

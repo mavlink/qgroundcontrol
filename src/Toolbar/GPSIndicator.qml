@@ -6,6 +6,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 // Vehicle GPS status, or the GNSS receiver's while the vehicle reports no GPS, plus correction and resilience state.
+// The label beside the icon is the vehicle's fix: "RTK" only once the vehicle reports an RTK fixed fix.
 Item {
     id:             control
 
@@ -21,7 +22,27 @@ Item {
     readonly property int _receiverSatellites: _receiverFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: _receiver.summaryLabel
     readonly property int _correctionState: QGroundControl.gpsManager.corrections.state
-    readonly property bool _showRtk: _correctionState !== GPSCorrectionManager.Inactive
+    readonly property bool _correctionsActive: _correctionState !== GPSCorrectionManager.Inactive
+    // The MAVLink GPS_FIX_TYPE the vehicle reports: 5 is an RTK float fix and 6 an RTK fixed one.
+    readonly property int _vehicleFixType: _vehicleGps ? _gps.lock.rawValue : 0
+    readonly property bool _vehicleRtkFloat: _vehicleFixType === 5
+    readonly property bool _vehicleRtkFixed: _vehicleFixType === 6
+    // The vehicle's fix where it reports its GPS. Without that, whether the ground has a correction source.
+    readonly property string _fixLabel: {
+        if (!_vehicleGps) {
+            return _correctionsActive ? qsTr("RTK") : qsTr("GNSS")
+        }
+        if (_vehicleRtkFixed) {
+            return qsTr("RTK")
+        }
+        //: An RTK float fix, in as few letters as possible: the label stands upright beside the GPS icon
+        return _vehicleRtkFloat ? qsTr("Float") : qsTr("GNSS")
+    }
+    // Corrections that the vehicle has no RTK fix from, or that stopped coming, want attention as a receiver warning
+    // does.
+    readonly property bool _fixLabelWarning: _receiverWarning || _correctionState === GPSCorrectionManager.Waiting
+                                             || (_vehicleGps && _correctionsActive
+                                                 && !_vehicleRtkFloat && !_vehicleRtkFixed)
     // The icons show the worse of the two receivers.
     readonly property VehicleGPSFactGroup _authenticationSource:
         _gps2 && (!_gps || _gps2.authenticationSeverity > _gps.authenticationSeverity) ? _gps2 : _gps
@@ -66,12 +87,12 @@ Item {
             QGCLabel {
                 objectName:             "gpsCorrectionsLabel"
                 rotation:               90
-                text:                   control._showRtk ? qsTr("RTK") : qsTr("GNSS")
+                text:                   control._fixLabel
                 textFormat:             Text.PlainText
-                color:                  control._receiverWarning || control._correctionState === GPSCorrectionManager.Waiting
-                                        ? qgcPal.colorOrange : qgcPal.textPrimary
+                color:                  control._fixLabelWarning ? qgcPal.colorOrange : qgcPal.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
-                visible:                control._receiverConnected || control._showRtk
+                visible:                control._receiverConnected || control._correctionsActive
+                                        || control._vehicleRtkFloat || control._vehicleRtkFixed
             }
 
             QGCColoredImage {

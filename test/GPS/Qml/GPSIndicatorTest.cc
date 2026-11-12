@@ -24,6 +24,7 @@
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
+#include "QmlObjectListModel.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
@@ -429,9 +430,25 @@ void GPSIndicatorTest::_correctionsStayInsideTheirBox()
     QFETCH(QString, farthest);
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(), units);
+    // A vehicle with the fix of the longest name, and the longest baseline and the highest rate GPS_RTK can report.
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps = vehicle.gpsFactGroup();
+    QVERIFY(gps);
+    gps->setLiveUpdates(true);
+    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_RTK_FIXED, .satellitesVisible = 20}));
+    mavlink_gps_rtk_t rtk{};
+    rtk.baseline_a_mm = rtk.baseline_b_mm = rtk.baseline_c_mm = INT32_MAX;
+    rtk.rtk_rate = UINT8_MAX;
+    mavlink_message_t rtkMessage{};
+    mavlink_msg_gps_rtk_encode(1, 1, &rtkMessage, &rtk);
+    gps->handleMessage(&vehicle, rtkMessage);
+    QmlObjectListModel vehicles;
+    vehicles.append(&vehicle);
     // The source with the longest name, which has announced its base station.
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> sent;
+    GPSTest::captureVehicleFrames(corrections, sent);
     const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
     // The RTCM 1005 frame of the recording Core/Protocols/fixtures/mixed.gps.
     local->submit(QByteArray::fromHex("d300133ed000038a58d9493c872f34109d07d6af48205ad7f7"), scheduler.nowMs());
@@ -449,6 +466,7 @@ void GPSIndicatorTest::_correctionsStayInsideTheirBox()
     auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorCorrections"));
     QVERIFY(box);
     QVERIFY(box->setProperty("corrections", QVariant::fromValue(&corrections)));
+    QVERIFY(box->setProperty("vehicles", QVariant::fromValue(&vehicles)));
     // A base station on the other side of the earth, which a mountpoint picked by mistake can be: the longest
     // distance there is.
     const QGeoCoordinate base = corrections.basePosition();
@@ -458,12 +476,24 @@ void GPSIndicatorTest::_correctionsStayInsideTheirBox()
     auto* source = box->findChild<QQuickItem*>(QStringLiteral("correctionsSelectedSource"));
     auto* rate = box->findChild<QQuickItem*>(QStringLiteral("correctionsDataRate"));
     auto* distance = box->findChild<QQuickItem*>(QStringLiteral("correctionsBaseDistance"));
-    QVERIFY(source && rate && distance);
+    auto* queued = box->findChild<QQuickItem*>(QStringLiteral("correctionsQueuedToVehicles"));
+    QVERIFY(source && rate && distance && queued);
     QCOMPARE(source->property("labelText").toString(),
              GPSCorrectionManager::sourceName(static_cast<int>(GPSCorrectionSettings::LocalReceiver)));
-    QVERIFY(rate->isVisible() && distance->isVisible());
-    // The longest rate.
+    QVERIFY(rate->isVisible() && distance->isVisible() && queued->isVisible());
+    // The longest rate and the longest size.
     QVERIFY(rate->setProperty("labelText", QStringLiteral("1,023.9KB/s")));
+    QVERIFY(queued->setProperty("labelText", QStringLiteral("1,023.9GB")));
+    const auto vehicleRow = [box](const char* name) {
+        const auto rows = TestFixtures::findItems(
+            box, [name](QQuickItem* item) { return item->objectName() == QLatin1String(name) && item->isVisible(); });
+        return rows.size() == 1 ? rows.first() : nullptr;
+    };
+    QVERIFY(vehicleRow("correctionsVehicleFix"));
+    QVERIFY(vehicleRow("correctionsVehicleBaseline"));
+    QVERIFY(vehicleRow("correctionsVehicleCorrectionRate"));
+    QCOMPARE(vehicleRow("correctionsVehicleCorrectionRate")->property("labelText").toString(),
+             QStringLiteral("255 Hz"));
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     QVERIFY(qAbs(box->width() - page->property("_preferredStatusWidth").toReal()) <= 1);
     // These rows do not wrap, so they must fit.
@@ -745,6 +775,64 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     QVERIFY(satellites->property("visible").toBool());
     QCOMPARE(satellites->property("text").toString(), QStringLiteral("9"));
     QCOMPARE(detailLabel->property("text").toString(), detail);
+}
+
+void GPSIndicatorTest::_labelFollowsVehicleFix_data()
+{
+    using State = GPSCorrectionManager::State;
+    QTest::addColumn<int>("fixType");
+    QTest::addColumn<int>("correctionState");
+    QTest::addColumn<bool>("shown");
+    QTest::addColumn<QString>("label");
+    QTest::addColumn<bool>("warning");
+    const auto row = [](const char* name, int fixType, State corrections, bool shown, const char* label, bool warning) {
+        QTest::newRow(name) << fixType << int(corrections) << shown << label << warning;
+    };
+    row("3d-without-corrections", GPS_FIX_TYPE_3D_FIX, State::Inactive, false, "GNSS", false);
+    // A correction source on the ground is no RTK: the label waits for the vehicle's fix, in the warning colour.
+    row("3d-corrections-waiting", GPS_FIX_TYPE_3D_FIX, State::Waiting, true, "GNSS", true);
+    row("3d-corrections-fresh", GPS_FIX_TYPE_3D_FIX, State::Fresh, true, "GNSS", true);
+    row("dgps-corrections-fresh", GPS_FIX_TYPE_DGPS, State::Fresh, true, "GNSS", true);
+    row("float", GPS_FIX_TYPE_RTK_FLOAT, State::Fresh, true, "Float", false);
+    row("fixed", GPS_FIX_TYPE_RTK_FIXED, State::Fresh, true, "RTK", false);
+    // The vehicle still has its fix after the stream stopped.
+    row("fixed-corrections-waiting", GPS_FIX_TYPE_RTK_FIXED, State::Waiting, true, "RTK", true);
+    // Corrections that reach the vehicle another way.
+    row("fixed-without-corrections", GPS_FIX_TYPE_RTK_FIXED, State::Inactive, true, "RTK", false);
+}
+
+void GPSIndicatorTest::_labelFollowsVehicleFix()
+{
+    QFETCH(int, fixType);
+    QFETCH(int, correctionState);
+    QFETCH(bool, shown);
+    QFETCH(QString, label);
+    QFETCH(bool, warning);
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps = vehicle.gpsFactGroup();
+    QVERIFY(gps);
+    gps->setLiveUpdates(true);
+    gps->handleMessage(&vehicle,
+                       GPSTest::gpsRawMessage({.fixType = static_cast<uint8_t>(fixType), .satellitesVisible = 12}));
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> indicator =
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicator.qml")),
+                      {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                       {QStringLiteral("_activeVehicle"), QVariant::fromValue(&vehicle)},
+                       {QStringLiteral("_correctionState"), correctionState}});
+    QVERIFY2(indicator, qPrintable(engine.lastError()));
+    auto* fixLabel = indicator->findChild<QObject*>(QStringLiteral("gpsCorrectionsLabel"));
+    QVERIFY(fixLabel);
+    QCOMPARE(fixLabel->property("visible").toBool(), shown);
+    QCOMPARE(fixLabel->property("text").toString(), label);
+    const QGCPalette palette;
+    QCOMPARE(colorOf(fixLabel), warning ? palette.colorOrange() : palette.textPrimary());
+
+    // The label follows the fix the vehicle reports next.
+    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_RTK_FLOAT, .satellitesVisible = 12}));
+    QCOMPARE(fixLabel->property("text").toString(), QStringLiteral("Float"));
+    QVERIFY(fixLabel->property("visible").toBool());
 }
 
 void GPSIndicatorTest::_receiverAntennaWarning()

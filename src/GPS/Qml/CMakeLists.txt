@@ -24,6 +24,7 @@ qt_add_qml_module(
     QML_FILES
         CorrectionsLogSwitch.qml
         CorrectionsStatus.qml
+        CorrectionsVehicles.qml
         GcsPositionStatus.qml
         GPSConstellationPalette.qml
         GPSFactComboField.qml

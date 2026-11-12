@@ -16,6 +16,7 @@ private slots:
     void _correctionsStatusBaseDistanceUnits_data();
     void _correctionsStatusBaseDistanceUnits();
     void _correctionsStatusShowsMessageFilterError();
+    void _correctionsStatusShowsVehicles();
     void _correctionsLogSwitch();
     void _ntripErrorActionRetries();
     void _ntripRetryNeedsCaster();
