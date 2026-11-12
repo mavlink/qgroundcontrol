@@ -20,18 +20,3 @@ QGeoMap::Capabilities QGeoTiledMapQGC::capabilities() const
 {
     return Capabilities(SupportsVisibleRegion | SupportsAnchoringCoordinate | SupportsVisibleArea);
 }
-
-/*void QGeoTiledMapQGC::evaluateCopyrights(const QSet<QGeoTileSpec> &visibleTiles)
-{
-    if (visibleTiles.isEmpty()) {
-        return;
-    }
-
-    const QGeoTileSpec tile = *(visibleTiles.constBegin());
-
-    const MapProvider* const provider = getProviderFromQtMapId(tile.mapId());
-
-    if (provider) {
-        emit copyrightsChanged(provider->copyright());
-    }
-}*/

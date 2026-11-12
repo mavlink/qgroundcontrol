@@ -18,7 +18,7 @@ void QGeoTiledMappingManagerEngineQGCTest::_testElevationProvidersAreNotMapTypes
     QNetworkAccessManager networkManager;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
     QString errorString;
-    const QGeoTiledMappingManagerEngineQGC engine({}, &error, &errorString, &networkManager);
+    const QGeoTiledMappingManagerEngineQGC engine(&error, &errorString, &networkManager);
     QCOMPARE(error, QGeoServiceProvider::NoError);
 
     const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
@@ -37,7 +37,7 @@ void QGeoTiledMappingManagerEngineQGCTest::_testMapTypeIdsAreSequential()
     QNetworkAccessManager networkManager;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
     QString errorString;
-    const QGeoTiledMappingManagerEngineQGC engine({}, &error, &errorString, &networkManager);
+    const QGeoTiledMappingManagerEngineQGC engine(&error, &errorString, &networkManager);
     QCOMPARE(error, QGeoServiceProvider::NoError);
 
     const QList<QGeoMapType> mapTypes = engine.supportedMapTypes();
@@ -76,7 +76,7 @@ void QGeoTiledMappingManagerEngineQGCTest::_testSourceChangeGivesTilesNewVersion
     QNetworkAccessManager networkManager;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
     QString errorString;
-    QGeoTiledMappingManagerEngineQGC engine({}, &error, &errorString, &networkManager);
+    QGeoTiledMappingManagerEngineQGC engine(&error, &errorString, &networkManager);
     QCOMPARE(error, QGeoServiceProvider::NoError);
     const int tileVersion = engine.tileVersion();
     QSignalSpy versionSpy(&engine, &QGeoTiledMappingManagerEngine::tileVersionChanged);

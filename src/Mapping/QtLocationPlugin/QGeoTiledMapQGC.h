@@ -13,7 +13,4 @@ public:
     ~QGeoTiledMapQGC();
 
     QGeoMap::Capabilities capabilities() const final;
-
-private:
-    // void evaluateCopyrights(const QSet<QGeoTileSpec> &visibleTiles) final;
 };

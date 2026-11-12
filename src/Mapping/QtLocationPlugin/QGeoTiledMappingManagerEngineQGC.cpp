@@ -38,13 +38,11 @@ static_assert(static_cast<int>(MapProvider::CarNavigationMap) == static_cast<int
 static_assert(static_cast<int>(MapProvider::CycleMap) == static_cast<int>(QGeoMapType::CycleMap));
 static_assert(static_cast<int>(MapProvider::CustomMap) == static_cast<int>(QGeoMapType::CustomMap));
 
-QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap& parameters,
-                                                                   QGeoServiceProvider::Error* error,
+QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(QGeoServiceProvider::Error* error,
                                                                    QString* errorString,
                                                                    QNetworkAccessManager* networkManager,
                                                                    QObject* parent)
     : QGeoTiledMappingManagerEngine(parent)
-    , m_networkManager(networkManager)
 {
     qCDebug(QGeoTiledMappingManagerEngineQGCLog) << this;
 
@@ -89,7 +87,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setSupportedMapTypes(mapList);
 
     setCacheHint(QAbstractGeoTileCache::CacheArea::AllCaches);
-    setTileCache(new QGeoFileTileCacheQGC(parameters, this));
+    setTileCache(new QGeoFileTileCacheQGC(this));
 
     getQGCMapEngine()->ensureInitialized();
 
@@ -104,7 +102,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
                        }
                    });
 
-    QGeoTileFetcherQGC* tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
+    QGeoTileFetcherQGC* tileFetcher = new QGeoTileFetcherQGC(networkManager, this);
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();

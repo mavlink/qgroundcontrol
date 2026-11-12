@@ -38,6 +38,7 @@ QGeoMappingManagerEngine* QGeoServiceProviderFactoryQGC::createMappingManagerEng
                                                                                     QGeoServiceProvider::Error* error,
                                                                                     QString* errorString) const
 {
+    Q_UNUSED(parameters);
     // The mapping engine fetches its tiles with the network access manager of the QML engine, on that engine's thread
     if (!m_engine || (m_engine->thread() != QThread::currentThread())) {
         qCWarning(QGeoServiceProviderFactoryQGCLog) << "No QML engine on this thread for the mapping manager engine";
@@ -59,7 +60,7 @@ QGeoMappingManagerEngine* QGeoServiceProviderFactoryQGC::createMappingManagerEng
 
     QNetworkAccessManager* networkManager = m_engine->networkAccessManager();
 
-    return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString, networkManager, nullptr);
+    return new QGeoTiledMappingManagerEngineQGC(error, errorString, networkManager, nullptr);
 }
 
 QGeoRoutingManagerEngine* QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(const QVariantMap& parameters,
