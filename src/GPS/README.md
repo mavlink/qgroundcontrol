@@ -43,7 +43,7 @@ src/GPS/Core * GPSReceiverWorker                              one receiver sessi
 | `Connection` | `GPSConnectionSupervisor` | Nothing |
 | `Positioning` | `GPSObservation`, `GPSSourceHealth`, `PositionManager` | `Core/Common` |
 | `Corrections` | `GPSCorrectionManager`, `GPSCorrectionSelector`, `RTCMMAVLink`, UDP input, the log, the loss alert | `Core/Common`, `Core/RTCM` |
-| `NTRIP` | `NTRIPManager`, its transport, `NTRIPGgaReporter`, the source table | `NTRIP/HTTP`, `Corrections`, `Positioning`, `Core/Common`, `Core/NMEA`, `Core/RTCM` |
+| `NTRIP` | `NTRIPManager`, its transport, `NTRIPGgaReporter`, the source table | `NTRIP/HTTP`, `Connection`, `Corrections`, `Positioning`, `Core/Common`, `Core/NMEA`, `Core/RTCM` |
 | `Receiver` | `GPSReceiver`, its session and connection policy, its serial and Bluetooth sides, status Facts, wording | `Corrections`, `Positioning`, `Core`, `Core/Transport`, `Core/Common` |
 | `src/GPS` itself | `GPSManager`, `GPSSettingsBindings` | `Receiver`, `NTRIP`, `Corrections`, `Positioning` |
 | `Qml` | The QML module `QGroundControl.GPS` | `Core/Common`, in `GPSQmlTypes.h` |
@@ -80,7 +80,7 @@ Quoted names are what the settings show today; the user guide is the reference f
   receiver, an `NTRIPHttpSession` for one exchange with a caster. The rest of `src/GPS` runs on the main thread.
 - **Connection supervisor**: a `GPSConnectionSupervisor`, the value that says for a connection that is kept up
   when its next attempt opens, how long a retry waits, what it does behind a gate such as a missing network, and
-  when it gives up. Its owner opens the attempts and times the delays.
+  when it gives up. Its owner opens the attempts and times the delays: `NTRIPManager`, for the caster connection.
 - **Base state**: `GPSBaseState`: `Inactive`, `Active` while a survey or averaging runs, `Valid` once the base
   position holds. Base modes are "Survey-In", "Fixed position" and "Receiver-managed averaging".
 - **Correction source**: where RTCM comes from, a `GPSCorrectionSettings::CorrectionSource`: `LocalReceiver`
