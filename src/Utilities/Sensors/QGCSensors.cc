@@ -14,7 +14,11 @@ namespace {
 /// @a name is what the log calls the sensor.
 bool connectSensor(QSensor* sensor, QSensorFilter* filter, const char* name)
 {
-    sensor->addFilter(filter);
+    // QSensor lists a filter once for each addFilter(), and a filter that is destroyed takes only one of its
+    // entries out: a second one would be left for the sensor to use
+    if (!sensor->filters().contains(filter)) {
+        sensor->addFilter(filter);
+    }
 
     if (!sensor->connectToBackend()) {
         qCWarning(QGCSensorsLog) << "Failed to connect to" << name << "backend";

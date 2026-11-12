@@ -405,6 +405,10 @@ void QGCSensorsTest::_checkRepeatedInit()
     QVERIFY(sensor.init());
     publishReading<Traits>(backend, true);
     QCOMPARE(updates.count(), 2);
+
+    // The sensor still has its filter once. A second entry would outlive the filter, which the sensor's owner
+    // destroys before the sensor.
+    QCOMPARE(backend->sensor()->filters().size(), 1);
 }
 
 template <typename Sensor>
