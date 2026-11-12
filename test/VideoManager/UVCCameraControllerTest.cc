@@ -187,7 +187,9 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
     QTRY_COMPARE_WITH_TIMEOUT(QImage(failed).size(), QSize(64, 48), TestTimeout::mediumMs());
     QCOMPARE(errorSpy.count(), 0);
 
-    // A captured photo that can't be saved is reported.
+    // A captured photo that can't be saved is reported. A debug build of Qt, which a Windows Debug build links, warns
+    // of the failed write as well.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^QImage::save: failed to write")));
     expectLogMessage("Video.VideoScreenshot", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to save screenshot")));
     controller._photoFiles.insert(10, {tempDir.filePath(QStringLiteral("missing/unwritable.png")), {}});

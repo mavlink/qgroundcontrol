@@ -1200,6 +1200,8 @@ void VideoManagerTest::_testScreenshotFailuresReachUser()
 
     const bool written = onDisplay && !file.isEmpty();
     if (written) {
+        // A debug build of Qt, which a Windows Debug build links, warns of the failed write as well.
+        ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^QImage::save: failed to write")));
         expectLogMessage("Video.VideoScreenshot", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Failed to save screenshot")));
     }

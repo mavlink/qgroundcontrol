@@ -123,7 +123,9 @@ void GstVideoReceiverReconnectTest::_testReconnectBacksOffAfterFailedStart()
     portBlocker.close();
     QVERIFY(stream.waitForState(State::Connecting));
     const qint64 retry = clock.elapsed();
-    QVERIFY2(retry >= kFirstReconnectDelayMs, qPrintable(QStringLiteral("retried after %1 ms").arg(retry)));
+    // Qt's precise timers are multimedia timers on Windows, which run up to 1.5% ahead of this clock.
+    const qint64 earliestRetry = kFirstReconnectDelayMs * 95 / 100;
+    QVERIFY2(retry >= earliestRetry, qPrintable(QStringLiteral("retried after %1 ms").arg(retry)));
     QVERIFY(stream.errorSpy.isEmpty());
 }
 

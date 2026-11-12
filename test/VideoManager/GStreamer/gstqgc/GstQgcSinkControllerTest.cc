@@ -140,7 +140,7 @@ void GstQgcSinkControllerTest::_testQVideoSinkControllerRebindRestoresActive()
     const auto elementActive = [&sink]() {
         gboolean value = FALSE;
         g_object_get(sink.qvideosink.get(), "active", &value, nullptr);
-        return value == TRUE;
+        return value != FALSE;
     };
 
     QVideoSink videoSink;
