@@ -104,7 +104,9 @@ void MissionItemVisualLoadTest::_itemRemovedWhileVisualLoads()
     QVERIFY(visualDir.isValid());
     const QString visualPath = visualDir.filePath(QStringLiteral("MissionItemVisualLoadTestVisual.qml"));
     QFile visualFile(visualPath);
-    QVERIFY(visualFile.open(QIODevice::WriteOnly));
+    if (!visualFile.open(QIODevice::WriteOnly)) {
+        QFAIL(qPrintable(QStringLiteral("Cannot write %1: %2").arg(visualPath, visualFile.errorString())));
+    }
     QVERIFY(visualFile.write(kVisualQml) > 0);
     visualFile.close();
     const QUrl visualUrl = QUrl::fromLocalFile(visualPath);
