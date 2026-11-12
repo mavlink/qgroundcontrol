@@ -1,11 +1,14 @@
 #include "GPSManagerTest.h"
 
+#include <chrono>
 #include <memory>
 
+#include <QtCore/QDateTime>
 #include <QtCore/QMetaEnum>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoPositionInfo>
 #include <QtTest/QSignalSpy>
 
 #include "Fact.h"
@@ -24,9 +27,11 @@
 #include "NTRIPSettings.h"
 #include "NTRIPVehicleGgaSource.h"
 #include "PositionManager.h"
+#include "PositionReceiverSettings.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
+#include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
@@ -143,6 +148,236 @@ void GPSManagerTest::_connectionPolling()
 
     manager.shutdown();
     QVERIFY(!manager.receiver()->hasReceiver());
+}
+
+void GPSManagerTest::_positionReceiverGivesGcsPosition_data()
+{
+    QTest::addColumn<PositionManager::SourceMode>("mode");
+    // The latitude published while the position receiver is in use and has no position; none is NaN. The base
+    // station reports 47 all along, this device 48 and the position receiver 49.
+    QTest::addColumn<double>("silent");
+    QTest::newRow("best-available") << PositionManager::SourceMode::Automatic << 48.0;
+    QTest::newRow("receiver-only") << PositionManager::SourceMode::ReceiverOnly << qQNaN();
+}
+
+void GPSManagerTest::_positionReceiverGivesGcsPosition()
+{
+    using namespace std::chrono_literals;
+    QFETCH(PositionManager::SourceMode, mode);
+    QFETCH(double, silent);
+    TestFixtures::SettingsFixture saved;
+    SettingsManager* const settings = SettingsManager::instance();
+    RTKSettings* const rtk = settings->rtkSettings();
+    PositionReceiverSettings* const position = settings->positionReceiverSettings();
+    saved.setFactValue(settings->ntripSettings()->ntripServerConnectEnabled(), false);
+    // A base station on a tripod and the operator's receiver, each on a TCP address scripted workers never open.
+    saved.setFactValue(rtk->receiverRole(), RTKSettings::ConfiguredBase);
+    saved.setFactValue(rtk->baseReceiverManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
+    saved.setFactValue(rtk->baseMode(), static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
+    saved.setFactValue(rtk->connectionType(), RTKSettings::Tcp);
+    saved.setFactValue(rtk->tcpHost(), QStringLiteral("base.test"));
+    saved.setFactValue(rtk->tcpPort(), 2101);
+    saved.setFactValue(rtk->autoConnect(), true);
+    saved.setFactValue(rtk->gcsPositionSource(), static_cast<int>(mode));
+    // As a new installation has it: out of use.
+    saved.setFactValue(position->enabled(), position->enabled()->rawDefaultValue());
+    saved.setFactValue(position->connectionType(), RTKSettings::Tcp);
+    saved.setFactValue(position->tcpHost(), QStringLiteral("position.test"));
+    saved.setFactValue(position->tcpPort(), 2102);
+
+    GPSTest::PositionSource device;
+    // Every position published from here on, the last ones as the manager shuts down.
+    QList<double> published;
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler);
+    PositionManager* const positions = manager.positionManager();
+    positions->setPlatformSourceFactory([&device](QObject*) { return &device; });
+    GPSTest::ScriptedReceiverWorkerFactory baseWorkers;
+    GPSTest::ScriptedReceiverWorkerFactory positionWorkers;
+    manager.receiver()->setWorkerFactory(baseWorkers.workerFactory());
+    manager.positionReceiver()->setWorkerFactory(positionWorkers.workerFactory());
+    manager.init();
+    // Whether or not the platform has granted the location permission.
+    positions->setInternalPositionSource(&device, PositionManager::SourceStatus::WaitingForFix);
+    connect(positions, &PositionManager::gcsPositionChanged, this, [&published](const QGeoCoordinate& coordinate) {
+        if (coordinate.isValid()) {
+            published.append(coordinate.latitude());
+        }
+    });
+
+    const auto fixAt = [](double latitude) {
+        GPSPositionReport report = GPSTest::fixReport(GPSFixQuality::Fix3D);
+        report.navigation.latitudeDegrees = latitude;
+        report.navigation.longitudeDegrees = 8;
+        report.navigation.horizontalAccuracyMeters = 1.0f;
+        return report;
+    };
+    // The base station and this device keep reporting, as they do, and the position receiver while @a reporting.
+    bool reporting = false;
+    const auto report = [&]() {
+        // A base with a surveyed position reports a time fix: its position is the antenna's.
+        baseWorkers.current()->position(GPSTest::fixReport(GPSFixQuality::NoFix));
+        if (device.active) {
+            QGeoPositionInfo fix(QGeoCoordinate(48, 8), QDateTime::currentDateTimeUtc());
+            fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+            device.publish(fix);
+        }
+        if (reporting) {
+            positionWorkers.current()->position(fixAt(49));
+        }
+    };
+    // Long enough for a receiver's last position to go stale, and for a receiver that returned while this device
+    // has a position to take over.
+    const auto run = [&]() {
+        for (int second = 0; second < 6; ++second) {
+            (void) scheduler.advanceBy(1s);
+            report();
+        }
+    };
+    const auto latitude = [positions]() {
+        return positions->acceptedObservation() ? positions->gcsPosition().latitude() : qQNaN();
+    };
+
+    // Base only, as it was: the antenna position of the base is the ground station's.
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(baseWorkers.count(), 1);
+    QCOMPARE(positionWorkers.count(), 0);
+    baseWorkers.current()->ready();
+    baseWorkers.current()->baseStatus({.state = GPSBaseState::Valid,
+                                       .position = {.latitudeDegrees = 47, .longitudeDegrees = 8},
+                                       .meanAccuracyMeters = 1.0});
+    run();
+    QCOMPARE(latitude(), 47.0);
+    QCOMPARE(positions->selectedSourceName(), PositionManager::tr("GNSS receiver"));
+
+    // In use, the position receiver connects by itself, as a receiver that is sent nothing. Before it has a
+    // position, the base's is already withdrawn.
+    published.clear();
+    position->enabled()->setRawValue(true);
+    report();
+    QCOMPARE(latitude(), silent);
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(positionWorkers.count(), 1);
+    QCOMPARE(positionWorkers.current()->type(), GPSType::Passive);
+    positionWorkers.current()->ready();
+    report();
+    QCOMPARE(latitude(), silent);
+    QVERIFY(!manager.positionReceiver()->forwardingCorrections());
+
+    reporting = true;
+    run();
+    QCOMPARE(latitude(), 49.0);
+    QCOMPARE(positions->selectedSourceName(), PositionManager::tr("Position receiver"));
+
+    // Only the base's RTCM is a correction source.
+    GPSCorrectionManager* const corrections = manager.corrections();
+    positionWorkers.current()->rtcm(GPSTest::rtcmMessage(1005, 20), scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(corrections->state(), GPSCorrectionManager::State::Waiting);
+    baseWorkers.current()->rtcm(GPSTest::rtcmMessage(1005, 20), scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(corrections->state(), GPSCorrectionManager::State::Fresh);
+
+    // The position receiver falls silent.
+    reporting = false;
+    run();
+    QCOMPARE(latitude(), silent);
+    reporting = true;
+    run();
+    QCOMPARE(latitude(), 49.0);
+
+    // Its connection is lost, and returns.
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+    positionWorkers.current()->fail(GPSConnectionError::DeviceError);
+    verifyExpectedLogMessage();
+    positionWorkers.finishRetired();
+    reporting = false;
+    report();
+    QCOMPARE(latitude(), silent);
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(positionWorkers.count(), 2);
+    positionWorkers.current()->ready();
+    reporting = true;
+    run();
+    QCOMPARE(latitude(), 49.0);
+    // Through all of it the base kept reporting, and its position was never the ground station's.
+    QVERIFY2(!published.contains(47.0), "the base's antenna position was published");
+
+    // Out of use, the position receiver is disconnected and stays so, and the base provides the position again.
+    position->enabled()->setRawValue(false);
+    QVERIFY(!manager.positionReceiver()->hasReceiver());
+    positionWorkers.finishRetired();
+    reporting = false;
+    run();
+    QCOMPARE(positionWorkers.count(), 2);
+    QCOMPARE(latitude(), 47.0);
+    QCOMPARE(positions->selectedSourceName(), PositionManager::tr("GNSS receiver"));
+}
+
+void GPSManagerTest::_discoveryLeavesPositionReceiverDevice()
+{
+#ifdef QGC_NO_SERIAL_LINK
+    QSKIP("Receivers are discovered on serial devices");
+#else
+    using namespace std::chrono_literals;
+    TestFixtures::SettingsFixture saved;
+    SettingsManager* const settings = SettingsManager::instance();
+    RTKSettings* const rtk = settings->rtkSettings();
+    PositionReceiverSettings* const position = settings->positionReceiverSettings();
+    saved.setFactValue(settings->ntripSettings()->ntripServerConnectEnabled(), false);
+    // A configured base without a saved device connects the RTK receiver it finds on USB, and configures it.
+    saved.setFactValue(rtk->receiverRole(), RTKSettings::ConfiguredBase);
+    saved.setFactValue(rtk->baseReceiverManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
+    saved.setFactValue(rtk->connectionType(), RTKSettings::Serial);
+    saved.setFactValue(rtk->serialDevice(), QString());
+    saved.setFactValue(rtk->autoConnect(), true);
+    saved.setFactValue(position->connectionType(), RTKSettings::Serial);
+    saved.setFactValue(position->serialDevice(), QStringLiteral("/test/position"));
+    saved.setFactValue(position->enabled(), true);
+    // Both receivers are RTK receivers on USB. The position receiver's has two serial interfaces and is listed
+    // first, so discovery would take it.
+    SerialPortManager::Port positionFirst = GPSTest::rtkPort(QStringLiteral("/test/position-first"));
+    SerialPortManager::Port positionSaved = GPSTest::rtkPort(QStringLiteral("/test/position"));
+    positionFirst.physicalDeviceId = positionSaved.physicalDeviceId = QStringLiteral("5446:425:position");
+    const SerialPortManager::Port base = GPSTest::rtkPort(QStringLiteral("/test/base"));
+    GPSTest::TestSerialPorts ports({positionFirst, positionSaved, base});
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler, &ports.manager);
+    manager.positionManager()->setPlatformSourceFactory([](QObject* parent) {
+        auto* const source = new GPSTest::PositionSource;
+        source->setParent(parent);
+        return source;
+    });
+    GPSTest::ScriptedReceiverWorkerFactory baseWorkers;
+    GPSTest::ScriptedReceiverWorkerFactory positionWorkers;
+    manager.receiver()->setWorkerFactory(baseWorkers.workerFactory());
+    manager.positionReceiver()->setWorkerFactory(positionWorkers.workerFactory());
+    manager.init();
+    // A newly listed device settles before discovery opens it.
+    const auto settle = [&scheduler]() { return scheduler.advanceBy(SerialPortManager::NEW_PORT_SETTLE_DELAY + 2s); };
+
+    // The user disconnected the position receiver, so nothing holds its device: discovery still leaves it, and
+    // its other interface, alone.
+    manager.positionReceiver()->disconnectReceiver();
+    QVERIFY(settle());
+    QCOMPARE(positionWorkers.count(), 0);
+    QCOMPARE(baseWorkers.count(), 1);
+    QCOMPARE(manager.receiver()->activeEndpoint(), QStringLiteral("/test/base"));
+
+    // The position receiver connects its device as a receiver that is sent nothing.
+    QVERIFY(manager.positionReceiver()->connectReceiver());
+    QCOMPARE(positionWorkers.current()->type(), GPSType::Passive);
+    QCOMPARE(manager.positionReceiver()->activeEndpoint(), QStringLiteral("/test/position"));
+
+    // Out of use, its device is any other: with the base unplugged, discovery connects it.
+    position->enabled()->setRawValue(false);
+    positionWorkers.finishRetired();
+    ports.plug({positionFirst, positionSaved});
+    baseWorkers.finishRetired();
+    QVERIFY(settle());
+    QCOMPARE(baseWorkers.count(), 2);
+    QCOMPARE(manager.receiver()->activeEndpoint(), QStringLiteral("/test/position-first"));
+#endif
 }
 
 void GPSManagerTest::_vehicleGpsTracking()
@@ -330,6 +565,7 @@ void GPSManagerTest::_qmlServicesAvailableBeforeInit()
             readonly property var corrections: QGroundControl.gpsManager.corrections
             readonly property var vehicleBytes: QGroundControl.gpsManager.corrections.vehicleBytesSubmitted
             readonly property var baseFacts: QGroundControl.gpsManager.receiver.facts
+            readonly property var positionFacts: QGroundControl.gpsManager.positionReceiver.facts
         }
     )"));
     QVERIFY2(root, qPrintable(engine.lastError()));
@@ -338,6 +574,7 @@ void GPSManagerTest::_qmlServicesAvailableBeforeInit()
     QVERIFY(root->property("vehicleBytes").isValid());
     QCOMPARE(root->property("vehicleBytes").toULongLong(), corrections->vehicleBytesSubmitted());
     QCOMPARE(root->property("baseFacts").value<FactGroup*>(), GPSManager::instance()->receiver()->facts());
+    QCOMPARE(root->property("positionFacts").value<FactGroup*>(), GPSManager::instance()->positionReceiver()->facts());
 }
 
 UT_REGISTER_TEST(GPSManagerTest, TestLabel::Unit)

@@ -11,6 +11,9 @@ private slots:
     void _positionManagerLifecycle();
     void _sourceModeMatchesSetting();
     void _connectionPolling();
+    void _positionReceiverGivesGcsPosition_data();
+    void _positionReceiverGivesGcsPosition();
+    void _discoveryLeavesPositionReceiverDevice();
     void _vehicleGpsTracking();
     void _vehicleGpsEllipsoidHeight_data();
     void _vehicleGpsEllipsoidHeight();

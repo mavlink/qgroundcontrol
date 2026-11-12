@@ -1,6 +1,8 @@
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <utility>
 
 #include <QtCore/QList>
 #include <QtCore/QObject>
@@ -81,6 +83,14 @@ public:
     /// Forgets since when the RTK receivers have been listed, so each waits again from its next listing.
     virtual void forgetRtkReceivers() {}
 
+    /// Keeps discovery off the devices @a excluded names, such as the device of a receiver that must never be
+    /// configured: settledRtkReceiver() returns none of them, and none is one rtkReceiverKeptClosed() tells of. An
+    /// interface of the same physical device as an excluded one is left alone with it.
+    void setDiscoveryExclusion(std::function<bool(const QString& device)> excluded)
+    {
+        _discoveryExcluded = std::move(excluded);
+    }
+
     /// Claims the device until the last copy is released. Empty when it is in use, and where only one serial device
     /// can be open at a time, as with Android's USB serial driver, while any other is: held() tells the two apart.
     virtual GPSSerialClaim claim([[maybe_unused]] const QString& device) { return {}; }
@@ -104,6 +114,10 @@ signals:
 protected:
     void setEntries(QList<GPSSerialPortEntry> entries);
 
+    /// setDiscoveryExclusion() names @a device.
+    bool discoveryExcluded(const QString& device) const { return _discoveryExcluded && _discoveryExcluded(device); }
+
 private:
     QList<GPSSerialPortEntry> _entries;
+    std::function<bool(const QString&)> _discoveryExcluded;
 };

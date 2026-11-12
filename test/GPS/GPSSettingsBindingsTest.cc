@@ -15,6 +15,8 @@
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "PositionManager.h"
+#include "PositionReceiverSettings.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "SettingsManager.h"
@@ -127,11 +129,63 @@ void GPSSettingsBindingsTest::_receiverSettingsBinding()
     QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 }
 
+void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
+{
+    RTKSettings rtk;
+    PositionReceiverSettings settings;
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    PositionManager positions;
+    GPSSettingsBindings::bindPositionReceiver(&settings, &receiver);
+    GPSSettingsBindings::bindPosition(&rtk, &settings, &positions);
+    // Out of use until the user turns it on, which leaves the RTK receiver the receiver source.
+    QVERIFY(!receiver.configuration().autoConnect);
+    QCOMPARE(positions.configuration().receiver, PositionManager::Receiver::Rtk);
+
+    settings.connectionType()->setRawValue(RTKSettings::Tcp);
+    settings.tcpHost()->setRawValue(QStringLiteral("position.example"));
+    settings.tcpPort()->setRawValue(2102);
+    settings.udpPort()->setRawValue(14500);
+    settings.serialDevice()->setRawValue(QStringLiteral("/test/position"));
+    settings.serialBaudRate()->setRawValue(0);
+    settings.enabled()->setRawValue(true);
+    rtk.gcsPositionSource()->setRawValue(static_cast<int>(PositionManager::SourceMode::ReceiverOnly));
+
+    // The connection is the settings'. The receiver is never configured and its RTCM never forwarded, whatever
+    // the RTK receiver's settings say of theirs.
+    const auto& configuration = receiver.configuration();
+    QCOMPARE(configuration.receiverRole, RTKSettings::Passive);
+    QVERIFY(!configuration.forwardReceiverRtcm);
+    QCOMPARE(configuration.connectionType, RTKSettings::Tcp);
+    QCOMPARE(configuration.tcpHost, QStringLiteral("position.example"));
+    QCOMPARE(configuration.tcpPort, 2102U);
+    QCOMPARE(configuration.udpPort, 14500U);
+    QCOMPARE(configuration.serialDevice, QStringLiteral("/test/position"));
+    QCOMPARE(configuration.serialBaudRate, 0U);
+    QVERIFY(configuration.autoConnect);
+    QCOMPARE(positions.configuration().receiver, PositionManager::Receiver::Position);
+    QCOMPARE(positions.configuration().sourceMode, PositionManager::SourceMode::ReceiverOnly);
+    // It offers the connections the RTK receiver does.
+    QCOMPARE(settings.connectionType()->enumValues(), rtk.connectionType()->enumValues());
+    QCOMPARE(settings.connectionType()->enumStrings(), rtk.connectionType()->enumStrings());
+
+    // Out of use again, it is disconnected, where the RTK receiver's automatic connection only stops reconnecting.
+    QVERIFY(receiver.connectReceiver());
+    QCOMPARE(harness.workers.current()->type(), GPSType::Passive);
+    settings.enabled()->setRawValue(false);
+    QVERIFY(!receiver.hasReceiver());
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QCOMPARE(positions.configuration().receiver, PositionManager::Receiver::Rtk);
+    harness.workers.finishRetired();
+}
+
 void GPSSettingsBindingsTest::_runtimeSettingsDoNotRequireAppRestart()
 {
     RTKSettings settings;
+    PositionReceiverSettings positionReceiver;
     // The bindings apply every receiver setting to the running receiver.
-    for (const Fact* fact : GPSSettingsBindings::_boundFacts(&settings)) {
+    for (const Fact* fact :
+         GPSSettingsBindings::_boundFacts(&settings) + GPSSettingsBindings::_boundFacts(&positionReceiver)) {
         QVERIFY2(!fact->qgcRebootRequired(), qPrintable(fact->name()));
         QVERIFY2(!fact->vehicleRebootRequired(), qPrintable(fact->name()));
     }
@@ -318,6 +372,9 @@ void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact_data()
     QTest::newRow("GPSCorrection") << static_cast<SettingsGroup*>(settings->gpsCorrectionSettings())
                                    << GPSSettingsBindings::_boundFacts(settings->gpsCorrectionSettings())
                                    << QList<Fact*>{};
+    QTest::newRow("PositionReceiver") << static_cast<SettingsGroup*>(settings->positionReceiverSettings())
+                                      << GPSSettingsBindings::_boundFacts(settings->positionReceiverSettings())
+                                      << QList<Fact*>{};
 }
 
 void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact()

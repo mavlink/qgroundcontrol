@@ -12,6 +12,7 @@ private slots:
     void _receiverSettingsMapping_data();
     void _receiverSettingsMapping();
     void _receiverSettingsBinding();
+    void _positionReceiverSettingsBinding();
     void _runtimeSettingsDoNotRequireAppRestart();
     void _ntripSettingsBinding();
     void _ntripActionsFollowConnectionSetting();

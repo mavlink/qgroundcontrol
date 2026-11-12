@@ -12,6 +12,7 @@
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "PositionManager.h"
+#include "PositionReceiverSettings.h"
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
 
@@ -140,9 +141,42 @@ ReceiverConfig receiverFromSettings(RTKSettings* settings, FactReader& read)
     return configuration;
 }
 
-PositionConfig positionFromSettings(RTKSettings* settings, FactReader& read)
+/// The position receiver has a connection and nothing else: it is never configured, and what RTCM it sends is not a
+/// correction source.
+ReceiverConfig positionReceiverFromSettings(PositionReceiverSettings* settings, FactReader& read)
 {
-    return {.sourceMode = static_cast<PositionManager::SourceMode>(read(settings->gcsPositionSource()).toInt())};
+    ReceiverConfig configuration;
+    configuration.receiverRole = RTKSettings::Passive;
+    configuration.forwardReceiverRtcm = false;
+    configuration.connectionType = static_cast<RTKSettings::ConnectionType>(read(settings->connectionType()).toInt());
+    configuration.tcpHost = read(settings->tcpHost()).toString();
+    configuration.tcpPort = read(settings->tcpPort()).toUInt();
+    configuration.udpPort = read(settings->udpPort()).toUInt();
+    configuration.serialDevice = read(settings->serialDevice()).toString();
+    configuration.serialBaudRate = read(settings->serialBaudRate()).toUInt();
+    // In use, it is kept connected as a saved receiver is.
+    configuration.autoConnect = read(settings->enabled()).toBool();
+    return configuration;
+}
+
+PositionManager::SourceMode sourceModeFromSettings(RTKSettings* settings, FactReader& read)
+{
+    return static_cast<PositionManager::SourceMode>(read(settings->gcsPositionSource()).toInt());
+}
+
+/// The groups the ground station position is configured in.
+struct PositionSettings
+{
+    RTKSettings* source = nullptr;
+    PositionReceiverSettings* positionReceiver = nullptr;
+};
+
+/// A position receiver in use is the receiver source, connected or not.
+PositionConfig positionFromSettings(PositionSettings settings, FactReader& read)
+{
+    return {.sourceMode = sourceModeFromSettings(settings.source, read),
+            .receiver = read(settings.positionReceiver->enabled()).toBool() ? PositionManager::Receiver::Position
+                                                                            : PositionManager::Receiver::Rtk};
 }
 
 /// The log names whether these are set, never their values: credentials and the base station's location.
@@ -165,8 +199,9 @@ void logSetting(const Fact* fact)
     qCDebug(GPSSettingsBindingsLog).noquote() << fact->name() << "=" << shown;
 }
 
+/// @a settings is a settings group, or the groups a configuration is built from.
 template <typename Settings, typename Configuration>
-QList<Fact*> readFacts(Settings* settings, Configuration (*build)(Settings*, FactReader&))
+QList<Fact*> readFacts(Settings settings, Configuration (*build)(Settings, FactReader&))
 {
     FactReader reader;
     (void) build(settings, reader);
@@ -175,7 +210,7 @@ QList<Fact*> readFacts(Settings* settings, Configuration (*build)(Settings*, Fac
 
 /// Applies the built configuration to @a target now and whenever a Fact it reads changes, logging each value.
 template <typename Settings, typename Configuration, typename Target>
-void bind(Settings* settings, Configuration (*build)(Settings*, FactReader&), Target* target,
+void bind(Settings settings, Configuration (*build)(Settings, FactReader&), Target* target,
           void (Target::*setter)(const Configuration&))
 {
     const auto apply = [settings, build, target, setter]() {
@@ -204,9 +239,14 @@ QList<Fact*> GPSSettingsBindings::_boundFacts(NTRIPSettings* settings)
     return readFacts(settings, ntripFromSettings);
 }
 
+QList<Fact*> GPSSettingsBindings::_boundFacts(PositionReceiverSettings* settings)
+{
+    return readFacts(settings, positionReceiverFromSettings);
+}
+
 QList<Fact*> GPSSettingsBindings::_boundFacts(RTKSettings* settings)
 {
-    return readFacts(settings, receiverFromSettings) + readFacts(settings, positionFromSettings);
+    return readFacts(settings, receiverFromSettings) + readFacts(settings, sourceModeFromSettings);
 }
 
 void GPSSettingsBindings::bindCorrections(GPSCorrectionSettings* settings, GPSCorrectionManager* corrections)
@@ -246,10 +286,27 @@ void GPSSettingsBindings::bindReceiver(RTKSettings* settings, GPSReceiver* recei
     bind(settings, receiverFromSettings, receiver, &GPSReceiver::setConfiguration);
 }
 
-void GPSSettingsBindings::bindPosition(RTKSettings* settings, PositionManager* positions)
+void GPSSettingsBindings::bindPositionReceiver(PositionReceiverSettings* settings, GPSReceiver* receiver)
 {
-    if (!settings || !positions) {
+    if (!settings || !receiver) {
         return;
     }
-    bind(settings, positionFromSettings, positions, &PositionManager::setConfiguration);
+    bind(settings, positionReceiverFromSettings, receiver, &GPSReceiver::setConfiguration);
+    // Out of use it is not wanted connected either. The RTK receiver's automatic connection, turned off, leaves
+    // the connection the user made.
+    QObject::connect(settings->enabled(), &Fact::rawValueChanged, receiver, [receiver](const QVariant& enabled) {
+        if (!enabled.toBool()) {
+            receiver->disconnectReceiver();
+        }
+    });
+}
+
+void GPSSettingsBindings::bindPosition(RTKSettings* settings, PositionReceiverSettings* positionReceiver,
+                                       PositionManager* positions)
+{
+    if (!settings || !positionReceiver || !positions) {
+        return;
+    }
+    bind(PositionSettings{settings, positionReceiver}, positionFromSettings, positions,
+         &PositionManager::setConfiguration);
 }

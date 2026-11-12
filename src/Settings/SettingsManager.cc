@@ -25,6 +25,7 @@
 #include "NTRIPSettings.h"
 #include "OfflineMapsSettings.h"
 #include "PlanViewSettings.h"
+#include "PositionReceiverSettings.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
@@ -72,6 +73,7 @@ void SettingsManager::init()
     _mapsSettings = new MapsSettings(this);
     _offlineMapsSettings = new OfflineMapsSettings(this);
     _planViewSettings = new PlanViewSettings(this);
+    _positionReceiverSettings = new PositionReceiverSettings(this);
     _remoteIDSettings = new RemoteIDSettings(this);
     _rtkSettings = new RTKSettings(this);
     _gpsCorrectionSettings = new GPSCorrectionSettings(this);
@@ -138,6 +140,11 @@ NTRIPSettings *SettingsManager::ntripSettings() const { return _ntripSettings; }
 GPSCorrectionSettings* SettingsManager::gpsCorrectionSettings() const
 {
     return _gpsCorrectionSettings;
+}
+
+PositionReceiverSettings* SettingsManager::positionReceiverSettings() const
+{
+    return _positionReceiverSettings;
 }
 
 VideoSettings *SettingsManager::videoSettings() const { return _videoSettings; }

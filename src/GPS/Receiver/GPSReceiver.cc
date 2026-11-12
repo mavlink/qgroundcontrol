@@ -62,6 +62,7 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
     , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration, _serial->supported()))
     , _correctionManager(dependencies.corrections)
     , _positionManager(dependencies.positions)
+    , _positionOnly(dependencies.positionOnly)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _positionHealth(new GPSSourceHealth(this, _scheduler))
     , _outputOverflowTask(_scheduler, this)
@@ -248,7 +249,8 @@ void GPSReceiver::_onGPSConnect()
     _setPersistentChangesAllowed(false);
     // Marking the status configured notifies its observers, one of which may have replaced the session that is ready.
     if (session && session == _session) {
-        session->registerPosition(_positionManager, _positionHealth);
+        session->registerPosition(_positionManager, _positionHealth,
+                                  _positionOnly ? PositionManager::Receiver::Position : PositionManager::Receiver::Rtk);
     }
     _emitChanges();
 }

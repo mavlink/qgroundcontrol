@@ -61,9 +61,18 @@ QStringList GPSReceiverSystemSerialPorts::_listedRtkReceivers() const
     if (!_manager) {
         return receivers;
     }
+    const QList<SerialPortManager::Port> ports = _manager->availablePorts();
+    // Any interface of an excluded device would configure it.
+    QSet<QString> excludedDevices;
+    for (const auto& port : ports) {
+        if (!port.physicalDeviceId.isEmpty() && discoveryExcluded(port.systemLocation)) {
+            excludedDevices.insert(port.physicalDeviceId);
+        }
+    }
     QSet<QString> seenDevices;
-    for (const auto& port : _manager->availablePorts()) {
-        if (port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader) {
+    for (const auto& port : ports) {
+        if (port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader ||
+            discoveryExcluded(port.systemLocation) || excludedDevices.contains(port.physicalDeviceId)) {
             continue;
         }
         // A labelled NMEA interface remains a receiver candidate on composite GPS devices.

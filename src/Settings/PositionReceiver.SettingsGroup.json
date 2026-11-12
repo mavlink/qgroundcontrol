@@ -1,0 +1,73 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "enabled",
+            "shortDesc": "Connects a second receiver that only provides the ground station position, such as the operator's own receiver while the GNSS receiver is an RTK base station on a tripod. QGroundControl never configures it. While this is on, the ground station position never comes from the GNSS receiver.",
+            "longDesc": "A second receiver that only provides the ground station position. QGroundControl never configures it: its NMEA, u-blox UBX or Septentrio SBF position output is used as it is, and its RTCM output is not forwarded to vehicles. While this is on, the GNSS receiver never provides the ground station position, whether or not the position receiver is connected or has a fix: Best available then uses this device. The saved position receiver connects at startup and reconnects when its connection is lost. Disconnect pauses that until you connect again.",
+            "type": "bool",
+            "default": false,
+            "label": "Use a position receiver",
+            "keywords": "position receiver,second receiver,gcs position,ground station position,nmea,external gps"
+        },
+        {
+            "name": "connectionType",
+            "shortDesc": "Receiver connection",
+            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for the receiver's output.",
+            "type": "uint8",
+            "enumStrings": "Serial,TCP,UDP",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Receiver connection"
+        },
+        {
+            "name": "tcpHost",
+            "shortDesc": "Receiver host",
+            "longDesc": "Host name or address of the receiver or serial-to-TCP bridge.",
+            "type": "string",
+            "default": "",
+            "label": "Receiver host"
+        },
+        {
+            "name": "tcpPort",
+            "shortDesc": "Receiver TCP port",
+            "longDesc": "TCP port of the receiver or serial-to-TCP bridge.",
+            "type": "uint32",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver TCP port"
+        },
+        {
+            "name": "udpPort",
+            "shortDesc": "Listens on this local port for the receiver's output. The first sender is used until it stops sending. Use a port the GNSS receiver does not listen on.",
+            "type": "uint32",
+            "default": 14402,
+            "min": 1,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver UDP port"
+        },
+        {
+            "name": "serialDevice",
+            "shortDesc": "Serial device",
+            "longDesc": "The position receiver's port. While the position receiver is in use, a configured base never connects to this device when it looks for an RTK receiver on USB.",
+            "type": "string",
+            "default": "",
+            "label": "Serial device"
+        },
+        {
+            "name": "serialBaudRate",
+            "shortDesc": "Baud rate",
+            "longDesc": "Serial rate of the position receiver. Auto (0) finds the rate by listening at the usual rates, without sending the receiver anything.",
+            "type": "uint32",
+            "default": 115200,
+            "min": 0,
+            "max": 4000000,
+            "decimalPlaces": 0,
+            "label": "Baud rate"
+        }
+    ]
+}

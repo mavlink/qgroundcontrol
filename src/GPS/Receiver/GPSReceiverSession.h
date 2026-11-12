@@ -90,8 +90,9 @@ public:
     void registerCorrections(GPSCorrectionManager* manager, const QString& sourceInstance);
     /// Creates the worker, with a real worker for an empty @a factory, and starts it. False when none is created.
     bool start(const GPSReceiverWorkerFactory& factory, GPSReceiverWorker::TransportFactory transportFactory);
-    /// Publishes @a producer as the receiver position source. Registration observers may retire this session.
-    void registerPosition(PositionManager* positionManager, GPSSourceHealth* producer);
+    /// Publishes @a producer as the position source of @a receiver. Registration observers may retire this session.
+    void registerPosition(PositionManager* positionManager, GPSSourceHealth* producer,
+                          PositionManager::Receiver receiver = PositionManager::Receiver::Rtk);
     /// Disconnects and stops the worker and ends both registrations. The worker keeps its transport, and so any
     /// serial reservation, until it exits and deletes itself.
     void retire();

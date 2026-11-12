@@ -39,6 +39,8 @@ struct GPSReceiverDependencies
     GPSCorrectionManager* corrections = nullptr;
     /// Ready receivers publish their solution here as the GCS "RTK receiver" position source.
     PositionManager* positions = nullptr;
+    /// The receiver only provides the ground station position, so it publishes there as the position receiver.
+    bool positionOnly = false;
     /// Creates the receiver's serial side as its child: the serial devices it may connect or discover, and their
     /// claims. A session holds its claim until its worker has stopped, and ends unplugged when a scan no longer lists
     /// its device. Without it the receiver has the serial side of its build, GPSReceiverSerialPorts::create(), with
@@ -360,6 +362,7 @@ private:
     QList<QPointer<GPSReceiverWorker>> _retiredWorkers;
     const QPointer<GPSCorrectionManager> _correctionManager;
     const QPointer<PositionManager> _positionManager;
+    const bool _positionOnly;
     RuntimeScheduler* const _scheduler;
     GPSSourceHealth* const _positionHealth;
     ScheduledTask _outputOverflowTask;

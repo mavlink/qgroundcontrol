@@ -133,12 +133,13 @@ bool GPSReceiverSession::start(const GPSReceiverWorkerFactory& factory,
     return true;
 }
 
-void GPSReceiverSession::registerPosition(PositionManager* positionManager, GPSSourceHealth* producer)
+void GPSReceiverSession::registerPosition(PositionManager* positionManager, GPSSourceHealth* producer,
+                                          PositionManager::Receiver receiver)
 {
     if (_retired || !positionManager || _position) {
         return;
     }
-    auto registration = positionManager->registerReceiver(producer, _sessionId);
+    auto registration = positionManager->registerReceiver(producer, _sessionId, receiver);
     // An observer that retired this session during registration leaves the registration to end here.
     if (!_retired) {
         _position = std::move(registration);
