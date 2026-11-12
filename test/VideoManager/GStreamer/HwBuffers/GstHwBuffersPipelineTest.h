@@ -21,6 +21,8 @@ private slots:
     void _testD3DMapTexturesWithQRhi();
     void _testD3DFrameToImage_data();
     void _testD3DFrameToImage();
+    void _testD3DBridgeDropsRemovedDevice_data();
+    void _testD3DBridgeDropsRemovedDevice();
     void _testDmaBufDispatch();
     void _testHwBufferFactoryDispatchSystemMemory();
     void _testIOSurfaceFrameToImage();

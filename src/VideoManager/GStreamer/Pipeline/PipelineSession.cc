@@ -489,7 +489,6 @@ void PipelineSession::_onBusError(GstMessage* message)
         }
         qCWarning(GstVideoReceiverLog) << "Decoder error from" << messageSourcePath(message) << ":" << text
                                        << "debug:" << debugText;
-        HwBuffers::onPipelineError(error.get(), debug.get());
         if (isPermanentError(message, error.get())) {
             _fail({.reason = QStringLiteral("decoder error"),
                    .message = tr("Unable to decode the video: %1").arg(description),
@@ -502,7 +501,6 @@ void PipelineSession::_onBusError(GstMessage* message)
 
     qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message) << ":" << text
                                    << "debug:" << debugText;
-    HwBuffers::onPipelineError(error.get(), debug.get());
     _dotDumper.snapshot(_pipeline.get(), QStringLiteral("pipeline-error"));
     const QString userMessage =
         isUnauthorizedError(error.get())

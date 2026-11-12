@@ -24,10 +24,6 @@ namespace HwBuffers {
 /// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
 
-/// For a receiver's pipeline ERROR (@p error and @p debug as gst_message_parse_error() returns them): drops cached GPU
-/// devices when it reports a device loss. No-op when no GPU paths compiled.
-void onPipelineError(const GError* error, const gchar* debug);
-
 /// Pipeline-restart hook; clears exhausted prime-retry latches (GL, Vulkan) so a restart can prime on the next
 /// NEED_CONTEXT. Never drops shared GPU objects: other streams may still be using them.
 void onPipelineRestart();

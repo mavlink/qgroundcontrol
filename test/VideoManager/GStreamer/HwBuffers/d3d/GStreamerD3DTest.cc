@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
+#include <thread>
 
 #include "CpuVideoFramePool.h"
 #include "GstHwFrameTexturesBase.h"
@@ -146,6 +147,27 @@ struct SnapshotGuard
     void* d3d12Device = nullptr;
     qint64 adapterLuid = 0;
 };
+
+/// The device @p path's context bridge shares now; null when it isn't primed.
+GStreamer::GstObjectPtr bridgeDevice(HwVideoBufferPath path)
+{
+    GstObject* device = nullptr;
+    switch (path) {
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+        case HwVideoBufferPath::D3D11:
+            device = GST_OBJECT_CAST(GstD3D11ContextBridge::currentDevice());
+            break;
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+        case HwVideoBufferPath::D3D12:
+            device = GST_OBJECT_CAST(GstD3D12ContextBridge::currentDevice());
+            break;
+#endif
+        default:
+            break;
+    }
+    return GStreamer::adoptObject(device);
+}
 
 struct D3DSample
 {
@@ -475,6 +497,64 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
         *rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
         converted ? "videoconvert" : "identity", converted ? cpuCaps.constData() : inputCaps.constData(),
         static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), (format == QStringLiteral("NV12")), hwPath);
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice_data()
+{
+    QTest::addColumn<int>("path");
+
+    QTest::newRow("d3d11") << int(HwVideoBufferPath::D3D11);
+    QTest::newRow("d3d12") << int(HwVideoBufferPath::D3D12);
+}
+
+void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice()
+{
+#if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
+    QSKIP("D3D GPU paths not compiled in this build");
+#else
+    QFETCH(int, path);
+
+    const auto hwPath = static_cast<HwVideoBufferPath>(path);
+    const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
+    GstContextBridgeBase* bridge = nullptr;
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    if (d3d11) {
+        bridge = &GstD3D11ContextBridge::instance();
+    }
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    if (!d3d11) {
+        bridge = &GstD3D12ContextBridge::instance();
+    }
+#endif
+    if (!bridge) {
+        QSKIP("This D3D GPU path is not compiled in this build");
+    }
+
+    const SnapshotGuard snapshotGuard;
+    // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
+    QString failure;
+    const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
+    if (!rhi) {
+        QSKIP(qPrintable(failure));
+    }
+
+    bridge->reset();
+    const auto bridgeGuard = qScopeGuard([bridge] { bridge->reset(); });
+    QVERIFY2(bridge->prime(), "Could not prime the D3D context bridge from the QRhi snapshot");
+
+    const GStreamer::GstObjectPtr device = bridgeDevice(hwPath);
+    QVERIFY(device);
+    if (!g_object_class_find_property(G_OBJECT_GET_CLASS(device.get()), "device-removed-reason")) {
+        QSKIP("This GStreamer's D3D devices don't report their removal (they do from 1.26)");
+    }
+
+    // As GStreamer reports a removed device: on a thread of its own.
+    std::thread([&device] { g_object_notify(G_OBJECT(device.get()), "device-removed-reason"); }).join();
+    QTRY_VERIFY2_WITH_TIMEOUT(!bridgeDevice(hwPath), "The bridge still shares the device GStreamer reported removed",
+                              TestTimeout::mediumMs());
 #endif
 }
 

@@ -276,23 +276,11 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
 
-    const GStreamer::GErrorPtr ordinaryError = GStreamer::adoptError(
-        g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "ordinary stream error"));
-    HwBuffers::onPipelineError(ordinaryError.get(), "debug");
-    QCOMPARE(testBridgeA().clears, 1);
-    QCOMPARE(s_testCacheResets, 1);
-
-    const GStreamer::GErrorPtr deviceLostError =
-        GStreamer::adoptError(g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "DEVICE_REMOVED"));
-    HwBuffers::onPipelineError(deviceLostError.get(), "debug");
-    QCOMPARE(testBridgeA().clears, 2);
-    QCOMPARE(s_testCacheResets, 2);
-
     // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
     QVERIFY(testBridgeA().prime());
     HwBuffers::onPipelineRestart();
-    QCOMPARE(testBridgeA().clears, 2);
-    QCOMPARE(s_testCacheResets, 2);
+    QCOMPARE(testBridgeA().clears, 1);
+    QCOMPARE(s_testCacheResets, 1);
     QVERIFY(testBridgeA().prime());
     QCOMPARE(testBridgeA().primes, 2);
 #endif

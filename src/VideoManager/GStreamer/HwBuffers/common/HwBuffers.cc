@@ -46,19 +46,6 @@ void forEachCompiledPath(Fn&& fn)
 }  // namespace
 #endif
 
-void onPipelineError(const GError* error, const gchar* debug)
-{
-    // Only a real device loss should drop every GPU cache; ordinary stream errors must not. There is no structured
-    // device-lost event, so classify by the D3D/DXGI device-removed/reset text surfaced in the error/debug strings.
-    const auto mentionsDeviceLoss = [](const gchar* text) {
-        return text && (g_strstr_len(text, -1, "DEVICE_REMOVED") || g_strstr_len(text, -1, "DEVICE_RESET") ||
-                        g_strstr_len(text, -1, "device removed") || g_strstr_len(text, -1, "device reset"));
-    };
-    if (mentionsDeviceLoss(error ? error->message : nullptr) || mentionsDeviceLoss(debug)) {
-        resetCachedGpuResources();
-    }
-}
-
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
