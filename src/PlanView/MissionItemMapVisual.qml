@@ -36,6 +36,16 @@ Item {
             mapVisualLoader.setSource(object.mapVisualQML, properties)
         }
 
+        // A removed item is deleted later. A source that finishes loading before that would be created in the
+        // Loader's context, which is already invalid, and Qt warns about it. Only a source that still loads is
+        // stopped: a visual that is being created is cancelled with its Loader, and stopping it here makes its
+        // bindings fail.
+        Component.onDestruction: {
+            if (sourceComponent && sourceComponent.status === Component.Loading) {
+                active = false
+            }
+        }
+
         onLoaded: {
             if (!item) {
                 return

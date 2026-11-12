@@ -30,6 +30,8 @@ target_sources(
         MissionControllerTreeTest.h
         MissionItemTest.cc
         MissionItemTest.h
+        MissionItemVisualLoaderTest.cc
+        MissionItemVisualLoaderTest.h
         MissionManagerTest.cc
         MissionManagerTest.h
         MissionSettingsTest.cc
@@ -140,6 +142,7 @@ add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)
 add_qgc_test(MissionControllerTest LABELS Integration MissionManager)
 add_qgc_test(MissionControllerTreeTest LABELS Integration MissionManager)
 add_qgc_test(MissionItemTest LABELS Unit MissionManager)
+add_qgc_test(MissionItemVisualLoaderTest LABELS Unit MissionManager)
 add_qgc_test(MissionManagerTest LABELS Integration MissionManager)
 add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)
 add_qgc_test(PlanMasterControllerTest LABELS Integration MissionManager)
