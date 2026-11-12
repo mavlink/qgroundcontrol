@@ -433,6 +433,7 @@ target_link_libraries(
         ZLIB::ZLIB
         LibLZMA::LibLZMA
         Zstd::Zstd
+        QGCFormat
         QGCLogging
 )
 

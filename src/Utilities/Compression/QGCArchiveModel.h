@@ -118,7 +118,7 @@ public:
     /// Check if a file exists in the archive
     Q_INVOKABLE bool contains(const QString &fileName) const;
 
-    /// Format bytes as human-readable string (e.g., "1.5 MB")
+    /// Format bytes as QGC::bigSizeToString() does (e.g., "1.5MB"), and a negative size as "--"
     Q_INVOKABLE static QString formatSize(qint64 bytes);
 
 signals:

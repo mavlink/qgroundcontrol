@@ -1,7 +1,9 @@
 #include "QGCArchiveModelTest.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QLocale>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
@@ -221,22 +223,21 @@ void QGCArchiveModelTest::_testFilterModeDirectoriesOnly()
 // ============================================================================
 void QGCArchiveModelTest::_testFormatSize()
 {
-    // Bytes
-    QCOMPARE(QGCArchiveModel::formatSize(0), QStringLiteral("0 B"));
-    QCOMPARE(QGCArchiveModel::formatSize(100), QStringLiteral("100 B"));
-    QCOMPARE(QGCArchiveModel::formatSize(1023), QStringLiteral("1023 B"));
-    // Kilobytes
-    QString kb = QGCArchiveModel::formatSize(1024);
-    QVERIFY(kb.contains("KB"));
-    QString kb2 = QGCArchiveModel::formatSize(1536);  // 1.5 KB
-    QVERIFY(kb2.contains("KB"));
-    // Megabytes
-    QString mb = QGCArchiveModel::formatSize(1024 * 1024);
-    QVERIFY(mb.contains("MB"));
-    // Gigabytes
-    QString gb = QGCArchiveModel::formatSize(1024LL * 1024 * 1024);
-    QVERIFY(gb.contains("GB"));
-    // Negative (edge case)
+    const QLocale previous;
+    QLocale::setDefault(QLocale(QStringLiteral("en_US")));
+    const auto restoreLocale = qScopeGuard([&previous]() { QLocale::setDefault(previous); });
+
+    // The text is that of QGC::bigSizeToString()
+    QCOMPARE(QGCArchiveModel::formatSize(0), QStringLiteral("0B"));
+    QCOMPARE(QGCArchiveModel::formatSize(100), QStringLiteral("100B"));
+    QCOMPARE(QGCArchiveModel::formatSize(1023), QStringLiteral("1,023B"));
+    QCOMPARE(QGCArchiveModel::formatSize(1024), QStringLiteral("1.0KB"));
+    QCOMPARE(QGCArchiveModel::formatSize(1536), QStringLiteral("1.5KB"));
+    // The unit follows the rounded number
+    QCOMPARE(QGCArchiveModel::formatSize(1024 * 1024 - 1), QStringLiteral("1.0MB"));
+    QCOMPARE(QGCArchiveModel::formatSize(1024 * 1024), QStringLiteral("1.0MB"));
+    QCOMPARE(QGCArchiveModel::formatSize(1024LL * 1024 * 1024), QStringLiteral("1.0GB"));
+    // A size that is not known has no number to show
     QCOMPARE(QGCArchiveModel::formatSize(-1), QStringLiteral("--"));
 }
 

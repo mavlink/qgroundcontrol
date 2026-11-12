@@ -1,12 +1,13 @@
 #include "QGCArchiveModel.h"
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-
-#include <QtCore/QFileInfo>
-#include <QtCore/QLocale>
 
 #include <algorithm>
+
+#include <QtCore/QFileInfo>
+
+#include "QGCCompression.h"
+#include "QGCFileHelper.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCArchiveModelLog, "Utilities.QGCArchiveModel")
 
@@ -203,30 +204,7 @@ bool QGCArchiveModel::contains(const QString &fileName) const
 
 QString QGCArchiveModel::formatSize(qint64 bytes)
 {
-    if (bytes < 0) {
-        return QStringLiteral("--");
-    }
-
-    static const char* units[] = { "B", "KB", "MB", "GB", "TB" };
-    constexpr int numUnits = sizeof(units) / sizeof(units[0]);
-
-    double size = static_cast<double>(bytes);
-    int unitIndex = 0;
-
-    while (size >= 1024.0 && unitIndex < numUnits - 1) {
-        size /= 1024.0;
-        unitIndex++;
-    }
-
-    if (unitIndex == 0) {
-        // Bytes - no decimals
-        return QStringLiteral("%1 %2").arg(bytes).arg(QLatin1String(units[unitIndex]));
-    }
-
-    // Use locale-aware number formatting
-    return QStringLiteral("%1 %2")
-        .arg(QLocale().toString(size, 'f', 1))
-        .arg(QLatin1String(units[unitIndex]));
+    return (bytes < 0) ? QStringLiteral("--") : QGC::bigSizeToString(static_cast<quint64>(bytes));
 }
 
 void QGCArchiveModel::_loadArchive()
