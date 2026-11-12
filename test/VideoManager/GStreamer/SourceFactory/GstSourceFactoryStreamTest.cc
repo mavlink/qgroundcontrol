@@ -72,6 +72,15 @@ QByteArray makeH264RtpPacket(quint16 sequence, quint32 timestamp)
     return packet;
 }
 
+/// Links a source bin's pad, once it has one, to the sink given as user data.
+void linkSourcePadToSink([[maybe_unused]] GstElement* source, GstPad* pad, gpointer sink)
+{
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(GST_ELEMENT(sink), "sink"));
+    if (sinkPad && !gst_pad_is_linked(sinkPad.get())) {
+        (void) gst_pad_link(pad, sinkPad.get());
+    }
+}
+
 /// An RTSP server on a free loopback port that takes a client through to PLAY of one H.264 stream, interleaved in the
 /// RTSP connection, answers whatever it asks next, and records the methods it asked for. It sends no video.
 class PlayingRtspServer
@@ -341,6 +350,69 @@ void GstSourceFactoryStreamTest::_testStatsCountPacketsDroppedOnLatency()
     guint64 neverArrived = 1;
     QVERIFY(stats && gst_structure_get_uint64(stats.get(), "num-lost", &neverArrived));
     QCOMPARE(neverArrived, guint64(0));
+}
+
+void GstSourceFactoryStreamTest::_testMpegTsStreamObjectCarriesParsedCaps()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mpegtsmux", "tsdemux");
+
+    const GStreamer::GstElementPtr source =
+        GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:0"), GStreamer::SourceFactory::Config{});
+    QVERIFY(source);
+
+    GstTest::TestPipeline receiver(gst_pipeline_new("mpegts-stream-object"));
+    GstElement* const sink = gst_element_factory_make("fakesink", nullptr);
+    QVERIFY(sink);
+    g_object_set(sink, "sync", FALSE, "async", FALSE, nullptr);
+    QVERIFY(gst_bin_add(receiver.bin(), source.get()));
+    QVERIFY(gst_bin_add(receiver.bin(), sink));
+    (void) g_signal_connect(source.get(), "pad-added", G_CALLBACK(linkSourcePadToSink), sink);
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
+    std::atomic<int> frames{0};
+    QVERIFY(gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames, nullptr));
+    QVERIFY(receiver.play());
+    gint port = 0;
+    g_object_get(GstTest::findByFactory(source.get(), "udpsrc").get(), "port", &port, nullptr);
+    QVERIFY(port > 0);
+
+    // The test stream in MPEG-TS, all of it at once.
+    QString loadError;
+    const QList<GstTest::AccessUnit> units =
+        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
+    QVERIFY2(!units.isEmpty(), qPrintable(loadError));
+    GstTest::TestPipeline sender;
+    QVERIFY2(sender.launch(QStringLiteral("appsrc name=src format=time "
+                                          "caps=video/x-h264,stream-format=byte-stream,alignment=au ! h264parse ! "
+                                          "mpegtsmux ! udpsink host=127.0.0.1 port=%1 sync=false async=false")
+                               .arg(port)),
+             qPrintable(sender.error()));
+    QVERIFY(sender.play());
+    const GStreamer::GstElementPtr appSource = sender.element("src");
+    for (qsizetype i = 0; i < units.size(); ++i) {
+        GstBuffer* const buffer =
+            gst_buffer_new_memdup(units.at(i).bytes.constData(), static_cast<gsize>(units.at(i).bytes.size()));
+        GST_BUFFER_PTS(buffer) = i * (GST_SECOND / GstTest::kStreamFrameRate);
+        GstFlowReturn pushed = GST_FLOW_ERROR;
+        g_signal_emit_by_name(appSource.get(), "push-buffer", buffer, &pushed);
+        gst_buffer_unref(buffer);
+        QCOMPARE(pushed, GST_FLOW_OK);
+    }
+    QVERIFY_TRUE_WAIT(frames.load() > 0, TestTimeout::mediumMs());
+
+    // decodebin3 picks the decoder by the caps on the stream object. tsdemux's has those of the unparsed stream,
+    // which no decoder takes.
+    const GStreamer::GstEventPtr streamStart =
+        GStreamer::adoptEvent(gst_pad_get_sticky_event(sinkPad.get(), GST_EVENT_STREAM_START, 0));
+    QVERIFY(streamStart);
+    GstStream* rawStream = nullptr;
+    gst_event_parse_stream(streamStart.get(), &rawStream);
+    const GStreamer::GstObjectPtr stream = GStreamer::adoptObject(GST_OBJECT_CAST(rawStream));
+    QVERIFY2(stream, "tsdemux sent no stream object");
+    const GStreamer::GstCapsPtr streamCaps = GStreamer::adoptCaps(gst_stream_get_caps(GST_STREAM_CAST(stream.get())));
+    const GStreamer::GstCapsPtr padCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(sinkPad.get()));
+    QVERIFY(streamCaps && padCaps);
+    const GStreamer::GCharPtr streamCapsText = GStreamer::adoptGChar(gst_caps_to_string(streamCaps.get()));
+    QVERIFY2(gst_caps_is_equal(streamCaps.get(), padCaps.get()), streamCapsText.get());
 }
 
 void GstSourceFactoryStreamTest::_testUdpSourceRefusesPortInUse()

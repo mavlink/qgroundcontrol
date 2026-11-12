@@ -497,6 +497,36 @@ GstElement* addTsDemux(GstElement* bin, GstElement* upstream, guint latencyMs)
     return demux;
 }
 
+// decodebin3 picks the decoder when the stream starts, from the caps on the stream object that came with it, and
+// stores the parsed caps on that object only then, on another thread. tsdemux's object has the caps of the unparsed
+// stream, which no decoder takes, and parsebin leaves an upstream element's object alone: on a busy machine
+// decodebin3 read those caps, and the stream ended for want of a decoder. So they are stored as they leave the parser.
+GstPadProbeReturn storeParsedCapsOnStream(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
+{
+    GstEvent* const event = GST_PAD_PROBE_INFO_EVENT(info);
+    if (GST_EVENT_TYPE(event) != GST_EVENT_CAPS) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    GstCaps* caps = nullptr;
+    gst_event_parse_caps(event, &caps);
+    const GstEventPtr streamStart = adoptEvent(gst_pad_get_sticky_event(pad, GST_EVENT_STREAM_START, 0));
+    GstStream* rawStream = nullptr;
+    if (streamStart) {
+        gst_event_parse_stream(streamStart.get(), &rawStream);
+    }
+    const GstObjectPtr stream = adoptObject(GST_OBJECT_CAST(rawStream));
+    if (stream && caps && gst_caps_is_fixed(caps)) {
+        gst_stream_set_caps(GST_STREAM_CAST(stream.get()), caps);
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+void storeParsedCapsOnPad([[maybe_unused]] GstElement* parser, GstPad* pad, [[maybe_unused]] gpointer data)
+{
+    (void) gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, storeParsedCapsOnStream, nullptr, nullptr);
+}
+
 // Wires upstream → (optional rtpjitterbuffer) → binParser once upstream's video pad appears: rtspsrc and tsdemux
 // have no source pad before they stream.
 void linkSourceToParserOnPadAdded(GstElement* upstream, GstElement* binParser, const Config& config, guint latencyMs,
@@ -713,6 +743,8 @@ GstElement* create(const QString& uri, const Config& config)
         if (!upstream) {
             return nullptr;
         }
+        // Ahead of the handler that hands the pad on.
+        (void) g_signal_connect(binParser, "pad-added", G_CALLBACK(storeParsedCapsOnPad), nullptr);
     }
 
     if (spec.rtpCodec) {

@@ -544,6 +544,11 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 - `tcp://`: MPEG-TS over TCP. `tcpclientsrc` connects inside the state change, on the receiver's worker, so it
   has a `timeout` of 3 s: without one it waits as long as the OS does for a host that doesn't answer.
 
+Both MPEG-TS sources store the parsed caps on the stream object that `tsdemux` sends with the stream. `decodebin3`
+picks the decoder by that object's caps when the stream starts, and stores the parsed caps on it only then, on
+another thread; `tsdemux` gives it those of the unparsed stream, which no decoder takes, and `parsebin` leaves them.
+On a busy machine `decodebin3` could read them first and end the stream for want of a decoder.
+
 ### Automated tests
 
 | Test | Label | Covers |
@@ -560,7 +565,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstSourceFactoryHarnessTest` | Unit | The parameter-set gate on a real H.264/H.265 depayloader under GstHarness, fed RTP payloaded from the test streams as a receiver joining mid-GOP sees it. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: stall detection, recording finalization by ancestry, pipeline and `.dot` file names, the size `VideoReceiver::presentedSize()` reports for a padded, cropped or rotated frame, and the RTP packet counter (loss, late and duplicate packets, wraparound, a sender that starts over, a stray packet of another one, the packet rate that tells a long loss from a sender starting over, jitter) with the probe that feeds it. |
 | `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into `qgcvideosinkbin` bound to a `QVideoSink`: formats, timestamps, colorimetry, non-square pixels, software frames through the GPU bins that need no GPU for them, teardown under load. |
-| `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback: RTP over UDP joining mid-GOP, a burst of packets the jitter buffer drops and the statistics count as lost, an RTSP session that sets up only the video stream, and one that ends with TEARDOWN alone; a second listener refused on a UDP port in use; and their `udpsrc` stopped right after it starts, thousands of times. |
+| `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback: RTP over UDP joining mid-GOP, a burst of packets the jitter buffer drops and the statistics count as lost, an RTSP session that sets up only the video stream, and one that ends with TEARDOWN alone; an MPEG-TS stream whose stream object leaves the bin with the parsed caps; a second listener refused on a UDP port in use; and their `udpsrc` stopped right after it starts, thousands of times. |
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start, frames that carry only a DTS, and the start time and comment each container is tagged with. |
 | `GStreamerHelpersTest` | Integration | The pipeline helpers: adding to a bin, removing a child with or without a flush and while its bin changes state, tee branches, keyframe requests, events sent from GStreamer's thread pool, pads held until linked, and the plugin registry walk. |
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
