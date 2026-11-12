@@ -97,6 +97,54 @@ std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
     return utcUs(calendar, *milliseconds);
 }
 
+/// Where the receiver's own sentences carry their fields, counted from "$PASHR".
+namespace Field {
+/// $PASHR,POS,d1,d2,m3,m4,c5,m6,c7,f8,f9,f10,f11,f12,f13,f14,f15,f16,s17
+constexpr size_t POS_MODE = 2;
+constexpr size_t POS_SATELLITES = 3;
+constexpr size_t POS_UTC_TIME = 4;
+constexpr size_t POS_LATITUDE = 5;
+constexpr size_t POS_LATITUDE_SECTOR = 6;
+constexpr size_t POS_LONGITUDE = 7;
+constexpr size_t POS_LONGITUDE_SECTOR = 8;
+constexpr size_t POS_ALTITUDE = 9;
+constexpr size_t POS_DIFFERENTIAL_AGE = 10;
+constexpr size_t POS_COURSE = 11;
+constexpr size_t POS_SPEED = 12;
+constexpr size_t POS_VERTICAL_VELOCITY = 13;
+constexpr size_t POS_PDOP = 14;
+constexpr size_t POS_HDOP = 15;
+constexpr size_t POS_VDOP = 16;
+constexpr size_t POS_TDOP = 17;
+/// $PASHR,RECEIPT,POS,AVG, then STARTED in the receipt of a start.
+constexpr size_t RECEIPT_SUBJECT = 2;
+constexpr size_t RECEIPT_OPERATION = 3;
+constexpr size_t RECEIPT_STAGE = 4;
+/// ...,STARTED,INTERVAL,<seconds>,<time>,<date>
+constexpr size_t START_INTERVAL_LABEL = 5;
+constexpr size_t START_INTERVAL = 6;
+constexpr size_t START_TIME = 7;
+constexpr size_t START_DATE = 8;
+constexpr size_t START_FIELDS = START_DATE + 1;
+/// ...,<seconds>,FINISHED,<time>,<date>, then ERR or
+/// <latitude>,<N/S>,<longitude>,<E/W>,<altitude>,OK,<mode>,<duration>
+constexpr size_t FINISH_INTERVAL = 4;
+constexpr size_t FINISH_STAGE = 5;
+constexpr size_t FINISH_TIME = 6;
+constexpr size_t FINISH_DATE = 7;
+constexpr size_t FINISH_ERROR = 8;
+constexpr size_t FINISH_LATITUDE = 8;
+constexpr size_t FINISH_LATITUDE_SECTOR = 9;
+constexpr size_t FINISH_LONGITUDE = 10;
+constexpr size_t FINISH_LONGITUDE_SECTOR = 11;
+constexpr size_t FINISH_ALTITUDE = 12;
+constexpr size_t FINISH_STATUS = 13;
+constexpr size_t FINISH_MODE = 14;
+constexpr size_t FINISH_DURATION = 15;
+constexpr size_t FAILED_FIELDS = FINISH_ERROR + 1;
+constexpr size_t FINISHED_FIELDS = FINISH_DURATION + 1;
+}  // namespace Field
+
 /// $PASHR,POS position modes (d1) outside the 0 to 5 that follow GPSFixQuality's order.
 namespace PositionMode {
 constexpr int SBAS_DIFFERENTIAL = 9;
@@ -163,24 +211,27 @@ std::optional<PositionFix> positionFix(const NMEA::Sentence& sentence)
     // sentence. Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix; the
     // hemisphere of an empty latitude or longitude may be empty too.
     const auto& fields = sentence.fields;
-    const auto quality = numberOr(fields[2], 0);
-    const auto satellites = numberOr(fields[3], 0);
-    const auto latitude = numberOr(fields[5], 0.0);
-    const auto longitude = numberOr(fields[7], 0.0);
-    const auto altitude = numberOr(fields[9], 0.0);
-    const auto horizontalDop = numberOr(fields[15], 99.9);
-    const auto verticalDop = numberOr(fields[16], 99.9);
+    const auto quality = numberOr(fields[Field::POS_MODE], 0);
+    const auto satellites = numberOr(fields[Field::POS_SATELLITES], 0);
+    const auto latitude = numberOr(fields[Field::POS_LATITUDE], 0.0);
+    const auto longitude = numberOr(fields[Field::POS_LONGITUDE], 0.0);
+    const auto altitude = numberOr(fields[Field::POS_ALTITUDE], 0.0);
+    const auto horizontalDop = numberOr(fields[Field::POS_HDOP], 99.9);
+    const auto verticalDop = numberOr(fields[Field::POS_VDOP], 99.9);
     // Track and speed are range-checked where they are read below. Time, differential age, vertical velocity, PDOP
     // and TDOP are validated but not reported.
-    for (const size_t validated : {4, 10, 11, 12, 13, 14, 17}) {
+    for (const size_t validated : {Field::POS_UTC_TIME, Field::POS_DIFFERENTIAL_AGE, Field::POS_COURSE,
+                                   Field::POS_SPEED, Field::POS_VERTICAL_VELOCITY, Field::POS_PDOP, Field::POS_TDOP}) {
         if (!numberOr(fields[validated], 0.0)) {
             return std::nullopt;
         }
     }
-    const std::string_view northSouth = fields[6];
-    const std::string_view eastWest = fields[8];
-    const bool latitudeSector = northSouth == "N" || northSouth == "S" || (northSouth.empty() && fields[5].empty());
-    const bool longitudeSector = eastWest == "E" || eastWest == "W" || (eastWest.empty() && fields[7].empty());
+    const bool noLatitude = fields[Field::POS_LATITUDE].empty();
+    const bool noLongitude = fields[Field::POS_LONGITUDE].empty();
+    const std::string_view northSouth = fields[Field::POS_LATITUDE_SECTOR];
+    const std::string_view eastWest = fields[Field::POS_LONGITUDE_SECTOR];
+    const bool latitudeSector = northSouth == "N" || northSouth == "S" || (northSouth.empty() && noLatitude);
+    const bool longitudeSector = eastWest == "E" || eastWest == "W" || (eastWest.empty() && noLongitude);
     constexpr int MAX_SATELLITES = 255;
     // 90 and 180 degrees as ddmm.mmmm and dddmm.mmmm.
     constexpr double MAX_LATITUDE = 9000;
@@ -199,10 +250,10 @@ std::optional<PositionFix> positionFix(const NMEA::Sentence& sentence)
         .altitudeEllipsoidMeters = *altitude,
         .horizontalDop = static_cast<float>(*horizontalDop),
         .verticalDop = static_cast<float>(*verticalDop),
-        .coordinatesFound = !fields[5].empty() && !fields[7].empty() && !fields[9].empty(),
-        .utcMilliseconds = NMEA::utcMilliseconds(fields[4]),
-        .courseDegrees = NMEA::courseDegrees(fields[11]),
-        .speedMetersPerSecond = NMEA::speedMetersPerSecond(fields[12], NMEA::KNOTS_TO_METERS_PER_SECOND),
+        .coordinatesFound = !noLatitude && !noLongitude && !fields[Field::POS_ALTITUDE].empty(),
+        .utcMilliseconds = NMEA::utcMilliseconds(fields[Field::POS_UTC_TIME]),
+        .courseDegrees = NMEA::courseDegrees(fields[Field::POS_COURSE]),
+        .speedMetersPerSecond = NMEA::speedMetersPerSecond(fields[Field::POS_SPEED], NMEA::KNOTS_TO_METERS_PER_SECOND),
     };
 }
 
@@ -248,9 +299,10 @@ struct SurveyReceipt
 std::optional<SurveyReceipt> surveyStartReceipt(const NMEA::Sentence& sentence)
 {
     const auto& fields = sentence.fields;
-    const auto interval = NMEA::number<uint32_t>(fields[6]);
-    const auto receiptTime = receiptUtc(fields[8], fields[7]);
-    if (sentence.count != 9 || fields[5] != "INTERVAL" || !interval || *interval == 0 || !receiptTime) {
+    const auto interval = NMEA::number<uint32_t>(fields[Field::START_INTERVAL]);
+    const auto receiptTime = receiptUtc(fields[Field::START_DATE], fields[Field::START_TIME]);
+    if (sentence.count != Field::START_FIELDS || fields[Field::START_INTERVAL_LABEL] != "INTERVAL" || !interval ||
+        *interval == 0 || !receiptTime) {
         return std::nullopt;
     }
     return SurveyReceipt{.stage = SurveyReceipt::Stage::Started, .interval = *interval, .utcUs = *receiptTime};
@@ -262,21 +314,25 @@ std::optional<SurveyReceipt> surveyStartReceipt(const NMEA::Sentence& sentence)
 std::optional<SurveyReceipt> surveyFinishReceipt(const NMEA::Sentence& sentence)
 {
     const auto& fields = sentence.fields;
-    const bool failed = fields[8] == "ERR";
-    const auto interval = NMEA::number<uint32_t>(fields[4]);
-    const auto receiptTime = receiptUtc(fields[7], fields[6]);
-    if (!interval || *interval == 0 || fields[5] != "FINISHED" || !receiptTime || sentence.count != (failed ? 9 : 16)) {
+    const bool failed = fields[Field::FINISH_ERROR] == "ERR";
+    const auto interval = NMEA::number<uint32_t>(fields[Field::FINISH_INTERVAL]);
+    const auto receiptTime = receiptUtc(fields[Field::FINISH_DATE], fields[Field::FINISH_TIME]);
+    if (!interval || *interval == 0 || fields[Field::FINISH_STAGE] != "FINISHED" || !receiptTime ||
+        sentence.count != (failed ? Field::FAILED_FIELDS : Field::FINISHED_FIELDS)) {
         return std::nullopt;
     }
     SurveyReceipt receipt{.stage = failed ? SurveyReceipt::Stage::Failed : SurveyReceipt::Stage::Finished,
                           .interval = *interval,
                           .utcUs = *receiptTime};
     if (!failed) {
-        const auto lat = NMEA::coordinate(fields[8], fields[9], NMEA::Coordinate::Latitude);
-        const auto lon = NMEA::coordinate(fields[10], fields[11], NMEA::Coordinate::Longitude);
-        const auto alt = NMEA::number<float>(fields[12]);
-        const auto duration = NMEA::number<double>(fields[15]);
-        if (!lat || !lon || !alt || fields[13] != "OK" || fields[14].empty() || !duration || *duration < 0) {
+        const auto lat = NMEA::coordinate(fields[Field::FINISH_LATITUDE], fields[Field::FINISH_LATITUDE_SECTOR],
+                                          NMEA::Coordinate::Latitude);
+        const auto lon = NMEA::coordinate(fields[Field::FINISH_LONGITUDE], fields[Field::FINISH_LONGITUDE_SECTOR],
+                                          NMEA::Coordinate::Longitude);
+        const auto alt = NMEA::number<float>(fields[Field::FINISH_ALTITUDE]);
+        const auto duration = NMEA::number<double>(fields[Field::FINISH_DURATION]);
+        if (!lat || !lon || !alt || fields[Field::FINISH_STATUS] != "OK" || fields[Field::FINISH_MODE].empty() ||
+            !duration || *duration < 0) {
             return std::nullopt;
         }
         receipt.latitude = *lat;
@@ -287,14 +343,15 @@ std::optional<SurveyReceipt> surveyFinishReceipt(const NMEA::Sentence& sentence)
 
 std::optional<SurveyReceipt> surveyReceipt(const NMEA::Sentence& sentence)
 {
-    if (sentence.count < 9) {
+    // The shortest receipt is that of a start or of a failed finish.
+    if (sentence.count < (std::min) (Field::START_FIELDS, Field::FAILED_FIELDS)) {
         return std::nullopt;
     }
     const auto& fields = sentence.fields;
-    if (fields[2] != "POS" || fields[3] != "AVG") {
+    if (fields[Field::RECEIPT_SUBJECT] != "POS" || fields[Field::RECEIPT_OPERATION] != "AVG") {
         return std::nullopt;
     }
-    return fields[4] == "STARTED" ? surveyStartReceipt(sentence) : surveyFinishReceipt(sentence);
+    return fields[Field::RECEIPT_STAGE] == "STARTED" ? surveyStartReceipt(sentence) : surveyFinishReceipt(sentence);
 }
 
 /// Configures an Ashtech receiver from Ashtech::Plan: finds its port and rate, moves the link to 115200 baud,
