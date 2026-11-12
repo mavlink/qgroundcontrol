@@ -1,7 +1,5 @@
 #pragma once
 
-#include <QtPositioning/QGeoCoordinate>
-
 #include "BaseClasses/VehicleTest.h"
 
 /// Verifies how MAV_CMD_DO_SET_HOME is sent for both "Set Home Here" and the GCS-position home
@@ -26,9 +24,6 @@ private slots:
     void _gcsPositionUpdateSendsCommandLong();
 
 private:
-    /// Waits for a DO_SET_HOME COMMAND_INT and checks its frame, unset yaw and location
-    void _verifySetHomeCommandInt(const QGeoCoordinate& coord, double amslAltitude);
-
     /// Replaces the connected vehicle with one that reports its capabilities without COMMAND_INT
     [[nodiscard]] bool _reconnectWithoutCommandInt();
 };

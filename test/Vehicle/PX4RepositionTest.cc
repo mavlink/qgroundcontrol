@@ -9,23 +9,24 @@
 namespace {
 constexpr double kAltitudeChange = 5.0;
 
-/// The MAV_CMD_DO_REPOSITION commands written to a MockLink as COMMAND_LONG from now on. It reads what the link is
-/// given to write: MockLink keeps only the last COMMAND_LONG it received, and QGroundControl may send another one
-/// meanwhile, such as a message request.
-class SentRepositionCommandLongs
+/// The MAV_CMD_DO_REPOSITION commands written to a MockLink from now on, each as the message it was sent in. It
+/// reads what the link is given to write: MockLink keeps only the last COMMAND_INT and the last COMMAND_LONG it
+/// received, and QGroundControl may send another one meanwhile, such as a message request.
+class SentRepositionCommands
 {
 public:
-    explicit SentRepositionCommandLongs(MockLink* link)
+    explicit SentRepositionCommands(MockLink* link)
         : _connection(QObject::connect(link, &MockLink::writeBytesQueuedSignal, link,
                                        [this](const QByteArray& bytes) { _read(bytes); }))
     {}
 
-    ~SentRepositionCommandLongs() { QObject::disconnect(_connection); }
+    ~SentRepositionCommands() { QObject::disconnect(_connection); }
 
-    SentRepositionCommandLongs(const SentRepositionCommandLongs&) = delete;
-    SentRepositionCommandLongs& operator=(const SentRepositionCommandLongs&) = delete;
+    SentRepositionCommands(const SentRepositionCommands&) = delete;
+    SentRepositionCommands& operator=(const SentRepositionCommands&) = delete;
 
-    QList<mavlink_command_long_t> commands;
+    QList<mavlink_command_int_t> asCommandInt;
+    QList<mavlink_command_long_t> asCommandLong;
 
 private:
     void _read(const QByteArray& bytes)
@@ -33,15 +34,22 @@ private:
         for (const char byte : bytes) {
             mavlink_message_t message{};
             mavlink_status_t status{};
-            if ((mavlink_frame_char_buffer(&_frame, &_parser, static_cast<uint8_t>(byte), &message, &status) !=
-                 MAVLINK_FRAMING_OK) ||
-                (message.msgid != MAVLINK_MSG_ID_COMMAND_LONG)) {
+            if (mavlink_frame_char_buffer(&_frame, &_parser, static_cast<uint8_t>(byte), &message, &status) !=
+                MAVLINK_FRAMING_OK) {
                 continue;
             }
-            mavlink_command_long_t command{};
-            mavlink_msg_command_long_decode(&message, &command);
-            if (command.command == MAV_CMD_DO_REPOSITION) {
-                commands.append(command);
+            if (message.msgid == MAVLINK_MSG_ID_COMMAND_INT) {
+                mavlink_command_int_t command{};
+                mavlink_msg_command_int_decode(&message, &command);
+                if (command.command == MAV_CMD_DO_REPOSITION) {
+                    asCommandInt.append(command);
+                }
+            } else if (message.msgid == MAVLINK_MSG_ID_COMMAND_LONG) {
+                mavlink_command_long_t command{};
+                mavlink_msg_command_long_decode(&message, &command);
+                if (command.command == MAV_CMD_DO_REPOSITION) {
+                    asCommandLong.append(command);
+                }
             }
         }
     }
@@ -50,15 +58,10 @@ private:
     mavlink_status_t _parser{};
     const QMetaObject::Connection _connection;
 };
-}  // namespace
 
-void PX4RepositionTest::_verifyRepositionCommandInt(float yaw, float amslAltitude)
+/// Checks @a command is a DO_REPOSITION to Hold that keeps the current latitude/longitude
+void verifyRepositionCommandInt(const mavlink_command_int_t& command, float yaw, float amslAltitude)
 {
-    mavlink_message_t message{};
-    QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_COMMAND_INT, message));
-    mavlink_command_int_t command{};
-    mavlink_msg_command_int_decode(&message, &command);
-    QCOMPARE(command.command, static_cast<uint16_t>(MAV_CMD_DO_REPOSITION));
     QCOMPARE(command.frame, static_cast<uint8_t>(MAV_FRAME_GLOBAL));
     QCOMPARE(command.param1, -1.0f);  // no ground speed change
     QCOMPARE(command.param2, static_cast<float>(MAV_DO_REPOSITION_FLAGS_CHANGE_MODE));
@@ -67,6 +70,7 @@ void PX4RepositionTest::_verifyRepositionCommandInt(float yaw, float amslAltitud
     QCOMPARE(command.y, INT32_MAX);
     QCOMPARE(command.z, amslAltitude);
 }
+}  // namespace
 
 double PX4RepositionTest::_changedAmslAltitude(double altitudeChange) const
 {
@@ -78,17 +82,14 @@ void PX4RepositionTest::_noChangeLatLonSentAsInt32Max()
     QVERIFY(vehicle());
 
     mockLink()->clearReceivedMavCommandCounts();
-    mockLink()->clearReceivedMavlinkMessageCounts();
+    SentRepositionCommands sent(mockLink());
     vehicle()->sendMavCommandInt(vehicle()->defaultComponentId(), MAV_CMD_DO_REPOSITION, MAV_FRAME_GLOBAL,
                                  false,  // showError
                                  -1.0f, MAV_DO_REPOSITION_FLAGS_CHANGE_MODE, 0.0f, qQNaN(), qQNaN(), qQNaN(), qQNaN());
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 1, TestTimeout::longMs());
 
-    mavlink_message_t message{};
-    QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_COMMAND_INT, message));
-    mavlink_command_int_t command{};
-    mavlink_msg_command_int_decode(&message, &command);
-    QCOMPARE(command.command, static_cast<uint16_t>(MAV_CMD_DO_REPOSITION));
+    QVERIFY(!sent.asCommandInt.isEmpty());
+    const mavlink_command_int_t& command = sent.asCommandInt.constFirst();
     // NaN has no integer form, so COMMAND_INT marks an unused x/y with INT32_MAX
     QCOMPARE(command.x, INT32_MAX);
     QCOMPARE(command.y, INT32_MAX);
@@ -100,10 +101,11 @@ void PX4RepositionTest::_pauseSendsCommandInt()
     QVERIFY(vehicle());
 
     mockLink()->clearReceivedMavCommandCounts();
-    mockLink()->clearReceivedMavlinkMessageCounts();
+    SentRepositionCommands sent(mockLink());
     vehicle()->pauseVehicle();
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 1, TestTimeout::longMs());
-    _verifyRepositionCommandInt(qQNaN(), qQNaN());
+    QVERIFY(!sent.asCommandInt.isEmpty());
+    verifyRepositionCommandInt(sent.asCommandInt.constFirst(), qQNaN(), qQNaN());
 }
 
 void PX4RepositionTest::_changeHeadingSendsCommandInt()
@@ -115,10 +117,11 @@ void PX4RepositionTest::_changeHeadingSendsCommandInt()
     const float expectedYaw = qDegreesToRadians(vehicle()->coordinate().azimuthTo(headingCoord));
 
     mockLink()->clearReceivedMavCommandCounts();
-    mockLink()->clearReceivedMavlinkMessageCounts();
+    SentRepositionCommands sent(mockLink());
     vehicle()->guidedModeChangeHeading(headingCoord);
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 1, TestTimeout::longMs());
-    _verifyRepositionCommandInt(expectedYaw, qQNaN());
+    QVERIFY(!sent.asCommandInt.isEmpty());
+    verifyRepositionCommandInt(sent.asCommandInt.constFirst(), expectedYaw, qQNaN());
 }
 
 void PX4RepositionTest::_changeAltitudeSendsCommandInt()
@@ -131,10 +134,11 @@ void PX4RepositionTest::_changeAltitudeSendsCommandInt()
     const double expectedAltitude = _changedAmslAltitude(kAltitudeChange);
 
     mockLink()->clearReceivedMavCommandCounts();
-    mockLink()->clearReceivedMavlinkMessageCounts();
+    SentRepositionCommands sent(mockLink());
     vehicle()->guidedModeChangeAltitude(kAltitudeChange, false /* pauseVehicle */);
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 1, TestTimeout::longMs());
-    _verifyRepositionCommandInt(qQNaN(), static_cast<float>(expectedAltitude));
+    QVERIFY(!sent.asCommandInt.isEmpty());
+    verifyRepositionCommandInt(sent.asCommandInt.constFirst(), qQNaN(), static_cast<float>(expectedAltitude));
 }
 
 void PX4RepositionTest::_changeAltitudeAfterPauseSendsCommandInt()
@@ -146,12 +150,14 @@ void PX4RepositionTest::_changeAltitudeAfterPauseSendsCommandInt()
     const double expectedAltitude = _changedAmslAltitude(kAltitudeChange);
 
     mockLink()->clearReceivedMavCommandCounts();
-    mockLink()->clearReceivedMavlinkMessageCounts();
+    SentRepositionCommands sent(mockLink());
     vehicle()->guidedModeChangeAltitude(kAltitudeChange, true /* pauseVehicle */);
-    // The pause is sent first and the altitude change follows once it is accepted. MockLink only
-    // accepts DO_REPOSITION as COMMAND_INT, so the second command also proves how the pause was sent.
+    // The pause is sent first and the altitude change follows once it is accepted
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 2, TestTimeout::longMs());
-    _verifyRepositionCommandInt(qQNaN(), static_cast<float>(expectedAltitude));
+    QCOMPARE(sent.asCommandLong.size(), 0);
+    QVERIFY(sent.asCommandInt.size() >= 2);
+    verifyRepositionCommandInt(sent.asCommandInt.constFirst(), qQNaN(), qQNaN());
+    verifyRepositionCommandInt(sent.asCommandInt.constLast(), qQNaN(), static_cast<float>(expectedAltitude));
 }
 
 void PX4RepositionTest::_pauseBeforePx4_1_12SendsCommandLong()
@@ -163,7 +169,7 @@ void PX4RepositionTest::_pauseBeforePx4_1_12SendsCommandLong()
 
     mockLink()->clearReceivedMavCommandCounts();
     mockLink()->clearReceivedMavlinkMessageCounts();
-    SentRepositionCommandLongs sent(mockLink());
+    SentRepositionCommands sent(mockLink());
     // MockLink only accepts DO_REPOSITION as COMMAND_INT
     expectAppMessage(QRegularExpression(QStringLiteral("MAV_CMD_DO_REPOSITION.*not supported")));
     vehicle()->pauseVehicle();
@@ -173,8 +179,8 @@ void PX4RepositionTest::_pauseBeforePx4_1_12SendsCommandLong()
     verifyExpectedLogMessage();
     QCOMPARE(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_COMMAND_INT), 0);
 
-    QVERIFY(!sent.commands.isEmpty());
-    const mavlink_command_long_t& command = sent.commands.constFirst();
+    QVERIFY(!sent.asCommandLong.isEmpty());
+    const mavlink_command_long_t& command = sent.asCommandLong.constFirst();
     QVERIFY(qIsNaN(command.param5));
     QVERIFY(qIsNaN(command.param6));
 }

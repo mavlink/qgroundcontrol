@@ -128,17 +128,12 @@ void verifyOneCommandLong(const SentSetHomeCommands& sent, const QGeoCoordinate&
     QCOMPARE(command.param7, static_cast<float>(amslAltitude));
 }
 
-}  // namespace
-
-void SetHomeTest::_verifySetHomeCommandInt(const QGeoCoordinate& coord, double amslAltitude)
+/// Checks that @a sent holds one command, a COMMAND_INT in MAV_FRAME_GLOBAL for @a coord at @a amslAltitude.
+void verifyOneCommandInt(const SentSetHomeCommands& sent, const QGeoCoordinate& coord, double amslAltitude)
 {
-    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_HOME) >= 1, TestTimeout::longMs());
-
-    mavlink_message_t message{};
-    QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_COMMAND_INT, message));
-    mavlink_command_int_t command{};
-    mavlink_msg_command_int_decode(&message, &command);
-    QCOMPARE(command.command, static_cast<uint16_t>(MAV_CMD_DO_SET_HOME));
+    QCOMPARE(sent.asCommandLong.size(), 0);
+    QCOMPARE(sent.asCommandInt.size(), 1);
+    const mavlink_command_int_t& command = sent.asCommandInt.constFirst();
     QCOMPARE(command.frame, static_cast<uint8_t>(MAV_FRAME_GLOBAL));
     QCOMPARE(command.param1, 0.0f);  // use the location in the command, not the current position
     // No yaw: home keeps the vehicle's default heading.
@@ -148,6 +143,8 @@ void SetHomeTest::_verifySetHomeCommandInt(const QGeoCoordinate& coord, double a
     QCOMPARE(command.z, static_cast<float>(amslAltitude));
 }
 
+}  // namespace
+
 void SetHomeTest::_setHomeHereSendsCommandInt()
 {
     QVERIFY(vehicle());
@@ -156,8 +153,10 @@ void SetHomeTest::_setHomeHereSendsCommandInt()
     const QGeoCoordinate homeCoord = UnitTestTerrainData::flat10Region.center();
 
     mockLink()->clearReceivedMavCommandCounts();
+    SentSetHomeCommands sent(mockLink());
     vehicle()->doSetHome(homeCoord);
-    _verifySetHomeCommandInt(homeCoord, UnitTestTerrainData::Flat10Region::amslElevation);
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_HOME) >= 1, TestTimeout::longMs());
+    verifyOneCommandInt(sent, homeCoord, UnitTestTerrainData::Flat10Region::amslElevation);
 }
 
 void SetHomeTest::_gcsPositionUpdateSendsCommandInt_data()
@@ -188,6 +187,7 @@ void SetHomeTest::_gcsPositionUpdateSendsCommandInt()
     GcsHomeUpdate gcs(datum);
 
     mockLink()->clearReceivedMavCommandCounts();
+    SentSetHomeCommands sent(mockLink());
     QGeoCoordinate gcsCoord(47.3977419, 8.5455938);
     if (qIsFinite(verticalAccuracy)) {
         gcsCoord.setAltitude(homeAltitude + 25);
@@ -201,7 +201,8 @@ void SetHomeTest::_gcsPositionUpdateSendsCommandInt()
         const double separation = QGCGeo::geoidSeparation(gcsCoord.latitude(), gcsCoord.longitude());
         expectedAltitude = gcsCoord.altitude() - (datum == GPSAltitudeDatum::Ellipsoid ? separation : 0.0);
     }
-    _verifySetHomeCommandInt(gcsCoord, expectedAltitude);
+    verifyOneCommandInt(sent, gcsCoord, expectedAltitude);
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_HOME) >= 1, TestTimeout::longMs());
     QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_HOME), 1);
 }
 
