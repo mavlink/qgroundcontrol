@@ -76,9 +76,24 @@ file(
     PATTERN "*.sbf"
     PATTERN "*.ubx"
 )
+# The smoke test reads the same seeds from the source tree, as a file list instead of corpus directories: libFuzzer
+# writes every input it keeps into its first corpus directory, which would grow with each run and slow the next.
+set(_qgc_gps_fuzz_seed_globs "${CMAKE_CURRENT_SOURCE_DIR}/../corpus/*")
+foreach(suffix cap gps nmea sbf ubx)
+    list(APPEND _qgc_gps_fuzz_seed_globs "${CMAKE_CURRENT_SOURCE_DIR}/../fixtures/*.${suffix}")
+endforeach()
+file(
+    GLOB _qgc_gps_fuzz_seeds
+    LIST_DIRECTORIES false
+    ${_qgc_gps_fuzz_seed_globs}
+)
+list(SORT _qgc_gps_fuzz_seeds)
+# libFuzzer splits the list at commas and takes the rest of the file literally, so it ends without a newline.
+list(JOIN _qgc_gps_fuzz_seeds "," _qgc_gps_fuzz_seed_list)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/smoke-seeds.txt" "${_qgc_gps_fuzz_seed_list}")
 add_test(
     NAME GPSProtocolFuzzSmoke COMMAND QGCGPSProtocolFuzz -runs=10000 -seed=12345 -max_len=8192
-                                      "${CMAKE_CURRENT_BINARY_DIR}/corpus" "${CMAKE_CURRENT_BINARY_DIR}/fixture-seeds"
+                                      "-seed_inputs=@${CMAKE_CURRENT_BINARY_DIR}/smoke-seeds.txt"
 )
 # Always built with ASan and UBSan, so it gets the unit-test timeout of the application's sanitizer builds.
 set_tests_properties(
