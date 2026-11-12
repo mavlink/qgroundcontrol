@@ -19,6 +19,7 @@ private slots:
     void _defaultSetInfoOpensAndCloses();
     void _setInfoShowsSetAreaAndMap_data();
     void _setInfoShowsSetAreaAndMap();
+    void _mapEngineErrorOpensOneDialog();
     void _setCannotBeEditedDuringImport();
     void _renamedSetIsListedByItsNewName();
 

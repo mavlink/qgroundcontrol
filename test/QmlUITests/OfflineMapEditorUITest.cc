@@ -369,6 +369,36 @@ void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
     stopUI();
 }
 
+void OfflineMapEditorUITest::_mapEngineErrorOpensOneDialog()
+{
+    _openMapsSettings(/*geoMapEngine*/ false);
+    const auto restoreEngine = qScopeGuard(
+        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_addButton"), QStringLiteral("settingsPageFlickable")));
+    if (!_editorMap(/*geoMapEngine*/ false)) {
+        return;
+    }
+
+    // The settings page, which stays under the editor, reports the errors of the map engine
+    QGCMapEngineManager* const manager = QGCMapEngineManager::instance();
+    const auto restoreError =
+        qScopeGuard([manager, savedError = manager->errorMessage()] { manager->setErrorMessage(savedError); });
+    manager->setErrorMessage(QStringLiteral("Error of the test for one dialog"));
+    QVERIFY(waitForDialog(QStringLiteral("Error Message")));
+    QCOMPARE(_visibleItemCount(_rootItem, QStringLiteral("popupDialog_title")), 1);
+
+    QVERIFY(rejectDialog());
+    QTRY_VERIFY_WITH_TIMEOUT(!dialogVisible(QStringLiteral("Error Message")), TestTimeout::shortMs());
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_cancelButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    stopUI();
+}
+
 void OfflineMapEditorUITest::_setCannotBeEditedDuringImport()
 {
     _openMapsSettings(/*geoMapEngine*/ false);

@@ -53,11 +53,6 @@ Item {
         updateMap()
     }
 
-    Connections {
-        target: QGroundControl.mapEngineManager
-        function onErrorMessageChanged() { errorDialogFactory.open() }
-    }
-
     function handleChanges() {
         if (isMapInteractive) {
             const xr = Math.round(_map.width) - 1  // Must be within boundaries of visible map
@@ -768,22 +763,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    QGCPopupDialogFactory {
-        id: errorDialogFactory
-
-        dialogComponent: errorDialogComponent
-    }
-
-    Component {
-        id: errorDialogComponent
-
-        QGCSimpleMessageDialog {
-            title: qsTr("Error Message")
-            text: QGroundControl.mapEngineManager.errorMessage
-            buttons: Dialog.Close
         }
     }
 
