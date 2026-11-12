@@ -603,7 +603,9 @@ These areas have their own READMEs:
   `tcp://localhost:5760`, `fly_plan.py`, which flies a `.plan` in ArduPilot or PX4 SITL and
   records the track and images, `mock_ntrip_caster.py`, an offline NTRIP caster on
   `127.0.0.1:2101` for testing RTK corrections, and `rc_transmitter.py`, a web page of RC channel
-  sliders for PX4 SITL.
+  sliders for PX4 SITL. It also describes the GNSS receiver simulator, which is not a script here
+  but `QGCGPSHardwareRunner --serve` of the Linux test build: a u-blox RTK base, or a replayed
+  receiver recording, on a TCP port.
 - [translations/](translations/README.md) — `just translations` runs `qgc_lupdate.py` (lupdate,
   the JSON string extractor, and `pseudo_loc.py`); `check_placeholders.py` guards translation
   placeholders.
