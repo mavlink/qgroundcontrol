@@ -157,8 +157,8 @@ constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
 /// Decompress a single file
 /// A compressed file that holds no data, as a compressor writes for an empty file, gives an empty output file.
 /// A file without any bytes is not a compressed file, and is refused. So is a file that is taken for a
-/// compressed one, by its name or by the format passed, and is not compressed: nothing is written, and
-/// lastError() is Error::UnsupportedFormat.
+/// compressed one, by its name or by the format passed, and is not compressed, and a bzip2 or LZ4 file in a
+/// build that cannot decode it: nothing is written, and lastError() is Error::UnsupportedFormat.
 /// @param inputPath Path to compressed file (or Qt resource path :/)
 /// @param outputPath Path for decompressed output. If empty: inputPath without the extension of the format
 ///        (for GZIP .gz or .gzip), or with ".decompressed" appended if it does not end in one

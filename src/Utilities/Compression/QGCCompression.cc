@@ -291,6 +291,9 @@ static void setOperationError(QGClibarchive::ReadResult result, const QString& m
         setError(Error::IoError, message);
     } else if (result == QGClibarchive::ReadResult::NotCompressed) {
         setError(Error::UnsupportedFormat, message + QStringLiteral(": the input is not compressed"));
+    } else if (result == QGClibarchive::ReadResult::Unsupported) {
+        setError(Error::UnsupportedFormat,
+                 message + QStringLiteral(": the compression is not supported by this build"));
     } else {
         // What is left is the input, which cannot be read or is damaged
         setError(Error::InvalidArchive, message);
@@ -325,6 +328,7 @@ static void setExtractionError(QGClibarchive::ReadResult result, const QString& 
         case QGClibarchive::ReadResult::Completed:
         case QGClibarchive::ReadResult::Cancelled:
         case QGClibarchive::ReadResult::NotCompressed:
+        case QGClibarchive::ReadResult::Unsupported:
         case QGClibarchive::ReadResult::Failed:
             break;
     }

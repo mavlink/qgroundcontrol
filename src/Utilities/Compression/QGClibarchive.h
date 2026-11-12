@@ -50,15 +50,15 @@ enum class ReaderMode {
 /// @param mode Format support mode (AllFormats or RawFormat)
 void configureReader(struct archive* a, ReaderMode mode);
 
-/// Size of the stream signature canDecodeStream() looks at
+/// Size of the stream signature undecodableStreamReason() looks at
 constexpr qsizetype kStreamSignatureSize = 4;
 
-/// Check that this build can decode a single compressed stream
+/// Tell why this build cannot decode a single compressed stream
 /// With RawFormat libarchive hands data through unchanged when no registered filter
 /// recognizes it, so bzip2 and LZ4 streams have to be refused when their decoder is missing.
 /// @param signature At least the first kStreamSignatureSize bytes of the stream
-/// @return false (after logging a warning) for a bzip2 or LZ4 stream that cannot be decoded
-bool canDecodeStream(const QByteArray& signature);
+/// @return The reason for a bzip2 or LZ4 stream that cannot be decoded, or an empty string
+QString undecodableStreamReason(const QByteArray& signature);
 
 /// Tell a compressed stream that decompresses to nothing from an input that cannot be read
 /// libarchive's raw format reads a stream as one entry, and has none for an input that is empty once it is
@@ -98,8 +98,8 @@ struct DeviceSource
 /// \brief RAII wrapper for libarchive reader with automatic cleanup
 ///
 /// Every libarchive reader is set up by one of the open functions: created, given the filters and
-/// formats of its mode by configureReader() and, in RawFormat mode, refused by canDecodeStream()
-/// if this build cannot decode the stream.
+/// formats of its mode by configureReader() and, in RawFormat mode, refused for the reason
+/// undecodableStreamReason() gives if this build cannot decode the stream.
 class ArchiveReader {
 public:
     ArchiveReader() = default;
@@ -124,8 +124,8 @@ public:
     /// Open archive for reading from a QIODevice, for a caller that reports the failure itself
     /// @param device QIODevice to read from (must be open and readable)
     /// @param mode Format support mode (AllFormats or RawFormat)
-    /// @param errorString Receives the reason if the device cannot be read or libarchive cannot open it,
-    ///        and that reason is then not logged
+    /// @param errorString Receives the reason if the device cannot be read, this build cannot decode the stream
+    ///        or libarchive cannot open it, and that reason is then not logged
     /// @return true on success
     /// @note The device must remain valid and open until the reader is closed
     bool open(QIODevice* device, ReaderMode mode, QString& errorString);
@@ -149,6 +149,9 @@ public:
     /// Check if archive is open
     bool isOpen() const { return _archive != nullptr; }
 
+    /// Whether the last open refused the input because this build cannot decode its compression
+    bool unsupportedStream() const { return _unsupportedStream; }
+
     /// Get the total data size (for progress reporting)
     /// @return Size in bytes: size of the data in memory, file size, or device size (0 if unknown)
     qint64 dataSize() const;
@@ -168,15 +171,17 @@ private:
     };
 
     /// Close the archive and create the reader for the next one
-    /// @param signature Start of the input (see canDecodeStream()), looked at in RawFormat mode
-    /// @return false, after logging a warning, if the reader was not created
-    bool _create(ReaderMode mode, const QByteArray& signature);
+    /// @param signature Start of the input (see undecodableStreamReason()), looked at in RawFormat mode
+    /// @param reason Receives why the reader was not created, which is not logged
+    /// @return false if the reader was not created
+    bool _create(ReaderMode mode, const QByteArray& signature, QString& reason);
 
     // Declared before the reader, which reads from them and so is the first to go
     QByteArray _memoryData;  // Data read from memory: a Qt resource, or the bytes given to openMemory()
     DeviceSource _source;    // Device for streaming reads
     std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
+    bool _unsupportedStream = false;
 };
 
 // ============================================================================
@@ -292,6 +297,8 @@ enum class ReadResult
     Cancelled,      ///< The progress callback returned false
     NotCompressed,  ///< What was to be decompressed as a single stream is not compressed: no decompression filter
                     ///< recognizes it (a warning has been logged)
+    Unsupported,    ///< What was to be decompressed as a single stream has a compression this build cannot decode
+                    ///< (a warning has been logged)
     Failed          ///< The input cannot be read or is damaged, or what it holds is larger than maxBytes
 };
 

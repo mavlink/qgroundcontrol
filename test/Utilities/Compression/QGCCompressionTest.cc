@@ -1671,26 +1671,35 @@ void QGCCompressionTest::_testNoExternalDecompressors()
     expectBzip2Refused();
     QVERIFY(QGCCompression::decompressData(bzip2Stream).isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
 
     expectBzip2Refused();
     QVERIFY(!QGCCompression::decompressFile(bzip2Path, tempDir.filePath("stream")));
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
     QVERIFY(!QFile::exists(tempDir.filePath("stream")));
 
     expectBzip2Refused();
     QVERIFY(QGCCompression::decompressFromDevice(&bzip2Device).isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
 
-    QGCDecompressDevice bzip2Decompressor(&bzip2Device);
     expectBzip2Refused();
-    QVERIFY(!bzip2Decompressor.open(QIODevice::ReadOnly));
+    QVERIFY(!QGCCompression::decompressFromDevice(&bzip2Device, tempDir.filePath("stream")));
     verifyExpectedLogMessage();
-    QCOMPARE(bzip2Decompressor.errorString(), QStringLiteral("Compression format is not supported by this build"));
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
+    QVERIFY(!QFile::exists(tempDir.filePath("stream")));
+
+    // The device does not log: the reason is in its error string
+    QGCDecompressDevice bzip2Decompressor(&bzip2Device);
+    QVERIFY(!bzip2Decompressor.open(QIODevice::ReadOnly));
+    QCOMPARE(bzip2Decompressor.errorString(), QStringLiteral("bzip2 decompression is not supported by this build"));
 #endif
 #ifndef QGC_ENABLE_LZ4
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("LZ4.*not supported"));
     QVERIFY(QGCCompression::decompressData(QByteArray("\x04\x22\x4D\x18\x64\x40\xA7", 7) + padding).isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
 #endif
 
     QVERIFY2(!QFile::exists(markerPath), "An external decompression program was run");

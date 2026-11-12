@@ -59,12 +59,6 @@ bool QGCDecompressDevice::open(OpenMode mode)
 
 bool QGCDecompressDevice::initArchive()
 {
-    if (_sourceDevice && _sourceDevice->isReadable() &&
-        !QGClibarchive::canDecodeStream(_sourceDevice->peek(QGClibarchive::kStreamSignatureSize))) {
-        setError(QStringLiteral("Compression format is not supported by this build"));
-        return false;
-    }
-
     // Raw format for single-file decompression
     configureArchiveFormats(false);
 

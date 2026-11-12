@@ -967,6 +967,12 @@ StreamHeader readStreamHeader(struct archive* a, bool plainAllowed = false)
     return StreamHeader::Failed;
 }
 
+/// How an operation ends whose reader for a single compressed stream could not be opened
+QGClibarchive::ReadResult streamOpenFailure(const QGClibarchive::ArchiveReader& reader)
+{
+    return reader.unsupportedStream() ? QGClibarchive::ReadResult::Unsupported : QGClibarchive::ReadResult::Failed;
+}
+
 /// Write the output of a compressed stream that decompresses to nothing: a file without content
 QGClibarchive::ReadResult writeEmptyFile(const QString& outputPath)
 {
@@ -1068,17 +1074,22 @@ void ArchiveReader::close()
     _source = {};
 }
 
-bool ArchiveReader::_create(ReaderMode mode, const QByteArray& signature)
+bool ArchiveReader::_create(ReaderMode mode, const QByteArray& signature, QString& reason)
 {
     close();
+    _unsupportedStream = false;
 
-    if (mode == ReaderMode::RawFormat && !canDecodeStream(signature)) {
-        return false;
+    if (mode == ReaderMode::RawFormat) {
+        reason = undecodableStreamReason(signature);
+        if (!reason.isEmpty()) {
+            _unsupportedStream = true;
+            return false;
+        }
     }
 
     _archive.reset(archive_read_new());
     if (!_archive) {
-        qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
+        reason = QStringLiteral("Failed to create archive reader");
         return false;
     }
 
@@ -1096,7 +1107,9 @@ bool ArchiveReader::open(const QString& path, ReaderMode mode)
         }
     }
 
-    if (!_create(mode, signature)) {
+    QString reason;
+    if (!_create(mode, signature, reason)) {
+        qCWarning(QGClibarchiveLog).noquote() << reason;
         return false;
     }
     _filePath = path;
@@ -1118,9 +1131,7 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
 
     QString errorString;
     if (!open(device, mode, errorString)) {
-        if (!errorString.isEmpty()) {
-            qCWarning(QGClibarchiveLog).noquote() << "Failed to open device:" << errorString;
-        }
+        qCWarning(QGClibarchiveLog).noquote() << "Failed to open device:" << errorString;
         return false;
     }
 
@@ -1135,7 +1146,7 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorStrin
     }
 
     const QByteArray signature = (mode == ReaderMode::RawFormat) ? device->peek(kStreamSignatureSize) : QByteArray();
-    if (!_create(mode, signature)) {
+    if (!_create(mode, signature, errorString)) {
         return false;
     }
     _source.device = device;
@@ -1162,7 +1173,9 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorStrin
 
 bool ArchiveReader::openMemory(const QByteArray& data, ReaderMode mode)
 {
-    if (!_create(mode, data)) {
+    QString reason;
+    if (!_create(mode, data, reason)) {
+        qCWarning(QGClibarchiveLog).noquote() << reason;
         return false;
     }
     // A shared copy keeps the bytes libarchive reads from alive as long as the reader
@@ -1236,17 +1249,15 @@ void configureReader(struct archive* a, ReaderMode mode)
     }
 }
 
-bool canDecodeStream(const QByteArray& signature)
+QString undecodableStreamReason(const QByteArray& signature)
 {
     if (!bzip2DecoderAvailable() && signature.startsWith("BZh")) {
-        qCWarning(QGClibarchiveLog) << "bzip2 decompression is not supported by this build";
-        return false;
+        return QStringLiteral("bzip2 decompression is not supported by this build");
     }
     if (!lz4DecoderAvailable() && signature.startsWith(QByteArrayView("\x04\x22\x4D\x18", 4))) {
-        qCWarning(QGClibarchiveLog) << "LZ4 decompression is not supported by this build";
-        return false;
+        return QStringLiteral("LZ4 decompression is not supported by this build");
     }
-    return true;
+    return {};
 }
 
 bool isEmptyStream(struct archive* a, int headerResult)
@@ -1941,6 +1952,7 @@ bool decompressSingleFile(const QString& inputPath, const QString& outputPath, P
 
     ArchiveReader reader;
     if (!reader.open(inputPath, ReaderMode::RawFormat)) {
+        outcome = streamOpenFailure(reader);
         return false;
     }
 
@@ -1976,6 +1988,7 @@ QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes, Rea
 
     ArchiveReader reader;
     if (!reader.openMemory(data, ReaderMode::RawFormat)) {
+        outcome = streamOpenFailure(reader);
         return {};
     }
 
@@ -2041,6 +2054,7 @@ bool decompressFromDevice(QIODevice* device, const QString& outputPath, Progress
 
     ArchiveReader reader;
     if (!reader.open(device, ReaderMode::RawFormat)) {
+        outcome = streamOpenFailure(reader);
         return false;
     }
 
@@ -2070,6 +2084,7 @@ QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes, ReadResu
 
     ArchiveReader reader;
     if (!reader.open(device, ReaderMode::RawFormat)) {
+        outcome = streamOpenFailure(reader);
         return {};
     }
 
