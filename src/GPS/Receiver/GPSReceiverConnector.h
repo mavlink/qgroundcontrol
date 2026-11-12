@@ -72,9 +72,15 @@ using GPSReceiverWorkerFactory =
 /// The receiver operations GPSReceiverConnectionPolicy drives. They change state without emitting; the receiver emits
 /// once its public method or report handler returns. A connection sends the request of the policy's
 /// GPSReceiverConnectability as it is given.
+/// GPSReceiver is its only implementation, as a private base, and no test replaces it. The interface is there to keep
+/// the policy to these six operations: the policy sees neither the receiver's header nor its other members, which a
+/// friend declaration would open to it, and the five operations that change the receiver stay private to it. They are
+/// called on a poll, a settings change or the user's request, so what the virtual calls cost does not matter.
 class GPSReceiverConnector
 {
 public:
+    Q_DISABLE_COPY_MOVE(GPSReceiverConnector)
+
     /// What ending the connection does with the connection error on display.
     enum class ShownError
     {
@@ -92,5 +98,6 @@ public:
                                GPSSerialClaim claim) = 0;
 
 protected:
+    GPSReceiverConnector() = default;
     ~GPSReceiverConnector() = default;
 };
