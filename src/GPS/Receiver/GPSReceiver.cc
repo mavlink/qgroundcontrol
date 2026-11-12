@@ -450,7 +450,10 @@ void GPSReceiver::startConnectionPolling(std::function<bool()> suspended)
         return;
     }
     (void) _pollTask.scheduleRepeating(POLL_INTERVAL, [this, suspended = std::move(suspended)]() {
-        if (!suspended || !suspended()) {
+        if (suspended && suspended()) {
+            // Nothing connects, but other connections still take and release their ports.
+            _serial->refreshEntries();
+        } else {
             tick();
         }
     });
