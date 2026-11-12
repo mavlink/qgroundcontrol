@@ -12,6 +12,7 @@ private slots:
     void _serverFailure_data();
     void _serverFailure();
     void _validatorRejectsCachedAndServerTiles();
+    void _unusableCachedTileIsReplaced();
     void _abortedReplyStaysSilent();
     void _deletedDuringCacheLookup();
     void _networkManagerDestroyedFirst();

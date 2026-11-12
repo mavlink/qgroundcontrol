@@ -293,8 +293,11 @@ bool QGCTileCacheDatabase::saveTile(const QString& hash, const QString& format, 
         return false;
     }
 
+    // A tile is saved under the key of a cached one when that one could not be used: the new one takes its place
     QSqlQuery query(_database());
-    if (!query.prepare("INSERT OR IGNORE INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)")) {
+    if (!query.prepare("INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?) "
+                       "ON CONFLICT(hash) DO UPDATE SET format = excluded.format, tile = excluded.tile, "
+                       "size = excluded.size, date = excluded.date")) {
         qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (prepare saveTile):" << query.lastError().text();
         return false;
     }

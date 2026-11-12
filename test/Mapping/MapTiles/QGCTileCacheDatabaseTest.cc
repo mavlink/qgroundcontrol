@@ -670,17 +670,21 @@ void QGCTileCacheDatabaseTest::_testSaveDuplicateTile()
     auto db = _createInitializedDB(tempDir);
 
     const QByteArray data1(10, 'X');
-    const QByteArray data2(10, 'Y');
+    const QByteArray data2(20, 'Y');
 
     QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("png"), data1, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    // Second save with same hash succeeds (links existing tile to same set via OR IGNORE)
-    QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("png"), data2, kFixedProviderType,
+    // The tile saved last takes the place of the one with its key: it was fetched because that one could not be used
+    QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("jpg"), data2, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     auto tile = db->getTile(QStringLiteral("dup_hash"));
     QVERIFY(tile != nullptr);
-    QCOMPARE(tile->img, data1);
+    QCOMPARE(tile->img, data2);
+    QCOMPARE(tile->format, QStringLiteral("jpg"));
+    const TotalsResult totals = db->computeTotals();
+    QCOMPARE(totals.totalCount, static_cast<quint32>(1));
+    QCOMPARE(totals.totalSize, static_cast<quint64>(data2.size()));
 }
 
 void QGCTileCacheDatabaseTest::_testOperationsAfterDisconnect()

@@ -6,6 +6,7 @@
 
 #include "AppSettings.h"
 #include "MapProvider.h"
+#include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCNetworkHelper.h"
 #include "QGCTileReply.h"
@@ -184,6 +185,45 @@ void QGCTileReplyTest::_validatorRejectsCachedAndServerTiles()
     QCOMPARE(unvalidated.error(), QGCTileReply::Error::NoError);
     QVERIFY(!unvalidated.isCached());
     QCOMPARE(nam.requestCount, 3);
+}
+
+// A tile in the cache that cannot be used, as a notice of refusal that was cached as a tile is, gives way to the
+// tile that is fetched in its place: it is not fetched again and again
+void QGCTileReplyTest::_unusableCachedTileIsReplaced()
+{
+    const QByteArray unusable = tileReplyPngBody(Qt::red);
+    const QByteArray usable = tileReplyPngBody();
+    QVERIFY(!unusable.isEmpty() && (unusable != usable));
+    const auto rejectUnusable = [unusable](const QByteArray& data) { return data != unusable; };
+
+    const int mapId = tileReplyMapId();
+    const int tileX = kTileX + 40;
+    const QString type = UrlFactory::getProviderTypeFromMapId(mapId);
+    QGCMapEngine* const engine = getQGCMapEngine();
+    engine->ensureInitialized();
+    engine->cacheTile(type, UrlFactory::getTileHash(type, tileX, kTileY, kTileZoom), unusable, QStringLiteral("png"));
+
+    TileReplyMockNam nam;
+    nam.body = usable;
+
+    QGCTileReply refetched(&nam, mapId, tileX, kTileY, kTileZoom);
+    refetched.setValidator(rejectUnusable);
+    QSignalSpy refetchedSpy(&refetched, &QGCTileReply::finished);
+    QVERIFY(refetched.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(refetchedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(refetched.error(), QGCTileReply::Error::NoError);
+    QVERIFY(!refetched.isCached());
+    QCOMPARE(refetched.data(), usable);
+    QCOMPARE(nam.requestCount, 1);
+
+    QGCTileReply cached(&nam, mapId, tileX, kTileY, kTileZoom);
+    cached.setValidator(rejectUnusable);
+    QSignalSpy cachedSpy(&cached, &QGCTileReply::finished);
+    QVERIFY(cached.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(cachedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY(cached.isCached());
+    QCOMPARE(cached.data(), usable);
+    QCOMPARE(nam.requestCount, 1);
 }
 
 void QGCTileReplyTest::_abortedReplyStaysSilent()

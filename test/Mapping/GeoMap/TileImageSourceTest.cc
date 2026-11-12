@@ -374,11 +374,10 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     QCOMPARE(nam.requestCount, 1);  // cache hit rejected, recovered from the network
     QVERIFY(failedSpy.isEmpty());
 
-    // Write-back is INSERT OR IGNORE, so the bad entry survives: a repeat
-    // request pays another network fetch but still delivers
+    // The fetched tile took the place of the bad entry: a repeat request is served from the cache
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 2, 5000);
-    QCOMPARE(nam.requestCount, 2);
+    QCOMPARE(nam.requestCount, 1);
     QVERIFY(failedSpy.isEmpty());
 }
 
