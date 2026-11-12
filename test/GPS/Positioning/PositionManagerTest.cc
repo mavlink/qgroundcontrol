@@ -19,6 +19,7 @@ using namespace std::chrono_literals;
 namespace {
 using Kind = PositionManager::SelectedSource;
 using Mode = PositionManager::SourceMode;
+using Receiver = PositionManager::Receiver;
 using Status = PositionManager::SourceStatus;
 
 using GPSTest::PositionSource;
@@ -270,17 +271,27 @@ void PositionManagerTest::_deviceAltitudeDatum()
     QCOMPARE(remoteId->position.coordinate().altitude(), expectedAltitude);
 }
 
+void PositionManagerTest::_registrationReplacementAndSessions_data()
+{
+    // The receiver that is the receiver source: the rules of a registration are the same for both.
+    QTest::addColumn<Receiver>("receiver");
+    QTest::newRow("rtk-receiver") << Receiver::Rtk;
+    QTest::newRow("position-receiver") << Receiver::Position;
+}
+
 void PositionManagerTest::_registrationReplacementAndSessions()
 {
+    QFETCH(Receiver, receiver);
     ManualScheduler scheduler;
     PositionManager service(nullptr, &scheduler);
+    service.setConfiguration({.receiver = receiver});
     GPSSourceHealth health(nullptr, &scheduler);
-    auto first = service.registerReceiver(&health, 11);
+    auto first = service.registerReceiver(&health, 11, receiver);
     health.updateObservation(fix(scheduler, 47, 12));
     QVERIFY(!service.gcsPosition().isValid());
     health.updateObservation(fix(scheduler, 47, 11));
     QVERIFY(service.gcsPosition().isValid());
-    auto second = service.registerReceiver(&health, 12);
+    auto second = service.registerReceiver(&health, 12, receiver);
     auto moved = std::move(first);
     QVERIFY(!first);
     moved.reset();
@@ -353,6 +364,109 @@ void PositionManagerTest::_automaticFailoverAndRecovery()
     receiverRegistration.reset();
     QCOMPARE(service.gcsPosition().latitude(), 48);
     QCOMPARE(service.selectedSource(), Kind::Internal);
+}
+
+void PositionManagerTest::_positionReceiverIsTheOnlyReceiverSource_data()
+{
+    QTest::addColumn<Mode>("mode");
+    QTest::addColumn<bool>("device");
+    // The latitude published while the position receiver is set up and has no position; none is NaN. The RTK
+    // receiver reports 47 all along, the device 48 and the position receiver 49.
+    QTest::addColumn<double>("silent");
+    QTest::newRow("automatic-with-device") << Mode::Automatic << true << 48.0;
+    QTest::newRow("automatic-without-device") << Mode::Automatic << false << qQNaN();
+    QTest::newRow("receiver-only") << Mode::ReceiverOnly << true << qQNaN();
+}
+
+void PositionManagerTest::_positionReceiverIsTheOnlyReceiverSource()
+{
+    QFETCH(Mode, mode);
+    QFETCH(bool, device);
+    QFETCH(double, silent);
+    ManualScheduler scheduler;
+    GPSSourceHealth rtk(nullptr, &scheduler);
+    GPSSourceHealth position(nullptr, &scheduler);
+    PositionSource internal;
+    PositionManager service(nullptr, &scheduler);
+    // Only the events of the test end a position, not the time its recovery delays take.
+    rtk.setFreshnessTimeout(60000ms);
+    position.setFreshnessTimeout(60000ms);
+    if (device) {
+        service.setInternalPositionSource(&internal, Status::WaitingForFix);
+        service._sourceHealth(Kind::Internal)->setFreshnessTimeout(60000ms);
+    }
+    auto rtkRegistration = service.registerReceiver(&rtk);
+    service.setConfiguration({.sourceMode = mode});
+    const auto report = [&]() {
+        rtk.updateObservation(fix(scheduler, 47));
+        if (device && internal.active) {
+            internal.publish(fix(scheduler, 48).position);
+        }
+    };
+    const auto latitude = [&service]() {
+        const auto accepted = service.acceptedObservation();
+        // What is published and what consumers are given are the same position, or none.
+        return accepted && service.gcsPosition() == accepted->coordinate() ? service.gcsPosition().latitude() : qQNaN();
+    };
+    // A receiver that returns while the device works takes over once it has stayed usable for the recovery delay.
+    const auto recover = [&]() {
+        if (mode == Mode::Automatic && device) {
+            QVERIFY(scheduler.advanceBy(PositionManager::RECOVERY_DELAY));
+        }
+    };
+
+    // Without a position receiver the RTK receiver is the receiver source, as it always was.
+    report();
+    QCOMPARE(latitude(), 47.0);
+    QCOMPARE(service.selectedSourceName(), PositionManager::tr("GNSS receiver"));
+
+    // A position receiver is set up and not connected: the RTK receiver's position is withdrawn.
+    service.setConfiguration({.sourceMode = mode, .receiver = Receiver::Position});
+    report();
+    QCOMPARE(latitude(), silent);
+    QCOMPARE(service.selectedSource(), qIsNaN(silent) ? Kind::None : Kind::Internal);
+
+    // It connects and has no position yet.
+    auto positionRegistration = service.registerReceiver(&position, 0, Receiver::Position);
+    report();
+    QCOMPARE(latitude(), silent);
+
+    // Its position is the ground station's, and what the RTK receiver reports meanwhile is not published.
+    position.updateObservation(fix(scheduler, 49));
+    recover();
+    QCOMPARE(latitude(), 49.0);
+    QCOMPARE(service.selectedSource(), Kind::Receiver);
+    QCOMPARE(service.selectedSourceName(), PositionManager::tr("Position receiver"));
+    QSignalSpy positions(&service, &PositionManager::gcsPositionChanged);
+    report();
+    QCOMPARE(latitude(), 49.0);
+    QVERIFY(positions.isEmpty());
+
+    // It loses its fix, and then its connection.
+    position.invalidatePosition();
+    report();
+    QCOMPARE(latitude(), silent);
+    position.updateObservation(fix(scheduler, 49));
+    recover();
+    QCOMPARE(latitude(), 49.0);
+    positionRegistration.reset();
+    report();
+    QCOMPARE(latitude(), silent);
+
+    // The end of the RTK receiver's registration does not end the position receiver's.
+    positionRegistration = service.registerReceiver(&position, 0, Receiver::Position);
+    position.updateObservation(fix(scheduler, 49));
+    recover();
+    rtkRegistration.reset();
+    QCOMPARE(latitude(), 49.0);
+
+    // Without a position receiver again, the RTK receiver is the receiver source once more.
+    rtkRegistration = service.registerReceiver(&rtk);
+    service.setConfiguration({.sourceMode = mode});
+    report();
+    recover();
+    QCOMPARE(latitude(), 47.0);
+    QCOMPARE(service.selectedSourceName(), PositionManager::tr("GNSS receiver"));
 }
 
 void PositionManagerTest::_sourceAndHealthLifetime()

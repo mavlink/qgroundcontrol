@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <functional>
 #include <limits>
@@ -23,6 +24,12 @@ using GPSPositionSourceRegistration = std::shared_ptr<const void>;
 /// Automatic mode prefers a usable receiver, returning to it only after it has stayed usable for RECOVERY_DELAY; the
 /// pinned modes publish only observations made after the selection. init() requests location permission and binds the
 /// platform source; tests bind their own with setInternalPositionSource() instead. Use from the manager's thread only.
+///
+/// Two receivers may register, and Configuration::receiver names the one that is the receiver source: the RTK
+/// receiver, or the position receiver while one is set up, whether or not that one is connected or has a position.
+/// The other receiver's position is never published. A base station's antenna position therefore does not stand in
+/// for a position receiver that is silent or disconnected: Automatic mode publishes this device's position then, and
+/// ReceiverOnly none. Freshness, accuracy and session are checked alike for both receivers.
 class PositionManager : public QObject
 {
     Q_OBJECT
@@ -56,6 +63,16 @@ public:
     };
     Q_ENUM(SelectedSource)
 
+    /// The receivers that register their position.
+    enum class Receiver
+    {
+        /// The receiver of the GNSS Receiver settings: an RTK base station, or a passive receiver.
+        Rtk,
+        /// The position receiver, which is never configured and only provides the ground station position.
+        Position,
+    };
+    Q_ENUM(Receiver)
+
     enum class SourceStatus
     {
         NoSource,
@@ -75,6 +92,8 @@ public:
     struct Configuration
     {
         SourceMode sourceMode = SourceMode::Automatic;
+        /// The receiver that is the receiver source, connected or not.
+        Receiver receiver = Receiver::Rtk;
         bool operator==(const Configuration&) const = default;
     };
 
@@ -111,8 +130,10 @@ public:
                                    GPSAltitudeDatum altitudeDatum = GPSAltitudeDatum::Unknown);
 
     /// The receiver publishes observations through @a producer and runs independently of selection; its observations
-    /// must carry @a sessionId when it is nonzero. The binding lasts until the registration is reset.
-    GPSPositionSourceRegistration registerReceiver(GPSSourceHealth* producer, quint64 sessionId = 0);
+    /// must carry @a sessionId when it is nonzero. The binding lasts until the registration is reset, and replaces
+    /// that of the same @a receiver only.
+    GPSPositionSourceRegistration registerReceiver(GPSSourceHealth* producer, quint64 sessionId = 0,
+                                                   Receiver receiver = Receiver::Rtk);
 
     QGeoCoordinate gcsPosition() const { return _published.position; }
 
@@ -144,8 +165,8 @@ private:
     /// Health of the source bound for @a kind, or null when none is.
     GPSSourceHealth* _sourceHealth(SelectedSource kind) const;
     /// Returns the token of this binding; the observers it notifies may already have replaced it.
-    quint64 _setReceiver(GPSSourceHealth* producer, quint64 sessionId);
-    void _retireReceiver(quint64 token);
+    quint64 _setReceiver(Receiver receiver, GPSSourceHealth* producer, quint64 sessionId);
+    void _retireReceiver(Receiver receiver, quint64 token);
     void _releaseDevice();
     void _setDeviceActive(bool active);
     void _devicePositionUpdated(const QGeoPositionInfo& position);
@@ -167,13 +188,25 @@ private:
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
 
+    /// What a receiver registered.
+    struct ReceiverBinding
+    {
+        QPointer<GPSSourceHealth> health;
+        quint64 session = 0;
+        quint64 token = 0;
+    };
+
+    ReceiverBinding& _binding(Receiver receiver) { return _receivers[static_cast<size_t>(receiver)]; }
+
+    /// The binding of the receiver that is the receiver source.
+    const ReceiverBinding& _receiverSource() const { return _receivers[static_cast<size_t>(_configuration.receiver)]; }
+
     RuntimeScheduler* const _scheduler;
     ScheduledTask _recoveryTask;
     std::optional<qint64> _receiverUsableSinceMs;
 
-    QPointer<GPSSourceHealth> _receiver;
-    quint64 _receiverSession = 0;
-    quint64 _receiverToken = 0;
+    /// By Receiver.
+    std::array<ReceiverBinding, 2> _receivers;
 
     QPointer<QGeoPositionInfoSource> _device;
     GPSSourceHealth* const _deviceHealth;

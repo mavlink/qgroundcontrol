@@ -27,8 +27,10 @@ PositionManager::~PositionManager()
     blockSignals(true);
     // Stop the borrowed backend and drop the receiver binding while the manager is still whole.
     _releaseDevice();
-    if (_receiver) {
-        _receiver->disconnect(this);
+    for (const ReceiverBinding& binding : _receivers) {
+        if (binding.health) {
+            binding.health->disconnect(this);
+        }
     }
 }
 
@@ -36,7 +38,8 @@ void PositionManager::setConfiguration(const Configuration& configuration)
 {
     const SourceMode mode = configuration.sourceMode;
     if (_shutdown || _configuration == configuration ||
-        (mode != SourceMode::Automatic && mode != SourceMode::ReceiverOnly && mode != SourceMode::InternalOnly)) {
+        (mode != SourceMode::Automatic && mode != SourceMode::ReceiverOnly && mode != SourceMode::InternalOnly) ||
+        (configuration.receiver != Receiver::Rtk && configuration.receiver != Receiver::Position)) {
         return;
     }
     _configuration = configuration;
@@ -158,40 +161,50 @@ void PositionManager::_setInternalPositionStatus(SourceStatus status)
     _update();
 }
 
-GPSPositionSourceRegistration PositionManager::registerReceiver(GPSSourceHealth* producer, quint64 sessionId)
+GPSPositionSourceRegistration PositionManager::registerReceiver(GPSSourceHealth* producer, quint64 sessionId,
+                                                                Receiver receiver)
 {
-    if (!producer) {
+    if (!producer || (receiver != Receiver::Rtk && receiver != Receiver::Position)) {
         return {};
     }
-    const quint64 token = _setReceiver(producer, sessionId);
+    const quint64 token = _setReceiver(receiver, producer, sessionId);
     // The handle points at this manager only so that it tests true; releasing it retires this binding alone.
-    return GPSPositionSourceRegistration(this, [manager = QPointer<PositionManager>(this), token](const void*) {
-        if (manager) {
-            manager->_retireReceiver(token);
-        }
-    });
+    return GPSPositionSourceRegistration(this,
+                                         [manager = QPointer<PositionManager>(this), receiver, token](const void*) {
+                                             if (manager) {
+                                                 manager->_retireReceiver(receiver, token);
+                                             }
+                                         });
 }
 
-quint64 PositionManager::_setReceiver(GPSSourceHealth* producer, quint64 sessionId)
+quint64 PositionManager::_setReceiver(Receiver receiver, GPSSourceHealth* producer, quint64 sessionId)
 {
-    if (_receiver) {
-        _receiver->disconnect(this);
+    ReceiverBinding& binding = _binding(receiver);
+    if (binding.health) {
+        binding.health->disconnect(this);
     }
-    _receiver = producer;
-    _receiverSession = sessionId;
-    const quint64 token = ++_receiverToken;
+    binding.health = producer;
+    binding.session = sessionId;
+    const quint64 token = ++binding.token;
     if (producer) {
-        connect(producer, &GPSSourceHealth::positionChanged, this, [this]() { _update(SelectedSource::Receiver); });
-        connect(producer, &QObject::destroyed, this, [this]() { _setReceiver(nullptr, 0); });
+        // What the other receiver reports, and its coming and going, change nothing that is published.
+        connect(producer, &GPSSourceHealth::positionChanged, this, [this, receiver]() {
+            if (receiver == _configuration.receiver) {
+                _update(SelectedSource::Receiver);
+            }
+        });
+        connect(producer, &QObject::destroyed, this, [this, receiver]() { _setReceiver(receiver, nullptr, 0); });
     }
-    _bindingChanged(SelectedSource::Receiver);
+    if (receiver == _configuration.receiver) {
+        _bindingChanged(SelectedSource::Receiver);
+    }
     return token;
 }
 
-void PositionManager::_retireReceiver(quint64 token)
+void PositionManager::_retireReceiver(Receiver receiver, quint64 token)
 {
-    if (token == _receiverToken) {
-        _setReceiver(nullptr, 0);
+    if (token == _binding(receiver).token) {
+        _setReceiver(receiver, nullptr, 0);
     }
 }
 
@@ -333,7 +346,7 @@ PositionManager::SelectedSource PositionManager::_choose()
     if (_sourceHealth(_selectedKind)) {
         return _selectedKind;
     }
-    return _receiver ? SelectedSource::Receiver : SelectedSource::Internal;
+    return _sourceHealth(SelectedSource::Receiver) ? SelectedSource::Receiver : SelectedSource::Internal;
 }
 
 void PositionManager::_republish()
@@ -434,8 +447,8 @@ std::optional<GPSObservation> PositionManager::_accepted(SelectedSource kind, GP
 {
     const GPSSourceHealth* const health = _sourceHealth(kind);
     auto observation = health ? health->acceptedObservation(use, maximumAge) : std::nullopt;
-    if (observation && kind == SelectedSource::Receiver && _receiverSession != 0 &&
-        observation->sessionId != _receiverSession) {
+    if (observation && kind == SelectedSource::Receiver && _receiverSource().session != 0 &&
+        observation->sessionId != _receiverSource().session) {
         return std::nullopt;
     }
     return observation;
@@ -445,7 +458,7 @@ GPSSourceHealth* PositionManager::_sourceHealth(SelectedSource kind) const
 {
     switch (kind) {
         case SelectedSource::Receiver:
-            return _receiver.data();
+            return _receiverSource().health.data();
         case SelectedSource::Internal:
             return _device ? _deviceHealth : nullptr;
         case SelectedSource::None:
@@ -460,7 +473,7 @@ QString PositionManager::selectedSourceName() const
         case SelectedSource::None:
             return tr("None");
         case SelectedSource::Receiver:
-            return tr("GNSS receiver");
+            return _configuration.receiver == Receiver::Position ? tr("Position receiver") : tr("GNSS receiver");
         case SelectedSource::Internal:
             return _usingPluginSource ? tr("Plugin positioning") : tr("Internal positioning");
     }

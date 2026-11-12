@@ -13,6 +13,7 @@ private slots:
     void _deviceAltitudeDatum();
     void _backendAltitudeDatum_data();
     void _backendAltitudeDatum();
+    void _registrationReplacementAndSessions_data();
     void _registrationReplacementAndSessions();
     void _registrationDuringNotification();
     void _producerLoss_data();
@@ -22,6 +23,8 @@ private slots:
     void _automaticRejectionMatchesPublication_data();
     void _automaticRejectionMatchesPublication();
     void _automaticFailoverAndRecovery();
+    void _positionReceiverIsTheOnlyReceiverSource_data();
+    void _positionReceiverIsTheOnlyReceiverSource();
     void _earlyExpiryTimerKeepsPublication();
     void _standbyReportsDoNotRepublish();
     void _consumerMaximumAge();
