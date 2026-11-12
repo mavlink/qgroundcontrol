@@ -1,5 +1,7 @@
 #include "UnitTestTileGenerator.h"
 
+#include <limits>
+
 #include <QtCore/QAtomicInt>
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
@@ -10,13 +12,13 @@
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
 #include <QtPositioning/QGeoCoordinate>
-#include <limits>
 
 #include "BaseClasses/TerrainTest.h"
 #include "ElevationMapProvider.h"
 #include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
+#include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileCacheWorker.h"
 #include "TerrainTileCopernicus.h"
@@ -195,6 +197,20 @@ void setForcedMissCount(int count)
 QByteArray syntheticTerrariumTileData(int x, int y, int zoom)
 {
     return _syntheticTerrariumTileData(x, y, zoom);
+}
+
+bool resetTileCache()
+{
+    bool reset = false;
+    // Declared after the flag: a signal still queued when this function returns is dropped with its context
+    const QObject context;
+    QGCResetTask* const task = new QGCResetTask();
+    (void) QObject::connect(task, &QGCResetTask::resetCompleted, &context, [&reset] { reset = true; });
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+        return false;
+    }
+    return QTest::qWaitFor([&reset] { return reset; }, TestTimeout::mediumMs());
 }
 
 void install()

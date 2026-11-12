@@ -7,6 +7,8 @@ class QGCTileReplyTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
     void _cachedTileServedWithoutNetwork();
     void _serverTileStoredInCache();
     void _serverFailure_data();

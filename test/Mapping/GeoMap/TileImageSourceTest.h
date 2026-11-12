@@ -7,6 +7,8 @@ class TileImageSourceTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
     void _tileDelivered();
     void _cancelledRequestSilent();
     void _multipleRequestsIndependent();

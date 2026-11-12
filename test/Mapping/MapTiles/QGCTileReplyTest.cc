@@ -50,6 +50,13 @@ bool tileReplyCacheLookupsAnswered()
 
 }  // namespace
 
+void QGCTileReplyTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
+
 void QGCTileReplyTest::_cachedTileServedWithoutNetwork()
 {
     TileReplyMockNam nam;

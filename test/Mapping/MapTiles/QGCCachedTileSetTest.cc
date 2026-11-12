@@ -13,6 +13,14 @@
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "TileReplyNetworkMock.h"
+#include "UnitTestTileGenerator.h"
+
+void QGCCachedTileSetTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
 
 void QGCCachedTileSetTest::_testConstructorSetsName()
 {

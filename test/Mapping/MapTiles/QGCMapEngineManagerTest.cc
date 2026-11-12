@@ -101,6 +101,13 @@ public:
 
 }  // namespace
 
+void QGCMapEngineManagerTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
+
 void QGCMapEngineManagerTest::_testTerrainSet_data()
 {
     QTest::addColumn<bool>("flyViewGeoMap");

@@ -7,6 +7,8 @@ class TerrariumTileFetcherTest : public TerrainTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
     void _deliversFlatRegionHeights();
     void _deliversSlopeRegionHeights();
     void _patchSamplingMatchesFieldSampling();

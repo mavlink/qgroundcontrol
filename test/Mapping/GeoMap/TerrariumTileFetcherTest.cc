@@ -122,6 +122,13 @@ protected:
 };
 }  // namespace
 
+void TerrariumTileFetcherTest::initTestCase()
+{
+    TerrainTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
+
 void TerrariumTileFetcherTest::_deliversFlatRegionHeights()
 {
     TerrariumTileFetcher source;

@@ -7,6 +7,8 @@ class QGCCachedTileSetTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
     void _testConstructorSetsName();
     void _testDefaultPropertyValues();
     void _testSetMapTypeStr();

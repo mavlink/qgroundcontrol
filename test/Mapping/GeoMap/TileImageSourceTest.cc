@@ -124,6 +124,13 @@ QByteArray pngBody()
 
 }  // namespace
 
+void TileImageSourceTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
+
 void TileImageSourceTest::_tileDelivered()
 {
     const QString type = mapType();

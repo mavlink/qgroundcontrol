@@ -33,6 +33,13 @@ QString viewer3DMapType()
 
 }  // namespace
 
+void Viewer3DTileReplyTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
+
 void Viewer3DTileReplyTest::_testOutcome_data()
 {
     QTest::addColumn<QString>("providerType");

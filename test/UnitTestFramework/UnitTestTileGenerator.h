@@ -38,4 +38,9 @@ void setForcedMissCount(int count);
 /// The terrarium-encoded PNG the generator would serve for a slippy tile (for
 /// mock network replies in network-fallback tests).
 QByteArray syntheticTerrariumTileData(int x, int y, int zoom);
+
+/// Empties the tile cache of the process and waits for that. The cache outlives a test class, which can run more
+/// than once in a process (--unittest-stress) and after other classes (--unittest): a class whose tests fetch tiles
+/// that the cache must lack calls this from initTestCase().
+[[nodiscard]] bool resetTileCache();
 }  // namespace UnitTestTileGenerator
