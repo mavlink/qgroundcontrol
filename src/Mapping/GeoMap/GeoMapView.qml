@@ -46,6 +46,9 @@ GeoMap {
     // Breaks the center/zoomLevel <-> camera cycle: camera moves echo into them and must not be written back
     property bool _echoingCamera: false
 
+    // A region to show that was asked for while the view had no size
+    property var _pendingVisibleRegion: null
+
     // Screen point -> coordinate of the rendered terrain surface under it, invalid on a sky pick.
     // clipToViewPort is accepted for FlightMap parity and ignored: every caller passes false.
     function toCoordinate(point, clipToViewPort) {
@@ -59,8 +62,14 @@ GeoMap {
         return (screenPos === undefined) ? Qt.point(-1, -1) : screenPos
     }
 
-    // MapFitFunctions contract
+    // MapFitFunctions contract. As a QtLocation map does, a view without a size, such as one in a tab that was
+    // never shown, shows the region once it has a size.
     function setVisibleRegion(region) {
+        if (!_viewportValid()) {
+            _pendingVisibleRegion = region
+            return
+        }
+        _pendingVisibleRegion = null
         root.fitToRegion(region)
     }
 
@@ -160,6 +169,9 @@ GeoMap {
                 root._applyZoomLevel()
             } else {
                 root._echoCameraZoom()
+            }
+            if (root._pendingVisibleRegion !== null && root._viewportValid()) {
+                root.setVisibleRegion(root._pendingVisibleRegion)
             }
         }
     }

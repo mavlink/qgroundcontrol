@@ -144,6 +144,7 @@ and the 2D↔3D mode animation.
 `FlightMap` offers, the view shared across both views and restarts, and optionally the
 `GeoMapControls` (2D/3D toggle, compass) and a map scale. The Plan View embeds them; the Fly View
 places them itself, because it also positions the occluders and the picture-in-picture swap.
+A region asked for with `setVisibleRegion` while the view has no size is shown once it has one.
 It also credits the imagery, and in 3D the terrain, in its bottom left corner, as `FlightMap` credits
 its imagery. A view moves that credit clear of its own controls with `attributionLeftMargin` and
 `attributionBottomMargin`, and turns it off with `showAttribution` for a map that is a small picture.

@@ -65,22 +65,21 @@ QPointF LogViewerMapUITest::_mapPoint(QQuickItem* map, const QGeoCoordinate& coo
     return expression.evaluate().toPointF();
 }
 
-/// True once the map shows the whole path, and large: a path far away or at world scale does not count
-bool LogViewerMapUITest::_pathFitsMap(QQuickItem* map, const QList<QGeoCoordinate>& path)
+bool LogViewerMapUITest::mapShowsCoordinates(QQuickItem* map, const QList<QGeoCoordinate>& coordinates)
 {
     const QRectF mapRect(0, 0, map->width(), map->height());
     if (mapRect.isEmpty()) {
-        return false;  // the tab was just shown and is not laid out yet
+        return false;  // the map was just shown and is not laid out yet
     }
-    QRectF pathRect;
-    for (const QGeoCoordinate& coordinate : path) {
+    QRectF shownRect;
+    for (const QGeoCoordinate& coordinate : coordinates) {
         const QPointF point = _mapPoint(map, coordinate);
         if (!mapRect.adjusted(-1, -1, 1, 1).contains(point)) {
             return false;
         }
-        pathRect = pathRect.isNull() ? QRectF(point, QSizeF(1, 1)) : pathRect.united(QRectF(point, QSizeF(1, 1)));
+        shownRect = shownRect.isNull() ? QRectF(point, QSizeF(1, 1)) : shownRect.united(QRectF(point, QSizeF(1, 1)));
     }
-    return qMax(pathRect.width(), pathRect.height()) > (qMin(mapRect.width(), mapRect.height()) / 4);
+    return qMax(shownRect.width(), shownRect.height()) > (qMin(mapRect.width(), mapRect.height()) / 4);
 }
 
 void LogViewerMapUITest::_showsLogPath_data()
@@ -128,17 +127,26 @@ void LogViewerMapUITest::_showsLogPath()
     const double sharedZoom = QGroundControlQmlGlobal::flightMapZoom();
     QGCFileDialogController::setTestNextFileForAccept(logFile);
     QVERIFY(clickButton(QStringLiteral("logViewer_openBinButton")));
-    QVERIFY(clickButton(QStringLiteral("logViewer_mapTabButton")));
 
     // The engine setting picks the map, and the other engine's map is not created
     const QString mapName = geoMapEngine ? QStringLiteral("logViewer_geoMap") : QStringLiteral("logViewer_flightMap");
     const QString otherMapName =
         geoMapEngine ? QStringLiteral("logViewer_flightMap") : QStringLiteral("logViewer_geoMap");
-    QQuickItem* const map = findVisibleItem(_rootItem, mapName, TestTimeout::mediumMs());
-    QVERIFY2(map, qPrintable(mapName + QStringLiteral(" not visible")));
+    QQuickItem* const map = findItem(_rootItem, mapName);
+    QVERIFY2(map, qPrintable(mapName + QStringLiteral(" not created")));
     QVERIFY2(!findItem(_rootItem, otherMapName), qPrintable(otherMapName + QStringLiteral(" was created")));
 
-    QTRY_VERIFY2_WITH_TIMEOUT(_pathFitsMap(map, path), "the map does not show the whole path", TestTimeout::mediumMs());
+    // The log is read before the tab of the map is shown for the first time: the map is asked for the path while
+    // it has no size, and shows it once it has one
+    QQmlExpression logHasPath(qmlContext(map), map, QStringLiteral("_mapTab._hasPath"));
+    QTRY_VERIFY_WITH_TIMEOUT(logHasPath.evaluate().toBool(), TestTimeout::mediumMs());
+    QVERIFY2(map->width() <= 0 || map->height() <= 0, "the map has a size before its tab was shown");
+    QVERIFY(clickButton(QStringLiteral("logViewer_mapTabButton")));
+    QVERIFY2(findVisibleItem(_rootItem, mapName, TestTimeout::mediumMs()),
+             qPrintable(mapName + QStringLiteral(" not visible")));
+
+    QTRY_VERIFY2_WITH_TIMEOUT(mapShowsCoordinates(map, path), "the map does not show the whole path",
+                              TestTimeout::mediumMs());
     if (geoMapEngine) {
         QQuickItem* const track = findItem(map, QStringLiteral("logViewer_geoMapTrack"));
         QVERIFY2(track, "track not found");
@@ -148,9 +156,9 @@ void LogViewerMapUITest::_showsLogPath()
     // Loading a log puts the cursor of the charts mid-log, and the dot on the path point of that time
     QQuickItem* const dot = findVisibleItem(map, QStringLiteral("logViewer_positionDot"), TestTimeout::mediumMs());
     QVERIFY2(dot, "position dot not visible");
-    const QPointF midPathPoint = _mapPoint(map, path[2]);
     const auto dotCenter = [dot, map] { return dot->mapToItem(map, QPointF(dot->width() / 2, dot->height() / 2)); };
-    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - midPathPoint).manhattanLength(), 3.0, TestTimeout::shortMs());
+    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - _mapPoint(map, path[2])).manhattanLength(), 3.0,
+                                 TestTimeout::shortMs());
 
     // The log's place stays the log viewer's: Fly View and Plan View keep theirs
     QCOMPARE(QGroundControlQmlGlobal::flightMapPosition(), sharedPosition);

@@ -26,6 +26,14 @@ AnalyzePage {
         border.width: 2
     }
 
+    // Scale in the bottom left corner of the map it is a child of, above the map's credit
+    component PathMapScale: MapScale {
+        anchors.margins: ScreenTools.defaultFontPixelWidth
+        anchors.bottomMargin: ScreenTools.defaultFontPixelWidth + mapControl.attributionHeight
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+    }
+
     Component {
         id: pageComponent
 
@@ -370,10 +378,10 @@ AnalyzePage {
                         // Smallest rectangle around the path
                         function _pathRegion() {
                             const p = _gpsPath
-                            var minLat = p[0].latitude, maxLat = minLat
-                            var minLon = p[0].longitude, maxLon = minLon
-                            for (var i = 1; i < p.length; i++) {
-                                var c = p[i]
+                            let minLat = p[0].latitude, maxLat = minLat
+                            let minLon = p[0].longitude, maxLon = minLon
+                            for (let i = 1; i < p.length; i++) {
+                                const c = p[i]
                                 if (c.latitude  < minLat) minLat = c.latitude
                                 if (c.latitude  > maxLat) maxLat = c.latitude
                                 if (c.longitude < minLon) minLon = c.longitude
@@ -381,6 +389,13 @@ AnalyzePage {
                             }
                             return QtPositioning.rectangle(QtPositioning.coordinate(maxLat, minLon),
                                                            QtPositioning.coordinate(minLat, maxLon))
+                        }
+
+                        // The map of a tab that was never shown has no size: either engine's map fits once it has one
+                        function _fitPath() {
+                            if (_hasPath && _mapLoader.item) {
+                                _mapLoader.item.setVisibleRegion(_pathRegion())
+                            }
                         }
 
                         function _setSharedZoom(minX, maxX) {
@@ -404,6 +419,7 @@ AnalyzePage {
 
                                 // Engine choice is snapshotted at creation (the setting is qgcRebootRequired)
                                 Loader {
+                                    id: _mapLoader
                                     anchors.fill: parent
                                     Component.onCompleted: sourceComponent = QGroundControl.settingsManager.flyViewSettings.useGeoMapEngine.rawValue ? _geoMapComponent : _flightMapComponent
                                 }
@@ -416,19 +432,6 @@ AnalyzePage {
                                         objectName: "logViewer_flightMap"
                                         mapName: "LogViewerMap"
                                         allowGCSLocationCenter: true
-
-                                        function _fitPath() {
-                                            if (_mapTab._hasPath) {
-                                                setVisibleRegion(_mapTab._pathRegion())
-                                            }
-                                        }
-
-                                        Connections {
-                                            target: logParser
-                                            function onParseCompleteChanged() {
-                                                if (logParser.parseComplete) Qt.callLater(_flightMap._fitPath)
-                                            }
-                                        }
 
                                         MapPolyline {
                                             line.width: 3
@@ -445,11 +448,7 @@ AnalyzePage {
                                             sourceItem: PositionDot { }
                                         }
 
-                                        MapScale {
-                                            anchors.margins: ScreenTools.defaultFontPixelWidth
-                                            anchors.bottomMargin: ScreenTools.defaultFontPixelWidth + _flightMap.attributionHeight
-                                            anchors.left: parent.left
-                                            anchors.bottom: parent.bottom
+                                        PathMapScale {
                                             mapControl: _flightMap
                                         }
                                     }
@@ -461,35 +460,12 @@ AnalyzePage {
                                     // Top-down and north-up like the QtLocation map: the log's path has no altitude to show in 3D
                                     GeoMapView {
                                         id: _geoMap
-
-                                        // A hidden tab has no size to fit the path to: it is fitted once the map is shown
-                                        property bool _fitPending: false
-
-                                        function _fitPath() {
-                                            _fitPending = true
-                                            _fitPendingPath()
-                                        }
-
-                                        function _fitPendingPath() {
-                                            if (!_fitPending || !visible || width <= 0 || height <= 0) {
-                                                return
-                                            }
-                                            _fitPending = false
-                                            if (_mapTab._hasPath) {
-                                                setVisibleRegion(_mapTab._pathRegion())
-                                            }
-                                        }
-
                                         objectName: "logViewer_geoMap"
                                         sharedView: false
                                         terrain: false
                                         allowRotation: false
                                         allowGCSLocationCenter: true
                                         followOffscreenVehicle: false
-
-                                        onVisibleChanged: Qt.callLater(_fitPendingPath)
-                                        onWidthChanged: Qt.callLater(_fitPendingPath)
-                                        onHeightChanged: Qt.callLater(_fitPendingPath)
 
                                         GeoMapTrack {
                                             objectName: "logViewer_geoMapTrack"
@@ -515,19 +491,8 @@ AnalyzePage {
                                             }
                                         }
 
-                                        MapScale {
-                                            anchors.margins: ScreenTools.defaultFontPixelWidth
-                                            anchors.bottomMargin: ScreenTools.defaultFontPixelWidth + _geoMap.attributionHeight
-                                            anchors.left: parent.left
-                                            anchors.bottom: parent.bottom
+                                        PathMapScale {
                                             mapControl: _geoMap
-                                        }
-
-                                        Connections {
-                                            target: logParser
-                                            function onParseCompleteChanged() {
-                                                if (logParser.parseComplete) Qt.callLater(_geoMap._fitPath)
-                                            }
                                         }
 
                                         Component.onCompleted: {
@@ -604,6 +569,15 @@ AnalyzePage {
                                     if (!isNaN(_mapTab._sharedCursorT)) {
                                         _altChart.setSharedCursor(_mapTab._sharedCursorT)
                                     }
+                                }
+                            }
+                        }
+
+                        Connections {
+                            target: logParser
+                            function onParseCompleteChanged() {
+                                if (logParser.parseComplete) {
+                                    Qt.callLater(_mapTab._fitPath)
                                 }
                             }
                         }
