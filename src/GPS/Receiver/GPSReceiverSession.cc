@@ -99,6 +99,7 @@ bool GPSReceiverSession::start(const GPSReceiverWorkerFactory& factory,
     }
     GPSReceiverWorker* const worker = _worker;
     worker->setEndsWhenIdle(_connection.role == RTKSettings::ConfiguredBase);
+    worker->setDetectionHint(_connection.detectionHint);
     (void) connect(
         worker, &GPSReceiverWorker::finished, this,
         [this]() {
@@ -125,6 +126,7 @@ bool GPSReceiverSession::start(const GPSReceiverWorkerFactory& factory,
     relay(&GPSReceiverWorker::baseStatusUpdated, &GPSReceiverSession::_onBaseStatus);
     relay(&GPSReceiverWorker::connectionError, &GPSReceiverSession::ended);
     relay(&GPSReceiverWorker::receiverReady, &GPSReceiverSession::_onReady);
+    relay(&GPSReceiverWorker::detecting, &GPSReceiverSession::_onDetecting);
     relay(&GPSReceiverWorker::receiverDetected, &GPSReceiverSession::_onDetected);
     relay(&GPSReceiverWorker::inputProblem, &GPSReceiverSession::inputProblem);
     worker->start();
@@ -177,12 +179,25 @@ void GPSReceiverSession::_onBaseStatus(const GPSBaseStatus& report)
     emit baseStatusUpdated(report);
 }
 
-void GPSReceiverSession::_onReady(const QString& identity)
+void GPSReceiverSession::_onReady(const QString& identity, const GPSDetectionHint& detected)
 {
     if (std::exchange(_identity, identity) != identity) {
         qCDebug(GPSReceiverSessionLog) << "Receiver identity:" << identity;
     }
+    _detecting.reset();
+    if (_connection.type == GPSType::Automatic) {
+        _detected = detected;
+    }
     emit receiverReady(identity);
+}
+
+void GPSReceiverSession::_onDetecting(GPSType family, unsigned baud)
+{
+    if (_connection.type != GPSType::Automatic) {
+        return;
+    }
+    _detecting = GPSDetectionProgress{.family = family, .baud = baud};
+    emit detectingChanged();
 }
 
 void GPSReceiverSession::_onDetected(GPSType type)
@@ -190,6 +205,7 @@ void GPSReceiverSession::_onDetected(GPSType type)
     if (_connection.type != GPSType::Automatic && _connection.type != GPSType::Passive) {
         return;
     }
+    _detecting.reset();
     _detectedType = type;
     qCDebug(GPSReceiverSessionLog) << "Detected receiver family:" << type;
     emit receiverDetected(type);

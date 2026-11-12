@@ -1,6 +1,7 @@
 #include "GPSDriver.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <optional>
 #include <span>
@@ -50,6 +51,10 @@ struct GPSDriver::State
     QString configurationError;
     /// What the receiver of a failed configuration identified itself as; its runtime is gone.
     QString failedIdentity;
+    /// What a GPSType::Automatic configuration detected and configured, as the next driver's hint.
+    GPSDetectionHint detected;
+    /// The rate the configured family left the link at.
+    unsigned baud = 0;
     bool consentRequired = false;
     bool configuring = false;
     /// The base status published last is Valid.
@@ -96,6 +101,11 @@ bool GPSDriver::configurationNeedsConsent() const
 QString GPSDriver::receiverIdentity() const
 {
     return _state->runtime ? _state->runtime->identity() : _state->failedIdentity;
+}
+
+GPSDetectionHint GPSDriver::nextDetectionHint() const
+{
+    return _state->detected;
 }
 
 bool GPSDriver::configure()
@@ -195,11 +205,66 @@ bool GPSDriver::configure()
                             {});
 }
 
+GPSReceiverDetection GPSDriver::_detectHinted(
+    const GPSRuntimeIO& io, const std::function<void(const GPSConfigurationEvidence&)>& commandFinished,
+    unsigned baudRate)
+{
+    GPSReceiverDetection detection;
+    const GPSReceiverFamily* const family =
+        _hint.family == GPSType::Automatic ? nullptr : gpsReceiverFamily(_hint.family);
+    if (!family || family->baudCandidates.empty()) {
+        return detection;
+    }
+    // The rate the receiver was left at first: a receiver that restarted since answers at the rate it was found at.
+    const std::array<unsigned, 2> rates =
+        baudRate ? std::array{baudRate, 0U}
+                 : std::array{_hint.baud, _hint.foundBaud == _hint.baud ? 0U : _hint.foundBaud};
+    for (const unsigned rate : rates) {
+        // A rate the link cannot run at is left to the scan, which reports it.
+        if (!rate || io.setBaudRate(rate) != GPSBaudStatus::Configured) {
+            continue;
+        }
+        if (_observer.detecting) {
+            _observer.detecting(family->type, rate);
+        }
+        GPSProtocolRuntime runtime(*family, io, {.commandFinished = commandFinished});
+        const bool answered = runtime.probe(HINT_PROBE_TIMEOUT);
+        if (runtime.error() == GPSProtocolError::Cancelled || runtime.error() == GPSProtocolError::Transport) {
+            detection.error = runtime.error();
+            detection.errorDetail = runtime.errorDetail();
+            return detection;
+        }
+        if (answered) {
+            qCDebug(GPSDriverLog).noquote() << QStringLiteral("%1 receiver answered at %2 baud, where it was expected")
+                                                   .arg(gpsReceiverName(family->type))
+                                                   .arg(rate);
+            detection.family = family;
+            detection.baud = rate;
+            detection.evidence = QStringLiteral("identity query");
+            return detection;
+        }
+    }
+    return detection;
+}
+
 bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudRate)
 {
     _state->configuring = true;
-    const GPSReceiverDetection detection =
-        GPSReceiverDetector(gpsReceiverFamilies(), io, observer.commandFinished).detect(baudRate);
+    GPSReceiverDetection detection = _detectHinted(io, observer.commandFinished, baudRate);
+    if (!detection.found() && detection.error == GPSProtocolError::None) {
+        GPSRuntimeIO scan = io;
+        if (_observer.detecting) {
+            scan.setBaudRate = [this, setBaudRate = io.setBaudRate](unsigned baud) {
+                const GPSBaudStatus status = setBaudRate(baud);
+                if (status == GPSBaudStatus::Configured) {
+                    _observer.detecting(GPSType::Automatic, baud);
+                }
+                return status;
+            };
+        }
+        detection =
+            GPSReceiverDetector(gpsReceiverFamilies(), std::move(scan), observer.commandFinished).detect(baudRate);
+    }
     _state->configuring = false;
     if (_observer.detected) {
         _observer.detected(detection, baudRate);
@@ -231,10 +296,20 @@ bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer,
     }
     // Without a fixed or selected rate, the family's baud search starts at the detected rate and moves the link to
     // the rate the family prefers.
-    return _configureFamily(
-        *detection.family, std::move(io), std::move(observer),
-        {.base = config.base, .allowPersistentChanges = config.allowPersistentChanges, .detectedBaud = detection.baud},
-        baudRate, QStringLiteral("Detected %1 receiver at %2 baud").arg(name).arg(detection.baud));
+    if (!_configureFamily(*detection.family, std::move(io), std::move(observer),
+                          {.base = config.base,
+                           .allowPersistentChanges = config.allowPersistentChanges,
+                           .detectedBaud = detection.baud},
+                          baudRate, QStringLiteral("Detected %1 receiver at %2 baud").arg(name).arg(detection.baud))) {
+        return false;
+    }
+    // A receiver found at the rate it is left at either kept running or starts at that rate. The rate an earlier
+    // driver found it at then still tells where it answers after a restart, unless the link has only one rate.
+    const bool keepsFoundBaud =
+        !baudRate && detection.baud == _state->baud && _hint.family == detected && _hint.foundBaud != 0;
+    _state->detected = {
+        .family = detected, .baud = _state->baud, .foundBaud = keepsFoundBaud ? _hint.foundBaud : detection.baud};
+    return true;
 }
 
 bool GPSDriver::_configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer,
@@ -268,6 +343,7 @@ bool GPSDriver::_configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO i
         return false;
     }
     _state->configurationError.clear();
+    _state->baud = baudRate;
     return true;
 }
 

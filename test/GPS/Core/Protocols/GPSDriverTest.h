@@ -26,8 +26,14 @@ private slots:
     void _nativeConfigurationRejectedBeforeIo();
     void _automaticDetection_data();
     void _automaticDetection();
+    void _automaticDetectionCancelled_data();
     void _automaticDetectionCancelled();
     void _detectionSkipsRefusedRate();
+    void _detectionHint_data();
+    void _detectionHint();
+    void _staleDetectionHintCost_data();
+    void _staleDetectionHintCost();
+    void _detectionHintOnFixedRateLink();
     void _mismatchHint_data();
     void _mismatchHint();
     /// The identity a receiver reported stays available when its configuration fails.

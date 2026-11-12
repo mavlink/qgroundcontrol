@@ -47,6 +47,12 @@ struct GPSReceiverDependencies
     /// The folder a recorded session's file goes to, asked as each session starts. Without it, or while it returns
     /// an empty path, sessions are not recorded.
     std::function<QString()> recordingDirectory = nullptr;
+    /// What "Detect automatically" last found on a link, by the link's name: "serial:" and the device, or "tcp:" and
+    /// the address. Asked as each such session starts, which then looks for that receiver first. Without it, and for
+    /// a link it knows nothing of, the session scans.
+    std::function<std::optional<RTKDetectedReceiver>(const QString& link)> detectedReceiver = nullptr;
+    /// Told what such a session found once its receiver is ready, to remember it for the link's next session.
+    std::function<void(const RTKDetectedReceiver& receiver)> rememberDetectedReceiver = nullptr;
 };
 
 /// Runs the local GPS receiver session and publishes its status Facts, corrections, and position.
@@ -310,6 +316,12 @@ private:
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
                           const QString& sourceInstance, GPSReceiverConfig request, const QString& serialDevice = {},
                           const QString& endpoint = {});
+    /// Where an Automatic session on @a link looks for its receiver first: what the last one found there. No hint
+    /// for a session of another @a type, for a link nothing is remembered of, and for a recorded session, which
+    /// detects from scratch so that its recording replays without what an earlier session found.
+    GPSDetectionHint _detectionHint(GPSType type, const QString& link) const;
+    /// Remembers what @a session detected for its link's next session.
+    void _rememberDetected(const GPSReceiverSession& session);
     /// Names the new session's recording and returns @a transportFactory wrapped to record the link it opens, or
     /// unchanged when sessions are not recorded.
     GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type,
@@ -368,6 +380,8 @@ private:
     /// shutdown() is running.
     bool _shuttingDown = false;
     const std::function<QString()> _recordingDirectory;
+    const std::function<std::optional<RTKDetectedReceiver>(const QString&)> _detectedReceiver;
+    const std::function<void(const RTKDetectedReceiver&)> _rememberDetectedReceiver;
     /// The start times the recordings are named by, so that sessions which start within one millisecond are recorded
     /// to files of their own.
     GPSFileStartTimes _recordingStartTimes;

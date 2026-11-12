@@ -1,6 +1,7 @@
 #include "RTKSettingsTest.h"
 
 #include <limits>
+#include <optional>
 
 #include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
@@ -393,6 +394,62 @@ void RTKSettingsTest::_baseSiteBecomesFixedPosition()
     QCOMPARE(rtk.fixedBasePositionLongitude()->rawValue().toDouble(), north.longitude);
     QCOMPARE(rtk.fixedBasePositionAltitude()->rawValue().toDouble(), north.altitude);
     QCOMPARE(rtk.fixedBasePositionAccuracy()->rawValue().toDouble(), north.accuracy);
+}
+
+void RTKSettingsTest::_detectedReceiversAreRemembered()
+{
+    RTKSettings rtk;
+    const auto receiver = [](int index) {
+        return RTKDetectedReceiver{.link = QStringLiteral("serial:/dev/ttyUSB%1").arg(index),
+                                   .manufacturer = 4,
+                                   .baudRate = 115200,
+                                   .foundBaudRate = 38400};
+    };
+    const auto remembered = [&rtk, &receiver](int index) { return rtk.detectedReceiver(receiver(index).link); };
+    QVERIFY(!remembered(0));
+    rtk.rememberDetectedReceiver(receiver(0));
+    QCOMPARE(remembered(0), std::optional(receiver(0)));
+
+    // A link is remembered once, as it was last found.
+    RTKDetectedReceiver another = receiver(0);
+    another.manufacturer = 2;
+    another.baudRate = 230400;
+    another.foundBaudRate = 230400;
+    rtk.rememberDetectedReceiver(another);
+    QCOMPARE(remembered(0), std::optional(another));
+
+    // The list is bounded: one link more than it holds forgets the link that was remembered longest ago.
+    for (int index = 1; index < RTKSettings::MaxDetectedReceivers; ++index) {
+        rtk.rememberDetectedReceiver(receiver(index));
+    }
+    rtk.rememberDetectedReceiver(receiver(0));
+    rtk.rememberDetectedReceiver(receiver(RTKSettings::MaxDetectedReceivers));
+    QVERIFY(!remembered(1));
+    for (const int index : {0, 2, int(RTKSettings::MaxDetectedReceivers)}) {
+        QCOMPARE(remembered(index), std::optional(receiver(index)));
+    }
+
+    // What names no link or no receiver family is not remembered, and neither is a link too long to be one.
+    const QString stored = rtk.detectedReceivers()->rawValue().toString();
+    RTKDetectedReceiver invalid = receiver(1);
+    invalid.manufacturer = 0;
+    rtk.rememberDetectedReceiver(invalid);
+    invalid = receiver(1);
+    invalid.link.clear();
+    rtk.rememberDetectedReceiver(invalid);
+    invalid.link = QString(RTKSettings::MaxDetectedLinkLength + 1, QLatin1Char('x'));
+    rtk.rememberDetectedReceiver(invalid);
+    QCOMPARE(rtk.detectedReceivers()->rawValue().toString(), stored);
+
+    // A stored value that does not read as receivers is none; an entry that does not is dropped.
+    rtk.detectedReceivers()->setRawValue(QStringLiteral("not JSON"));
+    QVERIFY(!remembered(0));
+    rtk.detectedReceivers()->setRawValue(QStringLiteral(
+        R"([7,{"link":""},{"link":"serial:/dev/ttyUSB3","manufacturer":4,"baudRate":115200,"foundBaudRate":38400}])"));
+    QCOMPARE(remembered(3), std::optional(receiver(3)));
+    rtk.rememberDetectedReceiver(receiver(0));
+    QCOMPARE(remembered(0), std::optional(receiver(0)));
+    QCOMPARE(remembered(3), std::optional(receiver(3)));
 }
 
 UT_REGISTER_TEST(RTKSettingsTest, TestLabel::Unit)

@@ -163,6 +163,18 @@ QJsonObject baseSiteToJson(const RTKBaseSite& site)
             {kSiteAccuracy, site.accuracy}};
 }
 
+// The keys of a remembered receiver.
+constexpr QLatin1StringView kDetectedLink("link");
+constexpr QLatin1StringView kDetectedManufacturer("manufacturer");
+constexpr QLatin1StringView kDetectedBaudRate("baudRate");
+constexpr QLatin1StringView kDetectedFoundBaudRate("foundBaudRate");
+
+bool validDetectedReceiver(const RTKDetectedReceiver& receiver)
+{
+    return !receiver.link.isEmpty() && receiver.link.size() <= RTKSettings::MaxDetectedLinkLength &&
+           receiver.manufacturer > 0;
+}
+
 }  // namespace
 
 DECLARE_SETTINGGROUP(RTK, "RTK")
@@ -264,6 +276,52 @@ void RTKSettings::_storeBaseSites(const QList<RTKBaseSite>& sites)
         sites.isEmpty() ? QString() : QString::fromUtf8(QJsonDocument(entries).toJson(QJsonDocument::Compact)));
 }
 
+QList<RTKDetectedReceiver> RTKSettings::_detectedReceivers()
+{
+    // A remembered receiver only saves time, so an entry that does not read as one is dropped without a word.
+    const QJsonArray entries = QJsonDocument::fromJson(detectedReceivers()->rawValue().toString().toUtf8()).array();
+    QList<RTKDetectedReceiver> receivers;
+    for (const QJsonValue& entry : entries) {
+        const QJsonObject object = entry.toObject();
+        const RTKDetectedReceiver receiver{
+            .link = object.value(kDetectedLink).toString(),
+            .manufacturer = object.value(kDetectedManufacturer).toInt(),
+            .baudRate = static_cast<quint32>(object.value(kDetectedBaudRate).toInteger()),
+            .foundBaudRate = static_cast<quint32>(object.value(kDetectedFoundBaudRate).toInteger())};
+        if (validDetectedReceiver(receiver) && receivers.size() < MaxDetectedReceivers &&
+            std::ranges::find(receivers, receiver.link, &RTKDetectedReceiver::link) == receivers.cend()) {
+            receivers.append(receiver);
+        }
+    }
+    return receivers;
+}
+
+std::optional<RTKDetectedReceiver> RTKSettings::detectedReceiver(const QString& link)
+{
+    const QList<RTKDetectedReceiver> receivers = _detectedReceivers();
+    const auto remembered = std::ranges::find(receivers, link, &RTKDetectedReceiver::link);
+    return remembered == receivers.cend() ? std::nullopt : std::optional(*remembered);
+}
+
+void RTKSettings::rememberDetectedReceiver(const RTKDetectedReceiver& receiver)
+{
+    if (!validDetectedReceiver(receiver)) {
+        return;
+    }
+    QList<RTKDetectedReceiver> receivers = _detectedReceivers();
+    receivers.removeIf([&receiver](const RTKDetectedReceiver& other) { return other.link == receiver.link; });
+    receivers.prepend(receiver);
+    receivers.resize(std::min<qsizetype>(receivers.size(), MaxDetectedReceivers));
+    QJsonArray entries;
+    for (const RTKDetectedReceiver& remembered : std::as_const(receivers)) {
+        entries.append(QJsonObject{{kDetectedLink, remembered.link},
+                                   {kDetectedManufacturer, remembered.manufacturer},
+                                   {kDetectedBaudRate, static_cast<qint64>(remembered.baudRate)},
+                                   {kDetectedFoundBaudRate, static_cast<qint64>(remembered.foundBaudRate)}});
+    }
+    detectedReceivers()->setRawValue(QString::fromUtf8(QJsonDocument(entries).toJson(QJsonDocument::Compact)));
+}
+
 DECLARE_SETTINGSFACT(RTKSettings, receiverRole)
 DECLARE_SETTINGSFACT(RTKSettings, forwardReceiverRtcm)
 DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturer)
@@ -285,3 +343,4 @@ DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAltitude)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAccuracy)
 DECLARE_SETTINGSFACT(RTKSettings, compactRtcmCorrections)
 DECLARE_SETTINGSFACT(RTKSettings, savedBaseSites)
+DECLARE_SETTINGSFACT(RTKSettings, detectedReceivers)

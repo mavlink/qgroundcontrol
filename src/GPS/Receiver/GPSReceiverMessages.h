@@ -8,6 +8,7 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverReports.h"
+#include "GPSReceiverSession.h"
 #include "GPSType.h"
 #include "RTKSettings.h"
 
@@ -42,6 +43,9 @@ struct ReceiverStatus
     GPSReceiver::State state = GPSReceiver::State::Disconnected;
     /// A connecting receiver is one an Automatic connection has not identified yet.
     bool identifying = false;
+    /// What the detection of such a connection looks for now; empty until it says. A rate of zero is not named, as
+    /// on a network link.
+    std::optional<GPSDetectionProgress> detecting;
     RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
     bool forwardingCorrections = false;
     /// Base mode of a configured base; empty for a passive receiver or without one.

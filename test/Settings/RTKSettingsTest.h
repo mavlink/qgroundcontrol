@@ -2,8 +2,8 @@
 
 #include "UnitTest.h"
 
-/// Migrations of earlier receiver settings, including those once kept in the AutoConnect group, and the saved base
-/// sites.
+/// Migrations of earlier receiver settings, including those once kept in the AutoConnect group, the saved base
+/// sites, and the receivers remembered for each link.
 class RTKSettingsTest : public UnitTest
 {
     Q_OBJECT
@@ -21,4 +21,5 @@ private slots:
     void _baseSitesLoad();
     void _baseSitesSaveAndRemove();
     void _baseSiteBecomesFixedPosition();
+    void _detectedReceiversAreRemembered();
 };

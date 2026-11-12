@@ -26,6 +26,7 @@ private slots:
     void _configuredReceiverRidesOutSilence();
     void _configuredReceiverReportsReadyThenLoss_data();
     void _configuredReceiverReportsReadyThenLoss();
+    void _automaticSessionFollowsHint();
     void _quectelConsentRefusal_data();
     void _quectelConsentRefusal();
     void _namedReceiverIsNotRepeated();

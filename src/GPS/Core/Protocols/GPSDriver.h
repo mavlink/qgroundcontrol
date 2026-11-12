@@ -11,6 +11,7 @@
 
 #include "GPSClock.h"
 #include "GPSCommand.h"
+#include "GPSDetectionHint.h"
 #include "GPSProtocolEvent.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverReports.h"
@@ -43,8 +44,8 @@ struct GPSDriverSinks
 };
 
 /// Observers of what a driver's detection and runtime produce, before the driver adapts and filters it for the sinks:
-/// for tests and tools that record a session. Invoked on the caller thread from within configure()/receiveOutcome();
-/// they must not call back into the driver.
+/// for the progress a session shows while it detects, and for tests and tools that record a session. Invoked on the
+/// caller thread from within configure()/receiveOutcome(); they must not call back into the driver.
 struct GPSDriverObserver
 {
     /// Every completed command: detection, configuration and streaming alike.
@@ -57,6 +58,9 @@ struct GPSDriverObserver
     /// discarded. After a success it stays the driver's until the next configure(), and input decoded through it
     /// (GPSProtocolRuntime::consume()) reaches the sinks as received input does.
     std::function<void(GPSProtocolRuntime&, unsigned requestedBaud, unsigned baud)> configured;
+    /// A GPSType::Automatic driver now looks for the receiver with the link at @a baud: for @a family alone, where
+    /// its hint says the receiver was, or for any family (GPSType::Automatic) as receiver detection scans that rate.
+    std::function<void(GPSType family, unsigned baud)> detecting;
 };
 
 /// What one receive cycle heard from the receiver.
@@ -85,18 +89,30 @@ struct [[nodiscard]] GPSReceiveResult
 };
 
 /// Hosts a native receiver family and adapts its decoded events to public reports. GPSType::Automatic detects the
-/// family (GPSReceiverDetector) on every configure(), then fits the request to it: consent to persistent changes lapses
-/// where the family has none, a compact-observation request lapses with a warning where the family has no compact
-/// option, and an unsupported base mode fails, naming the family.
+/// family on every configure(), then fits the request to it: consent to persistent changes lapses where the family has
+/// none, a compact-observation request lapses with a warning where the family has no compact option, and an
+/// unsupported base mode fails, naming the family. Detection first asks the family of a hint (setDetectionHint()) to
+/// identify itself, with the family's read-only identity query, and scans every family at every rate
+/// (GPSReceiverDetector) without a hint or when that family does not answer.
 class GPSDriver
 {
 public:
+    /// The longest the identity query of a hint waits for its answer, which is shorter than some families wait when
+    /// they are scanned for. A hint that no longer holds therefore costs at most this much for each of its rates
+    /// before the scan starts, and a receiver that takes longer to answer is found by the scan.
+    static constexpr std::chrono::milliseconds HINT_PROBE_TIMEOUT{1000};
+
     /// Deadlines, report times and satellite freshness run on @a clock; the default is the steady clock.
     GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks,
               GPSClock clock = {}, GPSDriverObserver observer = {});
     ~GPSDriver();
 
     Q_DISABLE_COPY(GPSDriver)
+
+    /// Where a GPSType::Automatic driver looks for the receiver first, from the next configure() on; ignored for any
+    /// other type, and when it names no family receiver detection probes. With a selected or fixed link rate the
+    /// family is asked at that rate, otherwise at the hint's rates.
+    void setDetectionHint(const GPSDetectionHint& hint) { _hint = hint; }
 
     /// Create and configure the underlying driver.
     bool configure();
@@ -118,8 +134,21 @@ public:
     /// itself; empty when unknown.
     [[nodiscard]] QString receiverIdentity() const;
 
+    /// The hint for the next driver on this link: the family the latest configure() of a GPSType::Automatic driver
+    /// detected and configured, the rate it left the link at, and the rate it found the receiver at. A receiver found
+    /// at the rate it is left at keeps the found rate of this driver's hint for the same family, which still tells
+    /// where it answers after a restart. No hint, with the family GPSType::Automatic, when configure() failed or
+    /// detected nothing.
+    [[nodiscard]] GPSDetectionHint nextDetectionHint() const;
+
 private:
     bool _configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudRate);
+    /// Asks the hint's family to identify itself, at @a baudRate when the link's rate is selected or fixed and else at
+    /// the hint's rates. @return the detection when it answered; none, without an error, when there is no hint to
+    /// follow or the family did not answer; none with the error when the link failed or the driver was stopped.
+    [[nodiscard]] GPSReceiverDetection _detectHinted(
+        const GPSRuntimeIO& io, const std::function<void(const GPSConfigurationEvidence&)>& commandFinished,
+        unsigned baudRate);
     /// @a detected describes the detection that chose @a family; empty for a configured type.
     bool _configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer,
                           const GPSConfig& config, unsigned baudRate, const QString& detected);
@@ -141,6 +170,7 @@ private:
     GPSDriverSinks _sinks;
     GPSClock _clock;
     GPSDriverObserver _observer;
+    GPSDetectionHint _hint;
 
     struct State;
     std::unique_ptr<State> _state;

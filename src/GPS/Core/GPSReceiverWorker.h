@@ -14,6 +14,7 @@
 #include "GPSCancellation.h"
 #include "GPSClock.h"
 #include "GPSConnectionErrors.h"
+#include "GPSDetectionHint.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverReports.h"
 #include "GPSType.h"
@@ -54,6 +55,12 @@ public:
     /// the setting.
     void setEndsWhenIdle(bool endsWhenIdle);
 
+    /// Where a GPSType::Automatic session looks for its receiver first (GPSDriver::setDetectionHint()). Ignored once
+    /// the session started, as its worker reads the hint.
+    void setDetectionHint(const GPSDetectionHint& hint);
+
+    const GPSDetectionHint& detectionHint() const { return _detectionHint; }
+
     /// Longest wait for one read before the session re-checks cancellation.
     static constexpr std::chrono::milliseconds RECEIVE_TIMEOUT{1200};
     /// inputProblem() is reported after this long without useful data from a receiver that ends when idle, or without
@@ -80,8 +87,14 @@ signals:
     /// one that ends when idle has delivered no useful data for that long; None once they arrive. The session keeps
     /// running.
     void inputProblem(GPSInputProblem problem);
-    /// identity is the receiver model and firmware, or empty when the family does not report them.
-    void receiverReady(const QString& identity = {});
+    /// A GPSType::Automatic session now looks for the receiver with the link at @a baud: for @a family alone, where
+    /// its hint says the receiver was, or for any family (GPSType::Automatic) as its detection scans that rate
+    /// (GPSDriverObserver::detecting).
+    void detecting(GPSType family, unsigned baud);
+    /// identity is the receiver model and firmware, or empty when the family does not report them. @a detected is
+    /// what a GPSType::Automatic session found, as the hint for the next session on its link
+    /// (GPSDriver::nextDetectionHint()); any other session has none.
+    void receiverReady(const QString& identity = {}, const GPSDetectionHint& detected = {});
     /// Delivered on this object's thread once the session thread has finished.
     void finished();
 
@@ -93,6 +106,7 @@ private:
     GPSType _type;
     GPSCancelSource _cancelSource;
     bool _endsWhenIdle = true;
+    GPSDetectionHint _detectionHint;
     GPSReceiverConfig _config{};
     GPSClock _clock;
 };

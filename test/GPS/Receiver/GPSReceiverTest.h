@@ -28,6 +28,9 @@ private slots:
     void _receiverFramesAreValidated();
     void _logsFixTransitionsWithoutCoordinates();
     void _automaticConnection();
+    void _detectedReceiverIsRememberedPerLink();
+    void _statusTextNamesWhatDetectionTries_data();
+    void _statusTextNamesWhatDetectionTries();
     void _statusTextFollowsState_data();
     void _statusTextFollowsState();
     void _statusTextSaysWhenNoCorrectionsAreSent_data();

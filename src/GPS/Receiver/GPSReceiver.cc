@@ -67,6 +67,8 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
     , _outputOverflowTask(_scheduler, this)
     , _pollTask(_scheduler, this)
     , _recordingDirectory(dependencies.recordingDirectory)
+    , _detectedReceiver(dependencies.detectedReceiver)
+    , _rememberDetectedReceiver(dependencies.rememberDetectedReceiver)
     , _satellites(new GPSSatelliteModel(this))
 {
     qCDebug(GPSReceiverLog) << this;
@@ -239,6 +241,9 @@ void GPSReceiver::_onGPSConnect()
     _setError();
     _connection->receiverReady();
     GPSReceiverSession* const session = _session;
+    if (session) {
+        _rememberDetected(*session);
+    }
     _facts->_setConfigured(true);
     _setPersistentChangesAllowed(false);
     // Marking the status configured notifies its observers, one of which may have replaced the session that is ready.
@@ -246,6 +251,31 @@ void GPSReceiver::_onGPSConnect()
         session->registerPosition(_positionManager, _positionHealth);
     }
     _emitChanges();
+}
+
+GPSDetectionHint GPSReceiver::_detectionHint(GPSType type, const QString& link) const
+{
+    if (type != GPSType::Automatic || !_recordingFile.isEmpty() || !_detectedReceiver) {
+        return {};
+    }
+    const std::optional<RTKDetectedReceiver> remembered = _detectedReceiver(link);
+    const auto* const family = remembered ? gpsReceiverDescriptorForManufacturer(remembered->manufacturer) : nullptr;
+    if (!family || !family->capabilities.rtkBase) {
+        return {};
+    }
+    return {.family = family->type, .baud = remembered->baudRate, .foundBaud = remembered->foundBaudRate};
+}
+
+void GPSReceiver::_rememberDetected(const GPSReceiverSession& session)
+{
+    const GPSDetectionHint& detected = session.detected();
+    const auto* const family = gpsReceiverDescriptor(detected.family);
+    if (_rememberDetectedReceiver && family && family->capabilities.rtkBase) {
+        _rememberDetectedReceiver({.link = session.link(),
+                                   .manufacturer = family->manufacturerId,
+                                   .baudRate = detected.baud,
+                                   .foundBaudRate = detected.foundBaud});
+    }
 }
 
 void GPSReceiver::_onReceiverDetected()
@@ -507,7 +537,9 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
          .forwardsCorrections = role == RTKSettings::ConfiguredBase || _configuration.forwardReceiverRtcm,
          .config = std::move(request),
          .serialDevice = serialDevice,
-         .endpoint = endpoint},
+         .endpoint = endpoint,
+         .link = sourceInstance,
+         .detectionHint = _detectionHint(type, sourceInstance)},
         this);
     session->registerCorrections(_correctionManager, sourceInstance);
     _session = session;
@@ -516,6 +548,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     connect(session, &GPSReceiverSession::baseStatusUpdated, this, &GPSReceiver::_onBaseStatusUpdated);
     connect(session, &GPSReceiverSession::receiverReady, this, &GPSReceiver::_onGPSConnect);
     connect(session, &GPSReceiverSession::receiverDetected, this, &GPSReceiver::_onReceiverDetected);
+    connect(session, &GPSReceiverSession::detectingChanged, this, &GPSReceiver::_emitChanges);
     connect(session, &GPSReceiverSession::inputProblem, this, &GPSReceiver::_onInputProblem);
     connect(session, &GPSReceiverSession::ended, this, [this](GPSConnectionError error, const QString& detail) {
         _endSession(error, detail, GPSReceiverSessionEnd::Reported);
@@ -629,8 +662,14 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
 
 QString GPSReceiver::statusText() const
 {
+    std::optional<GPSDetectionProgress> detecting = _session ? _session->detecting() : std::nullopt;
+    // A network link has no rate to name.
+    if (detecting && _session->serialDevice().isEmpty()) {
+        detecting->baud = 0;
+    }
     return GPSReceiverMessages::receiverStatus({.state = state(),
                                                 .identifying = activePresentation().automatic,
+                                                .detecting = detecting,
                                                 .role = activeRole(),
                                                 .forwardingCorrections = forwardingCorrections(),
                                                 .baseMode = _activeBaseMode(),

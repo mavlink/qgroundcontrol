@@ -842,6 +842,11 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(text && detected);
     QCOMPARE(text->property("statusText").toString(), QStringLiteral("Identifying receiver..."));
     QVERIFY(!detected->isVisible());
+    // The status line follows what the detection tries.
+    panel.receiver.worker()->looksFor(GPSType::Automatic, 38400);
+    QCOMPARE(text->property("statusText").toString(), panel.receiver.gps.statusText());
+    QVERIFY(text->property("statusText").toString().contains(QStringLiteral("38400")) ==
+            panel.receiver.gps.serialSupported());
     panel.receiver.worker()->detected(GPSType::Unicore);
     QVERIFY(detected->isVisible());
     QCOMPARE(detected->property("labelText").toString(), QStringLiteral("Unicore"));

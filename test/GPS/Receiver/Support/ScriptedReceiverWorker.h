@@ -44,9 +44,18 @@ public:
         deliverQueuedCalls();
     }
 
-    void ready(const QString& identity = {})
+    /// Reports what the detection of an Automatic session looks for: @a family alone, or any family
+    /// (GPSType::Automatic), with the link at @a baud.
+    void looksFor(GPSType family, unsigned baud)
     {
-        emit receiverReady(identity);
+        emit detecting(family, baud);
+        deliverQueuedCalls();
+    }
+
+    /// Reports the receiver ready, and @a detected as what an Automatic session found.
+    void ready(const QString& identity = {}, const GPSDetectionHint& detected = {})
+    {
+        emit receiverReady(identity, detected);
         deliverQueuedCalls();
     }
 

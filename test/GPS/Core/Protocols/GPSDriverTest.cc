@@ -10,6 +10,8 @@
 #include "GPSDecodedData.h"
 #include "GPSDriver.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverDescriptor.h"
+#include "GPSReceiverDetector.h"
 #include "GPSReceiverFamilies.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
@@ -511,14 +513,23 @@ void GPSDriverTest::_automaticDetection()
     }
 }
 
+void GPSDriverTest::_automaticDetectionCancelled_data()
+{
+    QTest::addColumn<GPSDetectionHint>("hint");
+    QTest::newRow("scan") << GPSDetectionHint{};
+    QTest::newRow("hint") << GPSDetectionHint{.family = GPSType::UBlox, .baud = 115200, .foundBaud = 38400};
+}
+
 void GPSDriverTest::_automaticDetectionCancelled()
 {
+    QFETCH(GPSDetectionHint, hint);
     AutomaticLink link(GPSType::UBlox);
     link.transport.cancel();
     int reported = 0;
     GPSDriverSinks sinks;
     sinks.onReceiverDetected = [&](GPSType) { ++reported; };
     GPSDriver driver(GPSType::Automatic, link.transport, {.base = surveyInBase(2, 180s)}, sinks, link.clock.source());
+    driver.setDetectionHint(hint);
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Receiver detection failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -551,6 +562,179 @@ void GPSDriverTest::_detectionSkipsRefusedRate()
     QCOMPARE(reported, QList<GPSType>{GPSType::UBlox});
     QCOMPARE(rates.mid(0, 2), (QList<unsigned>{115200, 38400}));
     QCOMPARE(driver.configurationError(), error);
+}
+
+namespace {
+
+/// A u-blox F9P behind receiver detection, as the automatic golden scenarios set one up: it answers only while the
+/// host runs the link at its rate, which its configuration moves to 115200.
+struct DetectableUBlox
+{
+    explicit DetectableUBlox(unsigned baud)
+        : link(clock, UBXReceiverModel::Receiver::F9P)
+    {
+        (void) link.detect(Dialect::UBX);
+        link.model.receiverBaud = baud;
+        link.atRate = [this] { return link.model.hostBaud == link.model.receiverBaud; };
+    }
+
+    /// Whether the host sent an identity query other than the u-blox one: those are all text.
+    bool otherFamiliesAsked() const { return std::ranges::any_of(link.detection->writes, textCommand); }
+
+    GPSTestClock clock{GPSTestClock::START_US};
+    ModelReceiver<UBXReceiverModel> link;
+};
+
+/// What a driver's observer saw of its detection.
+struct DetectionTrace
+{
+    GPSDriverObserver observer(GPSTestClock& clock)
+    {
+        GPSDriverObserver result;
+        result.detecting = [this, &clock](GPSType family, unsigned baud) {
+            // "any" is the scan, which asks every family.
+            const QString name = family == GPSType::Automatic ? QStringLiteral("any") : gpsReceiverName(family);
+            looked.append(QStringLiteral("%1@%2").arg(name).arg(baud));
+            if (family == GPSType::Automatic && !scanStartedAtUs) {
+                scanStartedAtUs = clock.nowUs();
+            }
+        };
+        result.detected = [this, &clock](const GPSReceiverDetection& detection, unsigned) {
+            found = detection.found()
+                        ? QStringLiteral("%1@%2").arg(gpsReceiverName(detection.family->type)).arg(detection.baud)
+                        : QString();
+            evidence = detection.evidence;
+            detectedAtUs = clock.nowUs();
+        };
+        return result;
+    }
+
+    /// The family and rate of each step, as "u-blox@115200".
+    QStringList looked;
+    QString found;
+    QString evidence;
+    uint64_t scanStartedAtUs = 0;
+    uint64_t detectedAtUs = 0;
+};
+
+uint64_t microseconds(std::chrono::milliseconds duration)
+{
+    return static_cast<uint64_t>(std::chrono::microseconds(duration).count());
+}
+
+}  // namespace
+
+void GPSDriverTest::_detectionHint_data()
+{
+    QTest::addColumn<unsigned>("receiverBaud");
+    QTest::addColumn<GPSDetectionHint>("hint");
+    QTest::addColumn<QStringList>("looked");
+    QTest::addColumn<GPSDetectionHint>("next");
+    const GPSDetectionHint ublox{.family = GPSType::UBlox, .baud = 115200, .foundBaud = 38400};
+    const QStringList scanTo38400{QStringLiteral("any@115200"), QStringLiteral("any@38400")};
+    QTest::newRow("no-hint") << 38400U << GPSDetectionHint{} << scanTo38400 << ublox;
+    // A receiver that kept running answers where the last session left it, which says nothing new about where it
+    // answers after a restart.
+    QTest::newRow("kept-running") << 115200U << ublox << QStringList{QStringLiteral("u-blox@115200")} << ublox;
+    QTest::newRow("restarted") << 38400U << ublox
+                               << QStringList{QStringLiteral("u-blox@115200"), QStringLiteral("u-blox@38400")} << ublox;
+    // A receiver that answers at neither rate is found by the scan, as without a hint.
+    QTest::newRow("at-another-rate") << 9600U << ublox
+                                     << QStringList{QStringLiteral("u-blox@115200"), QStringLiteral("u-blox@38400"),
+                                                    QStringLiteral("any@115200"),    QStringLiteral("any@38400"),
+                                                    QStringLiteral("any@460800"),    QStringLiteral("any@9600")}
+                                     << GPSDetectionHint{.family = GPSType::UBlox, .baud = 115200, .foundBaud = 9600};
+    QTest::newRow("another-family") << 38400U
+                                    << GPSDetectionHint{.family = GPSType::Septentrio,
+                                                        .baud = 115200,
+                                                        .foundBaud = 115200}
+                                    << (QStringList{QStringLiteral("Septentrio@115200")} + scanTo38400) << ublox;
+    // Detection probes no passive receiver, so there is none to ask.
+    QTest::newRow("not-a-family") << 38400U
+                                  << GPSDetectionHint{.family = GPSType::Passive, .baud = 38400, .foundBaud = 38400}
+                                  << scanTo38400 << ublox;
+}
+
+void GPSDriverTest::_detectionHint()
+{
+    QFETCH(unsigned, receiverBaud);
+    QFETCH(GPSDetectionHint, hint);
+    QFETCH(QStringList, looked);
+    QFETCH(GPSDetectionHint, next);
+    DetectableUBlox receiver(receiverBaud);
+    DetectionTrace trace;
+    QList<GPSType> reported;
+    GPSDriverSinks sinks;
+    sinks.onReceiverDetected = [&](GPSType type) { reported.append(type); };
+    GPSDriver driver(GPSType::Automatic, receiver.link, {.base = surveyInBase(2, 180s)}, sinks, receiver.clock.source(),
+                     trace.observer(receiver.clock));
+    driver.setDetectionHint(hint);
+    QVERIFY(driver.nextDetectionHint() == GPSDetectionHint{});
+    QVERIFY2(driver.configure(), qPrintable(driver.configurationError()));
+    QCOMPARE(trace.looked, looked);
+    QCOMPARE(trace.found, QStringLiteral("u-blox@%1").arg(receiverBaud));
+    QCOMPARE(trace.evidence, QStringLiteral("identity query"));
+    QCOMPARE(reported, QList<GPSType>{GPSType::UBlox});
+    // The hint for the next session: the family, the rate its configuration left the link at, and where it was found.
+    QVERIFY2(driver.nextDetectionHint() == next, qPrintable(QStringLiteral("baud %1, found at %2")
+                                                                .arg(driver.nextDetectionHint().baud)
+                                                                .arg(driver.nextDetectionHint().foundBaud)));
+    // A hint that holds asks no other family and waits for no output. At its first rate the receiver is found before
+    // the scan would have finished listening there, and at its second one query's wait later.
+    const bool scanned = trace.scanStartedAtUs != 0;
+    QCOMPARE(receiver.otherFamiliesAsked(), scanned);
+    if (!scanned) {
+        const uint64_t elapsedUs = trace.detectedAtUs - GPSTestClock::START_US;
+        QVERIFY(GPSDriver::HINT_PROBE_TIMEOUT <= GPSReceiverDetector::LISTEN_WINDOW);
+        QVERIFY2(elapsedUs < looked.size() * microseconds(GPSDriver::HINT_PROBE_TIMEOUT),
+                 qPrintable(QStringLiteral("%1 ms").arg(elapsedUs / 1000)));
+    }
+}
+
+void GPSDriverTest::_staleDetectionHintCost_data()
+{
+    QTest::addColumn<GPSType>("family");
+    for (const GPSReceiverDescriptor& family : gpsReceiverDescriptors()) {
+        if (family.capabilities.rtkBase && family.type != GPSType::UBlox) {
+            QTest::newRow(family.name.data()) << family.type;
+        }
+    }
+}
+
+void GPSDriverTest::_staleDetectionHintCost()
+{
+    QFETCH(GPSType, family);
+    // Another receiver is on the link than the one the last session found there.
+    DetectableUBlox receiver(38400);
+    DetectionTrace trace;
+    GPSDriver driver(GPSType::Automatic, receiver.link, {.base = surveyInBase(2, 180s)}, {}, receiver.clock.source(),
+                     trace.observer(receiver.clock));
+    driver.setDetectionHint({.family = family, .baud = 115200, .foundBaud = 230400});
+    QVERIFY2(driver.configure(), qPrintable(driver.configurationError()));
+    QCOMPARE(trace.found, QStringLiteral("u-blox@38400"));
+    QCOMPARE(trace.looked.size(), 4);
+    // Each of the hint's two rates costs one identity query that is not answered, before the scan starts. That is
+    // bounded for every family, also for one that waits longer for its answer when it is scanned for.
+    const auto cost = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::microseconds(trace.scanStartedAtUs - GPSTestClock::START_US));
+    QVERIFY2(cost <= 2 * GPSDriver::HINT_PROBE_TIMEOUT, qPrintable(QStringLiteral("%1 ms").arg(cost.count())));
+}
+
+void GPSDriverTest::_detectionHintOnFixedRateLink()
+{
+    // A network bridge runs at one rate, whatever rates the hint names. The link shows its family in its output, which
+    // the scan would listen for: the hinted family is asked instead.
+    AutomaticLink link(GPSType::UBlox);
+    DetectionTrace trace;
+    GPSDriver driver(GPSType::Automatic, link.transport, {.base = surveyInBase(2, 180s)}, {}, link.clock.source(),
+                     trace.observer(link.clock));
+    driver.setDetectionHint({.family = GPSType::UBlox, .baud = 9600, .foundBaud = 38400});
+    QVERIFY2(driver.configure(), qPrintable(driver.configurationError()));
+    QCOMPARE(trace.looked, QStringList{QStringLiteral("u-blox@115200")});
+    QCOMPARE(trace.found, QStringLiteral("u-blox@115200"));
+    QCOMPARE(trace.evidence, QStringLiteral("identity query"));
+    QVERIFY(driver.nextDetectionHint() ==
+            (GPSDetectionHint{.family = GPSType::UBlox, .baud = 115200, .foundBaud = 115200}));
 }
 
 void GPSDriverTest::_mismatchHint_data()

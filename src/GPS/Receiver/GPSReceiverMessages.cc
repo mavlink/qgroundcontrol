@@ -30,6 +30,28 @@ QString reconnectingMessage(GPSConnectionError error, const QString& detail)
                             : GPSReceiver::tr("Receiver connection lost: %1. Reconnecting automatically.").arg(detail);
 }
 
+/// The status of an Automatic connection that has not identified its receiver yet: what its detection looks for.
+QString identifyingStatus(const std::optional<GPSDetectionProgress>& detecting)
+{
+    const QString family = detecting ? gpsReceiverName(detecting->family) : QString();
+    if (family.isEmpty()) {
+        // Detection scans for any family, one rate after the other.
+        return detecting && detecting->baud
+                   //: %1 is a serial baud rate, such as 115200
+                   ? GPSReceiver::tr("Identifying receiver at %1 baud...").arg(detecting->baud)
+                   : GPSReceiver::tr("Identifying receiver...");
+    }
+    if (!detecting->baud) {
+        //: %1 is the manufacturer of the receiver that was connected here last time, such as u-blox
+        return GPSReceiver::tr("Identifying receiver: trying %1, as last time...").arg(family);
+    }
+    //: %1 is the manufacturer of the receiver that was connected here last time, such as u-blox, and %2 its serial
+    //: baud rate, such as 115200
+    return GPSReceiver::tr("Identifying receiver: trying %1 at %2 baud, as last time...")
+        .arg(family)
+        .arg(detecting->baud);
+}
+
 }  // namespace
 
 namespace GPSReceiverMessages {
@@ -204,7 +226,7 @@ QString receiverStatus(const ReceiverStatus& status)
         case GPSReceiver::State::Reconnecting:
             return GPSReceiver::tr("Connecting automatically...");
         case GPSReceiver::State::Connecting:
-            return status.identifying ? GPSReceiver::tr("Identifying receiver...")
+            return status.identifying ? identifyingStatus(status.detecting)
                                       : GPSReceiver::tr("Connecting to receiver...");
         case GPSReceiver::State::Connected:
             break;

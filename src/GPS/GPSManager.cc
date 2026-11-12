@@ -43,6 +43,13 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
         const QString savePath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString();
         return savePath.isEmpty() ? QString() : QDir(savePath).filePath(QStringLiteral("GPSReceiver"));
     };
+    // What "Detect automatically" finds on each link is kept in the settings, for its next connection there.
+    dependencies.detectedReceiver = [](const QString& link) {
+        return SettingsManager::instance()->rtkSettings()->detectedReceiver(link);
+    };
+    dependencies.rememberDetectedReceiver = [](const RTKDetectedReceiver& receiver) {
+        SettingsManager::instance()->rtkSettings()->rememberDetectedReceiver(receiver);
+    };
     return dependencies;
 }
 

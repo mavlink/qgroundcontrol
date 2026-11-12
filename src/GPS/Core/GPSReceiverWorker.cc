@@ -69,6 +69,13 @@ void GPSReceiverWorker::setEndsWhenIdle(bool endsWhenIdle)
     }
 }
 
+void GPSReceiverWorker::setDetectionHint(const GPSDetectionHint& hint)
+{
+    if (!_thread) {
+        _detectionHint = hint;
+    }
+}
+
 bool GPSReceiverWorker::wait(QDeadlineTimer deadline)
 {
     return !_thread || _thread->wait(deadline);
@@ -118,7 +125,11 @@ void GPSReceiverWorker::_runSession()
         emit receiverDetected(type);
     };
 
-    GPSDriver driver(_type, *transport, _config, std::move(sinks), _clock);
+    GPSDriverObserver observer;
+    observer.detecting = [this](GPSType family, unsigned baud) { emit detecting(family, baud); };
+
+    GPSDriver driver(_type, *transport, _config, std::move(sinks), _clock, std::move(observer));
+    driver.setDetectionHint(_detectionHint);
 
     if (!driver.configure()) {
         if (cancelToken.isCancelled()) {
@@ -136,7 +147,7 @@ void GPSReceiverWorker::_runSession()
     if (cancelToken.isCancelled()) {
         return;
     }
-    emit receiverReady(driver.receiverIdentity());
+    emit receiverReady(driver.receiverIdentity(), driver.nextDetectionHint());
 
     usefulDataReceived();
     GPSInputMonitor inputMonitor(_clock.nowUs(), USEFUL_DATA_TIMEOUT);

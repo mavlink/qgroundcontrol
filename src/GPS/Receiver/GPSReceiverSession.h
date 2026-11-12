@@ -37,6 +37,18 @@ struct GPSBaseStationState
     void applyStatus(const GPSBaseStatus& status);
 };
 
+/// What the detection of an Automatic session looks for at the moment.
+struct GPSDetectionProgress
+{
+    /// The family that is asked to identify itself where the session's hint says it was; GPSType::Automatic while
+    /// detection scans for any family.
+    GPSType family = GPSType::Automatic;
+    /// The rate the link runs at meanwhile.
+    unsigned baud = 0;
+
+    bool operator==(const GPSDetectionProgress&) const = default;
+};
+
 /// Builds the receiver request for one connection: a passive receiver gets no base settings, and compact
 /// observations apply only where the family supports them. @a error, when given, receives the translated diagnostic,
 /// which is empty when the receiver supports the request; the request is returned either way.
@@ -65,6 +77,10 @@ public:
         QString serialDevice;
         /// Serial device or network address shown to the user.
         QString endpoint;
+        /// Names the link among those receivers are detected on: "serial:" and the device, or "tcp:" and the address.
+        QString link;
+        /// Where an Automatic session looks for its receiver first; no hint for any other.
+        GPSDetectionHint detectionHint;
     };
 
     GPSReceiverSession(quint64 id, Connection connection, QObject* parent);
@@ -117,6 +133,16 @@ public:
 
     const QString& endpoint() const { return _connection.endpoint; }
 
+    const QString& link() const { return _connection.link; }
+
+    /// What an Automatic session's detection looks for now. Empty until it starts looking, once it found the family,
+    /// and for any other session.
+    std::optional<GPSDetectionProgress> detecting() const { return _detecting; }
+
+    /// What an Automatic session detected, once its receiver is ready, as the hint for the link's next session; no
+    /// hint until then and for any other session.
+    const GPSDetectionHint& detected() const { return _detected; }
+
     const QString& identity() const { return _identity; }
 
     /// A base with a known antenna position reports that position instead of its navigation solution.
@@ -130,6 +156,7 @@ signals:
     void receiverReady(const QString& identity);
     /// The family an Automatic session detected, or the protocol a passive receiver's output carries.
     void receiverDetected(GPSType type);
+    void detectingChanged();
     /// Why a passive receiver delivers no position; None once positions arrive.
     void inputProblem(GPSInputProblem problem);
     /// The worker failed or exited; the owner ends the session.
@@ -143,7 +170,8 @@ private:
     }
 
     void _onBaseStatus(const GPSBaseStatus& report);
-    void _onReady(const QString& identity);
+    void _onReady(const QString& identity, const GPSDetectionHint& detected);
+    void _onDetecting(GPSType family, unsigned baud);
     void _onDetected(GPSType type);
     void _forwardCorrection(const QByteArray& data, qint64 receivedAtMs);
 
@@ -156,5 +184,7 @@ private:
     GPSPositionSourceRegistration _position;
     QString _identity;
     std::optional<GPSType> _detectedType;
+    std::optional<GPSDetectionProgress> _detecting;
+    GPSDetectionHint _detected;
     bool _retired = false;
 };

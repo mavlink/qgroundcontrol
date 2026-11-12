@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <QObject>
 #include <QtCore/QList>
 #include <QtCore/QString>
@@ -49,6 +51,21 @@ public:
     bool operator==(const RTKBaseSite&) const = default;
 };
 
+/// What "Detect automatically" last found on a link, where its next connection on that link looks first.
+struct RTKDetectedReceiver
+{
+    /// Names the link: "serial:" and the serial device, or "tcp:" and the host and port.
+    QString link;
+    /// The receiver family, as a value of baseReceiverManufacturer other than "Detect automatically".
+    int manufacturer = 0;
+    /// The rate the link ran at once the receiver was configured.
+    quint32 baudRate = 0;
+    /// The rate the receiver answered at before it was configured, which a receiver that restarts returns to.
+    quint32 foundBaudRate = 0;
+
+    bool operator==(const RTKDetectedReceiver&) const = default;
+};
+
 class RTKSettings : public SettingsGroup
 {
     Q_OBJECT
@@ -86,6 +103,14 @@ public:
     };
     Q_ENUM(BaseSiteLimit)
 
+    /// Limits of the remembered receivers: how many links are remembered, and how long a link's name may be.
+    enum DetectedReceiverLimit : int
+    {
+        MaxDetectedReceivers = 8,
+        MaxDetectedLinkLength = 255,
+    };
+    Q_ENUM(DetectedReceiverLimit)
+
     QList<RTKBaseSite> baseSites() const { return _baseSites; }
 
     /// Saves @a site under its name without surrounding spaces, replacing the site of that name. Returns false,
@@ -98,6 +123,13 @@ public:
     Q_INVOKABLE bool useBaseSite(const QString& siteName);
     /// Returns false when no site has that name.
     Q_INVOKABLE bool removeBaseSite(const QString& siteName);
+
+    /// What was last remembered for @a link; empty when nothing is.
+    std::optional<RTKDetectedReceiver> detectedReceiver(const QString& link);
+    /// Remembers @a receiver for its link, in place of what was remembered for that link, and forgets the link that
+    /// was remembered longest ago beyond MaxDetectedReceivers links. A receiver without a link or a manufacturer, or
+    /// with a link longer than MaxDetectedLinkLength, is not remembered.
+    void rememberDetectedReceiver(const RTKDetectedReceiver& receiver);
 
     DEFINE_SETTING_NAME_GROUP()
     DEFINE_SETTINGFACT(receiverRole)
@@ -121,6 +153,7 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
     DEFINE_SETTINGFACT(compactRtcmCorrections)
     DEFINE_SETTINGFACT(savedBaseSites)
+    DEFINE_SETTINGFACT(detectedReceivers)
 
 signals:
     void baseSitesChanged();
@@ -129,6 +162,9 @@ private:
     /// Reads the sites from savedBaseSites, which holds them as JSON, dropping the entries that are not valid.
     void _loadBaseSites();
     void _storeBaseSites(const QList<RTKBaseSite>& sites);
+    /// Reads the remembered receivers from detectedReceivers, most recent first, dropping the entries that are not
+    /// valid.
+    QList<RTKDetectedReceiver> _detectedReceivers();
 
     QList<RTKBaseSite> _baseSites;
 };

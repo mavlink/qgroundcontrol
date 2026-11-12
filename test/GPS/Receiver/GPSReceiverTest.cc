@@ -260,6 +260,139 @@ void GPSReceiverTest::_automaticConnection()
     receiver.disconnectReceiver();
 }
 
+void GPSReceiverTest::_detectedReceiverIsRememberedPerLink()
+{
+    RTKSettings settings;
+    ScriptedGPSReceiver harness(
+        nullptr,
+        {.recordingDirectory = [] { return QStringLiteral("/test/recordings"); },
+         .detectedReceiver = [&settings](const QString& link) { return settings.detectedReceiver(link); },
+         .rememberDetectedReceiver =
+             [&settings](const RTKDetectedReceiver& detected) { settings.rememberDetectedReceiver(detected); }});
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(GPS_AUTOMATIC_MANUFACTURER);
+    useTcp(configuration);
+    configuration.autoConnect = false;
+    const QString link = QStringLiteral("tcp:rtk.test:2101");
+    const GPSDetectionHint found{.family = GPSType::UBlox, .baud = 115200, .foundBaud = 38400};
+    const auto hint = [&harness] { return harness.workers.current()->detectionHint(); };
+    const auto connects = [&](bool ready) {
+        receiver.disconnectReceiver();
+        receiver.setConfiguration(configuration);
+        if (!receiver.connectReceiver()) {
+            return false;
+        }
+        if (ready) {
+            harness.workers.current()->detected(found.family);
+            harness.workers.current()->ready(QStringLiteral("ZED-F9P HPG 1.32"), found);
+        }
+        return true;
+    };
+
+    // Nothing is known of the link, so the session scans. What it found is remembered once its receiver is ready.
+    QVERIFY(connects(false));
+    QCOMPARE(hint(), GPSDetectionHint{});
+    harness.workers.current()->detected(found.family);
+    QVERIFY(!settings.detectedReceiver(link));
+    harness.workers.current()->ready(QStringLiteral("ZED-F9P HPG 1.32"), found);
+    const RTKDetectedReceiver remembered{.link = link,
+                                         .manufacturer = gpsReceiverManufacturerForType(GPSType::UBlox),
+                                         .baudRate = 115200,
+                                         .foundBaudRate = 38400};
+    QCOMPARE(settings.detectedReceiver(link), std::optional(remembered));
+
+    // The next automatic session on that link looks for the receiver first; one on another link scans.
+    QVERIFY(connects(false));
+    QCOMPARE(hint(), found);
+    ++configuration.tcpPort;
+    QVERIFY(connects(false));
+    QCOMPARE(hint(), GPSDetectionHint{});
+    --configuration.tcpPort;
+
+    // A selected family needs no hint, and what its session reports is not a detection.
+    configuration.baseReceiverManufacturer = gpsReceiverManufacturerForType(GPSType::Septentrio);
+    QVERIFY(connects(true));
+    QCOMPARE(hint(), GPSDetectionHint{});
+    QCOMPARE(settings.detectedReceiver(link), std::optional(remembered));
+    configuration.baseReceiverManufacturer = GPS_AUTOMATIC_MANUFACTURER;
+
+    // A recorded session detects from scratch, so that its recording replays on its own.
+    receiver.setRecordSessions(true);
+    QVERIFY(connects(false));
+    QVERIFY(!receiver.recordingFile().isEmpty());
+    QCOMPARE(hint(), GPSDetectionHint{});
+    receiver.setRecordSessions(false);
+
+    // A family that is no longer supported is no hint.
+    settings.rememberDetectedReceiver({.link = link, .manufacturer = 99, .baudRate = 115200, .foundBaudRate = 115200});
+    QVERIFY(connects(false));
+    QCOMPARE(hint(), GPSDetectionHint{});
+}
+
+void GPSReceiverTest::_statusTextNamesWhatDetectionTries_data()
+{
+    QTest::addColumn<bool>("serial");
+    // A network link has no rate to name.
+    QTest::addColumn<QString>("remembered");
+    QTest::addColumn<QString>("scanning");
+    QTest::newRow("tcp") << false << GPSReceiver::tr("Identifying receiver: trying %1, as last time...").arg("u-blox")
+                         << GPSReceiver::tr("Identifying receiver...");
+#ifndef QGC_NO_SERIAL_LINK
+    QTest::newRow("serial")
+        << true
+        << GPSReceiver::tr("Identifying receiver: trying %1 at %2 baud, as last time...").arg("u-blox").arg(115200)
+        << GPSReceiver::tr("Identifying receiver at %1 baud...").arg(38400);
+#endif
+}
+
+void GPSReceiverTest::_statusTextNamesWhatDetectionTries()
+{
+    QFETCH(bool, serial);
+    QFETCH(QString, remembered);
+    QFETCH(QString, scanning);
+    auto configuration = receiverConfiguration(GPS_AUTOMATIC_MANUFACTURER);
+    configuration.autoConnect = false;
+#ifdef QGC_NO_SERIAL_LINK
+    ScriptedGPSReceiver harness;
+#else
+    TestSerialPorts ports({rtkPort()});
+    ScriptedGPSReceiver harness(nullptr, {.serial = ports.side()});
+    if (serial) {
+        configuration.connectionType = RTKSettings::Serial;
+        configuration.serialDevice = QStringLiteral("/test/rtk");
+        configuration.serialBaudRate = 0;
+    }
+#endif
+    if (!serial) {
+        useTcp(configuration);
+    }
+    GPSReceiver& receiver = harness.receiver;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.connectReceiver());
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    QSignalSpy texts(&receiver, &GPSReceiver::statusTextChanged);
+    QCOMPARE(receiver.statusText(), GPSReceiver::tr("Identifying receiver..."));
+
+    // First the receiver the link's last session found, then the scan, one rate after the other.
+    worker->looksFor(GPSType::UBlox, 115200);
+    QCOMPARE(receiver.statusText(), remembered);
+    worker->looksFor(GPSType::Automatic, 38400);
+    QCOMPARE(receiver.statusText(), scanning);
+    worker->detected(GPSType::UBlox);
+    QCOMPARE(receiver.statusText(), GPSReceiver::tr("Connecting to receiver..."));
+    QCOMPARE(texts.size(), 3);
+    worker->ready();
+    receiver.disconnectReceiver();
+
+    // A selected family is not detected, so there is nothing to name.
+    configuration.baseReceiverManufacturer = gpsReceiverManufacturerForType(GPSType::UBlox);
+    receiver.setConfiguration(configuration);
+    harness.workers.finishRetired();
+    QVERIFY(receiver.connectReceiver());
+    harness.workers.current()->looksFor(GPSType::UBlox, 115200);
+    QCOMPARE(receiver.statusText(), GPSReceiver::tr("Connecting to receiver..."));
+}
+
 void GPSReceiverTest::_statusTextFollowsState_data()
 {
     using State = GPSReceiver::State;

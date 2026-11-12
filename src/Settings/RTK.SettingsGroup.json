@@ -211,6 +211,14 @@
             "type": "string",
             "default": "",
             "label": "Saved base sites"
+        },
+        {
+            "name": "detectedReceivers",
+            "shortDesc": "Receivers detected on each connection",
+            "longDesc": "JSON array of what Detect automatically last found on each connection, the most recent first, which its next connection there looks for first. Each entry holds the link (a serial device or a TCP address), the manufacturer, the baud rate the link ran at once the receiver was configured and the baud rate the receiver was found at.",
+            "type": "string",
+            "default": "",
+            "label": "Detected receivers"
         }
     ]
 }

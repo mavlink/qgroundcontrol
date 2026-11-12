@@ -610,6 +610,43 @@ void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
     }
 }
 
+void GPSReceiverWorkerTest::_automaticSessionFollowsHint()
+{
+    // The worker passes its hint to the driver, reports what the driver looks for, and with the ready receiver what
+    // it found, as the hint for the next session.
+    GPSTestClock clock(GPSTestClock::START_US);
+    GPSReceiverWorker worker(
+        [&clock](GPSCancelToken cancelToken) {
+            auto transport = std::make_unique<ModelReceiver<FemtoReceiverModel>>(std::move(cancelToken), clock);
+            (void) transport->detect(Dialect::Femto);
+            transport->setReceiverBaudRate(230400);
+            return transport;
+        },
+        GPSType::Automatic, GPSReceiverConfig{.base = fixedBaseAt(47, 8, 500)}, nullptr, clock.source());
+    const GPSDetectionHint hint{.family = GPSType::Femto, .baud = 230400, .foundBaud = 230400};
+    worker.setDetectionHint(hint);
+    QCOMPARE(worker.detectionHint(), hint);
+    QSignalSpy looking(&worker, &GPSReceiverWorker::detecting);
+    QSignalSpy detected(&worker, &GPSReceiverWorker::receiverDetected);
+    QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
+    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    connect(&worker, &GPSReceiverWorker::receiverReady, &worker, [&worker] { worker.stop(); }, Qt::DirectConnection);
+    worker.start();
+    QVERIFY(worker.wait(TestTimeout::mediumDuration()));
+    QCOMPARE(errors.size(), 0);
+    // Only the hinted family was asked, at the hinted rate, which detection itself never tries for it.
+    QCOMPARE(looking.size(), 1);
+    QCOMPARE(qvariant_cast<GPSType>(looking.first().at(0)), GPSType::Femto);
+    QCOMPARE(looking.first().at(1).toUInt(), 230400U);
+    QCOMPARE(detected.size(), 1);
+    QCOMPARE(qvariant_cast<GPSType>(detected.first().first()), GPSType::Femto);
+    QCOMPARE(ready.size(), 1);
+    QCOMPARE(qvariant_cast<GPSDetectionHint>(ready.first().at(1)), hint);
+    // The hint is the session's from its start on.
+    worker.setDetectionHint({});
+    QCOMPARE(worker.detectionHint(), hint);
+}
+
 void GPSReceiverWorkerTest::_quectelConsentRefusal_data()
 {
     QTest::addColumn<unsigned>("role");

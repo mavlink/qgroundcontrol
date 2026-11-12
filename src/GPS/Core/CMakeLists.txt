@@ -9,6 +9,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Geo/GeographicLib.cmake")
 
 qt_add_library(
     QGCGPSCore STATIC
+    GPSDetectionHint.h
     GPSInputMonitor.h
     GPSReceiverWorker.cc
     GPSReceiverWorker.h
