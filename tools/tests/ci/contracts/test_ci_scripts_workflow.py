@@ -7,6 +7,19 @@ from typing import TYPE_CHECKING
 
 from ..._helpers import REPO_ROOT, TOOLS_DIR, get_steps, load_workflow
 from .._workflows import local_action, path_filter_covers
+from .test_android_serial_jni_contract import (
+    CPP_HEADER,
+    CPP_PORT_HEADER,
+    CPP_PORT_INFO_SOURCE,
+    CPP_SOURCE,
+    JAVA_SOURCE,
+    LIBRARY_TEST_SOURCE,
+    PORT_INFO_SOURCE,
+    PORT_NAME_SOURCE,
+    READER_SOURCE,
+    RESOURCE_ERROR_SOURCE,
+    RESULT_SOURCE,
+)
 
 if TYPE_CHECKING:
     import pytest
@@ -45,3 +58,26 @@ def test_just_test_python_installs_the_dependency_groups_ci_does() -> None:
     recipe = re.search(r"^test-python .*:\n[ \t]+(.+)$", justfile, re.MULTILINE)
     assert recipe is not None
     assert set(re.findall(r"--group (\w+)", recipe[1])) == set(setup["with"]["groups"].split(","))
+
+
+def test_linux_tests_check_out_and_follow_the_android_serial_jni_sources() -> None:
+    # test_android_serial_jni_contract.py reads these files when it runs, which only the Linux job
+    # does: the Windows job collects the module and runs none of its tests.
+    workflow = load_workflow("ci-scripts.yml")
+    sources = {
+        CPP_HEADER,
+        CPP_PORT_HEADER,
+        CPP_PORT_INFO_SOURCE,
+        CPP_SOURCE,
+        JAVA_SOURCE,
+        LIBRARY_TEST_SOURCE,
+        PORT_INFO_SOURCE,
+        PORT_NAME_SOURCE,
+        READER_SOURCE,
+        RESOURCE_ERROR_SOURCE,
+        RESULT_SOURCE,
+    }
+    assert sources <= set(workflow["on"]["pull_request"]["paths"])
+    steps = get_steps(workflow, "test-ci-scripts")
+    checkout = next(s for s in steps if s.get("uses", "").startswith("actions/checkout@"))
+    assert sources <= set(checkout["with"]["sparse-checkout"].splitlines())

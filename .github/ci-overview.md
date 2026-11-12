@@ -120,6 +120,8 @@ Rules CI relies on, each with the test that fails when it breaks. Tests are in
 | The locked local CMake has the major version CI pins | `test_cmake_version_alignment.py::test_the_locked_cmake_has_the_major_version_ci_pins` |
 | `just test-python` and CI install the same dependency groups | `test_ci_scripts_workflow.py::test_just_test_python_installs_the_dependency_groups_ci_does` |
 | Every file the CI Scripts jobs check out also triggers the workflow | `test_ci_scripts_workflow.py::test_every_file_the_test_jobs_check_out_triggers_the_workflow` |
+| Android's USB serial C++ and Java agree on the JNI methods and fields they bind, their result codes, resource error reasons, flow control codes and control line codes, the prefix of a stable port name, and the read size C++ accepts; C++ sends the USB serial library's numbers for data bits, stop bits and parity, which a Java test checks in the library | `test_android_serial_jni_contract.py` |
+| The CI Scripts Linux job checks out the C++ and Java sources that test reads | `test_ci_scripts_workflow.py::test_linux_tests_check_out_and_follow_the_android_serial_jni_sources` |
 | Every Codecov upload, in workflows and in run-unit-tests, uses OIDC, disables the default file search, passes no token, and names its files | `test_run_unit_tests_action.py::test_codecov_uploads_use_oidc_and_only_the_named_reports` |
 | No build workflow, and no action a build uses, holds AWS credentials | `test_workflow_security_policy.py::test_only_publishing_and_infrastructure_workflows_hold_aws_credentials` |
 | `publish.yml` follows and requires exactly the workflows that mark a package | `test_published_builds.py::test_publish_follows_and_requires_exactly_the_workflows_that_mark_packages` |

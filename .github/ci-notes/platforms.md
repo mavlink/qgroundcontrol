@@ -98,7 +98,10 @@ How CI runs, retries, and reports the application tests is described in
 - **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
   GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
   elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
-  ([details](../../src/VideoManager/GStreamer/README.md#boot-self-test)).
+  ([details](../../src/VideoManager/GStreamer/README.md#boot-self-test)). On Android it also runs the USB
+  serial self-test (`AndroidSerial::selfTest()`): Java has every method and field that C++ binds, passes
+  arguments that C++ gave it to each of its native callbacks, and answers calls about a port that does
+  not exist.
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
@@ -222,7 +225,8 @@ How CI runs, retries, and reports the application tests is described in
   launching it (QGC otherwise opens the system settings over its window and the boot test never
   completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
   or a running app without the marker fails, and the failure annotation quotes the
-  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. After the marker, main()
+  `Simple boot test failed`, `Video.GStreamer.SelfTest` and `Android.AndroidSerial.SelfTest` logcat
+  lines. After the marker, main()
   returns, Android destroys the activity and Qt calls `exit()`; the script watches logcat until the
   app's process (the marker line's pid) exits, for up to 30 s (`--exit-timeout`; a process still
   running then only warns). A crash of that process (its `Fatal signal`, `FORTIFY` or
