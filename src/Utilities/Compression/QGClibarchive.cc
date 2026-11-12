@@ -1160,11 +1160,6 @@ bool ArchiveReader::open(const QString& path, ReaderMode mode)
 
 bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
 {
-    if (!device || !device->isOpen() || !device->isReadable()) {
-        qCWarning(QGClibarchiveLog) << "Device is null, not open, or not readable";
-        return false;
-    }
-
     QString errorString;
     if (!open(device, mode, errorString)) {
         qCWarning(QGClibarchiveLog).noquote() << "Failed to open device:" << errorString;
@@ -1555,11 +1550,6 @@ QByteArray extractFileToMemory(const Source& source, const QString& fileName, qi
     ReadResult& outcome = (result != nullptr) ? *result : unused;
     outcome = ReadResult::Failed;
 
-    if (fileName.isEmpty()) {
-        qCWarning(QGClibarchiveLog) << "Empty file name";
-        return QByteArray();
-    }
-
     ArchiveReader reader;
     if (!reader.open(source, ReaderMode::AllFormats)) {
         return QByteArray();
@@ -1577,13 +1567,6 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
 {
     ReadResult unused = ReadResult::Failed;
     ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (fileNames.isEmpty()) {
-        outcome = ReadResult::Completed;
-        return true;
-    }
-
     outcome = createOutputDirectory(outputDirectoryPath);
     if (outcome != ReadResult::Completed) {
         return false;
@@ -1627,13 +1610,6 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
 {
     ReadResult unused = ReadResult::Failed;
     ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (patterns.isEmpty()) {
-        outcome = ReadResult::EntryNotFound;
-        return false;
-    }
-
     outcome = createOutputDirectory(outputDirectoryPath);
     if (outcome != ReadResult::Completed) {
         return false;

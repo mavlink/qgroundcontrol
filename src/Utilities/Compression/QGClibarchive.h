@@ -340,7 +340,7 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
 
 /// Extract a single file from any archive directly to memory
 /// @param source Path to the archive file (or Qt resource path), or the open QIODevice to read the archive from
-/// @param fileName Name of file inside archive
+/// @param fileName Name of file inside archive (not empty)
 /// @param maxBytes Maximum size of the file (0 = unlimited)
 /// @param result If not null, receives how the extraction ended
 /// @return File contents, or empty QByteArray if not found, larger than maxBytes or extraction failed
@@ -351,7 +351,7 @@ QByteArray extractFileToMemory(const Source& source, const QString& fileName, qi
 /// Extract multiple files from any archive by name in one pass
 /// The files are written as extractAnyArchive() writes its entries.
 /// @param archivePath Path to the archive file (or Qt resource path)
-/// @param fileNames Names of files inside archive
+/// @param fileNames Names of files inside archive (at least one)
 /// @param outputDirectoryPath Output directory
 /// @param result If not null, receives how the extraction ended: EntrySkipped if one of the names is that of a
 ///        directory, or of an entry that extractAnyArchive() skips
@@ -363,7 +363,7 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
 /// What matches is written as extractAnyArchive() writes its entries, but for a directory, which is passed over.
 /// @param archivePath Path to the archive file (or Qt resource path)
-/// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt")
+/// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt"), at least one
 /// @param outputDirectoryPath Output directory
 /// @param extractedFiles Optional output list of files that were extracted
 /// @param result If not null, receives how the extraction ended: EntryNotFound if no file matched
