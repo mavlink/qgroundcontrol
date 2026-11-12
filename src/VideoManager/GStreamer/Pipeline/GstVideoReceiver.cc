@@ -39,6 +39,8 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
     (void) connect(_worker, &GstReceiverWorker::recordingStarted, this, &GstVideoReceiver::recordingStarted);
     (void) connect(_worker, &GstReceiverWorker::recordingFinished, this, &GstVideoReceiver::recordingFinished);
     (void) connect(_worker, &GstReceiverWorker::errorOccurred, this, &GstVideoReceiver::errorOccurred);
+    // The video sink goes with the pipeline: it too holds the device.
+    (void) connect(_worker, &GstReceiverWorker::graphicsDeviceLost, this, &GstVideoReceiver::restart);
 
     _workerThread->setObjectName(QStringLiteral("GstVideoReceiver"));
     _worker->moveToThread(_workerThread);

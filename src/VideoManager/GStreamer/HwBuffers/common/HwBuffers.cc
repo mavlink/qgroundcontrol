@@ -1,7 +1,9 @@
 #include "HwBuffers.h"
 
+#include <algorithm>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include <QtCore/QCoreApplication>
 #include <QtQuick/QQuickWindow>
@@ -88,6 +90,45 @@ void resetCachedGpuResources()
         }
     }
 #endif
+}
+
+void onGraphicsDeviceRemoved()
+{
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    // Before the reset, which forgets them.
+    std::vector<GStreamer::GstElementPtr> pipelines;
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (!path->bridge) {
+            continue;
+        }
+        for (GStreamer::GstElementPtr& pipeline : path->bridge().takeServed()) {
+            const bool known = std::ranges::any_of(pipelines, [&pipeline](const GStreamer::GstElementPtr& other) {
+                return other.get() == pipeline.get();
+            });
+            if (!known) {
+                pipelines.push_back(std::move(pipeline));
+            }
+        }
+    }
+    resetCachedGpuResources();
+    for (const GStreamer::GstElementPtr& pipeline : pipelines) {
+        (void) gst_element_post_message(
+            pipeline.get(),
+            gst_message_new_element(GST_OBJECT(pipeline.get()), gst_structure_new_empty(kGraphicsDeviceLostMessage)));
+    }
+#endif
+}
+
+bool graphicsDeviceLost() noexcept
+{
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->bridge && path->bridge().deviceLost()) {
+            return true;
+        }
+    }
+#endif
+    return false;
 }
 
 void configureQtGraphics([[maybe_unused]] bool softwareRendering)
@@ -188,11 +229,11 @@ bool d3d11OpensD3D12() noexcept
 #endif
 }
 
-bool answerSinkBinContextQuery(GstQuery* query) noexcept
+bool answerSinkBinContextQuery(GstQuery* query, [[maybe_unused]] GstElement* sink) noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
     for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (path->bridge && path->bridge().answerContextQuery(query)) {
+        if (path->bridge && path->bridge().answerContextQuery(query, sink)) {
             return true;
         }
     }

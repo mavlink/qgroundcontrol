@@ -4,6 +4,7 @@
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 
+#include <atomic>
 #include <gst/gst.h>
 #include <memory>
 #include <span>
@@ -33,19 +34,29 @@ public:
     /// can't serve yet is remembered for serveWaitingPipelines(). Thread-safe.
     GstBusSyncReply handleSyncMessage(GstMessage* message);
 
-    /// Answers a GST_QUERY_CONTEXT for one of this bridge's context types; true when consumed. Thread-safe.
-    bool answerContextQuery(GstQuery* query);
+    /// Answers a GST_QUERY_CONTEXT for one of this bridge's context types; true when consumed. @p asker, an element
+    /// of the pipeline the query came through, has that pipeline count among those the bridge served. Thread-safe.
+    bool answerContextQuery(GstQuery* query, GstElement* asker = nullptr);
 
     /// Primes the bridge unless it already is, or failed for good; true once primed. Thread-safe.
     bool prime();
 
     /// Sets this bridge's contexts on the top-level bins that asked before it could prime, priming it now if it can,
-    /// so that they replace the device an element made meanwhile for the elements added from now on. For when Qt's
+    /// so that they replace the device an element made meanwhile for the elements added from now on, and posts
+    /// HwBuffers::kGraphicsDeviceServedMessage on each: the elements that have that device keep it. For when Qt's
     /// device becomes known; no-op when no bin waits. Thread-safe.
     void serveWaitingPipelines();
 
-    /// Drops the shared objects and the retry latch, so the next request primes from scratch.
+    /// Drops the shared objects and the retry latch, so the next request primes from scratch, and forgets the
+    /// pipelines it served.
     void reset();
+
+    /// The top-level bins that got this bridge's device and are still alive, which it then forgets: for
+    /// HwBuffers::onGraphicsDeviceRemoved(). Thread-safe.
+    std::vector<GStreamer::GstElementPtr> takeServed();
+
+    /// True from noteDeviceRemoved() until the bridge primes again. Thread-safe.
+    bool deviceLost() const noexcept { return _deviceLost.load(std::memory_order_acquire); }
 
     /// Lets a bridge that ran out of prime retries try again (pipeline restart); no-op otherwise.
     void rearm();
@@ -83,6 +94,10 @@ protected:
     /// which the bridge stays off until rearm() or reset(). True while a retry was granted.
     bool retryWithinBudget() noexcept;
 
+    /// For a subclass whose device reported its removal, on any thread: deviceLost() from now on, and the GUI thread
+    /// calls HwBuffers::onGraphicsDeviceRemoved(), which resets every bridge and tells the pipelines they served.
+    void noteDeviceRemoved();
+
     /// True on the retryWithinBudget() call that ran out of retries, for a single give-up log line.
     bool retriesJustExhausted() const noexcept { return _failedPrimes == kMaxPrimeRetries + 1; }
 
@@ -105,14 +120,18 @@ private:
 
     const char* matchContextType(const char* type) const;
     bool primeIfNeededLocked();
-    /// Primes, refs the object for @p contextType under the mutex, then builds its context unlocked; null when the
-    /// bridge can't serve it, and @p waiting (a top-level bin, if any) then waits for serveWaitingPipelines().
-    GStreamer::GstContextPtr makeContext(const char* contextType, GstElement* waiting = nullptr);
-    /// Adds @p topLevelBin to the bins waiting for a context; the mutex is held. The refs it took to look through
-    /// the list go to @p released, for the caller to drop without the mutex.
-    void rememberWaitingLocked(GstElement* topLevelBin, std::vector<GStreamer::GstElementPtr>& released);
-    /// The waiting bins that are still alive, which wait no longer; the mutex is held.
-    std::vector<GStreamer::GstElementPtr> takeWaitingLocked();
+    /// Primes, refs the object for @p contextType under the mutex, then builds its context unlocked, and
+    /// @p topLevelBin (if any) counts as served; null when the bridge can't serve it, and @p topLevelBin then waits
+    /// for serveWaitingPipelines() if @p mayWait.
+    GStreamer::GstContextPtr makeContext(const char* contextType, GstElement* topLevelBin = nullptr,
+                                         bool mayWait = false);
+    /// Adds @p topLevelBin to @p bins, the waiting or the served ones; the mutex is held. The refs it took to look
+    /// through the list go to @p released, for the caller to drop without the mutex.
+    static void rememberLocked(std::unique_ptr<WeakRefs>& bins, GstElement* topLevelBin,
+                               std::vector<GStreamer::GstElementPtr>& released);
+    /// The waiting bins that are still alive, which wait no longer and count as served; the mutex is held. The refs
+    /// taken meanwhile go to @p released, as for rememberLocked().
+    std::vector<GStreamer::GstElementPtr> takeWaitingLocked(std::vector<GStreamer::GstElementPtr>& released);
     /// Sets every context of this bridge on @p topLevelBins; the mutex is not held.
     void giveContexts(const std::vector<GStreamer::GstElementPtr>& topLevelBins);
 
@@ -125,6 +144,9 @@ private:
     /// Top-level bins an element of which asked for a context the bridge couldn't give yet; null while there was
     /// none. Behind a pointer because the bridges are constant-initialized, which a container isn't everywhere.
     std::unique_ptr<WeakRefs> _waiting;
+    /// Top-level bins that got this bridge's context since it was primed.
+    std::unique_ptr<WeakRefs> _served;
+    std::atomic<bool> _deviceLost{false};
 };
 
 #endif  // QGC_HAS_ANY_GPU_PATH

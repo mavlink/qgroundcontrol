@@ -17,6 +17,15 @@ class QQuickWindow;
 
 namespace HwBuffers {
 
+/// Name of the element message a context bridge posts on a pipeline it gives the device Qt renders with after an
+/// element of the pipeline had asked for one in vain: what was built meanwhile works on another device, and keeps it.
+inline constexpr char kGraphicsDeviceServedMessage[] = "qgc-graphics-device-served";
+
+/// Name of the element message onGraphicsDeviceRemoved() posts on the pipelines a context bridge gave its device,
+/// once that device is reported removed (a driver reset or update): their GPU elements can't go on, and they hold
+/// references that keep the device's successor from being created.
+inline constexpr char kGraphicsDeviceLostMessage[] = "qgc-graphics-device-lost";
+
 // noexcept marks what GStreamer's C callbacks call straight into (a bus sync handler, qgcqvideosink's vfuncs): no
 // exception may unwind through those, so one thrown here, such as a failed allocation, ends the process on purpose.
 
@@ -31,6 +40,14 @@ void onPipelineRestart();
 /// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
 /// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources();
+
+/// For a context bridge whose device was reported removed: resetCachedGpuResources(), then kGraphicsDeviceLostMessage
+/// on every pipeline a bridge had given its device. GUI thread.
+void onGraphicsDeviceRemoved();
+
+/// True from when a context bridge's device is reported removed until that bridge has a device again: a decoder
+/// that fails meanwhile isn't at fault. Always false when no GPU path is compiled. Safe off the GUI thread.
+bool graphicsDeviceLost() noexcept;
 
 /// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. On
 /// desktop Linux it pins the scene graph to OpenGL, unless @p softwareRendering (--swrast) or QSG_RHI_BACKEND chose
@@ -60,7 +77,8 @@ void* dmaBufImportDisplay() noexcept;
 bool d3d11OpensD3D12() noexcept;
 
 /// Synchronously answer GST_QUERY_CONTEXT through the GPU paths' context bridges; false -> let bus NEED_CONTEXT run.
-bool answerSinkBinContextQuery(GstQuery* query) noexcept;
+/// @p sink, the element the query reached, names the pipeline that gets the device this way.
+bool answerSinkBinContextQuery(GstQuery* query, GstElement* sink = nullptr) noexcept;
 
 /// Add a buffer pool on Qt's D3D11/D3D12 device to an ALLOCATION query for caps in that memory, so the decoder
 /// allocates on the device the importer samples from. False for any other memory, or before the device bridge is

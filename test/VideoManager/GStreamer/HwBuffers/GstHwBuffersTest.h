@@ -20,6 +20,7 @@ private slots:
     void _testContextBridgeRegistry();
     void _testContextBridgeAnswersWholePipeline();
     void _testContextBridgeServesPipelineOnceDeviceIsKnown();
+    void _testRemovedDeviceIsToldToThePipelinesThatGotIt();
     void _testHwBufferLifecycleResetsNativeCaches();
     void _testHwFrameTexturesRejectsForeignOldTextures();
     void _testHwFrameTexturesZeroHandleInvalidatesBundle_data();

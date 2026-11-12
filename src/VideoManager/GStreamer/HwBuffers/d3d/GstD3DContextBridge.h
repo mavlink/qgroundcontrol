@@ -10,7 +10,8 @@
 
 /// Shares one GstD3D11Device/GstD3D12Device on QRhi's adapter through a single device-handle context type. Priming
 /// waits for QRhi to run the matching backend and retries on every request until it does. When GStreamer reports the
-/// device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped.
+/// device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped and the pipelines
+/// that got the device are told (noteDeviceRemoved()).
 class GstD3DContextBridge : public GstContextBridgeBase
 {
 public:
@@ -50,6 +51,8 @@ private:
 
     /// True when QGCRhiCapture's snapshot reports a QRhi backend this bridge primes under; logs the first mismatch.
     bool snapshotBackendMatches();
+    /// The device's notify::device-removed-reason handler; @p bridge is the GstD3DContextBridge.
+    static void onDeviceRemoved(GObject* device, GParamSpec* property, gpointer bridge);
 
     int _qrhiBackend;
     int _secondQrhiBackend;

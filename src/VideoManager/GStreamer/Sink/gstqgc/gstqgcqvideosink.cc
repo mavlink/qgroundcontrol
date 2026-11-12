@@ -549,7 +549,8 @@ static gboolean gst_qgc_q_video_sink_propose_allocation(GstBaseSink* bsink, GstQ
 // RHI device; the bus NEED_CONTEXT fallback races state changes. ALLOCATION reaches propose_allocation via the parent.
 static gboolean gst_qgc_q_video_sink_query(GstBaseSink* bsink, GstQuery* query)
 {
-    if ((GST_QUERY_TYPE(query) == GST_QUERY_CONTEXT) && HwBuffers::answerSinkBinContextQuery(query)) {
+    if ((GST_QUERY_TYPE(query) == GST_QUERY_CONTEXT) &&
+        HwBuffers::answerSinkBinContextQuery(query, GST_ELEMENT(bsink))) {
         return TRUE;
     }
     if (GST_QUERY_TYPE(query) == GST_QUERY_ACCEPT_CAPS) {

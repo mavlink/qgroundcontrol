@@ -329,6 +329,11 @@ void GstReceiverWorker::onSessionStreaming()
     _supervisor->sessionStreaming();
 }
 
+void GstReceiverWorker::onSessionGraphicsDeviceLost()
+{
+    emit graphicsDeviceLost();
+}
+
 void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)
 {
     qCDebug(GstVideoReceiverLog) << "Stream failed:" << failure.reason << _redactedUri();

@@ -8,6 +8,7 @@
 #include <memory>
 #include <rhi/qrhi.h>
 #include <span>
+#include <thread>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QRect>
@@ -55,6 +56,9 @@ public:
         clears = 0;
         deviceKnown = true;
     }
+
+    /// As a device that reports its removal has its bridge do, on the thread it notifies on.
+    void removeDevice() { noteDeviceRemoved(); }
 
     int primes = 0;
     int clears = 0;
@@ -126,6 +130,22 @@ bool holdsTestBridgeContext(GstElement* element)
     const GStreamer::GstContextPtr context =
         GStreamer::adoptContext(gst_element_get_context(element, kTestContextTypeA[0]));
     return context && gst_structure_has_field(gst_context_get_structure(context.get()), "object");
+}
+
+/// Takes the next element message off @p pipeline's bus: whether it is the pipeline's own message @p name.
+bool nextElementMessageIs(GstElement* pipeline, const char* name)
+{
+    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline));
+    const GStreamer::GstMessagePtr message =
+        GStreamer::adoptMessage(gst_bus_pop_filtered(bus.get(), GST_MESSAGE_ELEMENT));
+    return message && gst_message_has_name(message.get(), name) &&
+           (GST_MESSAGE_SRC(message.get()) == GST_OBJECT(pipeline));
+}
+
+/// Whether a bridge posted on @p pipeline's bus that it served the pipeline after one of its elements had asked.
+bool servedLate(GstElement* pipeline)
+{
+    return nextElementMessageIs(pipeline, HwBuffers::kGraphicsDeviceServedMessage);
 }
 
 /// A new identity element in @p bin, which owns it; null when it couldn't be added.
@@ -217,6 +237,9 @@ void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
     GstElement* const later = addIdentityTo(pipeline.get());
     QVERIFY(later);
     QVERIFY(holdsTestBridgeContext(later));
+
+    // Served when it asked, the pipeline holds nothing on another device: its owner has nothing to replace.
+    QVERIFY(!servedLate(pipeline.get()));
 #endif
 }
 
@@ -254,10 +277,55 @@ void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
     const auto withdraw = qScopeGuard([] { QGCRhiCapture::publishDeviceSnapshotForTest(nullptr); });
     QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
     QCOMPARE(testBridgeA().primes, 1);
+    // The element that made its own device keeps it, so the pipeline's owner is told to replace it.
+    QVERIFY(servedLate(pipeline.get()));
 
     GstElement* const later = addIdentityTo(pipeline.get());
     QVERIFY(later);
     QVERIFY2(holdsTestBridgeContext(later), "an element added after the bridge primed got the device of another");
+#endif
+}
+
+void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    testBridgeA().restart();
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
+
+    const auto newPipeline = [] {
+        return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    };
+    // One pipeline got the device for a NEED_CONTEXT, one through a context query its sink answered, one not at all.
+    const GStreamer::GstElementPtr asked = newPipeline();
+    GstElement* const asking = addIdentityTo(asked.get());
+    QVERIFY(asking);
+    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
+             GST_BUS_DROP);
+    const GStreamer::GstElementPtr queried = newPipeline();
+    GstElement* const sink = addIdentityTo(queried.get());
+    QVERIFY(sink);
+    GstQuery* const query = gst_query_new_context(kTestContextTypeA[0]);
+    QVERIFY(HwBuffers::answerSinkBinContextQuery(query, sink));
+    gst_query_unref(query);
+    const GStreamer::GstElementPtr bystander = newPipeline();
+    QVERIFY(!HwBuffers::graphicsDeviceLost());
+
+    // A device notifies of its removal on a thread of its own.
+    std::thread([] { testBridgeA().removeDevice(); }).join();
+    QVERIFY(HwBuffers::graphicsDeviceLost());
+    // The GUI thread drops the device and tells the pipelines, which hold elements that work on it.
+    QTRY_COMPARE_WITH_TIMEOUT(testBridgeA().clears, 1, TestTimeout::mediumMs());
+    QVERIFY(nextElementMessageIs(asked.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(nextElementMessageIs(queried.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(!nextElementMessageIs(bystander.get(), HwBuffers::kGraphicsDeviceLostMessage));
+
+    // Lost until the bridge has a device again.
+    QVERIFY(HwBuffers::graphicsDeviceLost());
+    QVERIFY(testBridgeA().prime());
+    QVERIFY(!HwBuffers::graphicsDeviceLost());
 #endif
 }
 

@@ -52,6 +52,9 @@ signals:
     void recordingStarted(const QString& file);
     void recordingFinished(const QString& file, const QString& error);
     void errorOccurred(const QString& message);
+    /// The graphics device the stream's pipeline was given is gone: the receiver restarts the stream with a new
+    /// video sink, which lets go of what they hold of it.
+    void graphicsDeviceLost();
 
 private:
     void _onActiveChanged();
@@ -85,6 +88,7 @@ private:
 
     void onSessionStreaming() override;
     void onSessionFailed(const PipelineSession::Failure& failure) override;
+    void onSessionGraphicsDeviceLost() override;
     void onDecodingChanged(bool decoding) override;
     void onDecoderNameChanged(const QString& name) override;
     void onDecoderFailing() override;

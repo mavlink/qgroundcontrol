@@ -5,8 +5,11 @@
 #include <glib.h>
 #include <utility>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutexLocker>
+
+#include "HwBuffers.h"
 
 namespace {
 
@@ -52,17 +55,20 @@ bool GstContextBridgeBase::primeIfNeededLocked()
     }
     _primeAttempted = true;
     _primed = primeLocked();
+    if (_primed) {
+        _deviceLost.store(false, std::memory_order_release);
+    }
     return _primed;
 }
 
-void GstContextBridgeBase::rememberWaitingLocked(GstElement* topLevelBin,
-                                                 std::vector<GStreamer::GstElementPtr>& released)
+void GstContextBridgeBase::rememberLocked(std::unique_ptr<WeakRefs>& bins, GstElement* topLevelBin,
+                                          std::vector<GStreamer::GstElementPtr>& released)
 {
-    if (!_waiting) {
-        _waiting = std::make_unique<WeakRefs>();
+    if (!bins) {
+        bins = std::make_unique<WeakRefs>();
     }
     bool known = false;
-    std::erase_if(*_waiting, [&](const auto& ref) {
+    std::erase_if(*bins, [&](const auto& ref) {
         GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(g_weak_ref_get(ref.get())));
         if (!bin) {
             return true;
@@ -74,11 +80,12 @@ void GstContextBridgeBase::rememberWaitingLocked(GstElement* topLevelBin,
     if (!known) {
         GWeakRef* const ref = new GWeakRef;
         g_weak_ref_init(ref, topLevelBin);
-        _waiting->emplace_back(ref);
+        bins->emplace_back(ref);
     }
 }
 
-std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeWaitingLocked()
+std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeWaitingLocked(
+    std::vector<GStreamer::GstElementPtr>& released)
 {
     std::vector<GStreamer::GstElementPtr> bins;
     if (const std::unique_ptr<WeakRefs> waiting = std::move(_waiting)) {
@@ -88,38 +95,79 @@ std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeWaitingLocked()
             }
         }
     }
+    // They are given the contexts next.
+    for (const GStreamer::GstElementPtr& bin : bins) {
+        rememberLocked(_served, bin.get(), released);
+    }
     return bins;
+}
+
+std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeServed()
+{
+    std::vector<GStreamer::GstElementPtr> bins;
+    QMutexLocker lock(&_mutex);
+    if (const std::unique_ptr<WeakRefs> served = std::move(_served)) {
+        for (const auto& ref : *served) {
+            if (GstElement* const bin = GST_ELEMENT(g_weak_ref_get(ref.get()))) {
+                bins.push_back(GStreamer::adoptElement(bin));
+            }
+        }
+    }
+    return bins;
+}
+
+void GstContextBridgeBase::noteDeviceRemoved()
+{
+    _deviceLost.store(true, std::memory_order_release);
+    // The device may notify with its own locks held, on a thread it joins when it is disposed: nothing is dropped,
+    // and no bridge's mutex taken, before the GUI thread gets to it.
+    if (QCoreApplication* const app = QCoreApplication::instance()) {
+        (void) QMetaObject::invokeMethod(app, [] { HwBuffers::onGraphicsDeviceRemoved(); }, Qt::QueuedConnection);
+    }
 }
 
 void GstContextBridgeBase::giveContexts(const std::vector<GStreamer::GstElementPtr>& topLevelBins)
 {
     for (const GStreamer::GstElementPtr& bin : topLevelBins) {
+        bool given = false;
         for (const char* const contextType : _contextTypes) {
             if (const GStreamer::GstContextPtr context = makeContext(contextType)) {
                 gst_element_set_context(bin.get(), context.get());
+                given = true;
                 qCDebug(category()) << "Provided" << _apiName << contextType << "context to"
                                     << GST_ELEMENT_NAME(bin.get()) << "which asked before the bridge was primed";
             }
         }
+        if (given) {
+            // An element that has a device ignores the context: only the bin's owner can replace it.
+            (void) gst_element_post_message(
+                bin.get(), gst_message_new_element(GST_OBJECT(bin.get()),
+                                                   gst_structure_new_empty(HwBuffers::kGraphicsDeviceServedMessage)));
+        }
     }
 }
 
-GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextType, GstElement* waiting)
+GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextType, GstElement* topLevelBin,
+                                                           bool mayWait)
 {
     GStreamer::GstObjectPtr object;
     // Released, and served, without the mutex.
+    std::vector<GStreamer::GstElementPtr> released;
     std::vector<GStreamer::GstElementPtr> bins;
     {
         QMutexLocker lock(&_mutex);
         const bool wasPrimed = _primed;
         if (!primeIfNeededLocked()) {
-            if (waiting) {
-                rememberWaitingLocked(waiting, bins);
+            if (topLevelBin && mayWait) {
+                rememberLocked(_waiting, topLevelBin, released);
             }
             return nullptr;
         }
         if (!wasPrimed) {
-            bins = takeWaitingLocked();
+            bins = takeWaitingLocked(released);
+        }
+        if (topLevelBin) {
+            rememberLocked(_served, topLevelBin, released);
         }
         object = GStreamer::adoptObject(refObject(contextType));
     }
@@ -150,7 +198,7 @@ GstBusSyncReply GstContextBridgeBase::handleSyncMessage(GstMessage* message)
     }
 
     const GStreamer::GstElementPtr topLevelBin = topLevelBinOf(element);
-    const GStreamer::GstContextPtr context = makeContext(matched, topLevelBin.get());
+    const GStreamer::GstContextPtr context = makeContext(matched, topLevelBin.get(), /*mayWait=*/true);
     if (!context) {
         return GST_BUS_PASS;
     }
@@ -163,7 +211,7 @@ GstBusSyncReply GstContextBridgeBase::handleSyncMessage(GstMessage* message)
     return GST_BUS_DROP;
 }
 
-bool GstContextBridgeBase::answerContextQuery(GstQuery* query)
+bool GstContextBridgeBase::answerContextQuery(GstQuery* query, GstElement* asker)
 {
     if (!query || GST_QUERY_TYPE(query) != GST_QUERY_CONTEXT) {
         return false;
@@ -177,7 +225,9 @@ bool GstContextBridgeBase::answerContextQuery(GstQuery* query)
         return false;
     }
 
-    const GStreamer::GstContextPtr context = makeContext(matched);
+    // The element that asks takes the device from the answer, without a NEED_CONTEXT that would name its pipeline.
+    const GStreamer::GstElementPtr topLevelBin = asker ? topLevelBinOf(asker) : nullptr;
+    const GStreamer::GstContextPtr context = makeContext(matched, topLevelBin.get());
     if (!context) {
         return false;
     }
@@ -187,6 +237,7 @@ bool GstContextBridgeBase::answerContextQuery(GstQuery* query)
 
 bool GstContextBridgeBase::prime()
 {
+    std::vector<GStreamer::GstElementPtr> released;
     std::vector<GStreamer::GstElementPtr> bins;
     {
         QMutexLocker lock(&_mutex);
@@ -195,7 +246,7 @@ bool GstContextBridgeBase::prime()
             return false;
         }
         if (!wasPrimed) {
-            bins = takeWaitingLocked();
+            bins = takeWaitingLocked(released);
         }
     }
     giveContexts(bins);
@@ -215,6 +266,8 @@ void GstContextBridgeBase::serveWaitingPipelines()
 
 void GstContextBridgeBase::reset()
 {
+    // Dropped without the mutex.
+    const std::vector<GStreamer::GstElementPtr> served = takeServed();
     QMutexLocker lock(&_mutex);
     clearLocked();
     _primed = false;

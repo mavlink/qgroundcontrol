@@ -4,27 +4,19 @@
 
 #include <glib-object.h>
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QString>
 
-#include "HwBuffers.h"
 #include "QGCRhiCapture.h"
 
-namespace {
-
-/// GStreamer's D3D11 device notifies from its monitor thread, which it joins when disposed, and its D3D12 device
-/// from whichever thread saw the loss, with GStreamer's device list locked: neither may drop the device or wait for
-/// a bridge's mutex, so the GUI thread does.
-void dropGpuResourcesOfRemovedDevice(GObject* /*device*/, GParamSpec* /*property*/, gpointer /*data*/)
+// GStreamer's D3D11 device notifies from its monitor thread, which it joins when disposed, and its D3D12 device from
+// whichever thread saw the loss, with GStreamer's device list locked: neither may drop the device or wait for a
+// bridge's mutex, which noteDeviceRemoved() leaves to the GUI thread.
+void GstD3DContextBridge::onDeviceRemoved(GObject* /*device*/, GParamSpec* /*property*/, gpointer bridge)
 {
-    if (QCoreApplication* const app = QCoreApplication::instance()) {
-        (void) QMetaObject::invokeMethod(app, [] { HwBuffers::resetCachedGpuResources(); }, Qt::QueuedConnection);
-    }
+    static_cast<GstD3DContextBridge*>(bridge)->noteDeviceRemoved();
 }
-
-}  // namespace
 
 gint64 GstD3DContextBridge::readAdapterLuid(gpointer device)
 {
@@ -67,8 +59,7 @@ bool GstD3DContextBridge::primeLocked()
     _device = device;
     // Looked up by name, so this builds against releases older than 1.26 too.
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(device), "device-removed-reason")) {
-        _removalHandler = g_signal_connect(device, "notify::device-removed-reason",
-                                           G_CALLBACK(&dropGpuResourcesOfRemovedDevice), nullptr);
+        _removalHandler = g_signal_connect(device, "notify::device-removed-reason", G_CALLBACK(&onDeviceRemoved), this);
     }
     qCInfo(category()) << apiName() << "bridge primed: shared device =" << device;
     return true;

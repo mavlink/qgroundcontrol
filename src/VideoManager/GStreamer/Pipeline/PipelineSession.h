@@ -64,6 +64,9 @@ public:
         virtual void onSessionStreaming() = 0;
         /// The stream failed; the session ignores further failures until it is shut down.
         virtual void onSessionFailed(const Failure& failure) = 0;
+        /// The graphics device the pipeline was given is gone (HwBuffers::kGraphicsDeviceLostMessage). The stream
+        /// didn't fail, but its pipeline and video sink hold what is left of the device and must go.
+        virtual void onSessionGraphicsDeviceLost() = 0;
 
     protected:
         ~Listener() = default;

@@ -86,6 +86,11 @@ public:
     void onSourceStreaming();
     /// Replaces the decoder and resets the sink, leaving the rest of the pipeline (and a recording) running.
     void restartDecoder(const char* reason);
+    /// The pipeline got the graphics device Qt renders with after its elements had asked for it
+    /// (HwBuffers::kGraphicsDeviceServedMessage). A hardware decoder plugged meanwhile decodes on a device of its own,
+    /// which it keeps, so its frames reach Qt through the CPU: replaces it by one that takes the pipeline's device.
+    /// Not counted as a restart: the decoder didn't fail.
+    void onGraphicsDeviceServed();
 
     /// A decoder is inserted, so frames are due at the sink.
     bool displaying() const { return _decoder != nullptr; }

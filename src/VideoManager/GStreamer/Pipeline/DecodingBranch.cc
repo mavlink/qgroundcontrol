@@ -81,6 +81,26 @@ quint64 sinkLateFramesDropped(GstElement* sink)
     return dropped;
 }
 
+/// Whether decodebin3 @p decodebin has plugged a hardware decoder. Read from its elements rather than from what the
+/// branch was told of them, which reaches the worker after the decoder is in place.
+bool hasHardwareDecoder(GstElement* decodebin)
+{
+    bool hardware = false;
+    GstIterator* const elements = gst_bin_iterate_recurse(GST_BIN(decodebin));
+    const auto note = [](const GValue* item, gpointer data) {
+        GstElementFactory* const factory = gst_element_get_factory(GST_ELEMENT(g_value_get_object(item)));
+        if (factory && gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER) &&
+            GStreamer::isHardwareDecoderFactory(factory)) {
+            *static_cast<bool*>(data) = true;
+        }
+    };
+    while (gst_iterator_foreach(elements, note, &hardware) == GST_ITERATOR_RESYNC) {
+        gst_iterator_resync(elements);
+    }
+    gst_iterator_free(elements);
+    return hardware;
+}
+
 /// Whether a live source feeds @p decodebin, as the decoders inside it ask their own upstream.
 bool fedByLiveSource(GstElement* decodebin)
 {
@@ -253,6 +273,18 @@ void DecodingBranch::restartDecoder(const char* reason)
     _insertDecoder();
 }
 
+void DecodingBranch::onGraphicsDeviceServed()
+{
+    if (!_decoder || !hasHardwareDecoder(_decoder.get())) {
+        return;
+    }
+    qCDebug(GstVideoReceiverLog) << "Replacing the decoder" << _decoderName
+                                 << "by one on the graphics device Qt renders with" << _context.redactedUri;
+    _removeDecoder();
+    _setDecoding(false);
+    _insertDecoder();
+}
+
 bool DecodingBranch::isCurrent(GstObject* source) const
 {
     return _head.contains(source) || isInside(source, _decoder.get()) || (_decoder && isInside(source, _sink.get()));
@@ -406,6 +438,10 @@ void DecodingBranch::_linkDecoderPad(GstPad* pad)
 void DecodingBranch::_demoteFailedDecoder()
 {
     if (!_hardwareDecoder || !_pluggedDecoder) {
+        return;
+    }
+    // Every decoder fails on a device that was removed, and none is at fault.
+    if (HwBuffers::graphicsDeviceLost()) {
         return;
     }
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_pluggedDecoder.get(), "sink"));

@@ -7,6 +7,7 @@
 #include <gst/base/gstbasesink.h>
 #include <gst/pbutils/missing-plugins.h>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include <QtCore/QRegularExpression>
@@ -19,7 +20,15 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamerDecoderRanks.h"
 #include "GstScoped.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "MockVideoStreamServer.h"
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+#include <QtCore/QLoggingCategory>
+
+#include "GstContextBridgeBase.h"
+#include "GstHwPathRegistry.h"
+#endif
 
 namespace {
 
@@ -92,6 +101,32 @@ void receiver_stub_decoder_init(ReceiverStubDecoder* self)
     (void) gst_element_add_pad(GST_ELEMENT(self), sink);
     (void) gst_element_add_pad(GST_ELEMENT(self), gst_pad_new_from_static_template(&s_receiverStubDecoderSrc, "src"));
 }
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+Q_LOGGING_CATEGORY(LostDeviceBridgeLog, "Video.GStreamer.Test.LostDeviceBridge")
+
+constexpr const char* kLostDeviceContextTypes[] = {"qgc.test.lost-device"};
+
+/// A context bridge whose device was reported removed, and which gets no other.
+class LostDeviceBridge final : public GstContextBridgeBase
+{
+public:
+    LostDeviceBridge()
+        : GstContextBridgeBase("Test", kLostDeviceContextTypes, &LostDeviceBridgeLog)
+    {
+        noteDeviceRemoved();
+    }
+
+private:
+    bool primeLocked() override { return retryLater(); }
+
+    GstObject* refObject(const char* /*contextType*/) override { return nullptr; }
+
+    GstContext* buildContext(const char* /*contextType*/, GstObject* /*object*/) override { return nullptr; }
+
+    void clearLocked() override {}
+};
+#endif
 
 /// Has decodebin3 plug the stub decoder before any other, until destroyed. The factory stays registered, unranked:
 /// the element class points at it for good. Ranked through the rank applier, so that NONE is the rank a later decoder
@@ -600,6 +635,138 @@ void GstVideoReceiverPipelineTest::_testFailedDecoderLeavesAutoplugOnlyForAnothe
         GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
     QVERIFY(stub);
     QCOMPARE(gst_plugin_feature_get_rank(stub.get()), guint(demoted ? GST_RANK_NONE : GST_RANK_PRIMARY + 100));
+}
+
+void GstVideoReceiverPipelineTest::_testLateGraphicsDeviceReplacesHardwareDecoder_data()
+{
+    QTest::addColumn<bool>("hardware");
+
+    QTest::newRow("hardware decoder") << true;
+    // It holds no graphics device: replacing it would only have the stream wait for a keyframe.
+    QTest::newRow("software decoder") << false;
+}
+
+void GstVideoReceiverPipelineTest::_testLateGraphicsDeviceReplacesHardwareDecoder()
+{
+    QFETCH(bool, hardware);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+    // Without the host's hardware decoders, so the software row plugs the same decoder everywhere.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+    std::optional<StubDecoderRegistration> stubDecoder;
+    if (hardware) {
+        stubDecoder.emplace();
+        QVERIFY(stubDecoder->registered());
+    }
+    const QByteArray decoderName = hardware ? QByteArray(kStubDecoderName) : QByteArrayLiteral("avdec_h264");
+
+    // The stub decoder shows nothing: the watchdog must not be what replaces it.
+    Receiver stream(udpListenUri(), /*autoReconnect=*/false, std::chrono::minutes{1});
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    QVERIFY(stream.startStreaming());
+    QVERIFY_TRUE_WAIT(stream.receiver->decoderName() == QLatin1StringView(decoderName), TestTimeout::mediumMs());
+    if (!hardware) {
+        QVERIFY_TRUE_WAIT(stream.receiver->decoding(), TestTimeout::mediumMs());
+    }
+
+    const auto pluggedDecoder = [&stream, &decoderName] {
+        GStreamer::GstElementPtr decoder;
+        (void) runOnPipeline(stream.receiver.get(), [&decoder, &decoderName](GstElement* pipeline) {
+            decoder = pipeline ? GstTest::findByFactory(pipeline, decoderName.constData()) : nullptr;
+        });
+        return decoder;
+    };
+    // Held, so that the next decoder can't get its address.
+    const GStreamer::GstElementPtr first = pluggedDecoder();
+    QVERIFY(first);
+
+    // What a context bridge posts on a pipeline it gives Qt's device after the pipeline's elements had asked for it:
+    // a hardware decoder plugged by then made a device of its own, and keeps it.
+    QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* pipeline) {
+        (void) gst_element_post_message(
+            pipeline, gst_message_new_element(GST_OBJECT(pipeline),
+                                              gst_structure_new_empty(HwBuffers::kGraphicsDeviceServedMessage)));
+    }));
+
+    if (hardware) {
+        QVERIFY_TRUE_WAIT(pluggedDecoder() && (pluggedDecoder() != first), TestTimeout::mediumMs());
+    } else {
+        // The worker has taken the message off the bus long before the decoder has had this many more frames.
+        QVERIFY(stream.framesSent(GstReceiverTest::kFrameRate / 2));
+        QCOMPARE(pluggedDecoder().get(), first.get());
+        QVERIFY(stream.receiver->decoding());
+    }
+}
+
+void GstVideoReceiverPipelineTest::_testLostGraphicsDeviceRestartsTheStream()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    // Held, so that what replaces them can't get their addresses.
+    const GStreamer::GstElementPtr pipeline = stream.pipeline();
+    const GStreamer::GstElementPtr sink =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(displaySink(stream.receiver.get()))));
+
+    // What HwBuffers::onGraphicsDeviceRemoved() posts on a pipeline that was given the device: its GPU elements and
+    // its video sink hold a device that is gone.
+    QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* running) {
+        (void) gst_element_post_message(
+            running, gst_message_new_element(GST_OBJECT(running),
+                                             gst_structure_new_empty(HwBuffers::kGraphicsDeviceLostMessage)));
+    }));
+
+    // Not a failure: the stream is back at once, on a new pipeline and a new video sink.
+    QVERIFY(stream.resumeSending());
+    QVERIFY_TRUE_WAIT(stream.receiver->decoding(), TestTimeout::mediumMs());
+    QVERIFY(stream.pipeline().get() != pipeline.get());
+    QVERIFY(displaySink(stream.receiver.get()) != sink.get());
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverPipelineTest::_testDecoderFailingOnALostGraphicsDeviceKeepsItsRank()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+    const StubDecoderRegistration failingDecoder(/*fails=*/true);
+    QVERIFY(failingDecoder.registered());
+
+    static LostDeviceBridge lostDeviceBridge;
+    static const HwPathDescriptor kLostDevicePath = {
+        .path = HwVideoBufferPath::GlMemory,
+        .matches = [](GstMemory*) { return false; },
+        .bridge = []() -> GstContextBridgeBase& { return lostDeviceBridge; },
+    };
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kLostDevicePath});
+    QVERIFY(HwBuffers::graphicsDeviceLost());
+
+    ignoreLogMessage("Video.GStreamer.GStreamerAPI", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Simulated hardware decoder failure")));
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Decoder error from .*Simulated hardware decoder failure")));
+    // No decoder works on a device that is gone, so none is taken out of autoplug for failing on it: the stream
+    // gives up with the same decoder it began with, where it would otherwise go on with the next one.
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Video stream stopped:.*The video decoder keeps failing")));
+
+    Receiver stream;
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    QVERIFY(stream.startStreaming());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    const GStreamer::GstFeaturePtr stub =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
+    QVERIFY(stub);
+    QCOMPARE(gst_plugin_feature_get_rank(stub.get()), guint(GST_RANK_PRIMARY + 100));
+#endif
 }
 
 void GstVideoReceiverPipelineTest::_testOverrunWithoutLeakLeavesKeyframeGateOpen()

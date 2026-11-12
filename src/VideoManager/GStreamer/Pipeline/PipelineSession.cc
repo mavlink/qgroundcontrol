@@ -427,6 +427,19 @@ void PipelineSession::_handleMessage(GstMessage* message)
             }
             break;
         case GST_MESSAGE_ELEMENT:
+            if (gst_message_has_name(message, HwBuffers::kGraphicsDeviceServedMessage)) {
+                if (!_tearingDown()) {
+                    _decoding->onGraphicsDeviceServed();
+                }
+                break;
+            }
+            if (gst_message_has_name(message, HwBuffers::kGraphicsDeviceLostMessage)) {
+                if (_phase == Phase::Running) {
+                    qCDebug(GstVideoReceiverLog) << "The graphics device is gone" << _settings.redactedUri;
+                    _post([this]() { _listener.onSessionGraphicsDeviceLost(); });
+                }
+                break;
+            }
             _noteMissingPlugin(message);
             PipelineStatsProbe::noteElementMessage(message);
             _recording->onBusElement(message);
