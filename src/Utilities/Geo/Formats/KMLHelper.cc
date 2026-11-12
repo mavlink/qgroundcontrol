@@ -84,7 +84,9 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         if (rgValueStrings.size() >= 3) {
             bool altOk = false;
             alt = rgValueStrings[2].toDouble(&altOk);
-            if (!altOk) {
+            // toDouble() reads "nan" and "inf" as numbers, and gives infinity for a number beyond its range
+            if (!altOk || !std::isfinite(alt)) {
+                alt = 0.0;
                 qCWarning(KMLHelperLog) << "Failed to parse altitude, using" << alt << "in:" << coordinateString;
             }
         }

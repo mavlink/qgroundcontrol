@@ -30,6 +30,8 @@ private slots:
     void _testKMLCoordinateValidation();
     void _testKMLNonFiniteCoordinates_data();
     void _testKMLNonFiniteCoordinates();
+    void _testKMLNonFiniteAltitude_data();
+    void _testKMLNonFiniteAltitude();
     void _testSHPCoordinateValidation_data();
     void _testSHPCoordinateValidation();
     void _testKMLExportSchemaValidation();
