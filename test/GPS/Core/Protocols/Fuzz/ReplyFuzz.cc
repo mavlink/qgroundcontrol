@@ -108,6 +108,13 @@ protected:
         return {GPSWriteStatus::Completed, length, length};
     }
 
+    /// Time is the clock's here, so that an input runs the same every time: the real time the driver lost before it
+    /// wrote makes no write late.
+    GPSWriteResult writeExpired(QByteArrayView bytes) override
+    {
+        return writeData(bytes, QDeadlineTimer(QDeadlineTimer::Forever));
+    }
+
 private:
     void _count() { require(++_operations <= MAX_OPERATIONS); }
 

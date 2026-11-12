@@ -81,6 +81,9 @@ protected:
         return _refusals.writes ? GPSWriteResult{GPSWriteStatus::Unsupported} : _bench.write(bytes, deadline);
     }
 
+    /// The receiver answers, whose time is its clock.
+    GPSWriteResult writeExpired(QByteArrayView bytes) override { return writeData(bytes, QDeadlineTimer()); }
+
 private:
     ReceiverBench& _bench;
     const Refusals _refusals;

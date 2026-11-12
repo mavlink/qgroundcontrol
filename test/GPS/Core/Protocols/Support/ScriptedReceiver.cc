@@ -184,6 +184,14 @@ GPSWriteResult ScriptedReceiver::writeData(QByteArrayView bytes, QDeadlineTimer 
     return _write(bytes.toByteArray(), context);
 }
 
+GPSWriteResult ScriptedReceiver::writeExpired(QByteArrayView bytes)
+{
+    if (!_clock) {
+        return GPSTransport::writeExpired(bytes);
+    }
+    return writeData(bytes, QDeadlineTimer(configurationWriteTimeout(), Qt::PreciseTimer));
+}
+
 GPSReadResult ScriptedReceiver::_read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout,
                                       std::optional<GPSDeadline> deadline)
 {

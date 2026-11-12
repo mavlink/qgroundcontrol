@@ -157,6 +157,9 @@ protected:
         return result;
     }
 
+    /// The receiver answers, whose time is the link's clock.
+    GPSWriteResult writeExpired(QByteArrayView bytes) override { return writeData(bytes, QDeadlineTimer()); }
+
 private:
     GPSDriverSinks _sinks()
     {

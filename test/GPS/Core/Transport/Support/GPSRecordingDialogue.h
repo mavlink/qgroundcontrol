@@ -111,6 +111,13 @@ public:
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override;
 
+    /// Time is the clock's here: the real time the driver lost before it wrote makes no write late, and the recording
+    /// answers it.
+    GPSWriteResult writeExpired(QByteArrayView bytes) override
+    {
+        return writeData(bytes, QDeadlineTimer(QDeadlineTimer::Forever));
+    }
+
 private:
     GPSDialogueTransport(const QString& recording, GPSTestClock& clock, GPSCancelSource stop);
 

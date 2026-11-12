@@ -103,6 +103,9 @@ protected:
         return _receiver.write(bytes, deadline);
     }
 
+    /// The receiver answers, whose time is its clock.
+    GPSWriteResult writeExpired(QByteArrayView bytes) override { return writeData(bytes, QDeadlineTimer()); }
+
 private:
     ReceiverBench& _receiver;
     Input& _input;

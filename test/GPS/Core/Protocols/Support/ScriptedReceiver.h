@@ -72,7 +72,9 @@ public:
     void setModel(Model* model);
 
     /// Transport reads wait on @a clock as protocol reads do: the model acts until the read's deadline, and a read
-    /// that finds no data moves the clock to it. Without a clock, transport reads never wait.
+    /// that finds no data moves the clock to it. Without a clock, transport reads never wait. With one, real time
+    /// does not count: a driver on that clock finds a command late before it writes, so a write whose real-time
+    /// deadline has run out when it gets here, as after its thread was preempted, is made like any other.
     void setClock(GPSTestClock* clock) { _clock = clock; }
 
     void setFatalError(bool fatalError) { _fatalError = fatalError; }
@@ -133,6 +135,7 @@ public:
 
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override;
+    GPSWriteResult writeExpired(QByteArrayView bytes) override;
 
 private:
     GPSReadResult _read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout,

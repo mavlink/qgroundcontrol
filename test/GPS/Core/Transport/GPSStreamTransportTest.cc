@@ -80,12 +80,16 @@ void GPSStreamTransportTest::_writePreconditions_data()
     QTest::addColumn<int>("length");
     QTest::addColumn<bool>("expired");
     QTest::addColumn<bool>("cancelled");
+    QTest::addColumn<bool>("virtualClock");
     QTest::addColumn<GPSWriteStatus>("status");
     QTest::addColumn<bool>("reachesLink");
-    QTest::newRow("valid") << 1 << false << false << GPSWriteStatus::Completed << true;
-    QTest::newRow("empty") << 0 << false << false << GPSWriteStatus::Completed << false;
-    QTest::newRow("expired") << 1 << true << false << GPSWriteStatus::TimedOut << false;
-    QTest::newRow("cancelled") << 1 << false << true << GPSWriteStatus::Cancelled << false;
+    QTest::newRow("valid") << 1 << false << false << false << GPSWriteStatus::Completed << true;
+    QTest::newRow("empty") << 0 << false << false << false << GPSWriteStatus::Completed << false;
+    QTest::newRow("expired") << 1 << true << false << false << GPSWriteStatus::TimedOut << false;
+    QTest::newRow("cancelled") << 1 << false << true << false << GPSWriteStatus::Cancelled << false;
+    // The scripted link of the tests on their clock. A driver on that clock finds a command late before it writes, and
+    // the real time its thread then loses before the link sees the write, as when it is preempted, makes no write late.
+    QTest::newRow("expired-on-virtual-clock") << 1 << true << false << true << GPSWriteStatus::Completed << true;
 }
 
 void GPSStreamTransportTest::_writePreconditions()
@@ -93,10 +97,15 @@ void GPSStreamTransportTest::_writePreconditions()
     QFETCH(int, length);
     QFETCH(bool, expired);
     QFETCH(bool, cancelled);
+    QFETCH(bool, virtualClock);
     QFETCH(GPSWriteStatus, status);
     QFETCH(bool, reachesLink);
     GPSCancelSource stop;
     ScriptedReceiver transport(stop.token());
+    GPSTestClock clock;
+    if (virtualClock) {
+        transport.setClock(&clock);
+    }
     int submissions = 0;
     transport.setWriteHandler(
         [&](const QByteArray& bytes, const ScriptedReceiver::WriteContext&) -> std::optional<GPSWriteResult> {
