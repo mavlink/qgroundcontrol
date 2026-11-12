@@ -98,6 +98,15 @@ void OfflineMapEditorUITest::_openMapsSettings(bool geoMapEngine)
     QVERIFY(clickButton(QStringLiteral("settingsButton_Maps")));
 }
 
+bool OfflineMapEditorUITest::_clickSetEditButton(const QString& setName)
+{
+    const QString editButton = QStringLiteral("offlineMaps_editButton_") + setName;
+    // The page asks the cache for its sets as it opens. Their rows come with the answer, which waits for the tiles
+    // that the map behind the page asked for before.
+    return findVisibleItem(_rootItem, editButton, TestTimeout::mediumMs()) &&
+           clickButtonScrolled(editButton, QStringLiteral("settingsPageFlickable"));
+}
+
 QQuickItem* OfflineMapEditorUITest::_editorMap(bool geoMapEngine)
 {
     QQuickItem* const editor = findVisibleItem(_rootItem, QStringLiteral("offlineMapEditor"), TestTimeout::mediumMs());
@@ -282,8 +291,7 @@ void OfflineMapEditorUITest::_defaultSetInfoOpensAndCloses()
         return;
     }
 
-    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_editButton_Default Tile Set"),
-                                QStringLiteral("settingsPageFlickable")));
+    QVERIFY(_clickSetEditButton(QStringLiteral("Default Tile Set")));
     if (!_editorMap(geoMapEngine)) {
         return;
     }
@@ -348,8 +356,7 @@ void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
         return;
     }
 
-    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_editButton_") + setName,
-                                QStringLiteral("settingsPageFlickable")));
+    QVERIFY(_clickSetEditButton(setName));
     QQuickItem* const map = _editorMap(geoMapEngine);
     if (!map) {
         return;
@@ -458,8 +465,7 @@ void OfflineMapEditorUITest::_renamedSetIsListedByItsNewName()
         return;
     }
 
-    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_editButton_") + oldName,
-                                QStringLiteral("settingsPageFlickable")));
+    QVERIFY(_clickSetEditButton(oldName));
     QQuickItem* const nameField =
         findVisibleItem(_rootItem, QStringLiteral("offlineMapEditor_setNameField"), TestTimeout::mediumMs());
     QVERIFY2(nameField, "name field of the set not visible");
