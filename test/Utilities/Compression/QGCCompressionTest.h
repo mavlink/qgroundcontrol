@@ -141,8 +141,10 @@ private slots:
     void _testExtractRejectsEscapingNames_data();
     void _testExtractRejectsEscapingNames();
     void _testExtractRejectsEscapingLinks();
-    void _testExtractLeavesOutLinks_data();
-    void _testExtractLeavesOutLinks();
+    void _testExtractLinks_data();
+    void _testExtractLinks();
+    void _testExtractRestoresModificationTime_data();
+    void _testExtractRestoresModificationTime();
     void _testExtractLeavesOutSpecialFiles_data();
     void _testExtractLeavesOutSpecialFiles();
     void _testSpecialCharactersInPath();
@@ -191,6 +193,7 @@ private:
         QByteArray linkName = {};
         QList<TarSparseData> sparseData = {};  ///< For 'S': where the data belongs in the file, at most four parts
         qint64 sparseFileSize = 0;             ///< For 'S': size of the file with its holes
+        qint64 modified = 0;                   ///< Modification time in seconds since the epoch
     };
 
     /// Entry of a hand-built ZIP archive

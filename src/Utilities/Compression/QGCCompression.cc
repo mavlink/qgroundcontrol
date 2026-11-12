@@ -601,8 +601,9 @@ QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecom
 // Archive Extraction
 // ============================================================================
 
-bool extractArchive(const QString& archivePath, const QString& outputDirectoryPath, Format format,
-                    ProgressCallback progress, qint64 maxDecompressedBytes)
+/// extractArchive(), and extractArchiveFiltered() with its filter
+static bool extractEntries(const QString& archivePath, const QString& outputDirectoryPath, Format format,
+                           const EntryFilter& filter, const ProgressCallback& progress, qint64 maxDecompressedBytes)
 {
     if (!validateArchiveInput(archivePath, format)) {
         return false;
@@ -612,13 +613,19 @@ bool extractArchive(const QString& archivePath, const QString& outputDirectoryPa
                                << outputDirectoryPath;
 
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
-    const bool success =
-        QGClibarchive::extractAnyArchive(archivePath, outputDirectoryPath, progress, maxDecompressedBytes, &result);
+    const bool success = QGClibarchive::extractAnyArchive(archivePath, outputDirectoryPath, filter, progress,
+                                                          maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
         setOperationError(result, QStringLiteral("Failed to extract archive: ") + archivePath);
     }
     return success;
+}
+
+bool extractArchive(const QString& archivePath, const QString& outputDirectoryPath, Format format,
+                    ProgressCallback progress, qint64 maxDecompressedBytes)
+{
+    return extractEntries(archivePath, outputDirectoryPath, format, {}, progress, maxDecompressedBytes);
 }
 
 bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, Format format,
@@ -650,21 +657,7 @@ bool extractArchiveFiltered(const QString& archivePath, const QString& outputDir
         setError(Error::InternalError, QStringLiteral("No filter callback provided"));
         return false;
     }
-    Format format = Format::Auto;
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-
-    qCDebug(QGCCompressionLog) << "Extracting archive with filter:" << archivePath;
-
-    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
-    const bool success = QGClibarchive::extractWithFilter(archivePath, outputDirectoryPath, filter, progress,
-                                                          maxDecompressedBytes, &result);
-    captureFormatInfo();
-    if (!success) {
-        setOperationError(result, QStringLiteral("Failed to extract archive: ") + archivePath);
-    }
-    return success;
+    return extractEntries(archivePath, outputDirectoryPath, Format::Auto, filter, progress, maxDecompressedBytes);
 }
 
 QStringList listArchive(const QString& archivePath, Format format)
@@ -905,7 +898,7 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
     qCDebug(QGCCompressionLog) << "Extracting archive from device to" << outputDirectoryPath;
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success =
-        QGClibarchive::extractAnyArchive(device, outputDirectoryPath, progress, maxDecompressedBytes, &result);
+        QGClibarchive::extractAnyArchive(device, outputDirectoryPath, {}, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
         setOperationError(result, QStringLiteral("Failed to extract archive from device"));

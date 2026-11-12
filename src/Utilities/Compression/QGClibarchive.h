@@ -307,13 +307,14 @@ enum class ReadResult
 /// Supports: ZIP, 7z, TAR (plain or compressed)
 /// @param source Path to the archive file (or Qt resource path), or the open QIODevice to read the archive from
 /// @param outputDirectoryPath Path where files will be extracted
+/// @param filter Which entries to extract (not set = all of them)
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
 /// @param result If not null, receives how the extraction ended
-/// @return true on success, false on failure or size limit exceeded
+/// @return true on success (even if all entries are filtered out), false on failure or size limit exceeded
 template <typename Source>
-bool extractAnyArchive(const Source& source, const QString& outputDirectoryPath, ProgressCallback progress = nullptr,
-                       qint64 maxBytes = 0, ReadResult* result = nullptr);
+bool extractAnyArchive(const Source& source, const QString& outputDirectoryPath, const EntryFilter& filter = {},
+                       ProgressCallback progress = nullptr, qint64 maxBytes = 0, ReadResult* result = nullptr);
 
 /// Extract archive atomically using a temporary staging directory
 /// Provides all-or-nothing semantics: if extraction fails, no partial files remain.
@@ -348,17 +349,19 @@ QByteArray extractFileToMemory(const Source& source, const QString& fileName, qi
                                ReadResult* result = nullptr);
 
 /// Extract multiple files from any archive by name in one pass
+/// The files are written as extractAnyArchive() writes its entries.
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory
-/// @param result If not null, receives how the extraction ended
-/// @return true if all files found and extracted. A directory, a link or a special file is not extracted.
+/// @param result If not null, receives how the extraction ended: EntrySkipped if one of the names is that of a
+///        directory, or of an entry that extractAnyArchive() skips
+/// @return true if all files found and extracted
 bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
                           ReadResult* result = nullptr);
 
 /// Extract files matching glob patterns from archive (uses libarchive archive_match)
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
-/// A link or a special file that matches is skipped with a warning.
+/// What matches is written as extractAnyArchive() writes its entries, but for a directory, which is passed over.
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt")
 /// @param outputDirectoryPath Output directory
@@ -394,18 +397,6 @@ QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool*
 ///        zeros too
 /// @return ArchiveStats struct (all zeros on failure)
 ArchiveStats getArchiveStats(const QString& archivePath, bool* ok = nullptr);
-
-/// Extract archive with per-entry filtering
-/// A link or a special file the filter accepts is skipped with a warning.
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param outputDirectoryPath Path where files will be extracted
-/// @param filter Callback to decide which entries to extract
-/// @param progress Optional progress callback (return false to cancel)
-/// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return true on success (even if all entries filtered out), false on failure
-bool extractWithFilter(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
-                       ProgressCallback progress = nullptr, qint64 maxBytes = 0, ReadResult* result = nullptr);
 
 // ============================================================================
 // Single-File Decompression

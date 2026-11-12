@@ -218,6 +218,9 @@ QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
 /// entry cannot be written, they stay: the entries before the failure, and the one it happened in, which
 /// holds what could be read of it and can be filled up with zeros to the size the archive declares for it.
 /// extractArchiveAtomic() leaves nothing behind.
+/// The size limit counts the bytes of entry data that are read from the archive. The holes of a sparse entry are
+/// not stored, so they do not count, and the size an entry declares is not held against the limit: a file is
+/// written with the size its entry declares, which can be more than the limit.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
@@ -244,14 +247,13 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
                           qint64 maxDecompressedBytes = 0);
 
 /// Extract an archive with per-entry filtering
-/// Only regular files are written, with the directories they are in. Hard and symbolic links are skipped with
-/// a warning, where extractArchive() creates the symbolic links that stay inside the output directory, and so
-/// are special files (FIFO, device node, socket).
-/// A failed extraction keeps the files it wrote before the failure, whatever stopped it, and nothing of the
-/// file it was writing.
+/// The entries the filter accepts are written as extractArchive() writes them, and a failed extraction leaves
+/// behind what a failed extractArchive() leaves. The size limit is that of extractArchive(): an entry is not
+/// refused for the size it declares.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
-/// @param filter Callback to decide which entries to extract (return true to extract)
+/// @param filter Callback to decide which entries to extract (return true to extract). It is asked for the
+///        directories too: one it accepts is created, one it refuses is only made for the files in it
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxDecompressedBytes Maximum total decompressed size in bytes (0 = unlimited)
 /// @return true on success (even if filter skipped all entries), false on failure
@@ -326,21 +328,25 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
                            qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 /// Extract multiple files from an archive in one pass
+/// The files are written as extractArchive() writes its entries: a symbolic link that stays inside the output
+/// directory is created. The archive is read up to the last of the files. A failed extraction leaves behind
+/// what a failed extractArchive() leaves.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return true if all files found and extracted, false otherwise: also if one of them is a directory, a
-///         hard or symbolic link or a special file, which is not extracted, or has a name that leaves the
-///         output directory. lastError() tells which, as for extractFile()
+/// @return true if all files found and extracted, false otherwise: also if one of them is a directory, or an
+///         entry extractArchive() skips (a hard link, a special file, a symbolic link that leads out of the
+///         output directory, a name that leaves it). lastError() tells which, as for extractFile()
 bool extractFiles(const QString &archivePath, const QStringList &fileNames,
                   const QString &outputDirectoryPath,
                   Format format = Format::Auto);
 
 /// Extract files matching glob patterns from an archive
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
-/// Only regular files are written: a hard or symbolic link or a special file that matches is skipped with a
-/// warning.
+/// What matches is written as extractArchive() writes its entries, and an entry it skips is skipped here. A
+/// directory that matches is passed over: the files in it are what makes it. A failed extraction leaves behind
+/// what a failed extractArchive() leaves.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param patterns Glob patterns to match (e.g., "*.json", "subdir/*", "file.txt")
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)

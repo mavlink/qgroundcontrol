@@ -173,7 +173,7 @@ QByteArray QGCCompressionTest::_tarHeader(const TarEntry& entry, qint64 dataSize
         }
         setField(124, binary);
     }
-    setField(136, "00000000000");
+    setField(136, octal(entry.modified));
     setField(148, "        ");
     header[156] = entry.type;
     setField(157, entry.linkName.left(100));
@@ -1845,12 +1845,12 @@ void QGCCompressionTest::_testTruncatedArchive()
     // An entry whose header comes before the damage is there
     QVERIFY(QGCCompression::fileExists(archivePath, cutEntry));
 
-    // An entry whose data is cut is found, and fails while it is copied: no part of it is kept
+    // An entry whose data is cut is found, and fails while it is copied. Handed over alone, as a file or as
+    // data, no part of it is kept
     const auto expectDataFailure = [this]() {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Read error"));
     };
     const QString cutOutput = tempDir.filePath("cut_output");
-    const QString cutDir = tempDir.filePath("cut");
     const auto acceptAll = [](const QGCCompression::ArchiveEntry&) { return true; };
 
     expectDataFailure();
@@ -1862,22 +1862,34 @@ void QGCCompressionTest::_testTruncatedArchive()
     QVERIFY(QGCCompression::extractFileData(archivePath, cutEntry).isEmpty());
     verifyExpectedLogMessage();
 
-    expectDataFailure();
-    QVERIFY(!QGCCompression::extractFiles(archivePath, {cutEntry}, cutDir));
-    verifyExpectedLogMessage();
-
-    expectDataFailure();
-    QVERIFY(!QGCCompression::extractByPattern(archivePath, {cutEntry}, cutDir));
-    verifyExpectedLogMessage();
-
-    expectReadFailure();
-    expectDataFailure();
-    QVERIFY(!QGCCompression::extractArchiveFiltered(archivePath, cutDir, acceptAll));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-
-    QVERIFY(!QFileInfo::exists(cutDir + QLatin1Char('/') + cutEntry));
+    // The functions that select what they extract into a directory leave what extractArchive() leaves: the
+    // entry, with what could be read of it
+    const QList<Search> selections{
+        {"extractFiles", 1,
+         [&]() { return !QGCCompression::extractFiles(archivePath, {cutEntry}, tempDir.filePath("extractFiles")); }},
+        {"extractByPattern", 1,
+         [&]() {
+             return !QGCCompression::extractByPattern(archivePath, {cutEntry}, tempDir.filePath("extractByPattern"));
+         }},
+        // Once for the size pre-check and once for the extraction itself
+        {"extractArchiveFiltered", 2,
+         [&]() {
+             return !QGCCompression::extractArchiveFiltered(archivePath, tempDir.filePath("extractArchiveFiltered"),
+                                                            acceptAll);
+         }},
+    };
+    for (const Search& selection : selections) {
+        for (int i = 0; i < selection.reports; ++i) {
+            expectReadFailure();
+        }
+        QVERIFY2(selection.failed(), selection.name);
+        for (int i = 0; i < selection.reports; ++i) {
+            verifyExpectedLogMessage();
+        }
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+        QVERIFY2(QFileInfo::exists(tempDir.filePath(QLatin1String(selection.name)) + QLatin1Char('/') + cutEntry),
+                 selection.name);
+    }
 }
 
 void QGCCompressionTest::_testTruncatedStream_data()
@@ -2181,6 +2193,7 @@ void QGCCompressionTest::_testExtractToFileErrors_data()
     QTest::addColumn<bool>("blockedOutput");
     QTest::addColumn<QString>("warning");
     QTest::addColumn<QGCCompression::Error>("expectedError");
+    QTest::addColumn<bool>("entryLeft");  // Whether the entry is in the output afterwards
 
     using QGCCompression::Error;
 
@@ -2189,26 +2202,32 @@ void QGCCompressionTest::_testExtractToFileErrors_data()
         const bool oneFile = (qstrcmp(api, "extractFile") == 0);
         const auto addRow = [api](const char* name) -> QTestData& { return QTest::addRow("%s %s", api, name) << api; };
 
-        addRow("extracted") << "whole" << "last.txt" << false << "" << Error::None;
+        addRow("extracted") << "whole" << "last.txt" << false << "" << Error::None << true;
         // A pattern that matches nothing is not worth a warning
         addRow("absent") << "whole" << "absent.txt" << false << (byName ? "File not found in archive" : "")
-                         << Error::FileNotInArchive;
+                         << Error::FileNotInArchive << false;
         addRow("damaged before the entry")
-            << "damaged" << "absent.txt" << false << "Failed to read archive entry" << Error::InvalidArchive;
-        addRow("damaged inside the entry") << "damaged" << "full.txt" << false << "Read error" << Error::InvalidArchive;
+            << "damaged" << "absent.txt" << false << "Failed to read archive entry" << Error::InvalidArchive << false;
+        // The file that is given a path of its own is not written. Extracted into a directory, the entry stays
+        // with what could be read of it, as extractArchive() leaves it
+        addRow("damaged inside the entry")
+            << "damaged" << "full.txt" << false << (oneFile ? "Read error" : "Failed to read data")
+            << Error::InvalidArchive << !oneFile;
         addRow("not an archive") << "garbage" << "last.txt" << false << "Unrecognized archive format"
-                                 << Error::InvalidArchive;
+                                 << Error::InvalidArchive << false;
         // What cannot be made is the output directory, or the file for the function that is given its path
         addRow("output cannot be written")
             << "whole" << "last.txt" << true
-            << (oneFile ? "Failed to open output file" : "Failed to create output directory") << Error::IoError;
-        // Asked for by name, the link fails the call. A pattern is left with nothing that matches it.
-        addRow("link") << "whole" << "soft.txt" << false << "Skipping symlink: soft.txt"
-                       << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
-        // As is the directory, which is not a file without data. A pattern passes over it without a word:
-        // the files in a directory are what makes it.
+            << (oneFile ? "Failed to open output file" : "Failed to create output directory") << Error::IoError
+            << false;
+        // A link is no file to write to a path of its own. In a directory it is created, as extractArchive()
+        // creates the symbolic links that stay inside it
+        addRow("link") << "whole" << "soft.txt" << false << (oneFile ? "Skipping symlink: soft.txt" : "")
+                       << (oneFile ? Error::UnsupportedFormat : Error::None) << !oneFile;
+        // Asked for by name, the directory fails the call: it is not a file without data. A pattern passes
+        // over it without a word: the files in a directory are what makes it.
         addRow("directory") << "whole" << "folder/" << false << (byName ? "Skipping directory: folder/" : "")
-                            << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
+                            << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive) << false;
     }
 }
 
@@ -2220,6 +2239,7 @@ void QGCCompressionTest::_testExtractToFileErrors()
     QFETCH(bool, blockedOutput);
     QFETCH(QString, warning);
     QFETCH(QGCCompression::Error, expectedError);
+    QFETCH(bool, entryLeft);
     using QGCCompression::Error;
 
     const QByteArray tar = _makeTar({{.name = "empty.txt"},
@@ -2261,8 +2281,7 @@ void QGCCompressionTest::_testExtractToFileErrors()
 
     QCOMPARE(extracted, expectedError == Error::None);
     QCOMPARE(QGCCompression::lastError(), expectedError);
-    // Nothing is left of an entry that was not extracted
-    QCOMPARE(_entriesBelow(tempDir.filePath("output")), extracted ? QStringList{entryName} : QStringList());
+    QCOMPARE(_entriesBelow(tempDir.filePath("output")), entryLeft ? QStringList{entryName} : QStringList());
     QCOMPARE(_readFile(blockerPath), QByteArray("in the way"));
 }
 
@@ -2308,10 +2327,10 @@ void QGCCompressionTest::_testOutputWithoutPermission_data()
     QTest::newRow("extractArchive") << "extractArchive" << true << noEntry;
     QTest::newRow("extractFromDevice") << "extractFromDevice" << true << noEntry;
     QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << true << "Failed to create staging directory";
-    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << true << noFile;
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << true << noEntry;
     QTest::newRow("extractFile") << "extractFile" << true << noFile;
-    QTest::newRow("extractFiles") << "extractFiles" << true << noFile;
-    QTest::newRow("extractByPattern") << "extractByPattern" << true << noFile;
+    QTest::newRow("extractFiles") << "extractFiles" << true << noEntry;
+    QTest::newRow("extractByPattern") << "extractByPattern" << true << noEntry;
     QTest::newRow("decompressFile") << "decompressFile" << true << noFile;
     QTest::newRow("decompressFile of an empty stream")
         << "decompressFile-empty" << true << "Failed to write output file";
@@ -3458,23 +3477,14 @@ void QGCCompressionTest::_testExtractionStopsCleanly_data()
     QTest::addColumn<QString>("api");
     QTest::addColumn<bool>("declaredSizes");  // Whether the archive tells the size of an entry before its data
     QTest::addColumn<bool>("cancel");         // Otherwise the size limit stops the extraction
-    QTest::addColumn<QStringList>("remaining");
 
-    const QStringList nothing;
-    QTest::newRow("extractArchive-limit") << "extractArchive" << true << false << nothing;
-    QTest::newRow("extractArchive-cancel") << "extractArchive" << true << true << nothing;
-    QTest::newRow("extractFromDevice-limit") << "extractFromDevice" << true << false << nothing;
-    QTest::newRow("extractFromDevice-cancel") << "extractFromDevice" << true << true << nothing;
-    // Filtered extraction keeps the entries it wrote before it was stopped
-    QTest::newRow("extractArchiveFiltered-limit")
-        << "extractArchiveFiltered" << true << false << QStringList{QStringLiteral("first.txt")};
-    // The entry that is being written when the callback cancels is not kept, its directory is
-    QTest::newRow("extractArchiveFiltered-cancel")
-        << "extractArchiveFiltered" << true << true
-        << QStringList{QStringLiteral("first.txt"), QStringLiteral("nested")};
+    for (const char* api : {"extractArchive", "extractFromDevice", "extractArchiveFiltered"}) {
+        QTest::addRow("%s-limit", api) << api << true << false;
+        QTest::addRow("%s-cancel", api) << api << true << true;
+    }
     // The limit is on what is written, whatever the archive says or leaves out about the sizes
-    QTest::newRow("extractArchive-limit-undeclared") << "extractArchive" << false << false << nothing;
-    QTest::newRow("extractArchiveFiltered-limit-undeclared") << "extractArchiveFiltered" << false << false << nothing;
+    QTest::newRow("extractArchive-limit-undeclared") << "extractArchive" << false << false;
+    QTest::newRow("extractArchiveFiltered-limit-undeclared") << "extractArchiveFiltered" << false << false;
 }
 
 void QGCCompressionTest::_testExtractionStopsCleanly()
@@ -3482,7 +3492,6 @@ void QGCCompressionTest::_testExtractionStopsCleanly()
     QFETCH(QString, api);
     QFETCH(bool, declaredSizes);
     QFETCH(bool, cancel);
-    QFETCH(QStringList, remaining);
 
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(declaredSizes ? "three.tar" : "streamed.zip");
@@ -3528,7 +3537,8 @@ void QGCCompressionTest::_testExtractionStopsCleanly()
         verifyExpectedLogMessage();
         QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
     }
-    QCOMPARE(_entriesBelow(outputDir), remaining);
+    // What the extraction had written before it was stopped is removed again
+    QCOMPARE(_entriesBelow(outputDir), QStringList());
 }
 
 void QGCCompressionTest::_testDecompressionCancelled_data()
@@ -3923,28 +3933,27 @@ void QGCCompressionTest::_testExtractRejectsEscapingLinks()
 #endif
 }
 
-void QGCCompressionTest::_testExtractLeavesOutLinks_data()
+void QGCCompressionTest::_testExtractLinks_data()
 {
     QTest::addColumn<QString>("api");
 
-    for (const char* api : {"extractArchiveFiltered", "extractByPattern", "extractFiles", "extractFile"}) {
+    for (const char* api :
+         {"extractArchive", "extractArchiveFiltered", "extractByPattern", "extractFiles", "extractFile"}) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
 
-void QGCCompressionTest::_testExtractLeavesOutLinks()
+void QGCCompressionTest::_testExtractLinks()
 {
     QFETCH(QString, api);
 
-    // Both links stay inside the output directory. These functions write the data of regular files and
-    // cannot make a link, and a link is not an empty file.
+    // Both links stay inside the output directory
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("links.tar");
     const QString outputDir = tempDir.filePath("output");
     QVERIFY(_writeFile(archivePath, _makeTar({{.name = "target.txt", .data = "target"},
                                               {.name = "soft.txt", .type = '2', .linkName = "target.txt"},
                                               {.name = "hard.txt", .type = '1', .linkName = "target.txt"}})));
-    const QStringList targetOnly{QStringLiteral("target.txt")};
     const auto expectSkipped = [this](const char* kind, const char* name) {
         expectLogMessage(
             "Utilities.QGClibarchive", QtWarningMsg,
@@ -3952,30 +3961,8 @@ void QGCCompressionTest::_testExtractLeavesOutLinks()
                 QStringLiteral("Skipping %1.*%2 -> target.txt").arg(QLatin1String(kind), QLatin1String(name))));
     };
 
-    if (api == "extractArchiveFiltered") {
-        expectSkipped("symlink", "soft.txt");
-        expectSkipped("hard link", "hard.txt");
-        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
-                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
-        verifyExpectedLogMessage();
-        verifyExpectedLogMessage();
-    } else if (api == "extractByPattern") {
-        QStringList extractedFiles;
-        expectSkipped("symlink", "soft.txt");
-        expectSkipped("hard link", "hard.txt");
-        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir, &extractedFiles));
-        verifyExpectedLogMessage();
-        verifyExpectedLogMessage();
-        QCOMPARE(extractedFiles, targetOnly);
-    } else if (api == "extractFiles") {
-        // Asked for by name, so leaving the entry out fails the call
-        expectSkipped("symlink", "soft.txt");
-        QVERIFY(!QGCCompression::extractFiles(archivePath, {"target.txt", "soft.txt"}, outputDir));
-        verifyExpectedLogMessage();
-        expectSkipped("hard link", "hard.txt");
-        QVERIFY(!QGCCompression::extractFiles(archivePath, {"hard.txt"}, outputDir));
-        verifyExpectedLogMessage();
-    } else {
+    if (api == "extractFile") {
+        // The function that writes one file to a path of its own cannot make a link, and a link is not an empty file
         QVERIFY(QGCCompression::extractFile(archivePath, "target.txt", outputDir + "/target.txt"));
         expectSkipped("symlink", "soft.txt");
         QVERIFY(!QGCCompression::extractFile(archivePath, "soft.txt", outputDir + "/soft.txt"));
@@ -3983,10 +3970,73 @@ void QGCCompressionTest::_testExtractLeavesOutLinks()
         expectSkipped("hard link", "hard.txt");
         QVERIFY(!QGCCompression::extractFile(archivePath, "hard.txt", outputDir + "/hard.txt"));
         verifyExpectedLogMessage();
+        QCOMPARE(_entriesBelow(outputDir), QStringList{QStringLiteral("target.txt")});
+        QCOMPARE(_readFile(outputDir + "/target.txt"), QByteArray("target"));
+        return;
     }
 
-    QCOMPARE(_entriesBelow(outputDir), targetOnly);
-    QCOMPARE(_readFile(outputDir + "/target.txt"), QByteArray("target"));
+#ifndef Q_OS_UNIX
+    QSKIP("The archive holds POSIX links");
+#else
+    // The functions that write into a directory create the symbolic link, whichever way their entries are
+    // chosen, and leave out the hard link: libarchive would resolve its target outside the directory
+    const QStringList targetAndLink{QStringLiteral("soft.txt"), QStringLiteral("target.txt")};
+    expectSkipped("hard link", "hard.txt");
+    if (api == "extractArchive") {
+        QVERIFY(QGCCompression::extractArchive(archivePath, outputDir));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
+                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
+    } else if (api == "extractByPattern") {
+        QStringList extractedFiles;
+        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir, &extractedFiles));
+        extractedFiles.sort();
+        QCOMPARE(extractedFiles, targetAndLink);
+    } else {
+        // Asked for by name, so the entry that is left out fails the call
+        QVERIFY(!QGCCompression::extractFiles(archivePath, {"target.txt", "soft.txt", "hard.txt"}, outputDir));
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
+    }
+    verifyExpectedLogMessage();
+
+    QCOMPARE(_entriesBelow(outputDir), targetAndLink);
+    QVERIFY(QFileInfo(outputDir + "/soft.txt").isSymLink());
+    QCOMPARE(_readFile(outputDir + "/soft.txt"), QByteArray("target"));
+#endif
+}
+
+void QGCCompressionTest::_testExtractRestoresModificationTime_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchive", "extractArchiveFiltered", "extractByPattern", "extractFiles"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
+void QGCCompressionTest::_testExtractRestoresModificationTime()
+{
+    QFETCH(QString, api);
+
+    // Every function that writes into a directory gives a file the time the archive has for it
+    constexpr qint64 modified = 1000000000;
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("dated.tar");
+    const QString outputDir = tempDir.filePath("output");
+    QVERIFY(_writeFile(archivePath, _makeTar({{.name = "dated.txt", .data = "dated", .modified = modified}})));
+
+    if (api == "extractArchive") {
+        QVERIFY(QGCCompression::extractArchive(archivePath, outputDir));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
+                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
+    } else if (api == "extractByPattern") {
+        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir));
+    } else {
+        QVERIFY(QGCCompression::extractFiles(archivePath, {"dated.txt"}, outputDir));
+    }
+
+    QCOMPARE(QFileInfo(outputDir + "/dated.txt").lastModified().toSecsSinceEpoch(), modified);
 }
 
 void QGCCompressionTest::_testExtractLeavesOutSpecialFiles_data()
