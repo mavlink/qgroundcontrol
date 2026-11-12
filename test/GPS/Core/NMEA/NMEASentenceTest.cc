@@ -551,6 +551,60 @@ void NMEASentenceTest::_satelliteIds()
     QCOMPARE(NMEA::satelliteId(static_cast<GPSConstellation>(constellation), wireId), expected);
 }
 
+void NMEASentenceTest::_repeatedGsa_data()
+{
+    QTest::addColumn<QByteArrayList>("bodies");
+    QTest::addColumn<int>("constellation");
+    QTest::addColumn<int>("completedEarly");
+    QTest::addColumn<int>("inUse");
+    QTest::addColumn<int>("inView");
+
+    const int beidou = static_cast<int>(GPSConstellation::BeiDou);
+    const int gps = static_cast<int>(GPSConstellation::GPS);
+    const QByteArray beidouFirst("GNGSA,A,3,01,02,03,04,05,06,07,08,09,10,11,12,1.0,0.8,0.6,4");
+    const QByteArray beidouRest("GNGSA,A,3,13,14,,,,,,,,,,,1.0,0.8,0.6,4");
+    // A GSA has twelve satellite fields, so more satellites of one system take a second sentence.
+    QTest::newRow("split") << QByteArrayList{beidouFirst, beidouRest} << beidou << 0 << 14 << 0;
+    QTest::newRow("split-after-views") << QByteArrayList{"GBGSV,1,1,02,01,40,083,41,13,50,090,42", beidouFirst,
+                                                         beidouRest}
+                                       << beidou << 0 << 14 << 2;
+    // A dual-band receiver repeats a system for its second signal, whose ID follows the DOP values.
+    QTest::newRow("per-signal") << QByteArrayList{"GPGSA,A,3,01,02,03,04,05,,,,,,,,1.0,0.8,0.6",
+                                                  "GPGSA,A,3,01,03,05,,,,,,,,,,1.0,0.8,0.6,8"}
+                                << gps << 0 << 5 << 0;
+    // After another sentence, a GSA for a system already reported belongs to the next cycle.
+    QTest::newRow("next-cycle") << QByteArrayList{"GPGSA,A,3,01,02,03,,,,,,,,,,1.0,0.8,0.6",
+                                                  "GPGSV,1,1,01,01,40,083,41", "GPGSA,A,3,04,05,,,,,,,,,,,1.0,0.8,0.6"}
+                                << gps << 1 << 2 << 0;
+}
+
+void NMEASentenceTest::_repeatedGsa()
+{
+    QFETCH(QByteArrayList, bodies);
+    QFETCH(int, constellation);
+    QFETCH(int, completedEarly);
+    QFETCH(int, inUse);
+    QFETCH(int, inView);
+    NMEA::SatelliteAssembler assembler;
+    int completed = 0;
+    uint64_t receivedAtUs = 1000;
+    for (const auto& body : bodies) {
+        const auto sentence = ownedSentence(GPSTest::repairChecksum('$' + body));
+        QVERIFY(sentence);
+        const auto update = assembler.ingest(sentence->sentence(), receivedAtUs += 1000);
+        QVERIFY(update.accepted);
+        completed += !update.completed.empty();
+    }
+    QCOMPARE(completed, completedEarly);
+    const auto epoch = assembler.flush();
+    const auto system = std::find_if(epoch.begin(), epoch.end(), [constellation](const auto& report) {
+        return report.constellation == static_cast<GPSConstellation>(constellation);
+    });
+    QVERIFY(system != epoch.end());
+    QCOMPARE(system->inUse, std::optional<int>(inUse));
+    QCOMPARE(system->inView, inView);
+}
+
 void NMEASentenceTest::_coordinateNumbers_data()
 {
     QTest::addColumn<double>("degreesMinutes");

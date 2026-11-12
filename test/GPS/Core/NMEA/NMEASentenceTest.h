@@ -34,6 +34,8 @@ private slots:
     void _gstFieldCounts();
     void _satelliteIds_data();
     void _satelliteIds();
+    void _repeatedGsa_data();
+    void _repeatedGsa();
     void _coordinateNumbers_data();
     void _coordinateNumbers();
     void _numberFields_data();

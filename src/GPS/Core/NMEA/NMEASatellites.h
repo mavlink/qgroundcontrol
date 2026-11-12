@@ -101,6 +101,11 @@ struct GSV
 [[nodiscard]] std::optional<GSV> gsv(const Sentence& input);
 
 /// Bounded multipart/multisignal assembly; scheduling and delivery remain with the caller.
+///
+/// A GSA has twelve satellite fields. A receiver that uses more satellites of a system may name it in a second GSA,
+/// and some multi-band receivers send one GSA for each signal. GSA sentences that follow one another therefore add
+/// up: a system's satellites in use are those of every one that names it. After another sentence, a GSA for a system
+/// already reported begins the next cycle.
 class SatelliteAssembler
 {
 public:
@@ -137,6 +142,8 @@ private:
     {
         uint64_t timestamp = 0;
         std::set<int> ids;
+        /// Until a sentence other than GSA arrives: a GSA that names the system adds to it.
+        bool open = true;
     };
 
     std::map<GPSConstellation, std::map<int, View>> _views;

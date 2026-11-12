@@ -193,6 +193,11 @@ SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uin
         update.completed.insert(update.completed.end(), std::make_move_iterator(epoch.begin()),
                                 std::make_move_iterator(epoch.end()));
     };
+    if (input.type() != "GSA") {
+        for (auto& [system, used] : _used) {
+            used.open = false;
+        }
+    }
     if (validNavigation(input)) {
         const auto time = utcMilliseconds(input.fields[Field::UTC_TIME]);
         if (time && time != _time) {
@@ -266,12 +271,20 @@ SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uin
         if (reports.empty()) {
             return update;
         }
-        if (!_views.empty() && std::any_of(reports.begin(), reports.end(),
-                                           [this](const auto& report) { return _used.contains(report.first); })) {
+        const auto beginsCycle = [this](const auto& report) {
+            const auto used = _used.find(report.first);
+            return used != _used.end() && !used->second.open;
+        };
+        if (!_views.empty() && std::any_of(reports.begin(), reports.end(), beginsCycle)) {
             complete();
         }
         for (auto& [constellation, report] : reports) {
-            _used[constellation] = std::move(report);
+            const auto used = _used.find(constellation);
+            if (used != _used.end() && used->second.open) {
+                used->second.ids.merge(report.ids);
+            } else {
+                _used[constellation] = std::move(report);
+            }
         }
         update.accepted = true;
     }
