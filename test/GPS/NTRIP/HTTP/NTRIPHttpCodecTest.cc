@@ -106,6 +106,9 @@ void NTRIPHttpCodecTest::_buildRequestAuthority_data()
     QTest::newRow("ipv6") << QStringLiteral("::1") << 2101 << QByteArray("[::1]:2101");
     QTest::newRow("ipv6-long-form") << QStringLiteral("2001:DB8:0:0:0:0:0:1") << 2101
                                     << QByteArray("[2001:db8::1]:2101");
+    // The zone of a link-local address says which interface of this computer leads there, and nothing to the caster.
+    QTest::newRow("ipv6-zone") << QStringLiteral("fe80::1%eth0") << 2101 << QByteArray("[fe80::1]:2101");
+    QTest::newRow("ipv6-zone-index") << QStringLiteral("fe80::1%2") << 2101 << QByteArray("[fe80::1]:2101");
 }
 
 void NTRIPHttpCodecTest::_buildRequestAuthority()
