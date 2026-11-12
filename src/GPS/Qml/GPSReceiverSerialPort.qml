@@ -26,7 +26,7 @@ ColumnLayout {
         const devices = root.serialPorts.slice()
         if (root.anyDeviceLabel !== "")
             devices.unshift({ value: "", label: root.anyDeviceLabel })
-        // The mark comes first, as those of the listed ports do: the picker cuts a long label at the end.
+        // The mark comes first, as those of the listed ports do: the picker keeps both ends of a long label.
         if (root._device !== "" && !root._listed(root._device))
             devices.push({ value: root._device, label: qsTr("(unavailable) %1").arg(root._device) })
         if (devices.length === 0)
@@ -52,6 +52,9 @@ ColumnLayout {
             objectName: "rtkSerialDevice"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
+            // A label that is wider than the picker keeps its mark in front and the end of its path.
+            labelElide: Text.ElideMiddle
+            popupElide: Text.ElideMiddle
             enabled: root.editable && (root.serialPorts.length > 0 || root.anyDeviceLabel !== "")
             model: root._devices
             textRole: "label"

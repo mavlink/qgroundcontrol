@@ -72,6 +72,9 @@ ColumnLayout {
             objectName: "rtkBluetoothDevice"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
+            // A label that is wider than the picker keeps the start of the name and the end of the address.
+            labelElide: Text.ElideMiddle
+            popupElide: Text.ElideMiddle
             enabled: root.editable && root._found.length > 0
             model: root._devices.map(device => root._label(device))
             currentIndex: 0

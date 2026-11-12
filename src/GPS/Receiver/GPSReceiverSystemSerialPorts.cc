@@ -153,7 +153,7 @@ void GPSReceiverSystemSerialPorts::refreshEntries()
         //: %1 is a serial device's name, such as u-blox GNSS receiver; %2 its path, such as /dev/ttyACM0 or COM3
         QString label =
             name.isEmpty() ? port.systemLocation : GPSReceiver::tr("%1 – %2").arg(name, port.systemLocation);
-        // A mark comes first: the picker cuts a label that is wider than it is at the end.
+        // A mark comes first, and the path last: the picker keeps both ends of a label that is wider than it is.
         if (_manager->isPortReserved(port.systemLocation)) {
             if (_claims.value(port.systemLocation).expired()) {
                 //: %1 is a serial device that another QGroundControl connection, such as a vehicle link, uses

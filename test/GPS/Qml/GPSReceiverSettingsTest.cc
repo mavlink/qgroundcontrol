@@ -177,20 +177,25 @@ struct Panel
     std::unique_ptr<QObject> status;
 };
 
-/// Whether @a label, a text item, shows @a mark whole. A text wider than its item is cut on the right: the device
-/// picker elides its button's there, and its popup clips an entry's.
-bool showsWhole(const QQuickItem* label, const QString& mark)
+/// What @a label, a text item, shows of its text: all of it, what its elide mode leaves of a text that is wider than
+/// the item, or without one what fits before the item's edge cuts it.
+QString shownText(const QQuickItem* label)
 {
     const QString text = label->property("text").toString();
-    const qsizetype at = text.indexOf(mark);
-    if (at < 0) {
-        return false;
-    }
     if (label->implicitWidth() <= label->width()) {
-        return true;
+        return text;
     }
     const QFontMetricsF metrics(label->property("font").value<QFont>());
-    return metrics.horizontalAdvance(text.left(at + mark.size()) + QChar(0x2026)) <= label->width();
+    // Text's elide modes are Qt's.
+    const auto elide = static_cast<Qt::TextElideMode>(label->property("elide").toInt());
+    if (elide != Qt::ElideNone) {
+        return metrics.elidedText(text, elide, label->width());
+    }
+    qsizetype fitting = text.size();
+    while (fitting > 0 && metrics.horizontalAdvance(text.left(fitting)) > label->width()) {
+        --fitting;
+    }
+    return text.left(fitting);
 }
 
 /// The receiver status over a scripted base of @a family, connected and ready, whose status Facts publish at once.
@@ -1764,12 +1769,15 @@ void GPSReceiverSettingsTest::_serialDeviceMarkOnNarrowPanel()
     QVERIFY2(picker->property("currentText").toString().contains(mark),
              qPrintable(picker->property("currentText").toString()));
 
-    // The picker's button shows the selected device, and its popup lists the devices as wide as the button.
+    // The picker's button shows the selected device, and its popup lists the devices as wide as the button. A label
+    // that is wider is shortened in the middle: it keeps the mark in front and the end of the path, which tells
+    // the devices of one make apart.
+    const QString pathEnd = device.right(8);
     auto* button = picker->property("contentItem").value<QQuickItem*>();
     QVERIFY(button);
     QTRY_VERIFY_WITH_TIMEOUT(button->width() > 0 && picker->width() <= width, TestTimeout::mediumMs());
     QVERIFY(button->implicitWidth() > button->width());
-    QVERIFY2(showsWhole(button, mark), qPrintable(button->property("text").toString()));
+    QVERIFY2(shownText(button).startsWith(mark) && shownText(button).endsWith(pathEnd), qPrintable(shownText(button)));
     auto* popup = picker->property("popup").value<QObject*>();
     QVERIFY(popup);
     QVERIFY(QMetaObject::invokeMethod(popup, "open"));
@@ -1780,7 +1788,8 @@ void GPSReceiverSettingsTest::_serialDeviceMarkOnNarrowPanel()
         });
     QCOMPARE(entries.size(), 1);
     QVERIFY(entries.first()->implicitWidth() > entries.first()->width());
-    QVERIFY2(showsWhole(entries.first(), mark), qPrintable(entries.first()->property("text").toString()));
+    const QString entry = shownText(entries.first());
+    QVERIFY2(entry.startsWith(mark) && entry.endsWith(pathEnd), qPrintable(entry));
 #endif
 }
 
