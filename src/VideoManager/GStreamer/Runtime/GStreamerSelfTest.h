@@ -26,6 +26,13 @@ struct RegisteredPlugin
 QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const QStringList& pluginDirs,
                                 const QStringList& pluginFiles);
 
+#if defined(Q_OS_WIN)
+/// Why GStreamer for Windows won't use @p scanner, found the way it finds out before a scan
+/// (gstpluginloader-win32.c): started without arguments, a working gst-plugin-scanner exits with 1 at once. Empty
+/// when it does.
+QString pluginScannerStartFailure(const QString& scanner);
+#endif
+
 /// Runs every check that applies to @p runtime, within about 15 s, and returns whether all passed. Needs an
 /// initialized GStreamer; restores any decoder rank it changes.
 bool run(const Environment::BundledRuntime& runtime);

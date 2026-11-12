@@ -18,6 +18,9 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#if defined(Q_OS_WIN)
+#include <QtCore/QProcess>
+#endif
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSet>
 #include <QtCore/QTemporaryDir>
@@ -40,6 +43,10 @@ using namespace std::chrono_literals;
 
 constexpr std::chrono::milliseconds kBudget = 15s;
 constexpr std::chrono::milliseconds kPipelineTimeout = 4s;
+#if defined(Q_OS_WIN)
+/// As long as GStreamer waits for the scanner it tries.
+constexpr std::chrono::milliseconds kScannerStartTimeout = 5s;
+#endif
 constexpr const char* kProxyLookupUri = "rtsp://127.0.0.1";
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -275,14 +282,22 @@ void Checker::_checkBundledPlugins()
 
 void Checker::_checkPluginScanner()
 {
-    if (!externalPluginLoaderFailed()) {
+    const QString scanner = qEnvironmentVariable("GST_PLUGIN_SCANNER_1_0");
+    QString failure = externalPluginLoaderFailed() ? QStringLiteral("failed to run") : QString();
+#if defined(Q_OS_WIN)
+    // GStreamer for Windows tries the scanner before it scans. One that doesn't start is only named in GStreamer's
+    // debug log, and no scan may have been due in this launch, so the scanner is tried here as well.
+    if (failure.isEmpty()) {
+        failure = scanner.isEmpty() ? QStringLiteral("is not in the bundle") : pluginScannerStartFailure(scanner);
+    }
+#endif
+    if (failure.isEmpty()) {
         return;
     }
-    const QString scanner = qEnvironmentVariable("GST_PLUGIN_SCANNER_1_0");
-    _fail(QStringLiteral("GStreamer's plugin scanner %1 failed to run, so GStreamer loaded the plugins into QGC's "
-                         "process: check that the bundled gst-plugin-scanner is executable and signed and finds the "
-                         "GStreamer libraries")
-              .arg(scanner.isEmpty() ? QStringLiteral("(GST_PLUGIN_SCANNER unset)") : scanner));
+    _fail(QStringLiteral("GStreamer's plugin scanner %1 %2, so GStreamer loads the plugins into QGC's process: check "
+                         "that the bundled gst-plugin-scanner is executable and signed and finds the GStreamer "
+                         "libraries")
+              .arg(scanner.isEmpty() ? QStringLiteral("(GST_PLUGIN_SCANNER unset)") : scanner, failure));
 }
 
 void Checker::_checkFeatures()
@@ -466,6 +481,29 @@ QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const
     }
     return issues;
 }
+
+#if defined(Q_OS_WIN)
+QString pluginScannerStartFailure(const QString& scanner)
+{
+    const int timeoutMs = static_cast<int>(kScannerStartTimeout.count());
+    QProcess process;
+    process.setProgram(scanner);
+    process.start();
+    if (!process.waitForStarted(timeoutMs)) {
+        return QStringLiteral("could not be started (%1)").arg(process.errorString());
+    }
+    if (!process.waitForFinished(timeoutMs)) {
+        process.kill();
+        (void) process.waitForFinished(timeoutMs);
+        return QStringLiteral("did not exit within %1 ms").arg(timeoutMs);
+    }
+    if ((process.exitStatus() != QProcess::NormalExit) || (process.exitCode() != 1)) {
+        return QStringLiteral("exited with code 0x%1 where a working scanner exits with 1")
+            .arg(static_cast<quint32>(process.exitCode()), 0, 16);
+    }
+    return {};
+}
+#endif
 
 bool run(const Environment::BundledRuntime& runtime)
 {

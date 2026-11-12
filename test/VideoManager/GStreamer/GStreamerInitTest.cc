@@ -11,7 +11,9 @@
 #include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
+#include <QtCore/QTemporaryDir>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
@@ -361,6 +363,44 @@ void GStreamerInitTest::_testBundledPluginIssues()
     for (qsizetype i = 0; i < issues.size(); ++i) {
         QVERIFY2(found.at(i).contains(QRegularExpression(issues.at(i))), qPrintable(found.at(i)));
     }
+}
+
+void GStreamerInitTest::_testPluginScannerStartFailure_data()
+{
+    QTest::addColumn<QString>("program");
+    QTest::addColumn<QString>("failure");
+
+    // CI and a developer's test environment point GStreamer at the SDK's scanner.
+    QTest::newRow("working scanner") << qEnvironmentVariable("GST_PLUGIN_SCANNER_1_0") << QString();
+    QTest::newRow("missing scanner") << QStringLiteral("gst-plugin-scanner.exe")
+                                     << QStringLiteral("could not be started");
+    // Stands in for a scanner that ends otherwise, as one that can't find the GStreamer libraries does.
+    QTest::newRow("another exit code") << QStandardPaths::findExecutable(QStringLiteral("whoami.exe"))
+                                       << QStringLiteral("exited with code 0x0");
+}
+
+void GStreamerInitTest::_testPluginScannerStartFailure()
+{
+#if !defined(Q_OS_WIN)
+    QSKIP("Only GStreamer for Windows tries the plugin scanner before it scans");
+#else
+    QFETCH(QString, program);
+    QFETCH(QString, failure);
+
+    if (program.isEmpty()) {
+        QSKIP("This environment has no such program");
+    }
+    const QTemporaryDir emptyDir;
+    QVERIFY(emptyDir.isValid());
+    const QString path = QFileInfo(program).isAbsolute() ? program : emptyDir.filePath(program);
+
+    const QString found = GStreamer::SelfTest::pluginScannerStartFailure(path);
+    if (failure.isEmpty()) {
+        QVERIFY2(found.isEmpty(), qPrintable(found));
+    } else {
+        QVERIFY2(found.startsWith(failure), qPrintable(found));
+    }
+#endif
 }
 
 void GStreamerInitTest::_testUserFeatureRankKept_data()

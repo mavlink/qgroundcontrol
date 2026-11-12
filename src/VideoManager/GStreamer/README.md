@@ -519,7 +519,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | Test | Label | Covers |
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The environment `prepareEnvironment()` sets for a fake bundled desktop install (plugin path, scanner, which still forks and is reused, and the GIO modules of a bundle that has them; the same when prepared again) and for the running app, and the bundled runtime's private plugin registry: named per install, also across AppImage mounts and macOS translocation, pruned of registries unused for 30 days, and replaced by a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. The file write that refreshes Android's extracted CA bundle. |
-| `GStreamerInitTest` | Unit | Init policy: how GLib's and GStreamer's logs reach Qt logging, from GStreamer's first line of initialization on, which missing elements disable video and which only a feature, and the decoder ranks the decoder setting applies, except those set with `GST_PLUGIN_FEATURE_RANK`; the boot self-test's verdict on a failing plugin scanner and on a bundle's blacklisted, foreign, stale or unloaded plugins. |
+| `GStreamerInitTest` | Unit | Init policy: how GLib's and GStreamer's logs reach Qt logging, from GStreamer's first line of initialization on, which missing elements disable video and which only a feature, and the decoder ranks the decoder setting applies, except those set with `GST_PLUGIN_FEATURE_RANK`; the boot self-test's verdict on a failing plugin scanner, on Windows also one that doesn't start, and on a bundle's blacklisted, foreign, stale or unloaded plugins. |
 | `GStreamerTest` | Unit | The `GStreamer` facade: URI checks, decoder classification and the decoder rank warnings and log, init and the blacklisted plugins it names when an element is missing, the `VideoBackend` that forwards to it, the lifecycle states (GStreamer isn't initialized twice, or self-tested before it runs) and the Qt Multimedia receivers after a failed initialization, and the recording sink's accepted streams. |
 | `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements: construction, caps, allocation, CPU zero-copy frames, and frames pushed straight into the sink (latest frame only, with the superseded ones counted consistently with the delivered ones, flushes, orientation tags, crop, buffers larger than their caps, the Android decoder's transformation meta, renegotiation), and the render target it reads. |
 | `GstQgcSinkControllerTest` | Unit | `QGCQVideoSinkController` binding `qgcqvideosink` to a `QVideoSink`: inactive without a window, unbound when its owner or the `QVideoSink` goes away or the sink is released, and active again, when it was, once a `QVideoSink` is bound again. |
@@ -569,7 +569,9 @@ or file:
   blacklisted, as one whose library dependency is missing is; every plugin GStreamer registered from a file comes from
   that directory; and the registry and the directory hold the same plugin files.
 - **Plugin scanner** (bundled desktop runtimes): GStreamer did not log `External plugin loader failed` during init,
-  i.e. the bundled `gst-plugin-scanner` ran.
+  i.e. the bundled `gst-plugin-scanner` ran. GStreamer for Windows tries the scanner before a scan and mentions one
+  that doesn't start only in its debug log, so there the self-test starts the bundled scanner the same way: without
+  arguments it must exit with 1 within 5 s.
 - **Features**: every feature in `GStreamer.cc`'s plugin table has its elements. Unlike initialization, which needs
   only the display core, the self-test requires them all, since `gstreamer.plugins.common` and
   `gstreamer_plugin_policy.bundle_required` ship them on every platform.

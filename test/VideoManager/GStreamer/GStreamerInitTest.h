@@ -27,6 +27,8 @@ private slots:
     void _testUdpSrcUnlockSerializedBefore1_24_10();
     void _testBundledPluginIssues_data();
     void _testBundledPluginIssues();
+    void _testPluginScannerStartFailure_data();
+    void _testPluginScannerStartFailure();
     void _testUserFeatureRankKept_data();
     void _testUserFeatureRankKept();
     void _testPlanRanks_data();
