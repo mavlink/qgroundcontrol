@@ -23,6 +23,7 @@
 #include "GPSSourceHealth.h"
 #include "LinkManager.h"
 #include "ManualScheduler.h"
+#include "MultiVehicleManager.h"
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -32,6 +33,7 @@
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/fixtures/GPSFixtureExpectations.h"
+#include "QmlObjectListModel.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
@@ -685,6 +687,42 @@ void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum()
     QCOMPARE(ntrip->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     QCOMPARE(transport->sentNmea.size(), 1);
     QVERIFY2(transport->sentNmea.first().contains(heights), transport->sentNmea.first().constData());
+}
+
+void GPSManagerTest::_ntripWaitsForAVehicleFromTheFirstConnection()
+{
+    TestFixtures::SettingsFixture saved;
+    NTRIPSettings* const settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->ntripServerPort(), 2101);
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripUseTls(), false);
+    saved.setFactValue(settings->ntripDataCapMB(), 0);
+    saved.setFactValue(settings->ntripRequireVehicle(), true);
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
+    int attempts = 0;
+    // Receiver connection polling runs on this clock, which the test never advances.
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler);
+    manager.positionManager()->setPlatformSourceFactory([](QObject* parent) {
+        auto* const source = new GPSTest::PositionSource;
+        source->setParent(parent);
+        return source;
+    });
+    NTRIPManager* const ntrip = manager.ntrip();
+    ntrip->setTransportFactory([&attempts](const NTRIPManager::Configuration&, QObject* parent) {
+        ++attempts;
+        return new GPSTest::MockNTRIPTransport(parent);
+    });
+
+    // No vehicle is connected in this suite. init() gives the connection the option and the vehicles to ask before
+    // it starts it, so the first connection already waits.
+    QCOMPARE(MultiVehicleManager::instance()->vehicles()->count(), 0);
+    manager.init();
+    QVERIFY(ntrip->configuration().requireVehicle);
+    QCOMPARE(ntrip->connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    QCOMPARE(ntrip->statusMessage(), NTRIPManager::tr("Waiting for a vehicle"));
+    QCOMPARE(attempts, 0);
 }
 
 void GPSManagerTest::_qmlServicesAvailableBeforeInit()

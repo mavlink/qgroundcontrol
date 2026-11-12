@@ -15,6 +15,7 @@
 #include "NTRIP/Support/NTRIPTestHelpers.h"
 #include "NTRIP/Support/ScriptedNTRIPCaster.h"
 #include "NTRIPManager.h"
+#include "NTRIPSourceTableController.h"
 #include "NTRIPVehiclePresence.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCNetworkAvailabilityMonitor.h"
@@ -1498,6 +1499,38 @@ void NTRIPManagerTest::_failoverStartsAgainFromTheEnteredCaster()
     manager.shutdown();
 }
 
+void NTRIPManagerTest::_failoverGivesUpAfterTheAttemptCeiling()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    const QString entered = mockCasterConfiguration().connection.host;
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager);
+    initialize(manager, failoverConfiguration({savedCaster(QStringLiteral("Backup"))}));
+
+    // The attempts are counted across the casters, three to each in turn: going on to the next caster does not
+    // begin a new count.
+    constexpr int ATTEMPTS = 100;
+    QVERIFY(_failAttempts(manager, scheduler, attempts.latest, ATTEMPTS));
+    QCOMPARE(attempts.hosts.size(), ATTEMPTS + 1);
+    QCOMPARE(attempts.hosts.count(entered), 51);
+    QCOMPARE(attempts.hosts.count(kBackupHost), 50);
+    QCOMPARE(attempts.hosts.last(), kBackupHost);
+    _fail(attempts.latest, QStringLiteral("last refusal"));
+    QCOMPARE(manager.connectionStatus(), Status::Error);
+    // The connection has ended, so the message names no caster in use.
+    QCOMPARE(manager.statusMessage(),
+             QStringLiteral("Gave up after %1 reconnect attempts: last refusal").arg(ATTEMPTS));
+    QVERIFY(scheduler.advanceBy(NTRIPFailure::MAX_RETRY_AFTER));
+    QCOMPARE(attempts.hosts.size(), ATTEMPTS + 1);
+
+    // Retry starts again, with the entered caster.
+    manager.connectCaster();
+    QCOMPARE(attempts.hosts.size(), ATTEMPTS + 2);
+    QCOMPARE(attempts.hosts.last(), entered);
+    manager.shutdown();
+}
+
 void NTRIPManagerTest::_vehicleGateWaitsForAVehicle()
 {
     using Status = NTRIPManager::ConnectionStatus;
@@ -1778,6 +1811,47 @@ void NTRIPManagerTest::_dataCapLoweredBelowTheCount()
     expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("stopped at the data limit")));
     QVERIFY(scheduler.advanceBy(SettingsDebounce));
     verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), Status::Error);
+    QCOMPARE(manager.statusMessage(), kStoppedAtOneMB);
+    QCOMPARE(attempts.hosts.size(), 1);
+}
+
+void NTRIPManagerTest::_dataCapLeavesBrowsingAlone()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    using Fetch = NTRIPSourceTableController::FetchStatus;
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager, true);
+    auto configuration = dataCapConfiguration(1);
+    configuration.connection = caster.connectionConfig();
+    initialize(manager, configuration);
+    NTRIPSourceTableController* const browser = manager.sourceTableController();
+    const QString row = QStringLiteral("STR;%1;Town;RTCM 3.2;;2;GPS;NET;USA;40;-74\r\n");
+    const QString end = QStringLiteral("ENDSOURCETABLE\r\n");
+
+    // One more byte would reach the limit, and the table is longer: it is not what the limit counts.
+    receive(attempts.latest, MB - 1);
+    manager.fetchMountpoints();
+    QVERIFY(caster.serveSourceTable(row.arg(QStringLiteral("MP1")) + row.arg(QStringLiteral("MP2")) + end));
+    QTRY_COMPARE_WITH_TIMEOUT(browser->fetchStatus(), Fetch::Success, TestTimeout::mediumMs());
+    QCOMPARE(browser->mountpointCount(), 2);
+    deliverQueuedCalls();
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+
+    _receiveToTheLimit(attempts.latest, 1);
+    QCOMPARE(manager.connectionStatus(), Status::Error);
+
+    // Stopped at the limit, the connection leaves the caster's mountpoints to be fetched, and stays stopped. The
+    // table fetched before is asked for again once it is no longer fresh.
+    QVERIFY(scheduler.advanceBy(NTRIPSourceTableController::CACHE_TTL + std::chrono::milliseconds(1)));
+    manager.fetchMountpoints();
+    QVERIFY(caster.serveSourceTable(row.arg(QStringLiteral("MP3")) + end));
+    QTRY_COMPARE_WITH_TIMEOUT(browser->mountpointCount(), 1, TestTimeout::mediumMs());
+    QCOMPARE(browser->fetchStatus(), Fetch::Success);
+    deliverQueuedCalls();
     QCOMPARE(manager.connectionStatus(), Status::Error);
     QCOMPARE(manager.statusMessage(), kStoppedAtOneMB);
     QCOMPARE(attempts.hosts.size(), 1);

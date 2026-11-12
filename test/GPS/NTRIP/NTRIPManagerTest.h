@@ -88,6 +88,7 @@ private slots:
     void _failoverDropsAnotherCastersRetryAfter();
     void _failoverStartsAgainFromTheEnteredCaster_data();
     void _failoverStartsAgainFromTheEnteredCaster();
+    void _failoverGivesUpAfterTheAttemptCeiling();
 
     // Connecting only while a vehicle is connected.
     void _vehicleGateWaitsForAVehicle();
@@ -103,4 +104,5 @@ private slots:
     void _dataCapEndsWithConnectOrAHigherCap_data();
     void _dataCapEndsWithConnectOrAHigherCap();
     void _dataCapLoweredBelowTheCount();
+    void _dataCapLeavesBrowsingAlone();
 };

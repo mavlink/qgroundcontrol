@@ -9,4 +9,5 @@ class NTRIPConnectedVehiclesTest : public VehicleTest
 
 private slots:
     void _followsTheConnectedVehicles();
+    void _gpsManagerStartsNtripWithTheVehiclesKnown();
 };
