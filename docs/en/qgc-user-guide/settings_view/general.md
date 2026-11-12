@@ -104,7 +104,7 @@ GNSS receivers connect automatically with **Connect automatically** in the [GNSS
 
 ### Ground Station Location {#nmea_gps}
 
-The ground station position, including from an external GNSS receiver, is configured in the [GNSS Receiver](gnss_receiver.md#gcs_position) settings.
+The ground station position, including from a GNSS receiver, is configured in the [GNSS Receiver](gnss_receiver.md#gcs_position) settings.
 
 ## RTK GPS {#rtk_gps}
 

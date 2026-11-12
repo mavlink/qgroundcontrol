@@ -11,7 +11,7 @@ By default, QGC auto-detects and connects to common devices:
 - **LibrePilot** — auto-connect LibrePilot controllers
 - **UDP** — auto-connect via UDP broadcast
 
-GNSS receivers, including NMEA devices that provide the GCS position, are connected in the [GNSS Receiver](gnss_receiver.md) settings.
+GNSS receivers, including NMEA devices that provide the ground station position, are connected in the [GNSS Receiver](gnss_receiver.md) settings.
 
 ## Link Management
 
