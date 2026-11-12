@@ -56,6 +56,20 @@ qint64 QGCArchiveDeviceBase::bytesAvailable() const
     return _buffer.size() + QIODevice::bytesAvailable();
 }
 
+bool QGCArchiveDeviceBase::atEnd() const
+{
+    if (!isOpen()) {
+        return true;
+    }
+    if (bytesAvailable() > 0) {
+        return false;
+    }
+
+    // QIODevice goes by what is buffered, which says nothing about what is still compressed
+    const_cast<QGCArchiveDeviceBase*>(this)->fillBuffer();
+    return _buffer.isEmpty();
+}
+
 QString QGCArchiveDeviceBase::errorString() const
 {
     return _errorString;

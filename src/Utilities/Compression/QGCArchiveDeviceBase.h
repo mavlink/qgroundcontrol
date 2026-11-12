@@ -30,6 +30,11 @@ public:
     bool isSequential() const override { return true; }
     qint64 bytesAvailable() const override;
 
+    /// Whether everything has been read: the stream has ended, or cannot be read any further
+    /// Nothing is buffered before the first read, and between reads that took all there was, so this
+    /// decompresses the next block to find out. A read error it runs into is in errorString().
+    bool atEnd() const override;
+
     /// Why open() or a read failed
     /// The reason is also set as QIODevice's error string, for a caller that holds the device as a QIODevice:
     /// QIODevice::errorString() is not virtual, and returns "Unknown error" while nothing has failed.

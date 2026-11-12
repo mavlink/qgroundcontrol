@@ -71,6 +71,8 @@ private slots:
     void _testExtractFromDevice();
     void _testExtractFileDataFromDevice();
     void _testInterleavedDeviceReaders();
+    void _testDeviceAtEnd_data();
+    void _testDeviceAtEnd();
 
     // QGCCompressionJob (async operations)
     void _testCompressionJobExtract();

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <vector>
 
 #include <QtConcurrent/QtConcurrent>
@@ -1814,6 +1815,87 @@ void QGCCompressionTest::_testInterleavedDeviceReaders()
     QVERIFY(firstData == firstPayload);
     QCOMPARE(secondData.size(), secondPayload.size());
     QVERIFY(secondData == secondPayload);
+}
+
+void QGCCompressionTest::_testDeviceAtEnd_data()
+{
+    QTest::addColumn<bool>("archive");
+
+    QTest::newRow("QGCDecompressDevice") << false;
+    QTest::newRow("QGCArchiveFile") << true;
+}
+
+void QGCCompressionTest::_testDeviceAtEnd()
+{
+    QFETCH(bool, archive);
+
+    // Several of the blocks the devices decompress in, and not a whole number of them
+    QByteArray payload(300000, Qt::Uninitialized);
+    for (qsizetype i = 0; i < payload.size(); ++i) {
+        payload[i] = static_cast<char>('a' + ((i * 7) + (i / 13)) % 23);
+    }
+    const QByteArray input = archive ? _makeTar({{.name = "first.txt", .data = "first"},
+                                                 {.name = "payload.bin", .data = payload},
+                                                 {.name = "empty.txt"}})
+                                     : _gzipMember(payload);
+    const auto makeDevice = [archive](QIODevice* source,
+                                      const char* entryName) -> std::unique_ptr<QGCArchiveDeviceBase> {
+        if (archive) {
+            return std::make_unique<QGCArchiveFile>(source, QString::fromLatin1(entryName));
+        }
+        return std::make_unique<QGCDecompressDevice>(source);
+    };
+
+    // A read of the devices' block of 128 KiB leaves nothing buffered while there is more to decompress, as
+    // there is nothing buffered before the first read
+    for (const qint64 chunkSize : {qint64(1000), qint64(128 * 1024)}) {
+        QBuffer source;
+        source.setData(input);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        const std::unique_ptr<QGCArchiveDeviceBase> device = makeDevice(&source, "payload.bin");
+        QVERIFY(device->atEnd());
+        QVERIFY(device->open(QIODevice::ReadOnly));
+
+        QByteArray data;
+        while (!device->atEnd()) {
+            const QByteArray chunk = device->read(chunkSize);
+            QVERIFY2(!chunk.isEmpty(), "atEnd() was false with nothing left to read");
+            data.append(chunk);
+        }
+        QCOMPARE(data.size(), payload.size());
+        QVERIFY(data == payload);
+        QVERIFY2(device->errorString().isEmpty(), qPrintable(device->errorString()));
+    }
+
+    // A stream that is cut ends the loop as well, and the device tells why
+    QBuffer cutSource;
+    cutSource.setData(input.left(input.size() / 2));
+    QVERIFY(cutSource.open(QIODevice::ReadOnly));
+    const std::unique_ptr<QGCArchiveDeviceBase> cutDevice = makeDevice(&cutSource, "payload.bin");
+    QVERIFY(cutDevice->open(QIODevice::ReadOnly));
+    qint64 readable = 0;
+    expectLogMessage("Utilities.QGCArchiveDeviceBase", QtWarningMsg, QRegularExpression("Read error"));
+    while (!cutDevice->atEnd()) {
+        const QByteArray chunk = cutDevice->read(1000);
+        QVERIFY2(!chunk.isEmpty(), "atEnd() was false with nothing left to read");
+        readable += chunk.size();
+    }
+    verifyExpectedLogMessage();
+    QVERIFY(readable > 0);
+    QVERIFY(readable < payload.size());
+    QVERIFY(!cutDevice->errorString().isEmpty());
+
+    if (archive) {
+        // An entry without data is at its end before anything is read
+        QBuffer source;
+        source.setData(input);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        const std::unique_ptr<QGCArchiveDeviceBase> emptyDevice = makeDevice(&source, "empty.txt");
+        QVERIFY(emptyDevice->open(QIODevice::ReadOnly));
+        QVERIFY(emptyDevice->atEnd());
+        QVERIFY(emptyDevice->readAll().isEmpty());
+        QVERIFY2(emptyDevice->errorString().isEmpty(), qPrintable(emptyDevice->errorString()));
+    }
 }
 
 // ============================================================================
