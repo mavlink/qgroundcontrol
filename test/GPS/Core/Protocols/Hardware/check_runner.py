@@ -19,8 +19,6 @@ if TYPE_CHECKING:
 
 # Waits scale on CI as the C++ suites' TestTimeout does.
 CI_SCALE = 2 if "CI" in os.environ or "GITHUB_ACTIONS" in os.environ else 1
-# Scripted cancellation only has to return with a typed outcome, not within a hardware latency budget.
-CANCEL_SLACK = ["--cancel-slack-ms", str(2000 * CI_SCALE)]
 
 
 def run(binary: str, arguments: list[str], expected: int) -> dict:
@@ -282,7 +280,8 @@ def check_record_and_replay(binary: str) -> None:
         # The scripted fix is at 47.3, 8.5.
         assert not {47.3, 8.5} & set(numbers(report)), report
         # The recording as the dialogue it was: the driver, run again as the recording's settings describe, sends in
-        # answer to the receiver's bytes what the recording holds. The session ran on the steady clock.
+        # answer to the receiver's bytes what the recording holds. Its times are those of the scripted receiver's
+        # virtual clock, which the session ran on.
         dialogue = ["--replay", str(recording), "--dialogue", "--action", "configure"]
         report = run(binary, dialogue, 0)
         assert report["outcome"] == "reproduced" and report["configured"], report
@@ -320,7 +319,6 @@ def check_record_and_replay(binary: str) -> None:
                 "suite",
                 "--observe-ms",
                 "20",
-                *CANCEL_SLACK,
                 "--record",
                 str(Path(directory) / "suite"),
             ],
@@ -387,7 +385,12 @@ def check_record_and_replay(binary: str) -> None:
     run(binary, ["--replay", str(capture), "--record", "recordings", *passive], 2)
     # The options of the scripted receiver do not apply to a recording, which takes its place, and the message says
     # which option that is and what to leave out. A recording is not a physical transport, which refuses them too.
-    for option in (["--fault", "nak"], ["--model", "m8p"], ["--survey-state", "none"]):
+    for option in (
+        ["--fault", "nak"],
+        ["--model", "m8p"],
+        ["--survey-state", "none"],
+        ["--real-time"],
+    ):
         refused = run(binary, ["--replay", str(capture), *option, *replay], 2)
         assert refused["detail"].startswith(f"{option[0]} describes the scripted receiver"), refused
         assert "physical" not in refused["detail"], refused
@@ -418,13 +421,16 @@ def main() -> None:
         assert error["outcome"] == "evidence_error" and "stages" not in error
 
         path = Path(directory) / "progress.json"
-        # SIGINT ends the observation, so it can outlast any wait for progress; Windows observes to the end.
+        # SIGINT ends the observation, so it can outlast any wait for progress; Windows observes to the end. The run
+        # is on the steady clock, as a receiver's: on the scripted receiver's own clock the observation is over
+        # before anything can be read of it.
         observe = "2500" if sys.platform == "win32" else "600000"
         with subprocess.Popen(
             [
                 binary,
                 "--action",
                 "configure",
+                "--real-time",
                 "--output",
                 str(path),
                 "--observe-ms",
@@ -459,8 +465,14 @@ def main() -> None:
             report = json.loads(stdout)
             assert json.loads(path.read_text()) == report
             assert "active_stage" not in report
+            assert report["script"]["clock"] == "steady", report
             if sys.platform != "win32":
                 assert report["interrupted"]
+
+    # Without --real-time the scripted receiver's run takes its time from the receiver's virtual clock: ten minutes
+    # of observation pass at once, well within the time a run is given here.
+    report = run(binary, ["--action", "configure", "--observe-ms", "600000"], 3)
+    assert report["script"]["clock"] == "virtual", report
 
     tcp_endpoint = ["--transport", "tcp", "--device", "127.0.0.1:1"]
     report = run(binary, tcp_endpoint, 0)
@@ -565,7 +577,6 @@ def main() -> None:
                 model,
                 "--observe-ms",
                 "20",
-                *CANCEL_SLACK,
             ],
             3,
         )
@@ -596,6 +607,8 @@ def main() -> None:
         checks = {item["name"]: item for item in stages[-1]["checks"]}
         assert checks["reconnect"]["status"] == "passed"
         assert checks["receive_cancellation"]["status"] == "passed"
+        # On the virtual clock the receive ends at the moment its cancellation is asked for: 50 ms by default.
+        assert stages[-1]["cancellation_ms"] == 50, stages[-1]
 
     retained = run(
         binary,
@@ -634,7 +647,6 @@ def main() -> None:
                 "20",
                 "--cancel-after-ms",
                 "1000",
-                *CANCEL_SLACK,
             ],
             1,
         )

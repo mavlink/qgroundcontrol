@@ -15,6 +15,7 @@
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
@@ -28,6 +29,7 @@
 #include <QtNetwork/QHostAddress>
 
 #include "GPSCancellation.h"
+#include "GPSClock.h"
 #include "GPSDecodedData.h"
 #include "GPSDriver.h"
 #include "GPSEvidenceTransport.h"
@@ -38,6 +40,7 @@
 #include "GPSRecordingTransport.h"
 #include "MonotonicClock.h"
 #include "Protocols/Support/DetectionReceiver.h"
+#include "Protocols/Support/GPSTestClock.h"
 #include "Protocols/Support/GoldenFormat.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
@@ -92,6 +95,8 @@ struct Options
     GPSType family = GPSType::UBlox;
     /// The requested role: passive input rather than an RTK base.
     bool passive = false;
+    /// Run the scripted receiver on the steady clock instead of its virtual one.
+    bool realTime = false;
     GPSReceiverConfig config;
     int observeMs = 1000;
     int cancelAfterMs = 50;
@@ -256,6 +261,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         options.family = GPSType::Automatic;
     }
     options.passive = role == "passive";
+    options.realTime = parser.isSet("real-time");
     const bool detecting = options.family == GPSType::Automatic;
     if (detecting && options.passive) {
         return "Passive input is decoded as it arrives, without a receiver to detect: use --family passive";
@@ -274,7 +280,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         return "rtcm-nak-cancel requires --action cancel";
     }
     if (options.transport != "scripted") {
-        for (const char* name : {"model", "fault", "survey-state"}) {
+        for (const char* name : {"model", "fault", "survey-state", "real-time"}) {
             if (!parser.isSet(name)) {
                 continue;
             }
@@ -756,6 +762,58 @@ int serve(const Options& options)
     return output(report, 0);
 }
 
+/// Where the scripted receiver's virtual clock starts: past every interval the drivers measure from a receipt they
+/// never had, as a steady clock is.
+constexpr uint64_t SCRIPTED_START_US = 1000000000;
+
+/// How a session's waits pass on the scripted receiver, which has nothing to say until it is asked.
+/// On the receiver's virtual clock a wait takes no time, and the clock stands still until the session waits, so no
+/// thread can keep the run's deadline: the read that would pass it ends at it and cancels the run, as the watchdog
+/// cancels a run on the steady clock.
+/// On the steady clock a read that finds nothing waits out its timeout, as a read of a link does.
+class ScriptedWaits final : public ForwardingModel
+{
+public:
+    /// @a deadlineMs is the run's deadline on @a clock, zero for none, and @a expired is set once it cancelled the run.
+    ScriptedWaits(ScriptedReceiver::Model& model, GPSTestClock& clock, const std::atomic<qint64>& deadlineMs,
+                  std::atomic_bool& expired)
+        : ForwardingModel(model)
+        , _clock(clock)
+        , _deadlineMs(deadlineMs)
+        , _expired(expired)
+    {}
+
+    void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
+    {
+        const qint64 deadlineMs = _deadlineMs.load();
+        const uint64_t endUs = static_cast<uint64_t>(deadlineMs) * 1000;
+        if (deadlineMs == 0 || deadline.untilUs < endUs) {
+            _model.onProtocolReadWait(receiver, deadline);
+            return;
+        }
+        // What the receiver has to say before the deadline still arrives.
+        _model.onProtocolReadWait(receiver, {endUs - 1});
+        if (!receiver.hasQueuedReadData()) {
+            _clock.advanceTo(endUs);
+            _expired.store(true);
+            receiver.cancel();
+        }
+    }
+
+    void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout) override
+    {
+        const QDeadlineTimer deadline(timeout, Qt::PreciseTimer);
+        while (!receiver.isCancelled() && !deadline.hasExpired()) {
+            std::this_thread::sleep_for(1ms);
+        }
+    }
+
+private:
+    GPSTestClock& _clock;
+    const std::atomic<qint64>& _deadlineMs;
+    std::atomic_bool& _expired;
+};
+
 int run(const Options& options)
 {
     const bool scripted = options.transport == "scripted";
@@ -779,9 +837,10 @@ int run(const Options& options)
                                            {"cooperative_cancellation", true}});
     report.insert("started_at_utc", QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
     if (scripted) {
-        report.insert(
-            "script",
-            QJsonObject{{"model", options.model}, {"survey_state", options.surveyState}, {"fault", options.fault}});
+        report.insert("script", QJsonObject{{"model", options.model},
+                                            {"survey_state", options.surveyState},
+                                            {"fault", options.fault},
+                                            {"clock", options.realTime ? "steady" : "virtual"}});
     } else if (replaying) {
         report.insert("replay", QJsonObject{{"file", options.replayPath},
                                             {"pacing_baud", static_cast<qint64>(options.replayBaud)}});
@@ -813,13 +872,20 @@ int run(const Options& options)
     GPSCancelSource stop;
     std::atomic_bool deadlineExpired = false;
     std::atomic<qint64> operationDeadline = 0;
-    const auto now = [] { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); };
+    // The scripted receiver answers at once, and what the session waits for is its own timeouts. So its run takes its
+    // time from the receiver's virtual clock, which those waits move: no wait takes time, and the times of the run
+    // are the same every time.
+    const bool virtualTime = scripted && !options.realTime;
+    GPSTestClock scriptedClock(SCRIPTED_START_US);
+    const GPSClock sessionClock = virtualTime ? scriptedClock.source() : GPSClock{};
+    const auto now = [&sessionClock] { return static_cast<qint64>(sessionClock.nowUs() / 1000); };
     std::atomic_bool watchdogDone = false;
     std::thread watchdog([&] {
         while (!watchdogDone.load()) {
             const auto deadline = operationDeadline.load();
             const bool signalReceived = interrupted.test(std::memory_order_relaxed);
-            if (signalReceived || (deadline != 0 && now() >= deadline)) {
+            // On the virtual clock the scripted receiver keeps the deadline (ScriptedWaits).
+            if (signalReceived || (!virtualTime && deadline != 0 && now() >= deadline)) {
                 deadlineExpired.store(!signalReceived);
                 stop.cancel();
             }
@@ -841,12 +907,12 @@ int run(const Options& options)
             options.recordDirectory, options.family, recordingStartTimes.next(QDateTime::currentDateTimeUtc()));
         recordings.append(file);
         report.insert("recordings", recordings);
-        return std::make_unique<GPSRecordingTransport>(std::move(transport), file,
-                                                       GPSRecordingTransport::MAX_FILE_BYTES, std::function<void()>{},
-                                                       GPSRecordingTransport::Session{options.family, options.config});
+        return std::make_unique<GPSRecordingTransport>(
+            std::move(transport), file, GPSRecordingTransport::MAX_FILE_BYTES, std::function<void()>{},
+            GPSRecordingTransport::Session{options.family, options.config}, sessionClock);
     };
-    GPSTestClock scriptedClock;
     std::unique_ptr<UBXReceiverModel> receiver;
+    std::unique_ptr<ScriptedWaits> waits;
     if (scripted) {
         receiver = std::make_unique<UBXReceiverModel>(
             options.model == "f9p" ? UBXReceiverModel::Receiver::F9P : UBXReceiverModel::Receiver::M8PBase,
@@ -858,13 +924,17 @@ int run(const Options& options)
         } else if (options.fault == "cancel") {
             receiver->disableReply = UBXReceiverModel::DisableReply::Cancelled;
         }
+        waits = std::make_unique<ScriptedWaits>(*receiver, scriptedClock, operationDeadline, deadlineExpired);
     }
     // A new link to the receiver. The scripted receiver is its model, which keeps its state from one link to the next.
     const auto connect = [&]() -> std::unique_ptr<GPSTransport> {
         if (!scripted) {
             return recorded(physicalTransport(options, stop.token()));
         }
-        auto peer = std::make_unique<ScriptedReceiver>(stop, receiver.get());
+        auto peer = std::make_unique<ScriptedReceiver>(stop, waits.get());
+        if (virtualTime) {
+            peer->setClock(&scriptedClock);
+        }
         // Detection asks every family for its identity. A u-blox receiver ignores the text commands of the others,
         // which the model would take for the start of a frame.
         peer->setWriteHandler(
@@ -926,8 +996,7 @@ int run(const Options& options)
         int correctionFrames = 0;
         QMap<int, int> correctionMessages;
         QMap<int, qint64> correctionBytes;
-        QElapsedTimer elapsed;
-        elapsed.start();
+        const qint64 stageStartedMs = now();
         // The family --family automatic finds, which decides the commands the stage sends.
         std::optional<GPSType> detected;
         GPSDriverSinks sinks;
@@ -951,7 +1020,7 @@ int run(const Options& options)
             correctionBytes[messageId] += static_cast<qint64>(frame.size());
         };
         sinks.onBaseStatus = [&](const GPSBaseStatus& survey) {
-            const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
+            const bool prior = survey.duration.count() > (now() - stageStartedMs) / 1000 + 2;
             const bool active = survey.state == GPSBaseState::Active;
             const bool valid = survey.state == GPSBaseState::Valid;
             QString observation = "indeterminate";
@@ -969,12 +1038,12 @@ int run(const Options& options)
                                 {"valid", valid},
                                 {"mean_accuracy_m", survey.meanAccuracyMeters ? QJsonValue(*survey.meanAccuracyMeters)
                                                                               : QJsonValue(QJsonValue::Null)},
-                                {"observed_after_ms", elapsed.elapsed()},
+                                {"observed_after_ms", now() - stageStartedMs},
                                 {"origin_assessment", observation},
                                 {"fresh_survey_proven", false}});
             }
         };
-        GPSDriver driver(options.family, evidence, config, std::move(sinks));
+        GPSDriver driver(options.family, evidence, config, std::move(sinks), sessionClock);
         const bool configured = driver.configure();
         checks.append(check("configure_return", configured ? "passed" : "failed",
                             "Facade return value only, not independent confirmation of every requested setting"));
@@ -1036,10 +1105,11 @@ int run(const Options& options)
             if (scripted) {
                 injectMeasurements(*receiver, options);
             }
-            QElapsedTimer observation;
-            observation.start();
-            qint64 lastCheckpointMs = 0;
-            while (!stop.isCancelled() && !evidence.fatalError() && observation.elapsed() < options.observeMs) {
+            const qint64 observationStartedMs = now();
+            // The evidence file is for whoever reads it while the run goes on, whatever clock the session has.
+            QElapsedTimer sinceCheckpoint;
+            sinceCheckpoint.start();
+            while (!stop.isCancelled() && !evidence.fatalError() && now() - observationStartedMs < options.observeMs) {
                 const auto result = driver.receiveOutcome(50ms);
                 if (recordReceive(result)) {
                     break;
@@ -1049,12 +1119,12 @@ int run(const Options& options)
                     checks.append(check("observation_window", "failed", "Receive cancelled during observation"));
                     break;
                 }
-                if (!options.outputPath.isEmpty() && observation.elapsed() - lastCheckpointMs >= 1000) {
+                if (!options.outputPath.isEmpty() && sinceCheckpoint.elapsed() >= 1000) {
                     if (const QString error = checkpoint(); !error.isEmpty()) {
                         stop.cancel();
                         return evidenceError(report, error);
                     }
-                    lastCheckpointMs = observation.elapsed();
+                    sinceCheckpoint.start();
                 }
             }
             if (stop.isCancelled()) {
@@ -1070,9 +1140,8 @@ int run(const Options& options)
                 if (scripted) {
                     injectMeasurements(*receiver, options, true);
                 }
-                operationDeadline.store(now() + options.cancelAfterMs);
-                QElapsedTimer cancellation;
-                cancellation.start();
+                const qint64 cancellationStartedMs = now();
+                operationDeadline.store(cancellationStartedMs + options.cancelAfterMs);
                 int receiveCalls = 0;
                 GPSReceiveResult result;
                 do {
@@ -1082,8 +1151,8 @@ int run(const Options& options)
                         break;
                     }
                 } while (result.error != GPSProtocolError::Cancelled && !stop.isCancelled() && !evidence.fatalError() &&
-                         cancellation.elapsed() < options.cancelAfterMs + options.cancelSlackMs);
-                const qint64 cancelMs = cancellation.elapsed();
+                         now() - cancellationStartedMs < options.cancelAfterMs + options.cancelSlackMs);
+                const qint64 cancelMs = now() - cancellationStartedMs;
                 operationDeadline.store(0);
                 const bool timely = !receiveFailed && stop.isCancelled() && !evidence.fatalError() &&
                                     cancelMs < options.cancelAfterMs + options.cancelSlackMs;
@@ -1211,6 +1280,9 @@ int main(int argc, char* argv[])
         {"cancel-after-ms", "Delay before requesting blocked-receive cancellation", "milliseconds", "50"},
         {"cancel-slack-ms", "Time a cancelled receive may take to return after the request", "milliseconds", "500"},
         {"model", "Scripted or served receiver: f9p|m8p", "model", "f9p"},
+        {"real-time",
+         "Run the scripted receiver on the steady clock, as a receiver on a transport runs. Without it the run takes "
+         "its time from the receiver's virtual clock, on which no wait of the session takes time"},
         {"survey-state", "Scripted observations: fresh|retained|none", "state", "fresh"},
         {"fault", "Scripted fault: none|nak|wrong-readback|cancel|rtcm-nak|rtcm-nak-cancel", "fault", "none"},
     });

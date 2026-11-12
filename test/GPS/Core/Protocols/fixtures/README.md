@@ -233,7 +233,10 @@ What the tests use instead is not a run against a receiver:
 
 - The drivers configure receiver models (`../Support`). The runner's own test and the simulator's
   suite use the u-blox model with the identities of a ZED-F9P (HPG 1.32) and a NEO-M8P-2
-  (HPG 1.40).
+  (HPG 1.40). Without `--transport` the runner configures that model on the model's virtual clock,
+  which the report's `script` names: no wait of the session takes time, so the times in the report
+  are those of the driver's timeouts, not of a receiver. `--real-time` runs the model on the
+  steady clock.
 - The captures listed in `SOURCES.md` are the output of receivers that other projects logged.
   They show that QGroundControl decodes that output, not that it configured those receivers.
 
