@@ -18,6 +18,10 @@ private slots:
     void _testMapAttribution_data();
     void _testMapAttribution();
     void _testTerrainAttribution();
+    void _testIsSatelliteMap_data();
+    void _testIsSatelliteMap();
+    void _testIsImageryMap_data();
+    void _testIsImageryMap();
     void _testProviderAndTypeSelectEveryMap();
     void _testChosenMap_data();
     void _testChosenMap();

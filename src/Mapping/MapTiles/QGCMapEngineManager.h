@@ -74,6 +74,13 @@ public:
     /// The credit of the provider \a mapType, named as mapList() names it. Empty for a name that is not in that
     /// list, and for a provider without a credit.
     Q_INVOKABLE static QString mapAttribution(const QString& mapType);
+    /// True for a map \a mapType, named as mapList() names it, that a map engine can show: one that is not an
+    /// elevation provider. False for a name that is not in that list.
+    Q_INVOKABLE static bool isImageryMap(const QString& mapType);
+    /// True for a map \a mapType, named as mapList() names it, of satellite or aerial pictures, also one with
+    /// labels on them (a hybrid map): views draw what they put on such a map in light colors. The map style of
+    /// the provider tells, as the name of a map need not say it. False for a name that is not in that list.
+    Q_INVOKABLE static bool isSatelliteMap(const QString& mapType);
     Q_INVOKABLE static QStringList mapTypeList(const QString& provider);
 
     ImportAction importAction() const { return _importAction; }

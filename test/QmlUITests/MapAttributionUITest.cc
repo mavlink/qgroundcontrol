@@ -2,6 +2,7 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtGui/QColor>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
@@ -11,6 +12,7 @@
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
 #include "QGCMapEngineManager.h"
+#include "QGCMapPalette.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
 
@@ -128,10 +130,23 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
         QTRY_COMPARE_WITH_TIMEOUT(creditText(), mapboxCredit, TestTimeout::shortMs());
     }
 
+    // The style of a map tells that it is one of satellite pictures, whatever its name: what lies on it is light
+    const auto creditColor = [credit] { return credit->property("color").value<QColor>(); };
+    QGCMapPalette mapPalette;
+    const QColor darkText = mapPalette.text();
+    mapPalette.setLightColors(true);
+    const QColor lightText = mapPalette.text();
+    mapProviderFact->setRawValue(QStringLiteral("MapQuest"));
+    mapTypeFact->setRawValue(QStringLiteral("Sat"));
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), QGCMapEngineManager::mapAttribution(QStringLiteral("MapQuest Sat")),
+                              TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(creditColor(), lightText, TestTimeout::shortMs());
+
     // The map of OpenAIP has no type: its provider selects it, whatever type is left of the provider before
     mapProviderFact->setRawValue(QStringLiteral("OpenAIP"));
     const QString openAipCredit = QGCMapEngineManager::mapAttribution(QStringLiteral("OpenAIP"));
     QTRY_COMPARE_WITH_TIMEOUT(creditText(), openAipCredit, TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(creditColor(), darkText, TestTimeout::shortMs());
 
     // The settings page sets the provider, then the type. The two name no map in between: the map stays
     mapProviderFact->setRawValue(QStringLiteral("CustomURL"));

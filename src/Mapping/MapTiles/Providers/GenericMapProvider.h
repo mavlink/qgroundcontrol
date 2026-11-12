@@ -20,9 +20,10 @@ private:
 class CyberJapanMapProvider : public MapProvider
 {
 protected:
-    CyberJapanMapProvider(const QString& mapName, const QString& mapTypeId, const QString& imageFormat)
+    CyberJapanMapProvider(const QString& mapName, const QString& mapTypeId, const QString& imageFormat,
+                          MapProvider::MapStyle mapStyle = MapProvider::StreetMap)
         : MapProvider(mapName, QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std"), imageFormat,
-                      QGC_AVERAGE_TILE_SIZE, MapProvider::StreetMap)
+                      QGC_AVERAGE_TILE_SIZE, mapStyle)
         , _mapTypeId(mapTypeId)
     {}
 
@@ -49,7 +50,7 @@ class JapanSeamlessMapProvider : public CyberJapanMapProvider
 public:
     JapanSeamlessMapProvider()
         : CyberJapanMapProvider(QStringLiteral("Japan-GSI Seamless"), QStringLiteral("seamlessphoto"),
-                                QStringLiteral("jpg"))
+                                QStringLiteral("jpg"), MapProvider::SatelliteMapDay)
     {}
 };
 

@@ -28,6 +28,23 @@ QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "MapTiles.QGCMapEngineManager")
 
 Q_APPLICATION_STATIC(QGCMapEngineManager, _mapEngineManager);
 
+namespace {
+
+// Not UrlFactory::getMapProviderFromProviderType(), which warns of a name that no provider has: the questions that
+// are asked with a map's name here have an answer for such a name
+SharedMapProvider mapEngineManagerProvider(const QString& mapType)
+{
+    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
+        if (provider->getMapName() == mapType) {
+            return provider;
+        }
+    }
+
+    return nullptr;
+}
+
+}  // namespace
+
 QGCMapEngineManager* QGCMapEngineManager::instance()
 {
     return _mapEngineManager();
@@ -211,13 +228,30 @@ void QGCMapEngineManager::_tileSetSaved(QGCCachedTileSet* set)
 
 QString QGCMapEngineManager::mapAttribution(const QString& mapType)
 {
-    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
-        if (provider->getMapName() == mapType) {
-            return provider->attribution();
-        }
+    const SharedMapProvider provider = mapEngineManagerProvider(mapType);
+    return provider ? provider->attribution() : QString();
+}
+
+bool QGCMapEngineManager::isImageryMap(const QString& mapType)
+{
+    return _imageryMapList().contains(mapType);
+}
+
+bool QGCMapEngineManager::isSatelliteMap(const QString& mapType)
+{
+    const SharedMapProvider provider = mapEngineManagerProvider(mapType);
+    if (!provider) {
+        return false;
     }
 
-    return QString();
+    switch (provider->getMapStyle()) {
+        case MapProvider::SatelliteMapDay:
+        case MapProvider::SatelliteMapNight:
+        case MapProvider::HybridMap:
+            return true;
+        default:
+            return false;
+    }
 }
 
 QString QGCMapEngineManager::terrainAttribution()

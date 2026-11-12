@@ -428,7 +428,7 @@ Item {
                                 activeMapType: _map.activeMapType
                                 zoomLevel: zoomPreview.zoomLevel
 
-                                property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                                property bool isSatelliteMap: QGroundControl.mapEngineManager.isSatelliteMap(activeMapType.name)
 
                                 plugin: Plugin { name: "QGroundControl" }
 

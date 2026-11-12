@@ -40,7 +40,7 @@ GeoMap {
     /// For a view to put its own controls above the credit
     readonly property real attributionHeight: attribution.visible ? attribution.height : 0
 
-    readonly property bool isSatelliteMap: root.mapType.indexOf("Satellite") > -1 || root.mapType.indexOf("Hybrid") > -1
+    readonly property bool isSatelliteMap: QGroundControl.mapEngineManager.isSatelliteMap(root.mapType)
     readonly property var gcsPosition: QGroundControl.positionManager.gcsPosition
 
     // Breaks the center/zoomLevel <-> camera cycle: camera moves echo into them and must not be written back
@@ -82,9 +82,7 @@ GeoMap {
     /// instead of the map the user chose. The map keeps what it shows for a name that is no map, such as an
     /// elevation provider's or a map that the list no longer has.
     function showMapType(mapType) {
-        const manager = QGroundControl.mapEngineManager
-        // mapList has the elevation providers as well. mapProviderList, the providers of the maps, has none of them.
-        if (manager.mapList.indexOf(mapType) >= 0 && manager.mapProviderList.indexOf(mapType.split(" ")[0]) >= 0) {
+        if (QGroundControl.mapEngineManager.isImageryMap(mapType)) {
             root.mapType = mapType
         }
     }

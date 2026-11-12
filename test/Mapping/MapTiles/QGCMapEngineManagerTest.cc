@@ -396,6 +396,53 @@ void QGCMapEngineManagerTest::_testTerrainAttribution()
              QStringLiteral("Terrain: Mapzen, USGS, NOAA and other sources"));
 }
 
+void QGCMapEngineManagerTest::_testIsSatelliteMap_data()
+{
+    QTest::addColumn<QString>("mapType");
+    QTest::addColumn<bool>("satellite");
+
+    // Satellite or aerial pictures whose names say neither "Satellite" nor "Hybrid"
+    QTest::newRow("MapQuest Sat") << QStringLiteral("MapQuest Sat") << true;
+    QTest::newRow("LINZ Basemap") << QStringLiteral("LINZ Basemap") << true;
+    QTest::newRow("Japan-GSI Seamless") << QStringLiteral("Japan-GSI Seamless") << true;
+
+    QTest::newRow("hybrid map") << QStringLiteral("Bing Hybrid") << true;
+    QTest::newRow("street map") << QStringLiteral("Bing Road") << false;
+    QTest::newRow("elevation provider") << QString::fromLatin1(CopernicusElevationProvider::kProviderKey) << false;
+    QTest::newRow("not a map") << QStringLiteral("No Such Map Satellite") << false;
+}
+
+void QGCMapEngineManagerTest::_testIsSatelliteMap()
+{
+    QFETCH(QString, mapType);
+    QFETCH(bool, satellite);
+
+    QCOMPARE(QGCMapEngineManager::isSatelliteMap(mapType), satellite);
+}
+
+void QGCMapEngineManagerTest::_testIsImageryMap_data()
+{
+    QTest::addColumn<QString>("mapType");
+    QTest::addColumn<bool>("imagery");
+
+    QTest::newRow("map") << QStringLiteral("Bing Hybrid") << true;
+    QTest::newRow("map without a type") << QStringLiteral("OpenAIP") << true;
+    QTest::newRow("elevation provider") << QString::fromLatin1(CopernicusElevationProvider::kProviderKey) << false;
+    QTest::newRow("elevation provider that the user cannot select")
+        << QString::fromLatin1(TerrariumElevationProvider::kProviderKey) << false;
+    // A set of an earlier version can name a map that its provider has no more
+    QTest::newRow("no map of a provider that has maps") << QStringLiteral("Bing Removed") << false;
+    QTest::newRow("no name") << QString() << false;
+}
+
+void QGCMapEngineManagerTest::_testIsImageryMap()
+{
+    QFETCH(QString, mapType);
+    QFETCH(bool, imagery);
+
+    QCOMPARE(QGCMapEngineManager::isImageryMap(mapType), imagery);
+}
+
 // The settings select a map by provider and type: the providers and their types must lead to every map, and to
 // nothing else. The provider of OpenStreetMap, "Street", is also a word of other providers' map names, and the map
 // of OpenAIP has no type.
