@@ -16,7 +16,7 @@ struct NavigationEpoch
 {
     std::optional<int> timeMs;
     uint64_t receivedAtUs = 0;
-    /// Receipt of the GGA, or until it arrives of the RMC or GLL that began the epoch.
+    /// Receipt of the GGA.
     uint64_t positionReceivedAtUs = 0;
     uint64_t sequence = 0;
     GPSFixQuality fixQuality = GPSFixQuality::Unknown;
@@ -33,7 +33,6 @@ struct NavigationEpoch
 
     std::optional<double> horizontalAccuracyMeters;
     std::optional<double> verticalAccuracyMeters;
-    uint64_t accuracyReceivedAtUs = 0;
 
     std::optional<double> speedMetersPerSecond;
     std::optional<double> courseDegrees;
@@ -56,12 +55,14 @@ struct NavigationUpdate
 /// Joins the standard sentences of one UTC time into an epoch and publishes each epoch once.
 ///
 /// The GGA holds the epoch's position. RMC and GST join the epoch of their time; GSA and VTG carry no time and join
-/// the current epoch. Speed, course and VDOP come from whichever of these sentences reports them: an empty field
-/// leaves the value an earlier one supplied. An epoch is published when its GGA arrives, unless the receiver sends
-/// more of it after the GGA: the sentences that followed the GGA in both previous epochs are waited for, so that a
-/// receiver that sends GGA first is published with its speed, course, DOP and accuracy, at the last of those
-/// sentences. What arrives after an epoch was published is not published: not with that epoch, because every
-/// published position is a new observation, and not with the next, whose solution it does not describe.
+/// the current epoch. The time and the order of the sentences decide what an epoch holds, not how long they take to
+/// arrive: a slow link spreads one epoch over seconds. Speed, course and VDOP come from whichever of these sentences
+/// reports them: an empty field leaves the value an earlier one supplied. An epoch is published when its GGA
+/// arrives, unless the receiver sends more of it after the GGA: the sentences that followed the GGA in both previous
+/// epochs are waited for, so that a receiver that sends GGA first is published with its speed, course, DOP and
+/// accuracy, at the last of those sentences. What arrives after an epoch was published is not published: not with
+/// that epoch, because every published position is a new observation, and not with the next, whose solution it does
+/// not describe.
 ///
 /// A sentence follows its GGA only in the first half of the interval between the last two GGA; one that arrives later
 /// completes an epoch that waits for it, but is not waited for in the epochs to come. An epoch that still waits when
@@ -77,9 +78,6 @@ struct NavigationUpdate
 class NavigationEpochAssembler
 {
 public:
-    /// Receipt age beyond which retained metadata no longer joins a new sentence of its epoch.
-    static constexpr std::chrono::microseconds METADATA_MAX_AGE = std::chrono::seconds(2);
-
     void reset();
     /// @return a fix loss as soon as a sentence declares it, or the epoch this sentence completed or ended.
     std::optional<NavigationUpdate> ingest(const Sentence& sentence, uint64_t receivedAtUs);
@@ -121,11 +119,9 @@ private:
 
     static bool _holds(const StoredEpoch& stored, std::optional<int> timeMs);
     void _resetEpoch(StoredEpoch& stored, std::optional<int> timeMs);
-    void _resetExpiredEpoch(StoredEpoch& stored, uint64_t receivedAtUs);
     /// The epoch of @a timeMs as the current one. Ends the current epoch when it is of another time or already has
     /// @a position; @a overdue is that epoch when it was still waiting.
-    StoredEpoch& _positionEpoch(std::optional<int> timeMs, uint64_t receivedAtUs, Position position,
-                                std::optional<NavigationEpoch>& overdue);
+    StoredEpoch& _positionEpoch(std::optional<int> timeMs, Position position, std::optional<NavigationEpoch>& overdue);
     std::optional<NavigationEpoch> _end(StoredEpoch& stored);
     bool _hiddenByFixLoss(const NavigationEpoch& epoch) const;
     void _add(StoredEpoch& stored, Addition addition, uint64_t receivedAtUs) const;

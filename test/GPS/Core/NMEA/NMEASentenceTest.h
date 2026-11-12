@@ -23,7 +23,6 @@ private slots:
     void _incrementalReset();
     void _lineFraming_data();
     void _lineFraming();
-    void _navigationFreshnessBoundaries();
     void _navigationFixLoss_data();
     void _navigationFixLoss();
     void _fixQuality_data();

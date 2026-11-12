@@ -497,7 +497,7 @@ void GPSNMEAStreamTest::_lateSentenceCompletesWaitingEpoch()
     QVERIFY(receiver.published->velocityValid);
 }
 
-void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge_data()
+void GPSNMEAStreamTest::_awaitedSentenceAfterTwoSeconds_data()
 {
     QTest::addColumn<QByteArray>("type");
     QTest::newRow("rmc") << QByteArray("RMC");
@@ -507,14 +507,13 @@ void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge_data()
     QTest::newRow("vtg") << QByteArray("VTG");
 }
 
-void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge()
+void GPSNMEAStreamTest::_awaitedSentenceAfterTwoSeconds()
 {
     QFETCH(QByteArray, type);
     // A receiver that reports every five seconds at 4800 baud and sends the GSV sentences of four constellations
     // between its GGA and the sentence that follows: twelve of them put that sentence 1.92 s after the GGA, thirteen
     // put it 2.07 s after.
     constexpr uint64_t INTERVAL_US = 5000000;
-    constexpr uint64_t MAX_AGE_US = NMEA::NavigationEpochAssembler::METADATA_MAX_AGE.count();
     NMEAReceiver receiver;
     const uint64_t start = receiver.now;
     int epoch = 0;
@@ -529,11 +528,51 @@ void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge()
         QCOMPARE(receiver.positions, epoch);
         const auto& navigation = receiver.published->navigation;
         QCOMPARE(navigation.timestampUs, positionReceipt);
-        if (delayUs > MAX_AGE_US) {
+        if (epoch > 2) {
             // Two epochs have shown the sentence, so this one waited for it and is published with it.
             QVERIFY(type == "GST"   ? std::isfinite(navigation.horizontalAccuracyMeters)
                     : type == "GSA" ? std::isfinite(navigation.verticalDop)
                                     : receiver.published->velocityValid);
+        }
+    }
+}
+
+void GPSNMEAStreamTest::_epochLongerThanTwoSeconds_data()
+{
+    QTest::addColumn<QByteArrayList>("order");
+    QTest::newRow("gga-last") << QByteArrayList{"RMC", "GSA", "GST", "GSV", "GGA"};
+    QTest::newRow("gst-first") << QByteArrayList{"GST", "GSV", "GGA"};
+    QTest::newRow("gga-first") << QByteArrayList{"GGA", "GSV", "GSA", "RMC", "GST"};
+}
+
+void GPSNMEAStreamTest::_epochLongerThanTwoSeconds()
+{
+    QFETCH(QByteArrayList, order);
+    // A receiver that reports every five seconds at 4800 baud, where the GSV sentences of four constellations take
+    // 2.07 s: what precedes them and what follows them belong to one epoch.
+    constexpr uint64_t INTERVAL_US = 5000000;
+    constexpr uint64_t SATELLITES_US = 2070000;
+    NMEAReceiver receiver;
+    const uint64_t start = receiver.now;
+    for (int epoch = 0; epoch < 4; ++epoch) {
+        const QByteArray utc = QByteArray::number(123500 + 5 * epoch);
+        receiver.now = start + epoch * INTERVAL_US;
+        uint64_t positionReceipt = 0;
+        for (const auto& type : order) {
+            receiver.now += type == "GSV" ? SATELLITES_US : SENTENCE_INTERVAL_US;
+            if (type == "GGA") {
+                positionReceipt = receiver.now;
+            }
+            receiver.feed(sentenceOf(type, utc));
+        }
+        QCOMPARE(receiver.positions, epoch + 1);
+        const auto& navigation = receiver.published->navigation;
+        QCOMPARE(navigation.timestampUs, positionReceipt);
+        // What precedes the GGA is published with it; what follows it is waited for once two epochs have shown it.
+        if (order.last() == "GGA" || epoch >= 2) {
+            QCOMPARE(receiver.published->velocityValid, order.contains("RMC"));
+            QCOMPARE(std::isfinite(navigation.verticalDop), order.contains("GSA"));
+            QCOMPARE(std::isfinite(navigation.horizontalAccuracyMeters), order.contains("GST"));
         }
     }
 }
@@ -641,8 +680,8 @@ void GPSNMEAStreamTest::_vdopEpoch_data()
     QTest::newRow("same-time") << QByteArray("123519") << QByteArray("123519") << quint64(1000);
     QTest::newRow("next-epoch") << QByteArray("123519") << QByteArray("123520") << quint64(1000000);
     QTest::newRow("midnight") << QByteArray("235959") << QByteArray("000000") << quint64(1000000);
-    QTest::newRow("expired-same-time") << QByteArray("123519") << QByteArray("123519") << quint64(7000000);
-    QTest::newRow("expired-next-epoch") << QByteArray("123519") << QByteArray("123526") << quint64(7000000);
+    QTest::newRow("same-time-later") << QByteArray("123519") << QByteArray("123519") << quint64(7000000);
+    QTest::newRow("later-epoch") << QByteArray("123519") << QByteArray("123526") << quint64(7000000);
     QTest::newRow("missing-epoch") << QByteArray("123519") << QByteArray() << quint64(1000);
 }
 

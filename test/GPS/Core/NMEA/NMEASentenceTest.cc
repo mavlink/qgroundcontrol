@@ -181,41 +181,6 @@ void NMEASentenceTest::_lineFraming()
     QCOMPARE(parsed, expectedParsed);
 }
 
-void NMEASentenceTest::_navigationFreshnessBoundaries()
-{
-    const auto rmc =
-        ownedSentence(GPSTest::repairChecksum("$GPRMC,000000.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
-    const auto gga =
-        ownedSentence(GPSTest::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
-    const auto gsa = ownedSentence(GPSTest::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
-    const auto gst = ownedSentence(GPSTest::repairChecksum("$GPGST,000000.000,1,1,1,0,3,4,6"));
-    QVERIFY(rmc && gga && gsa && gst);
-
-    constexpr quint64 maxAgeUs = NMEA::NavigationEpochAssembler::METADATA_MAX_AGE.count();
-    // Neither sentence publishes the epoch the RMC began; the GGA does, with what joined it in time.
-    const auto gsaFresh = [&](quint64 ageUs) {
-        NMEA::NavigationEpochAssembler assembler;
-        if (assembler.ingest(rmc->sentence(), 1000000) || assembler.ingest(gsa->sentence(), 1000000 + ageUs)) {
-            return false;
-        }
-        const auto update = assembler.ingest(gga->sentence(), 1000000 + ageUs);
-        return update && update->epoch.verticalDop.has_value();
-    };
-    QVERIFY(gsaFresh(maxAgeUs));
-    QVERIFY(!gsaFresh(maxAgeUs + 1));
-
-    const auto gstFresh = [&](quint64 ageUs) {
-        NMEA::NavigationEpochAssembler assembler;
-        if (assembler.ingest(rmc->sentence(), 1000000) || assembler.ingest(gst->sentence(), 1000000)) {
-            return false;
-        }
-        const auto update = assembler.ingest(gga->sentence(), 1000000 + ageUs);
-        return update && update->epoch.horizontalAccuracyMeters.has_value();
-    };
-    QVERIFY(gstFresh(maxAgeUs - 1));
-    QVERIFY(!gstFresh(maxAgeUs + 1));
-}
-
 void NMEASentenceTest::_navigationFixLoss_data()
 {
     QTest::addColumn<QByteArray>("body");
