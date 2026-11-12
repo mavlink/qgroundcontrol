@@ -1243,15 +1243,42 @@ def test_a_rerun_s_artifact_replaces_the_earlier_attempt_s() -> None:
     assert [a["id"] for a in newest_artifacts(reversed(listing), run, commit)] == [13871058804]
 
 
+@pytest.mark.parametrize(
+    ("ref", "advice"),
+    [
+        (
+            REF,
+            "Re-run all jobs of each of these runs to build the packages again: the completion "
+            "of the last starts a publish of its own.",
+        ),
+        # The jobs of a tag's runs upload to the stores and push the builder images, and those
+        # of an older Stable branch upload to latest/ themselves: re-running them repeats that.
+        (
+            "refs/tags/v5.1.5",
+            "Do not re-run the jobs of a release tag's runs to build them again: the runs would "
+            "repeat their uploads to the stores and their builder images. What was published "
+            'of v5.1.5 is on the download server under builds/v5.1.5/: "Going back to an '
+            'earlier release" and "Release files" in '
+            "docs/en/qgc-dev-guide/release_branching_process.md say how to publish it from "
+            "there by hand.",
+        ),
+    ],
+    ids=["branch", "tag"],
+)
 def test_runs_whose_artifacts_expired_fail_the_request_instead_of_passing_for_an_old_layout(
-    runs: Runs, tmp_path: Path, gh_output: Path, capsys: pytest.CaptureFixture[str]
+    runs: Runs,
+    tmp_path: Path,
+    gh_output: Path,
+    capsys: pytest.CaptureFixture[str],
+    ref: str,
+    advice: str,
 ) -> None:
     # GitHub drops an expired artifact from its run's listing: upstream's Linux run
     # 36878132470 for v5.1.5, 42 days old, lists `size-metrics` alone, and the Windows run
     # nothing. A request for such a release (force_latest, force_release) changed nothing.
     for run in RUNS:
         runs.listing[run.run_id] = [runs._entry(run, "size-metrics")] * (run is LINUX)
-    argv = ["fetch", "--repo", REPO, "--ref", REF, "--commit", COMMIT, "--runs", RUNS_JSON]
+    argv = ["fetch", "--repo", REPO, "--ref", ref, "--commit", COMMIT, "--runs", RUNS_JSON]
 
     assert main([*argv, "--out", str(tmp_path / "set")]) == 1
 
@@ -1259,9 +1286,7 @@ def test_runs_whose_artifacts_expired_fail_the_request_instead_of_passing_for_an
         f"::error title=Packages failed verification::Linux run {LINUX.run_id}, Windows run "
         f"{WINDOWS.run_id}, MacOS run {MACOS.run_id}, Android run {ANDROID.run_id} passed, but "
         "list no package artifact. GitHub deletes a build's artifacts 30 days after their "
-        "upload, and nothing is published without them. Re-run all jobs of each of these "
-        "runs to build the packages again: the completion of the last starts a publish of "
-        "its own."
+        f"upload, and nothing is published without them. {advice}\n"
     ) in capsys.readouterr().out
     assert gh_output.read_text() == ""
     assert runs.downloads == []

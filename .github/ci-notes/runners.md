@@ -96,8 +96,12 @@ runner debugging. The [CI overview](../ci-overview.md) has the contributor-facin
   registered to the dispatching account, and run `touch continue` in the checkout to finish.
   Setup and session share a 15-minute step timeout, bounded by the remaining job timeout.
 - A manual run uploads to no store: the Play Store and TestFlight steps run for `push` events
-  only. `android.yml` and `ios.yml` dispatched on `master` or on a release tag build and sign
-  what the push builds and keep it as workflow artifacts
+  only. What it builds stays a workflow artifact, signed as a push build of its ref is.
+  `android.yml` signs the APK of its primary leg with the release keystore on any ref, when
+  `ANDROID_KEYSTORE_PASSWORD` is set (only pull requests are denied it), and builds no App
+  Bundle, which a `master` push alone does. `ios.yml` signs for the App Store only on a release
+  tag with every App Store secret and variable set, so its IPA of a branch is unsigned. A run
+  dispatched on a tag that is not a `vX.Y.Z` release tag on a `Stable*` branch builds nothing
   ([release tags](platforms.md#release-tags)).
 - Successful builds, PRs, tag runs, and cancelled jobs never open a session. A checkout failure can
   prevent the local action from loading; post-job cleanup failures and exhausted job timeouts

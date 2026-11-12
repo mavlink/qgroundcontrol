@@ -1067,6 +1067,76 @@ def test_a_manual_request_publishes_again_what_the_targets_hold_but_never_goes_b
     assert decision.targets["s3"] == f"holds the newer commit {M4}"
 
 
+def test_a_manual_request_can_name_an_older_commit_than_the_newest_finished_one(
+    upstream: Upstream,
+) -> None:
+    # M3 finished, but the job that packages its Linux build failed, so it lacks a package and
+    # is what a request for the branch alone decides for. M2 is the last commit that can publish.
+    upstream.set("master", M3, Linux="failure")
+    assert decide(REPO, ref_name="master").commit == M3
+
+    decision = decide(REPO, ref_name="master", commit=M2)
+
+    assert (decision.publish, decision.commit) == (True, M2)
+    assert decision.selected == ("daily", "s3")
+    assert [run["head_sha"] for run in decision.runs] == [M2] * 4
+
+    # The rules for a commit are those of any other: it gives way to a newer one that passed.
+    upstream.set("master", M3, Linux="success")
+    assert decide(REPO, ref_name="master", commit=M2).reason == f"{M3} {NEWER_PASSED}"
+    # And every platform must have finished building it.
+    assert decide(REPO, ref_name="master", commit=M4).reason.startswith(
+        "waiting for Linux (queued)"
+    )
+
+
+def test_a_commit_named_by_hand_never_takes_a_target_back(upstream: Upstream) -> None:
+    # M3 was published although its Linux run failed in a job that builds no package.
+    upstream.set("master", M3, Linux="failure")
+    upstream.publish(M3, "daily", "s3")
+
+    decision = decide(REPO, ref_name="master", commit=M2)
+
+    assert not decision.publish
+    assert decision.reason == "every target already holds this commit or a newer one"
+    assert decision.targets == {
+        "daily": f"holds the newer commit {M3}",
+        "s3": f"holds the newer commit {M3}",
+    }
+
+    # One target is behind: the commit goes there, and only there.
+    upstream.publish(M1, "s3")
+    decision = decide(REPO, ref_name="master", commit=M2)
+    assert decision.selected == ("s3",)
+    assert decision.targets["s3"] == f"moves forward from {M1}"
+
+
+@pytest.mark.parametrize(
+    "commit",
+    [M2[:10], M2.upper(), f"{M2}0", "master", "HEAD~1", f"{M2[:39]}g", "$(id)"],
+)
+def test_a_commit_that_is_not_a_full_sha_is_refused_before_any_request(
+    upstream: Upstream, commit: str
+) -> None:
+    decision = decide(REPO, ref_name="master", commit=commit)
+
+    assert not decision.publish
+    assert decision.reason == (
+        f"`{commit}` is not a full commit SHA: the commit input takes all 40 digits, in lower "
+        "case, of a commit of the ref"
+    )
+    assert upstream.requests == []
+
+
+def test_a_release_tag_is_published_only_at_the_commit_it_names(upstream: Upstream) -> None:
+    assert decide(REPO, ref_name="v5.1.5", commit=S1).publish
+
+    decision = decide(REPO, ref_name="v5.1.5", commit=S2)
+
+    assert not decision.publish
+    assert decision.reason == f"{S2} is not what tag v5.1.5 names ({S1}): not a tag build"
+
+
 def test_a_manual_request_for_a_branch_without_a_finished_commit_publishes_nothing(
     upstream: Upstream,
 ) -> None:
@@ -1232,6 +1302,36 @@ def test_a_manual_request_ignores_the_event_and_can_name_a_commit(
     assert read_github_file(gh_output)["publish"] == "false"
 
 
+def test_the_commit_input_reaches_the_decision_from_the_environment(
+    upstream: Upstream,
+    actions: Callable[..., None],
+    workflow_run_event: Callable[..., Path],
+    gh_output: Path,
+    gh_summary: Path,
+) -> None:
+    # Pasted into the form with a space after it.
+    upstream.set("master", M3, Linux="failure")
+    actions(
+        PUBLISH_DAILY_RELEASE="true",
+        PUBLISH_S3="true",
+        PUBLISH_REF="master",
+        PUBLISH_COMMIT=f"{M2} ",
+    )
+
+    assert main(["decide"]) == 0
+
+    outputs = read_github_file(gh_output)
+    assert (outputs["publish"], outputs["commit"]) == ("true", M2)
+    assert f"| Trigger | request for `master` at `{M2}` |" in gh_summary.read_text(encoding="utf-8")
+
+    # A completed build has no inputs: the workflow passes the variable empty.
+    actions(PUBLISH_REF="", PUBLISH_COMMIT="")
+    workflow_run_event(**upstream.run("Android", "master", M3))
+    gh_output.write_text("")
+    assert main(["decide"]) == 0
+    assert read_github_file(gh_output)["commit"] == M3
+
+
 def test_decide_needs_an_event_or_a_ref(actions: Callable[..., None], capsys) -> None:
     actions()
 
@@ -1308,6 +1408,18 @@ def test_a_tag_s_packages_go_to_its_github_release_and_a_published_one_is_only_c
     assert forced.targets["release"] == (
         "is already published, and its files are replaced as requested"
     )
+
+    # Upstream's v5.1.5 as GitHub reports it: published while the repository's release
+    # immutability setting was on. Nothing replaces its files, which the decision says, forced
+    # or not.
+    upstream.published["v5.1.5"]["immutable"] = True
+    locked = (
+        "is published and immutable: its job checks that it has these files, and nothing can "
+        "change them, force_release included"
+    )
+    assert decide(REPO, ref_name="v5.1.5").targets["release"] == locked
+    forced = decide(REPO, ref_name="v5.1.5", force=("release",))
+    assert (forced.selected, forced.targets["release"]) == (("s3", "latest", "release"), locked)
 
     # A draft, or no release at all: a token that only reads sees neither, so the job starts
     # and looks for the draft itself.

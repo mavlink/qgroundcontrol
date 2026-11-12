@@ -2,7 +2,8 @@
 """Decide whether a ref's packages are published now, and to which targets.
 
 ``decide`` answers for the platform run that just completed (the ``workflow_run`` event), or for
-a ref named by hand (``--ref``), which stands for that ref's newest complete build:
+a ref named by hand (``--ref``), which stands for that ref's newest complete build, or for the
+commit of it that ``--commit`` names:
 
 1. Only a ``push`` run of a platform workflow of this repository counts, on ``master``, a
    ``Stable*`` branch, or a ``vX.Y.Z`` tag. The name alone is not trusted: a branch must contain
@@ -28,7 +29,8 @@ a ref named by hand (``--ref``), which stands for that ref's newest complete bui
    refuses there unless the bucket has a record or the request forces it.
 5. A tag's packages also go to the tag's GitHub Release. Its job always starts: it attaches
    them to a draft, which cannot be seen from here, and only checks a published release,
-   which keeps its files unless a request by hand sets ``--force-release``.
+   which keeps its files unless a request by hand sets ``--force-release``. A release that
+   GitHub reports as immutable keeps them even then.
 
 ``confirm`` repeats steps 3 to 5 for one target from inside the job that writes it, where runs
 take turns. S3 is read without credentials here, and ``aws_upload.py`` reads the record again
@@ -306,7 +308,9 @@ def release_verdict(
     return False, f"holds the newer release {held.release}"
 
 
-def assets_verdict(published: bool, *, force: bool = False) -> tuple[bool, str]:
+def assets_verdict(
+    published: bool, *, force: bool = False, immutable: bool = False
+) -> tuple[bool, str]:
     """Return that the job of a tag's GitHub Release starts, and what it is to do there.
 
     *published* is whether the tag has a published release, whose files do not change under
@@ -314,9 +318,15 @@ def assets_verdict(published: bool, *, force: bool = False) -> tuple[bool, str]:
     these files, and fails when it does not, so that a release published before its packages
     arrived does not pass for complete. Without a published release the job attaches them: a
     draft is hidden from a token that only reads, so ``release_assets.py`` looks for it there.
+    GitHub accepts no change to the files of an *immutable* release, whatever *force* asks.
     """
     if not published:
         return True, "has no published release: the packages go to the tag's draft"
+    if immutable:
+        return True, (
+            "is published and immutable: its job checks that it has these files, and nothing "
+            "can change them, force_release included"
+        )
     if force:
         return True, "is already published, and its files are replaced as requested"
     return True, (
@@ -427,7 +437,11 @@ def verdict(
     """
     if target == "release":
         published = gh_api_json_or_none(f"repos/{repo}/releases/tags/{ref.name}")
-        return assets_verdict(published is not None, force="release" in force)
+        return assets_verdict(
+            published is not None,
+            force="release" in force,
+            immutable=bool(published) and published.get("immutable") is True,
+        )
     if target == "daily":
         return target_verdict(ref, published_commit(repo), commit, relation, republish=republish)
     record = public_record(LATEST_PREFIX if target == "latest" else builds_prefix(ref.name))
@@ -470,6 +484,13 @@ def decide(
         return Decision(
             False,
             f"{code_span(ref_name)} is not master, a Stable* branch or a vX.Y.Z release tag",
+        )
+    if run is None and commit and not _COMMIT.fullmatch(commit):
+        return Decision(
+            False,
+            f"{code_span(commit)} is not a full commit SHA: the commit input takes all 40 "
+            "digits, in lower case, of a commit of the ref",
+            ref,
         )
     admitted = PUBLISHABLE_CONCLUSIONS[ref.kind]
     if run is not None and run.get("conclusion") not in admitted:
@@ -616,6 +637,7 @@ def cmd_decide(args: argparse.Namespace) -> int:
         gh_error("Nothing to decide: no workflow_run event and no --ref")
         return 2
     dry_run = args.dry_run
+    commit = args.commit.strip()
     enabled = [
         target
         for target, variable in (
@@ -630,14 +652,14 @@ def cmd_decide(args: argparse.Namespace) -> int:
         trigger = f"{run.get('name')} run {run.get('id')} completed"
     else:
         trigger = f"request for {code_span(args.ref)}" + (
-            f" at {code_span(args.commit)}" if args.commit else ""
+            f" at {code_span(commit)}" if commit else ""
         )
     try:
         decision = decide(
             args.repo,
             run=run or None,
             ref_name=args.ref,
-            commit=args.commit,
+            commit=commit,
             enabled=enabled,
             force=_forced(args),
         )
@@ -705,7 +727,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Branch or release tag name to publish instead of the event's (default: $PUBLISH_REF)",
     )
     p_decide.add_argument(
-        "--commit", default="", help="Decide for this commit of --ref, not its newest complete one"
+        "--commit",
+        default=env_default("PUBLISH_COMMIT"),
+        help="Decide for this commit of --ref, not its newest complete one "
+        "(default: $PUBLISH_COMMIT)",
     )
     p_decide.add_argument(
         "--dry-run",

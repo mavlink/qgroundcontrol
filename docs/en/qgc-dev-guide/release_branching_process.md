@@ -92,7 +92,9 @@ A Stable branch that doesn't carry these workflow files yet keeps its old behavi
 That is `Stable_V5.0` and `Stable_V5.1`: each of their build jobs uploads its own file to the download server as soon as it finishes, to `builds/vX.Y.Z/` and to `latest/` whatever the version, and a failed job leaves a partial release.
 They write no `published.json`, and their GitHub Release gets no files.
 `Stable_V5.0` uploads with the static AWS keys (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`), which the repository didn't have when this was written, so check that they exist before you expect its tag to reach the download server.
-After a release from such a branch, have the `latest/published.json` record written again ([Pre-flight](#release_preflight)) and attach the release files by hand ([If a job fails midway](#release_failure)).
+After every release from such a branch, `latest/published.json` names another release than the files in `latest/`, and `latest/` can keep the `.sha256` files of that earlier release beside the new packages.
+Each time, have the record written again for the new tag, with the command under [Pre-flight](#release_preflight), and have those `.sha256` files deleted.
+Attach the release files to the draft GitHub Release by hand before you publish it ([If a job fails midway](#release_failure)).
 :::
 
 ### 1. Pre-flight {#release_preflight}
@@ -140,8 +142,18 @@ After a release from such a branch, have the `latest/published.json` record writ
 
    The files that were uploaded before _Publish Builds_ existed have no such record.
    Without it, _Publish Builds_ can't tell whether the release in `latest/` is older than yours, so its _S3 latest/_ job stops with an error instead of replacing it.
-   If the command fails, or names another release than the one `latest/` holds, ask someone with access to the S3 bucket to write the record, as described under _Seeding the latest/ record_ in `.github/ci-notes/platforms.md`.
-   This is needed once when _Publish Builds_ reaches `master`, and again after every release from `Stable_V5.0` or `Stable_V5.1`, whose build jobs replace the files in `latest/` without writing a record.
+   If the command fails, or names another release than the one `latest/` holds, ask someone with access to the S3 bucket to write the record, as described under _Seeding the latest/ record_ in `.github/ci-notes/platforms.md`:
+
+   ```sh
+   python3 tools/ci/publish/aws_upload.py seed --tag vX.Y.Z --commit "$(git rev-list -n 1 vX.Y.Z)" > published.json
+   aws s3 cp published.json s3://qgroundcontrol/latest/published.json --acl public-read
+   ```
+
+   Here `vX.Y.Z` is the release that `latest/` holds now, not the one you are about to tag.
+   On 2026-11-12 that was v5.1.5, which was published on 2026-10-01, and `latest/` had no record.
+   The record to write is therefore that of v5.1.5, unless a newer release has been published since.
+   To check, compare the version in `latest/QGC.version.txt` (`curl -fsS https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt`) with the newest published release (`gh release view --repo mavlink/qgroundcontrol --json tagName,publishedAt`).
+   The record is needed when _Publish Builds_ reaches `master`, and again after every release from `Stable_V5.0` or `Stable_V5.1`, whose build jobs replace the files in `latest/` without writing a record.
 1. **Stores.** Whether the tag reaches the Play Store and TestFlight depends only on which repository secrets and variables exist (see [What the tag publishes](#release_tag_publishes)).
    No per-release switch exists, so decide before tagging.
    Only the push of the tag uploads to them; a workflow that someone starts by hand for the tag doesn't.
@@ -313,11 +325,13 @@ The macOS job is different: upstream it fails when its signing secrets are missi
    1. Check the release files. _Publish Builds_ attached the six files, their checksums, and the two `.zsync` files once all four platforms had passed ([Verify](#release_verify)).
       The download buttons in the repository `README.md` link to the packages by name.
       If they're missing, see [If a job fails midway](#release_failure).
-      A release from `Stable_V5.0` or `Stable_V5.1` has none: attach its files by hand, as described there.
+      A release from `Stable_V5.0` or `Stable_V5.1` has none: attach its files by hand before you publish it, as described there.
    1. Publish the release.
       CI never does, and it doesn't change the files of a release once it's published.
-      Publish it only after the _GitHub Release assets_ job has finished.
+      Publish it only after the _GitHub Release assets_ job has passed.
       Published earlier, the release keeps the files it has: the job changes nothing, fails, names the files that are missing, and says how to attach them with `force_release`.
+      A release that GitHub shows as _Immutable_ can't be repaired at all, with `force_release` or by hand, so for such a release the order is a hard rule.
+      GitHub makes a release immutable when it's published while the repository's release immutability setting is on, which it was for v5.1.0 to v5.1.5 (see _Release immutability_ in `.github/ci-notes/platforms.md`).
       Mark a release candidate as a pre-release; otherwise GitHub shows it as the latest release, which is where those download buttons lead.
 1. **Version check file.** Update `latest/QGC.version.txt` in the S3 bucket (`https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt`) to the new version.
    QGC reads this file at startup and tells users that a new Stable is available, so do it last, after the checks in [Verify](#release_verify) pass.
@@ -350,6 +364,7 @@ Store uploads and builder images of the jobs that ran aren't undone.
   ```
 
   Add `-f dry_run=true` to see what it would publish without publishing anything.
+  For a branch, `-f commit=<full commit hash>` publishes that commit instead of the newest one whose builds have finished, which is how to publish the last good commit when a newer one failed to build a package; a tag needs no `commit`.
   A run started by hand publishes the release again even when the download server already holds it, so it's also how to publish a platform that was rebuilt for the same tag by re-running its workflow.
 - **A real defect:** fix it on the Stable branch and release the next patch version with a new tag.
   Don't move the existing tag.
@@ -363,7 +378,15 @@ Store uploads and builder images of the jobs that ran aren't undone.
   It publishes that tag's files again, to `builds/vX.Y.Z/` and to `latest/`.
   It takes them from the tag's own build runs, so it needs their artifacts, which GitHub keeps for 30 days, and a tag whose workflows mark their packages for _Publish Builds_.
   After 30 days the run fails in _Fetch and verify_ and says that the runs _list no package artifact_.
-  Otherwise someone with access to the S3 bucket has to do it by hand: copy everything in `builds/<previous tag>/`, including `published.json`, over `latest/`, and invalidate `/latest/*` in CloudFront.
+  Don't re-run the tag's build runs to get the artifacts back: they would upload to the stores and push the builder images again.
+  Otherwise someone with access to the S3 bucket has to do it by hand: copy everything in `builds/<previous tag>/`, including `published.json`, over `latest/` with the `public-read` ACL, and invalidate `/latest/*` in CloudFront:
+
+  ```sh
+  aws s3 cp s3://qgroundcontrol/builds/<previous tag>/ s3://qgroundcontrol/latest/ --recursive --acl public-read
+  ```
+
+  The `--acl public-read` option is what _Publish Builds_ uploads every file with.
+  A copy doesn't keep the ACL of its source, and the download server serves only objects that have it: without the option nobody can download the copies, and _Publish Builds_ can't read the record.
   If that directory has no `published.json`, write the record of the previous tag to `latest/published.json` instead (_Seeding the latest/ record_ in `.github/ci-notes/platforms.md`); don't delete it, because the next release then stops for want of a record.
   Check first that `builds/<previous tag>/` still holds all six files.
 - **Stores:** halt the staged rollout in the Play Console, or expire the build in App Store Connect.
@@ -379,8 +402,12 @@ Store uploads and builder images of the jobs that ran aren't undone.
   ```
 
   A publish by hand takes the files from the tag's build runs, whose artifacts GitHub keeps for 30 days.
-  After that, attach them by hand: download the files and their `.sha256` checksums from `builds/vX.Y.Z/` and add them with `gh release upload vX.Y.Z <files> --repo mavlink/qgroundcontrol --clobber`, keeping the file names.
+  After that, attach them by hand: download the files from `builds/vX.Y.Z/`, with their `.sha256` checksums when the directory has them, and add them with `gh release upload vX.Y.Z <files> --repo mavlink/qgroundcontrol --clobber`, keeping the file names.
+  A tag that was built from `Stable_V5.0` or `Stable_V5.1` has no checksum files there, because its build jobs upload none.
   The `.zsync` files aren't on the download server, so a release that is completed this way has none, and its AppImages can't update themselves from it.
+  None of this works for a release that GitHub shows as _Immutable_, as it does v5.1.0 to v5.1.5: GitHub accepts no change to its files.
+  The job then fails and says so, with `force_release` too, and GitHub refuses an upload by hand.
+  Such a release keeps the files it was published with, and the download server still offers its files under `builds/vX.Y.Z/`.
 
 Don't update `QGC.version.txt` or publish the GitHub Release until `latest/` is consistent again.
 

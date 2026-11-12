@@ -433,8 +433,9 @@ Release tags are cut on `Stable_V*` branches. Change detection (`_detect-changes
 plans the Android and Docker legs) skips every build for a tag ref that is not an exact `vX.Y.Z`
 name reachable from an `origin/Stable*` branch (the name check also covers `workflow_dispatch` on a
 tag, which bypasses the `push.tags` glob), so nothing is built, signed, or pushed (TestFlight, Play
-Store, Docker Hub). `aws_upload.py promote` independently refuses to publish such a tag to the S3
-`latest/` folder or invalidate CloudFront. Both use
+Store, Docker Hub). `aws_upload.py promote` independently refuses to upload such a tag to the S3
+`latest/` folder and fails its job, so the step after it, which invalidates CloudFront, does not
+run. Both use
 `qgc_tools.release_tag_check.check_release_tag()`, which fails the job if git cannot answer.
 Version-marker tags on `master` (e.g. `v5.2.0-dev`, consumed by `git describe` for daily-build
 version numbers) do not match the trigger glob and never start a build.
@@ -472,8 +473,9 @@ version numbers) do not match the trigger glob and never start a build.
   to again when the first run finishes. Publish Builds then finds that S3 already holds the
   release and uploads nothing there. Its GitHub Release job gives a draft the rebuilt packages,
   and fails for a published release, whose files differ from them, until a dispatch with
-  `force_release` replaces them. A run started by hand has a group of its own, so it does not
-  replace the push run that is waiting for its turn
+  `force_release` replaces them, which nothing can do for an
+  [immutable](#release-immutability) release. A run started by hand has a group of its own, so
+  it does not replace the push run that is waiting for its turn
   (`test_workflow_expressions.py::test_a_run_started_by_hand_never_displaces_a_push_run_that_is_waited_for`).
 - The tag push also runs `release.yml`, which stops with an error unless an `origin/Stable*`
   branch contains the tag (`tools/ci/publish/release_branch_check.py`), so no release is drafted
@@ -493,7 +495,8 @@ workflows and the actions they use hold no AWS credentials
 It starts when Linux, Windows, MacOS, or Android completes (the workflows that mark a package for
 publishing,
 `test_published_builds.py::test_publish_follows_and_requires_exactly_the_workflows_that_mark_packages`)
-and by `workflow_dispatch` with a `ref` and an optional `dry_run`. Every pull request's builds
+and by `workflow_dispatch` with a `ref`, an optional `commit` of it, and an optional `dry_run`.
+Every pull request's builds
 complete too: the `decide` job's `if:` skips a build that is not a `push` build of this
 repository that concluded `success` or `failure`, so such a run ends with every job skipped and
 uses no runner (`test_publish_workflow.py::test_a_build_that_cannot_publish_starts_no_job`). The trigger has no
@@ -534,9 +537,19 @@ it publishes without any repository variable, from the first build that complete
   summary. The runs are looked up by commit, however many pushes followed it. A re-run counts by
   its latest attempt: the event of an earlier attempt does not stand for a later one that is
   running or was stopped. A dispatch publishes the newest commit of the ref whose builds have all
-  finished, reading as many pages of runs as that takes. Only `push` runs count: a platform
+  finished, reading as many pages of runs as that takes. That commit may lack a package, because
+  a job that builds one failed, and the publish then ends with "nothing to publish yet". The
+  `commit` input reaches an older commit of the branch that can be published: it takes all 40
+  digits of the commit's SHA, in lower case, and the script refuses any other value before it
+  asks GitHub anything. The commit is decided for like any other: every platform's run of it
+  must have finished, it gives way to a newer commit that passed on every platform, and no
+  target goes back to it. A tag names one commit, so for a tag the input can only repeat it.
+  Only `push` runs count: a platform
   workflow dispatched by hand publishes no download, and uploads to no store
-  ([Release tags](#release-tags)).
+  ([Release tags](#release-tags))
+  (`tools/tests/ci/test_publish_decide.py::test_a_manual_request_can_name_an_older_commit_than_the_newest_finished_one`,
+  `tools/tests/ci/test_publish_decide.py::test_a_commit_named_by_hand_never_takes_a_target_back`,
+  `test_publish_workflow.py::test_what_a_request_names_reaches_the_decision_through_the_environment`).
 - **Which conclusions publish** (`publish_set.PUBLISHABLE_CONCLUSIONS`): a release tag needs
   `success` from all four workflows. A branch (`master`, `Stable*`) also takes `failure`, so
   that a job which builds no package, such as the Android emulator boot test or a unit-test leg,
@@ -631,7 +644,8 @@ it publishes without any repository variable, from the first build that complete
   has no inputs, and a dispatch from another ref is a dry run
   (`test_publish_workflow.py::test_only_a_run_started_by_hand_on_the_default_branch_can_force_a_target`).
   `force_release`, under the same rule, is the only way to change a GitHub Release that is
-  published. Neither input does the other's work.
+  published, and no way to change one that GitHub reports as immutable
+  ([Release immutability](#release-immutability)). Neither input does the other's work.
 - **Fetch and verify** (`publish_set.py fetch`; read access to contents, actions, and
   attestations): the packages are downloaded from exactly those runs by artifact id, the newest
   artifact of each name, since a re-run adds a second one. Each run is approved at one attempt,
@@ -662,8 +676,12 @@ it publishes without any repository variable, from the first build that complete
 - **Expired artifacts**: `attest-and-upload` keeps a push build's artifact for 30 days
   (`ARTIFACT_RETENTION_DAYS`), and GitHub then leaves it out of the run's listing: upstream's
   Linux run 36878132470 for `v5.1.5`, of 2026-10-01, listed `size-metrics` alone on 2026-11-12.
-  A run that passed and lists no package artifact therefore fails the set and says to re-run
-  all of its jobs, whether a completed build or a dispatch asked. It is not taken for a build
+  A run that passed and lists no package artifact therefore fails the set, whether a completed
+  build or a dispatch asked. For a branch the error says to re-run all jobs of the run. For a
+  release tag it says not to: the tag's push runs would upload to the stores and push the
+  builder images again, and those of a branch that uploads for itself (`Stable_V5.1`) would
+  write `latest/`. It names `builds/<tag>/` on the download server instead, and the passages
+  of the Release Checklist that publish from there by hand. Such a run is not taken for a build
   that publishes for itself, which lists its packages without markers
   (`tools/tests/ci/test_publish_set.py::test_runs_whose_artifacts_expired_fail_the_request_instead_of_passing_for_an_old_layout`).
 - **AppImage update files**: upstream's AppImages embed the update information `gh-releases-zsync|mavlink|qgroundcontrol|latest|<name>.AppImage.zsync`
@@ -697,9 +715,12 @@ it publishes without any repository variable, from the first build that complete
   attempt has its name and times, and exactly one passed job of the approved attempt has them.
   When several jobs share them, the job that built the package cannot be identified and the
   set fails, naming the job and the run. Any other comes from a job that failed after its
-  upload or that was run again, so the approved attempt's artifact of that name is missing.
-  The set then fails and names the artifact, and the older package never takes its place:
-  re-run the job.
+  upload or that was run again, so the approved attempt's artifact of that name is missing,
+  and the older package never takes its place. What follows depends on the run, as for any
+  package that a run lacks (_A failed build is not a failed publish_, above): for a run that
+  concluded `success` the set fails and names the artifact, and for a branch's run that
+  concluded `failure` the publish ends with "nothing to publish yet". Re-running the job
+  builds the package again, and the completion of that re-run starts a publish of its own.
 - **A complete set** is judged by the build, not by `master`. The packages of a workflow's run
   must all carry the same `packages` list and be exactly the packages on it, and every one of
   the four workflows must provide at least one. A missing package fails a run that passed,
@@ -739,6 +760,14 @@ it publishes without any repository variable, from the first build that complete
   with an unforced ref update, which GitHub and the tag ruleset accept only as a fast-forward;
   each old asset is then deleted and its `.next` renamed, which takes seconds; the notes, which
   record the commit, are written last. That record, not the tag, keeps an older commit out. The
+  first publication creates the tag and a draft, and the change that writes the notes also
+  publishes the draft, so the release appears with its files. A first run that failed leaves
+  the draft, which the next run finds in the listing of releases and finishes. The release
+  needs the repository's release immutability setting to be off, and the job refuses a
+  release that GitHub reports as immutable ([Release immutability](#release-immutability))
+  (`tools/tests/ci/test_daily_release.py::test_the_first_publish_is_a_draft_until_its_files_and_notes_are_complete`,
+  `tools/tests/ci/test_daily_release.py::test_a_rerun_publishes_the_draft_that_a_failed_first_publish_left`).
+  The
   notes also name each workflow's run and say how it concluded: every file was built by a job
   that passed, and a run that did not pass as a whole is named as such, since `master` is
   published although a job that builds no package failed
@@ -763,7 +792,10 @@ it publishes without any repository variable, from the first build that complete
   actor). The daily release does not need it to: what the release holds is the commit in its
   notes. If the tag must be reset all the same, an administrator has to disable that ruleset or
   add a bypass for the moment, delete the `daily` release and tag, and dispatch
-  `publish.yml -f ref=master`, which creates both again for the newest finished commit.
+  `publish.yml -f ref=master`, which creates both again for the newest finished commit. Check
+  first that release immutability is off: with it on, the new release is locked when it is
+  published, and the tag name of a deleted release that was immutable cannot be used again
+  ([Release immutability](#release-immutability)).
 - **S3** (`aws_upload.py`; `id-token: write`; the `mavlink` owner only): `publish` uploads the set
   to `builds/<ref>/`; `promote`, in its own job and for release tags only, then uploads it to
   `latest/`. Each writes the record last. The keys are the ones the build jobs used to write.
@@ -800,7 +832,10 @@ it publishes without any repository variable, from the first build that complete
   release is only checked, unless a dispatch sets `force_release`: the job passes when the
   release has every file of the set with the same SHA-256, and otherwise fails, naming the
   files that the release lacks or holds with other content and the dispatch that attaches
-  them. A release that was published before its packages arrived is thus a failed job, not a
+  them. A release that GitHub reports as immutable is only ever checked, with `force_release`
+  too: nothing can change its files, and the error says that instead of naming a dispatch
+  ([Release immutability](#release-immutability)). A release that was published before its
+  packages arrived is thus a failed job, not a
   release whose download buttons answer 404 and that nobody notices. One change is made to a
   published release without `force_release`: `<name>.next` uploads that a failed run of this
   job left are removed, because they are no files of the release and its users see them. They
@@ -819,14 +854,17 @@ it publishes without any repository variable, from the first build that complete
   name ends in. The tag is resolved again before the uploads and before the swap, and the
   release is read again by its id before every change. A draft that was published meanwhile is
   changed no further: the run withdraws its own `.next` uploads and fails, naming the files
-  that are missing and the `force_release` dispatch that attaches them. A release published in
+  that are missing and the `force_release` dispatch that attaches them. When the release is
+  immutable by then, the run leaves the uploads, which GitHub would not let it delete, and
+  says that the release keeps what it has. A release published in
   the moment between a check and the change that follows it still gets that one change. It has
   no record: a draft takes rebuilt packages of the same commit from any run, while S3 takes
   them only by dispatch. A build that is re-run after its release was published therefore
   fails this job, since the release's files differ from the rebuilt ones, and leaves the
   release as it is. The job does not depend on the S3 jobs
   (`test_publish_workflow.py::test_a_tag_s_packages_reach_its_github_release_in_a_job_of_their_own`,
-  `tools/tests/ci/test_release_assets.py::test_a_release_published_before_its_packages_were_attached_fails_the_job`).
+  `tools/tests/ci/test_release_assets.py::test_a_release_published_before_its_packages_were_attached_fails_the_job`,
+  `tools/tests/ci/test_release_assets.py::test_an_immutable_release_that_lacks_files_fails_and_nothing_can_attach_them`).
 - **What a publication holds**: each target gets exactly the verified set, whatever packages it
   has, and the tag's GitHub Release the AppImage update files besides. The daily release drops
   every asset that is not part of it. S3 never deletes: a file
@@ -844,15 +882,18 @@ it publishes without any repository variable, from the first build that complete
   GitHub starts the waiting jobs roughly in the order they began to wait, which `confirm` makes
   harmless, and cancels a job that would be the 101st in line: publish its commit by dispatch.
 - **Operating it**: runs are listed under `master` and named "_workflow_ completed for _ref_" or
-  "Publish _ref_". A failed publish fails this workflow, not a build, and a failed build does
+  "Publish _ref_", with "at _commit_" when the dispatch names one. A failed publish fails this
+  workflow, not a build, and a failed build does
   not fail this workflow: a green run whose _Fetch and verify_ summary reads "nothing to
   publish yet" names the package that a failed build did not produce, and re-running that
   build's failed jobs publishes the commit. Its jobs fail
   independently, and _Re-run failed jobs_ repeats only those, for the three days that the
   `publish-set` artifact is kept. To publish by hand:
-  `gh workflow run publish.yml -f ref=<branch or tag>`, with `-f dry_run=true` to only report,
-  with `-f force_latest=true` to let a release tag replace whatever `latest/` holds, and with
-  `-f force_release=true` to replace the files of its published GitHub Release.
+  `gh workflow run publish.yml -f ref=<branch or tag>`, with `-f commit=<full SHA>` to publish
+  that commit of a branch instead of the newest finished one, with `-f dry_run=true` to only
+  report, with `-f force_latest=true` to let a release tag replace whatever `latest/` holds, and
+  with `-f force_release=true` to replace the files of its published GitHub Release, unless
+  that is [immutable](#release-immutability).
 - **Approval gate** (not enabled): `environment: release` on the `s3-latest` job would require an
   approval before `latest/` changes, and before nothing else. The job has no `environment:` line
   today, so creating the environment alone gates nothing. Adding the line also changes that
@@ -861,7 +902,9 @@ it publishes without any repository variable, from the first build that complete
   ([AWS setup](#aws-setup)).
 - **Forks** run none of this, except a dispatched dry run, unless the repository variable
   `QGC_PUBLISH_DAILY_RELEASE` is `true`, which gives the fork a daily release of its own and
-  attaches a release tag's packages to the fork's draft release. S3 is upstream's alone, and a
+  attaches a release tag's packages to the fork's draft release. Such a fork needs
+  [release immutability](#release-immutability) off, as upstream does. S3 is upstream's alone,
+  and a
   fork's dry run reports the bucket's records as another repository's instead of comparing its
   commits with them.
 
@@ -875,7 +918,13 @@ run `builds/master/`, which the user guide links, keeps the last build that was 
 the merge. Older branches upload for themselves as before. Upstream had neither a `daily` tag
 nor a `daily` release, and no `published.json` in `builds/master/` or `latest/`, on 2026-11-12.
 
-**Before the merge**, nothing has to change in AWS. The role uploads and invalidates as the
+**Before the merge**, an administrator checks that release immutability is off:
+`gh api repos/mavlink/qgroundcontrol/immutable-releases` must print `"enabled":false`, as it
+did on 2026-11-12. With it on, the first daily release is locked when it is published: no
+later build can update it, and the tag name `daily` is used up
+([Release immutability](#release-immutability)).
+
+Nothing has to change in AWS. The role uploads and invalidates as the
 build jobs did with it, and the record is read over its public URL, which takes no permission.
 Make the two anonymous checks under [AWS setup](#aws-setup). A dry run asks for no
 credentials, so the first publication is the first run that uses the role from this workflow.
@@ -889,8 +938,9 @@ wait for the seed.
 commit's first builds start end with "waiting for …". The one that its last build starts
 decides _✅ publish_ with the targets `daily` and `s3`, both "nothing is published yet", and
 _Fetch and verify_ verifies six packages. _GitHub daily release_ then creates the `daily` tag
-at the commit and the prerelease _QGroundControl Daily Build_ with the six packages and their
-six checksums. _S3 builds/_ reads `builds/master/published.json`, which does not exist yet,
+at the commit and a draft, uploads the six packages and their six checksums to it, and
+publishes it with its notes as the prerelease _QGroundControl Daily Build_. _S3 builds/_ reads
+`builds/master/published.json`, which does not exist yet,
 uploads the same twelve files and then the record, reads the record back from its public URL,
 and invalidates `/builds/master/*` in CloudFront. The two jobs do not depend on each other:
 when one fails, the other's publication stands. The `daily` tag has not been created or moved
@@ -904,6 +954,9 @@ the first that show it.
   publishing jobs read "✅ published".
 - `gh release view daily --repo mavlink/qgroundcontrol` shows a prerelease with six packages
   and six `.sha256` files, whose notes name the commit.
+  `gh api repos/mavlink/qgroundcontrol/releases/tags/daily --jq .immutable` prints `false`.
+  When it prints `true`, the _GitHub daily release_ job has failed although the release is
+  published, and its error says what to do ([Release immutability](#release-immutability)).
 - `curl -fsS https://qgroundcontrol.s3.us-west-2.amazonaws.com/builds/master/published.json`
   names the commit and lists its `builds`.
 - A red _S3 builds/_ job is AWS: [AWS setup](#aws-setup) says what each message means.
@@ -925,6 +978,75 @@ verifies as usual, and each publishing job reports what it would write. GitHub i
 to start a disabled workflow for a dispatch either (not tried), so dispatch the dry run before
 disabling, or enable the workflow for it while no `master`, `Stable*`, or tag build is about
 to complete.
+
+#### Release immutability
+
+GitHub's _immutable releases_ is a repository setting (Settings > General > Releases). While it
+is on, GitHub locks every release when it is published. No file of the release can be added,
+replaced, or deleted, and its tag can be neither moved nor deleted while the release exists.
+When the release is deleted, the tag can be deleted too, but its name can never be used again
+in the repository. The title, the notes, and the prerelease and latest settings stay editable.
+The setting counts at publication: turning it on locks no release that was published before,
+unless that release is published again, and turning it off unlocks none that was published
+while it was on. Under it, GitHub's order for a release is to create a draft, attach the files,
+and publish.
+
+- **Keep it off** in a repository whose daily release Publish Builds updates, which is upstream
+  and every fork that opts in. The rolling release replaces its files and moves its tag with
+  each `master` build.
+- **Check it** as an administrator: `gh api repos/mavlink/qgroundcontrol/immutable-releases`
+  prints `{"enabled":false,"enforced_by_owner":false}` when it is off. The call takes read
+  access to the repository's administration, which a workflow's `GITHUB_TOKEN` cannot be
+  given, so no job can read the setting. A job sees only what a release reports of itself:
+  the `immutable` field of the releases API
+  (`gh api repos/mavlink/qgroundcontrol/releases/tags/<tag> --jq .immutable`).
+- **Upstream** had the setting on until 2026-11-12, when it was turned off for the daily
+  release. The releases that were published while it was on stay immutable: v5.1.0, v5.1.2,
+  v5.1.3, v5.1.4, and v5.1.5 (read on 2026-11-12; v5.0.8 and older are not). Neither
+  `force_release` nor an upload by hand (`gh release upload`, with or without `--clobber`) can
+  change their files, and their tags cannot move.
+- **The daily release** (`daily_release.py`) is first published as a draft that already has
+  its files, so a release that GitHub locks at publication is at least complete. A release
+  that is published is never sent `draft` again, since publishing a release again is what
+  locks one that was published before the setting was turned on. An existing `daily` release
+  that reports `immutable` is refused before any change, in a dry run too. A first
+  publication that comes back immutable fails the job, although the release is published and
+  complete: the job could not have known earlier. Both errors say what to do. Turn the setting
+  off. Delete the release and then the `daily` tag, for which upstream's _Tag Protection_
+  ruleset must be disabled or bypassed for the moment. Then give the daily release another
+  tag name, because GitHub does not take `daily` again. The name is `DAILY_TAG` in
+  `tools/ci/publish/daily_release.py`, and it is written out in these places besides: that
+  script's docstring, which `tools/ci/README.md` repeats, the comment at the head of
+  `publish.yml`, this file, `.github/ci-overview.md`, the _Daily Builds_ section of the
+  Release Checklist page, the comment on version tags in `cmake/modules/Git.cmake`, the tag
+  that `cmake/tests/run_git_configure_depends_test.cmake` creates, the stand-ins for GitHub in
+  `tools/tests/ci/test_daily_release.py` and `tools/tests/ci/test_publish_decide.py`, and
+  every download link that someone saved (`releases/download/daily/<file>`). Exercised on
+  GitHub once, on a fork with the setting off and no tag ruleset (2026-11-12, under a temporary
+  tag): the first publication as a draft, a re-run that finishes the draft of a failed first
+  run, and an update in place that moves the tag forward. Not exercised on GitHub: both
+  refusals have run against the tests' stand-in for the API only
+  (`tools/tests/ci/test_daily_release.py::test_an_immutable_release_is_refused_before_any_change`,
+  `tools/tests/ci/test_daily_release.py::test_a_first_publish_that_github_locks_fails_with_what_to_do`,
+  `tools/tests/ci/test_daily_release.py::test_a_published_release_is_never_published_again`).
+- **A tag's GitHub Release** (`release_assets.py`): an immutable release that has every file of
+  the set passes, like any published release. One that lacks a file, or holds one with other
+  content, fails the job with or without `force_release`. The error names the files, says
+  that nothing can attach them, and points to `builds/<tag>/` on the download server, where
+  the run's _S3 builds/_ job publishes the same files; a dry run reports the same. `.next`
+  uploads that a failed run left on such a release stay, with a warning. A draft that is
+  published as an immutable release while the job attaches is changed no further and keeps
+  what it has, its `.next` uploads included. So publish a release only after its _GitHub
+  Release assets_ job has passed: with the setting on, a release that was published earlier
+  cannot be repaired
+  (`tools/tests/ci/test_release_assets.py::test_an_immutable_release_that_has_every_file_passes`,
+  `tools/tests/ci/test_release_assets.py::test_a_release_that_becomes_immutable_while_the_job_runs_keeps_what_it_has`).
+- **If it is turned on again**, every release that is published from then on is locked at its
+  publication. A stable release must then have its files on the draft before it is published,
+  which is the order that the Release Checklist gives already. A daily release that had to be
+  created again would be locked by its first publication, and every later daily build would
+  fail. Whether the existing daily release goes on rolling with the setting on has not been
+  tried, so keep it off.
 
 #### AWS setup
 
@@ -1222,16 +1344,30 @@ nothing, so an IAM user that was made for the keys serves no workflow.
 
 `latest/` holds a release that the build jobs uploaded before Publish Builds existed, and no
 `published.json`. Until it has one, the `S3 latest/` job of every release tag fails after
-`builds/<tag>/` is published. Do one of the following when this workflow reaches `master`,
-and seed again after every release from a branch that still uploads for itself. `Stable_V5.1`
+`builds/<tag>/` is published. Do one of the following when this workflow reaches `master`.
+
+**Which release to seed.** On 2026-11-12 `latest/` held v5.1.5, which was published on
+2026-10-01, so the record to write is that of v5.1.5, unless a newer release has been published
+since. Check both signs before seeding:
+`curl -fsS https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt` prints the
+version that the release manager wrote there as the last step of the newest release, and
+`gh release view --repo mavlink/qgroundcontrol --json tagName,publishedAt` shows the newest
+published GitHub Release.
+
+**Seed again after every release from a branch that still uploads for itself**, with the same
+command and that release's tag. The seed is therefore not a one-time step while such a branch
+makes releases. `Stable_V5.1`
 copies each tag's files to `latest/` from its own build jobs, whatever the version (the step
-_Upload to S3 latest folder_ of its upload action), and writes no record, so after such a
-release the record names a release that `latest/` no longer holds. `Stable_V5.0` would do the
+_Upload to S3 latest folder_ of its upload action), and writes neither a record nor checksum
+files. After such a release the record names a release that `latest/` no longer holds, and
+any `.sha256` files that an earlier release of Publish Builds left there belong to that
+earlier release and match none of the new packages: delete them by hand. `Stable_V5.0` would do the
 same (_Upload tagged stable build to S3 latest Bucket_) with the static keys, which upstream
 does not have ([AWS setup](#aws-setup)). Publish Builds publishes nothing for those
 branches: `Stable_V5.1`'s packages carry no marker, and `Stable_V5.0` has no `android.yml`, so
 its commits stay at "waiting for Android (no run)". Their releases also get no packages on
-their GitHub Release from here: attach them by hand.
+their GitHub Release from here: attach them to the draft by hand, before it is published
+([Release immutability](#release-immutability)).
 
 - **Seed the record** of the release that `latest/` serves now, which is not the one being
   released. It takes AWS credentials that may write `latest/published.json` with a public ACL

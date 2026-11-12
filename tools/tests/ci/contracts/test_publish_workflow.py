@@ -174,6 +174,7 @@ def test_upstream_publishes_for_real_with_no_repository_variable_set(
     assert set(decide["env"]) == {
         "GH_TOKEN",
         "PUBLISH_REF",
+        "PUBLISH_COMMIT",
         "PUBLISH_DRY_RUN",
         "PUBLISH_FORCE_LATEST",
         "PUBLISH_FORCE_RELEASE",
@@ -181,6 +182,21 @@ def test_upstream_publishes_for_real_with_no_repository_variable_set(
         "PUBLISH_RELEASE_ASSETS",
         "PUBLISH_S3",
     }
+
+
+def test_what_a_request_names_reaches_the_decision_through_the_environment() -> None:
+    workflow = load_workflow(WORKFLOW)
+    inputs = workflow["on"]["workflow_dispatch"]["inputs"]
+    assert (inputs["ref"]["required"], inputs["commit"]["required"]) == (True, False)
+    # Empty unless the request names a commit: the decision then takes the newest finished one.
+    assert "default" not in inputs["commit"]
+    decide = get_step(get_steps(workflow, "decide"), "decide")
+    assert decide["env"]["PUBLISH_REF"] == "${{ inputs.ref }}"
+    assert decide["env"]["PUBLISH_COMMIT"] == "${{ inputs.commit }}"
+    # Free text never becomes part of a command line: the scripts read it, and check it.
+    for name, job in workflow["jobs"].items():
+        for step in job["steps"]:
+            assert "${{" not in str(step.get("run", "")), (name, step.get("name"))
 
 
 def test_the_decision_admits_the_conclusions_that_some_ref_is_published_from() -> None:
@@ -224,7 +240,7 @@ def test_only_a_run_started_by_hand_on_the_default_branch_can_force_a_target(
         )
 
     workflow = load_workflow(WORKFLOW)
-    inputs = {"ref", "dry_run", "force_latest", "force_release"}
+    inputs = {"ref", "commit", "dry_run", "force_latest", "force_release"}
     assert set(workflow["on"]["workflow_dispatch"]["inputs"]) == inputs
     other = "force_release" if name == "force_latest" else "force_latest"
     # Where the decision is made, and in the job that writes the target.

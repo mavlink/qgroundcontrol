@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import common.gh_actions
 import pytest
-from ci.publish import daily_release, release_assets
+from ci.publish import daily_release
 from ci.publish.release_assets import DRAFT_WAIT_ATTEMPTS, DRAFT_WAIT_SECONDS, main
 
 from .._helpers import completed
@@ -52,20 +52,28 @@ class Releases:
         self.calls = 0
         self.fail_at: int | None = None
         self.refuse_deletes = False
+        # The changes that GitHub refused because their release is immutable.
+        self.refused: list[str] = []
         self.slept: list[float] = []
         self._next_id = 401155735
         monkeypatch.setattr(common.gh_actions, "gh", self.gh)
         monkeypatch.setattr(daily_release, "gh", self.gh)
-        monkeypatch.setattr(release_assets, "gh", self.gh)
         monkeypatch.setattr(time, "sleep", self.slept.append)
 
-    def release(self, tag: str = TAG, *, draft: bool = True) -> dict[str, Any]:
-        """Create a release for *tag* as release.yml drafts it, or as a maintainer published it."""
+    def release(
+        self, tag: str = TAG, *, draft: bool = True, immutable: bool = False
+    ) -> dict[str, Any]:
+        """Create a release for *tag* as release.yml drafts it, or as a maintainer published it.
+
+        *immutable* is what GitHub reports of a release that was published while the
+        repository's release immutability setting was on.
+        """
         self._next_id += 1
         release = {
             "id": self._next_id,
             "tag_name": tag,
             "draft": draft,
+            "immutable": immutable,
             "prerelease": False,
             "name": f"QGroundControl {tag}",
             "body": "## Features\n\n- generated notes",
@@ -105,6 +113,13 @@ class Releases:
         self.log.append(step)
         self.after(step)
 
+    def _locked(self, release: dict[str, Any], args: tuple[str, ...]) -> None:
+        """Refuse, as GitHub does, a change to the files of an immutable release."""
+        if release["immutable"]:
+            self.refused.append(" ".join(args[:4]))
+            reason = "gh: Cannot modify assets of an immutable release (HTTP 422)"
+            raise subprocess.CalledProcessError(1, list(args), "", reason)
+
     def gh(self, *args: str, **_: object) -> subprocess.CompletedProcess:
         self.calls += 1
         if self.calls == self.fail_at:
@@ -113,6 +128,7 @@ class Releases:
             assert args[-2:] == ("--repo", REPO)
             # gh finds a draft by its tag, and one release only.
             (release,) = [r for r in self.releases if r["tag_name"] == args[2]]
+            self._locked(release, args)
             for path in args[3:-2]:
                 self.add(release, Path(path).name, Path(path).read_bytes())
             self._did(f"upload {len(args[3:-2])}")
@@ -128,6 +144,8 @@ class Releases:
         asset = int(path.removeprefix("releases/assets/"))
         if asset not in self.assets:
             raise subprocess.CalledProcessError(1, list(args), "", "gh: Not Found (HTTP 404)")
+        owner = next(r for r in self.releases if r["id"] == self.assets[asset]["release"])
+        self._locked(owner, args)
         if method == "DELETE":
             assert args[4:] == ()
             if self.refuse_deletes:
@@ -347,6 +365,128 @@ def test_a_dry_run_reports_a_published_release_that_lacks_files_without_touching
     assert "), and its job would fail without force_release |" in summary
 
 
+IMMUTABLE = (
+    f"The {TAG} release is published and immutable: it was published while the repository's "
+    "release immutability setting was on, and GitHub accepts no change to its files."
+)
+ON_S3 = (
+    f"The download server has this build's files under builds/{TAG}/ when the S3 builds/ job of "
+    "this run passed."
+)
+
+
+def test_an_immutable_release_that_has_every_file_passes(
+    releases: Releases, files: PublishSet, gh_summary: Path
+) -> None:
+    # Published with its files attached to the draft, as the release checklist says.
+    published = releases.release(draft=False, immutable=True)
+    releases.hold(published, files, ASSETS)
+
+    assert _attach(files) == 0
+
+    assert (releases.log, releases.refused) == ([], [])
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert "| Result | ✅ the published release already has these files |" in summary
+
+
+@pytest.mark.parametrize("extra", [(), ("--force-release",)])
+def test_an_immutable_release_that_lacks_files_fails_and_nothing_can_attach_them(
+    releases: Releases,
+    files: PublishSet,
+    capsys: pytest.CaptureFixture[str],
+    extra: tuple[str, ...],
+) -> None:
+    # Upstream's v5.1.0 to v5.1.5: published while the setting was on, the packages uploaded
+    # by hand before that. force_release would upload and be refused by GitHub.
+    published = releases.release(draft=False, immutable=True)
+    for name in NAMES:
+        releases.add(published, name, f"{name}, uploaded by hand".encode())
+    assets = dict(releases.ids(published))
+
+    assert _attach(files, *extra) == 1
+
+    assert (releases.ids(published), releases.log, releases.refused) == (assets, [], [])
+    out = capsys.readouterr().out
+    assert (
+        f"::error title=Release assets not attached::{IMMUTABLE} It lacks 6 of this build's 12 "
+        f"files ({', '.join(f'{name}.sha256' for name in NAMES)}) and holds 6 with other content "
+        f"({', '.join(NAMES)}), and force_release cannot replace and attach them. {ON_S3}"
+    ) in out
+    assert "force_release=true" not in out
+    assert "--clobber" not in out
+
+
+@pytest.mark.parametrize("extra", [(), ("--force-release",)])
+def test_a_dry_run_says_that_an_immutable_release_cannot_be_completed(
+    releases: Releases, files: PublishSet, gh_summary: Path, extra: tuple[str, ...]
+) -> None:
+    published = releases.release(draft=False, immutable=True)
+    releases.hold(published, files, ASSETS[:10])
+
+    assert _attach(files, "--dry-run", *extra) == 0
+
+    assert (releases.log, releases.refused) == ([], [])
+    assert (
+        f"| Result | 🧪 dry run: the published release lacks 2 of this build's 12 files "
+        f"({', '.join(ASSETS[10:])}), and its job would fail: the release is immutable, so "
+        "force_release cannot attach them |"
+    ) in gh_summary.read_text(encoding="utf-8")
+
+
+def test_a_failed_run_s_temporary_uploads_stay_on_an_immutable_release(
+    releases: Releases, files: PublishSet, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The draft was published while a run was uploading: GitHub would refuse the removal.
+    published = releases.release(draft=False, immutable=True)
+    releases.hold(published, files, ASSETS)
+    releases.add(published, f"{ASSETS[6]}.next", b"left by a failed run")
+
+    assert _attach(files) == 0
+
+    assert (releases.log, releases.refused) == ([], [])
+    assert (
+        "::warning title=Temporary uploads not removed::1 temporary uploads (<file>.next) that "
+        f"a failed run of this job left stay on the published {TAG} release: it is immutable, "
+        "and GitHub accepts no change to its files."
+    ) in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("extra", [(), ("--force-release",)])
+@pytest.mark.parametrize(
+    ("published_after", "attached"),
+    [("upload 12", []), (f"name {ASSETS[0]}", [ASSETS[0]])],
+)
+def test_a_release_that_becomes_immutable_while_the_job_runs_keeps_what_it_has(
+    releases: Releases,
+    files: PublishSet,
+    capsys: pytest.CaptureFixture[str],
+    extra: tuple[str, ...],
+    published_after: str,
+    attached: list[str],
+) -> None:
+    draft = releases.release()
+    _publish_after(releases, draft, published_after, immutable=True)
+
+    assert _attach(files, *extra) == 1
+
+    # No change is tried after the publication: GitHub would refuse each, the removal of the
+    # run's own temporary uploads included.
+    assert releases.log[-1] == published_after
+    assert releases.refused == []
+    waiting = [name for name in ASSETS if name not in attached]
+    assert releases.names(draft) == sorted([*attached, *(f"{name}.next" for name in waiting)])
+    out = capsys.readouterr().out
+    assert (
+        f"::error title=Release assets not attached::The {TAG} release was published while this "
+        "job was attaching its files, and it is immutable: the repository's release immutability "
+        "setting is on, and GitHub accepts no further change to its files. The job stopped "
+        f"before its next change: {len(waiting)} of 12 files were not attached "
+        f"({', '.join(waiting)}), and their temporary uploads (<file>.next) stay on the release. "
+        f"The release keeps the files it has: force_release cannot attach the others. {ON_S3}"
+    ) in out
+    assert "force_release=true" not in out
+
+
 def test_a_tag_without_a_release_is_waited_for_and_then_fails_naming_release_yml(
     releases: Releases, files: PublishSet, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -527,9 +667,12 @@ def test_only_a_release_tag_s_packages_are_attached(
     assert f"{MASTER} is not a release tag" in capsys.readouterr().out
 
 
-def _publish_after(releases: Releases, release: dict[str, Any], step: str) -> None:
+def _publish_after(
+    releases: Releases, release: dict[str, Any], step: str, *, immutable: bool = False
+) -> None:
     """Have a maintainer publish *release* right after the job made the change *step*."""
-    releases.after = lambda done: release.update(draft=False) if done == step else None
+    published = {"draft": False, "immutable": immutable}
+    releases.after = lambda done: release.update(published) if done == step else None
 
 
 @pytest.mark.parametrize(

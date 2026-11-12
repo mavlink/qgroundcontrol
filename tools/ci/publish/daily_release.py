@@ -18,11 +18,23 @@ When GitHub refuses to move the tag, the release is updated all the same, with a
 notes name the commit the files were built from and say where the tag still points, and the
 next publish tries the move again. A tag that could never move would otherwise stop every
 publish. Creating the tag for the first release is required.
+
+The first publication is made as a draft, and the change that writes its notes is the one that
+publishes it: the release appears with its files, and a first run that failed leaves a draft
+for the tag, which the next run finds and finishes. A release that is already published is
+never published again.
+
+A rolling release needs the repository's release immutability setting to be off. While it is
+on, GitHub locks every release when it is published: its files and its tag can never change
+again. The workflow's token cannot read the setting, so it shows only in a release: a daily
+release that reports itself immutable is refused before any change, and a first publication
+that comes back immutable fails the job. Both say what to do.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -73,6 +85,13 @@ _RECORD = re.compile(r"<!-- daily-build-commit: ([0-9a-f]{40}) -->")
 # GitHub understood a change and declined it (permissions, rulesets): repeating it cannot help.
 _REFUSED = re.compile(r"HTTP 4(?:03|09|22)\b")
 _PENDING_NOTES = "The first daily build is being published."
+_IMMUTABLE_REMEDY = (
+    "To publish daily builds again: turn the setting off (Settings > General > Releases), delete "
+    f"the release and then the {DAILY_TAG} tag, and give the daily release another tag name "
+    "(DAILY_TAG in tools/ci/publish/daily_release.py, and what else names the tag: see "
+    '"Release immutability" in .github/ci-notes/platforms.md). GitHub never lets the tag name '
+    "of a deleted immutable release be used again."
+)
 
 
 class ReleaseAssetsError(RuntimeError):
@@ -101,6 +120,38 @@ def recorded_commit(release: Mapping[str, Any] | None) -> str | None:
 def published_commit(repo: str) -> str | None:
     """Return the commit the repository's daily release holds, or None without one."""
     return recorded_commit(gh_api_json_or_none(f"repos/{repo}/releases/tags/{DAILY_TAG}"))
+
+
+def find_releases(repo: str, tag: str) -> list[dict[str, Any]]:
+    """Return every release of *repo* whose tag is *tag*, drafts included.
+
+    ``releases/tags/<tag>`` would not do: it answers for published releases only.
+    """
+    result = gh(
+        "api",
+        "--method",
+        "GET",
+        "--paginate",
+        "--jq",
+        f'.[] | select(.tag_name == "{tag}")',
+        f"repos/{repo}/releases",
+        "-F",
+        "per_page=100",
+        retry_transient=True,
+    )
+    return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+
+
+def first_draft(repo: str) -> dict[str, Any] | None:
+    """Return the draft that a failed first publication left for the daily tag, or None."""
+    drafts = [found for found in find_releases(repo, DAILY_TAG) if found.get("draft") is True]
+    if len(drafts) > 1:
+        ids = ", ".join(str(draft.get("id")) for draft in drafts)
+        raise DailyReleaseError(
+            f"{len(drafts)} draft releases have the tag {DAILY_TAG} (ids {ids}): delete all but "
+            "one, then re-run this job"
+        )
+    return drafts[0] if drafts else None
 
 
 def plan_assets(
@@ -219,10 +270,10 @@ def release_notes(
 
 def _change(
     method: str, path: str, fields: Mapping[str, str | bool] | None = None, *, attempts: int = 3
-) -> None:
+) -> str:
     """Send a GitHub API change; retry it when it is idempotent (*attempts* > 1).
 
-    Deleting what is already gone succeeds.
+    Return GitHub's answer. Deleting what is already gone succeeds.
     """
     args = ["api", "--method", method, path]
     for key, value in (fields or {}).items():
@@ -230,15 +281,14 @@ def _change(
         args += ["-F" if typed else "-f", f"{key}={str(value).lower() if typed else value}"]
     for attempt in range(1, attempts + 1):
         try:
-            gh(*args)
+            return gh(*args).stdout
         except subprocess.CalledProcessError as error:
             if method == "DELETE" and "HTTP 404" in (error.stderr or ""):
-                return
+                break
             if attempt == attempts:
                 raise
             time.sleep(2.0 * attempt)
-        else:
-            return
+    return ""
 
 
 def _stage(files: Iterable[tuple[Path, str]], staging: Path) -> list[Path]:
@@ -315,21 +365,28 @@ def swap_assets(
         _change("PATCH", f"{releases}/assets/{uploaded[name]}", {"name": name})
 
 
+def waiting_uploads(repo: str, release_id: int, uploaded: Mapping[str, int]) -> list[str]:
+    """Return the files whose uploads of this run still wait under temporary names.
+
+    *uploaded* is what ``upload_assets`` returned. Uploads that ``swap_assets`` has given their
+    names are the release's files by now.
+    """
+    waiting = {
+        int(asset["id"])
+        for asset in gh_api_json(f"repos/{repo}/releases/{release_id}/assets?per_page=100")
+        if str(asset["name"]).endswith(TEMP_SUFFIX)
+    }
+    return [name for name, asset_id in uploaded.items() if asset_id in waiting]
+
+
 def withdraw_uploads(repo: str, release_id: int, uploaded: Mapping[str, int]) -> list[str]:
     """Delete the uploads of this run that still wait under temporary names; return their files.
 
-    *uploaded* is what ``upload_assets`` returned. Uploads that ``swap_assets`` has given their
-    names are the release's files by now and stay.
+    The others are the release's files by now and stay.
     """
-    releases = f"repos/{repo}/releases"
-    waiting = {
-        int(asset["id"])
-        for asset in gh_api_json(f"{releases}/{release_id}/assets?per_page=100")
-        if str(asset["name"]).endswith(TEMP_SUFFIX)
-    }
-    withdrawn = [name for name, asset_id in uploaded.items() if asset_id in waiting]
+    withdrawn = waiting_uploads(repo, release_id, uploaded)
     for name in withdrawn:
-        _change("DELETE", f"{releases}/assets/{uploaded[name]}")
+        _change("DELETE", f"repos/{repo}/releases/assets/{uploaded[name]}")
     return withdrawn
 
 
@@ -342,6 +399,16 @@ def update_release(
     tag_ref = f"repos/{repo}/git/refs/tags/{DAILY_TAG}"
     names = [name for _, name in files.files()]
     release = gh_api_json_or_none(f"{releases}/tags/{DAILY_TAG}")
+    if release and release.get("immutable") is True:
+        raise DailyReleaseError(
+            "The daily release is immutable: the repository's release immutability setting was "
+            "on when it was published. GitHub accepts no change to its files or to its tag, so "
+            f"it cannot be updated in place. {_IMMUTABLE_REMEDY}"
+        )
+    # GitHub answers by tag for a published release only.
+    first = release is None
+    if first:
+        release = first_draft(repo)
     tag_commit = resolve_ref_commit(repo, f"tags/{DAILY_TAG}")
     step = tag_step(tag_commit, commit, lambda base, head: compare_commits(repo, base, head))
     # The tag lags behind the files after a refused move, so it alone does not show a step back.
@@ -355,8 +422,9 @@ def update_release(
             )
     plan = plan_assets((release or {}).get("assets") or [], names, owns_release=True)
     replaced = sum(old is not None for _, old in plan.replaced)
+    action = "create" if release is None else "publish the draft of a failed run"
     print(
-        f"release: {'update' if release else 'create'}; tag: {step}; assets: {replaced} replaced, "
+        f"release: {action if first else 'update'}; tag: {step}; assets: {replaced} replaced, "
         f"{len(names) - replaced} added, {len(plan.removed)} removed, {len(plan.stale)} stale"
     )
     if dry_run:
@@ -376,9 +444,8 @@ def update_release(
         "make_latest": "false",
     }
     if release is None:
-        fields = {"tag_name": DAILY_TAG, "body": _PENDING_NOTES, **settings}
-        _change("POST", releases, fields, attempts=1)
-        release = gh_api_json(f"{releases}/tags/{DAILY_TAG}")
+        fields = {"tag_name": DAILY_TAG, "body": _PENDING_NOTES, "draft": True, **settings}
+        release = json.loads(_change("POST", releases, fields, attempts=1))
     release_id = int(release["id"])
     staging = files.directory.with_name(f"{files.directory.name}.staging")
     uploaded = upload_assets(repo, DAILY_TAG, release_id, files.files(), plan, staging)
@@ -413,7 +480,17 @@ def update_release(
         run_url=run_url,
         tag_commit=lagging_tag,
     )
-    _change("PATCH", f"{releases}/{release_id}", {"body": notes, **settings})
+    # Only the first publication sends `draft`: publishing a release again is what makes one
+    # that was published before the immutability setting was turned on immutable.
+    publish: dict[str, str | bool] = {"draft": False} if first else {}
+    _change("PATCH", f"{releases}/{release_id}", {"body": notes, **settings, **publish})
+    if first and gh_api_json(f"{releases}/{release_id}").get("immutable") is True:
+        raise DailyReleaseError(
+            f"The daily release was published complete, with the files of {commit}, but GitHub "
+            "locked it: the repository's release immutability setting is on, which makes every "
+            "release immutable when it is published. No later commit can update it. "
+            f"{_IMMUTABLE_REMEDY}"
+        )
     if lagging_tag:
         return f"⚠️ published, but the `{DAILY_TAG}` tag still points at {code_span(lagging_tag)}"
     return "✅ published"

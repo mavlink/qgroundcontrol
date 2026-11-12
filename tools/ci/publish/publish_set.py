@@ -755,12 +755,24 @@ def fetch_set(
     }
     if gone := [run for run in runs if run.passed and not artifacts[run.run_id]]:
         one = len(gone) == 1
+        advice = (
+            f"Re-run all jobs of {'this run' if one else 'each of these runs'} to build the "
+            "packages again: the completion of the last starts a publish of its own."
+        )
+        if ref.startswith("refs/tags/"):
+            tag = ref.removeprefix("refs/tags/")
+            advice = (
+                "Do not re-run the jobs of a release tag's runs to build them again: the runs "
+                "would repeat their uploads to the stores and their builder images. What was "
+                f"published of {tag} is on the download server under builds/{tag}/: "
+                '"Going back to an earlier release" and "Release files" in '
+                "docs/en/qgc-dev-guide/release_branching_process.md say how to publish it "
+                "from there by hand."
+            )
         raise PublishSetError(
             f"{_names(gone)} passed, but {'lists' if one else 'list'} no package artifact. "
             f"GitHub deletes a build's artifacts {ARTIFACT_RETENTION_DAYS} days after their "
-            "upload, and nothing is published without them. Re-run all jobs of "
-            f"{'this run' if one else 'each of these runs'} to build the packages again: the "
-            "completion of the last starts a publish of its own."
+            f"upload, and nothing is published without them. {advice}"
         )
     if out.exists():
         shutil.rmtree(out)

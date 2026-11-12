@@ -53,7 +53,14 @@ class GitHub:
         # GitHub's answer to every request that creates or moves the tag, when it is not success.
         self.tag_error: str | None = None
         self.tag_requests = 0
+        # The repository setting that locks every release when it is published.
+        self.immutable_releases = False
+        # Drafts for the tag besides the one this stand-in holds.
+        self.other_drafts: list[dict[str, Any]] = []
         self.log: list[str] = []
+        # The change that made the release public, and the fields of every change of it.
+        self.published_by: str | None = None
+        self.release_fields: list[dict[str, str]] = []
         self._next_id = 500
         monkeypatch.setattr(common.gh_actions, "gh", self.gh)
         monkeypatch.setattr(daily_release, "gh", self.gh)
@@ -63,9 +70,23 @@ class GitHub:
         """Start from a release that holds *commit*'s files."""
         self.tag = commit
         body = f"<!-- daily-build-commit: {commit} -->" if notes else "pending"
-        self.release = {"id": 300, "body": body, "prerelease": True, "name": "Daily"}
+        self.release = {
+            "id": 300,
+            "tag_name": "daily",
+            "draft": False,
+            "immutable": False,
+            "body": body,
+            "prerelease": True,
+            "name": "Daily",
+        }
         for name in names:
             self.add(name)
+
+    def draft(self, commit: str, names: list[str]) -> None:
+        """Start from what a first publish left when it failed: the tag, and a draft."""
+        self.publish(commit, names, notes=False)
+        assert self.release
+        self.release["draft"] = True
 
     def add(self, name: str) -> int:
         assert name not in self.assets.values(), f"asset {name} exists"
@@ -77,17 +98,36 @@ class GitHub:
     def names(self) -> list[str]:
         return sorted(self.assets.values())
 
+    def _json(self) -> str:
+        assets = [{"id": i, "name": name} for i, name in self.assets.items()]
+        return json.dumps({**(self.release or {}), "assets": assets})
+
+    def _locked(self, args: tuple[str, ...]) -> None:
+        """Refuse, as GitHub does, a change to the files or the tag of an immutable release."""
+        if self.release and self.release.get("immutable"):
+            reason = "gh: Cannot modify an immutable release (HTTP 422)"
+            raise subprocess.CalledProcessError(1, list(args), "", reason)
+
     def gh(self, *args: str, **_: object) -> subprocess.CompletedProcess:
         if args[:2] == ("release", "upload"):
             assert args[2] == "daily" and args[-2:] == ("--repo", REPO)
+            self._locked(args)
             for path in args[3:-2]:
                 self.add(path.rsplit("/", 1)[1])
             self.log.append(f"upload {len(args[3:-2])}")
             return completed()
         assert args[0] == "api"
+        if "--paginate" in args:
+            # The listing of releases shows drafts, to a token that may write.
+            assert args[args.index("--jq") + 1] == '.[] | select(.tag_name == "daily")'
+            found = [self._json()] if self.release else []
+            found += [json.dumps(draft) for draft in self.other_drafts]
+            return completed("".join(f"{release}\n" for release in found))
         if args[1] != "--method":
             return self._get(args[1])
         method, path = args[2], args[3].removeprefix(f"repos/{REPO}/")
+        if not path.startswith("releases") or "/assets/" in path:
+            self._locked(args)
         fields = dict(field.split("=", 1) for field in args[5::2])
         typed = {
             field.split("=", 1)[0]
@@ -98,13 +138,16 @@ class GitHub:
             self._change(method, path, fields, typed)
         except LookupError as error:
             raise subprocess.CalledProcessError(1, list(args), "", f"gh: {error}") from error
-        return completed()
+        return completed(self._json() if path.startswith("releases") else "")
 
     def _get(self, path: str) -> subprocess.CompletedProcess:
         path = path.removeprefix(f"repos/{REPO}/")
-        if path == "releases/tags/daily" and self.release:
-            assets = [{"id": i, "name": name} for i, name in self.assets.items()]
-            return completed(json.dumps({**self.release, "assets": assets}))
+        # GitHub answers by tag for a published release only, and by id for a draft too.
+        published = self.release and not self.release["draft"]
+        if (path == "releases/tags/daily" and published) or (
+            path == "releases/300" and self.release
+        ):
+            return completed(self._json())
         if path == "git/ref/tags/daily" and self.tag:
             return completed(json.dumps({"object": {"type": "commit", "sha": self.tag}}))
         if match := re.fullmatch(r"compare/(\w+)\.\.\.(\w+)", path):
@@ -128,9 +171,8 @@ class GitHub:
             self.log.append("create tag")
         elif (method, path) == ("POST", "releases"):
             assert fields["tag_name"] == "daily" and self.release is None and self.tag
-            self.release = {"id": 300, **fields}
-            self.release["prerelease"] = fields["prerelease"] == "true" and "prerelease" in typed
-            self.log.append("create release")
+            self.release = {"id": 300, "draft": False, "immutable": False}
+            self._write_release("create release", fields, typed, public=False)
         elif (method, path) == ("PATCH", "git/refs/tags/daily"):
             # GitHub's rule for an unforced update, and the tag ruleset's for any update.
             forced = fields["force"] != "false" or "force" not in typed
@@ -146,14 +188,29 @@ class GitHub:
             self.log.append(f"delete {self.assets.pop(asset)}")
         elif path == "releases/300":
             assert method == "PATCH" and self.release
-            self.release.update(fields)
-            self.release["prerelease"] = fields["prerelease"] == "true" and "prerelease" in typed
-            self.log.append("write notes")
+            self._write_release("write notes", fields, typed, public=not self.release["draft"])
         else:
             asset = int(path.removeprefix("releases/assets/"))
             assert method == "PATCH" and fields["name"] not in self.assets.values()
             self.assets[asset] = fields["name"]
             self.log.append(f"name {fields['name']}")
+
+    def _write_release(
+        self, step: str, fields: dict[str, str], typed: set[str], *, public: bool
+    ) -> None:
+        """Create or change the release; *public* is whether it was published before."""
+        assert self.release is not None
+        self.release_fields.append(dict(fields))
+        self.release.update(fields)
+        self.release["prerelease"] = fields["prerelease"] == "true" and "prerelease" in typed
+        if "draft" in fields:
+            assert "draft" in typed
+            self.release["draft"] = fields["draft"] == "true"
+        if not public and not self.release["draft"]:
+            step = f"{step}, publish" if step == "write notes" else step
+            self.published_by = step
+            self.release["immutable"] = self.immutable_releases
+        self.log.append(step)
 
 
 @pytest.fixture
@@ -179,11 +236,155 @@ def test_the_first_publish_creates_the_tag_and_a_prerelease_that_is_never_latest
     assert github.release["make_latest"] == "false"
     assert github.names == sorted(ASSETS)
     assert github.log[:3] == ["create tag", "create release", "upload 12"]
-    assert github.log[-1] == "write notes"
     assert published_commit(REPO) == COMMIT
     summary = gh_summary.read_text(encoding="utf-8")
     assert "✅ published" in summary
     assert f"https://github.com/{REPO}/releases/tag/daily" in summary
+
+
+def test_the_first_publish_is_a_draft_until_its_files_and_notes_are_complete(
+    github: GitHub, tmp_path: Path
+) -> None:
+    # A release that is public from its creation is empty for as long as the uploads take, and
+    # is locked empty where the repository makes its releases immutable.
+    assert _update(write_set(tmp_path / "set")) == 0
+
+    names = [f"name {name}" for name in ASSETS]
+    assert github.log == [
+        "create tag",
+        "create release",
+        "upload 12",
+        *names,
+        "write notes, publish",
+    ]
+    assert github.published_by == "write notes, publish"
+    created, published = github.release_fields
+    assert created["draft"] == "true"
+    assert "daily-build-commit" not in created["body"]
+    assert published["draft"] == "false"
+    assert f"<!-- daily-build-commit: {COMMIT} -->" in published["body"]
+
+
+@pytest.mark.parametrize(("tag", "tag_step"), [(COMMIT, None), (OLDER_COMMIT, "move tag")])
+def test_a_rerun_publishes_the_draft_that_a_failed_first_publish_left(
+    github: GitHub, tmp_path: Path, tag: str, tag_step: str | None
+) -> None:
+    # The first run created the tag and the draft, gave one file its name and uploaded another.
+    # The run that finishes it publishes the same commit, or a newer one that has built since.
+    github.draft(tag, [NAMES[0], f"{NAMES[1]}.next"])
+    assert published_commit(REPO) is None
+
+    assert _update(write_set(tmp_path / "set")) == 0
+
+    assert "create release" not in github.log
+    assert github.log[:2] == [f"delete {NAMES[1]}.next", "upload 12"]
+    assert [step for step in github.log if "tag" in step] == ([tag_step] if tag_step else [])
+    assert github.log[-1] == github.published_by == "write notes, publish"
+    assert github.names == sorted(ASSETS)
+    assert github.tag == COMMIT
+    assert published_commit(REPO) == COMMIT
+
+
+def test_a_dry_run_of_the_first_publish_changes_nothing(
+    github: GitHub, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    files = write_set(tmp_path / "set")
+
+    assert _update(files, "--dry-run") == 0
+    github.draft(COMMIT, [NAMES[0]])
+    assert _update(files, "--dry-run") == 0
+
+    assert github.log == []
+    assert github.release is not None and github.release["draft"] is True
+    out = capsys.readouterr().out
+    assert "release: create; tag: create; assets: 0 replaced, 12 added" in out
+    assert (
+        "release: publish the draft of a failed run; tag: keep; assets: 1 replaced, 11 added" in out
+    )
+
+
+def test_two_drafts_for_the_tag_stop_the_first_publish(
+    github: GitHub, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    github.draft(COMMIT, [])
+    github.other_drafts = [{"id": 301, "tag_name": "daily", "draft": True, "assets": []}]
+
+    assert _update(write_set(tmp_path / "set")) == 1
+
+    assert github.log == []
+    assert (
+        "2 draft releases have the tag daily (ids 300, 301): delete all but one, then re-run "
+        "this job"
+    ) in capsys.readouterr().out
+
+
+IMMUTABLE_REMEDY = (
+    "To publish daily builds again: turn the setting off (Settings > General > Releases), delete "
+    "the release and then the daily tag, and give the daily release another tag name (DAILY_TAG "
+    'in tools/ci/publish/daily_release.py, and what else names the tag: see "Release '
+    'immutability" in .github/ci-notes/platforms.md). GitHub never lets the tag name of a '
+    "deleted immutable release be used again."
+)
+
+
+@pytest.mark.parametrize("extra", [(), ("--dry-run",)])
+def test_an_immutable_release_is_refused_before_any_change(
+    github: GitHub,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    gh_summary: Path,
+    extra: tuple[str, ...],
+) -> None:
+    # GitHub would refuse the first upload with an error that names neither cause nor remedy.
+    # A dry run fails too: it reports what its real run would do.
+    github.publish(OLDER_COMMIT, ASSETS)
+    assert github.release is not None
+    github.release["immutable"] = True
+    before = dict(github.assets)
+
+    assert _update(write_set(tmp_path / "set"), *extra) == 1
+
+    assert (github.log, github.release_fields, github.assets) == ([], [], before)
+    assert github.tag == OLDER_COMMIT
+    assert (
+        "::error title=Daily release not updated::The daily release is immutable: the "
+        "repository's release immutability setting was on when it was published. GitHub accepts "
+        "no change to its files or to its tag, so it cannot be updated in place. "
+        f"{IMMUTABLE_REMEDY}"
+    ) in capsys.readouterr().out
+    assert "| Result | ❌ failed |" in gh_summary.read_text(encoding="utf-8")
+
+
+def test_a_first_publish_that_github_locks_fails_with_what_to_do(
+    github: GitHub, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The job's token cannot read the setting, so the first publication is how it shows.
+    github.immutable_releases = True
+
+    assert _update(write_set(tmp_path / "set")) == 1
+
+    assert github.release is not None
+    assert (github.release["draft"], github.release["immutable"]) == (False, True)
+    assert github.names == sorted(ASSETS)
+    assert published_commit(REPO) == COMMIT
+    assert (
+        f"::error title=Daily release not updated::The daily release was published complete, "
+        f"with the files of {COMMIT}, but GitHub locked it: the repository's release "
+        "immutability setting is on, which makes every release immutable when it is published. "
+        f"No later commit can update it. {IMMUTABLE_REMEDY}"
+    ) in capsys.readouterr().out
+
+
+def test_a_published_release_is_never_published_again(github: GitHub, tmp_path: Path) -> None:
+    # Republishing is what makes an older release immutable once the setting is on.
+    github.publish(OLDER_COMMIT, ASSETS)
+
+    assert _update(write_set(tmp_path / "set")) == 0
+
+    assert github.log[-1] == "write notes"
+    assert [sorted(fields) for fields in github.release_fields] == [
+        ["body", "make_latest", "name", "prerelease"]
+    ]
 
 
 def test_an_update_swaps_the_assets_only_after_every_upload_and_the_tag_move(

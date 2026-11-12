@@ -12,7 +12,8 @@ name: Publish Builds
 run-name: >-
   ${{ github.event_name == 'workflow_run' &&
     format('{0} completed for {1}', github.event.workflow_run.name, github.event.workflow_run.head_branch) ||
-    format('Publish {0}{1}', inputs.ref, inputs.dry_run && ' (dry run)' || '') }}
+    format('Publish {0}{1}{2}', inputs.ref, inputs.commit && format(' at {0}', inputs.commit) || '',
+      inputs.dry_run && ' (dry run)' || '') }}
 
 on:
   workflow_run:  # zizmor: ignore[dangerous-triggers] default-branch code only; build artifacts are data, never executed, and verified by jobs without write access before a publishing job reads them
@@ -29,6 +30,10 @@ on:
       ref:
         description: 'Branch (master or Stable*) or release tag (vX.Y.Z) whose newest finished build to publish, again if it already is'
         required: true
+        type: string
+      commit:
+        description: 'Branches only: full 40-character SHA of the commit of the branch to publish instead of the newest finished one. Leave empty otherwise'
+        required: false
         type: string
       dry_run:
         description: 'Decide, download and verify, and report what would be published, without writing anything'
@@ -108,6 +113,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PUBLISH_REF: ${{ inputs.ref }}
+          PUBLISH_COMMIT: ${{ inputs.commit }}
           PUBLISH_DRY_RUN: ${{ inputs.dry_run || github.ref_type != 'branch' || github.ref_name != github.event.repository.default_branch }}
           PUBLISH_FORCE_LATEST: >-
             ${{ github.event_name == 'workflow_dispatch' && inputs.force_latest == true &&

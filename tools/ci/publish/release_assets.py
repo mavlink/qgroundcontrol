@@ -16,6 +16,12 @@ them. A release that is published before its packages arrive is therefore a fail
 release without downloads that nobody notices. The one thing removed from a published release
 is what a failed run of this job left under its temporary names.
 
+A release that GitHub reports as immutable was published while the repository's release
+immutability setting was on, and GitHub accepts no change to its files, ``--force-release`` or
+not. It is only ever checked, and when it lacks a file the job fails and says that nothing can
+attach it. A draft that becomes such a release while the job attaches is changed no further,
+and keeps the temporary uploads it has.
+
 The REST API answers by tag for published releases only. A draft is found in the listing of
 releases, which shows drafts to a token that may write, and is addressed by its id from then on.
 
@@ -39,7 +45,6 @@ check and the change that follows it still gets that one change.
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 import time
@@ -52,10 +57,10 @@ import _bootstrap as _bootstrap
 from common.gh_actions import (
     env_default,
     env_flag,
-    gh,
     gh_api_json,
     gh_error,
     gh_notice,
+    gh_warning,
     write_step_summary,
 )
 from common.io import sha256_file
@@ -65,9 +70,11 @@ from qgc_tools.release_tag_check import is_release_tag
 from ci.publish.daily_release import (
     AssetPlan,
     ReleaseAssetsError,
+    find_releases,
     plan_assets,
     swap_assets,
     upload_assets,
+    waiting_uploads,
     withdraw_uploads,
 )
 from ci.publish.publish_set import PublishSet, PublishSetError, load_set, set_table, tag_problem
@@ -82,31 +89,22 @@ DRAFT_WAIT_SECONDS = 30.0
 
 
 class _Stopped(ReleaseAssetsError):
-    """The tag or the release changed under the run, which goes no further."""
+    """The tag or the release changed under the run, which goes no further.
 
-    def __init__(self, reason: str, remedy: str) -> None:
+    *locked* is that the release became immutable, so that nothing of it can be withdrawn.
+    """
+
+    def __init__(self, reason: str, remedy: str, *, locked: bool = False) -> None:
         super().__init__(reason)
         self.remedy = remedy
+        self.locked = locked
 
 
-def find_releases(repo: str, tag: str) -> list[dict[str, Any]]:
-    """Return every release of *repo* whose tag is *tag*, drafts included.
-
-    ``releases/tags/<tag>`` would not do: it answers for published releases only.
-    """
-    result = gh(
-        "api",
-        "--method",
-        "GET",
-        "--paginate",
-        "--jq",
-        f'.[] | select(.tag_name == "{tag}")',
-        f"repos/{repo}/releases",
-        "-F",
-        "per_page=100",
-        retry_transient=True,
+def _on_s3(tag: str) -> str:
+    return (
+        f"The download server has this build's files under builds/{tag}/ when the S3 builds/ "
+        "job of this run passed."
     )
-    return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
 
 
 def tag_release(repo: str, tag: str, *, wait: bool) -> dict[str, Any] | None:
@@ -154,12 +152,14 @@ def check_published(
     plan: AssetPlan,
     *,
     dry_run: bool,
+    immutable: bool = False,
 ) -> str:
     """Return the result for a published release that has the set's files; raise when not.
 
     Nothing of it is changed without force_release, except that the temporary uploads a
     failed run of this job left are removed: they are no files of the release, and its users
-    see them. The job's concurrency group keeps another run from uploading meanwhile.
+    see them. The job's concurrency group keeps another run from uploading meanwhile. An
+    *immutable* release keeps them too: GitHub accepts no change to its files.
     """
     repo, tag = files.repository, files.ref_name
     total = len(files.release_files())
@@ -172,14 +172,27 @@ def check_published(
     if differing:
         which = "" if lacking else f" of this build's {total} files"
         found.append(f"holds {len(differing)}{which} with other content ({', '.join(differing)})")
+    remedy = " and ".join(["replace"] * bool(differing) + ["attach"] * bool(lacking))
     if dry_run:
         if not changed:
             return "🧪 dry run: the published release already has these files"
+        if immutable:
+            return (
+                f"🧪 dry run: the published release {' and '.join(found)}, and its job would "
+                f"fail: the release is immutable, so force_release cannot {remedy} them"
+            )
         return (
             f"🧪 dry run: the published release {' and '.join(found)}, and its job would fail "
             "without force_release"
         )
-    if plan.stale:
+    if plan.stale and immutable:
+        gh_warning(
+            f"{len(plan.stale)} temporary uploads (<file>.next) that a failed run of this job "
+            f"left stay on the published {tag} release: it is immutable, and GitHub accepts no "
+            "change to its files.",
+            title="Temporary uploads not removed",
+        )
+    elif plan.stale:
         staging = files.directory.with_name(f"{files.directory.name}.staging")
         upload_assets(repo, tag, release_id, [], plan, staging)
         gh_notice(
@@ -189,7 +202,13 @@ def check_published(
         )
     if not changed:
         return "✅ the published release already has these files"
-    remedy = " and ".join(["replace"] * bool(differing) + ["attach"] * bool(lacking))
+    if immutable:
+        raise ReleaseAssetsError(
+            f"The {tag} release is published and immutable: it was published while the "
+            "repository's release immutability setting was on, and GitHub accepts no change to "
+            f"its files. It {' and '.join(found)}, and force_release cannot {remedy} them. "
+            f"{_on_s3(tag)}"
+        )
     raise ReleaseAssetsError(
         f"The {tag} release is already published, and a published release is not changed "
         f"without force_release. It {' and '.join(found)}. To {remedy} them: gh workflow run "
@@ -213,6 +232,7 @@ def attach(files: PublishSet, *, dry_run: bool, force: bool) -> tuple[str, str]:
         )
     release_id, url = int(release["id"]), str(release.get("html_url") or "")
     draft = release.get("draft") is True
+    immutable = not draft and release.get("immutable") is True
     assets = gh_api_json(f"repos/{repo}/releases/{release_id}/assets?per_page=100")
     changed = changed_files(files, assets)
     names = [name for _, name in changed]
@@ -224,8 +244,11 @@ def attach(files: PublishSet, *, dry_run: bool, force: bool) -> tuple[str, str]:
         f"{len(changed) - replaced} added, {len(wanted) - len(changed)} unchanged, "
         f"{len(plan.stale)} left by a failed run"
     )
-    if not draft and not force:
-        return check_published(files, release_id, assets, changed, plan, dry_run=dry_run), url
+    if not draft and (immutable or not force):
+        result = check_published(
+            files, release_id, assets, changed, plan, dry_run=dry_run, immutable=immutable
+        )
+        return result, url
     if dry_run:
         return "🧪 dry run: the release was not changed", url
 
@@ -237,7 +260,21 @@ def attach(files: PublishSet, *, dry_run: bool, force: bool) -> tuple[str, str]:
             )
 
     def require_draft() -> None:
-        if force or gh_api_json(f"repos/{repo}/releases/{release_id}").get("draft") is True:
+        if not draft:
+            return
+        current = gh_api_json(f"repos/{repo}/releases/{release_id}")
+        if current.get("draft") is True:
+            return
+        if current.get("immutable") is True:
+            raise _Stopped(
+                f"The {tag} release was published while this job was attaching its files, and "
+                "it is immutable: the repository's release immutability setting is on, and "
+                "GitHub accepts no further change to its files",
+                "The release keeps the files it has: force_release cannot attach the others. "
+                f"{_on_s3(tag)}",
+                locked=True,
+            )
+        if force:
             return
         raise _Stopped(
             f"The {tag} release was published while this job was attaching its files, and a "
@@ -258,8 +295,11 @@ def attach(files: PublishSet, *, dry_run: bool, force: bool) -> tuple[str, str]:
     except _Stopped as stopped:
         # Temporary assets would show on a release that is published by now.
         try:
-            missing = withdraw_uploads(repo, release_id, uploaded) if uploaded else names
+            withdraw = waiting_uploads if stopped.locked else withdraw_uploads
+            missing = withdraw(repo, release_id, uploaded) if uploaded else names
             uploads = "this run's temporary uploads were removed"
+            if stopped.locked:
+                uploads = "their temporary uploads (<file>.next) stay on the release"
             uploads = uploads if uploaded else "nothing was uploaded"
         except subprocess.CalledProcessError as error:
             missing = list(uploaded)
