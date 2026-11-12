@@ -6,6 +6,7 @@ import json
 import os
 import re
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -39,6 +40,89 @@ def run(binary: str, arguments: list[str], expected: int) -> dict:
     report = json.loads(result.stdout)
     assert report["schema_version"] == 1
     return report
+
+
+class Simulator:
+    """The runner serving a simulated receiver on a free port of the loopback interface."""
+
+    def __init__(self, binary: str, arguments: list[str]) -> None:
+        self.process = subprocess.Popen(
+            [binary, "--serve", "0", *arguments],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        assert self.process.stdout is not None
+        # The first line says where it listens.
+        self.report = json.loads(self.process.stdout.readline())
+        assert self.report["outcome"] == "serving" and self.report["port"] > 0, self.report
+
+    def __enter__(self) -> Simulator:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        if self.process.poll() is None:
+            self.process.kill()
+        self.process.communicate()
+
+    def connect(self) -> socket.socket:
+        return socket.create_connection(("127.0.0.1", self.report["port"]), timeout=5 * CI_SCALE)
+
+    def stop(self) -> dict:
+        """Interrupts the simulator and returns what it reports to have served; nothing on Windows."""
+        if sys.platform == "win32":
+            return {}
+        self.process.send_signal(signal.SIGINT)
+        stdout, stderr = self.process.communicate(timeout=10 * CI_SCALE)
+        assert self.process.returncode == 0, (stdout, stderr)
+        report = json.loads(stdout.splitlines()[-1])
+        assert report["outcome"] == "served" and report["schema_version"] == 1, report
+        return report
+
+
+def received(link: socket.socket) -> bytes:
+    """What the peer sends until it closes the connection."""
+    data = b""
+    while chunk := link.recv(65536):
+        data += chunk
+    return data
+
+
+def ubx_frame(link: socket.socket) -> bytes:
+    """One UBX frame from the peer: six header bytes that end with the payload length, the payload, a checksum."""
+    data = b""
+    while len(data) < 6 or len(data) < 8 + int.from_bytes(data[4:6], "little"):
+        chunk = link.recv(65536)
+        assert chunk, data
+        data += chunk
+    return data
+
+
+def check_serve(binary: str) -> None:
+    # The u-blox receiver model answers a driver's identity poll and ignores another family's.
+    poll = bytes.fromhex("b5620a0400000e34")
+    foreign = b"$PQTMVERNO*58\r\n"
+    with Simulator(binary, []) as simulator:
+        assert simulator.report["evidence_origin"] == "scripted", simulator.report
+        assert simulator.report["address"] == "127.0.0.1", simulator.report
+        with simulator.connect() as link:
+            link.sendall(foreign + poll)
+            reply = ubx_frame(link)
+        assert reply.startswith(b"\xb5\x62\x0a\x04") and b"MOD=ZED-F9P" in reply, reply
+        report = simulator.stop()
+    if report:
+        assert report["connections"] == 1 and report["scripted_wire_valid"], report
+        assert report["received_bytes"] == len(foreign + poll), report
+        assert report["sent_bytes"] == len(reply), report
+
+    # The simulator serves a receiver and nothing else, on an address and a port.
+    run(binary, ["--serve", "0", "--action", "configure"], 2)
+    run(binary, ["--serve", "0", "--record", "recordings"], 2)
+    run(binary, ["--serve", "65536"], 2)
+    run(binary, ["--serve", "0", "--serve-address", "localhost"], 2)
+    run(binary, ["--serve-address", "0.0.0.0"], 2)
+    report = run(binary, ["--serve", "0", "--replay", "missing.log"], 1)
+    assert report["outcome"] == "failed" and "missing.log" in report["detail"], report
 
 
 def numbers(value: object) -> Iterator[float]:
@@ -85,6 +169,15 @@ def check_record_and_replay(binary: str) -> None:
         ), report
         assert report["positions"]["fix_types"]["3d"] > 0, report
         assert report["survey"]["messages"] > 0, report
+        # The simulator plays what the receiver sent to a client, and closes the connection after the last byte.
+        with Simulator(binary, ["--replay", str(recording)]) as simulator:
+            assert simulator.report["evidence_origin"] == "recording", simulator.report
+            with simulator.connect() as link:
+                played = received(link)
+            served = simulator.stop()
+        assert len(played) == replayed["bytes"] and played.startswith(b"\xb5\x62"), played
+        if served:
+            assert served["connections"] == 1 and served["sent_bytes"] == len(played), served
         report = run(binary, ["--replay", str(recording), *replay, "--family", "ublox"], 0)
         assert report["outcome"] == "replayed" and report["replay"]["decode_only"], report
         assert report["positions"]["fix_types"]["3d"] > 0, report
@@ -384,7 +477,10 @@ def main() -> None:
             "not_run" if fault == "rtcm-nak" else "failed"
         ), stage
     check_record_and_replay(binary)
-    print("Native GPS runner safety, survey provenance, failure and record/replay contracts passed")
+    check_serve(binary)
+    print(
+        "Native GPS runner safety, survey provenance, failure, record/replay and simulator contracts passed"
+    )
 
 
 if __name__ == "__main__":

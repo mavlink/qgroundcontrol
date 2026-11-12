@@ -22,7 +22,7 @@ namespace GPSTest {
 /// capture as fast as it is read; otherwise bytes become available at that line rate, ten bits per byte, from open().
 /// After the last byte the link stays idle, so reads time out without an error, and fatalError() reports it closed.
 /// A recording that is damaged delivers the records before the damage and then fails its reads.
-/// A developer tool, used by the hardware runner's --replay option and by tests.
+/// A developer tool, used by the hardware runner's --replay and --serve options and by tests.
 class ReplayGPSTransport final : public GPSTransport
 {
 public:

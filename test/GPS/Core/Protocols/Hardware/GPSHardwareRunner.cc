@@ -24,6 +24,8 @@
 #include <QtCore/QSaveFile>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTextStream>
+#include <QtCore/QTimer>
+#include <QtNetwork/QHostAddress>
 
 #include "GPSCancellation.h"
 #include "GPSDecodedData.h"
@@ -32,6 +34,7 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSReceiverFamilies.h"
+#include "GPSReceiverSimulator.h"
 #include "GPSRecordingTransport.h"
 #include "MonotonicClock.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
@@ -76,6 +79,10 @@ struct Options
     QString recordDirectory;
     QString replayPath;
     unsigned replayBaud = 0;
+    /// Serve a simulated receiver on servePort of serveAddress instead of running an action.
+    bool serve = false;
+    quint16 servePort = 0;
+    QHostAddress serveAddress{QHostAddress::LocalHost};
     GPSType family = GPSType::UBlox;
     /// The requested role: passive input rather than an RTK base.
     bool passive = false;
@@ -248,6 +255,22 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.cancelSlackMs = integer("cancel-slack-ms", 1, 60000);
     options.timeoutMs = integer("timeout-ms", 100, 120000);
     options.replayBaud = static_cast<unsigned>(integer("replay-baud", 0, 4000000));
+    if (parser.isSet("serve")) {
+        // The simulator takes its receiver from --model or --replay and nothing else.
+        const QStringList serving{"serve", "serve-address", "model", "replay", "replay-baud"};
+        for (const QString& name : parser.optionNames()) {
+            if (!serving.contains(name)) {
+                return QString("--serve cannot be combined with --%1").arg(name);
+            }
+        }
+        options.serve = true;
+        options.servePort = static_cast<quint16>(integer("serve", 0, 65535));
+        if (!options.serveAddress.setAddress(parser.value("serve-address"))) {
+            return "--serve-address must be an IP address";
+        }
+    } else if (parser.isSet("serve-address")) {
+        return "--serve-address requires --serve";
+    }
     if (options.family == GPSType::Quectel && !parser.isSet("timeout-ms")) {
         // Role and base changes can require multiple receiver restarts within the driver's 45-second budget.
         options.timeoutMs = 60000;
@@ -579,6 +602,50 @@ int replayRecording(const Options& options, QJsonObject report)
     }
     report.insert("outcome", complete ? "replayed" : "failed");
     return output(report, complete ? 0 : 1, options.outputPath);
+}
+
+/// Serves the receiver simulator until interrupted: the u-blox receiver model, or the capture of --replay. Prints
+/// where it listens, with the port it took for port 0, and what it served when it ends.
+int serve(const Options& options)
+{
+    const bool model = options.replayPath.isEmpty();
+    QJsonObject report{{"action", "serve"}, {"evidence_origin", model ? "scripted" : "recording"}};
+    if (model) {
+        report.insert("script", QJsonObject{{"model", options.model}});
+    } else {
+        report.insert("replay", QJsonObject{{"file", options.replayPath},
+                                            {"pacing_baud", static_cast<qint64>(options.replayBaud)}});
+    }
+    GPSReceiverSimulator simulator(
+        {.capture = options.replayPath,
+         .captureBaudRate = options.replayBaud,
+         .receiver = options.model == "f9p" ? UBXReceiverModel::Receiver::F9P : UBXReceiverModel::Receiver::M8PBase,
+         .secondLength = 1000ms});
+    if (!simulator.listen(options.servePort, options.serveAddress)) {
+        report.insert("outcome", "failed");
+        report.insert("detail", simulator.errorString());
+        return output(report, 1);
+    }
+    report.insert("address", options.serveAddress.toString());
+    report.insert("port", simulator.port());
+    report.insert("outcome", "serving");
+    (void) output(report, 0);
+    QTimer interruption;
+    (void) QObject::connect(&interruption, &QTimer::timeout, &interruption, [] {
+        if (interrupted.test(std::memory_order_relaxed)) {
+            QCoreApplication::quit();
+        }
+    });
+    interruption.start(50ms);
+    (void) QCoreApplication::exec();
+    report.insert("connections", simulator.connections());
+    report.insert("received_bytes", simulator.bytesReceived());
+    report.insert("sent_bytes", simulator.bytesSent());
+    if (model) {
+        report.insert("scripted_wire_valid", simulator.wireValid());
+    }
+    report.insert("outcome", "served");
+    return output(report, 0);
 }
 
 int run(const Options& options)
@@ -968,8 +1035,16 @@ int main(int argc, char* argv[])
          "Decode a session recording, or a file of raw receiver output, with --family, as configured for --role and "
          "the base options, instead of a live transport; nothing is configured or written",
          "file"},
-        {"replay-baud", "Replay pacing: 0 reads the recording as fast as possible, otherwise at this line rate", "baud",
-         "0"},
+        {"replay-baud",
+         "Replay pacing: 0 reads the recording as fast as possible, or with --serve a session recording at its "
+         "recorded times, otherwise at this line rate",
+         "baud", "0"},
+        {"serve",
+         "Serve a simulated receiver on this TCP port (0 takes a free one) until interrupted: the u-blox receiver of "
+         "--model, or the session recording or raw receiver output of --replay, played to each client",
+         "port"},
+        {"serve-address", "The address --serve listens on; 0.0.0.0 accepts connections from other hosts", "address",
+         "127.0.0.1"},
         {"device", "Explicit serial device path, or host:port for tcp", "path"},
         {"baud", "Serial baud rate (0 for managed detection; passive requires an explicit rate)", "baud", "0"},
         {"survey-duration", "Requested survey minimum seconds", "seconds", "60"},
@@ -984,7 +1059,7 @@ int main(int argc, char* argv[])
         {"timeout-ms", "Cancellation deadline for each open/configure operation", "milliseconds", "15000"},
         {"cancel-after-ms", "Delay before requesting blocked-receive cancellation", "milliseconds", "50"},
         {"cancel-slack-ms", "Time a cancelled receive may take to return after the request", "milliseconds", "500"},
-        {"model", "Scripted receiver: f9p|m8p", "model", "f9p"},
+        {"model", "Scripted or served receiver: f9p|m8p", "model", "f9p"},
         {"survey-state", "Scripted observations: fresh|retained|none", "state", "fresh"},
         {"fault", "Scripted fault: none|nak|wrong-readback|cancel|rtcm-nak|rtcm-nak-cancel", "fault", "none"},
     });
@@ -1001,5 +1076,5 @@ int main(int argc, char* argv[])
     }
     std::signal(SIGINT, interruptHandler);
     std::signal(SIGTERM, interruptHandler);
-    return run(options);
+    return options.serve ? serve(options) : run(options);
 }

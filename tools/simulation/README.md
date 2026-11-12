@@ -11,6 +11,7 @@ Tools for testing QGroundControl without physical hardware. Run them from the re
 | `fly_plan.py` | Fly a QGC `.plan` in ArduPilot or PX4 SITL and record the track and images | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `mock_ntrip_caster.py` | NTRIP/RTK client testing | Python standard library only |
+| `QGCGPSHardwareRunner --serve` | GNSS receiver on TCP: a u-blox RTK base, or a replayed recording | A Linux test build (`just configure && just build`) |
 
 ## Mock Vehicle (Lightweight)
 
@@ -197,6 +198,46 @@ is only enforced with `--auth USER:PASS`, and then for every request. Unknown mo
 | `--auth` | off | Require Basic auth (`USER:PASS`) |
 | `--rate` | 1 | Messages per second |
 | `--error` | off | `bad_crc` corrupts every 10th frame, `drop` closes after 10 frames, `http_401`/`http_500` reject every request |
+
+## GNSS Receiver
+
+A receiver for QGC's TCP receiver connection, so the receiver settings, the base station status and
+the corrections can be used without hardware. It is the `--serve` option of the receiver
+qualification runner, which the Linux test build puts in `build/Debug`.
+
+```bash
+# A u-blox ZED-F9P that QGC configures as an RTK base station
+build/Debug/QGCGPSHardwareRunner --serve 5780
+
+# Play a recording of a receiver connection at its recorded times
+build/Debug/QGCGPSHardwareRunner --serve 5780 --replay 20260102T030405.006Z-ublox.log
+```
+
+It prints a line of JSON with the address and port it listens on, and on Ctrl+C what it served.
+
+In QGC, open **Application Settings → GNSS Receiver**, set **Receiver connection** to _TCP_,
+**Receiver host** to `127.0.0.1` and **Receiver TCP port** to `5780`, then select **Connect**:
+
+- For the u-blox receiver, set **Receiver role** to _Configured base_ and **Receiver manufacturer**
+  to _Detect automatically_ or _u-blox_. The receiver answers QGC's configuration and sends what
+  it turned on: its position (the mock vehicle's default position) and satellites, the progress of
+  a survey-in, which takes the requested time and ends at the requested accuracy, and then RTCM
+  1005 with the surveyed or fixed position and the MSM and 1230 messages. It keeps its
+  configuration between connections.
+- For a recording, set **Receiver role** to _Passive_: the recording is played to each connection
+  from its start, the connection closes at its end, and nothing QGC sends is answered.
+
+**Limitations:** One connection at a time. The u-blox receiver is a test model, not firmware: its
+MSM messages name no satellites, so a vehicle gets no RTK fix from them, and it has no faults. The
+other receiver families can only be replayed from a recording.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--serve` | required | TCP port; `0` takes a free port and prints it |
+| `--serve-address` | 127.0.0.1 | Address to listen on; `0.0.0.0` accepts other hosts, such as QGC on a tablet |
+| `--model` | `f9p` | `f9p`, a ZED-F9P, or `m8p`, a NEO-M8P-2 that takes the commands before protocol 27 |
+| `--replay` | off | A recording of **Record receiver data**, or a file of raw receiver output, instead of the u-blox receiver |
+| `--replay-baud` | 0 | Play at this line rate instead of the recorded times; raw receiver output is sent at once without it |
 
 ## Virtual RC Transmitter (PX4 SITL)
 
