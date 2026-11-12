@@ -70,6 +70,8 @@ set(_qgc_gps_suites
 )
 qgc_add_gps_suites(Unit ${_qgc_gps_suites})
 qgc_add_gps_suites("Integration;Vehicle" Corrections/RTCMMAVLinkVehicleTest)
+# Binds the application's GPS services to the settings, for the rest of its process.
+qgc_add_gps_suites(Integration Qml/GPSSettingsPagesTest)
 
 add_subdirectory(Core)
 add_subdirectory(NTRIP/HTTP/Fuzz)
