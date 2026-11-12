@@ -22,21 +22,7 @@ void LogReplayLinkController::setLink(LogReplayLink *link)
         (void) QObject::disconnect(_link, nullptr, this, nullptr);  // link signals -> this
         (void) QObject::disconnect(this, nullptr, _link, nullptr);  // this signals -> link (playbackSpeedChanged)
 
-        _isPlaying = false;
-        emit isPlayingChanged(_isPlaying);
-
-        _percentComplete = 0;
-        emit percentCompleteChanged(_percentComplete);
-
-        _playheadSecs = kNoPlayhead;
-        _playheadTime.clear();
-        emit playheadTimeChanged(_playheadTime);
-
-        _totalTime.clear();
-        emit totalTimeChanged(_totalTime);
-
-        _link = nullptr;
-        emit linkChanged(_link);
+        _linkGone();
     }
 
     if (link) {
@@ -48,11 +34,32 @@ void LogReplayLinkController::setLink(LogReplayLink *link)
         (void) connect(_link, &LogReplayLink::playbackPercentCompleteChanged, this, &LogReplayLinkController::_playbackPercentCompleteChanged);
         (void) connect(_link, &LogReplayLink::currentLogTimeSecs, this, &LogReplayLinkController::_currentLogTimeSecs);
         (void) connect(_link, &LogReplayLink::disconnected, this, &LogReplayLinkController::_linkDisconnected);
+        // LinkManager handles disconnected() first, and there destroys a link no vehicle uses
+        (void) connect(_link, &QObject::destroyed, this, &LogReplayLinkController::_linkGone);
 
         (void) connect(this, &LogReplayLinkController::playbackSpeedChanged, _link, &LogReplayLink::setPlaybackSpeed);
 
         emit linkChanged(_link);
     }
+}
+
+void LogReplayLinkController::_linkGone()
+{
+    _isPlaying = false;
+    emit isPlayingChanged(_isPlaying);
+
+    _percentComplete = 0;
+    emit percentCompleteChanged(_percentComplete);
+
+    _playheadSecs = kNoPlayhead;
+    _playheadTime.clear();
+    emit playheadTimeChanged(_playheadTime);
+
+    _totalTime.clear();
+    emit totalTimeChanged(_totalTime);
+
+    _link = nullptr;
+    emit linkChanged(_link);
 }
 
 void LogReplayLinkController::setIsPlaying(bool isPlaying) const

@@ -49,6 +49,8 @@ private slots:
     void _playbackStarted();
 
 private:
+    /// Resets the state shown for a link once that link is detached or destroyed
+    void _linkGone();
     static QString _secondsToHMS(uint32_t seconds);
 
     /// Sentinel for _playheadSecs meaning "no playhead yet", so a t=0 update is never deduped

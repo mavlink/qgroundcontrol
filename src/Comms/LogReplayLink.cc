@@ -109,7 +109,8 @@ void LogReplayWorker::connectToLog()
     }
 
     if (!_loadLogFile()) {
-        disconnectFromLog();
+        // Reported, or the link would stay listed without ever having connected
+        emit disconnected();
         return;
     }
 

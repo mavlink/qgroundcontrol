@@ -24,6 +24,7 @@ private slots:
     void _testManualConnectRefusedWhileSuspended_data();
     void _testManualConnectRefusedWhileSuspended();
     void _testLogReplayRefusedWithActiveVehicle();
+    void _testLogReplayUnreadableLogEndsLink();
     void _testUdpUnresolvedHostFailsConnect();
     void _testUdpUnresolvedHostAllowedStaysConnected();
     void _testUdpBindFailureDisconnects();
