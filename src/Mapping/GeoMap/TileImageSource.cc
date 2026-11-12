@@ -9,8 +9,6 @@
 
 #include "TileImageSource.h"
 
-#include <QtNetwork/QNetworkAccessManager>
-
 #include "DecodedTileFetcher.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
@@ -24,8 +22,8 @@ TileImageSource::TileImageSource(const QString& mapType, QObject* parent, QNetwo
     , _mapType(mapType)
     , _mapId(UrlFactory::getMapIdFromProviderType(mapType))
     , _fetcher(new DecodedTileFetcher(
-          networkManager ? networkManager : new QNetworkAccessManager(this), _mapId,
-          [](const QByteArray& data) { return QImage::fromData(data); }, &GeoMapTileImageSourceLog, this))
+          networkManager, _mapId, [](const QByteArray& data) { return QImage::fromData(data); },
+          &GeoMapTileImageSourceLog, this))
 {
     if (_mapId < 0) {
         qCWarning(GeoMapTileImageSourceLog) << "unknown map type" << _mapType << "- all tile requests will fail";

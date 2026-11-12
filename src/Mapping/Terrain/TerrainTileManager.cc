@@ -3,14 +3,12 @@
 #include <limits>
 
 #include <QtCore/QDateTime>
-#include <QtNetwork/QNetworkAccessManager>
 
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCNetworkHelper.h"
 #include "QGCTileReply.h"
 #include "SettingsManager.h"
 #include "TerrainTile.h"
@@ -34,11 +32,6 @@ TerrainTileManager::TerrainTileManager(QObject* parent, QNetworkAccessManager* n
     , _networkManager(networkManager)
 {
     qCDebug(TerrainTileManagerLog) << this;
-
-    if (!_networkManager) {
-        _networkManager = new QNetworkAccessManager(this);
-        QGCNetworkHelper::configureProxy(_networkManager);
-    }
 }
 
 TerrainTileManager::~TerrainTileManager()

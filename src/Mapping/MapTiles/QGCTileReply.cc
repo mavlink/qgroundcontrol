@@ -80,6 +80,7 @@ Q_GLOBAL_STATIC(TileFetches, tileFetches)
 QGCTileReply::QGCTileReply(QNetworkAccessManager* networkManager, int mapId, int x, int y, int zoom, QObject* parent)
     : QObject(parent)
     , _networkManager(networkManager)
+    , _networkManagerGiven(networkManager != nullptr)
     , _mapId(mapId)
     , _x(x)
     , _y(y)
@@ -177,7 +178,10 @@ void QGCTileReply::_cacheLookupFinished(const QGCCacheTile* tile)
 
 void QGCTileReply::_fetchFromServer()
 {
-    if (!_networkManager) {
+    // The engine is asked for its manager here, not before: a request that the cache answers needs none
+    QNetworkAccessManager* const networkManager =
+        _networkManagerGiven ? _networkManager.data() : getQGCMapEngine()->networkManager();
+    if (!networkManager) {
         _finish(Error::NetworkError, QStringLiteral("network manager not available"));
         return;
     }
@@ -206,7 +210,7 @@ void QGCTileReply::_fetchFromServer()
     request.setOriginatingObject(this);
 
     _state = State::Network;
-    _networkReply = _networkManager->get(request);
+    _networkReply = networkManager->get(request);
     QGCNetworkHelper::ignoreSslErrorsIfNeeded(_networkReply);
     (void) connect(_networkReply, &QNetworkReply::finished, this, &QGCTileReply::_networkReplyFinished);
 }

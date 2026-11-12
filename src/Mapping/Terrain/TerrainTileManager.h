@@ -15,8 +15,8 @@ class TerrainTileManager : public QObject
 {
     Q_OBJECT
 public:
-    /// \a networkManager replaces the manager this object creates (test injection seam): it is not owned and must
-    /// outlive this object
+    /// \a networkManager fetches the tiles instead of the network manager of the map engine (test injection seam):
+    /// it is not owned and must outlive this object
     explicit TerrainTileManager(QObject* parent = nullptr, QNetworkAccessManager* networkManager = nullptr);
     ~TerrainTileManager();
 
@@ -73,6 +73,7 @@ private:
         _failedTiles;  ///< Tile hash -> ms since epoch of last failed fetch; suppresses immediate retries
     qint64 _lastFailedTileSweepMs = 0;  ///< ms since epoch of last expired-entry sweep of _failedTiles
 
+    /// Null: the network manager of the map engine
     QNetworkAccessManager* _networkManager = nullptr;
 
     static constexpr qint64 kFailedTileBackoffMs = 5000;

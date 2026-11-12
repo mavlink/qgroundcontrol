@@ -3,14 +3,11 @@
 #include <memory>
 #include <utility>
 
-#include <QtNetwork/QNetworkAccessManager>
-
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapTasks.h"
-#include "QGCNetworkHelper.h"
 #include "QGCTileReply.h"
 
 QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "MapTiles.QGCCachedTileSet")
@@ -133,11 +130,6 @@ void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*>& tiles, quint32 d
     if (tiles.isEmpty()) {
         _prepareDownload();
         return;
-    }
-
-    if (!_networkManager) {
-        _networkManager = new QNetworkAccessManager(this);
-        QGCNetworkHelper::configureProxy(_networkManager);
     }
 
     _tilesToDownload.append(tiles);

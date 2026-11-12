@@ -4,6 +4,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QStandardPaths>
+#include <QtNetwork/QNetworkAccessManager>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
@@ -16,6 +17,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCNetworkHelper.h"
 #include "QGCTile.h"
 #include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
@@ -174,6 +176,23 @@ void QGCMapEngine::closeInstance()
 QGCMapEngine* QGCMapEngine::instance()
 {
     return _mapEngine();
+}
+
+QNetworkAccessManager* QGCMapEngine::networkManager()
+{
+    if (m_testNetworkManager) {
+        return m_testNetworkManager;
+    }
+
+    if (!m_networkManager) {
+        m_networkManager = QGCNetworkHelper::createNetworkManager(this);
+    }
+    return m_networkManager;
+}
+
+void QGCMapEngine::setNetworkManagerForTest(QNetworkAccessManager* networkManager)
+{
+    m_testNetworkManager = networkManager;
 }
 
 void QGCMapEngine::init(const QString& databasePath)

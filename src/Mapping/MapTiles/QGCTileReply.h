@@ -28,8 +28,8 @@ struct QGCCacheTile;
 ///
 /// Independent of QtLocation, so every map engine and the terrain queries fetch tiles the same way.
 ///
-/// For the main thread only: a request reads the settings of its provider, and the requests share their fetches
-/// without a lock.
+/// For the main thread only: a request reads the settings of its provider, and the requests share their fetches and
+/// the network manager of the map engine without a lock.
 class QGCTileReply : public QObject
 {
     Q_OBJECT
@@ -48,6 +48,9 @@ public:
     /// Returns false for a tile the caller cannot use
     using Validator = std::function<bool(const QByteArray& data)>;
 
+    /// The server is asked through \a networkManager, which is not owned, or else through the network manager of
+    /// the map engine (QGCMapEngine::networkManager()), which the requests of all maps share. A \a networkManager
+    /// that is destroyed before the request asks the server ends the request with a NetworkError.
     QGCTileReply(QNetworkAccessManager* networkManager, int mapId, int x, int y, int zoom, QObject* parent = nullptr);
     ~QGCTileReply() override;
 
@@ -113,6 +116,7 @@ private:
     bool _isUsable(const QByteArray& data) const;
 
     QPointer<QNetworkAccessManager> _networkManager;
+    const bool _networkManagerGiven;  ///< false: the server is asked through the network manager of the map engine
     const int _mapId;
     const int _x;
     const int _y;

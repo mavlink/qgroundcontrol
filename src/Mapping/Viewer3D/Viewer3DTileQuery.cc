@@ -4,7 +4,6 @@
 
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
-#include <QtNetwork/QNetworkAccessManager>
 
 #include "MapProvider.h"
 #include "QGCLoggingCategory.h"
@@ -58,10 +57,6 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
     _mapToBeLoaded.tileMaxIndex = tileMaxIndex;
     _mapToBeLoaded.init();
 
-    if (!_networkManager) {
-        _networkManager = new QNetworkAccessManager(this);
-        _networkManager->setTransferTimeout(9000);
-    }
 
     for (int x = tileMinIndex.x(); x <= tileMaxIndex.x(); x++) {
         for (int y = tileMinIndex.y(); y <= tileMaxIndex.y(); y++) {

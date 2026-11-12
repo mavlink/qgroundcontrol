@@ -2,10 +2,12 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 
 class QGCMapTask;
 class QGCCacheWorker;
+class QNetworkAccessManager;
 
 class QGCMapEngine : public QObject
 {
@@ -30,6 +32,15 @@ public:
     /// Directory of the tile cache, created on first use. Empty when no directory could be created.
     static QString cachePath();
     static QString databaseFilePath();
+
+    /// The network manager for the requests of the maps: tiles, and lists such as the credits of a provider. The
+    /// requests share it, and so its connections to a server. Created on first use, never null, and alive as long
+    /// as the engine: shutdown() and close() leave it. For the main thread, where the engine lives.
+    QNetworkAccessManager* networkManager();
+
+    /// For tests: networkManager() returns \a networkManager, which is not owned, until that is destroyed or null
+    /// is set.
+    void setNetworkManagerForTest(QNetworkAccessManager* networkManager);
 
     /// Stops the cache worker thread and closes the database. Call before
     /// QCoreApplication teardown when the engine was initialized outside the
@@ -59,6 +70,8 @@ private slots:
 
 private:
     QGCCacheWorker* m_worker = nullptr;
+    QNetworkAccessManager* m_networkManager = nullptr;
+    QPointer<QNetworkAccessManager> m_testNetworkManager;
     bool m_pruning = false;
     std::atomic<bool> m_initialized = false;
     std::atomic<bool> m_closed = false;

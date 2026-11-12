@@ -25,6 +25,7 @@ private slots:
     void _abortedBeforeQueuedStepStaysSilent();
     void _deletedDuringCacheLookup();
     void _networkManagerDestroyedFirst();
+    void _requestWithoutManagerUsesMapEngineManager();
     void _concurrentRequestsShareOneFetch();
     void _waitingRequestFetchesAfterFetchWithoutTile_data();
     void _waitingRequestFetchesAfterFetchWithoutTile();

@@ -19,5 +19,5 @@ public:
 private:
     QGeoTiledMapReply* getTileImage(const QGeoTileSpec& spec) final;
 
-    QNetworkAccessManager* m_networkManager = nullptr;
+    QNetworkAccessManager* m_networkManager = nullptr;  ///< null: the network manager of the map engine
 };

@@ -13,7 +13,6 @@
 
 #include <QtCore/QVarLengthArray>
 #include <QtGui/QImage>
-#include <QtNetwork/QNetworkAccessManager>
 
 #include "DecodedTileFetcher.h"
 #include "ElevationMapProvider.h"
@@ -112,9 +111,8 @@ QVarLengthArray<TileMath::TileKey, 4> anchorKeysFor(const TileMath::TileKey& fet
 
 TerrariumTileFetcher::TerrariumTileFetcher(QObject* parent, QNetworkAccessManager* networkManager)
     : HeightSource(parent)
-    , _fetcher(new DecodedTileFetcher(networkManager ? networkManager : new QNetworkAccessManager(this),
-                                      UrlFactory::getMapIdFromProviderType(terrariumProviderType()), &decodeTile,
-                                      &GeoMapTerrariumTileFetcherLog, this))
+    , _fetcher(new DecodedTileFetcher(networkManager, UrlFactory::getMapIdFromProviderType(terrariumProviderType()),
+                                      &decodeTile, &GeoMapTerrariumTileFetcherLog, this))
 {
     connect(_fetcher, &DecodedTileFetcher::fetched, this,
             [this](int, const TileMath::TileKey& fetchKey, const QImage& image) { _tileFetched(fetchKey, image); });

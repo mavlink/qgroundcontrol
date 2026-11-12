@@ -39,7 +39,7 @@ class TerrariumTileFetcher : public HeightSource
     Q_OBJECT
 
 public:
-    /// \a networkManager overrides the internally created one (test injection seam)
+    /// \a networkManager fetches the tiles instead of the network manager of the map engine (test injection seam)
     explicit TerrariumTileFetcher(QObject* parent = nullptr, QNetworkAccessManager* networkManager = nullptr);
 
     /// Highest zoom the terrarium dataset serves (deeper patches sample the ancestor)

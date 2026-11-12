@@ -7,6 +7,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "QGeoMapReplyQGC.h"
+#include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 
 namespace {
@@ -38,8 +39,10 @@ void QGeoMapReplyQGCTest::_testErrorReported()
 {
     const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
-    // Without a network manager the cache miss cannot be fetched
-    QGeoTiledMapReplyQGC mapReply(nullptr, mapReplyTileSpec(4401));
+    // The server cannot be reached for the tile that the cache lacks
+    TileReplyMockNam networkManager;
+    networkManager.error = QNetworkReply::HostNotFoundError;
+    QGeoTiledMapReplyQGC mapReply(&networkManager, mapReplyTileSpec(4401));
     QSignalSpy finishedSpy(&mapReply, &QGeoTiledMapReply::finished);
 
     expectLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,

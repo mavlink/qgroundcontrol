@@ -30,7 +30,8 @@ public:
     using Decoder = std::function<QImage(const QByteArray& data)>;
     using LoggingCategory = const QLoggingCategory& (*)();
 
-    /// \a networkManager is not owned and must outlive this object. A fetch that fails is logged in \a category.
+    /// \a networkManager is not owned and must outlive this object; null means the network manager of the map
+    /// engine. A fetch that fails is logged in \a category.
     DecodedTileFetcher(QNetworkAccessManager* networkManager, int mapId, Decoder decoder, LoggingCategory category,
                        QObject* parent);
 

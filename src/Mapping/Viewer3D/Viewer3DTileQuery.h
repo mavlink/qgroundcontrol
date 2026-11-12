@@ -68,7 +68,7 @@ private:
         void clear();
     };
 
-    QNetworkAccessManager* _networkManager = nullptr;
+    QNetworkAccessManager* _networkManager = nullptr;  ///< null: the network manager of the map engine
     MapTileContainer_t _mapToBeLoaded;
     QGeoCoordinate _textureCoordinateMin;
     QGeoCoordinate _textureCoordinateMax;

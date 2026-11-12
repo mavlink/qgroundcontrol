@@ -131,7 +131,8 @@ public:
         }
     }
 
-    /// Downloads with \a networkManager, which must outlive this set, instead of with a manager of its own
+    /// For tests: downloads with \a networkManager, which must outlive this set, instead of with the network manager
+    /// of the map engine
     void setNetworkManager(QNetworkAccessManager* networkManager) { _networkManager = networkManager; }
 
     void setMapTypeStr(const QString& typeStr) { _mapTypeStr = typeStr; }
@@ -280,7 +281,7 @@ private:
     QHash<QString, QGCTileReply*> _replies;
     QQueue<QGCTile*> _tilesToDownload;
     QGCMapEngineManager* _manager = nullptr;
-    QNetworkAccessManager* _networkManager = nullptr;
+    QNetworkAccessManager* _networkManager = nullptr;  ///< null: the network manager of the map engine
 
     static constexpr int kTileBatchSize = 256;
     /// QNetworkAccessManager queues the requests it receives and runs 6 of them in parallel for one HTTP host and

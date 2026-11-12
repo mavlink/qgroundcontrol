@@ -116,8 +116,8 @@ void QGeoTiledMappingManagerEngineQGCTest::_testSourceChangeGivesTilesNewVersion
 
 void QGeoTiledMappingManagerEngineQGCTest::_testFactoryNeedsQmlEngine()
 {
-    // QtLocation gives the factory the QML engine before it asks for a mapping engine, which fetches its tiles with
-    // the network access manager of that engine
+    // QtLocation gives the factory the QML engine before it asks for a mapping engine, which fetches its tiles on the
+    // thread of that engine
     const QGeoServiceProviderFactoryQGC factory;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NoError;
     QString errorString;

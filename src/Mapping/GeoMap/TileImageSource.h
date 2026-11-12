@@ -38,8 +38,9 @@ public:
     /// mapType is a provider type string from UrlFactory::getProviderTypes()
     /// (e.g. "Google Satellite"). With an unknown type every request fails
     /// (asynchronously) without touching the cache or network.
-    /// \a networkManager overrides the internally created one (test injection
-    /// seam); an injected manager is not owned and must outlive this object
+    /// \a networkManager fetches the tiles instead of the network manager of
+    /// the map engine (test injection seam); it is not owned and must outlive
+    /// this object
     explicit TileImageSource(const QString& mapType, QObject* parent = nullptr,
                              QNetworkAccessManager* networkManager = nullptr);
 

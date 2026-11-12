@@ -457,12 +457,36 @@ void QGCTileReplyTest::_networkManagerDestroyedFirst()
     fetching.reset();
 }
 
+// The maps give their requests no network manager: all of them ask their servers through the one of the map engine
+void QGCTileReplyTest::_requestWithoutManagerUsesMapEngineManager()
+{
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
+
+    // In place of the manager of the engine, which would ask the server of the provider
+    QGCMapEngine* const engine = getQGCMapEngine();
+    engine->setNetworkManagerForTest(&nam);
+    const auto restoreManager = qScopeGuard([engine] { engine->setNetworkManagerForTest(nullptr); });
+
+    // More than the one lookup of the test: it misses also when a lookup of an earlier test is still queued
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
+
+    QGCTileReply reply(nullptr, tileReplyMapId(), kTileX + 60, kTileY, kTileZoom);
+    QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);
+    reply.start();
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(reply.error(), QGCTileReply::Error::NoError);
+    QVERIFY(!reply.isCached());
+    QCOMPARE(reply.data(), nam.body);
+    QCOMPARE(nam.requestCount, 1);
+}
+
 // Two maps that show the same place ask for the same tiles at the same moment: the server is asked once
 void QGCTileReplyTest::_concurrentRequestsShareOneFetch()
 {
     const QByteArray png = tileReplyPngBody();
 
-    // Every consumer of tiles has a network manager of its own
+    // Two network managers tell whether the fetching request or a waiting one asked the server
     TileReplyMockNam fetchingNam;
     fetchingNam.body = png;
     fetchingNam.holdReplies = true;
