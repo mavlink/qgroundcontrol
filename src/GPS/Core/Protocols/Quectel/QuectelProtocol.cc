@@ -204,6 +204,8 @@ private:
     GPSProtocolMath::Ecef _fixedECEF;
     /// The firmware PQTMVERNO reported; the boot banner must name it.
     QByteArray _firmware;
+    /// The time of week of the latest status that reported a survey since the receiver last started, which later
+    /// status must follow.
     std::optional<unsigned> _lastTow;
     std::optional<GPSBaseStatus> _survey;
     SurveyPhase _phase = SurveyPhase::Off;
@@ -589,6 +591,8 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
             // §2.3.1: this is the first output upon each successful startup.
             if (_expectingBoot && !_sawBoot) {
                 _sawBoot = true;
+                // The receiver's time of week starts again with it.
+                _lastTow.reset();
                 if (_phase == SurveyPhase::AwaitingBoot) {
                     _phase = SurveyPhase::Verifying;
                 }
@@ -650,7 +654,11 @@ bool Protocol::_handleSurvey(std::string_view body, GPSDecodeContext& context)
     if (_lastTow && !GPSTime::towAdvances(tow, *_lastTow)) {
         return false;
     }
-    _lastTow = tow;
+    // Only a status that reports a survey orders the ones after it: without one the receiver may not have its time
+    // yet, as after a restart, and that time of week would lock out the real one.
+    if (number(reply[Field::SURVEY_VALIDITY], validity) && validity != Validity::INVALID) {
+        _lastTow = tow;
+    }
     if (_phase != SurveyPhase::Verifying && _phase != SurveyPhase::Monitoring) {
         return false;
     }

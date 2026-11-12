@@ -168,7 +168,7 @@ void surveyLifecycle(GPSTestClock& clock)
     QVERIFY(receiver.model.sent("PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1"));
     QVERIFY(receiver.model.sent("PQTMCFGMSGRATE,R,RTCM3-107X,0"));
     driver.consume(CORRECTION);
-    feed(driver, surveyStatus(291263000, 2, 60));
+    // What the receiver sent before the restart is no evidence of the survey.
     QVERIFY(receiver.log.reports<GPSBaseStatus>().empty());
     driver.consume(CORRECTION);
     QCOMPARE(receiver.log.correctionsWhileValid, 0);
@@ -405,6 +405,32 @@ void measurementOrderAndRollover(GPSTestClock& clock)
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     driver.consume(CORRECTION);
     QCOMPARE(receiver.log.correctionsWhileValid, 1);
+}
+
+/// The time of week orders the status of one start of the receiver, and of a receiver that reports a survey: a
+/// restart begins its time again, and it may not have its time until a survey runs.
+void statusOrderAfterRestart(GPSTestClock& clock)
+{
+    clock.reset();
+    Receiver receiver(clock);
+    receiver.model.role = 2;
+    receiver.model.periodicStatus = false;
+    // From before the restart that configuration makes, late in the GPS week.
+    receiver.model.queued = surveyStatus(400000000, 2, 60);
+    GPSProtocolRuntime driver = receiver.runtime(Quectel::FAMILY);
+    unsigned baud = 460800;
+    QVERIFY(driver.configure(surveyConfig(), baud));
+    QVERIFY(receiver.log.reports<GPSBaseStatus>().empty());
+    feed(driver, surveyStatus(0, 0, 0));
+    QCOMPARE(receiver.log.count<GPSBaseStatus>(), 1);
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
+    // Neither the time before the restart nor the one without a survey locks this one out.
+    feed(driver, surveyStatus(399000000, 1, 1));
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
+    feed(driver, surveyStatus(398999000, 2, 60));
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
+    feed(driver, surveyStatus(399001000, 2, 60));
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
 }
 
 void cancellationRevokesPublishedState(GPSTestClock& clock)
@@ -672,6 +698,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"malformed-and-mixed-framing", malformedAndMixedFraming},
     {"scheduled-short-survey", scheduledShortSurvey},
     {"measurement-order-and-rollover", measurementOrderAndRollover},
+    {"status-order-after-restart", statusOrderAfterRestart},
     {"cancellation-revokes-published-state", cancellationRevokesPublishedState},
     {"restart-and-configuration-safety", restartAndConfigurationSafety},
     {"managed-changes", managedChanges},
