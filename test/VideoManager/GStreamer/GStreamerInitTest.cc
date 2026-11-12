@@ -479,6 +479,15 @@ void GStreamerInitTest::_testPlanRanks_data()
     QTest::newRow("default on Linux prefers va over vaapi")
         << int(VideoDecoderOption::Default) << true << 0 << linuxDecoders
         << QStringList{"vaapih264dec=0", "vah264dec=258", "v4l2slh264dec=258"} << QString();
+    QTest::newRow("default on Linux leaves va decoders GStreamer ranks NONE")
+        << int(VideoDecoderOption::Default) << true << 0
+        << QStringList{"vah264dec 257 hw", "vajpegdec 0 hw", "vah266dec 0 hw", "jpegdec 256 sw"}
+        << QStringList{"vah264dec=258"} << QString();
+    // GStreamer before 1.24 ranks every va decoder NONE.
+    QTest::newRow("default on Linux raises va decoders all ranked NONE")
+        << int(VideoDecoderOption::Default) << true << 0
+        << QStringList{"vah264dec 0 hw", "vah265dec 0 hw", "avdec_h264 256 sw"}
+        << QStringList{"vah264dec=258", "vah265dec=258"} << QString();
     QTest::newRow("default on D3D11 RHI") << int(VideoDecoderOption::Default) << false << 11 << windowsDecoders
                                           << QStringList{"d3d11h264dec=258", "d3d12h264dec=0"} << QString();
     QTest::newRow("default on D3D12 RHI") << int(VideoDecoderOption::Default) << false << 12 << windowsDecoders

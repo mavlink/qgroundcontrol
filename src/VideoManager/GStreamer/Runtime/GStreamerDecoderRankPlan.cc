@@ -13,6 +13,11 @@ constexpr uint16_t kPrioritizedRank = GST_RANK_PRIMARY + 1;
 // Above kPrioritizedRank, so the GPU-memory decoders the platform prefers win autoplug.
 constexpr uint16_t kZeroCopyRank = GST_RANK_PRIMARY + 2;
 
+bool autoplugged(const DecoderInfo& decoder)
+{
+    return decoder.rank >= GST_RANK_MARGINAL;
+}
+
 class Planner
 {
 public:
@@ -62,7 +67,6 @@ public:
     // order among them holds and one it ranks NONE (experimental, or unfit for the platform) stays out.
     void demoteOtherClass(bool hardware, QStringList& warnings)
     {
-        const auto autoplugged = [](const DecoderInfo& decoder) { return decoder.rank >= GST_RANK_MARGINAL; };
         const bool classAutoplugged = std::ranges::any_of(_decoders, [&](const DecoderInfo& decoder) {
             return (decoder.hardware == hardware) && autoplugged(decoder);
         });
@@ -75,10 +79,16 @@ public:
                     GST_RANK_NONE);
     }
 
-    // The decoders whose DMABuf output the GPU paths import, above every other.
+    // The decoders whose DMABuf output the GPU paths import, above every other. A va decoder GStreamer ranks NONE
+    // (vajpegdec, vah266dec) stays out of autoplug, except where it ranks them all NONE, as it did before 1.24.
     void prioritizeZeroCopy()
     {
-        rankFamily(VideoDecoderOption::VAAPI, kZeroCopyRank);
+        const auto va = [](const DecoderInfo& decoder) { return decoder.family == VideoDecoderOption::VAAPI; };
+        const bool someAutoplugged = std::ranges::any_of(
+            _decoders, [&](const DecoderInfo& decoder) { return va(decoder) && autoplugged(decoder); });
+        (void) rank(
+            [&](const DecoderInfo& decoder) { return va(decoder) && (!someAutoplugged || autoplugged(decoder)); },
+            kZeroCopyRank);
         rankPrefix("v4l2sl", kZeroCopyRank);
     }
 
