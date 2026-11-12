@@ -38,6 +38,8 @@ public:
 
     static void calcPrevWaypointValues(VisualMissionItem* currentItem, VisualMissionItem* prevItem,
                                        double* azimuth, double* distance, double* altDifference);
+    /// Heading the vehicle arrives at currentItem with, coming from prevItem
+    static double calcArrivalAzimuth(VisualMissionItem* currentItem, VisualMissionItem* prevItem);
     static double calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem);
 
 private:
