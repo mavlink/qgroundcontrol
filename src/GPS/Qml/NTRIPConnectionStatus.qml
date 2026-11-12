@@ -79,10 +79,11 @@ QGCGroupBox {
         visible:        root._stats.dataStale && root._connected
     }
 
-    LabelledLabel {
+    // The mountpoint, the data received and the data queued to vehicles can be wider than the status column of the
+    // GPS indicator's drop-down has room for, so the values of these rows wrap.
+    GPSWrappingRow {
         label:           qsTr("Mountpoint")
         labelText:       root._mountpoint
-        labelTextFormat: Text.PlainText
         visible:         root._mountpoint !== "" && root._connected
     }
 
@@ -102,12 +103,13 @@ QGCGroupBox {
         visible:   root._connected && root._stats.messagesReceived > 0
     }
 
-    LabelledLabel {
+    GPSWrappingRow {
+        objectName: "ntripDataReceived"
         label:     qsTr("Data Received")
         //: %1 is the total data size, %2 the data size received per second
         labelText: qsTr("%1 (%2/s)").arg(QGroundControl.bigSizeToString(root._stats.bytesReceived))
                                     .arg(QGroundControl.bigSizeToString(root._stats.dataRateBytesPerSec))
-        labelTextFormat: Text.PlainText
+        labelWrapMode: Text.Wrap
         visible:   root._connected && root._stats.bytesReceived > 0
     }
 
@@ -117,10 +119,14 @@ QGCGroupBox {
         visible:        root._connected && root._stats.dataUsageHigh
     }
 
-    LabelledLabel {
-        label:     qsTr("Queued to vehicle links (any source)")
-        labelText: QGroundControl.bigSizeToString(root.corrections.vehicleBytesSubmitted)
-        labelTextFormat: Text.PlainText
+    GPSWrappingRow {
+        objectName: "ntripQueuedToVehicles"
+        label:     qsTr("Queued to vehicles")
+        //: %1 is the size of the corrections queued to vehicles, from whichever source they came. The space in
+        //: "any source" is a no-break space.
+        labelText: qsTr("%1 (any\u00A0source)")
+                       .arg(QGroundControl.bigSizeToString(root.corrections.vehicleBytesSubmitted))
+        labelWrapMode: Text.Wrap
         visible:   root._connected && root.corrections.vehicleBytesSubmitted > 0
     }
 

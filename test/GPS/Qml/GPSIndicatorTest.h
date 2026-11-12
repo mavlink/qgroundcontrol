@@ -14,6 +14,8 @@ private slots:
     void _pageFitsWidth();
     void _compactExpandedPageHasSettingsSize();
     void _gcsPositionStaysInsideItsBox();
+    void _ntripStaysInsideItsBox();
+    void _correctionsStayInsideTheirBox();
     void _statusColumnKeepsItsWidth();
     void _receiverBesideVehicleGps();
     void _pageOffersNtripConnect();

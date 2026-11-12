@@ -1,10 +1,12 @@
 #include "GPSIndicatorTest.h"
 
+#include <chrono>
 #include <initializer_list>
 #include <memory>
 #include <tuple>
 
 #include <QtGui/QColor>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuickTest/quicktest.h>
 
@@ -15,9 +17,11 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "MAVLinkLib.h"
+#include "ManualScheduler.h"
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPSettings.h"
 #include "PositionManager.h"
+#include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
 #include "QmlTesting/QmlFixtures.h"
@@ -101,6 +105,15 @@ QStringList textsOutside(QQuickItem* box)
         }
     }
     return outside;
+}
+
+/// The number of lines the one label under @a box that shows @a text takes; 0 when none or several show it.
+int lineCount(QQuickItem* box, const QString& text)
+{
+    const auto shown = TestFixtures::findItems(box, [&text](QQuickItem* item) {
+        return item->isVisible() && item->property("text").toString() == text && item->property("lineCount").isValid();
+    });
+    return shown.size() == 1 ? shown.first()->property("lineCount").toInt() : 0;
 }
 }  // namespace
 
@@ -347,6 +360,104 @@ void GPSIndicatorTest::_gcsPositionStaysInsideItsBox()
     QCOMPARE(shown.size(), 1);
     QVERIFY(shown.first()->property("lineCount").toInt() > 1);
     // It wraps inside the box instead of running past it and taking the other rows' values along.
+    const QStringList outside = textsOutside(box);
+    QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
+}
+
+void GPSIndicatorTest::_ntripStaysInsideItsBox()
+{
+    TestFixtures::SettingsFixture saved;
+    NTRIPSettings* const settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerConnectEnabled(), false);
+    const QString mountpoint = QStringLiteral("VRS_RTCM32_MSM7_NEAREST_STATION");
+    saved.setFactValue(settings->ntripMountpoint(), mountpoint);
+    // The page shows the box once the application's caster is named. Its rows follow a stream of this test, which
+    // has reported a position and whose corrections went to a vehicle, so that every row shows.
+    const GPSTest::CasterHost caster(GPSManager::instance()->ntrip(), QStringLiteral("caster.example"));
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> routed;
+    captureVehicleFrames(corrections, routed);
+    NTRIPManager ntrip(nullptr, &scheduler, {.corrections = &corrections});
+    ntrip.setConfiguration(mockCasterConfiguration());
+    ntrip.setGgaPositionProvider(NTRIPGgaReporter::PositionSource::RTKReceiver,
+                                 [] { return ggaObservation(QGeoCoordinate(47.3, 8.5, 400)); });
+    MockNTRIPTransport* const transport = injectMockTransport(ntrip, true);
+    ntrip.init();
+    transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
+    deliverQueuedCalls();
+    QCOMPARE(ntrip.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    QVERIFY(corrections.vehicleBytesSubmitted() > 0);
+    QVERIFY(!ntrip.ggaSource().isEmpty());
+
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorNtrip"));
+    QVERIFY(box && box->isVisible());
+    QVERIFY(box->setProperty("ntripManager", QVariant::fromValue(&ntrip)));
+    QVERIFY(box->setProperty("corrections", QVariant::fromValue(&corrections)));
+    // The longest values the counters show.
+    auto* received = box->findChild<QQuickItem*>(QStringLiteral("ntripDataReceived"));
+    auto* queued = box->findChild<QQuickItem*>(QStringLiteral("ntripQueuedToVehicles"));
+    QVERIFY(received && received->isVisible() && queued && queued->isVisible());
+    QVERIFY(received->setProperty("labelText", QStringLiteral("1,023.9MB (1,023.9KB/s)")));
+    QVERIFY(queued->setProperty("labelText", QStringLiteral("1,023.9MB (any\u00A0source)")));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY(qAbs(box->width() - page->property("_preferredStatusWidth").toReal()) <= 1);
+    // The rows wrap inside the box instead of widening its layout, which would take every value of the box and the
+    // button past its edge.
+    const QStringList outside = textsOutside(box);
+    QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
+    QVERIFY(lineCount(box, mountpoint) > 1);
+}
+
+void GPSIndicatorTest::_correctionsStayInsideTheirBox()
+{
+    using namespace std::chrono_literals;
+    TestFixtures::SettingsFixture saved;
+    // Feet give the longer distance.
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(),
+                       UnitsSettings::HorizontalDistanceUnitsFeet);
+    // The source with the longest name, which has announced its base station.
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
+    // The RTCM 1005 frame of the recording Core/Protocols/fixtures/mixed.gps.
+    local->submit(QByteArray::fromHex("d300133ed000038a58d9493c872f34109d07d6af48205ad7f7"), scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(1s));
+    local->submit(GPSTest::rtcmMessage(1077, 20), scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(1s));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+    QVERIFY(corrections.basePosition().isValid());
+
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorCorrections"));
+    QVERIFY(box);
+    QVERIFY(box->setProperty("corrections", QVariant::fromValue(&corrections)));
+    // A base station 100 km away, farther than its corrections are of use.
+    QVERIFY(box->setProperty("gcsPosition",
+                             QVariant::fromValue(corrections.basePosition().atDistanceAndAzimuth(100000, 90))));
+    QVERIFY(box->isVisible());
+    auto* source = box->findChild<QQuickItem*>(QStringLiteral("correctionsSelectedSource"));
+    auto* rate = box->findChild<QQuickItem*>(QStringLiteral("correctionsDataRate"));
+    auto* distance = box->findChild<QQuickItem*>(QStringLiteral("correctionsBaseDistance"));
+    QVERIFY(source && rate && distance);
+    QCOMPARE(source->property("labelText").toString(),
+             GPSCorrectionManager::sourceName(static_cast<int>(GPSCorrectionSettings::LocalReceiver)));
+    QVERIFY(rate->isVisible() && distance->isVisible());
+    QCOMPARE(distance->property("labelText").toString(), QStringLiteral("328084 ft"));
+    // The longest rate.
+    QVERIFY(rate->setProperty("labelText", QStringLiteral("1,023.9KB/s")));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY(qAbs(box->width() - page->property("_preferredStatusWidth").toReal()) <= 1);
+    // These rows do not wrap, so they must fit.
     const QStringList outside = textsOutside(box);
     QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
 }
