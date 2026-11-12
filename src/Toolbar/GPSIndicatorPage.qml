@@ -105,10 +105,13 @@ ToolIndicatorPage {
                         labelText: root._gps?.count.valueString ?? ""
                         labelTextFormat: Text.PlainText
                     }
-                    LabelledLabel {
+                    // The name of an RTK fix is wider than a narrow drop-down has room for beside its label, so it
+                    // wraps, as the receiver's fix does.
+                    GPSWrappingRow {
+                        objectName: "vehicleGpsLock"
                         label: root._gps?.lock.shortDescription ?? ""
                         labelText: root._gps?.lock.enumStringValue ?? ""
-                        labelTextFormat: Text.PlainText
+                        labelWrapMode: Text.Wrap
                     }
                     MeasurementLabel {
                         objectName: "vehicleGpsHdop"

@@ -392,6 +392,47 @@ void GPSIndicatorTest::_receiverStaysInsideItsBox()
     QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
 }
 
+void GPSIndicatorTest::_vehicleStaysInsideItsBox_data()
+{
+    QTest::addColumn<qreal>("available");
+    QTest::newRow("preferred") << qreal(640);
+    QTest::newRow("narrow") << qreal(200);
+}
+
+void GPSIndicatorTest::_vehicleStaysInsideItsBox()
+{
+    QFETCH(qreal, available);
+    // The fix with the longest name.
+    const QString fix = QStringLiteral("3D RTK GPS Lock (fixed)");
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps = vehicle.gpsFactGroup();
+    QVERIFY(gps);
+    gps->setLiveUpdates(true);
+    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_RTK_FIXED, .satellitesVisible = 20}));
+    QCOMPARE(gps->lock()->enumStringValue(), fix);
+
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        createIndicatorPage(engine, window, &vehicle, {{QStringLiteral("availableWidth"), available}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorVehicle"));
+    QVERIFY(box && box->isVisible());
+    auto* row = box->findChild<QQuickItem*>(QStringLiteral("vehicleGpsLock"));
+    QVERIFY(row && row->isVisible());
+    QCOMPARE(row->property("labelText").toString(), fix);
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    const qreal preferred = page->property("_preferredStatusWidth").toReal();
+    QVERIFY2(qAbs(box->width() - qMin(available, preferred)) <= 1,
+             qPrintable(QStringLiteral("box %1").arg(box->width())));
+    // On a drop-down that is narrower than the status column prefers, it wraps inside the box instead of running
+    // past it.
+    const QStringList outside = textsOutside(box);
+    QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
+    QCOMPARE(lineCount(box, fix) > 1, available < preferred);
+}
+
 void GPSIndicatorTest::_vehicleRtkValuesShownOnce()
 {
     // Two vehicles that report an RTK baseline and a correction rate. The first is the active one, whose GPS status
