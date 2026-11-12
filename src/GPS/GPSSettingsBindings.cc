@@ -81,6 +81,7 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
         qCWarning(GPSSettingsBindingsLog) << "Invalid GGA position source; using automatic selection";
     }
     configuration.gga.interval = std::chrono::seconds(read(settings->ntripGgaIntervalSec()).toUInt());
+    configuration.version1Casters = read(settings->ntripVersion1Casters()).toString();
     return configuration;
 }
 
@@ -230,6 +231,10 @@ void GPSSettingsBindings::bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip
     QObject::connect(
         ntrip, &NTRIPManager::certificatePinChanged, ntrip,
         [settings](const QString& pin) { settings->ntripPinnedCertificate()->setRawValue(pin); }, Qt::QueuedConnection);
+    QObject::connect(
+        ntrip, &NTRIPManager::version1CastersChanged, ntrip,
+        [settings](const QString& casters) { settings->ntripVersion1Casters()->setRawValue(casters); },
+        Qt::QueuedConnection);
     bind(settings, ntripFromSettings, ntrip, &NTRIPManager::setConfiguration);
 }
 

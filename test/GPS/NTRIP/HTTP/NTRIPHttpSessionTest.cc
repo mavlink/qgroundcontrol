@@ -193,6 +193,192 @@ void NTRIPHttpSessionTest::_answeredRequestIsNotRepeated()
     QVERIFY_ONLY_SIGNAL(spy, "failed");
 }
 
+void NTRIPHttpSessionTest::_casterVersionsKeepTheLatestCasters()
+{
+    const auto caster = [](qsizetype number) { return connectionConfig(2101 + static_cast<int>(number)); };
+    const qsizetype most = NTRIPCasterVersions::MAX_CASTERS;
+    NTRIPCasterVersions versions;
+    QSignalSpy changes(&versions, &NTRIPCasterVersions::changed);
+    for (qsizetype number = 0; number < most; ++number) {
+        versions.setVersion(caster(number), NTRIPVersion::Version1);
+    }
+    QCOMPARE(changes.size(), most);
+    QCOMPARE(versions.saved().split(QLatin1Char(' ')).size(), most);
+
+    // A caster that accepts another version 1 request is the latest one again, which the latest one already is.
+    versions.setVersion(caster(most - 1), NTRIPVersion::Version1);
+    QCOMPARE(changes.size(), most);
+    versions.setVersion(caster(0), NTRIPVersion::Version1);
+    QCOMPARE(changes.size(), most + 1);
+
+    // One more than are kept: the caster that accepted such a request longest ago makes room.
+    versions.setVersion(caster(most), NTRIPVersion::Version1);
+    QCOMPARE(changes.size(), most + 2);
+    QCOMPARE(versions.versionFor(caster(1)), NTRIPVersion::Version2);
+    for (const qsizetype kept : {qsizetype(0), qsizetype(2), most}) {
+        QCOMPARE(versions.versionFor(caster(kept)), NTRIPVersion::Version1);
+    }
+    QCOMPARE(versions.saved().split(QLatin1Char(' ')).size(), most);
+
+    // Forgetting a caster that is not remembered changes nothing.
+    versions.setVersion(caster(1), NTRIPVersion::Version2);
+    QCOMPARE(changes.size(), most + 2);
+
+    // The caster is its host, port and TLS: neither the mountpoint nor the account.
+    auto other = caster(0);
+    other.mountpoint = QStringLiteral("OTHER");
+    other.username = QStringLiteral("user");
+    QCOMPARE(versions.versionFor(other), NTRIPVersion::Version1);
+    other.useTls = true;
+    QCOMPARE(versions.versionFor(other), NTRIPVersion::Version2);
+}
+
+void NTRIPHttpSessionTest::_casterVersionsAreSavedAndRestored_data()
+{
+    QTest::addColumn<QString>("saved");
+    QTest::addColumn<QString>("restored");
+    const QString plain = QStringLiteral("http://127.0.0.1:2101/");
+    const QString tls = QStringLiteral("https://caster.example.com:443/");
+    QTest::newRow("none") << QString() << QString();
+    QTest::newRow("as-saved") << plain + QLatin1Char(' ') + tls << plain + QLatin1Char(' ') + tls;
+    // What another hand wrote: each caster once, where it was named last.
+    QTest::newRow("spaces-and-repeats") << QStringLiteral("  ") + plain + QStringLiteral("   ") + tls +
+                                               QStringLiteral("\n") + plain + QLatin1Char(' ')
+                                        << tls + QLatin1Char(' ') + plain;
+    QStringList many;
+    for (int port = 1; port <= NTRIPCasterVersions::MAX_CASTERS + 4; ++port) {
+        many.append(QStringLiteral("http://caster.example.com:%1/").arg(port));
+    }
+    QTest::newRow("more-than-are-kept") << many.join(QLatin1Char(' '))
+                                        << many.last(NTRIPCasterVersions::MAX_CASTERS).join(QLatin1Char(' '));
+}
+
+void NTRIPHttpSessionTest::_casterVersionsAreSavedAndRestored()
+{
+    QFETCH(QString, saved);
+    QFETCH(QString, restored);
+    NTRIPCasterVersions versions;
+    versions.setVersion(connectionConfig(4000), NTRIPVersion::Version1);
+    QSignalSpy changes(&versions, &NTRIPCasterVersions::changed);
+    versions.restore(saved);
+    QCOMPARE(versions.saved(), restored);
+    QCOMPARE(changes.size(), 1);
+    // The casters restored take the place of the ones remembered.
+    QCOMPARE(versions.versionFor(connectionConfig(4000)), NTRIPVersion::Version2);
+    QCOMPARE(versions.versionFor(connectionConfig(2101)),
+             restored.contains(QStringLiteral("127.0.0.1:2101")) ? NTRIPVersion::Version1 : NTRIPVersion::Version2);
+
+    // What was saved is restored as it is.
+    versions.restore(versions.saved());
+    QCOMPARE(versions.saved(), restored);
+    QCOMPARE(changes.size(), 1);
+}
+
+void NTRIPHttpSessionTest::_version1MemoryFollowsTheCaster_data()
+{
+    // What the caster answers a version 1 request with; without an answer it closes the connection.
+    QTest::addColumn<QByteArray>("answer");
+    QTest::addColumn<bool>("remembered");
+    QTest::newRow("accepted") << QByteArray("ICY 200 OK\r\n") << true;
+    QTest::newRow("unauthorized") << QByteArray("HTTP/1.0 401 Unauthorized\r\n\r\n") << false;
+    // As a server that takes HTTP/1.1 requests only answers one without a Host header.
+    QTest::newRow("bad-request") << QByteArray("HTTP/1.1 400 Bad Request\r\n\r\n") << false;
+    QTest::newRow("no-answer") << QByteArray() << false;
+}
+
+void NTRIPHttpSessionTest::_version1MemoryFollowsTheCaster()
+{
+    QFETCH(QByteArray, answer);
+    QFETCH(bool, remembered);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    const auto config = caster.connectionConfig();
+    const auto versions = std::make_shared<NTRIPCasterVersions>();
+    versions->setVersion(config, NTRIPVersion::Version1);
+    QSignalSpy changes(versions.get(), &NTRIPCasterVersions::changed);
+    NTRIPHttpSession session;
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(&session));
+    QVERIFY(session.open(config, versions).isEmpty());
+
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().startsWith("GET /TEST HTTP/1.0\r\n"));
+    QCOMPARE(connection->write(answer), answer.size());
+    if (remembered) {
+        QVERIFY_WAIT_SIGNAL(spy, "responseStarted", TestTimeout::mediumMs());
+    } else {
+        connection->disconnectFromHost();
+        QVERIFY_WAIT_SIGNAL(spy, "failed", TestTimeout::mediumMs());
+    }
+    // A caster that does not accept the request is asked in version 2 form next time; this request is not repeated.
+    QCOMPARE(versions->versionFor(config), remembered ? NTRIPVersion::Version1 : NTRIPVersion::Version2);
+    QCOMPARE(changes.size(), remembered ? 0 : 1);
+    QCOMPARE(caster.requestLines().size(), 1);
+    session.abort();
+}
+
+void NTRIPHttpSessionTest::_version1MemoryOutlastsLocalFailures()
+{
+    const auto versions = std::make_shared<NTRIPCasterVersions>();
+    QSignalSpy changes(versions.get(), &NTRIPCasterVersions::changed);
+
+    // A connection that is not made says nothing of the caster.
+    {
+        ScriptedNTRIPCaster caster;
+        QVERIFY(caster.isListening());
+        const auto config = caster.connectionConfig();
+        caster.close();
+        versions->setVersion(config, NTRIPVersion::Version1);
+        ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Socket error")));
+        NTRIPHttpSession session;
+        MultiSignalSpy spy;
+        QVERIFY(spy.init(&session));
+        QVERIFY(session.open(config, versions).isEmpty());
+        QVERIFY_WAIT_SIGNAL(spy, "failed", TestTimeout::mediumMs());
+        QCOMPARE(versions->versionFor(config), NTRIPVersion::Version1);
+    }
+
+    // Nor does a request its owner gives up before the caster has answered, as at a timeout.
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    const auto config = caster.connectionConfig();
+    versions->setVersion(config, NTRIPVersion::Version1);
+    NTRIPHttpSession session;
+    QVERIFY(session.open(config, versions).isEmpty());
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().startsWith("GET /TEST HTTP/1.0\r\n"));
+    session.abort();
+    QCOMPARE(versions->versionFor(config), NTRIPVersion::Version1);
+    QCOMPARE(changes.size(), 2);
+}
+
+void NTRIPHttpSessionTest::_acceptedVersion2RequestForgetsVersion1()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    const auto config = caster.connectionConfig();
+    const auto versions = std::make_shared<NTRIPCasterVersions>();
+    NTRIPHttpSession session;
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(&session));
+    QVERIFY(session.open(config, versions).isEmpty());
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().startsWith("GET /TEST HTTP/1.1\r\n"));
+
+    // The caster is remembered while the version 2 request is under way, as restored settings do. Its answer to that
+    // request is the later evidence.
+    versions->setVersion(config, NTRIPVersion::Version1);
+    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + QByteArray(16, '\xd3');
+    QCOMPARE(connection->write(response), response.size());
+    QVERIFY_WAIT_SIGNAL(spy, "responseStarted", TestTimeout::mediumMs());
+    QCOMPARE(versions->versionFor(config), NTRIPVersion::Version2);
+    session.abort();
+}
+
 void NTRIPHttpSessionTest::_abortIsSilent()
 {
     ScriptedNTRIPCaster caster;

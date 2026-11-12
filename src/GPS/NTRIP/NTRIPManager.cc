@@ -81,6 +81,7 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
 
     connect(&_sourceTableController, &NTRIPSourceTableController::certificatePinned, this,
             &NTRIPManager::_setPinnedCertificate);
+    connect(_casterVersions.get(), &NTRIPCasterVersions::changed, this, &NTRIPManager::_onCasterVersionsChanged);
 
     if (_networkMonitor) {
         connect(_networkMonitor, &QGCNetworkAvailabilityMonitor::availableChanged, this, [this](bool available) {
@@ -133,6 +134,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     const bool ggaChanged = configuration.gga != _configuration.gga;
     const bool streamChanged =
         configuration.enabled != _configuration.enabled || configuration.connection != _configuration.connection;
+    const bool castersChanged = configuration.version1Casters != _configuration.version1Casters;
     const bool couldConnect = canConnect();
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
@@ -152,6 +154,9 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     }
     if (canConnect() != couldConnect) {
         emit canConnectChanged();
+    }
+    if (castersChanged) {
+        _casterVersions->restore(_configuration.version1Casters);
     }
 }
 
@@ -584,6 +589,15 @@ void NTRIPManager::_setPinnedCertificate(const QString& pin)
     }
     pinned = pin;
     emit certificatePinChanged(pin);
+}
+
+void NTRIPManager::_onCasterVersionsChanged()
+{
+    // Also what restore() kept of a stored list that it did not write, so that the settings hold what is remembered.
+    const QString casters = _casterVersions->saved();
+    if (std::exchange(_configuration.version1Casters, casters) != casters) {
+        emit version1CastersChanged(casters);
+    }
 }
 
 void NTRIPManager::_onCorrectionFrame(const RTCMDecodedFrame& frame)

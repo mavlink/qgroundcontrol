@@ -89,6 +89,13 @@
             "max": 60,
             "units": "s",
             "label": "GGA Send Interval"
+        },
+        {
+            "name": "ntripVersion1Casters",
+            "shortDesc": "Casters that take NTRIP version 1 requests only",
+            "type": "string",
+            "default": "",
+            "label": "NTRIP version 1 casters"
         }
     ]
 }

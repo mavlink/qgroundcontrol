@@ -93,6 +93,9 @@ public:
         bool enabled = false;
         NTRIPConnectionConfig connection;
         NTRIPGgaReporter::Configuration gga;
+        /// The casters an earlier run found to take NTRIP version 1 requests only, as version1CastersChanged()
+        /// reported them.
+        QString version1Casters;
         bool operator==(const Configuration&) const = default;
     };
 
@@ -155,6 +158,9 @@ signals:
     void enabledRequested(bool enabled);
     /// The trusted self-signed caster certificate changed, or was forgotten (empty); the settings should store it.
     void certificatePinChanged(const QString& pin);
+    /// The casters found to take NTRIP version 1 requests only changed; the settings should store them for the next
+    /// run.
+    void version1CastersChanged(const QString& casters);
 
 private:
     /// What the change signals last announced.
@@ -218,6 +224,7 @@ private:
     void _onTransportError(const NTRIPFailure& failure);
     void _onCertificatePinned(const QString& pin);
     void _setPinnedCertificate(const QString& pin);
+    void _onCasterVersionsChanged();
     void _onCorrectionFrame(const RTCMDecodedFrame& frame);
     /// Brings the connection in line with the latest configuration.
     void _applyConfiguration();
@@ -247,7 +254,8 @@ private:
     Configuration _configuration;
     Configuration _running;
 
-    /// The request form each caster takes, which the stream and the mountpoint browser find out for each other.
+    /// The request form each caster takes, which the stream and the mountpoint browser find out for each other and
+    /// the settings keep between runs.
     const std::shared_ptr<NTRIPCasterVersions> _casterVersions;
     NTRIPSourceTableController _sourceTableController;
 

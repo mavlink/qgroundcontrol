@@ -1,5 +1,6 @@
 #include "NTRIPHttpSession.h"
 
+#include <algorithm>
 #include <utility>
 
 #include <QtCore/QPointer>
@@ -23,10 +24,36 @@ NTRIPVersion NTRIPCasterVersions::versionFor(const NTRIPConnectionConfig& caster
 void NTRIPCasterVersions::setVersion(const NTRIPConnectionConfig& caster, NTRIPVersion version)
 {
     const QString endpoint = caster.url(false).toString();
+    QStringList casters = _version1Casters;
+    casters.removeAll(endpoint);
     if (version == NTRIPVersion::Version1) {
-        _version1Casters.insert(endpoint);
-    } else {
-        _version1Casters.remove(endpoint);
+        casters.append(endpoint);
+    }
+    _remember(casters);
+}
+
+QString NTRIPCasterVersions::saved() const
+{
+    return _version1Casters.join(QLatin1Char(' '));
+}
+
+void NTRIPCasterVersions::restore(const QString& saved)
+{
+    QStringList casters;
+    for (const QString& caster : saved.simplified().split(QLatin1Char(' '), Qt::SkipEmptyParts)) {
+        // Named again later, a caster is a later one.
+        casters.removeAll(caster);
+        casters.append(caster);
+    }
+    _remember(casters);
+}
+
+void NTRIPCasterVersions::_remember(const QStringList& casters)
+{
+    const QStringList latest = casters.last((std::min) (casters.size(), MAX_CASTERS));
+    if (latest != _version1Casters) {
+        _version1Casters = latest;
+        emit changed();
     }
 }
 
@@ -218,13 +245,9 @@ void NTRIPHttpSession::_closed()
 {
     // A close and a reset arrive alike. A caster that sent anything has read the request, so asking again in another
     // form would only count against the client.
-    const bool unanswered = _requestSent && !_answered;
-    if (unanswered && _version == NTRIPVersion::Version2) {
+    if (_requestSent && !_answered && _version == NTRIPVersion::Version2) {
         _repeatInVersion1();
         return;
-    }
-    if (unanswered && _casterVersions) {
-        _casterVersions->setVersion(_config, NTRIPVersion::Version2);
     }
     _finishResponse();
 }
@@ -257,8 +280,10 @@ void NTRIPHttpSession::_publish(const NTRIPHttpDecoder::Result& result, qint64 r
     // Observers may abort or retire this session from each signal.
     const QPointer<NTRIPHttpSession> self(this);
     if (result.connected) {
-        if (_casterVersions && _version == NTRIPVersion::Version1) {
-            _casterVersions->setVersion(_config, NTRIPVersion::Version1);
+        _accepted = true;
+        // The form the caster accepted is the one to ask it in next.
+        if (_casterVersions) {
+            _casterVersions->setVersion(_config, _version);
         }
         emit responseStarted();
         if (!self || _ended) {
@@ -272,6 +297,11 @@ void NTRIPHttpSession::_publish(const NTRIPHttpDecoder::Result& result, qint64 r
         }
     }
     if (result.failure) {
+        // A caster that refuses a version 1 request, or closes it unanswered, may take the version 2 form by now.
+        // Saved, it would otherwise be asked in version 1 form for ever.
+        if (_casterVersions && _version == NTRIPVersion::Version1 && !_accepted) {
+            _casterVersions->setVersion(_config, NTRIPVersion::Version2);
+        }
         _end();
         emit failed(*result.failure);
     } else if (result.complete) {

@@ -28,4 +28,8 @@ public:
     DEFINE_SETTINGFACT(ntripPinnedCertificate)
     DEFINE_SETTINGFACT(ntripGgaPositionSource)
     DEFINE_SETTINGFACT(ntripGgaIntervalSec)
+    /// Not shown in the UI: the URLs of the casters found to take NTRIP version 1 requests only, the latest last, so
+    /// that they are asked in that form at once after a restart. A caster is taken out when it no longer accepts
+    /// such a request.
+    DEFINE_SETTINGFACT(ntripVersion1Casters)
 };

@@ -53,6 +53,7 @@ private slots:
     void _unrepeatableAnswerWaitsForUser_data();
     void _unrepeatableAnswerWaitsForUser();
     void _version1CasterIsRemembered();
+    void _savedVersion1CasterIsAskedInThatFormAtOnce();
     void _retryPublicationSuperseded();
     void _missingMountpointDoesNotStartTransport();
     void _correctionIngressKeepsSessionAndIdentity();

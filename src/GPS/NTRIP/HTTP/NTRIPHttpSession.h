@@ -8,8 +8,8 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QList>
 #include <QtCore/QObject>
-#include <QtCore/QSet>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
@@ -22,15 +22,39 @@ class QTcpSocket;
 class RuntimeScheduler;
 
 /// The casters found to take only NTRIP version 1 requests, by host, port and TLS. The sessions that share one ask
-/// such a caster in that form at once, instead of finding it out again on every connection.
-class NTRIPCasterVersions
+/// such a caster in that form at once, instead of finding it out again on every connection. A caster is remembered
+/// once it accepts a version 1 request. It is forgotten when it does not accept one, answering it with anything else
+/// or closing it unanswered, and when it accepts a version 2 request: the next exchange then starts in version 2 form
+/// again. A failure that says nothing of the caster, such as a lost network or a timeout, leaves it remembered.
+class NTRIPCasterVersions : public QObject
 {
+    Q_OBJECT
+
 public:
+    /// The most casters remembered. For another one, the caster that accepted a version 1 request longest ago is
+    /// forgotten.
+    static constexpr qsizetype MAX_CASTERS = 16;
+
     [[nodiscard]] NTRIPVersion versionFor(const NTRIPConnectionConfig& caster) const;
+    /// Remembers that @a caster accepted a version 1 request, or forgets it for Version2.
     void setVersion(const NTRIPConnectionConfig& caster, NTRIPVersion version);
 
+    /// The remembered casters as one line of text, which restore() reads: their URLs, the latest last, with a space
+    /// between them.
+    [[nodiscard]] QString saved() const;
+    /// Remembers the casters of @a saved in place of the present ones: the last MAX_CASTERS of them, each once.
+    void restore(const QString& saved);
+
+signals:
+    /// saved() changed.
+    void changed();
+
 private:
-    QSet<QString> _version1Casters;
+    /// Keeps the last MAX_CASTERS of @a casters and announces a change.
+    void _remember(const QStringList& casters);
+
+    /// The latest last.
+    QStringList _version1Casters;
 };
 
 /// One HTTP exchange with a caster over TCP or TLS, shared by the correction stream and source-table fetches: it sends
@@ -62,8 +86,8 @@ public:
 
     /// Connects once and sends the request of the session's purpose when connected; later calls are ignored. Returns
     /// why @a config cannot build a request, without connecting, or empty.
-    /// With @a casterVersions, a caster that accepted a version 1 request is asked in that form first, until it
-    /// closes such a request without answering.
+    /// With @a casterVersions, a caster that accepted a version 1 request is asked in that form first, until it does
+    /// not accept such a request.
     QString open(const NTRIPConnectionConfig& config, std::shared_ptr<NTRIPCasterVersions> casterVersions = {});
     /// Sends @a bytes after the request. False unless isConnected() and the socket accepted every byte; the owner
     /// decides how to report it.
@@ -128,6 +152,8 @@ private:
     bool _requestSent = false;
     /// The caster sent something in answer to _request.
     bool _answered = false;
+    /// The caster accepted _request, so what follows is its body.
+    bool _accepted = false;
     bool _reading = false;
     bool _ended = false;
 };

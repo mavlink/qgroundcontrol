@@ -152,7 +152,8 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
                        .useTls = true,
                        .allowSelfSignedCerts = true,
                        .pinnedCertificate = QStringLiteral("caster.example.com:443|00ff")},
-        .gga = {.source = NTRIPGgaReporter::PositionSource::GCSPosition, .interval = std::chrono::seconds(7)}};
+        .gga = {.source = NTRIPGgaReporter::PositionSource::GCSPosition, .interval = std::chrono::seconds(7)},
+        .version1Casters = QStringLiteral("http://caster.example.com:2101/")};
     saved.setFactValue(settings->ntripServerHostAddress(), expected.connection.host);
     saved.setFactValue(settings->ntripServerPort(), expected.connection.port);
     saved.setFactValue(settings->ntripUsername(), expected.connection.username);
@@ -163,6 +164,7 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
     saved.setFactValue(settings->ntripPinnedCertificate(), expected.connection.pinnedCertificate);
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(expected.gga.source));
     saved.setFactValue(settings->ntripGgaIntervalSec(), 7);
+    saved.setFactValue(settings->ntripVersion1Casters(), expected.version1Casters);
 
     NTRIPManager manager;
     GPSSettingsBindings::bindNtrip(settings, &manager);
@@ -171,6 +173,13 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
     QCOMPARE(configuration, expected);
     settings->ntripServerConnectEnabled()->setRawValue(true);
     QVERIFY(manager.configuration().enabled);
+
+    // The manager reports the casters it found to take NTRIP version 1 requests only, which the next run starts with.
+    const QString casters = QStringLiteral("http://caster.example.com:2101/ https://other.example.com:443/");
+    emit manager.version1CastersChanged(casters);
+    deliverQueuedCalls();
+    QCOMPARE(settings->ntripVersion1Casters()->rawValue().toString(), casters);
+    QCOMPARE(manager.configuration().version1Casters, casters);
 
     // A stored source that names none would report no position at all.
     expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,

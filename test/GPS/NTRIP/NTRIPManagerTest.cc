@@ -774,6 +774,7 @@ void NTRIPManagerTest::_version1CasterIsRemembered()
     QList<Status> observed;
     connect(&manager, &NTRIPManager::connectionStatusChanged, this,
             [&]() { observed.append(manager.connectionStatus()); });
+    QSignalSpy casters(&manager, &NTRIPManager::version1CastersChanged);
     const QRegularExpression failure(QStringLiteral("NTRIP error:"));
 
     // The caster closes the request and serves its repeat in NTRIP version 1 form: one attempt, and not a failed one.
@@ -786,6 +787,10 @@ void NTRIPManagerTest::_version1CasterIsRemembered()
     QCOMPARE(connection->write(stream), stream.size());
     QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStats()->messagesReceived(), quint32(1), TestTimeout::shortMs());
     QCOMPARE(observed, (QList<Status>{Status::Connecting, Status::Connected}));
+    // The settings are given the caster to keep for the next run.
+    QCOMPARE(casters.size(), 1);
+    QCOMPARE(casters.constLast().constFirst().toString(), configuration.connection.url(false).toString());
+    QCOMPARE(manager.configuration().version1Casters, configuration.connection.url(false).toString());
 
     // The mountpoint browser now asks this caster in version 1 form at once.
     manager.fetchMountpoints();
@@ -810,6 +815,47 @@ void NTRIPManagerTest::_version1CasterIsRemembered()
     QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), Status::Reconnecting, TestTimeout::shortMs());
     verifyExpectedLogMessage();
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
+    connection = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1\r\n"));
+    QCOMPARE(casters.size(), 2);
+    QVERIFY(casters.constLast().constFirst().toString().isEmpty());
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_savedVersion1CasterIsAskedInThatFormAtOnce()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto configuration = mockCasterConfiguration();
+    configuration.connection = caster.connectionConfig();
+    // As an earlier run reported the caster, and the settings kept it.
+    configuration.version1Casters = configuration.connection.url(false).toString();
+    QSignalSpy casters(&manager, &NTRIPManager::version1CastersChanged);
+
+    initialize(manager, configuration);
+    auto* connection = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.0\r\n"));
+    QVERIFY(casters.isEmpty());
+
+    // The caster no longer takes that form, and refuses it instead of closing the connection: it is forgotten, so
+    // that the settings do not keep it for ever.
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:")));
+    const QByteArray refusal = "HTTP/1.1 400 Bad Request\r\n\r\n";
+    QCOMPARE(connection->write(refusal), refusal.size());
+    connection->disconnectFromHost();
+    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), Status::Error, TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(casters.size(), 1);
+    QVERIFY(casters.constFirst().constFirst().toString().isEmpty());
+    QVERIFY(manager.configuration().version1Casters.isEmpty());
+
+    // The next attempt asks in version 2 form again.
+    manager.connectCaster();
     connection = caster.waitForConnection(TestTimeout::shortMs());
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1\r\n"));

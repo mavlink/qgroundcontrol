@@ -25,7 +25,8 @@ public:
     static void bindCorrections(GPSCorrectionSettings* settings, GPSCorrectionManager* corrections);
 
     /// Supplies the NTRIP settings to @a ntrip now and whenever they change, and stores the connection a retry
-    /// enables and the certificate pin trusted on first use. Call before NTRIPManager::init().
+    /// enables, the certificate pin trusted on first use and the casters found to take NTRIP version 1 requests only.
+    /// Call before NTRIPManager::init().
     static void bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip);
 
     /// Supplies the receiver settings to @a receiver now and whenever they change. Call before the receiver is
