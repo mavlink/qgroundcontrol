@@ -41,6 +41,7 @@ target_sources(
 set(_qgc_gps_suites
     GPSManagerTest
     GPSSettingsBindingsTest
+    Connection/GPSConnectionSupervisorTest
     Corrections/GPSCorrectionLossAlertTest
     Corrections/GPSCorrectionManagerTest
     Corrections/GPSCorrectionSelectorTest

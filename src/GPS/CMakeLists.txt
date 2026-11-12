@@ -23,6 +23,7 @@ target_link_libraries(
         GPSModule
 )
 
+add_subdirectory(Connection)
 add_subdirectory(Corrections)
 add_subdirectory(NTRIP)
 add_subdirectory(Positioning)

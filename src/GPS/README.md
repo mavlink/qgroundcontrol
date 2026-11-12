@@ -23,7 +23,8 @@ application    Vehicle, FollowMe, RemoteIDManager; QML through QGroundControl.gp
                ----------------------------------------------------------------------------------------------
 src/GPS        GPSManager, GPSSettingsBindings                creates the services, hands them the settings
                Receiver                 NTRIP                 the two services that hold a connection
-               Corrections  Positioning         NTRIP/HTTP *  what they feed; one HTTP exchange with a caster
+               Corrections  Positioning  Connection  NTRIP/HTTP *  what they feed; when a connection is retried;
+                                                              one HTTP exchange with a caster
 src/GPS/Core * GPSReceiverWorker                              one receiver session, on a thread of its own
                Protocols                                      GPSDriver, its framework, the receiver families
                NMEA    RTCM    Transport                      wire formats and byte links
@@ -39,6 +40,7 @@ src/GPS/Core * GPSReceiverWorker                              one receiver sessi
 | `Core/Protocols` | `GPSDriver`, `GPSProtocolRuntime`, `GPSCommandChannel`, `GPSStreamDemux`, `GPSReceiverDetector` and a folder for each family | The three above, `Core/Common` |
 | `Core` | `GPSReceiverWorker` | `Core/Protocols`, `Core/Transport`, `Core/Common` |
 | `NTRIP/HTTP` | `NTRIPHttpSession`, the request and response codec, `NTRIPConnectionConfig` | Nothing |
+| `Connection` | `GPSConnectionSupervisor` | Nothing |
 | `Positioning` | `GPSObservation`, `GPSSourceHealth`, `PositionManager` | `Core/Common` |
 | `Corrections` | `GPSCorrectionManager`, `GPSCorrectionSelector`, `RTCMMAVLink`, UDP input, the log, the loss alert | `Core/Common`, `Core/RTCM` |
 | `NTRIP` | `NTRIPManager`, its transport, `NTRIPGgaReporter`, the source table | `NTRIP/HTTP`, `Corrections`, `Positioning`, `Core/Common`, `Core/NMEA`, `Core/RTCM` |
@@ -76,6 +78,9 @@ Quoted names are what the settings show today; the user guide is the reference f
   commands of its plan through a `GPSCommandChannel`.
 - **Session**: one connection's lifetime: a `GPSReceiverSession` with its `GPSReceiverWorker` thread for a
   receiver, an `NTRIPHttpSession` for one exchange with a caster. The rest of `src/GPS` runs on the main thread.
+- **Connection supervisor**: a `GPSConnectionSupervisor`, the value that says for a connection that is kept up
+  when its next attempt opens, how long a retry waits, what it does behind a gate such as a missing network, and
+  when it gives up. Its owner opens the attempts and times the delays.
 - **Base state**: `GPSBaseState`: `Inactive`, `Active` while a survey or averaging runs, `Valid` once the base
   position holds. Base modes are "Survey-In", "Fixed position" and "Receiver-managed averaging".
 - **Correction source**: where RTCM comes from, a `GPSCorrectionSettings::CorrectionSource`: `LocalReceiver`
