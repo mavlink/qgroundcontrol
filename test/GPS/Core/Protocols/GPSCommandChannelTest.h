@@ -19,4 +19,6 @@ private slots:
     void _writeResults();
     void _invalidReadResults_data();
     void _invalidReadResults();
+    /// receiveFor() and receiveUntil() end with the deadline scope around them instead of polling until their own.
+    void _receivingEndsWithEnclosingDeadline();
 };

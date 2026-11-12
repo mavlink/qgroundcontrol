@@ -480,7 +480,7 @@ GPSReceiveUpdates GPSCommandChannel::receiveCycle(std::chrono::milliseconds time
 
 void GPSCommandChannel::receiveFor(std::chrono::milliseconds duration)
 {
-    const GPSDeadline until = GPSDeadline::after(nowUs(), duration);
+    const GPSDeadline until = _receivingUntil(duration);
     while (nowUs() < until.untilUs) {
         (void) _runtime.protocol().receive(*this, until.remaining(nowUs()));
         if (failed()) {
@@ -491,7 +491,7 @@ void GPSCommandChannel::receiveFor(std::chrono::milliseconds duration)
 
 bool GPSCommandChannel::receiveUntil(std::function<bool()> done, std::chrono::milliseconds duration)
 {
-    const GPSDeadline until = GPSDeadline::after(nowUs(), duration);
+    const GPSDeadline until = _receivingUntil(duration);
     while (!done() && nowUs() < until.untilUs) {
         (void) receiveCycle(until.remaining(nowUs()));
         if (failed()) {
@@ -499,6 +499,12 @@ bool GPSCommandChannel::receiveUntil(std::function<bool()> done, std::chrono::mi
         }
     }
     return done();
+}
+
+GPSDeadline GPSCommandChannel::_receivingUntil(std::chrono::milliseconds duration) const
+{
+    // Past the operation deadline every read returns at once, so a loop that outlived it would poll without blocking.
+    return {(std::min) (_operationDeadline.untilUs, GPSDeadline::after(nowUs(), duration).untilUs)};
 }
 
 void GPSCommandChannel::serviceControls()

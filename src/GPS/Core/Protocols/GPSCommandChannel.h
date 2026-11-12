@@ -208,10 +208,11 @@ public:
     /// family reports the cycle complete, the deadline passes, or I/O fails. @return the accumulated updates.
     GPSReceiveUpdates receiveCycle(std::chrono::milliseconds timeout);
 
-    /// Repeats the family's full streaming receive until @a duration has passed or I/O fails.
+    /// Repeats the family's full streaming receive until @a duration has passed, the operation deadline passes, or I/O
+    /// fails.
     void receiveFor(std::chrono::milliseconds duration);
 
-    /// Repeats receive cycles until @a done, @a duration has passed, or I/O fails.
+    /// Repeats receive cycles until @a done, @a duration has passed, the operation deadline passes, or I/O fails.
     /// @return whether @a done holds; false after a sticky failure.
     bool receiveUntil(std::function<bool()> done, std::chrono::milliseconds duration);
 
@@ -259,6 +260,9 @@ private:
 
     /// Reads one bounded chunk and decodes it. @return the chunk's updates.
     GPSReceiveUpdates _readAndDecode(std::chrono::milliseconds timeout);
+
+    /// When receiving for @a duration from now ends: no later than the operation deadline.
+    [[nodiscard]] GPSDeadline _receivingUntil(std::chrono::milliseconds duration) const;
 
     [[nodiscard]] QString _commandFailure(const QByteArray& label, GPSCommandOutcome outcome) const;
     /// Names the latest command, if it failed, as the failure's detail when the failure has none.

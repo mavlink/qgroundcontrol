@@ -917,4 +917,41 @@ void GPSCommandChannelTest::_invalidReadResults()
                                              .arg(result.detail)});
 }
 
+void GPSCommandChannelTest::_receivingEndsWithEnclosingDeadline()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    // A read whose deadline has passed returns at once, as a transport's does. It takes a millisecond here, so that
+    // a loop of such reads ends and is counted instead of hanging on the virtual clock.
+    int polls = 0;
+    auto io = makeGPSRuntimeTestIO(clock);
+    io.read = [&](std::span<uint8_t>, GPSDeadline deadline) -> GPSReadResult {
+        if (deadline.untilUs <= clock.nowUs()) {
+            ++polls;
+            clock.advanceBy(1000);
+        } else {
+            clock.advanceTo(deadline.untilUs);
+        }
+        return {GPSReadStatus::TimedOut};
+    };
+    QStringList notes;
+    GPSProtocolRuntime runtime(HARNESS_FAMILY,
+                               std::make_unique<ChannelHarness>(
+                                   [](GPSCommandChannel& c, ChannelHarness&, unsigned&, QStringList& stops) -> bool {
+                                       const auto scope = c.deadlineScope(10ms);
+                                       c.receiveFor(1s);
+                                       stops += QString::number(c.nowUs());
+                                       stops += c.receiveUntil([] { return false; }, 1s) ? QStringLiteral("done")
+                                                                                         : QStringLiteral("pending");
+                                       stops += QString::number(c.nowUs());
+                                       return true;
+                                   },
+                                   notes),
+                               std::move(io));
+    unsigned baud = 0;
+    QVERIFY(runtime.configure({}, baud));
+    QCOMPARE(polls, 0);
+    const QString scopeEnd = QString::number(GPSTestClock::START_US + 10000);
+    QCOMPARE(notes, (QStringList{scopeEnd, QStringLiteral("pending"), scopeEnd}));
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSCommandChannelTest, TestLabel::Unit)
