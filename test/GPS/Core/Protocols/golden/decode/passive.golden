@@ -32,12 +32,6 @@ file fixtures/synthetic-gga.nmea bytes=398
     input type=passive
     usage used=0 receipt=1
     position fix=3d lat=0.00000000 lon=0.00000000 msl=0.0000 ellipsoid=0.0000 hacc=nan vacc=nan hdop=0.000 vdop=nan speed=nan course=nan used=0 utc=0 velocity=0 receipt=1
-    usage used=- receipt=1
-    position fix=rtk-fixed lat=12.50000000 lon=-45.25000000 msl=nan ellipsoid=nan hacc=nan vacc=nan hdop=nan vdop=nan speed=nan course=nan used=- utc=0 velocity=0 receipt=1
-    usage used=12 receipt=1
-    position fix=rtk-float lat=-12.50000000 lon=-45.25000000 msl=-15.5000 ellipsoid=-45.7500 hacc=nan vacc=nan hdop=0.000 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
-    usage used=8 receipt=1
-    position fix=differential lat=12.50000000 lon=45.25000000 msl=0.0000 ellipsoid=nan hacc=nan vacc=nan hdop=0.750 vdop=nan speed=nan course=nan used=8 utc=0 velocity=0 receipt=1
     usage used=0 receipt=1
     position fix=none lat=nan lon=nan msl=nan ellipsoid=nan hacc=nan vacc=nan hdop=nan vdop=nan speed=nan course=nan used=0 utc=0 velocity=0 receipt=1
     usage used=0 receipt=1

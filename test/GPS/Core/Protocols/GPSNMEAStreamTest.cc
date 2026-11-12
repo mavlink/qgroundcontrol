@@ -744,6 +744,57 @@ void GPSNMEAStreamTest::_timeStepsBack()
     QVERIFY(std::isnan(navigation.horizontalAccuracyMeters));
 }
 
+void GPSNMEAStreamTest::_sentenceOfAnotherTalker_data()
+{
+    QTest::addColumn<QByteArrayList>("order");
+    QTest::addColumn<int>("reportsPerTime");
+    // A SiRFstar V reports the satellites of each constellation in a GGA of its own.
+    QTest::newRow("gga-per-constellation") << QByteArrayList{"GPGGA", "GLGGA", "GPGSA", "GNRMC"} << 1;
+    // A Telit PLS83 repeats the RMC as well.
+    QTest::newRow("gga-and-rmc-per-constellation") << QByteArrayList{"GPGGA", "GAGGA", "GPRMC", "GARMC"} << 1;
+    QTest::newRow("gga-last") << QByteArrayList{"GPRMC", "GARMC", "GPGLL", "GAGLL", "GPGGA", "GAGGA"} << 1;
+    // The first talker's sentence again is the next report, also of a receiver whose time stands still.
+    QTest::newRow("time-stands-still") << QByteArrayList{"GPGGA", "GLGGA", "GPGSA", "GNRMC"} << 1000;
+}
+
+void GPSNMEAStreamTest::_sentenceOfAnotherTalker()
+{
+    QFETCH(QByteArrayList, order);
+    QFETCH(int, reportsPerTime);
+    NMEAReceiver receiver;
+    for (int report = 1; report <= 6; ++report) {
+        const QByteArray utc = QByteArray::number(123519 + report / reportsPerTime);
+        receiver.now += EPOCH_INTERVAL_US;
+        uint64_t positionReceipt = 0;
+        QByteArrayList sent;
+        for (const auto& name : order) {
+            const QByteArray type = name.mid(NMEA::Sentence::TALKER_LENGTH);
+            // The epoch's sentence is the first of its type. The one another talker repeats differs in its satellite
+            // count or its course.
+            const bool first = !sent.contains(type);
+            sent.append(type);
+            receiver.now += SENTENCE_INTERVAL_US;
+            if (type == "GGA" && first) {
+                positionReceipt = receiver.now;
+            }
+            const QByteArray body = type == "GGA" ? "GPGGA," + utc + ",4807.038,N,01131.000,E,1," +
+                                                        (first ? "08" : "02") + ",0.9,100.0,M,10.0,M,,"
+                                                  : sentenceOfReport(type, utc, first ? 90 : 180);
+            receiver.feed(name.first(NMEA::Sentence::TALKER_LENGTH) + body.mid(NMEA::Sentence::TALKER_LENGTH));
+        }
+        // One position for each report, however many talkers repeat its sentences.
+        QCOMPARE(receiver.positions, report);
+        const auto& navigation = receiver.published->navigation;
+        QCOMPARE(navigation.timestampUs, positionReceipt);
+        QCOMPARE(navigation.satellitesUsed, std::optional<uint8_t>(8));
+        // Two reports show what the receiver sends after its GGA.
+        if (report > 2) {
+            QVERIFY(receiver.published->velocityValid);
+            QCOMPARE(qRound(qRadiansToDegrees(navigation.courseRadians)), 90);
+        }
+    }
+}
+
 void GPSNMEAStreamTest::_vdopEpoch_data()
 {
     QTest::addColumn<QByteArray>("firstUtc");

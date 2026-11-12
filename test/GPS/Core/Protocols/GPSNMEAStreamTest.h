@@ -34,6 +34,8 @@ private slots:
     void _timeDoesNotAdvance_data();
     void _timeDoesNotAdvance();
     void _timeStepsBack();
+    void _sentenceOfAnotherTalker_data();
+    void _sentenceOfAnotherTalker();
     void _vdopEpoch_data();
     void _vdopEpoch();
     void _unassociatedGsa_data();

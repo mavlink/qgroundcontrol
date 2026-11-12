@@ -92,12 +92,21 @@ void NavigationEpochAssembler::_resetEpoch(StoredEpoch& stored, std::optional<in
     stored.epoch.timeMs = timeMs;
 }
 
-NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_positionEpoch(std::optional<int> timeMs,
+NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_positionEpoch(std::optional<int> timeMs,
                                                                                 Position position,
+                                                                                std::string_view talker,
                                                                                 std::optional<NavigationEpoch>& overdue)
 {
-    // The same sentence of the same time again is the next report of a receiver whose time does not advance.
-    if (!_holds(_current, timeMs) || _current.positions.testFlag(position)) {
+    Talker sender{};
+    talker.copy(sender.data(), sender.size());
+    auto& held = _current.positions[static_cast<size_t>(position)];
+    const bool sameTime = _holds(_current, timeMs);
+    if (sameTime && held && *held != sender) {
+        return nullptr;
+    }
+    // The same sentence of the same time from the same talker is the next report of a receiver whose time does not
+    // advance.
+    if (!sameTime || held) {
         if (_current.active) {
             overdue = _end(_current);
         }
@@ -108,8 +117,8 @@ NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_positionEpoch(
         }
         _ahead = {};
     }
-    _current.positions |= position;
-    return _current;
+    held = sender;
+    return &_current;
 }
 
 std::optional<NavigationEpoch> NavigationEpochAssembler::_end(StoredEpoch& stored)
@@ -158,8 +167,12 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
 {
     // Position sentences reach here only with a receiver-declared valid fix; ingest() reports fix loss first.
     if (const auto ggaFix = gga(sentence)) {
-        auto& stored = _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), Position::GGA, overdue);
-        auto& epoch = stored.epoch;
+        auto* const stored = _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), Position::GGA,
+                                            sentence.talker(), overdue);
+        if (!stored) {
+            return &_current;
+        }
+        auto& epoch = stored->epoch;
         epoch.ggaQuality = ggaFix->quality;
         epoch.fixQuality = fixQuality(ggaFix->quality, GPSFixQuality::Fix3D);
         epoch.latitude = ggaFix->latitude;
@@ -169,10 +182,10 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
         epoch.satellitesUsed = ggaFix->satellitesUsed;
         epoch.horizontalDop = finiteValue(ggaFix->hdop);
         epoch.positionReceivedAtUs = receivedAtUs;
-        stored.sequence = _sequence;
+        stored->sequence = _sequence;
         _ggaInterval = MonotonicClock::age(_ggaReceivedAtUs, receivedAtUs).value_or(std::chrono::microseconds::zero());
         _ggaReceivedAtUs = receivedAtUs;
-        return &stored;
+        return stored;
     }
 
     const auto rmcFix = rmc(sentence);
@@ -186,13 +199,13 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
         return nullptr;
     }
     // Only the GGA's position is published.
-    auto& stored = _positionEpoch(timeMs, rmcFix ? Position::RMC : Position::GLL, overdue);
-    if (rmcFix) {
-        addReported(stored.epoch.speedMetersPerSecond, finiteValue(rmcFix->speedMetersPerSecond));
-        addReported(stored.epoch.courseDegrees, finiteValue(rmcFix->courseDegrees));
-        _add(stored, Addition::RMC, receivedAtUs);
+    auto* const stored = _positionEpoch(timeMs, rmcFix ? Position::RMC : Position::GLL, sentence.talker(), overdue);
+    if (stored && rmcFix) {
+        addReported(stored->epoch.speedMetersPerSecond, finiteValue(rmcFix->speedMetersPerSecond));
+        addReported(stored->epoch.courseDegrees, finiteValue(rmcFix->courseDegrees));
+        _add(*stored, Addition::RMC, receivedAtUs);
     }
-    return &stored;
+    return &_current;
 }
 
 NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(const Sentence& sentence,

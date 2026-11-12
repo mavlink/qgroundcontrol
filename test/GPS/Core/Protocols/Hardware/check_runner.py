@@ -208,6 +208,16 @@ def numbers(value: object) -> Iterator[float]:
         yield float(value)
 
 
+def at_second(sentence: bytes, second: int) -> bytes:
+    """An NMEA sentence with its time moved to the given second of its minute."""
+    body = sentence[1 : sentence.index(b"*")]
+    body = re.sub(rb",(\d{4})\d\d\b", b",\\g<1>%02d" % second, body, count=1)
+    checksum = 0
+    for byte in body:
+        checksum ^= byte
+    return b"$%s*%02X\r\n" % (body, checksum)
+
+
 def check_record_and_replay(binary: str) -> None:
     corpus = Path(__file__).resolve().parents[2] / "Protocols" / "corpus"
     fixtures = corpus.parent / "fixtures"
@@ -354,9 +364,17 @@ def check_record_and_replay(binary: str) -> None:
     assert not report["replay"]["session_recording"] and "sent_bytes" not in report["replay"], (
         report
     )
-    assert (
-        report["positions"]["messages"] > 0 and report["positions"]["fix_types"]["rtk-fixed"] == 1
-    )
+    assert report["positions"]["messages"] > 0, report
+    # The fixture's fixes have one time and come from several talkers, which makes all but the first a repeat of it
+    # for another constellation. Each at its own second is a position.
+    with TemporaryDirectory(prefix="gps-fixes-", dir=Path.cwd()) as directory:
+        fixes = Path(directory) / "fixes.nmea"
+        sentences = capture.read_bytes().splitlines()
+        fixes.write_bytes(
+            b"".join(at_second(line, second) for second, line in enumerate(sentences))
+        )
+        report = run(binary, ["--replay", str(fixes), *passive], 0)
+    assert report["positions"]["fix_types"]["rtk-fixed"] == 1, report
     # Summaries only: no coordinate field, and none of the synthetic fixes' coordinates.
     assert "latitude" not in json.dumps(report) and "longitude" not in json.dumps(report), report
     assert not {12.5, -12.5, 45.25, -45.25} & set(numbers(report)), report
