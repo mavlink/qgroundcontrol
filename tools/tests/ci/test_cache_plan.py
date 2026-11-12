@@ -73,7 +73,7 @@ def test_pull_request_keys_match_the_previous_action(workspace) -> None:
     fingerprint = compute_cpm_fingerprint(workspace.resolve())
     ccache = "ccache-linux-linux_gcc_64-Release"
     moc = "moccache-linux-linux_gcc_64"
-    cpm = "cpm-sources-v2-linux-linux_gcc_64"
+    cpm = "cpm-sources-v3-linux-linux_gcc_64"
 
     assert result.outputs == {
         "ccache_key": f"{ccache}-pr-42-{CCACHE_HASH}-7-1",
@@ -131,7 +131,7 @@ def test_variant_and_suffix_keys_match_the_previous_action(workspace) -> None:
     fingerprint = compute_cpm_fingerprint(workspace.resolve())
     ccache = "ccache-linux-linux_gcc_64-Debug-custom"
     moc = "moccache-linux-linux_gcc_64-shared"
-    cpm = "cpm-sources-v2-linux-linux_gcc_64"
+    cpm = "cpm-sources-v3-linux-linux_gcc_64"
 
     assert result.outputs["ccache_key"] == f"{ccache}-custom-debug-shared-{CCACHE_HASH}-7-1"
     assert restore_keys(result.outputs["ccache_restore_keys"]) == [

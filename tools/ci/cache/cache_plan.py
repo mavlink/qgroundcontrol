@@ -48,6 +48,10 @@ PULL_REQUEST_EVENTS = frozenset({"pull_request", "pull_request_target"})
 CCACHE_CONF = Path("tools/configs/ccache.conf")
 DEFAULT_CCACHE_MAX_SIZE = "2G"
 CPM_MODULES = ".cache/CPM"
+# Bump the version when a dependency's checkout shrinks or its directory layout changes. A new
+# fingerprint first restores the newest older archive through the restore keys and saves all it
+# finds, so content no build reads any more would stay in every later archive.
+CPM_KEY_PREFIX = "cpm-sources-v3"
 # Configure-check results ride inside the ccache directory, which every leg already restores and
 # saves; ccache's cleanup only manages its own hashed subdirectories.
 CHECK_RESULT_CACHE_SUBDIR = "qgc-configure-checks"
@@ -362,7 +366,7 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
                 environment["CCACHE_DIR"], fingerprint, inputs.runner_image
             )
         )
-    cpm_base = f"cpm-sources-v2-{host}-{target}{key_suffix}"
+    cpm_base = f"{CPM_KEY_PREFIX}-{host}-{target}{key_suffix}"
     outputs["cpm_mode"] = dependency_mode
     # PRs and branches restore an identical default-branch snapshot instead of saving a copy.
     outputs["cpm_shared_probe"] = str(release_save and not _same(scope, "shared")).lower()
@@ -371,8 +375,8 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
     outputs["cpm_restore_keys"] = _restore_keys(
         f"{cpm_base}-{scope}-",
         f"{cpm_base}-shared-",
-        f"cpm-sources-v2-{host}-{target}-{scope}-",
-        f"cpm-sources-v2-{host}-{target}-shared-",
+        f"{CPM_KEY_PREFIX}-{host}-{target}-{scope}-",
+        f"{CPM_KEY_PREFIX}-{host}-{target}-shared-",
     )
     # Desktop Linux and macOS builds use the system GStreamer.
     if target.lower().startswith("win") or _same(target, "android") or _same(target, "ios"):

@@ -230,6 +230,15 @@ def test_only_the_snapshot_upload_takes_a_name_the_cleanup_deletes(plan) -> None
             assert not is_snapshot_name(re.sub(r"\$\{\{.*?\}\}", "0" * 64, name)), label
 
 
+def test_cache_cleanup_protects_the_default_branch_caches_the_plan_saves(plan) -> None:
+    # Above its storage threshold the cleanup evicts every cache but the newest of each family
+    # it protects, so a key prefix that changes in the plan must change in the cleanup too.
+    outputs = plan().outputs
+    protected = re.compile(gh_cache_cleanup.DEFAULT_PROTECT)
+    for name in ("ccache_key", "moccache_key", "cpm_key", "gst_key"):
+        assert protected.search(outputs[name]), outputs[name]
+
+
 def test_cache_cleanup_dispatch_defaults_match_the_script() -> None:
     inputs = load_workflow("cache-cleanup.yml")["on"]["workflow_dispatch"]["inputs"]
     assert {name: spec.get("default", "") for name, spec in inputs.items()} == (

@@ -64,6 +64,9 @@ def _group(concurrency: dict, event: str, ref: str, run_id: int) -> str:
 
 # Workflows whose push runs publish in their own jobs, as the newest push must do last.
 _PUSH_RUNS_PUBLISH = {"devcontainer.yml", "docker.yml"}
+# Workflows that publish from a release tag's push run only (TestFlight); their branch pushes
+# have a group each.
+_TAG_PUSH_RUNS_PUBLISH = {"ios.yml"}
 
 
 def test_a_run_started_by_hand_never_displaces_a_push_run_that_is_waited_for() -> None:
@@ -72,10 +75,11 @@ def test_a_run_started_by_hand_never_displaces_a_push_run_that_is_waited_for() -
     # run. A run started by hand must therefore not wait in a ref's group: it would replace
     # the push run that waits there, and hold the group ahead of the pushes that follow.
     waited_for = set(load_workflow("publish.yml")["on"]["workflow_run"]["workflows"])
+    published = _PUSH_RUNS_PUBLISH | _TAG_PUSH_RUNS_PUBLISH
     checked = set()
     for name in workflow_names():
         workflow = load_workflow(name)
-        if workflow["name"] not in waited_for and name not in _PUSH_RUNS_PUBLISH:
+        if workflow["name"] not in waited_for and name not in published:
             continue
         assert {"push", "workflow_dispatch"} <= set(workflow["on"]), name
         block = workflow["concurrency"]
@@ -83,11 +87,12 @@ def test_a_run_started_by_hand_never_displaces_a_push_run_that_is_waited_for() -
             push = _group(block, "push", ref, 1)
             by_hand = _group(block, "workflow_dispatch", ref, 3)
             # The pushes to one ref take turns; a run started by hand waits for nobody.
-            assert _group(block, "push", ref, 2) == push, f"{name}: {ref}"
+            if name not in _TAG_PUSH_RUNS_PUBLISH or ref.startswith("refs/tags/"):
+                assert _group(block, "push", ref, 2) == push, f"{name}: {ref}"
             assert by_hand != push, f"{name}: {ref}"
             assert _group(block, "workflow_dispatch", ref, 4) != by_hand, f"{name}: {ref}"
         checked.add(name)
-    assert len(checked) == len(waited_for) + len(_PUSH_RUNS_PUBLISH)
+    assert len(checked) == len(waited_for) + len(published)
 
 
 # What uploads a build to an app store: the actions that do, the tools a script would call, and

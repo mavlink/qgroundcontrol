@@ -567,7 +567,7 @@ def test_pr_and_feature_caches_do_not_prevent_reaching_target() -> None:
 def test_select_prune_victims_never_evicts_protected() -> None:
     caches = [
         _usage("ccache-linux", 6000),
-        _usage("cpm-sources-v2-shared", 1000),
+        _usage("cpm-sources-v3-shared", 1000),
         _usage("avd-Linux", 3000),
     ]
     victims, _total, _projected = mod.select_prune_victims(
@@ -576,12 +576,15 @@ def test_select_prune_victims_never_evicts_protected() -> None:
     assert [v.key for v in victims] == ["avd-Linux"]
 
 
-def test_retired_cpm_modules_caches_are_evictable() -> None:
-    caches = [_usage("ccache-linux", 6000), _usage("cpm-modules-linux-shared-hash", 3000)]
+@pytest.mark.parametrize(
+    "retired", ["cpm-modules-linux-shared-hash", "cpm-sources-v2-linux-shared-hash"]
+)
+def test_retired_cpm_caches_are_evictable(retired: str) -> None:
+    caches = [_usage("ccache-linux", 6000), _usage(retired, 3000)]
     victims, _total, projected = mod.select_prune_victims(
         caches, keep_mb=6500, high_water_mb=8000, protect=mod.DEFAULT_PROTECT
     )
-    assert [v.key for v in victims] == ["cpm-modules-linux-shared-hash"]
+    assert [v.key for v in victims] == [retired]
     assert projected == 6000 * 1024 * 1024
 
 
@@ -677,7 +680,7 @@ def test_select_prune_victims_protects_dependency_cache(prefix: str) -> None:
     assert projected == 7000 * 1024 * 1024
 
 
-@pytest.mark.parametrize("prefix", ["ccache", "cpm-sources-v2", "gst-sdk-v1"])
+@pytest.mark.parametrize("prefix", ["ccache", "cpm-sources-v3", "gst-sdk-v1"])
 def test_select_prune_victims_replaces_legacy_static_entry(prefix: str) -> None:
     caches = [
         _usage(f"{prefix}-linux-shared-hash", 4000, accessed="2026-01-01"),

@@ -5,16 +5,20 @@ from __future__ import annotations
 import ast
 import functools
 import re
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..._helpers import REPO_ROOT, get_steps, load_action
 from .._workflows import local_action, step_groups
 from ..test_bootstrap_sparse_checkout import NAMED_FILE
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 INPUT_NAME = re.compile(r"INPUT_[A-Z0-9_]+")
 CMAKE_HELPER = "tools/ci/compile/cmake_helper.py"
-# Steps allowed to continue after a failed CTest run, as (label, step name): none.
-MAY_IGNORE_CTEST_FAILURE: frozenset[tuple[str, str]] = frozenset()
+# What may continue after a failed CTest run, as (label, step name), or (label, None) for a job
+# that continues on error as a whole: none.
+MAY_IGNORE_CTEST_FAILURE: frozenset[tuple[str, str | None]] = frozenset()
 
 
 def _script_calls(step: dict[str, Any]) -> list[tuple[str, list[str]]]:
@@ -136,13 +140,47 @@ def _runs_ctest(step: dict[str, Any]) -> bool:
     return name is not None and any(map(_runs_ctest, get_steps(load_action(name))))
 
 
-def test_no_step_continues_after_a_failed_ctest_run() -> None:
+def _ignored_ctest_failures(
+    groups: Iterable[tuple[str, dict[str, Any], list[dict[str, Any]]]],
+) -> set[tuple[str, str | None]]:
+    """Where a failed CTest run would not fail its job, among `step_groups()` entries."""
+    ignored: set[tuple[str, str | None]] = set()
+    for label, owner, steps in groups:
+        ctest_steps = [step for step in steps if _runs_ctest(step)]
+        ignored.update(
+            (label, step.get("name")) for step in ctest_steps if "continue-on-error" in step
+        )
+        # Only a job can have the key; an action's document cannot.
+        if ctest_steps and "continue-on-error" in owner:
+            ignored.add((label, None))
+    return ignored
+
+
+def test_no_step_or_job_continues_after_a_failed_ctest_run() -> None:
     # CTest's exit code is all that fails a job whose tests fail: `continue-on-error` on its
-    # step, or on a step that uses its action, would report every test failure as success.
-    ctest_steps = [
-        (label, step) for label, _, steps in step_groups() for step in steps if _runs_ctest(step)
+    # step, on a step that uses its action, or on the job would report every test failure as
+    # success.
+    groups = list(step_groups())
+    assert any(
+        label == "actions/run-unit-tests" and any(map(_runs_ctest, steps))
+        for label, _, steps in groups
+    )
+    assert _ignored_ctest_failures(groups) == MAY_IGNORE_CTEST_FAILURE
+
+
+def test_the_ctest_sweep_sees_a_step_and_a_job_that_continue_on_error() -> None:
+    ctest = {"name": "Test", "run": f'python3 "${{GITHUB_WORKSPACE}}/{CMAKE_HELPER}" ctest'}
+    build = {"name": "Build", "run": f"python3 {CMAKE_HELPER} build", "continue-on-error": True}
+    through_action = {"name": "Tests", "uses": "./.github/actions/run-unit-tests"}
+    groups = [
+        ("clean.yml:test", {}, [build, ctest]),
+        ("step.yml:test", {}, [{**ctest, "continue-on-error": True}]),
+        ("job.yml:test", {"continue-on-error": True}, [build, ctest]),
+        ("job.yml:build", {"continue-on-error": True}, [build]),
+        ("action.yml:test", {}, [{**through_action, "continue-on-error": True}]),
     ]
-    assert "actions/run-unit-tests" in {label for label, _ in ctest_steps}
-    assert {
-        (label, step.get("name")) for label, step in ctest_steps if "continue-on-error" in step
-    } == MAY_IGNORE_CTEST_FAILURE
+    assert _ignored_ctest_failures(groups) == {
+        ("step.yml:test", "Test"),
+        ("job.yml:test", None),
+        ("action.yml:test", "Tests"),
+    }

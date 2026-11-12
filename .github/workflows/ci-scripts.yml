@@ -102,8 +102,9 @@ jobs:
         with:
           groups: test,terrain,simulation,release
 
+      # -rs prints why each skipped test was skipped, such as a tool the runner lacks.
       - name: Run CI script tests
-        run: pytest -q -n auto tools/tests
+        run: pytest -q -rs -n auto tools/tests
 
   test-tools-windows:
     name: Test Python Tools (Windows)
@@ -140,4 +141,4 @@ jobs:
       # test_read_config.py reads the Dockerfile and test_artifact_report.py the GPL denylist in
       # PluginPolicy.cmake.
       - name: Run Windows-marked tests
-        run: pytest -q -n 2 --durations=15 -m windows tools/tests
+        run: pytest -q -rs -n 2 --durations=15 -m windows tools/tests

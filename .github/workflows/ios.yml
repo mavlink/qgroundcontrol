@@ -18,11 +18,12 @@ on:
         type: boolean
         default: false
 
-# Only a pull request's superseded runs are cancelled. A release tag's runs take turns: its push run
+# Only a pull request's superseded runs are cancelled. A release tag's push runs take turns: each
 # uploads to TestFlight. Every other run has its own group, so a newer push neither cancels it nor
-# replaces it while it waits.
+# replaces it while it waits, and a run started by hand on the tag neither replaces the tag's
+# waiting push run nor queues behind it.
 concurrency:
-  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || github.ref_type == 'tag') && github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'tag')) && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:

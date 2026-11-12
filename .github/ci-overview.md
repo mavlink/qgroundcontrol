@@ -169,8 +169,8 @@ without containers or VMs (`test_deploy_scripts.py`, `test_vm_build_vagrant.py`)
    Workflows whose pushes feed or overwrite per-ref publish targets (`linux`, `windows`, `macos`,
    `android`, `docker`, `devcontainer`, `docs`) group by `github.ref` instead: a ref's runs take
    turns and are never cancelled, but a waiting run gives way to a newer one. All but `docs` give
-   a run started by hand its own group (`github.run_id`). `ios.yml` groups by ref for tags and by
-   run for branches.
+   a run started by hand its own group (`github.run_id`). `ios.yml` groups a tag's push runs by
+   ref, every other run by run.
 3. **Every job**: `timeout-minutes`; harden-runner first (`if: runner.environment ==
    'github-hosted'` where the job can run on RunsOn); least-privilege `permissions`;
    `persist-credentials: false` on checkouts. Pin a third-party action to its release's commit

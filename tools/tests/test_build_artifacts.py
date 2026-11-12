@@ -7,6 +7,7 @@ from qgc_tools.build_artifacts import (
     BUILDS_URL,
     PUBLISHED_BUILDS,
     RETIRED_BUILD_NAMES,
+    companion_names,
     is_distributable_artifact,
     is_public_name,
     is_publishable_name,
@@ -77,6 +78,15 @@ def test_a_workflow_s_packages_are_the_published_builds_it_builds() -> None:
     workflows = ("Linux", "Windows", "MacOS", "Android")
     names = [name for workflow in workflows for name in workflow_packages(workflow)]
     assert sorted(names) == sorted(build.name for build in PUBLISHED_BUILDS)
+
+
+def test_only_an_appimage_with_a_public_name_has_a_companion() -> None:
+    appimage = "QGroundControl-x86_64.AppImage"
+    assert companion_names(appimage) == (f"{appimage}.zsync",)
+    assert companion_names("QGroundControl.dmg") == ()
+    # An AppImage by its suffix, but not a package file name.
+    assert not is_public_name("QGroundControl x86_64.AppImage")
+    assert companion_names("QGroundControl x86_64.AppImage") == ()
 
 
 @pytest.mark.parametrize(

@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 DEFAULT_PROTECT = (
-    r"^(apt-debs|ccache|cpm-sources-v2|gst-sdk-v1|moccache|qt"
+    r"^(apt-debs|ccache|cpm-sources-v3|gst-sdk-v1|moccache|qt"
     r"|prek-v1|prek-renovate-v1|lychee-v1)-"
 )
 _ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")

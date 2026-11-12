@@ -167,7 +167,9 @@ step leaves it out.
   snapshots are not saved again. Keys follow host and target, so Debug legs (the iOS simulator,
   Linux's custom plugin) restore their platform's Release snapshot; a `cache-key-suffix` splits them
   (Android legs), and suffixed legs fall back to the unsuffixed platform's sources. A managed runner
-  image's CPM seed fills an empty cache when its fingerprint matches.
+  image's CPM seed fills an empty cache when its fingerprint matches. Bump the keys' version
+  (`CPM_KEY_PREFIX`, `cpm-sources-v3`) when a dependency's checkout shrinks or its directory
+  layout changes: the restore keys carry an older archive's content into every later one.
 - ArduPilot's parameter metadata lives in the CPM source cache too: `qgc_git_sparse_checkout()`
   (`cmake/modules/GitSparseCheckout.cmake`) fetches the one pinned commit and checks out only the
   parameter definitions (66 MB of a 440 MB tree at the commit pinned in November 2026) into a

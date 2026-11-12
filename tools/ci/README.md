@@ -261,10 +261,10 @@ Import scripts outside the `tools/` packages with `load_script()`. A test reads 
 it checks directly, without skipping when they are missing: a file absent from a CI sparse checkout
 fails the test. Mark the tests of each script that `windows.yml` runs on Windows, and of other
 Windows-specific code paths, with `pytestmark = pytest.mark.windows`; the Windows CI job runs
-`pytest -n 2 --durations=15 -m windows tools/tests` (two xdist workers are a trial; revert to
+`pytest -q -rs -n 2 --durations=15 -m windows tools/tests` (two xdist workers are a trial; revert to
 serial if CI shows it slower).
 
-Run the same suite as CI (`pytest -q -n auto tools/tests`):
+Run the same suite as CI (`pytest -q -rs -n auto tools/tests`):
 
 ```bash
 just test-python
