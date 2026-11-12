@@ -34,6 +34,9 @@ Item {
     property bool radiusLabelVisible: false
     property int altitudeMode: GeoMapItem.ClampToGround
 
+    /// A handle is held or dragged. The map moving meanwhile would change the edit: see GeoMap.itemDragActive
+    readonly property bool dragActive: centerHandle.dragActive || radiusHandle.dragActive
+
     readonly property var _center: mapCircle ? mapCircle.center : QtPositioning.coordinate()
     readonly property real _radius: mapCircle ? mapCircle.radius.rawValue : 0
     readonly property var _camera: scene ? scene.camera : null
@@ -46,6 +49,7 @@ Item {
         property bool labelVisible: false
         property string labelText
         property bool showGroundDrop: false     ///< Drop line and ground shadow under a floating handle
+        readonly property bool dragActive: handleMouseArea.pressed
 
         signal dragged(var coordinate)
 
@@ -107,6 +111,7 @@ Item {
         }
 
         MouseArea {
+            id: handleMouseArea
             anchors.fill: parent
             // The map pan DragHandler would otherwise take over past the drag threshold
             preventStealing: true
@@ -195,6 +200,7 @@ Item {
     }
 
     DragHandle {
+        id: centerHandle
         objectName: "geoMapCircleCenterHandle"
         scene: root.scene
         surfaceModel: root.surfaceModel
@@ -207,6 +213,7 @@ Item {
     }
 
     DragHandle {
+        id: radiusHandle
         objectName: "geoMapCircleRadiusHandle"
         scene: root.scene
         surfaceModel: root.surfaceModel

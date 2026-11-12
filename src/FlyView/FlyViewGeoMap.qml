@@ -24,6 +24,7 @@ GeoMapView {
     allowGCSLocationCenter: true
     allowVehicleLocationCenter: true
     keepVehicleCentered: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
+    itemDragActive: fwdFlightGotoMapCircle.dragActive || orbitMapCircle.dragActive
 
     // Guided-action indicators for the map click drop panel (FlyViewMapClickDropPanel)
     readonly property var gotoIndicator: gotoLocationItem

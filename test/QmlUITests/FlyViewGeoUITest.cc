@@ -759,12 +759,11 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
                                              .toDouble();
             // The map one-shot centers on the first vehicle position: wait it out. The map also moves a vehicle
             // that is out of view or under a Fly View widget to the middle, half a second at most after it gets
-            // there, and with the edit in the middle the vehicle is under the instrument panel: turned off, so
-            // the camera stays put under the drags
+            // there, and with the edit in the middle the vehicle is under the instrument panel: the drags below
+            // check that the camera stays put under them all the same
             auto* const positionTracker = geoMap->findChild<MapPositionTracker*>();
             QVERIFY2(positionTracker, "MapPositionTracker not found");
             QTRY_VERIFY_WITH_TIMEOUT(positionTracker->firstVehiclePositionReceived(), kItemAppearTimeoutMs);
-            QVERIFY(geoMap->setProperty("followOffscreenVehicle", false));
             const QGeoCoordinate loiterCenter = vehicle->coordinate().atDistanceAndAzimuth(100, 0);
             cam->lookAt(loiterCenter, 0, 0, 600);
             QVERIFY(QMetaObject::invokeMethod(gotoItem, "show", Q_ARG(QVariant, QVariant::fromValue(loiterCenter))));
@@ -783,7 +782,7 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
             };
             double radiusTolerance = 0.0;
             // Drags the radius handle to where a ring of targetRadius draws its handle
-            const auto dragRadiusTo = [this, cam, &handleCenter, &toWin, &radiusTolerance](
+            const auto dragRadiusTo = [this, cam, positionTracker, &handleCenter, &toWin, &radiusTolerance](
                                           QQuickItem* handle, const QGeoCoordinate& center, double targetRadius) {
                 const double handleZ = handle->property("scenePosition").value<QVector3D>().z();
                 const auto target = radiusHandleScreenPos(cam, center, targetRadius, handleZ);
@@ -793,11 +792,17 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
                 radiusTolerance = *tolerance;
                 const QPointF from = handleCenter(handle);
                 QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, toWin(from));
+                // Holding the handle pauses the following as a map gesture does, and stops a recenter under way
+                QVERIFY(positionTracker->userInteracting());
+                QVERIFY(!positionTracker->animating());
+                const QGeoCoordinate heldCenter = cam->center();
                 constexpr int steps = 10;
                 for (int i = 1; i <= steps; i++) {
                     QTest::mouseMove(_window, toWin(from + (((*target - from) * i) / steps)));
                 }
                 QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, toWin(*target));
+                QVERIFY(!positionTracker->userInteracting());
+                QCOMPARE(cam->center(), heldCenter);
             };
             const double editedRadius = defaultRadius + 50.0;
 
@@ -808,6 +813,10 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
             QVERIFY(radiusHandle->property("labelVisible").toBool());
             QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("geoMapCircleCenterHandle"), 0),
                      "Loiter center must not be draggable");
+            // The first drag starts while the map moves the vehicle to the middle, whether it already had begun to
+            positionTracker->evaluateOccluderFollow(QPointF(-1, -1), QRectF(0, 0, geoMap->width(), geoMap->height()),
+                                                    {});
+            QVERIFY(positionTracker->animating());
             dragRadiusTo(radiusHandle, gotoItem->property("coordinate").value<QGeoCoordinate>(), editedRadius);
             QCOMPARE_LT(qAbs(loiterRadius->rawValue().toDouble() - editedRadius), radiusTolerance);
             QVERIFY(QMetaObject::invokeMethod(loiterVisuals, "actionCancelled"));

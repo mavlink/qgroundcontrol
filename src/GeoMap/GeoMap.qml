@@ -56,6 +56,7 @@ Item {
     property rect followViewportRect: Qt.rect(0, 0, width, height)   ///< Map area the followed vehicle is kept within
     property var followOccluders: []                                ///< Rects within the viewport covered by host UI
     property bool followOffscreenVehicle: true                      ///< false: the map is not recentered when the vehicle leaves the viewport
+    property bool itemDragActive: false                             ///< Set by the view while one of its map items is dragged: following pauses as for a gesture
 
     // Live SurfaceModel stats for debug overlays
     property alias patchCount: patchModel.patchCount
@@ -146,6 +147,13 @@ Item {
         recenterAnimation.stop()
     }
 
+    onItemDragActiveChanged: {
+        if (itemDragActive) {
+            // A recenter under way would go on moving the map under the item
+            recenterAnimation.stop()
+        }
+    }
+
     // Keep the camera's look-at point riding the terrain data, not the drawn
     // mesh: the pivot feeds LOD selection, so following patch churn would loop.
     // Without this the orbit center stays at z=0 and a close-zoom 2D->3D switch
@@ -210,6 +218,7 @@ Item {
         centerGCSWhenVehicleValid: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
         userInteracting: panHandler.active || orbitHandler.active || shiftOrbitHandler.active
                          || lookHandler.active || metaLookHandler.active || pinchHandler.active
+                         || root.itemDragActive
         animating: recenterAnimation.running
 
         onCenterMap: (coordinate, firstPosition) => {
