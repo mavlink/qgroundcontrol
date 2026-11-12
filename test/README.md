@@ -21,6 +21,7 @@
   - [Via the QGroundControl Binary](#via-the-qgroundcontrol-binary-unittest-build)
   - [Convenience Targets](#convenience-targets)
   - [QML Test Split](#qml-test-split)
+  - [Tests That Use the Host's Bluetooth](#tests-that-use-the-hosts-bluetooth)
 - [Portable Utility Tests](#portable-utility-tests)
 - [GPS Protocol Golden Transcripts](#gps-protocol-golden-transcripts)
 - [MultiSignalSpy](#multisignalspy)
@@ -371,6 +372,22 @@ A C++ suite can also test one QML component outside the main window, with the fi
 `UnitTestFramework/QmlTesting/QmlFixtures.h`. `TestFixtures::QmlEngine` creates the component from inline QML or
 from its source file (`TestFixtures::sourceQmlUrl()`), and `TestFixtures::QmlWindowFixture` shows it for
 assertions that need layout or rendering. The panel suites in `test/GPS/Qml` are written this way.
+
+### Tests That Use the Host's Bluetooth
+
+Two suites in `test/Comms/Bluetooth` act on the machine they run on, so they skip every test function unless
+their switch is set in the environment, whatever the labels of the run:
+
+| Suite                          | Switch                              | What it does when switched on                                                    |
+| ------------------------------ | ----------------------------------- | -------------------------------------------------------------------------------- |
+| `BluetoothLiveAdapterTest`     | `QGC_TEST_BLUETOOTH_LIVE_ADAPTER=1` | Lists the adapter's devices and starts a scan, which powers the adapter on       |
+| `BluetoothEmulatedAdapterTest` | `QGC_TEST_BLUETOOTH_EMULATION=1`    | Starts a BlueZ emulator (`btvirt -l2`, or `QGC_TEST_BLUETOOTH_EMULATOR_CMD`)     |
+
+```bash
+QGC_TEST_BLUETOOTH_LIVE_ADAPTER=1 ctest --test-dir build -R BluetoothLiveAdapterTest --output-on-failure
+```
+
+The other Bluetooth suites run everywhere: they must not scan, pair or connect with the host's adapter.
 
 ## Portable Utility Tests
 

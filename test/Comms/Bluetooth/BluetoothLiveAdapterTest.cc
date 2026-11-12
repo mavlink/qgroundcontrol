@@ -50,6 +50,12 @@ static QString _firstAdapterAddressOrEmpty(const QVariantList &adapters)
 
 void BluetoothLiveAdapterTest::init()
 {
+    // These tests use the host's own adapter: they list its devices and scan, and a scan powers the adapter on.
+    // They run on request only. The skip comes before UnitTest::init(), which requires a cleanup() a skip prevents
+    if (qEnvironmentVariable("QGC_TEST_BLUETOOTH_LIVE_ADAPTER") != QStringLiteral("1")) {
+        QSKIP("Set QGC_TEST_BLUETOOTH_LIVE_ADAPTER=1 to run the tests that use this host's Bluetooth adapter");
+    }
+
     UnitTest::init();
 
     // Qt's Bluetooth stack emits environment-dependent warnings when BlueZ is
