@@ -90,10 +90,9 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
 
     if (_networkMonitor) {
         connect(_networkMonitor, &QGCNetworkAvailabilityMonitor::availableChanged, this, [this](bool available) {
-            if (!available || _shutdown || _connectionStatus != ConnectionStatus::Reconnecting || !_waitingForNetwork) {
+            if (!available || _shutdown || !_waitsFor(Wait::Network)) {
                 return;
             }
-            _waitingForNetwork = false;
             _dispatch(Event::ReconnectDue);
             _publish();
         });
@@ -119,8 +118,7 @@ QString NTRIPManager::securityWarning() const
 
 QString NTRIPManager::statusMessage() const
 {
-    // No state has been entered before the first connection.
-    const QString message = _statusMessage.isEmpty() ? _defaultMessageFor(_connectionStatus) : _statusMessage;
+    const QString message = _stateMessage();
     if (!_savedCaster) {
         return message;
     }
@@ -128,6 +126,51 @@ QString NTRIPManager::statusMessage() const
     //: %1 is the connection status, such as "Connected"; %2 the name of the saved caster in use instead of the
     //: caster that is entered
     return tr("%1 (saved caster %2)").arg(message, _savedCaster->name);
+}
+
+QString NTRIPManager::_stateMessage() const
+{
+    switch (_connectionStatus) {
+        case ConnectionStatus::Disconnected:
+            break;
+        case ConnectionStatus::Connecting:
+            //: %1 is the caster's host and port, such as caster.example.com:2101
+            return tr("Connecting to %1...").arg(_running.connection.endpoint());
+        case ConnectionStatus::Connected:
+            if (_stats.messagesReceived() > 0) {
+                return tr("Connected");
+            }
+            // A network RTK (VRS) mountpoint sends nothing until it is told a position, and may then take a minute
+            // or more over its first corrections, so until corrections arrive the message says which of the two the
+            // stream waits for.
+            return _ggaReporter.currentSource().isEmpty() ? tr("Connected, waiting for a position to report")
+                                                          : tr("Connected, waiting for corrections");
+        case ConnectionStatus::Reconnecting:
+            switch (_waitingFor) {
+                case Wait::Vehicle:
+                    return tr("Waiting for a vehicle");
+                case Wait::Network:
+                    return tr("Waiting for network");
+                case Wait::Delay:
+                    break;
+            }
+            return tr("Reconnecting in %1s: %2").arg(_retryDelay.count() / 1000).arg(_lastFailureDetail);
+        case ConnectionStatus::Error:
+            switch (_stopReason) {
+                case StopReason::GaveUp:
+                    return tr("Gave up after %1 reconnect attempts: %2")
+                        .arg(MAX_RECONNECT_ATTEMPTS)
+                        .arg(_lastFailureDetail);
+                case StopReason::DataLimit:
+                    //: %1 is the limit, a number of megabytes
+                    return tr("Stopped at the data limit of %1 MB").arg(_stoppedAtCapMB);
+                case StopReason::Failure:
+                    break;
+            }
+            // A failure that gives no reason still says that the connection ended.
+            return _lastFailureDetail.isEmpty() ? tr("Error") : _lastFailureDetail;
+    }
+    return tr("Disconnected");
 }
 
 void NTRIPManager::init()
@@ -248,6 +291,7 @@ void NTRIPManager::_start()
     _cancelReconnect();
     _reconnectBackoff.reset();
     _useEnteredCaster();
+    _everStarted = true;
     _dispatch(_shouldWaitForVehicle() ? Event::NoVehicle : Event::StartRequested);
     _publish();
 }
@@ -267,7 +311,9 @@ void NTRIPManager::_publish()
         emit connectionStatusChanged();
     }
     const QString savedCaster = _savedCaster ? _savedCaster->name : QString();
-    const bool messageChanged = std::exchange(_notified.message, _statusMessage) != _statusMessage;
+    // Until the connection is first started its message was announced by no signal, and is no change to announce.
+    const QString message = _everStarted ? _stateMessage() : QString();
+    const bool messageChanged = std::exchange(_notified.message, message) != message;
     if (std::exchange(_notified.savedCaster, savedCaster) != savedCaster || messageChanged) {
         emit statusMessageChanged();
     }
@@ -280,7 +326,7 @@ void NTRIPManager::_publish()
     }
 }
 
-bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milliseconds retryAfter)
+bool NTRIPManager::_dispatch(Event ev, std::chrono::milliseconds retryAfter)
 {
     using CS = ConnectionStatus;
 
@@ -339,7 +385,7 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
 
     for (const auto& row : kTransitions) {
         if (row.from == _connectionStatus && row.event == ev) {
-            _enterState(row.to, detail, retryAfter);
+            _enterState(row.to, retryAfter);
             return true;
         }
     }
@@ -347,56 +393,26 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
     return false;
 }
 
-void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter)
+void NTRIPManager::_enterState(ConnectionStatus to, std::chrono::milliseconds retryAfter)
 {
     const ConnectionStatus from = _connectionStatus;
-    const QString msg = detail.isEmpty() ? _defaultMessageFor(to) : detail;
     if (from != to) {
-        _waitingForNetwork = false;
-        qCDebug(NTRIPManagerLog) << "NTRIP state" << from << "→" << to << msg;
+        qCDebug(NTRIPManagerLog) << "NTRIP state" << from << "→" << to;
     }
 
-    // Commit state + message before running entry actions so that a recursive
+    // Commit the state before running entry actions so that a recursive
     // _dispatch() from inside an entry action (e.g. _openSession → ConfigInvalid)
     // observes the already-committed state, not the stale caller value.
     _connectionStatus = to;
-    _statusMessage = msg;
 
     // Entry action runs on every dispatched transition, including self-transitions
     // (e.g. Connecting→Connecting on HotReconfigure).
     _onEnterState(to, retryAfter);
 }
 
-QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
-{
-    switch (state) {
-        case ConnectionStatus::Disconnected:
-            return tr("Disconnected");
-        case ConnectionStatus::Connecting:
-            return tr("Connecting...");
-        case ConnectionStatus::Connected:
-            return tr("Connected");
-        case ConnectionStatus::Reconnecting:
-            return tr("Reconnecting...");
-        case ConnectionStatus::Error:
-            break;
-    }
-    return tr("Error");
-}
-
-QString NTRIPManager::_connectedMessage() const
-{
-    if (_stats.messagesReceived() > 0) {
-        return _defaultMessageFor(ConnectionStatus::Connected);
-    }
-    return _ggaReporter.currentSource().isEmpty() ? tr("Connected, waiting for a position to report")
-                                                  : tr("Connected, waiting for corrections");
-}
-
 void NTRIPManager::_refreshConnectedMessage()
 {
     if (_connectionStatus == ConnectionStatus::Connected) {
-        _statusMessage = _connectedMessage();
         _publish();
     }
 }
@@ -425,7 +441,6 @@ void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds 
 
         case ConnectionStatus::Connected:
             _stats.start();
-            _statusMessage = _connectedMessage();
             // Last, because a position reported at once publishes this state.
             _ggaReporter.start(_transport);
             break;
@@ -460,24 +475,27 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
         return;
     }
     if (_shouldWaitForNetwork()) {
-        _waitForNetwork();
+        _waitingFor = Wait::Network;
         return;
     }
 
     if (_reconnectExhausted()) {
-        _dispatch(Event::ReconnectGaveUp,
-                  tr("Gave up after %1 reconnect attempts: %2").arg(MAX_RECONNECT_ATTEMPTS).arg(_lastFailureDetail));
+        _stopReason = StopReason::GaveUp;
+        _dispatch(Event::ReconnectGaveUp);
         return;
     }
     const ExponentialBackoff beforeAttempt = _reconnectBackoff;
-    const auto backoff = _reconnectBackoff.next(retryAfter);
-    _reconnectTask.schedule(backoff, [this, beforeAttempt]() {
+    _waitingFor = Wait::Delay;
+    _retryDelay = _reconnectBackoff.next(retryAfter);
+    qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << _retryDelay.count() << "ms (attempt"
+                             << _reconnectBackoff.attempts() << ")";
+    _reconnectTask.schedule(_retryDelay, [this, beforeAttempt]() {
         if (_shouldWaitForVehicle()) {
             _waitForVehicle();
         } else if (_shouldWaitForNetwork()) {
             // The attempt never ran, so the next one keeps its delay.
             _reconnectBackoff = beforeAttempt;
-            _waitForNetwork();
+            _waitingFor = Wait::Network;
         } else {
             _dispatch(Event::ReconnectDue);
         }
@@ -488,8 +506,6 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
 void NTRIPManager::_cancelReconnect()
 {
     _reconnectTask.cancel();
-    _waitingForNetwork = false;
-    _waitingForVehicle = false;
 }
 
 bool NTRIPManager::_dataCapReached() const
@@ -498,10 +514,12 @@ bool NTRIPManager::_dataCapReached() const
     return _configuration.dataCapMB > 0 && _linkBytes >= _configuration.dataCapMB * megabyte;
 }
 
-QString NTRIPManager::_dataCapMessage() const
+void NTRIPManager::_stopAtDataCap()
 {
-    //: %1 is the limit, a number of megabytes
-    return tr("Stopped at the data limit of %1 MB").arg(_configuration.dataCapMB);
+    qCWarning(NTRIPManagerLog) << "NTRIP stopped at the data limit of" << _configuration.dataCapMB << "MB";
+    _stopReason = StopReason::DataLimit;
+    _stoppedAtCapMB = _configuration.dataCapMB;
+    _dispatch(Event::DataCapReached);
 }
 
 void NTRIPManager::_onDataReceived(qint64 bytes)
@@ -511,8 +529,7 @@ void NTRIPManager::_onDataReceived(qint64 bytes)
     }
     _linkBytes += static_cast<quint64>(bytes);
     if (_dataCapReached()) {
-        qCWarning(NTRIPManagerLog) << "NTRIP stopped at the data limit of" << _configuration.dataCapMB << "MB";
-        _dispatch(Event::DataCapReached, _dataCapMessage());
+        _stopAtDataCap();
         _publish();
     }
 }
@@ -526,11 +543,9 @@ void NTRIPManager::_waitForVehicle()
 {
     // A reconnect that was due is not: the next vehicle starts the connection anew, from the entered caster.
     _reconnectTask.cancel();
-    _waitingForNetwork = false;
-    _waitingForVehicle = true;
+    _waitingFor = Wait::Vehicle;
     _reconnectBackoff.reset();
     _useEnteredCaster();
-    _statusMessage = tr("Waiting for a vehicle");
 }
 
 void NTRIPManager::_onVehiclePresenceChanged(bool present)
@@ -540,8 +555,7 @@ void NTRIPManager::_onVehiclePresenceChanged(bool present)
     }
     if (present) {
         _vehicleHoldTask.cancel();
-        if (_connectionStatus == ConnectionStatus::Reconnecting && _waitingForVehicle) {
-            _waitingForVehicle = false;
+        if (_waitsFor(Wait::Vehicle)) {
             _dispatch(Event::ReconnectDue);
             _publish();
         }
@@ -553,7 +567,7 @@ void NTRIPManager::_onVehiclePresenceChanged(bool present)
     }
     // A link that drops and returns within the hold leaves the stream as it is.
     _vehicleHoldTask.schedule(VEHICLE_HOLD, [this]() {
-        if (_shouldWaitForVehicle() && !_waitingForVehicle) {
+        if (_shouldWaitForVehicle() && !_waitsFor(Wait::Vehicle)) {
             _dispatch(Event::NoVehicle);
             _publish();
         }
@@ -576,12 +590,6 @@ bool NTRIPManager::_casterIsLoopback() const
     return address.setAddress(host) && address.isLoopback();
 }
 
-void NTRIPManager::_waitForNetwork()
-{
-    _waitingForNetwork = true;
-    _statusMessage = tr("Waiting for network");
-}
-
 void NTRIPManager::_openSession()
 {
     _stopStreaming();
@@ -600,16 +608,14 @@ void NTRIPManager::_openSession()
     if (!err.isEmpty()) {
         qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << connection.host
                                    << " port=" << connection.port;
-        _dispatch(Event::ConfigInvalid, err);
+        _lastFailureDetail = err;
+        _stopReason = StopReason::Failure;
+        _dispatch(Event::ConfigInvalid);
         return;
     }
 
     qCDebug(NTRIPManagerLog) << "Starting NTRIP transport: host=" << connection.host << " port=" << connection.port
                              << " mount=" << connection.mountpoint;
-
-    // Replace the generic "Connecting..." with a host-specific message.
-    //: %1 is the caster's host and port, such as caster.example.com:2101
-    _statusMessage = tr("Connecting to %1...").arg(connection.endpoint());
 
     _running = config;
     _stats.reset();
@@ -696,7 +702,8 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     const bool retryable = isRetryable(code, _streamServed);
     // What is wrong with the entered caster is the user's to see; a saved caster that fails so is left out instead.
     if (!_isEnabled() || (!retryable && !_savedCaster)) {
-        _dispatch(Event::TransportFatalError, detail);
+        _stopReason = StopReason::Failure;
+        _dispatch(Event::TransportFatalError);
         _publish();
         return;
     }
@@ -709,11 +716,7 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
         nextCaster = _goToNextCaster();
     }
     // A caster's Retry-After says nothing of another caster.
-    const auto retryAfter = nextCaster ? std::chrono::milliseconds{} : failure.retryAfter;
-    const auto backoffMs = _reconnectBackoff.peek(retryAfter).count();
-    qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt"
-                             << (_reconnectBackoff.attempts() + 1) << ")";
-    _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail), retryAfter);
+    _dispatch(Event::TransportError, nextCaster ? std::chrono::milliseconds{} : failure.retryAfter);
     _publish();
 }
 
@@ -829,8 +832,7 @@ void NTRIPManager::_applyConfiguration()
         // The limit was set below what has arrived. A connection that ended at it stays ended, whatever else is
         // changed: only Connect, Retry or a limit that leaves room starts it.
         if (_connectionStatus != ConnectionStatus::Error) {
-            qCWarning(NTRIPManagerLog) << "NTRIP stopped at the data limit of" << _configuration.dataCapMB << "MB";
-            _dispatch(Event::DataCapReached, _dataCapMessage());
+            _stopAtDataCap();
         }
     } else if (!isActive) {
         // Disconnected / Error / Reconnecting: start fresh. The connecting

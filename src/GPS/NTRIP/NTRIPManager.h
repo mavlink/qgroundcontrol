@@ -234,6 +234,22 @@ private:
         QString streamMountpoint;
     };
 
+    /// What a connection in the Reconnecting state waits for.
+    enum class Wait
+    {
+        Delay,  ///< The delay before its next attempt, _retryDelay.
+        Network,
+        Vehicle,
+    };
+
+    /// Why a connection is in the Error state.
+    enum class StopReason
+    {
+        Failure,    ///< A failure that is not retried, or a configuration that is not valid: _lastFailureDetail.
+        GaveUp,     ///< The last of MAX_RECONNECT_ATTEMPTS failed.
+        DataLimit,  ///< _stoppedAtCapMB megabytes arrived.
+    };
+
     /// Emits one change signal for each property that differs from what the signals last announced. Public operations
     /// and event handlers call it once the state machine has settled, so observers never see a half-entered state.
     void _publish();
@@ -244,22 +260,20 @@ private:
 
     /// Dispatch an event. Returns true if a transition was found and taken.
     /// Events with no matching row for the current state are ignored (debug log).
-    bool _dispatch(Event ev, const QString& detail = {}, std::chrono::milliseconds retryAfter = {});
+    bool _dispatch(Event ev, std::chrono::milliseconds retryAfter = {});
 
     /// Commit a state change before invoking entry actions, so recursive dispatches from entry
     /// actions observe the new state.
-    void _enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter = {});
+    void _enterState(ConnectionStatus to, std::chrono::milliseconds retryAfter = {});
 
     /// Per-state side effects (open or retire the transport, schedule reconnect, etc.).
     void _onEnterState(ConnectionStatus to, std::chrono::milliseconds retryAfter);
 
-    /// Default user-visible message for a state. Callers may override via detail.
-    static QString _defaultMessageFor(ConnectionStatus state);
-    /// The message of the Connected state. A network RTK (VRS) mountpoint sends nothing until it is told a position,
-    /// and may then take a minute or more over its first corrections, so until corrections arrive the message says
-    /// which of the two the stream waits for.
-    QString _connectedMessage() const;
-    /// Publishes _connectedMessage() while connected; the other states publish their own message.
+    /// The one place that words what the connection is doing or why it stopped, from the state and the values kept
+    /// for it. statusMessage() adds the saved caster in use.
+    QString _stateMessage() const;
+    /// Publishes the message of the Connected state, which says what the stream waits for, once that has changed;
+    /// the other states publish their own message.
     void _refreshConnectedMessage();
 
     /// Stops the previous stream, registers the new one as the NTRIP correction source in place of the previous
@@ -289,7 +303,12 @@ private:
 
     bool _shouldWaitForNetwork() const;
     bool _casterIsLoopback() const;
-    void _waitForNetwork();
+
+    /// The connection is in the Reconnecting state, waiting for @a what.
+    bool _waitsFor(Wait what) const
+    {
+        return _connectionStatus == ConnectionStatus::Reconnecting && _waitingFor == what;
+    }
 
     /// How long the stream outlasts the last vehicle.
     static constexpr std::chrono::milliseconds VEHICLE_HOLD{10000};
@@ -300,7 +319,8 @@ private:
 
     /// As much has arrived in this run of the connection as it may use.
     bool _dataCapReached() const;
-    QString _dataCapMessage() const;
+    /// Ends the connection with the error that it reached its data limit.
+    void _stopAtDataCap();
     void _onDataReceived(qint64 bytes);
 
     bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= MAX_RECONNECT_ATTEMPTS; }
@@ -325,7 +345,6 @@ private:
     NTRIPConnectionStats _stats;
 
     ConnectionStatus _connectionStatus = ConnectionStatus::Disconnected;
-    QString _statusMessage;
     Notified _notified;
 
     TransportFactory _transportFactory;
@@ -350,7 +369,14 @@ private:
     static constexpr std::chrono::milliseconds SETTINGS_DEBOUNCE{250};
     ExponentialBackoff _reconnectBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30),
                                          NTRIPFailure::MAX_RETRY_AFTER};
-    QString _lastFailureDetail;  ///< The latest transport failure, for the give-up message.
+    /// What the latest failure said: the transport's own text, or why the configuration is not valid.
+    QString _lastFailureDetail;
+    Wait _waitingFor = Wait::Delay;
+    /// The delay before the attempt that follows the latest failure.
+    std::chrono::milliseconds _retryDelay{};
+    StopReason _stopReason = StopReason::Failure;
+    /// The data limit the connection ended at, which the setting may no longer be.
+    quint32 _stoppedAtCapMB = 0;
     /// Corrections have arrived over the current connection settings since they were last started, so a source
     /// table in place of the stream means the mountpoint went offline, not that it is wrong.
     bool _streamServed = false;
@@ -362,8 +388,9 @@ private:
     int _casterFailures = 0;
     /// What arrived from the caster in this run of the connection.
     quint64 _linkBytes = 0;
-    bool _waitingForNetwork = false;
-    bool _waitingForVehicle = false;
     bool _initialized = false;
+    /// _start() has run. A connection that is then stopped before its first message was announced still announces
+    /// one, as it did when the message was kept as text that was empty until then.
+    bool _everStarted = false;
     bool _shutdown = false;
 };
