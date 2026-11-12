@@ -26,7 +26,7 @@ void QGeoMapReplyQGCTest::_testTileDelivered()
     QGeoTiledMapReplyQGC mapReply(&networkManager, mapReplyTileSpec(4400));
     QSignalSpy finishedSpy(&mapReply, &QGeoTiledMapReply::finished);
 
-    QVERIFY(mapReply.init());
+    mapReply.init();
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(mapReply.error(), QGeoTiledMapReply::NoError);
     QVERIFY(!mapReply.mapImageData().isEmpty());
@@ -45,7 +45,7 @@ void QGeoMapReplyQGCTest::_testErrorReported()
 
     expectLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
                      QRegularExpression(QStringLiteral("NetworkError")));
-    QVERIFY(mapReply.init());
+    mapReply.init();
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
     QCOMPARE(mapReply.error(), QGeoTiledMapReply::CommunicationError);
@@ -57,14 +57,14 @@ void QGeoMapReplyQGCTest::_testAbortFinishesOnce()
     QNetworkAccessManager networkManager;
     QGeoTiledMapReplyQGC aborted(&networkManager, mapReplyTileSpec(4402));
     QSignalSpy abortedSpy(&aborted, &QGeoTiledMapReply::finished);
-    QVERIFY(aborted.init());
+    aborted.init();
     aborted.abort();
     QCOMPARE(abortedSpy.count(), 1);
 
     // The cache worker runs lookups in order: once this one is answered, the aborted reply's tile has arrived too
     QGeoTiledMapReplyQGC sentinel(&networkManager, mapReplyTileSpec(4403));
     QSignalSpy sentinelSpy(&sentinel, &QGeoTiledMapReply::finished);
-    QVERIFY(sentinel.init());
+    sentinel.init();
     QVERIFY_SIGNAL_COUNT_WAIT(sentinelSpy, 1, TestTimeout::mediumMs());
 
     QCOMPARE(abortedSpy.count(), 1);

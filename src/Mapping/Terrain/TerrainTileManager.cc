@@ -84,11 +84,8 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>&
             // A cached tile that does not decode must be fetched again: the cache would serve it for every request
             reply->setValidator([](const QByteArray& data) { return TerrainTile(data).isValid(); });
             (void) connect(reply, &QGCTileReply::finished, this, &TerrainTileManager::_terrainDone);
-            if (reply->start()) {
-                _state = TerrainQuery::State::Downloading;
-            } else {
-                reply->deleteLater();
-            }
+            reply->start();
+            _state = TerrainQuery::State::Downloading;
             return false;
         } else {
             return false;

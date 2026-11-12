@@ -13,9 +13,14 @@ private slots:
     void _serverTileStoredInCache();
     void _serverFailure_data();
     void _serverFailure();
+    void _unknownMapIdFinishesWithError();
+    void _secondStartDoesNothing_data();
+    void _secondStartDoesNothing();
     void _validatorRejectsCachedAndServerTiles();
     void _unusableCachedTileIsReplaced();
     void _abortedReplyStaysSilent();
+    void _abortedBeforeQueuedStepStaysSilent_data();
+    void _abortedBeforeQueuedStepStaysSilent();
     void _deletedDuringCacheLookup();
     void _networkManagerDestroyedFirst();
     void _concurrentRequestsShareOneFetch();
@@ -26,4 +31,5 @@ private slots:
     void _sourceChangedDuringRequest();
     void _requestIdentity_data();
     void _requestIdentity();
+    void _tileFetchedWhenCacheRefusesLookup();
 };

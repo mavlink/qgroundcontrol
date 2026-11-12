@@ -27,11 +27,7 @@ void Viewer3DTileReply::_startFetch()
 {
     _tileReply = new QGCTileReply(_networkManager, _tile.mapId, _tile.x, _tile.y, _tile.zoomLevel, this);
     connect(_tileReply, &QGCTileReply::finished, this, &Viewer3DTileReply::_onFetchFinished);
-    if (!_tileReply->start()) {
-        // Queued: the signals of this object are connected only after its construction
-        QMetaObject::invokeMethod(
-            this, [this] { _giveUp(QStringLiteral("could not start the request")); }, Qt::QueuedConnection);
-    }
+    _tileReply->start();
 }
 
 void Viewer3DTileReply::_onFetchFinished()

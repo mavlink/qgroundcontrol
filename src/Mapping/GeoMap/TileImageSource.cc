@@ -64,14 +64,8 @@ int TileImageSource::requestTileImage(const TileMath::TileKey& key)
         emit tileImageReady(requestId, *image);
     });
 
-    if (!reply->start()) {
-        qCDebug(GeoMapTileImageSourceLog) << "could not queue cache lookup for" << key;
-        delete reply;
-        _pending.insert(requestId, nullptr);
-        _failAsync(requestId);
-        return requestId;
-    }
     _pending.insert(requestId, reply);
+    reply->start();
     return requestId;
 }
 

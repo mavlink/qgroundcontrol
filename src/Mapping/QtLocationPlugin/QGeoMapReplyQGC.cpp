@@ -25,9 +25,9 @@ QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
     qCDebug(QGeoTiledMapReplyQGCLog) << this;
 }
 
-bool QGeoTiledMapReplyQGC::init()
+void QGeoTiledMapReplyQGC::init()
 {
-    return _tileReply->start();
+    _tileReply->start();
 }
 
 void QGeoTiledMapReplyQGC::_tileReplyFinished()

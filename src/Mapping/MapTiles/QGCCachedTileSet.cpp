@@ -172,11 +172,7 @@ void QGCCachedTileSet::_prepareDownload()
             QMutexLocker lock(&_repliesMutex);
             (void) _replies.insert(hash, reply);
         }
-        if (!reply->start()) {
-            // Handled like a failed download, once this loop is done
-            QMetaObject::invokeMethod(
-                this, [this, reply, hash] { _tileReplyFinished(reply, hash); }, Qt::QueuedConnection);
-        }
+        reply->start();
 
         if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (kConcurrentDownloads * 10))) {
             createDownloadTask();
@@ -192,9 +188,7 @@ void QGCCachedTileSet::_tileReplyFinished(QGCTileReply* reply, const QString& ha
         (void) _replies.remove(hash);
     }
 
-    if (!reply->isFinished()) {
-        _tileFailed(hash, QStringLiteral("could not start the request"));
-    } else if (reply->error() == QGCTileReply::Error::NoTileError) {
+    if (reply->error() == QGCTileReply::Error::NoTileError) {
         // Nothing to download: the set is complete without a tile its provider does not have
         qCDebug(QGCCachedTileSetLog) << "No tile to fetch:" << hash;
         queueDownloadState(_id, hash, QGCTile::StateComplete);

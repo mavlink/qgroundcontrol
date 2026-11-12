@@ -61,9 +61,9 @@ public:
     void cancelRequest(int requestId) final;
 
     /// Ensures the attached field holds this tile (clamped to the z15 ancestor
-    /// above kMaxTileZoom), plus the kAnchorZoom ancestors of it and its neighbors. Returns false when no
-    /// field is attached, the key is invalid, or the fetch could not start; true
-    /// when the tile is already held, already in flight, or a fetch was started.
+    /// above kMaxTileZoom), plus the kAnchorZoom ancestors of it and its neighbors. Returns false for a request
+    /// it rejects: no field is attached, or the key is invalid. True when the tile is already held, already in
+    /// flight, or a fetch was started: a fetch that fails is reported by tileFailed.
     bool requestTile(const TileMath::TileKey& key) override;
 
     int pendingCount() const { return _pending.count(); }
@@ -92,7 +92,7 @@ private:
     int _releaseHeld(const TileMath::TileKey& anchor);
     void _failAsync(int requestId);
     bool _fetchInFlight(const TileMath::TileKey& fetchKey) const;
-    bool _startFetch(const TileMath::TileKey& fetchKey);
+    void _startFetch(const TileMath::TileKey& fetchKey);
     void _deliverAll(const TileMath::TileKey& fetchKey, const QImage& image);
     void _failAll(const TileMath::TileKey& fetchKey, const QString& reason);
     void _deliver(int requestId, const QImage& image);

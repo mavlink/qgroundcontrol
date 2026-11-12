@@ -156,12 +156,6 @@ int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int 
         _failAsync(requestId);
         return requestId;
     }
-    if (_mapId < 0) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestPatchHeights: elevation provider not registered";
-        _pending.insert(requestId, PendingRequest{});
-        _failAsync(requestId);
-        return requestId;
-    }
 
     // Deeper than the dataset: fetch the top-zoom ancestor and sample the
     // patch's sub-window of it
@@ -188,11 +182,7 @@ int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int 
         return requestId;  // a fetch for this tile is already in flight; it serves all waiters
     }
 
-    if (!_startFetch(pending.fetchKey)) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestPatchHeights: could not start fetch for" << pending.fetchKey;
-        _waiters.remove(pending.fetchKey);
-        _failAsync(requestId);
-    }
+    _startFetch(pending.fetchKey);
     return requestId;
 }
 
@@ -203,14 +193,9 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
             << "requestTile rejected: key" << key << "heightFieldSet" << (_heightField != nullptr);
         return false;
     }
-    if (_mapId < 0) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestTile: elevation provider not registered";
-        return false;
-    }
 
     const TileMath::TileKey fetchKey = fetchKeyFor(key);
     // Anchors first: their fetches queue ahead, and _insertIntoField holds this tile until they land.
-    // An anchor that fails to start stops blocking, as a failed fetch does in _failAll.
     // Also for a tile that is already here: an anchor that failed did not hold it back, and is fetched again.
     for (const TileMath::TileKey& anchor : anchorKeysFor(fetchKey)) {
         (void) requestTile(anchor);
@@ -228,11 +213,7 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
         return true;  // piggyback on the fetch already serving patch waiters
     }
 
-    if (!_startFetch(fetchKey)) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestTile: could not start fetch for" << fetchKey;
-        _fieldRequests.remove(fetchKey);
-        return false;
-    }
+    _startFetch(fetchKey);
     return true;
 }
 
@@ -241,7 +222,7 @@ bool TerrariumTileFetcher::_fetchInFlight(const TileMath::TileKey& fetchKey) con
     return _waiters.contains(fetchKey) || _fieldRequests.contains(fetchKey);
 }
 
-bool TerrariumTileFetcher::_startFetch(const TileMath::TileKey& fetchKey)
+void TerrariumTileFetcher::_startFetch(const TileMath::TileKey& fetchKey)
 {
     QGCTileReply* const reply = new QGCTileReply(_networkManager, _mapId, fetchKey.x, fetchKey.y, fetchKey.zoom, this);
     // A body that is not a terrarium tile (a corrupt cache entry, an HTTP-200 error page) must be neither delivered
@@ -261,13 +242,8 @@ bool TerrariumTileFetcher::_startFetch(const TileMath::TileKey& fetchKey)
         _deliverAll(fetchKey, *image);
     });
 
-    if (!reply->start()) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "could not queue cache lookup for" << fetchKey;
-        delete reply;
-        return false;
-    }
     _fetches.insert(fetchKey, reply);
-    return true;
+    reply->start();
 }
 
 void TerrariumTileFetcher::cancelRequest(int requestId)

@@ -32,6 +32,7 @@ public:
         NetworkError,  ///< The server could not be reached, or it reported an error
         NoTileError,   ///< The provider has no tile at this position
         DataError,     ///< The server answered with something that is not a tile
+        RequestError,  ///< The request names no map provider
     };
     Q_ENUM(Error)
 
@@ -49,8 +50,9 @@ public:
     /// it first, as a set downloads only the tiles the cache lacks.
     void setTileSet(quint64 tileSet) { _tileSet = tileSet; }
 
-    /// Returns false when the request could not be started; finished() is then not emitted.
-    [[nodiscard]] bool start();
+    /// Starts the request. finished() is emitted once, after start() returned: a request that cannot be made
+    /// finishes with an error. A second call does nothing.
+    void start();
 
     /// Stops the request. finished() is not emitted.
     void abort();
@@ -68,7 +70,7 @@ public:
 
     bool isCached() const { return _cached; }
 
-    /// Key of the tile in the cache; empty until start()
+    /// Key of the tile in the cache; empty until start(), and for a request that names no map provider
     QString hash() const { return _hash; }
 
 signals:
@@ -82,6 +84,7 @@ private:
     enum class State
     {
         Idle,
+        Rejected,  ///< Names no map provider: finishes with the error once start() returned
         Starting,
         CacheLookup,
         Network,

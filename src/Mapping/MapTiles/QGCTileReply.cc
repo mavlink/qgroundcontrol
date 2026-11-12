@@ -106,15 +106,25 @@ QGCTileReply::~QGCTileReply()
     abort();
 }
 
-bool QGCTileReply::start()
+void QGCTileReply::start()
 {
     if (_state != State::Idle) {
-        return false;
+        return;
     }
 
     _provider = UrlFactory::getMapProviderFromMapId(_mapId);
     if (!_provider) {
-        return false;
+        _state = State::Rejected;
+        // Queued: finished() must not be emitted from within start()
+        QMetaObject::invokeMethod(
+            this,
+            [this] {
+                if (_state == State::Rejected) {
+                    _finish(Error::RequestError, QStringLiteral("no map provider has the id %1").arg(_mapId));
+                }
+            },
+            Qt::QueuedConnection);
+        return;
     }
     _hash = UrlFactory::getTileHash(_provider->getMapName(), _x, _y, _zoom);
 
@@ -126,7 +136,7 @@ bool QGCTileReply::start()
         _state = State::CacheLookup;
         // Queued: finished() must not be emitted from within start()
         QMetaObject::invokeMethod(this, [this] { _cacheLookupFinished(nullptr); }, Qt::QueuedConnection);
-        return true;
+        return;
     }
 
     QGCFetchTileTask* const task = new QGCFetchTileTask(_hash);
@@ -136,14 +146,13 @@ bool QGCTileReply::start()
 
     // A lookup that cannot be queued reports its error from within addTask(), which Starting ignores
     _state = State::Starting;
-    if (!engine->addTask(task)) {
-        task->deleteLater();
-        _state = State::Idle;
-        return false;
-    }
+    const bool lookupQueued = engine->addTask(task);
     _state = State::CacheLookup;
-
-    return true;
+    if (!lookupQueued) {
+        task->deleteLater();
+        // The server needs no cache: go on as after a miss. Queued, as for a tile set
+        QMetaObject::invokeMethod(this, [this] { _cacheLookupFinished(nullptr); }, Qt::QueuedConnection);
+    }
 }
 
 void QGCTileReply::abort()

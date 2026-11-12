@@ -15,7 +15,8 @@ public:
                                   QObject* parent = nullptr);
     ~QGeoTiledMapReplyQGC();
 
-    bool init();
+    /// Starts the request. The reply always finishes: with an error when the request cannot be made.
+    void init();
 
 private:
     void _tileReplyFinished();

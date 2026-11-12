@@ -46,10 +46,7 @@ QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec& spec)
     }
 
     QGeoTiledMapReplyQGC* tileImage = new QGeoTiledMapReplyQGC(m_networkManager, spec);
-    if (!tileImage->init()) {
-        tileImage->deleteLater();
-        return nullptr;
-    }
+    tileImage->init();
 
     return tileImage;
 }
