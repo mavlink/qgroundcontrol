@@ -19,6 +19,7 @@ private slots:
     void _ntripRetryNeedsCaster();
     void _ntripConnectionActionIsIdempotent_data();
     void _ntripConnectionActionIsIdempotent();
+    void _ntripDoubleClickActsOnce();
     void _ntripMountpointLockedWhileActive();
     void _ntripLongStatusWrapsWithinPanel();
     void _ntripMountpointRowLayout();

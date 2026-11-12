@@ -493,6 +493,47 @@ void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
     QCOMPARE(unexpected->startCount, 0);
 }
 
+void GPSCorrectionsPanelTest::_ntripDoubleClickActsOnce()
+{
+    ScriptedNTRIP ntrip;
+    QPointer<MockNTRIPTransport> first = ntrip.nextTransport();
+    ntrip.manager.init();
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*Connection failed")));
+    first->simulateError(NTRIPError::AuthFailed, QStringLiteral("Connection failed"));
+    deliverQueuedCalls();
+    verifyExpectedLogMessage();
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QPointer<MockNTRIPTransport> retry = ntrip.nextTransport();
+    QSignalSpy requests(&ntrip.manager, &NTRIPManager::enabledRequested);
+
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
+    QVERIFY2(panel, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* button = panel->findChild<QQuickItem*>(QStringLiteral("ntripConnectButton"));
+    QVERIFY(button);
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QCOMPARE(button->property("text").toString(), QStringLiteral("Retry"));
+    const QPoint center = button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint();
+
+    // Retry starts an attempt at once, and the button then reads "Disconnect". The second click of a double click is
+    // not a click on that: it would stop the attempt it has just started and turn the connection off.
+    QTest::mouseDClick(window.window(), Qt::LeftButton, Qt::NoModifier, center);
+    QVERIFY(retry);
+    QCOMPARE(retry->startCount, 1);
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+    QCOMPARE(button->property("text").toString(), QStringLiteral("Disconnect"));
+    QCOMPARE(requests.size(), 1);
+    QVERIFY(requests.constLast().constFirst().toBool());
+
+    // A click of its own stops the attempt.
+    QTest::mouseClick(window.window(), Qt::LeftButton, Qt::NoModifier, center);
+    QCOMPARE(requests.size(), 2);
+    QVERIFY(!requests.constLast().constFirst().toBool());
+}
+
 void GPSCorrectionsPanelTest::_ntripMountpointLockedWhileActive()
 {
     // The application's setting would start its NTRIP connection.

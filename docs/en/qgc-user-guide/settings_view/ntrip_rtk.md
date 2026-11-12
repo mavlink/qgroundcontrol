@@ -15,6 +15,7 @@ The toolbar GNSS indicator also offers **Connect** once an NTRIP server is confi
 
 Shows the NTRIP connection state with message and byte counters, the age of the last correction, and a Connect/Disconnect button.
 While a connection is being opened or retried, the button stops it. After an error it reads **Retry**, beside a **Disconnect** button that turns the connection off; **Connect** and **Retry** need a host address.
+A double click or double tap on the button counts once, so it does not stop the connection it has just started.
 The counters count everything the caster sends, including messages the [RTCM message filter](#correction-routing) keeps from vehicles.
 
 QGroundControl reconnects when a stream that has delivered data sends nothing for 30 seconds. A stream that has not delivered anything yet has longer: it waits without a limit while there is no position to report to the caster, and 2 minutes once one has been reported ([GGA Position Reporting](#gga-position-reporting)).

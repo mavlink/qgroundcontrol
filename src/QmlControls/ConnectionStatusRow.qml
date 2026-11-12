@@ -39,5 +39,8 @@ RowLayout {
         enabled:   root.buttonEnabled
         visible:   root.buttonText !== ""
         onClicked: root.clicked()
+        // A click changes what the button does: Connect becomes Disconnect. With a handler here, the button reports the
+        // second click of a double click as doubleClicked() instead of clicked(), so it does not undo the first.
+        onDoubleClicked: {}
     }
 }
