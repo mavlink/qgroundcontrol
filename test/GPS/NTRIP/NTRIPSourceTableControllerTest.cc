@@ -28,6 +28,11 @@ static const QString kValidTable = QStringLiteral(
     "STR;MP1;Id1;RTCM 3.2;details;2;GPS;NET;USA;40.0;-74.0;0;1;gen;none;B;N;4800;misc\r\n"
     "ENDSOURCETABLE\r\n");
 
+/// A table with a line that starts with the terminator, which is no terminator.
+static const QByteArray kLongerLineTable =
+    "STR;BASE1;Rooftop antenna\r\nENDSOURCETABLES;not the end\r\n"
+    "STR;BASE2;Field station\r\nENDSOURCETABLE\r\n";
+
 namespace {
 /// The session of the fetch in progress; a finished fetch releases its session.
 QPointer<NTRIPHttpSession> activeSession(const NTRIPSourceTableController& controller)
@@ -301,6 +306,7 @@ void NTRIPSourceTableControllerTest::_tableWithoutMountpoints_data()
 {
     QTest::addColumn<QString>("table");
     QTest::newRow("empty") << QStringLiteral("ENDSOURCETABLE\r\n");
+    QTest::newRow("empty-without-line-ending") << QStringLiteral("ENDSOURCETABLE");
     QTest::newRow("no-stream-records") << QStringLiteral(
         "CAS;caster.example.com;2101;desc;op;0;USA;0;0;0;0;0;0;misc\r\nENDSOURCETABLE\r\n");
     QTest::newRow("unnamed-stream") << QStringLiteral("STR;;Rooftop antenna;RTCM 3.2\r\nENDSOURCETABLE\r\n");
@@ -378,6 +384,89 @@ void NTRIPSourceTableControllerTest::_tableWithoutTerminator()
     QCOMPARE(controller.fetchStatus(), error.isEmpty() ? NTRIPSourceTableController::FetchStatus::Success
                                                        : NTRIPSourceTableController::FetchStatus::Error);
     QCOMPARE(controller.mountpointModel()->rowCount(), mountpoints);
+}
+
+void NTRIPSourceTableControllerTest::_terminatorIsAWholeLine_data()
+{
+    // Where the caster's answer is split in two; nowhere when negative.
+    QTest::addColumn<int>("split");
+    const int word = static_cast<int>(kLongerLineTable.indexOf("ENDSOURCETABLES") + qstrlen("ENDSOURCETABLE"));
+    QTest::newRow("whole") << -1;
+    QTest::newRow("after-the-word") << word;
+    QTest::newRow("after-the-next-byte") << word + 1;
+    QTest::newRow("inside-the-word") << word - 3;
+}
+
+void NTRIPSourceTableControllerTest::_terminatorIsAWholeLine()
+{
+    QFETCH(int, split);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPSourceTableController controller;
+    controller.fetch(caster.connectionConfig(QString()));
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().startsWith("GET / HTTP/1.1"));
+    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + kLongerLineTable;
+    const qsizetype bodyStart = response.size() - kLongerLineTable.size();
+    if (split >= 0) {
+        // The controller reads the first part before the caster sends the second.
+        qsizetype received = 0;
+        connect(activeSession(controller).data(), &NTRIPHttpSession::bodyReceived, this,
+                [&received](const QByteArray& body) { received += body.size(); });
+        QCOMPARE(connection->write(response.first(bodyStart + split)), bodyStart + split);
+        QTRY_COMPARE_WITH_TIMEOUT(received, qsizetype(split), TestTimeout::mediumMs());
+        connection->write(response.sliced(bodyStart + split));
+    } else {
+        QCOMPARE(connection->write(response), response.size());
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(controller.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
+                             TestTimeout::mediumMs());
+    // A line that only starts with the terminator does not end the table, wherever the answer is split: both
+    // mountpoints are listed.
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QCOMPARE(controller.mountpointModel()->rowCount(), 2);
+}
+
+void NTRIPSourceTableControllerTest::_terminatorWithoutLineEnding_data()
+{
+    // Whether the caster closes the connection after its table.
+    QTest::addColumn<bool>("close");
+    QTest::newRow("close") << true;
+    QTest::newRow("silence") << false;
+}
+
+void NTRIPSourceTableControllerTest::_terminatorWithoutLineEnding()
+{
+    QFETCH(bool, close);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPSourceTableController controller(nullptr, &scheduler);
+    controller.fetch(caster.connectionConfig(QString()));
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().startsWith("GET / HTTP/1.1"));
+    const QByteArray table = "STR;BASE1;Rooftop antenna\r\nENDSOURCETABLE";
+    qsizetype received = 0;
+    connect(activeSession(controller).data(), &NTRIPHttpSession::bodyReceived, this,
+            [&received](const QByteArray& body) { received += body.size(); });
+    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + table;
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(received, table.size(), TestTimeout::mediumMs());
+    // More of the line could follow, so the word alone does not end the table.
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
+    if (close) {
+        connection->disconnectFromHost();
+        QTRY_VERIFY_WITH_TIMEOUT(controller.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
+                                 TestTimeout::mediumMs());
+    } else {
+        // A caster that neither ends the line nor closes has ended its table once the fetch has waited in vain.
+        QVERIFY(scheduler.advanceBy(NTRIPSourceTableController::FETCH_TIMEOUT));
+    }
+    QCOMPARE(controller.fetchError(), QString());
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
 }
 
 void NTRIPSourceTableControllerTest::_sourceTablePublishesSortedRowsOnce()

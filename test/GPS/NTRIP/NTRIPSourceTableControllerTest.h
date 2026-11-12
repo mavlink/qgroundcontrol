@@ -23,6 +23,10 @@ private slots:
     void _tableWithoutMountpoints();
     void _tableWithoutTerminator_data();
     void _tableWithoutTerminator();
+    void _terminatorIsAWholeLine_data();
+    void _terminatorIsAWholeLine();
+    void _terminatorWithoutLineEnding_data();
+    void _terminatorWithoutLineEnding();
     void _sourceTablePublishesSortedRowsOnce();
     void _v1SourceTable_data();
     void _v1SourceTable();

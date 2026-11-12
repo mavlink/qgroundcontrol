@@ -156,28 +156,41 @@ void NTRIPSourceTableTest::_emptyTable()
 void NTRIPSourceTableTest::_tableTerminator_data()
 {
     QTest::addColumn<QByteArray>("body");
-    QTest::addColumn<bool>("complete");
+    // The bytes after which the table is complete while more of the body may follow; -1 when it never is.
+    QTest::addColumn<int>("completeAfter");
+    // Whether the table is complete once the body has ended.
+    QTest::addColumn<bool>("completeAtEnd");
     const QByteArray row = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800";
-    QTest::newRow("crlf") << row + "\r\nENDSOURCETABLE\r\n" << true;
-    QTest::newRow("lf") << row + "\nENDSOURCETABLE\n" << true;
-    QTest::newRow("no-final-newline") << row + "\r\nENDSOURCETABLE" << true;
-    QTest::newRow("empty-table") << QByteArray("ENDSOURCETABLE\r\n") << true;
-    QTest::newRow("partial") << row + "\r\nENDSOURCE" << false;
-    QTest::newRow("inside-row") << QByteArray("STR;ENDSOURCETABLE;Id\r\n") << false;
-    QTest::newRow("prefix-of-line") << row + "\r\nENDSOURCETABLES\r\n" << false;
+    const int rowSize = static_cast<int>(row.size());
+    // The first byte of its line ending shows that the terminator line is whole.
+    QTest::newRow("crlf") << row + "\r\nENDSOURCETABLE\r\n" << rowSize + 17 << true;
+    QTest::newRow("lf") << row + "\nENDSOURCETABLE\n" << rowSize + 16 << true;
+    QTest::newRow("empty-table") << QByteArray("ENDSOURCETABLE\r\n") << 15 << true;
+    // Without a line ending only the end of the body shows it.
+    QTest::newRow("no-final-newline") << row + "\r\nENDSOURCETABLE" << -1 << true;
+    QTest::newRow("partial") << row + "\r\nENDSOURCE" << -1 << false;
+    QTest::newRow("inside-row") << QByteArray("STR;ENDSOURCETABLE;Id\r\n") << -1 << false;
+    QTest::newRow("prefix-of-line") << row + "\r\nENDSOURCETABLES\r\n" << -1 << false;
+    const QByteArray longerLine = row + "\r\nENDSOURCETABLES\r\n" + row;
+    QTest::newRow("terminator-after-prefix-of-line") << longerLine + "\r\nENDSOURCETABLE\r\n"
+                                                     << static_cast<int>(longerLine.size()) + 17 << true;
 }
 
 void NTRIPSourceTableTest::_tableTerminator()
 {
     QFETCH(QByteArray, body);
-    QFETCH(bool, complete);
-    QCOMPARE(ntripSourceTableComplete(body), complete);
-    // After a check of an incomplete prefix, checking only what the rest could complete gives the same answer.
+    QFETCH(int, completeAfter);
+    QFETCH(bool, completeAtEnd);
+    // However the body is split, a piece completes the table only once it holds the bytes that complete the whole.
     for (qsizetype split = 0; split <= body.size(); ++split) {
-        if (!ntripSourceTableComplete(body.first(split))) {
-            QCOMPARE(ntripSourceTableComplete(body, split), complete);
+        const bool complete = ntripSourceTableComplete(body.first(split));
+        QCOMPARE(complete, completeAfter >= 0 && split >= completeAfter);
+        // After a check of an incomplete piece, checking only what the rest could complete gives the same answer.
+        if (!complete) {
+            QCOMPARE(ntripSourceTableComplete(body, split), completeAfter >= 0);
         }
     }
+    QCOMPARE(ntripSourceTableComplete(body, 0, true), completeAtEnd);
 }
 
 void NTRIPSourceTableTest::_rolesAreReadOnlyProperties()

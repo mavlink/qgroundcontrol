@@ -106,9 +106,11 @@ void NTRIPSourceTableController::_startFetch()
     connect(session, &NTRIPHttpSession::bodyReceived, this, &NTRIPSourceTableController::_readReply);
     connect(session, &NTRIPHttpSession::failed, this,
             [this](const NTRIPFailure& failure) { _finishFetch(failure.detail); });
-    // The response ended where its framing allows, without the terminator: RTKLIB's caster up to 2.4.3 b33 sends
-    // its operator's table file as it is. A response cut off before that end fails instead.
-    connect(session, &NTRIPHttpSession::finished, this, [this]() { _finishFetch({}, false); });
+    // The response ended where its framing allows, without a terminator that its line ending showed to be whole. It
+    // may end with the terminator itself, or have none: RTKLIB's caster up to 2.4.3 b33 sends its operator's table
+    // file as it is. A response cut off before that end fails instead.
+    connect(session, &NTRIPHttpSession::finished, this,
+            [this]() { _finishFetch({}, ntripSourceTableComplete(_attempt->body, 0, true)); });
     _armFetchTimeout();
     if (const QString openError = session->open(_lastFetchConfig, _casterVersions); !openError.isEmpty()) {
         _finishFetch(openError);
@@ -120,9 +122,13 @@ void NTRIPSourceTableController::_armFetchTimeout()
     // An inactivity timeout: a large table on a slow link keeps the fetch alive while bytes arrive.
     _attempt->timeout.schedule(FETCH_TIMEOUT, [this]() {
         // A refusal the caster is still explaining ends on its own deadline.
-        if (!_attempt->session || !_attempt->session->awaitingErrorBody()) {
-            _finishFetch(tr("Source table request timed out"));
+        if (_attempt->session && _attempt->session->awaitingErrorBody()) {
+            return;
         }
+        // A caster that sent the terminator without a line ending, and since then neither more nor a close, has
+        // ended its table there.
+        const bool terminated = ntripSourceTableComplete(_attempt->body, 0, true);
+        _finishFetch(terminated ? QString() : tr("Source table request timed out"));
     });
 }
 

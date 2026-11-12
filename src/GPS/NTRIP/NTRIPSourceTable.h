@@ -10,9 +10,11 @@
 #include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
-/// True once an ENDSOURCETABLE line arrives, with CRLF, LF, or no final line ending. When the first @a checkedSize
-/// bytes were already checked, only a terminator that may have completed since is searched for.
-[[nodiscard]] bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize = 0);
+/// True once an ENDSOURCETABLE line has arrived. The first byte of its line ending, CRLF or LF, shows that the line is
+/// whole, so the answer does not depend on how the caster's bytes are split; a body that has @a ended may also end
+/// with the line itself. When the first @a checkedSize bytes were already checked, only a terminator that may have
+/// completed since is searched for.
+[[nodiscard]] bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize = 0, bool ended = false);
 
 /// The parsed fields of an NTRIP source-table STR row that the mountpoint list shows or sorts by. All fields are
 /// immutable after parse except distanceKm, which is recomputed by updateDistances(). Each property is a model role of

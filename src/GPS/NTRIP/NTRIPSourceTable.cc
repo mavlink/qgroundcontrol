@@ -23,16 +23,17 @@ enum class StrField : qsizetype
 };
 }  // namespace
 
-bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize)
+bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize, bool ended)
 {
     static constexpr QByteArrayView terminator("ENDSOURCETABLE");
-    // A terminator the earlier check missed ends past its data, so it starts no earlier than this.
+    // A terminator the earlier check missed has its line ending past that data, so it starts no earlier than this.
     const qsizetype from = (std::max) (qsizetype(0), checkedSize - terminator.size());
     for (qsizetype offset = body.indexOf(terminator, from); offset >= 0;
          offset = body.indexOf(terminator, offset + 1)) {
         const qsizetype end = offset + terminator.size();
-        if ((offset == 0 || body.at(offset - 1) == '\n') &&
-            (end == body.size() || body.at(end) == '\r' || body.at(end) == '\n')) {
+        // At the end of the bytes so far, the line may still go on.
+        const bool lineEnds = end == body.size() ? ended : body.at(end) == '\r' || body.at(end) == '\n';
+        if ((offset == 0 || body.at(offset - 1) == '\n') && lineEnds) {
             return true;
         }
     }
