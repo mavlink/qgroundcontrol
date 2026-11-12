@@ -22,6 +22,7 @@
 #include "NTRIP/Support/ScriptedNTRIPCaster.h"
 #include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
+#include "NTRIPManager.h"
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTlsPolicy_p.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
@@ -329,6 +330,55 @@ void NTRIPTlsTest::_sourceTablePolicyChanges()
     QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
                               TestTimeout::mediumMs());
     QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+}
+
+void NTRIPTlsTest::_browsingAgainKeepsPinnedFetch_data()
+{
+    QTest::addColumn<bool>("duringFetch");
+    QTest::newRow("in-flight") << true;
+    QTest::newRow("cached") << false;
+}
+
+void NTRIPTlsTest::_browsingAgainKeepsPinnedFetch()
+{
+    using FetchStatus = NTRIPSourceTableController::FetchStatus;
+    QFETCH(bool, duringFetch);
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls);
+    QVERIFY(caster.isListening());
+    NTRIPManager manager;
+    NTRIPManager::Configuration configuration;
+    configuration.connection = caster.connectionConfig();
+    configuration.connection.allowSelfSignedCerts = true;
+    manager.setConfiguration(configuration);
+    const NTRIPSourceTableController* const table = manager.sourceTableController();
+    QSignalSpy pins(&manager, &NTRIPManager::certificatePinChanged);
+
+    _expectTlsWarnings(true);
+    manager.fetchMountpoints();
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().startsWith("GET / HTTP/1.1"));
+    _verifyTlsWarnings();
+    // The fetch trusted the caster's certificate on first use, and the manager keeps the pin with the connection.
+    QCOMPARE(pins.size(), 1);
+    QCOMPARE(manager.configuration().connection.pinnedCertificate, pins.first().first().toString());
+
+    // Browsing again is a request for the same caster: it neither restarts the fetch in progress nor, within the
+    // cache's lifetime, fetches the table again.
+    if (duringFetch) {
+        manager.fetchMountpoints();
+    }
+    const QByteArray response = sourceTableResponse();
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(table->fetchStatus(), FetchStatus::Success, TestTimeout::mediumMs());
+    if (!duringFetch) {
+        QSignalSpy statuses(table, &NTRIPSourceTableController::fetchStatusChanged);
+        manager.fetchMountpoints();
+        QVERIFY(statuses.isEmpty());
+        QCOMPARE(table->fetchStatus(), FetchStatus::Success);
+    }
+    QCOMPARE(table->mountpointModel()->rowCount(), 1);
+    QCOMPARE(caster.requestLines().size(), 1);
 }
 
 void NTRIPTlsTest::_retireAttempt_data()

@@ -121,7 +121,11 @@ void NTRIPSourceTableController::_startFetch()
     auto* session = new NTRIPHttpSession(this, _scheduler, NTRIPHttpPurpose::SourceTable);
     _attempt->session = session;
     // _abortFetch() retires the session, which disconnects it, so these run only for the live attempt.
-    connect(session, &NTRIPHttpSession::certificatePinned, this, &NTRIPSourceTableController::certificatePinned);
+    connect(session, &NTRIPHttpSession::certificatePinned, this, [this](const QString& pin) {
+        // The owner asks for this caster with the pin from now on, which is still the caster of this fetch.
+        _lastFetchConfig.pinnedCertificate = pin;
+        emit certificatePinned(pin);
+    });
     connect(session, &NTRIPHttpSession::responseStarted, this, &NTRIPSourceTableController::_armFetchTimeout);
     connect(session, &NTRIPHttpSession::bodyReceived, this, &NTRIPSourceTableController::_readReply);
     connect(session, &NTRIPHttpSession::failed, this,

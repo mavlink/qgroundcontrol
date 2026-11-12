@@ -16,6 +16,8 @@ private slots:
     void _requestPrecedesPositionReport();
     void _sourceTablePolicyChanges_data();
     void _sourceTablePolicyChanges();
+    void _browsingAgainKeepsPinnedFetch_data();
+    void _browsingAgainKeepsPinnedFetch();
     void _retireAttempt_data();
     void _retireAttempt();
     void _restartRetiresAttempt_data();
