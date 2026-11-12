@@ -119,7 +119,7 @@ jobs:
       - name: Download App Store provisioning profiles
         id: profiles
         if: env.APPSTORE_RELEASE == 'true'
-        uses: apple-actions/download-provisioning-profiles@v6
+        uses: apple-actions/download-provisioning-profiles@v7
         with:
           bundle-id: ${{ env.APPSTORE_BUNDLE_ID }}
           profile-type: IOS_APP_STORE
