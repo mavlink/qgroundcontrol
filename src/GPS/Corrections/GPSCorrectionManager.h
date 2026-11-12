@@ -187,7 +187,7 @@ public:
 
     /// The selected stream's frames per RTCM message ID, and how often each arrives. They start again when another
     /// stream is selected, and are empty while none is.
-    RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
+    RTCMMessageCountModel* messageCounts() const { return _messageCounts; }
 
     /// Where the selected stream's base station is, as its RTCM message 1005 or 1006 says, with the ellipsoid height
     /// as altitude. Invalid until the stream sends one, and once it is no longer the selected stream.
@@ -271,7 +271,7 @@ private:
     QSet<int> _leftOutMessages;
     qint64 _leftOutAtMs = 0;
     QString _messageFilterError;
-    RTCMMessageCountModel _messageCounts{this};
+    RTCMMessageCountModel* const _messageCounts = new RTCMMessageCountModel(this);
     QGeoCoordinate _basePosition;
     /// The stream _messageCounts and _basePosition describe. _selected follows it only at the next refresh.
     GPSCorrectionStream _recordedStream;

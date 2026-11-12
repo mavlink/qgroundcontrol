@@ -293,7 +293,7 @@ void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, co
         _forgetSelected();
         _recordedStream = stream;
     }
-    _messageCounts.record(RTCMFramer::frameMessageId(data), receivedAtMs);
+    _messageCounts->record(RTCMFramer::frameMessageId(data), receivedAtMs);
     if (const auto station = RTCMStationPosition::fromFrame(data)) {
         const GPSEllipsoidPosition& position = station->position;
         _setBasePosition(QGeoCoordinate(position.latitudeDegrees, position.longitudeDegrees, position.altitudeMeters));
@@ -303,7 +303,7 @@ void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, co
 void GPSCorrectionManager::_forgetSelected()
 {
     _recordedStream = {};
-    _messageCounts.clear();
+    _messageCounts->clear();
     _setBasePosition(QGeoCoordinate());
 }
 
@@ -398,7 +398,7 @@ void GPSCorrectionManager::_refresh()
     if (selected != _recordedStream) {
         _forgetSelected();
     }
-    _messageCounts.expireIntervals(now);
+    _messageCounts->expireIntervals(now);
     State state = State::Inactive;
     if (selected) {
         state = State::Fresh;
