@@ -1,6 +1,7 @@
 #include "GPSReceiverDetectorTest.h"
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -12,8 +13,10 @@
 #include <QtCore/QList>
 
 #include "GPSCancellation.h"
+#include "GPSReceiverDescriptor.h"
 #include "GPSReceiverDetector.h"
 #include "GPSReceiverFamilies.h"
+#include "GPSType.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/DetectionReceiver.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
@@ -44,6 +47,14 @@ QList<QByteArray> identityQueries()
             nmeaBytes("PQTMVERNO")};
 }
 
+/// What detection looked for at one moment: a family it asked, or any (GPSType::Automatic) while it listened.
+struct Step
+{
+    uint64_t atUs = 0;
+    GPSType family = GPSType::Automatic;
+    unsigned baud = 0;
+};
+
 /// One receiver of a family at a rate on a serial link, on a virtual clock, behind receiver detection.
 struct Bench
 {
@@ -52,6 +63,8 @@ struct Bench
     DetectionReceiver* detection = nullptr;
     const ScriptedReceiver::Model* model = nullptr;
     QList<unsigned> rates;
+    /// What detection said it looked for, in order.
+    QList<Step> steps;
     std::function<void(const QByteArray&)> onWrite;
 
     GPSRuntimeIO io()
@@ -73,7 +86,23 @@ struct Bench
 
     GPSReceiverDetection detect(unsigned fixedBaud = 0)
     {
-        return GPSReceiverDetector(gpsReceiverFamilies(), io(), receiver->observer().commandFinished).detect(fixedBaud);
+        return GPSReceiverDetector(gpsReceiverFamilies(), io(), receiver->observer().commandFinished,
+                                   [this](GPSType family, unsigned baud) {
+                                       steps.append({.atUs = clock.nowUs(), .family = family, .baud = baud});
+                                   })
+            .detect(fixedBaud);
+    }
+
+    /// The families detection looked for at @a baud, in order.
+    QList<GPSType> lookedFor(unsigned baud) const
+    {
+        QList<GPSType> families;
+        for (const Step& step : steps) {
+            if (step.baud == baud) {
+                families.append(step.family);
+            }
+        }
+        return families;
     }
 
     const std::vector<GPSConfigurationEvidence>& evidence() const { return receiver->log.commands; }
@@ -195,6 +224,8 @@ void GPSReceiverDetectorTest::_signatureDetection()
     if (baud == 115200) {
         QVERIFY(b->detection->writes.empty());
     }
+    // The output told the family while detection listened at the rate, before any family was asked there.
+    QCOMPARE(b->lookedFor(baud), QList<GPSType>{GPSType::Automatic});
 }
 
 void GPSReceiverDetectorTest::_probeDetection_data()
@@ -244,6 +275,12 @@ void GPSReceiverDetectorTest::_probeDetection()
         QVERIFY(!model.identityBauds.empty());
         QCOMPARE(model.identityBauds.back(), baud);
     }
+    // The family that answered its query is the one detection said it asked last.
+    if (evidence == QStringLiteral("identity query")) {
+        QVERIFY(!b->steps.isEmpty());
+        QCOMPARE(b->steps.constLast().family, type);
+        QCOMPARE(b->steps.constLast().baud, baud);
+    }
 }
 
 void GPSReceiverDetectorTest::_standardNMEAEndsSearch()
@@ -272,6 +309,32 @@ void GPSReceiverDetectorTest::_fixedRateProbesEveryFamily()
         queries.removeAll(write);
     }
     QVERIFY2(queries.isEmpty(), qPrintable(QString::number(queries.size())));
+}
+
+void GPSReceiverDetectorTest::_tellsWhatItLooksFor()
+{
+    // Nothing answers, so at every rate each family that lists it waits out its query.
+    auto b = bench(std::nullopt, 0);
+    QVERIFY(!b->detect().found());
+    // First the output of any family, then one family after the other, in the order of the family table.
+    QCOMPARE(b->lookedFor(115200),
+             (QList<GPSType>{GPSType::Automatic, GPSType::UBlox, GPSType::Trimble, GPSType::Septentrio, GPSType::Femto,
+                             GPSType::Unicore, GPSType::Quectel}));
+    QCOMPARE(b->lookedFor(38400),
+             (QList<GPSType>{GPSType::Automatic, GPSType::UBlox, GPSType::Trimble, GPSType::Unicore}));
+    QVERIFY(!b->steps.isEmpty());
+    QCOMPARE(b->steps.constFirst().atUs, GPSTestClock::START_US);
+    QCOMPARE(b->steps.constLast().baud, b->rates.constLast());
+    // A session shows each step in its status line. The shortest query, of two attempts, keeps its step there for
+    // long enough to be read: a family whose query gives up sooner would only flicker.
+    constexpr std::chrono::milliseconds SHORTEST_STEP{400};
+    for (qsizetype index = 1; index < b->steps.size(); ++index) {
+        const std::chrono::microseconds shown(b->steps[index].atUs - b->steps[index - 1].atUs);
+        QVERIFY2(shown >= SHORTEST_STEP, qPrintable(QStringLiteral("%1 at %2 baud was shown for %3 ms")
+                                                        .arg(gpsReceiverName(b->steps[index - 1].family))
+                                                        .arg(b->steps[index - 1].baud)
+                                                        .arg(shown.count() / 1000)));
+    }
 }
 
 void GPSReceiverDetectorTest::_cancellation()

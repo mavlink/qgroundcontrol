@@ -2,7 +2,7 @@
 
 #include "Protocols/Support/GPSProtocolTestBase.h"
 
-/// Receiver detection: baud candidates, signature and probe detection, and cancellation.
+/// Receiver detection: baud candidates, signature and probe detection, what it tells of its steps, and cancellation.
 class GPSReceiverDetectorTest : public GPSProtocolTestBase
 {
     Q_OBJECT
@@ -15,5 +15,6 @@ private slots:
     void _probeDetection();
     void _standardNMEAEndsSearch();
     void _fixedRateProbesEveryFamily();
+    void _tellsWhatItLooksFor();
     void _cancellation();
 };

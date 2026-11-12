@@ -638,6 +638,7 @@ void GPSReceiverWorkerTest::_automaticSessionFollowsHint()
     QCOMPARE(looking.size(), 1);
     QCOMPARE(qvariant_cast<GPSType>(looking.first().at(0)), GPSType::Femto);
     QCOMPARE(looking.first().at(1).toUInt(), 230400U);
+    QVERIFY(looking.first().at(2).toBool());
     QCOMPARE(detected.size(), 1);
     QCOMPARE(qvariant_cast<GPSType>(detected.first().first()), GPSType::Femto);
     QCOMPARE(ready.size(), 1);

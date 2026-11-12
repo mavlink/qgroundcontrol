@@ -334,14 +334,17 @@ void GPSReceiverTest::_statusTextNamesWhatDetectionTries_data()
     QTest::addColumn<bool>("serial");
     // A network link has no rate to name.
     QTest::addColumn<QString>("remembered");
-    QTest::addColumn<QString>("scanning");
+    QTest::addColumn<QString>("listening");
+    QTest::addColumn<QString>("asking");
     QTest::newRow("tcp") << false << GPSReceiver::tr("Identifying receiver: trying %1, as last time...").arg("u-blox")
-                         << GPSReceiver::tr("Identifying receiver...");
+                         << GPSReceiver::tr("Identifying receiver...")
+                         << GPSReceiver::tr("Identifying receiver: trying %1...").arg("Trimble");
 #ifndef QGC_NO_SERIAL_LINK
     QTest::newRow("serial")
         << true
         << GPSReceiver::tr("Identifying receiver: trying %1 at %2 baud, as last time...").arg("u-blox").arg(115200)
-        << GPSReceiver::tr("Identifying receiver at %1 baud...").arg(38400);
+        << GPSReceiver::tr("Identifying receiver at %1 baud...").arg(38400)
+        << GPSReceiver::tr("Identifying receiver: trying %1 at %2 baud...").arg("Trimble").arg(38400);
 #endif
 }
 
@@ -349,7 +352,8 @@ void GPSReceiverTest::_statusTextNamesWhatDetectionTries()
 {
     QFETCH(bool, serial);
     QFETCH(QString, remembered);
-    QFETCH(QString, scanning);
+    QFETCH(QString, listening);
+    QFETCH(QString, asking);
     auto configuration = receiverConfiguration(GPS_AUTOMATIC_MANUFACTURER);
     configuration.autoConnect = false;
 #ifdef QGC_NO_SERIAL_LINK
@@ -373,14 +377,17 @@ void GPSReceiverTest::_statusTextNamesWhatDetectionTries()
     QSignalSpy texts(&receiver, &GPSReceiver::statusTextChanged);
     QCOMPARE(receiver.statusText(), GPSReceiver::tr("Identifying receiver..."));
 
-    // First the receiver the link's last session found, then the scan, one rate after the other.
-    worker->looksFor(GPSType::UBlox, 115200);
+    // First the receiver the link's last session found. Then the scan, one rate after the other: at each it listens
+    // for any receiver and then asks one family after the other, also the one that did not answer as last time.
+    worker->looksFor(GPSType::UBlox, 115200, true);
     QCOMPARE(receiver.statusText(), remembered);
     worker->looksFor(GPSType::Automatic, 38400);
-    QCOMPARE(receiver.statusText(), scanning);
+    QCOMPARE(receiver.statusText(), listening);
+    worker->looksFor(GPSType::Trimble, 38400);
+    QCOMPARE(receiver.statusText(), asking);
     worker->detected(GPSType::UBlox);
     QCOMPARE(receiver.statusText(), GPSReceiver::tr("Connecting to receiver..."));
-    QCOMPARE(texts.size(), 3);
+    QCOMPARE(texts.size(), 4);
     worker->ready();
     receiver.disconnectReceiver();
 
@@ -389,7 +396,7 @@ void GPSReceiverTest::_statusTextNamesWhatDetectionTries()
     receiver.setConfiguration(configuration);
     harness.workers.finishRetired();
     QVERIFY(receiver.connectReceiver());
-    harness.workers.current()->looksFor(GPSType::UBlox, 115200);
+    harness.workers.current()->looksFor(GPSType::UBlox, 115200, true);
     QCOMPARE(receiver.statusText(), GPSReceiver::tr("Connecting to receiver..."));
 }
 

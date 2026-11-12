@@ -35,11 +35,21 @@ QString identifyingStatus(const std::optional<GPSDetectionProgress>& detecting)
 {
     const QString family = detecting ? gpsReceiverName(detecting->family) : QString();
     if (family.isEmpty()) {
-        // Detection scans for any family, one rate after the other.
+        // Detection listens for any family, one rate after the other.
         return detecting && detecting->baud
                    //: %1 is a serial baud rate, such as 115200
                    ? GPSReceiver::tr("Identifying receiver at %1 baud...").arg(detecting->baud)
                    : GPSReceiver::tr("Identifying receiver...");
+    }
+    if (!detecting->remembered) {
+        // Detection asks one family after the other at the rate.
+        if (!detecting->baud) {
+            //: %1 is a manufacturer whose receivers are asked to identify themselves, such as u-blox
+            return GPSReceiver::tr("Identifying receiver: trying %1...").arg(family);
+        }
+        //: %1 is a manufacturer whose receivers are asked to identify themselves, such as u-blox, and %2 the serial
+        //: baud rate they are asked at, such as 115200
+        return GPSReceiver::tr("Identifying receiver: trying %1 at %2 baud...").arg(family).arg(detecting->baud);
     }
     if (!detecting->baud) {
         //: %1 is the manufacturer of the receiver that was connected here last time, such as u-blox

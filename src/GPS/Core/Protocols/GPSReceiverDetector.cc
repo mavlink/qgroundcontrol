@@ -63,11 +63,13 @@ void GPSReceiverSignatures::frame(const GPSFrame& frame)
 }
 
 GPSReceiverDetector::GPSReceiverDetector(std::span<const GPSReceiverFamily* const> families, GPSRuntimeIO io,
-                                         std::function<void(const GPSConfigurationEvidence&)> commandFinished)
+                                         std::function<void(const GPSConfigurationEvidence&)> commandFinished,
+                                         Looking looking)
     : _families(families)
     , _signatures(families)
     , _io(std::move(io))
     , _commandFinished(std::move(commandFinished))
+    , _looking(std::move(looking))
 {
     // Every byte read while detecting, probe replies included, is checked for signatures.
     _io.read = [this, read = std::move(_io.read)](std::span<uint8_t> buffer, GPSDeadline deadline) {
@@ -130,6 +132,9 @@ GPSReceiverDetection GPSReceiverDetector::detect(unsigned baud)
         }
         tried.push_back(rate);
         _signatures.reset();
+        if (_looking) {
+            _looking(GPSType::Automatic, rate);
+        }
         switch (_listen(rate, untilUs, result)) {
             case Listen::Failed:
                 return result;
@@ -148,6 +153,9 @@ GPSReceiverDetection GPSReceiverDetector::detect(unsigned baud)
             }
             qCDebug(GPSReceiverDetectorLog)
                 << "Probing" << gpsReceiverName(family->type) << "identity at" << rate << "baud";
+            if (_looking) {
+                _looking(family->type, rate);
+            }
             GPSProtocolRuntime runtime(*family, _io, {.commandFinished = _commandFinished});
             const bool answered = runtime.probe(GPSDeadline{untilUs}.remaining(now));
             if (runtime.error() == GPSProtocolError::Cancelled || runtime.error() == GPSProtocolError::Transport) {

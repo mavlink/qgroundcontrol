@@ -44,11 +44,12 @@ public:
         deliverQueuedCalls();
     }
 
-    /// Reports what the detection of an Automatic session looks for: @a family alone, or any family
-    /// (GPSType::Automatic), with the link at @a baud.
-    void looksFor(GPSType family, unsigned baud)
+    /// Reports what the detection of an Automatic session looks for with the link at @a baud: @a family, where the
+    /// session's hint says it was when @a remembered and else in its turn, or the output of any family
+    /// (GPSType::Automatic).
+    void looksFor(GPSType family, unsigned baud, bool remembered = false)
     {
-        emit detecting(family, baud);
+        emit detecting(family, baud, remembered);
         deliverQueuedCalls();
     }
 

@@ -40,11 +40,13 @@ struct GPSBaseStationState
 /// What the detection of an Automatic session looks for at the moment.
 struct GPSDetectionProgress
 {
-    /// The family that is asked to identify itself where the session's hint says it was; GPSType::Automatic while
-    /// detection scans for any family.
+    /// The family that is asked to identify itself; GPSType::Automatic while detection listens for the output of
+    /// any family.
     GPSType family = GPSType::Automatic;
     /// The rate the link runs at meanwhile.
     unsigned baud = 0;
+    /// The family is asked where the session's hint says it was, before detection scans for any.
+    bool remembered = false;
 
     bool operator==(const GPSDetectionProgress&) const = default;
 };
@@ -172,7 +174,7 @@ private:
 
     void _onBaseStatus(const GPSBaseStatus& report);
     void _onReady(const QString& identity, const GPSDetectionHint& detected);
-    void _onDetecting(GPSType family, unsigned baud);
+    void _onDetecting(GPSType family, unsigned baud, bool remembered);
     void _onDetected(GPSType type);
     void _forwardCorrection(const QByteArray& data, qint64 receivedAtMs);
 

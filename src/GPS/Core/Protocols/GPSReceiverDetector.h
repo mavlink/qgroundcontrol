@@ -14,6 +14,7 @@
 #include "GPSFamilyProtocol.h"
 #include "GPSProtocolRuntime.h"
 #include "GPSStreamDemux.h"
+#include "GPSType.h"
 
 /// Recognises receiver families in raw received bytes. Every framer is enabled, whatever the families use, and each
 /// frame goes to each family's signature hook in table order.
@@ -84,10 +85,17 @@ public:
     static constexpr std::chrono::milliseconds TIMEOUT{45000};
     static constexpr std::array<unsigned, 8> BAUD_PRIORITY{115200, 38400, 460800, 9600, 230400, 921600, 57600, 19200};
 
+    /// Told what detection looks for with the link at @a baud, as it starts to: the output of any family
+    /// (GPSType::Automatic) while it listens there, then each @a family before it sends that family's identity probe.
+    /// The steps follow each other at the pace of the probes. One that goes unanswered takes its family 0.4 s to 2 s,
+    /// which is slow enough for a status line to show each step.
+    using Looking = std::function<void(GPSType family, unsigned baud)>;
+
     /// @a families are the candidates, in probe order; a family without baud candidates is never detected. Probe
-    /// commands reach @a commandFinished. Decoded events are never published.
+    /// commands reach @a commandFinished, and each step of detection @a looking. Decoded events are never published.
     GPSReceiverDetector(std::span<const GPSReceiverFamily* const> families, GPSRuntimeIO io,
-                        std::function<void(const GPSConfigurationEvidence&)> commandFinished = {});
+                        std::function<void(const GPSConfigurationEvidence&)> commandFinished = {},
+                        Looking looking = {});
 
     Q_DISABLE_COPY(GPSReceiverDetector)
 
@@ -113,4 +121,5 @@ private:
     GPSReceiverSignatures _signatures;
     GPSRuntimeIO _io;
     std::function<void(const GPSConfigurationEvidence&)> _commandFinished;
+    Looking _looking;
 };

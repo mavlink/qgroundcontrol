@@ -87,10 +87,10 @@ signals:
     /// one that ends when idle has delivered no useful data for that long; None once they arrive. The session keeps
     /// running.
     void inputProblem(GPSInputProblem problem);
-    /// A GPSType::Automatic session now looks for the receiver with the link at @a baud: for @a family alone, where
-    /// its hint says the receiver was, or for any family (GPSType::Automatic) as its detection scans that rate
-    /// (GPSDriverObserver::detecting).
-    void detecting(GPSType family, unsigned baud);
+    /// A GPSType::Automatic session now looks for the receiver with the link at @a baud: it asks @a family, where
+    /// its hint says the receiver was when @a remembered, or else in its turn as detection scans that rate, or it
+    /// listens for any family (GPSType::Automatic) as that scan does first (GPSDriverObserver::detecting).
+    void detecting(GPSType family, unsigned baud, bool remembered);
     /// identity is the receiver model and firmware, or empty when the family does not report them. @a detected is
     /// what a GPSType::Automatic session found, as the hint for the next session on its link
     /// (GPSDriver::nextDetectionHint()); any other session has none.

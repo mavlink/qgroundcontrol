@@ -591,10 +591,15 @@ struct DetectionTrace
     GPSDriverObserver observer(GPSTestClock& clock)
     {
         GPSDriverObserver result;
-        result.detecting = [this, &clock](GPSType family, unsigned baud) {
-            // "any" is the scan, which asks every family.
+        result.detecting = [this, &clock](GPSType family, unsigned baud, bool remembered) {
+            // "any" is the scan as it listens at a rate, before it asks each family there.
             const QString name = family == GPSType::Automatic ? QStringLiteral("any") : gpsReceiverName(family);
-            looked.append(QStringLiteral("%1@%2").arg(name).arg(baud));
+            const QString step = QStringLiteral("%1@%2").arg(name).arg(baud);
+            if (remembered || family == GPSType::Automatic) {
+                looked.append(step);
+            } else {
+                asked.append(step);
+            }
             if (family == GPSType::Automatic && !scanStartedAtUs) {
                 scanStartedAtUs = clock.nowUs();
             }
@@ -609,8 +614,10 @@ struct DetectionTrace
         return result;
     }
 
-    /// The family and rate of each step, as "u-blox@115200".
+    /// The family and rate of each step, as "u-blox@115200": the family of the hint, and the rates of the scan.
     QStringList looked;
+    /// The families the scan asked, each with its rate.
+    QStringList asked;
     QString found;
     QString evidence;
     uint64_t scanStartedAtUs = 0;
@@ -683,6 +690,15 @@ void GPSDriverTest::_detectionHint()
     // the scan would have finished listening there, and at its second one query's wait later.
     const bool scanned = trace.scanStartedAtUs != 0;
     QCOMPARE(receiver.otherFamiliesAsked(), scanned);
+    // A scan tells each family it asks, the first of the family table at its first rate, up to the one that answers.
+    if (scanned) {
+        QVERIFY(!trace.asked.isEmpty());
+        QCOMPARE(trace.asked.constFirst(), QStringLiteral("u-blox@115200"));
+        QVERIFY(trace.asked.contains(QStringLiteral("Quectel@115200")));
+        QCOMPARE(trace.asked.constLast(), QStringLiteral("u-blox@%1").arg(receiverBaud));
+    } else {
+        QCOMPARE(trace.asked, QStringList());
+    }
     if (!scanned) {
         const uint64_t elapsedUs = trace.detectedAtUs - GPSTestClock::START_US;
         QVERIFY(GPSDriver::HINT_PROBE_TIMEOUT <= GPSReceiverDetector::LISTEN_WINDOW);

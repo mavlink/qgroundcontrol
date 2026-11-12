@@ -63,7 +63,7 @@ The settings are:
   QGroundControl remembers the receiver it found on a serial device or TCP address, with its baud rates, and asks that receiver first the next time it connects there: a receiver that is still there connects without the search.
   When it does not answer within a second at a remembered rate, the search runs as before.
   The eight connections used last are remembered, and a [recorded](#receiver) connection always runs the search.
-  Meanwhile the [status line](#status) names what is tried: _Identifying receiver: trying u-blox at 115200 baud, as last time..._ for the remembered receiver, and _Identifying receiver at 38400 baud..._ for each rate of the search.
+  Meanwhile the [status line](#status) names what is tried: _Identifying receiver: trying u-blox at 115200 baud, as last time..._ for the remembered receiver. For each rate of the search it shows _Identifying receiver at 38400 baud..._ while QGroundControl listens there, and then each manufacturer whose receivers it asks in turn, as in _Identifying receiver: trying Trimble at 38400 baud..._.
   Select a manufacturer to configure only that receiver family.
   A manufacturer saved by a version without receiver roles only filtered the settings shown, so it resets to _Detect automatically_.
 - **Receiver connection:** _Serial_ connects a receiver on a local port, _TCP_ a receiver's network port or a serial-to-TCP bridge, and _UDP_ listens for the output of a passive receiver.

@@ -225,7 +225,7 @@ GPSReceiverDetection GPSDriver::_detectHinted(
             continue;
         }
         if (_observer.detecting) {
-            _observer.detecting(family->type, rate);
+            _observer.detecting(family->type, rate, true);
         }
         GPSProtocolRuntime runtime(*family, io, {.commandFinished = commandFinished});
         const bool answered = runtime.probe(HINT_PROBE_TIMEOUT);
@@ -252,18 +252,12 @@ bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer,
     _state->configuring = true;
     GPSReceiverDetection detection = _detectHinted(io, observer.commandFinished, baudRate);
     if (!detection.found() && detection.error == GPSProtocolError::None) {
-        GPSRuntimeIO scan = io;
+        GPSReceiverDetector::Looking looking;
         if (_observer.detecting) {
-            scan.setBaudRate = [this, setBaudRate = io.setBaudRate](unsigned baud) {
-                const GPSBaudStatus status = setBaudRate(baud);
-                if (status == GPSBaudStatus::Configured) {
-                    _observer.detecting(GPSType::Automatic, baud);
-                }
-                return status;
-            };
+            looking = [this](GPSType family, unsigned baud) { _observer.detecting(family, baud, false); };
         }
-        detection =
-            GPSReceiverDetector(gpsReceiverFamilies(), std::move(scan), observer.commandFinished).detect(baudRate);
+        detection = GPSReceiverDetector(gpsReceiverFamilies(), io, observer.commandFinished, std::move(looking))
+                        .detect(baudRate);
     }
     _state->configuring = false;
     if (_observer.detected) {

@@ -58,9 +58,11 @@ struct GPSDriverObserver
     /// discarded. After a success it stays the driver's until the next configure(), and input decoded through it
     /// (GPSProtocolRuntime::consume()) reaches the sinks as received input does.
     std::function<void(GPSProtocolRuntime&, unsigned requestedBaud, unsigned baud)> configured;
-    /// A GPSType::Automatic driver now looks for the receiver with the link at @a baud: for @a family alone, where
-    /// its hint says the receiver was, or for any family (GPSType::Automatic) as receiver detection scans that rate.
-    std::function<void(GPSType family, unsigned baud)> detecting;
+    /// A GPSType::Automatic driver now looks for the receiver with the link at @a baud. It asks @a family to
+    /// identify itself: where its hint says the receiver was, which @a remembered tells, or as one of the families
+    /// receiver detection asks in turn at each rate it scans (GPSReceiverDetector::Looking). Or it listens for the
+    /// output of any family (GPSType::Automatic), as that detection does first at each rate.
+    std::function<void(GPSType family, unsigned baud, bool remembered)> detecting;
 };
 
 /// What one receive cycle heard from the receiver.

@@ -192,12 +192,12 @@ void GPSReceiverSession::_onReady(const QString& identity, const GPSDetectionHin
     emit receiverReady(identity);
 }
 
-void GPSReceiverSession::_onDetecting(GPSType family, unsigned baud)
+void GPSReceiverSession::_onDetecting(GPSType family, unsigned baud, bool remembered)
 {
     if (_connection.type != GPSType::Automatic) {
         return;
     }
-    _detecting = GPSDetectionProgress{.family = family, .baud = baud};
+    _detecting = GPSDetectionProgress{.family = family, .baud = baud, .remembered = remembered};
     emit detectingChanged();
 }
 

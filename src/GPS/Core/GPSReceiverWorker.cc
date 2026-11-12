@@ -126,7 +126,9 @@ void GPSReceiverWorker::_runSession()
     };
 
     GPSDriverObserver observer;
-    observer.detecting = [this](GPSType family, unsigned baud) { emit detecting(family, baud); };
+    observer.detecting = [this](GPSType family, unsigned baud, bool remembered) {
+        emit detecting(family, baud, remembered);
+    };
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks), _clock, std::move(observer));
     driver.setDetectionHint(_detectionHint);
