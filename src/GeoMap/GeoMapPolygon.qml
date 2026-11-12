@@ -13,8 +13,8 @@ import QtQuick.Shapes
 import QGroundControl
 import QGroundControl.GeoMap
 
-/// Polygon outline/fill from a coordinate list: the GeoMap counterpart of
-/// QGCMapPolygonVisuals (display only — no drag-to-edit vertices).
+/// Polygon outline/fill from a coordinate list; GeoMapPolygonVisuals is the
+/// full QGCMapPolygonVisuals counterpart (adds drag and split handles).
 /// Ground-projected by default; set altitudeMode to GeoMapItem.Absolute to
 /// render at the vertex coordinates' altitude. Set extrudeHeightMeters to
 /// also render a 3D fence wall from the terrain up to that AGL height
@@ -30,6 +30,7 @@ Item {
     property color fillColor: "transparent"
     property real extrudeHeightMeters: 0    ///< 0 = flat outline only
     property color extrudeColor: Qt.alpha(strokeColor, 0.25)
+    property real node3DOpacity: 1          ///< Dimming of the wall, see GeoMapItem.node3DOpacity
     property alias altitudeMode: pathProjector.altitudeMode
 
     GeoMapProjectedPath {
@@ -59,6 +60,7 @@ Item {
         surfaceModel: root.surfaceModel
         heightAglMeters: root.extrudeHeightMeters
         color: root.extrudeColor
+        node3DOpacity: root.node3DOpacity
         coordinates: root.coordinates
     }
 }

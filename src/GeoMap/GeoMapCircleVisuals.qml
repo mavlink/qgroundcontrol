@@ -11,7 +11,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Shapes
-import QtQuick3D
 import QtPositioning
 
 import QGroundControl
@@ -30,6 +29,10 @@ Item {
     property bool interactive: mapCircle ? mapCircle.interactive : false
     property color borderColor: QGroundControl.globalPalette.mapMissionTrajectory
     property real borderWidth: 3
+    property color fillColor: "transparent"
+    property real extrudeHeightMeters: 0    ///< 3D fence wall height, see GeoMapCircle
+    property color extrudeColor: Qt.alpha(borderColor, 0.25)
+    property real node3DOpacity: 1          ///< Dimming of the wall, see GeoMapItem.node3DOpacity
     property bool centerDragHandleVisible: true
     property bool radiusLabelVisible: false
     property int altitudeMode: GeoMapItem.ClampToGround
@@ -38,107 +41,6 @@ Item {
     readonly property real _radius: mapCircle ? mapCircle.radius.rawValue : 0
     readonly property var _camera: scene ? scene.camera : null
 
-    /// Screen-space handle that reports the coordinate it is dragged to, on the
-    /// same surface the handle is drawn on so it stays under the cursor at any tilt
-    component DragHandle: GeoMapItem {
-        id: handle
-
-        property bool labelVisible: false
-        property string labelText
-        property bool showGroundDrop: false     ///< Drop line and ground shadow under a floating handle
-
-        signal dragged(var coordinate)
-
-        width: ScreenTools.defaultFontPixelHeight * 1.5
-        height: width
-        anchorPoint: Qt.point(width / 2, height / 2)
-        // Handle stays opaque in 3D; its 3D node is only the drop line
-        crossfade3D: false
-        delegate3D: showGroundDrop ? dropLineComponent : null
-
-        Component {
-            id: dropLineComponent
-
-            Node {
-                GeoMapDropLine {
-                    dropLength: dropShadow.dropLength
-                    lineScale: dropShadow.dropLineScale
-                }
-            }
-        }
-
-        GeoMapDropShadow {
-            id: dropShadow
-            objectName: "geoMapDragHandleDropShadow"
-            geoItem: handle
-            indicatorSize: handle.width
-            visible: handle.showGroundDrop && dropLength > 0
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: "white"
-            opacity: 0.9
-        }
-
-        Rectangle {
-            anchors.bottom: parent.top
-            anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.25
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: handleLabel.width + (ScreenTools.defaultFontPixelHeight * 0.5)
-            height: parent.height
-            radius: height / 2
-            color: "white"
-            opacity: 0.5
-            visible: handle.labelVisible
-        }
-
-        QGCLabel {
-            id: handleLabel
-            anchors.bottom: parent.top
-            anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.25
-            anchors.horizontalCenter: parent.horizontalCenter
-            height: parent.height
-            verticalAlignment: Text.AlignVCenter
-            color: "black"
-            text: handle.labelText
-            visible: handle.labelVisible
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            // The map pan DragHandler would otherwise take over past the drag threshold
-            preventStealing: true
-
-            // Cursor-to-anchor offset at press, so the handle doesn't jump to the cursor
-            property point _grabOffset
-
-            function _parentPosition(mouse) {
-                return handle.mapToItem(handle.parent, mouse.x, mouse.y)
-            }
-
-            onPressed: (mouse) => {
-                const pos = _parentPosition(mouse)
-                _grabOffset = Qt.point(handle.x + handle.anchorPoint.x - pos.x, handle.y + handle.anchorPoint.y - pos.y)
-            }
-
-            onPositionChanged: (mouse) => {
-                const pos = _parentPosition(mouse)
-                const target = Qt.point(pos.x + _grabOffset.x, pos.y + _grabOffset.y)
-                const scene = handle.scene
-                // Absolute handles sit on the horizontal plane at their altitude,
-                // ground-clamped ones on the rendered terrain
-                const coordinate = (handle.altitudeMode === GeoMapItem.Absolute)
-                    ? scene.camera.coordinateAtScreenPoint(target, handle.scenePosition.z)
-                    : handle.surfaceModel.surfaceCoordinateAtScreenPoint(scene.camera, target, scene.verticalScale * scene.terrainScale)
-                if (coordinate.isValid) {
-                    handle.dragged(coordinate)
-                }
-            }
-        }
-    }
-
     GeoMapCircle {
         scene: root.scene
         surfaceModel: root.surfaceModel
@@ -146,6 +48,10 @@ Item {
         radiusMeters: root._radius
         strokeColor: root.borderColor
         strokeWidth: root.borderWidth
+        fillColor: root.fillColor
+        extrudeHeightMeters: root.extrudeHeightMeters
+        extrudeColor: root.extrudeColor
+        node3DOpacity: root.node3DOpacity
         altitudeMode: root.altitudeMode
     }
 
@@ -194,7 +100,7 @@ Item {
         }
     }
 
-    DragHandle {
+    GeoMapDragHandle {
         objectName: "geoMapCircleCenterHandle"
         scene: root.scene
         surfaceModel: root.surfaceModel
@@ -206,7 +112,7 @@ Item {
         onDragged: (coordinate) => root.mapCircle.center = QtPositioning.coordinate(coordinate.latitude, coordinate.longitude, root._center.altitude)
     }
 
-    DragHandle {
+    GeoMapDragHandle {
         objectName: "geoMapCircleRadiusHandle"
         scene: root.scene
         surfaceModel: root.surfaceModel

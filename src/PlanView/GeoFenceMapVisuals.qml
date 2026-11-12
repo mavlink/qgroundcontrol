@@ -135,7 +135,7 @@ Item {
         MissionItemIndicatorDrag {
             mapControl:     map
             itemCoordinate: myGeoFenceController.breachReturnPoint
-            visible:        _root.interactive
+            visible:        _root.interactive && myGeoFenceController.breachReturnSupported
 
             onItemCoordinateChanged: myGeoFenceController.breachReturnPoint = itemCoordinate
         }
@@ -152,6 +152,7 @@ Item {
             z:              QGroundControl.zOrderMapItems
             coordinate:     myGeoFenceController.breachReturnPoint
             opacity:        _root.opacity
+            visible:        myGeoFenceController.breachReturnSupported
 
             sourceItem: MissionItemIndexLabel {
                 label:      qsTr("B", "Breach Return Point item indicator")
