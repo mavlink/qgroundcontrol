@@ -68,7 +68,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping_data()
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<int>("baseMode");
     QTest::addColumn<bool>("accepted");
-    // Each family's modes and limits are GPSBaseStationSettingsTest's; these rows show the receiver applies them.
+    // Each family's modes and limits are GPSReceiverSessionTest's; these rows show the receiver applies them.
     QTest::newRow("ublox-survey-in") << 4 << 0 << true;
     QTest::newRow("unicore-needs-explicit-mode") << 5 << 0 << false;
     // Automatic accepts what any family supports; the detected family's support is checked on the worker.

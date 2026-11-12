@@ -2,8 +2,8 @@
 
 #include "UnitTest.h"
 
-/// Saved base-station settings: the receiver request and base state they produce.
-class GPSBaseStationSettingsTest : public UnitTest
+/// A receiver session's base-station settings: the receiver request and base state they produce.
+class GPSReceiverSessionTest : public UnitTest
 {
     Q_OBJECT
 

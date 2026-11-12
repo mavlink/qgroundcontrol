@@ -1,4 +1,4 @@
-#include "GPSBaseStationSettingsTest.h"
+#include "GPSReceiverSessionTest.h"
 
 #include <chrono>
 #include <cmath>
@@ -42,7 +42,7 @@ GPSBaseStationConfig savedSettings(int mode)
 }
 }  // namespace
 
-void GPSBaseStationSettingsTest::_configForSettings_data()
+void GPSReceiverSessionTest::_configForSettings_data()
 {
     QTest::addColumn<GPSType>("type");
     QTest::addColumn<int>("mode");
@@ -56,7 +56,7 @@ void GPSBaseStationSettingsTest::_configForSettings_data()
     }
 }
 
-void GPSBaseStationSettingsTest::_configForSettings()
+void GPSReceiverSessionTest::_configForSettings()
 {
     QFETCH(GPSType, type);
     QFETCH(int, mode);
@@ -79,7 +79,7 @@ void GPSBaseStationSettingsTest::_configForSettings()
     QVERIFY(config.base.mode == expected);
 }
 
-void GPSBaseStationSettingsTest::_settingsDiagnostics_data()
+void GPSReceiverSessionTest::_settingsDiagnostics_data()
 {
     QTest::addColumn<GPSType>("type");
     QTest::addColumn<int>("mode");
@@ -99,7 +99,7 @@ void GPSBaseStationSettingsTest::_settingsDiagnostics_data()
     QTest::newRow("passive-ignores-base-settings") << GPSType::Passive << 2 << 0U << 115200U << QString();
 }
 
-void GPSBaseStationSettingsTest::_settingsDiagnostics()
+void GPSReceiverSessionTest::_settingsDiagnostics()
 {
     QFETCH(GPSType, type);
     QFETCH(int, mode);
@@ -116,7 +116,7 @@ void GPSBaseStationSettingsTest::_settingsDiagnostics()
     QCOMPARE(error, diagnostic);
 }
 
-void GPSBaseStationSettingsTest::_compactObservationsFollowSupport()
+void GPSReceiverSessionTest::_compactObservationsFollowSupport()
 {
     auto settings = savedSettings(0);
     for (const bool compact : {false, true}) {
@@ -131,7 +131,7 @@ void GPSBaseStationSettingsTest::_compactObservationsFollowSupport()
     }
 }
 
-void GPSBaseStationSettingsTest::_persistentConsent_data()
+void GPSReceiverSessionTest::_persistentConsent_data()
 {
     QTest::addColumn<GPSType>("type");
     QTest::addColumn<bool>("allowPersistentChanges");
@@ -142,7 +142,7 @@ void GPSBaseStationSettingsTest::_persistentConsent_data()
     }
 }
 
-void GPSBaseStationSettingsTest::_persistentConsent()
+void GPSReceiverSessionTest::_persistentConsent()
 {
     QFETCH(GPSType, type);
     QFETCH(bool, allowPersistentChanges);
@@ -152,7 +152,7 @@ void GPSBaseStationSettingsTest::_persistentConsent()
     QCOMPARE(config.allowPersistentChanges, allowPersistentChanges);
 }
 
-void GPSBaseStationSettingsTest::_baseStationState()
+void GPSReceiverSessionTest::_baseStationState()
 {
     using Mode = BaseModeDefinition::Mode;
     const auto stateFor = [](int mode, GPSType type) {
@@ -180,7 +180,7 @@ void GPSBaseStationSettingsTest::_baseStationState()
     QVERIFY(!averaging.assumedAccuracyMeters);
 }
 
-void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition_data()
+void GPSReceiverSessionTest::_baseStatusUpdatesBasePosition_data()
 {
     QTest::addColumn<int>("mode");
     QTest::addColumn<GPSBaseState>("state");
@@ -201,7 +201,7 @@ void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition_data()
     QTest::newRow("passive-has-no-position") << -1 << GPSBaseState::Valid << 11.0 << 0.5 << NAN_DOUBLE;
 }
 
-void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition()
+void GPSReceiverSessionTest::_baseStatusUpdatesBasePosition()
 {
     QFETCH(int, mode);
     QFETCH(GPSBaseState, state);
@@ -229,4 +229,4 @@ void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition()
     }
 }
 
-UT_REGISTER_TEST_LIGHTWEIGHT(GPSBaseStationSettingsTest, TestLabel::Unit)
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSReceiverSessionTest, TestLabel::Unit)

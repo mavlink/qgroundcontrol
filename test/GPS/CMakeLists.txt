@@ -63,10 +63,10 @@ set(_qgc_gps_suites
     Qml/GPSCorrectionsPanelTest
     Qml/GPSIndicatorTest
     Qml/GPSReceiverSettingsTest
-    Receiver/GPSBaseStationSettingsTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
     Receiver/GPSReceiverPresentationTest
+    Receiver/GPSReceiverSessionTest
     Receiver/GPSReceiverTest
 )
 qgc_add_gps_suites(Unit ${_qgc_gps_suites})
