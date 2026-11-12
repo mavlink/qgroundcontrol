@@ -691,7 +691,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   diagnostics are uploaded separately. The workflow runs only on pull requests: nothing reads
   uploaded fuzzer builds, so there is no continuous build.
 - **GPS standalone** (`gps-standalone.yml`): `test/GPS/Standalone` builds `QGCGPSCore` and
-  `QGCNTRIPHttp` without the application, with the receiver qualification runner, the fuzzers'
+  `QGCNTRIPHttp` without the application, with the golden transcripts of the receiver protocols
+  (`GPSGoldenTranscripts`), the receiver qualification runner, the fuzzers'
   smoke tests and the libFuzzer harnesses. It is its own path-filtered workflow, not a Linux leg or
   a required check: pull requests and `master`/`Stable*` pushes run it when `src/GPS`, the utility
   libraries and CMake modules the project adds, `test/GPS`, `build-config.json` or the workflow

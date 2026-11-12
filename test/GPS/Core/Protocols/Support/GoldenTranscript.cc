@@ -10,12 +10,9 @@
 #include "GPSReceiverDetector.h"
 #include "GPSReceiverFamilies.h"
 #include "Protocols/Support/GPSModelViolations.h"
-#include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/GPSTestClock.h"
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/ScriptedReceiver.h"
-
-using namespace GPSTest;
 
 namespace GPSTest::Golden {
 namespace {
@@ -276,8 +273,6 @@ void decodeOffline(GPSProtocolRuntime& runtime, const Link& link, QByteArrayView
 
 Run runGolden(const Scenario& scenario, const Link& link)
 {
-    // Diagnostics are not transcribed; failure scenarios warn by design.
-    const GPSProtocolLogCapture diagnostics;
     Run run;
     Session session(scenario, link, run);
     if (!session.configure()) {
@@ -308,7 +303,6 @@ Run runGolden(const Scenario& scenario, const Link& link)
 
 Decode decodeGolden(const Scenario& setup, const Link& link, QByteArrayView bytes, qsizetype chunk)
 {
-    const GPSProtocolLogCapture diagnostics;
     Decode result;
     Run run;
     Session session(setup, link, run);
@@ -323,7 +317,6 @@ Decode decodeGolden(const Scenario& setup, const Link& link, QByteArrayView byte
 
 Decode armedDecodeGolden(const Scenario& setup, const Link& link, QByteArrayView bytes, qsizetype chunk)
 {
-    const GPSProtocolLogCapture diagnostics;
     Decode result;
     const GPSReceiverFamily* family = gpsReceiverFamily(setup.type);
     if (!family) {

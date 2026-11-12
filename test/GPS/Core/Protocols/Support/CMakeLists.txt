@@ -28,6 +28,30 @@ add_library(
     UBXReceiverModel.h
     UnicoreReceiverModel.h
 )
+# The golden transcripts (../golden), which are application-free too: their recorder and text here, and their
+# scenarios, decode table and checks in ../Scenarios, included as "Protocols/Scenarios/<header>".
+# GPSGoldenTranscriptTest runs the checks in the application and QGCGPSGoldenTranscripts (../Scenarios) in
+# test/GPS/Standalone.
+target_sources(
+    QGCGPSProtocolTestSupport
+    PRIVATE
+        GoldenFormat.cc
+        GoldenFormat.h
+        GoldenTranscript.cc
+        GoldenTranscript.h
+        ../Scenarios/GoldenChecks.cc
+        ../Scenarios/GoldenChecks.h
+        ../Scenarios/GoldenScenarios.cc
+        ../Scenarios/GoldenScenarios.h
+        ../Scenarios/GoldenScenariosAshtech.cc
+        ../Scenarios/GoldenScenariosAutomatic.cc
+        ../Scenarios/GoldenScenariosFemto.cc
+        ../Scenarios/GoldenScenariosPassive.cc
+        ../Scenarios/GoldenScenariosQuectel.cc
+        ../Scenarios/GoldenScenariosSBF.cc
+        ../Scenarios/GoldenScenariosUBX.cc
+        ../Scenarios/GoldenScenariosUnicore.cc
+)
 target_compile_features(QGCGPSProtocolTestSupport PUBLIC cxx_std_20)
 target_include_directories(QGCGPSProtocolTestSupport PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 # The protocol headers are private to QGCGPSCore; the protocol suites, the hardware runner and the fuzzer include them

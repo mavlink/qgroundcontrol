@@ -1,28 +1,15 @@
 # ============================================================================
 # GPS Protocol Tests
-# The golden scenarios and the protocol test helpers that need the unit test framework. The application-free helpers
-# are QGCGPSProtocolTestSupport (Support/), which test/GPS/Core links; the receiver qualification runner (Hardware/)
-# and the reply fuzzer's smoke test (Fuzz/) build here or standalone, and the libFuzzer harnesses (Fuzz/) only
-# standalone (test/GPS/Standalone).
+# The protocol test helpers that need the unit test framework. The application-free helpers and the golden
+# transcripts are QGCGPSProtocolTestSupport (Support/ and Scenarios/), which test/GPS/Core links; the receiver
+# qualification runner (Hardware/) and the reply fuzzer's smoke test (Fuzz/) build here or standalone, and the
+# libFuzzer harnesses (Fuzz/) and the golden transcripts' own program (Scenarios/) only standalone
+# (test/GPS/Standalone).
 # ============================================================================
 
 target_sources(
     QGCUnitTests
     PRIVATE
-        Scenarios/GoldenScenarios.cc
-        Scenarios/GoldenScenarios.h
-        Scenarios/GoldenScenariosAshtech.cc
-        Scenarios/GoldenScenariosAutomatic.cc
-        Scenarios/GoldenScenariosFemto.cc
-        Scenarios/GoldenScenariosPassive.cc
-        Scenarios/GoldenScenariosQuectel.cc
-        Scenarios/GoldenScenariosSBF.cc
-        Scenarios/GoldenScenariosUBX.cc
-        Scenarios/GoldenScenariosUnicore.cc
-        Support/GoldenFormat.cc
-        Support/GoldenFormat.h
-        Support/GoldenTranscript.cc
-        Support/GoldenTranscript.h
         Support/GPSProtocolTestBase.cc
         Support/GPSProtocolTestBase.h
 )

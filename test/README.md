@@ -401,7 +401,7 @@ and `test/GPS/Core/Protocols/fixtures/` at several chunk sizes. The expected tra
 `test/GPS/Core/Protocols/golden/`, and `test/GPS/Core/Protocols/Support/GoldenTranscript.h` documents the driver
 seam. The suite also checks that a decoder armed without I/O for a recording replay
 (`GPSProtocolRuntime::armDecodeOnly()`) decodes those files as the configured decoder does.
-[`test/GPS/Core/Protocols/GPSGoldenTranscriptTest.cc`](GPS/Core/Protocols/GPSGoldenTranscriptTest.cc) describes the
+[`test/GPS/Core/Protocols/Support/GoldenFormat.cc`](GPS/Core/Protocols/Support/GoldenFormat.cc) describes the
 format. A scenario that behaves exactly as another one names it in `sameAs` and has no golden of its own, and a
 scenario records its stream phase only when that differs from every other scenario's of its family.
 
@@ -412,8 +412,12 @@ change, then review the diff. Update mode also removes files no scenario produce
 QGC_GPS_GOLDEN_UPDATE=1 ctest --test-dir build -R GPSGoldenTranscriptTest
 ```
 
-`test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with the receiver
-qualification runner and the smoke tests of the NTRIP decoder and receiver reply fuzzers. With Clang,
+The scenarios, the recorder and the checks of each scenario and decoder against its golden
+(`test/GPS/Core/Protocols/Scenarios/GoldenChecks.h`) need no unit test framework: they are part of
+`QGCGPSProtocolTestSupport`, and `test/GPS/Standalone` runs them as `GPSGoldenTranscripts`.
+
+`test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with those golden transcripts,
+the receiver qualification runner and the smoke tests of the NTRIP decoder and receiver reply fuzzers. With Clang,
 `-DQGC_GPS_LIBFUZZER=ON` adds the libFuzzer harnesses and builds both libraries with ASan and UBSan:
 `QGCGPSProtocolFuzz` decodes its input, `QGCGPSReplyFuzz` feeds it to the driver as the replies of the receiver it
 configures or detects, on a virtual clock, and `ntrip_http_decoder_fuzzer` decodes it as a caster's response. Build

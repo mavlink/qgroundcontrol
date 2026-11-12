@@ -2,10 +2,11 @@
 
 // Golden-transcript driver seam.
 //
-// GPSGoldenTranscriptTest pins the observable behaviour of every native receiver family: host-to-receiver bytes,
-// baud changes, configuration evidence, identity and decoded events. The test and the checked-in goldens under
-// test/GPS/Core/Protocols/golden/ only use this header. GoldenTranscript.cc is the only file that knows the protocol
-// implementation; a re-architecture re-implements that file, and must reproduce every golden byte for byte.
+// The golden checks (Scenarios/GoldenChecks.h) pin the observable behaviour of every native receiver family:
+// host-to-receiver bytes, baud changes, configuration evidence, identity and decoded events. The checks and the
+// checked-in goldens under test/GPS/Core/Protocols/golden/ only use this header. GoldenTranscript.cc is the only file
+// that knows the protocol implementation; a re-architecture re-implements that file, and must reproduce every golden
+// byte for byte. It needs no unit test framework, so that the checks also run without the application.
 //
 // Contract of an implementation:
 // - Run GPSDriver itself, as GPSReceiverWorker does: configure(), then receiveOutcome() for the stream. The transcript
@@ -25,8 +26,9 @@
 // - After a successful configuration, run each StreamStep: queue its bytes on the receiver, then call
 //   GPSDriver::receiveOutcome() with RECEIVE_TIMEOUT slices until `duration` of virtual time has passed, the driver
 //   reports a failure, or MAX_RECEIVE_CALLS slices were used.
-// - Never let diagnostics reach the test log: failure scenarios emit warnings by design, and the transcripts pin wire
-//   behaviour, not diagnostic text. GPSGoldenTranscriptTest accepts the warnings of GPSDriver itself.
+// - Leave diagnostics to the caller: failure scenarios emit warnings by design, and the transcripts pin wire
+//   behaviour, not diagnostic text. GPSGoldenTranscriptTest accepts the warnings of the protocols and of GPSDriver in
+//   its log check, and QGCGPSGoldenTranscripts drops them.
 // - decodeGolden() configures Link as above (without stream steps), then decodes the bytes in chunks through the
 //   driver's runtime with the receiver unreachable (any attempted I/O is counted and fails), then decodes nothing
 //   after FRESHNESS_HORIZON. A failed configuration decodes nothing. armedDecodeGolden() decodes the same way after
