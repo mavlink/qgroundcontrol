@@ -85,48 +85,9 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::ingest(const Sentence&
     return std::nullopt;
 }
 
-NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_find(std::optional<int> timeMs)
+bool NavigationEpochAssembler::_holds(const StoredEpoch& stored, std::optional<int> timeMs)
 {
-    if (auto* existing = _findExisting(timeMs)) {
-        return *existing;
-    }
-
-    auto oldest = _epochs.begin();
-    for (auto epoch = _epochs.begin(); epoch != _epochs.end(); ++epoch) {
-        if (!epoch->active) {
-            oldest = epoch;
-            break;
-        }
-        if (epoch->epoch.receivedAtUs < oldest->epoch.receivedAtUs) {
-            oldest = epoch;
-        }
-    }
-    _resetEpoch(*oldest, timeMs);
-    return *oldest;
-}
-
-NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_findExisting(std::optional<int> timeMs)
-{
-    const int key = timeMs.value_or(NO_TIME_KEY);
-    for (auto& epoch : _epochs) {
-        if (epoch.active && epoch.key == key) {
-            return &epoch;
-        }
-    }
-    return nullptr;
-}
-
-NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_current()
-{
-    if (!_hasCurrent) {
-        return nullptr;
-    }
-    for (auto& epoch : _epochs) {
-        if (epoch.active && epoch.key == _currentKey) {
-            return &epoch;
-        }
-    }
-    return nullptr;
+    return stored.active && stored.key == timeMs.value_or(NO_TIME_KEY);
 }
 
 void NavigationEpochAssembler::_resetEpoch(StoredEpoch& stored, std::optional<int> timeMs)
@@ -154,16 +115,21 @@ NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_positionEpoch(
                                                                                 uint64_t receivedAtUs, bool gga,
                                                                                 std::optional<NavigationEpoch>& overdue)
 {
-    auto* const current = _current();
-    auto& stored = _find(timeMs);
+    const bool current = _holds(_current, timeMs);
     // A GGA of the same time again is a new report from a receiver whose time does not advance.
-    if (current && (current != &stored || (gga && stored.epoch.ggaQuality))) {
-        overdue = _end(*current);
+    if (_current.active && (!current || (gga && _current.epoch.ggaQuality))) {
+        overdue = _end(_current);
     }
-    _resetExpiredEpoch(stored, receivedAtUs);
-    _currentKey = stored.key;
-    _hasCurrent = true;
-    return stored;
+    if (!current) {
+        if (_holds(_ahead, timeMs)) {
+            _current = _ahead;
+        } else {
+            _resetEpoch(_current, timeMs);
+        }
+        _ahead = {};
+    }
+    _resetExpiredEpoch(_current, receivedAtUs);
+    return _current;
 }
 
 std::optional<NavigationEpoch> NavigationEpochAssembler::_end(StoredEpoch& stored)
@@ -272,7 +238,10 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(c
     if (!timeMs) {
         return nullptr;
     }
-    auto& stored = _find(timeMs);
+    auto& stored = _holds(_current, timeMs) ? _current : _ahead;
+    if (!_holds(stored, timeMs)) {
+        _resetEpoch(stored, timeMs);
+    }
     _resetExpiredEpoch(stored, receivedAtUs);
     auto& epoch = stored.epoch;
     epoch.horizontalAccuracyMeters = finiteValue(accuracy->horizontalAccuracy);
@@ -286,8 +255,8 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(c
 NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinUntimed(const Sentence& sentence,
                                                                               uint64_t receivedAtUs)
 {
-    auto* stored = _current();
-    if (!stored || !stored->epoch.positionReceivedAtUs ||
+    auto* const stored = &_current;
+    if (!stored->active ||
         !MonotonicClock::withinAge(stored->epoch.positionReceivedAtUs, receivedAtUs, METADATA_MAX_AGE)) {
         return nullptr;
     }

@@ -284,6 +284,8 @@ void GPSNMEAStreamTest::_sentenceOrder_data()
                                  << true << true << false;
     QTest::newRow("gga-last") << QByteArrayList{"RMC", "VTG", "GSA", "GST", "GGA"} << QByteArray("GGA") << true << true
                               << true;
+    // The GST begins its epoch before the GGA makes it the current one.
+    QTest::newRow("gst-first") << QByteArrayList{"GST", "GGA", "GSA"} << QByteArray("GSA") << false << true << true;
     QTest::newRow("gga-only") << QByteArrayList{"GGA"} << QByteArray("GGA") << false << false << false;
 }
 
@@ -531,6 +533,26 @@ void GPSNMEAStreamTest::_fixLossWhileWaiting()
     QCOMPARE(receiver.positions, 4);
     QCOMPARE(receiver.published->navigation.timestampUs, receiver.now);
     QCOMPARE(receiver.published->navigation.fixType, GPSFixQuality::Fix3D);
+}
+
+void GPSNMEAStreamTest::_timeStepsBack()
+{
+    NMEAReceiver receiver;
+    for (const auto& sentence : {rmc("123519"), QByteArray(GSA), gst("123519"), gga("123519")}) {
+        receiver.feed(sentence);
+    }
+    QVERIFY(receiver.published && receiver.published->velocityValid);
+    receiver.now += EPOCH_INTERVAL_US / 2;
+    receiver.feed(gga("123520"));
+    // The receiver reports a time of day again. What the earlier epoch of that time carried is not this one's.
+    receiver.now += EPOCH_INTERVAL_US / 2;
+    receiver.feed(gga("123519"));
+    QCOMPARE(receiver.positions, 3);
+    const auto& navigation = receiver.published->navigation;
+    QCOMPARE(navigation.timestampUs, receiver.now);
+    QVERIFY(!receiver.published->velocityValid);
+    QVERIFY(std::isnan(navigation.verticalDop));
+    QVERIFY(std::isnan(navigation.horizontalAccuracyMeters));
 }
 
 void GPSNMEAStreamTest::_vdopEpoch_data()

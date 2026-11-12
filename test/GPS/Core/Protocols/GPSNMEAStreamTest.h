@@ -27,6 +27,7 @@ private slots:
     void _awaitedSentenceLaterThanMetadataAge_data();
     void _awaitedSentenceLaterThanMetadataAge();
     void _fixLossWhileWaiting();
+    void _timeStepsBack();
     void _vdopEpoch_data();
     void _vdopEpoch();
     void _vdopReceiptIsNotRenewed();

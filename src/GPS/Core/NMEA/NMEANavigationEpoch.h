@@ -1,9 +1,7 @@
 #pragma once
 
-#include <array>
 #include <chrono>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <optional>
 
@@ -67,10 +65,13 @@ struct NavigationUpdate
 /// A sentence follows its GGA only in the first half of the interval between the last two GGA; one that arrives later
 /// is not waited for in the epochs to come. An epoch that still waits when the next one begins is published then as
 /// it stands, unless the same sentence publishes the next one.
+///
+/// Two epochs are kept, the only ones a sentence can join: the current one, which the last GGA, RMC or GLL belongs
+/// to, and one that a GST began ahead of the GGA, RMC or GLL of its time. An epoch that ended is forgotten, so a time
+/// of day that comes again, as from a receiver whose time stepped back, begins an epoch that takes nothing from it.
 class NavigationEpochAssembler
 {
 public:
-    static constexpr size_t MAX_RETAINED_EPOCHS = 32;
     /// Receipt age beyond which retained metadata no longer joins a new sentence of its epoch.
     static constexpr std::chrono::microseconds METADATA_MAX_AGE = std::chrono::seconds(2);
 
@@ -103,9 +104,7 @@ private:
 
     static constexpr int NO_TIME_KEY = -1;
 
-    StoredEpoch& _find(std::optional<int> timeMs);
-    StoredEpoch* _findExisting(std::optional<int> timeMs);
-    StoredEpoch* _current();
+    static bool _holds(const StoredEpoch& stored, std::optional<int> timeMs);
     void _resetEpoch(StoredEpoch& stored, std::optional<int> timeMs);
     void _resetExpiredEpoch(StoredEpoch& stored, uint64_t receivedAtUs);
     /// The epoch of @a timeMs as the current one. Ends the current epoch when it is another one or, for a GGA, when
@@ -121,9 +120,9 @@ private:
     StoredEpoch* _joinAccuracy(const Sentence& sentence, uint64_t receivedAtUs);
     StoredEpoch* _joinUntimed(const Sentence& sentence, uint64_t receivedAtUs);
 
-    std::array<StoredEpoch, MAX_RETAINED_EPOCHS> _epochs{};
-    int _currentKey = NO_TIME_KEY;
-    bool _hasCurrent = false;
+    StoredEpoch _current;
+    /// Begun by a GST ahead of the GGA, RMC or GLL that makes its epoch the current one.
+    StoredEpoch _ahead;
     uint64_t _sequence = 0;
     uint64_t _invalidThroughSequence = 0;
     bool _navigationValid = true;
