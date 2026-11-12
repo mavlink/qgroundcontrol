@@ -35,12 +35,19 @@ QString goldenFile(const QString& name)
     return name + QStringLiteral(".golden");
 }
 
+/// Where the stream phase of @a transcript begins, at the end of the line before its `stream` line; negative for a
+/// transcript without one, which a failed configuration and a scenario that records its detection only have.
+qsizetype streamPhase(const QString& transcript)
+{
+    return transcript.indexOf(QLatin1String("\nstream "));
+}
+
 /// The stream phase the golden @a name records, from its `stream` line on; empty when no event follows that line.
 QString recordedStream(const QString& name)
 {
     QString golden = QString::fromUtf8(readFile(QDir(goldenRoot()).filePath(goldenFile(name))).value_or(QByteArray()));
     golden.remove(u'\r');
-    const qsizetype phase = golden.indexOf(QLatin1String("\nstream "));
+    const qsizetype phase = streamPhase(golden);
     const bool events = phase >= 0 && golden.indexOf(u'\n', phase + 1) < golden.size() - 1;
     return events ? golden.mid(phase + 1) : QString();
 }
@@ -172,6 +179,12 @@ QString checkScenario(const ScenarioDef& scenario)
     const QString second = scenarioTranscript(scenario);
     if (first != second) {
         return difference(name + QStringLiteral(" (first run)"), first, second);
+    }
+    if (!scenario.stream.empty() && streamPhase(first) < 0) {
+        return QStringLiteral(
+                   "%1 has no stream phase, as its configuration fails or only its detection is recorded: "
+                   "leave its stream empty")
+            .arg(name);
     }
     if (!scenario.sameAs) {
         return checkGolden(goldenRoot(), goldenFile(name), first);

@@ -51,7 +51,8 @@ const std::vector<DataFile>& dataFiles();
 QString goldenName(const ScenarioDef& scenario);
 QString goldenName(const DecoderDef& decoder);
 
-/// @a scenario runs the same twice, as its golden records or as the scenario it is the same as behaves.
+/// @a scenario runs the same twice, as its golden records or as the scenario it is the same as behaves, and gives a
+/// stream only when its transcript has a stream phase.
 [[nodiscard]] QString checkScenario(const ScenarioDef& scenario);
 
 /// @a decoder decodes its data files the same twice and in chunks of 1 and 7 bytes, as its golden records or as the

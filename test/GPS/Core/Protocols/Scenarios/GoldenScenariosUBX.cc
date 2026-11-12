@@ -30,8 +30,7 @@ void addUblox(Table& table)
     table.add(type, "profile-f9p-survey", "F9P profile, survey-in", ubxProfile(Receiver::F9P), survey, stream);
     table.add(type, "profile-f9p-fixed", "F9P profile, fixed base", ubxProfile(Receiver::F9P), fixed);
     // UBXProtocolTest checks the other receivers without base support.
-    table.add(type, "profile-m8n-survey", "Receiver profile without base support", ubxProfile(Receiver::M8N), survey,
-              stream);
+    table.add(type, "profile-m8n-survey", "Receiver profile without base support", ubxProfile(Receiver::M8N), survey);
     table
         .add(type, "profile-f9p-survey-restart", "F9P left surveying by an earlier session",
              ubxProfile(Receiver::F9P,
@@ -48,7 +47,7 @@ void addUblox(Table& table)
                              b.model.retainedSurveyDuration = 329000;
                              b.model.surveyStopStuck = true;
                          }),
-              survey, stream);
+              survey);
     table.add(type, "profile-m8p-base-survey-restart", "M8P left surveying by an earlier session",
               ubxProfile(Receiver::M8PBase,
                          [](UBXBench& b) {
@@ -62,7 +61,7 @@ void addUblox(Table& table)
                              b.model.timeMode = 1;
                              b.model.surveyStopStuck = true;
                          }),
-              survey, stream);
+              survey);
     table
         .add(type, "profile-f9p-corrupt-version", "F9P with corrupt identity replies around the valid one",
              ubxProfile(Receiver::F9P, [](UBXBench& b) { b.model.corruptVersionReplies = true; }), fixed)
@@ -74,7 +73,7 @@ void addUblox(Table& table)
     table.add(
         type, "profile-f9p-disable-nak", "F9P rejects disabling time mode (required)",
         ubxProfile(Receiver::F9P, [](UBXBench& b) { b.model.disableReply = UBXReceiverModel::DisableReply::Nak; }),
-        survey, stream);
+        survey);
     table
         .add(type, "profile-f9p-stale-disable-ack", "F9P repeats a stale acknowledgement before disabling",
              ubxProfile(Receiver::F9P, [](UBXBench& b) { b.model.staleDisableAck = true; }), survey, stream)
@@ -82,9 +81,9 @@ void addUblox(Table& table)
     table.add(type, "profile-f9p-survey-rtcm-rejected", "F9P rejects RTCM activation after the survey completes",
               ubxProfile(Receiver::F9P, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), survey, stream);
     table.add(type, "profile-f9p-fixed-rtcm-rejected", "F9P rejects RTCM activation for a fixed base",
-              ubxProfile(Receiver::F9P, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), fixed, stream);
+              ubxProfile(Receiver::F9P, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), fixed);
     table.add(type, "profile-m8p-base-fixed-rtcm-rejected", "M8P rejects RTCM activation for a fixed base",
-              ubxProfile(Receiver::M8PBase, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), fixed, stream);
+              ubxProfile(Receiver::M8PBase, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), fixed);
 
     // The gate on a base's corrections: GPSDriver forwards none while it configures the receiver, and none of a
     // survey before the base position is valid.
@@ -224,13 +223,13 @@ void addUblox(Table& table)
     }
 
     table.add(type, "wire-f9p-start-rejected", "Receiver rejects starting the survey (base mode)",
-              ubxWire([](UBXBench& b) { b.model.rejectStart = true; }), wireSurvey, stream);
+              ubxWire([](UBXBench& b) { b.model.rejectStart = true; }), wireSurvey);
     table.add(type, "wire-m8p-legacy-disable-rejected", "NEO-M8P rejects disabling time mode", ubxWire([](UBXBench& b) {
                   b.model.legacy = true;
                   b.model.module = "NEO-M8P";
                   b.model.disableReply = UBXReceiverModel::DisableReply::Nak;
               }),
-              wireSurvey, stream);
+              wireSurvey);
 
     const struct
     {

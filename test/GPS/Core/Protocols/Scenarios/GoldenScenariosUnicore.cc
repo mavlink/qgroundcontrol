@@ -17,23 +17,23 @@ void addUnicore(Table& table)
     table.add(type, "auto-baud-460800", "Detects a receiver at 460800",
               unicore([](UnicoreBench& b) { b.model.availableBaud = 460800; }), average);
     table.add(type, "explicit-baud-mismatch", "Explicit 9600 while the receiver is at 115200", unicore(),
-              averaging(5, 9600), stream);
+              averaging(5, 9600));
     table.add(type, "version-timeout", "Receiver never answers the version query (identity)",
-              rules({silence("VERSIONA")}), average, stream);
+              rules({silence("VERSIONA")}), average);
     table.add(type, "base-rejected", "Receiver rejects base mode", unicore([](UnicoreBench& b) {
                   b.model.fault = GPSTest::UnicoreReceiverModel::Fault::Reject;
                   b.model.faultCommand = "MODE BASE";
               }),
-              average, stream);
+              average);
     table.add(type, "short-write", "Transport accepts a truncated command",
               rules({GPSTest::writeFails("RTCM1074 1",
                                          [](const QByteArray& command) {
                                              const int written = static_cast<int>(command.size()) - 1;
                                              return GPSWriteResult{GPSWriteStatus::Completed, written, written};
                                          })}),
-              average, stream);
+              average);
     table.add(type, "read-error", "Transport read fails", unicore([](UnicoreBench& b) { b.model.readError = true; }),
-              average, stream);
+              average);
     table.add(type, "averaging-incomplete", "Averaging never reaches a fixed position",
               unicore([](UnicoreBench& b) { b.model.allowAveragingCompletion = false; }), average, stream);
 }

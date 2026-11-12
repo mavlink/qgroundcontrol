@@ -207,7 +207,8 @@ struct ScenarioDef
     BenchFactory bench;
     GPSReceiverConfig config;
     /// Recorded once per distinct stream transcript of a family: a scenario whose stream phase would repeat another's
-    /// byte for byte leaves it empty, which checkGoldenFiles() enforces.
+    /// byte for byte leaves it empty, which checkGoldenFiles() enforces. So does one whose transcript has no stream
+    /// phase, because its configuration fails or only its detection is recorded, which checkScenario() enforces.
     std::vector<StreamStep> stream;
     /// A scenario of the same type whose golden this one's transcript must match, beyond its about and request lines;
     /// it has no golden of its own.

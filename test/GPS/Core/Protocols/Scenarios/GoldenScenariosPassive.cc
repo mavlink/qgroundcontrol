@@ -77,7 +77,7 @@ void addPassive(Table& table)
     table.add(type, "baud-9600", "NMEA and RTCM input at 9600", passive(), passiveInput(9600));
     table.add(type, "baud-unsupported", "Transport cannot change its baud",
               passive([](PassiveBench& b) { b.setBaudRateHandler([](unsigned) { return std::optional(false); }); }),
-              passiveInput(115200), stream);
+              passiveInput(115200));
     table.add(type, "ubx-115200", "u-blox UBX and RTCM input, never answered", passive(), passiveInput(115200),
               ubxInput());
     table.add(type, "sbf-115200", "Septentrio SBF and RTCM input", passive(), passiveInput(115200), sbfInput());

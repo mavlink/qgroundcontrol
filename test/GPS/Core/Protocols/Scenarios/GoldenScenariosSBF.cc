@@ -25,11 +25,11 @@ void addSeptentrio(Table& table)
     table.add(type, "com-port-fixed", "Serial COM1 connection, fixed base", rules({latestReply("\n\r", "COM1>")}),
               fixed);
     table.add(type, "port-detection-timeout", "Receiver never answers the port prompt", rules({silence("\n\r")}),
-              survey, stream);
+              survey);
     table.add(type, "nak-optional-output-disable", "Receiver rejects disabling a COM output (optional)",
               rules({latestReply("setDataInOut,COM1", SBF_NAK)}), survey);
     table.add(type, "nak-required-reset", "Receiver rejects resetting the SBF output (required)",
-              rules({latestReply("setSBFOutput, Stream1, USB1, none", SBF_NAK)}), survey, stream);
+              rules({latestReply("setSBFOutput, Stream1, USB1, none", SBF_NAK)}), survey);
 }
 
 }  // namespace GPSTest::GoldenScenario
