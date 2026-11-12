@@ -190,7 +190,11 @@ void NTRIPHttpSessionTest::_answeredRequestIsNotRepeated()
     QCOMPARE(failure.code, NTRIPError::InvalidHttpResponse);
     QCOMPARE(failure.detail, disconnectedBeforeResponse());
     deliverQueuedCalls();
-    QVERIFY_ONLY_SIGNAL(spy, "failed");
+    // The byte is reported as having arrived, and nothing else is made of it.
+    QCOMPARE(spy.count("failed"), 1);
+    QCOMPARE(spy.count("dataReceived"), 1);
+    QCOMPARE(spy.argument<qint64>("dataReceived"), qint64(1));
+    QVERIFY(spy.notEmitted("certificatePinned", "responseStarted", "bodyReceived", "finished"));
 }
 
 void NTRIPHttpSessionTest::_casterVersionsKeepTheLatestCasters()

@@ -100,6 +100,7 @@ public:
     DEFINE_SETTINGFACT(ntripSavedCasters)
     DEFINE_SETTINGFACT(ntripFailoverEnabled)
     DEFINE_SETTINGFACT(ntripRequireVehicle)
+    DEFINE_SETTINGFACT(ntripDataCapMB)
 
 signals:
     void savedCastersChanged();

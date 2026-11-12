@@ -27,6 +27,7 @@ private slots:
 
     // Connection lifecycle
     void _invalidConfigurationIsNotConnected();
+    void _reportsEverythingTheCasterSends();
     void _connectionWaitsForHttpResponse();
     void _legacyCaster_data();
     void _legacyCaster();

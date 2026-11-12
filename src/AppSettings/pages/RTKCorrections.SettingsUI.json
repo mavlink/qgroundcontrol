@@ -19,7 +19,7 @@
         {
             "heading": "NTRIP Server",
             "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
-            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls", "vehicle"],
+            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls", "vehicle", "data limit", "metered"],
             "controls": [
                 {
                     "setting": "ntripSettings.ntripServerHostAddress",
@@ -48,6 +48,9 @@
                 },
                 {
                     "setting": "ntripSettings.ntripRequireVehicle"
+                },
+                {
+                    "setting": "ntripSettings.ntripDataCapMB"
                 }
             ]
         },

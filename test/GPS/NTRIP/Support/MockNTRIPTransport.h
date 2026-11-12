@@ -60,6 +60,9 @@ public:
         emit error(NTRIPFailure{code, detail, retryAfter});
     }
 
+    /// @a bytes arrive from the caster, whatever they hold.
+    void simulateData(qint64 bytes) { emit dataReceived(bytes); }
+
     /// Like NTRIPHttpTransport, a stream reports connected() before its first frame, and emits only valid frames.
     void simulateRtcmData(const QByteArray& data, int messageId = 0, qint64 receivedAtMs = GPSTest::nowMs())
     {

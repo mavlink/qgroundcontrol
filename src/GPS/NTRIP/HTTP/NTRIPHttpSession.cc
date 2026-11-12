@@ -229,6 +229,12 @@ void NTRIPHttpSession::_read()
         if (bytes.isEmpty()) {
             break;
         }
+        // Before they are decoded, which may end the exchange, as an observer of this may.
+        emit dataReceived(bytes.size());
+        current = self && !_ended;
+        if (!current) {
+            break;
+        }
         _receive(bytes, receivedAtMs);
         current = self && !_ended;
     }

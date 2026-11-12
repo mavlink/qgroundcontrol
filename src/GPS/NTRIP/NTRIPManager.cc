@@ -153,6 +153,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     const bool failoverChanged =
         configuration.failover != _configuration.failover || configuration.savedCasters != _configuration.savedCasters;
     const bool vehicleGateChanged = configuration.requireVehicle != _configuration.requireVehicle;
+    const bool dataCapChanged = configuration.dataCapMB != _configuration.dataCapMB;
     const bool couldConnect = canConnect();
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
@@ -165,7 +166,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
         _ggaReporter.configure(configuration.gga);
     }
     // The saved caster in use may have changed or gone, so the connection starts again from the entered one.
-    if (_initialized && (streamChanged || vehicleGateChanged || (failoverChanged && _savedCaster))) {
+    if (_initialized && (streamChanged || vehicleGateChanged || dataCapChanged || (failoverChanged && _savedCaster))) {
         _settingsDebounceTask.schedule(SETTINGS_DEBOUNCE, [this]() { _applyConfiguration(); });
     }
     if (pinForgotten) {
@@ -201,6 +202,8 @@ void NTRIPManager::connectCaster()
     // After an error the setting is still on, and storing it again would start nothing.
     if (_connectionStatus == ConnectionStatus::Error) {
         _configuration.enabled = true;
+        // The user's Connect or Retry is a new run of the connection.
+        _linkBytes = 0;
         _start();
     }
     emit enabledRequested(true);
@@ -327,6 +330,11 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
         {CS::Connecting, Event::NoVehicle, CS::Reconnecting},
         {CS::Connected, Event::NoVehicle, CS::Reconnecting},
         {CS::Reconnecting, Event::NoVehicle, CS::Reconnecting},
+
+        // The data limit ends the connection wherever it is reached or lowered.
+        {CS::Connecting, Event::DataCapReached, CS::Error},
+        {CS::Connected, Event::DataCapReached, CS::Error},
+        {CS::Reconnecting, Event::DataCapReached, CS::Error},
     };
 
     for (const auto& row : kTransitions) {
@@ -405,6 +413,8 @@ void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds 
             _useEnteredCaster();
             if (to == ConnectionStatus::Disconnected) {
                 _correctionSource.reset();
+                // Turned off, this run of the connection is over.
+                _linkBytes = 0;
             }
             break;
 
@@ -480,6 +490,31 @@ void NTRIPManager::_cancelReconnect()
     _reconnectTask.cancel();
     _waitingForNetwork = false;
     _waitingForVehicle = false;
+}
+
+bool NTRIPManager::_dataCapReached() const
+{
+    const quint64 megabyte = 1024 * 1024;
+    return _configuration.dataCapMB > 0 && _linkBytes >= _configuration.dataCapMB * megabyte;
+}
+
+QString NTRIPManager::_dataCapMessage() const
+{
+    //: %1 is the limit, a number of megabytes
+    return tr("Stopped at the data limit of %1 MB").arg(_configuration.dataCapMB);
+}
+
+void NTRIPManager::_onDataReceived(qint64 bytes)
+{
+    if (bytes <= 0) {
+        return;
+    }
+    _linkBytes += static_cast<quint64>(bytes);
+    if (_dataCapReached()) {
+        qCWarning(NTRIPManagerLog) << "NTRIP stopped at the data limit of" << _configuration.dataCapMB << "MB";
+        _dispatch(Event::DataCapReached, _dataCapMessage());
+        _publish();
+    }
 }
 
 bool NTRIPManager::_shouldWaitForVehicle() const
@@ -617,6 +652,16 @@ void NTRIPManager::_openSession()
         Qt::QueuedConnection);
 
     connect(transport, &NTRIPTransport::certificatePinned, this, &NTRIPManager::_onCertificatePinned);
+
+    // Queued, like errors: reaching the data limit stops and deletes the transport.
+    connect(
+        transport, &NTRIPTransport::dataReceived, this,
+        [this, isCurrent](qint64 bytes) {
+            if (isCurrent()) {
+                _onDataReceived(bytes);
+            }
+        },
+        Qt::QueuedConnection);
 
     transport->start();
     qCDebug(NTRIPManagerLog) << "NTRIP transport started";
@@ -780,6 +825,13 @@ void NTRIPManager::_applyConfiguration()
     if (!_isEnabled()) {
         _reconnectBackoff.reset();
         _stop();
+    } else if (_dataCapReached()) {
+        // The limit was set below what has arrived. A connection that ended at it stays ended, whatever else is
+        // changed: only Connect, Retry or a limit that leaves room starts it.
+        if (_connectionStatus != ConnectionStatus::Error) {
+            qCWarning(NTRIPManagerLog) << "NTRIP stopped at the data limit of" << _configuration.dataCapMB << "MB";
+            _dispatch(Event::DataCapReached, _dataCapMessage());
+        }
     } else if (!isActive) {
         // Disconnected / Error / Reconnecting: start fresh. The connecting
         // path re-reads settings, so the new values take effect there.

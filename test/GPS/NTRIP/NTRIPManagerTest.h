@@ -21,6 +21,9 @@ class NTRIPManagerTest : public UnitTest
     /// Fails @a transport and delivers the failure, which the manager logs.
     void _fail(GPSTest::MockNTRIPTransport* transport, const QString& detail, NTRIPError code = NTRIPError::SocketError,
                std::chrono::milliseconds retryAfter = {});
+    /// @a bytes arrive over @a transport, with which the manager's connection reaches its data limit and says so
+    /// in the log.
+    void _receiveToTheLimit(GPSTest::MockNTRIPTransport* transport, qint64 bytes);
     /// Fails the attempt in progress @a times, each followed by the next attempt. False unless each was made.
     bool _failAttempts(NTRIPManager& manager, ManualScheduler& scheduler, QPointer<GPSTest::MockNTRIPTransport>& latest,
                        int times);
@@ -93,4 +96,11 @@ private slots:
     void _vehicleGateNeedsTheOptionAndTheVehicles();
     void _vehicleGateFollowsTheOption();
     void _vehicleGateWaitsInsteadOfRetrying();
+
+    // Ending the connection at a data limit.
+    void _dataCapEndsTheConnection();
+    void _dataCapCountsOneRunOfTheConnection();
+    void _dataCapEndsWithConnectOrAHigherCap_data();
+    void _dataCapEndsWithConnectOrAHigherCap();
+    void _dataCapLoweredBelowTheCount();
 };

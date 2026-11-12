@@ -750,4 +750,33 @@ void NTRIPHttpTransportTest::_bodyPublicationRetiresAttempt()
     QCOMPARE(scheduler.pendingCount(), restart ? 1 : 0);
 }
 
+void NTRIPHttpTransportTest::_reportsEverythingTheCasterSends()
+{
+    CasterSession session;
+    auto* connection = session.start();
+    QVERIFY(connection);
+    QVERIFY(connection->waitForRequest().endsWith("\r\n\r\n"));
+    const QSignalSpy& data = session.signal("dataReceived");
+    const auto received = [&data] {
+        qint64 bytes = 0;
+        for (const QList<QVariant>& emission : data) {
+            bytes += emission.constFirst().toLongLong();
+        }
+        return bytes;
+    };
+
+    // A connection carries more than its corrections: the response around the stream, and data that is no frame.
+    const QByteArray valid = GPSTest::rtcmMessage(1005);
+    QByteArray corrupt = GPSTest::rtcmMessage(1077);
+    corrupt.back() ^= 1;
+    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid RTCM frame")));
+    const QByteArray response = okChunkedResponse(valid + corrupt, false);
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(received(), qint64(response.size()), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(session.signal("correctionFrameReceived").size(), 1);
+    QVERIFY(received() > valid.size());
+    session.transport.stop();
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(NTRIPHttpTransportTest, TestLabel::Unit)

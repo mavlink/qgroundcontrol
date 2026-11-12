@@ -119,6 +119,17 @@
             "type": "bool",
             "default": false,
             "label": "Connect only with a vehicle"
+        },
+        {
+            "name": "ntripDataCapMB",
+            "shortDesc": "End the connection after this much data from the caster; 0 for no limit",
+            "longDesc": "End the NTRIP connection once this many megabytes have arrived from the caster since it was connected, across reconnects. 0 sets no limit. The count starts again with Connect or Retry and is not kept when the application is closed.",
+            "type": "uint32",
+            "default": 0,
+            "min": 0,
+            "max": 1000000,
+            "units": "MB",
+            "label": "Data limit"
         }
     ]
 }

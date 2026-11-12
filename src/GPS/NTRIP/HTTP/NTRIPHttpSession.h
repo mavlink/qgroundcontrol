@@ -110,6 +110,9 @@ signals:
     void certificatePinned(const QString& pin);
     /// The caster accepted the request; its body follows.
     void responseStarted();
+    /// @a bytes were read from the connection, whatever they are part of: the response's header, its framing or its
+    /// body. Precedes what decoding them publishes.
+    void dataReceived(qint64 bytes);
     /// Body bytes, with the scheduler time at which the bytes carrying them arrived.
     void bodyReceived(const QByteArray& body, qint64 receivedAtMs);
     /// A socket, TLS or HTTP failure, including an error status with the caster's explanation.

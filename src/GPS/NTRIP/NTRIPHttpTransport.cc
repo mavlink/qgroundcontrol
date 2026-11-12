@@ -63,6 +63,11 @@ NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
         }
     });
     connect(session, &NTRIPHttpSession::responseStarted, this, &NTRIPHttpTransport::_onResponseStarted);
+    connect(session, &NTRIPHttpSession::dataReceived, this, [this](qint64 bytes) {
+        if (!_stopped) {
+            emit dataReceived(bytes);
+        }
+    });
     connect(session, &NTRIPHttpSession::bodyReceived, this, [this](const QByteArray& body, qint64 receivedAtMs) {
         _dataSinceValidFrame = true;
         if (!std::exchange(_dataReceived, true)) {

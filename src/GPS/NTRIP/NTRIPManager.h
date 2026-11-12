@@ -69,6 +69,13 @@ struct NTRIPManagerDependencies
 /// it at once, from the entered caster and with the first retry delay. When the last vehicle is gone, the stream is
 /// kept for VEHICLE_HOLD, so that a link that drops and returns does not restart it, and then ended. Turning the
 /// option on applies like any settings change, without that hold.
+///
+/// With Configuration::dataCapMB, the connection ends with an error once that much has arrived from the caster. The
+/// count is of everything the correction connection carried to this side (NTRIPTransport::dataReceived()), not of
+/// valid frames, over one run of the connection: from when it was turned on, or from Connect or Retry after an
+/// error, across reconnects, failover and waits for a vehicle. It is not kept when the application ends. Ended so,
+/// the connection stays ended whatever else is changed, until Connect, Retry, or a limit that leaves room; a limit
+/// that is raised or removed starts it again without a new count.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -116,6 +123,7 @@ public:
         ReconnectGaveUp,      ///< The reconnect attempt ceiling was reached.
         HotReconfigure,       ///< Transport-affecting setting changed while connected; reconnect in place.
         NoVehicle,            ///< The connection may run only with a vehicle, and none is connected.
+        DataCapReached,       ///< As much data arrived from the caster as the connection may use.
     };
     Q_ENUM(Event)
 
@@ -142,6 +150,9 @@ public:
         QList<SavedCaster> savedCasters = {};
         /// Connect only while a vehicle is connected.
         bool requireVehicle = false;
+        /// End the connection once this many megabytes (of 1024 * 1024 bytes) arrived from the caster; 0 for no
+        /// limit.
+        quint32 dataCapMB = 0;
         bool operator==(const Configuration&) const = default;
     };
 
@@ -287,6 +298,11 @@ private:
     void _waitForVehicle();
     void _onVehiclePresenceChanged(bool present);
 
+    /// As much has arrived in this run of the connection as it may use.
+    bool _dataCapReached() const;
+    QString _dataCapMessage() const;
+    void _onDataReceived(qint64 bytes);
+
     bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= MAX_RECONNECT_ATTEMPTS; }
 
     void _onGgaSourceChanged();
@@ -344,6 +360,8 @@ private:
     QStringList _castersLeftOut;
     /// Failed attempts on the caster in use since it was taken up or last sent corrections.
     int _casterFailures = 0;
+    /// What arrived from the caster in this run of the connection.
+    quint64 _linkBytes = 0;
     bool _waitingForNetwork = false;
     bool _waitingForVehicle = false;
     bool _initialized = false;
