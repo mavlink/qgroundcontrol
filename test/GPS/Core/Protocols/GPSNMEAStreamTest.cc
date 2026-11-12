@@ -676,6 +676,12 @@ void GPSNMEAStreamTest::_fixLossOncePerEpoch_data()
                                                       "GPGSA,A,1,,,,,,,,,,,,,,,,",     "GNGSA,A,1,,,,,,,,,,,,,,,,",
                                                       "GPGGA,,,,,,0,,,,,,,,",          "GPRMC,,V,,,,,,,,,,N"}
                                     << QByteArray("191434.96") << 0;
+    // A Myguide 3100 without a fix leaves the quality of its GGA empty and still prints a position: the GGA is not
+    // read, and the RMC declares the loss.
+    QTest::newRow("myguide-3100") << QByteArrayList{"GPGGA,105025.80,5612.9999,N,00306.7096,W,,2,60.000,160.002,M,,M,,",
+                                                    "GPRMC,105025.80,V,5612.9999,N,00306.7096,W,,,081009,,W,N",
+                                                    "GPGSA,A,1,29,30,,,,,,,,,,,60.000,60.000,60.000"}
+                                  << QByteArray("105025.80") << 0;
     // No sentence has a time: the first one to come again begins the next epoch.
     QTest::newRow("bt-451") << QByteArrayList{"GPRMC,,V,,,,,,,,,,N", "GPVTG,,,,,,,,,N", "GPGGA,,,,,,0,00,99.99,,,,,,",
                                               "GPGSA,A,1,,,,,,,,,,,,,99.99,99.99,99.99", "GPGLL,,,,,,V,N"}

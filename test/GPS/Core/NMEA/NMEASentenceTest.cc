@@ -741,6 +741,29 @@ void NMEASentenceTest::_ggaValidity()
     }
 }
 
+void NMEASentenceTest::_ggaWithoutQuality()
+{
+    // Two receivers of gpsd's regression logs send a GGA whose quality field is empty, and neither tells a fix by it.
+    // A Myguide 3100 sends it while it has no fix, with a position and two or three satellites: the RMC and the GSA
+    // of the epoch declare the loss, and with a fix the quality is 1. The sentence is read neither as a fix nor as a
+    // fix loss.
+    const auto withoutFix = ownedSentence("$GPGGA,105025.80,5612.9999,N,00306.7096,W,,2,60.000,160.002,M,,M,,*56");
+    QVERIFY(withoutFix);
+    QVERIFY(!NMEA::gga(withoutFix->sentence()));
+    QVERIFY(!NMEA::navigationStatus(withoutFix->sentence()));
+
+    // A FireFly-II sends it while its RMC reports a fix. The checksum of every one in the log is that of the sentence
+    // with one more byte of value 2, as of a quality written as a number where its digit belongs, which the log did
+    // not keep. Neither what the log has nor the sentence with that byte is one that is read.
+    const QByteArray logged("$GPGGA,005947.00,3715.6616,N,12157.6709,W,,11,0.8,86.0,M,-30.1,M,,*54");
+    QVERIFY(!NMEA::sentence({logged.constData(), static_cast<size_t>(logged.size())}));
+    QByteArray sent = logged;
+    sent.insert(sent.indexOf(",,11") + 1, '\x02');
+    const std::string_view body(sent.constData() + 1, static_cast<size_t>(sent.indexOf('*') - 1));
+    QCOMPARE(NMEA::checksum(body), static_cast<unsigned char>(0x54));
+    QVERIFY(!NMEA::sentence({sent.constData(), static_cast<size_t>(sent.size())}));
+}
+
 void NMEASentenceTest::_gnsQuality_data()
 {
     QTest::addColumn<QByteArray>("modes");

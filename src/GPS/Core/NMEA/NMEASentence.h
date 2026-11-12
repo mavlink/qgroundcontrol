@@ -239,7 +239,9 @@ struct GGA
 /// report.
 [[nodiscard]] std::optional<unsigned> ggaSatellitesUsed(std::string_view field);
 
-/// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields.
+/// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields. A GGA without
+/// a quality is not read, as a fix or as a fix loss: a receiver was seen to leave the field empty while it has no fix
+/// and still prints a position, so the coordinates and the satellite count do not tell a fix.
 [[nodiscard]] std::optional<GGA> gga(const Sentence& input);
 
 /// The GGA quality that the mode indicator of a GNS stands for. The indicator has one letter for each constellation
