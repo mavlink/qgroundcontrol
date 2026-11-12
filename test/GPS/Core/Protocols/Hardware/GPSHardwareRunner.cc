@@ -37,11 +37,13 @@
 #include "GPSReceiverSimulator.h"
 #include "GPSRecordingTransport.h"
 #include "MonotonicClock.h"
+#include "Protocols/Support/GoldenFormat.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "Protocols/Support/UBXReceiverModel.h"
 #include "RTCMFramer.h"
 #include "TCPGPSTransport.h"
+#include "Transport/Support/GPSRecordingDialogue.h"
 #include "Transport/Support/ReplayGPSTransport.h"
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -80,6 +82,8 @@ struct Options
     QString replayPath;
     QString extractPath;
     unsigned replayBaud = 0;
+    /// Replay the recording as the dialogue it was, with its own settings, instead of decoding it.
+    bool dialogue = false;
     /// Serve a simulated receiver on servePort of serveAddress instead of running an action.
     bool serve = false;
     quint16 servePort = 0;
@@ -220,6 +224,19 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         options.transport = "replay";
     } else if (parser.isSet("replay-baud")) {
         return "--replay-baud requires --replay";
+    }
+    options.dialogue = parser.isSet("dialogue");
+    if (options.dialogue) {
+        if (!parser.isSet("replay")) {
+            return "--dialogue requires --replay";
+        }
+        // The recording says what its session was asked to do, and nothing of it is decoded for a report.
+        const QStringList replaying{"dialogue", "replay", "a", "action", "output"};
+        for (const QString& name : parser.optionNames()) {
+            if (!replaying.contains(name)) {
+                return QString("--dialogue cannot be combined with --%1").arg(name);
+            }
+        }
     }
     if (family == "trimble") {
         options.family = GPSType::Trimble;
@@ -626,6 +643,47 @@ int replayRecording(const Options& options, QJsonObject report)
     return output(report, complete ? 0 : 1, options.outputPath);
 }
 
+/// Replays a session recording as the dialogue it was: GPSDriver, run as the recording's settings describe, against
+/// the receiver's bytes at their recorded times, sending what the recording holds. Reports where the driver departed
+/// from the recording, with the record and what the driver did, which quote the bytes of both.
+int checkDialogue(const Options& options, QJsonObject report)
+{
+    const GPSDialogueResult result =
+        replayDialogue(options.replayPath, [] { return interrupted.test(std::memory_order_relaxed); });
+    report.insert("replay", QJsonObject{{"file", options.replayPath},
+                                        {"dialogue", true},
+                                        {"records", result.records},
+                                        {"bytes", result.receivedBytes},
+                                        {"sent_bytes", result.sentBytes},
+                                        {"baud_changes", result.baudRateChanges},
+                                        {"session_ms", static_cast<qint64>(result.duration.count() / 1000)}});
+    if (result.settings) {
+        const bool passive = result.settings->type == GPSType::Passive;
+        QJsonObject session = requestedConfig(result.settings->config, passive);
+        session.insert("fixed_baud_rate", static_cast<qint64>(result.settings->fixedBaudRate));
+        report.insert("receiver_family", Golden::typeName(result.settings->type));
+        report.insert("requested", session);
+        report.insert("configured", result.configured);
+        report.insert("receiver_identity", result.receiverIdentity);
+        if (!result.configured) {
+            report.insert("configuration_error", result.configurationError);
+        }
+    } else {
+        report.remove("receiver_family");
+    }
+    report.insert("interrupted", interrupted.test(std::memory_order_relaxed));
+    if (result.divergence) {
+        report.insert("divergence", QJsonObject{{"line", result.divergence->line},
+                                                {"recorded", result.divergence->recorded},
+                                                {"driver", result.divergence->driver}});
+        report.insert("detail", result.divergence->text());
+    } else if (!result.error.isEmpty()) {
+        report.insert("detail", result.error);
+    }
+    report.insert("outcome", result.passed() ? "reproduced" : result.divergence ? "diverged" : "failed");
+    return output(report, result.passed() ? 0 : 1, options.outputPath);
+}
+
 /// Serves the receiver simulator until interrupted: the u-blox receiver model, or the capture of --replay. Prints
 /// where it listens, with the port it took for port 0, and what it served when it ends.
 int serve(const Options& options)
@@ -720,7 +778,7 @@ int run(const Options& options)
         return output(report, 0, options.outputPath);
     }
     if (replaying) {
-        return replayRecording(options, report);
+        return options.dialogue ? checkDialogue(options, report) : replayRecording(options, report);
     }
 
     GPSCancelSource stop;
@@ -1061,6 +1119,10 @@ int main(int argc, char* argv[])
          "Decode a session recording, or a file of raw receiver output, with --family, as configured for --role and "
          "the base options, instead of a live transport; nothing is configured or written",
          "file"},
+        {"dialogue",
+         "With --replay of a session recording: instead of decoding it, run the driver with the settings the "
+         "recording holds against the receiver's bytes at their recorded times, and report the first record the "
+         "driver does not reproduce: a command or a baud rate change that differs from the recorded one"},
         {"extract",
          "With --replay: also write the bytes the receiver sent to this new file, as raw receiver output to cut a "
          "capture fixture from",

@@ -1,8 +1,9 @@
 # Receiver recordings
 
 How a recording of a receiver connection is read, how one that a user sends becomes a fixture and
-a regression test, and which receivers the hardware runner was run against. `SOURCES.md` lists
-where the fixtures in this directory come from.
+a regression test, how its dialogue is replayed against the driver, and which receivers the
+hardware runner was run against. `SOURCES.md` lists where the fixtures in this directory come
+from.
 
 The commands use the receiver qualification runner, which the Linux test build puts in
 `build/Debug` and `test/GPS/Standalone` builds without the application, in `Hardware/`:
@@ -49,8 +50,10 @@ The `SETTINGS` record is what decides the commands a session sends, as `key=valu
 | `base` | `survey` with `duration` (s) and `accuracy` (m), `fixed` with `latitude`, `longitude` (degrees), `altitude` and `accuracy` (m), or `averaging` with `duration` (s) |
 
 QGroundControl and the runner write it. A recording without it, as one made by a recorder that
-was not given its session, is read as before. The numbers are written so that they read back
-exactly: a fixed position that differs in its last digit gives other command bytes.
+was not given its session, is read as before and decodes, but its dialogue cannot be replayed
+until the line is added by hand from what the sender says the settings were. The numbers are
+written so that they read back exactly: a fixed position that differs in its last digit gives
+other command bytes.
 
 A recording does not hold the UTC start time, which is in the file name, the end of the
 connection, or what the link refused.
@@ -97,12 +100,94 @@ only with the sender's agreement, and name the sender, the receiver and its firm
    `QGC_GPS_GOLDEN_UPDATE=1 ctest --test-dir build -R GPSGoldenTranscriptTest`, and review its new
    lines: they are the regression test.
 
-This covers what the receiver sent. A problem in the dialogue, such as a command the receiver
-rejects or answers late, cannot be replayed yet: the replay discards what the driver writes and
-accepts every baud rate. Read the `TX` and `RX` records, and reproduce the dialogue in the
-family's receiver model (`../Support`) as a golden scenario. A replay that checks each driver
-write against the recorded one is to be built on `GPSRecordingReader`, which returns both
-directions and their times for it.
+This covers what the receiver sent. The next section covers the dialogue, such as a command the
+receiver rejects or answers late.
+
+## Replaying the dialogue
+
+The receiver models answer as the drivers expect, because both were written from the same
+reading of the manuals. A recording of a receiver holds what it really answered, and replaying it
+as a dialogue puts the driver in front of those answers:
+
+```sh
+$R --replay 20260102T030405.006Z-ublox.log --dialogue --action configure
+```
+
+`GPSDriver` runs the session the `SETTINGS` record describes, on a virtual clock, on a link that
+plays the recording (`GPSDialogueTransport` in `test/GPS/Core/Transport/Support`):
+
+- The receiver's bytes arrive one recorded read at a time, at their recorded times. A recording
+  holds no read that returned nothing, so a read that ends before the next bytes arrived times
+  out after the timeout the driver gave it.
+- While the next record is a `TX` or a `BAUD`, the recorded session acted before it read more:
+  reads time out until the driver has acted.
+- What the driver writes must be the bytes of the `TX` records that follow, in order. Only the
+  bytes count, not how the write calls divide them.
+- A baud rate the driver sets must be that of the next `BAUD` record.
+
+The first thing the driver does that the recording does not hold ends the replay. So does a
+command the driver has not sent 30 seconds after the recording has it, and a session the driver
+ends while records remain. The report's `divergence` names the line of the record, what the
+recording has there and what the driver did, each with its time; its `outcome` is `reproduced`,
+`diverged`, or `failed` for a file that is damaged, has no settings or is not a session
+recording. The replay ends with the recording, since a recording does not say what its session
+did after its last record: one that was cut between two lines replays as far as it goes. Nothing
+is decoded for the report, and the session's own duration takes no time to replay.
+
+`--replay` decodes unless `--dialogue` is given. Decoding is the first step above: it works for
+raw receiver output, for a recording without settings and whatever the driver sends today. The
+dialogue needs the settings and fails as soon as a command of the driver changes, so it is asked
+for.
+
+What a replay cannot tell from a driver that changed:
+
+- **What the link refused.** A baud rate the link refused and a write of which it accepted nothing
+  are not recorded. The replay has no record to answer them from and diverges where the session
+  met one: at a rate a serial adapter does not support, or at the first command of a configured
+  receiver on UDP, which carries no writes.
+- **A reply at a deadline.** Between two records the replay's clock runs on the driver's own
+  timeouts, which a real link overruns a little; data recorded up to 2 ms after the end of a read
+  counts as returned by that read. A reply that came closer than that to a deadline of the driver
+  can replay on the other side of it. The divergence then shows two times that close together.
+
+### A dialogue as a regression test
+
+`GPSRecordingDialogueTest` replays every `*.recording` file in `dialogues/` and fails with the
+divergence. No recording of a receiver has been added yet. To add one:
+
+1. Replay it with the command above. A recording made with an older driver diverges at the first
+   command that changed since: cut it there, as described below.
+2. Cut it after the last line that matters, to keep the file small. A recording may end after any
+   line.
+3. Copy it to `dialogues/<receiver>-<what it shows>.recording`: git ignores `*.log`. Name the
+   sender, the receiver and its firmware in `SOURCES.md`, with the sender's agreement to publish
+   the positions it holds, which include a fixed base position in its `SETTINGS`.
+
+The same suite makes a recording of every golden scenario at run time, from the driver's session
+with the scenario's receiver model, and requires each to replay, and to fail at the changed line
+when one `TX` byte or one `BAUD` is changed or one answered `TX` record is removed. Those
+recordings are not fixtures: they pass by construction, and the golden transcripts pin the same
+bytes.
+
+### When the driver's commands change on purpose
+
+A recording of a receiver cannot be made again without the receiver, and what it holds after a
+changed command are the receiver's answers to the command the driver no longer sends. When a
+dialogue fixture fails:
+
+1. Read the divergence. If the change of the command was not intended, the fixture has done what
+   it is for: fix the driver.
+2. If it was intended, cut the fixture before the line the divergence names, so that it ends with
+   the last record the driver still reproduces. It keeps pinning the dialogue up to there. Never
+   edit the recorded bytes to match the new command: the answers after them were given to the old
+   one.
+3. Say in `SOURCES.md` which change shortened the recording. The receiver's bytes after the cut
+   are still what that receiver sends: extract them from the uncut recording (`--extract`) when
+   they are worth a decode fixture.
+4. A fixture that is left without a `TX` record checks nothing: remove it.
+5. Ask the sender, or whoever the hardware qualification table names for the receiver, for a
+   recording made with the changed driver. Until it replaces the fixture, the changed part of the
+   dialogue rests on the receiver model alone.
 
 ## Hardware qualification
 

@@ -46,7 +46,7 @@ struct GPSRecordingSettings
     unsigned fixedBaudRate = 0;
 };
 
-/// The reader of the receiver recording format, which the replay transport and the tests share. It reads a device
+/// The reader of the receiver recording format, which the replay transports and the tests share. It reads a device
 /// that is open for reading record by record, so a recording is never held whole, and returns both directions and
 /// the baud rate changes in file order with their times, which never decrease.
 /// A line that is not a record ends the reading with an error that names the line. So does a last line without its
@@ -70,6 +70,9 @@ public:
 
     /// What ended the reading before the end of the recording; empty otherwise.
     [[nodiscard]] const QString& error() const { return _error; }
+
+    /// The line of the record next() returned last: the header is line 1.
+    [[nodiscard]] qint64 line() const { return _line; }
 
     /// The records of the recording at @a path up to its end or its first error, which @a error receives: a line
     /// that is not a record, or a file that cannot be read or is not a recording. @a settings receives those of the

@@ -417,8 +417,8 @@ The scenarios, the recorder and the checks of each scenario and decoder against 
 `QGCGPSProtocolTestSupport`, and `test/GPS/Standalone` runs them as `GPSGoldenTranscripts`.
 
 [`test/GPS/Core/Protocols/fixtures/README.md`](GPS/Core/Protocols/fixtures/README.md) describes the receiver
-recordings users send, how one becomes a fixture and a regression test, and which receivers the qualification
-runner was run against.
+recordings users send, how one becomes a fixture and a regression test, how `GPSRecordingDialogueTest` replays one
+as a dialogue that checks what the driver sends, and which receivers the qualification runner was run against.
 
 `test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with those golden transcripts,
 the receiver qualification runner and the fuzzers' smoke tests. With Clang, `-DQGC_GPS_LIBFUZZER=ON` adds the

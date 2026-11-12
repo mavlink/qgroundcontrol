@@ -199,6 +199,37 @@ def check_record_and_replay(binary: str) -> None:
         assert "requested" not in report, report
         # The scripted fix is at 47.3, 8.5.
         assert not {47.3, 8.5} & set(numbers(report)), report
+        # The recording as the dialogue it was: the driver, run again as the recording's settings describe, sends in
+        # answer to the receiver's bytes what the recording holds. The session ran on the steady clock.
+        dialogue = ["--replay", str(recording), "--dialogue", "--action", "configure"]
+        report = run(binary, dialogue, 0)
+        assert report["outcome"] == "reproduced" and report["configured"], report
+        assert report["receiver_family"] == "ublox", report
+        assert report["requested"]["base_mode"] == "survey", report
+        # The scripted receiver is on a port that runs at one rate, as a network bridge does.
+        assert report["requested"]["fixed_baud_rate"] == 115200, report
+        assert report["receiver_identity"] == "ZED-F9P HPG 1.32", report
+        for count in ("bytes", "sent_bytes", "baud_changes"):
+            assert report["replay"][count] == replayed[count], (report, replayed)
+        # A recording that holds another command than the driver sends fails at that command's line.
+        lines = recording.read_text().splitlines(keepends=True)
+        command = next(index for index, line in enumerate(lines) if " TX b5" in line)
+        lines[command] = lines[command].replace(" TX b5", " TX b4")
+        changed = Path(directory) / "changed.log"
+        changed.write_text("".join(lines))
+        report = run(binary, ["--replay", str(changed), "--dialogue", "--action", "configure"], 1)
+        assert report["outcome"] == "diverged", report
+        assert report["divergence"]["line"] == command + 1, report
+        assert report["divergence"]["recorded"].startswith("TX "), report
+        assert report["divergence"]["driver"].startswith("wrote "), report
+        assert report["replay"]["records"] == command - 2, report
+        # The settings are the recording's own: raw receiver output has none, and no option replaces them.
+        report = run(binary, ["--replay", str(extracted), "--dialogue", "--action", "configure"], 1)
+        assert report["outcome"] == "failed" and "divergence" not in report, report
+        assert report["detail"] == "not a receiver recording", report
+        run(binary, [*dialogue, "--family", "ublox"], 2)
+        run(binary, [*dialogue, "--extract", str(Path(directory) / "again.ubx")], 2)
+        run(binary, ["--dialogue", "--action", "configure"], 2)
 
     with TemporaryDirectory(prefix="gps-slice-", dir=Path.cwd()) as directory:
         # The NAV-PVT frame at the start of the recording, as in the C++ NAV_PVT slice.
