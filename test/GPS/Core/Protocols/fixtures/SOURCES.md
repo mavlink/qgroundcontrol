@@ -26,7 +26,8 @@ The `*.cap` files are unmodified byte slices of logs that receivers produced, fr
 logs of [gpsd](https://gitlab.com/gpsd/gpsd) (BSD-2-Clause) at commit
 `092e62282f7390840b272692bc258853643b072c` and from the pinned pyubx2. `GPSCaptureDecodeTest`
 decodes each one whole, byte by byte and in chunks of seven bytes, and they seed the protocol
-fuzzers. The golden transcripts do not read them.
+fuzzers. The golden transcripts do not read them. A capture that a user sent has no upstream
+file: its row names the sender, the receiver and its firmware instead.
 
 | File | Upstream file | Offset, length | Content |
 | --- | --- | --- | --- |
@@ -89,9 +90,11 @@ build/gps-fixture-oracle/bin/python test/GPS/Core/Protocols/fixtures/generate_co
 Omit `--check` to rewrite the synthetic fixtures and the expectations headers. The script verifies
 the installed oracle commits.
 
-With `--upstream <directory>`, the script also compares every capture with its slice of the
-upstream file, or rewrites the captures without `--check`. The directory holds checkouts named
-`gpsd`, `pyubx2` and `pyrtcm` at the commits above:
+With `--upstream <directory>`, the script also compares every capture that is a slice of an
+upstream file with that slice, or rewrites those captures without `--check`. A capture that
+`capture_expectations.py` lists without an upstream file, as one a user sent, only has to be
+there: its row in the table above says where it comes from, and the expectations header pins its
+SHA-256. The directory holds checkouts named `gpsd`, `pyubx2` and `pyrtcm` at the commits above:
 
 ```sh
 git clone https://gitlab.com/gpsd/gpsd.git build/gps-fixture-upstream/gpsd

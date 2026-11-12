@@ -107,8 +107,9 @@ only with the sender's agreement, and name the sender, the receiver and its firm
    claims: name the file as the rule of its family expects, or add a rule.
    As a `.cap` capture, `GPSCaptureDecodeTest` compares what QGroundControl decodes with what the
    pinned tools decode (`capture_expectations.py`), which suits values QGroundControl may get
-   wrong. That script's `--upstream` check takes every capture for a slice of a public log, which
-   a user's capture is not, and has to skip it. Both kinds seed the protocol fuzzers.
+   wrong. List the capture in that script's `CAPTURES` with its directory alone, and in the list
+   of its protocol: a capture without an upstream file is no slice of a public log, and the
+   script's `--upstream` check leaves it as it is. Both kinds seed the protocol fuzzers.
 4. **Pin the behaviour.** Fix the code, write the golden with
    `QGC_GPS_GOLDEN_UPDATE=1 ctest --test-dir build -R GPSGoldenTranscriptTest`, and review its new
    lines: they are the regression test.

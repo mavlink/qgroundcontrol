@@ -20,8 +20,10 @@ NTRIP_HEADER = NTRIP_ROOT / "NTRIPCaptureExpectations.h"
 # The gpsd commit its slices were taken at; pyubx2 and pyrtcm slices come from the pinned oracle commits.
 GPSD_COMMIT = "092e62282f7390840b272692bc258853643b072c"
 
-# Capture: directory, upstream project, file in it, offset, length.
-CAPTURES = {
+# Capture: its directory, then for a slice of a public log the upstream project, the file in it, the offset and the
+# length. A capture with its directory alone is no such slice, as one a user sent: SOURCES.md says where it comes
+# from, and its digest in the expectations header pins its bytes.
+CAPTURES: dict[str, tuple[Path] | tuple[Path, str, str, int, int]] = {
     "gpsd-zed-f9t-base.cap": (ROOT, "gpsd", "test/daemon/ublox-zed-f9t-rtcm3.log", 327, 3216),
     "gpsd-zed-f9p-rtk.cap": (ROOT, "gpsd", "test/daemon/ublox-zed-f9p-rtk.log", 462, 882),
     "gpsd-neo-m8p-rover.cap": (ROOT, "gpsd", "test/daemon/ublox-neo-m8p.log", 881, 534),
@@ -386,7 +388,10 @@ def ntrip_expectations() -> str:
 
 
 def check_sources(upstream: Path, check: bool, commits: dict[str, str]) -> None:
-    """Compares each capture with its slice of the checkouts in @a upstream, or writes it."""
+    """Compares each capture that has an upstream source with its slice of the checkouts in @a upstream, or writes it.
+
+    A capture without one only has to be there.
+    """
     for project, commit in commits.items():
         head = subprocess.run(
             ["git", "-C", str(upstream / project), "rev-parse", "HEAD"],
@@ -396,7 +401,12 @@ def check_sources(upstream: Path, check: bool, commits: dict[str, str]) -> None:
         ).stdout.strip()
         if head != commit:
             raise SystemExit(f"{upstream / project} is at {head}; check out {commit}")
-    for name, (directory, project, path, offset, length) in CAPTURES.items():
+    for name, source in CAPTURES.items():
+        if len(source) == 1:
+            if not (source[0] / name).is_file():
+                raise SystemExit(f"{name} is missing, and has no upstream source to take it from")
+            continue
+        directory, project, path, offset, length = source
         data = (upstream / project / path).read_bytes()[offset : offset + length]
         if len(data) != length:
             raise SystemExit(f"{project} {path} is shorter than {offset + length} bytes")

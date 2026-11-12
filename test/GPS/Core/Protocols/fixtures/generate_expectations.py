@@ -277,7 +277,7 @@ def main() -> None:
     parser.add_argument(
         "--upstream",
         type=Path,
-        help="directory with gpsd, pyubx2 and pyrtcm checkouts at the commits in SOURCES.md, to check or rewrite the captures",
+        help="directory with gpsd, pyubx2 and pyrtcm checkouts at the commits in SOURCES.md, to check or rewrite the captures that are slices of their files",
     )
     args = parser.parse_args()
     verify_pins()
