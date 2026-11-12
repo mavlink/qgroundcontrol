@@ -16,5 +16,7 @@ private slots:
     void _eventSharesItsSatellites();
     void _nmeaCaptureSatellites();
     void _reportKeepsEachConstellation();
+    void _reportOutlastsSlowSatelliteOutput_data();
+    void _reportOutlastsSlowSatelliteOutput();
     void _reportIsBounded();
 };

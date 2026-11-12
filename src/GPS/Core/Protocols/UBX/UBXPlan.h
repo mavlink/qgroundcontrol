@@ -133,8 +133,8 @@ inline constexpr uint8_t NO_OUTPUT = 0;
 inline constexpr uint8_t STATIONARY_DYNAMIC_MODEL = 2;
 /// NAV-SAT every tenth survey epoch.
 inline constexpr uint8_t SURVEY_SATELLITE_RATE = 10;
-/// Satellites every 2 s at the 1 Hz base rate, as during a 5 Hz survey; the survey divisor would exceed the 5 s
-/// freshness of satellite reports.
+/// Satellites every 2 s at the 1 Hz base rate, as during a 5 Hz survey; the survey divisor would not stay below the
+/// freshness limit of satellite reports.
 inline constexpr uint8_t BASE_SATELLITE_INFO_RATE = 2;
 inline constexpr uint8_t SURVEY_STATUS_RATE = 5;
 /// RTCM output only needs 1 Hz; the survey keeps the faster navigation rate because it converges faster.

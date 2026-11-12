@@ -25,7 +25,10 @@ GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityR
 class SatelliteCounts
 {
 public:
-    static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT{5000};
+    /// Longer than the slowest usual report period with the second a satellite epoch may take to arrive, so that a
+    /// count lasts until the next one: NMEA receivers with a SiRF or MediaTek chipset send their GSV every fifth
+    /// second unless told otherwise, and some send it every sixth.
+    static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT{10000};
 
     GPSSatelliteReport update(const GPSDecodedSatellites& source, uint64_t nowUs);
     /// Records a count-only used count. @return the report, whose used count is this one only while the constellations'

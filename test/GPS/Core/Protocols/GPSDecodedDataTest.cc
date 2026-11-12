@@ -1,6 +1,7 @@
 #include "GPSDecodedDataTest.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
 
@@ -16,6 +17,12 @@ QList<ReportedConstellation> reportedConstellations(const GPSSatelliteReport& re
 {
     const auto constellations = report.constellationsInView();
     return {constellations.begin(), constellations.end()};
+}
+
+/// How long a satellite count lasts from its receipt, in microseconds.
+constexpr uint64_t satelliteCountLifetimeUs()
+{
+    return static_cast<uint64_t>(std::chrono::microseconds(GPSDecodedData::SatelliteCounts::FRESHNESS_TIMEOUT).count());
 }
 }  // namespace
 
@@ -392,42 +399,46 @@ void GPSDecodedDataTest::_satelliteSnapshotBounds()
 
 void GPSDecodedDataTest::_satelliteSnapshotExpiry()
 {
+    constexpr uint64_t SECOND_US = 1'000'000;
+    constexpr uint64_t LIFETIME_US = satelliteCountLifetimeUs();
     GPSDecodedData::SatelliteCounts state;
     GPSDecodedSatellites gps;
     gps.fullSnapshot = false;
     auto* gpsGroup = gps.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gpsGroup);
-    gpsGroup->inViewTimestampUs = 1'000'000;
+    const uint64_t gpsReceipt = SECOND_US;
+    gpsGroup->inViewTimestampUs = gpsReceipt;
     gpsGroup->inView = 1;
-    gpsGroup->inUseTimestampUs = 1'000'000;
+    gpsGroup->inUseTimestampUs = gpsReceipt;
     gpsGroup->inUse = 0;
-    state.update(gps, 1'000'000);
+    state.update(gps, gpsReceipt);
     GPSDecodedSatellites glonass;
     glonass.fullSnapshot = false;
     auto* glonassGroup = glonass.ensureConstellation(GPSConstellation::GLONASS);
     QVERIFY(glonassGroup);
-    glonassGroup->inViewTimestampUs = 4'000'000;
+    glonassGroup->inViewTimestampUs = gpsReceipt + 3 * SECOND_US;
     glonassGroup->inView = 1;
-    glonassGroup->inUseTimestampUs = 4'000'000;
+    glonassGroup->inUseTimestampUs = gpsReceipt + 3 * SECOND_US;
     glonassGroup->inUse = 1;
-    auto snapshot = state.update(glonass, 4'000'000);
+    auto snapshot = state.update(glonass, gpsReceipt + 3 * SECOND_US);
     QCOMPARE(snapshot.inView, std::optional<int>{2});
     QCOMPARE(snapshot.used, std::optional<int>{1});
     QCOMPARE(reportedConstellations(snapshot),
              (QList<ReportedConstellation>{{GPSConstellation::GPS, 1, 0}, {GPSConstellation::GLONASS, 1, 1}}));
 
     // A constellation leaves the list when its view expires, as it leaves the totals.
-    glonassGroup->inViewTimestampUs = 6'000'000;
-    glonassGroup->inUseTimestampUs = 6'000'000;
-    snapshot = state.update(glonass, 6'000'000);
+    const uint64_t gpsExpiry = gpsReceipt + LIFETIME_US;
+    glonassGroup->inViewTimestampUs = gpsExpiry;
+    glonassGroup->inUseTimestampUs = gpsExpiry;
+    snapshot = state.update(glonass, gpsExpiry);
     QCOMPARE(snapshot.inView, std::optional<int>{1});
     QCOMPARE(snapshot.used, std::optional<int>{1});
     QCOMPARE(reportedConstellations(snapshot), (QList<ReportedConstellation>{{GPSConstellation::GLONASS, 1, 1}}));
-    QCOMPARE(state.update(gps, 6'000'000).inView, std::optional<int>{1});  // Expired receipts cannot resurrect a view.
-    gpsGroup->inViewTimestampUs = 6'000'001;
+    QCOMPARE(state.update(gps, gpsExpiry).inView, std::optional<int>{1});  // Expired receipts cannot resurrect a view.
+    gpsGroup->inViewTimestampUs = gpsExpiry + 1;
     gpsGroup->inUseTimestampUs = 0;
     gpsGroup->inUse.reset();
-    snapshot = state.update(gps, 6'000'001);
+    snapshot = state.update(gps, gpsExpiry + 1);
     QCOMPARE(snapshot.inView, std::optional<int>{2});
     QVERIFY(!snapshot.used);
 
@@ -435,19 +446,20 @@ void GPSDecodedDataTest::_satelliteSnapshotExpiry()
     usage.fullSnapshot = false;
     auto* usageGroup = usage.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(usageGroup);
-    usageGroup->inUseTimestampUs = 7'000'000;
+    const uint64_t usageReceipt = gpsExpiry + SECOND_US;
+    usageGroup->inUseTimestampUs = usageReceipt;
     usageGroup->inUse = 1;
     GPSDecodedData::SatelliteCounts usageOnly;
-    const auto unavailableView = usageOnly.update(usage, 7'000'000);
+    const auto unavailableView = usageOnly.update(usage, usageReceipt);
     QCOMPARE(unavailableView.timestampUs, uint64_t{0});
     QVERIFY(!unavailableView.inView);
-    snapshot = state.update(usage, 7'000'000);
+    snapshot = state.update(usage, usageReceipt);
     QCOMPARE(snapshot.used, std::optional<int>{2});
-    gpsGroup->inViewTimestampUs = 7'500'000;
-    snapshot = state.update(gps, 7'500'000);
+    gpsGroup->inViewTimestampUs = usageReceipt + SECOND_US / 2;
+    snapshot = state.update(gps, usageReceipt + SECOND_US / 2);
     QCOMPARE(snapshot.used, std::optional<int>{2});
-    gpsGroup->inViewTimestampUs = 12'000'000;
-    snapshot = state.update(gps, 12'000'000);
+    gpsGroup->inViewTimestampUs = usageReceipt + LIFETIME_US;
+    snapshot = state.update(gps, usageReceipt + LIFETIME_US);
     QCOMPARE(snapshot.inView, std::optional<int>{1});
     QVERIFY(!snapshot.used);
     // The used count expired on its own receipt, ahead of the view it belongs to.
@@ -456,20 +468,20 @@ void GPSDecodedDataTest::_satelliteSnapshotExpiry()
     gpsGroup->inView = 0;
     ++gpsGroup->inViewTimestampUs;
     QCOMPARE(state.update(gps, gpsGroup->inViewTimestampUs).inView, std::optional<int>{0});
-    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 4'999'999));
-    const auto expired = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
+    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + LIFETIME_US - 1));
+    const auto expired = state.expire(gpsGroup->inViewTimestampUs + LIFETIME_US);
     QVERIFY(expired);
     QVERIFY(!expired->inView);
-    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 6'000'000));
+    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + LIFETIME_US + SECOND_US));
 
-    gpsGroup->inViewTimestampUs += 7'000'000;
+    gpsGroup->inViewTimestampUs += LIFETIME_US + 2 * SECOND_US;
     gpsGroup->inView = 1;
     QCOMPARE(state.update(gps, gpsGroup->inViewTimestampUs).constellationsInView().size(), size_t{1});
-    const auto gone = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
+    const auto gone = state.expire(gpsGroup->inViewTimestampUs + LIFETIME_US);
     QVERIFY(gone);
     QVERIFY(!gone->inView);
     QVERIFY(gone->constellationsInView().empty());
-    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 5'000'001));
+    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + LIFETIME_US + 1));
 }
 
 void GPSDecodedDataTest::_satelliteReceipts()
@@ -557,40 +569,44 @@ void GPSDecodedDataTest::_satelliteUsageCombination()
 
 void GPSDecodedDataTest::_satelliteUsageExpiry()
 {
+    constexpr uint64_t SECOND_US = 1'000'000;
+    constexpr uint64_t LIFETIME_US = satelliteCountLifetimeUs();
     GPSDecodedData::SatelliteCounts counts;
-    auto countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 500'000, .usedCount = 9}, 500'000);
+    const uint64_t usageReceipt = SECOND_US / 2;
+    auto countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = usageReceipt, .usedCount = 9}, usageReceipt);
     QVERIFY(!countOnly.inView);
     QCOMPARE(countOnly.used, std::optional<int>{9});
 
     GPSDecodedSatellites view;
     auto* gps = view.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gps);
-    gps->inViewTimestampUs = 1'000'000;
+    const uint64_t viewReceipt = SECOND_US;
+    gps->inViewTimestampUs = viewReceipt;
     gps->inView = 3;
-    auto report = counts.update(view, 1'000'000);
+    auto report = counts.update(view, viewReceipt);
     QCOMPARE(report.inView, std::optional<int>{3});
     QCOMPARE(report.used, std::optional<int>{9});
 
     // The count-only count lapses on its own receipt, ahead of the view it stood in for.
-    QVERIFY(!counts.expire(5'499'999));
-    auto expired = counts.expire(5'500'000);
+    QVERIFY(!counts.expire(usageReceipt + LIFETIME_US - 1));
+    auto expired = counts.expire(usageReceipt + LIFETIME_US);
     QVERIFY(expired);
     QCOMPARE(expired->inView, std::optional<int>{3});
     QVERIFY(!expired->used);
-    QVERIFY(!counts.expire(5'999'999));
-    expired = counts.expire(6'000'000);
+    QVERIFY(!counts.expire(viewReceipt + LIFETIME_US - 1));
+    expired = counts.expire(viewReceipt + LIFETIME_US);
     QVERIFY(expired);
     QCOMPARE(*expired, GPSSatelliteReport{});
 
     // A receiver that reports nothing else retires the count too, once, counted from its latest receipt.
     GPSDecodedData::SatelliteCounts usageOnly;
-    (void) usageOnly.update(GPSDecodedSatelliteUsage{.timestampUs = 1'000'000, .usedCount = 7}, 1'000'000);
-    (void) usageOnly.update(GPSDecodedSatelliteUsage{.timestampUs = 3'000'000, .usedCount = 7}, 3'000'000);
-    QVERIFY(!usageOnly.expire(7'999'999));
-    expired = usageOnly.expire(8'000'000);
+    (void) usageOnly.update(GPSDecodedSatelliteUsage{.timestampUs = SECOND_US, .usedCount = 7}, SECOND_US);
+    (void) usageOnly.update(GPSDecodedSatelliteUsage{.timestampUs = 3 * SECOND_US, .usedCount = 7}, 3 * SECOND_US);
+    QVERIFY(!usageOnly.expire(3 * SECOND_US + LIFETIME_US - 1));
+    expired = usageOnly.expire(3 * SECOND_US + LIFETIME_US);
     QVERIFY(expired);
     QCOMPARE(*expired, GPSSatelliteReport{});
-    QVERIFY(!usageOnly.expire(9'000'000));
+    QVERIFY(!usageOnly.expire(3 * SECOND_US + LIFETIME_US + SECOND_US));
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSDecodedDataTest, TestLabel::Unit)
