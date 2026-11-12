@@ -8,6 +8,48 @@
 
 namespace {
 constexpr double kAltitudeChange = 5.0;
+
+/// The MAV_CMD_DO_REPOSITION commands written to a MockLink as COMMAND_LONG from now on. It reads what the link is
+/// given to write: MockLink keeps only the last COMMAND_LONG it received, and QGroundControl may send another one
+/// meanwhile, such as a message request.
+class SentRepositionCommandLongs
+{
+public:
+    explicit SentRepositionCommandLongs(MockLink* link)
+        : _connection(QObject::connect(link, &MockLink::writeBytesQueuedSignal, link,
+                                       [this](const QByteArray& bytes) { _read(bytes); }))
+    {}
+
+    ~SentRepositionCommandLongs() { QObject::disconnect(_connection); }
+
+    SentRepositionCommandLongs(const SentRepositionCommandLongs&) = delete;
+    SentRepositionCommandLongs& operator=(const SentRepositionCommandLongs&) = delete;
+
+    QList<mavlink_command_long_t> commands;
+
+private:
+    void _read(const QByteArray& bytes)
+    {
+        for (const char byte : bytes) {
+            mavlink_message_t message{};
+            mavlink_status_t status{};
+            if ((mavlink_frame_char_buffer(&_frame, &_parser, static_cast<uint8_t>(byte), &message, &status) !=
+                 MAVLINK_FRAMING_OK) ||
+                (message.msgid != MAVLINK_MSG_ID_COMMAND_LONG)) {
+                continue;
+            }
+            mavlink_command_long_t command{};
+            mavlink_msg_command_long_decode(&message, &command);
+            if (command.command == MAV_CMD_DO_REPOSITION) {
+                commands.append(command);
+            }
+        }
+    }
+
+    mavlink_message_t _frame{};
+    mavlink_status_t _parser{};
+    const QMetaObject::Connection _connection;
+};
 }  // namespace
 
 void PX4RepositionTest::_verifyRepositionCommandInt(float yaw, float amslAltitude)
@@ -121,6 +163,7 @@ void PX4RepositionTest::_pauseBeforePx4_1_12SendsCommandLong()
 
     mockLink()->clearReceivedMavCommandCounts();
     mockLink()->clearReceivedMavlinkMessageCounts();
+    SentRepositionCommandLongs sent(mockLink());
     // MockLink only accepts DO_REPOSITION as COMMAND_INT
     expectAppMessage(QRegularExpression(QStringLiteral("MAV_CMD_DO_REPOSITION.*not supported")));
     vehicle()->pauseVehicle();
@@ -130,11 +173,8 @@ void PX4RepositionTest::_pauseBeforePx4_1_12SendsCommandLong()
     verifyExpectedLogMessage();
     QCOMPARE(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_COMMAND_INT), 0);
 
-    mavlink_message_t message{};
-    QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_COMMAND_LONG, message));
-    mavlink_command_long_t command{};
-    mavlink_msg_command_long_decode(&message, &command);
-    QCOMPARE(command.command, static_cast<uint16_t>(MAV_CMD_DO_REPOSITION));
+    QVERIFY(!sent.commands.isEmpty());
+    const mavlink_command_long_t& command = sent.commands.constFirst();
     QVERIFY(qIsNaN(command.param5));
     QVERIFY(qIsNaN(command.param6));
 }
