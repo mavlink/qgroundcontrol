@@ -43,6 +43,13 @@
             "keywords": ["automatic", "startup", "auto connect", "compact rtcm", "msm4", "flash save", "record"]
         },
         {
+            "comment": "A second receiver, out of use by default: the component shows its connection and status once it is in use.",
+            "component": "GPSPositionReceiver",
+            "showWhen": "QGroundControl.settingsManager.positionReceiverSettings.userVisible",
+            "sectionName": "Position Receiver",
+            "keywords": ["position receiver", "second receiver", "gcs position", "ground station position", "nmea", "external gps", "passive", "position only", "base station", "tripod", "serial", "tcp", "udp"]
+        },
+        {
             "component": "GcsPositionStatus",
             "sectionName": "GCS Position",
             "keywords": ["gcs position", "ground station position", "position source", "internal gps", "this device", "nmea", "gps"]

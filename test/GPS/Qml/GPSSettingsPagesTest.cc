@@ -19,6 +19,7 @@
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "PositionManager.h"
+#include "PositionReceiverSettings.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
@@ -185,6 +186,77 @@ void GPSSettingsPagesTest::_receiverConnectsFromPage()
     QTRY_COMPARE_WITH_TIMEOUT(link->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
     QVERIFY(rowValue(page.get(), "rtkReceiverEndpoint").isEmpty());
     QVERIFY(host->isEnabled());
+}
+
+void GPSSettingsPagesTest::_positionReceiverConnectsFromPage()
+{
+    // The operator's receiver, which sends NMEA on a TCP port of this machine. The GNSS receiver has no connection.
+    QTcpServer bridge;
+    QVERIFY(bridge.listen(QHostAddress::LocalHost));
+    const QString address = QStringLiteral("127.0.0.1");
+    TestFixtures::SettingsFixture saved;
+    PositionReceiverSettings* const settings = SettingsManager::instance()->positionReceiverSettings();
+    saved.setFactValue(settings->enabled(), false);
+    saved.setFactValue(settings->connectionType(), RTKSettings::Tcp);
+    saved.setFactValue(settings->tcpHost(), QString());
+    saved.setFactValue(settings->tcpPort(), 0);
+    GPSManager* const gps = GPSManager::instance();
+    GPSReceiver* const receiver = gps->positionReceiver();
+    const auto disconnected = qScopeGuard([receiver]() { receiver->disconnectReceiver(); });
+
+    TestFixtures::QmlEngine engine;
+    const std::unique_ptr<QObject> page = createPage(engine, "GNSSReceiverSettings");
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto* const inUse = page->findChild<QObject*>(QStringLiteral("positionReceiverEnabled"));
+    QQuickItem* const host = textInput(page.get(), "positionReceiverTcpHost");
+    QQuickItem* const port = textInput(page.get(), "positionReceiverTcpPort");
+    QVERIFY(inUse && host && port);
+    // Out of use, the section has neither a connection to edit nor a status.
+    QVERIFY(!host->isVisible());
+    QVERIFY(!page->findChild<QObject*>(QStringLiteral("positionReceiverStatus")));
+
+    // The switch puts the receiver in use, and the address entered in the form is the receiver's.
+    QVERIFY(press(inUse));
+    QVERIFY(settings->enabled()->rawValue().toBool());
+    QVERIFY(enter(host, address));
+    QVERIFY(enter(port, QString::number(bridge.serverPort())));
+    QVERIFY(receiver->hasEndpoint());
+    auto* const status = page->findChild<QObject*>(QStringLiteral("positionReceiverStatus"));
+    QVERIFY(status);
+    auto* const connect = status->findChild<QObject*>(QStringLiteral("rtkConnectButton"));
+    QVERIFY(connect);
+
+    // Its own Connect opens its connection, and its own status shows what it sends. The GNSS receiver stays as it
+    // was.
+    QVERIFY(press(connect));
+    QTRY_VERIFY_WITH_TIMEOUT(bridge.hasPendingConnections(), TestTimeout::mediumMs());
+    QTcpSocket* const link = bridge.nextPendingConnection();
+    QTRY_COMPARE_WITH_TIMEOUT(receiver->state(), GPSReceiver::State::Connected, TestTimeout::mediumMs());
+    QCOMPARE(gps->receiver()->state(), GPSReceiver::State::Disconnected);
+    QVERIFY(!host->isEnabled());
+    int epoch = 0;
+    const auto reports = [&](const QObject* group, const char* row, const QString& value) {
+        link->write(nmeaEpoch(epoch++));
+        return rowValue(group, row) == value;
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(reports(status, "rtkSatellitesUsed", QStringLiteral("8")), TestTimeout::mediumMs());
+    QCOMPARE(rowValue(status, "rtkReceiverEndpoint"), QStringLiteral("%1:%2").arg(address).arg(bridge.serverPort()));
+    // Its position is the ground station's: the page's last group names it as the source in use.
+    PositionManager* const positions = gps->positionManager();
+    const QString positionReceiver = PositionManager::tr("Position receiver");
+    QTRY_VERIFY_WITH_TIMEOUT(reports(page.get(), "gcsPositionSelectedSource", positionReceiver) &&
+                                 positions->selectedSource() == PositionManager::SelectedSource::Receiver,
+                             TestTimeout::mediumMs());
+
+    // The switch takes it out of use: the link closes, and its status goes with its position.
+    QVERIFY(press(inUse));
+    QVERIFY(!settings->enabled()->rawValue().toBool());
+    QCOMPARE(receiver->state(), GPSReceiver::State::Disconnected);
+    QTRY_COMPARE_WITH_TIMEOUT(link->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
+    QVERIFY(!host->isVisible());
+    QVERIFY(rowValue(page.get(), "gcsPositionSelectedSource") != positionReceiver);
+    QTRY_VERIFY_WITH_TIMEOUT(!page->findChild<QObject*>(QStringLiteral("positionReceiverStatus")),
+                             TestTimeout::shortMs());
 }
 
 void GPSSettingsPagesTest::_ntripConnectsFromPage()

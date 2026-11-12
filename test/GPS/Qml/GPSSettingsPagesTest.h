@@ -16,5 +16,6 @@ class GPSSettingsPagesTest : public UnitTest
 private slots:
     void initTestCase() override;
     void _receiverConnectsFromPage();
+    void _positionReceiverConnectsFromPage();
     void _ntripConnectsFromPage();
 };

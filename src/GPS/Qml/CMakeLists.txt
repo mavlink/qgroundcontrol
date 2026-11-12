@@ -33,6 +33,8 @@ qt_add_qml_module(
         GPSFactSwitchField.qml
         GPSFactTextField.qml
         GPSField.qml
+        GPSPositionReceiver.qml
+        GPSPositionReceiverStatus.qml
         GPSReceiverBasePosition.qml
         GPSReceiverBaseSites.qml
         GPSReceiverBaseStation.qml

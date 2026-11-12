@@ -172,6 +172,28 @@ A u-blox receiver that QGC configured as a base station keeps its USB NMEA outpu
 A separate _NMEA GPS Device_ from an earlier version becomes a passive receiver, unless RTK GPS auto-connect had been turned on explicitly or an RTK receiver's serial device was saved.
 In that case the RTK base station stays the receiver; select the NMEA device again with the _Passive_ role to use it instead.
 
+## Position Receiver {#position_receiver}
+
+A receiver that is set up as an [RTK base station](#base_station) reports the position of its antenna.
+With the base on a tripod, the ground station position is then the tripod's, and so is what uses it: _Follow Me_, the home position set at the ground station and the operator location of [Remote ID](remote_id.md).
+**Use a position receiver** connects a second receiver that only provides the ground station position, such as the operator's own receiver beside the ground station.
+
+- QGC never configures the position receiver and sends it nothing.
+  It reads the output a [passive receiver](#passive) has: standard NMEA, u-blox UBX or Septentrio SBF, over **Serial** (with the receiver's baud rate, or **Auto**), **TCP** or **UDP**.
+  RTCM that it sends is not forwarded to vehicles.
+- While the setting is on, the position receiver is the only receiver that provides the ground station position, whether or not it is connected or has a fix.
+  The GNSS receiver's position is never used then.
+  With the [Source](#gcs_position) on _Best available_, the position comes from this device until the position receiver has a fix; with _GNSS receiver_, there is no ground station position until then.
+  The _GCS Position_ section names the source in use as _Position receiver_.
+- The saved position receiver connects when QGC starts and reconnects when its connection is lost.
+  **Disconnect** pauses that until you select **Connect** again, and turning the setting off disconnects it.
+- A configured base that looks for an RTK receiver on USB never connects to the serial device selected for the position receiver, so the position receiver can be an RTK receiver on USB as well.
+  Select different serial devices, and different UDP ports, for the two receivers.
+- Its status, below its settings and in the toolbar's GNSS drop-down, shows what the [receiver status](#status) shows for the GNSS receiver.
+  **Record receiver data** records its connections to the `GPSPositionReceiver` folder.
+
+The GNSS receiver stays the _RTK Receiver_ whose position [RTK Corrections](ntrip_rtk.md) can report to an NTRIP caster; the position receiver's position is reported as the _GCS Position_.
+
 ## GCS Position {#gcs_position}
 
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
@@ -189,10 +211,11 @@ A receiver that states no vertical accuracy, as an NMEA receiver without GST sen
 [Remote ID](remote_id.md) reports the operator's height above the WGS84 ellipsoid instead.
 It sends the ellipsoid height of a GNSS receiver or an Android device as it is, and converts an altitude above mean sea level, which is all macOS, iOS and Windows devices report, with the same geoid model.
 
-A connected GNSS receiver can provide the ground station position instead; use the [Passive](#passive) role for a receiver that only does that.
+A connected GNSS receiver can provide the ground station position instead; use the [Passive](#passive) role for a receiver that only does that, or a [position receiver](#position_receiver) beside a receiver that is an RTK base station.
 The settings are:
 
 - **Source**: _Best available_ uses the GNSS receiver while it has a fix and falls back to this device; select _GNSS receiver_ or _This device_ to use only one.
+  While a [position receiver](#position_receiver) is in use, it is the GNSS receiver meant here.
 
 A position is used while it is accurate to 100 m horizontally; a less accurate one is shown as _Position fix does not meet accuracy requirements_.
 A receiver that states no horizontal accuracy, as an NMEA receiver without GST sentences, counts as accurate to 5.1 m times its HDOP, which is one standard deviation as a stated accuracy is, so its position is used while its HDOP is below 19.6.

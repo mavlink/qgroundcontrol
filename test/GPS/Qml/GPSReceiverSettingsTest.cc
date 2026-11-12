@@ -1332,7 +1332,8 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
     if (baseSites) {
         sections.append(QStringLiteral("Saved Base Sites"));
     }
-    sections.append({QStringLiteral("Connection Options"), QStringLiteral("GCS Position")});
+    sections.append(
+        {QStringLiteral("Connection Options"), QStringLiteral("Position Receiver"), QStringLiteral("GCS Position")});
     QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(), sections);
 
     // The page's group of a control: the child of the page layout that holds it.

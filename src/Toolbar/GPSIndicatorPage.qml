@@ -178,6 +178,9 @@ ToolIndicatorPage {
                     disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
                 }
 
+                // Shown while the position receiver is in use.
+                GPSPositionReceiverStatus { objectName: "gpsIndicatorPositionReceiver" }
+
                 CorrectionsStatus {
                     objectName: "gpsIndicatorCorrections"
                     Layout.minimumWidth: 0

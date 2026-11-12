@@ -1466,6 +1466,7 @@ class TestRealPageDefinitions:
             "GPSReceiverBaseStation",
             "GPSReceiverBaseSites",
             "GPSReceiverConnectControls",
+            "GPSPositionReceiver",
             "GcsPositionStatus",
         ]
         # The status section says so when no receiver is connected instead of showing an empty page.
