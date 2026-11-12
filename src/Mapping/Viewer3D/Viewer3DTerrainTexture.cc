@@ -2,13 +2,10 @@
 
 #include <tuple>
 
-#include "Fact.h"
-#include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapUrlEngine.h"
-#include "SettingsManager.h"
 #include "Viewer3DMapProvider.h"
 #include "Viewer3DTileQuery.h"
 #include "Viewer3DTileStatistics.h"
@@ -16,14 +13,11 @@
 QGC_LOGGING_CATEGORY(Viewer3DTerrainTextureLog, "Viewer3d.Viewer3DTerrainTexture")
 
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()
-    : _flightMapSettings(SettingsManager::instance()->flightMapSettings())
 {
     _onMapTypeChanged();
 
-    // The provider alone can change: to one whose first type has the name of the type before, or to one without types
-    connect(_flightMapSettings->mapProvider(), &Fact::rawValueChanged, this,
+    connect(QGCMapEngineManager::instance(), &QGCMapEngineManager::chosenMapChanged, this,
             &Viewer3DTerrainTexture::_onMapTypeChanged);
-    connect(_flightMapSettings->mapType(), &Fact::rawValueChanged, this, &Viewer3DTerrainTexture::_onMapTypeChanged);
     connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this, &Viewer3DTerrainTexture::_onTileSourceChanged);
 }
 
@@ -118,9 +112,8 @@ void Viewer3DTerrainTexture::_updateTexture()
 
 void Viewer3DTerrainTexture::_onMapTypeChanged()
 {
-    const QString mapType = QGCMapEngineManager::mapName(_flightMapSettings->mapProvider()->rawValue().toString(),
-                                                         _flightMapSettings->mapType()->rawValue().toString());
-    // The provider and the type are set one after the other, and can name no map in between
+    const QString mapType = QGCMapEngineManager::instance()->chosenMap();
+    // Saved settings can name no map
     if (!QGCMapEngineManager::mapList().contains(mapType)) {
         return;
     }

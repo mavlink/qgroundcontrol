@@ -77,9 +77,6 @@ public:
     /// list, and for a provider without a credit.
     Q_INVOKABLE static QString mapAttribution(const QString& mapType);
     Q_INVOKABLE static QStringList mapTypeList(const QString& provider);
-    /// The name, as mapList() has it, of the map of \a provider that has \a type: the two parts by which the
-    /// settings select a map. A provider whose only map has no type names that map itself, and \a type is ignored.
-    Q_INVOKABLE static QString mapName(const QString& provider, const QString& type);
     Q_INVOKABLE static void saveSetting(const QString& key, const QString& value);
 
     ImportAction importAction() const { return _importAction; }
@@ -126,6 +123,9 @@ public:
     }
 
     static QStringList mapList();
+    /// The name, as mapList() has it, of the map of \a provider that has \a type: the two parts by which the
+    /// settings select a map. A provider whose only map has no type names that map itself, and \a type is ignored.
+    static QString mapName(const QString& provider, const QString& type);
     static QStringList mapProviderList();
     static QStringList elevationProviderList();
     /// The credit of the terrain that the GeoMap engine shapes its surface with

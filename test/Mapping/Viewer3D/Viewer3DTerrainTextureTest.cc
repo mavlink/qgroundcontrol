@@ -15,6 +15,7 @@
 
 #include "AppSettings.h"
 #include "FlightMapSettings.h"
+#include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 #include "Viewer3DTerrainTexture.h"
 
@@ -65,6 +66,31 @@ void Viewer3DTerrainTextureTest::_testFallbackCenterTriggersLoad()
 
     QCOMPARE(centerSpy.count(), 1);
     QVERIFY(texture._terrainTileLoader);
+}
+
+void Viewer3DTerrainTextureTest::_testTextureFollowsChosenMap()
+{
+    Fact* const provider = SettingsManager::instance()->flightMapSettings()->mapProvider();
+    Fact* const type = SettingsManager::instance()->flightMapSettings()->mapType();
+    const auto restore =
+        qScopeGuard([provider, type, savedProvider = provider->rawValue(), savedType = type->rawValue()] {
+            provider->setRawValue(savedProvider);
+            type->setRawValue(savedType);
+        });
+    provider->setRawValue(QStringLiteral("Bing"));
+    type->setRawValue(QStringLiteral("Hybrid"));
+    const int bingHybrid = UrlFactory::getMapIdFromProviderType(QStringLiteral("Bing Hybrid"));
+    const int customUrl = UrlFactory::getMapIdFromProviderType(QStringLiteral("CustomURL Custom"));
+    QVERIFY((bingHybrid >= 0) && (customUrl >= 0) && (bingHybrid != customUrl));
+
+    Viewer3DTerrainTexture texture;
+    QCOMPARE(texture._mapId, bingHybrid);
+
+    // The settings page sets the provider, then the type. The two name no map in between: the map stays
+    provider->setRawValue(QStringLiteral("CustomURL"));
+    QCOMPARE(texture._mapId, bingHybrid);
+    type->setRawValue(QStringLiteral("Custom"));
+    QCOMPARE(texture._mapId, customUrl);
 }
 
 void Viewer3DTerrainTextureTest::_testSourceChangeReloadsTexture()

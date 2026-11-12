@@ -8,7 +8,6 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DTextureData>
 
-class FlightMapSettings;
 class Viewer3DMapProvider;
 class Viewer3DTileQuery;
 struct Viewer3DTileStatistics;
@@ -86,7 +85,6 @@ private:
     static std::pair<QGeoCoordinate, QGeoCoordinate> _fallbackBoundingBox(const QGeoCoordinate& center);
 
     Viewer3DTileQuery* _terrainTileLoader = nullptr;
-    FlightMapSettings* _flightMapSettings = nullptr;
     Viewer3DMapProvider* _mapProvider = nullptr;
 
     QGeoCoordinate _fallbackCenter;

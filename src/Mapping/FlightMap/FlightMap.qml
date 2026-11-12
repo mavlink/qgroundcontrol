@@ -80,11 +80,10 @@ Map {
     }
 
     function updateActiveMapType() {
-        var settings =  QGroundControl.settingsManager.flightMapSettings
-        var fullMapName = QGroundControl.mapEngineManager.mapName(settings.mapProvider.value, settings.mapType.value)
+        var chosenMap = QGroundControl.mapEngineManager.chosenMap
 
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (fullMapName === _map.supportedMapTypes[i].name) {
+            if (chosenMap === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
                 return
             }
@@ -98,13 +97,8 @@ Map {
     }
 
     Connections {
-        target: QGroundControl.settingsManager.flightMapSettings.mapType
-        function onRawValueChanged() { updateActiveMapType() }
-    }
-
-    Connections {
-        target: QGroundControl.settingsManager.flightMapSettings.mapProvider
-        function onRawValueChanged() { updateActiveMapType() }
+        target: QGroundControl.mapEngineManager
+        function onChosenMapChanged() { updateActiveMapType() }
     }
 
     signal mapPanStart
