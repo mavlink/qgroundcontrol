@@ -173,6 +173,12 @@ GPSWriteResult GPSRecordingTransport::writeData(QByteArrayView bytes, QDeadlineT
     return result;
 }
 
+GPSWriteResult GPSRecordingTransport::writeExpired(QByteArrayView bytes)
+{
+    // The link answers, so that the attempt is recorded as any write that it refuses.
+    return writeData(bytes, QDeadlineTimer());
+}
+
 void GPSRecordingTransport::_start()
 {
     // Never over an earlier recording: session names differ by their start time alone.

@@ -77,6 +77,12 @@ GPSWriteResult GPSEvidenceTransport::writeData(QByteArrayView bytes, QDeadlineTi
     return result;
 }
 
+GPSWriteResult GPSEvidenceTransport::writeExpired(QByteArrayView bytes)
+{
+    // A failed write here as any other, which the recorder of the link keeps.
+    return writeData(bytes, QDeadlineTimer());
+}
+
 std::chrono::milliseconds GPSEvidenceTransport::configurationWriteTimeout() const
 {
     return _transport.configurationWriteTimeout();

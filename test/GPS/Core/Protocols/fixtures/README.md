@@ -25,7 +25,7 @@ call that crossed the link or that the link refused, in the order the session ma
 | `SETTINGS` | What the session was asked to do, once, before the other records | |
 | `RX` | The bytes one read returned | Reads that timed out or failed |
 | `TX` | The bytes the link accepted from one write | The rest of a write that the link accepted the start of |
-| `TX-REFUSED` | How the link answered one write of which it accepted nothing, then the bytes of that write | A write that was cancelled |
+| `TX-REFUSED` | How the link answered one write of which it accepted nothing, then the bytes of that write. A write the session made after the time it allowed for it is one, answered `timed-out` | A write that was cancelled |
 | `BAUD` | The baud rate the link changed to | |
 | `BAUD-REFUSED` | A baud rate the link refused | A rate asked for after the session was stopped |
 
@@ -45,6 +45,10 @@ a command without ending the session. The answer of a `TX-REFUSED` is `unsupport
 1203 BAUD-REFUSED 921600
 1650 TX-REFUSED unsupported b5620a0400000e34
 ```
+
+A command that the driver writes when the time it allowed for it has just run out is answered
+`timed-out` before the link is given its bytes. The driver goes on to its next command, and the
+record is all that shows that it tried this one.
 
 The `SETTINGS` record is what decides the commands a session sends, as `key=value` pairs:
 
@@ -162,7 +166,9 @@ What a replay cannot tell from a driver that changed:
 - **What the link refused, in an older recording.** A recording made before the `TX-REFUSED` and
   `BAUD-REFUSED` records existed holds neither. The replay has no record to answer from and
   diverges where the session met a refusal: at a rate a serial adapter does not support, or at
-  the first command of a configured receiver on UDP, which carries no writes.
+  the first command of a configured receiver on UDP, which carries no writes. A recording made
+  before a write after its deadline was recorded holds no such write either: the replay, whose
+  clock stands still between two records, makes the write in time and diverges there.
 - **A reply at a deadline.** Between two records the replay's clock runs on the driver's own
   timeouts, which a real link overruns a little; data recorded up to 2 ms after the end of a read
   counts as returned by that read. A reply that came closer than that to a deadline of the driver

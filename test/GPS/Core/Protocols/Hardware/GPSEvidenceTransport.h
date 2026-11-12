@@ -27,6 +27,7 @@ public:
 
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override;
+    GPSWriteResult writeExpired(QByteArrayView bytes) override;
 
 private:
     void _observe(QByteArray& pending, QByteArrayView bytes, bool incoming);

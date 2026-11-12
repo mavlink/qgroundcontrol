@@ -27,10 +27,15 @@ GPSWriteResult GPSTransport::write(QByteArrayView bytes, QDeadlineTimer deadline
         return {GPSWriteStatus::Completed};
     }
     if (deadline.hasExpired()) {
-        return {GPSWriteStatus::TimedOut};
+        return writeExpired(bytes);
     }
     const QDeadlineTimer cap(configurationWriteTimeout(), Qt::PreciseTimer);
     return writeData(bytes, (std::min) (deadline, cap));
+}
+
+GPSWriteResult GPSTransport::writeExpired(QByteArrayView)
+{
+    return {GPSWriteStatus::TimedOut};
 }
 
 std::chrono::milliseconds GPSTransport::configurationWriteTimeout() const

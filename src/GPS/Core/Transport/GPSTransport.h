@@ -117,6 +117,11 @@ protected:
     /// Receives non-empty bytes and an unexpired, capped deadline that implementations must honor.
     virtual GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) = 0;
 
+    /// Answers a write of non-empty bytes whose deadline had expired when it was made: timed out, and nothing
+    /// accepted. A transport that wraps another passes the write on with its expired deadline instead, so that the
+    /// wrapped transport answers it and a recorder among them keeps the attempt.
+    virtual GPSWriteResult writeExpired(QByteArrayView bytes);
+
 private:
     GPSCancelToken _cancelToken;
 

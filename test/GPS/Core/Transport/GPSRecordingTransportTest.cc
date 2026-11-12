@@ -32,6 +32,7 @@
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/GPSTestClock.h"
 #include "Protocols/Support/ReceiverBench.h"
+#include "Transport/Support/GPSRecordingDialogue.h"
 #include "Transport/Support/GPSRecordingReader.h"
 #include "Transport/Support/ReplayGPSTransport.h"
 
@@ -350,6 +351,43 @@ void GPSRecordingTransportTest::_recordsWhatLinkRefused()
     QString error;
     QCOMPARE(GPSRecordingReader::readFile(file, &error), expected);
     QCOMPARE(error, QString());
+}
+
+void GPSRecordingTransportTest::_recordsWriteGivenUpAtItsDeadline()
+{
+    TestFixtures::TempDirFixture directory;
+    const QString file = QDir(directory.path()).filePath(QStringLiteral("session.log"));
+    const QByteArray command = QByteArray::fromHex("b5620a0400000e34");
+    GPSTestClock clock(GPSTestClock::START_US);
+    {
+        auto inner = std::make_unique<MemoryGPSTransport>();
+        MemoryGPSTransport* const link = inner.get();
+        GPSRecordingTransport recorder(std::move(inner), file, GPSRecordingTransport::MAX_FILE_BYTES, {}, {},
+                                       clock.source());
+        QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
+        clock.advanceBy(2ms);
+        // The time the session gave the command had run out when the write was made, so the link was not asked.
+        const GPSWriteResult late = recorder.write(command, QDeadlineTimer());
+        QCOMPARE(late.status, GPSWriteStatus::TimedOut);
+        QCOMPARE(late.acceptedBytes, 0);
+        QVERIFY(link->written().isEmpty());
+        clock.advanceBy(1ms);
+        QCOMPARE(writeBytes(recorder, command).status, GPSWriteStatus::Completed);
+    }
+    QCOMPARE(records(file), (QByteArrayList{"TX-REFUSED timed-out " + command.toHex(), "TX " + command.toHex()}));
+
+    // A driver that repeats the session makes the write in time, on a clock that only the recording moves, and gets
+    // the answer the recorded session got.
+    GPSTestClock replayClock(GPSTestClock::START_US);
+    GPSDialogueTransport replay(file, replayClock);
+    QCOMPARE(replay.open().status, GPSOpenStatus::Opened);
+    const GPSWriteResult answered = writeBytes(replay, command);
+    QCOMPARE(answered.status, GPSWriteStatus::TimedOut);
+    QCOMPARE(answered.acceptedBytes, 0);
+    QCOMPARE(replayClock.nowUs(), GPSTestClock::START_US + 2000);
+    QCOMPARE(writeBytes(replay, command).status, GPSWriteStatus::Completed);
+    QVERIFY(replay.finished());
+    QVERIFY(!replay.divergence());
 }
 
 void GPSRecordingTransportTest::_recordsSessionSettings_data()

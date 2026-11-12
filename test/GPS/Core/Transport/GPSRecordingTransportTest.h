@@ -15,6 +15,7 @@ private slots:
     void _recordsLinkTrafficInOrder();
     void _recordsWhatLinkRefused_data();
     void _recordsWhatLinkRefused();
+    void _recordsWriteGivenUpAtItsDeadline();
     void _recordsSessionSettings_data();
     void _recordsSessionSettings();
     void _recordingReplaysToSameEvents();

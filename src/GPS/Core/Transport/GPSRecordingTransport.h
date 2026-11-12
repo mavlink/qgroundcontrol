@@ -28,7 +28,8 @@ class QDateTime;
 /// - TX and the bytes the link accepted for writing to the receiver, in hexadecimal;
 /// - BAUD and the baud rate the link changed to;
 /// - TX-REFUSED, how the link answered a write of which it accepted nothing (refusalName()), and the bytes of that
-///   write, in hexadecimal;
+///   write, in hexadecimal. A write that the session makes after the deadline it gives it is such a write: it is
+///   answered timed-out before the link is given its bytes;
 /// - BAUD-REFUSED and a baud rate the link did not change to.
 /// A session goes on after either refusal, which is why they are recorded. A call that the session's own
 /// cancellation ended is not, nor is the rest of a write of which the link accepted the start: neither session goes on.
@@ -104,6 +105,7 @@ public:
 
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override;
+    GPSWriteResult writeExpired(QByteArrayView bytes) override;
 
 private:
     void _start();
