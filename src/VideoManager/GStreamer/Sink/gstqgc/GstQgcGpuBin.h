@@ -40,4 +40,11 @@ GpuBinMode selectGpuBin(GpuBinPreference preference, const RenderTarget& target)
 
 const char* gpuBinName(GpuBinMode mode) noexcept;
 
+/// Whether the element @p factoryName of GStreamer's plugin @p pluginName may be the bin's converter under @p target.
+/// Under Direct3D 11 a pipeline's d3d11 elements share the device Qt renders with (GstD3D11ContextBridge), and with
+/// it the immediate context, whose state Qt caches. Decoders, the uploader and the downloader only copy there. The
+/// plugin's other filters (d3d11convert, d3d11scale, d3d11deinterlace, d3d11overlay) draw, which sets that state
+/// behind Qt's back.
+bool converterSuitsRenderTarget(const char* pluginName, const char* factoryName, const RenderTarget& target) noexcept;
+
 }  // namespace GstQgc

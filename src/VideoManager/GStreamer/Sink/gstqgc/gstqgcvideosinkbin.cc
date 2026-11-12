@@ -128,13 +128,23 @@ static void gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin* self)
 static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSinkBin* self)
 {
     if (self->conversion_element && self->conversion_element[0] != '\0') {
-        GstElement* e = gst_element_factory_make(self->conversion_element, NULL);
-        if (e) {
+        const GStreamer::GstFactoryPtr factory =
+            GStreamer::adoptFactory(gst_element_factory_find(self->conversion_element));
+        const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+        if (factory &&
+            !GstQgc::converterSuitsRenderTarget(gst_plugin_feature_get_plugin_name(GST_PLUGIN_FEATURE(factory.get())),
+                                                self->conversion_element, target)) {
+            GST_WARNING_OBJECT(self,
+                               "conversion-element='%s' would draw on the device Qt renders with (%s) — falling "
+                               "through to defaults",
+                               self->conversion_element, GstQgc::toString(target.backend));
+        } else if (GstElement* e = factory ? gst_element_factory_create(factory.get(), NULL) : NULL) {
             GST_INFO_OBJECT(self, "Using conversion-element override '%s'", self->conversion_element);
             return e;
+        } else {
+            GST_WARNING_OBJECT(self, "conversion-element='%s' factory missing — falling through to defaults",
+                               self->conversion_element);
         }
-        GST_WARNING_OBJECT(self, "conversion-element='%s' factory missing — falling through to defaults",
-                           self->conversion_element);
     }
     // These SoCs' decoders output proprietary layouts under plain video/x-raw formats, which only their converter
     // reads.

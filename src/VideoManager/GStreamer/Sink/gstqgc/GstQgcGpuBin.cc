@@ -3,6 +3,7 @@
 #ifdef QGC_UNITTEST_BUILD
 #include <optional>
 #endif
+#include <string_view>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QtEnvironmentVariables>
@@ -97,6 +98,15 @@ const char* gpuBinName(GpuBinMode mode) noexcept
             break;
     }
     return "passthrough";
+}
+
+bool converterSuitsRenderTarget(const char* pluginName, const char* factoryName, const RenderTarget& target) noexcept
+{
+    const auto is = [](const char* text, std::string_view expected) { return text && (expected == text); };
+    if ((target.backend != RenderBackend::Direct3D11) || !is(pluginName, "d3d11")) {
+        return true;
+    }
+    return is(factoryName, "d3d11upload") || is(factoryName, "d3d11download");
 }
 
 }  // namespace GstQgc

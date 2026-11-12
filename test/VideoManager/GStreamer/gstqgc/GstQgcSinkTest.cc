@@ -30,6 +30,7 @@
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcFrameDelivery.h"
 #include "gstqgc/GstQgcFrameMap.h"
+#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcPathSession.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcSinkCounters.h"
@@ -289,6 +290,48 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
         }
     }
 #endif
+}
+
+void GstQgcSinkTest::_testQgcVideoSinkBinRefusesDrawingD3D11Converter_data()
+{
+    QTest::addColumn<QByteArray>("plugin");
+    QTest::addColumn<QByteArray>("converter");
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<bool>("suits");
+
+    const QByteArray d3d11 = QByteArrayLiteral("d3d11");
+    const int direct3D11 = int(GstQgc::RenderBackend::Direct3D11);
+    QTest::newRow("d3d11convert") << d3d11 << QByteArrayLiteral("d3d11convert") << direct3D11 << false;
+    QTest::newRow("d3d11deinterlace") << d3d11 << QByteArrayLiteral("d3d11deinterlace") << direct3D11 << false;
+    // It only copies into the device's textures.
+    QTest::newRow("d3d11upload") << d3d11 << QByteArrayLiteral("d3d11upload") << direct3D11 << true;
+    // Qt renders on another device then.
+    QTest::newRow("d3d11convert under Direct3D 12")
+        << d3d11 << QByteArrayLiteral("d3d11convert") << int(GstQgc::RenderBackend::Direct3D12) << true;
+    QTest::newRow("videoconvert") << QByteArrayLiteral("videoconvertscale") << QByteArrayLiteral("videoconvert")
+                                  << direct3D11 << true;
+}
+
+void GstQgcSinkTest::_testQgcVideoSinkBinRefusesDrawingD3D11Converter()
+{
+    QFETCH(QByteArray, plugin);
+    QFETCH(QByteArray, converter);
+    QFETCH(int, backend);
+    QFETCH(bool, suits);
+
+    const GstQgc::RenderTarget target{.backend = static_cast<GstQgc::RenderBackend>(backend)};
+    QCOMPARE(GstQgc::converterSuitsRenderTarget(plugin.constData(), converter.constData(), target), suits);
+
+    // Where GStreamer has the element, the bin converts with its default instead.
+    if (suits || !GstTest::firstMissingFactory({converter.constData()}).isEmpty()) {
+        return;
+    }
+    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = target});
+    GstElement* const element =
+        gst_element_factory_make_full("qgcvideosinkbin", "conversion-element", converter.constData(), nullptr);
+    QVERIFY2(element, "Failed to create qgcvideosinkbin");
+    const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), withConverter({QStringLiteral("qgcqvideosink")}));
 }
 
 void GstQgcSinkTest::_testQgcVideoSinkBinRejectsFailedAdopt()

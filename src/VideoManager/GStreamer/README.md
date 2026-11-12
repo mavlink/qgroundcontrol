@@ -147,7 +147,11 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   variant and `d3d12upload ! d3d12convert` for the d3d12convert variant. The converter is the `conversion-element`
   override, else `imxvideoconvert_g2d` or `nvvidconv` when present, else `videoconvertscale`
   (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
-  sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
+  sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through. When Qt renders with
+  Direct3D 11, an override that names a filter of GStreamer's `d3d11` plugin other than `d3d11upload` and
+  `d3d11download` (such as `d3d11convert` or `d3d11deinterlace`) is ignored: a pipeline's d3d11 elements share the
+  device Qt renders with, and such a filter draws on its immediate context, whose state Qt caches. Decoders and the
+  two elements named only copy there.
 
   The bin doesn't deinterlace: an interlaced stream (576i or 1080i, as analogue-to-IP encoders send) is shown woven,
   both fields in each frame, so motion combs. Upstream's playsink plugs gst-plugins-good's `deinterlace` for that.

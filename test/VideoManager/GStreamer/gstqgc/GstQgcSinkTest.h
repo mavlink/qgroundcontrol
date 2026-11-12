@@ -13,6 +13,8 @@ private slots:
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
     void _testQgcVideoSinkBinGpuBinVariant_data();
     void _testQgcVideoSinkBinGpuBinVariant();
+    void _testQgcVideoSinkBinRefusesDrawingD3D11Converter_data();
+    void _testQgcVideoSinkBinRefusesDrawingD3D11Converter();
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
