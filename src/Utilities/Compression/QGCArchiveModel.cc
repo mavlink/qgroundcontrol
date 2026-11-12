@@ -3,7 +3,6 @@
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QCollator>
 #include <QtCore/QFileInfo>
 #include <QtCore/QLocale>
 

@@ -441,15 +441,26 @@ CopyResult copyEntryToFile(struct archive* a, const QString& outputPath, DataTra
     return CopyResult::Completed;
 }
 
+/// Whether an entry is a hard link, which is then logged as skipped
+/// No extraction writes one: libarchive's disk writer resolves the target against the working directory, not
+/// the output directory, and writes the entry's data through the link.
+bool skipHardLinkEntry(struct archive_entry* entry)
+{
+    if (archive_entry_hardlink(entry) == nullptr) {
+        return false;
+    }
+    qCWarning(QGClibarchiveLog) << "Skipping hard link:" << archive_entry_pathname(entry) << "->"
+                                << archive_entry_hardlink(entry);
+    return true;
+}
+
 /// Whether an entry is a hard or symbolic link, which is then logged as skipped
 /// The functions that write an entry with writeArchiveEntryToFile() leave links out: QSaveFile makes regular
 /// files, so a link would become an empty one. extractArchiveEntries() creates the symbolic links that stay
 /// inside its output directory instead.
 bool skipLinkEntry(struct archive_entry* entry)
 {
-    if (archive_entry_hardlink(entry) != nullptr) {
-        qCWarning(QGClibarchiveLog) << "Skipping hard link:" << archive_entry_pathname(entry) << "->"
-                                    << archive_entry_hardlink(entry);
+    if (skipHardLinkEntry(entry)) {
         return true;
     }
     if (archive_entry_filetype(entry) == AE_IFLNK) {
@@ -573,6 +584,15 @@ QGClibarchive::ReadResult createOutputDirectory(const QString& directoryPath)
                                         : QGClibarchive::ReadResult::WriteFailed;
 }
 
+/// Whether the entries of an archive fit in the free space of the directory they are extracted to
+/// An archive whose statistics could not be read has none, and is taken to fit: the extraction tells what is
+/// wrong with it.
+/// @param copies How many times the entries are on disk at once
+bool hasSpaceFor(const QGClibarchive::ArchiveStats& stats, const QString& directoryPath, int copies = 1)
+{
+    return QGCFileHelper::hasSufficientDiskSpace(directoryPath, stats.totalUncompressedSize * copies);
+}
+
 /// Remove only files/directories created during extraction (safe cleanup)
 /// @param createdFiles Files created during extraction (removed first)
 /// @param createdDirs Directories created during extraction (removed in reverse order, only if empty)
@@ -687,14 +707,7 @@ QString diskEntryPath(struct archive_entry* entry, const QString& canonicalOutpu
         return {};
     }
 
-    // Security: libarchive resolves a hard link's target against the working directory, not the
-    // output directory, and writes the entry's data through the link
-    if (archive_entry_hardlink(entry) != nullptr) {
-        qCWarning(QGClibarchiveLog) << "Skipping hard link:" << currentFile << "->" << archive_entry_hardlink(entry);
-        return {};
-    }
-
-    if (skipSpecialEntry(entry)) {
+    if (skipHardLinkEntry(entry) || skipSpecialEntry(entry)) {
         return {};
     }
 
@@ -1347,13 +1360,9 @@ bool extractAnyArchive(const QString& archivePath, const QString& outputDirector
         return false;
     }
 
-    // Pre-check: verify sufficient disk space before extraction
-    const ArchiveStats stats = getArchiveStats(archivePath);
-    if (stats.totalUncompressedSize > 0) {
-        if (!QGCFileHelper::hasSufficientDiskSpace(outputDirectoryPath, stats.totalUncompressedSize)) {
-            outcome = ReadResult::WriteFailed;
-            return false;
-        }
+    if (!hasSpaceFor(getArchiveStats(archivePath), outputDirectoryPath)) {
+        outcome = ReadResult::WriteFailed;
+        return false;
     }
 
     outcome = extractArchiveFile(archivePath, outputDirectoryPath, progress, maxBytes);
@@ -1393,10 +1402,8 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
 
     // Need ~2x space: one for temp extraction, one for final location
     // (though move on same filesystem doesn't need extra space)
-    if (stats.totalUncompressedSize > 0) {
-        if (!QGCFileHelper::hasSufficientDiskSpace(outputDirectoryPath, stats.totalUncompressedSize * 2)) {
-            return false;
-        }
+    if (!hasSpaceFor(stats, outputDirectoryPath, 2)) {
+        return false;
     }
 
     const QString outputDirectoryName = outputInfo.fileName();
@@ -1862,13 +1869,10 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
         return false;
     }
 
-    // Pre-check: verify sufficient disk space (uses total archive size as upper bound)
-    const ArchiveStats stats = getArchiveStats(archivePath);
-    if (stats.totalUncompressedSize > 0) {
-        if (!QGCFileHelper::hasSufficientDiskSpace(outputDirectoryPath, stats.totalUncompressedSize)) {
-            outcome = ReadResult::WriteFailed;
-            return false;
-        }
+    // The size of the whole archive is the upper bound of what the filter lets through
+    if (!hasSpaceFor(getArchiveStats(archivePath), outputDirectoryPath)) {
+        outcome = ReadResult::WriteFailed;
+        return false;
     }
     outcome = ReadResult::Failed;
 
