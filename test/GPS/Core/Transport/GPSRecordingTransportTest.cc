@@ -10,6 +10,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
@@ -31,6 +32,7 @@
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/GPSTestClock.h"
 #include "Protocols/Support/ReceiverBench.h"
+#include "Transport/Support/GPSRecordingReader.h"
 #include "Transport/Support/ReplayGPSTransport.h"
 
 using namespace std::chrono_literals;
@@ -157,26 +159,34 @@ GPSWriteResult writeBytes(GPSTransport& transport, const QByteArray& bytes)
     return transport.write(bytes, QDeadlineTimer(TestTimeout::shortDuration()));
 }
 
-/// The records of the recording at @a path as "<kind> <value>", in file order. Whatever breaks the format stays
-/// whole: a missing header, an unterminated last line, a line without a time, or a time before the one above it.
+/// The records of the recording at @a path as "<kind> <value>", in file order, followed by what the reader rejects
+/// the recording for: a missing header, an unterminated last line, or a line that is not a record with a time at or
+/// after the one above it.
 QByteArrayList records(const QString& path)
 {
-    QByteArrayList lines = readFile(path).value_or(QByteArray()).split('\n');
-    if (lines.size() < 2 || lines.takeFirst() != GPSRecordingTransport::FILE_HEADER || !lines.takeLast().isEmpty()) {
-        return {"not a recording"};
-    }
-    qint64 previousUs = 0;
-    for (QByteArray& line : lines) {
-        const qsizetype space = line.indexOf(' ');
-        bool timed = false;
-        const qint64 timeUs = line.left(space).toLongLong(&timed);
-        if (timed && timeUs >= previousUs) {
-            previousUs = timeUs;
-            line.remove(0, space + 1);
+    QString error;
+    QByteArrayList lines;
+    for (const GPSRecordingRecord& record : GPSRecordingReader::readFile(path, &error)) {
+        switch (record.kind) {
+            case GPSRecordingRecord::Kind::Received:
+                lines.append("RX " + record.bytes.toHex());
+                break;
+            case GPSRecordingRecord::Kind::Sent:
+                lines.append("TX " + record.bytes.toHex());
+                break;
+            case GPSRecordingRecord::Kind::BaudRate:
+                lines.append("BAUD " + QByteArray::number(record.baudRate));
+                break;
         }
+    }
+    if (!error.isEmpty()) {
+        lines.append(error.toUtf8());
     }
     return lines;
 }
+
+/// The first line of every recording, spelled out so that the format cannot change with the recorder's constant.
+constexpr const char* HEADER_LINE = "QGC GPS receiver recording 1\n";
 
 /// Reads @a transport in @a bufferBytes pieces until it has nothing left, calling @a afterRead with the number of
 /// each read, and returns one line per event the passive decoder publishes for what was read. The decoder's clock
@@ -289,6 +299,133 @@ void GPSRecordingTransportTest::_recordingReplaysToSameEvents()
     QVERIFY(replay.finished());
     QCOMPARE(replay.bytesDelivered(), input.size());
     QCOMPARE(replayed, live);
+}
+
+void GPSRecordingTransportTest::_readerReturnsBothDirectionsWithTimes()
+{
+    using Kind = GPSRecordingRecord::Kind;
+    TestFixtures::TempDirFixture directory;
+    // As the recorder writes it, and after a transfer that converted the line endings.
+    const QByteArray text = QByteArray(HEADER_LINE) +
+                            "0 BAUD 115200\n"
+                            "1500 TX b5620a0400000e34\n"
+                            "1500 RX b562\n"
+                            "2250000 RX 0a04\n";
+    const QList<GPSRecordingRecord> expected{
+        {.time = 0us, .kind = Kind::BaudRate, .bytes = {}, .baudRate = 115200},
+        {.time = 1500us, .kind = Kind::Sent, .bytes = QByteArray::fromHex("b5620a0400000e34"), .baudRate = 0},
+        {.time = 1500us, .kind = Kind::Received, .bytes = QByteArray::fromHex("b562"), .baudRate = 0},
+        {.time = 2250ms, .kind = Kind::Received, .bytes = QByteArray::fromHex("0a04"), .baudRate = 0},
+    };
+    for (const QByteArray& lineEnding : {QByteArray("\n"), QByteArray("\r\n")}) {
+        QByteArray converted = text;
+        converted.replace("\n", lineEnding);
+        const QString file = directory.createFile(QStringLiteral("session-%1.log").arg(lineEnding.size()), converted);
+        QString error;
+        QCOMPARE(GPSRecordingReader::readFile(file, &error), expected);
+        QCOMPARE(error, QString());
+    }
+    // A session that crossed nothing is a recording without records.
+    QString error;
+    QVERIFY(
+        GPSRecordingReader::readFile(directory.createFile(QStringLiteral("empty.log"), HEADER_LINE), &error).isEmpty());
+    QCOMPARE(error, QString());
+}
+
+void GPSRecordingTransportTest::_readerStopsAtDamage_data()
+{
+    QTest::addColumn<QByteArray>("text");
+    QTest::addColumn<int>("records");
+    QTest::addColumn<QString>("error");
+    const QByteArray header(HEADER_LINE);
+    QTest::newRow("no-header") << QByteArray("0 RX aa\n") << 0 << QStringLiteral("not a receiver recording");
+    QTest::newRow("other-version") << QByteArray("QGC GPS receiver recording 2\n0 RX aa\n") << 0
+                                   << QStringLiteral("not a receiver recording");
+    // What a session leaves that was killed between two flushes of its file.
+    QTest::newRow("cut-in-a-record") << header + "0 RX aa\n10 RX bb" << 1
+                                     << QStringLiteral("line 3: the recording ends within a record");
+    QTest::newRow("time-goes-back") << header + "10 RX aa\n10 TX bb\n9 RX cc\n20 RX dd\n"
+                                    << 2
+                                    << QStringLiteral(
+                                           "line 4: not a time at or after the time of the record before it");
+    QTest::newRow("no-time") << header + "soon RX aa\n"
+                             << 0 << QStringLiteral("line 2: not a time at or after the time of the record before it");
+    QTest::newRow("missing-field") << header + "0 RX aa\n5 RX\n"
+                                   << 1 << QStringLiteral("line 3: not a time, a kind and a value");
+    QTest::newRow("blank-line") << header + "\n0 RX aa\n"
+                                << 0 << QStringLiteral("line 2: not a time, a kind and a value");
+    QTest::newRow("unknown-kind") << header + "0 ERR aa\n" << 0 << QStringLiteral("line 2: unknown record kind");
+    QTest::newRow("half-a-byte") << header + "0 TX b56\n"
+                                 << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
+    QTest::newRow("not-hexadecimal") << header + "0 RX b5g2\n"
+                                     << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
+    QTest::newRow("upper-case") << header + "0 RX B562\n"
+                                << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
+    QTest::newRow("no-bytes") << header + "0 RX \n"
+                              << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
+    QTest::newRow("no-baud-rate") << header + "0 BAUD fast\n" << 0 << QStringLiteral("line 2: not a baud rate");
+}
+
+void GPSRecordingTransportTest::_readerStopsAtDamage()
+{
+    QFETCH(QByteArray, text);
+    QFETCH(int, records);
+    QFETCH(QString, error);
+    TestFixtures::TempDirFixture directory;
+    const QString file = directory.createFile(QStringLiteral("session.log"), text);
+    QString reported;
+    QCOMPARE(GPSRecordingReader::readFile(file, &reported).size(), records);
+    QCOMPARE(reported, error);
+}
+
+void GPSRecordingTransportTest::_replayEndsAtDamage()
+{
+    TestFixtures::TempDirFixture directory;
+    const QString file = directory.createFile(QStringLiteral("session.log"),
+                                              QByteArray(HEADER_LINE) + "0 RX aabb\n5 TX cc\n9 RX dd\n12 RX e");
+    GPSCancelSource stop;
+    ReplayGPSTransport replay(file, stop.token());
+    QCOMPARE(replay.open().status, GPSOpenStatus::Opened);
+    // The records before the damage are delivered, and then the reads fail with what the reader found.
+    expectLogMessage("Test.GPS.Transport.ReplayGPSTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("line 5: the recording ends within a record")));
+    QCOMPARE(readAvailable(replay), QByteArray::fromHex("aabbdd"));
+    verifyExpectedLogMessage();
+    uint8_t buffer[8];
+    const GPSReadResult failed = replay.read(buffer, 0ms);
+    QCOMPARE(failed.status, GPSReadStatus::Error);
+    QCOMPARE(failed.detail, QStringLiteral("line 5: the recording ends within a record"));
+    QVERIFY(replay.fatalError());
+    QVERIFY(!replay.finished());
+    QCOMPARE(replay.sentBytes(), 1);
+}
+
+void GPSRecordingTransportTest::_replayKeepsRecordedTimes()
+{
+    TestFixtures::TempDirFixture directory;
+    // The receiver's second answer came 60 ms into the session; what the session sent takes no time to replay.
+    constexpr std::chrono::milliseconds SECOND_ANSWER{60};
+    const QString file = directory.createFile(
+        QStringLiteral("session.log"), QByteArray(HEADER_LINE) + "0 RX aa\n1000 TX cc\n60000 RX bb\n60000 BAUD 9600\n");
+    GPSCancelSource stop;
+    ReplayGPSTransport replay(file, stop.token());
+    replay.setRecordedTiming(true);
+    QElapsedTimer elapsed;
+    elapsed.start();
+    QCOMPARE(replay.open().status, GPSOpenStatus::Opened);
+    QVERIFY(replay.recording());
+    QByteArray received;
+    uint8_t buffer[8];
+    while (!replay.finished()) {
+        const GPSReadResult result = replay.read(buffer, TestTimeout::shortDuration());
+        QCOMPARE(result.status, GPSReadStatus::Data);
+        received.append(reinterpret_cast<const char*>(buffer), result.bytesRead);
+    }
+    // Only a lower bound: the replay never runs ahead of the recording.
+    QVERIFY2(elapsed.durationElapsed() >= SECOND_ANSWER, qPrintable(QString::number(elapsed.elapsed())));
+    QCOMPARE(received, QByteArray::fromHex("aabb"));
+    QCOMPARE(replay.sentBytes(), 1);
+    QCOMPARE(replay.baudRateChanges(), 1);
 }
 
 void GPSRecordingTransportTest::_fileErrorKeepsLink_data()

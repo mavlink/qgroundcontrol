@@ -73,20 +73,16 @@ def check_record_and_replay(binary: str) -> None:
         assert len(report["recordings"]) == 1, report
         recording = Path(report["recordings"][0])
         assert re.fullmatch(r"\d{8}T\d{6}\.\d{3}Z-ublox\.log", recording.name), recording
-        header, *lines = recording.read_text().splitlines()
-        assert header == "QGC GPS receiver recording 1", header
-        # Each record is its time in microseconds, its kind, and bytes in hexadecimal or a baud rate.
-        records = [line.split(" ") for line in lines]
-        times = [int(time) for time, _, _ in records]
-        assert times == sorted(times), times
-        assert {kind for _, kind, _ in records} == {"RX", "TX", "BAUD"}, lines
-        received = b"".join(bytes.fromhex(value) for _, kind, value in records if kind == "RX")
-        sent = b"".join(bytes.fromhex(value) for _, kind, value in records if kind == "TX")
-        assert b"\xb5\x62" in received and sent.startswith(b"\xb5\x62")
         # The passive decoder reads the recorded UBX fix and survey status too.
         report = run(binary, ["--replay", str(recording), *passive], 0)
-        assert report["outcome"] == "replayed" and report["replay"]["complete"], report
-        assert report["replay"]["bytes"] == len(received)
+        replayed = report["replay"]
+        assert report["outcome"] == "replayed" and replayed["complete"], report
+        # The runner reads the file with the C++ reader of the format, which rejects any line that is not a record.
+        # The session's commands and the baud rate it set are in the file with what the receiver sent.
+        assert replayed["session_recording"], report
+        assert (
+            replayed["bytes"] > 0 and replayed["sent_bytes"] > 0 and replayed["baud_changes"] > 0
+        ), report
         assert report["positions"]["fix_types"]["3d"] > 0, report
         assert report["survey"]["messages"] > 0, report
         report = run(binary, ["--replay", str(recording), *replay, "--family", "ublox"], 0)
@@ -126,6 +122,9 @@ def check_record_and_replay(binary: str) -> None:
     capture = fixtures / "synthetic-gga.nmea"
     report = run(binary, ["--replay", str(capture), *passive], 0)
     assert report["evidence_origin"] == "recording" and report["outcome"] == "replayed", report
+    assert not report["replay"]["session_recording"] and "sent_bytes" not in report["replay"], (
+        report
+    )
     assert (
         report["positions"]["messages"] > 0 and report["positions"]["fix_types"]["rtk-fixed"] == 1
     )

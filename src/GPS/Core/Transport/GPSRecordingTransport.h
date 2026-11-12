@@ -17,7 +17,7 @@
 class QDateTime;
 
 /// Records a receiver session: every call passes through to the link it wraps, and what crossed the link goes to a
-/// text file, which the test tooling replays (ReplayGPSTransport).
+/// text file, which the test tooling reads (GPSRecordingReader) and replays (ReplayGPSTransport).
 /// The file starts with FILE_HEADER on a line of its own. Every other line is one record, in the order the session
 /// made the calls: the microseconds from the start of the recording to the return of the call, on a monotonic
 /// clock, then one of

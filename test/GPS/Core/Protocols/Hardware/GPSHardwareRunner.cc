@@ -541,6 +541,12 @@ int replayRecording(const Options& options, QJsonObject report)
     replayed.insert("bytes", replay.bytesDelivered());
     replayed.insert("complete", replay.finished());
     replayed.insert("elapsed_ms", elapsed.elapsed());
+    // What a session recording holds besides the receiver's bytes; a file of raw receiver output has neither.
+    replayed.insert("session_recording", replay.recording());
+    if (replay.recording()) {
+        replayed.insert("sent_bytes", replay.sentBytes());
+        replayed.insert("baud_changes", replay.baudRateChanges());
+    }
     report.insert("replay", replayed);
     QJsonObject fixTypes;
     for (auto it = fixes.cbegin(); it != fixes.cend(); ++it) {

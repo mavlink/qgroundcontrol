@@ -28,13 +28,11 @@
 #include "GPSReceiverSystemSerialPorts.h"
 #endif
 #include "GPSReceiverWorker.h"
-#include "GPSRecordingTransport.h"
 #include "GPSSettingsBindings.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
 #include "NMEASentence.h"
 #include "PositionManager.h"
-#include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "QGCGeoid.h"
@@ -42,6 +40,7 @@
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "Support/GPSTestHelpers.h"
+#include "Transport/Support/GPSRecordingReader.h"
 #include "Transport/Support/UnusedUdpPort.h"
 
 using namespace std::chrono_literals;
@@ -1021,15 +1020,14 @@ void GPSReceiverTest::_recordsSessionsStartedWhileOn()
     QVERIFY(receiver.recordingFile().isEmpty());
     QCOMPARE(fileChanges.size(), 2);
     QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{QFileInfo(file).fileName()});
-    QByteArrayList lines = readFile(file).value_or(QByteArray()).split('\n');
-    QCOMPARE(lines.takeFirst(), QByteArray(GPSRecordingTransport::FILE_HEADER));
+    QString damage;
     QByteArray received;
-    for (const QByteArray& line : std::as_const(lines)) {
-        const QByteArrayList fields = line.split(' ');
-        if (fields.size() == 3 && fields[1] == GPSRecordingTransport::RECEIVED) {
-            received += QByteArray::fromHex(fields[2]);
+    for (const GPSTest::GPSRecordingRecord& record : GPSTest::GPSRecordingReader::readFile(file, &damage)) {
+        if (record.kind == GPSTest::GPSRecordingRecord::Kind::Received) {
+            received += record.bytes;
         }
     }
+    QCOMPARE(damage, QString());
     QCOMPARE(received, stream);
 }
 

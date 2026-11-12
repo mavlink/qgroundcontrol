@@ -1,11 +1,13 @@
 # ============================================================================
 # GPS Transport Test Support
-# The replay of a recorded receiver session, used by the transport tests and the hardware runner, plus the
-# header-only link peers those tests share (a pseudo-terminal and a UDP port probe).
+# The reader of receiver recordings and the replay of a recorded receiver session, used by the tests and the hardware
+# runner, plus the header-only link peers the transport tests share (a pseudo-terminal and a UDP port probe).
 # ============================================================================
 
 qt_add_library(
     QGCGPSTestTransports STATIC
+    GPSRecordingReader.cc
+    GPSRecordingReader.h
     PseudoTerminal.h
     ReplayGPSTransport.cc
     ReplayGPSTransport.h

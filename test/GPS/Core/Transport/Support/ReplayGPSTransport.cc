@@ -5,9 +5,6 @@
 #include <thread>
 #include <utility>
 
-#include <QtCore/QList>
-
-#include "GPSRecordingTransport.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(ReplayGPSTransportLog, "Test.GPS.Transport.ReplayGPSTransport")
@@ -20,19 +17,12 @@ constexpr qint64 BITS_PER_BYTE = 10;
 constexpr qint64 MICROSECONDS_PER_SECOND = 1'000'000;
 /// Waits sleep in slices this long so a stop request ends them promptly.
 constexpr std::chrono::milliseconds SLEEP_SLICE{20};
-
-/// The bytes of a recording line that is a received record; empty for every other line.
-QByteArray receivedBytes(const QByteArray& line)
-{
-    const QList<QByteArray> fields = line.trimmed().split(' ');
-    return fields.size() == 3 && fields[1] == GPSRecordingTransport::RECEIVED ? QByteArray::fromHex(fields[2])
-                                                                              : QByteArray();
-}
 }  // namespace
 
 ReplayGPSTransport::ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudRate, int chunkBytes)
     : GPSTransport(std::move(cancelToken))
     , _file(std::move(path))
+    , _reader(_file)
     , _baudRate(baudRate)
     , _chunkBytes(std::max(chunkBytes, 1))
 {
@@ -55,17 +45,8 @@ GPSOpenResult ReplayGPSTransport::open()
     if (!_file.open(QIODevice::ReadOnly)) {
         return {GPSOpenStatus::Error, _file.errorString()};
     }
-    // A recording starts with its header line, whichever line ending it has; anything else is raw receiver output.
-    const QByteArray start = _file.peek(sizeof(GPSRecordingTransport::FILE_HEADER) + 1);
-    const qsizetype lineEnd = start.indexOf('\n');
-    _recording = lineEnd >= 0 && start.first(lineEnd).trimmed() == GPSRecordingTransport::FILE_HEADER;
-    if (_recording) {
-        (void) _file.skip(lineEnd + 1);
-    }
-    _pending.clear();
-    _delivered = 0;
-    _failed = false;
-    _finished = false;
+    // Anything but a recording is raw receiver output.
+    _recording = _reader.readHeader();
     _load();
     _clock.start();
     qCDebug(ReplayGPSTransportLog) << "Replaying" << (_recording ? "recording" : "raw capture") << _file.fileName()
@@ -75,7 +56,7 @@ GPSOpenResult ReplayGPSTransport::open()
 
 bool ReplayGPSTransport::fatalError() const
 {
-    return !_file.isOpen() || _failed || _finished;
+    return !_file.isOpen() || !_error.isEmpty() || _finished;
 }
 
 GPSReadResult ReplayGPSTransport::read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout)
@@ -83,8 +64,8 @@ GPSReadResult ReplayGPSTransport::read(std::span<uint8_t> buffer, std::chrono::m
     if (isCancelled()) {
         return {GPSReadStatus::Cancelled};
     }
-    if (_failed) {
-        return {GPSReadStatus::Error, 0, _file.errorString()};
+    if (!_error.isEmpty()) {
+        return {GPSReadStatus::Error, 0, _error};
     }
     if (!_file.isOpen()) {
         return {GPSReadStatus::Closed, 0, QStringLiteral("Receiver recording is not open")};
@@ -127,26 +108,48 @@ GPSWriteResult ReplayGPSTransport::writeData(QByteArrayView bytes, QDeadlineTime
 
 void ReplayGPSTransport::_load()
 {
-    while (_pending.isEmpty() && !_file.atEnd()) {
-        _pending = _recording ? receivedBytes(_file.readLine()) : _file.read(_chunkBytes);
+    while (_pending.isEmpty() && _error.isEmpty() && !_file.atEnd()) {
+        if (!_recording) {
+            _pending = _file.read(_chunkBytes);
+        } else if (auto record = _reader.next()) {
+            switch (record->kind) {
+                case GPSRecordingRecord::Kind::Received:
+                    _pending = std::move(record->bytes);
+                    _pendingTime = record->time;
+                    break;
+                case GPSRecordingRecord::Kind::Sent:
+                    _sentBytes += record->bytes.size();
+                    break;
+                case GPSRecordingRecord::Kind::BaudRate:
+                    ++_baudRateChanges;
+                    break;
+            }
+        }
         if (_file.error() != QFileDevice::NoError) {
-            qCWarning(ReplayGPSTransportLog)
-                << "Cannot read receiver recording" << _file.fileName() << _file.errorString();
-            _pending.clear();
-            _failed = true;
-            return;
+            _fail(_file.errorString());
+        } else if (!_reader.error().isEmpty()) {
+            _fail(_reader.error());
         }
     }
-    _finished = _pending.isEmpty();
+    _finished = _pending.isEmpty() && _error.isEmpty();
+}
+
+void ReplayGPSTransport::_fail(const QString& error)
+{
+    qCWarning(ReplayGPSTransportLog) << "Cannot read receiver recording" << _file.fileName() << error;
+    _pending.clear();
+    _error = error;
 }
 
 qint64 ReplayGPSTransport::_available(qint64 length) const
 {
     qint64 available = std::min({length, static_cast<qint64>(_chunkBytes), static_cast<qint64>(_pending.size())});
+    const qint64 elapsedUs = _clock.nsecsElapsed() / 1000;
     if (_baudRate > 0) {
-        const qint64 elapsedUs = _clock.nsecsElapsed() / 1000;
         const qint64 due = elapsedUs * _baudRate / (BITS_PER_BYTE * MICROSECONDS_PER_SECOND);
         available = std::min(available, due - _delivered);
+    } else if (_recordedTiming && elapsedUs < _pendingTime.count()) {
+        available = 0;
     }
     return std::max<qint64>(available, 0);
 }
@@ -154,7 +157,9 @@ qint64 ReplayGPSTransport::_available(qint64 length) const
 QDeadlineTimer ReplayGPSTransport::_nextByteDue() const
 {
     if (_baudRate == 0) {
-        return QDeadlineTimer(0);
+        return _recordedTiming
+                   ? QDeadlineTimer(_pendingTime - std::chrono::nanoseconds(_clock.nsecsElapsed()), Qt::PreciseTimer)
+                   : QDeadlineTimer(0);
     }
     const qint64 dueUs = ((_delivered + 1) * BITS_PER_BYTE * MICROSECONDS_PER_SECOND + _baudRate - 1) / _baudRate;
     return QDeadlineTimer(std::chrono::microseconds(dueUs - _clock.nsecsElapsed() / 1000), Qt::PreciseTimer);
