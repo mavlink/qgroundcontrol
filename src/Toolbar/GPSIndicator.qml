@@ -5,7 +5,7 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-// Vehicle GPS status, or the GNSS receiver's while the vehicle reports no GPS, plus correction and resilience state.
+// Vehicle GPS status, or a ground receiver's while the vehicle reports no GPS, plus correction and resilience state.
 // The label beside the icon is the vehicle's fix: "RTK" only once the vehicle reports an RTK fixed fix.
 Item {
     id:             control
@@ -16,11 +16,17 @@ Item {
     readonly property VehicleGPSFactGroup _gps2: _activeVehicle ? _activeVehicle.gps2 : null
     readonly property bool _vehicleGps: !!_gps && _gps.telemetryAvailable
     readonly property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
-    readonly property GPSReceiverFactGroup _receiverFacts: _receiver.facts
-    readonly property bool _receiverConnected: _receiver.state === GPSReceiver.Connected
-    readonly property bool _receiverWarning: _receiverConnected && _receiverFacts.receiverWarning
+    readonly property GPSReceiver _positionReceiver: QGroundControl.gpsManager.positionReceiver
+    // The ground receiver that is shown: the GNSS receiver, which as a base says what it is doing, and the position
+    // receiver while it alone is connected.
+    readonly property GPSReceiver _shownReceiver: !_connected(_receiver) && _connected(_positionReceiver)
+                                                  ? _positionReceiver : _receiver
+    readonly property GPSReceiverFactGroup _receiverFacts: _shownReceiver.facts
+    readonly property bool _receiverConnected: _connected(_shownReceiver)
+    // A warning of either receiver wants attention, whichever is shown.
+    readonly property bool _receiverWarning: _warns(_receiver) || _warns(_positionReceiver)
     readonly property int _receiverSatellites: _receiverFacts.numSatellitesUsed.rawValue
-    readonly property string _receiverDetail: _receiver.summaryLabel
+    readonly property string _receiverDetail: _shownReceiver.summaryLabel
     readonly property int _correctionState: QGroundControl.gpsManager.corrections.state
     readonly property bool _correctionsActive: _correctionState !== GPSCorrectionManager.Inactive
     // The MAVLink GPS_FIX_TYPE the vehicle reports: 5 is an RTK float fix and 6 an RTK fixed one.
@@ -66,6 +72,14 @@ Item {
         }
     }
 
+    function _connected(receiver) {
+        return receiver.state === GPSReceiver.Connected
+    }
+
+    function _warns(receiver) {
+        return _connected(receiver) && receiver.facts.receiverWarning
+    }
+
     objectName:     "toolbar_gpsIndicator"
     width:          gpsIndicatorRow.width
     anchors.top:    parent.top
@@ -108,7 +122,7 @@ Item {
             }
         }
 
-        // Satellites and HDOP from the vehicle; satellites used and fix from the receiver without vehicle GPS.
+        // Satellites and HDOP from the vehicle; satellites used and fix from a ground receiver without vehicle GPS.
         Column {
             anchors.verticalCenter: parent.verticalCenter
             visible:                control._vehicleGps ? !isNaN(control._gps.hdop.value) : control._receiverConnected

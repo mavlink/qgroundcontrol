@@ -284,6 +284,8 @@ With the base on a tripod, the ground station position is then the tripod's, and
   Select different serial devices, and different UDP ports, for the two receivers.
 - A Bluetooth device takes one connection. While the position receiver is in use on a Bluetooth device, that device is the position receiver's, connected or not: the GNSS receiver does not connect to it, says so in its status, and connects once the position receiver is turned off or set to another device.
 - Its status, below its settings and in the toolbar's GNSS drop-down, has its own **Connect** and shows what the [receiver status](#status) shows for the GNSS receiver.
+- While the vehicle reports no GPS and the GNSS receiver is not connected, the toolbar GNSS indicator shows the position receiver: the satellites it uses and its fix.
+  Jamming, spoofing or an open or shorted antenna that the position receiver reports turns the indicator orange, as the GNSS receiver's does.
   **Record receiver data** records its connections to the `GPSPositionReceiver` folder.
 
 The GNSS receiver stays the _GNSS receiver_ whose position [RTK Corrections](ntrip_rtk.md) can report to an NTRIP caster; the position receiver's position is reported as the _Ground station position_.

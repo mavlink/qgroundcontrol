@@ -100,7 +100,7 @@ To update the firmware use [Vehicle Configuration > Firmware](../setup_view/firm
 
 The GPS indicator shows satellite and GNSS status in the toolbar, and the dropdown provides additional GPS details.
 
-While the vehicle reports GPS, the indicator shows its satellite count and HDOP. Otherwise it shows the connected [GNSS receiver](../settings_view/gnss_receiver.md): the satellites it uses and its fix, or the state of an RTK base station.
+While the vehicle reports GPS, the indicator shows its satellite count and HDOP. Otherwise it shows the connected [GNSS receiver](../settings_view/gnss_receiver.md): the satellites it uses and its fix, or the state of an RTK base station. While that receiver is not connected, it shows a connected [position receiver](../settings_view/gnss_receiver.md#position_receiver) the same way.
 A vertical label beside the icon follows the active vehicle's fix: _RTK_ for an RTK fixed fix, _Float_ for an RTK float fix and _GNSS_ otherwise, and while no vehicle reports its GPS it says whether a correction source is on. It is orange while a correction source is on and the vehicle has no RTK fix or no stream arrives, and when the receiver reports jamming, spoofing or an antenna fault ([RTK Corrections](../settings_view/ntrip_rtk.md#vehicle_fix)).
 
 When the vehicle reports GPS resilience telemetry (authentication, spoofing, or jamming state), icons next to the indicator show the worse of the vehicle's GPS receivers, and the dropdown lists the state of each receiver that reports it.

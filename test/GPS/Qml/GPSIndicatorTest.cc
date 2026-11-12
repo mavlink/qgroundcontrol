@@ -838,6 +838,72 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     QCOMPARE(detailLabel->property("text").toString(), detail);
 }
 
+void GPSIndicatorTest::_showsPositionReceiverWithoutGnssReceiver()
+{
+    // The application's two receivers: the GNSS receiver, a base, and the position receiver, which is only read.
+    ScriptedGPSReceiver gnss;
+    ScriptedGPSReceiver position;
+    for (GPSReceiver* const receiver : {&gnss.receiver, &position.receiver}) {
+        receiver->facts()->setLiveUpdates(true);
+    }
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> indicator =
+        createIndicator(engine, window,
+                        {{QStringLiteral("_receiver"), QVariant::fromValue(&gnss.receiver)},
+                         {QStringLiteral("_positionReceiver"), QVariant::fromValue(&position.receiver)},
+                         {QStringLiteral("_correctionState"), int(GPSCorrectionManager::State::Inactive)}});
+    QVERIFY2(indicator, qPrintable(engine.lastError()));
+    auto* label = indicator->findChild<QObject*>(QStringLiteral("gpsCorrectionsLabel"));
+    auto* satellites = indicator->findChild<QObject*>(QStringLiteral("gpsSatelliteCount"));
+    auto* detail = indicator->findChild<QObject*>(QStringLiteral("gpsDetail"));
+    QVERIFY(label && satellites && detail);
+    const QGCPalette palette;
+    const auto shown = [&] {
+        return satellites->property("visible").toBool()
+                   ? QStringLiteral("%1 %2").arg(satellites->property("text").toString(),
+                                                 detail->property("text").toString())
+                   : QString();
+    };
+    const auto report = [](ScriptedGPSReceiver& receiver, int used, GPSIntegrityReport::AntennaState antenna) {
+        GPSPositionReport fix = fixReport(GPSFixQuality::Fix3D);
+        fix.integrity.antenna.state = antenna;
+        receiver.workers.current()->position(fix);
+        GPSSatelliteReport counted;
+        counted.used = used;
+        receiver.workers.current()->satellites(counted);
+    };
+    QVERIFY(shown().isEmpty());
+    QVERIFY(!label->property("visible").toBool());
+
+    // The position receiver alone is shown as the GNSS receiver is: the satellites it uses and its fix.
+    QVERIFY(connectOverTcp(position.receiver, receiverConfiguration(kPassiveManufacturer)));
+    position.workers.current()->ready();
+    report(position, 7, GPSIntegrityReport::AntennaState::Ok);
+    QCOMPARE(shown(), QStringLiteral("7 3D"));
+    QVERIFY(label->property("visible").toBool());
+    QCOMPARE(colorOf(label), palette.textPrimary());
+    // Its warnings want attention as the GNSS receiver's do.
+    report(position, 7, GPSIntegrityReport::AntennaState::Open);
+    QCOMPARE(colorOf(label), palette.colorOrange());
+
+    // A connected GNSS receiver comes first, a base in a word, and the position receiver's warning stays.
+    QVERIFY(connectOverTcp(gnss.receiver));
+    gnss.workers.current()->ready();
+    report(gnss, 12, GPSIntegrityReport::AntennaState::Ok);
+    gnss.workers.current()->baseStatus({.state = GPSBaseState::Valid});
+    QCOMPARE(shown(), QStringLiteral("12 Base"));
+    QCOMPARE(colorOf(label), palette.colorOrange());
+    report(position, 7, GPSIntegrityReport::AntennaState::Ok);
+    QCOMPARE(colorOf(label), palette.textPrimary());
+
+    // Without it, the position receiver is shown again.
+    gnss.receiver.disconnectReceiver();
+    QCOMPARE(shown(), QStringLiteral("7 3D"));
+    position.receiver.disconnectReceiver();
+    QVERIFY(shown().isEmpty());
+}
+
 void GPSIndicatorTest::_labelFollowsVehicleFix_data()
 {
     using State = GPSCorrectionManager::State;

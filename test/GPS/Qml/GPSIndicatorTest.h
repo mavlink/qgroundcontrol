@@ -30,6 +30,7 @@ private slots:
     void _resilienceIcon();
     void _showsReceiverWithoutVehicleGPS_data();
     void _showsReceiverWithoutVehicleGPS();
+    void _showsPositionReceiverWithoutGnssReceiver();
     void _labelFollowsVehicleFix_data();
     void _labelFollowsVehicleFix();
     void _receiverAntennaWarning();
