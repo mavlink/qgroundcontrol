@@ -39,7 +39,9 @@ QVariant RTCMMessageCountModel::data(const QModelIndex& index, int role) const
 
 QHash<int, QByteArray> RTCMMessageCountModel::roleNames() const
 {
-    return {{MessageIdRole, "messageId"}, {CountRole, "count"}, {IntervalRole, "interval"}};
+    static const QHash<int, QByteArray> roles{
+        {MessageIdRole, "messageId"}, {CountRole, "count"}, {IntervalRole, "interval"}};
+    return roles;
 }
 
 double RTCMMessageCountModel::Row::intervalMs() const
