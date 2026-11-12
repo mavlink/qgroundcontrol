@@ -261,6 +261,31 @@ void OfflineMapEditorUITest::_defaultSetInfoOpensAndCloses()
     stopUI();
 }
 
+void OfflineMapEditorUITest::_setCannotBeEditedDuringImport()
+{
+    _openMapsSettings(/*geoMapEngine*/ false);
+    const auto restoreEngine = qScopeGuard(
+        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    const QString editButton = QStringLiteral("offlineMaps_editButton_Default Tile Set");
+    QVERIFY2(findVisibleItem(_rootItem, editButton, TestTimeout::mediumMs()),
+             "Edit button of the default set not visible");
+
+    QGCMapEngineManager* const manager = QGCMapEngineManager::instance();
+    const auto restoreImportAction =
+        qScopeGuard([manager, savedAction = manager->importAction()] { manager->setImportAction(savedAction); });
+
+    manager->setImportAction(QGCMapEngineManager::ImportAction::ActionImporting);
+    QVERIFY(verifyEnabled(editButton, false, QStringLiteral("during an import")));
+    manager->setImportAction(QGCMapEngineManager::ImportAction::ActionDone);
+    QVERIFY(verifyEnabled(editButton, true, QStringLiteral("after the import")));
+
+    stopUI();
+}
+
 void OfflineMapEditorUITest::_renamedSetIsListedByItsNewName()
 {
     // A set that is only in the database, like one of an earlier run: nothing downloads its tiles

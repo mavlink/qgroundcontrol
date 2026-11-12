@@ -38,7 +38,8 @@ Item {
 
                 OfflineMapInfo {
                     tileSet:    object
-                    enabled:    !object.deleting
+                    // An import that ends replaces the set objects: an editor opened meanwhile would lose its set
+                    enabled:    !object.deleting && !root._currentlyImportOrExporting
                     onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem, { tileSet: object }).showInfo()
                 }
             }

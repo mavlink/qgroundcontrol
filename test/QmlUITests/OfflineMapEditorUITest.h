@@ -16,6 +16,7 @@ private slots:
     void _newSetEstimateFollowsChosenType();
     void _defaultSetInfoOpensAndCloses_data();
     void _defaultSetInfoOpensAndCloses();
+    void _setCannotBeEditedDuringImport();
     void _renamedSetIsListedByItsNewName();
 
 private:
