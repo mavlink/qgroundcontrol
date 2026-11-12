@@ -86,6 +86,27 @@ void addUblox(Table& table)
     table.add(type, "profile-m8p-base-fixed-rtcm-rejected", "M8P rejects RTCM activation for a fixed base",
               ubxProfile(Receiver::M8PBase, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), fixed, stream);
 
+    // The gate on a base's corrections: GPSDriver forwards none while it configures the receiver, and none of a
+    // survey before the base position is valid.
+    table.add(type, "profile-f9p-fixed-rtcm-while-configuring", "F9P sends a correction while it is configured",
+              ubxProfile(Receiver::F9P,
+                         [](UBXBench& b) {
+                             auto correction = afterUbxValset(UBXWire::KEY_RATE_MEAS, [](ScriptedReceiver& receiver) {
+                                 receiver.queueReply(rtcm1005());
+                             });
+                             // Not again after the RTCM activation, which sets the rate too.
+                             correction.last = 1;
+                             b.faults.rules.push_back(std::move(correction));
+                         }),
+              fixed);
+    table.add(type, "profile-f9p-survey-rtcm-before-valid", "F9P sends observations while it still surveys",
+              ubxProfile(Receiver::F9P), survey,
+              {
+                  {navSvin(1000, 30, false, true) + navPvt(1000) + navEoe(1000) + rtcm1077(), 1500ms},
+                  {navSvin(2000, 181, true, false) + navPvt(2000) + navEoe(2000), 1500ms},
+                  {rtcm1005() + rtcm1077(), 3000ms},
+              });
+
     // Receivers the model's fields describe, on a UART whose rate the driver finds, for the receivers and faults the
     // presets above do not cover.
     const auto module = [](const char* name, const char* hardware = "") {

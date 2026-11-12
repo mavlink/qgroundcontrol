@@ -244,6 +244,11 @@ Rule ubxNak(uint32_t key)
     return reply(valsetWith(key), ubx(UBXWire::ACK_NAK, QByteArray::fromHex("068a")));
 }
 
+Rule afterUbxValset(uint32_t key, std::function<void(ScriptedReceiver&)> hook)
+{
+    return {.matches = valsetWith(key), .forward = true, .after = std::move(hook)};
+}
+
 BenchFactory ubxWire(std::function<void(UBXBench&)> setup)
 {
     return bench<UBXBench>([setup = std::move(setup)](UBXBench& b) {

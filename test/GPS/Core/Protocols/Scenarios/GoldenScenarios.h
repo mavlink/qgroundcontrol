@@ -145,6 +145,8 @@ using Rule = ScriptedFaults::Rule;
 
 /// A reply that rejects the UBX CFG-VALSET frames setting @a key.
 Rule ubxNak(uint32_t key);
+/// The model answers the UBX CFG-VALSET frames setting @a key, then @a hook runs.
+Rule afterUbxValset(uint32_t key, std::function<void(ScriptedReceiver&)> hook);
 
 // ---------------------------------------------------------------------------------------------------------------
 // Receiver benches (Support/ReceiverBench.h): a model, optional fault rules, and the transport the protocol drives.
