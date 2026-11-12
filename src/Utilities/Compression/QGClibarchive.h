@@ -187,7 +187,8 @@ private:
 /// Read callback for QIODevice streaming
 /// @param clientData DeviceSource pointer
 /// @param buffer Output pointer to buffer
-/// @return Bytes read, or ARCHIVE_FATAL on error
+/// @return Bytes read, 0 at the end of the device (which a sequential device can answer a read with -1 at), or
+///         ARCHIVE_FATAL on error
 la_ssize_t deviceReadCallback(struct archive *a, void *clientData, const void **buffer);
 
 /// Skip callback for QIODevice streaming

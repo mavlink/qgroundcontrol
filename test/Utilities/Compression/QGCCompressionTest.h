@@ -71,6 +71,9 @@ private slots:
     void _testTruncatedStream_data();
     void _testTruncatedStream();
     void _testExtractStreamedZipEntry();
+    void _testSequentialDeviceEnd_data();
+    void _testSequentialDeviceEnd();
+    void _testSequentialDeviceReadError();
     void _testExtractFileDataErrors_data();
     void _testExtractFileDataErrors();
     void _testExtractToFileErrors_data();

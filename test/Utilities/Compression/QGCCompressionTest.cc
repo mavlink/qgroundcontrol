@@ -1979,16 +1979,35 @@ namespace {
 class QGCCompressionTestSequentialDevice : public QIODevice
 {
 public:
-    explicit QGCCompressionTestSequentialDevice(const QByteArray& data)
+    /// What a read gets once the bytes are used up
+    enum class End
+    {
+        NoBytes,  ///< 0
+        MinusOne  ///< -1, which is what a network reply that has finished answers
+    };
+
+    /// @param failAt Offset at which reads fail, with the bytes after it still to come (-1 = never)
+    explicit QGCCompressionTestSequentialDevice(const QByteArray& data, End end = End::NoBytes, qint64 failAt = -1)
         : _data(data)
+        , _end(end)
+        , _failAt(failAt)
     {}
 
     bool isSequential() const override { return true; }
 
+    qint64 bytesAvailable() const override { return (_data.size() - _offset) + QIODevice::bytesAvailable(); }
+
 protected:
     qint64 readData(char* data, qint64 maxSize) override
     {
-        const qint64 count = qMin(maxSize, _data.size() - _offset);
+        if (_offset == _failAt) {
+            return -1;
+        }
+        const qint64 limit = (_failAt >= 0) ? _failAt : _data.size();
+        const qint64 count = qMin(maxSize, limit - _offset);
+        if ((count == 0) && (_end == End::MinusOne)) {
+            return -1;
+        }
         memcpy(data, _data.constData() + _offset, static_cast<size_t>(count));
         _offset += count;
         return count;
@@ -1998,6 +2017,8 @@ protected:
 
 private:
     const QByteArray _data;
+    const End _end;
+    const qint64 _failAt;
     qint64 _offset = 0;
 };
 
@@ -2017,6 +2038,47 @@ void QGCCompressionTest::_testExtractStreamedZipEntry()
     QFile extracted(tempDir.filePath(QString::fromLatin1(name)));
     QVERIFY(extracted.open(QIODevice::ReadOnly));
     QCOMPARE(extracted.readAll(), content);
+}
+
+void QGCCompressionTest::_testSequentialDeviceEnd_data()
+{
+    QTest::addColumn<QString>("resource");
+
+    for (const char* extension : {"gz", "xz", "zst"}) {
+        QTest::newRow(extension) << QStringLiteral(":/unittest/manifest.json.") + QLatin1String(extension);
+    }
+}
+
+void QGCCompressionTest::_testSequentialDeviceEnd()
+{
+    QFETCH(QString, resource);
+    using End = QGCCompressionTestSequentialDevice::End;
+    const QByteArray stream = _readFile(resource);
+    const QByteArray content = QGCCompression::decompressData(stream);
+    QVERIFY(!content.isEmpty());
+
+    // A read of -1 is the end of a device that has no more bytes to give
+    QGCCompressionTestSequentialDevice finished(stream, End::MinusOne);
+    QVERIFY(finished.open(QIODevice::ReadOnly));
+    QCOMPARE(QGCCompression::decompressFromDevice(&finished), content);
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
+}
+
+void QGCCompressionTest::_testSequentialDeviceReadError()
+{
+    using End = QGCCompressionTestSequentialDevice::End;
+    const QByteArray tar = _makeTar({{.name = "first.txt", .data = "1"}, {.name = "second.txt", .data = "2"}});
+
+    // A read of -1 from a device that still has bytes is an error. Taken for the end of the device, this one
+    // would be read as an archive of first.txt alone: it fails where the header of second.txt starts.
+    QGCCompressionTestSequentialDevice broken(tar, End::NoBytes, 2 * 512);
+    QVERIFY(broken.open(QIODevice::ReadOnly));
+    QTemporaryDir tempDir;
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
+                     QRegularExpression("Failed to read archive entry.*Truncated tar archive"));
+    QVERIFY(!QGCCompression::extractFromDevice(&broken, tempDir.filePath("out")));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 }
 
 void QGCCompressionTest::_testExtractFileDataErrors_data()

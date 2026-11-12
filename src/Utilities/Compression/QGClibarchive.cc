@@ -104,9 +104,16 @@ namespace QGClibarchive {
 la_ssize_t deviceReadCallback(struct archive*, void* clientData, const void** buffer)
 {
     auto* source = static_cast<DeviceSource*>(clientData);
+    QIODevice* device = source->device;
 
-    const qint64 bytesRead = source->device->read(source->block.data(), source->block.size());
+    const qint64 bytesRead = device->read(source->block.data(), source->block.size());
     if (bytesRead < 0) {
+        // A sequential device that has no more bytes to give, like a network reply that has finished, answers a
+        // read with -1 as it does for an error. Its bytes end there as those of a file do: the decoder tells if
+        // they were cut.
+        if (device->isSequential() && device->atEnd()) {
+            return 0;
+        }
         return ARCHIVE_FATAL;
     }
 
