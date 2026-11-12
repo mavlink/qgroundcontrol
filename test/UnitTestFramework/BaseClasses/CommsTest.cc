@@ -22,7 +22,6 @@ void CommsTest::init()
 
     // Initialize managers for link creation
     MultiVehicleManager::instance()->init();
-    LinkManager::instance()->setConnectionsAllowed();
 
     // Ensure clean state
     QCOMPARE(LinkManager::instance()->links().count(), 0);

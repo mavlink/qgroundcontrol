@@ -12,7 +12,6 @@
 #endif
 
 #include "AppSettings.h"
-#include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
@@ -51,7 +50,6 @@ void MavlinkLogTest::init()
 {
     UnitTest::init();
     MultiVehicleManager::instance()->init();
-    LinkManager::instance()->setConnectionsAllowed();
     // Make sure temp directory is clear of mavlink logs
     QDir tmpDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     QStringList logFiles(tmpDir.entryList(QStringList(QString("*.%1").arg(_logFileExtension)), QDir::Files));

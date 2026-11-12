@@ -72,7 +72,6 @@ void RTCMMAVLinkVehicleTest::_replayExcludedFromLiveAdmissions()
     const auto cleanup = qScopeGuard([this]() {
         disconnectAllLinks();
         MAVLinkProtocol::instance()->suspendLogForReplay(false);
-        linkManager()->setConnectionsAllowed();
     });
 
     auto replayConfig = std::make_shared<LogReplayConfiguration>(QStringLiteral("Correction replay"));

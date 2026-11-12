@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -55,7 +57,8 @@ public:
     Q_INVOKABLE void endConfigurationEditing(LinkConfiguration *config, LinkConfiguration *editedConfig);
     Q_INVOKABLE void endCreateConfiguration(LinkConfiguration *config);
     Q_INVOKABLE void removeConfiguration(LinkConfiguration *config);
-    /// This should only be used by Qml code
+    /// This should only be used by Qml code. It is the user's request to connect, which is refused with a message
+    /// while new connections are suspended.
     Q_INVOKABLE void createConnectedLink(const LinkConfiguration *config);
     Q_INVOKABLE void disconnectLink(LinkInterface *link);
     /// Stop a link and suppress auto-reconnect, working whether or not a live link currently exists.
@@ -72,14 +75,21 @@ public:
     void loadLinkConfigurationList();
     void saveLinkConfigurationList();
 
-    /// Sets the flag to suspend the all new connections
-    ///     @param reason User visible reason to suspend connections
-    void setConnectionsSuspended(const QString &reason) { _connectionsSuspended = true; _connectionsSuspendedReason = reason; }
+    /// Who suspends new connections. Each one ends only its own suspension.
+    enum class ConnectionSuspension
+    {
+        LogReplay,        ///< A flight data replay is playing
+        FirmwareUpgrade,  ///< The firmware upgrade is looking for a board or flashing it
+        Shutdown,         ///< The application is closing
+    };
 
-    /// Sets the flag to allow new connections to be made
-    void setConnectionsAllowed() { _connectionsSuspended = false; }
+    /// Suspends new connections for @a reason. A log replay calls this from its worker thread.
+    void setConnectionsSuspended(ConnectionSuspension reason);
 
-    bool connectionsSuspended() const { return _connectionsSuspended; }
+    /// Ends the suspension for @a reason. New connections stay suspended while another reason holds.
+    void setConnectionsAllowed(ConnectionSuspension reason);
+
+    bool connectionsSuspended() const { return _connectionSuspensions.load() != 0; }
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     bool createConnectedLink(SharedLinkConfigurationPtr &config);
@@ -125,7 +135,7 @@ private slots:
 
 private:
     QmlObjectListModel *_qmlLinkConfigurations();
-    /// If all new connections should be suspended a message is displayed to the user and true is returned;
+    /// If new connections are suspended a message naming the reason is displayed to the user and true is returned
     bool _connectionsSuspendedMsg() const;
     void _updateAutoConnectLinks();
     void _removeConfiguration(const LinkConfiguration *config);
@@ -142,10 +152,9 @@ private:
 
     bool _configUpdateSuspended = false;            ///< true: stop updating configuration list
     bool _configurationsLoaded = false;             ///< true: Link configurations have been loaded
-    bool _connectionsSuspended = false;             ///< true: all new connections should not be allowed
     bool _mavlinkSupportForwardingEnabled = false;
     uint32_t _mavlinkChannelsUsedBitMask = 1;
-    QString _connectionsSuspendedReason;            ///< User visible reason for suspension
+    std::atomic<uint32_t> _connectionSuspensions{0};  ///< A bit for each ConnectionSuspension that holds
 
     QMutex _linksMutex;                             ///< Protects _rgLinks access from multiple threads
     QList<SharedLinkInterfacePtr> _rgLinks;

@@ -164,12 +164,12 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
 {
-    LinkManager::instance()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed(LinkManager::ConnectionSuspension::FirmwareUpgrade);
 }
 
 void FirmwareUpgradeController::startBoardSearch(void)
 {
-    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Firmware Upgrade."));
+    LinkManager::instance()->setConnectionsSuspended(LinkManager::ConnectionSuspension::FirmwareUpgrade);
 
     // FIXME: Why did we get here with active vehicle?
     if (!MultiVehicleManager::instance()->activeVehicle()) {
@@ -389,7 +389,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 /// @brief Begins the process of downloading the selected firmware file.
 void FirmwareUpgradeController::_downloadFirmware(void)
 {
-    Q_ASSERT(!_firmwareFilename.isEmpty());
+    if (_firmwareFilename.isEmpty()) {
+        _errorCancel(tr("No firmware file selected"));
+        return;
+    }
 
     _flashCancelled = false;
 
@@ -489,7 +492,7 @@ void FirmwareUpgradeController::_flashComplete(void)
 
     _appendStatusLog(tr("Upgrade complete"), true);
     emit flashComplete();
-    LinkManager::instance()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed(LinkManager::ConnectionSuspension::FirmwareUpgrade);
 }
 
 void FirmwareUpgradeController::_error(const QString& errorString)
@@ -524,7 +527,10 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 /// Appends the specified text to the status log area in the ui
 void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool critical)
 {
-    Q_ASSERT(_statusLog);
+    if (!_statusLog) {
+        qCWarning(FirmwareUpgradeControllerLog) << "No status log control for:" << text;
+        return;
+    }
 
     QString varText;
 
@@ -545,7 +551,7 @@ void FirmwareUpgradeController::_errorCancel(const QString& msg)
     _appendStatusLog(tr("Upgrade cancelled"), true);
     emit error();
     cancel();
-    LinkManager::instance()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed(LinkManager::ConnectionSuspension::FirmwareUpgrade);
 }
 
 void FirmwareUpgradeController::_eraseStarted(void)

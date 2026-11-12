@@ -146,6 +146,59 @@ void LinkManagerTest::_testLinkActiveStableAcrossReconnect()
     linkManager()->removeConfiguration(config.get());
 }
 
+void LinkManagerTest::_testManualConnectRefusedWhileSuspended_data()
+{
+    using Suspension = LinkManager::ConnectionSuspension;
+    QTest::addColumn<Suspension>("reason");
+    QTest::addColumn<Suspension>("endedReason");
+    QTest::addColumn<QString>("message");
+
+    QTest::newRow("log replay") << Suspension::LogReplay << Suspension::FirmwareUpgrade
+                                << QStringLiteral("during Flight Data replay");
+    QTest::newRow("firmware upgrade") << Suspension::FirmwareUpgrade << Suspension::LogReplay
+                                      << QStringLiteral("during Firmware Upgrade");
+    QTest::newRow("shutdown") << Suspension::Shutdown << Suspension::LogReplay << QStringLiteral("during shutdown");
+}
+
+void LinkManagerTest::_testManualConnectRefusedWhileSuspended()
+{
+    QFETCH(LinkManager::ConnectionSuspension, reason);
+    QFETCH(LinkManager::ConnectionSuspension, endedReason);
+    QFETCH(QString, message);
+
+    MockConfiguration* const mockConfig = new MockConfiguration(QStringLiteral("SuspendedMock"));
+    mockConfig->setAutoConnect(true);
+    SharedLinkConfigurationPtr config = linkManager()->addConfiguration(mockConfig);
+    const auto cleanup = qScopeGuard([this, reason, endedReason, config] {
+        linkManager()->setConnectionsAllowed(reason);
+        linkManager()->setConnectionsAllowed(endedReason);
+        linkManager()->removeConfiguration(config.get());
+    });
+
+    if (reason == LinkManager::ConnectionSuspension::Shutdown) {
+        linkManager()->shutdown();
+    } else {
+        linkManager()->setConnectionsSuspended(reason);
+    }
+    // Another suspender that ends its own suspension leaves this one in place
+    linkManager()->setConnectionsSuspended(endedReason);
+    linkManager()->setConnectionsAllowed(endedReason);
+    QVERIFY(linkManager()->connectionsSuspended());
+
+    // The Connect button of a link
+    expectAppMessage(QRegularExpression(QStringLiteral("Connect not allowed ") + message));
+    linkManager()->createConnectedLink(config.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!config->link());
+    // Nor is the link left for the auto-connect timer to start once connections are allowed
+    QVERIFY(!config->linkActive());
+
+    linkManager()->setConnectionsAllowed(reason);
+    QVERIFY(!linkManager()->connectionsSuspended());
+    linkManager()->createConnectedLink(config.get());
+    QVERIFY(config->link());
+}
+
 void LinkManagerTest::_testUdpUnresolvedHostFailsConnect()
 {
     UDPConfiguration* const udpConfig = new UDPConfiguration(QStringLiteral("UnresolvedUdp"));

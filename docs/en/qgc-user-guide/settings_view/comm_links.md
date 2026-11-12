@@ -26,3 +26,6 @@ Manually create and manage communication links when auto-connect is insufficient
 - **High Latency** — mark the link as high-latency (reduces message rate)
 
 Existing links can be edited, deleted, connected, or disconnected from the link list.
+
+A link cannot be connected while a [flight data replay](../fly_view/replay_flight_data.md) is playing, or while [Firmware](../setup_view/firmware.md) setup is looking for a board or flashing it.
+**Connect** then shows a message that names the reason, and auto-connect waits until it has ended.

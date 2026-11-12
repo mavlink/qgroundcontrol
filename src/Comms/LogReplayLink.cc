@@ -133,8 +133,9 @@ void LogReplayWorker::disconnectFromLog()
 
     qCDebug(LogReplayLinkLog) << "Disconnecting from log";
 
-    if (_readTickTimer) {
-        _readTickTimer->stop();
+    // A replay closed while it plays is not paused first, and playing suspends new connections and telemetry logging
+    if (isPlaying()) {
+        pause();
     }
 
     if (_logFile.isOpen()) {
@@ -152,7 +153,7 @@ bool LogReplayWorker::isPlaying() const
 
 void LogReplayWorker::play()
 {
-    LinkManager::instance()->setConnectionsSuspended(tr("Connect not allowed during Flight Data replay."));
+    LinkManager::instance()->setConnectionsSuspended(LinkManager::ConnectionSuspension::LogReplay);
     MAVLinkProtocol::instance()->suspendLogForReplay(true);
 
     if (_logFile.atEnd()) {
@@ -168,7 +169,7 @@ void LogReplayWorker::play()
 
 void LogReplayWorker::pause()
 {
-    LinkManager::instance()->setConnectionsAllowed();
+    LinkManager::instance()->setConnectionsAllowed(LinkManager::ConnectionSuspension::LogReplay);
     MAVLinkProtocol::instance()->suspendLogForReplay(false);
 
     _readTickTimer->stop();

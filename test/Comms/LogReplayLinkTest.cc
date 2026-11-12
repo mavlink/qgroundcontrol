@@ -6,6 +6,7 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "LinkManager.h"
 #include "LogReplayLink.h"
 #include "MAVLinkLib.h"
 
@@ -82,6 +83,25 @@ void LogReplayLinkTest::_testCleanLogLoads()
 
     worker.pause();
     worker.disconnectFromLog();
+}
+
+void LogReplayLinkTest::_testClosedWhilePlayingAllowsConnections()
+{
+    const QString filename = _writeLogFile(buildTlogBytes(3, 1700000000000000ULL));
+    QVERIFY(!filename.isEmpty());
+
+    LogReplayConfiguration config(QStringLiteral("LogReplayLinkTest"));
+    config.setLogFilename(filename);
+
+    LogReplayWorker worker(&config);
+    worker.setup();
+    worker.connectToLog();
+    QVERIFY(worker.isPlaying());
+    QVERIFY(LinkManager::instance()->connectionsSuspended());
+
+    // Disconnecting the replay's vehicle closes the replay without pausing it first
+    worker.disconnectFromLog();
+    QVERIFY(!LinkManager::instance()->connectionsSuspended());
 }
 
 void LogReplayLinkTest::_testTrailingBytesIgnored_data()

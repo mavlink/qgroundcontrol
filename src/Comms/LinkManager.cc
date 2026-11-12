@@ -38,6 +38,13 @@ QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
 
 Q_APPLICATION_STATIC(LinkManager, _linkManagerInstance);
 
+namespace {
+constexpr uint32_t connectionSuspensionBit(LinkManager::ConnectionSuspension reason)
+{
+    return 1U << static_cast<uint32_t>(reason);
+}
+}  // namespace
+
 LinkManager::LinkManager(QObject *parent)
     : QObject(parent)
     , _portListTimer(new QTimer(this))
@@ -101,6 +108,11 @@ QmlObjectListModel *LinkManager::_qmlLinkConfigurations()
 
 void LinkManager::createConnectedLink(const LinkConfiguration *config)
 {
+    // Refused before the link is marked as started, which would leave it for the auto-connect timer to connect later
+    if (_connectionsSuspendedMsg()) {
+        return;
+    }
+
     for (SharedLinkConfigurationPtr &sharedConfig : _rgLinkConfigs) {
         if (sharedConfig.get() == config) {
             sharedConfig->setAutoConnectStarted(true);
@@ -355,14 +367,33 @@ SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(const Link
     return SharedLinkInterfacePtr(nullptr);
 }
 
+void LinkManager::setConnectionsSuspended(ConnectionSuspension reason)
+{
+    (void) _connectionSuspensions.fetch_or(connectionSuspensionBit(reason));
+}
+
+void LinkManager::setConnectionsAllowed(ConnectionSuspension reason)
+{
+    (void) _connectionSuspensions.fetch_and(~connectionSuspensionBit(reason));
+}
+
 bool LinkManager::_connectionsSuspendedMsg() const
 {
-    if (_connectionsSuspended) {
-        QGC::showAppMessage(tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
-        return true;
+    const uint32_t suspensions = _connectionSuspensions.load();
+
+    QString message;
+    if (suspensions & connectionSuspensionBit(ConnectionSuspension::Shutdown)) {
+        message = tr("Connect not allowed during shutdown.");
+    } else if (suspensions & connectionSuspensionBit(ConnectionSuspension::FirmwareUpgrade)) {
+        message = tr("Connect not allowed during Firmware Upgrade.");
+    } else if (suspensions & connectionSuspensionBit(ConnectionSuspension::LogReplay)) {
+        message = tr("Connect not allowed during Flight Data replay.");
+    } else {
+        return false;
     }
 
-    return false;
+    QGC::showAppMessage(message);
+    return true;
 }
 
 void LinkManager::saveLinkConfigurationList()
@@ -567,7 +598,7 @@ void LinkManager::_updateAutoConnectLinks()
     // Existing links still need fresh unplug checks while new connections are suspended.
     const auto ports = SerialPortManager::instance()->availablePorts();
 #endif
-    if (_connectionsSuspended) {
+    if (connectionsSuspended()) {
         return;
     }
 
@@ -586,7 +617,7 @@ void LinkManager::_updateAutoConnectLinks()
 
 void LinkManager::shutdown()
 {
-    setConnectionsSuspended(tr("Shutdown"));
+    setConnectionsSuspended(ConnectionSuspension::Shutdown);
     disconnectAll();
 
     // Wait for all the vehicles to go away to ensure an orderly shutdown and deletion of all objects

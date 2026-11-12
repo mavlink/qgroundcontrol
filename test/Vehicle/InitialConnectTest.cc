@@ -69,8 +69,6 @@ void InitialConnectTest::_performTestCases()
 
 void InitialConnectTest::_boardVendorProductId()
 {
-    LinkManager::instance()->setConnectionsAllowed();
-
     auto* mvm = MultiVehicleManager::instance();
     QSignalSpy activeVehicleSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
     auto mockConfig = std::make_shared<MockConfiguration>(QString{"MockLink"});
@@ -163,7 +161,6 @@ void InitialConnectTest::_highLatencySkipsPlanRequests()
     // High-latency links cannot fetch component metadata.
     ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
                      QRegularExpression("failed to load metadata"));
-    LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
     QVERIFY(!mvm->activeVehicle());
@@ -240,7 +237,6 @@ void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("Rally Point transfer failed"));
     ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg, QRegularExpression("Rally Point transfer failed"));
-    LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
     QSignalSpy activeVehicleSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
@@ -377,8 +373,6 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
         ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg, QRegularExpression("transfer failed"));
     }
 
-    LinkManager::instance()->setConnectionsAllowed();
-
     auto* mvm = MultiVehicleManager::instance();
     QSignalSpy activeVehicleSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
     auto* mockConfig = new MockConfiguration(QStringLiteral("TimeoutFallthroughMock"));
@@ -494,8 +488,6 @@ void InitialConnectTest::_stateRunMatrix()
             noInitialDownloadWhenArmed->setRawValue(previousNoInitialDownloadWhenArmed);
         });
     noInitialDownloadWhenArmed->setRawValue(armed);
-
-    LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
     QVERIFY(!mvm->activeVehicle());

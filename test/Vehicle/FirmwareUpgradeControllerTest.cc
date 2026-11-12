@@ -1,11 +1,13 @@
 #include "FirmwareUpgradeControllerTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 #include <QtTest/QSignalSpy>
 
 #include "FirmwareUpgradeController.h"
-#include <QtCore/QTemporaryDir>
+#include "LinkManager.h"
 
 void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState()
 {
@@ -188,6 +190,20 @@ void FirmwareUpgradeControllerTest::_px4ReleasesCompleteOnlyStableKeepsBetaEmpty
 
     QCOMPARE(controller._px4StableVersion, QStringLiteral("v1.15.2"));
     QVERIFY(controller._px4BetaVersion.isEmpty());
+}
+
+void FirmwareUpgradeControllerTest::_destroyedControllerEndsOnlyItsOwnSuspension()
+{
+    LinkManager* const links = LinkManager::instance();
+    const auto endReplay =
+        qScopeGuard([links] { links->setConnectionsAllowed(LinkManager::ConnectionSuspension::LogReplay); });
+
+    // A flight data replay is playing while the Firmware page is opened and left
+    links->setConnectionsSuspended(LinkManager::ConnectionSuspension::LogReplay);
+    {
+        const FirmwareUpgradeController controller;
+    }
+    QVERIFY(links->connectionsSuspended());
 }
 
 UT_REGISTER_TEST(FirmwareUpgradeControllerTest, TestLabel::Unit, TestLabel::Vehicle)

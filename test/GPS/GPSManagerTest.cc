@@ -126,14 +126,15 @@ void GPSManagerTest::_connectionPolling()
     GPSTest::ScriptedReceiverWorkerFactory workers;
     manager.receiver()->setWorkerFactory(workers.workerFactory());
     LinkManager* const links = LinkManager::instance();
-    const auto allowConnections = qScopeGuard([links] { links->setConnectionsAllowed(); });
+    const auto allowConnections =
+        qScopeGuard([links] { links->setConnectionsAllowed(LinkManager::ConnectionSuspension::FirmwareUpgrade); });
     manager.init();
 
     // The saved receiver connects at the first poll, which waits while new connections are suspended.
-    links->setConnectionsSuspended(QStringLiteral("GPSManagerTest"));
+    links->setConnectionsSuspended(LinkManager::ConnectionSuspension::FirmwareUpgrade);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QCOMPARE(workers.count(), 0);
-    links->setConnectionsAllowed();
+    links->setConnectionsAllowed(LinkManager::ConnectionSuspension::FirmwareUpgrade);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(999)));
     QCOMPARE(workers.count(), 0);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));

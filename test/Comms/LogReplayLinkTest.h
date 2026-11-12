@@ -8,12 +8,14 @@
 
 /// Tests for LogReplayWorker tlog file loading. Logs with uninterpretable trailing
 /// bytes (e.g. not closed cleanly due to crash/power loss) must still replay (issue #14210).
+/// A replay suspends new connections only while it plays.
 class LogReplayLinkTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
     void _testCleanLogLoads();
+    void _testClosedWhilePlayingAllowsConnections();
     void _testTrailingBytesIgnored_data();
     void _testTrailingBytesIgnored();
     void _testGarbageOnlyLogFails();

@@ -151,7 +151,6 @@ void RequestMetaDataTypeStateMachineTest::_requestSkipsCompInfoOnHighLatencyLink
                      QRegularExpression("failed to load metadata"));
     _disconnectMockLink();
 
-    LinkManager::instance()->setConnectionsAllowed();
     auto* mvm = MultiVehicleManager::instance();
     QVERIFY(!mvm->activeVehicle());
 
