@@ -148,7 +148,7 @@
         {
             "name": "rtpJitterLatencyMs",
             "shortDesc": "RTP jitter-buffer playout latency (ms).",
-            "longDesc": "Latency budget for the RTP jitter buffer (rtspsrc.latency / rtpjitterbuffer.latency). Lower = less glass-to-glass delay; higher = more headroom for packet reordering and retransmission. The default of 80 ms allows RFC 4588 retransmission to recover lost packets before the playout deadline; values <40 ms effectively disable retransmission. Ignored when Low Latency Mode is enabled.",
+            "longDesc": "Latency budget for the RTP jitter buffer (rtspsrc.latency / rtpjitterbuffer.latency). Lower = less glass-to-glass delay; higher = more headroom for packet reordering and retransmission. The default of 80 ms allows RFC 4588 retransmission to recover lost packets before the playout deadline; values <40 ms effectively disable retransmission. An MPEG-TS stream over UDP is delayed by this value as well, and by at least 100 ms. Ignored when Low Latency Mode is enabled.",
             "type": "uint32",
             "min": 0,
             "max": 2000,

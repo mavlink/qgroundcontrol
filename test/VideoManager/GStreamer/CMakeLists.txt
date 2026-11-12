@@ -100,7 +100,7 @@ add_qgc_test(GstSelfTestPipelineTest LABELS Integration)
 add_qgc_test(GstSourceFactoryStreamTest LABELS Integration)
 add_qgc_test(GstVideoReceiverPipelineTest LABELS Integration)
 add_qgc_test(GstVideoReceiverReconnectTest LABELS Integration)
-add_qgc_test(GstVideoReceiverRecordingTest LABELS Integration)
+add_qgc_test(GstVideoReceiverRecordingTest LABELS Integration SHARDS 2)
 add_qgc_test(GstVideoReceiverStatsTest LABELS Integration)
 # Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping) without an
 # X display.

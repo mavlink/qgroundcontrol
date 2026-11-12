@@ -34,8 +34,10 @@ GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
 /// QFile::encodeName() gives the bytes of the ANSI code page instead, and the file system's encoding elsewhere.
 QByteArray glibFileName(const QString& file);
 
-/// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets (on RTSP, rtpbin turns this into an
-/// RTCP PLI/FIR). Doesn't block: the event is not serialized.
+/// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets. On RTSP, rtpbin turns this into an
+/// RTCP PLI when the stream's SDP advertises that feedback, which GstRtspSource has it do for video. A plain UDP
+/// stream has no way back to its sender, so nothing comes of the request there. Doesn't block: the event is not
+/// serialized.
 void requestKeyframe(GstPad* sinkPad);
 
 /// Sends @p event into @p pad from GStreamer's thread pool, so a serialized event waiting for a busy streaming thread
