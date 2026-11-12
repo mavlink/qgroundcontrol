@@ -1,9 +1,9 @@
 # ============================================================================
 # GPS Standalone
 # QGCGPSCore and QGCNTRIPHttp without the application, with the golden transcripts of the receiver protocols, the
-# receiver qualification runner, the smoke tests of four fuzzers (the NTRIP decoder, the driver's replies, the RTCM
-# station position and the NTRIP source table) and, with Clang and QGC_GPS_LIBFUZZER, the libFuzzer harnesses and the
-# smoke test of the fifth, the protocol decoder's:
+# checks of the pipe transport, the receiver qualification runner, the smoke tests of four fuzzers (the NTRIP
+# decoder, the driver's replies, the RTCM station position and the NTRIP source table) and, with Clang and
+# QGC_GPS_LIBFUZZER, the libFuzzer harnesses and the smoke test of the fifth, the protocol decoder's:
 #   cmake -S test/GPS/Standalone -B <build> [-DQGC_NO_SERIAL_LINK=ON] [-DQGC_GPS_LIBFUZZER=ON]
 # ============================================================================
 
@@ -65,6 +65,7 @@ if(QGC_GPS_LIBFUZZER)
 endif()
 
 add_subdirectory(../Core/Transport/Support TestTransports)
+add_subdirectory(../Core/Transport/Checks PipeTransportChecks)
 add_subdirectory(../Core/Protocols/Support ProtocolTestSupport)
 add_subdirectory(../Core/Protocols/Scenarios GoldenTranscripts)
 add_subdirectory(../Core/Protocols/Hardware Hardware)

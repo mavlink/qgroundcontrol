@@ -15,12 +15,15 @@
 #include <QtCore/QEventLoop>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QSemaphore>
 #include <QtCore/QTimer>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 
 #include "GPSCancellation.h"
+#include "GPSPipe.h"
+#include "GPSPipeTransport.h"
 #include "TCPGPSTransport.h"
 #include "Transport/Support/UnusedUdpPort.h"
 #include "UDPGPSTransport.h"
@@ -44,6 +47,7 @@ enum class TransportKind
     Tcp,
     Udp,
     Serial,
+    Pipe,
 };
 
 class ContractEndpoint
@@ -61,6 +65,8 @@ public:
     std::unique_ptr<GPSTransport> transport;
     bool bidirectional = true;
     bool terminalPeer = true;
+    /// The transport's waits dispatch the thread's events.
+    bool waitsInEventLoop = true;
 };
 
 class TcpEndpoint final : public ContractEndpoint
@@ -186,6 +192,50 @@ private:
 };
 #endif
 
+/// The pipe to a link another thread serves, whose peer is the link's side: here it answers on the transport's own
+/// thread, as the transport asks, so the link is up at once and takes and confirms what is written.
+class PipeEndpoint final : public ContractEndpoint
+{
+public:
+    ~PipeEndpoint() override
+    {
+        // The transport, which the base destroys last, tells the link's side of its end.
+        _pipe->setLinkNotifier({});
+    }
+
+    QString start() override
+    {
+        _pipe->setLinkNotifier([this] {
+            if (_pipe->openRequested()) {
+                _pipe->opened();
+            }
+            const QByteArray output = _pipe->takeOutput();
+            _written += output;
+            _pipe->confirmWritten(output.size());
+        });
+        transport = std::make_unique<GPSPipeTransport>(_pipe, stop.token());
+        if (transport->open().status != GPSOpenStatus::Opened) {
+            return QStringLiteral("Cannot open the pipe transport");
+        }
+        waitsInEventLoop = false;
+        return {};
+    }
+
+    bool peerWrite(const QByteArray& bytes) override
+    {
+        _pipe->feed(bytes);
+        return true;
+    }
+
+    QByteArray peerRead(qsizetype bytes) override { return _written.left(bytes); }
+
+    void closePeer() override { _pipe->close(QStringLiteral("The link's owner ended it")); }
+
+private:
+    const std::shared_ptr<GPSPipe> _pipe = std::make_shared<GPSPipe>();
+    QByteArray _written;
+};
+
 /// The started endpoint of @a kind; nullptr with an empty @a failure when this platform has no such transport.
 std::unique_ptr<ContractEndpoint> startEndpoint(TransportKind kind, QString& failure)
 {
@@ -201,6 +251,9 @@ std::unique_ptr<ContractEndpoint> startEndpoint(TransportKind kind, QString& fai
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
             endpoint = std::make_unique<SerialEndpoint>();
 #endif
+            break;
+        case TransportKind::Pipe:
+            endpoint = std::make_unique<PipeEndpoint>();
             break;
     }
     if (endpoint) {
@@ -237,6 +290,7 @@ void addTransportRows()
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
     QTest::newRow("Serial") << static_cast<int>(TransportKind::Serial);
 #endif
+    QTest::newRow("Pipe") << static_cast<int>(TransportKind::Pipe);
 }
 
 /// The started endpoint of the row's transport, or null with the reason in @a failure.
@@ -310,14 +364,24 @@ void GPSTransportContractTest::_stopWakesBlockedRead()
         }
     });
     QObject context;
-    // Posted events run only once the read is waiting in its event loop.
-    QTimer::singleShot(0, &context, [&] {
+    QSemaphore reading;
+    const auto startStopper = [&] {
         stopper = std::thread([&] {
+            reading.acquire();
             stoppedAtNs = clock.nsecsElapsed();
             endpoint->stop.cancel();
         });
-    });
+    };
+    if (endpoint->waitsInEventLoop) {
+        // Posted events run only once the read is waiting in its event loop.
+        QTimer::singleShot(0, &context, startStopper);
+    } else {
+        // A read that dispatches no events is stopped as it begins or while it waits, which the pipe's own checks
+        // tell apart.
+        startStopper();
+    }
     std::array<uint8_t, 8> buffer{};
+    reading.release();
     const auto result = endpoint->transport->read(buffer, TestTimeout::longDuration());
     const qint64 returnedAtNs = clock.nsecsElapsed();
     QCOMPARE(result.status, GPSReadStatus::Cancelled);

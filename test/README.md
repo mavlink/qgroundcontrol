@@ -421,6 +421,7 @@ recordings users send, how one becomes a fixture and a regression test, how `GPS
 as a dialogue that checks what the driver sends, and which receivers the qualification runner was run against.
 
 `test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with those golden transcripts,
+the checks of the pipe transport (`GPSPipeTransportChecks`, which `GPSPipeTransportTest` runs in the application),
 the receiver qualification runner and the fuzzers' smoke tests. With Clang, `-DQGC_GPS_LIBFUZZER=ON` adds the
 libFuzzer harnesses and builds both libraries with ASan and UBSan: `QGCGPSProtocolFuzz` decodes its input,
 `QGCGPSReplyFuzz` feeds it to the driver as the replies of the receiver it configures or detects, on a virtual

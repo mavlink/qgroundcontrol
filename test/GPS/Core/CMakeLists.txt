@@ -26,6 +26,7 @@ set(_qgc_gps_core_suites
     RTCM/RTCMConformanceTest
     RTCM/RTCMStreamContentTest
     Transport/GPSCancellationTest
+    Transport/GPSPipeTransportTest
     Transport/GPSRecordingDialogueTest
     Transport/GPSRecordingTransportTest
     Transport/GPSStreamTransportTest
