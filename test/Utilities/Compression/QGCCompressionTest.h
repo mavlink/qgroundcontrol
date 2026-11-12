@@ -43,6 +43,10 @@ private slots:
     void _testDecompressIfNeeded();
     void _testDecompressIfNeededDefaultOutput_data();
     void _testDecompressIfNeededDefaultOutput();
+    void _testDecompressEmptyStream_data();
+    void _testDecompressEmptyStream();
+    void _testDecompressRejectsStreamWithoutData_data();
+    void _testDecompressRejectsStreamWithoutData();
 
     // Progress callbacks
     void _testProgressCallbackExtract_data();

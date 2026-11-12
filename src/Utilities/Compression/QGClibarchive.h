@@ -60,6 +60,22 @@ constexpr qsizetype kStreamSignatureSize = 4;
 /// @return false (after logging a warning) for a bzip2 or LZ4 stream that cannot be decoded
 bool canDecodeStream(const QByteArray& signature);
 
+/// Tell a compressed stream that decompresses to nothing from an input that cannot be read
+/// libarchive's raw format reads a stream as one entry, and has none for an input that is empty once it is
+/// decompressed. A RawFormat reader takes such an input with libarchive's format for an empty file, whose
+/// first header is the end of the archive. That is a valid gzip, xz, ... stream of an empty file, or an
+/// input that has no bytes at all, which is not a compressed stream. Nothing can be read from the reader
+/// after it.
+/// @param a RawFormat reader on which archive_read_next_header() was just called for the first time
+/// @param headerResult What that call returned
+/// @return true if the input is a compressed stream that holds no data
+bool isEmptyStream(struct archive* a, int headerResult);
+
+/// Why the first header of a RawFormat reader could not be read
+/// @param a Reader on which archive_read_next_header() was just called for the first time
+/// @param headerResult What that call returned: not ARCHIVE_OK, and not what isEmptyStream() accepts
+QString streamHeaderError(struct archive* a, int headerResult);
+
 // ============================================================================
 // QIODevice Source
 // ============================================================================
@@ -394,8 +410,10 @@ bool decompressSingleFile(const QString &inputPath, const QString &outputPath,
 /// Decompress data in memory
 /// @param data Compressed input data
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
+/// @param ok If not null, receives whether the data was decompressed: a stream of an empty file gives
+///        nothing too
 /// @return Decompressed data, or empty on failure or size limit exceeded
-QByteArray decompressDataFromMemory(const QByteArray &data, qint64 maxBytes = 0);
+QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes = 0, bool* ok = nullptr);
 
 // ============================================================================
 // QIODevice-based Operations (streaming)
@@ -433,8 +451,9 @@ bool decompressFromDevice(QIODevice *device, const QString &outputPath,
 /// Decompress single-file format from QIODevice to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
+/// @param ok If not null, receives whether the stream was decompressed: one of an empty file gives nothing too
 /// @return Decompressed data, or empty QByteArray on failure or size limit exceeded
-QByteArray decompressDataFromDevice(QIODevice *device, qint64 maxBytes = 0);
+QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes = 0, bool* ok = nullptr);
 
 // ============================================================================
 // Format Detection (Thread-Local State)

@@ -963,6 +963,183 @@ void QGCCompressionTest::_testDecompressIfNeededDefaultOutput()
     QCOMPARE(_entriesBelow(tempDir.path()), inputAndOutput);
 }
 
+void QGCCompressionTest::_testDecompressEmptyStream_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("extension");
+    QTest::addColumn<QGCCompression::Format>("format");
+    QTest::addColumn<QString>("filterName");
+    QTest::addColumn<QByteArray>("stream");
+
+    using QGCCompression::Format;
+
+    struct EmptyStream
+    {
+        const char* extension;
+        Format format;
+        const char* filterName;
+        const char* hex;
+    };
+
+    // What each compressor writes for a file of no bytes
+    const EmptyStream streams[] = {
+        {"gz", Format::GZIP, "gzip", "1f8b080000000000000303000000000000000000"},
+        {"xz", Format::XZ, "xz", "fd377a585a000004e6d6b446000000001cdf44211fb6f37d010000000004595a"},
+        {"lzma", Format::XZ, "lzma", "5d00008000ffffffffffffffff0083fffbffffc0000000"},
+        {"zst", Format::ZSTD, "zstd", "28b52ffd240001000099e9d851"},
+#ifdef QGC_ENABLE_BZIP2
+        {"bz2", Format::BZIP2, "bzip2", "425a683917724538509000000000"},
+#endif
+#ifdef QGC_ENABLE_LZ4
+        {"lz4", Format::LZ4, "lz4", "04224d186440a700000000055dcc02"},
+#endif
+    };
+    for (const EmptyStream& stream : streams) {
+        for (const char* api :
+             {"decompressFile", "decompressData", "decompressFromDevice-file", "decompressFromDevice-memory",
+              "decompressIfNeeded", "QGCDecompressDevice", "readFile", "computeFileHash"}) {
+            QTest::addRow("%s %s", stream.filterName, api)
+                << api << stream.extension << stream.format << stream.filterName << QByteArray::fromHex(stream.hex);
+        }
+    }
+}
+
+void QGCCompressionTest::_testDecompressEmptyStream()
+{
+    QFETCH(QString, api);
+    QFETCH(QString, extension);
+    QFETCH(QGCCompression::Format, format);
+    QFETCH(QString, filterName);
+    QFETCH(QByteArray, stream);
+    using QGCCompression::Error;
+
+    // An empty log or parameter file is compressed to a valid stream that holds no data
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("empty.log." + extension);
+    const QString outputPath = tempDir.filePath("output.log");
+    QVERIFY(_writeFile(inputPath, stream));
+    QBuffer device;
+    device.setData(stream);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    const auto isEmptyFile = [](const QString& path) {
+        const QFileInfo info(path);
+        return info.isFile() && (info.size() == 0);
+    };
+
+    // No data is also what a failure returns from the functions that decompress to memory
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
+    QVERIFY(!QGCCompression::fileExists(QStringLiteral("/nonexistent/archive.zip"), QStringLiteral("a")));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::FileNotFound);
+
+    if (api == "decompressFile") {
+        QVERIFY(QGCCompression::decompressFile(inputPath, outputPath));
+        QVERIFY(isEmptyFile(outputPath));
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+        QCOMPARE(QGCCompression::detectedFilterName(), filterName);
+    } else if (api == "decompressData") {
+        const bool detected = (QGCCompression::detectFormatFromData(stream) == format);
+        QVERIFY(QGCCompression::decompressData(stream, detected ? QGCCompression::Format::Auto : format).isEmpty());
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+        QCOMPARE(QGCCompression::detectedFilterName(), filterName);
+    } else if (api == "decompressFromDevice-file") {
+        QVERIFY(QGCCompression::decompressFromDevice(&device, outputPath));
+        QVERIFY(isEmptyFile(outputPath));
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+    } else if (api == "decompressFromDevice-memory") {
+        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+    } else if (api == "decompressIfNeeded") {
+        const QString defaultOutput = tempDir.filePath("empty.log");
+        QCOMPARE(QGCCompression::decompressIfNeeded(inputPath), defaultOutput);
+        QVERIFY(isEmptyFile(defaultOutput));
+        QCOMPARE(QGCCompression::lastError(), Error::None);
+    } else if (api == "QGCDecompressDevice") {
+        QGCDecompressDevice decompressor(&device);
+        QVERIFY2(decompressor.open(QIODevice::ReadOnly), qPrintable(decompressor.errorString()));
+        QCOMPARE(decompressor.filterName(), filterName);
+        QVERIFY(decompressor.atEnd());
+        char byte = 0;
+        QCOMPARE(decompressor.read(&byte, 1), 0);
+        QVERIFY(decompressor.readAll().isEmpty());
+        QVERIFY2(decompressor.errorString().isEmpty(), qPrintable(decompressor.errorString()));
+    } else if (api == "readFile") {
+        QString readError;
+        QVERIFY(QGCCompression::readFile(inputPath, &readError).isEmpty());
+        QVERIFY2(readError.isEmpty(), qPrintable(readError));
+    } else if (api == "computeFileHash") {
+        QCOMPARE(QGCCompression::computeFileHash(inputPath),
+                 QString::fromLatin1(QCryptographicHash::hash(QByteArray(), QCryptographicHash::Sha256).toHex()));
+    } else {
+        QFAIL("Unknown row");
+    }
+}
+
+void QGCCompressionTest::_testDecompressRejectsStreamWithoutData_data()
+{
+    QTest::addColumn<QByteArray>("stream");
+    QTest::addColumn<QString>("reason");
+
+    // Neither is a compressed stream of nothing: an input of no bytes, and a gzip stream of nothing that
+    // has lost the eight bytes after its data. libarchive 3.8.8 has no words for the second, so the reader
+    // gives its own
+    QTest::newRow("no bytes") << QByteArray() << "Unrecognized archive format";
+    QTest::newRow("cut gzip") << QByteArray::fromHex("1f8b08000000000000030300") << "Truncated";
+}
+
+void QGCCompressionTest::_testDecompressRejectsStreamWithoutData()
+{
+    QFETCH(QByteArray, stream);
+    QFETCH(QString, reason);
+    using QGCCompression::Error;
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("nothing.gz");
+    const QString outputPath = tempDir.filePath("nothing");
+    QVERIFY(_writeFile(inputPath, stream));
+    QBuffer device;
+    device.setData(stream);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    const QRegularExpression failure(reason);
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
+    QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::IoError);
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
+    QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::IoError);
+
+    QVERIFY(device.seek(0));
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
+    QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::IoError);
+
+    if (!stream.isEmpty()) {
+        // decompressData() refuses data of no bytes before it is looked at: see _testDecompressDataErrors
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
+        QVERIFY(QGCCompression::decompressData(stream).isEmpty());
+        verifyExpectedLogMessage();
+        QCOMPARE(QGCCompression::lastError(), Error::IoError);
+    }
+
+    // The device does not log: the reason is in its error string
+    QVERIFY(device.seek(0));
+    QGCDecompressDevice decompressor(&device);
+    QVERIFY(!decompressor.open(QIODevice::ReadOnly));
+    QVERIFY2(decompressor.errorString().contains(failure), qPrintable(decompressor.errorString()));
+
+    QString readError;
+    QVERIFY(QGCCompression::readFile(inputPath, &readError).isEmpty());
+    QVERIFY(!readError.isEmpty());
+
+    // Nothing is written for an input that is refused
+    QCOMPARE(_entriesBelow(tempDir.path()), QStringList{QStringLiteral("nothing.gz")});
+}
+
 // ============================================================================
 // Progress Callback Tests
 // ============================================================================
@@ -1710,7 +1887,7 @@ void QGCCompressionTest::_testDecompressDataErrors()
         return !exists && (QGCCompression::lastError() == Error::FileNotFound);
     };
 
-    // Decompressed data is never empty, but lastError() is only of use if each call sets it
+    // lastError() is only of use if each call sets it
     QVERIFY(leaveAnErrorBehind());
     QVERIFY(!QGCCompression::decompressData(compressed).isEmpty());
     QCOMPARE(QGCCompression::lastError(), Error::None);

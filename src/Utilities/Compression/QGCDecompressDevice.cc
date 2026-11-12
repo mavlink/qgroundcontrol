@@ -75,8 +75,12 @@ bool QGCDecompressDevice::prepareForReading()
 {
     // Read the first (and only) entry header for raw format
     struct archive_entry *entry = nullptr;
-    if (archive_read_next_header(_reader->handle(), &entry) != ARCHIVE_OK) {
-        setError(QString::fromUtf8(archive_error_string(_reader->handle())));
+    const int header = archive_read_next_header(_reader->handle(), &entry);
+    if (QGClibarchive::isEmptyStream(_reader->handle(), header)) {
+        // A stream of an empty file has no entry to read from
+        _eof = true;
+    } else if (header != ARCHIVE_OK) {
+        setError(QGClibarchive::streamHeaderError(_reader->handle(), header));
         _reader.reset();
         return false;
     }

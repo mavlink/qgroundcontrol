@@ -38,7 +38,8 @@ enum class Error {
 /// operation. Every function that reports a failure through it sets it on each call, to Error::None on
 /// success, so it never tells of an earlier operation. The result alone does not tell a failure of
 /// decompressData(), extractFileData(), the two functions that read a device to memory and the three that
-/// list an archive: an entry without data, and an archive without entries, are returned as empty too.
+/// list an archive: a compressed file or an entry without data, and an archive without entries, are
+/// returned as empty too.
 /// readFile(), computeFileHash() and parseCompressedJson() report in their own way: do not read it after them.
 Error lastError();
 
@@ -153,6 +154,8 @@ constexpr qint64 kDefaultMaxDecompressedMemoryBytes = 256LL * 1024 * 1024;
 constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
 
 /// Decompress a single file
+/// A compressed file that holds no data, as a compressor writes for an empty file, gives an empty output file.
+/// A file without any bytes is not a compressed file, and is refused.
 /// @param inputPath Path to compressed file (or Qt resource path :/)
 /// @param outputPath Path for decompressed output. If empty: inputPath without the extension of the format
 ///        (for GZIP .gz or .gzip), or with ".decompressed" appended if it does not end in one
@@ -180,7 +183,8 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath = 
 /// @param data Compressed input data
 /// @param format Kind of input, a single-stream format here: see Format (Auto = detect from magic bytes)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
-/// @return Decompressed data, or empty on failure or if size limit exceeded: lastError() tells which
+/// @return Decompressed data. It is empty for a stream that holds no data, and also on failure or if the
+///         size limit is exceeded: lastError() is Error::None for the first
 QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
                           qint64 maxDecompressedBytes = 0);
 
@@ -340,7 +344,8 @@ bool decompressFromDevice(QIODevice *device, const QString &outputPath,
 /// Decompress from QIODevice to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
-/// @return Decompressed data, or empty QByteArray on failure or if size limit exceeded
+/// @return Decompressed data. It is empty for a stream that holds no data, and also on failure or if the
+///         size limit is exceeded: lastError() is Error::None for the first
 QByteArray decompressFromDevice(QIODevice *device, qint64 maxDecompressedBytes = 0);
 
 /// Extract archive from QIODevice to directory

@@ -674,9 +674,11 @@ QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecom
         return {};
     }
 
-    QByteArray result = QGClibarchive::decompressDataFromMemory(data, maxDecompressedBytes);
+    // The data does not tell a failure: a stream of an empty file has none
+    bool decompressed = false;
+    QByteArray result = QGClibarchive::decompressDataFromMemory(data, maxDecompressedBytes, &decompressed);
     captureFormatInfo();
-    if (result.isEmpty()) {
+    if (!decompressed) {
         setOperationError(QStringLiteral("Failed to decompress data"));
     }
     return result;
@@ -960,9 +962,11 @@ QByteArray decompressFromDevice(QIODevice* device, qint64 maxDecompressedBytes)
         return {};
     }
     qCDebug(QGCCompressionLog) << "Decompressing from device to memory";
-    QByteArray result = QGClibarchive::decompressDataFromDevice(device, maxDecompressedBytes);
+    // The data does not tell a failure: a stream of an empty file has none
+    bool decompressed = false;
+    QByteArray result = QGClibarchive::decompressDataFromDevice(device, maxDecompressedBytes, &decompressed);
     captureFormatInfo();
-    if (result.isEmpty()) {
+    if (!decompressed) {
         setOperationError(QStringLiteral("Failed to decompress from device"));
     }
     return result;
