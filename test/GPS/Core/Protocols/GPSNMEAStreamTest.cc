@@ -192,6 +192,12 @@ QByteArray sentenceOfReport(const QByteArray& type, const QByteArray& utc, int r
 constexpr uint64_t EPOCH_INTERVAL_US = 1000000;
 constexpr uint64_t SENTENCE_INTERVAL_US = 10000;
 
+/// The time the sentence of @a body takes on a serial link of @a baud, at ten bits a byte.
+uint64_t wireTimeUs(const QByteArray& body, unsigned baud)
+{
+    return static_cast<uint64_t>(nmeaBytes(body).size()) * 10 * 1000000 / baud;
+}
+
 constexpr qsizetype PRODUCTIVE_INPUTS = 5;
 
 }  // namespace
@@ -348,16 +354,18 @@ void GPSNMEAStreamTest::_sentenceOrder()
 
 void GPSNMEAStreamTest::_sentenceNotWaitedFor_data()
 {
+    QTest::addColumn<QByteArray>("type");
     QTest::addColumn<int>("everyEpochs");
     QTest::addColumn<quint64>("delayUs");
     // An RMC at half the rate of the GGA follows every other epoch only.
-    QTest::newRow("slower-sentence") << 2 << quint64(SENTENCE_INTERVAL_US);
-    // An RMC in the second half of the interval would hold the position for too long.
-    QTest::newRow("late-in-the-interval") << 1 << quint64(EPOCH_INTERVAL_US * 6 / 10);
+    QTest::newRow("slower-sentence") << QByteArray("RMC") << 2 << quint64(SENTENCE_INTERVAL_US);
+    // A VTG carries no time: in the second half of the interval it may open the next epoch's burst.
+    QTest::newRow("untimed-late-in-the-interval") << QByteArray("VTG") << 1 << quint64(EPOCH_INTERVAL_US * 6 / 10);
 }
 
 void GPSNMEAStreamTest::_sentenceNotWaitedFor()
 {
+    QFETCH(QByteArray, type);
     QFETCH(int, everyEpochs);
     QFETCH(quint64, delayUs);
     NMEAReceiver receiver;
@@ -368,14 +376,71 @@ void GPSNMEAStreamTest::_sentenceNotWaitedFor()
         receiver.feed(gga(utc));
         QCOMPARE(receiver.positions, epoch + 1);
         QCOMPARE(receiver.published->navigation.timestampUs, receiver.now);
-        // The RMC that came after the epoch before was published is not published with this one either.
+        // The sentence that came after the epoch before was published is not published with this one either.
         QVERIFY(!receiver.published->velocityValid);
         if (epoch % everyEpochs == 0) {
             receiver.now += delayUs;
-            receiver.feed(rmc(utc));
+            receiver.feed(sentenceOf(type, utc));
         }
     }
     QCOMPARE(receiver.positions, 6);
+}
+
+void GPSNMEAStreamTest::_timedSentenceLateInInterval_data()
+{
+    QTest::addColumn<QByteArray>("type");
+    QTest::addColumn<int>("satellitesEvery");
+    // SiRF and MediaTek receivers send GGA, GSA, GSV and RMC in this order, the GSV in every epoch or in every fifth.
+    QTest::newRow("rmc-satellites-every-epoch") << QByteArray("RMC") << 1;
+    QTest::newRow("rmc-satellites-every-fifth-epoch") << QByteArray("RMC") << 5;
+    QTest::newRow("gst-satellites-every-epoch") << QByteArray("GST") << 1;
+    QTest::newRow("gst-satellites-every-fifth-epoch") << QByteArray("GST") << 5;
+}
+
+void GPSNMEAStreamTest::_timedSentenceLateInInterval()
+{
+    QFETCH(QByteArray, type);
+    QFETCH(int, satellitesEvery);
+    // One epoch a second at 4800 baud, the rate of NMEA 0183. The GSV sentences of twelve satellites take 0.44 s,
+    // which puts the sentence after them more than half the interval after the GGA.
+    constexpr unsigned BAUD = 4800;
+    const QByteArrayList satellites{
+        "GPGSV,3,1,12,01,40,083,46,02,17,308,41,03,07,344,39,04,22,228,45",
+        "GPGSV,3,2,12,05,11,111,40,06,62,150,44,07,35,060,42,08,19,190,38",
+        "GPGSV,3,3,12,09,51,270,43,10,08,020,33,11,27,130,41,12,74,300,47",
+    };
+    NMEAReceiver receiver;
+    const uint64_t start = receiver.now;
+    const auto feed = [&receiver](const QByteArray& body) {
+        receiver.now += wireTimeUs(body, BAUD);
+        receiver.feed(body);
+    };
+    for (int epoch = 0; epoch < 12; ++epoch) {
+        const QByteArray utc = QByteArray::number(123519 + epoch);
+        const bool withSatellites = epoch % satellitesEvery == 0;
+        receiver.now = start + epoch * EPOCH_INTERVAL_US;
+        feed(gga(utc));
+        const uint64_t positionReceipt = receiver.now;
+        feed(GSA);
+        if (withSatellites) {
+            for (const auto& page : satellites) {
+                feed(page);
+            }
+        }
+        const int publishedBefore = receiver.positions;
+        feed(sentenceOf(type, utc));
+        QCOMPARE(receiver.now - positionReceipt > EPOCH_INTERVAL_US / 2, withSatellites);
+        QCOMPARE(receiver.positions, epoch + 1);
+        const auto& navigation = receiver.published->navigation;
+        QCOMPARE(navigation.timestampUs, positionReceipt);
+        if (epoch >= 2) {
+            // The sentence carries its epoch's time, so two epochs make it the receiver's order however late it
+            // came: this epoch waited for it, as does the one after an epoch whose satellites delayed it.
+            QCOMPARE(publishedBefore, epoch);
+            QVERIFY(type == "GST" ? std::isfinite(navigation.horizontalAccuracyMeters)
+                                  : receiver.published->velocityValid);
+        }
+    }
 }
 
 void GPSNMEAStreamTest::_missingSentence_data()

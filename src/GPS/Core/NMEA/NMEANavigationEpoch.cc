@@ -134,10 +134,12 @@ void NavigationEpochAssembler::_add(StoredEpoch& stored, Addition addition, uint
     if (!stored.epoch.ggaQuality) {
         return;
     }
-    // Later in the interval a sentence would hold the position for too long, and a GSA or VTG there may open the next
-    // epoch's burst. The first GGA has no interval: the epoch after it confirms what followed it.
+    // An RMC or GST names the epoch it belongs to, however late it arrives. A GSA or VTG does not, and late in the
+    // interval it may open the next epoch's burst. The first GGA has no interval: the epoch after it confirms what
+    // followed it.
+    const bool timed = addition == Addition::RMC || addition == Addition::GST;
     const auto sinceGga = MonotonicClock::age(stored.epoch.positionReceivedAtUs, receivedAtUs);
-    if (sinceGga && (_ggaInterval == std::chrono::microseconds::zero() || *sinceGga <= _ggaInterval / 2)) {
+    if (sinceGga && (timed || _ggaInterval == std::chrono::microseconds::zero() || *sinceGga <= _ggaInterval / 2)) {
         stored.followers |= addition;
     }
 }

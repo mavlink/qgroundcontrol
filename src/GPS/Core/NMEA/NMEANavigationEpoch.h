@@ -62,9 +62,14 @@ struct NavigationUpdate
 /// with that epoch, because every published position is a new observation, and not with the next, whose solution it
 /// does not describe.
 ///
-/// A sentence follows its GGA only in the first half of the interval between the last two GGA; one that arrives later
-/// completes an epoch that waits for it, but is not waited for in the epochs to come. An epoch that still waits when
-/// the next one begins is published then as it stands, unless the same sentence publishes the next one.
+/// An RMC or GST names its epoch, so it follows its GGA whenever it arrives, and the position waits for it as long as
+/// the receiver takes to send it. At 4800 baud that is 0.6 to 0.8 s when the GSV sentences come between them, which
+/// some receivers send in every epoch and others in every few: a limit on the wait would publish those epochs, or the
+/// two after each of them, without their speed, course and accuracy. A GSA or VTG names no epoch and late in the
+/// interval may open the next one's burst, so it follows its GGA only in the first half of the interval between the
+/// last two GGA; one that arrives later completes an epoch that waits for it, but is not waited for in the epochs to
+/// come. An epoch that still waits when the next one begins is published then as it stands, unless the same sentence
+/// publishes the next one.
 ///
 /// An epoch has one GGA, one RMC, one GLL and one GST. A GGA, RMC or GLL that comes again with the same time begins
 /// another epoch, which takes nothing from the one before it: the next report of a receiver that prints whole seconds
@@ -110,7 +115,7 @@ private:
         Positions positions;
         /// The additions received, before or after the GGA.
         Additions additions;
-        /// The additions received soon after the GGA.
+        /// The additions received after the GGA that the epochs to come wait for.
         Additions followers;
         bool published = false;
     };

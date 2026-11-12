@@ -134,6 +134,7 @@ The _Passive_ role uses the receiver's existing output without configuring it or
   When a receiver sends both NMEA and a binary protocol, positions come from the one recognized first, until it stops reporting positions.
 - With NMEA, the position comes from the GGA sentence.
   RMC or VTG add the speed and heading, and GST or GSA the accuracy.
+  The position of a receiver that sends RMC or GST after GGA is used once it has sent them, which at 4800 baud can be most of a second later; a higher baud rate shortens that.
 - Turn off **Forward receiver RTCM** to use the receiver only for the ground station position.
 - Select the connection (**Serial** with the receiver's existing baud rate, **TCP**, or **UDP** with the port QGC listens on).
 

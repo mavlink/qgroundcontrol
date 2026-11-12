@@ -18,6 +18,8 @@ private slots:
     void _sentenceOrder();
     void _sentenceNotWaitedFor_data();
     void _sentenceNotWaitedFor();
+    void _timedSentenceLateInInterval_data();
+    void _timedSentenceLateInInterval();
     void _missingSentence_data();
     void _missingSentence();
     void _untimedSentenceBeforeItsPosition();
