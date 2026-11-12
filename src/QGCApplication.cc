@@ -49,6 +49,17 @@
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
 QGC_LOGGING_CATEGORY(QGCAppMessageLog, "API.QGCApplication.AppMessage")
 
+namespace {
+
+// A test run has its own application name, which desktop platforms put in the path of the settings and cache
+// locations. Android and iOS do not: there these are the installed application's own directories.
+bool isTestRunDirectory(const QDir& dir)
+{
+    return dir.absolutePath().split(QLatin1Char('/')).contains(QCoreApplication::applicationName());
+}
+
+}  // namespace
+
 QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLineParser::CommandLineParseResult& cli)
     : QGuiApplication(argc, argv),
       _runningUnitTests(cli.runningUnitTests),
@@ -115,7 +126,8 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.value(AppSettings::clearSettingsNextBootKey, false).toBool();
 
-    if (_runningUnitTests || _simpleBootTest) {
+    const bool testRun = _runningUnitTests || _simpleBootTest;
+    if (testRun) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
@@ -126,8 +138,10 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
 
         // Clear parameter cache
         QDir paramDir(ParameterManager::parameterCacheDir());
-        paramDir.removeRecursively();
-        paramDir.mkpath(paramDir.absolutePath());
+        if (!testRun || isTestRunDirectory(paramDir)) {
+            paramDir.removeRecursively();
+            paramDir.mkpath(paramDir.absolutePath());
+        }
     } else {
         // Determine if upgrade message for settings version bump is required. Check and clear must happen before
         // toolbox is started since that will write some settings.
@@ -690,7 +704,7 @@ void QGCApplication::shutdown()
 
         for (const auto location : {QStandardPaths::AppConfigLocation, QStandardPaths::CacheLocation}) {
             QDir dir(QStandardPaths::writableLocation(location));
-            if (dir.exists()) {
+            if (dir.exists() && isTestRunDirectory(dir)) {
                 if (dir.removeRecursively()) {
                     qCDebug(QGCApplicationLog) << "Removed test run directory:" << dir.absolutePath();
                 } else {
