@@ -16,6 +16,7 @@
 #include "GPSObservation.h"
 #include "GPSReceiverConnector.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSReceiverEvent.h"
 #include "GPSReceiverPresentation.h"
 #include "GPSReceiverReports.h"
 #include "GPSReceiverSerialPorts.h"
@@ -304,14 +305,6 @@ signals:
     void recordSessionsChanged();
     void recordingFileChanged();
 
-private slots:
-    void _onSatelliteInfoUpdated(const GPSSatelliteReport& msg);
-    void _onPositionUpdated(const GPSPositionReport& report);
-    void _onGPSConnect();
-    void _onReceiverDetected();
-    void _onInputProblem(GPSInputProblem problem);
-    void _onBaseStatusUpdated(const GPSBaseStatus& status);
-
 private:
     /// The values behind receiverChanged.
     struct ReceiverState
@@ -376,6 +369,21 @@ private:
     /// unchanged when sessions are not recorded.
     GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type,
                                                   const GPSReceiverConfig& request);
+    /// What the receiver does with each kind of report of its session.
+    void _onReport(const GPSSatelliteReport& msg);
+    void _onReport(const GPSPositionReport& report);
+    void _onReport(const GPSBaseStatus& status);
+    void _onReport(const GPSReceiverReady&);
+    void _onReport(const GPSReceiverDetected&);
+    void _onReport(GPSInputProblem problem);
+    void _onReport(const GPSReceiverEnded& ended);
+
+    /// The session keeps what detection looks for, which the status text shows.
+    void _onReport(const GPSDetectionProgress&) { _emitChanges(); }
+
+    /// The session forwards an RTCM frame itself and does not report it.
+    void _onReport(const GPSReceiverRTCM&) {}
+
     void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();

@@ -800,18 +800,18 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     QVERIFY(first);
     GPSReceiverFactGroup& facts = *receiver.facts();
     QVERIFY(!receiver.facts()->telemetryAvailable());
-    emit first->receiverReady();
+    emit first->reported(GPSReceiverReady{});
     GPSBaseStatus survey{};
     survey.state = GPSBaseState::Valid;
     survey.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     survey.duration = std::chrono::seconds(4294967295LL);
     survey.meanAccuracyMeters = 1.5;
-    emit first->baseStatusUpdated(survey);
+    emit first->reported(survey);
     GPSSatelliteReport satellites;
     satellites.timestampUs = 1;
     satellites.inView = 2;
     satellites.used = 7;
-    emit first->satelliteInfoUpdated(satellites);
+    emit first->reported(satellites);
     QTRY_VERIFY_WITH_TIMEOUT(receiver.facts()->telemetryAvailable(), TestTimeout::shortMs());
     QCOMPARE(baseState(facts), GPSBaseState::Valid);
     QCOMPARE(facts.currentBasePosition(),
@@ -820,21 +820,21 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts.currentDuration()->rawValue().toLongLong(), 4294967295LL);
     QCOMPARE(solution(facts), (Solution{.inView = 2, .used = 7}));
     const auto frame = GPSTest::rtcmMessage(1005);
-    emit first->rtcmDataReceived(frame, GPSTest::nowMs());
+    emit first->reported(GPSReceiverRTCM{frame, GPSTest::nowMs()});
     QTRY_COMPARE_WITH_TIMEOUT(routed.size(), 1, TestTimeout::shortMs());
     QCOMPARE(routed[0], frame);
     QTRY_COMPARE_WITH_TIMEOUT(corrections.selectedStream().instanceId, instance, TestTimeout::shortMs());
     QCOMPARE(corrections.selectedStream().source, static_cast<int>(GPSCorrectionSettings::LocalReceiver));
     // Retirement must reject callbacks already in the GUI queue.
     satellites.used = 12;
-    emit first->rtcmDataReceived(frame, GPSTest::nowMs());
-    emit first->baseStatusUpdated(survey);
-    emit first->satelliteInfoUpdated(satellites);
-    emit first->positionUpdated(fixReport(GPSFixQuality::Unknown));
-    emit first->receiverReady();
-    emit first->connectionError(GPSConnectionError::ConfigFailed,
-                                QStringLiteral("Retired receiver configuration failure"));
-    emit first->connectionError(GPSConnectionError::DeviceError);
+    emit first->reported(GPSReceiverRTCM{frame, GPSTest::nowMs()});
+    emit first->reported(survey);
+    emit first->reported(satellites);
+    emit first->reported(fixReport(GPSFixQuality::Unknown));
+    emit first->reported(GPSReceiverReady{});
+    emit first->reported(
+        GPSReceiverEnded{GPSConnectionError::ConfigFailed, QStringLiteral("Retired receiver configuration failure")});
+    emit first->reported(GPSReceiverEnded{GPSConnectionError::DeviceError, {}});
     // Replacing the connection retires the first worker.
     receiver.disconnectReceiver();
     QVERIFY(connectOverTcp(receiver));
@@ -852,9 +852,9 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(routed.size(), 1);
     auto* activeWorker = receiver.findChild<GPSReceiverWorker*>();
     QVERIFY(activeWorker);
-    emit activeWorker->receiverReady();
+    emit activeWorker->reported(GPSReceiverReady{});
     const auto receivedAtMs = GPSTest::nowMs() - 10;
-    emit activeWorker->rtcmDataReceived(frame, receivedAtMs);
+    emit activeWorker->reported(GPSReceiverRTCM{frame, receivedAtMs});
     QTRY_VERIFY_WITH_TIMEOUT(receiver.facts()->telemetryAvailable(), TestTimeout::shortMs());
     QCOMPARE(routed.size(), 2);
     QCOMPARE(routed[1], frame);
@@ -868,11 +868,11 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
                      QRegularExpression(QStringLiteral("GPS device error, connection lost")));
     const QPointer<GPSReceiverWorker> second = receiver.findChild<GPSReceiverWorker*>();
     QVERIFY(second);
-    emit second->connectionError(GPSConnectionError::DeviceError);
-    emit second->rtcmDataReceived(frame, GPSTest::nowMs());
-    emit second->receiverReady();
-    emit second->baseStatusUpdated(survey);
-    emit second->satelliteInfoUpdated(satellites);
+    emit second->reported(GPSReceiverEnded{GPSConnectionError::DeviceError, {}});
+    emit second->reported(GPSReceiverRTCM{frame, GPSTest::nowMs()});
+    emit second->reported(GPSReceiverReady{});
+    emit second->reported(survey);
+    emit second->reported(satellites);
     deliverQueuedCalls();
     verifyExpectedLogMessage();
     QVERIFY(!receiver.facts()->telemetryAvailable());
@@ -897,7 +897,7 @@ void GPSReceiverTest::_workerCanOutliveManager()
     QTRY_VERIFY_WITH_TIMEOUT(gate.entered(), TestTimeout::mediumMs());
     QPointer<GPSReceiverWorker> worker = receiver->findChild<GPSReceiverWorker*>();
     QVERIFY(worker);
-    emit worker->receiverReady();
+    emit worker->reported(GPSReceiverReady{});
     QTRY_VERIFY_WITH_TIMEOUT(receiver->facts()->telemetryAvailable(), TestTimeout::shortMs());
     receiver.reset();
     QVERIFY(worker);
@@ -1798,7 +1798,7 @@ void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
     QTRY_VERIFY_WITH_TIMEOUT(gate.entered(), TestTimeout::mediumMs());
     QPointer<GPSReceiverWorker> worker = receiver.findChild<GPSReceiverWorker*>();
     QVERIFY(worker);
-    emit worker->receiverReady();
+    emit worker->reported(GPSReceiverReady{});
     QTRY_VERIFY_WITH_TIMEOUT(receiver.facts()->telemetryAvailable(), TestTimeout::shortMs());
     bool heartbeat = false;
     QTimer::singleShot(0, &receiver, [&heartbeat] { heartbeat = true; });

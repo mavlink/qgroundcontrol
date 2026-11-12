@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <utility>
+#include <variant>
 
 #include "GPSCorrectionManager.h"
 #include "GPSReceiverDescriptor.h"
@@ -109,33 +110,9 @@ bool GPSReceiverSession::start(const GPSReceiverWorkerFactory& factory,
     worker->setDetectionHint(_connection.detectionHint);
     (void) connect(
         worker, &GPSReceiverWorker::finished, this,
-        [this]() {
-            if (!_retired) {
-                emit ended(GPSConnectionError::DeviceError, {});
-            }
-        },
-        Qt::QueuedConnection);
+        [this]() { _onReport(GPSReceiverEnded{GPSConnectionError::DeviceError, {}}); }, Qt::QueuedConnection);
     (void) connect(worker, &GPSReceiverWorker::finished, worker, &QObject::deleteLater);
-    const auto relay = [this, worker]<typename... Args>(void (GPSReceiverWorker::*signal)(Args...),
-                                                        void (GPSReceiverSession::*handler)(Args...)) {
-        (void) connect(
-            worker, signal, this,
-            [this, handler](Args... args) {
-                if (!_retired) {
-                    (this->*handler)(args...);
-                }
-            },
-            Qt::QueuedConnection);
-    };
-    relay(&GPSReceiverWorker::rtcmDataReceived, &GPSReceiverSession::_forwardCorrection);
-    relay(&GPSReceiverWorker::satelliteInfoUpdated, &GPSReceiverSession::satelliteInfoUpdated);
-    relay(&GPSReceiverWorker::positionUpdated, &GPSReceiverSession::positionUpdated);
-    relay(&GPSReceiverWorker::baseStatusUpdated, &GPSReceiverSession::_onBaseStatus);
-    relay(&GPSReceiverWorker::connectionError, &GPSReceiverSession::ended);
-    relay(&GPSReceiverWorker::receiverReady, &GPSReceiverSession::_onReady);
-    relay(&GPSReceiverWorker::detecting, &GPSReceiverSession::_onDetecting);
-    relay(&GPSReceiverWorker::receiverDetected, &GPSReceiverSession::_onDetected);
-    relay(&GPSReceiverWorker::inputProblem, &GPSReceiverSession::inputProblem);
+    (void) connect(worker, &GPSReceiverWorker::reported, this, &GPSReceiverSession::_onReport, Qt::QueuedConnection);
     worker->start();
     return true;
 }
@@ -178,50 +155,58 @@ GPSObservation GPSReceiverSession::observation(const GPSPositionReport& report, 
     return observation;
 }
 
-void GPSReceiverSession::_onBaseStatus(const GPSBaseStatus& report)
+void GPSReceiverSession::_onReport(const GPSReceiverEvent& event)
 {
-    if (_connection.role != RTKSettings::ConfiguredBase) {
-        return;
+    if (!_retired && std::visit([this](const auto& report) { return _take(report); }, event)) {
+        emit reported(event);
     }
-    _base.applyStatus(report);
-    emit baseStatusUpdated(report);
 }
 
-void GPSReceiverSession::_onReady(const QString& identity, const GPSDetectionHint& detected)
+bool GPSReceiverSession::_take(const GPSBaseStatus& report)
 {
-    if (std::exchange(_identity, identity) != identity) {
-        qCDebug(GPSReceiverSessionLog) << "Receiver identity:" << identity;
+    if (_connection.role != RTKSettings::ConfiguredBase) {
+        return false;
+    }
+    _base.applyStatus(report);
+    return true;
+}
+
+bool GPSReceiverSession::_take(const GPSReceiverReady& ready)
+{
+    if (std::exchange(_identity, ready.identity) != ready.identity) {
+        qCDebug(GPSReceiverSessionLog) << "Receiver identity:" << ready.identity;
     }
     _detecting.reset();
     if (_connection.type == GPSType::Automatic) {
-        _detected = detected;
+        _detected = ready.detected;
     }
-    emit receiverReady(identity);
+    return true;
 }
 
-void GPSReceiverSession::_onDetecting(GPSType family, unsigned baud, bool remembered)
+bool GPSReceiverSession::_take(const GPSDetectionProgress& progress)
 {
     if (_connection.type != GPSType::Automatic) {
-        return;
+        return false;
     }
-    _detecting = GPSDetectionProgress{.family = family, .baud = baud, .remembered = remembered};
-    emit detectingChanged();
+    _detecting = progress;
+    return true;
 }
 
-void GPSReceiverSession::_onDetected(GPSType type)
+bool GPSReceiverSession::_take(const GPSReceiverDetected& detected)
 {
     if (_connection.type != GPSType::Automatic && _connection.type != GPSType::Passive) {
-        return;
+        return false;
     }
     _detecting.reset();
-    _detectedType = type;
-    qCDebug(GPSReceiverSessionLog) << "Detected receiver family:" << type;
-    emit receiverDetected(type);
+    _detectedType = detected.type;
+    qCDebug(GPSReceiverSessionLog) << "Detected receiver family:" << detected.type;
+    return true;
 }
 
-void GPSReceiverSession::_forwardCorrection(const QByteArray& data, qint64 receivedAtMs)
+bool GPSReceiverSession::_take(const GPSReceiverRTCM& rtcm)
 {
     if (_correction) {
-        _correction->submit(data, receivedAtMs);
+        _correction->submit(rtcm.frame, rtcm.receivedAtMs);
     }
+    return false;
 }

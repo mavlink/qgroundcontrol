@@ -12,6 +12,7 @@
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverConnector.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSReceiverEvent.h"
 #include "GPSReceiverReports.h"
 #include "GPSReceiverWorker.h"
 #include "PositionManager.h"
@@ -50,8 +51,9 @@ struct GPSBaseStationState
 [[nodiscard]] GPSBaseStationState gpsBaseStationStateFor(GPSType type, const GPSReceiverConfig& config);
 
 /// One receiver connection of GPSReceiver: its worker, correction and position registrations, and identity.
-/// Worker signals are queued to the session and relayed only until it is retired. retire() disconnects them, but
-/// Qt still delivers calls it had already queued, so a retired session drops those itself.
+/// The worker's reports are queued to the session, which passes them on only until it is retired. retire()
+/// disconnects the worker, but Qt still delivers the reports it had already queued, so a retired session drops those
+/// itself.
 class GPSReceiverSession : public QObject
 {
     Q_OBJECT
@@ -147,18 +149,11 @@ public:
     GPSObservation observation(const GPSPositionReport& report, quint64 receivedAtUs) const;
 
 signals:
-    void satelliteInfoUpdated(const GPSSatelliteReport& report);
-    void positionUpdated(const GPSPositionReport& report);
-    /// The base position status of a configured base, in every base mode.
-    void baseStatusUpdated(const GPSBaseStatus& report);
-    void receiverReady(const QString& identity);
-    /// The family an Automatic session detected, or the protocol a passive receiver's output carries.
-    void receiverDetected(GPSType type);
-    void detectingChanged();
-    /// Why a passive receiver delivers no position; None once positions arrive.
-    void inputProblem(GPSInputProblem problem);
-    /// The worker failed or exited; the owner ends the session.
-    void ended(GPSConnectionError error, const QString& detail);
+    /// A report of the worker that the owner acts on, after the session took what it keeps of it: every report but
+    /// an RTCM frame, the base status of a receiver that is no configured base, what a session that is not Automatic
+    /// looks for, and what a session of a selected family detected. At a GPSReceiverEnded the owner ends the session:
+    /// the worker failed, or it exited, which is reported as a DeviceError without detail.
+    void reported(const GPSReceiverEvent& event);
 
 private:
     /// The selected family, or the detected one once an Automatic session detected it.
@@ -167,11 +162,21 @@ private:
         return _connection.type == GPSType::Automatic ? _detectedType.value_or(GPSType::Automatic) : _connection.type;
     }
 
-    void _onBaseStatus(const GPSBaseStatus& report);
-    void _onReady(const QString& identity, const GPSDetectionHint& detected);
-    void _onDetecting(GPSType family, unsigned baud, bool remembered);
-    void _onDetected(GPSType type);
-    void _forwardCorrection(const QByteArray& data, qint64 receivedAtMs);
+    /// Passes a report of the worker on, unless the session is retired or keeps the report to itself.
+    void _onReport(const GPSReceiverEvent& event);
+    /// Takes what the session keeps of a report. False when the owner is not told of it.
+    bool _take(const GPSBaseStatus& report);
+    bool _take(const GPSReceiverReady& ready);
+    bool _take(const GPSDetectionProgress& progress);
+    bool _take(const GPSReceiverDetected& detected);
+    bool _take(const GPSReceiverRTCM& rtcm);
+
+    /// The session keeps nothing of a position, the satellites, an input problem or its end.
+    template <typename Report>
+    bool _take(const Report&)
+    {
+        return true;
+    }
 
     const quint64 _sessionId;
     const Connection _connection;

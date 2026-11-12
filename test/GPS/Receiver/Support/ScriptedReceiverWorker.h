@@ -39,63 +39,40 @@ public:
 
     bool stopped() const { return _stopped; }
 
-    void detected(GPSType type)
+    /// Reports @a event as the session's thread does, and delivers it.
+    void send(const GPSReceiverEvent& event)
     {
-        emit receiverDetected(type);
+        emit reported(event);
         deliverQueuedCalls();
     }
+
+    void detected(GPSType type) { send(GPSReceiverDetected{type}); }
 
     /// Reports what the detection of an Automatic session looks for with the link at @a baud: @a family, where the
     /// session's hint says it was when @a remembered and else in its turn, or the output of any family
     /// (GPSType::Automatic).
     void looksFor(GPSType family, unsigned baud, bool remembered = false)
     {
-        emit detecting(family, baud, remembered);
-        deliverQueuedCalls();
+        send(GPSDetectionProgress{family, baud, remembered});
     }
 
     /// Reports the receiver ready, and @a detected as what an Automatic session found.
     void ready(const QString& identity = {}, const GPSDetectionHint& detected = {})
     {
-        emit receiverReady(identity, detected);
-        deliverQueuedCalls();
+        send(GPSReceiverReady{identity, detected});
     }
 
-    void position(const GPSPositionReport& report)
-    {
-        emit positionUpdated(report);
-        deliverQueuedCalls();
-    }
+    void position(const GPSPositionReport& report) { send(report); }
 
-    void satellites(const GPSSatelliteReport& report)
-    {
-        emit satelliteInfoUpdated(report);
-        deliverQueuedCalls();
-    }
+    void satellites(const GPSSatelliteReport& report) { send(report); }
 
-    void baseStatus(const GPSBaseStatus& status)
-    {
-        emit baseStatusUpdated(status);
-        deliverQueuedCalls();
-    }
+    void baseStatus(const GPSBaseStatus& status) { send(status); }
 
-    void rtcm(const QByteArray& bytes, qint64 receivedAtMs = 0)
-    {
-        emit rtcmDataReceived(bytes, receivedAtMs);
-        deliverQueuedCalls();
-    }
+    void rtcm(const QByteArray& bytes, qint64 receivedAtMs = 0) { send(GPSReceiverRTCM{bytes, receivedAtMs}); }
 
-    void input(GPSInputProblem problem)
-    {
-        emit inputProblem(problem);
-        deliverQueuedCalls();
-    }
+    void input(GPSInputProblem problem) { send(problem); }
 
-    void fail(GPSConnectionError error, const QString& detail = {})
-    {
-        emit connectionError(error, detail);
-        deliverQueuedCalls();
-    }
+    void fail(GPSConnectionError error, const QString& detail = {}) { send(GPSReceiverEnded{error, detail}); }
 
     void finish()
     {

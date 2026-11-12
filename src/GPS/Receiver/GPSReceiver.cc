@@ -284,7 +284,7 @@ void GPSReceiver::_updateOutputOverflow(uint64_t receiptUs)
     });
 }
 
-void GPSReceiver::_onGPSConnect()
+void GPSReceiver::_onReport(const GPSReceiverReady&)
 {
     _setError();
     _connection->receiverReady();
@@ -327,13 +327,13 @@ void GPSReceiver::_rememberDetected(const GPSReceiverSession& session)
     }
 }
 
-void GPSReceiver::_onReceiverDetected()
+void GPSReceiver::_onReport(const GPSReceiverDetected&)
 {
     _setPersistentChangesAllowed(false);
     _emitChanges();
 }
 
-void GPSReceiver::_onInputProblem(GPSInputProblem problem)
+void GPSReceiver::_onReport(GPSInputProblem problem)
 {
     _setError(GPSReceiverMessages::inputProblem(problem, _session ? _session->detectedType() : std::nullopt,
                                                 activeEndpoint(), forwardingCorrections(), _positionOnly));
@@ -371,7 +371,13 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
     _resetStatus();
 }
 
-void GPSReceiver::_onBaseStatusUpdated(const GPSBaseStatus& status)
+void GPSReceiver::_onReport(const GPSReceiverEnded& ended)
+{
+    _endSession(ended.error, ended.detail, GPSReceiverSessionEnd::Reported);
+    _emitChanges();
+}
+
+void GPSReceiver::_onReport(const GPSBaseStatus& status)
 {
     // A family reports the result of its check once, so this tells of a wrong position once. The base runs on: the
     // user may know the position better than a receiver without corrections does.
@@ -627,16 +633,8 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
         this);
     session->registerCorrections(_correctionManager, sourceInstance);
     _session = session;
-    connect(session, &GPSReceiverSession::satelliteInfoUpdated, this, &GPSReceiver::_onSatelliteInfoUpdated);
-    connect(session, &GPSReceiverSession::positionUpdated, this, &GPSReceiver::_onPositionUpdated);
-    connect(session, &GPSReceiverSession::baseStatusUpdated, this, &GPSReceiver::_onBaseStatusUpdated);
-    connect(session, &GPSReceiverSession::receiverReady, this, &GPSReceiver::_onGPSConnect);
-    connect(session, &GPSReceiverSession::receiverDetected, this, &GPSReceiver::_onReceiverDetected);
-    connect(session, &GPSReceiverSession::detectingChanged, this, &GPSReceiver::_emitChanges);
-    connect(session, &GPSReceiverSession::inputProblem, this, &GPSReceiver::_onInputProblem);
-    connect(session, &GPSReceiverSession::ended, this, [this](GPSConnectionError error, const QString& detail) {
-        _endSession(error, detail, GPSReceiverSessionEnd::Reported);
-        _emitChanges();
+    connect(session, &GPSReceiverSession::reported, this, [this](const GPSReceiverEvent& event) {
+        std::visit([this](const auto& report) { _onReport(report); }, event);
     });
     if (!session->start(_workerFactory, std::move(transportFactory))) {
         _retireSession();
@@ -713,7 +711,7 @@ void GPSReceiver::endConnection(ShownError error)
     }
 }
 
-void GPSReceiver::_onSatelliteInfoUpdated(const GPSSatelliteReport& msg)
+void GPSReceiver::_onReport(const GPSSatelliteReport& msg)
 {
     const int inView = msg.inView.value_or(-1);
     const int used = msg.used.value_or(-1);
@@ -727,7 +725,7 @@ void GPSReceiver::_onSatelliteInfoUpdated(const GPSSatelliteReport& msg)
     _emitChanges();
 }
 
-void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
+void GPSReceiver::_onReport(const GPSPositionReport& report)
 {
     if (gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()) != report.navigation.fixType) {
         qCDebug(GPSReceiverLog) << "Receiver fix changed:" << report.navigation.fixType;
