@@ -39,6 +39,8 @@ also configure a receiver as an RTK base only, where upstream's drivers configur
 
 ## Families
 
+The [GPS README](../../README.md#receiver-families) describes the families as they are today.
+
 | `GPSType` | Directory | Upstream files | Ported from |
 | --- | --- | --- | --- |
 | `UBlox` | `UBX/` | `src/ubx.cpp`, `src/ubx.h` | `ab090ca` |
