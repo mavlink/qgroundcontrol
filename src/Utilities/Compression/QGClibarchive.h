@@ -252,11 +252,12 @@ EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor);
 // Utility Functions
 // ============================================================================
 
-/// What an entry is, if it is one whose data is neither returned nor written to a file
-/// A hard or symbolic link has no data of its own, and a FIFO, a device node or a socket has none at all.
-/// The functions that extract an entry by name fail for one, and those that walk the archive skip it.
-/// @return "hard link", "symbolic link", "FIFO", "character device", "block device" or "socket"; nullptr for
-///         a regular file or a directory
+/// What an entry is, if it is one that is not extracted when it is asked for by name
+/// A hard or symbolic link has no data of its own, and a directory, a FIFO, a device node or a socket has
+/// none at all: read as a file, each would look like one that is empty. The functions that walk the archive
+/// skip the links and the special files, and make the directories.
+/// @return "directory", "hard link", "symbolic link", "FIFO", "character device", "block device" or "socket";
+///         nullptr for a regular file
 const char* skippedEntryKind(struct archive_entry* entry);
 
 /// Convert libarchive entry to ArchiveEntry struct
@@ -283,8 +284,9 @@ enum class ReadResult
 {
     Completed,      ///< Every entry asked for was read to its end, and written if it was to be
     EntryNotFound,  ///< The archive was read to its end without an entry that was asked for
-    EntrySkipped,   ///< An entry asked for by name is one that is not extracted: a link, a special file, or a
-                    ///< name that would be written outside the output directory (a warning has been logged)
+    EntrySkipped,   ///< An entry asked for by name is one that is not extracted: a directory, a link, a special
+                    ///< file, or a name that would be written outside the output directory (a warning has been
+                    ///< logged)
     WriteFailed,    ///< The output directory or a file in it could not be written
     WriteDenied,    ///< As WriteFailed, and the reason is that the output may not be written to
     Cancelled,      ///< The progress callback returned false
@@ -320,7 +322,7 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
 /// @param fileName Name of file inside archive
 /// @param outputPath Output file path
 /// @param result If not null, receives how the extraction ended
-/// @return true on success, false if not found, a link or a special file, or extraction failed
+/// @return true on success, false if not found, a directory, a link or a special file, or extraction failed
 bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
                        ReadResult* result = nullptr);
 
@@ -338,7 +340,7 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory
 /// @param result If not null, receives how the extraction ended
-/// @return true if all files found and extracted. A link or a special file is not extracted.
+/// @return true if all files found and extracted. A directory, a link or a special file is not extracted.
 bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
                           ReadResult* result = nullptr);
 

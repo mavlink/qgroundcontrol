@@ -311,8 +311,8 @@ static void setExtractionError(QGClibarchive::ReadResult result, const QString& 
             return;
         case QGClibarchive::ReadResult::EntrySkipped:
             setError(Error::UnsupportedFormat,
-                     message + QStringLiteral(": a link, a special file or a name that leaves the output directory "
-                                              "is not extracted"));
+                     message + QStringLiteral(": a directory, a link, a special file or a name that leaves the "
+                                              "output directory is not extracted"));
             return;
         case QGClibarchive::ReadResult::WriteFailed:
             setError(Error::IoError, message + QStringLiteral(": the output cannot be written"));
@@ -937,7 +937,7 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
                      QStringLiteral("%1 in %2 exceeds the size limit").arg(fileName, archivePath));
         } else if (read == QGClibarchive::ReadResult::EntrySkipped) {
             setError(Error::UnsupportedFormat,
-                     QStringLiteral("%1 in %2 is a link or a special file, which is not extracted")
+                     QStringLiteral("%1 in %2 is a directory, a link or a special file, which is not extracted")
                          .arg(fileName, archivePath));
         } else {
             const bool notFound = (read == QGClibarchive::ReadResult::EntryNotFound);
@@ -1065,7 +1065,7 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
             setError(Error::SizeLimitExceeded, fileName + QStringLiteral(" exceeds the size limit"));
         } else if (read == QGClibarchive::ReadResult::EntrySkipped) {
             setError(Error::UnsupportedFormat,
-                     fileName + QStringLiteral(" is a link or a special file, which is not extracted"));
+                     fileName + QStringLiteral(" is a directory, a link or a special file, which is not extracted"));
         } else if (read == QGClibarchive::ReadResult::EntryNotFound) {
             setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
         } else {

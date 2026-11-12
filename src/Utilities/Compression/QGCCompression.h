@@ -287,9 +287,9 @@ bool fileExists(const QString &archivePath, const QString &fileName,
 /// @param outputPath Output file path (if empty, extracts to current directory)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
 /// @return true on success. Otherwise lastError() is Error::FileNotInArchive if the archive was read to its
-///         end without the file, Error::UnsupportedFormat if it is a hard or symbolic link or a special file
-///         (FIFO, device node, socket), which are not extracted, Error::InvalidArchive if the archive cannot
-///         be read or is damaged, and Error::IoError if the output cannot be written, or
+///         end without the file, Error::UnsupportedFormat if it is a directory, a hard or symbolic link or a
+///         special file (FIFO, device node, socket), which are not extracted, Error::InvalidArchive if the
+///         archive cannot be read or is damaged, and Error::IoError if the output cannot be written, or
 ///         Error::PermissionDenied if that is for lack of permission
 bool extractFile(const QString &archivePath, const QString &fileName,
                  const QString &outputPath = QString(),
@@ -302,9 +302,9 @@ bool extractFile(const QString &archivePath, const QString &fileName,
 /// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
 /// @return File contents. They are empty for a file without data, and also on failure. lastError() tells
 ///         which: Error::None for the file without data, Error::FileNotInArchive if the archive was read to
-///         its end without the file, Error::UnsupportedFormat if it is a hard or symbolic link or a special
-///         file, which have no data to extract, Error::SizeLimitExceeded, or Error::InvalidArchive if the
-///         archive cannot be read or is damaged
+///         its end without the file, Error::UnsupportedFormat if it is a directory, a hard or symbolic link
+///         or a special file, which have no data to extract, Error::SizeLimitExceeded, or
+///         Error::InvalidArchive if the archive cannot be read or is damaged
 QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format = Format::Auto,
                            qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
@@ -313,9 +313,9 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return true if all files found and extracted, false otherwise: also if one of them is a hard or symbolic
-///         link or a special file, which is not extracted, or has a name that leaves the output directory.
-///         lastError() tells which, as for extractFile()
+/// @return true if all files found and extracted, false otherwise: also if one of them is a directory, a
+///         hard or symbolic link or a special file, which is not extracted, or has a name that leaves the
+///         output directory. lastError() tells which, as for extractFile()
 bool extractFiles(const QString &archivePath, const QStringList &fileNames,
                   const QString &outputDirectoryPath,
                   Format format = Format::Auto);

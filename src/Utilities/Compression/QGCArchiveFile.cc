@@ -110,7 +110,7 @@ bool QGCArchiveFile::seekToEntry()
                 return true;
             }
 
-            // Read as a file, a link or a special file would look like one that is empty
+            // Read as a file, a directory, a link or a special file would look like one that is empty
             skippedKind = QGClibarchive::skippedEntryKind(entry);
             if (skippedKind != nullptr) {
                 return false;

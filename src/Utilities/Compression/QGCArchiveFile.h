@@ -12,8 +12,8 @@
 /// Supports ZIP, TAR, 7z, and other libarchive-supported formats
 /// Read-only, sequential access only
 /// A truncated or corrupt entry reads as far as it can be decompressed: errorString() tells of it
-/// Only a regular file is read. open() fails for a hard or symbolic link and for a special file (FIFO, device
-/// node, socket), which would read as a file without data.
+/// Only a regular file is read. open() fails for a directory, for a hard or symbolic link and for a special
+/// file (FIFO, device node, socket), which would read as a file without data.
 ///
 /// Example usage:
 /// @code

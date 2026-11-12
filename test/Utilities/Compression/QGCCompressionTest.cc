@@ -1830,7 +1830,8 @@ void QGCCompressionTest::_testExtractFileDataErrors()
                                      {.name = "last.txt", .data = "z"},
                                      {.name = "soft.txt", .type = '2', .linkName = "full.txt"},
                                      {.name = "hard.txt", .type = '1', .linkName = "full.txt"},
-                                     {.name = "pipe", .type = '6'}});
+                                     {.name = "pipe", .type = '6'},
+                                     {.name = "folder/", .type = '5'}});
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("entries.tar");
     QVERIFY(_writeFile(archivePath, tar));
@@ -1879,17 +1880,18 @@ void QGCCompressionTest::_testExtractFileDataErrors()
     verifyExpectedLogMessage();
     QCOMPARE(QGCCompression::lastError(), Error::SizeLimitExceeded);
 
-    // A link has no data of its own and a special file has none: neither is extracted, and neither is
-    // an entry without data
+    // A link has no data of its own, and a special file and a directory have none: none of them is
+    // extracted, and none is an entry without data
     struct SkippedEntry
     {
         const char* name;
         const char* report;
     };
 
-    for (const SkippedEntry& skipped : {SkippedEntry{"soft.txt", "Skipping symlink: soft.txt -> full.txt"},
-                                        SkippedEntry{"hard.txt", "Skipping hard link: hard.txt -> full.txt"},
-                                        SkippedEntry{"pipe", "Skipping FIFO: pipe"}}) {
+    for (const SkippedEntry& skipped :
+         {SkippedEntry{"soft.txt", "Skipping symlink: soft.txt -> full.txt"},
+          SkippedEntry{"hard.txt", "Skipping hard link: hard.txt -> full.txt"},
+          SkippedEntry{"pipe", "Skipping FIFO: pipe"}, SkippedEntry{"folder/", "Skipping directory: folder/"}}) {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(skipped.report));
         QVERIFY(extract(archivePath, skipped.name).isEmpty());
         verifyExpectedLogMessage();
@@ -1932,6 +1934,10 @@ void QGCCompressionTest::_testExtractToFileErrors_data()
         // Asked for by name, the link fails the call. A pattern is left with nothing that matches it.
         addRow("link") << "whole" << "soft.txt" << false << "Skipping symlink: soft.txt"
                        << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
+        // As is the directory, which is not a file without data. A pattern passes over it without a word:
+        // the files in a directory are what makes it.
+        addRow("directory") << "whole" << "folder/" << false << (byName ? "Skipping directory: folder/" : "")
+                            << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
     }
 }
 
@@ -1948,6 +1954,7 @@ void QGCCompressionTest::_testExtractToFileErrors()
     const QByteArray tar = _makeTar({{.name = "empty.txt"},
                                      {.name = "full.txt", .data = QByteArray(600, 'a')},
                                      {.name = "soft.txt", .type = '2', .linkName = "full.txt"},
+                                     {.name = "folder/", .type = '5'},
                                      {.name = "last.txt", .data = "z"}});
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(archive + ".tar");
@@ -1969,7 +1976,9 @@ void QGCCompressionTest::_testExtractToFileErrors()
     }
     bool extracted = false;
     if (api == "extractFile") {
-        extracted = QGCCompression::extractFile(archivePath, entryName, outputDir + QLatin1Char('/') + entryName);
+        // The output is the path of a file, also where the name of the entry is that of a directory
+        const QString fileName = entryName.endsWith(QLatin1Char('/')) ? entryName.chopped(1) : entryName;
+        extracted = QGCCompression::extractFile(archivePath, entryName, outputDir + QLatin1Char('/') + fileName);
     } else if (api == "extractFiles") {
         extracted = QGCCompression::extractFiles(archivePath, {entryName}, outputDir);
     } else {
@@ -2552,7 +2561,8 @@ void QGCCompressionTest::_testArchiveFileLeavesOutLinks()
     source.setData(_makeTar({{.name = "target.txt", .data = "target"},
                              {.name = "soft.txt", .type = '2', .linkName = "target.txt"},
                              {.name = "hard.txt", .type = '1', .linkName = "target.txt"},
-                             {.name = "pipe", .type = '6'}}));
+                             {.name = "pipe", .type = '6'},
+                             {.name = "folder/", .type = '5'}}));
     QVERIFY(source.open(QIODevice::ReadOnly));
 
     // Reading one of these as a file without data would hide what it is. The device does not log: the
@@ -2563,8 +2573,9 @@ void QGCCompressionTest::_testArchiveFileLeavesOutLinks()
         const char* kind;
     };
 
-    for (const SkippedEntry& skipped : {SkippedEntry{"soft.txt", "symbolic link"},
-                                        SkippedEntry{"hard.txt", "hard link"}, SkippedEntry{"pipe", "FIFO"}}) {
+    for (const SkippedEntry& skipped :
+         {SkippedEntry{"soft.txt", "symbolic link"}, SkippedEntry{"hard.txt", "hard link"},
+          SkippedEntry{"pipe", "FIFO"}, SkippedEntry{"folder/", "directory"}}) {
         QVERIFY(source.seek(0));
         QGCArchiveFile file(&source, QString::fromLatin1(skipped.name));
         QVERIFY2(!file.open(QIODevice::ReadOnly), skipped.name);

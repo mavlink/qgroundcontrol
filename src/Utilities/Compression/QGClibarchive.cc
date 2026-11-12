@@ -485,6 +485,19 @@ bool skipSpecialEntry(struct archive_entry* entry)
     return true;
 }
 
+/// Whether an entry that was asked for by name is one that is not extracted, which is then logged
+/// A directory is refused as a link and a special file are: it is not a file without data, which is what
+/// writing it with writeArchiveEntryToFile() or returning its data would make of it. The functions that walk
+/// the archive make the directories of the files they write.
+bool skipNamedEntry(struct archive_entry* entry)
+{
+    if (archive_entry_filetype(entry) == AE_IFDIR) {
+        qCWarning(QGClibarchiveLog) << "Skipping directory:" << archive_entry_pathname(entry);
+        return true;
+    }
+    return skipLinkEntry(entry) || skipSpecialEntry(entry);
+}
+
 /// Write current archive entry data to a file atomically
 /// @param a Archive handle (must have entry header already read)
 /// @param outputPath Output file path (parent directory must exist)
@@ -902,8 +915,8 @@ QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qi
             return {};
     }
 
-    // Neither has data to return, which would make it look like a file that is empty
-    if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
+    // None of them has data to return, which would make it look like a file that is empty
+    if (skipNamedEntry(entry)) {
         result = QGClibarchive::ReadResult::EntrySkipped;
         return {};
     }
@@ -1234,6 +1247,9 @@ QString streamHeaderError(struct archive* a, int headerResult)
 
 const char* skippedEntryKind(struct archive_entry* entry)
 {
+    if (archive_entry_filetype(entry) == AE_IFDIR) {
+        return "directory";
+    }
     if (archive_entry_hardlink(entry) != nullptr) {
         return "hard link";
     }
@@ -1450,7 +1466,7 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
         case NextEntry::Error:
             return false;
     }
-    if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
+    if (skipNamedEntry(entry)) {
         outcome = ReadResult::EntrySkipped;
         return false;
     }
@@ -1522,7 +1538,7 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
         }
 
         // Asked for by name, so an entry that is left out fails the extraction
-        if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
+        if (skipNamedEntry(entry)) {
             outcome = ReadResult::EntrySkipped;
             failed = true;
             return false;
