@@ -19,7 +19,7 @@
         {
             "heading": "NTRIP Server",
             "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
-            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls"],
+            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls", "vehicle"],
             "controls": [
                 {
                     "setting": "ntripSettings.ntripServerHostAddress",
@@ -45,6 +45,9 @@
                 {
                     "setting": "ntripSettings.ntripAllowSelfSignedCerts",
                     "enableWhen": "!ntripActive && QGroundControl.settingsManager.ntripSettings.ntripUseTls.rawValue"
+                },
+                {
+                    "setting": "ntripSettings.ntripRequireVehicle"
                 }
             ]
         },

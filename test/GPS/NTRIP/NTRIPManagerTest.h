@@ -85,4 +85,12 @@ private slots:
     void _failoverDropsAnotherCastersRetryAfter();
     void _failoverStartsAgainFromTheEnteredCaster_data();
     void _failoverStartsAgainFromTheEnteredCaster();
+
+    // Connecting only while a vehicle is connected.
+    void _vehicleGateWaitsForAVehicle();
+    void _vehicleGateHoldsThroughAShortLoss();
+    void _vehicleGateNeedsTheOptionAndTheVehicles_data();
+    void _vehicleGateNeedsTheOptionAndTheVehicles();
+    void _vehicleGateFollowsTheOption();
+    void _vehicleGateWaitsInsteadOfRetrying();
 };

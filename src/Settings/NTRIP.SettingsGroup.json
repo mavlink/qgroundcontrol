@@ -111,6 +111,14 @@
             "type": "bool",
             "default": false,
             "label": "Fall back to saved casters"
+        },
+        {
+            "name": "ntripRequireVehicle",
+            "shortDesc": "Connect only while a vehicle is connected",
+            "longDesc": "Wait with the NTRIP connection until a vehicle is connected, and end it 10 seconds after the last vehicle is gone.",
+            "type": "bool",
+            "default": false,
+            "label": "Connect only with a vehicle"
         }
     ]
 }

@@ -221,6 +221,7 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
     saved.setFactValue(settings->ntripVersion1Casters(), expected.version1Casters);
     saved.setFactValue(settings->ntripFailoverEnabled(), false);
     saved.setFactValue(settings->ntripSavedCasters(), QString());
+    saved.setFactValue(settings->ntripRequireVehicle(), false);
 
     NTRIPManager manager;
     GPSSettingsBindings::bindNtrip(settings, &manager);
@@ -248,6 +249,8 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
     QCOMPARE(backup.connection, expected.connection);
     QVERIFY(settings->removeSavedCaster(backup.name));
     QVERIFY(manager.configuration().savedCasters.isEmpty());
+    settings->ntripRequireVehicle()->setRawValue(true);
+    QVERIFY(manager.configuration().requireVehicle);
 
     // A stored source that names none would report no position at all.
     expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,

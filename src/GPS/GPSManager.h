@@ -6,6 +6,7 @@
 
 class GPSCorrectionManager;
 class GPSReceiver;
+class NTRIPConnectedVehicles;
 class NTRIPManager;
 class NTRIPVehicleGgaSource;
 class PositionManager;
@@ -83,6 +84,7 @@ private:
     PositionManager* const _positionManager;
     GPSReceiver* const _receiver;
     GPSReceiver* const _positionReceiver;
+    NTRIPConnectedVehicles* const _connectedVehicles;
     NTRIPManager* const _ntripManager;
     NTRIPVehicleGgaSource* const _vehicleGga;
     bool _initialized = false;

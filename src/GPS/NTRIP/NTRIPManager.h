@@ -24,6 +24,7 @@
 class GPSCorrectionManager;
 class GPSCorrectionSourceHandle;
 class NTRIPCasterVersions;
+class NTRIPVehiclePresence;
 class QGCNetworkAvailabilityMonitor;
 class RuntimeScheduler;
 
@@ -34,6 +35,8 @@ struct NTRIPManagerDependencies
     GPSCorrectionManager* corrections = nullptr;
     /// Reconnects wait for a network while it reports none.
     QGCNetworkAvailabilityMonitor* network = nullptr;
+    /// With Configuration::requireVehicle, the connection runs only while it reports a vehicle.
+    NTRIPVehiclePresence* vehicles = nullptr;
 };
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
@@ -60,6 +63,12 @@ struct NTRIPManagerDependencies
 ///   saved caster. Every start of the connection begins with the entered caster: Connect, Retry, a change of the
 ///   connection settings, and, while a saved caster is in use, a change of the saved casters or of failover.
 /// - While the caster in use, or the next to be tried, is a saved one, the status message ends with its name.
+///
+/// With Configuration::requireVehicle and a Dependencies::vehicles to ask, the connection runs only while a vehicle
+/// is connected. Without one it opens no transport and waits, in the Reconnecting state, saying so; a vehicle starts
+/// it at once, from the entered caster and with the first retry delay. When the last vehicle is gone, the stream is
+/// kept for VEHICLE_HOLD, so that a link that drops and returns does not restart it, and then ended. Turning the
+/// option on applies like any settings change, without that hold.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -106,6 +115,7 @@ public:
         ReconnectDue,         ///< The reconnect delay elapsed or the network returned.
         ReconnectGaveUp,      ///< The reconnect attempt ceiling was reached.
         HotReconfigure,       ///< Transport-affecting setting changed while connected; reconnect in place.
+        NoVehicle,            ///< The connection may run only with a vehicle, and none is connected.
     };
     Q_ENUM(Event)
 
@@ -130,6 +140,8 @@ public:
         bool failover = false;
         /// In the order failover takes them.
         QList<SavedCaster> savedCasters = {};
+        /// Connect only while a vehicle is connected.
+        bool requireVehicle = false;
         bool operator==(const Configuration&) const = default;
     };
 
@@ -268,6 +280,13 @@ private:
     bool _casterIsLoopback() const;
     void _waitForNetwork();
 
+    /// How long the stream outlasts the last vehicle.
+    static constexpr std::chrono::milliseconds VEHICLE_HOLD{10000};
+
+    bool _shouldWaitForVehicle() const;
+    void _waitForVehicle();
+    void _onVehiclePresenceChanged(bool present);
+
     bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= MAX_RECONNECT_ATTEMPTS; }
 
     void _onGgaSourceChanged();
@@ -285,6 +304,7 @@ private:
     RuntimeScheduler* const _scheduler;
     ScheduledTask _settingsDebounceTask;
     ScheduledTask _reconnectTask;
+    ScheduledTask _vehicleHoldTask;
     NTRIPGgaReporter _ggaReporter;
     NTRIPConnectionStats _stats;
 
@@ -300,6 +320,7 @@ private:
 
     const QPointer<GPSCorrectionManager> _correctionManager;
     const QPointer<QGCNetworkAvailabilityMonitor> _networkMonitor;
+    const QPointer<NTRIPVehiclePresence> _vehicles;
 
     // Latest supplied configuration, and the one the current transport uses.
     Configuration _configuration;
@@ -324,6 +345,7 @@ private:
     /// Failed attempts on the caster in use since it was taken up or last sent corrections.
     int _casterFailures = 0;
     bool _waitingForNetwork = false;
+    bool _waitingForVehicle = false;
     bool _initialized = false;
     bool _shutdown = false;
 };

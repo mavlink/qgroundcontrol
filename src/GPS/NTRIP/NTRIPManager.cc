@@ -12,6 +12,7 @@
 #include "NTRIPError.h"
 #include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
+#include "NTRIPVehiclePresence.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkAvailabilityMonitor.h"
 #include "RuntimeScheduler.h"
@@ -69,11 +70,13 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _settingsDebounceTask(_scheduler, this)
     , _reconnectTask(_scheduler, this)
+    , _vehicleHoldTask(_scheduler, this)
     , _ggaReporter(this, _scheduler)
     // The display agrees with routing, which stops using a stream after the same age.
     , _stats(GPSCorrectionSelector::FRESHNESS_TIMEOUT, this, _scheduler)
     , _correctionManager(dependencies.corrections)
     , _networkMonitor(dependencies.network)
+    , _vehicles(dependencies.vehicles)
     , _casterVersions(std::make_shared<NTRIPCasterVersions>())
     , _sourceTableController(this, _scheduler, _casterVersions)
 {
@@ -94,6 +97,9 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
             _dispatch(Event::ReconnectDue);
             _publish();
         });
+    }
+    if (_vehicles) {
+        connect(_vehicles, &NTRIPVehiclePresence::presentChanged, this, &NTRIPManager::_onVehiclePresenceChanged);
     }
 }
 
@@ -146,6 +152,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     const bool castersChanged = configuration.version1Casters != _configuration.version1Casters;
     const bool failoverChanged =
         configuration.failover != _configuration.failover || configuration.savedCasters != _configuration.savedCasters;
+    const bool vehicleGateChanged = configuration.requireVehicle != _configuration.requireVehicle;
     const bool couldConnect = canConnect();
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
@@ -158,7 +165,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
         _ggaReporter.configure(configuration.gga);
     }
     // The saved caster in use may have changed or gone, so the connection starts again from the entered one.
-    if (_initialized && (streamChanged || (failoverChanged && _savedCaster))) {
+    if (_initialized && (streamChanged || vehicleGateChanged || (failoverChanged && _savedCaster))) {
         _settingsDebounceTask.schedule(SETTINGS_DEBOUNCE, [this]() { _applyConfiguration(); });
     }
     if (pinForgotten) {
@@ -238,7 +245,7 @@ void NTRIPManager::_start()
     _cancelReconnect();
     _reconnectBackoff.reset();
     _useEnteredCaster();
-    _dispatch(Event::StartRequested);
+    _dispatch(_shouldWaitForVehicle() ? Event::NoVehicle : Event::StartRequested);
     _publish();
 }
 
@@ -313,6 +320,13 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
         // Error: user-visible fault. User retry or stop both resolve it.
         {CS::Error, Event::StartRequested, CS::Connecting},
         {CS::Error, Event::StopRequested, CS::Disconnected},
+
+        // No vehicle: the connection stays on and waits in Reconnecting, from wherever it was.
+        {CS::Disconnected, Event::NoVehicle, CS::Reconnecting},
+        {CS::Error, Event::NoVehicle, CS::Reconnecting},
+        {CS::Connecting, Event::NoVehicle, CS::Reconnecting},
+        {CS::Connected, Event::NoVehicle, CS::Reconnecting},
+        {CS::Reconnecting, Event::NoVehicle, CS::Reconnecting},
     };
 
     for (const auto& row : kTransitions) {
@@ -385,6 +399,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds 
         case ConnectionStatus::Disconnected:
         case ConnectionStatus::Error:
             _cancelReconnect();
+            _vehicleHoldTask.cancel();
             _stopStreaming();
             _running = {};
             _useEnteredCaster();
@@ -430,6 +445,10 @@ void NTRIPManager::_stopStreaming()
 
 void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
 {
+    if (_shouldWaitForVehicle()) {
+        _waitForVehicle();
+        return;
+    }
     if (_shouldWaitForNetwork()) {
         _waitForNetwork();
         return;
@@ -443,7 +462,9 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
     const ExponentialBackoff beforeAttempt = _reconnectBackoff;
     const auto backoff = _reconnectBackoff.next(retryAfter);
     _reconnectTask.schedule(backoff, [this, beforeAttempt]() {
-        if (_shouldWaitForNetwork()) {
+        if (_shouldWaitForVehicle()) {
+            _waitForVehicle();
+        } else if (_shouldWaitForNetwork()) {
             // The attempt never ran, so the next one keeps its delay.
             _reconnectBackoff = beforeAttempt;
             _waitForNetwork();
@@ -458,6 +479,50 @@ void NTRIPManager::_cancelReconnect()
 {
     _reconnectTask.cancel();
     _waitingForNetwork = false;
+    _waitingForVehicle = false;
+}
+
+bool NTRIPManager::_shouldWaitForVehicle() const
+{
+    return _configuration.requireVehicle && _vehicles && !_vehicles->present();
+}
+
+void NTRIPManager::_waitForVehicle()
+{
+    // A reconnect that was due is not: the next vehicle starts the connection anew, from the entered caster.
+    _reconnectTask.cancel();
+    _waitingForNetwork = false;
+    _waitingForVehicle = true;
+    _reconnectBackoff.reset();
+    _useEnteredCaster();
+    _statusMessage = tr("Waiting for a vehicle");
+}
+
+void NTRIPManager::_onVehiclePresenceChanged(bool present)
+{
+    if (_shutdown) {
+        return;
+    }
+    if (present) {
+        _vehicleHoldTask.cancel();
+        if (_connectionStatus == ConnectionStatus::Reconnecting && _waitingForVehicle) {
+            _waitingForVehicle = false;
+            _dispatch(Event::ReconnectDue);
+            _publish();
+        }
+        return;
+    }
+    if (!_configuration.requireVehicle || _connectionStatus == ConnectionStatus::Disconnected ||
+        _connectionStatus == ConnectionStatus::Error) {
+        return;
+    }
+    // A link that drops and returns within the hold leaves the stream as it is.
+    _vehicleHoldTask.schedule(VEHICLE_HOLD, [this]() {
+        if (_shouldWaitForVehicle() && !_waitingForVehicle) {
+            _dispatch(Event::NoVehicle);
+            _publish();
+        }
+    });
 }
 
 bool NTRIPManager::_shouldWaitForNetwork() const
@@ -719,6 +784,9 @@ void NTRIPManager::_applyConfiguration()
         // Disconnected / Error / Reconnecting: start fresh. The connecting
         // path re-reads settings, so the new values take effect there.
         _start();
+    } else if (_shouldWaitForVehicle()) {
+        // The option was turned on with no vehicle connected.
+        _dispatch(Event::NoVehicle);
     } else if (_savedCaster || newConfig.connection != _running.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";
         _useEnteredCaster();

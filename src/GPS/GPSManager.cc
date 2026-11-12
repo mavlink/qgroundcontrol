@@ -13,6 +13,7 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
 #include "LinkManager.h"
+#include "NTRIPConnectedVehicles.h"
 #include "NTRIPGgaReporter.h"
 #include "NTRIPManager.h"
 #include "NTRIPVehicleGgaSource.h"
@@ -105,8 +106,11 @@ GPSManager::GPSManager(QObject* parent, RuntimeScheduler* scheduler, SerialPortM
           receiverDependencies(_corrections, _positionManager, serialPorts,
                                [this](const QString& device) { return _positionReceiverUses(device); })))
     , _positionReceiver(new GPSReceiver(this, _scheduler, positionReceiverDependencies(_positionManager, serialPorts)))
+    , _connectedVehicles(new NTRIPConnectedVehicles(this))
     , _ntripManager(new NTRIPManager(this, _scheduler,
-                                     {.corrections = _corrections, .network = new QGCNetworkAvailabilityMonitor(this)}))
+                                     {.corrections = _corrections,
+                                      .network = new QGCNetworkAvailabilityMonitor(this),
+                                      .vehicles = _connectedVehicles}))
     , _vehicleGga(new NTRIPVehicleGgaSource(_scheduler, this))
 {
     qCDebug(GPSManagerLog) << this;
@@ -165,6 +169,7 @@ void GPSManager::init()
     GPSSettingsBindings::bindReceiver(settings->rtkSettings(), _receiver);
     GPSSettingsBindings::bindPositionReceiver(settings->positionReceiverSettings(), _positionReceiver);
     GPSSettingsBindings::bindCorrections(settings->gpsCorrectionSettings(), _corrections);
+    _connectedVehicles->attach();
     GPSSettingsBindings::bindNtrip(settings->ntripSettings(), _ntripManager);
     _ntripManager->init();
     const auto suspended = [] { return LinkManager::instance()->connectionsSuspended(); };

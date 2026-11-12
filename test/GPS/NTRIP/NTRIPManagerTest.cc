@@ -15,6 +15,7 @@
 #include "NTRIP/Support/NTRIPTestHelpers.h"
 #include "NTRIP/Support/ScriptedNTRIPCaster.h"
 #include "NTRIPManager.h"
+#include "NTRIPVehiclePresence.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCNetworkAvailabilityMonitor.h"
 #include "RTCMFramer.h"
@@ -68,6 +69,25 @@ NTRIPManager::Configuration failoverConfiguration(const QList<NTRIPManager::Save
     NTRIPManager::Configuration configuration = mockCasterConfiguration();
     configuration.failover = true;
     configuration.savedCasters = casters;
+    return configuration;
+}
+
+class FakeVehicles : public NTRIPVehiclePresence
+{
+public:
+    explicit FakeVehicles(bool connected) { _setPresent(connected); }
+
+    void setConnected(bool connected) { _setPresent(connected); }
+};
+
+const QString kWaitingForVehicle = QStringLiteral("Waiting for a vehicle");
+constexpr std::chrono::seconds VehicleHold{10};
+
+/// mockCasterConfiguration() for a connection that runs only while a vehicle is connected.
+NTRIPManager::Configuration vehicleGateConfiguration()
+{
+    NTRIPManager::Configuration configuration = mockCasterConfiguration();
+    configuration.requireVehicle = true;
     return configuration;
 }
 
@@ -1445,6 +1465,145 @@ void NTRIPManagerTest::_failoverStartsAgainFromTheEnteredCaster()
     QCOMPARE(attempts.hosts.last(), entered);
     QCOMPARE(manager.connectionStatus(), Status::Connected);
     QVERIFY(!manager.statusMessage().contains(QStringLiteral("saved caster")));
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_vehicleGateWaitsForAVehicle()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ManualScheduler scheduler;
+    FakeVehicles vehicles(false);
+    NTRIPManager manager(nullptr, &scheduler, {.vehicles = &vehicles});
+    Attempts attempts(manager, true);
+    initialize(manager, vehicleGateConfiguration());
+
+    // The connection is on and says what it waits for; it can be stopped like a reconnect that is due.
+    QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+    QCOMPARE(manager.statusMessage(), kWaitingForVehicle);
+    QVERIFY(scheduler.advanceBy(std::chrono::minutes(10)));
+    QVERIFY(attempts.hosts.isEmpty());
+
+    vehicles.setConnected(true);
+    QCOMPARE(attempts.hosts.size(), 1);
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_vehicleGateHoldsThroughAShortLoss()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ManualScheduler scheduler;
+    FakeVehicles vehicles(true);
+    NTRIPManager manager(nullptr, &scheduler, {.vehicles = &vehicles});
+    Attempts attempts(manager, true);
+    initialize(manager, vehicleGateConfiguration());
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    const QPointer<MockNTRIPTransport> stream = attempts.latest;
+
+    // A link that drops and comes back does not restart the stream.
+    vehicles.setConnected(false);
+    QVERIFY(scheduler.advanceBy(VehicleHold - std::chrono::milliseconds(1)));
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    vehicles.setConnected(true);
+    QVERIFY(scheduler.advanceBy(std::chrono::minutes(1)));
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    QCOMPARE(stream->stopCount, 0);
+    QCOMPARE(attempts.hosts.size(), 1);
+
+    // Without a vehicle for the whole hold, counted from when the last one left, the stream ends.
+    vehicles.setConnected(false);
+    QVERIFY(scheduler.advanceBy(VehicleHold - std::chrono::milliseconds(1)));
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+    QCOMPARE(manager.statusMessage(), kWaitingForVehicle);
+    QVERIFY(!stream || stream->stopCount == 1);
+    QVERIFY(scheduler.advanceBy(std::chrono::minutes(10)));
+    QCOMPARE(attempts.hosts.size(), 1);
+
+    vehicles.setConnected(true);
+    QCOMPARE(attempts.hosts.size(), 2);
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_vehicleGateNeedsTheOptionAndTheVehicles_data()
+{
+    QTest::addColumn<bool>("option");
+    QTest::addColumn<bool>("vehiclesKnown");
+    QTest::newRow("option-off") << false << true;
+    // An application that does not say whether a vehicle is connected cannot be waited on.
+    QTest::newRow("vehicles-unknown") << true << false;
+}
+
+void NTRIPManagerTest::_vehicleGateNeedsTheOptionAndTheVehicles()
+{
+    QFETCH(bool, option);
+    QFETCH(bool, vehiclesKnown);
+    ManualScheduler scheduler;
+    FakeVehicles vehicles(false);
+    NTRIPManager manager(nullptr, &scheduler, {.vehicles = vehiclesKnown ? &vehicles : nullptr});
+    Attempts attempts(manager, true);
+    auto configuration = vehicleGateConfiguration();
+    configuration.requireVehicle = option;
+    initialize(manager, configuration);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    QCOMPARE(attempts.hosts.size(), 1);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_vehicleGateFollowsTheOption()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ManualScheduler scheduler;
+    FakeVehicles vehicles(false);
+    NTRIPManager manager(nullptr, &scheduler, {.vehicles = &vehicles});
+    Attempts attempts(manager, true);
+    auto configuration = mockCasterConfiguration();
+    initialize(manager, configuration);
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+
+    // Turned on without a vehicle, it ends the stream as any settings change does: the hold is for a lost link.
+    configuration.requireVehicle = true;
+    manager.setConfiguration(configuration);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+    QCOMPARE(manager.statusMessage(), kWaitingForVehicle);
+    QCOMPARE(attempts.hosts.size(), 1);
+
+    configuration.requireVehicle = false;
+    manager.setConfiguration(configuration);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    QCOMPARE(attempts.hosts.size(), 2);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_vehicleGateWaitsInsteadOfRetrying()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ManualScheduler scheduler;
+    FakeVehicles vehicles(true);
+    NTRIPManager manager(nullptr, &scheduler, {.vehicles = &vehicles});
+    Attempts attempts(manager);
+    initialize(manager, vehicleGateConfiguration());
+    _fail(attempts.latest, QStringLiteral("unreachable"));
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(attempts.hosts.size(), 2);
+
+    // A connection that fails while no vehicle is connected is not opened again for none.
+    vehicles.setConnected(false);
+    _fail(attempts.latest, QStringLiteral("unreachable"));
+    QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+    QCOMPARE(manager.statusMessage(), kWaitingForVehicle);
+    QVERIFY(scheduler.advanceBy(std::chrono::minutes(10)));
+    QCOMPARE(attempts.hosts.size(), 2);
+
+    // The next vehicle starts the connection anew, with the first delay after a failure.
+    vehicles.setConnected(true);
+    QCOMPARE(attempts.hosts.size(), 3);
+    _fail(attempts.latest, QStringLiteral("unreachable"));
+    QVERIFY(manager.statusMessage().contains(QStringLiteral("in 1s: unreachable")));
     manager.shutdown();
 }
 

@@ -10,6 +10,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCNTRIPHttp)
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        NTRIPConnectedVehicles.cc
+        NTRIPConnectedVehicles.h
         NTRIPConnectionStats.cc
         NTRIPConnectionStats.h
         NTRIPGgaReporter.cc
@@ -23,6 +25,7 @@ target_sources(
         NTRIPSourceTableController.cc
         NTRIPSourceTableController.h
         NTRIPTransport.h
+        NTRIPVehiclePresence.h
         NTRIPVehicleGgaSource.cc
         NTRIPVehicleGgaSource.h
 )
