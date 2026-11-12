@@ -478,42 +478,31 @@ void QGCCompressionTest::_testFormatParameter()
 // ============================================================================
 // Archive Extraction Tests (from Qt resources)
 // ============================================================================
-void QGCCompressionTest::_testZipFromResource()
+void QGCCompressionTest::_testExtractFromResource_data()
 {
-    QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputPath = tempDir.path() + "/resource_output";
-    QVERIFY2(QGCCompression::extractArchive(zipResource, outputPath), "Failed to extract ZIP from Qt resource");
-    QVERIFY2(QDir(outputPath).exists(), "Output directory not created");
-    QDir outputDir(outputPath);
-    QStringList files = outputDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
-    QVERIFY2(!files.isEmpty(), "No files extracted from ZIP");
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<QGCCompression::Format>("format");
+
+    using QGCCompression::Format;
+    const QString zip = QStringLiteral(":/unittest/manifest.json.zip");
+
+    QTest::newRow("ZIP") << "extractArchive" << zip << Format::Auto;
+    QTest::newRow("7z") << "extractArchive" << QStringLiteral(":/unittest/manifest.json.7z") << Format::SEVENZ;
+    QTest::newRow("ZIP, atomically") << "extractArchiveAtomic" << zip << Format::Auto;
 }
 
-void QGCCompressionTest::_test7zFromResource()
+void QGCCompressionTest::_testExtractFromResource()
 {
-    QTemporaryDir tempDir;
-    const QString archiveResource = QStringLiteral(":/unittest/manifest.json.7z");
-    const QString outputPath = tempDir.path() + "/7z_output";
-    QVERIFY2(QGCCompression::extractArchive(archiveResource, outputPath, QGCCompression::Format::SEVENZ),
-             "Failed to extract 7z from Qt resource");
-    QVERIFY2(QDir(outputPath).exists(), "Output directory not created");
-    QDir outputDir(outputPath);
-    QStringList files = outputDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
-    QVERIFY2(!files.isEmpty(), "No files extracted from 7z");
-    QVERIFY2(QFile::exists(outputPath + "/manifest.json"), "manifest.json not extracted");
-}
+    QFETCH(QString, api);
+    QFETCH(QString, resource);
+    QFETCH(QGCCompression::Format, format);
 
-void QGCCompressionTest::_testExtractArchiveAtomic()
-{
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputPath = tempDir.path() + "/atomic_output";
-
-    QVERIFY2(QGCCompression::extractArchiveAtomic(zipResource, outputPath),
-             "Failed to atomically extract ZIP from Qt resource");
-    QVERIFY2(QDir(outputPath).exists(), "Output directory not created");
-    QVERIFY2(QFile::exists(outputPath + "/manifest.json"), "manifest.json not extracted");
+    const QString outputPath = tempDir.filePath("output");
+    const QGCCompression::Outcome outcome = _call(api, {.path = resource, .output = outputPath, .format = format});
+    QVERIFY2(outcome, qPrintable(outcome.message));
+    QCOMPARE(_entriesBelow(outputPath), QStringList{QStringLiteral("manifest.json")});
 }
 
 void QGCCompressionTest::_testExtractArchiveAtomicReplacesExistingDirectory()
@@ -3994,45 +3983,41 @@ void QGCCompressionTest::_testUnicodePaths()
 // ============================================================================
 // Benchmarks
 // ============================================================================
-void QGCCompressionTest::_benchmarkExtractZip()
+void QGCCompressionTest::_benchmarkExtract_data()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
+    QTest::addColumn<QString>("resource");
+
+    QTest::newRow("ZIP") << QStringLiteral(":/unittest/manifest.json.zip");
+    QTest::newRow("7z") << QStringLiteral(":/unittest/manifest.json.7z");
+}
+
+void QGCCompressionTest::_benchmarkExtract()
+{
+    QFETCH(QString, resource);
+
     int iteration = 0;
     QBENCHMARK
     {
         QTemporaryDir tempDir;
-        const QString outputDir = tempDir.path() + QString("/bench_zip_%1").arg(iteration++);
-        (void) QGCCompression::extractArchive(zipResource, outputDir);
+        const QString outputDir = tempDir.path() + QString("/bench_%1").arg(iteration++);
+        (void) QGCCompression::extractArchive(resource, outputDir);
     }
 }
 
-void QGCCompressionTest::_benchmarkExtract7z()
+void QGCCompressionTest::_benchmarkDecompress_data()
 {
-    const QString archive = QStringLiteral(":/unittest/manifest.json.7z");
-    int iteration = 0;
-    QBENCHMARK
-    {
-        QTemporaryDir tempDir;
-        const QString outputDir = tempDir.path() + QString("/bench_7z_%1").arg(iteration++);
-        (void) QGCCompression::extractArchive(archive, outputDir);
-    }
+    QTest::addColumn<QString>("resource");
+
+    QTest::newRow("gzip") << QStringLiteral(":/unittest/manifest.json.gz");
+    QTest::newRow("xz") << QStringLiteral(":/unittest/manifest.json.xz");
 }
 
-void QGCCompressionTest::_benchmarkDecompressGzip()
+void QGCCompressionTest::_benchmarkDecompress()
 {
+    QFETCH(QString, resource);
+
     // Load compressed data once
-    const QByteArray compressedData = TestFixtures::readFile(":/unittest/manifest.json.gz");
-    QByteArray decompressed;
-    QBENCHMARK
-    {
-        (void) QGCCompression::decompressData(compressedData, decompressed);
-    }
-}
-
-void QGCCompressionTest::_benchmarkDecompressXz()
-{
-    // Load compressed data once
-    const QByteArray compressedData = TestFixtures::readFile(":/unittest/manifest.json.xz");
+    const QByteArray compressedData = TestFixtures::readFile(resource);
     QByteArray decompressed;
     QBENCHMARK
     {

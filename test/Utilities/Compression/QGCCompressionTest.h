@@ -21,9 +21,8 @@ private slots:
     void _testFormatParameter();
 
     // Archive extraction from Qt resources
-    void _testZipFromResource();
-    void _test7zFromResource();
-    void _testExtractArchiveAtomic();
+    void _testExtractFromResource_data();
+    void _testExtractFromResource();
     void _testExtractArchiveAtomicReplacesExistingDirectory();
     void _testExtractArchiveAtomicFailureKeepsExistingDirectory();
     void _testListArchive();
@@ -152,10 +151,10 @@ private slots:
     void _testUnicodePaths();
 
     // Benchmarks (run with --benchmark flag)
-    void _benchmarkExtractZip();
-    void _benchmarkExtract7z();
-    void _benchmarkDecompressGzip();
-    void _benchmarkDecompressXz();
+    void _benchmarkExtract_data();
+    void _benchmarkExtract();
+    void _benchmarkDecompress_data();
+    void _benchmarkDecompress();
     void _benchmarkConcurrentExtraction();
     void _benchmarkListArchive();
 
