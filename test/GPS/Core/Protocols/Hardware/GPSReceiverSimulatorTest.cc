@@ -177,6 +177,43 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
     }
 }
 
+void GPSReceiverSimulatorTest::_refusesUnknownConfiguration_data()
+{
+    using Receiver = UBXReceiverModel::Receiver;
+    QTest::addColumn<Receiver>("receiver");
+    QTest::addColumn<QByteArray>("command");
+    QTest::addColumn<QByteArray>("answer");
+    QTest::addColumn<bool>("driverMaySend");
+    // A receiver that is configured with CFG-VALSET does not take the port configuration of the receivers before
+    // it. It says so with an ACK-NAK that names the message, as a receiver answers every CFG message.
+    QTest::newRow("f9p-port-configuration") << Receiver::F9P << QByteArray::fromHex("b562060000000618")
+                                            << QByteArray::fromHex("b5620500020006000d32") << false;
+    QTest::newRow("f9p-unknown-message") << Receiver::F9P << QByteArray::fromHex("b56206ff00000515")
+                                         << QByteArray::fromHex("b5620500020006ff0c31") << false;
+    // What the older receiver answers to the configuration message of the newer one.
+    QTest::newRow("m8p-valset") << Receiver::M8PBase << QByteArray::fromHex("b562068a0400000100009511")
+                                << QByteArray::fromHex("b56205000200068a97bc") << true;
+}
+
+void GPSReceiverSimulatorTest::_refusesUnknownConfiguration()
+{
+    QFETCH(UBXReceiverModel::Receiver, receiver);
+    QFETCH(QByteArray, command);
+    QFETCH(QByteArray, answer);
+    QFETCH(bool, driverMaySend);
+    GPSReceiverSimulator simulator(
+        {.capture = {}, .captureBaudRate = 0, .receiver = receiver, .secondLength = SECOND_LENGTH});
+    QVERIFY2(simulator.listen(0), qPrintable(simulator.errorString()));
+    QTcpSocket client;
+    client.connectToHost(QHostAddress(QHostAddress::LocalHost), simulator.port());
+    QTRY_COMPARE_WITH_TIMEOUT(client.state(), QAbstractSocket::ConnectedState, TestTimeout::mediumMs());
+    QCOMPARE(client.write(command), command.size());
+    QTRY_COMPARE_WITH_TIMEOUT(client.bytesAvailable(), answer.size(), TestTimeout::mediumMs());
+    QCOMPARE(client.readAll().toHex(), answer.toHex());
+    // The answer does not make the message one the driver may send to that receiver.
+    QCOMPARE(simulator.wireValid(), driverMaySend);
+}
+
 void GPSReceiverSimulatorTest::_playsCaptureToEachClient_data()
 {
     QTest::addColumn<QByteArray>("capture");

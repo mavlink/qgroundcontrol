@@ -101,6 +101,9 @@ public:
 
     GPSTestClock& clock() const { return *_clock; }
 
+    /// False once the host sent what a driver must not send to this receiver: bytes that are no frame, or a message
+    /// the receiver does not take. A CFG message of that kind gets the ACK-NAK a receiver answers it with; the write
+    /// of any other fails.
     bool wireValid = true;
     bool corruptVersionReplies = false;
     /// The reply to CFG-SEC-JAMDET arrives late: after the host's timeout, ahead of the next reply.

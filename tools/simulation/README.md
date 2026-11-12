@@ -228,7 +228,8 @@ In QGC, open **Application Settings → GNSS Receiver**, set **Receiver connecti
   from its start, the connection closes at its end, and nothing QGC sends is answered.
 
 **Limitations:** One connection at a time. The u-blox receiver is a test model, not firmware: its
-MSM messages name no satellites, so a vehicle gets no RTK fix from them, and it has no faults. The
+MSM messages name no satellites, so a vehicle gets no RTK fix from them, and it has no faults. It
+takes the configuration messages QGC sends and answers any other CFG message with ACK-NAK. The
 other receiver families can only be replayed from a recording.
 
 | Option | Default | Description |

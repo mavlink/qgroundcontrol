@@ -465,7 +465,12 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
     }
     if (message != UBX::Msg::CFG_VALSET.value() || payload.size() < 4) {
         wireValid = false;
-        return false;
+        if (!configuration) {
+            return false;
+        }
+        // A receiver answers every CFG message, and one it does not accept with ACK-NAK.
+        _queueAck(receiver, static_cast<uint8_t>(message >> 8), false);
+        return true;
     }
     return _handleValset(receiver, message, payload);
 }
