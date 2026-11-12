@@ -1731,15 +1731,6 @@ bool validateArchive(const QString& archivePath)
     return walk == EntryWalk::Completed;
 }
 
-bool fileExistsInArchive(const QString& archivePath, const QString& fileName)
-{
-    if (fileName.isEmpty()) {
-        return false;
-    }
-
-    return findEntryInArchive(archivePath, fileName) == NextEntry::Found;
-}
-
 NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName)
 {
     ArchiveReader reader;

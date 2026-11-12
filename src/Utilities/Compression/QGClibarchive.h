@@ -142,10 +142,6 @@ public:
     /// Get the underlying archive handle
     struct archive* handle() const { return _archive.get(); }
 
-    /// Release ownership of archive handle (caller must free)
-    /// @note The handle keeps reading through this object, which has to outlive it
-    struct archive* release() { return _archive.release(); }
-
     /// Check if archive is open
     bool isOpen() const { return _archive != nullptr; }
 
@@ -370,15 +366,8 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
 /// @return true if archive is valid
 bool validateArchive(const QString &archivePath);
 
-/// Check if a file exists in an archive without extracting
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param fileName Name of file to check for
-/// @return true if file exists in archive
-bool fileExistsInArchive(const QString &archivePath, const QString &fileName);
-
 /// Look for an entry in an archive without extracting it
-/// Unlike fileExistsInArchive(), this tells an archive that does not have the entry from one that could
-/// not be searched.
+/// The result tells an archive that does not have the entry from one that could not be searched.
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of the entry to look for
 /// @return Found, End if the archive was read to its end without the entry, or Error (after a warning) if
