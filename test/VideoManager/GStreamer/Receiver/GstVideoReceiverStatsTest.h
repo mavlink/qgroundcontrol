@@ -12,6 +12,7 @@ private slots:
     void _testStatsMeasureStream_data();
     void _testStatsMeasureStream();
     void _testStatsCountFramesTooLateToDisplay();
+    void _testStatsCountFramesTheDisplayQueueLeaks();
     void _testStatsCountLostPacketsWithoutJitterBuffer();
 #endif
 };

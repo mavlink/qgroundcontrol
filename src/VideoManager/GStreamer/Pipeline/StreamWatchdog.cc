@@ -44,6 +44,11 @@ bool StreamWatchdog::noteSinkFrame(qint64 nowMs)
     return !_sinkFrameSeen.exchange(true, std::memory_order_relaxed);
 }
 
+void StreamWatchdog::noteFrameWithheld(qint64 nowMs)
+{
+    _lastSinkFrameMs.store(nowMs, std::memory_order_relaxed);
+}
+
 void StreamWatchdog::startSinkClock(qint64 nowMs)
 {
     _lastSinkFrameMs.store(nowMs, std::memory_order_relaxed);

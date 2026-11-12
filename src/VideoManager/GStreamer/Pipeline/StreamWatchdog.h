@@ -39,6 +39,10 @@ public:
     /// Returns true for the first sink frame since startSinkClock().
     bool noteSinkFrame(qint64 nowMs);
 
+    /// A frame is kept from the decoder at @p nowMs, as by the display's keyframe gate: the decoder owes no frame for
+    /// it, so its silence counts from here.
+    void noteFrameWithheld(qint64 nowMs);
+
     /// A decoder starts displaying at @p nowMs: its silence counts from here until the first sink frame.
     void startSinkClock(qint64 nowMs);
 

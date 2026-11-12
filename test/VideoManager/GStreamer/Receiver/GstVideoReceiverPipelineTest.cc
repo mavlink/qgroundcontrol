@@ -2,8 +2,11 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <algorithm>
 #include <atomic>
 #include <gst/base/gstbasesink.h>
+#include <memory>
+#include <utility>
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
@@ -116,6 +119,113 @@ public:
 private:
     const bool _registered;
 };
+
+/// What the display queue is given once armed: a stream without keyframes, and without a mark that is not the
+/// scenario's, in which the queue overran once. The overrun leaked a frame if so set, and upstream lost one a few
+/// buffers later if so set.
+struct DisplayQueueScenario
+{
+    bool leak = false;
+    bool upstreamLoss = false;
+    std::atomic<bool> armed = false;
+    // Set once the queue has been given all of the above.
+    std::atomic<bool> played = false;
+    // Set by the first buffer the keyframe gate lets through.
+    std::atomic<bool> gateOpen = false;
+    // The longest stretch of the armed stream that the gate kept from the decoder.
+    std::atomic<GstClockTime> longestGap = 0;
+    // Each is used by one streaming thread only.
+    int buffersSinceOverrun = -1;
+    GstClockTime lastGatedPts = GST_CLOCK_TIME_NONE;
+};
+
+GstPadProbeReturn displayQueueScenarioProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    DisplayQueueScenario& scenario = **static_cast<std::shared_ptr<DisplayQueueScenario>*>(data);
+    if (!scenario.armed.load()) {
+        return GST_PAD_PROBE_OK;
+    }
+    // The tee shares its buffer with the recording branch.
+    GstBuffer* const buffer = gst_buffer_make_writable(GST_PAD_PROBE_INFO_BUFFER(info));
+    GST_PAD_PROBE_INFO_DATA(info) = buffer;
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+    // Upstream marks the buffer after a packet that a loaded host lost, or had too late.
+    GST_BUFFER_FLAG_UNSET(buffer, GST_BUFFER_FLAG_DISCONT);
+    if (scenario.played.load()) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    if (scenario.buffersSinceOverrun >= 0) {
+        // As upstream marks the buffer after a loss ahead of the tee.
+        constexpr int kBuffersToUpstreamLoss = 3;
+        if (++scenario.buffersSinceOverrun == kBuffersToUpstreamLoss) {
+            GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
+            scenario.played.store(true);
+        }
+        return GST_PAD_PROBE_OK;
+    }
+
+    // The gate sees the buffer after an overrun next, as it does this one once the queue holds no other.
+    const GStreamer::GstElementPtr queue = GStreamer::adoptElement(gst_pad_get_parent_element(pad));
+    guint queued = 0;
+    g_object_get(queue.get(), "current-level-buffers", &queued, nullptr);
+    if (queued > 0) {
+        return GST_PAD_PROBE_OK;
+    }
+    g_signal_emit_by_name(queue.get(), "overrun");
+    // The mark a leak leaves on the buffer after it.
+    if (scenario.leak) {
+        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
+    }
+    scenario.buffersSinceOverrun = 0;
+    scenario.played.store(!scenario.upstreamLoss);
+    return GST_PAD_PROBE_OK;
+}
+
+/// Sees the buffers the keyframe gate lets through.
+GstPadProbeReturn gatedStreamProbe([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    DisplayQueueScenario& scenario = **static_cast<std::shared_ptr<DisplayQueueScenario>*>(data);
+    scenario.gateOpen.store(true);
+    const GstClockTime pts = GST_BUFFER_PTS(GST_PAD_PROBE_INFO_BUFFER(info));
+    if (!GST_CLOCK_TIME_IS_VALID(pts)) {
+        return GST_PAD_PROBE_OK;
+    }
+    if (scenario.armed.load() && GST_CLOCK_TIME_IS_VALID(scenario.lastGatedPts) && (pts > scenario.lastGatedPts)) {
+        scenario.longestGap.store(std::max(scenario.longestGap.load(), pts - scenario.lastGatedPts));
+    }
+    scenario.lastGatedPts = pts;
+    return GST_PAD_PROBE_OK;
+}
+
+/// Has @p receiver's display queue take its input through @p scenario, which alone decides what the keyframe gate
+/// sees from here on: the queue itself no longer overruns or leaks, however slowly this host decodes, and a gate
+/// that a frame leaked while the decoder started had closed is open again.
+bool stageDisplayQueue(GstVideoReceiver* receiver, const std::shared_ptr<DisplayQueueScenario>& scenario)
+{
+    const auto addProbe = [&scenario](GstPad* pad, GstPadProbeCallback probe) {
+        return pad && gst_pad_add_probe(
+                          pad, GST_PAD_PROBE_TYPE_BUFFER, probe, new std::shared_ptr<DisplayQueueScenario>(scenario),
+                          [](gpointer data) { delete static_cast<std::shared_ptr<DisplayQueueScenario>*>(data); });
+    };
+    bool staged = false;
+    (void) GstVideoReceiverTestBase::runOnPipeline(receiver, [&staged, &addProbe](GstElement* pipeline) {
+        for (const GStreamer::GstElementPtr& element : GstTest::childElements(GST_BIN(pipeline))) {
+            GstElementFactory* const factory = gst_element_get_factory(element.get());
+            if (!factory || (g_strcmp0(GST_OBJECT_NAME(factory), "queue") != 0) ||
+                (GStreamer::branchOf(GST_OBJECT(element.get())) != GStreamer::PipelineBranch::Decoding)) {
+                continue;
+            }
+            g_object_set(element.get(), "max-size-buffers", 0U, nullptr);
+            const GStreamer::GstPadPtr sink = GStreamer::adoptPad(gst_element_get_static_pad(element.get(), "sink"));
+            const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(element.get(), "src"));
+            // The gate is a probe on the queue's source pad, so its peer sees what the gate let through.
+            const GStreamer::GstPadPtr gated = GStreamer::adoptPad(src ? gst_pad_get_peer(src.get()) : nullptr);
+            staged = addProbe(sink.get(), displayQueueScenarioProbe) && addProbe(gated.get(), gatedStreamProbe);
+        }
+    });
+    return staged && QTest::qWaitFor([&scenario]() { return scenario->gateOpen.load(); }, TestTimeout::mediumMs());
+}
 
 }  // namespace
 
@@ -477,6 +587,53 @@ void GstVideoReceiverPipelineTest::_testFailedDecoderLeavesAutoplugOnlyForAnothe
         GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
     QVERIFY(stub);
     QCOMPARE(gst_plugin_feature_get_rank(stub.get()), guint(demoted ? GST_RANK_NONE : GST_RANK_PRIMARY + 100));
+}
+
+void GstVideoReceiverPipelineTest::_testOverrunWithoutLeakLeavesKeyframeGateOpen()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    const auto scenario = std::make_shared<DisplayQueueScenario>();
+    scenario->upstreamLoss = true;
+    QVERIFY(stageDisplayQueue(stream.receiver.get(), scenario));
+    QSignalSpy frameSpy(stream.videoSink(), &QVideoSink::videoFrameChanged);
+
+    // The queue was full for a moment, but the decoder took a frame before the queue looked again, so nothing leaked
+    // and the next buffer carries no DISCONT. A gate that closed for the overrun alone, or that took it for the leak
+    // behind the DISCONT upstream sets on a later buffer, would keep its two seconds of this stream from the decoder,
+    // as no keyframe opens it sooner.
+    scenario->armed.store(true);
+    QVERIFY_TRUE_WAIT(scenario->played.load(), TestTimeout::mediumMs());
+    frameSpy.clear();
+    QVERIFY_SIGNAL_COUNT_WAIT(frameSpy, GstReceiverTest::kFrameRate, TestTimeout::mediumMs());
+    QCOMPARE_LT(scenario->longestGap.load(), GstClockTime{GST_SECOND});
+}
+
+void GstVideoReceiverPipelineTest::_testKeyframeGateOpensWithoutKeyframe()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().valid, TestTimeout::mediumMs());
+    const qint64 droppedBefore = stream.receiver->stats().framesDropped;
+    const auto scenario = std::make_shared<DisplayQueueScenario>();
+    scenario->leak = true;
+    QVERIFY(stageDisplayQueue(stream.receiver.get(), scenario));
+    QSignalSpy frameSpy(stream.videoSink(), &QVideoSink::videoFrameChanged);
+
+    // The gate closes for the leaked frame and asks for a keyframe, which this stream never sends: UDP carries no
+    // request to the sender, and every frame from here on is a delta frame.
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^No keyframe within \\d+ ms of the request")));
+    scenario->armed.store(true);
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().framesDropped >= (droppedBefore + GstReceiverTest::kFrameRate),
+                      TestTimeout::mediumMs());
+
+    // Rather than hold the picture for good, the gate opens again after its two seconds, and says why.
+    frameSpy.clear();
+    QVERIFY_SIGNAL_COUNT_WAIT(frameSpy, GstReceiverTest::kFrameRate, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
 }
 
 void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream_data()

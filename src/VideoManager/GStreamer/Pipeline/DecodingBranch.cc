@@ -13,8 +13,10 @@
 namespace {
 
 constexpr guint kDisplayQueueMaxBuffers = 2;
-// A stream without keyframes (intra refresh) would otherwise freeze for good after a dropped frame.
-constexpr int kMaxGateDrops = 300;
+// How long the keyframe gate waits for a keyframe: time for one that was asked for to arrive, and most streams' own
+// keyframe interval. A stream without keyframes (intra refresh), or one whose sender takes no requests, would
+// otherwise freeze for good, or for a whole GOP, after a dropped frame.
+constexpr qint64 kMaxGateMs = 2000;
 
 /// Sets "sync" on @p sink, or on the sinks inside it when it is a bin without the property.
 void setSinkSync(GstElement* sink, bool sync)
@@ -152,12 +154,16 @@ bool DecodingBranch::build()
     }
     GstElement* const queue = _head.queue();
 
-    // Tiny and leaky: the live display must drop its oldest frame on backpressure, never stall the tee.
+    // Tiny and leaky: the live display must drop its oldest frame on backpressure, never stall the tee. The
+    // backpressure comes late, though: ahead of its decoder, decodebin3's multiqueue first buffers the stream, by
+    // time and with no limit on buffers. It holds its min-interleave-time: 250 ms by default, the decoder's latency
+    // plus 100 ms once the decoder reports one, and no less than the pipeline's latency (GStreamer 1.24, and the
+    // later 1.22 releases). Only a decoder that falls further behind than that makes this queue leak.
     gst_util_set_object_arg(G_OBJECT(queue), "leaky", "downstream");
     g_object_set(queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
                  G_GUINT64_CONSTANT(0), nullptr);
 
-    // "overrun" fires before the queue drops its oldest frame.
+    // "overrun" announces a leak; the gate's probe sees whether one followed.
     _head.onOverrun(G_CALLBACK(_onQueueOverrun), this);
     const GStreamer::GstPadPtr queueSrc = GStreamer::adoptPad(gst_element_get_static_pad(queue, "src"));
     if (!queueSrc || !_keyframeGate.add(queueSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _gateProbe, this)) {
@@ -442,26 +448,50 @@ void DecodingBranch::_setDecoderName(const QString& name)
 void DecodingBranch::_onQueueOverrun(GstElement* /*queue*/, gpointer data)
 {
     auto* const self = static_cast<DecodingBranch*>(data);
-    // Each overrun leaks the oldest buffer: the queue fills by buffer count only.
-    (void) self->_framesDropped.fetch_add(1, std::memory_order_relaxed);
-    if (self->_gateClosed.exchange(true, std::memory_order_relaxed)) {
-        return;
-    }
-    self->_gateDrops.store(0, std::memory_order_relaxed);
-    self->_context.post([self]() { self->_head.requestKeyframe(); });
+    // No frame is lost yet: the queue looks again once this returns, and leaks its oldest buffer only if it is still
+    // full. The decoder may have taken one meanwhile.
+    (void) self->_overruns.fetch_add(1, std::memory_order_relaxed);
 }
 
 GstPadProbeReturn DecodingBranch::_gateProbe(GstPad* /*pad*/, GstPadProbeInfo* info, gpointer data)
 {
     auto* const self = static_cast<DecodingBranch*>(data);
+    const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    // The queue marks the buffer that follows a leak. Each overrun before it leaked one buffer, as the queue fills by
+    // buffer count only. An overrun before a buffer without the mark leaked nothing, and is forgotten: it would be
+    // taken for the leak behind a mark that upstream sets later, for a loss ahead of the tee.
+    if (buffer && GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DISCONT)) {
+        const quint64 leaked = self->_overruns.exchange(0, std::memory_order_relaxed);
+        (void) self->_framesDropped.fetch_add(leaked, std::memory_order_relaxed);
+        if ((leaked > 0) && !self->_gateClosed.exchange(true, std::memory_order_relaxed)) {
+            self->_gateClosedAtMs.store(StreamWatchdog::now(), std::memory_order_relaxed);
+            self->_context.post([self]() { self->_head.requestKeyframe(); });
+        }
+    } else {
+        self->_overruns.store(0, std::memory_order_relaxed);
+    }
     if (!self->_gateClosed.load(std::memory_order_relaxed)) {
         return GST_PAD_PROBE_OK;
     }
-    const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
-    const bool delta = buffer && GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
-    if (delta && (self->_gateDrops.fetch_add(1, std::memory_order_relaxed) < kMaxGateDrops)) {
-        (void) self->_framesDropped.fetch_add(1, std::memory_order_relaxed);
-        return GST_PAD_PROBE_DROP;
+    if (buffer && GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
+        const qint64 now = StreamWatchdog::now();
+        if ((now - self->_gateClosedAtMs.load(std::memory_order_relaxed)) < kMaxGateMs) {
+            (void) self->_framesDropped.fetch_add(1, std::memory_order_relaxed);
+            // The gate's time is not the decoder's: with the shortest stream timeout the decoder counts as stalled
+            // after as long as the gate may stay closed.
+            self->_context.watchdog->noteFrameWithheld(now);
+            return GST_PAD_PROBE_DROP;
+        }
+        // Told once at a level that shows: the same holds for every later request to this stream's sender.
+        if (!self->_gateTimeoutWarned.exchange(true, std::memory_order_relaxed)) {
+            qCWarning(GstVideoReceiverLog) << "No keyframe within" << kMaxGateMs
+                                           << "ms of the request that followed a dropped frame: the picture goes on "
+                                              "without one. The stream's sender may not take keyframe requests."
+                                           << self->_context.redactedUri;
+        } else {
+            qCDebug(GstVideoReceiverLog) << "No keyframe within" << kMaxGateMs << "ms of the request"
+                                         << self->_context.redactedUri;
+        }
     }
     self->_gateClosed.store(false, std::memory_order_relaxed);
     return GST_PAD_PROBE_OK;

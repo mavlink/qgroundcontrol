@@ -28,6 +28,7 @@ struct PathStats;
 /// The queue drops the oldest frame when the decoder falls behind, so the tee (and with it the recording) never waits
 /// for the decoder. A decoder can't recover a dropped compressed frame, so after a drop the branch also drops delta
 /// frames until the next keyframe, which it requests: the picture freezes briefly instead of smearing for a whole GOP.
+/// It waits two seconds at most, and says so when no keyframe came, so a stream without keyframes goes on.
 ///
 /// Threading: the receiver's worker, except the probes and the decoder's signal handlers (streaming threads), which
 /// hand their work to the worker through BranchContext::post().
@@ -161,9 +162,14 @@ private:
     GStreamer::ScopedSignal _decoderPadAdded;
     GStreamer::ScopedSignal _decoderElementAdded;
 
+    /// The queue's overruns since the last buffer it pushed: the frames it leaked, if it marks the next one DISCONT.
+    std::atomic<quint64> _overruns = 0;
     /// Set when the queue drops a frame; delta frames are dropped while it is set.
     std::atomic<bool> _gateClosed = false;
-    std::atomic<int> _gateDrops = 0;
+    /// When the gate closed, as StreamWatchdog::now() tells time.
+    std::atomic<qint64> _gateClosedAtMs = 0;
+    /// The gate already warned that it opened without a keyframe.
+    std::atomic<bool> _gateTimeoutWarned = false;
     /// Frames the queue and the keyframe gate dropped.
     std::atomic<quint64> _framesDropped = 0;
     /// Counts decoder insertions, so a first-frame report from a replaced decoder is ignored.

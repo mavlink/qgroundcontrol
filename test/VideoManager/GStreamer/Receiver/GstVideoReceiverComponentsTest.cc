@@ -61,6 +61,7 @@ void GstVideoReceiverComponentsTest::_testStallDetection_data()
     QTest::addColumn<uint>("timeoutSec");
     QTest::addColumn<qint64>("sourceFrameAgeMs");
     QTest::addColumn<qint64>("sinkFrameAgeMs");
+    QTest::addColumn<qint64>("withheldFrameAgeMs");
     QTest::addColumn<bool>("decoding");
     QTest::addColumn<int>("expected");
 
@@ -68,14 +69,20 @@ void GstVideoReceiverComponentsTest::_testStallDetection_data()
     const int source = int(StreamWatchdog::Stall::Source);
     const int decoder = int(StreamWatchdog::Stall::Decoder);
 
-    QTest::newRow("source within timeout") << 2u << qint64(2000) << qint64(0) << true << none;
-    QTest::newRow("source past timeout") << 2u << qint64(2001) << qint64(0) << true << source;
-    QTest::newRow("zero timeout floors at 1 s, within") << 0u << qint64(1000) << kNoFrame << false << none;
-    QTest::newRow("zero timeout floors at 1 s, past") << 0u << qint64(1001) << kNoFrame << false << source;
-    QTest::newRow("sink within twice timeout") << 2u << qint64(0) << qint64(4000) << true << none;
-    QTest::newRow("sink past twice timeout") << 2u << qint64(0) << qint64(4001) << true << decoder;
-    QTest::newRow("sink silence ignored when not decoding") << 2u << qint64(0) << qint64(60000) << false << none;
-    QTest::newRow("source stall reported first") << 2u << qint64(3000) << qint64(60000) << true << source;
+    QTest::newRow("source within timeout") << 2u << qint64(2000) << qint64(0) << kNoFrame << true << none;
+    QTest::newRow("source past timeout") << 2u << qint64(2001) << qint64(0) << kNoFrame << true << source;
+    QTest::newRow("zero timeout floors at 1 s, within") << 0u << qint64(1000) << kNoFrame << kNoFrame << false << none;
+    QTest::newRow("zero timeout floors at 1 s, past") << 0u << qint64(1001) << kNoFrame << kNoFrame << false << source;
+    QTest::newRow("sink within twice timeout") << 2u << qint64(0) << qint64(4000) << kNoFrame << true << none;
+    QTest::newRow("sink past twice timeout") << 2u << qint64(0) << qint64(4001) << kNoFrame << true << decoder;
+    QTest::newRow("sink silence ignored when not decoding")
+        << 2u << qint64(0) << qint64(60000) << kNoFrame << false << none;
+    QTest::newRow("source stall reported first") << 2u << qint64(3000) << qint64(60000) << kNoFrame << true << source;
+    // The keyframe gate may keep the stream from the decoder for as long as the shortest timeout gives the decoder.
+    QTest::newRow("frames kept from the decoder are not its silence")
+        << 1u << qint64(0) << qint64(2500) << qint64(500) << true << none;
+    QTest::newRow("sink past twice timeout since the last frame kept from the decoder")
+        << 1u << qint64(0) << qint64(4500) << qint64(2001) << true << decoder;
 }
 
 void GstVideoReceiverComponentsTest::_testStallDetection()
@@ -83,6 +90,7 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     QFETCH(uint, timeoutSec);
     QFETCH(qint64, sourceFrameAgeMs);
     QFETCH(qint64, sinkFrameAgeMs);
+    QFETCH(qint64, withheldFrameAgeMs);
     QFETCH(bool, decoding);
     QFETCH(int, expected);
 
@@ -91,6 +99,9 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     (void) watchdog.noteSourceFrame(kNowMs - sourceFrameAgeMs);
     if (sinkFrameAgeMs != kNoFrame) {
         (void) watchdog.noteSinkFrame(kNowMs - sinkFrameAgeMs);
+    }
+    if (withheldFrameAgeMs != kNoFrame) {
+        watchdog.noteFrameWithheld(kNowMs - withheldFrameAgeMs);
     }
 
     QCOMPARE(int(watchdog.check(kNowMs, decoding).stall), expected);

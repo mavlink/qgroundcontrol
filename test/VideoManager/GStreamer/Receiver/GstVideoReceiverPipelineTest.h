@@ -23,6 +23,8 @@ private slots:
     void _testFailingHardwareDecoderGivesWayToTheNext();
     void _testFailedDecoderLeavesAutoplugOnlyForAnother_data();
     void _testFailedDecoderLeavesAutoplugOnlyForAnother();
+    void _testOverrunWithoutLeakLeavesKeyframeGateOpen();
+    void _testKeyframeGateOpensWithoutKeyframe();
     void _testDecoderInsertionFailureStopsStream_data();
     void _testDecoderInsertionFailureStopsStream();
     void _testScreenshotSavesDisplayedFrame();

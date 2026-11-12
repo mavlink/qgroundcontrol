@@ -2,7 +2,10 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <memory>
+
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 
 #include "GStreamerDecoderRanks.h"
 #include "VideoStreamStats.h"
@@ -14,6 +17,20 @@ using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
+
+/// Holds the frames that reach @p sink until @p gate opens, as a display that has stopped taking them.
+bool holdDisplayFrames(GstElement* sink, const std::shared_ptr<GstReceiverTest::Gate>& gate)
+{
+    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
+    return pad && gst_pad_add_probe(
+                      pad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+                      [](GstPad*, GstPadProbeInfo*, gpointer data) {
+                          (*static_cast<std::shared_ptr<GstReceiverTest::Gate>*>(data))->wait();
+                          return GST_PAD_PROBE_OK;
+                      },
+                      new std::shared_ptr<GstReceiverTest::Gate>(gate),
+                      [](gpointer data) { delete static_cast<std::shared_ptr<GstReceiverTest::Gate>*>(data); });
+}
 
 }  // namespace
 
@@ -132,6 +149,27 @@ void GstVideoReceiverStatsTest::_testStatsCountFramesTooLateToDisplay()
     }));
     QVERIFY(delayed);
     QVERIFY_TRUE_WAIT(receiving.receiver->stats().framesDropped >= (droppedBefore + GstReceiverTest::kFrameRate),
+                      TestTimeout::mediumMs());
+    QVERIFY(receiving.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountFramesTheDisplayQueueLeaks()
+{
+    Receiver receiving;
+    QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
+    receiving.window.show();
+    receiving.receiver->setVideoOutput(receiving.output);
+    const auto gate = std::make_shared<GstReceiverTest::Gate>();
+    // Before the receiver stops: its worker waits for the streaming thread the gate holds.
+    const auto release = qScopeGuard([&gate] { gate->release(); });
+    QVERIFY(holdDisplayFrames(displaySink(receiving.receiver.get()), gate));
+    QVERIFY(receiving.startStreaming());
+
+    // The decoder can't hand its frame on, so the stream backs up into the display queue, which leaks rather than
+    // hold up the tee: two seconds of frames are far more than decodebin3 buffers ahead of its decoder.
+    QVERIFY(receiving.framesSent(2 * GstReceiverTest::kFrameRate));
+    gate->release();
+    QVERIFY_TRUE_WAIT(receiving.receiver->stats().framesDropped >= (GstReceiverTest::kFrameRate / 2),
                       TestTimeout::mediumMs());
     QVERIFY(receiving.errorSpy.isEmpty());
 }
