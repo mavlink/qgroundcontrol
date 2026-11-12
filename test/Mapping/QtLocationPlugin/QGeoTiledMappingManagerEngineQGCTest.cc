@@ -149,9 +149,10 @@ void QGeoTiledMappingManagerEngineQGCTest::_testCachedTileServedWithoutProviderU
     const QByteArray tile = tileReplyPngBody();
     QVERIFY(!tile.isEmpty());
     // The cache worker runs tasks in order: the tile is stored before the fetcher asks for it
-    getQGCMapEngine()->cacheTile(kMappingEngineCustomUrlType,
-                                 UrlFactory::getTileHash(kMappingEngineCustomUrlType, spec.x(), spec.y(), spec.zoom()),
-                                 tile, QStringLiteral("png"));
+    QGCMapEngine::instance()->cacheTile(
+        kMappingEngineCustomUrlType,
+        UrlFactory::getTileHash(kMappingEngineCustomUrlType, spec.x(), spec.y(), spec.zoom()), tile,
+        QStringLiteral("png"));
 
     fetcher->updateTileRequests({spec}, {});
 

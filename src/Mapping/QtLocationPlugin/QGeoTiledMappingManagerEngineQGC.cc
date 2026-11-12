@@ -67,7 +67,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(QGeoServicePr
     setTileVersion(kTileVersion);
     // A tile of the source the user configures now has the spec of the tile of the previous source that the maps and
     // the tile cache hold. Under another version it is another tile, so every map requests its tiles again.
-    (void) connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this,
+    (void) connect(QGCMapEngine::instance(), &QGCMapEngine::tileSourceChanged, this,
                    [this] { setTileVersion(tileVersion() + 1); });
     setTileSize(QSize(256, 256));
 
@@ -89,7 +89,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(QGeoServicePr
     setCacheHint(QAbstractGeoTileCache::CacheArea::AllCaches);
     setTileCache(new QGeoFileTileCacheQGC(this));
 
-    getQGCMapEngine()->ensureInitialized();
+    QGCMapEngine::instance()->ensureInitialized();
 
     m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers
                                                               : QGeoTiledMap::NoPrefetching;

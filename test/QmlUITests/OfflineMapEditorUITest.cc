@@ -131,7 +131,7 @@ void OfflineMapEditorUITest::_addEngineRows()
 void OfflineMapEditorUITest::_saveSet(const QString& name, const QString& shownType, const QGeoRectangle& area,
                                       quint64& setId)
 {
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     engine->ensureInitialized();
     const QStringList maps = QGCMapEngineManager::mapList();
     QGCCachedTileSet* const savedSet = new QGCCachedTileSet(name);
@@ -161,7 +161,7 @@ void OfflineMapEditorUITest::_deleteSet(quint64 setId)
     }
     QGCDeleteTileSetTask* const deleteTask = new QGCDeleteTileSetTask(setId);
     const QSignalSpy deletedSpy(deleteTask, &QGCDeleteTileSetTask::tileSetDeleted);
-    if (getQGCMapEngine()->addTask(deleteTask)) {
+    if (QGCMapEngine::instance()->addTask(deleteTask)) {
         (void) QTest::qWaitFor([&deletedSpy] { return !deletedSpy.isEmpty(); }, TestTimeout::mediumMs());
     } else {
         delete deleteTask;
@@ -773,7 +773,7 @@ void OfflineMapEditorUITest::_deletedSetLeavesTheList()
     const QString tileHash =
         UrlFactory::getTileHash(mapType, UrlFactory::long2tileX(mapType, area.topLeft().longitude(), kSetZoom),
                                 UrlFactory::lat2tileY(mapType, area.topLeft().latitude(), kSetZoom), kSetZoom);
-    getQGCMapEngine()->cacheTile(mapType, tileHash, tileReplyPngBody(), QStringLiteral("png"), setId);
+    QGCMapEngine::instance()->cacheTile(mapType, tileHash, tileReplyPngBody(), QStringLiteral("png"), setId);
     QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
 
     _openMapsSettings(/*geoMapEngine*/ false);

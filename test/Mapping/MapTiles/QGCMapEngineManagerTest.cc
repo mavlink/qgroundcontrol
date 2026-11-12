@@ -142,7 +142,7 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     TestFixtures::SettingsFixture saved;
     selectGeoMapEngines(saved, flyViewGeoMap, planViewGeoMap);
 
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     engine->ensureInitialized();
 
     constexpr double kLeftLon = 8.4991;
@@ -225,7 +225,7 @@ void QGCMapEngineManagerTest::_testElevationTypeSet()
     TestFixtures::SettingsFixture saved;
     selectGeoMapEngines(saved, true, false);
 
-    getQGCMapEngine()->ensureInitialized();
+    QGCMapEngine::instance()->ensureInitialized();
 
     constexpr double kLeftLon = 8.4991;
     const QGCTileSet tiles = offlineRegionTiles(elevationType, kLeftLon, setMinZoom, setMaxZoom);
@@ -265,7 +265,7 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
     TestFixtures::SettingsFixture saved;
     selectGeoMapEngines(saved, true, false);
 
-    getQGCMapEngine()->ensureInitialized();
+    QGCMapEngine::instance()->ensureInitialized();
 
     // A region of its own, as its Terrarium tiles end up in the cache. The zoom leaves the terrain set with as many
     // tiles as a set asks for at a time.
@@ -320,7 +320,7 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
 // it loaded from the cache database
 void QGCMapEngineManagerTest::_testNewSetTellsManagerOfItsSelection()
 {
-    getQGCMapEngine()->ensureInitialized();
+    QGCMapEngine::instance()->ensureInitialized();
 
     constexpr double kLeftLon = 8.4991;
     constexpr int kZoom = 12;

@@ -52,7 +52,7 @@ void TerrainTileManagerTest::_testUndecodableCachedTileIsFetchedAgain()
 
     const QString hash = UrlFactory::getTileHash(type, UrlFactory::long2tileX(type, coordinate.longitude(), 1),
                                                  UrlFactory::lat2tileY(type, coordinate.latitude(), 1), 1);
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     engine->ensureInitialized();
     engine->cacheTile(type, hash, QByteArrayLiteral("not a terrain tile"), QStringLiteral("bin"));
 

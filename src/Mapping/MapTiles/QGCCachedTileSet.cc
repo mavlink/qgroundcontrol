@@ -17,7 +17,7 @@ namespace {
 void queueDownloadState(quint64 setId, const QString& hash, QGCTile::TileState state)
 {
     QGCUpdateTileDownloadStateTask* const task = new QGCUpdateTileDownloadStateTask(setId, state, hash);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
     }
 }
@@ -70,7 +70,7 @@ void QGCCachedTileSet::createDownloadTask()
     if (_manager) {
         (void) connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
     }
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
     }
 
@@ -88,7 +88,7 @@ void QGCCachedTileSet::resumeDownloadTask()
 
     // Also the tiles that a cancelled download was given: the database has them as being downloaded
     QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
     }
 

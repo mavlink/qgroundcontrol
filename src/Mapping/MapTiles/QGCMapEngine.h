@@ -76,5 +76,3 @@ private:
     std::atomic<bool> m_initialized = false;
     std::atomic<bool> m_closed = false;
 };
-
-extern QGCMapEngine* getQGCMapEngine();

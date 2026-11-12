@@ -34,7 +34,7 @@ TileImageSource::TileImageSource(const QString& mapType, QObject* parent, QNetwo
             });
     connect(_fetcher, &DecodedTileFetcher::failed, this, &TileImageSource::tileImageFailed);
     connect(_fetcher, &DecodedTileFetcher::noTile, this, &TileImageSource::tileImageMissing);
-    connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this, [this](int mapId) {
+    connect(QGCMapEngine::instance(), &QGCMapEngine::tileSourceChanged, this, [this](int mapId) {
         if (mapId == _mapId) {
             emit sourceChanged();
         }

@@ -18,7 +18,8 @@ Viewer3DTerrainTexture::Viewer3DTerrainTexture()
 
     connect(QGCMapEngineManager::instance(), &QGCMapEngineManager::chosenMapChanged, this,
             &Viewer3DTerrainTexture::_onMapTypeChanged);
-    connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this, &Viewer3DTerrainTexture::_onTileSourceChanged);
+    connect(QGCMapEngine::instance(), &QGCMapEngine::tileSourceChanged, this,
+            &Viewer3DTerrainTexture::_onTileSourceChanged);
 }
 
 void Viewer3DTerrainTexture::loadTexture()

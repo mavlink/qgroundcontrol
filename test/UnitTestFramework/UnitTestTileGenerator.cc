@@ -221,7 +221,7 @@ bool resetTileCache()
     const QObject context;
     QGCResetTask* const task = new QGCResetTask();
     (void) QObject::connect(task, &QGCResetTask::resetCompleted, &context, [&reset] { reset = true; });
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
         return false;
     }
@@ -237,7 +237,7 @@ bool waitForCacheTasks()
     QGCGetTileDownloadListTask* const task = new QGCGetTileDownloadListTask(0, 0);
     (void) QObject::connect(task, &QGCGetTileDownloadListTask::tileListFetched, &context, [&done] { done = true; });
     (void) QObject::connect(task, &QGCMapTask::error, &context, [&done] { done = true; });
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
         return false;
     }
@@ -261,12 +261,12 @@ void initMapEngine()
         qFatal("UnitTestTileGenerator: failed to create temp dir for tile cache db: %s",
                qPrintable(tempDir.errorString()));
     }
-    getQGCMapEngine()->init(tempDir.filePath(QStringLiteral("qgc_unit_test_tile_cache.db")));
+    QGCMapEngine::instance()->init(tempDir.filePath(QStringLiteral("qgc_unit_test_tile_cache.db")));
 }
 
 void shutdownMapEngine()
 {
-    getQGCMapEngine()->shutdown();
+    QGCMapEngine::instance()->shutdown();
 }
 
 }  // namespace UnitTestTileGenerator

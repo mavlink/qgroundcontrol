@@ -201,8 +201,8 @@ void TerrariumTileFetcherTest::_cachedUnusableTileFallsBackToNetwork()
     const TileMath::TileKey key{centerKey.x + 2, centerKey.y, centerKey.zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
     const QString type = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
-    getQGCMapEngine()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
-                                 QByteArrayLiteral("garbage"), QStringLiteral("png"));
+    QGCMapEngine::instance()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
+                                        QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
     TileReplyMockNam nam;
     nam.body = UnitTestTileGenerator::syntheticTerrariumTileData(key.x, key.y, key.zoom);

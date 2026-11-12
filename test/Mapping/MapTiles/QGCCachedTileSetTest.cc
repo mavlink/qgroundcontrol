@@ -43,7 +43,7 @@ std::unique_ptr<QGCCachedTileSet> tileSetTestSavedSet(const QString& name, const
         tileCount += tiles.tileCount;
     }
 
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     engine->ensureInitialized();
 
     QGCCachedTileSet* const newSet = new QGCCachedTileSet(name);
@@ -411,7 +411,7 @@ void QGCCachedTileSetTest::_testDownload()
     QGCFetchTileSetTask* const fetchSetsTask = new QGCFetchTileSetTask();
     connect(fetchSetsTask, &QGCFetchTileSetTask::tileSetFetched, &fetchSetsContext,
             [&databaseSets](QGCCachedTileSet* databaseSet) { databaseSets.append(databaseSet); });
-    QVERIFY(getQGCMapEngine()->addTask(fetchSetsTask));
+    QVERIFY(QGCMapEngine::instance()->addTask(fetchSetsTask));
     QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
 
     const auto databaseSet =

@@ -269,8 +269,8 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 15, kKey.y, kKey.zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
-    getQGCMapEngine()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
-                                 QByteArrayLiteral("garbage"), QStringLiteral("png"));
+    QGCMapEngine::instance()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
+                                        QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
     TileReplyMockNam nam;
     nam.body = tileReplyPngBody();

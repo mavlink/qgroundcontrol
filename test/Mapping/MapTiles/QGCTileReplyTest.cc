@@ -61,7 +61,7 @@ TileReplyCacheAnswer tileReplyCacheAnswer(const QString& hash)
     (void) QObject::connect(task, &QGCFetchTileTask::tileFetched, &context,
                             [&answer] { answer = TileReplyCacheAnswer::Stored; });
     (void) QObject::connect(task, &QGCMapTask::error, &context, [&answer] { answer = TileReplyCacheAnswer::Missing; });
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
         return TileReplyCacheAnswer::None;
     }
@@ -337,7 +337,7 @@ void QGCTileReplyTest::_unusableCachedTileIsReplaced()
     }
 
     const int mapId = UrlFactory::getMapIdFromProviderType(type);
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     engine->ensureInitialized();
     engine->cacheTile(type, UrlFactory::getTileHash(type, tileX, kTileY, kTileZoom), unusable, QStringLiteral("png"));
 
@@ -464,7 +464,7 @@ void QGCTileReplyTest::_requestWithoutManagerUsesMapEngineManager()
     nam.body = tileReplyPngBody();
 
     // In place of the manager of the engine, which would ask the server of the provider
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     engine->setNetworkManagerForTest(&nam);
     const auto restoreManager = qScopeGuard([engine] { engine->setNetworkManagerForTest(nullptr); });
 
@@ -774,7 +774,7 @@ void QGCTileReplyTest::_requestIdentity()
 // A cache without a database takes no lookup. The server needs no cache: the tile is fetched all the same.
 void QGCTileReplyTest::_tileFetchedWhenCacheRefusesLookup()
 {
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     const auto restoreCache = qScopeGuard([engine] {
         engine->shutdown();
         UnitTestTileGenerator::initMapEngine();

@@ -87,7 +87,7 @@ QGCMapEngineManager::QGCMapEngineManager(QObject* parent)
     (void) qmlRegisterUncreatableType<QGCMapEngineManager>("QGroundControl.QGCMapEngineManager", 1, 0,
                                                            "QGCMapEngineManager", "Reference only");
 
-    (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals,
+    (void) connect(QGCMapEngine::instance(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals,
                    Qt::UniqueConnection);
 
     // Saved settings that name no map are repaired: there is no map chosen before them to keep
@@ -183,7 +183,7 @@ void QGCMapEngineManager::loadTileSets()
     QGCFetchTileSetTask* task = new QGCFetchTileSetTask();
     (void) connect(task, &QGCFetchTileSetTask::tileSetFetched, this, &QGCMapEngineManager::_tileSetFetched);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
     }
 }
@@ -240,7 +240,7 @@ void QGCMapEngineManager::_createTileSet(const QString& name, const QString& map
     QGCCreateTileSetTask* const task = new QGCCreateTileSetTask(set);
     (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
     }
 }
@@ -383,7 +383,7 @@ void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
         QGCResetTask* task = new QGCResetTask();
         (void) connect(task, &QGCResetTask::resetCompleted, this, &QGCMapEngineManager::_resetCompleted);
         (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        if (!getQGCMapEngine()->addTask(task)) {
+        if (!QGCMapEngine::instance()->addTask(task)) {
             task->deleteLater();
         }
     } else {
@@ -392,7 +392,7 @@ void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)
         QGCDeleteTileSetTask* task = new QGCDeleteTileSetTask(tileSet->id());
         (void) connect(task, &QGCDeleteTileSetTask::tileSetDeleted, this, &QGCMapEngineManager::_tileSetDeleted);
         (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        if (!getQGCMapEngine()->addTask(task)) {
+        if (!QGCMapEngine::instance()->addTask(task)) {
             task->deleteLater();
         }
     }
@@ -412,7 +412,7 @@ void QGCMapEngineManager::renameTileSet(QGCCachedTileSet* tileSet, const QString
 
     QGCRenameTileSetTask* task = new QGCRenameTileSetTask(tileSet->id(), name);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
     }
 }
@@ -534,7 +534,7 @@ bool QGCMapEngineManager::importSets(const QString& path)
     (void) connect(task, &QGCImportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
     (void) connect(task, &QGCImportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
         return false;
     }
@@ -583,7 +583,7 @@ bool QGCMapEngineManager::exportSets(const QString& path)
     (void) connect(task, &QGCExportTileTask::actionCompleted, this, &QGCMapEngineManager::_actionCompleted);
     (void) connect(task, &QGCExportTileTask::actionProgress, this, &QGCMapEngineManager::_actionProgressHandler);
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
         return false;
     }
@@ -791,7 +791,7 @@ void QGCMapEngineManager::_handleExtractionFinished(bool success)
     (void) connect(task, &QGCImportTileTask::actionProgress, this,
                    [this](int percentage) { setActionProgress(50 + (percentage / 2)); });
     (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-    if (!getQGCMapEngine()->addTask(task)) {
+    if (!QGCMapEngine::instance()->addTask(task)) {
         task->deleteLater();
         setErrorMessage(tr("Failed to start import task"));
         setImportAction(ImportAction::ActionDone);

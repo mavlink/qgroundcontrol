@@ -111,11 +111,6 @@ QString createCacheDirectory()
 
 }  // namespace
 
-QGCMapEngine* getQGCMapEngine()
-{
-    return QGCMapEngine::instance();
-}
-
 QGCMapEngine::QGCMapEngine(QObject* parent)
     : QObject(parent)
 {

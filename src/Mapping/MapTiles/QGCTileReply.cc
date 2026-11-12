@@ -114,7 +114,7 @@ void QGCTileReply::start()
     }
     _hash = UrlFactory::getTileHash(_provider->getMapName(), _x, _y, _zoom);
 
-    QGCMapEngine* const engine = getQGCMapEngine();
+    QGCMapEngine* const engine = QGCMapEngine::instance();
     // Only a QtLocation map initializes the tile cache on its own
     engine->ensureInitialized();
 
@@ -180,7 +180,7 @@ void QGCTileReply::_fetchFromServer()
 {
     // The engine is asked for its manager here, not before: a request that the cache answers needs none
     QNetworkAccessManager* const networkManager =
-        _networkManagerGiven ? _networkManager.data() : getQGCMapEngine()->networkManager();
+        _networkManagerGiven ? _networkManager.data() : QGCMapEngine::instance()->networkManager();
     if (!networkManager) {
         _finish(Error::NetworkError, QStringLiteral("network manager not available"));
         return;
@@ -280,7 +280,7 @@ void QGCTileReply::_networkReplyFinished()
     }
 
     qCDebug(QGCTileReplyLog) << "tile" << _hash << "fetched from network," << data.size() << "bytes, caching";
-    getQGCMapEngine()->cacheTile(_provider->getMapName(), _hash, data, format, _tileSet);
+    QGCMapEngine::instance()->cacheTile(_provider->getMapName(), _hash, data, format, _tileSet);
     _data = data;
     _format = format;
     _finish(Error::NoError);

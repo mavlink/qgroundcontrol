@@ -36,7 +36,7 @@ double esriAttributionWrappedLongitude(double longitude)
 
 EsriAttribution::EsriAttribution(QNetworkAccessManager* networkManager, QObject* parent)
     : QObject(parent)
-    , _networkManager(networkManager ? networkManager : getQGCMapEngine()->networkManager())
+    , _networkManager(networkManager ? networkManager : QGCMapEngine::instance()->networkManager())
 {}
 
 QString EsriAttribution::credits(const QUrl& listUrl, double south, double west, double north, double east, int zoom)
