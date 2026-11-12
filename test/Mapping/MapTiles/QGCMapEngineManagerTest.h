@@ -14,4 +14,6 @@ private slots:
     void _testMapAttribution_data();
     void _testMapAttribution();
     void _testProviderAndTypeSelectEveryMap();
+    void _testChosenMap_data();
+    void _testChosenMap();
 };

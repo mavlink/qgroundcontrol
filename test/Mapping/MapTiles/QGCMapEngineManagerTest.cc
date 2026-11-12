@@ -337,4 +337,86 @@ void QGCMapEngineManagerTest::_testProviderAndTypeSelectEveryMap()
     QCOMPARE(selectableMaps, maps);
 }
 
+void QGCMapEngineManagerTest::_testChosenMap_data()
+{
+    // The settings that the manager is created with
+    QTest::addColumn<QString>("savedProvider");
+    QTest::addColumn<QString>("savedType");
+    // The settings and the chosen map once it is created
+    QTest::addColumn<QString>("provider");
+    QTest::addColumn<QString>("type");
+    QTest::addColumn<QString>("map");
+    // What the settings page sets then, the provider first, and the chosen map after each. Empty: it is not set.
+    QTest::addColumn<QString>("newProvider");
+    QTest::addColumn<QString>("mapOfNewProvider");
+    QTest::addColumn<QString>("newType");
+    QTest::addColumn<QString>("mapOfNewType");
+
+    const QString bing = QStringLiteral("Bing");
+    const QString hybrid = QStringLiteral("Hybrid");
+    const QString bingHybrid = QStringLiteral("Bing Hybrid");
+    const QString notSet;
+
+    // The provider and the type name no map in between: the map chosen before stays
+    QTest::newRow("provider, then type") << bing << hybrid << bing << hybrid << bingHybrid
+                                         << QStringLiteral("CustomURL") << bingHybrid << QStringLiteral("Custom")
+                                         << QStringLiteral("CustomURL Custom");
+    // The map of OpenAIP has no type: its provider selects it, whatever type is left of the provider before
+    QTest::newRow("provider without types")
+        << bing << hybrid << bing << hybrid << bingHybrid << QStringLiteral("OpenAIP") << QStringLiteral("OpenAIP")
+        << notSet << notSet;
+
+    // Saved settings that name no map are repaired. Earlier versions saved this pair for OpenStreetMap: it gets the
+    // type of that map.
+    QTest::newRow("saved type that its provider lacks")
+        << QStringLiteral("Street") << QStringLiteral("Street Map") << QStringLiteral("Street") << QStringLiteral("Map")
+        << QStringLiteral("Street Map") << notSet << notSet << notSet << notSet;
+    // No type makes a map of this provider: the settings get the default map
+    QTest::newRow("saved provider that no map has")
+        << QStringLiteral("No Such Provider") << QStringLiteral("Custom") << bing << hybrid << bingHybrid << notSet
+        << notSet << notSet << notSet;
+}
+
+void QGCMapEngineManagerTest::_testChosenMap()
+{
+    QFETCH(QString, savedProvider);
+    QFETCH(QString, savedType);
+    QFETCH(QString, provider);
+    QFETCH(QString, type);
+    QFETCH(QString, map);
+    QFETCH(QString, newProvider);
+    QFETCH(QString, mapOfNewProvider);
+    QFETCH(QString, newType);
+    QFETCH(QString, mapOfNewType);
+
+    Fact* const providerFact = SettingsManager::instance()->flightMapSettings()->mapProvider();
+    Fact* const typeFact = SettingsManager::instance()->flightMapSettings()->mapType();
+    const auto restoreSettings = qScopeGuard(
+        [providerFact, typeFact, providerBefore = providerFact->rawValue(), typeBefore = typeFact->rawValue()] {
+            providerFact->setRawValue(providerBefore);
+            typeFact->setRawValue(typeBefore);
+        });
+    providerFact->setRawValue(savedProvider);
+    typeFact->setRawValue(savedType);
+
+    const QGCMapEngineManager manager;
+    QCOMPARE(providerFact->rawValue().toString(), provider);
+    QCOMPARE(typeFact->rawValue().toString(), type);
+    QCOMPARE(manager.chosenMap(), map);
+
+    // The signal tells of a change of the map, and of nothing else
+    QSignalSpy chosenMapSpy(&manager, &QGCMapEngineManager::chosenMapChanged);
+    if (!newProvider.isEmpty()) {
+        providerFact->setRawValue(newProvider);
+        QCOMPARE(manager.chosenMap(), mapOfNewProvider);
+        QCOMPARE(chosenMapSpy.count(), (mapOfNewProvider == map) ? 0 : 1);
+    }
+    if (!newType.isEmpty()) {
+        chosenMapSpy.clear();
+        typeFact->setRawValue(newType);
+        QCOMPARE(manager.chosenMap(), mapOfNewType);
+        QCOMPARE(chosenMapSpy.count(), (mapOfNewType == mapOfNewProvider) ? 0 : 1);
+    }
+}
+
 UT_REGISTER_TEST(QGCMapEngineManagerTest, TestLabel::Unit)

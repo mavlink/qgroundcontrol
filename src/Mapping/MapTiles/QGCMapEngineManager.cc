@@ -47,7 +47,8 @@ QGCMapEngineManager::QGCMapEngineManager(QObject* parent)
     (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals,
                    Qt::UniqueConnection);
 
-    // Saved settings that name no map are taken as they are: there is no map chosen before them to keep
+    // Saved settings that name no map are repaired: there is no map chosen before them to keep
+    _repairMapOfSettings();
     _chosenMap = _mapOfSettings();
     if (FlightMapSettings* const settings = SettingsManager::instance()->flightMapSettings()) {
         (void) connect(settings->mapProvider(), &Fact::rawValueChanged, this, &QGCMapEngineManager::_updateChosenMap);
@@ -515,6 +516,36 @@ QString QGCMapEngineManager::_mapOfSettings()
     }
 
     return mapName(settings->mapProvider()->rawValue().toString(), settings->mapType()->rawValue().toString());
+}
+
+void QGCMapEngineManager::_repairMapOfSettings()
+{
+    FlightMapSettings* const settings = SettingsManager::instance()->flightMapSettings();
+    if (!settings) {
+        return;
+    }
+
+    Fact* const providerFact = settings->mapProvider();
+    Fact* const typeFact = settings->mapType();
+    const QString provider = providerFact->rawValue().toString();
+    const QStringList maps = mapList();
+    if (maps.contains(mapName(provider, typeFact->rawValue().toString()))) {
+        return;
+    }
+
+    const QStringList types = mapTypeList(provider);
+    if (!types.isEmpty()) {
+        typeFact->setRawValue(types.constFirst());
+        return;
+    }
+
+    // No map has the provider
+    const QVariant defaultProvider = providerFact->rawDefaultValue();
+    const QVariant defaultType = typeFact->rawDefaultValue();
+    if (maps.contains(mapName(defaultProvider.toString(), defaultType.toString()))) {
+        providerFact->setRawValue(defaultProvider);
+        typeFact->setRawValue(defaultType);
+    }
 }
 
 void QGCMapEngineManager::_updateChosenMap()

@@ -28,7 +28,8 @@ class QGCMapEngineManager : public QObject
     Q_PROPERTY(QStringList mapList READ mapList CONSTANT)
     /// Name of the map the user chose, as mapList has it. The settings select the map by a provider and a type that
     /// are set one after the other and name no map in between: the map chosen before stays until they name one.
-    /// Saved settings that name no map make a name that is not in mapList, until the user chooses a map.
+    /// Saved settings that name no map are repaired when the manager is created: they get the first type of their
+    /// provider, or the default map when no map has that provider.
     Q_PROPERTY(QString chosenMap READ chosenMap NOTIFY chosenMapChanged)
     Q_PROPERTY(QStringList mapProviderList READ mapProviderList CONSTANT)
     Q_PROPERTY(QStringList elevationProviderList READ elevationProviderList CONSTANT)
@@ -165,6 +166,10 @@ private slots:
 private:
     /// The name that the provider and the type in the settings make: no map has it while one of the two is being set
     static QString _mapOfSettings();
+    /// Makes settings that name no map name one: they get the first type of their provider or, when no map has that
+    /// provider, the default map. They stay as they are when the default settings name no map either. Earlier
+    /// versions saved the provider "Street" with the type "Street Map" for OpenStreetMap, which names no map.
+    static void _repairMapOfSettings();
     /// Stores a set of \a tiles for the region of the current view and starts its download
     void _createTileSet(const QString& name, const QString& mapType, int minZoom, int maxZoom, const QGCTileSet& tiles);
 
