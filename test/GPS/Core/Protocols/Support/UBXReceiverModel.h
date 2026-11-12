@@ -23,8 +23,8 @@
 namespace GPSTest {
 
 /// Stateful UBX model: receiver configuration survives transport sessions. A receiver preset reports its recorded
-/// identity; otherwise the module, hardware, protocol and legacy fields describe the receiver, which reports a
-/// firmware version of that module.
+/// identity; otherwise the module, firmware, hardware, protocol and legacy fields describe the receiver, which
+/// reports a firmware version of that module when the firmware field names none.
 class UBXReceiverModel : public ScriptedReceiver::Model
 {
 public:
@@ -181,6 +181,9 @@ public:
     unsigned transportOperations = 0;
     bool legacy = false;
     std::string module = "ZED-F9P";
+    /// The firmware version of the FWVER extension, such as "HPG 1.32", which a preset reports too. Empty, the
+    /// receiver reports no such extension and a version of its module as its software version.
+    std::string firmware;
     std::string hardware;
     std::string protocol;
     unsigned receiverBaud = 0;

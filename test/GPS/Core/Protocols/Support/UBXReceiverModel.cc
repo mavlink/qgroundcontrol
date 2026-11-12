@@ -332,9 +332,9 @@ QByteArray UBXReceiverModel::_identityPayload()
     if (!_presetIdentity.isEmpty()) {
         return _presetIdentity;
     }
-    QByteArray version(70, '\0');
-    const std::string_view firmware = firmwareOf(module);
-    std::memcpy(version.data(), firmware.data(), firmware.size());
+    const std::string_view software = firmware.empty() ? firmwareOf(module) : std::string_view("EXT CORE");
+    QByteArray version(40, '\0');
+    std::memcpy(version.data(), software.data(), software.size());
     const std::string hardwareVersion = hardware.empty() ? (legacy                 ? "00080000"
                                                             : module == "ZED-X20P" ? "000B0000"
                                                                                    : "00190000")
@@ -344,20 +344,20 @@ QByteArray UBXReceiverModel::_identityPayload()
     } else {
         wireValid = false;
     }
-    const std::string identity = "MOD=" + module;
-    if (identity.size() < 30) {
-        std::memcpy(version.data() + 40, identity.c_str(), identity.size());
-    } else {
-        wireValid = false;
-    }
-    if (!protocol.empty()) {
-        const std::string extension = "PROTVER=" + protocol;
+    const auto extend = [this, &version](const std::string& extension) {
         if (extension.size() < 30) {
-            version.resize(100, '\0');
-            std::copy(extension.begin(), extension.end(), version.begin() + 70);
+            version += padded(QByteArray::fromStdString(extension), 30);
         } else {
             wireValid = false;
         }
+    };
+    // A receiver names its firmware ahead of its module, and the driver reads them in that order.
+    if (!firmware.empty()) {
+        extend("FWVER=" + firmware);
+    }
+    extend("MOD=" + module);
+    if (!protocol.empty()) {
+        extend("PROTVER=" + protocol);
     }
     return version;
 }

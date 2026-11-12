@@ -143,7 +143,7 @@ void addUblox(Table& table)
         };
     };
     table.add(type, "wire-f9p-l1l5-survey", "ZED-F9P L1/L5 firmware (FWVER=HPGL1L5), survey-in",
-              ubxWire(module("ZED-F9P FWVER=HPGL1L5")), wireSurvey);
+              ubxWire([](UBXBench& b) { b.model.firmware = "HPGL1L5 1.40"; }), wireSurvey);
     table.add(type, "wire-x20-fixed-compact", "ZED-X20P, fixed base with MSM4", ubxWire(module("ZED-X20P")),
               compact(wireFixed));
     table.add(type, "wire-f9p-legacy-protocol", "ZED-F9P hardware reporting PROTVER 20.30", ubxWire([](UBXBench& b) {

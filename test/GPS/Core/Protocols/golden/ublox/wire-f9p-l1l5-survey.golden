@@ -1,7 +1,7 @@
 about ZED-F9P L1/L5 firmware (FWVER=HPGL1L5), survey-in
 request type=ublox role=rtk-base mode=survey-in accuracy=1.2500m duration=60s compact=0 persistent=0 baud=115200
 configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
-  identity "ZED-F9P FWVER=HPGL1L5 HPGL1L5"
+  identity "ZED-F9P HPGL1L5 1.40"
   baud 115200 configured
   write "UBX-MON-VER" 8 acknowledged required
     b5620a0400000e34
