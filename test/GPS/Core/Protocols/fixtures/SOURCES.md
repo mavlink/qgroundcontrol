@@ -1,5 +1,7 @@
 # Receiver fixtures
 
+[README.md](README.md) describes how a recording of a receiver connection becomes a fixture.
+
 ## Recordings
 
 Unmodified frame slices of BSD-3-Clause upstream test logs, also used as protocol fuzzer seeds.

@@ -239,6 +239,9 @@ other receiver families can only be replayed from a recording.
 | `--replay` | off | A recording of **Record receiver data**, or a file of raw receiver output, instead of the u-blox receiver |
 | `--replay-baud` | 0 | Play at this line rate instead of the recorded times; raw receiver output is sent at once without it |
 
+[Receiver recordings](../../test/GPS/Core/Protocols/fixtures/README.md) describes the recordings
+and how one becomes a regression test.
+
 ## Virtual RC Transmitter (PX4 SITL)
 
 Simulates an RC transmitter for PX4 SITL, which has no RC receiver. A web page has a slider and

@@ -178,6 +178,20 @@ def check_record_and_replay(binary: str) -> None:
         assert len(played) == replayed["bytes"] and played.startswith(b"\xb5\x62"), played
         if served:
             assert served["connections"] == 1 and served["sent_bytes"] == len(played), served
+        # The receiver's side of the recording, extracted as raw receiver output, decodes to the same summaries.
+        extracted = Path(directory) / "received.ubx"
+        again = run(binary, ["--replay", str(recording), "--extract", str(extracted), *passive], 0)
+        assert again["replay"]["extracted"] == str(extracted), again
+        assert extracted.read_bytes() == played, again
+        raw = run(binary, ["--replay", str(extracted), *passive], 0)
+        assert not raw["replay"]["session_recording"], raw
+        for summary in ("positions", "satellites", "corrections", "survey"):
+            assert raw[summary] == report[summary], (raw, report)
+        # An extract never replaces a file.
+        refused = run(
+            binary, ["--replay", str(recording), "--extract", str(extracted), *passive], 1
+        )
+        assert refused["outcome"] == "failed" and "positions" not in refused, refused
         report = run(binary, ["--replay", str(recording), *replay, "--family", "ublox"], 0)
         assert report["outcome"] == "replayed" and report["replay"]["decode_only"], report
         assert report["positions"]["fix_types"]["3d"] > 0, report
@@ -234,6 +248,7 @@ def check_record_and_replay(binary: str) -> None:
     run(binary, ["--replay", str(capture), "--fault", "nak", *replay], 2)
     run(binary, ["--replay", str(capture), "--action", "suite", *passive[2:]], 2)
     run(binary, ["--replay-baud", "9600"], 2)
+    run(binary, ["--extract", "received.ubx"], 2)
 
 
 def main() -> None:
@@ -386,7 +401,7 @@ def main() -> None:
     run(binary, ["--survey-accuracy", "nan"], 2)
     run(binary, ["--observe-ms", "-1"], 2)
 
-    for model in ("f9p", "m8p"):
+    for model, identity in (("f9p", "ZED-F9P HPG 1.32"), ("m8p", "NEO-M8P-2 HPG 1.40")):
         report = run(
             binary,
             [
@@ -408,6 +423,8 @@ def main() -> None:
         for stage in stages:
             checks = {item["name"]: item for item in stage["checks"]}
             assert checks["configure_return"]["status"] == "passed", stage
+            # What a qualification row names: the model and firmware the receiver reported.
+            assert stage["receiver_identity"] == identity, stage
             assert stage["wire_evidence"]["transport_written_bytes"] > 0
             assert stage["wire_evidence"]["ubx_ack_frames"] > 0
             assert checks["requested_settings_readback"]["status"] == "inconclusive"

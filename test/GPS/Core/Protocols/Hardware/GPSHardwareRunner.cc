@@ -78,6 +78,7 @@ struct Options
     QString outputPath;
     QString recordDirectory;
     QString replayPath;
+    QString extractPath;
     unsigned replayBaud = 0;
     /// Serve a simulated receiver on servePort of serveAddress instead of running an action.
     bool serve = false;
@@ -191,6 +192,10 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.replayPath = parser.value("replay");
     if (parser.isSet("replay") && options.replayPath.isEmpty()) {
         return "--replay requires a nonempty path";
+    }
+    options.extractPath = parser.value("extract");
+    if (parser.isSet("extract") && (options.extractPath.isEmpty() || !parser.isSet("replay"))) {
+        return "--extract requires a nonempty path and --replay";
     }
     const QString role = parser.value("role");
     if (!QStringList{"plan", "configure", "suite", "cancel"}.contains(options.action) ||
@@ -483,6 +488,14 @@ int replayRecording(const Options& options, QJsonObject report)
                                        : QString("No decoder for receiver family %1").arg(options.familyName));
         return output(report, 1, options.outputPath);
     }
+    // The receiver's side of the recording as raw receiver output, which the capture fixtures are made of.
+    QFile extract(options.extractPath);
+    if (!options.extractPath.isEmpty() && !extract.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
+        report.insert("replay", replayed);
+        report.insert("outcome", "failed");
+        report.insert("detail", QString("Cannot create %1: %2").arg(options.extractPath, extract.errorString()));
+        return output(report, 1, options.outputPath);
+    }
     int positions = 0;
     QMap<QString, int> fixes;
     int satellites = 0;
@@ -552,6 +565,11 @@ int replayRecording(const Options& options, QJsonObject report)
         const GPSReadResult read = replay.read(buffer, 50ms);
         if (read.status == GPSReadStatus::Data) {
             (void) runtime.consume(std::span<const uint8_t>(buffer).first(static_cast<size_t>(read.bytesRead)));
+            if (extract.isOpen() &&
+                extract.write(reinterpret_cast<const char*>(buffer.data()), read.bytesRead) != read.bytesRead) {
+                readError = QString("Cannot write %1: %2").arg(options.extractPath, extract.errorString());
+                break;
+            }
         } else if (read.status != GPSReadStatus::TimedOut) {
             readError = read.status == GPSReadStatus::Cancelled ? QString("Replay cancelled")
                                                                 : QString("Recording read failed: %1").arg(read.detail);
@@ -569,6 +587,10 @@ int replayRecording(const Options& options, QJsonObject report)
     if (replay.recording()) {
         replayed.insert("sent_bytes", replay.sentBytes());
         replayed.insert("baud_changes", replay.baudRateChanges());
+    }
+    if (extract.isOpen()) {
+        extract.close();
+        replayed.insert("extracted", options.extractPath);
     }
     report.insert("replay", replayed);
     QJsonObject fixTypes;
@@ -847,6 +869,8 @@ int run(const Options& options)
         checks.append(check("configure_return", configured ? "passed" : "failed",
                             "Facade return value only, not independent confirmation of every requested setting"));
         stage.insert("configuration_evidence", configurationEvidence(driver));
+        // The model and firmware the receiver reported, which a qualification row names; empty when it reported none.
+        stage.insert("receiver_identity", driver.receiverIdentity());
         auto snapshot = [&] {
             stage.insert("position_messages", positions);
             stage.insert("last_position", lastPosition);
@@ -1034,6 +1058,10 @@ int main(int argc, char* argv[])
         {"replay",
          "Decode a session recording, or a file of raw receiver output, with --family, as configured for --role and "
          "the base options, instead of a live transport; nothing is configured or written",
+         "file"},
+        {"extract",
+         "With --replay: also write the bytes the receiver sent to this new file, as raw receiver output to cut a "
+         "capture fixture from",
          "file"},
         {"replay-baud",
          "Replay pacing: 0 reads the recording as fast as possible, or with --serve a session recording at its "
