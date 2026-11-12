@@ -37,8 +37,10 @@ public:
     };
 
     /// The epoch at @a tow, started now when new; nullptr for a time of week already published or too old. A new time
-    /// base publishes the epochs in flight and forgets the last published time of week.
-    Epoch* find(uint32_t tow, GPSDecodeContext& context);
+    /// base publishes the epochs in flight and forgets the last published time of week, which @a previousTimeBase
+    /// then holds. The caller logs the step once it has read the message: its payload borrows the frame decoder's
+    /// storage, which a message handler that decodes more traffic reuses.
+    Epoch* find(uint32_t tow, GPSDecodeContext& context, std::optional<uint32_t>& previousTimeBase);
 
     /// Publishes epochs older than MAX_AGE.
     void expire(GPSDecodeContext& context);

@@ -3,12 +3,12 @@
 #include <utility>
 
 #include "GPSFamilyProtocol.h"
-#include "GPSReceiverFamilies.h"
 #include "GPSTime.h"
 
 namespace UBX {
 
-EpochAssembler::Epoch* EpochAssembler::find(uint32_t tow, GPSDecodeContext& context)
+EpochAssembler::Epoch* EpochAssembler::find(uint32_t tow, GPSDecodeContext& context,
+                                            std::optional<uint32_t>& previousTimeBase)
 {
     const uint64_t now = context.nowUs();
     expire(context);
@@ -20,14 +20,12 @@ EpochAssembler::Epoch* EpochAssembler::find(uint32_t tow, GPSDecodeContext& cont
             return nullptr;
         }
         // Neither an advance nor a late message: the receiver's time of week stepped.
-        qCDebug(UBXProtocolLog) << "New time base, last published time of week:" << *_lastPublished
-                                << "received:" << tow;
         for (auto& epoch : _epochs) {
             if (epoch) {
                 _finish(epoch, context);
             }
         }
-        _lastPublished.reset();
+        previousTimeBase = std::exchange(_lastPublished, std::nullopt);
     }
     for (auto& epoch : _epochs) {
         if (epoch && epoch->tow == tow) {

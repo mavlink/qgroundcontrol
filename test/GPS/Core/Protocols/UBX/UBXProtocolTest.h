@@ -16,4 +16,5 @@ private slots:
     void _replyFaults();
     void _timeOfWeekSteps_data();
     void _timeOfWeekSteps();
+    void _reentrantTimeOfWeekStep();
 };

@@ -14,8 +14,10 @@
 #include <utility>
 #include <vector>
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QtMessageHandler>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "GPSCancellation.h"
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverFamilies.h"
@@ -70,24 +72,25 @@ bool positionUpdated(GPSReceiveUpdates updates)
     return updates.testFlag(GPSReceiveUpdate::Position);
 }
 
-/// Calls a hook for each protocol warning while alive, after the handler installed earlier has seen it.
-class WarningHook
+/// Calls a hook for each message of one type while alive, after the handler installed earlier has seen it.
+class MessageHook
 {
 public:
-    explicit WarningHook(std::function<void(const QString&)> hook)
+    MessageHook(QtMsgType type, std::function<void(const QString&)> hook)
     {
+        s_type = type;
         s_hook = std::move(hook);
-        s_previous = qInstallMessageHandler(&WarningHook::_handle);
+        s_previous = qInstallMessageHandler(&MessageHook::_handle);
     }
 
-    ~WarningHook()
+    ~MessageHook()
     {
         qInstallMessageHandler(s_previous);
         s_hook = {};
     }
 
-    WarningHook(const WarningHook&) = delete;
-    WarningHook& operator=(const WarningHook&) = delete;
+    MessageHook(const MessageHook&) = delete;
+    MessageHook& operator=(const MessageHook&) = delete;
 
 private:
     static void _handle(QtMsgType type, const QMessageLogContext& context, const QString& text)
@@ -95,11 +98,12 @@ private:
         if (s_previous) {
             s_previous(type, context, text);
         }
-        if (type == QtWarningMsg && s_hook) {
+        if (type == s_type && s_hook) {
             s_hook(text);
         }
     }
 
+    static inline QtMsgType s_type = QtWarningMsg;
     static inline std::function<void(const QString&)> s_hook;
     static inline QtMessageHandler s_previous = nullptr;
 };
@@ -715,7 +719,7 @@ void reentrantPayload(GPSTestClock& clock)
     const Bytes correction = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
     // A message handler that decodes more input while the decoder logs reuses the storage of the frame being
     // decoded; the nested frame does not log, because Qt does not pass nested messages to handlers.
-    const WarningHook hook([&](const QString& message) {
+    const MessageHook hook(QtWarningMsg, [&](const QString& message) {
         if (!reentered && message == u"ubx msg: txbuf alloc") {
             reentered = true;
             driver.armNavigationDecode({.corrections = true});
@@ -756,7 +760,7 @@ void reentrantIdentity(GPSTestClock& clock)
     put(70, "PROTVER=99.00");
     put(100, "MOD=ZED-F99P");
     bool reentered = false;
-    const WarningHook hook([&](const QString& message) {
+    const MessageHook hook(QtWarningMsg, [&](const QString& message) {
         if (!reentered && message.startsWith(u"unknown board hw")) {
             reentered = true;
             // As long as the identity, so the nested frame takes all of its storage.
@@ -1923,6 +1927,32 @@ void UBXProtocolTest::_timeOfWeekSteps()
         }
     }
     QCOMPARE(actual, published);
+}
+
+void UBXProtocolTest::_reentrantTimeOfWeekStep()
+{
+    // The step is a debug message, which reaches a message handler only while its category is enabled.
+    const TestFixtures::LoggingCategoryFixture debugOutput(QStringLiteral("GPS.Protocols.UBX"));
+    expectLogMessage("GPS.Protocols.UBX", QtDebugMsg, QRegularExpression(QStringLiteral("New time base")));
+    GPSTestClock clock;
+    NavigationDecoder decoder(clock);
+    (void) decoder->decode(ubxNavigationEpoch(ubxFix3D(), 500000000));
+    bool reentered = false;
+    // The position is read from its frame before the step is logged, as the identity is before its warning.
+    const MessageHook hook(QtDebugMsg, [&](const QString& message) {
+        if (!reentered && message.startsWith(u"New time base")) {
+            reentered = true;
+            // As long as the position, so the nested frame takes all of its storage.
+            (void) decoder->consume(ubxFrame(Msg::INF_NOTICE.value(), Bytes(UBX::WIRE_SIZE<UBX::NavPvt>, 'x')));
+        }
+    });
+    const auto stepped = decoder->decode(ubxNavigationEpoch(ubxFix3D(), 400000000));
+    QVERIFY(reentered);
+    verifyExpectedLogMessage();
+    QCOMPARE(stepped.events.size(), 1);
+    const auto& navigation = std::get<GPSDecodedPosition>(stepped.events.front()).navigation;
+    QCOMPARE(navigation.fixType, GPSPositionReport::FixType::Fix3D);
+    QVERIFY(matches(navigation.latitudeDegrees, 47.0) && matches(navigation.longitudeDegrees, 8.0));
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(UBXProtocolTest, TestLabel::Unit)

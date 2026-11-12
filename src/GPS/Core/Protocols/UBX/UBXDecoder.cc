@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -210,8 +211,14 @@ GPSReceiveUpdates Protocol::_decode(uint16_t message, std::span<const uint8_t> p
     // Only navigation decoding accepts the messages with a time of week.
     if (schema && schema->towOffset >= 0) {
         const auto tow = LittleEndian::read<uint32_t>(payload, static_cast<size_t>(schema->towOffset)).value_or(0);
-        if (auto* epoch = _epochs.find(tow, context)) {
+        std::optional<uint32_t> previousTimeBase;
+        if (auto* epoch = _epochs.find(tow, context, previousTimeBase)) {
             _decodeEpoch(message, payload, *epoch);
+        }
+        // After decoding: a message handler may decode more traffic, which reuses the frame's storage.
+        if (previousTimeBase) {
+            qCDebug(UBXProtocolLog) << "New time base, last published time of week:" << *previousTimeBase
+                                    << "received:" << tow;
         }
         return GPSReceiveUpdate::Activity;
     }
