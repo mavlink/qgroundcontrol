@@ -9,6 +9,10 @@ import QGroundControl.Controls
 T.ComboBox {
     property bool sizeToContents: false
     property string alternateText: ""
+    /// Where the button's text is shortened when it is wider than the button
+    property alias labelElide: text.elide
+    /// Where a popup entry is shortened when it is wider than the popup. Text.ElideNone lets the popup's edge cut it.
+    property int popupElide: Text.ElideNone
 
     id: control
     padding: ScreenTools.comboBoxPadding
@@ -84,6 +88,7 @@ T.ComboBox {
             font: control.font
             color: qgcPal.textPrimary
             verticalAlignment: Text.AlignVCenter
+            elide: control.popupElide
         }
 
         background: Rectangle {
