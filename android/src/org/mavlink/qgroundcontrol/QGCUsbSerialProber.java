@@ -1,6 +1,7 @@
 package org.mavlink.qgroundcontrol;
 
 import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
+import com.hoho.android.usbserial.driver.FtdiSerialDriver;
 import com.hoho.android.usbserial.driver.ProbeTable;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
@@ -13,14 +14,8 @@ public class QGCUsbSerialProber {
     public static ProbeTable getQGCProbeTable() {
         final ProbeTable probeTable = UsbSerialProber.getDefaultProbeTable();
 
-        // FTDI (D2XX-backed adapter). When unavailable, keep default FTDI probing.
-        if (QGCFtdiDriver.isAvailable()) {
-            probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT232R, QGCFtdiSerialDriver.class);
-            probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT2232H, QGCFtdiSerialDriver.class);
-            probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT4232H, QGCFtdiSerialDriver.class);
-            probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT232H, QGCFtdiSerialDriver.class);
-            probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT231X, QGCFtdiSerialDriver.class);
-        }
+        // Not in the library's FTDI product list. Linux's ftdi_sio drives it exactly like the FT4232H.
+        probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT4232HA, FtdiSerialDriver.class);
 
         // PX4
         probeTable.addProduct(QGCUsbId.VENDOR_PX4, QGCUsbId.DEVICE_PX4FMU_V1, CdcAcmSerialDriver.class);
