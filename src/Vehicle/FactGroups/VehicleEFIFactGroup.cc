@@ -3,6 +3,22 @@
 #include "MAVLinkLib.h"
 #include "Vehicle.h"
 
+namespace {
+
+// ArduPilot reports an unavailable EFI temperature as 0 K converted to degC (-273.15).
+double efiTemperatureOrNaN(float degC)
+{
+    return (degC <= -273.0F) ? qQNaN() : degC;
+}
+
+// MAVLink EFI_STATUS: zero in ignition_voltage / fuel_pressure means "unknown".
+double efiZeroIsUnknown(float value)
+{
+    return (value == 0.0F) ? qQNaN() : value;
+}
+
+}  // namespace
+
 VehicleEFIFactGroup::VehicleEFIFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/EFIFact.json"), parent)
 {
@@ -75,15 +91,15 @@ void VehicleEFIFactGroup::_handleEFIStatus(const mavlink_message_t &message)
     sparkTime()->setRawValue(efi.spark_dwell_time);
     baroPress()->setRawValue(efi.barometric_pressure);
     intakePress()->setRawValue(efi.intake_manifold_pressure);
-    intakeTemp()->setRawValue(efi.intake_manifold_temperature);
-    cylinderTemp()->setRawValue(efi.cylinder_head_temperature);
+    intakeTemp()->setRawValue(efiTemperatureOrNaN(efi.intake_manifold_temperature));
+    cylinderTemp()->setRawValue(efiTemperatureOrNaN(efi.cylinder_head_temperature));
     ignTime()->setRawValue(efi.ignition_timing);
     injTime()->setRawValue(efi.injection_time);
-    exGasTemp()->setRawValue(efi.exhaust_gas_temperature);
+    exGasTemp()->setRawValue(efiTemperatureOrNaN(efi.exhaust_gas_temperature));
     throttleOut()->setRawValue(efi.throttle_out);
     ptComp()->setRawValue(efi.pt_compensation);
-    ignVoltage()->setRawValue(efi.ignition_voltage);
-    fuelPressure()->setRawValue(efi.fuel_pressure);
+    ignVoltage()->setRawValue(efiZeroIsUnknown(efi.ignition_voltage));
+    fuelPressure()->setRawValue(efiZeroIsUnknown(efi.fuel_pressure));
 
     _setTelemetryAvailable(true);
 }

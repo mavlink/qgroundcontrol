@@ -64,6 +64,8 @@ target_sources(
         VehicleAirborneTest.h
         VehicleDistanceSensorFactGroupTest.cc
         VehicleDistanceSensorFactGroupTest.h
+        VehicleEFIFactGroupTest.cc
+        VehicleEFIFactGroupTest.h
         VehicleFirmwareUpdateTest.cc
         VehicleFirmwareUpdateTest.h
         VehicleGPSFactGroupTest.cc
@@ -72,6 +74,8 @@ target_sources(
         VehicleLinkManagerTest.h
         VehicleReadinessTest.cc
         VehicleReadinessTest.h
+        VehicleRPMFactGroupTest.cc
+        VehicleRPMFactGroupTest.h
 )
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -120,9 +124,11 @@ add_qgc_test(StandardModesTest LABELS Integration Vehicle)
 add_qgc_test(TrajectoryPointsTest LABELS Unit Vehicle)
 add_qgc_test(VehicleAirborneTest LABELS Integration Vehicle)
 add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
+add_qgc_test(VehicleEFIFactGroupTest LABELS Unit Vehicle)
 add_qgc_test(VehicleFirmwareUpdateTest LABELS Integration Vehicle)
 add_qgc_test(VehicleGPSFactGroupTest LABELS Unit GPS)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)
 add_qgc_test(VehicleReadinessTest LABELS Unit Vehicle)
 add_qgc_test(VehicleReadinessPX4Test LABELS Integration Vehicle)
 add_qgc_test(VehicleReadinessAPMTest LABELS Integration Vehicle)
+add_qgc_test(VehicleRPMFactGroupTest LABELS Unit Vehicle)
