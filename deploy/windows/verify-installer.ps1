@@ -22,6 +22,12 @@ if ($Phase -eq 'Install') {
     $settingsMarker = Join-Path $settingsDir "installer-upgrade-test.txt"
     New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
     Set-Content -Path $settingsMarker -Value "preserve during upgrade"
+    Write-Host "Upgrading in place: $oldInstallDir"
+    Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$oldInstallDir" -Wait -NoNewWindow
+    if (-not (Test-Path $oldBinary)) {
+      Write-Error "QGroundControl.exe not found at $oldBinary after upgrade"
+      exit 1
+    }
     Write-Host "Upgrading into a different directory: $installDir"
     Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow
     if (Test-Path $oldBinary) {
@@ -34,7 +40,7 @@ if ($Phase -eq 'Install') {
     }
     $binary = Join-Path $installDir "bin\QGroundControl.exe"
     if (-not (Test-Path $binary)) {
-      Write-Error "QGroundControl.exe not found at $binary after upgrade"
+      Write-Error "QGroundControl.exe not found at $binary after upgrade to a different directory"
       Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
       exit 1
     }
