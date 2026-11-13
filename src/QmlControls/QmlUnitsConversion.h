@@ -25,6 +25,13 @@ public:
 
     QString appSettingsHorizontalDistanceUnitsString(void) const { return FactMetaData::appSettingsHorizontalDistanceUnitsString(); }
 
+    /// Returns the number of decimal places appropriate for the current horizontal distance unit.
+    [[nodiscard]] Q_INVOKABLE int appSettingsHorizontalDistanceUnitsDecimalPlaces() const
+    {
+        return (appSettingsHorizontalDistanceUnitsString().compare(QStringLiteral("NM"), Qt::CaseInsensitive) == 0) ? 2
+                                                                                                                    : 0;
+    }
+
     /// Converts from meters to the user specified horizontal distance unit with units appended, e.g. "16.4 ft".
     /// Keeps the converted value and units label paired so they can never disagree.
     Q_INVOKABLE QString metersToAppSettingsHorizontalDistanceUnitsString(const QVariant& meters, int decimalPlaces = 1) const

@@ -294,6 +294,8 @@ private:
     static QVariant _mavlinkGimbalDegreesToUserGimbalDegrees(const QVariant &mavlinkGimbalDegrees);
     static QVariant _metersToFeet(const QVariant &meters);
     static QVariant _feetToMeters(const QVariant &feet);
+    static QVariant _metersToNauticalMiles(const QVariant& meters);
+    static QVariant _nauticalMilesToMeters(const QVariant& nauticalMiles);
     static QVariant _squareMetersToSquareKilometers(const QVariant &squareMeters);
     static QVariant _squareKilometersToSquareMeters(const QVariant &squareKilometers);
     static QVariant _squareMetersToHectares(const QVariant &squareMeters);
@@ -393,6 +395,7 @@ private:
         static constexpr const qreal squareMetersToSquareFeet = 10.7639;
         static constexpr const qreal squareMetersToSquareMiles = 3.86102e-7;
         static constexpr const qreal squareMilesToSquareMeters = 2589988.11;
+        static constexpr const qreal MetersToNauticalMiles = 1852.0;
     } constants{};
 
     struct BuiltInTranslation_s {

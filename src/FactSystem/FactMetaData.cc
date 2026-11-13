@@ -18,6 +18,7 @@ QGC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")
 static constexpr int kMaxBitmaskIndex = std::numeric_limits<unsigned int>::digits - 1;
 
 // Built in translations for all Facts
+// clang-format off
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
     { "radians",        "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
@@ -26,8 +27,10 @@ const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] 
     { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
     { "centi-celsius",  "C",    FactMetaData::_centiCelsiusToCelsius,                   FactMetaData::_celsiusToCentiCelsius },
 };
+// clang-format on
 
 // Translations driven by app settings
+// clang-format off
 const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTranslations[] = {
     { "m",      "m",        FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "meter",  "meter",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
@@ -43,6 +46,7 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "meters", "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "vertical m",  "ft",  FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "cm/px",  "in/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
+    { .rawUnits = "cm/px", .cookedUnits = "cm/px", .unitType = FactMetaData::UnitHorizontalDistance, .unitOption = UnitsSettings::HorizontalDistanceUnitsNauticalMiles, .rawTranslator = FactMetaData::_defaultTranslator, .cookedTranslator = FactMetaData::_defaultTranslator },
     { "m^2",    "km^2",     FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
     { "m^2",    "ha",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsHectares,             FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
     { "m^2",    "ft^2",     FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareFeet,           FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
@@ -57,7 +61,11 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "g",      "kg",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsKg,                 FactMetaData::_gramsToKilograms,                    FactMetaData::_kilogramsToGrams },
     { "g",      "oz",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsOz,                 FactMetaData::_gramsToOunces,                       FactMetaData::_ouncesToGrams },
     { "g",      "lbs",      FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsLbs,                FactMetaData::_gramsToPunds,                        FactMetaData::_poundsToGrams },
+    { .rawUnits = "m", .cookedUnits = "NM", .unitType = FactMetaData::UnitHorizontalDistance, .unitOption = UnitsSettings::HorizontalDistanceUnitsNauticalMiles, .rawTranslator = FactMetaData::_metersToNauticalMiles, .cookedTranslator = FactMetaData::_nauticalMilesToMeters },
+    { .rawUnits = "meter", .cookedUnits = "NM", .unitType = FactMetaData::UnitHorizontalDistance, .unitOption = UnitsSettings::HorizontalDistanceUnitsNauticalMiles, .rawTranslator = FactMetaData::_metersToNauticalMiles, .cookedTranslator = FactMetaData::_nauticalMilesToMeters },
+    { .rawUnits = "meters", .cookedUnits = "NM", .unitType = FactMetaData::UnitHorizontalDistance, .unitOption = UnitsSettings::HorizontalDistanceUnitsNauticalMiles, .rawTranslator = FactMetaData::_metersToNauticalMiles, .cookedTranslator = FactMetaData::_nauticalMilesToMeters },
 };
+// clang-format on
 
 FactMetaData::FactMetaData(QObject *parent)
     : QObject(parent)
@@ -725,6 +733,16 @@ QVariant FactMetaData::_feetToMeters(const QVariant &feet)
     return QVariant(feet.toDouble() * constants.feetToMeters);
 }
 
+QVariant FactMetaData::_metersToNauticalMiles(const QVariant& meters)
+{
+    return {(meters.toDouble() * 1.0) / UnitConsts_s::MetersToNauticalMiles};
+}
+
+QVariant FactMetaData::_nauticalMilesToMeters(const QVariant& nauticalMiles)
+{
+    return {nauticalMiles.toDouble() * UnitConsts_s::MetersToNauticalMiles};
+}
+
 QVariant FactMetaData::_squareMetersToSquareKilometers(const QVariant &squareMeters)
 {
     return QVariant(squareMeters.toDouble() * 0.000001);
@@ -1216,6 +1234,11 @@ int FactMetaData::decimalPlaces() const
         }
     } else {
         actualDecimalPlaces = _decimalPlaces;
+    }
+
+    // Nautical miles need enough precision so sub-mile distances don't round to zero
+    if ((actualDecimalPlaces < 2) && (_cookedUnits.compare(QStringLiteral("NM"), Qt::CaseInsensitive) == 0)) {
+        actualDecimalPlaces = 2;
     }
 
     return actualDecimalPlaces;
