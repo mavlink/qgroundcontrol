@@ -11,6 +11,9 @@ include(CreateCPackCommon)
 set(CPACK_GENERATOR "NSIS")
 set(CPACK_BINARY_NSIS ON)
 
+# Install Runtime directly so the preinstall hook runs before files are extracted.
+set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};${CMAKE_PROJECT_NAME};Runtime;/")
+
 # Normalize Windows processor aliases for stable installer artifact filenames.
 function(_qgc_normalize_nsis_arch processor output_variable)
     string(TOLOWER "${processor}" normalized_processor)
