@@ -22,6 +22,7 @@ import QGroundControl.MultiVehicleManager
 import QGroundControl.Palette
 
 SettingsPage {
+    id:page
     property var    _settingsManager:           QGroundControl.settingsManager
     property var    _appSettings:               _settingsManager.appSettings
     property var    _brandImageSettings:        _settingsManager.brandImageSettings
@@ -29,9 +30,123 @@ SettingsPage {
     property Fact   _userBrandImageIndoor:      _brandImageSettings.userBrandImageIndoor
     property Fact   _userBrandImageOutdoor:     _brandImageSettings.userBrandImageOutdoor
     property Fact   _appSavePath:               _appSettings.savePath
+    // card width follows the window: 80% of the page, never below 50 or above 110 character-widths
+    readonly property real _cardW: Math.max(ScreenTools.defaultFontPixelWidth * 50,
+                                            Math.min(page.width * 0.8, ScreenTools.defaultFontPixelWidth * 110))
 
-    SettingsGroupLayout {
+    // Settings card: gray outer box (heading) + inner box (rows)
+    component AppCard: Rectangle {
+        id: card
+
+        default property alias content: contentLayout.data
+        property string heading:            ""
+        property string headingDescription: ""
+        property bool   showDividers:       true
+        property real   targetWidth:        0
+
+        readonly property bool  _light:  QGroundControl.globalPalette.globalTheme === QGCPalette.Light
+        readonly property color _cOuter: _light ? "#F5F5F5" : "#404040"
+        readonly property color _cInner: _light ? "#FFFFFF" : "#202020"
+        readonly property color _cLine:  _light ? "#E8E8E8" : "#606060"
+        readonly property color _cEdge:  _light ? "#D6D7DC" : "#2A394A"
+        readonly property real  _m:      ScreenTools.defaultFontPixelHeight / 2
+
         Layout.fillWidth:   true
+        implicitWidth:       Math.max(outerLayout.implicitWidth + 24, targetWidth)
+        implicitHeight:     outerLayout.implicitHeight + 24
+        radius:             20
+        color:              _cOuter
+        border.color:       _cEdge
+        border.width:       1
+
+        ColumnLayout {
+            id:                 outerLayout
+            anchors.fill:       parent
+            anchors.margins:    6
+            spacing:            0
+
+            // Heading inside the outer box
+            ColumnLayout {
+                Layout.fillWidth:       true
+                Layout.leftMargin:      10
+                Layout.topMargin:       8
+                Layout.bottomMargin:    10
+                spacing:                2
+                visible:                card.heading !== ""
+
+                QGCLabel {
+                    text:           card.heading
+                    font.pointSize: ScreenTools.defaultFontPointSize + 3
+                    font.bold:      true
+                }
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    text:               card.headingDescription
+                    wrapMode:           Text.WordWrap
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                    opacity:            0.6
+                    visible:            card.headingDescription !== ""
+                }
+            }
+
+            // Inner box with the rows
+            Rectangle {
+                id:                 innerCard
+                Layout.fillWidth:   true
+                implicitWidth:      contentLayout.implicitWidth + card._m * 2
+                implicitHeight:     contentLayout.implicitHeight + card._m * 2
+                radius:             14
+                color:              card._cInner
+                border.color:       card._cLine
+                border.width:       card._light ? 0 : 1
+
+                // soft shadow under the inner box
+                Rectangle {
+                    z:                  -1
+                    anchors.fill:       parent
+                    anchors.topMargin:  2
+                    anchors.bottomMargin: -2
+                    radius:             parent.radius
+                    color:              "#000000"
+                    opacity:            card._light ? 0.07 : 0.25
+                }
+
+                // divider lines between rows
+                Repeater {
+                    model: card.showDividers ? contentLayout.children.length : 0
+
+                    Rectangle {
+                        x:          card._m
+                        y:          contentLayout.y + _item.y + _item.height + card._m
+                        width:      innerCard.width - card._m * 2
+                        height:     1
+                        color:      card._cLine
+                        visible:    _item.visible && _item.width !== 0 && _item.height !== 0 &&
+                                        index < contentLayout.children.length - 1
+
+                        property var _item: contentLayout.children[index]
+                    }
+                }
+
+                ColumnLayout {
+                    id:         contentLayout
+                    x:          card._m
+                    y:          card._m
+                    width:      innerCard.width - card._m * 2
+                    spacing:    card._m * 2
+                }
+            }
+        }
+    }
+
+
+
+    Item { Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5 }
+
+    AppCard {
+        Layout.fillWidth:   true
+        targetWidth:        page._cardW
         heading:            qsTr("General")
 
         LabelledFactComboBox {
@@ -159,8 +274,9 @@ SettingsPage {
         }
     }
 
-    SettingsGroupLayout {
+    AppCard {
         Layout.fillWidth:   true
+        targetWidth:        page._cardW
         heading:            qsTr("Units")
         visible:            QGroundControl.settingsManager.unitsSettings.visible
 
@@ -175,8 +291,9 @@ SettingsPage {
         }
     }
 
-    SettingsGroupLayout {
+    AppCard {
         Layout.fillWidth:   true
+        targetWidth:        page._cardW
         heading:            qsTr("Brand Image")
         visible:            _brandImageSettings.visible && !ScreenTools.isMobile
         

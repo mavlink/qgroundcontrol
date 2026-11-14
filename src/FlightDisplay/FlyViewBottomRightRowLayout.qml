@@ -14,17 +14,22 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 
+
 RowLayout {
     TelemetryValuesBar {
         Layout.alignment:       Qt.AlignBottom
-        extraWidth:             instrumentPanel.extraValuesWidth
+        // extraWidth:             instrumentPanel.extraValuesWidth
         settingsGroup:          factValueGrid.telemetryBarSettingsGroup
         specificVehicleForCard: null // Tracks active vehicle
+        visible: false
     }
 
     FlyViewInstrumentPanel {
         id:                 instrumentPanel
         Layout.alignment:   Qt.AlignBottom
-        visible:            QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI
+        // visible:            QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI
+        visible: false
     }
 }
+
+

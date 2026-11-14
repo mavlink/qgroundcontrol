@@ -30,6 +30,11 @@ ToolStripActionList {
             visible:    true
             enabled:    true
             actionID:   _guidedController._customController.actionCustomButton
-}
+        },
+        ToolStripAction {
+            text:       qsTr("My Action")
+            iconSource: "/res/gear-white.svg"
+            onTriggered: mainWindow.showMessageDialog(qsTr("My Action"), qsTr(" my custom action!"))
+        }
     ]
 }

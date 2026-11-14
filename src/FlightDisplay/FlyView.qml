@@ -60,6 +60,11 @@ Item {
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapControl
+    // Custom overlay panel sizes - used to shrink the map so it doesn't render under custom panels
+    property real   _customLeftInset:       0   // aside + left panel width
+    property real   _customRightInset:      0   // right panel width
+    property real   _customBottomInset:     0   // footer height
+    property real   _customTopInset:        0   // reserved, not used yet
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -81,8 +86,13 @@ Item {
 
     FlyViewToolBar {
         id:         toolbar
-        visible:    !QGroundControl.videoManager.fullScreen
+        visible:    false
     }
+
+    Binding {target: _root; property: "_customTopInset"; value: customOverlay.customTopInset}
+    Binding {target: _root;property: "_customLeftInset"; value: customOverlay.customLeftInset}
+    Binding {target: _root; property: "_customRightInset"; value: customOverlay.customRightInset}
+    Binding {target: _root; property: "_customBottomInset"; value: customOverlay.customBottomInset}
 
     Item {
         id:                 mapHolder
@@ -90,6 +100,12 @@ Item {
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
         anchors.right:      parent.right
+
+        // These lines shrink the map into the center box
+            anchors.leftMargin:   _root._customLeftInset
+            anchors.rightMargin:  _root._customRightInset
+            anchors.bottomMargin: _root._customBottomInset
+            // anchors.topMargin: _root._customTopInset
 
         FlyViewMap {
             id:                     mapControl
@@ -137,14 +153,7 @@ Item {
             isViewer3DOpen:         viewer3DWindow.isOpen
         }
 
-        FlyViewCustomLayer {
-            id:                 customOverlay
-            anchors.fill:       widgetLayer
-            z:                  _fullItemZorder + 2
-            parentToolInsets:   widgetLayer.totalToolInsets
-            mapControl:         _mapControl
-            visible:            !QGroundControl.videoManager.fullScreen
-        }
+
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
         FlyViewInsetViewer {
@@ -178,5 +187,14 @@ Item {
             id:                     viewer3DWindow
             anchors.fill:           parent
         }
+    }
+
+    FlyViewCustomLayer {
+        id:                 customOverlay
+        anchors.fill:       _root
+        z:                  _fullItemZorder + 1
+        parentToolInsets:   _root.parentToolInsets
+        mapControl:         _mapControl
+        visible:            !QGroundControl.videoManager.fullScreen
     }
 }

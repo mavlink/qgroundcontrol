@@ -27,8 +27,8 @@ T.ComboBox {
     implicitHeight: Math.max(background ? background.implicitHeight : 0,
                              Math.max(contentItem.implicitHeight, indicator ? indicator.implicitHeight : 0) + topPadding + bottomPadding)
     baselineOffset: contentItem.y + text.baselineOffset
-    leftPadding:    padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
-    rightPadding:   padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width)
+    leftPadding:    padding + (_settingsStyle ? ScreenTools.defaultFontPixelWidth : 0) + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
+    rightPadding:   padding + (_settingsStyle ? ScreenTools.defaultFontPixelWidth : 0) + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width)
 
     property bool   centeredLabel:  false
     property bool   sizeToContents: false
@@ -36,7 +36,14 @@ T.ComboBox {
 
     property real   _popupWidth:    width
     property bool   _onCompleted:   false
-    property bool   _showBorder:    qgcPal.globalTheme === QGCPalette.Light
+    property bool   _settingsStyle: (typeof mainWindow !== "undefined") && mainWindow.settingsPageOpen
+    property bool   _showBorder:    _settingsStyle || qgcPal.globalTheme === QGCPalette.Light
+
+    readonly property bool  _light:         qgcPal.globalTheme === QGCPalette.Light
+    readonly property color _popBg:         _light ? "#FFFFFF" : "#404040"
+    readonly property color _popBorder:     _light ? "#E2E2E2" : "#606060"
+    readonly property color _popSelected:   _light ? "#EBEBEB" : "#606060"
+    readonly property color _popHover:      _light ? "#F4F4F4" : "#505050"
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -73,10 +80,11 @@ T.ComboBox {
 
     // The items in the popup
     delegate: ItemDelegate {
-        width:  _popupWidth
+        id:     itemDel
+        width:  control._settingsStyle ? _popupWidth - 12 : _popupWidth
         height: Math.round(popupItemMetrics.height * 1.75)
 
-        property string _text: control.textRole ? 
+        property string _text: control.textRole ?
                                     (model.hasOwnProperty(control.textRole) ? model[control.textRole] : modelData[control.textRole]) :
                                     modelData
 
@@ -89,19 +97,22 @@ T.ComboBox {
         contentItem: Text {
             text:                   _text
             font:                   control.font
-            color:                  control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  control._settingsStyle ? qgcPal.text : (control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText)
             verticalAlignment:      Text.AlignVCenter
         }
 
         background: Rectangle {
-            color:                  control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+            radius: control._settingsStyle ? 8 : 0
+            color:  control._settingsStyle ?
+                        (control.currentIndex === index ? control._popSelected : (itemDel.highlighted ? control._popHover : "transparent")) :
+                        (control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button)
         }
 
         highlighted:                control.highlightedIndex === index
     }
 
     indicator: QGCColoredImage {
-        anchors.rightMargin:    control.padding
+        anchors.rightMargin:    control.padding + (control._settingsStyle ? ScreenTools.defaultFontPixelWidth : 0)
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         height:                 ScreenTools.defaultFontPixelWidth
@@ -121,19 +132,37 @@ T.ComboBox {
     }
 
     background: Rectangle {
-        color:          qgcPal.button
-        border.color:   qgcPal.buttonBorder
+        color:          (_settingsStyle && qgcPal.globalTheme === QGCPalette.Dark) ? "#404040" : qgcPal.button
+        border.color:   (_settingsStyle && qgcPal.globalTheme === QGCPalette.Dark) ? "#606060" : qgcPal.buttonBorder
         border.width:   _showBorder ? 1 : 0
-        radius:         ScreenTools.buttonBorderRadius
+        radius:         _settingsStyle ? height / 2 : ScreenTools.buttonBorderRadius
     }
 
     popup: T.Popup {
-        x:              control.width - _popupWidth
-        y:              control.height
-        width:          _popupWidth
-        height:         Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin)
-        topMargin:      6
-        bottomMargin:   6
+        x:                  control.width - _popupWidth
+        y:                  control.height + (control._settingsStyle ? 6 : 0)
+        width:              _popupWidth
+        height:             Math.min(contentItem.implicitHeight + topPadding + bottomPadding, control.Window.height - topMargin - bottomMargin)
+        topMargin:          6
+        bottomMargin:       6
+        padding:            control._settingsStyle ? 6 : 0
+        transformOrigin:    Popup.Top
+
+        // Application Settings only: fade + slight scale animation
+        enter: Transition {
+            enabled: control._settingsStyle
+            ParallelAnimation {
+                NumberAnimation { property: "opacity"; from: 0.0;  to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                NumberAnimation { property: "scale";   from: 0.92; to: 1.0; duration: 170; easing.type: Easing.OutCubic }
+            }
+        }
+        exit: Transition {
+            enabled: control._settingsStyle
+            ParallelAnimation {
+                NumberAnimation { property: "opacity"; from: 1.0; to: 0.0;  duration: 110 }
+                NumberAnimation { property: "scale";   from: 1.0; to: 0.96; duration: 110 }
+            }
+        }
 
         contentItem: ListView {
             clip:                   true
@@ -141,6 +170,7 @@ T.ComboBox {
             model:                  control.delegateModel
             currentIndex:           control.highlightedIndex
             highlightMoveDuration:  0
+            spacing:                control._settingsStyle ? 2 : 0
 
             Rectangle {
                 z:              10
@@ -148,13 +178,17 @@ T.ComboBox {
                 height:         parent.height
                 color:          "transparent"
                 border.color:   qgcPal.text
+                visible:        !control._settingsStyle
             }
 
             T.ScrollIndicator.vertical: ScrollIndicator { }
         }
 
         background: Rectangle {
-            color: qgcPal.window
+            radius:         control._settingsStyle ? 12 : 0
+            color:          control._settingsStyle ? control._popBg : qgcPal.window
+            border.color:   control._popBorder
+            border.width:   control._settingsStyle ? 1 : 0
         }
     }
 }

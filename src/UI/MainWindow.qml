@@ -161,6 +161,12 @@ ApplicationWindow {
         }
     }
 
+    function exitTool() {
+        toolDrawer.visible = false
+    }
+
+    readonly property bool settingsPageOpen: toolDrawer.visible && toolDrawer._hideToolbar
+
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
@@ -472,6 +478,8 @@ ApplicationWindow {
         property string toolTitle
         property alias toolSource:  toolDrawerLoader.source
         property var toolIcon
+        // Application Settings draws its own back button, so the top bar is hidden for it
+        readonly property bool _hideToolbar: toolSource.toString().indexOf("AppSettings.qml") >= 0
 
         onVisibleChanged: {
             if (!toolDrawer.visible) {
@@ -489,8 +497,10 @@ ApplicationWindow {
             anchors.left:   parent.left
             anchors.right:  parent.right
             anchors.top:    parent.top
-            height:         ScreenTools.toolbarHeight
+            // height:         ScreenTools.toolbarHeight
             color:          qgcPal.toolbarBackground
+            height:         toolDrawer._hideToolbar ? 0 : ScreenTools.toolbarHeight
+            visible:        !toolDrawer._hideToolbar
 
             RowLayout {
                 id:                 toolDrawerToolbarLayout

@@ -20,8 +20,11 @@ Button {
     text:           ""
 
     property bool   primary:        false                               ///< primary button for a group of buttons
-    property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
-    property real   backRadius:     ScreenTools.buttonBorderRadius
+    // Application Settings page only: pill-shaped buttons
+    readonly property bool _settingsStyle: (typeof mainWindow !== "undefined") && mainWindow.settingsPageOpen
+
+    property bool   showBorder:     _settingsStyle || qgcPal.globalTheme === QGCPalette.Light
+    property real   backRadius:     _settingsStyle ? height / 2 : ScreenTools.buttonBorderRadius
     property real   heightFactor:   0.5
     property string iconSource:     ""
     property real   fontWeight:     Font.Normal // default for qml Text
@@ -45,8 +48,8 @@ Button {
         implicitWidth:  ScreenTools.implicitButtonWidth
         implicitHeight: ScreenTools.implicitButtonHeight
         border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-        color:          primary ? qgcPal.primaryButton : qgcPal.button
+        border.color:   (_settingsStyle && qgcPal.globalTheme === QGCPalette.Dark) ? "#606060" : qgcPal.buttonBorder
+        color:          (_settingsStyle && qgcPal.globalTheme === QGCPalette.Dark) ? "#404040" : (primary ? qgcPal.primaryButton : qgcPal.button)
 
         Rectangle {
             anchors.fill:   parent
