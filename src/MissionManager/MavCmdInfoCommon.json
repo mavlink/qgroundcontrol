@@ -746,6 +746,18 @@
                 "default":          null,
                 "nanUnchanged":     true,
                 "decimalPlaces":    2
+            },
+            "param5": {
+                "label":            "Actuator 5",
+                "default":          null,
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
+            },
+            "param6": {
+                "label":            "Actuator 6",
+                "default":          null,
+                "nanUnchanged":     true,
+                "decimalPlaces":    2
             }
         },
         { "id": 185, "rawName": "MAV_CMD_DO_FLIGHTTERMINATION", "friendlyName": "Flight termination" },

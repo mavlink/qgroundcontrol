@@ -127,6 +127,9 @@ public:
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void resetMissionItemHandler() const { _missionItemHandler->reset(); }
 
+    /// Test-only: the mission item stored at seq, as written by the GCS
+    mavlink_mission_item_int_t missionItem(uint16_t seq) const { return _missionItemHandler->missionItem(seq); }
+
     /// Test-only: seeds a simple multirotor mission (takeoff, waypoint, RTL) onto the simulated vehicle.
     void loadSimpleMultirotorMission() const { _missionItemHandler->loadSimpleMultirotorMission(); }
 
