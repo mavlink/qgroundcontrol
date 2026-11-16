@@ -3,6 +3,7 @@
 #ifdef QGC_GST_STREAMING
 
 #include <atomic>
+#include <cerrno>
 #include <gst/video/video-event.h>
 #include <memory>
 
@@ -870,6 +871,49 @@ void GstVideoReceiverRecordingTest::_testRecordingErrorKeepsStreaming()
 
     const QString problem = recordingProblem(path);
     QVERIFY2(problem.isEmpty(), qPrintable(problem));
+}
+
+void GstVideoReceiverRecordingTest::_testFullStorageNamedInRecordingError_data()
+{
+    QTest::addColumn<int>("code");
+    QTest::addColumn<int>("detailErrno");
+    QTest::addColumn<bool>("namedFull");
+
+    // filesink's two reports of a full disk: a write that fails, and the fsync after a header update that does.
+    QTest::newRow("write") << static_cast<int>(GST_RESOURCE_ERROR_NO_SPACE_LEFT) << 0 << true;
+    QTest::newRow("fsync") << static_cast<int>(GST_RESOURCE_ERROR_WRITE) << ENOSPC << true;
+    QTest::newRow("another write error") << static_cast<int>(GST_RESOURCE_ERROR_WRITE) << EIO << false;
+}
+
+void GstVideoReceiverRecordingTest::_testFullStorageNamedInRecordingError()
+{
+    QFETCH(int, code);
+    QFETCH(int, detailErrno);
+    QFETCH(bool, namedFull);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    const QString path = tempDir.filePath(QStringLiteral("full.mp4"));
+    QVERIFY(stream.record(path));
+
+    const QString text = QStringLiteral("Error while writing to file.");
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Recording error:")));
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&text, code, detailErrno](GstElement* pipeline) {
+        const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(pipeline, "filesink");
+        GError* const error = g_error_new_literal(GST_RESOURCE_ERROR, code, qUtf8Printable(text));
+        const char* const detail = detailErrno ? g_strerror(detailErrno) : nullptr;
+        (void) gst_element_post_message(fileSink.get(),
+                                        gst_message_new_error(GST_OBJECT(fileSink.get()), error, detail));
+        g_error_free(error);
+    }));
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1),
+             namedFull ? QStringLiteral("The storage is full.") : text);
 }
 
 void GstVideoReceiverRecordingTest::_testFailedRecordingStartLeavesBranchUsable()

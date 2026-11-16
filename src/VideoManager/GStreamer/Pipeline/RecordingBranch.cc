@@ -1,5 +1,7 @@
 #include "RecordingBranch.h"
 
+#include <cerrno>
+#include <cstring>
 #include <gst/gst.h>
 #include <utility>
 
@@ -24,6 +26,10 @@ namespace {
 constexpr guint64 kRecordingReservedMaxDurationNs = 2 * 3600 * GST_SECOND;
 constexpr guint64 kRecordingMoovUpdatePeriodNs = 5 * GST_SECOND;
 constexpr std::chrono::seconds kRecordingWatchInterval{1};
+// matroskamux never has its file synced, as qtmux has with each header update. Storage that takes writes into a cache
+// (an Android SD card, a network share) reports a full disk only to a sync: a recording there would lose everything
+// without an error. A sync as often as the MP4's also bounds what a power loss takes.
+constexpr gint64 kRecordingSyncPeriodUs = static_cast<gint64>(kRecordingMoovUpdatePeriodNs / GST_USECOND);
 static_assert(std::chrono::nanoseconds(RecordingBranch::kHeaderEstimateDelay).count() >=
                   static_cast<qint64>(2 * kRecordingMoovUpdatePeriodNs),
               "The muxer's estimate of its header space counts from its second header update");
@@ -81,6 +87,23 @@ GstPadProbeReturn timestampForMuxer([[maybe_unused]] GstPad* pad, GstPadProbeInf
     return GST_PAD_PROBE_OK;
 }
 
+/// Has filesink sync the file after the first buffer and after one every kRecordingSyncPeriodUs. @p data: when the
+/// last one was marked, on the monotonic clock.
+GstPadProbeReturn syncPeriodically([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    auto* const markedAt = static_cast<gint64*>(data);
+    const gint64 now = g_get_monotonic_time();
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer || ((*markedAt != 0) && ((now - *markedAt) < kRecordingSyncPeriodUs))) {
+        return GST_PAD_PROBE_OK;
+    }
+    *markedAt = now;
+    buffer = gst_buffer_make_writable(buffer);
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_SYNC_AFTER);
+    GST_PAD_PROBE_INFO_DATA(info) = buffer;
+    return GST_PAD_PROBE_OK;
+}
+
 /// The data of a probe that reports to its recording: which one that is.
 struct RecordingWatch
 {
@@ -105,6 +128,20 @@ struct SwitchWatch
     RecordingBranch* branch = nullptr;
     quint64 hold = 0;
 };
+
+/// Whether a recorder's bus error is a full disk. filesink names it by the error's code when a write fails, and only
+/// by errno's text in the detail when the fsync after one of the muxer's header updates does.
+bool reportsFullStorage(const GError* error, const char* debug)
+{
+    if (!error) {
+        return false;
+    }
+    if (g_error_matches(error, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_NO_SPACE_LEFT)) {
+        return true;
+    }
+    return g_error_matches(error, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_WRITE) && debug &&
+           (std::strstr(debug, g_strerror(ENOSPC)) != nullptr);
+}
 
 QString notFinalizedError()
 {
@@ -178,6 +215,11 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     if (!muxer || !fileSink || !gst_element_link(muxer, fileSink)) {
         qCWarning(GstVideoReceiverLog) << "Failed to link the muxer and filesink";
         return nullptr;
+    }
+    if (format == VideoReceiver::FileFormat::Mkv) {
+        const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink, "sink"));
+        (void) gst_pad_add_probe(fileSinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, syncPeriodically, g_new0(gint64, 1),
+                                 g_free);
     }
 
     // No release_request_pad on failure: disposing the bin reclaims the pad.
@@ -562,7 +604,7 @@ bool RecordingBranch::_fromRecorder(GstObject* source) const
     return _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink.get()));
 }
 
-void RecordingBranch::onBusError(GstMessage* message, const QString& text, const char* debug)
+void RecordingBranch::onBusError(GstMessage* message, const GError* error, const QString& text, const char* debug)
 {
     if (!_fromRecorder(GST_MESSAGE_SRC(message))) {
         qCDebug(GstVideoReceiverLog) << "Ignoring an error from an earlier recording:" << text;
@@ -575,7 +617,9 @@ void RecordingBranch::onBusError(GstMessage* message, const QString& text, const
     } else {
         qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
     }
-    _failure = text;
+    // GStreamer's text for it names the file, not the cause.
+    _failure = reportsFullStorage(error, debug) ? QCoreApplication::translate("RecordingBranch", "The storage is full.")
+                                                : text;
     // The bus handler closed the valve already: a failing recorder ends the recording, not the stream.
     _finish(QString());
 }

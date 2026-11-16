@@ -344,6 +344,80 @@ void GstRecordingSinkTest::_testRecordingSinkTagsFile()
     QVERIFY2(qAbs(date.secsTo(started)) <= 60, qPrintable(date.toString(Qt::ISODate)));
 }
 
+void GstRecordingSinkTest::_testMkvRecordingIsSynced()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "h264parse", "matroskamux");
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    constexpr int kFrames = 10;
+    QString loadError;
+    const QList<GstTest::AccessUnit> units =
+        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
+    QVERIFY2(units.size() >= kFrames, qPrintable(loadError));
+
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src format=time "
+                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
+                                            "h264parse name=parse")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstCapsPtr recordingCaps =
+        GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
+    const GStreamer::GstElementPtr sinkBin = RecordingBranch::makeFileSink(
+        tempDir.filePath(QStringLiteral("synced.mkv")), VideoReceiver::FileFormat::Mkv, recordingCaps.get());
+    QVERIFY(sinkBin);
+
+    // What filesink is given, after the bin's own probe. matroskamux asks for no sync: without one, storage that
+    // caches writes never reports a full disk, and the recording is lost without an error.
+    struct Written
+    {
+        std::atomic<int> buffers{0};
+        std::atomic<int> synced{0};
+        std::atomic<bool> firstSynced{false};
+    } written;
+
+    const GStreamer::GstElementPtr fileSink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "filesink"));
+    QVERIFY(fileSink);
+    const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink.get(), "sink"));
+    GStreamer::PadProbe writtenProbe;
+    QVERIFY(writtenProbe.add(
+        fileSinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+        [](GstPad*, GstPadProbeInfo* info, gpointer data) -> GstPadProbeReturn {
+            auto* const seen = static_cast<Written*>(data);
+            const bool synced = GST_BUFFER_FLAG_IS_SET(GST_PAD_PROBE_INFO_BUFFER(info), GST_BUFFER_FLAG_SYNC_AFTER);
+            if (seen->buffers.fetch_add(1, std::memory_order_relaxed) == 0) {
+                seen->firstSynced.store(synced, std::memory_order_relaxed);
+            }
+            if (synced) {
+                seen->synced.fetch_add(1, std::memory_order_relaxed);
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &written));
+
+    QVERIFY(gst_bin_add(pipeline.bin(), sinkBin.get()));
+    QVERIFY(gst_element_link(pipeline.element("parse").get(), sinkBin.get()));
+    QVERIFY(pipeline.play());
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
+    for (int frame = 0; frame < kFrames; ++frame) {
+        QCOMPARE(pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration),
+                 GST_FLOW_OK);
+    }
+    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
+
+    // From the first buffer, so that a disk already full is reported at once, and then now and again: not each one.
+    QVERIFY(written.firstSynced.load(std::memory_order_relaxed));
+    QVERIFY2(written.synced.load(std::memory_order_relaxed) < written.buffers.load(std::memory_order_relaxed),
+             qPrintable(QStringLiteral("%1 of %2 buffers synced")
+                            .arg(written.synced.load(std::memory_order_relaxed))
+                            .arg(written.buffers.load(std::memory_order_relaxed))));
+}
+
 #endif
 
 UT_REGISTER_TEST(GstRecordingSinkTest, TestLabel::Integration)

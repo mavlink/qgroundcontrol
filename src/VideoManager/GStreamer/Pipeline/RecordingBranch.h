@@ -104,8 +104,8 @@ public:
     void completeTeardown();
 
     /// A bus ERROR from the recording branch (GStreamer::PipelineBranch::Recording): the current recorder's fails the
-    /// recording.
-    void onBusError(GstMessage* message, const QString& text, const char* debug);
+    /// recording, with @p text unless the error is a full disk, which is named instead.
+    void onBusError(GstMessage* message, const GError* error, const QString& text, const char* debug);
     /// A bus ELEMENT message: the current recorder's EOS, as the pipeline forwards it, means its file is closed.
     void onBusElement(GstMessage* message);
 

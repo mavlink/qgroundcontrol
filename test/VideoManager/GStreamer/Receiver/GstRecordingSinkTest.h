@@ -13,5 +13,6 @@ private slots:
     void _testRecordingSinkTimestampsDtsOnlyFrames();
     void _testRecordingSinkTagsFile_data();
     void _testRecordingSinkTagsFile();
+    void _testMkvRecordingIsSynced();
 #endif
 };

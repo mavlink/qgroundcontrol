@@ -28,6 +28,8 @@ private slots:
     void _testRecordingSwitchWithoutDisplay();
     void _testStreamEndClosesRecordingAtOnce();
     void _testRecordingErrorKeepsStreaming();
+    void _testFullStorageNamedInRecordingError_data();
+    void _testFullStorageNamedInRecordingError();
     void _testFailedRecordingStartLeavesBranchUsable();
     void _testRecordingStartKeepsPipelinePlaying();
     void _testDestroyWhileRecordingFinalizesFile();

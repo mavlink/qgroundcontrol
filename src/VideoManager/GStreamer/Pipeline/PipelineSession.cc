@@ -480,7 +480,7 @@ void PipelineSession::_onBusError(GstMessage* message)
 
     const GStreamer::PipelineBranch branch = GStreamer::branchOf(GST_MESSAGE_SRC(message));
     if (branch == GStreamer::PipelineBranch::Recording) {
-        _recording->onBusError(message, text, debug.get());
+        _recording->onBusError(message, error.get(), text, debug.get());
         return;
     }
 
