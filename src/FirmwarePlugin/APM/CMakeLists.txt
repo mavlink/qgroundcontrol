@@ -48,7 +48,7 @@ qt_add_resources(
 qgc_git_sparse_checkout(
     NAME ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG 7ed73878bfd6ddf11950dc28d94955a00223f997
+    GIT_TAG b1907ded1b515ed8db24d9219496fc27d4ceb165
     PATTERNS "/*/apm.pdef.json"
     SOURCE_DIR_VAR _apm_params_dir
 )
