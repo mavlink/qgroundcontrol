@@ -19,7 +19,7 @@ runs:
         script: await exec.exec('python3', ['tools/ci/cache/cache_backend.py'])
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         # These inputs are evaluated again during nested post-job cleanup.
         enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
