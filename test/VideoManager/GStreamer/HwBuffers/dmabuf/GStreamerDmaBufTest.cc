@@ -7,6 +7,7 @@
 #include <gst/gst.h>
 #include <memory>
 #include <rhi/qrhi.h>
+#include <span>
 #include <vector>
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <gst/allocators/gstdmabuf.h>
@@ -720,6 +721,35 @@ void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions()
 
     GstDmaBufVulkan::requestDeviceExtensions();
     QCOMPARE(qgetenv(kVariable), after);
+#endif
+}
+
+void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
+{
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf->Vulkan frame bundles not compiled in this build");
+#else
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
+
+    // Any non-null handle: the Null QRhi wraps it without touching Vulkan, while a null one is left unwrapped.
+    const auto image = VkImage(quintptr(1));
+    auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(
+        rhi.get(), QSize(64, 64), QVideoFrameFormat::Format_RGBA8888, std::span<const VkImage>(&image, 1));
+    QVERIFY(bundle->allPlanesValid());
+    int releases = 0;
+    bundle->adoptVulkanResources([&releases] { ++releases; });
+    QRhiTexture* wrapped = bundle->texture(0);
+
+    // Qt keeps sampling the current bundle across window frames; frame end must not release the imported image.
+    for (int frame = 0; frame < 3; ++frame) {
+        bundle->onFrameEndInvoked();
+    }
+    QCOMPARE(bundle->texture(0), wrapped);
+    QCOMPARE(releases, 0);
+
+    bundle.reset();
+    QCOMPARE(releases, 1);
 #endif
 }
 

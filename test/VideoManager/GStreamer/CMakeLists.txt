@@ -33,7 +33,6 @@ target_sources(
         HwBuffers/d3d/GStreamerD3DTest.cc
         HwBuffers/dmabuf/GStreamerDmaBufTest.cc
         HwBuffers/gl/GStreamerGlTest.cc
-        HwBuffers/vulkan/GStreamerVulkanTest.cc
         Pipeline/GstRecordingSinkTest.cc
         Pipeline/GstRecordingSinkTest.h
         Pipeline/GstVideoReceiverComponentsTest.cc
