@@ -14,13 +14,9 @@
 
 #include "QGCLoggingCategory.h"
 // EGL on Linux and Android; GLX/Wayland/X11 wrapping below only where their headers exist.
-#if defined(__linux__)
 #include <gst/gl/egl/gstgldisplay_egl.h>
 
 #include <EGL/egl.h>
-#define QGC_GST_BRIDGE_HAS_EGL 1
-#endif
-#if defined(__linux__)
 // Qt 6 on xcb uses GLX by default — fall back to GLX context wrapping when EGL isn't available.
 #if __has_include(<gst/gl/x11/gstgldisplay_x11.h>) && __has_include(<QtGui/qopenglcontext_platform.h>)
 #include <gst/gl/x11/gstgldisplay_x11.h>
@@ -36,36 +32,10 @@
 #include <gst/gl/wayland/gstgldisplay_wayland.h>
 #define QGC_GST_BRIDGE_HAS_WAYLAND 1
 #endif
-#endif
 
 QGC_LOGGING_CATEGORY(GstGlBridgeLog, "Video.GStreamer.HwBuffers.GstGlBridge")
 
 namespace {
-
-#if defined(QGC_GST_BRIDGE_HAS_EGL)
-EGLDisplay qtEglDisplay(QOpenGLContext* qtCtx)
-{
-    // QEGLContext::display() is the only handle that guarantees EGLImage import/sample compatibility; fall back to
-    // EGL_DEFAULT_DISPLAY when unavailable.
-    if (qtCtx) {
-        if (auto* egl = qtCtx->nativeInterface<QNativeInterface::QEGLContext>()) {
-            EGLDisplay d = egl->display();
-            if (d != EGL_NO_DISPLAY)
-                return d;
-        }
-    }
-    return eglGetDisplay(EGL_DEFAULT_DISPLAY);
-}
-
-EGLContext qtEglContext(QOpenGLContext* qtCtx)
-{
-    if (!qtCtx)
-        return EGL_NO_CONTEXT;
-    if (auto* egl = qtCtx->nativeInterface<QNativeInterface::QEGLContext>()) {
-        return egl->nativeContext();
-    }
-    return EGL_NO_CONTEXT;
-}
 
 // The API of Qt's context: what the wrap is declared as, and all primeLocked() lets gst-gl create contexts in.
 GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
@@ -75,7 +45,6 @@ GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
     }
     return (qtCtx.format().profile() == QSurfaceFormat::CoreProfile) ? GST_GL_API_OPENGL3 : GST_GL_API_OPENGL;
 }
-#endif
 
 constexpr char kGlAppContextType[] = "gst.gl.app_context";
 // A pipeline is given these in this order: a gst-gl element creates its GL context as soon as it is handed another
@@ -120,10 +89,15 @@ bool GlContextBridge::primeLocked()
         return false;
     }
 
-#if defined(QGC_GST_BRIDGE_HAS_EGL)
     // Try EGL first (Wayland, eglfs, xcb_egl, Android); fall back to GLX (Linux xcb default on Qt 6).
-    EGLContext eglCtx = qtEglContext(qtCtx);
-    EGLDisplay eglDisp = (eglCtx != EGL_NO_CONTEXT) ? qtEglDisplay(qtCtx) : EGL_NO_DISPLAY;
+    const auto* const egl = qtCtx->nativeInterface<QNativeInterface::QEGLContext>();
+    const EGLContext eglCtx = egl ? egl->nativeContext() : EGL_NO_CONTEXT;
+    // QEGLContext::display() is the only handle that guarantees EGLImage import/sample compatibility; fall back to
+    // EGL_DEFAULT_DISPLAY when unavailable.
+    EGLDisplay eglDisp = (eglCtx != EGL_NO_CONTEXT) ? egl->display() : EGL_NO_DISPLAY;
+    if ((eglCtx != EGL_NO_CONTEXT) && (eglDisp == EGL_NO_DISPLAY)) {
+        eglDisp = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    }
     if (eglCtx != EGL_NO_CONTEXT && eglDisp != EGL_NO_DISPLAY) {
 #if defined(QGC_GST_BRIDGE_HAS_WAYLAND)
         // On Wayland, primary display must be GstGLDisplayWayland; derived EGL display is marked foreign so unref
@@ -220,12 +194,6 @@ bool GlContextBridge::primeLocked()
     // gst-gl chooses the config of its own contexts, one that fits the surface it creates for them.
     qCDebug(GstGlBridgeLog) << "GL bridge primed: display=" << _display << "context=" << _context;
     return true;
-#else
-    // EGL-only by design; Windows uses the D3D11/D3D12 bridge, macOS/iOS use CVPixelBuffer. No WGL/CGL wrap: forcing
-    // QSG_RHI_BACKEND=opengl on Windows (rare; RHI defaults to D3D11) just falls back to the CPU path here.
-    qCInfo(GstGlBridgeLog) << "GL bridge inactive on this platform (non-EGL)";
-    return false;
-#endif
 }
 
 GstObject* GlContextBridge::refObject(const char* contextType)

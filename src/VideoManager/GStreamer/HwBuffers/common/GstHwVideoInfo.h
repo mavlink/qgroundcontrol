@@ -1,7 +1,6 @@
 #pragma once
 
 #include <gst/gst.h>
-#include <gst/video/gstvideometa.h>
 #include <gst/video/video-info.h>
 
 namespace GstHw {
@@ -18,17 +17,6 @@ bool hasCpuLayout(GstCaps* caps);
 /// third plane holds component 3, the full-height alpha, not the half-height V component 2). 0 for a plane without
 /// components.
 int planeHeight(const GstVideoInfo& info, int plane);
-
-/// Byte offset and row stride of one plane within its buffer.
-struct PlaneLayout
-{
-    gsize offset = 0;
-    gint stride = 0;
-};
-
-/// Layout of plane @p plane: from @p vmeta when present (decoders pad rows/planes beyond the caps layout), else @p
-/// info.
-PlaneLayout planeLayout(const GstVideoInfo& info, const GstVideoMeta* vmeta, int plane) noexcept;
 
 /// Bytes of image data in one row of @p plane, i.e. the stride without its alignment padding: up to the last byte of
 /// any component stored in the plane.

@@ -214,14 +214,14 @@ QString vulkanImportMismatch(std::unique_ptr<GstDmaBufVideoBuffer> frame, QRhi& 
         }
     }
     const quint64 failuresBefore =
-        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
     QImage actual = QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(frame), &rhi)).toImage();
     // Qt's converter draws its quad without QRhi::clipSpaceCorrMatrix(), so under Vulkan, whose clip space points
     // down, the image comes out upside down.
     if (!rhi.isYUpInNDC()) {
         actual.flip(Qt::Vertical);
     }
-    if (GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures) !=
+    if (GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures) !=
         failuresBefore) {
         return QStringLiteral("the frame was converted from its CPU map, not from the imported textures");
     }
@@ -475,13 +475,13 @@ void GstHwBuffersVulkanReadbackTest::_testVulkanImageFrameIsNotImported()
     // The image is on the same physical device as the QRhi but on GStreamer's VkDevice, so it can't be wrapped.
     using GstHwPathTelemetry::HwFallbackReason;
     const quint64 refusedBefore =
-        GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
     // Warned about once per device.
     ignoreLogMessage("Video.GStreamer.HwBuffers.GstVulkanBuf", QtWarningMsg,
                      QRegularExpression(QStringLiteral("VkDevice != QRhi VkDevice")));
     QVideoFrameTexturesUPtr none;
     QVERIFY(!frame.mapTextures(*rhi, none));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt),
+    QCOMPARE(GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt),
              refusedBefore + 1);
     // Nor has the frame a CPU map for Qt to show it from: gst-vulkan maps host-visible memory only.
     QCOMPARE(frame.map(QVideoFrame::ReadOnly).planeCount, 0);

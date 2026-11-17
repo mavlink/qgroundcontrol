@@ -95,9 +95,11 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
         case RenderBackend::Vulkan:
             // DMA_DRM only, in the layouts Qt's Vulkan device imports: Vulkan needs the modifier, which legacy
             // memory:DMABuf caps don't carry.
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) && GST_CHECK_VERSION(1, 24, 0)
             if (policy.dmaBufDisplay) {
                 caps += GstHw::buildVulkanDmaDrmCaps(advertisedFormats(kOfferDmaDrm));
             }
+#endif
             break;
         case RenderBackend::Direct3D12:
         case RenderBackend::Metal:

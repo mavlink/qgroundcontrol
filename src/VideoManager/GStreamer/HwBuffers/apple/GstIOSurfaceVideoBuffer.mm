@@ -147,11 +147,6 @@ private:
 
 }  // namespace
 
-GstIOSurfaceVideoBuffer::GstIOSurfaceVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
-                                                 const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{}
-
 bool GstIOSurfaceVideoBuffer::validatePlaneHandles() const
 {
     return validatePlanes([](GstMemory* mem) {

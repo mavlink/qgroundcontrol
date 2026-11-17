@@ -20,8 +20,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
 )
 
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
@@ -202,8 +200,8 @@ set(_qgc_gpu_row_DMABuf
     REQUIRES QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
-    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstQtDmaBufImport.cc
-            dmabuf/GstQtDmaBufImport.h)
+    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstDmaDrmCaps.cc
+            dmabuf/GstDmaDrmCaps.h dmabuf/GstQtDmaBufImport.cc dmabuf/GstQtDmaBufImport.h)
 # The DMABuf path under a Vulkan QRhi (QSG_RHI_BACKEND=vulkan): each plane imported as a VkImage on Qt's device. Needs
 # Qt's Vulkan support, not gst-vulkan.
 set(_qgc_gpu_row_DMABuf_Vulkan

@@ -31,7 +31,6 @@
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
-#include "GstHwImportPreflight.h"
 #include "QGCRhiCapture.h"
 #endif
 
@@ -359,36 +358,19 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("QGCRhiCapture not compiled in this build (no GPU path enabled)");
 #else
-    // cachedRhi() returns nullptr before any window has been connected.
-    QVERIFY(!QGCRhiCapture::cachedRhi());
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
 
-    // Create an offscreen window and connect it. The scene graph is never
-    // initialized here so cachedRhi() remains nullptr.
+    // Create an offscreen window and connect it. The scene graph is never initialized here, so the Null QRhi's device
+    // stands in for the one its render thread would publish.
     auto* window = new QQuickWindow();
     QGCRhiCapture::connectWindow(window);
-    QVERIFY(!QGCRhiCapture::cachedRhi());
+    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
+    QCOMPARE(QGCRhiCapture::deviceSnapshot().backend.load(), static_cast<int>(QRhi::Null));
 
-    // Destroying the window must clear the cache (no dangling QRhi*).
+    // Destroying the window must withdraw the device (no dangling handles).
     delete window;
-    QVERIFY(!QGCRhiCapture::cachedRhi());
-#endif
-}
-
-void GstHwBuffersTest::_testPreflightVerdictsDroppedWithRhi()
-{
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("Import preflight not compiled in this build (no GPU path enabled)");
-#else
-    std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
-    QVERIFY(rhi);
-    const QRhi* const address = rhi.get();
-    QVERIFY(GstHwImportPreflight::preflightOrRecord(rhi.get(), HwVideoBufferPath::DmaBuf,
-                                                    QVideoFrameFormat::Format_NV12, QSize(64, 64)));
-    QCOMPARE(GstHwImportPreflight::memoizedVerdictCountForTest(address), std::size_t(1));
-
-    // The next QRhi may be allocated at the same address; it must not inherit this one's verdicts.
-    rhi.reset();
-    QCOMPARE(GstHwImportPreflight::memoizedVerdictCountForTest(address), std::size_t(0));
+    QCOMPARE(QGCRhiCapture::deviceSnapshot().backend.load(), -1);
 #endif
 }
 
@@ -626,7 +608,7 @@ class TestableHwVideoBuffer : public GstHwVideoBuffer
 {
 public:
     TestableHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat fmt)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, info, std::move(fmt))
+        : GstHwVideoBuffer(sample, info, std::move(fmt))
     {}
 
     /// Always fails, like a GPU import the active QRhi rejects.
@@ -966,8 +948,6 @@ void GstHwBuffersTest::_testTelemetryFallbackReasonMatrix()
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch), quint64(2));
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
     QCOMPARE(delta(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch),
-             after.count(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch));
 }
 
 void GstHwBuffersTest::_testTelemetrySyncWaitSplit()

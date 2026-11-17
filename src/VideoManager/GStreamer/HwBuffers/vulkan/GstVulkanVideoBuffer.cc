@@ -52,11 +52,6 @@ VulkanDiagnostics s_diag;
 
 }  // namespace
 
-GstVulkanVideoBuffer::GstVulkanVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
-                                           const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{}
-
 bool GstVulkanVideoBuffer::validatePlaneHandles() const
 {
     return validatePlanes([](GstMemory* mem) { return mem && gst_is_vulkan_image_memory(mem); });

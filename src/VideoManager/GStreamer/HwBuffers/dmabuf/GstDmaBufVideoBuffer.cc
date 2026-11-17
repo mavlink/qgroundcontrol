@@ -6,7 +6,6 @@
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstHwVideoInfo.h"
 #include "GstQtDmaBufImport.h"
 #include "QGCRhiCapture.h"
 
@@ -414,7 +413,9 @@ bool locatePlanes(GstBuffer* buffer, const GstVideoInfo& info, const GstQtDmaBuf
 {
     const GstVideoMeta* vmeta = gst_buffer_get_video_meta(buffer);
     for (int i = 0; i < fourccs.count; ++i) {
-        const auto [offset, stride] = GstHw::planeLayout(info, vmeta, i);
+        // The meta's layout when present: decoders pad rows and planes beyond the caps' layout.
+        const gsize offset = vmeta ? vmeta->offset[i] : GST_VIDEO_INFO_PLANE_OFFSET(&info, i);
+        const gint stride = vmeta ? vmeta->stride[i] : GST_VIDEO_INFO_PLANE_STRIDE(&info, i);
         guint memIdx = 0;
         guint length = 0;
         gsize skip = 0;
@@ -460,7 +461,7 @@ bool locateImportPlanes(GstBuffer* buffer, const GstVideoInfo& info, const GstQt
 
 GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
                                            const QVideoFrameFormat& format, EGLDisplay eglDisplay)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+    : GstHwVideoBuffer(sample, videoInfo, format)
     , _eglDisplay(eglDisplay)
     , _drmModifier(DRM_FORMAT_MOD_INVALID)
     , _packedYuvFourcc(eglfsPackedYuvFourcc(format.pixelFormat()))
@@ -676,7 +677,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, GstBuffer*
     if (!locateImportPlanes(buffer, _videoInfo, fourccs, _drmModifier, planes)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
-    if (!GstHwImportPreflight::preflightOrRecord(&rhi, HwVideoBufferPath::DmaBuf, pixelFormat, _format.frameSize())) {
+    if (!GstHwImportPreflight::preflightOrRecord(rhi, HwVideoBufferPath::DmaBuf, pixelFormat, _format.frameSize())) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
@@ -726,7 +727,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    if (!GstHwImportPreflight::preflightOrRecord(&rhi, HwVideoBufferPath::DmaBuf, pixelFormat, _format.frameSize())) {
+    if (!GstHwImportPreflight::preflightOrRecord(rhi, HwVideoBufferPath::DmaBuf, pixelFormat, _format.frameSize())) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 

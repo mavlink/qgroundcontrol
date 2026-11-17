@@ -16,9 +16,8 @@ bool GstHw::texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes)
     return (textureSize.width() > rounded(picture.width())) || (textureSize.height() > rounded(picture.height()));
 }
 
-GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
-                                   QVideoFrameFormat format)
-    : QHwVideoBuffer(handleType)
+GstHwVideoBuffer::GstHwVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, QVideoFrameFormat format)
+    : QHwVideoBuffer(QVideoFrame::RhiTextureHandle)
     , _sample(sample ? gst_sample_ref(sample) : nullptr)
     , _videoInfo(videoInfo)
     , _format(std::move(format))
@@ -56,25 +55,22 @@ bool GstHwVideoBuffer::checkMapPreconditions(const QRhi& rhi, int expectedBacken
                                              GstHw::MapDiagnostics& diag, GstBuffer*& outBuffer) const
 {
     if (!_sample) {
-        if (!diag.loggedNullSample.exchange(true, std::memory_order_relaxed))
-            qCWarning(cat) << "mapTextures: GstSample is null";
+        QGC_HW_WARN_ONCE(cat, diag.loggedNullSample, "mapTextures: GstSample is null");
         return false;
     }
     if (!rhi.thread()->isCurrentThread()) {
-        if (!diag.loggedWrongThread.exchange(true, std::memory_order_relaxed))
-            qCWarning(cat) << "mapTextures: called outside QRhi render thread";
+        QGC_HW_WARN_ONCE(cat, diag.loggedWrongThread, "mapTextures: called outside QRhi render thread");
         return false;
     }
     if (static_cast<int>(rhi.backend()) != expectedBackend) {
-        if (!diag.loggedBadBackend.exchange(true, std::memory_order_relaxed))
-            qCWarning(cat) << "mapTextures: QRhi backend is" << rhi.backendName() << "(backend id" << expectedBackend
-                           << "required)";
+        QGC_HW_WARN_ONCE(
+            cat, diag.loggedBadBackend,
+            "mapTextures: QRhi backend is" << rhi.backendName() << "(backend id" << expectedBackend << "required)");
         return false;
     }
     outBuffer = gst_sample_get_buffer(_sample);
     if (!outBuffer) {
-        if (!diag.loggedNullBuffer.exchange(true, std::memory_order_relaxed))
-            qCWarning(cat) << "mapTextures: GstSample has no buffer";
+        QGC_HW_WARN_ONCE(cat, diag.loggedNullBuffer, "mapTextures: GstSample has no buffer");
         return false;
     }
     return true;

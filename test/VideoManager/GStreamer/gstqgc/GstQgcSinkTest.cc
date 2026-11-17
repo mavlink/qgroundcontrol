@@ -1094,7 +1094,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkGpuPathSelection()
 
     using GstHwPathTelemetry::HwFallbackReason;
     const quint64 noPathBefore =
-        GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
     for (int i = 1; i <= 3; ++i) {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         if (fdMemory) {
@@ -1107,7 +1107,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkGpuPathSelection()
         QCOMPARE(harness.pushFrame(i * GST_SECOND), GST_FLOW_OK);
     }
     const quint64 noPathAfter =
-        GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
 
     QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
     QCOMPARE(GstQgcTest::sinkStat(harness.element(), "gpu-fallbacks"), expectedGpuFallbacks);

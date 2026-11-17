@@ -41,7 +41,6 @@ enum class Counter
 };
 
 void record(HwVideoBufferPath path, Counter counter) noexcept;
-quint64 peek(HwVideoBufferPath path, Counter counter) noexcept;
 
 /// Per-path mapTextures() wall-time, fed into an EWMA; peek returns the smoothed value in microseconds.
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept;
@@ -69,7 +68,6 @@ private:
 
 /// Per-(path,reason) fallback accounting; lets a bug report show *why* a path demoted to CPU.
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
-quint64 peekFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
 
 /// Every counter and fallback reason at one instant; a reader's baseline for counts since then.
 struct Snapshot

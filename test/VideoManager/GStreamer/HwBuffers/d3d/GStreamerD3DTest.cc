@@ -82,10 +82,8 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
     }
 
     QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
-    const QGCRhiCapture::DeviceSnapshot& snapshot = QGCRhiCapture::deviceSnapshot();
-    const void* const device = (api == QRhi::D3D11) ? snapshot.d3d11Device.load(std::memory_order_acquire)
-                                                    : snapshot.d3d12Device.load(std::memory_order_acquire);
-    if (!device) {
+    // A Direct3D 12 QRhi always has a device; Qt's Direct3D 11 one is published only once its context is protected.
+    if ((api == QRhi::D3D11) && !QGCRhiCapture::deviceSnapshot().d3d11Device.load(std::memory_order_acquire)) {
         failure = QStringLiteral("QRhi exposes no native device handle");
         return {};
     }
@@ -97,7 +95,6 @@ struct SnapshotGuard
     SnapshotGuard()
         : backend(QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire))
         , d3d11Device(QGCRhiCapture::deviceSnapshot().d3d11Device.load(std::memory_order_acquire))
-        , d3d12Device(QGCRhiCapture::deviceSnapshot().d3d12Device.load(std::memory_order_acquire))
         , adapterLuid(QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire))
         , d3d11OpensD3D12(QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire))
     {}
@@ -105,7 +102,6 @@ struct SnapshotGuard
     ~SnapshotGuard()
     {
         QGCRhiCapture::deviceSnapshot().d3d11Device.store(d3d11Device, std::memory_order_release);
-        QGCRhiCapture::deviceSnapshot().d3d12Device.store(d3d12Device, std::memory_order_release);
         QGCRhiCapture::deviceSnapshot().adapterLuid.store(adapterLuid, std::memory_order_release);
         QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.store(d3d11OpensD3D12, std::memory_order_release);
         QGCRhiCapture::deviceSnapshot().backend.store(backend, std::memory_order_release);
@@ -113,7 +109,6 @@ struct SnapshotGuard
 
     int backend = -1;
     void* d3d11Device = nullptr;
-    void* d3d12Device = nullptr;
     qint64 adapterLuid = 0;
     bool d3d11OpensD3D12 = false;
 };

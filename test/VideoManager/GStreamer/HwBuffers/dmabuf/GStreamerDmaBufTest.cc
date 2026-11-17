@@ -359,7 +359,7 @@ void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
                                EGL_NO_DISPLAY);
     gst_sample_unref(sample);
     const quint64 failuresBefore =
-        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
 
     // Warned once, and once more after each reset: a recreated scene graph reports its failures again.
     QVideoFrameTexturesUPtr none;
@@ -371,7 +371,7 @@ void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
         verifyExpectedLogMessage();
         QVERIFY(!frame.mapTextures(*rhi, none));
     }
-    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
+    QCOMPARE(GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
              failuresBefore + 4);
 #endif
 }

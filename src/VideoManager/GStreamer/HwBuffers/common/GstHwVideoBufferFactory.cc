@@ -10,45 +10,9 @@
 
 QGC_LOGGING_CATEGORY(GstHwBufFactoryLog, "Video.GStreamer.HwBuffers.Factory")
 
-namespace {
-
-/// Creates the GstSample a backend buffer holds only once a path has matched the memory, so a frame that ends up on
-/// the CPU path never allocates one.
-class LazySample
-{
-public:
-    LazySample(GstBuffer* buffer, GstCaps* caps)
-        : _buffer(buffer)
-        , _caps(caps)
-    {}
-
-    ~LazySample()
-    {
-        if (_sample) {
-            gst_sample_unref(_sample);
-        }
-    }
-
-    LazySample(const LazySample&) = delete;
-    LazySample& operator=(const LazySample&) = delete;
-
-    GstSample* get()
-    {
-        if (!_sample) {
-            _sample = gst_sample_new(_buffer, _caps, nullptr, nullptr);
-        }
-        return _sample;
-    }
-
-private:
-    GstBuffer* _buffer = nullptr;
-    GstCaps* _caps = nullptr;
-    GstSample* _sample = nullptr;
-};
-
-std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffer* buffer, const GstVideoInfo& info,
-                                                    QVideoFrameFormat format, const HwVideoBufferContext& context,
-                                                    HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache)
+std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
+                                                  QVideoFrameFormat format, const HwVideoBufferContext& context,
+                                                  HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache)
 {
     matchedPath = HwVideoBufferPath::None;
     if (!context.gpuEnabled || !buffer) {
@@ -104,7 +68,11 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
             return nullptr;
         }
         matchedPath = path.path;
-        return buildOrFallback(path.construct(sample.get(), info, format, context));
+        // The sample a backend buffer holds, created only now that a path has matched the memory.
+        GstSample* const sample = gst_sample_new(buffer, caps, nullptr, nullptr);
+        auto imported = buildOrFallback(path.construct(sample, info, format, context));
+        gst_sample_unref(sample);
+        return imported;
     };
 
     const auto paths = GstHwPathRegistry::paths();
@@ -136,13 +104,4 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::None,
                                              GstHwPathTelemetry::HwFallbackReason::UnknownMemType);
     return nullptr;
-}
-}  // namespace
-
-std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
-                                                  QVideoFrameFormat format, const HwVideoBufferContext& context,
-                                                  HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache)
-{
-    LazySample sample(buffer, caps);
-    return selectHwVideoBuffer(sample, buffer, info, std::move(format), context, matchedPath, cache);
 }

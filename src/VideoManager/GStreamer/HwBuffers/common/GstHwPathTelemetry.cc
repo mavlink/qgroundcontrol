@@ -22,11 +22,6 @@ void record(HwVideoBufferPath path, Counter counter) noexcept
     s_counters[size_t(path)][size_t(counter)].fetch_add(1, std::memory_order_relaxed);
 }
 
-quint64 peek(HwVideoBufferPath path, Counter counter) noexcept
-{
-    return s_counters[size_t(path)][size_t(counter)].load(std::memory_order_relaxed);
-}
-
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept
 {
     if (nsecs < 0) {
@@ -50,11 +45,6 @@ quint64 peekMapDurationUsEwma(HwVideoBufferPath path) noexcept
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept
 {
     s_fallbackReasons[size_t(attemptedPath)][size_t(reason)].fetch_add(1, std::memory_order_relaxed);
-}
-
-quint64 peekFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept
-{
-    return s_fallbackReasons[size_t(attemptedPath)][size_t(reason)].load(std::memory_order_relaxed);
 }
 
 Snapshot snapshot() noexcept

@@ -209,7 +209,7 @@ void waitProducerComplete(GstBuffer* buffer)
 
 GstAHardwareBufferVideoBuffer::GstAHardwareBufferVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
                                                              const QVideoFrameFormat& format, EGLDisplay eglDisplay)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+    : GstHwVideoBuffer(sample, videoInfo, format)
     , _eglDisplay(eglDisplay)
 {}
 

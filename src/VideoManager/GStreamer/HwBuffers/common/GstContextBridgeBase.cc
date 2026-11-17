@@ -1,7 +1,5 @@
 #include "GstContextBridgeBase.h"
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-
 #include <glib.h>
 #include <utility>
 
@@ -301,5 +299,3 @@ bool GstContextBridgeBase::retryWithinBudget() noexcept
     }
     return false;
 }
-
-#endif  // QGC_HAS_ANY_GPU_PATH

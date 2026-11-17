@@ -130,14 +130,12 @@ public:
 
     // QRhi can't sample one slice of a texture array, and none reaches the sink: gst-d3d12's pools hold single
     // textures, and its decoders copy a frame out of a reference-only array before they hand it on.
-    static Handle* copySlice(Handle* /*resource*/, guint subIdx, int plane, Memory* /*mem*/)
+    static Handle* copySlice(Handle* /*resource*/, guint subIdx, int plane)
     {
         QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedArraySlice,
                          "resolve: plane" << plane << "is slice" << subIdx << "of a texture array — CPU fallback");
         return nullptr;
     }
-
-    static bool finish() { return true; }
 
     static GstBufferPool* newPool(Device* device) { return gst_d3d12_buffer_pool_new(device); }
 

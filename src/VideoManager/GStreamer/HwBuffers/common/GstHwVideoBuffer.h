@@ -70,8 +70,7 @@ QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
 class GstHwVideoBuffer : public QHwVideoBuffer
 {
 public:
-    GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
-                     QVideoFrameFormat format);
+    GstHwVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, QVideoFrameFormat format);
     ~GstHwVideoBuffer() override;
 
     QVideoFrameFormat format() const override { return _format; }

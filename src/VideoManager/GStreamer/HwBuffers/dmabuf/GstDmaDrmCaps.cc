@@ -1,12 +1,9 @@
 #include "GstDmaDrmCaps.h"
 
-#if GST_CHECK_VERSION(1, 24, 0)
-#include <gst/video/video-info-dma.h>
-#endif
-
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
 #include <algorithm>
 #include <drm_fourcc.h>
+#include <gst/video/video-info-dma.h>
 #include <gst/video/video.h>
 #include <map>
 #include <vector>
@@ -19,11 +16,8 @@
 #include <EGL/eglext.h>
 
 QGC_LOGGING_CATEGORY(GstDmaDrmCapsLog, "Video.GStreamer.HwBuffers.GstDmaDrmCaps")
-#endif
 
 namespace GstHw {
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
 
 namespace {
 
@@ -251,30 +245,6 @@ guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexc
 }
 #endif
 
-#else
-
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat>, void*)
-{
-    return std::string();
-}
-
-std::string buildVulkanDmaDrmCaps(std::span<const GstVideoFormat>)
-{
-    return std::string();
-}
-
-#ifdef QGC_UNITTEST_BUILD
-bool dmaDrmModifierImportableForTest(guint64) noexcept
-{
-    return false;
-}
-
-guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat, guint) noexcept
-{
-    return 0;
-}
-#endif
+}  // namespace GstHw
 
 #endif  // QGC_HAS_GST_DMABUF_GPU_PATH && GST_CHECK_VERSION(1, 24, 0)
-
-}  // namespace GstHw

@@ -21,7 +21,7 @@ class QRhi;
 class GstVulkanVideoBuffer final : public GstHwVideoBuffer
 {
 public:
-    GstVulkanVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format);
+    using GstHwVideoBuffer::GstHwVideoBuffer;
 
     bool validatePlaneHandles() const override;
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override;

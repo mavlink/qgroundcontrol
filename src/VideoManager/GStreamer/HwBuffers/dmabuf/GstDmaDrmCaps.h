@@ -5,6 +5,7 @@
 #include <span>
 #include <string>
 
+/// Defined only in builds with the DMABuf path (QGC_HAS_GST_DMABUF_GPU_PATH) on GStreamer 1.24 or later.
 namespace GstHw {
 
 /// Best-effort DMA_DRM caps string built from the (format, modifier) pairs EGL @p display (Qt's EGLDisplay, as

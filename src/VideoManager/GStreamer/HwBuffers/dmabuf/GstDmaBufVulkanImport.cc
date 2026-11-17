@@ -459,11 +459,6 @@ bool importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDe
 
 namespace GstDmaBufVulkan {
 
-std::span<const char* const> requiredDeviceExtensions() noexcept
-{
-    return kRequiredDeviceExtensions;
-}
-
 void requestDeviceExtensions()
 {
     QByteArrayList extensions = qgetenv(kDeviceExtensionsVariable).split(';');

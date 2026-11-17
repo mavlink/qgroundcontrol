@@ -105,8 +105,8 @@ public:
                 return std::move(old);
             }
         }
-        if (tail.preflight && !GstHwImportPreflight::preflightOrRecord(&rhi, tail.path, tail.pixelFormat,
-                                                                       tail.frameSize, tail.textureFlags)) {
+        if (tail.preflight && !GstHwImportPreflight::preflightOrRecord(rhi, tail.path, tail.pixelFormat, tail.frameSize,
+                                                                       tail.textureFlags)) {
             return GstHwPathTelemetry::fail(tail.path);
         }
         std::unique_ptr<FT> textures = make();

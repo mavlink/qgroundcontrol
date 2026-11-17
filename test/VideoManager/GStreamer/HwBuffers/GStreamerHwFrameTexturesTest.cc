@@ -29,7 +29,7 @@ class TailTestBuffer final : public GstHwVideoBuffer
 {
 public:
     TailTestBuffer(GstSample* sample, const GstVideoInfo& info)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, info, QVideoFrameFormat(kFrameSize, kPixelFormat))
+        : GstHwVideoBuffer(sample, info, QVideoFrameFormat(kFrameSize, kPixelFormat))
     {}
 
     QVideoFrameTexturesUPtr mapTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
@@ -160,7 +160,7 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVERIFY(old);
     QVideoFrameTextures* const previous = old.get();
     const quint64 reuseBefore =
-        GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse);
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse);
 
     GstSample* nextSample = TailFixture::makeSample();
     bool nextSampleReleased = false;
@@ -173,8 +173,9 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVERIFY(mapped);
     QCOMPARE(mapped.get() == previous, reuse);
     QCOMPARE(built, !reuse);
-    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse),
-             reuseBefore + (reuse ? 1 : 0));
+    QCOMPARE(
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::TextureReuse),
+        reuseBefore + (reuse ? 1 : 0));
     nextFrame.reset();
     QVERIFY2(!nextSampleReleased, "The mapped bundle must keep the frame's sample alive while Qt samples it");
     mapped.reset();
@@ -187,8 +188,8 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
     QVERIFY(fixture.sample && fixture.rhi);
     TailTestBuffer frame(fixture.sample, fixture.info);
     const quint64 failuresBefore =
-        GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::MapFailures);
-    const quint64 mapFailedBefore = GstHwPathTelemetry::peekFallbackReason(
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::MapFailures);
+    const quint64 mapFailedBefore = GstHwPathTelemetry::snapshot().count(
         HwVideoBufferPath::GlMemory, GstHwPathTelemetry::HwFallbackReason::MapFailed);
 
     expectLogMessage("Video.GStreamer.Test.HwFrameTextures", QtWarningMsg,
@@ -198,10 +199,11 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
     verifyExpectedLogMessage();
 
     QVERIFY2(!mapped, "A bundle with an unwrapped plane would render with missing chroma");
-    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::MapFailures),
-             failuresBefore + 1);
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::GlMemory,
-                                                    GstHwPathTelemetry::HwFallbackReason::MapFailed),
+    QCOMPARE(
+        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::MapFailures),
+        failuresBefore + 1);
+    QCOMPARE(GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::GlMemory,
+                                                  GstHwPathTelemetry::HwFallbackReason::MapFailed),
              mapFailedBefore + 1);
     QVERIFY2(frame.holdsSample(), "A failed map must leave the sample for Qt's CPU fallback");
 }

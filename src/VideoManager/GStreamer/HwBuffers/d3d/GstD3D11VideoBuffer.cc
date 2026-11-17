@@ -80,15 +80,13 @@ public:
         return true;
     }
 
-    Handle* copySlice(Handle* tex, guint subIdx, int plane, Memory* /*mem*/)
+    Handle* copySlice(Handle* tex, guint subIdx, int plane)
     {
         tex->AddRef();
         _slices[std::size_t(plane)] = subIdx;
         _copied[std::size_t(plane)] = true;
         return tex;
     }
-
-    static bool finish() { return true; }
 
     const std::array<guint, kMaxPlanes>& slices() const noexcept { return _slices; }
 

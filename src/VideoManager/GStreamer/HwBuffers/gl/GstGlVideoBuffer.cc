@@ -141,10 +141,6 @@ bool admitGlMemory(GstMemory* mem, const HwVideoBufferContext&)
 
 }  // namespace
 
-GstGlVideoBuffer::GstGlVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{}
-
 bool GstGlVideoBuffer::validatePlaneHandles() const
 {
     // Allocator-only — GLuint check needs GST_MAP_GL, too expensive on streaming thread.

@@ -23,10 +23,7 @@
 /// they are requested before Qt creates it, and what the device then imports is asked of it once.
 namespace GstDmaBufVulkan {
 
-/// The device extensions the import needs enabled on the VkDevice Qt renders with.
-std::span<const char* const> requiredDeviceExtensions() noexcept;
-
-/// Asks Qt to enable requiredDeviceExtensions() on the Vulkan devices it creates, by adding them to
+/// Asks Qt to enable the device extensions the import needs on the Vulkan devices it creates, by adding them to
 /// QT_VULKAN_DEVICE_EXTENSIONS: QRhi enables the ones a device has. Call before Qt creates a Vulkan device.
 void requestDeviceExtensions();
 

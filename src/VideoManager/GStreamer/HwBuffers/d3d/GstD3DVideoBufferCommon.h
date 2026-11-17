@@ -104,9 +104,8 @@ struct PlaneResourceGuard
 /// @p Api supplies the API-specific pieces:
 ///   types Handle, Memory, Device; static kMemoryName, log(), isMemory(GstMemory*), bridgeDevice() (transfer-full),
 ///   sameDevice(Device*, Device*), resource(Memory*), subresource(Memory*, int plane), isArraySlice(Handle*, guint);
-///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane, Memory*)
-///   (returns the slice's own resource, AddRef'd, when the API copies it later, or null when it can't take a slice),
-///   finish() (the last word on the resolved planes).
+///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane) (returns the
+///   slice's own resource, AddRef'd, when the API copies it later, or null when it can't take a slice).
 /// proposePool() needs static kCapsFeature, newPool(Device*) and setAllocationParams(GstStructure* config, Device*,
 ///   const GstVideoInfo*).
 template <class Api>
@@ -155,7 +154,7 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
         }
         const guint subIdx = Api::subresource(d3dmem, i);
         if (Api::isArraySlice(resource, subIdx)) {
-            auto* slice = api.copySlice(resource, subIdx, i, d3dmem);
+            auto* slice = api.copySlice(resource, subIdx, i);
             if (!slice) {
                 return 0;
             }
@@ -166,7 +165,7 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
         }
         guard.owned = i + 1;
     }
-    return api.finish() ? memCount : 0;
+    return memCount;
 }
 
 /// Wraps an array of D3D native handles (ID3D11Texture2D*/ID3D12Resource*) as QRhi-importable textures; releases them
@@ -285,7 +284,7 @@ public:
 protected:
     VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
                 HwVideoBufferPath path, MapDiagnostics& diag)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+        : GstHwVideoBuffer(sample, videoInfo, format)
         , _path(path)
         , _diag(diag)
     {}

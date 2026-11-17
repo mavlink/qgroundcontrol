@@ -56,7 +56,6 @@ private slots:
     void _testCpuCopyOfPaddedBuffer_data();
     void _testCpuCopyOfPaddedBuffer();
     void _testQGCRhiCaptureCacheLifecycle();
-    void _testPreflightVerdictsDroppedWithRhi();
     void _testGpuBinPreferenceParse_data();
     void _testGpuBinPreferenceParse();
     void _testGpuBinSelection_data();
