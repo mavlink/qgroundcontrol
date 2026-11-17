@@ -412,7 +412,9 @@ void NTRIPSourceTableControllerTest::_terminatorIsAWholeLine()
     if (split >= 0) {
         // The controller reads the first part before the caster sends the second.
         qsizetype received = 0;
-        connect(activeSession(controller).data(), &NTRIPHttpSession::bodyReceived, this,
+        // The count is this block's, and so is the connection: the rest of the answer arrives after it.
+        QObject counting;
+        connect(activeSession(controller).data(), &NTRIPHttpSession::bodyReceived, &counting,
                 [&received](const QByteArray& body) { received += body.size(); });
         QCOMPARE(connection->write(response.first(bodyStart + split)), bodyStart + split);
         QTRY_COMPARE_WITH_TIMEOUT(received, qsizetype(split), TestTimeout::mediumMs());
