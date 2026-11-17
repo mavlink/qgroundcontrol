@@ -9,7 +9,8 @@
 #include <atomic>
 #include <cstddef>
 #include <gst/gst.h>
-// Not <gst/video/gstvideopool.h>: on GStreamer 1.28 it must not be the first video header (include cycle).
+// Not <gst/video/gstvideopool.h>. GStreamer defect, seen in GStreamer 1.28: it must not be the first video header
+// (include cycle).
 #include <gst/video/video.h>
 #include <memory>
 #include <private/qhwvideobuffer_p.h>

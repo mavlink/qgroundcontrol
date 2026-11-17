@@ -497,10 +497,11 @@ GstElement* addTsDemux(GstElement* bin, GstElement* upstream, guint latencyMs)
     return demux;
 }
 
-// decodebin3 picks the decoder when the stream starts, from the caps on the stream object that came with it, and
-// stores the parsed caps on that object only then, on another thread. tsdemux's object has the caps of the unparsed
-// stream, which no decoder takes, and parsebin leaves an upstream element's object alone: on a busy machine
-// decodebin3 read those caps, and the stream ended for want of a decoder. So they are stored as they leave the parser.
+// GStreamer defect, seen in GStreamer 1.28.8: decodebin3 picks the decoder when the stream starts, from the caps on
+// the stream object that came with it, and stores the parsed caps on that object only then, on another thread.
+// tsdemux's object has the caps of the unparsed stream, which no decoder takes, and parsebin leaves an upstream
+// element's object alone: on a busy machine decodebin3 read those caps, and the stream ended for want of a decoder.
+// So they are stored as they leave the parser, which a decodebin3 that waits for the parsed caps would not need.
 GstPadProbeReturn storeParsedCapsOnStream(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
 {
     GstEvent* const event = GST_PAD_PROBE_INFO_EVENT(info);

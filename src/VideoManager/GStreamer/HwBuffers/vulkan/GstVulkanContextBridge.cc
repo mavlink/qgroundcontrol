@@ -15,9 +15,9 @@
 // gstvkdecoder.h's `slots` member collides with Qt's `slots` keyword macro — see GstVulkanVideoBuffer.cc.
 #pragma push_macro("slots")
 #undef slots
-// gstvkqueue.h (gst-vulkan 1.24.x) omits G_BEGIN_DECLS, so gst_context_set_vulkan_queue would get C++
-// linkage and fail to link against the C symbol; the explicit extern "C" restores it (harmless for the
-// sibling headers that already self-guard).
+// GStreamer defect, seen in gst-vulkan 1.24.x: gstvkqueue.h omits G_BEGIN_DECLS, so
+// gst_context_set_vulkan_queue would get C++ linkage and fail to link against the C symbol; the explicit
+// extern "C" restores it (harmless for the sibling headers that already self-guard).
 extern "C" {
 #include <gst/vulkan/gstvkdevice.h>
 #include <gst/vulkan/gstvkimagememory.h>
