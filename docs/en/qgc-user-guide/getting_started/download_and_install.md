@@ -135,6 +135,8 @@ Supported versions: Android 9 (API 28) or later (arm 32/64):
 
 - [Android APK](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
 
+Daily builds can be installed alongside the stable release and have separate settings.
+
 ::: important
 The version of Qt used by QGroundControl requires Android 9 (API 28) as the minimum supported version. It is not possible to support older Android releases. This means that some integrated controllers running older versions of Android are no longer compatible with current builds of QGroundControl. QGroundControl 5.0 stable is the last release that supports these older devices. Note that 5.0 may not fully support firmware versions released after it, so users on older controllers may experience limited compatibility with newer autopilot firmware.
 :::
