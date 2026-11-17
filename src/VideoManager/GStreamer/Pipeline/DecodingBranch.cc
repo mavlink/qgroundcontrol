@@ -19,6 +19,15 @@ constexpr guint kDisplayQueueMaxBuffers = 2;
 // otherwise freeze for good, or for a whole GOP, after a dropped frame.
 constexpr qint64 kMaxGateMs = 2000;
 
+/// decodebin3's "select-stream": only video is decoded, so that no audio decoder is built. decodebin3 asks on the
+/// streaming thread that brings the stream. A SELECT_STREAMS event can't be sent from there: sending it takes the
+/// decoder's state lock, which a state change holds while it waits for that thread to stop.
+gint decodeVideoOnly([[maybe_unused]] GstElement* decodebin, [[maybe_unused]] GstStreamCollection* collection,
+                     GstStream* stream, [[maybe_unused]] gpointer data)
+{
+    return ((gst_stream_get_stream_type(stream) & GST_STREAM_TYPE_VIDEO) != 0) ? 1 : 0;
+}
+
 /// Sets "sync" on @p sink, or on the sinks inside it when it is a bin without the property.
 void setSinkSync(GstElement* sink, bool sync)
 {
@@ -378,6 +387,7 @@ bool DecodingBranch::_tryInsertDecoder()
     TeeBranchHead::absorbFlowErrors(_decoder.get());
     (void) _decoderElementAdded.connect(_decoder.get(), "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
     (void) _decoderPadAdded.connect(_decoder.get(), "pad-added", G_CALLBACK(_onDecoderPadAdded), this);
+    (void) g_signal_connect(_decoder.get(), "select-stream", G_CALLBACK(decodeVideoOnly), nullptr);
 
     if (!gst_bin_add(GST_BIN(_context.pipeline), _decoder.get()) ||
         !gst_element_sync_state_with_parent(_decoder.get()) || !gst_element_link(_head.valve(), _decoder.get())) {

@@ -484,6 +484,36 @@ void GstVideoReceiverPipelineTest::_testDecoderQosDisabled()
     QVERIFY2(qosEnabled.isEmpty(), qPrintable(qosEnabled.join(u',')));
 }
 
+void GstVideoReceiverPipelineTest::_testDecoderDecodesVideoStreamsOnly()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+
+    // decodebin3 asks, for each stream of a collection, whether to decode it (1) or not (0); -1 leaves it the choice.
+    gint video = -1;
+    gint audio = -1;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&video, &audio](GstElement* pipeline) {
+        const GStreamer::GstElementPtr decoder = GstTest::findByFactory(pipeline, "decodebin3");
+        if (!decoder) {
+            return;
+        }
+        const GStreamer::GstObjectPtr collection =
+            GStreamer::adoptObject(GST_OBJECT_CAST(gst_stream_collection_new("test")));
+        const auto selected = [&decoder, &collection](GstStreamType type) {
+            const GStreamer::GstObjectPtr candidate =
+                GStreamer::adoptObject(GST_OBJECT_CAST(gst_stream_new(nullptr, nullptr, type, GST_STREAM_FLAG_NONE)));
+            gint answer = -1;
+            g_signal_emit_by_name(decoder.get(), "select-stream", collection.get(), candidate.get(), &answer);
+            return answer;
+        };
+        video = selected(GST_STREAM_TYPE_VIDEO);
+        audio = selected(GST_STREAM_TYPE_AUDIO);
+    }));
+    QCOMPARE(video, 1);
+    QCOMPARE(audio, 0);
+}
+
 void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness_data()
 {
     QTest::addColumn<int>("streamType");

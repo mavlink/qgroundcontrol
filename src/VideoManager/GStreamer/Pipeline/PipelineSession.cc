@@ -60,30 +60,6 @@ void logSourceProgress(GstMessage* message)
                                  << (connect ? "Connecting" : (text ? text.get() : ""));
 }
 
-/// Selecting only video keeps decodebin3 from instantiating audio decoder branches. Done synchronously so the
-/// selection is in place before decodebin3 falls back to its default one.
-void selectVideoStreams(GstMessage* message)
-{
-    GstStreamCollection* collection = nullptr;
-    gst_message_parse_stream_collection(message, &collection);
-    const GStreamer::GstObjectPtr collectionRef = GStreamer::adoptObject(GST_OBJECT_CAST(collection));
-    if (!collectionRef) {
-        return;
-    }
-    GList* selectedIds = nullptr;
-    const guint nStreams = gst_stream_collection_get_size(collection);
-    for (guint i = 0; i < nStreams; ++i) {
-        GstStream* stream = gst_stream_collection_get_stream(collection, i);
-        if (gst_stream_get_stream_type(stream) & GST_STREAM_TYPE_VIDEO) {
-            selectedIds = g_list_append(selectedIds, g_strdup(gst_stream_get_stream_id(stream)));
-        }
-    }
-    if (selectedIds) {
-        (void) gst_element_send_event(GST_ELEMENT(GST_MESSAGE_SRC(message)), gst_event_new_select_streams(selectedIds));
-        g_list_free_full(selectedIds, g_free);
-    }
-}
-
 bool isRecoverableH265PaciError(GstMessage* msg, const GError* error, const gchar* debug)
 {
     if (!msg || !error || (error->domain != GST_STREAM_ERROR) || (error->code != GST_STREAM_ERROR_FORMAT) || !debug ||
@@ -597,10 +573,6 @@ GstBusSyncReply PipelineSession::_onBusSync(GstMessage* message)
     }
 
     switch (GST_MESSAGE_TYPE(message)) {
-        case GST_MESSAGE_STREAM_COLLECTION:
-            selectVideoStreams(message);
-            gst_message_unref(message);
-            return GST_BUS_DROP;
         case GST_MESSAGE_ERROR:
             // Closed now, before the failing element returns its flow error: the valve reports OK for a push that
             // fails after drop was set, which keeps the error out of the tee and so out of the other branch.
