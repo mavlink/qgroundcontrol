@@ -80,6 +80,7 @@ def test_clean_cache_removes_caches_and_keeps_clangd_config(
 ) -> None:
     (tmp_path / ".cache" / "clangd" / "index").mkdir(parents=True)
     (tmp_path / ".cache" / "ccache").mkdir()
+    (tmp_path / "tools" / ".cache" / "pytest").mkdir(parents=True)
     (tmp_path / ".ccache").mkdir()
     (tmp_path / ".clangd").write_text("CompileFlags: {}\n", encoding="utf-8")
 
@@ -89,6 +90,7 @@ def test_clean_cache_removes_caches_and_keeps_clangd_config(
     monkeypatch.setattr("clean.subprocess.run", unexpected_run)
     clean_cache(tmp_path, dry_run=False)
     assert not (tmp_path / ".cache").exists()
+    assert not (tmp_path / "tools" / ".cache").exists()
     assert not (tmp_path / ".ccache").exists()
     assert (tmp_path / ".clangd").is_file()
 

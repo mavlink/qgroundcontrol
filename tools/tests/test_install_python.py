@@ -1,4 +1,4 @@
-"""Environment integration tests shared by the Python 3.10/3.12 CI matrix."""
+"""Python environment setup tests."""
 
 from __future__ import annotations
 
@@ -20,6 +20,15 @@ def test_requirements_honor_markers_and_versions() -> None:
     assert python_env.check_requirements(["jinja2>=3"]) == 0
 
 
+def test_requirements_reject_an_interpreter_below_the_project_floor(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nrequires-python = ">=99"\n')
+    monkeypatch.setenv("QGC_TOOLS_PROJECT", str(tmp_path))
+    assert python_env.check_requirements([]) == 1
+    assert "does not satisfy >=99" in capsys.readouterr().err
+
+
 def test_unknown_group_rejected() -> None:
     with pytest.raises(ValueError, match="Unknown group"):
         python_env.requirements_for("nope")
@@ -31,6 +40,11 @@ def test_nested_profile_contains_generator_and_test_dependencies() -> None:
     assert "packaging>=24" in packages
     assert "aqtinstall" in packages
     assert len(packages) == len(set(packages))
+
+
+def test_first_setup_profile_needs_no_gdal() -> None:
+    """rasterio has wheels only for macOS 15+, glibc 2.28+ and Windows, and builds against GDAL elsewhere."""
+    assert not any(package.startswith("rasterio") for package in python_env.requirements_for("dev"))
 
 
 def test_missing_uv_never_falls_back_to_system_install() -> None:
@@ -49,7 +63,7 @@ def test_tool_uses_resolved_environment_not_path(tmp_path: Path) -> None:
         assert python_env.tool_command("aqt", "qt") == [str(tool)]
 
 
-def test_new_environment_interpreter_is_resolved_by_uv(tmp_path: Path) -> None:
+def test_environment_interpreter_is_resolved_by_uv_unless_requested(tmp_path: Path) -> None:
     def python_arg() -> str | None:
         command = run.call_args.args[0]
         return command[command.index("--python") + 1] if "--python" in command else None
@@ -62,11 +76,12 @@ def test_new_environment_interpreter_is_resolved_by_uv(tmp_path: Path) -> None:
         assert python_arg() is None
         python_env.sync_groups("dev", environment=tmp_path, python="python3.12")
         assert python_arg() == "python3.12"
+        # uv keeps an existing environment on the pinned version and rebuilds any other.
         interpreter = python_env.executable("python", tmp_path)
         interpreter.parent.mkdir(parents=True)
         interpreter.touch()
         python_env.sync_groups("dev", environment=tmp_path)
-        assert python_arg() == str(interpreter)
+        assert python_arg() is None
 
 
 def test_fresh_environment_and_repeated_setup_preserve_tools(tmp_path: Path) -> None:

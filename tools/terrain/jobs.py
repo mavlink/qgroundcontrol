@@ -5,7 +5,7 @@ from __future__ import annotations
 import itertools
 import random
 from concurrent.futures import FIRST_COMPLETED, wait
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from .tilemath import JOB_ZOOM, TileKey
 
@@ -19,9 +19,6 @@ TILES_DIR = "terrarium"
 OCEAN_STATUS = "ocean"
 # Tasks queued per pool worker: enough to keep every worker busy while results are collected.
 IN_FLIGHT_PER_WORKER = 4
-
-T = TypeVar("T")
-R = TypeVar("R")
 
 
 def tile_path(out: Path, key: TileKey) -> Path:
@@ -59,7 +56,7 @@ def completed_jobs(out: Path) -> dict[TileKey, str]:
     }
 
 
-def bounded_completion(
+def bounded_completion[T, R](
     submit: Callable[[T], Future[R]], items: Iterable[T], limit: int
 ) -> Iterator[tuple[T, Future[R]]]:
     """Yield ``(item, future)`` as futures complete, keeping at most ``limit`` in flight.

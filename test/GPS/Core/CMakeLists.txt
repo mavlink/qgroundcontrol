@@ -7,7 +7,7 @@
 add_subdirectory(Transport/Support)
 add_subdirectory(Protocols/Support)
 target_link_libraries(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         QGCGPSTestTransports
         QGCGPSProtocolTestSupport

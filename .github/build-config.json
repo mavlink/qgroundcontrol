@@ -13,7 +13,9 @@
     "cmdline_tools_sha256": "04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7",
     "ndk_version": "r27c",
     "ndk_full_version": "27.2.12479018",
-    "java_version": "21"
+    "java_version": "21",
+    "openssl_version": "3.5.9",
+    "openssl_sha256": "603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a"
   },
   "apple": {
     "xcode_version": "26.x",
@@ -157,6 +159,31 @@
       "x264",
       "x265"
     ]
+  },
+  "appimage": {
+    "linuxdeploy": {
+      "repository": "linuxdeploy/linuxdeploy",
+      "tag": "1-alpha-20251107-1",
+      "sha256": {
+        "x86_64": "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d",
+        "aarch64": "620095110d693282b8ebeb244a95b5e911cf8f65f76c88b4b47d16ae6346fcff"
+      }
+    },
+    "appimagetool": {
+      "repository": "AppImage/appimagetool",
+      "tag": "1.9.1",
+      "sha256": {
+        "x86_64": "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0",
+        "aarch64": "f0837e7448a0c1e4e650a93bb3e85802546e60654ef287576f46c71c126a9158"
+      }
+    },
+    "appimagelint": {
+      "repository": "TheAssassin/appimagelint",
+      "tag": "continuous",
+      "sha256": {
+        "x86_64": "61dc4ec2d5697249644bb559ac917bd60196bc2eebb9752582f976f717ab7869"
+      }
+    }
   },
   "analysis": {
     "llvm_version": "18",

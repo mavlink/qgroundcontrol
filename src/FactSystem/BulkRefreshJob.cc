@@ -84,8 +84,9 @@ void BulkRefreshJob::_checkRoundComplete()
                                      << "\u2014" << _failed.count() << "params still failed";
         if (_notifyFailure) {
             const QStringList failedList(_failed.cbegin(), _failed.cend());
-            QGC::showAppMessage(_mgr->tr("Parameter refresh failed for: %1").arg(failedList.join(QStringLiteral(", "))),
-                                _mgr->tr("Parameter Bulk Refresh"));
+            QGC::showAppMessage(
+                ParameterManager::tr("Parameter refresh failed for: %1").arg(failedList.join(QStringLiteral(", "))),
+                ParameterManager::tr("Parameter Bulk Refresh"));
         }
         deleteLater();
     }

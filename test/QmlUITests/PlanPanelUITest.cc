@@ -15,8 +15,6 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
 #include <QtCore/QtNumeric>
-#include <QtGui/QGuiApplication>
-#include <QtGui/QMouseEvent>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -1320,6 +1318,7 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
 
     // A terrain-relative marker stands at its height above the terrain, which changes as it is dragged
     QQuickItem* map = nullptr;
+    VisualMissionItem* waypoint = nullptr;
     std::function<QGeoCoordinate()> targetCoordinate;
     std::function<QQuickItem*()> findMarker;
     if (rallyPoint) {
@@ -1349,6 +1348,7 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
         QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
         VisualMissionItem* const target = controller->currentPlanViewItem();
         QVERIFY(target);
+        waypoint = target;
         targetCoordinate = [target] { return target->coordinate(); };
         findMarker = [&map, target]() -> QQuickItem* {
             for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
@@ -1392,26 +1392,39 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
 
     const QGeoCoordinate before = targetCoordinate();
     const QPoint start = markerPoint();
-    const QPoint cursor = start + QPoint(-160, 110);
+    const QPoint delta(-160, 110);
     QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
-    // One big step, so the marker's new height has to come from the pick and not from following the cursor. The move
-    // is delivered directly and the marker read before the event loop runs again: half a second later the terrain
-    // query for a waypoint's new position answers with the terrain of the unit tests, which has none of the hills the
-    // map draws, and the waypoint moves to its height above that
-    QMouseEvent move(QEvent::MouseMove, cursor, _window->mapToGlobal(cursor), Qt::NoButton, Qt::LeftButton,
-                     Qt::NoModifier);
-    QGuiApplication::sendEvent(_window, &move);
-    const QGeoCoordinate after = targetCoordinate();
-    const QPoint end = markerPoint();
-    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, cursor);
+    // One big step, so the marker's new height has to come from the pick and not from following the cursor
+    QTest::mouseMove(_window, start + delta);
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
 
-    QVERIFY2(after.distanceTo(before) > 1.0, "Dragging the current marker did not move it");
-    QVERIFY2((end - cursor).manhattanLength() <= 6,
+    QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
+                              QStringLiteral("marker moved")),
+             "Dragging the current marker did not move it");
+    // Half a second after it moves, a waypoint asks QGC's terrain query for its altitude. The unit test terrain
+    // answering it has no debug hills and would take the marker off them, so that answer is dropped: the marker
+    // is checked where the drag left it, at its height above the hills. The marker is usually there before an
+    // answer arrives, so the slot is looked up first: the invoke alone would rarely notice that it is gone
+    QVERIFY2(!waypoint || waypoint->metaObject()->indexOfSlot("_terrainDataReceived(bool,QList<double>)") != -1,
+             "VisualMissionItem has no _terrainDataReceived(bool, QList<double>) slot to drop the terrain answer");
+    QPoint end;
+    bool terrainAnswerDropped = true;
+    const auto markerUnderCursor = [&] {
+        if (waypoint && !qIsNaN(waypoint->amslEntryAlt())) {
+            terrainAnswerDropped = QMetaObject::invokeMethod(waypoint, "_terrainDataReceived", Q_ARG(bool, false),
+                                                             Q_ARG(QList<double>, QList<double>()));
+        }
+        end = markerPoint();
+        // A failed invoke ends the wait: it is reported below
+        return !terrainAnswerDropped || (end - (start + delta)).manhattanLength() <= 6;
+    };
+    QVERIFY2(waitForCondition(markerUnderCursor, 5000, QStringLiteral("marker under the cursor")),
              qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
                             .arg(end.x())
                             .arg(end.y())
-                            .arg(cursor.x())
-                            .arg(cursor.y())));
+                            .arg(start.x() + delta.x())
+                            .arg(start.y() + delta.y())));
+    QVERIFY2(terrainAnswerDropped, "VisualMissionItem::_terrainDataReceived(bool, QList<double>) could not be invoked");
 }
 
 void PlanPanelUITest::_testGeoMapMarkerShowsWhileTerrainAltitudePending()

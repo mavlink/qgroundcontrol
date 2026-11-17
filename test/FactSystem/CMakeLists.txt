@@ -35,7 +35,7 @@ target_sources(
         ParameterMetaDataTestHelper.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(APMParameterMetaDataTest LABELS Unit RESOURCE_LOCK TempFiles)
 add_qgc_test(FactControlsUnitsTest LABELS Unit)

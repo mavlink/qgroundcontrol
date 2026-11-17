@@ -26,7 +26,7 @@ endfunction()
 _qgc_configure_fixture(--fresh)
 file(READ "${FIXTURE_BINARY_DIR}/moccache-scripts.txt" _scripts)
 if(_scripts STREQUAL ";")
-    message(STATUS "QGC_TEST_SKIPPED: moccache prerequisites (python3 >= 3.10) not found")
+    message(STATUS "QGC_TEST_SKIPPED: moccache prerequisites (a new enough python3) not found")
     return()
 endif()
 

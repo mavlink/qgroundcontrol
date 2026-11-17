@@ -3,7 +3,37 @@
 Backends for [`tools/analyze.py`](../analyze.py) and QGC-specific static analyzers for C++ code.
 For `analyze.py` usage and compiler-analysis prerequisites, see
 [tools/README.md](../README.md#analyzepy); for CI planning, sharding, and result caching, see
-[ci-overview.md](../../.github/ci-overview.md).
+[the CI notes](../../.github/ci-notes/platforms.md#code-analysis).
+
+## Check Policy
+
+[`.clang-tidy`](../../.clang-tidy) enables clang-tidy's `bugprone-*`, `clang-analyzer-*`, and
+`performance-*` checks: likely defects and avoidable cost. A few bug classes are errors
+(`WarningsAsErrors`); the rest are advisory warnings. Six checks are off because here they report
+ordinary code: `bugprone-signed-bitwise` (`1 << n` flag values),
+`bugprone-throwing-static-initialization` (static Qt objects and logging categories),
+`performance-enum-size` (enums wider than one byte, including those QML and MAVLink use),
+`bugprone-easily-swappable-parameters`, `bugprone-exception-escape`, and
+`clang-analyzer-cplusplus.NewDeleteLeaks` (QObjects that their parent deletes).
+
+clang-tidy does not enforce style: naming, includes, and modern C++ usage follow
+[CODING_STYLE.md](../../CODING_STYLE.md). The `readability-*`, `modernize-*`,
+`cppcoreguidelines-*`, and `misc-include-cleaner` checks are off; they were 90% of a full scan's
+24,187 warnings (November 2026) and hid the rest. To try other checks on a file, name them on the
+command line, which keeps `.clang-tidy`'s other settings:
+
+```bash
+clang-tidy -p build --checks='-*,modernize-*' src/Vehicle/Vehicle.cc
+```
+
+`tools/analyze.py` reports and fixes headers only in this checkout's `src/`, `test/`, and `tools/`:
+it passes a `--header-filter` anchored to the checkout. `.clang-tidy`'s `HeaderFilterRegex` cannot
+name the checkout, so a plain `clang-tidy` run also reports dependency headers below a directory
+of those names, such as MAVLink's `test/` dialect in the build tree or CPM sources.
+
+On pull requests, findings on changed lines appear in the Build Results comment, and the likely
+bugs among them as inline review comments
+([reporting notes](../../.github/ci-notes/reporting.md#build-results)).
 
 ## Compiler Analysis Output
 
@@ -43,8 +73,8 @@ parallel cannot guarantee. The `clang-apply-replacements` beside `clang-tidy` is
 in LLVM packages and the pinned `clang-tidy` PyPI wheel), then `PATH`.
 
 - Fix runs bypass `--cache-dir`: a replayed result would export no fixes.
-- Header fixes are limited to this checkout's `src/`, `test/`, and `tools/`, because CPM sources and
-  generated headers in other `src/` directories also match `.clang-tidy`'s `HeaderFilterRegex`.
+- Header fixes are limited to this checkout's `src/`, `test/`, and `tools/`, as the findings are
+  ([Check Policy](#check-policy)).
 - Fixes from translation units that failed to compile are discarded, as `clang-tidy --fix` does.
 - Fixed code is not reformatted; run `just format-fix`, review with `git diff`, and rerun without
   `--fix` for findings that have no automatic fix.

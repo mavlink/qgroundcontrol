@@ -59,12 +59,9 @@ def _sha256_file(path: Path) -> str:
 
 def _sha256_file_stat(path: Path) -> tuple[str, os.stat_result]:
     """Hash path and fstat the same open file, so both describe one version of it."""
-    h = hashlib.sha256()
     with path.open("rb") as f:
         st = os.fstat(f.fileno())
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest(), st
+        return hashlib.file_digest(f, "sha256").hexdigest(), st
 
 
 def _sha256_file_normalized(path: Path, prefixes: list[str]) -> str:

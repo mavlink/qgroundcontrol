@@ -15,6 +15,8 @@ add_library(QGCUnitTests OBJECT UnitTestList.cc UnitTestList.h)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCUnitTests)
 
 # Tests compile against everything the application does, including what its libraries propagate.
+# Test include directories and test support libraries go on QGCUnitTests, never on the application:
+# its objects would otherwise recompile whenever a test directory is added.
 target_include_directories(QGCUnitTests PRIVATE $<TARGET_PROPERTY:${CMAKE_PROJECT_NAME},INCLUDE_DIRECTORIES>)
 target_compile_definitions(QGCUnitTests PRIVATE $<TARGET_PROPERTY:${CMAKE_PROJECT_NAME},COMPILE_DEFINITIONS>)
 target_compile_options(QGCUnitTests PRIVATE $<TARGET_PROPERTY:${CMAKE_PROJECT_NAME},COMPILE_OPTIONS>)
@@ -34,7 +36,7 @@ find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
 target_include_directories(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Portable
@@ -80,7 +82,7 @@ endif()
 # ============================================================================
 
 add_subdirectory(Utilities/Timing/Support)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCTestTiming)
+target_link_libraries(QGCUnitTests PRIVATE QGCTestTiming)
 
 add_subdirectory(UnitTestFramework)
 add_subdirectory(ADSB)
@@ -114,6 +116,7 @@ add_subdirectory(QmlUITests)
 # headers as system headers. Only targets visible here can be named; the executable still
 # links every dependency itself, so this adds no objects or archives to the link.
 get_target_property(_qgc_application_links ${CMAKE_PROJECT_NAME} LINK_LIBRARIES)
+get_target_property(_qgc_application_includes ${CMAKE_PROJECT_NAME} INCLUDE_DIRECTORIES)
 foreach(_qgc_link IN LISTS _qgc_application_links)
     if(TARGET "${_qgc_link}" AND NOT _qgc_link STREQUAL "QGCUnitTests")
         set_property(
@@ -121,15 +124,21 @@ foreach(_qgc_link IN LISTS _qgc_application_links)
             APPEND
             PROPERTY LINK_LIBRARIES "${_qgc_link}"
         )
+        get_target_property(_qgc_link_includes ${_qgc_link} INTERFACE_INCLUDE_DIRECTORIES)
+        if(_qgc_link_includes)
+            list(APPEND _qgc_application_includes ${_qgc_link_includes})
+        endif()
     endif()
 endforeach()
 
-# Match the application: moc waits for generated protocol headers, not for linked libraries.
-if(NOT QGC_CUSTOM_BUILD)
-    set_target_properties(
-        QGCUnitTests
-        PROPERTIES
-            AUTOGEN_ORIGIN_DEPENDS OFF
-            AUTOGEN_TARGET_DEPENDS qgc-analysis-headers
-    )
-endif()
+# The application must not regain a test include directory, its own or a linked library's.
+foreach(_qgc_include IN LISTS _qgc_application_includes)
+    string(REGEX REPLACE "^\\$<BUILD_INTERFACE:(.*)>$" "\\1" _qgc_include "${_qgc_include}")
+    cmake_path(IS_PREFIX CMAKE_CURRENT_SOURCE_DIR "${_qgc_include}" NORMALIZE _qgc_is_test_include)
+    if(_qgc_is_test_include)
+        message(
+            FATAL_ERROR "QGC: '${_qgc_include}' is an include directory of ${CMAKE_PROJECT_NAME}. Attach test include "
+                        "directories and test support libraries to QGCUnitTests instead."
+        )
+    endif()
+endforeach()

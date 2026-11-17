@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import re
 import string
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from ci.planning import detect_changes
@@ -13,26 +14,34 @@ from ci.planning.detect_changes import (
     detect_builds,
     get_changed_files,
     has_relevant_changes,
+    is_build_input,
     workflow_name_for_platform,
 )
+from ci.planning.plan_platform import PLATFORMS as PLATFORM_WORKFLOWS
 from hypothesis import given
 from hypothesis import strategies as st
 from qgc_tools.release_tag_check import GitQueryError
 
 from .._helpers import (
     REPO_ROOT,
+    TOOLS_DIR,
     commit_files,
     git,
+    load_action,
     load_workflow,
     pr_merge_checkout,
     workflow_names,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 REUSABLE_DETECTION = "./.github/workflows/_detect-changes.yml"
+LOCAL_ACTION = "./.github/actions/"
+NATIVE_PLATFORMS = ("linux", "windows", "macos", "ios", "android")
+DOCKER_PLATFORMS = ("docker-linux", "docker-android")
 _EVENT_VARS = (
     "EVENT_NAME",
     "PR_BASE_SHA",
@@ -125,7 +134,8 @@ def test_other_branch_events_build_without_diffing(
         raise AssertionError("non-PR events must not diff")
 
     event.setattr(detect_changes, "get_changed_files", unexpected)
-    assert _should_build() is True
+    platforms = detect_changes.PLATFORMS
+    assert detect_builds(platforms).builds == dict.fromkeys(platforms, True)
 
 
 @pytest.mark.parametrize("event_name", ["push", "workflow_dispatch"])
@@ -212,8 +222,7 @@ def test_detection_job_checks_out_and_passes_what_detect_builds_reads() -> None:
     entries = set(checkout["sparse-checkout"].split())
     assert {
         "deploy/docker/variants.json",
-        "tools/ci/planning/detect_changes.py",
-        "tools/ci/planning/plan_platform.py",
+        "tools/ci",
         "tools/qgc_tools",
     } <= entries
     # Pull requests diff the merge commit against its first parent; tags need full history.
@@ -286,6 +295,208 @@ def test_matrix_workflows_build_the_planned_legs(workflow: str, platform: str) -
 )
 def test_shared_build_inputs_trigger_all_platforms(platform: str, filename: str) -> None:
     assert has_relevant_changes([filename], platform)
+
+
+def _building(files: list[str]) -> set[str]:
+    return {
+        platform for platform in detect_changes.PLATFORMS if has_relevant_changes(files, platform)
+    }
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        ["tools/uv.lock"],
+        ["tools/pyproject.toml"],
+        ["tools/pyproject.toml", "tools/uv.lock"],
+        ["tools/uv.lock", "docs/en/index.md", "tools/README.md"],
+    ],
+)
+def test_python_environment_changes_alone_build_only_linux(files: list[str]) -> None:
+    assert _building(files) == {"linux"}
+
+
+def test_python_environment_changes_do_not_narrow_other_changes() -> None:
+    assert _building(["tools/uv.lock", "src/Vehicle/Vehicle.cc"]) == set(NATIVE_PLATFORMS)
+    assert _building(["tools/uv.lock", "deploy/docker/Dockerfile"]) == {"linux", *DOCKER_PLATFORMS}
+    # Other environment inputs still build everything.
+    assert _building(["tools/.python-version"]) == set(detect_changes.PLATFORMS)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "README.md",
+        "src/GeoMap/README.md",
+        "test/README.md",
+        "cmake/README.md",
+        "tools/README.md",
+        "tools/ci/README.md",
+        "tools/setup/NOTES.md",
+        ".github/actions/README.md",
+        "deploy/docker/README.md",
+        "android/NOTES.md",
+    ],
+)
+def test_markdown_never_builds(path: str) -> None:
+    assert _building([path]) == set()
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "tools/analyze.py",
+        "tools/analyzers/clang_tidy.py",
+        "tools/ci_script_index.py",
+        "tools/pre_commit.py",
+        "tools/validate_configs.py",
+        "tools/debuggers/profile.py",
+        "tools/terrain/cli.py",
+        "tools/ci/planning/analysis_matrix.py",
+        "tools/ci/publish/aws_upload.py",
+        "tools/ci/publish/pages_site.py",
+        "tools/ci/publish/publish_decide.py",
+        "tools/ci/publish/release_assets.py",
+        "tools/ci/reporting/generate_build_results_comment.py",
+        "tools/ci/runner/runner_image.py",
+    ],
+)
+def test_scripts_that_no_platform_build_runs_never_build(path: str) -> None:
+    assert _building([path]) == set()
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        # Not named by a skip rule, so still a build input.
+        "tools/new_helper.py",
+        "tools/new_area/module.py",
+        "tools/ci/new_area/script.py",
+        "tools/ci/reporting/new_report.py",
+        "tools/ci/reporting/junit_report.py",
+        "tools/debuggers/valgrind.supp",
+        "tools/generators/config_qml/generate_pages.py",
+        "tools/translations/qgc_lupdate.py",
+    ],
+)
+def test_unlisted_tools_paths_keep_building_every_platform(path: str) -> None:
+    assert _building([path]) == set(detect_changes.PLATFORMS)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "src/Vehicle/Vehicle.cc",
+        "src/FlyView/FlyView.qml",
+        "test/Vehicle/VehicleTest.cc",
+        "translations/qgc_source_fr_FR.ts",
+        "resources/gear-black.svg",
+        "resources/qgcresources.qrc",
+    ],
+)
+def test_application_changes_build_native_platforms_but_not_docker(path: str) -> None:
+    assert _building([path]) == set(NATIVE_PLATFORMS)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "src/CMakeLists.txt",
+        "src/Vehicle/CMakeLists.txt",
+        "src/QtLocationPlugin/Sources.cmake",
+        "test/CMakeLists.txt",
+        "cmake/CustomOptions.cmake",
+        ".github/actions/cache/action.yml",
+        "tools/ci/cache/cache_plan.py",
+    ],
+)
+def test_build_system_changes_still_build_docker(path: str) -> None:
+    assert _building([path]) == set(detect_changes.PLATFORMS)
+
+
+def _strings(node: Any) -> Iterator[str]:
+    if isinstance(node, str):
+        yield node
+    elif isinstance(node, dict):
+        for value in node.values():
+            yield from _strings(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _strings(value)
+
+
+def _platform_build_references() -> set[str]:
+    """tools/ paths named by the platform workflows, the local actions they use, and CMake."""
+    documents = [load_workflow(f"{platform}.yml") for platform in PLATFORM_WORKFLOWS]
+    actions: set[str] = set()
+    # The list grows while it is read: an action's own local actions are loaded too.
+    for document in documents:
+        for text in _strings(document):
+            name = text.removeprefix(LOCAL_ACTION)
+            if text.startswith(LOCAL_ACTION) and name not in actions:
+                actions.add(name)
+                documents.append(load_action(name))
+    texts = [text for document in documents for text in _strings(document)]
+    for root in ("CMakeLists.txt", "cmake", "src", "test"):
+        path = REPO_ROOT / root
+        for cmake_file in [path] if path.is_file() else path.rglob("*"):
+            if cmake_file.name == "CMakeLists.txt" or ".cmake" in cmake_file.suffixes:
+                texts += re.findall(
+                    r"CMAKE_SOURCE_DIR[}@]/(tools/[\w./-]+)", cmake_file.read_text(encoding="utf-8")
+                )
+    return {
+        match.rstrip("./")
+        for text in texts
+        for match in re.findall(r"(?<![\w-])tools/[\w./-]+", text)
+    }
+
+
+def _imported_tools_modules(script: Path) -> set[Path]:
+    """Files under tools/ that *script* imports: absolute, `tools.`-prefixed, or relative."""
+    package = script.parent.relative_to(TOOLS_DIR).parts
+    modules: list[str] = []
+    for node in ast.walk(ast.parse(script.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Import):
+            modules += [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            base = package[: len(package) - node.level + 1] if node.level else ()
+            module = ".".join([*base, *([node.module] if node.module else [])])
+            modules += [module, *(f"{module}.{alias.name}" for alias in node.names)]
+    found: set[Path] = set()
+    for module in modules:
+        parts = module.removeprefix("tools.").split(".")
+        for length in range(len(parts), 0, -1):
+            candidate = TOOLS_DIR.joinpath(*parts[:length])
+            for file in (candidate.with_suffix(".py"), candidate / "__init__.py"):
+                if file.is_file():
+                    found.add(file)
+    return found
+
+
+def test_nothing_a_platform_build_runs_is_marked_as_not_a_build_input() -> None:
+    pending: list[Path] = []
+    for reference in _platform_build_references() - {"tools/.venv"}:
+        path = REPO_ROOT / reference
+        pending += path.rglob("*.py") if path.is_dir() else [path] if path.is_file() else []
+    files: set[Path] = set()
+    while pending:
+        path = pending.pop()
+        if path not in files:
+            files.add(path)
+            if path.suffix == ".py":
+                pending += _imported_tools_modules(path)
+    inputs = {path.relative_to(REPO_ROOT).as_posix() for path in files}
+    # The scan reaches scripts that workflows, actions and CMake name, and the modules they import.
+    assert {
+        "tools/ci/compile/cmake_helper.py",
+        "tools/ci/packaging/macho_bundle_audit.py",
+        "tools/common/gh_actions.py",
+        "tools/debuggers/valgrind.supp",
+        "tools/generators/mavlink_enums.py",
+        "tools/setup/install_dependencies/_debian.py",
+        "tools/uv.lock",
+    } <= inputs
+    assert sorted(path for path in inputs if not is_build_input(path)) == []
 
 
 @pytest.mark.parametrize("platform", detect_changes.PLATFORMS)
@@ -472,13 +683,21 @@ class TestRelevanceProperties:
 
     @given(path=_RELATIVE_PATH, platform=_PLATFORM)
     def test_shared_inputs_build_every_platform(self, path: str, platform: str) -> None:
-        for root in ("src", "cmake", "test", "resources", ".github/actions", "tools/ci"):
-            assert has_relevant_changes([f"{root}/{path}"], platform)
+        for root in ("cmake", "libs", ".github/actions", "tools/ci"):
+            changed = f"{root}/{path}"
+            assert has_relevant_changes([changed], platform) == is_build_input(changed)
+
+    @given(path=_RELATIVE_PATH, platform=st.sampled_from(NATIVE_PLATFORMS))
+    def test_sources_build_every_native_platform(self, path: str, platform: str) -> None:
+        for root in ("src", "test", "resources", "translations"):
+            changed = f"{root}/{path}"
+            assert has_relevant_changes([changed], platform) == is_build_input(changed)
 
     @given(path=_RELATIVE_PATH, platform=_PLATFORM)
     def test_platform_inputs_build_their_platform(self, path: str, platform: str) -> None:
         workflow = workflow_name_for_platform(platform)
-        assert has_relevant_changes([f"deploy/{platform}/{path}"], platform)
+        changed = f"deploy/{platform}/{path}"
+        assert has_relevant_changes([changed], platform) == is_build_input(changed)
         assert has_relevant_changes([f".github/workflows/{workflow}.yml"], platform)
 
     @given(path=_RELATIVE_PATH.filter(lambda path: not path.endswith(".qrc")), platform=_PLATFORM)

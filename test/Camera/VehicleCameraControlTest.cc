@@ -66,7 +66,7 @@ void VehicleCameraControlTest::_testNameFieldReadIsBounded()
     memset(wire.vendor, 'A', sizeof(wire.vendor));
     memcpy(wire.model, "SHOULD_NOT_APPEAR", 18);
 
-    const QString bounded = VehicleCameraControl::boundedStringField(wire.vendor, sizeof(wire.vendor));
+    const QString bounded = QGCMAVLink::boundedStringField(wire.vendor);
 
     QCOMPARE(bounded.length(), 32);
     QVERIFY(!bounded.contains(QLatin1String("SHOULD_NOT_APPEAR")));
@@ -74,15 +74,13 @@ void VehicleCameraControlTest::_testNameFieldReadIsBounded()
     // A short, properly terminated field must still read normally.
     memset(&wire, 0, sizeof(wire));
     memcpy(wire.vendor, "Sony", 5);
-    QCOMPARE(VehicleCameraControl::boundedStringField(wire.vendor, sizeof(wire.vendor)), QStringLiteral("Sony"));
+    QCOMPARE(QGCMAVLink::boundedStringField(wire.vendor), QStringLiteral("Sony"));
 
     // QGC has always decoded these names as UTF-8, so a non-ASCII name must not turn into Latin-1 mojibake.
     static constexpr char utf8Name[] = "C\xC3\xA1mara";
     memset(&wire, 0, sizeof(wire));
     memcpy(wire.vendor, utf8Name, sizeof(utf8Name));
-    QCOMPARE(VehicleCameraControl::boundedStringField(wire.vendor, sizeof(wire.vendor)), QStringLiteral("C\u00e1mara"));
-
-    QVERIFY(VehicleCameraControl::boundedStringField(nullptr, 32).isEmpty());
+    QCOMPARE(QGCMAVLink::boundedStringField(wire.vendor), QStringLiteral("C\u00e1mara"));
 }
 
 void VehicleCameraControlTest::_testCameraNamesCannotSteerCachePath()

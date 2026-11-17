@@ -136,8 +136,11 @@ def test_the_nightly_run_starts_from_the_last_one_s_corpus_and_saves_its_own() -
     # The restore trusts the events of a nightly run, and only this workflow's runs.
     assert set(on) - {"pull_request", "push"} == fuzz_corpus_artifact.TRUSTED_EVENTS
     assert fuzz_corpus_artifact.PRODUCER_WORKFLOW == ".github/workflows/gps-standalone.yml"
-    # Queued behind master's pushes, a nightly run would delay them or be cancelled by the next one.
-    assert WORKFLOW["concurrency"]["group"].endswith(f"${{{{ {NIGHTLY} && '-nightly' || '' }}}}")
+    # Queued behind master's pushes, a nightly run would delay them or be cancelled by the next one: every run but
+    # a pull request's has a group of its own.
+    assert WORKFLOW["concurrency"]["group"].endswith(
+        "${{ github.event_name == 'pull_request' && github.ref || github.run_id }}"
+    )
 
     restore = get_step(STEPS, "Restore the fuzzing corpus")
     assert STEPS.index(restore) < min(STEPS.index(step) for step in FUZZ)

@@ -9,6 +9,7 @@ from ci.reporting import junit_report as mod
 from common.junit import parse_junit
 
 from ..test_junit import QT_FAILURE, TIMEOUT_OUTPUT, junit_xml
+from .test_cmake_helper import BROKEN, FLAKY, STABLE, merged_junit, passed
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -62,6 +63,47 @@ def test_main_writes_summary_and_annotates_failures_and_slow_tests(
     assert "::warning::Slow test (>=60.0s): MissionControllerTest took 95.200s" in out
     assert "::warning::Slow test (>=60.0s): FTPManagerTest took 61.500s" in out
     assert "ParameterManagerTest took" not in out
+
+
+@pytest.mark.parametrize(
+    ("first", "retry", "result", "counts", "errors"),
+    [
+        ([STABLE, FLAKY], [passed(FLAKY)], "passed, 1 on retry", "2 passed, 0 failed", 0),
+        (
+            [FLAKY, BROKEN],
+            [passed(FLAKY), BROKEN],
+            "1 failed, 1 passed on retry",
+            "1 passed, 1 failed",
+            1,
+        ),
+    ],
+)
+def test_summary_names_tests_that_passed_on_retry(
+    tmp_path: Path,
+    gh_summary: Path,
+    capsys: pytest.CaptureFixture[str],
+    first: list[tuple[str, str, float, str, str]],
+    retry: list[tuple[str, str, float, str, str]],
+    result: str,
+    counts: str,
+    errors: int,
+) -> None:
+    path = tmp_path / "junit.xml"
+    path.write_text(merged_junit(first, retry), encoding="utf-8")
+    assert mod.main(["--junit-path", str(path)]) == 0
+    summary = gh_summary.read_text(encoding="utf-8")
+    assert f"| Result | {result} |" in summary
+    assert f"| Tests | {counts}, 0 skipped |" in summary
+    assert (
+        "**Passed on retry**\n\n- `MissionControllerTest`: `FAIL! : "
+        "MissionControllerTest::_testGimbalRecalc() Compared values are not the same`\n"
+    ) in summary
+    first_failure = summary.split(
+        "<details><summary>First failure of the tests that passed on retry</summary>"
+    )[1]
+    assert "   Actual   (visualItems->count()): 3" in first_failure.split("</details>")[0]
+    # A test that passed on retry is not an error; cmake_helper.py annotated it as a warning.
+    assert capsys.readouterr().out.count("::error ") == errors
 
 
 def test_slow_warnings_are_opt_in(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

@@ -13,7 +13,7 @@ target_sources(
         QGCStateMachineTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
 # Helper Tests
@@ -29,7 +29,7 @@ target_sources(
         Helpers/StateHistoryRecorderTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Helpers)
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Helpers)
 
 # ----------------------------------------------------------------------------
 # State Tests
@@ -82,7 +82,7 @@ target_sources(
         states/AdditionalStatesCoverageTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/states)
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/states)
 
 # ----------------------------------------------------------------------------
 # Transition Tests
@@ -112,7 +112,7 @@ target_sources(
         transitions/AdditionalTransitionsCoverageTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/transitions)
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/transitions)
 
 add_qgc_test(QGCStateMachineTest LABELS Unit Utilities)
 add_qgc_test(ErrorRecoveryBuilderTest LABELS Unit Utilities)

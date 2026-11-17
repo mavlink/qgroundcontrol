@@ -8,9 +8,10 @@ import os
 import re
 import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from urllib.parse import quote
 
 from .proc import run_captured, run_with_retry
 
@@ -106,6 +107,48 @@ def gh_api_json(path: str) -> Any:
     return json.loads(gh("api", path, retry_transient=True).stdout)
 
 
+def _gh_api_or_none(*args: str) -> str | None:
+    """Return the output of a GitHub REST API GET, or None when GitHub answers 404."""
+    result = gh("api", *args, retry_transient=True, check=False)
+    if result.returncode == 0:
+        return result.stdout
+    if "HTTP 404" in result.stderr:
+        return None
+    raise subprocess.CalledProcessError(
+        result.returncode, result.args, result.stdout, result.stderr
+    )
+
+
+def gh_api_json_or_none(path: str) -> Any:
+    """Like ``gh_api_json``, but return None for a path GitHub does not have (HTTP 404)."""
+    output = _gh_api_or_none(path)
+    return None if output is None else json.loads(output)
+
+
+def resolve_ref_commit(repo: str, ref: str) -> str | None:
+    """Return the commit that ``heads/<branch>`` or ``tags/<tag>`` names, or None without that ref.
+
+    The qualified form keeps a branch and a tag of the same name apart. Annotated tags are peeled.
+    """
+    data = gh_api_json_or_none(f"repos/{repo}/git/ref/{quote(ref, safe='/')}")
+    target = data.get("object") if isinstance(data, dict) else None
+    while isinstance(target, dict) and target.get("type") == "tag":
+        target = gh_api_json(f"repos/{repo}/git/tags/{target['sha']}").get("object")
+    if isinstance(target, dict) and target.get("type") == "commit":
+        return str(target["sha"])
+    return None
+
+
+def compare_commits(repo: str, base: str, head: str) -> str | None:
+    """Return how commit *head* relates to *base*, or None when the repository lacks either.
+
+    ``ahead`` means *head* contains *base* and more, ``behind`` the reverse, ``identical`` the
+    same commit, and ``diverged`` that neither contains the other.
+    """
+    status = _gh_api_or_none(f"repos/{repo}/compare/{base}...{head}", "--jq", ".status")
+    return None if status is None else status.strip()
+
+
 def _paginate_items(path: str, item_key: str, params: dict[str, str]) -> list[dict[str, Any]]:
     """Fetch all pages of a GitHub list endpoint and return the unpacked items.
 
@@ -145,19 +188,32 @@ def list_run_artifacts(repo: str, run_id: int | str) -> list[dict[str, Any]]:
     )
 
 
-def list_run_jobs(repo: str, run_id: int | str) -> list[dict[str, Any]]:
-    """List the jobs of a workflow run's latest attempt, with their steps, across all pages."""
+def list_run_jobs(
+    repo: str, run_id: int | str, *, attempt: int | None = None
+) -> list[dict[str, Any]]:
+    """List the jobs of a workflow run with their steps, across all pages.
+
+    They are the latest attempt's, or those of *attempt*, which lists the jobs it did not run
+    again as copies with ids of their own.
+    """
     try:
         run_id_int = int(run_id)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"run_id must be an integer, got {run_id!r}") from exc
     if run_id_int <= 0:
         raise ValueError(f"run_id must be positive, got {run_id_int}")
-
+    if attempt is None:
+        return _paginate_items(
+            f"repos/{repo}/actions/runs/{run_id_int}/jobs",
+            "jobs",
+            {"per_page": "100", "filter": "latest"},
+        )
+    if attempt <= 0:
+        raise ValueError(f"attempt must be positive, got {attempt}")
     return _paginate_items(
-        f"repos/{repo}/actions/runs/{run_id_int}/jobs",
+        f"repos/{repo}/actions/runs/{run_id_int}/attempts/{attempt}/jobs",
         "jobs",
-        {"per_page": "100", "filter": "latest"},
+        {"per_page": "100"},
     )
 
 
@@ -218,15 +274,13 @@ def parse_github_timestamp(value: Any) -> datetime | None:
     text = str(value or "").strip()
     if not text:
         return None
-    if text.endswith("Z"):  # 3.10 fromisoformat rejects the trailing 'Z'
-        text = f"{text[:-1]}+00:00"
     try:
         parsed = datetime.fromisoformat(text)
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def seconds_between(start: Any, end: Any) -> float | None:

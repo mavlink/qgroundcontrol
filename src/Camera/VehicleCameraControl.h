@@ -46,11 +46,6 @@ public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     ~VehicleCameraControl() override;
 
-    /// Read a fixed-size CAMERA_INFORMATION string field without running off the end of it.
-    /// MAVLink does not guarantee these arrays are NUL terminated, so the length is bounded
-    /// by the array itself rather than by strlen().
-    static QString boundedStringField(const uint8_t* raw, size_t maxLen);
-
     /// Reduce a vehicle-supplied name to something safe to embed in a file name. Everything
     /// that could act as a path separator, a drive or NTFS stream qualifier, or a directory
     /// traversal is replaced.

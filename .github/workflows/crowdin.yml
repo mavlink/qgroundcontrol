@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -50,7 +50,7 @@ jobs:
       # Each mode runs one half of the action: with download_translations off it never pushes a
       # branch or opens a pull request, so the localization settings apply only to downloads.
       - name: Sync with Crowdin (${{ env.SYNC_MODE }})
-        uses: crowdin/github-action@v3
+        uses: crowdin/github-action@d651c77756acbe11a31d77a6fb79d8a239e1e05a # v3.6.0
         with:
           config: 'docs/crowdin_docs.yml'
           upload_sources: ${{ env.SYNC_MODE == 'upload' }}
@@ -58,8 +58,9 @@ jobs:
           download_translations: ${{ env.SYNC_MODE == 'download' }}
           localization_branch_name: l10n_crowdin_docs_translations
           crowdin_branch_name: master
+          commit_message: 'docs: update QGC guide translations (Crowdin)'
           create_pull_request: true
-          pull_request_title: 'New QGC guide translations (Crowdin)'
+          pull_request_title: 'docs: update QGC guide translations (Crowdin)'
           pull_request_body: 'New QGC guide Crowdin translations by [Crowdin GH Action](https://github.com/crowdin/github-action)'
           pull_request_labels: 'translations, automated'
           pull_request_base_branch_name: 'master'

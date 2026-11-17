@@ -3,18 +3,24 @@
 
 build-results.yml's analysis-review job runs this with trusted default-branch code when a pull
 request's Code Analysis run completes, over the ``*-diagnostics.json`` reports it downloaded.
-Those reports come from the PR's own code, so a warning or error is posted only on a line the
-PR's GitHub diff adds, its message is escaped and its source excerpt fenced, and one review holds
-at most MAX_COMMENTS. Code Analysis numbers lines in GitHub's merge commit, so a file whose
-merge-commit content differs from the PR head's is skipped. A finding is posted once per place:
-never twice in one review, nor again after a review posted it. Failures only warn; the analysis
-run's logs and artifacts still hold every finding.
+Only bug-class findings are posted (common.analysis_diagnostics.is_bug_class: errors, and
+clang-tidy's bugprone-* and clang-analyzer-* warnings); the Build Results comment summarizes
+every warning. A pull request gets at most MAX_WARNING_COMMENTS_PER_PR finding comments over all
+its reviews, counting those it already has, outdated ones too. Errors are posted past that cap,
+at most MAX_COMMENTS in one review, and warnings take turns by check, so one frequent check
+cannot fill every slot.
+Those reports come from the PR's own code, so a finding is posted only on a line the PR's GitHub
+diff adds, and its message is escaped and its source excerpt fenced. Code Analysis numbers lines
+in GitHub's merge commit, so a file whose merge-commit content differs from the PR head's is
+skipped. A finding is posted once per place: never twice in one review, nor again after a review
+posted it. Failures only warn; the analysis run's logs and artifacts still hold every finding.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import itertools
 import json
 import os
 import re
@@ -30,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.analysis_diagnostics import (
     AnalysisWarning,
+    is_bug_class,
     load_analysis_commit,
     load_changed_findings,
 )
@@ -42,7 +49,10 @@ from ci.reporting.report_context import resolve_context
 from ci.reporting.workflow_runs import triggering_run
 
 ANALYSIS_WORKFLOW = ".github/workflows/analysis.yml"
+# One review's comments; only errors can reach it.
 MAX_COMMENTS = 25
+# A pull request's finding comments over all its reviews; errors are posted past it.
+MAX_WARNING_COMMENTS_PER_PR = 10
 # GitHub's compare API lists at most this many changed files.
 COMPARE_FILE_LIMIT = 300
 # build-results.yml downloads the Code Analysis artifacts here.
@@ -120,12 +130,28 @@ def _merge_changed(repo: str, head: str, commit: str, paths: set[str]) -> set[st
     }
 
 
+def _taking_turns(warnings: list[AnalysisWarning]) -> list[AnalysisWarning]:
+    """Order *warnings* as each check's first, then each check's second, and so on.
+
+    Checks go by name, and a check's warnings keep their order.
+    """
+    by_check: dict[str, list[AnalysisWarning]] = {}
+    for warning in warnings:
+        by_check.setdefault(warning.check, []).append(warning)
+    turns = itertools.zip_longest(*(by_check[check] for check in sorted(by_check)))
+    return [warning for turn in turns for warning in turn if warning is not None]
+
+
 def new_comments(
     repo: str, pr: str, head: str, analysis_dir: Path
 ) -> tuple[list[dict[str, Any]], int]:
-    """Return the review comments to post and how many unposted findings qualified."""
+    """Return the review comments to post and how many unposted bug-class findings qualified."""
     findings = sorted(
-        (finding for finding in load_changed_findings(analysis_dir) if finding.message),
+        (
+            finding
+            for finding in load_changed_findings(analysis_dir)
+            if finding.message and is_bug_class(finding)
+        ),
         key=lambda w: (w.file, w.line, w.column, w.tool, w.check, w.severity),
     )
     commit = load_analysis_commit(analysis_dir)
@@ -142,30 +168,46 @@ def new_comments(
         findings = [finding for finding in findings if finding.file not in changed]
     # GitHub keeps a comment's line current as the diff moves (None once outdated), so a finding
     # was posted when a bot comment with its fingerprint sits at its path and line now.
-    seen = {
+    posted = [
         (marker[1], comment.get("path"), comment.get("line"))
         for comment in _list(f"repos/{repo}/pulls/{pr}/comments?per_page=100")
         if (comment.get("user") or {}).get("type") == "Bot"
         and (marker := _FINDING_MARKER.match(str(comment.get("body") or "")))
-    }
+    ]
+    seen = set(posted)
     unposted = []
     for finding in findings:
         if (key := (fingerprint(finding), finding.file, finding.line)) not in seen:
             seen.add(key)
             unposted.append(finding)
+    errors = [finding for finding in unposted if finding.severity == "error"]
+    warnings = _taking_turns([finding for finding in unposted if finding.severity != "error"])
+    # The cap counts every finding comment so far, outdated ones too, and this review's errors.
+    remaining = max(0, MAX_WARNING_COMMENTS_PER_PR - len(posted) - len(errors))
     comments = [
         {"path": w.file, "line": w.line, "side": "RIGHT", "body": comment_body(w)}
-        for w in unposted[:MAX_COMMENTS]
+        for w in [*errors, *warnings[:remaining]][:MAX_COMMENTS]
     ]
     return comments, len(unposted)
 
 
 def review_body(count: int, total: int, run_url: str, conclusion: str) -> str:
-    noun = "finding" if count == 1 else "findings"
-    body = f"{REVIEW_MARKER}\nCode Analysis: {count} new {noun} on lines this pull request changed"
-    body += f" ([analysis run]({run_url}))." if run_url else "."
+    shown = f"{count} of {total}" if total > count else str(count)
+    noun = "finding" if total == 1 else "findings"
+    body = (
+        f"{REVIEW_MARKER}\nCode Analysis: {shown} new bug-class {noun} (errors, and clang-tidy "
+        "`bugprone-*` and `clang-analyzer-*` warnings) on lines this pull request changed."
+    )
     if total > count:
-        body += f" Showing the first {count} of {total}; the analysis run has the rest."
+        body += (
+            f" Inline comments stop at {MAX_WARNING_COMMENTS_PER_PR} per pull request, except"
+            f" for errors (at most {MAX_COMMENTS} in one review)."
+        )
+    run = f"[analysis run]({run_url})" if run_url else "analysis run"
+    body += (
+        " The Build Results comment summarizes every warning on the changed lines, and the"
+        f" {run} lists them all."
+    )
     if conclusion != "success":
         body += (
             f"\n\nThe analysis run ended with {code_span(conclusion or 'no conclusion')}, so these"
@@ -178,7 +220,8 @@ def post_review(repo: str, run: dict[str, Any], pr: str, analysis_dir: Path) -> 
     head = str(run["head_sha"])
     comments, total = new_comments(repo, pr, head, analysis_dir)
     if not comments:
-        print("No new Code Analysis findings on changed lines")
+        reason = f"{total} are past the cap for this pull request" if total else "none are new"
+        print(f"No bug-class Code Analysis findings to post on changed lines: {reason}")
         return 0
     run_url = str(run.get("html_url") or "")
     if not run_url.startswith(f"https://github.com/{repo}/actions/runs/"):

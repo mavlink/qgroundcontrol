@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import os
+import platform
 import sys
 from pathlib import Path
 
@@ -71,10 +72,14 @@ def requirements_for(group_spec: str) -> list[str]:
 def check_requirements(requirements: list[str]) -> int:
     try:
         from packaging.requirements import Requirement
+        from packaging.specifiers import SpecifierSet
     except ImportError:
         print("Missing packaging; synchronize the scripts group first", file=sys.stderr)
         return 1
     failures = []
+    requires_python = read_toml(project_path() / "pyproject.toml")["project"]["requires-python"]
+    if not SpecifierSet(requires_python).contains(platform.python_version(), prereleases=True):
+        failures.append(f"Python {platform.python_version()} does not satisfy {requires_python}")
     for value in requirements:
         requirement = Requirement(value)
         if requirement.marker and not requirement.marker.evaluate():
@@ -101,9 +106,12 @@ def sync_groups(
     dry_run: bool = False,
     python: str | None = None,
 ) -> Path:
-    """Add locked groups; removal requires an explicit profile replacement."""
+    """Add locked groups; removal requires an explicit profile replacement.
+
+    Without *python*, uv takes the version from the project's ``.python-version`` and rebuilds an
+    environment created with another one.
+    """
     target = (environment or environment_path()).resolve()
-    interpreter = executable("python", target)
     command = [
         require_uv(),
         "sync",
@@ -113,7 +121,6 @@ def sync_groups(
         "--no-default-groups",
         "--no-install-project",
     ]
-    python = python or (str(interpreter) if interpreter.exists() else None)
     if python:
         command.extend(["--python", python])
     if not replace:

@@ -53,14 +53,17 @@ def test_prepare_emits_every_path_the_action_consumes(
     _prepare()
 
     artifact = build / "QGroundControl.AppImage"
+    metadata = build / "QGroundControl.AppImage.build.json"
     assert read_github_file(gh_output) == {
         "path": str(artifact),
         "checksum": str(build / "QGroundControl.AppImage.sha256"),
+        "companion": "",
         "dependency-sbom": str(build / "QGroundControl-linux.dependencies.cdx.json"),
-        "metadata": str(build / "QGroundControl.AppImage.build.json"),
+        "metadata": str(metadata),
+        # What the provenance attestation covers, a path to a line.
+        "provenance-subjects": f"{artifact}\n{metadata}",
         "sbom-path": str(tmp_path / "QGroundControl-linux.sbom.spdx.json"),
         "subject-name": "QGroundControl-linux",
-        "publish-aws": "false",
     }
     sidecar = build / "QGroundControl.AppImage.sha256"
     assert sidecar.read_bytes().endswith(b"  QGroundControl.AppImage\n")
@@ -78,39 +81,209 @@ def test_subject_defaults_to_the_package_name(build: Path, gh_output: Path) -> N
     assert outputs["dependency-sbom"] == str(build / "QGC.dependencies.cdx.json")
 
 
-RELEASE_ENV = {
-    "GITHUB_EVENT_NAME": "push",
-    "GITHUB_REF_TYPE": "branch",
-    "GITHUB_REPOSITORY_OWNER": "mavlink",
-    "UPLOAD_AWS": "true",
-    "HAS_AWS_CREDENTIALS": "true",
-}
+def _metadata(build: Path) -> dict:
+    return json.loads((build / "QGroundControl.AppImage.build.json").read_text())
+
+
+@pytest.mark.parametrize(("flag", "marked"), [("true", True), ("false", False), ("", False)])
+def test_publish_marks_the_package_with_its_name_and_its_workflow_s_packages(
+    build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch, flag: str, marked: bool
+) -> None:
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/master")
+    monkeypatch.setenv("GITHUB_WORKFLOW", "Linux")
+    source = (build / "QGroundControl.AppImage").rename(build / "QGroundControl-x86_64.AppImage")
+    argv = ["prepare", "--artifact-name", source.name, "--package-name", "QGroundControl-x86_64"]
+
+    assert attest_helper.main([*argv, "--publish", flag, "--job-id", "130639116867"]) == 0
+
+    metadata = json.loads(source.with_name(f"{source.name}.build.json").read_text())
+    # Every package the Linux workflow marks in this checkout: the publisher holds the commit's
+    # set complete when it has exactly these from the Linux run.
+    marker = {
+        "name": "QGroundControl-x86_64.AppImage",
+        "workflow": "Linux",
+        "packages": ["QGroundControl-aarch64.AppImage", "QGroundControl-x86_64.AppImage"],
+    }
+    assert metadata.get("publish") == (marker if marked else None)
+    # What the publisher checks against the run it downloads the package from.
+    assert (metadata["schema_version"], metadata["event"]) == (2, "push")
+    assert (metadata["ref"], metadata["commit"]) == ("refs/heads/master", "abc")
+    assert (metadata["workflow"], metadata["run_id"]) == ("Linux", "123")
+    # The job the publisher looks up, and the attempt it ran in.
+    assert (metadata["job_id"], metadata["run_attempt"]) == ("130639116867", "2")
+
+
+def _linux_package(build: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, list[str]]:
+    """The x86_64 AppImage of a Linux build, and the arguments its step prepares it with."""
+    monkeypatch.setenv("GITHUB_WORKFLOW", "Linux")
+    source = (build / "QGroundControl.AppImage").rename(build / "QGroundControl-x86_64.AppImage")
+    argv = ["prepare", "--artifact-name", source.name, "--package-name", "QGroundControl-x86_64"]
+    return source, [*argv, "--job-id", "130639116867"]
+
+
+@pytest.mark.parametrize("publish", ["true", "false"])
+def test_an_appimage_s_update_file_is_attested_uploaded_and_listed_in_its_marker(
+    build: Path, gh_output: Path, gh_summary: Path, monkeypatch: pytest.MonkeyPatch, publish: str
+) -> None:
+    # appimagetool writes it beside an AppImage that embeds update information.
+    source, argv = _linux_package(build, monkeypatch)
+    zsync = source.with_name(f"{source.name}.zsync")
+    zsync.write_bytes(b"zsync: 0.6.2\n\nblock sums")
+
+    assert attest_helper.main([*argv, "--publish", publish, "--companion", str(zsync)]) == 0
+
+    outputs = read_github_file(gh_output)
+    assert outputs["companion"] == str(zsync)
+    assert outputs["provenance-subjects"].splitlines() == [
+        str(source),
+        str(source.with_name(f"{source.name}.build.json")),
+        str(zsync),
+    ]
+    metadata = json.loads(source.with_name(f"{source.name}.build.json").read_text())
+    # Publish Builds requires the file that a marker lists, and none without a marker.
+    listed = [
+        {
+            "name": "QGroundControl-x86_64.AppImage.zsync",
+            "size": 24,
+            "sha256": hashlib.sha256(zsync.read_bytes()).hexdigest(),
+        }
+    ]
+    assert metadata.get("publish", {}).get("companions") == (listed if publish == "true" else None)
+    assert "| Companion file | `QGroundControl-x86_64.AppImage.zsync` |" in (
+        gh_summary.read_text(encoding="utf-8")
+    )
 
 
 @pytest.mark.parametrize(
-    ("change", "publish"),
+    ("companion", "content", "reason"),
     [
-        ({}, "true"),
-        ({"GITHUB_REF_TYPE": "tag"}, "true"),
-        ({"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF_TYPE": "tag"}, "true"),
-        ({"GITHUB_EVENT_NAME": "workflow_dispatch"}, "false"),
-        ({"GITHUB_EVENT_NAME": "pull_request"}, "false"),
-        ({"GITHUB_EVENT_NAME": "merge_group"}, "false"),
-        ({"GITHUB_REPOSITORY_OWNER": "someone"}, "false"),
-        ({"UPLOAD_AWS": "false"}, "false"),
-        ({"HAS_AWS_CREDENTIALS": "false"}, "false"),
-        ({"UPLOAD_AWS": ""}, "false"),
+        # Only the package's own update file, from the package's directory, with content.
+        ("QGroundControl-aarch64.AppImage.zsync", b"x", "is not a file that is published beside"),
+        ("QGroundControl-x86_64.AppImage.sha256", b"x", "is not a file that is published beside"),
+        ("notes.txt", b"x", "only an AppImage has one, its <file>.zsync"),
+        ("other/QGroundControl-x86_64.AppImage.zsync", b"x", "is not beside"),
+        ("QGroundControl-x86_64.AppImage.zsync", b"", "is missing or empty"),
+        ("QGroundControl-x86_64.AppImage.zsync", None, "is missing or empty"),
     ],
 )
-def test_prepare_publishes_to_aws_only_for_credentialed_upstream_releases(
-    build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch, change: dict, publish: str
+def test_a_companion_that_is_not_the_package_s_update_file_fails_the_build(
+    build: Path,
+    gh_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    companion: str,
+    content: bytes | None,
+    reason: str,
 ) -> None:
-    for name, value in (RELEASE_ENV | change).items():
-        monkeypatch.setenv(name, value)
+    source, argv = _linux_package(build, monkeypatch)
+    path = build / companion
+    path.parent.mkdir(exist_ok=True)
+    if content is not None:
+        path.write_bytes(content)
 
+    with pytest.raises(SystemExit) as exit_:
+        attest_helper.main([*argv, "--publish", "true", "--companion", str(path)])
+
+    assert exit_.value.code == 1
+    assert "::error::attest-and-upload: companion-path: " in (out := capsys.readouterr().out)
+    assert reason in out
+    assert gh_output.read_text() == ""
+    assert not source.with_name(f"{source.name}.build.json").exists()
+
+
+def test_only_an_appimage_has_a_companion_file(
+    build: Path, gh_output: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    monkeypatch.setenv("GITHUB_WORKFLOW", "MacOS")
+    source = (build / "QGroundControl.AppImage").rename(build / "QGroundControl.dmg")
+    zsync = source.with_name("QGroundControl.dmg.zsync")
+    zsync.write_bytes(b"x")
+    argv = ["prepare", "--artifact-name", source.name, "--package-name", "QGroundControl"]
+
+    with pytest.raises(SystemExit):
+        attest_helper.main([*argv, "--publish", "true", "--companion", str(zsync)])
+
+    assert "'QGroundControl.dmg.zsync' is not a file that is published beside" in (
+        capsys.readouterr().out
+    )
+
+
+def test_packages_are_unmarked_unless_the_caller_asks(build: Path, gh_output: Path) -> None:
     _prepare()
 
-    assert read_github_file(gh_output)["publish-aws"] == publish
+    assert "publish" not in _metadata(build)
+
+
+@pytest.mark.parametrize(
+    ("artifact", "package", "reason"),
+    [
+        # Uploaded as the wrong name, so its sidecar would name another file.
+        ("QGroundControl.dmg", "QGroundControl", "not artifact-name 'QGroundControl.dmg'"),
+        ("QGroundControl.ipa", "QGroundControl-ios", "not a publishable QGroundControl package"),
+        # The publisher only downloads distributable artifacts.
+        ("QGroundControl.AppImage", "linux-package", "not a distributable artifact name"),
+        # A package its own marker would not list: the publisher would hold the set wrong.
+        (
+            "QGroundControl.AppImage",
+            "QGroundControl-x86_64",
+            "PUBLISHED_BUILDS does not list 'QGroundControl.AppImage' as a package of the 'Linux'",
+        ),
+    ],
+)
+def test_publish_rejects_a_package_the_publisher_could_not_publish(
+    build: Path,
+    gh_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    artifact: str,
+    package: str,
+    reason: str,
+) -> None:
+    monkeypatch.setenv("GITHUB_WORKFLOW", "Linux")
+    source = build / "QGroundControl.AppImage"
+    if artifact.endswith(".ipa"):
+        source = source.rename(build / artifact)
+    argv = ["prepare", "--artifact-name", artifact, "--override", str(source)]
+
+    with pytest.raises(SystemExit) as excinfo:
+        attest_helper.main([*argv, "--package-name", package, "--publish", "true"])
+
+    assert excinfo.value.code == 1
+    assert reason in capsys.readouterr().out
+    assert not list(build.glob("*.build.json"))
+    assert gh_output.read_text() == ""
+
+
+@pytest.mark.parametrize("job_id", [None, "", "build", "0", "1.30639116867E+11"])
+def test_a_package_marked_without_a_usable_job_id_still_builds_and_warns(
+    build: Path,
+    gh_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    job_id: str | None,
+) -> None:
+    # A runner that does not tell the job its id is no fault of the build. The package is
+    # marked without one, and the publisher refuses it in its own run.
+    monkeypatch.setenv("GITHUB_WORKFLOW", "Linux")
+    source = (build / "QGroundControl.AppImage").rename(build / "QGroundControl-x86_64.AppImage")
+    argv = ["prepare", "--artifact-name", source.name, "--package-name", "QGroundControl-x86_64"]
+    argv += [] if job_id is None else ["--job-id", job_id]
+
+    assert attest_helper.main([*argv, "--publish", "true"]) == 0
+
+    metadata = json.loads(source.with_name(f"{source.name}.build.json").read_text())
+    assert metadata["publish"]["name"] == source.name
+    assert metadata["job_id"] == ""
+    assert read_github_file(gh_output)["metadata"] == str(build / f"{source.name}.build.json")
+    out = capsys.readouterr().out
+    assert out.count("::warning title=Package cannot be published from this run::") == 1
+    assert f"job-id is '{job_id or ''}', not the number that `job.check_run_id` gives" in out
+    assert "::error" not in out
+
+    # A package that is not published needs none, and one that has it gets no warning.
+    assert attest_helper.main([*argv, "--publish", "false"]) == 0
+    assert attest_helper.main([*argv, "--publish", "true", "--job-id", "130639116867"]) == 0
+    assert "::warning" not in capsys.readouterr().out
 
 
 def test_prepare_adds_an_artifact_section_to_the_job_summary(

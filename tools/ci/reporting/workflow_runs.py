@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -232,8 +232,7 @@ def group_runs_by_name(
         grouped[name].sort(
             key=lambda run: (
                 parse_github_timestamp(run.get("created_at")) is not None,
-                parse_github_timestamp(run.get("created_at"))
-                or datetime.min.replace(tzinfo=timezone.utc),
+                parse_github_timestamp(run.get("created_at")) or datetime.min.replace(tzinfo=UTC),
                 str(run.get("created_at", "")),
             ),
             reverse=True,

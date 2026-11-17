@@ -8,7 +8,7 @@ from datetime import date
 from typing import TYPE_CHECKING, Any
 
 import _bootstrap as _bootstrap
-from common.io import read_json
+from common.io import read_json, read_toml
 from common.paths import REPO_ROOT
 from jsonschema import Draft7Validator
 from packaging.version import Version
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 UV_IMAGE_RE = re.compile(r"^COPY --from=ghcr\.io/astral-sh/uv:(\S+) ", re.MULTILINE)
+UV_IMAGE_DOCKERFILES = ("deploy/docker/Dockerfile", ".clusterfuzzlite/Dockerfile")
 
 
 def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> list[str]:
@@ -71,16 +72,43 @@ def validate_exception_dates(text: str, today: date) -> list[str]:
 
 
 def validate_uv_pins(root: Path) -> list[str]:
-    """CI, install_uv.py and the Docker image install the tools/pyproject.toml required-version floor."""
+    """CI, install_uv.py and both Docker images install the tools/pyproject.toml required-version floor."""
     try:
         version = required_version(root / "tools/pyproject.toml")
     except ValueError as error:
         return [str(error)]
-    dockerfile = (root / "deploy/docker/Dockerfile").read_text(encoding="utf-8")
-    images = UV_IMAGE_RE.findall(dockerfile)
-    if images != [version]:
-        return [f"deploy/docker/Dockerfile must copy uv {version}, not {images}"]
-    return []
+    errors = []
+    for dockerfile in UV_IMAGE_DOCKERFILES:
+        images = UV_IMAGE_RE.findall((root / dockerfile).read_text(encoding="utf-8"))
+        if images != [version]:
+            errors.append(f"{dockerfile} must copy uv {version}, not {images}")
+    return errors
+
+
+def validate_python_pins(root: Path) -> list[str]:
+    """tools/.python-version names the Python uv installs; the floor and lint targets follow it."""
+    version = (root / "tools/.python-version").read_text(encoding="utf-8").strip()
+    if not re.fullmatch(r"3\.\d+", version):
+        return [f"tools/.python-version must name one minor version such as 3.12, not {version!r}"]
+    pins = {
+        "tools/pyproject.toml requires-python": (
+            read_toml(root / "tools/pyproject.toml")["project"]["requires-python"],
+            f">={version}",
+        ),
+        "ruff.toml target-version": (
+            read_toml(root / "ruff.toml")["target-version"],
+            f"py{version.replace('.', '')}",
+        ),
+        "pyrightconfig.json pythonVersion": (
+            read_json(root / "pyrightconfig.json")["pythonVersion"],
+            version,
+        ),
+    }
+    return [
+        f"{name} must be {expected!r} to match tools/.python-version, not {actual!r}"
+        for name, (actual, expected) in pins.items()
+        if actual != expected
+    ]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -89,6 +117,7 @@ def main(argv: list[str] | None = None) -> int:
     schema = read_json(REPO_ROOT / ".github/build-config.schema.json")
     errors = validate_build_config(config, schema)
     errors.extend(validate_uv_pins(REPO_ROOT))
+    errors.extend(validate_python_pins(REPO_ROOT))
     lychee = (REPO_ROOT / "tools/configs/lychee.toml").read_text(encoding="utf-8")
     errors.extend(validate_exception_dates(lychee, date.today()))
     for error in errors:

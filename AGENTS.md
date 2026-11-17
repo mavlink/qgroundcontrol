@@ -9,7 +9,7 @@ Instructions for AI coding agents (Codex, Claude Code, etc.) working on QGroundC
 - [tools/README.md](tools/README.md) — Development scripts, tooling, and every `just` recipe
 - [test/README.md](test/README.md) — Test framework, base classes, CTest labels, MultiSignalSpy, sanitizers, coverage
 - [cmake/README.md](cmake/README.md) — CMake modules, presets, and test options
-- [.github/ci-overview.md](.github/ci-overview.md) — CI workflow/action/script layout and conventions
+- [.github/ci-overview.md](.github/ci-overview.md) — What runs on a pull request, CI invariants, and how-tos (a failed check, workflows, dependencies); design notes in `.github/ci-notes/`
 - [.pre-commit-config.yaml](.pre-commit-config.yaml) — Lint hooks (`just lint` runs every hook not marked `manual`)
 
 ## Required Preflight
@@ -70,14 +70,16 @@ The `just` recipes are the canonical workflow — see [tools/README.md](tools/RE
 configure and build `build/` with the `default*` preset for `BUILD_TYPE` (default `Debug`, tests enabled).
 
 ```bash
+just qt                 # install the pinned Qt into ~/Qt; does nothing when configure already finds it
 just configure          # CMake configure through the default preset
 just build              # incremental build; uses all cores (override with JOBS=N)
 just test               # ctest --preset default, LABELS="Unit|Integration" EXCLUDE="Flaky|Network"
 just lint               # prek run --all-files (the pre-commit hooks)
 just lint-docs          # only the docs hooks, on docs/en pages (pass --changed for branch changes)
-just test-python        # pytest for tools/tests (CI script tests in tools/tests/ci)
+just test-python        # pytest for tools/tests with CI's dependency groups (CI script tests in tools/tests/ci)
 just check              # lint + test-python + test
 just format-fix         # apply clang-format to changed lines
+just format-fix-python  # apply ruff's lint fixes and formatting (the ruff hooks only report)
 just info               # print configured versions (Qt, CMake minimum, GStreamer) and build settings
 ```
 
@@ -89,7 +91,7 @@ just info               # print configured versions (Qt, CMake minimum, GStreame
   presets. Reproduce a sanitizer failure with `cmake --workflow --preset Linux-sanitizers` (needs `QT_ROOT_DIR`)
   and coverage with `just coverage`. CI lints only the files changed from the PR base, like
   `uv run --frozen --project tools --group dev python tools/pre_commit.py --changed`.
-  See [.github/ci-overview.md](.github/ci-overview.md) for the rest.
+  See [.github/ci-overview.md](.github/ci-overview.md#a-check-failed) for the rest.
 
 ## Definition of Done
 

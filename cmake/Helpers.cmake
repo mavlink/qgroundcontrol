@@ -215,13 +215,15 @@ endfunction()
 
 # ----------------------------------------------------------------------------
 # _qgc_verify_moccache_python
-# find_program VALIDATOR: moccache targets Python 3.10 (ruff.toml); an older
-# interpreter would fail on every moc invocation, so reject it and let
+# find_program VALIDATOR: moccache targets the Python in tools/.python-version; an
+# older interpreter would fail on every moc invocation, so reject it and let
 # qgc_config_moccache fall back to plain moc.
 # ----------------------------------------------------------------------------
 function(_qgc_verify_moccache_python _ok _path)
+    file(STRINGS "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../tools/.python-version" _minimum LIMIT_COUNT 1)
     execute_process(
-        COMMAND "${_path}" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
+        COMMAND "${_path}" -c "import sys; sys.exit(sys.version_info < tuple(map(int, sys.argv[1].split('.'))))"
+                "${_minimum}"
         RESULT_VARIABLE _res
         OUTPUT_QUIET ERROR_QUIET
     )
@@ -264,9 +266,20 @@ function(qgc_config_moccache)
             unset(QGC_MOCCACHE_PYTHON CACHE)
         endif()
     endif()
+    # The interpreter the build already uses (the tools environment's) when it is new enough.
+    if(NOT QGC_MOCCACHE_PYTHON AND Python3_EXECUTABLE)
+        set(_python_ok TRUE)
+        _qgc_verify_moccache_python(_python_ok "${Python3_EXECUTABLE}")
+        if(_python_ok)
+            set(QGC_MOCCACHE_PYTHON
+                "${Python3_EXECUTABLE}"
+                CACHE FILEPATH "Python interpreter that runs moccache"
+            )
+        endif()
+    endif()
     find_program(QGC_MOCCACHE_PYTHON NAMES python3 python VALIDATOR _qgc_verify_moccache_python)
     if(NOT QGC_MOCCACHE_PYTHON)
-        message(STATUS "QGC: python3 >= 3.10 not found - building without moc caching")
+        message(STATUS "QGC: no Python that meets tools/.python-version found - building without moc caching")
         return()
     endif()
 

@@ -284,6 +284,72 @@ void GimbalControllerBasicsTest::_testCommandPaths()
     QVERIFY(!(cmd.flags & GIMBAL_MANAGER_FLAGS_RETRACT));
 }
 
+void GimbalControllerBasicsTest::_testCenterAndTilt90YawLock_data()
+{
+    QTest::addColumn<bool>("preserveYawLock");
+    QTest::addColumn<bool>("yawLocked");
+    QTest::addColumn<bool>("expectYawLockKept");
+
+    QTest::newRow("preserve on, yaw locked") << true << true << true;
+    QTest::newRow("preserve on, yaw follow") << true << false << false;
+    QTest::newRow("preserve off, yaw locked") << false << true << false;
+    QTest::newRow("preserve off, yaw follow") << false << false << false;
+}
+
+void GimbalControllerBasicsTest::_testCenterAndTilt90YawLock()
+{
+    QFETCH(bool, preserveYawLock);
+    QFETCH(bool, yawLocked);
+    QFETCH(bool, expectYawLockKept);
+
+    GimbalController* const controller = gimbalController();
+    Gimbal* const gimbal = activeGimbal();
+    MockLinkGimbal* const mock = mockGimbal();
+    Fact* const preserveFact =
+        SettingsManager::instance()->gimbalControllerSettings()->preserveYawLockOnPositionCommands();
+    const QVariant previousPreserve = preserveFact->rawValue();
+    const auto restorePreserve =
+        qScopeGuard([preserveFact, previousPreserve]() { preserveFact->setRawValue(previousPreserve); });
+    preserveFact->setRawValue(preserveYawLock);
+
+    PUSH_ATTITUDE(kVehicleHeadingDeg, kGimbalBodyYawDeg, MockLinkGimbal::DeltaYawMode::Unknown, 0.0f);
+    controller->acquireGimbalControl();
+    QVERIFY_TRUE_WAIT(gimbal->gimbalHaveControl(), TestTimeout::longMs());
+
+    if (yawLocked) {
+        controller->setGimbalYawLock(true);
+        QVERIFY_TRUE_WAIT(mock->yawLock(), TestTimeout::mediumMs());
+        mock->sendGimbalDeviceAttitudeStatusNow();
+        QVERIFY_TRUE_WAIT(gimbal->yawLock(), TestTimeout::mediumMs());
+    }
+
+    const auto verifyFrame = [expectYawLockKept](const MockLinkGimbal::PitchYawCommand& cmd) {
+        if (expectYawLockKept) {
+            return (cmd.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK) && (cmd.flags & GIMBAL_MANAGER_FLAGS_YAW_IN_EARTH_FRAME);
+        }
+        return (cmd.flags & GIMBAL_MANAGER_FLAGS_YAW_IN_VEHICLE_FRAME) && !(cmd.flags & GIMBAL_MANAGER_FLAGS_YAW_LOCK);
+    };
+
+    int count = mock->lastPitchYawCommand().count;
+    const float expectedCenterYaw = expectYawLockKept ? kVehicleHeadingDeg : 0.0f;
+    controller->centerGimbal();
+    QVERIFY_TRUE_WAIT(mock->lastPitchYawCommand().count > count, TestTimeout::mediumMs());
+    MockLinkGimbal::PitchYawCommand cmd = mock->lastPitchYawCommand();
+    QCOMPARE(cmd.pitchDeg, 0.0f);
+    QVERIFY2(_near(cmd.yawDeg, expectedCenterYaw), qPrintable(_describe("center yaw", cmd.yawDeg, expectedCenterYaw)));
+    QVERIFY(verifyFrame(cmd));
+    count = cmd.count;
+
+    // Tilt 90 keeps the gimbal's current earth-frame yaw when the lock is preserved
+    const float expectedTiltYaw = expectYawLockKept ? gimbal->absoluteYaw()->rawValue().toFloat() : 0.0f;
+    controller->tilt90Gimbal();
+    QVERIFY_TRUE_WAIT(mock->lastPitchYawCommand().count > count, TestTimeout::mediumMs());
+    cmd = mock->lastPitchYawCommand();
+    QCOMPARE(cmd.pitchDeg, -90.0f);
+    QVERIFY2(_near(cmd.yawDeg, expectedTiltYaw), qPrintable(_describe("tilt 90 yaw", cmd.yawDeg, expectedTiltYaw)));
+    QVERIFY(verifyFrame(cmd));
+}
+
 void GimbalControllerBasicsTest::_testJoystickRateSlots()
 {
     GimbalController* const controller = gimbalController();

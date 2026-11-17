@@ -13,7 +13,7 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +86,7 @@ def expired_images(images: list[dict[str, Any]], in_use: set[str], now: datetime
         image["ImageId"]
         for image in owned
         if image["ImageId"] not in protected
-        and datetime.fromisoformat(image["CreationDate"].replace("Z", "+00:00"))
+        and datetime.fromisoformat(image["CreationDate"])
         < now - timedelta(days=7 if image["Name"].startswith(CANDIDATE_PREFIX) else 30)
     ]
 
@@ -139,7 +139,7 @@ def cleanup(region: str) -> None:
     in_use = {
         instance["ImageId"] for reservation in reservations for instance in reservation["Instances"]
     }
-    for image_id in expired_images(images, in_use, datetime.now(timezone.utc)):
+    for image_id in expired_images(images, in_use, datetime.now(UTC)):
         print(f"Retiring {image_id}", flush=True)
         result = ec2(
             region, "deregister-image", "--image-id", image_id, "--delete-associated-snapshots"

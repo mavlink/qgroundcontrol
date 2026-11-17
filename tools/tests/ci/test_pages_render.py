@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from ci.publish import pages_render as mod
 
-NOW = datetime(2026, 10, 23, 23, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 10, 23, 23, 0, tzinfo=UTC)
 REPO = "mavlink/qgroundcontrol"
 SVG = "{http://www.w3.org/2000/svg}"
 NASTY = 'Release <x86_64> & "arm64"'

@@ -17,13 +17,16 @@ from pre_commit import (
     CI_MANUAL_HOOKS,
     CI_SKIPPED_HOOKS,
     DOCS_HOOKS,
+    FIX_RECIPES,
     QT_PATHSPECS,
+    RERUN_COMMAND,
     build_precommit_args,
     changed_refs,
     describe_selection,
     extract_hook_lines,
     failed_hooks,
     file_selection_args,
+    fix_commands,
     needs_qt,
     parse_args,
     select_docs_files,
@@ -71,6 +74,21 @@ def test_failed_hooks_lists_names_in_run_order() -> None:
         "Failed to load a file\n"
     )
     assert failed_hooks(output) == ["clang-format", "check yaml"]
+
+
+def test_fix_commands_name_each_recipe_once_for_the_report_only_hooks() -> None:
+    failures = ["ruff check", "check yaml", "clang-format", "ruff format (whole tree)"]
+    assert fix_commands(failures) == ["just format-fix-python", "just format-fix"]
+    assert fix_commands(["check yaml"]) == []
+
+
+def test_fix_recipes_name_configured_hooks_and_just_recipes() -> None:
+    hook_names = {hook.get("name", hook_id) for hook_id, hook in _hooks_by_id().items()}
+    assert set(FIX_RECIPES) <= hook_names
+    justfile = (REPO_ROOT / "justfile").read_text(encoding="utf-8")
+    for command in FIX_RECIPES.values():
+        recipe = command.removeprefix("just ")
+        assert re.search(rf"^{re.escape(recipe)}( \*ARGS)?:$", justfile, re.MULTILINE), command
 
 
 def test_describe_selection() -> None:
@@ -521,18 +539,26 @@ def test_ci_failure_writes_summary_and_annotation(
     assert summary.startswith("### Pre-commit\n\n| Item | Value |")
     assert "| Result | failed |" in summary
     assert "| Hooks | 1 passed, 1 failed, 0 skipped |" in summary
-    assert "Failed hooks: `lint`." in summary
+    rerun = f"{RERUN_COMMAND} --ci --hook typos"
+    assert f"Failed hooks: `lint`. Reproduce with `{rerun}`." in summary
     assert "<details><summary>Hook results</summary>" in summary
     assert "lint........................Failed" in summary
     # No workflow step reads outputs; the summary and results artifact carry the counts.
     assert gh_output.read_text(encoding="utf-8") == ""
-    assert "::error::Required pre-commit checks failed" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "::error::Required pre-commit checks failed" in out
+    # The hint repeats this run; it must not tell contributors to rewrite history.
+    assert f"  Check again: {rerun}\n" in out
+    assert "git commit" not in out
 
 
 def test_precommit_workflow_relies_on_step_failure_and_uploads_results() -> None:
     job = load_workflow("pre-commit.yml")["jobs"]["pre-commit"]
     assert job["env"] == {
-        "PR_BASE_SHA": "${{ github.event.pull_request.base.sha || github.event.before }}",
+        "PR_BASE_SHA": (
+            "${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha"
+            " || github.event.before }}"
+        ),
         "PR_HEAD_SHA": "${{ github.event.pull_request.head.sha || github.sha }}",
     }
     steps = job["steps"]
@@ -626,7 +652,7 @@ def test_trial_formatters_only_check_on_the_manual_stage(hook_id: str, check_arg
 
 
 def test_local_python_hooks_run_in_the_locked_environment() -> None:
-    # A git hook's bare python3 may be a system interpreter older than the tools' 3.10 floor.
+    # A git hook's bare python3 may be a system interpreter older than tools/.python-version.
     scripts = {
         hook_id: hook["entry"]
         for hook_id, hook in _hooks_by_id().items()

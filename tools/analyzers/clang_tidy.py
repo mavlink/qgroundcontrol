@@ -17,9 +17,9 @@ from .base import AnalysisResult
 from .compiler import CompilerAnalyzer, FileResult
 
 APPLY_REPLACEMENTS = "clang-apply-replacements"
-# The .clang-tidy HeaderFilterRegex directories, anchored to the checkout when fixing: CPM sources
-# and generated headers under other src/ directories also match the configured pattern.
-FIX_HEADER_DIRS = ("src", "test", "tools")
+# The .clang-tidy HeaderFilterRegex directories. A config file cannot name the checkout, so its
+# pattern also matches a dependency's or the build tree's src/, test/, and tools/ directories.
+HEADER_DIRS = ("src", "test", "tools")
 
 
 def _file_identity(file: Path) -> str:
@@ -36,13 +36,16 @@ class ClangTidyAnalyzer(CompilerAnalyzer):
     fixes_dir: Path | None = None
 
     def _tool_arguments(self) -> tuple[str, ...]:
-        # Cached dependencies can live outside the checkout and inherit another config.
-        arguments = (*super()._tool_arguments(), f"--config-file={self.repo_root / '.clang-tidy'}")
-        if self.fixes_dir is None:
-            return arguments
         root = re.escape(self.repo_root.resolve().as_posix())
-        directories = "|".join(FIX_HEADER_DIRS)
-        return (*arguments, f"--header-filter=^{root}/({directories})/.*\\.(h|hpp)$")
+        directories = "|".join(HEADER_DIRS)
+        return (
+            *super()._tool_arguments(),
+            # Cached dependencies can live outside the checkout and inherit another config.
+            f"--config-file={self.repo_root / '.clang-tidy'}",
+            # Only this checkout's headers are reported and fixed, wherever the build tree and
+            # the dependency sources are.
+            f"--header-filter=^{root}/({directories})/.*\\.(h|hpp)$",
+        )
 
     def _config_inputs(self) -> tuple[str, ...]:
         return ((self.repo_root / ".clang-tidy").read_text(encoding="utf-8"),)

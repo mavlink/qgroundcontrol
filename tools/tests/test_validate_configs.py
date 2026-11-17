@@ -41,6 +41,8 @@ def test_current_configuration():
         ("apple", "macos_deployment_target"),
         ("android", "cmdline_tools"),
         ("android", "cmdline_tools_sha256"),
+        ("android", "openssl_sha256"),
+        ("appimage", "linuxdeploy"),
         ("qt", "modules"),
         ("tools", "grype"),
     ],
@@ -133,13 +135,14 @@ def test_link_exception_deadlines_come_from_the_config_lychee_uses(
     assert checked == [(REPO_ROOT / config).read_text(encoding="utf-8")]
 
 
-def _uv_pin_tree(tmp_path: Path, required: str, image: str) -> Path:
+def _uv_pin_tree(tmp_path: Path, required: str, builder: str, fuzzing: str) -> Path:
     (tmp_path / "tools").mkdir()
     (tmp_path / "tools/pyproject.toml").write_text(f'[tool.uv]\nrequired-version = "{required}"\n')
-    (tmp_path / "deploy/docker").mkdir(parents=True)
-    (tmp_path / "deploy/docker/Dockerfile").write_text(
-        f"COPY --from=ghcr.io/astral-sh/uv:{image} /uv /usr/local/bin/uv\n"
-    )
+    for directory, image in (("deploy/docker", builder), (".clusterfuzzlite", fuzzing)):
+        (tmp_path / directory).mkdir(parents=True)
+        (tmp_path / directory / "Dockerfile").write_text(
+            f"COPY --from=ghcr.io/astral-sh/uv:{image} /uv /usr/local/bin/uv\n"
+        )
     return tmp_path
 
 
@@ -159,16 +162,56 @@ def test_uv_version_has_one_source():
 
 
 @pytest.mark.parametrize(
-    "required,image,error",
+    "required,builder,fuzzing,error",
     [
-        (">=0.12.8", "0.13.1", "Dockerfile must copy uv 0.12.8"),
-        (">=0.12", "0.12.8", "required-version to '>=X.Y.Z'"),
+        (">=0.12.8", "0.13.1", "0.12.8", "deploy/docker/Dockerfile must copy uv 0.12.8"),
+        (">=0.12.8", "0.12.8", "0.13.1", ".clusterfuzzlite/Dockerfile must copy uv 0.12.8"),
+        (">=0.12", "0.12.8", "0.12.8", "required-version to '>=X.Y.Z'"),
     ],
 )
-def test_uv_version_drift_is_rejected(tmp_path: Path, required, image, error):
+def test_uv_version_drift_is_rejected(tmp_path: Path, required, builder, fuzzing, error):
     from validate_configs import validate_uv_pins
 
-    errors = validate_uv_pins(_uv_pin_tree(tmp_path, required, image))
+    errors = validate_uv_pins(_uv_pin_tree(tmp_path, required, builder, fuzzing))
+    assert any(error in message for message in errors), errors
+
+
+def _python_pin_tree(tmp_path: Path, pin: str, floor: str, ruff: str, pyright: str) -> Path:
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools/.python-version").write_text(f"{pin}\n")
+    (tmp_path / "tools/pyproject.toml").write_text(f'[project]\nrequires-python = "{floor}"\n')
+    (tmp_path / "ruff.toml").write_text(f'target-version = "{ruff}"\n')
+    (tmp_path / "pyrightconfig.json").write_text(json.dumps({"pythonVersion": pyright}))
+    return tmp_path
+
+
+def test_python_version_has_one_source():
+    from validate_configs import validate_python_pins
+
+    assert validate_python_pins(REPO_ROOT) == []
+    action = load_action("setup-python")
+    assert "python-version" not in action["inputs"]
+    steps = action["runs"]["steps"]
+    (setup_uv,) = (step for step in steps if step.get("uses", "").startswith("astral-sh/setup-uv@"))
+    # An explicit version would become UV_PYTHON, which overrides tools/.python-version.
+    assert "python-version" not in setup_uv["with"]
+    (install,) = (step for step in steps if "install_python.py" in step.get("run", ""))
+    assert install["run"].startswith("uv run --no-project --project tools python ")
+
+
+@pytest.mark.parametrize(
+    "pin,floor,ruff,pyright,error",
+    [
+        ("3.12", ">=3.10", "py312", "3.12", "requires-python must be '>=3.12'"),
+        ("3.13", ">=3.13", "py312", "3.13", "target-version must be 'py313'"),
+        ("3.12", ">=3.12", "py312", "3.10", "pythonVersion must be '3.12'"),
+        ("3.12.3", ">=3.12", "py312", "3.12", "must name one minor version"),
+    ],
+)
+def test_python_version_drift_is_rejected(tmp_path: Path, pin, floor, ruff, pyright, error):
+    from validate_configs import validate_python_pins
+
+    errors = validate_python_pins(_python_pin_tree(tmp_path, pin, floor, ruff, pyright))
     assert any(error in message for message in errors), errors
 
 

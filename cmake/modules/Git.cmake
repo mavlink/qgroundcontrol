@@ -111,8 +111,11 @@ endif()
 # ----------------------------------------------------------------------------
 # Extract Version String from Git Tags
 # ----------------------------------------------------------------------------
+# Only tags that can name a version count. CI moves the `daily` tag of its rolling release along
+# master, where it is nearer than the vX.Y.Z-dev marker and would otherwise be described.
+set(_qgc_version_tags --match "v[0-9]*" --match "[0-9]*")
 execute_process(
-    COMMAND "${GIT_EXECUTABLE}" describe --always --tags
+    COMMAND "${GIT_EXECUTABLE}" describe --always --tags ${_qgc_version_tags}
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE QGC_APP_VERSION_STR
     OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
@@ -134,7 +137,7 @@ endif()
 # Extract Clean Version Tag
 # ----------------------------------------------------------------------------
 execute_process(
-    COMMAND "${GIT_EXECUTABLE}" describe --always --tags --abbrev=0
+    COMMAND "${GIT_EXECUTABLE}" describe --always --tags --abbrev=0 ${_qgc_version_tags}
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE QGC_APP_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET

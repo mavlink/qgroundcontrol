@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
 
-from .io import extract_tar_data, extract_zip_safe
+from .io import extract_tar_data, extract_zip_safe, sha256_file
 
 __all__ = ["download_file", "fetch_bytes", "fetch_release_member", "read_url_text"]
 
@@ -67,14 +67,6 @@ def fetch_bytes(
             if attempt < attempts:
                 time.sleep(backoff_seconds * attempt)
     raise RuntimeError(f"Failed to fetch {url} after {attempts} attempts: {last}") from last
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(1024 * 1024):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _content_range(headers: Any) -> tuple[int, int | None] | None:
@@ -161,7 +153,7 @@ def download_file(
             valid_digest = False
         if not valid_digest or len(expected_sha256) != 64:
             raise ValueError("expected_sha256 must be a 64-character hexadecimal digest")
-        if dest.is_file() and _sha256_file(dest) == expected_sha256:
+        if dest.is_file() and sha256_file(dest) == expected_sha256:
             print(f"Using {dest}, which already matches its SHA-256")
             return
         partial = dest.parent / f".{dest.name}.{expected_sha256[:16]}.part"
@@ -187,7 +179,7 @@ def download_file(
             try:
                 _fetch_into(url, staging, offset, timeout, deadline)
                 if expected_sha256 is not None:
-                    actual_sha256 = _sha256_file(staging)
+                    actual_sha256 = sha256_file(staging)
                     if actual_sha256 != expected_sha256:
                         staging.unlink(missing_ok=True)
                         mismatch = ChecksumMismatchError(

@@ -43,11 +43,16 @@ RUN if [ -n "${CC_PIN}" ]; then \
             > /etc/profile.d/qgc-toolchain.sh; \
     fi
 
-# Locked Python environment for generators, Qt installation, and build tools.
+# Locked Python environment for generators, Qt installation, and build tools. uv installs the
+# Python named in .python-version, the same on every variant, under /opt: its default directory is
+# in root's home, which the entrypoint's non-root user cannot read.
 COPY --from=ghcr.io/astral-sh/uv:0.12.8 /uv /usr/local/bin/uv
+ENV UV_PYTHON_INSTALL_DIR=/opt/qgc-python
+COPY tools/.python-version /opt/qgc-tools/
+RUN uv python install --no-bin --project /opt/qgc-tools
 COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
 RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
-        --project /opt/qgc-tools --python python3 \
+        --project /opt/qgc-tools --managed-python \
         --group scripts --group qt --group build \
         --no-default-groups --no-install-project --frozen && \
     /opt/qgc-venv/bin/python -c "import jinja2, defusedxml, lxml, fastcrc" && \

@@ -18,6 +18,10 @@ runs:
         INPUT_DOCKER_REPORT: ${{ inputs.docker-report }}
       run: python3 tools/ci/cache/ccache_helper.py save-plan
 
+    # Seven days: pull requests restore the default branch's snapshot, which a one-day retention
+    # expired whenever master was quiet for a day, so their builds started cold. The retention
+    # bounds how long a snapshot waits for a restore, not storage: cache-cleanup.yml deletes the
+    # snapshots that newer ones superseded.
     - name: Retain compiler cache snapshot
       id: artifact
       if: steps.plan.outputs.artifact_path != ''
@@ -27,7 +31,7 @@ runs:
         name: ${{ env.QGC_BUILD_CACHE_ARTIFACT_NAME }}
         path: ${{ steps.plan.outputs.artifact_path }}
         compression-level: 0
-        retention-days: 1
+        retention-days: 7
         overwrite: true
         if-no-files-found: error
 

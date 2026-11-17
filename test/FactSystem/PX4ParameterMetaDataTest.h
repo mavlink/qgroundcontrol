@@ -29,6 +29,7 @@ private slots:
     void _getVersionInfoInvalidJson();
     void _loadGuard();
     void _loadMissingFile();
+    void _rejectOtherThread();
     void _loadBundledPX4MetaData();
     void _verifyFullPX4Parse();
     void _versionFromFileName();

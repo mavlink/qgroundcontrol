@@ -49,6 +49,18 @@ def _hide_ci_environment() -> Iterator[None]:
         yield
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _keep_tools_offline() -> Iterator[None]:
+    """Keep the tools that tests run off the network and out of the home directory.
+
+    git-cliff otherwise asks crates.io for its newest version and records the answer in
+    ~/.cache/update-informer-rs.
+    """
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setenv("GIT_CLIFF_OFFLINE", "true")
+        yield
+
+
 @pytest.fixture(autouse=True)
 def _restore_environ() -> Iterator[None]:
     """Undo environment changes that monkeypatch does not track.

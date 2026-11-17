@@ -8,7 +8,7 @@ import json
 import subprocess
 import time
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from urllib.error import HTTPError
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 REPO = "mavlink/qgroundcontrol"
-NOW = datetime(2026, 10, 23, 23, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 10, 23, 23, 0, tzinfo=UTC)
 COMMIT = "6f5b75cf8721ae45c2ea28d1f09b880cbbe72a5d"
 DIGEST = "c42c37f850cf8372c85c73823f08da02a8d500606a172e10bd938259d1772005"
 APPIMAGE = "QGroundControl-x86_64.AppImage"

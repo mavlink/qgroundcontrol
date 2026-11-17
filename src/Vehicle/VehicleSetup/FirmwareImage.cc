@@ -425,10 +425,18 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
         return false;
     }
 
-    _imageSize = (uint32_t)binFile.size();
+    const uint32_t imageSize = static_cast<uint32_t>(binFile.size());
 
     binFile.close();
 
+    // The bootloader programs and verifies in multiples of 4 bytes. Refuse the image here, before the board is
+    // erased; .px4 and .apj images are padded when they are loaded.
+    if ((imageSize % 4) != 0) {
+        emit statusMessage(tr("Firmware image size (%1 bytes) is not a multiple of 4").arg(imageSize));
+        return false;
+    }
+
+    _imageSize = imageSize;
     _binFilename = imageFilename;
 
     return true;

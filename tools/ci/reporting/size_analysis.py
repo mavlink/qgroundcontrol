@@ -121,14 +121,12 @@ class BinaryAnalyzer:
 
     def get_stripped_size(self) -> int:
         """Return the size of the stripped binary in bytes."""
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp_path = Path(tmp.name)
-        try:
-            shutil.copy2(self.binary_path, tmp_path)
-            run_captured(["strip", str(tmp_path)], check=True)
-            return tmp_path.stat().st_size
-        finally:
-            tmp_path.unlink(missing_ok=True)
+        with tempfile.NamedTemporaryFile(delete_on_close=False) as tmp:
+            tmp.close()
+            stripped = Path(tmp.name)
+            shutil.copy2(self.binary_path, stripped)
+            run_captured(["strip", str(stripped)], check=True)
+            return stripped.stat().st_size
 
     def get_symbol_count(self) -> int:
         """Return the number of symbols in the binary."""

@@ -115,12 +115,9 @@ def test_write_text_if_changed_and_sha256_file(tmp_path: Path) -> None:
 
     payload = tmp_path / "payload.bin"
     payload.write_bytes(b"abc")
-    assert sha256_file(payload, chunk_size=1) == (
+    assert sha256_file(payload) == (
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     )
-    for invalid_size in (0, -1):
-        with pytest.raises(ValueError, match="chunk_size must be a positive integer"):
-            sha256_file(payload, chunk_size=invalid_size)
 
 
 def test_ensure_sha256_sidecar_creates_canonical_checksum(tmp_path: Path) -> None:

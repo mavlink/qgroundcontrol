@@ -1,14 +1,10 @@
 include_guard(GLOBAL)
 include(Download)
+include("${CMAKE_CURRENT_LIST_DIR}/BuildConfigReader.cmake")
 
-set(QGC_ANDROID_OPENSSL_VERSION
-    "3.5.6"
-    CACHE STRING "OpenSSL version built from source for Android"
-)
-set(QGC_ANDROID_OPENSSL_SHA256
-    "deae7c80cba99c4b4f940ecadb3c3338b13cb77418409238e57d7f31f2a3b736"
-    CACHE STRING "SHA256 of the OpenSSL source tarball for QGC_ANDROID_OPENSSL_VERSION"
-)
+# OpenSSL built from source for Android: .github/build-config.json pins the release and its source tarball.
+qgc_config_read(QGC_ANDROID_OPENSSL_VERSION android openssl_version)
+qgc_config_read(QGC_ANDROID_OPENSSL_SHA256 android openssl_sha256)
 
 set(_android_openssl_rev b71f1470962019bd89534a2919f5925f93bc5779)
 set(_android_openssl_hash SHA256=9277d62ecdb4809801e2c369e0a639c154e0d9137e8d60863b44bf07d16ed5b3)

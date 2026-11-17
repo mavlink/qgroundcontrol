@@ -91,7 +91,7 @@ runs:
     # The one CMake and Ninja for CI builds. After setup-python, so they precede the CMake and
     # Ninja that the build and dev groups add to tools/.venv (local development keeps those).
     - id: cmake
-      uses: lukka/get-cmake@v4.4.2
+      uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       with:
         cmakeVersion: ${{ steps.plan.outputs.cmake_version }}
         ninjaVersion: ${{ steps.plan.outputs.ninja_version }}
@@ -120,7 +120,7 @@ runs:
     - name: Setup Gradle (Android)
       id: gradle
       if: inputs.mode == 'android'
-      uses: gradle/actions/setup-gradle@v6
+      uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       with:
         cache-disabled: ${{ env.QGC_ACTIONS_CACHE_BACKEND != 's3' }}
         cache-provider: basic
@@ -144,7 +144,7 @@ runs:
     - name: Setup Xcode
       id: xcode
       if: runner.os == 'macOS' && inputs.mode != 'android'
-      uses: maxim-lobanov/setup-xcode@v1
+      uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
       with:
         xcode-version: ${{ steps.plan.outputs.xcode_version }}
 
@@ -183,7 +183,7 @@ runs:
     - name: Setup MSVC environment (Windows desktop)
       id: msvc
       if: inputs.mode == 'desktop' && runner.os == 'Windows'
-      uses: TheMrMilchmann/setup-msvc-dev@v4
+      uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
       with:
         arch: ${{ steps.plan.outputs.msvc_arch }}
 
@@ -203,7 +203,7 @@ runs:
     - name: Setup Android Environment
       id: android
       if: inputs.mode == 'android'
-      uses: android-actions/setup-android@v4
+      uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
       with:
         cmdline-tools-version: ${{ steps.plan.outputs.cmdline_tools }}
         packages: ''

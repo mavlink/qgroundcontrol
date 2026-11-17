@@ -33,7 +33,7 @@ import sys
 import time
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from http.client import HTTPException
 from pathlib import Path
@@ -531,7 +531,7 @@ def main(argv: list[str] | None = None) -> int:
             args.out,
             repo=args.repo,
             work_dir=args.work_dir,
-            now=datetime.now(timezone.utc),
+            now=datetime.now(UTC),
             new_history=args.new_history,
         )
     except (SiteError, HistoryError) as exc:

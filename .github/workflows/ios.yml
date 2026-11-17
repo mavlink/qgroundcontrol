@@ -18,9 +18,13 @@ on:
         type: boolean
         default: false
 
+# Only a pull request's superseded runs are cancelled. A release tag's push runs take turns: each
+# uploads to TestFlight. Every other run has its own group, so a newer push neither cancels it nor
+# replaces it while it waits, and a run started by hand on the tag neither replaces the tag's
+# waiting push run nor queues behind it.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_type == 'tag')) && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -70,8 +74,9 @@ jobs:
       PACKAGE: QGroundControl
       APPSTORE_BUNDLE_ID: ${{ vars.APPSTORE_BUNDLE_ID || 'org.mavlink.qgroundcontrol' }}
       APPSTORE_TAG: ${{ matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
-      # Version tags sign the device build for the App Store and upload it to TestFlight; without
-      # the signing secrets and variables they build the unsigned IPA instead of failing.
+      # Version tags sign the device build for the App Store, and the tag's push run uploads it to
+      # TestFlight; without the signing secrets and variables they build the unsigned IPA instead
+      # of failing.
       APPSTORE_RELEASE: >-
         ${{ matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') &&
           secrets.APPSTORE_API_PRIVATE_KEY != '' && secrets.APPSTORE_CERTIFICATES_FILE_BASE64 != '' &&
@@ -81,12 +86,12 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Record build timeline
-        uses: Kesin11/actions-timeline@v3
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf # v3.2.1
         continue-on-error: true
         with:
           show-waiting-runner: true
@@ -109,9 +114,13 @@ jobs:
         if: env.APPSTORE_TAG == 'true' && env.APPSTORE_RELEASE != 'true'
         run: echo "::notice::App Store signing secrets or variables are missing; building an unsigned IPA without uploading it to TestFlight"
 
+      - name: Skip TestFlight on a run the tag's push did not start
+        if: env.APPSTORE_RELEASE == 'true' && github.event_name != 'push'
+        run: echo "::notice::Only the push of the tag uploads to TestFlight; this run signs the IPA for the App Store and keeps it as a workflow artifact"
+
       - name: Import App Store signing certificate
         if: env.APPSTORE_RELEASE == 'true'
-        uses: apple-actions/import-codesign-certs@v7
+        uses: apple-actions/import-codesign-certs@288b8ec97b82c66b6f2a6baaf7acc8dfbcbe331c # v7.2.0
         with:
           p12-file-base64: ${{ secrets.APPSTORE_CERTIFICATES_FILE_BASE64 }}
           p12-password: ${{ secrets.APPSTORE_CERTIFICATES_PASSWORD }}
@@ -119,7 +128,7 @@ jobs:
       - name: Download App Store provisioning profiles
         id: profiles
         if: env.APPSTORE_RELEASE == 'true'
-        uses: apple-actions/download-provisioning-profiles@v6
+        uses: apple-actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
         with:
           bundle-id: ${{ env.APPSTORE_BUNDLE_ID }}
           profile-type: IOS_APP_STORE
@@ -199,11 +208,11 @@ jobs:
           artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
           package-name: ${{ env.PACKAGE }}-ios
           subject-name: ${{ env.PACKAGE }}-ios
-          upload-aws: 'false'
+          publish: 'false'
 
       - name: Upload to TestFlight
-        if: env.APPSTORE_RELEASE == 'true'
-        uses: apple-actions/upload-testflight-build@v5
+        if: env.APPSTORE_RELEASE == 'true' && github.event_name == 'push'
+        uses: apple-actions/upload-testflight-build@665328adbecbc3ad929d3da710696d928b8a7ba9 # v5.9.0
         with:
           app-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
           issuer-id: ${{ vars.APPSTORE_ISSUER_ID }}
@@ -215,8 +224,8 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
-  # The required status check: a skipped matrix job reports an unexpanded name, so branch
-  # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  # The check a ruleset should require (none does today): a skipped matrix job reports an
+  # unexpanded name, so this job has the stable one. always(): a skipped gate would count as passing.
   ios-ok:
     name: iOS
     if: always()
@@ -226,12 +235,12 @@ jobs:
     permissions: {}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Require every leg to pass
-        uses: re-actors/alls-green@v1.3.0
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           allowed-skips: build
           jobs: ${{ toJSON(needs) }}

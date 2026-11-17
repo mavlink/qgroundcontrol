@@ -15,4 +15,5 @@ private slots:
     void _px4ReleasesCompleteNonArrayJsonKeepsPreviousVersions();
     void _px4ReleasesCompleteOnlyStableKeepsBetaEmpty();
     void _destroyedControllerEndsOnlyItsOwnSuspension();
+    void _binImageSizeMustBeMultipleOf4();
 };

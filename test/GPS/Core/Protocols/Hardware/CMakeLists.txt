@@ -17,7 +17,7 @@ target_link_libraries(
         Qt6::Network
 )
 if(TARGET QGCUnitTests)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSReceiverSimulator)
+    target_link_libraries(QGCUnitTests PRIVATE QGCGPSReceiverSimulator)
     qgc_add_gps_suites(Unit GPSReceiverSimulatorTest)
 endif()
 

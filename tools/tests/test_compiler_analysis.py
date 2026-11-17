@@ -1,6 +1,8 @@
 """Compiler analyzer regressions: diagnostics, invocation errors, and file selection."""
 
 import json
+import re
+import sys
 from contextlib import nullcontext
 from pathlib import Path
 from subprocess import CompletedProcess, TimeoutExpired
@@ -9,11 +11,11 @@ from unittest.mock import patch
 import analyze
 import pytest
 from analyze import FileCollector
-from analyzers.clang_tidy import ClangTidyAnalyzer
+from analyzers.clang_tidy import HEADER_DIRS, ClangTidyAnalyzer
 from analyzers.clazy import ClazyAnalyzer
 from analyzers.dependencies import DependencyScanError
 
-from ._helpers import commit_files, git
+from ._helpers import REPO_ROOT, commit_files, git
 
 
 def _scan_including(header: Path, dependents: set[Path]):
@@ -310,6 +312,67 @@ def test_tidy_uses_checkout_config_for_external_cached_headers(tmp_path):
     ):
         assert analyzer.run([tmp_path / "file.cc"]).passed
     assert f"--config-file={tmp_path / '.clang-tidy'}" in run.call_args.args[0]
+
+
+MAVLINK_TEST_HEADER = "build/_deps/mavlink-build/include/mavlink/test/mavlink_msg_test_types.h"
+
+
+def _header_filter(analyzer: ClangTidyAnalyzer) -> re.Pattern[str]:
+    """Return the header filter of the analyzer's runs: its argument, else .clang-tidy's."""
+    for argument in analyzer._tool_arguments():
+        if argument.startswith("--header-filter="):
+            return re.compile(argument.partition("=")[2])
+    config = (REPO_ROOT / ".clang-tidy").read_text(encoding="utf-8")
+    configured = re.search(r"^HeaderFilterRegex: '(.+)'$", config, re.M)
+    assert configured is not None
+    return re.compile(configured[1])
+
+
+@pytest.mark.parametrize(
+    ("header", "reported"),
+    [
+        ("{checkout}/src/Vehicle/Vehicle.h", True),
+        ("{checkout}/test/UnitTestFramework/UnitTest.h", True),
+        ("{checkout}/tools/coding-style/CodingStyle.h", True),
+        # MAVLink's test dialect in a local build tree, and in CI's ${RUNNER_TEMP}/build.
+        ("{checkout}/" + MAVLINK_TEST_HEADER, False),
+        ("{outside}/" + MAVLINK_TEST_HEADER, False),
+        # CPM sources in the default source cache, and in one outside the checkout.
+        ("{checkout}/.cache/CPM/sdl3/1/src/SDL_internal.h", False),
+        ("{outside}/CPM/sdl3/1/src/SDL_internal.h", False),
+        ("{checkout}/build/src/generated.h", False),
+    ],
+)
+def test_tidy_reports_only_this_checkout_s_headers(tmp_path, header, reported):
+    checkout = (tmp_path / "qgroundcontrol").resolve()
+    outside = (tmp_path / "runner-temp").resolve()
+    analyzer = ClangTidyAnalyzer(checkout, checkout / "build")
+    name = header.format(checkout=checkout.as_posix(), outside=outside.as_posix())
+    assert bool(_header_filter(analyzer).match(name)) is reported
+
+
+def test_tidy_header_filter_anchors_the_configured_header_filter():
+    config = (REPO_ROOT / ".clang-tidy").read_text(encoding="utf-8")
+    match = re.search(
+        r"^HeaderFilterRegex: '\^\.\*/\(([^)]*)\)/\.\*\\\.\(h\|hpp\)\$'$", config, re.M
+    )
+    assert match is not None
+    assert tuple(match.group(1).split("|")) == HEADER_DIRS
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the fake tool is a POSIX script")
+def test_tidy_results_are_cached_under_the_header_filter_and_the_config(tmp_path, monkeypatch):
+    # Master pushes seed the result cache that pull requests replay.
+    (tmp_path / ".clang-tidy").write_text("Checks: bugprone-*\n", encoding="utf-8")
+    tool = tmp_path / "bin/clang-tidy"
+    tool.parent.mkdir()
+    tool.write_text(f"#!{sys.executable}\nprint('version 1')\n", encoding="utf-8")
+    tool.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tool.parent))
+    analyzer = ClangTidyAnalyzer(tmp_path, tmp_path)
+    identity = analyzer._cache_identity()
+    assert f"--header-filter={_header_filter(analyzer).pattern}" in identity
+    assert "Checks: bugprone-*\n" in identity
 
 
 @pytest.mark.parametrize("contents", ["invalid json", "{}", '[{"file": 1}]'])

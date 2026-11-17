@@ -37,16 +37,53 @@ entry point for normal builds.
 `cmake/modules/CPM.cmake` is vendored. Do not modify or reformat it as part of project CMake
 maintenance; the pre-commit CMake hooks intentionally exclude it.
 
-The standard application's autogen target depends explicitly on `qgc-analysis-headers` instead
-of waiting for all linked libraries. Add new build-time header generators to that prerequisite
-target when moc can consume them. Custom builds retain forwarded dependencies because their
-additional generators are not known to the standard build.
+Versions and digests of what the build downloads belong in [`.github/build-config.json`](../.github/build-config.json),
+read with `qgc_config_read()` (`modules/BuildConfigReader.cmake`); only the C++ libraries that `CPMAddPackage` fetches
+are pinned at their call. Besides Qt, the Android toolchain and GStreamer, it pins:
+
+- `android.openssl_version` and `android.openssl_sha256`: the OpenSSL release `modules/AndroidOpenSSL.cmake` builds
+  from source for the APK.
+- `appimage.linuxdeploy`, `appimage.appimagetool` and `appimage.appimagelint`: the release tag and per-processor
+  SHA-256 of each tool `install/CreateAppImage.cmake` downloads. appimagelint publishes only a `continuous` release
+  that is rebuilt in place, so its digest pins one reviewed build: once upstream replaces it, a build that runs the
+  lint warns, skips it and names the new digest to review and pin. The lint (`QGC_RUN_APPIMAGELINT`, default `ON`
+  except on Fedora and Arch) runs only in local packaging: CI's `cmake-configure` action and the Docker and VM builds
+  (`deploy/docker/entrypoint.py`, `deploy/multipass/build_in_vm.py`) pass `-DQGC_RUN_APPIMAGELINT=OFF`, so no CI job
+  downloads or checks appimagelint.
+
+ArduPilot's parameter metadata has no releases, so `src/FirmwarePlugin/APM/CMakeLists.txt` pins a commit of its `main`
+branch. `qgc_git_sparse_checkout()` (`modules/GitSparseCheckout.cmake`) fetches that commit alone and checks out only
+the parameter definitions, into a directory of the CPM source cache named for the commit.
+
+Renovate proposes updates for all of these; which wait for approval, which need digests added by hand, and which are
+not updated (appimagelint) is described in the [dependency notes](../.github/ci-notes/dependencies.md#renovate), and
+adding a C++ dependency in the [CI overview](../.github/ci-overview.md#add-a-c-dependency). CI keys its CPM source
+cache on every CMake file that declares a dependency and on `modules/GitSparseCheckout.cmake`
+([caching notes](../.github/ci-notes/caching.md#cpm-and-gstreamer-sdk-caches)).
+
+In the standard build, the autogen step (moc) of every project target waits for `qgc-analysis-headers` instead of the
+libraries the target links, so the libraries' moc steps and compiles start together (`QGC_AUTOGEN_TARGET_DEPENDS`,
+applied by `qgc_configure_target()`, which also sets `AUTOGEN_ORIGIN_DEPENDS OFF`). Add new build-time header generators to that prerequisite target when moc can
+consume them, or to the `AUTOGEN_TARGET_DEPENDS` of the one target whose moc reads them. Custom builds retain forwarded
+dependencies because their additional generators are not known to the standard build. The `CMake.AutogenGraph` test
+checks every project autogen step and fails when one waits for a library.
+
+Test include directories and test support libraries are attached to `QGCUnitTests`, never to the application target,
+whose objects would otherwise recompile whenever a test directory is added; configure fails when the application gains
+an include directory under `test/`.
 
 `QGC_USE_MOCCACHE` (default `ON`) routes AUTOMOC through a generated `<build>/moccache-launcher`, which runs
 `tools/moccache_launcher.py` to import [`tools/moccache/`](../tools/README.md#moccache) with cached bytecode.
-It needs Python 3.10 or newer (`QGC_MOCCACHE_PYTHON`) and, on Windows, CMake 3.29; otherwise configure falls back
-to plain moc. Configure rewrites the launcher only when its content changes, because AUTOMOC re-runs moc for every
-target whose launcher is newer than its output.
+It runs on the build's Python (`QGC_MOCCACHE_PYTHON`: the tools environment's interpreter, else a `python3` at least
+as new as `tools/.python-version`) and, on Windows, needs CMake 3.29; otherwise configure falls back to plain moc.
+Configure rewrites the launcher only when its content changes, because AUTOMOC re-runs moc for every target whose
+launcher is newer than its output.
+
+`modules/PythonVenv.cmake` points `Python3_EXECUTABLE` at the tools environment (`tools/.venv`, or `QGC_PYTHON_ENV`).
+When the environment is missing or fails `install_python.py scripts --check` (which includes an interpreter older than
+`requires-python`), it runs the installer through uv, which supplies the Python named in `tools/.python-version`; the
+host needs uv but no particular `python3`. `QGC_AUTO_PYTHON_VENV=OFF` turns that off: an existing environment is used
+as is, and without one configure looks for a system Python of at least that version.
 
 `QGC_USE_LLD_LINK` (default `OFF`) links MSVC builds with `lld-link` through `CMAKE_LINKER_TYPE` (CMake 3.29+). It
 applies only without IPO (single-config Debug or RelWithDebInfo): lld-link cannot link the `/GL` objects of Release

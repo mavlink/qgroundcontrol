@@ -13,7 +13,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: endersonmenezes/free-disk-space@v4
+    - uses: endersonmenezes/free-disk-space@8b8cd4e2277836962939a8f3b4ea0ee4bc006156 # v4.0.1
       with:
         remove_android: ${{ inputs.remove-android }}
         remove_dotnet: true

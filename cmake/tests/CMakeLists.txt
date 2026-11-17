@@ -18,6 +18,8 @@ qgc_add_cmake_contract_test(CompilerWarningsWerrorOn compiler-warnings-on)
 qgc_add_cmake_contract_test(CompilerWarningsWerrorOff compiler-warnings-off)
 qgc_add_cmake_contract_test(CompilerWarningsProjectTargets compiler-warnings-project-targets)
 qgc_add_cmake_contract_test(UnityProjectTargets unity-project-targets)
+qgc_add_cmake_contract_test(AutogenProjectTargetsStandard autogen-project-targets-standard)
+qgc_add_cmake_contract_test(AutogenProjectTargetsCustom autogen-project-targets-custom)
 qgc_add_cmake_contract_test(CoverageProjectTargets coverage-project-targets)
 qgc_add_cmake_contract_test(CoverageCleanWithoutGcovr coverage-clean-without-gcovr)
 qgc_add_cmake_contract_test(SanitizerProjectTargets sanitizer-project-targets)
@@ -55,6 +57,18 @@ set_tests_properties(
         FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
 )
 
+add_test(
+    NAME CMake.GitSparseCheckout COMMAND "${CMAKE_COMMAND}" -P
+                                         "${CMAKE_CURRENT_SOURCE_DIR}/test_git_sparse_checkout.cmake"
+)
+set_tests_properties(
+    CMake.GitSparseCheckout
+    PROPERTIES
+        LABELS "CMake;Unit"
+        FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
+        SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
+)
+
 set(_qgc_expected_failure_cases
     "QmlCodegenMissingNames|qml-codegen-missing-names|QML_NAMES is required"
     "QmlCodegenListOutputsWithNames|qml-codegen-list-outputs-with-names|LIST_OUTPUTS are mutually exclusive"
@@ -79,6 +93,7 @@ set(_qgc_expected_failure_cases
     "HelpersCpmInvalidName|helpers-cpm-invalid-name|exactly one valid CPM package name is required"
     "HelpersJsonUnknownArgument|helpers-json-unknown-argument|unknown arguments"
     "HelpersJsonEscapedPattern|helpers-json-escaped-pattern|PATTERN must remain under the current source directory"
+    "PythonVenvMissingUv|python-venv-missing-uv|uv was not found"
 )
 # <test name>|<ModuleContracts TEST_CASE>|<expected diagnostic>
 foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)

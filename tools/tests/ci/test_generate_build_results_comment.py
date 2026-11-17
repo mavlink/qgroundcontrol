@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,13 +18,14 @@ from common.analysis_diagnostics import load_unique_warnings
 
 from .._helpers import write_files
 from ..test_junit import ASAN_FAILURE, QT_FAILURE, TIMEOUT_OUTPUT, junit_xml
+from .test_cmake_helper import FLAKY, merged_junit, passed
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from syrupy.assertion import SnapshotAssertion
 
-NOW = datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC)
 HEAD = "0123456789abcdef0123456789abcdef01234567"
 BASE = "a" * 40
 # GitHub's merge of HEAD into the base branch, which Code Analysis checks out.
@@ -806,6 +807,27 @@ def test_unreadable_junit_is_skipped(tmp_path: Path, caplog: pytest.LogCaptureFi
     assert "<details><summary>Tests:" not in comment
 
 
+def test_tests_that_passed_on_retry_are_flagged_not_failed(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    integration = _passing("Integration", 60, 4.0)
+    write_files(
+        tmp_path,
+        {
+            "artifacts/test-results-linux-coverage-integration/junit.xml": merged_junit(
+                [*integration, FLAKY], [passed(FLAKY)]
+            )
+        },
+    )
+    comment = generate_comment(env, tmp_path, NOW)
+    assert _verdict(comment).startswith("✅ **All builds passed**")
+    assert "| Linux | ✅ Passed | 26m 50s | 878 passed, ⚠️ 1 passed on retry |" in comment
+    assert (
+        "<details><summary>Tests: 1,327 passed, 0 failed, 1 skipped in 7 suites; "
+        "1 passed on retry; 1 added, 1 removed vs base</summary>"
+    ) in comment
+    assert "Passed on retry: `MissionControllerTest` (linux-coverage-integration)" in comment
+
+
 def test_tests_added_and_removed_versus_the_base_build(tmp_path: Path) -> None:
     comment = generate_comment(write_scenario(tmp_path, "all-passed"), tmp_path, NOW)
     assert (
@@ -975,6 +997,65 @@ def test_analysis_reports_warnings_on_changed_lines_once_across_shards(tmp_path:
     assert "| `clang-tidy` | 75 | 2 | 4 | 0 |" in comment
     assert "unique warnings in" not in comment
     assert "Most frequent checks" not in comment
+
+
+def test_analysis_lists_likely_bugs_first_and_counts_every_changed_line_warning_by_check(
+    tmp_path: Path,
+) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    # 46 warnings of 14 checks; the most frequent check is first by path and is not bug-class.
+    tidy = {
+        "src/A.cc": [
+            [line, 1, "warning", "performance-unnecessary-value-param"] for line in range(1, 31)
+        ],
+        "src/M.cc": [[n + 1, 1, "warning", f"performance-x{n:02d}"] for n in range(10)],
+        "src/Z.cc": [
+            [1, 1, "warning", "clang-analyzer-core.CallAndMessage"],
+            *([line, 1, "warning", "bugprone-narrowing-conversions"] for line in (2, 3, 4)),
+        ],
+    }
+    clazy = {"src/B.cc": [[line, 1, "warning", "-Wclazy-range-loop-detach"] for line in (1, 2)]}
+    for report in tmp_path.glob("analysis-artifacts/**/*-diagnostics.json"):
+        report.unlink()
+    shard = "analysis-artifacts/clang-tidy-clazy-output-1"
+    write_files(
+        tmp_path,
+        {
+            f"{shard}/clang-tidy-diagnostics.json": _diagnostics("clang-tidy", tidy, tidy),
+            f"{shard}/clazy-diagnostics.json": _diagnostics("clazy", clazy, clazy),
+        },
+    )
+    collected = mod.collect_report(env, tmp_path, NOW)
+
+    full, smaller, smallest = (mod.render_analysis(collected, limits) for limits in mod.LIMIT_STEPS)
+
+    listed = re.findall(r"^- \[`(src/\S+)`\]\S* `(\S+)` ", full, re.M)
+    assert listed[:5] == [
+        ("src/Z.cc:1", "clang-analyzer-core.CallAndMessage"),
+        ("src/Z.cc:2", "bugprone-narrowing-conversions"),
+        ("src/Z.cc:3", "bugprone-narrowing-conversions"),
+        ("src/Z.cc:4", "bugprone-narrowing-conversions"),
+        ("src/A.cc:1", "performance-unnecessary-value-param"),
+    ]
+    assert len(listed) == 20
+    assert "- …and 26 more\n\n" in full
+    assert (
+        "By check: `performance-unnecessary-value-param` 30, `bugprone-narrowing-conversions` 3,"
+        " `-Wclazy-range-loop-detach` 2, `clang-analyzer-core.CallAndMessage` 1,"
+        " `performance-x00` 1, `performance-x01` 1, `performance-x02` 1, `performance-x03` 1,"
+        " `performance-x04` 1, `performance-x05` 1, …and 4 more checks\n\n"
+    ) in full
+    # The smaller limit sets shorten the list and the counts together.
+    assert "- …and 36 more\n\n" in smaller
+    assert (
+        "`clang-analyzer-core.CallAndMessage` 1, `performance-x00` 1, …and 9 more checks" in smaller
+    )
+    assert "- …and 41 more\n\n" in smallest
+    assert (
+        "By check: `performance-unnecessary-value-param` 30, `bugprone-narrowing-conversions` 3,"
+        " `-Wclazy-range-loop-detach` 2, …and 11 more checks\n\n"
+    ) in smallest
+    assert len(smallest) < len(smaller) < len(full)
 
 
 @pytest.mark.parametrize(

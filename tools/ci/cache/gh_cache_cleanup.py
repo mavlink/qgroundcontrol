@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-"""List and optionally delete GitHub Actions caches via the built-in `gh cache` commands.
+"""List and optionally delete GitHub Actions caches and superseded compiler-cache snapshots.
 
-With --summary, appends a Cache cleanup section (pool size, candidates, deletion
-totals or a dry-run notice, and a collapsed cache table) to GITHUB_STEP_SUMMARY.
+Caches go through the built-in `gh cache` commands. With --summary, appends a Cache cleanup
+section (pool size, candidates, deletion totals or a dry-run notice, and a collapsed cache
+table) to GITHUB_STEP_SUMMARY.
+
+A prune also removes the compiler-cache snapshot artifacts that newer ones superseded: it keeps
+the newest --keep-snapshots of each artifact name and restore group (the workflow, branch,
+repository and event class a restore requires of a snapshot's producer) and adds a
+Compiler-cache snapshot cleanup section. It lists everything before deleting anything, and
+exits with an error, deleting nothing, when a listing fails or is incomplete.
 
 In cache-cleanup.yml the branch and flags follow the triggering event (GITHUB_EVENT_NAME and the
 GITHUB_EVENT_PATH payload): a schedule prunes and deletes with a summary; a closed pull request
@@ -16,10 +23,13 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
+import time
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -29,16 +39,23 @@ from common.gh_actions import (
     env_default,
     env_flag,
     gh,
+    gh_api_json,
     gh_warning,
     parse_bool,
+    parse_github_timestamp,
     require_repository,
     write_step_summary,
 )
 from common.io import read_json
 from common.markdown import code_span, md_table, more_items, summary_section
 
+from ci.cache.build_cache_artifact import is_snapshot_name, restore_group
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 DEFAULT_PROTECT = (
-    r"^(apt-debs|ccache|cpm-sources-v2|gst-sdk-v1|moccache|qt"
+    r"^(apt-debs|ccache|cpm-sources-v3|gst-sdk-v1|moccache|qt"
     r"|prek-v1|prek-renovate-v1|lychee-v1)-"
 )
 _ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")
@@ -46,6 +63,16 @@ _PR_BUILD_CACHE_RE = re.compile(r"^(ccache|moccache)-.*-(\d+)-(\d+)$")
 _DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
 _APT_GENERATION_RE = re.compile(r"^(apt-debs-.+)-\d{4}-\d{2}-<digest>$")
 _MIB = 1024 * 1024
+# A restore reads only the newest snapshot of its restore group. The one before it serves a
+# re-run of the newest's own producer, a restore that began before the newest was saved, and the
+# pull requests after a bad newest snapshot is deleted by hand; older ones serve nothing.
+KEEP_SNAPSHOTS = 2
+# Only a name saved since the last cleanup can have a superseded snapshot. Two days of the
+# artifact list span eight six-hourly cleanups; what a longer gap leaves expires with its retention.
+SNAPSHOT_LOOKBACK_HOURS = 48
+_ARTIFACTS_PER_PAGE = 100
+_MAX_DISCOVERY_PAGES = 300
+_LISTING_ATTEMPTS = 4
 
 
 @dataclass(frozen=True)
@@ -332,6 +359,249 @@ def _list_summary(rows: list[CacheUsage], branch: str, *, deleted: int | None, f
 _DRY_RUN_NOTICE = "**Dry run**: no caches were deleted. Set `dry-run: false` to delete."
 
 
+class ArtifactListingError(RuntimeError):
+    """The artifact list is unreadable or incomplete, so no snapshot may be deleted."""
+
+
+@dataclass(frozen=True)
+class Snapshot:
+    artifact_id: int
+    name: str
+    size_bytes: int
+    created_at: str
+    run_id: int
+    branch: str
+
+
+def _artifact_page(repo: str, page: int, name: str = "") -> tuple[list[dict[str, Any]], int]:
+    """Return one page of the repository's artifacts, newest first, and the API's total count.
+
+    The unfiltered list of a large repository answers some requests with an empty HTTP 500,
+    which gh reports as a JSON error that the shared transient-error check does not know, so
+    this retries every failure of the read-only request.
+    """
+    args = ["api", "--method", "GET", f"repos/{repo}/actions/artifacts"]
+    args += ["-f", f"per_page={_ARTIFACTS_PER_PAGE}", "-f", f"page={page}"]
+    if name:
+        args += ["-f", f"name={name}"]
+    detail = ""
+    for attempt in range(_LISTING_ATTEMPTS):
+        if attempt:
+            time.sleep(2 * attempt)
+        try:
+            result = gh(*args, check=False)
+        except subprocess.TimeoutExpired:
+            detail = "timed out"
+            continue
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            continue
+        try:
+            payload = json.loads(result.stdout)
+            artifacts, total = payload["artifacts"], payload["total_count"]
+        except (ValueError, KeyError, TypeError) as error:
+            detail = f"malformed response: {error}"
+            continue
+        if (
+            isinstance(artifacts, list)
+            and all(isinstance(artifact, dict) for artifact in artifacts)
+            and isinstance(total, int)
+        ):
+            return artifacts, total
+        detail = "malformed response"
+    listed = f"artifacts named {name}" if name else "artifacts"
+    raise ArtifactListingError(f"cannot list {listed} (page {page}): {detail}")
+
+
+def recent_snapshot_names(repo: str, since: datetime) -> list[str]:
+    """Return the snapshot names among the artifacts created since *since*."""
+    names: set[str] = set()
+    for page in range(1, _MAX_DISCOVERY_PAGES + 1):
+        artifacts, _ = _artifact_page(repo, page)
+        names.update(a["name"] for a in artifacts if is_snapshot_name(a.get("name")))
+        created = [parse_github_timestamp(artifact.get("created_at")) for artifact in artifacts]
+        if len(artifacts) < _ARTIFACTS_PER_PAGE or all(
+            moment is not None and moment < since for moment in created
+        ):
+            return sorted(names)
+    raise ArtifactListingError(
+        f"the artifact list did not reach {since:%Y-%m-%d %H:%M} UTC "
+        f"within {_MAX_DISCOVERY_PAGES} pages"
+    )
+
+
+def list_snapshots(repo: str, name: str) -> list[Snapshot]:
+    """Return every unexpired snapshot named *name*; raise unless the list is complete."""
+    listed: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        artifacts, total = _artifact_page(repo, page, name)
+        listed += artifacts
+        if len(artifacts) < _ARTIFACTS_PER_PAGE:
+            break
+        page += 1
+    if len(listed) != total:
+        raise ArtifactListingError(f"listed {len(listed)} of {total} artifacts named {name}")
+    try:
+        return [
+            Snapshot(
+                artifact_id=int(artifact["id"]),
+                name=name,
+                size_bytes=int(artifact.get("size_in_bytes") or 0),
+                created_at=str(artifact.get("created_at") or ""),
+                run_id=int(artifact["workflow_run"]["id"]),
+                branch=str(artifact["workflow_run"].get("head_branch") or ""),
+            )
+            for artifact in listed
+            if artifact.get("name") == name and not artifact.get("expired")
+        ]
+    except (KeyError, TypeError, ValueError) as error:
+        raise ArtifactListingError(f"malformed artifact named {name}: {error!r}") from error
+
+
+def snapshot_restore_groups(repo: str, snapshots: list[Snapshot]) -> dict[int, tuple[Any, ...]]:
+    """Return the restore group of each producing run, from one lookup per run."""
+    return {
+        run_id: restore_group(gh_api_json(f"repos/{repo}/actions/runs/{run_id}"))
+        for run_id in sorted({snapshot.run_id for snapshot in snapshots})
+    }
+
+
+def select_superseded_snapshots(
+    snapshots: list[Snapshot], groups: Mapping[int, tuple[Any, ...]], keep: int
+) -> list[Snapshot]:
+    """Return the snapshots older than the newest *keep* of their name and restore group.
+
+    A restore takes the highest artifact id, so the same order decides which are newest.
+    """
+    if keep < KEEP_SNAPSHOTS:
+        raise ValueError(f"keep at least {KEEP_SNAPSHOTS} snapshots, not {keep}")
+    members: dict[tuple[Any, ...], list[Snapshot]] = {}
+    for snapshot in snapshots:
+        members.setdefault((snapshot.name, groups[snapshot.run_id]), []).append(snapshot)
+    superseded: list[Snapshot] = []
+    for group in members.values():
+        superseded += sorted(group, key=lambda item: item.artifact_id, reverse=True)[keep:]
+    return superseded
+
+
+def delete_snapshots(repo: str, snapshots: list[Snapshot]) -> tuple[list[Snapshot], int]:
+    """Delete each snapshot artifact; return (deleted, failed)."""
+    deleted: list[Snapshot] = []
+    failed = 0
+    for snapshot in snapshots:
+        result = gh(
+            "api",
+            "--method",
+            "DELETE",
+            f"repos/{repo}/actions/artifacts/{snapshot.artifact_id}",
+            check=False,
+        )
+        if result.returncode == 0:
+            deleted.append(snapshot)
+        else:
+            failed += 1
+    return deleted, failed
+
+
+def _size(snapshots: list[Snapshot]) -> int:
+    return sum(snapshot.size_bytes for snapshot in snapshots)
+
+
+def _snapshot_table(snapshots: list[Snapshot]) -> str:
+    table = md_table(
+        ["Artifact", "Name", "Size", "Created", "Branch", "Run"],
+        [
+            (
+                item.artifact_id,
+                code_span(item.name),
+                _mib(item.size_bytes),
+                item.created_at,
+                code_span(item.branch),
+                item.run_id,
+            )
+            for item in snapshots[:_LISTED_CACHES]
+        ],
+        markdown=True,
+    )
+    if len(snapshots) > _LISTED_CACHES:
+        table += f"\n\n{more_items(len(snapshots) - _LISTED_CACHES)}"
+    return table
+
+
+def _snapshot_summary(
+    snapshots: list[Snapshot],
+    superseded: list[Snapshot],
+    *,
+    keep: int,
+    deleted: list[Snapshot] | None,
+    failed: int,
+) -> str:
+    """Compiler-cache snapshot cleanup section; *deleted* is None for a dry run."""
+    body = "No superseded snapshots." if not superseded else ""
+    if superseded and deleted is None:
+        body = "**Dry run**: no snapshots were deleted. Set `dry-run: false` to delete."
+    names = len({snapshot.name for snapshot in snapshots})
+    kept = f"{len(snapshots) - len(superseded)}, {_mib(_size(snapshots) - _size(superseded))}"
+    return summary_section(
+        "Compiler-cache snapshot cleanup",
+        [
+            ("Mode", "prune" if deleted is not None else "prune (dry run)"),
+            ("Snapshots", f"{len(snapshots)} under {names} names, {_mib(_size(snapshots))}"),
+            ("Kept", f"{kept}: the newest {keep} of each name and restore group"),
+            ("Superseded", f"{len(superseded)}, {_mib(_size(superseded))}"),
+            ("Deleted", None if deleted is None else len(deleted)),
+            ("Freed", None if deleted is None else _mib(_size(deleted))),
+            ("Failed deletions", failed or None),
+        ],
+        body=body,
+        collapsed=[
+            (
+                f"Superseded snapshots ({len(superseded)})",
+                _snapshot_table(superseded) if superseded else "",
+            )
+        ],
+    )
+
+
+def run_snapshot_prune(repo: str, args: argparse.Namespace) -> None:
+    """Delete the compiler-cache snapshots that newer ones of their restore group superseded.
+
+    Every listing completes before the first deletion: a failed one raises and deletes nothing.
+    """
+    since = datetime.now(UTC) - timedelta(hours=args.snapshot_lookback_hours)
+    snapshots = [
+        snapshot
+        for name in recent_snapshot_names(repo, since)
+        for snapshot in list_snapshots(repo, name)
+    ]
+    superseded = select_superseded_snapshots(
+        snapshots, snapshot_restore_groups(repo, snapshots), args.keep_snapshots
+    )
+    for snapshot in superseded:
+        print(
+            f"Superseded snapshot {snapshot.artifact_id} ({_mib(snapshot.size_bytes)}, "
+            f"{snapshot.created_at}, {snapshot.branch}): {snapshot.name}"
+        )
+    deleted: list[Snapshot] | None = None
+    failed = 0
+    if args.delete:
+        deleted, failed = delete_snapshots(repo, superseded)
+    print(
+        f"Snapshots: {len(snapshots)}; superseded {len(superseded)} "
+        f"({_mib(_size(superseded))}); deleted {len(deleted or [])} "
+        f"({_mib(_size(deleted or []))} freed); failed {failed}"
+    )
+    if failed:
+        gh_warning(f"Failed to delete {failed} compiler-cache snapshot artifacts")
+    if args.summary:
+        write_step_summary(
+            _snapshot_summary(
+                snapshots, superseded, keep=args.keep_snapshots, deleted=deleted, failed=failed
+            )
+        )
+
+
 def main(argv: list[str] | None = None) -> int:
     defaults = event_defaults(os.environ.get("GITHUB_EVENT_NAME", ""), _event_payload())
     parser = argparse.ArgumentParser(description=__doc__)
@@ -381,12 +651,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--default-branch", default=env_default("DEFAULT_BRANCH", defaults.default_branch)
     )
+    parser.add_argument(
+        "--keep-snapshots",
+        type=int,
+        default=KEEP_SNAPSHOTS,
+        help="Prune keeps this many compiler-cache snapshots of each name and restore group "
+        f"(default and minimum {KEEP_SNAPSHOTS})",
+    )
+    parser.add_argument(
+        "--snapshot-lookback-hours",
+        type=int,
+        default=SNAPSHOT_LOOKBACK_HOURS,
+        help="Prune the snapshot names saved in this many hours "
+        f"(default {SNAPSHOT_LOOKBACK_HOURS})",
+    )
     args = parser.parse_args(argv)
+    if args.keep_snapshots < KEEP_SNAPSHOTS:
+        parser.error(f"--keep-snapshots must be at least {KEEP_SNAPSHOTS}")
 
     repo = require_repository()
 
     if args.prune:
         run_prune(repo, args)
+        run_snapshot_prune(repo, args)
         return 0
 
     rows = list_caches(repo, args.branch, args.limit)

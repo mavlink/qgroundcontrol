@@ -20,20 +20,23 @@ Base images are pulled from the [Amazon ECR Public mirror](https://gallery.ecr.a
 To build the image and then build QGC in it, run this command from the QGC root directory:
 
 ```sh
-python3 deploy/docker/run_docker.py build ubuntu
+uv run --frozen --project tools python deploy/docker/run_docker.py build ubuntu
 ```
 
 (`just docker` runs the same command.)
+[uv](https://docs.astral.sh/uv/getting-started/installation/) supplies the Python 3.12 that the script runs on; a `python3` that is 3.12 or newer can also run `deploy/docker/run_docker.py` directly.
 Replace `ubuntu` with any variant from `variants.json`, and optionally append a build type (`Release` by default, or `Debug`, `RelWithDebInfo`, `MinSizeRel`).
 The build output, including the AppImage, is written to `build/` (`build-aarch64/` for the `aarch64` variant).
 
 To rebuild with an image you already built, use `run`:
 
 ```sh
-python3 deploy/docker/run_docker.py run qgc-ubuntu-docker Release --fuse
+uv run --frozen --project tools python deploy/docker/run_docker.py run qgc-ubuntu-docker Release
 ```
 
-The script runs the container as your user and mounts the source and build directories. `--fuse` gives the container access to FUSE, which the AppImage checks need. Environment variables adjust the run:
+The script runs the container as your user, with no extra privileges, and mounts the source and build directories.
+The build packages the AppImage without FUSE and skips the AppImageLint compatibility check, which only runs when you package QGC outside a container.
+Environment variables adjust the run:
 
 | Variable      | Purpose                                                     |
 | ------------- | ----------------------------------------------------------- |
@@ -76,7 +79,7 @@ docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-
 ```
 
 ::: info
-These commands run the build as `root` and without FUSE, so the AppImage checks are skipped.
+These commands run the build as `root`; the script runs it as your user instead.
 See [`run_docker.py`](https://github.com/mavlink/qgroundcontrol/blob/master/deploy/docker/run_docker.py) for the exact `docker run` options the script uses.
 :::
 

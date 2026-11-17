@@ -38,9 +38,10 @@ on:
         default: false
 
 concurrency:
-  # The nightly run has its own group: in the group of master's pushes they would wait for it, and cancel it while it waits.
-  group: ${{ github.workflow }}-${{ github.ref }}${{ (github.event_name == 'schedule' || inputs.nightly == true) && '-nightly' || '' }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  # Only a pull request's runs share a group. In the group of master's pushes, they would wait for a nightly run and
+  # cancel it while it waits.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -67,7 +68,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 

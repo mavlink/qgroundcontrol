@@ -7,7 +7,7 @@ import json
 import subprocess
 import time
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 from urllib.error import HTTPError, URLError
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 REPO = "mavlink/qgroundcontrol"
-NOW = datetime(2026, 10, 23, 23, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 10, 23, 23, 0, tzinfo=UTC)
 HISTORY_URL = "https://mavlink.github.io/qgroundcontrol/data/history.json"
 COMMIT = "6f5b75cf8721ae45c2ea28d1f09b880cbbe72a5d"
 
@@ -502,7 +502,7 @@ def test_collect_new_records_skips_known_attempts_and_retries_failures(
 
 def _runs(count: int) -> list[dict]:
     """Return *count* Linux runs of distinct commits, one hour apart, oldest first."""
-    start = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    start = datetime(2026, 10, 1, tzinfo=UTC)
     return [
         {
             **LINUX_RUN,
