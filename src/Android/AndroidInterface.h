@@ -11,6 +11,18 @@ void setNativeMethods();
 bool checkStoragePermissions();
 QString getSDCardPath();
 void setKeepScreenOn(bool on);
+
+/// What should go on while the app is in the background, where Android freezes an app and cuts its network.
+enum class BackgroundWork
+{
+    VehicleLink = 1 << 0,
+    VideoRecording = 1 << 1,
+};
+
+/// While any @p work is @p active, a foreground service with its notification keeps the app's process and network
+/// alive in the background, and the CPU and Wi-Fi awake with the screen off. Qt still pauses the main thread
+/// there: what other threads do goes on, as a video recording does.
+void setBackgroundWork(BackgroundWork work, bool active);
 void openFileImportDialog(const QString& destPath, std::function<void(const QString&)> callback);
 
 constexpr const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";

@@ -56,6 +56,9 @@ public class QGCActivity extends QtActivity {
     protected void onResume() {
         super.onResume();
         QGCSDLManager.onResume();
+        // Android starts no service for an app in the background, and shows a notification only once the user
+        // has allowed them: both are asked for from the foreground.
+        QGCForegroundService.sync(this);
 
         if (m_storagePermissionController != null) {
             final Boolean granted = m_storagePermissionController.onResume();
@@ -69,6 +72,7 @@ public class QGCActivity extends QtActivity {
     protected void onDestroy() {
         try {
             QGCSDLManager.cleanup();
+            stopService(new Intent(this, QGCForegroundService.class));
             releaseMulticastLock();
             QGCUsbSerialManager.cleanup(this);
         } catch (final Exception e) {
@@ -146,7 +150,7 @@ public class QGCActivity extends QtActivity {
             if (cursor != null && cursor.moveToFirst()) {
                 final int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                 if (nameIndex >= 0) {
-                    displayName = cursor.getString(nameIndex);                    
+                    displayName = cursor.getString(nameIndex);
                     displayName = sanitizeFilename(displayName);
                 }
             }
@@ -291,6 +295,34 @@ public class QGCActivity extends QtActivity {
             intent.setType("*/*");
             m_instance.startActivityForResult(intent, IMPORT_FILE_REQUEST_CODE);
         });
+    }
+
+    /**
+     * Called from native code: keeps the app's process and network alive in the background, under a notification
+     * with these texts, until stopBackgroundWork().
+     *
+     * @param channelName Name of the notification's category in Android's settings.
+     * @param title       Title of the notification.
+     * @param text        Text of the notification.
+     */
+    public static void startBackgroundWork(final String channelName, final String title, final String text) {
+        QGCForegroundService.setWanted(new QGCForegroundService.Texts(channelName, title, text));
+        syncForegroundService();
+    }
+
+    /** Called from native code: ends what startBackgroundWork() began. */
+    public static void stopBackgroundWork() {
+        QGCForegroundService.setWanted(null);
+        syncForegroundService();
+    }
+
+    private static void syncForegroundService() {
+        final QGCActivity activity = m_instance;
+        if (activity == null) {
+            QGCLogger.e(TAG, "Activity instance is null");
+            return;
+        }
+        activity.runOnUiThread(() -> QGCForegroundService.sync(activity));
     }
 
     @Override

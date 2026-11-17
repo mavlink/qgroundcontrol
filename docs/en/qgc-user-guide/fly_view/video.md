@@ -24,8 +24,14 @@ arms, and **VIDEO STOPPED** once the video was stopped.
 
 On Android and iOS the video is not decoded while _QGroundControl_ is in the background, which saves battery. Back in
 the app, the view says **WAITING FOR VIDEO** until the stream's next keyframe arrives. A recording goes on for as long
-as the stream arrives: Android 15 cuts the network of an app in the background after about five seconds, which ends
-the recording; it continues in a new part when the app returns.
+as the stream arrives.
+
+On Android, _QGroundControl_ shows a notification while a vehicle is connected or a video is being recorded. With it,
+Android keeps the app's network open in the background, where it would otherwise cut it after a few seconds: the stream
+stays connected and a recording goes on in the same file. Tap the notification to return to the app. Android 13 and
+later ask once whether _QGroundControl_ may show notifications; the stream and the recording go on in the background
+without it too. Telemetry is not handled while the app is in the background: the vehicle's messages are handled when
+the app returns, and a recording's telemetry subtitles have a gap for that time.
 
 ## Video Tiles
 

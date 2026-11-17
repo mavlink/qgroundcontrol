@@ -38,6 +38,10 @@
 #include "VideoStreamUri.h"
 #include "VideoTelemetryOverlay.h"
 
+#if defined(Q_OS_ANDROID)
+#include "AndroidInterface.h"
+#endif
+
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 namespace {
@@ -116,6 +120,12 @@ VideoManager::VideoManager(QObject* parent)
     // A mobile app in the background shows nothing, and decoding there costs the battery. A desktop app's windows
     // stay in view without the focus.
     (void) connect(qGuiApp, &QGuiApplication::applicationStateChanged, this, &VideoManager::_onApplicationStateChanged);
+#endif
+#if defined(Q_OS_ANDROID)
+    // Android cuts the network of an app in the background, which would end a recording there.
+    (void) connect(this, &VideoManager::recordingChanged, this, [](bool recording) {
+        AndroidInterface::setBackgroundWork(AndroidInterface::BackgroundWork::VideoRecording, recording);
+    });
 #endif
 
     _connectSettings();

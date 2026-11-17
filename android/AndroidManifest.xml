@@ -87,6 +87,14 @@
                 android:value="false" />
         </activity>
 
+        <!-- Runs while a vehicle is connected or a video is recorded, so that Android neither freezes the app in
+             the background nor cuts its network. -->
+        <service
+            android:name="org.mavlink.qgroundcontrol.QGCForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice"
+            android:stopWithTask="true" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.qtprovider"

@@ -185,6 +185,12 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.INTERNET
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.WAKE_LOCK)
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_NETWORK_STATE)
 
+# QGCForegroundService keeps the app's network open in the background. Its type takes CHANGE_WIFI_MULTICAST_STATE,
+# above, as the proof that the app talks to a device; Android 13+ asks the user before it shows the notification.
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.FOREGROUND_SERVICE)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.POST_NOTIFICATIONS)
+
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_FINE_LOCATION)
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_COARSE_LOCATION)
 
