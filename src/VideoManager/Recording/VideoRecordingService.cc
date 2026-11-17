@@ -24,12 +24,6 @@ constexpr std::chrono::minutes kStorageLimitInterval{1};
 // A file written this recently may be a recording's that has yet to report its first frame.
 constexpr std::chrono::minutes kBeingWritten{1};
 
-QString subtitlePathFor(const QString& videoFile)
-{
-    const QFileInfo info(videoFile);
-    return QStringLiteral("%1/%2.ass").arg(info.path(), info.completeBaseName());
-}
-
 }  // namespace
 
 VideoRecordingService::VideoRecordingService(const QList<VideoStreamController*>& sources, QObject* parent)
@@ -129,7 +123,7 @@ QStringList VideoRecordingService::_openFiles() const
 {
     QStringList files;
     for (const QString& file : _recordingFiles) {
-        files << file << subtitlePathFor(file);
+        files << file << SubtitleWriter::subtitleFile(file);
     }
     return files;
 }

@@ -49,12 +49,10 @@ Item {
             spacing:                0
 
             QGCLabel {
-                objectName: "videoStreamFrameRate"
                 text:       qsTr("%1 fps").arg(root._stats.fps.toFixed(0))
             }
 
             QGCLabel {
-                objectName: "videoStreamDetail"
                 text:       root._stats.bitrateKbps >= 0 ? VideoStreamFormat.bitrateText(root._stats.bitrateKbps)
                                                          : qsTr("%1p").arg(root._measuredSource.videoSize.height)
             }

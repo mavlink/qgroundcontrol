@@ -40,7 +40,6 @@ class VideoStreamController : public QObject
     Q_PROPERTY(bool tile READ tile NOTIFY tileChanged FINAL)
     /// What the user knows the source by: the camera's and the stream's names, the video source, or the local camera.
     Q_PROPERTY(QString displayName READ displayName NOTIFY displayNameChanged FINAL)
-    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged FINAL)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged FINAL)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
@@ -145,7 +144,6 @@ public:
     bool canTakeScreenshot() const;
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
 
-    bool streaming() const;
     bool decoding() const;
 
     /// True while the stream, lost after it was decoded, is being recovered: its last frame is still worth showing.
@@ -177,7 +175,6 @@ signals:
     void roleChanged();
     void tileChanged();
     void displayNameChanged();
-    void streamingChanged();
     void decodingChanged();
     void reconnectingChanged();
     void recordingChanged(bool recording);

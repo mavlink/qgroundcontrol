@@ -1,6 +1,5 @@
 #include "VideoSettings.h"
 
-#include <QtCore/QSettings>
 #include <QtCore/QVariantList>
 #include <QtMultimedia/QMediaDevices>
 
@@ -29,28 +28,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
     _setForceVideoDecodeList();
 
-    // Migrate legacy gpuZeroCopyEnabled (pre-rename) into the new force-CPU semantics.
-    {
-        QSettings settings;
-        settings.beginGroup(settingsGroup);
-        const bool hasLegacy = settings.contains(QStringLiteral("gpuZeroCopyEnabled"));
-        const bool hasNew    = settings.contains(forceCpuVideoPathName);
-        if (hasLegacy) {
-            if (!hasNew) {
-                const bool gpuZeroCopy = settings.value(QStringLiteral("gpuZeroCopyEnabled")).toBool();
-                forceCpuVideoPath()->setRawValue(!gpuZeroCopy);
-            }
-            settings.remove(QStringLiteral("gpuZeroCopyEnabled"));
-        }
-        settings.endGroup();
-    }
-
-    // Set default value for videoSource
-    _setDefaults();
-}
-
-void VideoSettings::_setDefaults()
-{
     _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
 }
 
@@ -169,95 +146,35 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, uvcTileCamera)
     return _uvcTileCameraFact;
 }
 
+// DECLARE_SETTINGSFACT for a setting shown only where VISIBLE holds, read as the Fact is created.
+#define DECLARE_VIDEO_SETTINGSFACT_VISIBLE(NAME, VISIBLE)    \
+    DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, NAME)        \
+    {                                                        \
+        if (!_##NAME##Fact) {                                \
+            _##NAME##Fact = _createSettingsFact(NAME##Name); \
+            _##NAME##Fact->setUserVisible(VISIBLE);          \
+        }                                                    \
+        return _##NAME##Fact;                                \
+    }
+
 // Only a GStreamer build offers a choice: without GStreamer, Qt Multimedia plays the streams.
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoBackend)
-{
-    if (!_videoBackendFact) {
-        _videoBackendFact = _createSettingsFact(videoBackendName);
-        _videoBackendFact->setUserVisible(hasPipelineSettings());
-    }
-    return _videoBackendFact;
-}
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, hasPipelineSettings())
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
-{
-    if (!_forceVideoDecoderFact) {
-        _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
-
-        _forceVideoDecoderFact->setUserVisible(hasPipelineSettings());
-    }
-    return _forceVideoDecoderFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
-{
-    if (!_lowLatencyModeFact) {
-        _lowLatencyModeFact = _createSettingsFact(lowLatencyModeName);
-
-        _lowLatencyModeFact->setUserVisible(hasStreaming());
-    }
-    return _lowLatencyModeFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtpJitterLatencyMs)
-{
-    if (!_rtpJitterLatencyMsFact) {
-        _rtpJitterLatencyMsFact = _createSettingsFact(rtpJitterLatencyMsName);
-        _rtpJitterLatencyMsFact->setUserVisible(hasPipelineSettings());
-    }
-    return _rtpJitterLatencyMsFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspAutoReconnect)
-{
-    if (!_rtspAutoReconnectFact) {
-        _rtspAutoReconnectFact = _createSettingsFact(rtspAutoReconnectName);
-        _rtspAutoReconnectFact->setUserVisible(hasStreaming());
-    }
-    return _rtspAutoReconnectFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
-{
-    if (!_forceCpuVideoPathFact) {
-        _forceCpuVideoPathFact = _createSettingsFact(forceCpuVideoPathName);
-
-        _forceCpuVideoPathFact->setUserVisible(VideoBackend::instance().capabilities().gpuVideoPath);
-    }
-    return _forceCpuVideoPathFact;
-}
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(lowLatencyMode, hasStreaming())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspAutoReconnect, hasStreaming())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceCpuVideoPath, VideoBackend::instance().capabilities().gpuVideoPath)
 
 // videoConversionElement / disablePixelAspectRatio reach the receivers' display sinks as construct-only properties
 // (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when they
 // change.
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
-{
-    if (!_videoConversionElementFact) {
-        _videoConversionElementFact = _createSettingsFact(videoConversionElementName);
-        _videoConversionElementFact->setUserVisible(hasPipelineSettings());
-    }
-    return _videoConversionElementFact;
-}
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoConversionElement, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(disablePixelAspectRatio, hasPipelineSettings())
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, disablePixelAspectRatio)
-{
-    if (!_disablePixelAspectRatioFact) {
-        _disablePixelAspectRatioFact = _createSettingsFact(disablePixelAspectRatioName);
-        _disablePixelAspectRatioFact->setUserVisible(hasPipelineSettings());
-    }
-    return _disablePixelAspectRatioFact;
-}
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspTimeout, hasStreaming())
 
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
-{
-    if (!_rtspTimeoutFact) {
-        _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
-
-        _rtspTimeoutFact->setUserVisible(hasStreaming());
-    }
-    return _rtspTimeoutFact;
-}
+#undef DECLARE_VIDEO_SETTINGSFACT_VISIBLE
 
 void VideoSettings::_setForceVideoDecodeList()
 {

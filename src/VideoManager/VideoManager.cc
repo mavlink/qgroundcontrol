@@ -42,53 +42,6 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 namespace {
 
-/// How a change to a video setting reaches the sources.
-enum class VideoSettingReaction : uint8_t
-{
-    /// Live: the sources resolve their config again. VideoReceiver restarts for a changed config, except for a change
-    /// of autoReconnect alone, which applies at once.
-    Reconfigure,
-    /// Construct-only property of the display sink: the sources restart, which rebuilds a stream's sink.
-    RebuildSink,
-    /// The decoder ranks, which are global: once the backend is ready they are applied again, and the sources restart
-    /// so the streams' new pipelines pick decoders by them.
-    RerankDecoders,
-    /// Which receiver plays the streams: each stream gets a new one.
-    RecreateReceivers,
-};
-
-struct VideoSettingReactionEntry
-{
-    Fact* (VideoSettings::*fact)();
-    VideoSettingReaction reaction;
-};
-
-// Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit and maxVideoSize,
-// read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance, uvcZoom,
-// uvcExposureCompensation and uvcFocusMode, which go to the USB camera, and uvcRecordingCodec and uvcRecordingQuality,
-// which go to every source (_connectSettings()).
-constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
-    {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::tcpUrl, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::rtspUrl, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::rtspTimeout, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::lowLatencyMode, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::rtpJitterLatencyMs, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::rtspAutoReconnect, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::disableWhenDisarmed, VideoSettingReaction::Reconfigure},
-    // Which sources there are, and what the camera source plays.
-    {&VideoSettings::maxVideoTiles, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::uvcTileCamera, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::uvcTileCameraAsMainPicture, VideoSettingReaction::Reconfigure},
-    {&VideoSettings::videoConversionElement, VideoSettingReaction::RebuildSink},
-    {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
-    {&VideoSettings::forceCpuVideoPath, VideoSettingReaction::RebuildSink},
-    {&VideoSettings::forceVideoDecoder, VideoSettingReaction::RerankDecoders},
-    {&VideoSettings::videoBackend, VideoSettingReaction::RecreateReceivers},
-};
-
 // What VideoSettings::maxVideoTiles allows: as many tiles as fit beside the main picture.
 constexpr uint kMaxVideoTiles = 4;
 
@@ -261,49 +214,64 @@ void VideoManager::_connectSettings()
     (void) connect(_videoSettings->uvcTileCamera(), &Fact::rawValueChanged, this,
                    [this] { _videoSettings->uvcTileCameraAsMainPicture()->setRawValue(false); });
 
-    for (const VideoSettingReactionEntry& entry : kVideoSettingReactions) {
-        Fact* const fact = (_videoSettings->*entry.fact)();
-        switch (entry.reaction) {
-            case VideoSettingReaction::Reconfigure:
-                (void) connect(fact, &Fact::rawValueChanged, this, [this] {
-                    _updateState();
-                    for (VideoStreamController* source : std::as_const(_sources)) {
-                        source->scheduleApply();
-                    }
-                });
-                break;
-            case VideoSettingReaction::RebuildSink:
-                (void) connect(fact, &Fact::rawValueChanged, this, &VideoManager::_restartSources);
-                break;
-            case VideoSettingReaction::RecreateReceivers:
-                (void) connect(fact, &Fact::rawValueChanged, this, [this] {
-                    {
-                        // A receiver that is recording runs the event loop as it goes: the sources stay as they are
-                        // until each has let go of its own.
-                        const QScopedValueRollback<bool> sourcesHeld(_updatingState, true);
-                        for (VideoStreamController* source : std::as_const(_sources)) {
-                            source->setReceiver(nullptr);
-                        }
-                    }
-                    if (_backendInitFinished() && _hasMainWindow) {
-                        _createVideoReceivers();
-                    }
-                    if (!_updatingState && _updateStatePending) {
-                        _updateState();
-                    }
-                });
-                break;
-            case VideoSettingReaction::RerankDecoders:
-                (void) connect(fact, &Fact::rawValueChanged, this, [this](const QVariant& value) {
-                    // Until then, _onBackendInitComplete() applies the setting.
-                    if (_initState == InitState::Ready) {
-                        VideoBackend::instance().applyDecoderPriorities(videoDecoderOptionFromSetting(value.toInt()));
-                    }
-                    _restartSources();
-                });
-                break;
+    // How a change to a video setting reaches the sources. Not listed: aspectRatio, read by
+    // VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read by QML; showTelemetryOverlay,
+    // read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording
+    // starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance, uvcZoom, uvcExposureCompensation
+    // and uvcFocusMode, which go to the USB camera, and uvcRecordingCodec and uvcRecordingQuality, which go to every
+    // source (below).
+
+    // Live: the sources resolve their config again. VideoReceiver restarts for a changed config, except for a change
+    // of autoReconnect alone, which applies at once.
+    const auto reconfigure = [this] {
+        _updateState();
+        for (VideoStreamController* source : std::as_const(_sources)) {
+            source->scheduleApply();
         }
+    };
+    for (Fact* const fact :
+         {_videoSettings->videoSource(), _videoSettings->udpUrl(), _videoSettings->tcpUrl(), _videoSettings->rtspUrl(),
+          _videoSettings->rtspTimeout(), _videoSettings->lowLatencyMode(), _videoSettings->rtpJitterLatencyMs(),
+          _videoSettings->rtspAutoReconnect(), _videoSettings->disableWhenDisarmed(),
+          // Which sources there are, and what the camera source plays.
+          _videoSettings->maxVideoTiles(), _videoSettings->uvcTileCamera(),
+          _videoSettings->uvcTileCameraAsMainPicture()}) {
+        (void) connect(fact, &Fact::rawValueChanged, this, reconfigure);
     }
+
+    // Construct-only properties of the display sink: the sources restart, which rebuilds a stream's sink.
+    for (Fact* const fact : {_videoSettings->videoConversionElement(), _videoSettings->disablePixelAspectRatio(),
+                             _videoSettings->forceCpuVideoPath()}) {
+        (void) connect(fact, &Fact::rawValueChanged, this, &VideoManager::_restartSources);
+    }
+
+    // The decoder ranks, which are global: once the backend is ready they are applied again, and the sources restart
+    // so the streams' new pipelines pick decoders by them.
+    (void) connect(_videoSettings->forceVideoDecoder(), &Fact::rawValueChanged, this, [this](const QVariant& value) {
+        // Until then, _onBackendInitComplete() applies the setting.
+        if (_initState == InitState::Ready) {
+            VideoBackend::instance().applyDecoderPriorities(videoDecoderOptionFromSetting(value.toInt()));
+        }
+        _restartSources();
+    });
+
+    // Which receiver plays the streams: each stream gets a new one.
+    (void) connect(_videoSettings->videoBackend(), &Fact::rawValueChanged, this, [this] {
+        {
+            // A receiver that is recording runs the event loop as it goes: the sources stay as they are until each has
+            // let go of its own.
+            const QScopedValueRollback<bool> sourcesHeld(_updatingState, true);
+            for (VideoStreamController* source : std::as_const(_sources)) {
+                source->setReceiver(nullptr);
+            }
+        }
+        if (_backendInitFinished() && _hasMainWindow) {
+            _createVideoReceivers();
+        }
+        if (!_updatingState && _updateStatePending) {
+            _updateState();
+        }
+    });
 
     Fact* const uvcCameraFormat = _videoSettings->uvcCameraFormat();
     _uvcCamera->setFormat(uvcCameraFormat->rawValue().toString());
@@ -431,7 +399,8 @@ void VideoManager::init(QQuickWindow* mainWindow)
     }
 
     VideoBackend::instance().onMainWindowReady(mainWindow);
-    VideoBackend::bindDebugLevelFact(SettingsManager::instance()->appSettings()->gstDebugLevel(), this);
+    (void) connect(SettingsManager::instance()->appSettings()->gstDebugLevel(), &Fact::rawValueChanged, this,
+                   [](const QVariant& value) { VideoBackend::instance().setDebugLevel(value.toInt()); });
 
     MultiVehicleManager* const multiVehicleManager = MultiVehicleManager::instance();
     (void) connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this,

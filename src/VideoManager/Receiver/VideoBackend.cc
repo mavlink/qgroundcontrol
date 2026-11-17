@@ -5,7 +5,6 @@
 
 #include "AppMessages.h"
 #include "AppSettings.h"
-#include "Fact.h"
 #include "QGCApplication.h"
 #include "QtMultimediaVideoReceiver.h"
 
@@ -54,13 +53,4 @@ std::optional<int> VideoBackend::persistedDebugLevel()
         return settings.value(AppSettings::gstDebugLevelName).toInt();
     }
     return std::nullopt;
-}
-
-void VideoBackend::bindDebugLevelFact(Fact* fact, QObject* context)
-{
-    if (!fact || !context) {
-        return;
-    }
-    (void) QObject::connect(fact, &Fact::rawValueChanged, context,
-                            [](const QVariant& value) { VideoBackend::instance().setDebugLevel(value.toInt()); });
 }

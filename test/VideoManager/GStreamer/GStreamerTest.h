@@ -26,7 +26,6 @@ private slots:
     void _testVideoBackendRunsInOrder();
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
-    void _testBindDebugLevelFactRejectsNullContext();
     void _testRuntimeVersionCheck();
 #endif
 };

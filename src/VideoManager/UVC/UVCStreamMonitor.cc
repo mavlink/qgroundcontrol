@@ -4,7 +4,6 @@
 #include <utility>
 
 #include <QtMultimedia/QCamera>
-#include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
@@ -37,17 +36,13 @@ void UVCStreamMonitor::attach(QCamera* camera, QVideoSink* videoSink)
     }
     qCDebug(UVCStreamMonitorLog) << "attach" << camera << videoSink;
     _disconnect();
-    _camera = camera;
     _videoSink = videoSink;
     // Qt's capture session queues the camera's frames to the sink's thread, which is this monitor's.
     _connections.append(connect(videoSink, &QVideoSink::videoFrameChanged, this, &UVCStreamMonitor::_onVideoFrame));
     if (camera) {
         _connections.append(connect(camera, &QCamera::activeChanged, this, &UVCStreamMonitor::_restart));
-        _connections.append(connect(camera, &QCamera::cameraDeviceChanged, this, &UVCStreamMonitor::_updateCameraName));
-        _connections.append(connect(camera, &QCamera::cameraDeviceChanged, this, &UVCStreamMonitor::_restart));
     }
     _restart();
-    _updateCameraName();
     _sampleTimer.start();
 }
 
@@ -56,7 +51,6 @@ void UVCStreamMonitor::detach()
     qCDebug(UVCStreamMonitorLog) << "detach" << _videoSink.data();
     _disconnect();
     _restart();
-    _updateCameraName();
 }
 
 void UVCStreamMonitor::_disconnect()
@@ -65,7 +59,6 @@ void UVCStreamMonitor::_disconnect()
         (void) disconnect(connection);
     }
     _connections.clear();
-    _camera.clear();
     _videoSink.clear();
     _sampleTimer.stop();
 }
@@ -90,7 +83,6 @@ void UVCStreamMonitor::_sample()
         // The sink went away without detaching.
         _disconnect();
         _restart();
-        _updateCameraName();
         return;
     }
     const FrameCounters& frameCounters = _frameCounters;
@@ -120,16 +112,6 @@ void UVCStreamMonitor::_restart()
     _meter.reset();
     _streamingSinceMs.reset();
     _publish(VideoStreamStats(), QSize(), 0.0);
-}
-
-void UVCStreamMonitor::_updateCameraName()
-{
-    const QString cameraName = _camera ? _camera->cameraDevice().description() : QString();
-    if (cameraName == _cameraName) {
-        return;
-    }
-    _cameraName = cameraName;
-    emit cameraNameChanged();
 }
 
 void UVCStreamMonitor::_publish(const VideoStreamStats& stats, QSize videoSize, double cameraFrameRate)

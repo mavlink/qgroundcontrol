@@ -9,7 +9,6 @@
 
 #include "VideoDecoderOptions.h"
 
-class Fact;
 class QObject;
 class QQuickWindow;
 class VideoReceiver;
@@ -42,9 +41,6 @@ public:
 
     /// The persisted gstDebugLevel setting, read before the settings system exists; nullopt when it was never set.
     static std::optional<int> persistedDebugLevel();
-
-    /// Routes changes of @p fact (AppSettings::gstDebugLevel) to setDebugLevel() while @p context lives.
-    static void bindDebugLevelFact(Fact* fact, QObject* context);
 
     /// What the backend offers.
     struct Capabilities

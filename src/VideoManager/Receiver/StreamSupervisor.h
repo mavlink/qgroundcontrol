@@ -63,9 +63,7 @@ public:
 
     Phase phase() const { return _phase; }
 
-    VideoReceiver::State state() const { return stateFor(_phase); }
-
-    static VideoReceiver::State stateFor(Phase phase);
+    VideoReceiver::State state() const;
 
     bool halted() const { return _phase == Phase::Halted; }
 

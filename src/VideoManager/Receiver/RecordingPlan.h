@@ -30,8 +30,6 @@ public:
     /// "<base>_part<part>.<ext>" for @p file "<base>.<ext>"; @p file itself for part 1.
     static QString partFile(const QString& file, int part);
 
-    const QString& file() const { return _file; }
-
     VideoReceiver::FileFormat format() const { return _format; }
 
     int part() const { return _part; }

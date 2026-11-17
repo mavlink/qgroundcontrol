@@ -116,7 +116,6 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         return;
     }
 
-    const bool wasStreaming = streaming();
     const bool wasDecoding = decoding();
     const bool wasRecording = recording();
     const bool wasEncoding = encodesRecordings();
@@ -141,7 +140,6 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         _receiver = receiver;
         _receiver->setParent(this);
         _receiver->setName(name());
-        (void) connect(_receiver, &VideoReceiver::streamingChanged, this, &VideoStreamController::streamingChanged);
         (void) connect(_receiver, &VideoReceiver::decodingChanged, this, [this] {
             // Updated first: a stream that loses its decoder is reconnecting by the time decodingChanged arrives, so
             // QML never sees it neither decoding nor reconnecting, which would clear the frame it keeps.
@@ -168,9 +166,6 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         _apply();
     }
 
-    if (streaming() != wasStreaming) {
-        emit streamingChanged();
-    }
     if (decoding() != wasDecoding) {
         emit decodingChanged();
     }
@@ -449,11 +444,6 @@ bool VideoStreamController::canTakeScreenshot() const
 bool VideoStreamController::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
 {
     return _receiver && _receiver->takeScreenshot(file, exif);
-}
-
-bool VideoStreamController::streaming() const
-{
-    return _receiver && _receiver->streaming();
 }
 
 bool VideoStreamController::decoding() const

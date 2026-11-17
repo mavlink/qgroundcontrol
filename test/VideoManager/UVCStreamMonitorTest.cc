@@ -82,7 +82,6 @@ void UVCStreamMonitorTest::_testFramesBecomeStats()
     QVERIFY(!stats.hasRtpStats());
     QCOMPARE(monitor.videoSize(), QSize(640, 480));
     QCOMPARE(monitor.cameraFrameRate(), 30.0);
-    QVERIFY(monitor.cameraName().isEmpty());
 
     // A camera that stalls reads 0 fps once its frames drop out of the rate window.
     for (int i = 0; i < VideoStreamStatsMeter::kRateWindowIntervals; ++i) {
@@ -164,7 +163,7 @@ void UVCStreamMonitorTest::_testStatsGroupShowsCamera()
     QVERIFY(showsText(group.get(), QStringLiteral("640 × 480 MJPEG")));
     QVERIFY(showsText(group.get(), QStringLiteral("CPU")));
     QVERIFY(showsText(group.get(), QStringLiteral("0:01")));
-    // Without a camera there is no name to show.
+    // Without a name there is no row for it.
     QVERIFY(!showsText(group.get(), QStringLiteral("Camera")));
 }
 

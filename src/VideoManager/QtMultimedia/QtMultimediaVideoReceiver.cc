@@ -338,13 +338,10 @@ void QtMultimediaVideoReceiver::_fail(const QString& reason)
 void QtMultimediaVideoReceiver::_bindVideoSink()
 {
     QVideoSink* const sink = videoSink();
-    if (sink != _videoSink) {
-        (void) disconnect(_frameConnection);
-        _videoSink = sink;
-        if (sink) {
-            _frameConnection =
-                connect(sink, &QVideoSink::videoFrameChanged, this, &QtMultimediaVideoReceiver::_onVideoFrame);
-        }
+    (void) disconnect(_frameConnection);
+    if (sink) {
+        _frameConnection =
+            connect(sink, &QVideoSink::videoFrameChanged, this, &QtMultimediaVideoReceiver::_onVideoFrame);
     }
     if (_player) {
         _player->setVideoSink(sink);
@@ -427,7 +424,7 @@ void QtMultimediaVideoReceiver::_sample()
     }
     const qint64 timeoutMs = std::chrono::duration_cast<std::chrono::milliseconds>(config().timeout).count() +
                              ((_frames == 0) ? kFirstFrameGraceMs : 0);
-    if (_videoSink && (_sinceFrame.elapsed() > timeoutMs)) {
+    if (videoSink() && (_sinceFrame.elapsed() > timeoutMs)) {
         _fail(tr("no video for %1 s").arg(timeoutMs / 1000));
         return;
     }

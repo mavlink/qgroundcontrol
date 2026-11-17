@@ -101,32 +101,27 @@
             "controls": [
                 {
                     "setting": "videoSettings.videoBackend",
-                    "control": "combobox",
-                    "showWhen": "isStreamSource"
+                    "control": "combobox"
                 },
                 {
                     "setting": "videoSettings.aspectRatio",
-                    "showWhen": "!autoStreamConfig && isStreamSource"
+                    "showWhen": "!autoStreamConfig"
                 },
                 {
-                    "setting": "videoSettings.maxVideoTiles",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.maxVideoTiles"
                 },
                 {
-                    "setting": "videoSettings.disableWhenDisarmed",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.disableWhenDisarmed"
                 },
                 {
-                    "setting": "videoSettings.lowLatencyMode",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.lowLatencyMode"
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "isStreamSource && rtpLatencyVisible && gstreamer"
+                    "showWhen": "rtpLatencyVisible && gstreamer"
                 },
                 {
-                    "setting": "videoSettings.rtspAutoReconnect",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.rtspAutoReconnect"
                 },
                 {
                     "setting": "videoSettings.forceCpuVideoPath",

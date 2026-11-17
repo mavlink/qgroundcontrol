@@ -10,6 +10,8 @@ QGCGroupBox {
     id: root
 
     required property UVCStreamMonitor monitor
+    /// The camera's name; no row for an empty one.
+    property string cameraName
 
     readonly property videoStreamStats _stats: monitor.stats
     readonly property size _videoSize:  monitor.videoSize
@@ -21,7 +23,7 @@ QGCGroupBox {
 
     LabelledLabel {
         label:      qsTr("Camera")
-        labelText:  root.monitor.cameraName
+        labelText:  root.cameraName
         visible:    labelText !== ""
     }
 

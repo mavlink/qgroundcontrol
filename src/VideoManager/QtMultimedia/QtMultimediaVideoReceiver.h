@@ -4,7 +4,6 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtMultimedia/QMediaPlayer>
@@ -16,7 +15,6 @@
 class QMediaCaptureSession;
 class QtVideoRecorder;
 class QVideoFrameInput;
-class QVideoSink;
 
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
@@ -100,7 +98,6 @@ private:
     bool _closing = false;
     /// The config the session started with.
     Config _sessionConfig;
-    QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _frameConnection;
     StreamSupervisor* const _supervisor;
     QTimer _sampleTimer;

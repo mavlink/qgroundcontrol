@@ -28,34 +28,22 @@ Item {
     readonly property real _viewWidth: root.parent ? root.parent.width : 0
     readonly property real _viewHeight: root.parent ? root.parent.height : 0
     // The box the thermal video fits in, as the thermal mode asks.
-    readonly property real _boxWidth: {
+    readonly property size _box: {
         if (!root.camera) {
-            return 0
+            return Qt.size(0, 0)
         }
         switch (root.camera.thermalMode) {
         case MavlinkCameraControlInterface.THERMAL_FULL:
-            return root._viewWidth
+            return Qt.size(root._viewWidth, root._viewHeight)
         case MavlinkCameraControlInterface.THERMAL_PIP:
-            return Math.max(0, root._viewWidth - root.anchors.leftMargin)
+            return Qt.size(Math.max(0, root._viewWidth - root.anchors.leftMargin),
+                           ScreenTools.defaultFontPixelHeight * 12)
         default:
-            return root._viewWidth * root._blendSizeFactor
-        }
-    }
-    readonly property real _boxHeight: {
-        if (!root.camera) {
-            return 0
-        }
-        switch (root.camera.thermalMode) {
-        case MavlinkCameraControlInterface.THERMAL_FULL:
-            return root._viewHeight
-        case MavlinkCameraControlInterface.THERMAL_PIP:
-            return ScreenTools.defaultFontPixelHeight * 12
-        default:
-            return root._viewHeight * root._blendSizeFactor
+            return Qt.size(root._viewWidth * root._blendSizeFactor, root._viewHeight * root._blendSizeFactor)
         }
     }
 
-    width:      Math.min(root._boxWidth, root._boxHeight * root._aspectRatio)
+    width:      Math.min(root._box.width, root._box.height * root._aspectRatio)
     height:     root.width / root._aspectRatio
     visible:    root._shown
 

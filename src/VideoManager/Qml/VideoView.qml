@@ -171,7 +171,6 @@ Item {
 
         // Frozen video must not pass for live.
         VideoStatusLabel {
-            objectName:         "videoLostLabel"
             anchors.centerIn:   parent
             useSmallFont:       root.useSmallFont
             text:               qsTr("VIDEO LOST - RECONNECTING")

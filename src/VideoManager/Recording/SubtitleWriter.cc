@@ -41,6 +41,12 @@ SubtitleWriter::~SubtitleWriter()
     stopCapturingTelemetry();
 }
 
+QString SubtitleWriter::subtitleFile(const QString& videoFile)
+{
+    const QFileInfo info(videoFile);
+    return QStringLiteral("%1/%2.ass").arg(info.path(), info.completeBaseName());
+}
+
 void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize videoSize)
 {
     stopCapturingTelemetry();
@@ -50,8 +56,7 @@ void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize vid
     _rowWidth = (_size.width() + kOffsetFactor) / (kColumnCount + 1);
     _telemetry.readLayout();
 
-    const QFileInfo videoFileInfo(videoFile);
-    _file.setFileName(QStringLiteral("%1/%2.ass").arg(videoFileInfo.path(), videoFileInfo.completeBaseName()));
+    _file.setFileName(subtitleFile(videoFile));
     qCDebug(SubtitleWriterLog) << "Writing overlay to file:" << _file.fileName();
     if (!_file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
         qCWarning(SubtitleWriterLog) << "Unable to write subtitle file" << _file.fileName() << _file.errorString();

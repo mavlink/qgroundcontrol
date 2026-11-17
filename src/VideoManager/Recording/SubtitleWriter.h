@@ -23,8 +23,11 @@ public:
     explicit SubtitleWriter(QObject* parent = nullptr);
     ~SubtitleWriter() override;
 
-    /// Starts "<videoFile without extension>.ass", replacing any existing file, timed from now. Call when the video
-    /// file starts. Stops any capture in progress first.
+    /// The subtitle file that goes with @p videoFile: "<videoFile without extension>.ass".
+    static QString subtitleFile(const QString& videoFile);
+
+    /// Starts subtitleFile(@p videoFile), replacing any existing file, timed from now. Call when the video file starts.
+    /// Stops any capture in progress first.
     void startCapturingTelemetry(const QString& videoFile, QSize videoSize);
     void stopCapturingTelemetry();
 

@@ -9,18 +9,10 @@
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
+#include "SubtitleWriter.h"
 #include "VideoReceiver.h"
 
 QGC_LOGGING_CATEGORY(VideoRecordingListLog, "AnalyzeView.VideoRecordingList")
-
-namespace {
-
-QString subtitleFile(const QFileInfo& video)
-{
-    return QStringLiteral("%1/%2.ass").arg(video.path(), video.completeBaseName());
-}
-
-}  // namespace
 
 VideoRecordingList::VideoRecordingList(QObject* parent)
     : QObject(parent)
@@ -70,7 +62,7 @@ void VideoRecordingList::_refresh()
         const QFileInfoList files =
             QDir(_directory).entryInfoList(nameFilters, QDir::Files | QDir::Readable, QDir::Time | QDir::Name);
         for (const QFileInfo& file : files) {
-            const QFileInfo subtitles(subtitleFile(file));
+            const QFileInfo subtitles(SubtitleWriter::subtitleFile(file.filePath()));
             recordings.append(QVariantMap{
                 {QStringLiteral("name"), file.fileName()},
                 {QStringLiteral("path"), file.filePath()},
@@ -97,7 +89,7 @@ bool VideoRecordingList::remove(const QString& path)
 
     const bool removed = QFile::remove(path);
     if (removed) {
-        const QString subtitles = subtitleFile(video);
+        const QString subtitles = SubtitleWriter::subtitleFile(path);
         if (QFile::exists(subtitles) && !QFile::remove(subtitles)) {
             qCWarning(VideoRecordingListLog) << "Unable to delete" << subtitles;
         }

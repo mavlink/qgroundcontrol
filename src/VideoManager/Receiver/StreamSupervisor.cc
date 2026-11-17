@@ -13,9 +13,9 @@ StreamSupervisor::StreamSupervisor(QObject* parent, ExponentialBackoff backoff)
     (void) connect(&_reconnectTimer, &QTimer::timeout, this, &StreamSupervisor::reconnectDue);
 }
 
-VideoReceiver::State StreamSupervisor::stateFor(Phase phase)
+VideoReceiver::State StreamSupervisor::state() const
 {
-    switch (phase) {
+    switch (_phase) {
         case Phase::Connecting:
             return VideoReceiver::State::Connecting;
         case Phase::Streaming:

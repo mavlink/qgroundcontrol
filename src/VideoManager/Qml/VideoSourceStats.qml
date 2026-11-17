@@ -45,7 +45,8 @@ ColumnLayout {
                 id: cameraGroupComponent
 
                 UVCStatsGroup {
-                    monitor: root.videoManager.uvcCamera.monitor
+                    monitor:    root.videoManager.uvcCamera.monitor
+                    cameraName: groupLoader.modelData.displayName
                 }
             }
         }

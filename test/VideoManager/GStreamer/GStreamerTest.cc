@@ -13,7 +13,6 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVersionNumber>
 
-#include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
@@ -335,12 +334,6 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 
     QVERIFY2(gst_element_link(source.get(), sink.get()),
              qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
-}
-
-void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
-{
-    Fact fact;
-    VideoBackend::bindDebugLevelFact(&fact, nullptr);
 }
 
 void GStreamerTest::_testRuntimeVersionCheck()
