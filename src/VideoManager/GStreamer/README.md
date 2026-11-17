@@ -556,6 +556,14 @@ On a busy machine `decodebin3` could read them first and end the stream for want
 
 ### Automated tests
 
+A test is in `test/VideoManager` at the path its source has in `src/VideoManager`: the tests of `Pipeline/` are in
+`test/VideoManager/GStreamer/Pipeline/`, those of `Sink/gstqgc/` in `test/VideoManager/GStreamer/Sink/gstqgc/`. Code
+in a `common` folder is tested from its parent's folder. Support that several folders share is in their nearest common
+parent: `GStreamerTestBase` and `GStreamerTestHelpers` in `test/VideoManager/GStreamer/`, `VideoTestHelpers.h` in
+`test/VideoManager/`. The cases of `GstHwBuffersTest` and `GstHwBuffersPipelineTest` are spread over part files that
+define no class of their own, the cases of one GPU path in that path's folder
+(`HwBuffers/dmabuf/GStreamerDmaBufTest.cc`).
+
 | Test | Label | Covers |
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The environment `prepareEnvironment()` sets for a fake bundled desktop install (plugin path, scanner, which still forks and is reused, and the GIO modules of a bundle that has them; the same when prepared again) and for the running app, and the bundled runtime's private plugin registry: named per install, also across AppImage mounts and macOS translocation, pruned of registries unused for 30 days, and replaced by a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. The file write that refreshes Android's extracted CA bundle. |
@@ -585,7 +593,7 @@ On a busy machine `decodebin3` could read them first and end the stream for want
 The classes derived from `GStreamerTestBase` fail in `initTestCase()` when `GStreamer::completeInit()` fails, as it does when an element video needs is missing, and their tests skip where GStreamer can't be initialized at all (as under AddressSanitizer). A test skips, rather than fails, when an optional element it uses is missing (`GSTTEST_SKIP_UNLESS_FACTORIES` in `GStreamerTestHelpers.h`). The two `*HarnessTest` classes use GstHarness from gst-check (`gstreamer-check-1.0`), which test builds request as an optional GStreamer component (`Check`); they compile only where the SDK or distribution ships it. No test needs a software encoder: the streams they send are the short 320x240 H.264 and H.265 files, and a 160x120 H.264 one a stream switches to mid-way, in [`SelfTest/Media/`](SelfTest/Media/), which the app's self-test embeds too (its `generate.sh` regenerates them), split into access units and paced through `appsrc`. Only `GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams` encodes in software, as MockLink's stream server does (`openh264enc`, falling back to `x264enc`; `x265enc` for H.265); the VA-API cases encode with the host's `vah264enc`. Each class runs in its own process, so a crash in a GPU path only fails its own class; `-LE GPU` leaves out the classes that use the host's GPU.
 
 ```bash
-ctest --test-dir build -R '^(GStreamer|Gst)[A-Za-z]*Test$' --output-on-failure
+ctest --test-dir build -R '^(GStreamer|Gst)[A-Za-z]*Test(\.[0-9]+)?$' --output-on-failure
 ```
 
 CI runs these classes in the Linux coverage and sanitizer jobs and the macOS Debug leg with the rest of the suite, and on
