@@ -3,7 +3,8 @@
 QGroundControl uses GStreamer for UDP RTP and RTSP video streaming in the Main Flight Display.
 
 This guide covers the GStreamer receiver architecture, platform setup, and diagnostics. See
-[CODING_STYLE.md](../../../CODING_STYLE.md) for repository-wide source conventions,
+[the video module's README](../README.md) for a map of the folders of `src/VideoManager` and the path of a frame and
+of a recording through them, [CODING_STYLE.md](../../../CODING_STYLE.md) for repository-wide source conventions,
 [test/README.md](../../../test/README.md) for the test framework, and
 [tools/README.md](../../../tools/README.md) for general build and tooling commands.
 
@@ -11,10 +12,14 @@ This guide covers the GStreamer receiver architecture, platform setup, and diagn
 
 The backend is split into focused components, by folder:
 
-- `Runtime/`: initialization, environment, logging, helpers, the boot self-test and `GStreamerVideoBackend`.
-- `Pipeline/`: the receiver, its worker, sessions and branches, and the source bins.
+- `GStreamerVideoBackend`, in this folder: the `VideoBackend`, the app's way into the folders below.
+- `Runtime/`: initialization, environment, logging, decoder ranks, workarounds and helpers.
+- `Source/`: the source bins, from a stream's URI to its parsed stream.
+- `Pipeline/`: the receiver, its worker, sessions and branches.
 - `Sink/`: `QGCQVideoSinkController` and the `gstqgc` plugin (`Sink/gstqgc/`).
-- `HwBuffers/`: the zero-copy GPU paths.
+- `HwBuffers/`: the zero-copy GPU paths: the `HwBuffers` facade the other folders call, a folder for each path, and
+  `common/`, which the paths share.
+- `SelfTest/`: the boot self-test and the encoded samples it decodes and records (`SelfTest/Media/`).
 - `Platform/`: platform shims (`IOSPipe2Compat.c`) and the Android JNI state `GStreamer::mobile` keeps for GStreamer's Android plugins (`gst_android_jni.c`).
 
 The backend-neutral `VideoReceiver`, `VideoBackend` and `VideoStreamStats` are in `../Receiver/`. `../QtMultimedia/`
@@ -47,6 +52,9 @@ that a stream on display already has gets no source: a camera sends such streams
   nor starts a stream that stays on display when the current stream changes.
 - Recordings and photos are of the main picture and its thermal stream, not of the tiles.
 
+The components, in the order of their folders: `Pipeline/`, `Source/`, `Sink/`, `Runtime/`, `SelfTest/`, and
+`GStreamerVideoBackend`.
+
 | Component | Role |
 | --- | --- |
 | `GstVideoReceiver` | The `VideoReceiver` the app uses. Callers state what they want (config, active, video output, recording), which it hands to its `GstReceiverWorker` as one `GstReceiverRequest` after each change. It owns the display sink, built from its `VideoReceiver::DisplayConfig` when an output is set and rebuilt by `restart()`, which it also calls when its worker reports the stream's graphics device lost. |
@@ -73,10 +81,10 @@ that a stream on display already has gets no source: a camera sends such streams
 | `GStreamerHelpers` | Small utilities: keyframe requests, events sent without blocking, holding a new pad's data until it is linked, and taking a child element out of a running bin. |
 | `GStreamerLibavWorkaround` | Has `avdec_h265` decode on one thread with FFmpeg 7.1.0 (libavcodec 61.19.100, which GStreamer 1.28 packages for Android, iOS, macOS and Windows), whose slice threads deadlock on an HEVC picture with more wavefront rows than threads and take the streaming thread with them; `DecodingBranch` applies it to each decoder `decodebin3` plugs. The libavcodec version comes from its pkg-config file at configure time, and on iOS, whose SDK has none, from its version headers. |
 | `GStreamerLogging` | Routes GStreamer's log output through QGC's logging, unless GStreamer's own output was requested, and applies the persisted debug level. See [GStreamer Logging](#gstreamer-logging). |
-| `GStreamerSelfTest` | `GStreamer::SelfTest::run()`, which the boot test runs to prove the packaged runtime decodes and records. See [Boot self-test](#boot-self-test). |
-| `GStreamerSelfTestMedia` | The self-test's media pipelines: decoding the embedded samples and recording and reading back MP4 and MKV. |
 | `GStreamerUdpSrcWorkaround` | Serializes `udpsrc`'s `unlock()`/`unlock_stop()` on gst-plugins-good before 1.24.10, whose race corrupts the heap when a UDP stream stops right after it starts; `completeInit()` applies it. |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return, `makeElement()` (never floating), `PadProbe` and `ScopedSignal`. |
+| `GStreamerSelfTest` | `GStreamer::SelfTest::run()`, which the boot test runs to prove the packaged runtime decodes and records. See [Boot self-test](#boot-self-test). |
+| `GStreamerSelfTestMedia` | The self-test's media pipelines: decoding the embedded samples and recording and reading back MP4 and MKV. |
 | `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's process lifecycle, which it keeps as states (unprepared, prepared, initialized, failed): the environment first, initialization once (a failed or repeated one isn't retried, as `gst_init()` can't be undone), the self-test only once initialized. Also GStreamer's tuning (decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. Once GStreamer has failed to initialize, its receivers are `QtMultimediaVideoReceiver`s, and `VideoManager` shows its `initFailureMessage()`. |
 
 MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead.
