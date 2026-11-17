@@ -23,6 +23,7 @@
 #include "GStreamerTestHelpers.h"
 #include "GstHwVideoInfo.h"
 #include "GstQgcFrameMap.h"
+#include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -42,7 +43,6 @@
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #define QGC_TEST_GLMEMORY_READBACK 1
 #include <atomic>
-#include <gst/app/gstappsink.h>
 #include <gst/gl/gl.h>
 
 #include <QtMultimedia/QVideoFrame>
@@ -54,7 +54,6 @@
 #include "GstGlContextBridge.h"
 #include "GstGlVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
-#include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
 #endif
@@ -338,14 +337,14 @@ void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack()
     QVERIFY(sampleCaps);
     GstVideoInfo info;
     QVERIFY(GstHw::dmaDrmAwareVideoInfo(sampleCaps.get(), &info));
-    GstSample* sample = gst_sample_new(buffer, sampleCaps.get(), nullptr, nullptr);
+    GstTest::SamplePtr sample(gst_sample_new(buffer, sampleCaps.get(), nullptr, nullptr));
     // The format the sink gives the frame.
     const QSize capsSize(GST_VIDEO_INFO_WIDTH(&info), GST_VIDEO_INFO_HEIGHT(&info));
     GstDmaBufVideoBuffer frame(
-        sample, info,
+        sample.get(), info,
         withFrameGeometry(QVideoFrameFormat(capsSize, QVideoFrameFormat::Format_NV12), frameGeometry(buffer, info)),
         static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
-    gst_sample_unref(sample);
+    sample.reset();
     QVERIFY(frame.validatePlaneHandles());
     QCOMPARE(frame.format().viewport(), QRect(QPoint(0, 0), capsSize));
 
@@ -380,62 +379,24 @@ void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
     if (drmCaps.empty()) {
         QSKIP("Qt's EGL display offers no importable NV12 modifier");
     }
-    drmCaps.resize(drmCaps.find_last_not_of("; ") + 1);
     GstDmaBufVideoBuffer::resetCachedState();
 
     // One bitstream decoded twice: into the driver's own (usually tiled) DMABuf layout, and downloaded to system
     // memory as the reference.
     constexpr int kVaWidth = 320;
     constexpr int kVaHeight = 240;
-    GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! "
-                                        "video/x-raw,format=NV12,width=%1,height=%2,framerate=30/1 ! "
-                                        "vah264enc ! h264parse ! tee name=t "
-                                        "t. ! queue ! vah264dec ! capsfilter name=gpucaps ! fakesink name=gpu "
-                                        "t. ! queue ! vah264dec ! video/x-raw,format=NV12 ! fakesink name=cpu")
-                             .arg(kVaWidth)
-                             .arg(kVaHeight))) {
-        QSKIP(qPrintable(QStringLiteral("VA pipeline parse skipped: %1").arg(pipeline.error())));
+    GstTest::VaFramePair frames;
+    GstTest::pullVaFramePair(
+        frames,
+        QStringLiteral("video/x-raw,format=NV12,width=%1,height=%2,framerate=30/1 ! vah264enc ! h264parse")
+            .arg(kVaWidth)
+            .arg(kVaHeight),
+        QStringLiteral("vah264dec"), drmCaps, GST_VIDEO_FORMAT_NV12);
+    if (!frames.gpu) {
+        return;
     }
-    const GStreamer::GstCapsPtr gpuCaps = GStreamer::adoptCaps(gst_caps_from_string(drmCaps.c_str()));
-    QVERIFY(gpuCaps);
-    g_object_set(pipeline.element("gpucaps").get(), "caps", gpuCaps.get(), nullptr);
-    // VA hands out DMA_DRM memory only to a peer that takes GstVideoMeta, as qgcqvideosink does.
-    const GStreamer::GstPadPtr gpuPad =
-        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("gpu").get(), "sink"));
-    QVERIFY(gpuPad);
-    GStreamer::PadProbe allocationProbe;
-    QVERIFY(allocationProbe.add(
-        gpuPad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM | GST_PAD_PROBE_TYPE_PUSH),
-        +[](GstPad*, GstPadProbeInfo* info, gpointer) -> GstPadProbeReturn {
-            GstQuery* query = GST_PAD_PROBE_INFO_QUERY(info);
-            if (GST_QUERY_TYPE(query) != GST_QUERY_ALLOCATION) {
-                return GST_PAD_PROBE_OK;
-            }
-            gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr);
-            return GST_PAD_PROBE_HANDLED;
-        },
-        nullptr));
-    if (!pipeline.play()) {
-        QSKIP("VA pipeline failed to PLAY (no VA driver / DRI device?)");
-    }
-    const QString failure = pipeline.runToEos();
-    if (!failure.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("VA driver can't decode into the offered modifiers (%1): %2")
-                             .arg(QString::fromStdString(drmCaps), failure)));
-    }
-
-    using SamplePtr = std::unique_ptr<GstSample, decltype(&gst_sample_unref)>;
-    const auto lastSample = [&pipeline](const char* name) {
-        GstSample* sample = nullptr;
-        g_object_get(pipeline.element(name).get(), "last-sample", &sample, nullptr);
-        return SamplePtr(sample, &gst_sample_unref);
-    };
-    const SamplePtr gpuSampleRef = lastSample("gpu");
-    const SamplePtr cpuSampleRef = lastSample("cpu");
-    QVERIFY(gpuSampleRef && cpuSampleRef);
-    GstSample* const gpuSample = gpuSampleRef.get();
-    GstSample* const cpuSample = cpuSampleRef.get();
+    GstSample* const gpuSample = frames.gpu.get();
+    GstSample* const cpuSample = frames.cpu.get();
 
     GstVideoInfo gpuInfo;
     QVERIFY(GstHw::dmaDrmAwareVideoInfo(gst_sample_get_caps(gpuSample), &gpuInfo));
@@ -503,10 +464,11 @@ void GstHwBuffersGlReadbackTest::_testDmaBufBufferReturnsAfterGpuReads()
     QVERIFY(caps);
     GstVideoInfo info;
     QVERIFY(GstHw::dmaDrmAwareVideoInfo(caps.get(), &info));
-    GstSample* sample = gst_sample_new(buffer, caps.get(), nullptr, nullptr);
-    GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(kSide, kSide), QVideoFrameFormat::Format_RGBA8888),
+    GstTest::SamplePtr sample(gst_sample_new(buffer, caps.get(), nullptr, nullptr));
+    GstDmaBufVideoBuffer frame(sample.get(), info,
+                               QVideoFrameFormat(QSize(kSide, kSide), QVideoFrameFormat::Format_RGBA8888),
                                static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
-    gst_sample_unref(sample);
+    sample.reset();
 
     // A pipe the test writes to stands in for the fence of the GPU's work.
     int fence[2] = {-1, -1};
@@ -563,14 +525,12 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
     QVERIFY(reference.play());
     const QString referenceFailure = reference.runToEos();
     QVERIFY2(referenceFailure.isEmpty(), qPrintable(referenceFailure));
-    GstSample* cpuSample = nullptr;
-    g_object_get(reference.element("cpu").get(), "last-sample", &cpuSample, nullptr);
+    const GstTest::SamplePtr cpuSample = reference.lastSample("cpu");
     QVERIFY(cpuSample);
-    const auto unrefSample = qScopeGuard([cpuSample] { gst_sample_unref(cpuSample); });
     GstVideoInfo cpuInfo;
-    QVERIFY(gst_video_info_from_caps(&cpuInfo, gst_sample_get_caps(cpuSample)));
+    QVERIFY(gst_video_info_from_caps(&cpuInfo, gst_sample_get_caps(cpuSample.get())));
     GstVideoFrame cpuFrame;
-    QVERIFY(gst_video_frame_map(&cpuFrame, &cpuInfo, gst_sample_get_buffer(cpuSample), GST_MAP_READ));
+    QVERIFY(gst_video_frame_map(&cpuFrame, &cpuInfo, gst_sample_get_buffer(cpuSample.get()), GST_MAP_READ));
     const auto unmapCpuFrame = qScopeGuard([&cpuFrame] { gst_video_frame_unmap(&cpuFrame); });
 
     // Uploaded by glupload in a gst-gl context the GL bridge shares with Qt's, delivered as the receiver delivers it.
@@ -646,24 +606,12 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
         },
         nullptr, nullptr);
     QVERIFY(pipeline.play());
-    const auto pull = [&pipeline](const char* name) {
-        return gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element(name).get()),
-                                            GstTest::clockTime(TestTimeout::mediumDuration()));
-    };
-    GstSample* const gpuSample = pull("gpu");
-    GstSample* const cpuSample = pull("cpu");
-    const auto unref = qScopeGuard([gpuSample, cpuSample] {
-        if (gpuSample) {
-            gst_sample_unref(gpuSample);
-        }
-        if (cpuSample) {
-            gst_sample_unref(cpuSample);
-        }
-    });
+    const GstTest::SamplePtr gpuSample = pipeline.pullSample("gpu");
+    const GstTest::SamplePtr cpuSample = pipeline.pullSample("cpu");
     QVERIFY2(gpuSample && cpuSample, "the pipeline produced no frame");
 
     GstVideoInfo info;
-    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(cpuSample)));
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(cpuSample.get())));
     const QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&info), GST_VIDEO_INFO_HEIGHT(&info)),
                                    QVideoFrameFormat::Format_RGBA8888);
     // The frame as the sink makes it under caps of capsHeight rows.
@@ -672,12 +620,13 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
     const QSize capsSize(GST_VIDEO_INFO_WIDTH(&capsInfo), capsHeight);
     const QVideoFrameFormat gpuFormat =
         withFrameGeometry(QVideoFrameFormat(capsSize, QVideoFrameFormat::Format_RGBA8888),
-                          frameGeometry(gst_sample_get_buffer(gpuSample), capsInfo));
+                          frameGeometry(gst_sample_get_buffer(gpuSample.get()), capsInfo));
     HwVideoBufferContext context;
     context.gpuEnabled = true;
     HwVideoBufferPath path = HwVideoBufferPath::None;
-    std::unique_ptr<QHwVideoBuffer> buffer = makeHwVideoBuffer(
-        gst_sample_get_buffer(gpuSample), gst_sample_get_caps(gpuSample), capsInfo, gpuFormat, context, path);
+    std::unique_ptr<QHwVideoBuffer> buffer =
+        makeHwVideoBuffer(gst_sample_get_buffer(gpuSample.get()), gst_sample_get_caps(gpuSample.get()), capsInfo,
+                          gpuFormat, context, path);
     QVERIFY2(buffer, "the GLMemory sample did not create a hardware video buffer");
     QCOMPARE(path, HwVideoBufferPath::GlMemory);
 
@@ -685,7 +634,7 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
     const QImage actual = QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), rhi))
                               .toImage()
                               .copy(gpuFormat.viewport());
-    const QImage expected = CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpuSample), info, format)
+    const QImage expected = CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpuSample.get()), info, format)
                                 .toImage()
                                 .copy(QRect(QPoint(0, 0), capsSize));
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/2);
@@ -722,19 +671,17 @@ void GstHwBuffersGlReadbackTest::_testTenBitPlanarFrameToImage()
              qPrintable(pipeline.error()));
     QVERIFY(GStreamer::setupQVideoSinkElement(pipeline.element("sink").get(), &videoSink, &owner));
     QVERIFY(pipeline.play());
-    GstSample* const reference = gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element("reference").get()),
-                                                              GstTest::clockTime(TestTimeout::mediumDuration()));
+    const GstTest::SamplePtr reference = pipeline.pullSample("reference");
     QVERIFY2(reference, "the pipeline produced no frame");
-    const auto unrefReference = qScopeGuard([reference] { gst_sample_unref(reference); });
     QVERIFY_TRUE_WAIT(frame.isValid(), TestTimeout::mediumMs());
 
     // The decoder's own format, with nothing converted ahead of the sink.
     QCOMPARE(frame.pixelFormat(), QVideoFrameFormat::Format_YUV420P10);
 
     GstVideoInfo info;
-    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(reference)));
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(reference.get())));
     GstVideoFrame converted;
-    QVERIFY(gst_video_frame_map(&converted, &info, gst_sample_get_buffer(reference), GST_MAP_READ));
+    QVERIFY(gst_video_frame_map(&converted, &info, gst_sample_get_buffer(reference.get()), GST_MAP_READ));
     const auto unmapConverted = qScopeGuard([&converted] { gst_video_frame_unmap(&converted); });
     // BGRA bytes are QImage's ARGB32 on a little-endian host.
     const QImage expected(static_cast<const uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&converted, 0)),
@@ -778,14 +725,12 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryMapLeavesFrameSyncMeta()
         },
         nullptr, nullptr);
     QVERIFY(pipeline.play());
-    GstSample* const sample = gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element("gpu").get()),
-                                                           GstTest::clockTime(TestTimeout::mediumDuration()));
+    const GstTest::SamplePtr sample = pipeline.pullSample("gpu");
     QVERIFY2(sample, "the pipeline produced no frame");
-    const auto unrefSample = qScopeGuard([sample] { gst_sample_unref(sample); });
 
     // The sync meta a producer attaches for the consumers of its buffer, which glupload does for the buffers it
     // uploads into. The buffer is shared with them, so the meta's fence is theirs to wait on.
-    GstBuffer* const buffer = gst_sample_get_buffer(sample);
+    GstBuffer* const buffer = gst_sample_get_buffer(sample.get());
     GstGLSyncMeta* frameSync = gst_buffer_get_gl_sync_meta(buffer);
     if (!frameSync) {
         frameSync =
@@ -796,12 +741,12 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryMapLeavesFrameSyncMeta()
     s_frameSyncPointsSet = 0;
 
     GstVideoInfo info;
-    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(sample)));
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(sample.get())));
     HwVideoBufferContext hwContext;
     hwContext.gpuEnabled = true;
     HwVideoBufferPath path = HwVideoBufferPath::None;
     const std::unique_ptr<QHwVideoBuffer> frame =
-        makeHwVideoBuffer(buffer, gst_sample_get_caps(sample), info,
+        makeHwVideoBuffer(buffer, gst_sample_get_caps(sample.get()), info,
                           QVideoFrameFormat(QSize(64, 48), QVideoFrameFormat::Format_RGBA8888), hwContext, path);
     QVERIFY2(frame, "the GLMemory sample did not create a hardware video buffer");
     QVideoFrameTexturesUPtr none;
@@ -830,15 +775,13 @@ void GstHwBuffersGlReadbackTest::_testUnsharedGlMemoryTakesCpuPath()
     if (!pipeline.play()) {
         QSKIP("gst-gl can't create a GL context of its own here");
     }
-    GstSample* const sample = gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element("gpu").get()),
-                                                           GstTest::clockTime(TestTimeout::mediumDuration()));
+    const GstTest::SamplePtr sample = pipeline.pullSample("gpu");
     if (!sample) {
         QSKIP("gst-gl can't create a GL context of its own here");
     }
-    const auto unref = qScopeGuard([sample] { gst_sample_unref(sample); });
 
     GstVideoInfo info;
-    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(sample)));
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(sample.get())));
     HwVideoBufferContext context;
     context.gpuEnabled = true;
     HwVideoBufferPath path = HwVideoBufferPath::GlMemory;
@@ -846,7 +789,7 @@ void GstHwBuffersGlReadbackTest::_testUnsharedGlMemoryTakesCpuPath()
     ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBuf", QtWarningMsg,
                      QRegularExpression(QStringLiteral("doesn't share with Qt's")));
     const std::unique_ptr<QHwVideoBuffer> buffer =
-        makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+        makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), gst_sample_get_caps(sample.get()), info,
                           QVideoFrameFormat(QSize(64, 48), QVideoFrameFormat::Format_RGBA8888), context, path);
     QVERIFY2(!buffer, "Qt's context can't sample a texture of a GL context outside its share group");
     QCOMPARE(path, HwVideoBufferPath::None);

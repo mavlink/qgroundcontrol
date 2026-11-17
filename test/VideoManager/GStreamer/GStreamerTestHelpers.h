@@ -75,6 +75,14 @@ QStringList childFactoryNames(GstBin* bin, bool recurse = false);
 /// The first element made by @p factoryName anywhere inside the bin @p bin, or null (also for a null @p bin).
 GStreamer::GstElementPtr findByFactory(GstElement* bin, const char* factoryName);
 
+struct SampleDeleter
+{
+    void operator()(GstSample* sample) const noexcept { gst_sample_unref(sample); }
+};
+
+/// Owns a reference to a GstSample.
+using SamplePtr = std::unique_ptr<GstSample, SampleDeleter>;
+
 /// A sample holding one uninitialized @p format frame; the sample owns the only buffer ref, so the buffer is writable.
 GstSample* makeVideoSample(GstVideoFormat format, int width, int height, GstVideoInfo* info = nullptr);
 
@@ -129,6 +137,11 @@ public:
     GStreamer::GstMessagePtr waitForEosOrError(std::chrono::milliseconds timeout = TestTimeout::mediumDuration()) const;
     /// Waits for EOS; returns an empty string on EOS, else the error or the timeout.
     QString runToEos(std::chrono::milliseconds timeout = TestTimeout::mediumDuration()) const;
+    /// The "last-sample" of the sink named @p sinkName; null without that sink, or when it has shown no buffer.
+    SamplePtr lastSample(const char* sinkName) const;
+    /// The next sample of the appsink named @p appsinkName; null without that appsink, or when none came in @p timeout.
+    SamplePtr pullSample(const char* appsinkName,
+                         std::chrono::milliseconds timeout = TestTimeout::mediumDuration()) const;
 
 private:
     GStreamer::GstElementPtr _pipeline;

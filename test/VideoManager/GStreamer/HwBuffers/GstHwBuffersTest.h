@@ -60,7 +60,6 @@ private slots:
     void _testGpuBinPreferenceParse();
     void _testGpuBinSelection_data();
     void _testGpuBinSelection();
-    void _testHwBufferCropMatrixIdentityWithoutMeta();
     void _testTexturePadsPicture_data();
     void _testTexturePadsPicture();
     void _testFrameGeometryFollowsBufferMetas_data();

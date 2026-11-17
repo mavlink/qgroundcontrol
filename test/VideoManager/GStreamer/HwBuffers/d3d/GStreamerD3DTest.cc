@@ -149,6 +149,22 @@ struct D3DSample
     }
 };
 
+/// @p path's context bridge; null when the path isn't compiled in.
+GstContextBridgeBase* d3dContextBridge(HwVideoBufferPath path)
+{
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    if (path == HwVideoBufferPath::D3D11) {
+        return &GstD3D11ContextBridge::instance();
+    }
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    if (path == HwVideoBufferPath::D3D12) {
+        return &GstD3D12ContextBridge::instance();
+    }
+#endif
+    return nullptr;
+}
+
 void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadElement, const char* capsFilter,
                    HwVideoBufferPath bridgePath = HwVideoBufferPath::None)
 {
@@ -174,20 +190,9 @@ void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadE
         gst_bus_set_sync_handler(
             bus.get(),
             [](GstBus*, GstMessage* message, gpointer userData) -> GstBusSyncReply {
-                const HwVideoBufferPath path = static_cast<HwVideoBufferPath>(GPOINTER_TO_INT(userData));
-                switch (path) {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-                    case HwVideoBufferPath::D3D11:
-                        return GstD3D11ContextBridge::instance().handleSyncMessage(message);
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-                    case HwVideoBufferPath::D3D12:
-                        return GstD3D12ContextBridge::instance().handleSyncMessage(message);
-#endif
-                    default:
-                        break;
-                }
-                return GST_BUS_PASS;
+                GstContextBridgeBase* const bridge =
+                    d3dContextBridge(static_cast<HwVideoBufferPath>(GPOINTER_TO_INT(userData)));
+                return bridge ? bridge->handleSyncMessage(message) : GST_BUS_PASS;
             },
             GINT_TO_POINTER(static_cast<int>(bridgePath)), nullptr);
     }
@@ -373,17 +378,7 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
 
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
     const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
-    GstContextBridgeBase* bridge = nullptr;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    if (d3d11) {
-        bridge = &GstD3D11ContextBridge::instance();
-    }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    if (!d3d11) {
-        bridge = &GstD3D12ContextBridge::instance();
-    }
-#endif
+    GstContextBridgeBase* const bridge = d3dContextBridge(hwPath);
     if (!bridge) {
         QSKIP("This D3D GPU path is not compiled in this build");
     }
@@ -433,17 +428,7 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
 
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
     const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
-    GstContextBridgeBase* bridge = nullptr;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    if (d3d11) {
-        bridge = &GstD3D11ContextBridge::instance();
-    }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    if (!d3d11) {
-        bridge = &GstD3D12ContextBridge::instance();
-    }
-#endif
+    GstContextBridgeBase* const bridge = d3dContextBridge(hwPath);
     if (!bridge) {
         QSKIP("This D3D GPU path is not compiled in this build");
     }
@@ -503,17 +488,7 @@ void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice()
 
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
     const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
-    GstContextBridgeBase* bridge = nullptr;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    if (d3d11) {
-        bridge = &GstD3D11ContextBridge::instance();
-    }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    if (!d3d11) {
-        bridge = &GstD3D12ContextBridge::instance();
-    }
-#endif
+    GstContextBridgeBase* const bridge = d3dContextBridge(hwPath);
     if (!bridge) {
         QSKIP("This D3D GPU path is not compiled in this build");
     }

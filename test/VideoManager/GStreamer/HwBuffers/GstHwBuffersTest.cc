@@ -171,9 +171,8 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
     });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA, &kTestBridgePathB});
 
-    GstElement* const identity = gst_element_factory_make("identity", nullptr);
-    QVERIFY(identity);
-    const GStreamer::GstElementPtr owner = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(identity)));
+    const GStreamer::GstElementPtr owner = GStreamer::makeElement("identity");
+    QVERIFY(owner);
     GstElement* const element = owner.get();
 
     // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
@@ -708,9 +707,8 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestSelectPathA, &kTestSelectPathB});
 
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 16, 16, &info);
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 16, 16, &info));
     QVERIFY(sample);
-    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -724,7 +722,7 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
                          QRegularExpression(QStringLiteral("failed plane-handle validation")));
     }
     const auto buffer =
-        makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+        makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), gst_sample_get_caps(sample.get()), info,
                           QVideoFrameFormat(QSize(16, 16), QVideoFrameFormat::Format_NV12), context, path, &cache);
     if (!aConstructs) {
         verifyExpectedLogMessage();
@@ -737,40 +735,23 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
 #endif
 }
 
-void GstHwBuffersTest::_testHwBufferCropMatrixIdentityWithoutMeta()
-{
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
-    GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 320, 240, &info);
-    QVERIFY(sample);
-    QVideoFrameFormat fmt(QSize(320, 240), QVideoFrameFormat::Format_NV12);
-    TestableHwVideoBuffer hw(sample, info, fmt);
-    // Default externalTextureMatrix from QHwVideoBuffer is identity; we don't override it
-    // for crop because Qt only consults externalTextureMatrix for Format_SamplerExternalOES.
-    QCOMPARE(hw.externalTextureMatrix(), QMatrix4x4());
-    gst_sample_unref(sample);
-#endif
-}
-
 void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
 {
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
 #else
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info);
+    GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info));
     QVERIFY(sample);
     QByteArray pixels(static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info)), Qt::Uninitialized);
     for (qsizetype i = 0; i < pixels.size(); ++i) {
         pixels[i] = static_cast<char>(i);
     }
-    gst_buffer_fill(gst_sample_get_buffer(sample), 0, pixels.constData(), static_cast<gsize>(pixels.size()));
+    gst_buffer_fill(gst_sample_get_buffer(sample.get()), 0, pixels.constData(), static_cast<gsize>(pixels.size()));
 
     auto hw = std::make_unique<TestableHwVideoBuffer>(
-        sample, info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
-    gst_sample_unref(sample);
+        sample.get(), info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
+    sample.reset();
     // A bundle from an earlier successful import takes its own sample ref; the CPU view must survive that.
     gst_sample_unref(hw->refSample());
     QVideoFrame frame(std::move(hw));
@@ -817,11 +798,10 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
     QFETCH(bool, expectMapped);
 
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_YUY2, 4, 2, &info);
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_YUY2, 4, 2, &info));
     QVERIFY(sample);
-    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
 
-    AdvertisingHwVideoBuffer hw(sample, info,
+    AdvertisingHwVideoBuffer hw(sample.get(), info,
                                 QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(memoryFormat)),
                                 QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(advertisedFormat)));
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
@@ -895,10 +875,9 @@ void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas()
     // The geometry reaches the frame as QVideoFrameFormat's frame size and viewport, not through
     // externalTextureMatrix.
     GstVideoInfo info;
-    GstSample* const sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info);
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info));
     QVERIFY(sample);
-    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
-    GstBuffer* const buffer = gst_sample_get_buffer(sample);
+    GstBuffer* const buffer = gst_sample_get_buffer(sample.get());
     if (metaSize.isValid()) {
         gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12,
                                   static_cast<guint>(metaSize.width()), static_cast<guint>(metaSize.height()));
@@ -976,21 +955,8 @@ void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("No GPU path compiled in this build");
 #else
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::DmaBuf;
-#elif defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::GlMemory;
-#elif defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::D3D11;
-#elif defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::D3D12;
-#elif defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::IOSurface;
-#elif defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::AHardwareBuffer;
-#else
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
-#endif
+    // Any compiled path: those are the ones HwBuffers::extraPathStatsSince() reports.
+    const HwVideoBufferPath path = GstHwPathRegistry::paths().front()->path;
 
     const GstHwPathTelemetry::Snapshot receiverBaseline = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::record(path, GstHwPathTelemetry::Counter::MapFailures);

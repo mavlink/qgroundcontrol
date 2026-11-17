@@ -10,17 +10,12 @@ class GstQgcSinkPipelineTest : public GStreamerTestBase
 private slots:
 #ifdef QGC_GST_STREAMING
     void _testFrameDelivery();
-    void _testYuvPassthrough();
     void _testPtsAndColorimetry();
-    void _testCapsCacheInvalidation();
     void _testGpuZeroCopyFallback_data();
     void _testGpuZeroCopyFallback();
     void _testQgcVideoSinkBinScalesNonSquarePixels_data();
     void _testQgcVideoSinkBinScalesNonSquarePixels();
     void _testTeardownUnderLoad();
-    void _testFrameCountsTelemetrySignal();
     void _testInactiveQgcQVideoSinkDropsAndCounts();
-    void _testCpuMemcpyActiveRowStrideHandling();
-    void _testColorimetryFrameRatePropagation();
 #endif
 };

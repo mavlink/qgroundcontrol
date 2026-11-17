@@ -269,6 +269,21 @@ QString TestPipeline::runToEos(std::chrono::milliseconds timeout) const
     return (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_EOS) ? QString() : errorText(message.get());
 }
 
+SamplePtr TestPipeline::lastSample(const char* sinkName) const
+{
+    GstSample* sample = nullptr;
+    if (const GStreamer::GstElementPtr sink = element(sinkName)) {
+        g_object_get(sink.get(), "last-sample", &sample, nullptr);
+    }
+    return SamplePtr(sample);
+}
+
+SamplePtr TestPipeline::pullSample(const char* appsinkName, std::chrono::milliseconds timeout) const
+{
+    const GStreamer::GstElementPtr appsink = element(appsinkName);
+    return SamplePtr(appsink ? gst_app_sink_try_pull_sample(GST_APP_SINK(appsink.get()), clockTime(timeout)) : nullptr);
+}
+
 QList<AccessUnit> loadAccessUnits(const QString& resource, QString* error)
 {
     const auto fail = [error](const QString& why) {

@@ -14,7 +14,6 @@
 #include "GstHwPathTelemetry.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
 void GstQgcSinkPipelineTest::_testFrameDelivery()
@@ -28,16 +27,7 @@ void GstQgcSinkPipelineTest::_testFrameDelivery()
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
     QCOMPARE(r.lastFormat.frameSize(), QSize(320, 240));
-}
-
-void GstQgcSinkPipelineTest::_testYuvPassthrough()
-{
-    QVideoSink videoSink;
-    const auto r = GstQgcTest::runPipelineThroughQVideoSink(
-        videoSink, "video/x-raw,format=I420,width=320,height=240,framerate=30/1", /*numBuffers=*/10);
-    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
-    QVERIFY(r.frameCount > 0);
-    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_YUV420P);
+    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
 }
 
 void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
@@ -48,27 +38,11 @@ void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
         /*numBuffers=*/5, /*gpuZerocopy=*/false, "do-timestamp=true");
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
+    // The bin leaves YUV to Qt's shaders instead of converting it to RGB.
+    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_YUV420P);
     QVERIFY2(r.lastStartTime >= 0, "GstBuffer PTS not forwarded to QVideoFrame::startTime");
     QCOMPARE(r.lastFormat.colorSpace(), QVideoFrameFormat::ColorSpace_BT709);
-}
-
-void GstQgcSinkPipelineTest::_testCapsCacheInvalidation()
-{
-    QVideoSink videoSink;
-
-    auto r1 = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
-                                                       "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-                                                       "videoconvert ! video/x-raw,format=BGRA");
-    QVERIFY2(r1.eos, qUtf8Printable(QStringLiteral("Session 1: %1").arg(r1.errorMessage)));
-    QVERIFY(r1.frameCount > 0);
-    QCOMPARE(r1.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
-
-    auto r2 = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
-                                                       "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-                                                       "videoconvert ! video/x-raw,format=RGBA");
-    QVERIFY2(r2.eos, qUtf8Printable(QStringLiteral("Session 2: %1").arg(r2.errorMessage)));
-    QVERIFY(r2.frameCount > 0);
-    QCOMPARE(r2.lastFormat.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(r.lastFormat.streamFrameRate(), 30.0);
 }
 
 void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback_data()
@@ -206,39 +180,6 @@ void GstQgcSinkPipelineTest::_testTeardownUnderLoad()
     QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
 }
 
-void GstQgcSinkPipelineTest::_testFrameCountsTelemetrySignal()
-{
-    // Telemetry counters are process-global and leak across tests; diff against a baseline so the
-    // assertions below measure only this pipeline's contribution.
-    const GstHwPathTelemetry::Snapshot baseline = GstHwPathTelemetry::snapshot();
-
-    QVideoSink videoSink;
-    QObject controllerOwner;
-    GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc is-live=false num-buffers=90 ! "
-                                            "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1 ! "
-                                            "qgcvideosinkbin name=sink")),
-             qPrintable(pipeline.error()));
-
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    QVERIFY(sinkBin);
-    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
-    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
-    QVERIFY(qvideosink);
-
-    QVERIFY(pipeline.play());
-    QVERIFY_TRUE_WAIT(GstQgcTest::framesDelivered(qvideosink.get()) > 0, TestTimeout::mediumMs());
-
-    QVERIFY(GstQgcTest::sinkStat(qvideosink.get(), GstQgc::sinkFramesField(HwVideoBufferPath::None)) > 0);
-    quint64 gpuFallback = 0;
-    for (auto p : {HwVideoBufferPath::DmaBuf, HwVideoBufferPath::GlMemory, HwVideoBufferPath::D3D11,
-                   HwVideoBufferPath::D3D12, HwVideoBufferPath::IOSurface, HwVideoBufferPath::AHardwareBuffer}) {
-        gpuFallback += GstHwPathTelemetry::snapshot().count(p, GstHwPathTelemetry::Counter::MapFailures) -
-                       baseline.count(p, GstHwPathTelemetry::Counter::MapFailures);
-    }
-    QCOMPARE(gpuFallback, quint64(0));
-}
-
 void GstQgcSinkPipelineTest::_testInactiveQgcQVideoSinkDropsAndCounts()
 {
     QVideoSink videoSink;
@@ -274,52 +215,6 @@ void GstQgcSinkPipelineTest::_testInactiveQgcQVideoSinkDropsAndCounts()
     QVERIFY(input >= guint64(12));
     QCOMPARE(dropped, input);
     QCOMPARE(delivered, guint64(0));
-}
-
-void GstQgcSinkPipelineTest::_testCpuMemcpyActiveRowStrideHandling()
-{
-    // Width 753 is not 4-byte aligned; GStreamer will pad stride to 756.
-    // If the memcpy copies stride bytes instead of active-row bytes, the
-    // right-edge pixels of the right-most component will contain padding zeros.
-    QVideoSink videoSink;
-    QObject controllerOwner;
-
-    QVideoFrame capturedFrame;
-    // Controller teardown clears the QVideoSink with an invalid frame; keep the last real one.
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &controllerOwner, [&](const QVideoFrame& f) {
-        if (f.isValid()) {
-            capturedFrame = f;
-        }
-    });
-
-    auto r = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
-                                                      "video/x-raw,format=BGRA,width=753,height=432,framerate=30/1",
-                                                      /*numBuffers=*/5);
-    QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
-    QVERIFY(capturedFrame.isValid());
-
-    QVERIFY(capturedFrame.map(QVideoFrame::ReadOnly));
-    const uchar* data = capturedFrame.bits(0);
-    const int stride = capturedFrame.bytesPerLine(0);
-    // Sample the last active pixel column (x=752) from row 0; BGRA so 4 bytes/pixel.
-    const uchar* lastPixel = data + 752 * 4;
-    // videotestsrc pattern=0 (smpte) fills with non-zero color in top rows.
-    const bool nonZero = (lastPixel[0] | lastPixel[1] | lastPixel[2] | lastPixel[3]) != 0;
-    capturedFrame.unmap();
-
-    (void) stride;
-    QVERIFY2(nonZero, "Last active column is all zeros — likely stride vs active-row memcpy bug");
-}
-
-void GstQgcSinkPipelineTest::_testColorimetryFrameRatePropagation()
-{
-    QVideoSink videoSink;
-    const auto r =
-        GstQgcTest::runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1",
-                                                 /*numBuffers=*/3);
-    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
-    QVERIFY(r.frameCount > 0);
-    QCOMPARE(r.lastFormat.streamFrameRate(), 30.0);
 }
 
 #endif

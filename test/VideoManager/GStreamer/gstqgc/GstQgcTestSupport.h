@@ -126,14 +126,7 @@ public:
         return buffer;
     }
 
-    GstFlowReturn pushFrame(GstClockTime pts, bool discont = false, gsize size = kFrameBytes)
-    {
-        GstBuffer* buffer = makeFrame(pts, size);
-        if (discont) {
-            GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DISCONT);
-        }
-        return pushBuffer(buffer);
-    }
+    GstFlowReturn pushFrame(GstClockTime pts, gsize size = kFrameBytes) { return pushBuffer(makeFrame(pts, size)); }
 
     GstFlowReturn pushBuffer(GstBuffer* buffer) { return gst_pad_push(_src.get(), buffer); }
 
@@ -196,12 +189,10 @@ struct SinkBin
 
 inline SinkBin makeSinkBin()
 {
-    GstElement* const bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-    if (!bin) {
-        return {};
+    SinkBin made{GStreamer::makeElement("qgcvideosinkbin"), nullptr};
+    if (made.bin) {
+        made.qvideosink = GstQgcTest::qvideosink(made.bin.get());
     }
-    SinkBin made{GStreamer::adoptFloating(bin), nullptr};
-    made.qvideosink = GstQgcTest::qvideosink(bin);
     return made;
 }
 

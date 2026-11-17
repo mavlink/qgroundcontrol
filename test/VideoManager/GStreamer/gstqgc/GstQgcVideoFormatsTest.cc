@@ -4,7 +4,6 @@
 
 #include <gst/gst.h>
 #include <gst/video/video.h>
-#include <string>
 
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -142,26 +141,15 @@ void GstQgcVideoFormatsTest::_testPixelFormatAcceptedButNotAdvertised()
     QCOMPARE(toQtPixelFormat(GST_VIDEO_FORMAT_UNKNOWN), QVideoFrameFormat::Format_Invalid);
 }
 
-void GstQgcVideoFormatsTest::_testAdvertisedFormatListMatchesTable()
-{
-    const std::string list = GstQgc::advertisedFormatList();
-    for (const auto& e : GstQgc::kVideoFormatTable) {
-        if (e.capsToken) {
-            QVERIFY2(
-                list.find(e.capsToken) != std::string::npos,
-                qPrintable(
-                    QStringLiteral("advertised token '%1' missing from list").arg(QString::fromUtf8(e.capsToken))));
-        }
-    }
-    QVERIFY2(list.find("BGRx") == std::string::npos, "accepted-only BGRx must not be advertised");
-    QVERIFY2(list.rfind("{ ", 0) == 0 && list.find(" }") != std::string::npos, "list must be brace-wrapped");
-}
-
 void GstQgcVideoFormatsTest::_testAdvertisedFormatListForOffer_data()
 {
     QTest::addColumn<uint>("offer");
     QTest::addColumn<QString>("expected");
 
+    // Every advertised format in the table's order, the order of preference, and none that is only accepted (BGRx).
+    const QString advertised = QStringLiteral(
+        "{ NV12, NV21, I420, YV12, Y42B, P010_10LE, I420_10LE, AYUV, YUY2, UYVY, GRAY8, GRAY16_LE, BGRA, RGBA }");
+    QTest::newRow("system and GPU memory") << 0u << advertised;
     // Multi-plane GLMemory renders green through Qt's GL import, so glupload must stay single-plane RGB.
     QTest::newRow("glupload") << uint(GstQgc::kOfferGlUpload) << QStringLiteral("{ BGRA, RGBA }");
     QTest::newRow("linear-dma-drm") << uint(GstQgc::kOfferDmaDrm)

@@ -63,6 +63,33 @@
 #include "gstqgc/GstQgcTestSupport.h"
 #endif
 
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) || defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+namespace {
+
+/// A Vulkan QRhi on the instance Qt Quick renders with, on the software device when @p software; null with the
+/// reason in @p unavailable.
+std::unique_ptr<QRhi> createGstVulkanTestRhi(bool software, QString& unavailable)
+{
+    QRhiVulkanInitParams params;
+    params.inst = QVulkanDefaultInstance::instance();
+    if (!params.inst) {
+        unavailable = QStringLiteral("No Vulkan instance on the %1 platform").arg(QGuiApplication::platformName());
+        return {};
+    }
+    std::unique_ptr<QRhi> rhi(
+        QRhi::create(QRhi::Vulkan, &params, software ? QRhi::Flags(QRhi::PreferSoftwareRenderer) : QRhi::Flags()));
+    if (!rhi) {
+        unavailable = QStringLiteral("QRhi::create(Vulkan) failed");
+    } else if (software && (rhi->driverInfo().deviceType != QRhiDriverInfo::CpuDevice)) {
+        unavailable = QStringLiteral("No software Vulkan device");
+        rhi.reset();
+    }
+    return rhi;
+}
+
+}  // namespace
+#endif
+
 #endif  // QGC_GST_STREAMING
 
 GstHwBuffersVulkanReadbackTest::GstHwBuffersVulkanReadbackTest() = default;
@@ -77,16 +104,8 @@ QRhi* GstHwBuffersVulkanReadbackTest::_vulkanRhi()
     _rhiProbed = true;
     // As HwBuffers::configureQtGraphics() does before the application's QRhi exists.
     GstDmaBufVulkan::requestDeviceExtensions();
-    // The instance Qt Quick renders with.
-    QRhiVulkanInitParams params;
-    params.inst = QVulkanDefaultInstance::instance();
-    if (!params.inst) {
-        _rhiUnavailable = QStringLiteral("No Vulkan instance on the %1 platform").arg(QGuiApplication::platformName());
-        return nullptr;
-    }
-    _rhi.reset(QRhi::create(QRhi::Vulkan, &params));
+    _rhi = createGstVulkanTestRhi(/*software=*/false, _rhiUnavailable);
     if (!_rhi) {
-        _rhiUnavailable = QStringLiteral("QRhi::create(Vulkan) failed");
         return nullptr;
     }
     GstDmaBufVulkan::probeDevice(*_rhi);
@@ -119,37 +138,8 @@ void GstHwBuffersVulkanReadbackTest::cleanupTestCase()
     GStreamerTestBase::cleanupTestCase();
 }
 
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) || defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-namespace {
-
-using VulkanTestSample = std::unique_ptr<GstSample, decltype(&gst_sample_unref)>;
-
-}  // namespace
-#endif
-
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 namespace {
-
-/// A Vulkan QRhi on the instance Qt Quick renders with, on the software device when @p software; null with the
-/// reason in @p unavailable.
-std::unique_ptr<QRhi> createGstVulkanTestRhi(bool software, QString& unavailable)
-{
-    QRhiVulkanInitParams params;
-    params.inst = QVulkanDefaultInstance::instance();
-    if (!params.inst) {
-        unavailable = QStringLiteral("No Vulkan instance on the %1 platform").arg(QGuiApplication::platformName());
-        return {};
-    }
-    std::unique_ptr<QRhi> rhi(
-        QRhi::create(QRhi::Vulkan, &params, software ? QRhi::Flags(QRhi::PreferSoftwareRenderer) : QRhi::Flags()));
-    if (!rhi) {
-        unavailable = QStringLiteral("QRhi::create(Vulkan) failed");
-    } else if (software && (rhi->driverInfo().deviceType != QRhiDriverInfo::CpuDevice)) {
-        unavailable = QStringLiteral("No software Vulkan device");
-        rhi.reset();
-    }
-    return rhi;
-}
 
 /// Publishes @p rhi as the render thread publishes the scene graph's, primes the gst-vulkan bridge on it and returns
 /// the GstVulkanDevice the bridge then answers context queries with; null when it doesn't prime.
@@ -192,13 +182,6 @@ public:
 private:
     int _previous;
 };
-
-VulkanTestSample lastSampleOf(const GstTest::TestPipeline& pipeline, const char* sink)
-{
-    GstSample* sample = nullptr;
-    g_object_get(pipeline.element(sink).get(), "last-sample", &sample, nullptr);
-    return VulkanTestSample(sample, &gst_sample_unref);
-}
 
 /// Where @p frame, imported into @p rhi and converted there, differs from the CPU conversion of @p reference; empty
 /// when they match. Also a mismatch when the import fails: toImage() would then quietly convert the CPU map.
@@ -280,63 +263,27 @@ void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage()
     if (drmCaps.empty()) {
         QSKIP("The Vulkan device imports no layout of this format");
     }
-    drmCaps.resize(drmCaps.find_last_not_of("; ") + 1);
     GstDmaBufVideoBuffer::resetCachedState();
 
-    // One SMPTE frame through the VA element twice: into the layout the driver picks among those the device imports
-    // (usually a tiled one), and downloaded to system memory as the reference. A frame sampled with the wrong pitch,
-    // plane offset, plane format or tiling shows in the bars.
-    GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! tee name=t "
-                                        "t. ! queue ! %2 ! capsfilter name=gpucaps ! fakesink name=gpu "
-                                        "t. ! queue ! %2 ! video/x-raw,format=%3 ! fakesink name=cpu")
-                             .arg(source, producer, QLatin1String(gst_video_format_to_string(format))))) {
-        QSKIP(qPrintable(QStringLiteral("VA pipeline parse skipped: %1").arg(pipeline.error())));
+    GstTest::VaFramePair frames;
+    GstTest::pullVaFramePair(frames, source, producer, drmCaps, format);
+    if (!frames.gpu) {
+        return;
     }
-    const GStreamer::GstCapsPtr gpuCaps = GStreamer::adoptCaps(gst_caps_from_string(drmCaps.c_str()));
-    QVERIFY(gpuCaps);
-    g_object_set(pipeline.element("gpucaps").get(), "caps", gpuCaps.get(), nullptr);
-    // VA hands out DMA_DRM memory only to a peer that takes GstVideoMeta, as qgcqvideosink does.
-    const GStreamer::GstPadPtr gpuPad =
-        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("gpu").get(), "sink"));
-    QVERIFY(gpuPad);
-    GStreamer::PadProbe allocationProbe;
-    QVERIFY(allocationProbe.add(
-        gpuPad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM | GST_PAD_PROBE_TYPE_PUSH),
-        +[](GstPad*, GstPadProbeInfo* info, gpointer) -> GstPadProbeReturn {
-            GstQuery* query = GST_PAD_PROBE_INFO_QUERY(info);
-            if (GST_QUERY_TYPE(query) != GST_QUERY_ALLOCATION) {
-                return GST_PAD_PROBE_OK;
-            }
-            gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr);
-            return GST_PAD_PROBE_HANDLED;
-        },
-        nullptr));
-    if (!pipeline.play()) {
-        QSKIP("VA pipeline failed to PLAY (no VA driver / DRI device?)");
-    }
-    const QString failure = pipeline.runToEos();
-    if (!failure.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("VA driver can't produce the offered layouts (%1): %2")
-                             .arg(QString::fromStdString(drmCaps), failure)));
-    }
-    const VulkanTestSample gpuSample = lastSampleOf(pipeline, "gpu");
-    const VulkanTestSample cpuSample = lastSampleOf(pipeline, "cpu");
-    QVERIFY(gpuSample && cpuSample);
 
     GstVideoInfo gpuInfo;
-    QVERIFY(GstHw::dmaDrmAwareVideoInfo(gst_sample_get_caps(gpuSample.get()), &gpuInfo));
+    QVERIFY(GstHw::dmaDrmAwareVideoInfo(gst_sample_get_caps(frames.gpu.get()), &gpuInfo));
     GstVideoInfo cpuInfo;
-    QVERIFY(gst_video_info_from_caps(&cpuInfo, gst_sample_get_caps(cpuSample.get())));
+    QVERIFY(gst_video_info_from_caps(&cpuInfo, gst_sample_get_caps(frames.cpu.get())));
     auto frame = std::make_unique<GstDmaBufVideoBuffer>(
-        gpuSample.get(), gpuInfo,
+        frames.gpu.get(), gpuInfo,
         QVideoFrameFormat(QSize(320, 240), static_cast<QVideoFrameFormat::PixelFormat>(qtFormat)), EGL_NO_DISPLAY);
     const GStreamer::GCharPtr negotiated =
-        GStreamer::adoptGChar(gst_caps_to_string(gst_sample_get_caps(gpuSample.get())));
+        GStreamer::adoptGChar(gst_caps_to_string(gst_sample_get_caps(frames.gpu.get())));
     QVERIFY2(frame->validatePlaneHandles(), negotiated.get());
 
     const QString mismatch =
-        vulkanImportMismatch(std::move(frame), *rhi, cpuSample.get(), cpuInfo, GST_VIDEO_INFO_IS_YUV(&cpuInfo));
+        vulkanImportMismatch(std::move(frame), *rhi, frames.cpu.get(), cpuInfo, GST_VIDEO_INFO_IS_YUV(&cpuInfo));
     QVERIFY2(mismatch.isEmpty(), qPrintable(QStringLiteral("%1 (%2)").arg(mismatch, QLatin1String(negotiated.get()))));
 #endif
 }
@@ -464,7 +411,7 @@ void GstHwBuffersVulkanReadbackTest::_testVulkanImageFrameIsNotImported()
     gst_buffer_append_memory(buffer, memory);
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(
         gst_caps_from_string("video/x-raw(memory:VulkanImage),format=RGBA,width=320,height=240,framerate=30/1"));
-    const VulkanTestSample sample(gst_sample_new(buffer, caps.get(), nullptr, nullptr), &gst_sample_unref);
+    const GstTest::SamplePtr sample(gst_sample_new(buffer, caps.get(), nullptr, nullptr));
     gst_buffer_unref(buffer);
     GstVideoInfo info;
     QVERIFY(gst_video_info_from_caps(&info, caps.get()));

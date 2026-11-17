@@ -10,9 +10,8 @@ class GstQgcSinkControllerTest : public GStreamerTestBase
 
 private slots:
 #ifdef QGC_GST_STREAMING
-    void _testQVideoSinkControllerClearsElementOnDestroy();
-    void _testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed();
-    void _testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy();
+    void _testQVideoSinkControllerReleasesElement_data();
+    void _testQVideoSinkControllerReleasesElement();
     void _testQVideoSinkControllerNoWindowStartsInactive();
     void _testQVideoSinkControllerRebindRestoresActive_data();
     void _testQVideoSinkControllerRebindRestoresActive();
