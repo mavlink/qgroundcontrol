@@ -11,6 +11,7 @@ private slots:
 
     void _testFactoryCreatesClassicWorker();
     void _testFactoryCreatesBleWorker();
+    void _testMacLinkKeepsWorkerOnMainThread();
     void _testInitialState();
     void _testWriteEmptyDataEmitsNothing();
     void _testWriteWhileDisconnectedEmitsError();
@@ -19,6 +20,7 @@ private slots:
     void _testClassicDiscoveryTimerStopsOnFinished();
     void _testClassicDiscoveryTimerStopsOnCanceled();
     void _testClassicDiscoveryTimerStopsOnError();
+    void _testClassicSocketErrorHasDescription();
     void _testDestroyClassicWorker();
     void _testDestroyBleWorker();
 };

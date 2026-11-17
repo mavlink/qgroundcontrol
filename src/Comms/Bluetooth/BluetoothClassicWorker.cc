@@ -1,4 +1,7 @@
 #include "BluetoothClassicWorker.h"
+
+#include <QtCore/QMetaEnum>
+
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(BluetoothClassicWorkerLog, "Comms.Bluetooth.BluetoothClassicWorker")
@@ -32,7 +35,13 @@ void BluetoothClassicWorker::onConnectLink()
         return;
     }
 
+#if defined(Q_OS_MACOS)
+    // Full SDP discovery can close the baseband connection immediately before
+    // RFCOMM opens on macOS. Paired devices already have their SPP channel cached.
+    _startClassicServiceDiscovery();
+#else
     _socket->connectToService(_device.address(), SPP_UUID);
+#endif
 }
 
 void BluetoothClassicWorker::onDisconnectLink()
@@ -175,6 +184,12 @@ void BluetoothClassicWorker::_onSocketErrorOccurred(QBluetoothSocket::SocketErro
         errorString = tr("Socket error: Null Socket");
     }
 
+    if (errorString.trimmed().isEmpty()) {
+        const QString errorName = QString::fromLatin1(
+            QMetaEnum::fromType<QBluetoothSocket::SocketError>().valueToKey(static_cast<int>(socketError)));
+        errorString = tr("Bluetooth socket error: %1").arg(errorName);
+    }
+
     qCWarning(BluetoothClassicWorkerLog) << "Socket error:" << socketError << errorString;
     emit errorOccurred(errorString);
 
@@ -196,12 +211,18 @@ void BluetoothClassicWorker::_onSocketErrorOccurred(QBluetoothSocket::SocketErro
 
 void BluetoothClassicWorker::_startClassicServiceDiscovery()
 {
+    if (_device.address().isNull()) {
+        emit errorOccurred(tr("Bluetooth device address is not available"));
+        return;
+    }
+
     if (_classicDiscovery && _classicDiscovery->isActive()) {
         return;
     }
 
     if (!_classicDiscovery) {
-        _classicDiscovery = new QBluetoothServiceDiscoveryAgent(_device.address(), this);
+        _classicDiscovery = new QBluetoothServiceDiscoveryAgent(this);
+        _classicDiscovery->setRemoteAddress(_device.address());
         (void) connect(_classicDiscovery.data(), &QBluetoothServiceDiscoveryAgent::serviceDiscovered,
                        this, &BluetoothClassicWorker::_onClassicServiceDiscovered);
         (void) connect(_classicDiscovery.data(), &QBluetoothServiceDiscoveryAgent::finished,
@@ -214,12 +235,17 @@ void BluetoothClassicWorker::_startClassicServiceDiscovery()
 
     qCDebug(BluetoothClassicWorkerLog) << "Starting classic service discovery on" << _device.name();
     _classicDiscoveredService = QBluetoothServiceInfo();
-    _classicDiscovery->start(QBluetoothServiceDiscoveryAgent::FullDiscovery);
+    _classicDiscovery->clear();
 
     if (_serviceDiscoveryTimer) {
-        _serviceDiscoveryTimer->stop();
         _serviceDiscoveryTimer->start();
     }
+
+#if defined(Q_OS_MACOS)
+    _classicDiscovery->start(QBluetoothServiceDiscoveryAgent::MinimalDiscovery);
+#else
+    _classicDiscovery->start(QBluetoothServiceDiscoveryAgent::FullDiscovery);
+#endif
 }
 
 void BluetoothClassicWorker::_onClassicServiceDiscovered(const QBluetoothServiceInfo &serviceInfo)
@@ -232,7 +258,7 @@ void BluetoothClassicWorker::_onClassicServiceDiscovered(const QBluetoothService
     const bool isSerial = serviceUuids.contains(QBluetoothUuid(QBluetoothUuid::ServiceClassUuid::SerialPort));
     const bool hasRfcommChannel = serviceInfo.serverChannel() > 0;
 
-    if (isSerial || (hasRfcommChannel && !_classicDiscoveredService.isValid())) {
+    if (hasRfcommChannel && (isSerial || !_classicDiscoveredService.isValid())) {
         _classicDiscoveredService = serviceInfo;
     }
 }
@@ -245,6 +271,9 @@ void BluetoothClassicWorker::_onClassicServiceDiscoveryFinished()
 
     if (!_classicDiscoveredService.isValid()) {
         qCWarning(BluetoothClassicWorkerLog) << "No suitable classic service found";
+        if (!_classicDiscovery || _classicDiscovery->error() == QBluetoothServiceDiscoveryAgent::NoError) {
+            emit errorOccurred(tr("No RFCOMM service found for this device"));
+        }
         return;
     }
 
@@ -272,6 +301,6 @@ void BluetoothClassicWorker::_onClassicServiceDiscoveryError(QBluetoothServiceDi
     }
 
     const QString e = _classicDiscovery ? _classicDiscovery->errorString() : tr("Service discovery error: %1").arg(error);
-    qCWarning(BluetoothClassicWorkerLog) << e;
+    qCWarning(BluetoothClassicWorkerLog) << "Service discovery error:" << e;
     emit errorOccurred(e);
 }

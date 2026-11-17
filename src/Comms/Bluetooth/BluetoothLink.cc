@@ -10,28 +10,42 @@ QGC_LOGGING_CATEGORY(BluetoothLinkLog, "Comms.Bluetooth.BluetoothLink")
 
 /*===========================================================================*/
 
-BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent)
+BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr& config, QObject* parent)
     : LinkInterface(config, parent)
     , _bluetoothConfig(qobject_cast<BluetoothConfiguration*>(config.get()))
+#if defined(Q_OS_MACOS)
+    , _workerThread(nullptr)
+#else
     , _workerThread(new QThread(this))
+#endif
 {
     if (!_bluetoothConfig) {
         qCCritical(BluetoothLinkLog) << "Invalid BluetoothConfiguration";
         return;
     }
 
+#if defined(Q_OS_MACOS)
+    // Qt's IOBluetooth backend requires a CFRunLoop, which ordinary QThreads lack.
+    if (QThread::currentThread() != QCoreApplication::instance()->thread()) {
+        qCCritical(BluetoothLinkLog) << "macOS Bluetooth link must be created on the main thread";
+        return;
+    }
+    _worker = BluetoothWorker::create(_bluetoothConfig, this);
+#else
     _worker = BluetoothWorker::create(_bluetoothConfig);
+#endif
 
     qCDebug(BluetoothLinkLog) << this;
 
     const QString threadName = (_bluetoothConfig->mode() == BluetoothConfiguration::BluetoothMode::ModeLowEnergy)
         ? QStringLiteral("BLE_%1") : QStringLiteral("Bluetooth_%1");
-    _workerThread->setObjectName(threadName.arg(_bluetoothConfig->name()));
+    if (_workerThread) {
+        _workerThread->setObjectName(threadName.arg(_bluetoothConfig->name()));
+        _worker->moveToThread(_workerThread.data());
 
-    _worker->moveToThread(_workerThread.data());
-
-    (void) connect(_workerThread.data(), &QThread::started, _worker.data(), &BluetoothWorker::setupConnection);
-    (void) connect(_workerThread.data(), &QThread::finished, _worker.data(), &QObject::deleteLater);
+        (void) connect(_workerThread.data(), &QThread::started, _worker.data(), &BluetoothWorker::setupConnection);
+        (void) connect(_workerThread.data(), &QThread::finished, _worker.data(), &QObject::deleteLater);
+    }
 
     (void) connect(_worker.data(), &BluetoothWorker::connected, this, &BluetoothLink::_onConnected, Qt::QueuedConnection);
     (void) connect(_worker.data(), &BluetoothWorker::disconnected, this, &BluetoothLink::_onDisconnected, Qt::QueuedConnection);
@@ -53,6 +67,8 @@ BluetoothLink::~BluetoothLink()
         }
 
         _shutdownWorkerThread(_workerThread, BluetoothLinkLog());
+    } else if (_worker) {
+        _worker->disconnectLink();
     }
 
     qCDebug(BluetoothLinkLog) << this;
@@ -164,7 +180,13 @@ void BluetoothLink::_handlePermissionStatus(Qt::PermissionStatus permissionStatu
 
     qCDebug(BluetoothLinkLog) << "Bluetooth Permission Granted";
 
-    if (_workerThread && !_workerThread->isRunning()) {
+    if (!_workerThread) {
+        if (!_worker || QThread::currentThread() != _worker->thread()) {
+            qCCritical(BluetoothLinkLog) << "Bluetooth worker is unavailable on the current thread";
+            return;
+        }
+        _worker->setupConnection();
+    } else if (!_workerThread->isRunning()) {
         _workerThread->start();
         if (!_workerThread->isRunning()) {
             qCCritical(BluetoothLinkLog) << "Failed to start worker thread";

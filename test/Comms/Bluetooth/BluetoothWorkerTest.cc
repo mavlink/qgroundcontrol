@@ -1,14 +1,17 @@
 #include "BluetoothWorkerTest.h"
 
+#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
+#include <QtTest/QSignalSpy>
+
 #include "BluetoothBleWorker.h"
 #include "BluetoothClassicWorker.h"
 #include "BluetoothConfiguration.h"
+#include "BluetoothLink.h"
 #include "BluetoothWorker.h"
-
-#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QTimer>
-#include <QtTest/QSignalSpy>
 
 static QTimer *_findServiceDiscoveryTimer(const BluetoothWorker *worker)
 {
@@ -44,10 +47,12 @@ void BluetoothWorkerTest::init()
                      QRegularExpression(QStringLiteral("no valid device found|Default Bluetooth controller is OFF")));
     ignoreLogMessage("Comms.Bluetooth.BluetoothBleWorker", QtWarningMsg,
                      QRegularExpression(QStringLiteral("BLE Controller error")));
+    ignoreLogMessage("Comms.Bluetooth.BluetoothLink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth Permission Denied|Communication error")));
     ignoreLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
                      QRegularExpression(QStringLiteral(
                          "Cannot find valid Bluetooth adapter|Socket error|No suitable classic service found|"
-                         "Device is powered off")));
+                         "Service discovery error:")));
 }
 
 void BluetoothWorkerTest::_testFactoryCreatesClassicWorker()
@@ -68,6 +73,21 @@ void BluetoothWorkerTest::_testFactoryCreatesBleWorker()
     std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
     QVERIFY(worker);
     QVERIFY(qobject_cast<BluetoothBleWorker *>(worker.get()));
+}
+
+void BluetoothWorkerTest::_testMacLinkKeepsWorkerOnMainThread()
+{
+#if defined(Q_OS_MACOS)
+    SharedLinkConfigurationPtr config = std::make_shared<BluetoothConfiguration>("TestBT_macMainThread");
+    BluetoothLink link(config);
+
+    BluetoothWorker* worker = link.findChild<BluetoothWorker*>(QString(), Qt::FindDirectChildrenOnly);
+    QVERIFY(worker);
+    QCOMPARE(worker->thread(), QCoreApplication::instance()->thread());
+    QVERIFY(!link.findChild<QThread*>(QString(), Qt::FindDirectChildrenOnly));
+#else
+    QSKIP("IOBluetooth main-thread affinity is specific to macOS");
+#endif
 }
 
 void BluetoothWorkerTest::_testInitialState()
@@ -203,6 +223,26 @@ void BluetoothWorkerTest::_testClassicDiscoveryTimerStopsOnError()
                                             QBluetoothServiceDiscoveryAgent::Error::UnknownError)));
     verifyExpectedLogMessage();
     QVERIFY(!serviceTimer->isActive());
+}
+
+void BluetoothWorkerTest::_testClassicSocketErrorHasDescription()
+{
+    qRegisterMetaType<QBluetoothSocket::SocketError>("QBluetoothSocket::SocketError");
+    BluetoothConfiguration config("TestBT_classicEmptyError");
+    config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
+    std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
+    worker->setupConnection();
+    QSignalSpy errorSpy(worker.get(), &BluetoothWorker::errorOccurred);
+
+    expectLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
+                     QRegularExpression("Socket error:.*UnknownSocketError"));
+    QVERIFY(QMetaObject::invokeMethod(
+        worker.get(), "_onSocketErrorOccurred", Qt::DirectConnection,
+        Q_ARG(QBluetoothSocket::SocketError, QBluetoothSocket::SocketError::UnknownSocketError)));
+    verifyExpectedLogMessage();
+
+    QCOMPARE(errorSpy.count(), 1);
+    QVERIFY(errorSpy.first().first().toString().contains("UnknownSocketError"));
 }
 
 void BluetoothWorkerTest::_testDestroyClassicWorker()
