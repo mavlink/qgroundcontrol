@@ -22,6 +22,11 @@ A video view without a picture says why: **WAITING FOR VIDEO** until the stream 
 DISARMED** when [Disable Video Stream When Disarmed](../settings_view/video.md#settings) has stopped it until the vehicle
 arms, and **VIDEO STOPPED** once the video was stopped.
 
+On Android and iOS the video is not decoded while _QGroundControl_ is in the background, which saves battery. Back in
+the app, the view says **WAITING FOR VIDEO** until the stream's next keyframe arrives. A recording goes on for as long
+as the stream arrives: Android 15 cuts the network of an app in the background after about five seconds, which ends
+the recording; it continues in a new part when the app returns.
+
 ## Video Tiles
 
 While the video is in the foreground, _QGroundControl_ shows the other video it can play in small tiles along the top

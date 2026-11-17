@@ -9,6 +9,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QScopedValueRollback>
 #include <QtCore/QUrl>
+#include <QtGui/QGuiApplication>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
@@ -158,6 +159,11 @@ VideoManager::VideoManager(QObject* parent)
     (void) connect(_uvcCamera->monitor(), &UVCStreamMonitor::statsChanged, this, &VideoManager::_updateSourceSummary);
     (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
                    &VideoManager::telemetryOverlayTextChanged);
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    // A mobile app in the background shows nothing, and decoding there costs the battery. A desktop app's windows
+    // stay in view without the focus.
+    (void) connect(qGuiApp, &QGuiApplication::applicationStateChanged, this, &VideoManager::_onApplicationStateChanged);
+#endif
 
     _connectSettings();
     _updateState();
@@ -171,6 +177,20 @@ VideoManager::~VideoManager()
 VideoManager* VideoManager::instance()
 {
     return _videoManagerInstance();
+}
+
+void VideoManager::_onApplicationStateChanged(Qt::ApplicationState state)
+{
+    // Inactive is in view without the focus, as beside another app or under a system dialog.
+    const bool suspended = (state == Qt::ApplicationHidden) || (state == Qt::ApplicationSuspended);
+    if (suspended == _displaySuspended) {
+        return;
+    }
+    _displaySuspended = suspended;
+    qCDebug(VideoManagerLog) << (suspended ? "In the background: display suspended" : "Display resumed");
+    for (VideoStreamController* source : std::as_const(_sources)) {
+        source->setDisplaySuspended(suspended);
+    }
 }
 
 void VideoManager::_connectSource(VideoStreamController* source)
@@ -768,6 +788,7 @@ void VideoManager::_updateTileStreams(int count)
             tile->setStreamInfo(stream.streamInfo);
             // Its source records once it is the primary stream.
             tile->setRecordingEncoding(recordingEncodingSetting(_videoSettings));
+            tile->setDisplaySuspended(_displaySuspended);
             _connectSource(tile);
             _recordingService->addSource(tile);
         }

@@ -248,6 +248,8 @@ private:
     /// Tells each camera of the active vehicle which of its streams play in tiles.
     void _nameExtraStreams();
     void _connectSource(VideoStreamController* source);
+    /// In the background (hidden or suspended) no stream is displayed, so none is decoded for display.
+    void _onApplicationStateChanged(Qt::ApplicationState state);
     /// Recomputes what the sources amount to together: tileCount, measuredSource and degraded.
     void _updateSourceSummary();
     void _onArmedChanged(bool armed);
@@ -265,6 +267,7 @@ private:
     /// The sources of the streams in tiles, in the tiles' order.
     QList<VideoStreamController*> _tileStreams;
     QList<VideoStreamController*> _sources;
+    bool _displaySuspended = false;
     VideoStreamController* _measuredSource;
     VideoRecordingService* const _recordingService;
     VideoTelemetryOverlay* const _telemetryOverlay;

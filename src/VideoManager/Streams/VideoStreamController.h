@@ -126,6 +126,10 @@ public:
     /// loop pass, unless another output registered by then.
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
+    /// Keeps the registered output from the receiver while @p suspended, as while the application is in the
+    /// background: a receiver without an output decodes nothing, and goes on recording.
+    void setDisplaySuspended(bool suspended);
+
     /// True when the receiver is active, accepting startRecording().
     bool active() const;
     void startRecording(const QString& file, VideoReceiver::FileFormat format);
@@ -211,6 +215,7 @@ private:
     QPointer<QGCVideoStreamInfo> _streamInfo;
     QString _camera;
     QPointer<QQuickItem> _videoOutput;
+    bool _displaySuspended = false;
     VideoReceiver::RecordingEncoding _recordingEncoding;
     /// The URI the receiver was last configured with.
     QString _uri;

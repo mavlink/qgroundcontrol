@@ -1070,6 +1070,35 @@ void VideoManagerTest::_testVideoOutputRegistration()
     QCOMPARE(stream->videoOutput(), nullptr);
 }
 
+void VideoManagerTest::_testBackgroundSuspendsDisplay()
+{
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QQuickItem output;
+    stream->registerVideoOutput(&output);
+    QCOMPARE(_primary->videoOutput(), &output);
+
+    // Without the focus the window is still in view.
+    _videoManager->_onApplicationStateChanged(Qt::ApplicationInactive);
+    QCOMPARE(_primary->videoOutput(), &output);
+
+    // In the background nothing is displayed: the receiver, which decodes only into an output, has none.
+    _videoManager->_onApplicationStateChanged(Qt::ApplicationHidden);
+    QCOMPARE(_primary->videoOutput(), nullptr);
+    _videoManager->_onApplicationStateChanged(Qt::ApplicationSuspended);
+    QCOMPARE(_primary->videoOutput(), nullptr);
+    QCOMPARE(stream->videoOutput(), &output);
+
+    // An output that registers meanwhile waits like the others.
+    QQuickItem other;
+    stream->registerVideoOutput(&other);
+    QCOMPARE(_primary->videoOutput(), nullptr);
+
+    _videoManager->_onApplicationStateChanged(Qt::ApplicationActive);
+    QCOMPARE(_primary->videoOutput(), &other);
+    stream->unregisterVideoOutput(&other);
+    _settle();
+}
+
 void VideoManagerTest::_testQmlVideoOutputRegistersItself()
 {
     QQmlEngine engine;

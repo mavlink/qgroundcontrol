@@ -37,6 +37,10 @@ that a stream on display already has gets no source: a camera sends such streams
   leaves takes the source over, so a source moves between the main picture and a tile without its receiver being
   without an output, which would take the decoder out of its pipeline. A tile's source has an output only while the
   tile is shown: hidden, its stream is received but not decoded, as the thermal stream is with its view off.
+- On Android and iOS no source has an output while the app is in the background (`Qt::ApplicationHidden` or
+  `Qt::ApplicationSuspended`): nothing is decoded there. The streams are still received and recorded, for as long as
+  the system lets them arrive: Android 15 cuts a background app's network after about five seconds, with which the
+  stream times out and a recording ends, to continue in a new part once the app is back.
 - The vehicle's cameras are told which of their streams play in tiles
   (`MavlinkCameraControlInterface::setExtraStreams()`). `VehicleCameraControl` asks the camera to transmit them
   (`MAV_CMD_VIDEO_START_STREAMING`) and to stop those that left (`MAV_CMD_VIDEO_STOP_STREAMING`), and neither stops

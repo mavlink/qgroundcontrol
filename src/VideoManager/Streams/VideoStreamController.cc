@@ -164,7 +164,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         (void) connect(_receiver, &VideoReceiver::errorOccurred, this, &VideoStreamController::errorOccurred);
         _receiver->setDisplayConfig(_resolvedDisplayConfig());
         _receiver->setRecordingEncoding(_recordingEncoding);
-        _receiver->setVideoOutput(_videoOutput);
+        _receiver->setVideoOutput(_displaySuspended ? nullptr : _videoOutput.data());
         _apply();
     }
 
@@ -363,7 +363,7 @@ void VideoStreamController::registerVideoOutput(QQuickItem* videoOutput)
                                       << videoOutput;
     _videoOutput = videoOutput;
     // Also for the current output: the receiver binds it anew.
-    if (_receiver) {
+    if (_receiver && !_displaySuspended) {
         _receiver->setVideoOutput(videoOutput);
     }
 }
@@ -387,6 +387,25 @@ void VideoStreamController::_detachVideoOutput()
         // lost, so the output it returns to waits for video rather than report a reconnect.
         _forgetDecoded();
         _receiver->setVideoOutput(nullptr);
+    }
+}
+
+void VideoStreamController::setDisplaySuspended(bool suspended)
+{
+    if (suspended == _displaySuspended) {
+        return;
+    }
+    _displaySuspended = suspended;
+    qCDebug(VideoStreamControllerLog) << name() << (suspended ? "display suspended" : "display resumed");
+    if (!_receiver || !_videoOutput) {
+        return;
+    }
+    if (suspended) {
+        // As for an output that was removed: the stream is not lost, and its output waits for video on its return.
+        _forgetDecoded();
+        _receiver->setVideoOutput(nullptr);
+    } else {
+        _receiver->setVideoOutput(_videoOutput);
     }
 }
 

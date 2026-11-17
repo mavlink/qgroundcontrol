@@ -42,6 +42,7 @@ private slots:
     void _testPlaceholderTellsWhyThereIsNoVideo_data();
     void _testPlaceholderTellsWhyThereIsNoVideo();
     void _testVideoOutputRegistration();
+    void _testBackgroundSuspendsDisplay();
     void _testQmlVideoOutputRegistersItself();
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testScreenshotFailuresReachUser_data();
