@@ -60,6 +60,12 @@ void GstVideoReceiverTestBase::setMaxRecordingPartDuration(GstVideoReceiver* rec
     receiver->_postToWorker([duration](GstReceiverWorker& worker) { worker.setMaxRecordingPartDuration(duration); });
 }
 
+void GstVideoReceiverTestBase::holdWorker(GstVideoReceiver* receiver,
+                                          const std::shared_ptr<GstReceiverTest::Gate>& gate)
+{
+    receiver->_postToWorker([gate](GstReceiverWorker& /*worker*/) { gate->wait(); });
+}
+
 void GstVideoReceiverTestBase::initTestCase()
 {
     GStreamerTestBase::initTestCase();

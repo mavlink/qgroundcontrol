@@ -2,14 +2,18 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <array>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
 
 namespace {
 
 using GstReceiverTest::FileFormat;
+using GstReceiverTest::Gate;
 using GstReceiverTest::kFirstReconnectDelayMs;
 using GstReceiverTest::kNoReconnectWindowMs;
 using GstReceiverTest::kShortWatchdogTimeout;
@@ -21,6 +25,17 @@ using GstReceiverTest::udpListenUri;
 // Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first one-second tick
 // and checked at the next two.
 constexpr int kSilentSourceWindowMs = 3500;
+
+// How often the receiver checks its worker while a test holds the worker: a stuck one is reported at the seventh
+// check, the sixth in a row at which it has run no task. The two windows are counted in checks, so they follow it.
+constexpr std::chrono::milliseconds kHeldWorkerHeartbeat{100};
+constexpr char kStuckWorkerWarning[] = "^The worker of .* has run none of its tasks";
+// A stuck worker's report would be repeated within these seven checks: at each of them, or once six have added up
+// again.
+constexpr int kRepeatedReportWindowMs = static_cast<int>(7 * kHeldWorkerHeartbeat.count());
+// Ends between the third check, the second at which a held worker has run no task since the one before, and the
+// fourth.
+constexpr int kBusyWorkerWindowMs = static_cast<int>(7 * kHeldWorkerHeartbeat.count() / 2);
 
 }  // namespace
 
@@ -253,6 +268,118 @@ void GstVideoReceiverReconnectTest::_testFailureMessageNamesCause()
     verifyExpectedLogMessage();
     const QString message = stream.errorSpy.constFirst().constFirst().toString();
     QVERIFY2(message.contains(cause), qPrintable(message));
+}
+
+void GstVideoReceiverReconnectTest::_testStuckWorkerIsReported()
+{
+    const QRegularExpression stuckWarning(QString::fromLatin1(kStuckWorkerWarning));
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+
+    // A decoder that doesn't return holds its streaming thread, and with it the worker that stops the pipeline.
+    auto gate = std::make_shared<Gate>();
+    // After the receiver, so that a failed check lets the worker go before the receiver waits for it.
+    const auto openGate = qScopeGuard([&gate] { gate->release(); });
+    QVERIFY(stream.blockDecoder(gate));
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, stuckWarning);
+    stream.receiver->restart();
+    // Not before: only a worker that is held may run nothing for intervals this short.
+    stream.receiver->setHeartbeatInterval(kHeldWorkerHeartbeat);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    const QString message = stream.errorSpy.constFirst().constFirst().toString();
+    QVERIFY2(message.contains(QStringLiteral("stopped responding")), qPrintable(message));
+    // The frozen picture goes, as that of a stream that gave up.
+    QCOMPARE(stream.receiver->state(), State::Stopped);
+    QVERIFY(!stream.receiver->decoding());
+    // Once, for as long as the worker is stuck.
+    QVERIFY_NO_SIGNAL_WAIT(stream.errorSpy, kRepeatedReportWindowMs);
+
+    // The decoder returns after all: the worker restarts the stream, and the receiver follows it again.
+    stream.receiver->setHeartbeatInterval(GstVideoReceiver::kHeartbeatInterval);
+    gate->release();
+    QVERIFY(stream.resumeSending());
+    QVERIFY_TRUE_WAIT(stream.receiver->decoding(), TestTimeout::mediumMs());
+    QCOMPARE(stream.errorSpy.count(), 1);
+
+    // Stuck once more, now stopping a stream that is no longer wanted: reported again.
+    gate = std::make_shared<Gate>();
+    QVERIFY(stream.blockDecoder(gate));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, stuckWarning);
+    stream.receiver->setActive(false);
+    stream.receiver->setHeartbeatInterval(kHeldWorkerHeartbeat);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 2, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY_TRUE_WAIT(!stream.receiver->decoding(), TestTimeout::mediumMs());
+
+    // The worker gets to its requests again, and stops when the receiver goes.
+    gate->release();
+    bool stopped = false;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&stopped](GstElement* pipeline) { stopped = !pipeline; }));
+    QVERIFY(stopped);
+    QCOMPARE(stream.errorSpy.count(), 2);
+}
+
+void GstVideoReceiverReconnectTest::_testStuckWorkerKeepsMovingPicture()
+{
+    // Reconnects, so that the worker, once it is let go, doesn't give up on the stream this test stops.
+    Receiver stream(udpListenUri(), /*autoReconnect=*/true);
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+
+    // Stuck elsewhere than in the display, as behind a recorder that doesn't return from a write to a hung network
+    // mount: the pipeline goes on decoding without its worker.
+    const auto gate = std::make_shared<Gate>();
+    const auto openGate = qScopeGuard([gate] { gate->release(); });
+    holdWorker(stream.receiver.get(), gate);
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QString::fromLatin1(kStuckWorkerWarning)));
+    stream.receiver->setHeartbeatInterval(kHeldWorkerHeartbeat);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    // The user is told, and keeps the picture while its frames arrive. On a busy machine not at once: a check of the
+    // worker that no frame came before takes the picture away until one does.
+    QVERIFY_TRUE_WAIT(stream.receiver->streaming() && stream.receiver->decoding(), TestTimeout::mediumMs());
+
+    // Nothing reconnects a stream whose worker is stuck: the last frame of one that stops is not left up as its
+    // picture.
+    stream.sender.stop();
+    QVERIFY_TRUE_WAIT(!stream.receiver->streaming() && !stream.receiver->decoding(), TestTimeout::mediumMs());
+    QCOMPARE(stream.errorSpy.count(), 1);
+}
+
+void GstVideoReceiverReconnectTest::_testBusyWorkerIsNotReported()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+
+    // Behind with a row of tasks that each take three checks, as stopping and connecting again to a host that answers
+    // late does: twice as long in all as a stuck worker is given, and more of them than it takes their checks without
+    // a task run to add up to a report.
+    const std::array gates{std::make_shared<Gate>(), std::make_shared<Gate>(), std::make_shared<Gate>(),
+                           std::make_shared<Gate>()};
+    const auto openGates = qScopeGuard([&gates] {
+        for (const std::shared_ptr<Gate>& gate : gates) {
+            gate->release();
+        }
+    });
+    for (const std::shared_ptr<Gate>& gate : gates) {
+        holdWorker(stream.receiver.get(), gate);
+    }
+
+    for (const std::shared_ptr<Gate>& gate : gates) {
+        // The worker is through with the task before, and no check ran meanwhile.
+        QVERIFY(gate->waitUntilReached(TestTimeout::mediumDuration()));
+        // Starts the interval over, so the window ends as far from a check as it can.
+        stream.receiver->setHeartbeatInterval(kHeldWorkerHeartbeat);
+        QVERIFY_NO_SIGNAL_WAIT(stream.errorSpy, kBusyWorkerWindowMs);
+        gate->release();
+    }
+    QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* /*pipeline*/) {}));
+    QCOMPARE(stream.receiver->state(), State::Streaming);
 }
 
 #endif

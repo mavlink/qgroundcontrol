@@ -54,6 +54,9 @@ signals:
     /// The graphics device the stream's pipeline was given is gone: the receiver restarts the stream with a new
     /// video sink, which lets go of what they hold of it.
     void graphicsDeviceLost();
+    /// A task the receiver posted has run, a request or its heartbeat: the worker still gets to them. Emitted by the
+    /// receiver's posting, on the worker's thread.
+    void taskDone();
 
 private:
     void _onActiveChanged();

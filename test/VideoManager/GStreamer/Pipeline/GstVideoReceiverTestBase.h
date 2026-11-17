@@ -25,6 +25,10 @@
 #include "RecordingBranch.h"
 #include "VideoReceiver.h"
 
+namespace GstReceiverTest {
+struct Gate;
+}
+
 #endif
 
 /// Base of the tests that drive GstVideoReceiver end to end against in-process H.264 and H.265 streams on loopback.
@@ -40,6 +44,8 @@ public:
     static GstElement* displaySink(const GstVideoReceiver* receiver);
     /// Has @p receiver's recordings, those started from now on, continue in a new part every @p duration.
     static void setMaxRecordingPartDuration(GstVideoReceiver* receiver, std::chrono::milliseconds duration);
+    /// Posts @p receiver's worker a task that keeps it busy until @p gate opens.
+    static void holdWorker(GstVideoReceiver* receiver, const std::shared_ptr<GstReceiverTest::Gate>& gate);
 #endif
 
 protected slots:
@@ -108,7 +114,16 @@ struct Gate
     void wait()
     {
         std::unique_lock lock(mutex);
-        released.wait(lock, [this] { return open; });
+        reached = true;
+        changed.notify_all();
+        changed.wait(lock, [this] { return open; });
+    }
+
+    /// Blocks until a thread waits at the gate, or did; false when none does within @p timeout.
+    [[nodiscard]] bool waitUntilReached(std::chrono::milliseconds timeout)
+    {
+        std::unique_lock lock(mutex);
+        return changed.wait_for(lock, timeout, [this] { return reached; });
     }
 
     void release()
@@ -117,12 +132,13 @@ struct Gate
             const std::lock_guard lock(mutex);
             open = true;
         }
-        released.notify_all();
+        changed.notify_all();
     }
 
     std::mutex mutex;
-    std::condition_variable released;
+    std::condition_variable changed;
     bool open = false;
+    bool reached = false;
 };
 
 /// Holds the streaming thread that pushes into @p element's sink pad until @p gate opens.
@@ -267,6 +283,16 @@ struct Receiver
             blocked = holdAtSink(GstTest::findByFactory(pipeline, "filesink").get(), gate);
         });
         return blocked;
+    }
+
+    /// Holds the streaming thread that feeds the decoder until @p gate opens, as a decoder that doesn't return does.
+    [[nodiscard]] bool blockDecoder(const std::shared_ptr<Gate>& gate) const
+    {
+        bool blocked = false;
+        (void) GstVideoReceiverTestBase::runOnPipeline(receiver.get(), [&blocked, gate](GstElement* pipeline) {
+            blocked = holdAtSink(GstTest::findByFactory(pipeline, "decodebin3").get(), gate);
+        });
+        return blocked && gate->waitUntilReached(TestTimeout::mediumDuration());
     }
 
     /// Posts an ERROR message from the pipeline's @p factoryName element, as the element would.

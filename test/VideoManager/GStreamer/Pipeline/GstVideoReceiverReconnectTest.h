@@ -20,5 +20,8 @@ private slots:
     void _testRtspWithoutVideoStreamReconnects();
     void _testFailureMessageNamesCause_data();
     void _testFailureMessageNamesCause();
+    void _testStuckWorkerIsReported();
+    void _testStuckWorkerKeepsMovingPicture();
+    void _testBusyWorkerIsNotReported();
 #endif
 };
