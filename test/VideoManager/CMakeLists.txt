@@ -8,42 +8,44 @@ target_sources(
     QGCUnitTests
     PRIVATE
         QtMultimediaPrivateApiCheck.cc
-        QtMultimediaVideoReceiverTest.cc
-        QtMultimediaVideoReceiverTest.h
-        QtVideoRecorderTest.cc
-        QtVideoRecorderTest.h
-        RecordingPlanTest.cc
-        RecordingPlanTest.h
-        SharedVideoFrameTest.cc
-        SharedVideoFrameTest.h
-        StreamSupervisorTest.cc
-        StreamSupervisorTest.h
-        SubtitleWriterTest.cc
-        SubtitleWriterTest.h
-        UVCCameraControllerTest.cc
-        UVCCameraControllerTest.h
-        UVCDevicesTest.cc
-        UVCDevicesTest.h
-        UVCStreamMonitorTest.cc
-        UVCStreamMonitorTest.h
+        QtMultimedia/QtMultimediaVideoReceiverTest.cc
+        QtMultimedia/QtMultimediaVideoReceiverTest.h
+        QtMultimedia/QtVideoRecorderTest.cc
+        QtMultimedia/QtVideoRecorderTest.h
+        Receiver/RecordingPlanTest.cc
+        Receiver/RecordingPlanTest.h
+        QtMultimedia/SharedVideoFrameTest.cc
+        QtMultimedia/SharedVideoFrameTest.h
+        Receiver/StreamSupervisorTest.cc
+        Receiver/StreamSupervisorTest.h
+        Recording/SubtitleWriterTest.cc
+        Recording/SubtitleWriterTest.h
+        UVC/UVCCameraControllerTest.cc
+        UVC/UVCCameraControllerTest.h
+        UVC/UVCDevicesTest.cc
+        UVC/UVCDevicesTest.h
+        UVC/UVCStreamMonitorTest.cc
+        UVC/UVCStreamMonitorTest.h
         VideoManagerInitTest.cc
         VideoManagerInitTest.h
         VideoManagerTest.cc
         VideoManagerTest.h
         VideoManagerVehicleTest.cc
         VideoManagerVehicleTest.h
-        VideoRecordingServiceTest.cc
-        VideoRecordingServiceTest.h
-        VideoScreenshotTest.cc
-        VideoScreenshotTest.h
-        VideoStreamResolverTest.cc
-        VideoStreamResolverTest.h
-        VideoStreamStatsMeterTest.cc
-        VideoStreamStatsMeterTest.h
+        Recording/VideoRecordingServiceTest.cc
+        Recording/VideoRecordingServiceTest.h
+        Receiver/VideoScreenshotTest.cc
+        Receiver/VideoScreenshotTest.h
+        Streams/VideoStreamResolverTest.cc
+        Streams/VideoStreamResolverTest.h
+        Receiver/VideoStreamStatsMeterTest.cc
+        Receiver/VideoStreamStatsMeterTest.h
         VideoTelemetryOverlayTest.cc
         VideoTelemetryOverlayTest.h
         VideoTestHelpers.h
 )
+
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(QtMultimediaVideoReceiverTest LABELS Integration TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(QtVideoRecorderTest LABELS Integration)

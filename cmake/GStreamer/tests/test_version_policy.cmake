@@ -27,7 +27,7 @@ if(NOT _source_factory MATCHES "QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER")
 endif()
 qgc_test_pass("parsebin legacy caps workaround gate")
 
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../test/VideoManager/GStreamer/GStreamerTest.cc" _gstreamer_test)
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../test/VideoManager/GStreamer/Runtime/GStreamerTest.cc" _gstreamer_test)
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../test/VideoManager/GStreamer/CMakeLists.txt" _gstreamer_test_cmake)
 if(NOT _gstreamer_test MATCHES "QGC_GST_RUNTIME_MINIMUM_VERSION"
    OR NOT _gstreamer_test_cmake MATCHES "qgc_config_read\\(_qgc_gst_runtime_minimum gstreamer version minimum\\)"

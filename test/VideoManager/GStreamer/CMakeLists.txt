@@ -4,20 +4,20 @@
 target_sources(
     QGCUnitTests
     PRIVATE
-        GStreamerEnvironmentTest.cc
-        GStreamerEnvironmentTest.h
-        GStreamerHelpersTest.cc
-        GStreamerHelpersTest.h
-        GStreamerInitTest.cc
-        GStreamerInitTest.h
-        GStreamerTest.cc
-        GStreamerTest.h
+        Runtime/GStreamerEnvironmentTest.cc
+        Runtime/GStreamerEnvironmentTest.h
+        Runtime/GStreamerHelpersTest.cc
+        Runtime/GStreamerHelpersTest.h
+        Runtime/GStreamerInitTest.cc
+        Runtime/GStreamerInitTest.h
+        Runtime/GStreamerTest.cc
+        Runtime/GStreamerTest.h
         GStreamerTestBase.cc
         GStreamerTestBase.h
         GStreamerTestHelpers.cc
         GStreamerTestHelpers.h
-        GstSelfTestPipelineTest.cc
-        GstSelfTestPipelineTest.h
+        SelfTest/GstSelfTestPipelineTest.cc
+        SelfTest/GstSelfTestPipelineTest.h
         HwBuffers/GStreamerHwFrameTexturesTest.cc
         HwBuffers/GStreamerHwImportCacheTest.cc
         HwBuffers/GstHwBuffersGlReadbackTest.cc
@@ -34,37 +34,43 @@ target_sources(
         HwBuffers/dmabuf/GStreamerDmaBufTest.cc
         HwBuffers/gl/GStreamerGlTest.cc
         HwBuffers/vulkan/GStreamerVulkanTest.cc
-        Receiver/GstRecordingSinkTest.cc
-        Receiver/GstRecordingSinkTest.h
-        Receiver/GstVideoReceiverComponentsTest.cc
-        Receiver/GstVideoReceiverComponentsTest.h
-        Receiver/GstVideoReceiverPipelineTest.cc
-        Receiver/GstVideoReceiverPipelineTest.h
-        Receiver/GstVideoReceiverReconnectTest.cc
-        Receiver/GstVideoReceiverReconnectTest.h
-        Receiver/GstVideoReceiverRecordingTest.cc
-        Receiver/GstVideoReceiverRecordingTest.h
-        Receiver/GstVideoReceiverStatsTest.cc
-        Receiver/GstVideoReceiverStatsTest.h
-        Receiver/GstVideoReceiverTestBase.cc
-        Receiver/GstVideoReceiverTestBase.h
-        SourceFactory/GstSourceFactoryStreamTest.cc
-        SourceFactory/GstSourceFactoryStreamTest.h
-        SourceFactory/GstSourceFactoryTest.cc
-        SourceFactory/GstSourceFactoryTest.h
-        gstqgc/GstQgcSinkControllerTest.cc
-        gstqgc/GstQgcSinkControllerTest.h
-        gstqgc/GstQgcSinkPipelineTest.cc
-        gstqgc/GstQgcSinkPipelineTest.h
-        gstqgc/GstQgcSinkTest.cc
-        gstqgc/GstQgcSinkTest.h
-        gstqgc/GstQgcTestSupport.cc
-        gstqgc/GstQgcTestSupport.h
-        gstqgc/GstQgcVideoFormatsTest.cc
-        gstqgc/GstQgcVideoFormatsTest.h
+        Pipeline/GstRecordingSinkTest.cc
+        Pipeline/GstRecordingSinkTest.h
+        Pipeline/GstVideoReceiverComponentsTest.cc
+        Pipeline/GstVideoReceiverComponentsTest.h
+        Pipeline/GstVideoReceiverPipelineTest.cc
+        Pipeline/GstVideoReceiverPipelineTest.h
+        Pipeline/GstVideoReceiverReconnectTest.cc
+        Pipeline/GstVideoReceiverReconnectTest.h
+        Pipeline/GstVideoReceiverRecordingTest.cc
+        Pipeline/GstVideoReceiverRecordingTest.h
+        Pipeline/GstVideoReceiverStatsTest.cc
+        Pipeline/GstVideoReceiverStatsTest.h
+        Pipeline/GstVideoReceiverTestBase.cc
+        Pipeline/GstVideoReceiverTestBase.h
+        Source/GstSourceFactoryStreamTest.cc
+        Source/GstSourceFactoryStreamTest.h
+        Source/GstSourceFactoryTest.cc
+        Source/GstSourceFactoryTest.h
+        Sink/GstQgcSinkControllerTest.cc
+        Sink/GstQgcSinkControllerTest.h
+        Sink/gstqgc/GstQgcSinkPipelineTest.cc
+        Sink/gstqgc/GstQgcSinkPipelineTest.h
+        Sink/gstqgc/GstQgcSinkTest.cc
+        Sink/gstqgc/GstQgcSinkTest.h
+        Sink/gstqgc/GstQgcTestSupport.cc
+        Sink/gstqgc/GstQgcTestSupport.h
+        Sink/gstqgc/GstQgcVideoFormatsTest.cc
+        Sink/gstqgc/GstQgcVideoFormatsTest.h
 )
 
-target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# Sink, so that "gstqgc/GstQgcTestSupport.h" resolves as the sink's headers do in the sources ("gstqgc/GstQgcCaps.h").
+target_include_directories(
+    QGCUnitTests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Sink
+)
 
 # The encoded stream the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by
 # src/VideoManager/GStreamer/SelfTest/Media/generate.sh. The other two streams of that directory are the app's
@@ -116,10 +122,10 @@ if(TARGET GStreamer::Check)
     target_sources(
         QGCUnitTests
         PRIVATE
-            SourceFactory/GstSourceFactoryHarnessTest.cc
-            SourceFactory/GstSourceFactoryHarnessTest.h
-            gstqgc/GstQgcSinkHarnessTest.cc
-            gstqgc/GstQgcSinkHarnessTest.h
+            Source/GstSourceFactoryHarnessTest.cc
+            Source/GstSourceFactoryHarnessTest.h
+            Sink/gstqgc/GstQgcSinkHarnessTest.cc
+            Sink/gstqgc/GstQgcSinkHarnessTest.h
     )
     add_qgc_test(GstQgcSinkHarnessTest LABELS Unit)
     add_qgc_test(GstSourceFactoryHarnessTest LABELS Unit)
@@ -133,7 +139,7 @@ else()
     qgc_config_read(_qgc_gst_runtime_minimum gstreamer version bundled_minimum)
 endif()
 set_property(
-    SOURCE GStreamerTest.cc TARGET_DIRECTORY QGCUnitTests
+    SOURCE Runtime/GStreamerTest.cc TARGET_DIRECTORY QGCUnitTests
     APPEND
     PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_MINIMUM_VERSION=\"${_qgc_gst_runtime_minimum}\""
 )
