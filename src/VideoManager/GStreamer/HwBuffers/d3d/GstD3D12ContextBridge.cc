@@ -15,11 +15,19 @@ namespace {
 
 constexpr const char* kContextTypes[] = {GST_D3D12_DEVICE_HANDLE_CONTEXT_TYPE};
 
+/// Under a Direct3D 11 QRhi the device is GStreamer's own on Qt's adapter: a frame decoded there opens as a texture of
+/// Qt's device (GstD3D12VideoBuffer), which GStreamer then never touches.
 class D3D12ContextBridge final : public GstD3DContextBridge
 {
 public:
     constexpr D3D12ContextBridge() noexcept
-        : GstD3DContextBridge("D3D12", kContextTypes, &GstD3D12BridgeLog, int(QRhi::D3D12))
+        : GstD3DContextBridge("D3D12", kContextTypes, &GstD3D12BridgeLog, int(QRhi::D3D12),
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+                              int(QRhi::D3D11)
+#else
+                              -1
+#endif
+          )
     {}
 
 private:

@@ -1,15 +1,20 @@
 #include "TopLevelViewsTest.h"
 
+#include <algorithm>
+
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
-#include <algorithm>
-
 #include "Fact.h"
+#include "QtMultimediaVideoReceiver.h"
 #include "ScreenToolsController.h"
 #include "SettingsManager.h"
+#include "UVCDevices.h"
+#include "VideoManager.h"
 #include "VideoSettings.h"
+#include "VideoStreamController.h"
 
 UT_REGISTER_TEST(TopLevelViewsTest, TestLabel::Integration)
 
@@ -95,6 +100,24 @@ static QQuickItem* findFirstVisibleSettingsButton(QQuickItem* root)
     return (first == buttons.cend()) ? nullptr : *first;
 }
 
+// The visible control of a settings group that edits fact
+static QQuickItem* findVisibleFactControl(QQuickItem* root, const Fact* fact)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+    if (root->property("fact").value<Fact*>() == fact) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findVisibleFactControl(child, fact)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
 // Sets the video source and returns a guard restoring the original value on scope exit
 [[nodiscard]] static auto setVideoSourceWithRestore(const char* source)
 {
@@ -102,6 +125,24 @@ static QQuickItem* findFirstVisibleSettingsButton(QQuickItem* root)
     const QVariant savedVideoSource = videoSource->rawValue();
     videoSource->setRawValue(QString::fromLatin1(source));
     return qScopeGuard([videoSource, savedVideoSource] { videoSource->setRawValue(savedVideoSource); });
+}
+
+// A settings page's control by its label, whether it is shown or not
+static QQuickItem* findLabelledControl(QQuickItem* root, const QString& label)
+{
+    if (!root) {
+        return nullptr;
+    }
+    if (root->property("label").toString() == label) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findLabelledControl(child, label)) {
+            return found;
+        }
+    }
+    return nullptr;
 }
 
 QQuickItem* TopLevelViewsTest::_clickSettingsButton(const QString& pageName)
@@ -439,9 +480,16 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
     QVERIFY(videoPage->setProperty("autoStreamConfig", true));
     QVERIFY(videoPage->setProperty("isStreamSource", true));
 
+    // The camera's stream leaves no source to pick. The USB camera to show in a tile beside it can be.
     QQuickItem* const sourceGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource"));
     QVERIFY(sourceGroup);
-    QTRY_VERIFY(!sourceGroup->isEnabled());
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    const QQuickItem* const sourceControl = findVisibleFactControl(sourceGroup, videoSettings->videoSource());
+    QVERIFY(sourceControl);
+    QTRY_VERIFY(!sourceControl->isEnabled());
+    const QQuickItem* tileCameraControl = nullptr;
+    QTRY_VERIFY((tileCameraControl = findVisibleFactControl(sourceGroup, videoSettings->uvcTileCamera())));
+    QVERIFY(tileCameraControl->isEnabled());
     QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsGroup_Connection"), 0));
     QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsTextField_aspectRatio"), 0));
 
@@ -452,4 +500,94 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
 
     stopUI();
 #endif
+}
+
+void TopLevelViewsTest::_testRecordingEncodingSettingsVisible()
+{
+    // A stream source, which shows the recording settings. Without a URL it plays nothing.
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceRTSP);
+    VideoStreamController* const stream = VideoManager::instance()->primaryStream();
+    const auto restoreReceiver = qScopeGuard([stream] { stream->setReceiver(nullptr); });
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    if (!_clickSettingsButton(QStringLiteral("Video"))) {
+        return;
+    }
+
+    QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
+    QVERIFY(videoPage);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    QQuickItem* const codec = findLabelledControl(videoPage, videoSettings->uvcRecordingCodec()->label());
+    QQuickItem* const quality = findLabelledControl(videoPage, videoSettings->uvcRecordingQuality()->label());
+    QVERIFY(codec);
+    QVERIFY(quality);
+
+    // Nothing encodes the stream's recording: GStreamer's receiver saves the stream as it arrives.
+    QVERIFY(!stream->encodesRecordings());
+    QVERIFY(!codec->isVisible());
+    QVERIFY(!quality->isVisible());
+
+    // Qt Multimedia's receiver encodes it, as the video backend setting or a GStreamer that failed to start brings.
+    stream->setReceiver(new QtMultimediaVideoReceiver);
+    QTRY_VERIFY(codec->isVisible());
+    QTRY_VERIFY(quality->isVisible());
+
+    // A USB camera that isn't attached leaves nothing to record.
+    setVideoSource("Unplugged USB Camera");
+    QTRY_VERIFY(!codec->isVisible());
+    QTRY_VERIFY(!quality->isVisible());
+
+    setVideoSource(VideoSettings::videoSourceRTSP);
+    QTRY_VERIFY(codec->isVisible());
+    stream->setReceiver(nullptr);
+    QTRY_VERIFY(!codec->isVisible());
+    QTRY_VERIFY(!quality->isVisible());
+
+    stopUI();
+}
+
+void TopLevelViewsTest::_testUsbCameraSettingsShowForTileCamera()
+{
+    // A stream source: a USB camera plays beside it in a tile, not as the main picture.
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceRTSP);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    VideoManager* const videoManager = VideoManager::instance();
+    const auto restoreCamera =
+        qScopeGuard([videoSettings, videoManager, tileCamera = videoSettings->uvcTileCamera()->rawValue()] {
+            videoManager->_cameraAttached = &UVCDevices::deviceExists;
+            videoSettings->uvcTileCamera()->setRawValue(tileCamera);
+        });
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    if (!_clickSettingsButton(QStringLiteral("Video"))) {
+        return;
+    }
+
+    QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
+    QVERIFY(videoPage);
+    QQuickItem* const rotation = findLabelledControl(videoPage, videoSettings->uvcCameraRotation()->label());
+    QVERIFY(rotation);
+    QVERIFY(!rotation->isVisible());
+
+    // The camera the test attaches isn't one Qt knows.
+    ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    videoManager->_cameraAttached = [](const QString&) { return true; };
+    videoSettings->uvcTileCamera()->setRawValue(QStringLiteral("QGC Test Camera"));
+    QTRY_VERIFY(rotation->isVisible());
+    QVERIFY(!videoManager->isUvc());
+
+    videoSettings->uvcTileCamera()->setRawValue(QString());
+    QTRY_VERIFY(!rotation->isVisible());
+
+    stopUI();
 }

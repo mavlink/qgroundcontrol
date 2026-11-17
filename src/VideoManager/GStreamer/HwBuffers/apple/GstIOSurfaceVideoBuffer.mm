@@ -147,11 +147,6 @@ private:
 
 }  // namespace
 
-GstIOSurfaceVideoBuffer::GstIOSurfaceVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo,
-                                                 const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{}
-
 bool GstIOSurfaceVideoBuffer::validatePlaneHandles() const
 {
     return validatePlanes([](GstMemory* mem) {
@@ -184,6 +179,7 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
 
     // Mirror of GstCoreVideoMeta from gst-plugins-bad sys/applemedia/corevideobuffer.h (plugin-private, not installed;
     // identical in 1.20-1.28). The registered meta size is checked below before reading past the GstMeta header.
+    // GStreamer 1.30 gives the surface without it: gst_iosurface_memory_peek_surface() (gst/allocators/gstiosurface.h).
     struct CoreVideoMetaMirror
     {
         GstMeta meta;
@@ -335,7 +331,7 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
 // gst-applemedia exports no public gst_is_apple_core_video_memory() predicate, so match the allocator's memory type.
 constinit const HwPathDescriptor GstHwPaths::kIOSurface = {
     .path = HwVideoBufferPath::IOSurface,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool {
+    .matches = [](GstMemory* mem) -> bool {
         return mem->allocator && (g_strcmp0(mem->allocator->mem_type, "AppleCoreVideoMemory") == 0);
     },
     .construct = &GstHwPaths::construct<GstIOSurfaceVideoBuffer>,

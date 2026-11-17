@@ -1,12 +1,16 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QString>
 #include <QtCore/qcontainerfwd.h>
 #include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QVideoFrameFormat>
 
-/// USB (UVC) cameras offered as video sources. A camera's description is its video source name. UVCCameraController
-/// runs the selected camera through Qt Multimedia; no VideoReceiver is involved.
+class QObject;
+
+/// USB (UVC) cameras offered as video sources. A camera's description is its video source name. UVCCameraController,
+/// the VideoReceiver of a camera, runs the selected one through Qt Multimedia.
 namespace UVCDevices {
 
 /// Descriptions of the attached cameras.
@@ -24,7 +28,8 @@ QString formatName(const QCameraFormat& format);
 QStringList formatNames(const QCameraDevice& device);
 /// The format of @p device that formatName() calls @p name; a null format for none.
 QCameraFormat format(const QCameraDevice& device, const QString& name);
-/// Asks for camera permission unless the user already answered.
-void requestPermission();
+/// Asks for camera permission unless the user already answered. @p granted is then called, on @p context's thread,
+/// if the user grants it; the user is told when it is refused.
+void requestPermission(QObject* context, std::function<void()> granted);
 
 }  // namespace UVCDevices

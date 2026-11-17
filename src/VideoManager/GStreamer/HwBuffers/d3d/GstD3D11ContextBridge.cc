@@ -32,7 +32,10 @@ constinit D3D11ContextBridge s_bridge;
 
 GstObject* D3D11ContextBridge::createDevice()
 {
-    // Snapshot populated on the render thread (sceneGraphInitialized); only atomic loads here.
+    // Snapshot populated on the render thread (sceneGraphInitialized); only atomic loads here. The pointer holds no
+    // reference until gst_d3d11_device_new_wrapped() takes one, and needs none: whatever withdraws the snapshot
+    // (QGCRhiCapture's unpublishRhi()) then resets this bridge, under the mutex held here, before Qt destroys the
+    // device.
     auto* dev = static_cast<ID3D11Device*>(QGCRhiCapture::deviceSnapshot().d3d11Device.load(std::memory_order_acquire));
     if (!dev) {
         qCWarning(GstD3D11BridgeLog) << "QRhi D3D11 snapshot missing ID3D11Device*";

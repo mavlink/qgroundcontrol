@@ -40,11 +40,11 @@ struct PlaneFourccs
     int count = 0;
 };
 
-PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat) noexcept;
+PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat);
 
 /// EGLDisplay of @p rhi's GL context when that context is EGL and can bind EGLImages, else EGL_NO_DISPLAY. Makes the
 /// context current. Render thread, GL QRhi only.
-EGLDisplay importDisplay(QRhi& rhi) noexcept;
+EGLDisplay importDisplay(QRhi& rhi);
 
 struct ImportResult
 {

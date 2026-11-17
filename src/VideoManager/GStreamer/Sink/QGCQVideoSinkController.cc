@@ -25,8 +25,10 @@ void QGCQVideoSinkController::followWindowVisibility(QQuickItem* videoOutput)
 {
     (void) QObject::disconnect(_visibilityConnection);
     _videoOutput = videoOutput;
-    // QQuickVideoOutput never emits windowChanged (its itemChange() skips the base), so the window is taken now; an
-    // output that moves to another window is followed again from there.
+    // Qt defect, seen in Qt 6.12.0: QQuickVideoOutput::itemChange() never calls QQuickItem::itemChange()
+    // (qtmultimedia/src/multimediaquick/qquickvideooutput.cpp), so the output emits no windowChanged. The window is
+    // taken now, and VideoStreamOutput.qml registers an output again after it moved to another window. Once the minimum
+    // Qt has the fix, connect to QQuickItem::windowChanged here and drop that re-registration.
     if (QQuickWindow* window = videoOutput ? videoOutput->window() : nullptr) {
         _visibilityConnection = QObject::connect(window, &QWindow::visibilityChanged, this,
                                                  &QGCQVideoSinkController::_applyWindowVisibility);
@@ -47,6 +49,7 @@ void QGCQVideoSinkController::setActive(bool active)
         qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
         return;
     }
+    _active = active;
     if (!_element || _bindingReleased)
         return;
     g_object_set(_element.get(), "active", active ? TRUE : FALSE, nullptr);
@@ -68,12 +71,11 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
     if (!raw) {
         // Caller's QVideoSink was destroyed between the call site and here — clear the
         // element's snapshot and gate show_frame until a replacement sink is installed.
-        g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
-        _bindingReleased = true;
-        _clearVideoSinkFrame();
+        _releaseElementBinding();
         return;
     }
-    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), nullptr);
+    // Unbinding turned the element off: bound again, it goes on as setActive() last asked.
+    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), "active", _active ? TRUE : FALSE, nullptr);
     if (_videoSink != raw) {
         _clearVideoSinkFrame();
     }
@@ -103,7 +105,18 @@ void QGCQVideoSinkController::releaseFrame()
     }
 }
 
-void QGCQVideoSinkController::_releaseElementBinding() noexcept
+QSize QGCQVideoSinkController::pictureSize() const
+{
+    if (!_element) {
+        return {};
+    }
+    gint width = 0;
+    gint height = 0;
+    g_object_get(_element.get(), "picture-width", &width, "picture-height", &height, nullptr);
+    return ((width > 0) && (height > 0)) ? QSize(width, height) : QSize();
+}
+
+void QGCQVideoSinkController::_releaseElementBinding()
 {
     if (!_element || _bindingReleased)
         return;

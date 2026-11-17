@@ -17,9 +17,12 @@ struct SinkCapsPolicy
     /// qgcvideosinkbin's GPU variant in front of the sink; value-initialized, Passthrough (a standalone sink).
     GpuBinMode gpuBin{};
     RenderTarget target;
-    /// The EGLDisplay the DMABuf path imports with now (HwBuffers::dmaBufImportDisplay()); null while it can't import.
+    /// What the DMABuf path imports with now (HwBuffers::dmaBufImportDisplay()): Qt's EGLDisplay, or its Vulkan
+    /// device. Null while it can't import.
     void* dmaBufDisplay = nullptr;
-    /// Ask for square pixels in system memory, which the bin's converter scales to.
+    /// Qt's Direct3D 11 device opens a Direct3D 12 device's resources (HwBuffers::d3d11OpensD3D12()).
+    bool d3d11OpensD3D12 = false;
+    /// Ask for square pixels, in every kind of memory. The bin's converter scales system memory to them.
     bool squarePixels = true;
 
     friend bool operator==(const SinkCapsPolicy&, const SinkCapsPolicy&) = default;
@@ -29,9 +32,12 @@ struct SinkCapsPolicy
 /// kVideoFormatTable. The glupload variant takes GLMemory only, as glcolorconvert outputs it. Otherwise, with
 /// gpu-zerocopy, the GPU memory @p policy's render target imports comes first: EGL-importable DMA_DRM and DMABuf on
 /// OpenGL over EGL while the DMABuf import works; GLMemory, unless the direct DMABuf variant, wherever gst-gl shares
-/// Qt's OpenGL context (EGL or GLX); AHardwareBuffer on OpenGL over EGL (Android); D3D11Memory on Direct3D11; none
-/// elsewhere. GLMemory always carries texture-target=2D, the only target the GL path samples. System memory always
-/// closes the list. DMABuf builds query EGL for importable DMA_DRM modifiers.
+/// Qt's OpenGL context (EGL or GLX); AHardwareBuffer on OpenGL over EGL (Android); on Direct3D11 NV12 and P010
+/// D3D12Memory, where Qt's device opens it, then D3D11Memory; the DMA_DRM layouts Qt's device imports on Vulkan; none
+/// elsewhere.
+/// GLMemory always carries texture-target=2D, the only target the GL path samples. System memory always closes the
+/// list. Every entry asks for square pixels when
+/// @p policy does. DMABuf builds query EGL for importable DMA_DRM modifiers.
 std::string buildSinkCaps(const SinkCapsPolicy& policy);
 
 #ifdef QGC_UNITTEST_BUILD
@@ -42,6 +48,7 @@ struct SinkEnvironment
     GpuBinPreference gpuBin{};  ///< For gpuBinPreference().
     /// For Qt's EGLDisplay in HwBuffers::dmaBufImportDisplay(); the import-failure latch still applies.
     void* dmaBufDisplay = nullptr;
+    bool d3d11OpensD3D12 = false;  ///< For HwBuffers::d3d11OpensD3D12().
 };
 
 /// The sink environment readers return @p environment while alive, then what they returned before.

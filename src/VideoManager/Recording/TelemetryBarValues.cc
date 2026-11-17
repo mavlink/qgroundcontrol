@@ -7,24 +7,14 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "MultiVehicleManager.h"
-#include "QmlObjectListModel.h"
 #include "Vehicle.h"
 
 void TelemetryBarValues::readLayout()
 {
     _fields.clear();
-    // The telemetry bar's layout, defaults included, comes from FactValueGrid and the core plugin.
-    FactValueGrid grid;
-    (void) grid.setProperty("settingsGroup", HorizontalFactValueGrid::telemetryBarSettingsGroup);
-    grid.componentComplete();
-    for (int colIndex = 0; colIndex < grid.columns()->count(); colIndex++) {
-        const QmlObjectListModel* const column = grid.columns()->value<const QmlObjectListModel*>(colIndex);
-        for (int rowIndex = 0; rowIndex < column->count(); rowIndex++) {
-            const InstrumentValueData* const value = column->value<InstrumentValueData*>(rowIndex);
-            if (value->fact()) {
-                _fields.append({value->factGroupName(), value->factName()});
-            }
-        }
+    for (const FactValueGrid::LayoutFact& fact :
+         FactValueGrid::layoutFacts(HorizontalFactValueGrid::telemetryBarSettingsGroup)) {
+        _fields.append({fact.factGroupName, fact.factName});
     }
 }
 

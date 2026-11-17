@@ -33,7 +33,7 @@ struct RenderTarget
 
 /// What qgcqvideosink renders into now; callable from any thread. The backend of QGC's scene graph once it runs
 /// (QGCRhiCapture); before that, the API Qt Quick was asked to use, as last read on the GUI thread.
-RenderTarget currentRenderTarget() noexcept;
+RenderTarget currentRenderTarget();
 
 const char* toString(RenderBackend backend) noexcept;
 

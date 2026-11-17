@@ -1,16 +1,14 @@
 #include "GstDmaDrmCaps.h"
 
-#if GST_CHECK_VERSION(1, 24, 0)
-#include <gst/video/video-info-dma.h>
-#endif
-
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
 #include <algorithm>
 #include <drm_fourcc.h>
+#include <gst/video/video-info-dma.h>
 #include <gst/video/video.h>
 #include <map>
 #include <vector>
 
+#include "GstDmaBufVulkanImport.h"
 #include "GstEglHelpers.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
@@ -18,11 +16,8 @@
 #include <EGL/eglext.h>
 
 QGC_LOGGING_CATEGORY(GstDmaDrmCapsLog, "Video.GStreamer.HwBuffers.GstDmaDrmCaps")
-#endif
 
 namespace GstHw {
-
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
 
 namespace {
 
@@ -208,6 +203,36 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, vo
     return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
 }
 
+std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoFormat> formats)
+{
+    std::string entries;
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    for (const GstVideoFormat format : formats) {
+        const guint32 fourcc = gst_video_dma_drm_fourcc_from_format(format);
+        const guint planes = GST_VIDEO_FORMAT_INFO_N_PLANES(gst_video_format_get_info(format));
+        if ((fourcc == DRM_FORMAT_INVALID) || (planes == 0)) {
+            continue;
+        }
+        // The modifiers the first plane imports with, kept when every other plane imports with them too.
+        for (const quint64 modifier : GstDmaBufVulkan::importableModifiers(planeImportFourcc(format, 0))) {
+            bool importable = modifierImportable(modifier);
+            for (guint plane = 1; importable && (plane < planes); ++plane) {
+                const std::vector<quint64> planeModifiers =
+                    GstDmaBufVulkan::importableModifiers(planeImportFourcc(format, plane));
+                importable = std::ranges::find(planeModifiers, modifier) != planeModifiers.end();
+            }
+            if (importable) {
+                appendDrmFormat(entries, fourcc, modifier);
+            }
+        }
+    }
+#endif
+    if (entries.empty()) {
+        return std::string();
+    }
+    return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
+}
+
 #ifdef QGC_UNITTEST_BUILD
 bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept
 {
@@ -220,25 +245,6 @@ guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexc
 }
 #endif
 
-#else
-
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat>, void*)
-{
-    return std::string();
-}
-
-#ifdef QGC_UNITTEST_BUILD
-bool dmaDrmModifierImportableForTest(guint64) noexcept
-{
-    return false;
-}
-
-guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat, guint) noexcept
-{
-    return 0;
-}
-#endif
+}  // namespace GstHw
 
 #endif  // QGC_HAS_GST_DMABUF_GPU_PATH && GST_CHECK_VERSION(1, 24, 0)
-
-}  // namespace GstHw

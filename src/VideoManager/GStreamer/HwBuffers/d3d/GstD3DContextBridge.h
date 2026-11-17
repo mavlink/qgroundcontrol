@@ -9,7 +9,9 @@
 #include "GstContextBridgeBase.h"
 
 /// Shares one GstD3D11Device/GstD3D12Device on QRhi's adapter through a single device-handle context type. Priming
-/// waits for QRhi to run the matching backend and retries on every request until it does.
+/// waits for QRhi to run the matching backend and retries on every request until it does. When GStreamer reports the
+/// device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped and the pipelines
+/// that got the device are told (noteDeviceRemoved()).
 class GstD3DContextBridge : public GstContextBridgeBase
 {
 public:
@@ -20,10 +22,14 @@ public:
     static gint64 readAdapterLuid(gpointer device);
 
 protected:
+    /// @p qrhiBackend is the QRhi backend whose device the bridge shares; under @p secondQrhiBackend, when given, it
+    /// also primes, with a device of its own on that backend's adapter.
     constexpr GstD3DContextBridge(const char* api, std::span<const char* const> contextTypes,
-                                  const QLoggingCategory& (*logCategory)(), int qrhiBackend) noexcept
+                                  const QLoggingCategory& (*logCategory)(), int qrhiBackend,
+                                  int secondQrhiBackend = -1) noexcept
         : GstContextBridgeBase(api, contextTypes, logCategory)
         , _qrhiBackend(qrhiBackend)
+        , _secondQrhiBackend(secondQrhiBackend)
     {}
 
     ~GstD3DContextBridge() = default;
@@ -43,11 +49,16 @@ private:
     GstContext* buildContext(const char* contextType, GstObject* object) final;
     void clearLocked() final;
 
-    /// True when QGCRhiCapture's snapshot reports this bridge's QRhi backend; logs the first mismatch.
+    /// True when QGCRhiCapture's snapshot reports a QRhi backend this bridge primes under; logs the first mismatch.
     bool snapshotBackendMatches();
+    /// The device's notify::device-removed-reason handler; @p bridge is the GstD3DContextBridge.
+    static void onDeviceRemoved(GObject* device, GParamSpec* property, gpointer bridge);
 
     int _qrhiBackend;
+    int _secondQrhiBackend;
     GstObject* _device = nullptr;
+    /// The device-removed-reason notify handler on _device; 0 where GStreamer's device has no such property.
+    gulong _removalHandler = 0;
     bool _warnedWrongBackend = false;
 };
 

@@ -8,10 +8,12 @@ include_guard(GLOBAL)
 # gstreamer-gl-prototypes-1.0. The mandatory ones are always probed and fail configure when missing: the sources include
 # their headers unconditionally. Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are incomplete fails their
 # pkg-config checks, and only the GL GPU path needs them. Check (gst-check's GstHarness) serves only the unit tests.
+# Pbutils names the plugin a missing-plugin message is about.
 set(GSTREAMER_COMPONENTS
     Base
     Gl
     GlPrototypes
+    Pbutils
     Rtsp
     Video
     App
@@ -19,7 +21,7 @@ set(GSTREAMER_COMPONENTS
     Allocators
     Check
 )
-set(GSTREAMER_MANDATORY_COMPONENTS Base Rtsp Video)
+set(GSTREAMER_MANDATORY_COMPONENTS Base Pbutils Rtsp Video)
 
 # qgc_gst_component_module(<component> <out_var>)
 # Sets <out_var> to the component's gstreamer-<kebab-case>-1.0 pkg-config module.

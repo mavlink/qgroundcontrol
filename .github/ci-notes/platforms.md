@@ -115,10 +115,10 @@ How CI runs, retries, and reports the application tests is described in
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
   (`run-unit-tests`' `tests-regex`
-  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan)`, Unit and
-  Integration), with the Qt Multimedia receiver, its recorder, the USB camera classes and the reconnect and
-  recording-part policies both receivers share, so the script tests' Windows-only branches (8.3 short paths, SDK
-  architecture) run on Windows. The build tree finds the
+  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan|SharedVideoFrame)`,
+  Unit and Integration), with the Qt Multimedia receiver, its recorder and shared frame, the USB camera classes and
+  the reconnect and recording-part policies both receivers share, so the script tests' Windows-only branches (8.3
+  short paths, SDK architecture) run on Windows. The build tree finds the
   SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
   and stages the shipped plugins plus the sources and encoders the tests send streams with
   (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
@@ -161,7 +161,8 @@ How CI runs, retries, and reports the application tests is described in
 - **iOS**: `ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle, installing
   Qt's separate `ios_device` and `ios_simulator_x86_64` SDKs. The simulator stays on x86_64 because
   Qt's bundled FFmpeg has no arm64 simulator slice. Simulator builds run `ios_boot_test.py`, which
-  launches with `--simple-boot-test` and requires QGC's success marker. Cold boots have a
+  launches with `--simple-boot-test`, logging QGC's startup and its GStreamer self-test, and requires QGC's
+  success marker. Cold boots have a
   600-second deadline and at most two fresh-device attempts (`--boot-timeout` 1–900 s,
   `--boot-attempts` 1–2). Boot and installation failures, and a launch that times out before QGC
   prints anything, are retried on a fresh device; QGC failures are not. Install and launch each

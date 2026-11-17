@@ -9,8 +9,6 @@ target_sources(
     PRIVATE
         RecordingPlan.cc
         RecordingPlan.h
-        SharedVideoFrame.cc
-        SharedVideoFrame.h
         StreamSupervisor.cc
         StreamSupervisor.h
         VideoReceiver.cc
@@ -25,6 +23,8 @@ target_sources(
         VideoStreamStatsMeter.h
         VideoStreamStatsSampler.cc
         VideoStreamStatsSampler.h
+        VideoStreamUri.cc
+        VideoStreamUri.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

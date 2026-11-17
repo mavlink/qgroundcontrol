@@ -111,7 +111,8 @@ endfunction()
 
 # _qgc_gst_create_sdk_targets()
 # Creates the targets listed above from the SDK at GStreamer_ROOT_DIR, then applies the macOS framework overlay or
-# builds GStreamer::mobile. Sets GStreamer_VERSION and, on Android, GSTREAMER_STATIC_PLUGINS in the caller's scope.
+# builds GStreamer::mobile. Sets GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION (empty without libavcodec's
+# pkg-config file) and, on Android, GSTREAMER_STATIC_PLUGINS in the caller's scope.
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_create_sdk_targets)
     qgc_gst_layout_get(USE_FRAMEWORK _gst_use_framework)
@@ -140,7 +141,11 @@ function(_qgc_gst_create_sdk_targets)
         endif()
     endforeach()
 
-    set(_outputs GStreamer_VERSION)
+    # The FFmpeg the SDK's libav plugin decodes with: the video code works around bugs of single releases.
+    pkg_check_modules(PC_GStreamer_Libavcodec QUIET libavcodec)
+    set(GStreamer_LIBAVCODEC_VERSION "${PC_GStreamer_Libavcodec_VERSION}")
+
+    set(_outputs GStreamer_VERSION GStreamer_LIBAVCODEC_VERSION)
     if(_gst_use_framework)
         _qgc_gst_apply_macos_framework_overlay()
     elseif(ANDROID)

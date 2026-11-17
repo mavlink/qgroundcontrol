@@ -1,5 +1,7 @@
 #include "RecordingBranch.h"
 
+#include <cerrno>
+#include <cstring>
 #include <gst/gst.h>
 #include <utility>
 
@@ -9,6 +11,7 @@
 #include "GStreamerHelpers.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
+#include "RecordingPlan.h"
 
 namespace {
 
@@ -16,9 +19,23 @@ namespace {
 // there every update period, so a crash or power loss leaves a file playable up to the last update.
 // The reservation (550 B/s per track by default, ~8 MB here) outlasts the nominal duration since the
 // index grows ~140 B/s at 30 fps and ~260 B/s at 60 fps; overrunning it makes qtmux post an ERROR.
+// No file is meant to get that far: its recording continues in a new part after half the nominal duration. The
+// index grows faster at higher frame rates, and when no two frames last the same, as without a jitter buffer, so
+// the muxer's own estimate of the room left is watched too (RecordingBranch::kHeaderSpaceMargin).
 // The period bounds crash data loss without rewriting the growing moov too often.
 constexpr guint64 kRecordingReservedMaxDurationNs = 2 * 3600 * GST_SECOND;
 constexpr guint64 kRecordingMoovUpdatePeriodNs = 5 * GST_SECOND;
+constexpr std::chrono::seconds kRecordingWatchInterval{1};
+// matroskamux never has its file synced, as qtmux has with each header update. Storage that takes writes into a cache
+// (an Android SD card, a network share) reports a full disk only to a sync: a recording there would lose everything
+// without an error. A sync as often as the MP4's also bounds what a power loss takes.
+constexpr gint64 kRecordingSyncPeriodUs = static_cast<gint64>(kRecordingMoovUpdatePeriodNs / GST_USECOND);
+static_assert(std::chrono::nanoseconds(RecordingBranch::kHeaderEstimateDelay).count() >=
+                  static_cast<qint64>(2 * kRecordingMoovUpdatePeriodNs),
+              "The muxer's estimate of its header space counts from its second header update");
+static_assert((2 * std::chrono::nanoseconds(RecordingPlan::kMaxPartDuration).count()) <=
+                  static_cast<qint64>(kRecordingReservedMaxDurationNs),
+              "A recording's part must end well within the header space its muxer reserves");
 
 const char* muxerFactory(VideoReceiver::FileFormat format)
 {
@@ -70,12 +87,80 @@ GstPadProbeReturn timestampForMuxer([[maybe_unused]] GstPad* pad, GstPadProbeInf
     return GST_PAD_PROBE_OK;
 }
 
-/// The keyframe probe's data: which recording it gates.
-struct KeyframeWatch
+/// Has filesink sync the file after the first buffer and after one every kRecordingSyncPeriodUs. @p data: when the
+/// last one was marked, on the monotonic clock.
+GstPadProbeReturn syncPeriodically([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    auto* const markedAt = static_cast<gint64*>(data);
+    const gint64 now = g_get_monotonic_time();
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer || ((*markedAt != 0) && ((now - *markedAt) < kRecordingSyncPeriodUs))) {
+        return GST_PAD_PROBE_OK;
+    }
+    *markedAt = now;
+    buffer = gst_buffer_make_writable(buffer);
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_SYNC_AFTER);
+    GST_PAD_PROBE_INFO_DATA(info) = buffer;
+    return GST_PAD_PROBE_OK;
+}
+
+/// Has filesink sync an MKV once more when matroskamux has finalized it, as qtmux asks with the last thing it writes:
+/// without that, a power cut takes the file's end with its index and duration, and a disk that was full for it goes
+/// unreported. Asked with a buffer ahead of the EOS, which follows the muxer's last write. filesink writes out what
+/// it holds back, and then syncs, only for a buffer that has a memory; an empty one adds nothing to the file. A sync
+/// that fails is filesink's error, as while recording.
+GstPadProbeReturn syncAtEnd(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
+{
+    const GstEvent* const event = gst_pad_probe_info_get_event(info);
+    if (!event || (GST_EVENT_TYPE(event) != GST_EVENT_EOS)) {
+        return GST_PAD_PROBE_OK;
+    }
+    GstBuffer* const buffer = gst_buffer_new();
+    gst_buffer_append_memory(buffer, gst_allocator_alloc(nullptr, 0, nullptr));
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_SYNC_AFTER);
+    // From the thread that brings the EOS, which holds the pad's stream lock for it: the lock is recursive.
+    (void) gst_pad_chain(pad, buffer);
+    return GST_PAD_PROBE_OK;
+}
+
+/// The data of a probe that reports to its recording: which one that is.
+struct RecordingWatch
 {
     RecordingBranch* branch = nullptr;
     quint64 recording = 0;
 };
+
+/// Blocks the CAPS event that sets the caps passed as @p data, until the probe is removed.
+GstPadProbeReturn holdCapsEvent([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    GstEvent* const event = gst_pad_probe_info_get_event(info);
+    GstCaps* caps = nullptr;
+    if (event && (GST_EVENT_TYPE(event) == GST_EVENT_CAPS)) {
+        gst_event_parse_caps(event, &caps);
+    }
+    return (caps && gst_caps_is_equal(caps, static_cast<const GstCaps*>(data))) ? GST_PAD_PROBE_OK : GST_PAD_PROBE_PASS;
+}
+
+/// The switch probe's data: which hold it is.
+struct SwitchWatch
+{
+    RecordingBranch* branch = nullptr;
+    quint64 hold = 0;
+};
+
+/// Whether a recorder's bus error is a full disk. filesink names it by the error's code when a write fails, and only
+/// by errno's text in the detail when the fsync after one of the muxer's header updates does.
+bool reportsFullStorage(const GError* error, const char* debug)
+{
+    if (!error) {
+        return false;
+    }
+    if (g_error_matches(error, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_NO_SPACE_LEFT)) {
+        return true;
+    }
+    return g_error_matches(error, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_WRITE) && debug &&
+           (std::strstr(debug, g_strerror(ENOSPC)) != nullptr);
+}
 
 QString notFinalizedError()
 {
@@ -101,8 +186,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
         return nullptr;
     }
 
-    GstElement* const rawBin = gst_bin_new("sinkbin");
-    GStreamer::GstElementPtr bin = GStreamer::adoptElement(rawBin ? GST_ELEMENT(gst_object_ref_sink(rawBin)) : nullptr);
+    GStreamer::GstElementPtr bin = GStreamer::adoptFloating(gst_bin_new("sinkbin"));
     if (!bin) {
         qCWarning(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
         return nullptr;
@@ -142,13 +226,19 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
                      "reserved-moov-update-period", kRecordingMoovUpdatePeriodNs, nullptr);
     }
     // Not async: a sink that waits to preroll would take the live pipeline out of PLAYING until the first keyframe.
-    g_object_set(fileSinkOwner.get(), "location", QFile::encodeName(file).constData(), "async", FALSE, nullptr);
+    g_object_set(fileSinkOwner.get(), "location", GStreamer::glibFileName(file).constData(), "async", FALSE, nullptr);
 
     GstElement* const muxer = GStreamer::addToBin(bin.get(), std::move(muxerOwner), "muxer");
     GstElement* const fileSink = GStreamer::addToBin(bin.get(), std::move(fileSinkOwner), "filesink");
     if (!muxer || !fileSink || !gst_element_link(muxer, fileSink)) {
         qCWarning(GstVideoReceiverLog) << "Failed to link the muxer and filesink";
         return nullptr;
+    }
+    if (format == VideoReceiver::FileFormat::Mkv) {
+        const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink, "sink"));
+        (void) gst_pad_add_probe(fileSinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, syncPeriodically, g_new0(gint64, 1),
+                                 g_free);
+        (void) gst_pad_add_probe(fileSinkPad.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, syncAtEnd, nullptr, nullptr);
     }
 
     // No release_request_pad on failure: disposing the bin reclaims the pad.
@@ -203,6 +293,11 @@ RecordingBranch::RecordingBranch(const BranchContext& context, Listener& listene
             _finish(notFinalizedError());
         }
     });
+    _watchTimer.setInterval(kRecordingWatchInterval);
+    (void) QObject::connect(&_watchTimer, &QTimer::timeout, &_watchTimer, [this]() {
+        _checkStarted();
+        _checkHeaderSpace();
+    });
 }
 
 RecordingBranch::~RecordingBranch()
@@ -232,12 +327,15 @@ bool RecordingBranch::build()
 void RecordingBranch::reset()
 {
     _finalizeTimer.stop();
+    _watchTimer.stop();
     _keyframeWatch.remove();
+    _startWatch.remove();
+    _capsWatch.remove();
+    _releaseSwitchHold();
     if (_fileSink) {
         GStreamer::flushAndDisposeChild(_fileSink.get());
         _fileSink.reset();
     }
-    (void) _finalizer.disarm();
     _state = State::Idle;
     _head.reset();
 }
@@ -263,7 +361,17 @@ void RecordingBranch::_reconcile()
             }
             break;
         case State::Recording:
-            if (!_requested || (*_requested != _current)) {
+            if (_requested && (*_requested == _current)) {
+                _releaseSwitchHold();
+            } else if (_requested && _fileStarted.load(std::memory_order_acquire)) {
+                // A file with frames ends where the next one can begin, so the frames in between aren't lost: at the
+                // change of caps the stream is held at, or else at its next keyframe.
+                if (_capsHold.load(std::memory_order_acquire) != 0) {
+                    _end();
+                } else {
+                    _switchAtKeyframe();
+                }
+            } else {
                 _end();
             }
             break;
@@ -278,6 +386,7 @@ void RecordingBranch::_start(const Request& request)
     (void) _recording.fetch_add(1, std::memory_order_relaxed);
     _failure.clear();
     _fileStarted.store(false, std::memory_order_relaxed);
+    _fedAt.store(0, std::memory_order_relaxed);
     _openedReported = false;
     _state = State::Recording;
 
@@ -296,8 +405,7 @@ void RecordingBranch::_start(const Request& request)
         _finish(QString());
         return;
     }
-    // Before the sink can post, so its ERROR (such as a file that can't be opened) settles this recording.
-    _finalizer.arm(_fileSink.get());
+    TeeBranchHead::absorbFlowErrors(_fileSink.get());
 
     gst_util_set_object_arg(G_OBJECT(_head.queue()), "leaky", "no");
     if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.get()) ||
@@ -317,18 +425,77 @@ void RecordingBranch::_start(const Request& request)
         return;
     }
 
-    // The file starts with a keyframe at t=0, so playback can decode from its first frame.
-    if (!_keyframeWatch.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _keyframeProbe,
-                            new KeyframeWatch{.branch = this, .recording = _recording.load(std::memory_order_relaxed)},
-                            [](gpointer watch) { delete static_cast<KeyframeWatch*>(watch); })) {
-        qCCritical(GstVideoReceiverLog) << "Failed to add the keyframe probe" << _context.redactedUri;
+    // The file starts with a keyframe at t=0, so playback can decode from its first frame. The stream's first keyframe
+    // lets it into the recorder, whose parser passes on nothing before a keyframe that comes with its parameter sets:
+    // the first frame the file can hold.
+    const GStreamer::GstElementPtr parser =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(_fileSink.get()), "parser"));
+    const GStreamer::GstPadPtr parserSrc =
+        GStreamer::adoptPad(parser ? gst_element_get_static_pad(parser.get(), "src") : nullptr);
+    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "sink"));
+    const auto newWatch = [this]() {
+        return new RecordingWatch{.branch = this, .recording = _recording.load(std::memory_order_relaxed)};
+    };
+    const GDestroyNotify deleteWatch = [](gpointer watch) { delete static_cast<RecordingWatch*>(watch); };
+    if (!_keyframeWatch.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _keyframeProbe, this) ||
+        !_startWatch.add(parserSrc ? parserSrc.get() : valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _startProbe,
+                         newWatch(), deleteWatch) ||
+        !_capsWatch.add(valveSink.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _capsProbe, newWatch(), deleteWatch)) {
+        qCCritical(GstVideoReceiverLog) << "Failed to add the recording's probes" << _context.redactedUri;
         _failure = QCoreApplication::translate("RecordingBranch", "Unable to start recording.");
         _finish(QString());
         return;
     }
 
-    _head.open();
+    if (_switching || (_capsHold.load(std::memory_order_acquire) != 0)) {
+        // The switch asked for the keyframe this file starts with, and holds it or still waits for it; the one that
+        // comes with new caps follows them.
+        g_object_set(_head.valve(), "drop", FALSE, nullptr);
+    } else {
+        _head.open();
+    }
+    _watchTimer.start();
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-filesink");
+}
+
+void RecordingBranch::_switchAtKeyframe()
+{
+    if (_switching) {
+        return;
+    }
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
+    if (!_switchHold.add(valveSrc.get(),
+                         static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
+                         _switchProbe, new SwitchWatch{.branch = this, .hold = ++_switchHoldId},
+                         [](gpointer watch) { delete static_cast<SwitchWatch*>(watch); })) {
+        qCWarning(GstVideoReceiverLog) << "Unable to hold the next keyframe; frames up to it are not recorded";
+        _end();
+        return;
+    }
+    _switching = true;
+    // Not left to the stream: with a long GOP, or a camera that sends keyframes on request only, the current file
+    // would go on growing meanwhile.
+    _head.requestKeyframe();
+}
+
+void RecordingBranch::_onSwitchKeyframe(quint64 hold)
+{
+    if (!_switching || (hold != _switchHoldId) || (_state != State::Recording)) {
+        return;
+    }
+    // Its _finish() starts the requested file and lets the keyframe go.
+    _end();
+}
+
+void RecordingBranch::_releaseSwitchHold()
+{
+    _switchHold.remove();
+    _switching = false;
+    // Both at once: a pad lets go of what it holds only once its last blocking probe is gone.
+    if (const gulong capsHold = _capsHold.exchange(0, std::memory_order_acq_rel); (capsHold != 0) && _head.valve()) {
+        const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
+        gst_pad_remove_probe(valveSrc.get(), capsHold);
+    }
 }
 
 void RecordingBranch::_end(const QString& failure)
@@ -342,6 +509,7 @@ void RecordingBranch::_end(const QString& failure)
 
     _head.close();
     _keyframeWatch.remove();
+    _watchTimer.stop();
 
     if (!_fileStarted.load(std::memory_order_acquire)) {
         _finish(QString());
@@ -362,17 +530,19 @@ void RecordingBranch::_end(const QString& failure)
     _finalizeTimer.start();
 }
 
-void RecordingBranch::_finish(const QString& error)
+void RecordingBranch::_finish(const QString& error, bool fileClosed)
 {
     _finalizeTimer.stop();
+    _watchTimer.stop();
     _keyframeWatch.remove();
+    _startWatch.remove();
+    _capsWatch.remove();
     _head.close();
 
-    const RecordingFinalizer::Outcome outcome = _finalizer.disarm();
     if (_fileSink) {
         // Removed before going NULL, so nothing it posts while stopping reaches the bus. Flushed unless it closed its
         // file: going NULL would otherwise wait for a streaming thread stuck inside it.
-        if (outcome == RecordingFinalizer::Outcome::Closed) {
+        if (fileClosed) {
             GStreamer::disposeChild(_fileSink.get());
         } else {
             GStreamer::flushAndDisposeChild(_fileSink.get());
@@ -403,19 +573,21 @@ void RecordingBranch::_finish(const QString& error)
     }
 
     _reconcile();
+
+    // A keyframe or a change of caps held for a switch goes into the file _reconcile() started. Without one it finds
+    // the valve closed, which hides that nothing is linked behind it.
+    _releaseSwitchHold();
 }
 
 bool RecordingBranch::beginTeardown()
 {
     _requested.reset();
+    // What is held for a switch that won't happen goes into the current file, ahead of the EOS that drains it, and
+    // nothing more is held: no file follows.
+    _capsWatch.remove();
+    _releaseSwitchHold();
     if (_state != State::Recording) {
         return finalizing();
-    }
-
-    // Its recorder is done already, so there is nothing left to drain.
-    if (_finalizer.outcome() != RecordingFinalizer::Outcome::Pending) {
-        _finish(QString());
-        return false;
     }
 
     if (!_fileStarted.load(std::memory_order_acquire)) {
@@ -437,25 +609,23 @@ void RecordingBranch::completeTeardown()
         return;
     }
 
-    if (_finalizer.outcome() == RecordingFinalizer::Outcome::Pending) {
-        // Before the flush, which a recorder stuck in the kernel can hold up.
-        warnNotFinalized();
-        // Not serialized, so it doesn't wait for the stream lock: wakes the tee's thread if the full queue holds it,
-        // and has the queue stop pushing into the recorder.
-        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
-        (void) gst_pad_send_event(queueSink.get(), gst_event_new_flush_start());
-        _finish(notFinalizedError());
-        return;
-    }
-    _finish(QString());
+    // Before the flush, which a recorder stuck in the kernel can hold up.
+    warnNotFinalized();
+    // Not serialized, so it doesn't wait for the stream lock: wakes the tee's thread if the full queue holds it, and
+    // has the queue stop pushing into the recorder.
+    const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
+    (void) gst_pad_send_event(queueSink.get(), gst_event_new_flush_start());
+    _finish(notFinalizedError());
 }
 
-void RecordingBranch::onBusError(GstMessage* message, const QString& text, const char* debug)
+bool RecordingBranch::_fromRecorder(GstObject* source) const
 {
-    bool fromRecorder = false;
-    const bool settled =
-        _finalizer.settleFrom(GST_MESSAGE_SRC(message), RecordingFinalizer::Outcome::Failed, &fromRecorder);
-    if (!fromRecorder) {
+    return _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink.get()));
+}
+
+void RecordingBranch::onBusError(GstMessage* message, const GError* error, const QString& text, const char* debug)
+{
+    if (!_fromRecorder(GST_MESSAGE_SRC(message))) {
         qCDebug(GstVideoReceiverLog) << "Ignoring an error from an earlier recording:" << text;
         return;
     }
@@ -466,12 +636,9 @@ void RecordingBranch::onBusError(GstMessage* message, const QString& text, const
     } else {
         qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
     }
-    // An error after the file closed doesn't fail it; a recording still running ends either way.
-    if (!settled && (_state != State::Recording)) {
-        return;
-    }
-
-    _failure = text;
+    // GStreamer's text for it names the file, not the cause.
+    _failure = reportsFullStorage(error, debug) ? QCoreApplication::translate("RecordingBranch", "The storage is full.")
+                                                : text;
     // The bus handler closed the valve already: a failing recorder ends the recording, not the stream.
     _finish(QString());
 }
@@ -490,7 +657,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
     if (!forwarded || (GST_MESSAGE_TYPE(forwarded.get()) != GST_MESSAGE_EOS)) {
         return;
     }
-    if (!_finalizer.settleFrom(GST_MESSAGE_SRC(forwarded.get()), RecordingFinalizer::Outcome::Closed)) {
+    if (!_fromRecorder(GST_MESSAGE_SRC(forwarded.get()))) {
         return;
     }
     if (_state == State::Recording) {
@@ -499,7 +666,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
         _streaming = false;
     }
     qCDebug(GstVideoReceiverLog) << "Recording finalized" << _current.file;
-    _finish(QString());
+    _finish(QString(), /*fileClosed=*/true);
 }
 
 void RecordingBranch::_onFileOpened(quint64 recording)
@@ -520,25 +687,107 @@ void RecordingBranch::_onOverrun(quint64 recording)
     _end(QCoreApplication::translate("RecordingBranch", "The storage is too slow to keep up with the video."));
 }
 
+void RecordingBranch::_onCapsChanged(quint64 recording)
+{
+    if ((_capsHold.load(std::memory_order_acquire) == 0) || (_state == State::Finalizing)) {
+        // Let go already, or held until _finish() has started what follows the file that is finishing.
+        return;
+    }
+    if ((_state != State::Recording) || (recording != _recording.load(std::memory_order_relaxed))) {
+        // The file the change was held for is gone: it goes on to what is linked by now.
+        _releaseSwitchHold();
+        _reconcile();
+        return;
+    }
+
+    qCDebug(GstVideoReceiverLog) << "The stream's caps changed while recording" << _current.file;
+    if (_requested && (*_requested == _current)) {
+        // The listener counts a file from this report on.
+        _reportOpened();
+        _listener.onRecordingNeedsNewFile(_current.file);
+    }
+    // Ends the file where the stream is held, for the one requested by now. Without one the change goes on into the
+    // file, whose muxer decides whether it can take it.
+    _reconcile();
+}
+
+void RecordingBranch::_checkStarted()
+{
+    if ((_state != State::Recording) || _fileStarted.load(std::memory_order_acquire)) {
+        return;
+    }
+    const gint64 fedAt = _fedAt.load(std::memory_order_relaxed);
+    if ((fedAt == 0) || ((g_get_monotonic_time() - fedAt) < std::chrono::microseconds(kStartTimeout).count())) {
+        return;
+    }
+    qCWarning(GstVideoReceiverLog) << "No keyframe to start the recording with within"
+                                   << std::chrono::seconds(kStartTimeout).count()
+                                   << "s of the stream's first one, as when keyframes come without their parameter"
+                                   << "sets; ending the recording" << _current.file;
+    _end(
+        QCoreApplication::translate("RecordingBranch", "The video stream has no keyframe a recording can start from."));
+}
+
+void RecordingBranch::_checkHeaderSpace()
+{
+    // A switch under way leaves the file soon enough. Until its second header update the muxer has its estimate from
+    // the file's first frame alone: seconds, when that frame and the next arrived together.
+    if ((_state != State::Recording) || _switching || !_fileSink || !_openedReported ||
+        !_openedFor.hasExpired(std::chrono::milliseconds(kHeaderEstimateDelay).count())) {
+        return;
+    }
+    const GStreamer::GstElementPtr muxer =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(_fileSink.get()), "muxer"));
+    if (!muxer || !g_object_class_find_property(G_OBJECT_GET_CLASS(muxer.get()), "reserved-duration-remaining")) {
+        return;
+    }
+    // The muxer's estimate from the space the recording used so far.
+    guint64 remainingNs = 0;
+    g_object_get(muxer.get(), "reserved-duration-remaining", &remainingNs, nullptr);
+    if (remainingNs >= static_cast<guint64>(std::chrono::nanoseconds(kHeaderSpaceMargin).count())) {
+        return;
+    }
+    qCDebug(GstVideoReceiverLog) << "Header space left for about" << (remainingNs / GST_SECOND) << "s in"
+                                 << _current.file;
+    _listener.onRecordingNeedsNewFile(_current.file);
+}
+
 void RecordingBranch::_reportOpened()
 {
     if (_openedReported) {
         return;
     }
     _openedReported = true;
+    _openedFor.start();
     qCDebug(GstVideoReceiverLog) << "Recording started" << _current.file;
     _listener.onRecordingFileOpened(_current.file);
 }
 
-GstPadProbeReturn RecordingBranch::_keyframeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data)
+GstPadProbeReturn RecordingBranch::_keyframeProbe([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
 {
-    const auto* const watch = static_cast<const KeyframeWatch*>(data);
+    auto* const self = static_cast<RecordingBranch*>(data);
+    if (self->_fedAt.load(std::memory_order_relaxed) != 0) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    // Upstream of the tee is always a parser (GstBaseParse), which pushes single buffers, never lists.
+    const GstBuffer* const buffer = gst_pad_probe_info_get_buffer(info);
+    if (!buffer || GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
+        return GST_PAD_PROBE_DROP;
+    }
+    self->_fedAt.store(g_get_monotonic_time(), std::memory_order_relaxed);
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn RecordingBranch::_startProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    const auto* const watch = static_cast<const RecordingWatch*>(data);
     RecordingBranch* const self = watch->branch;
     if (self->_fileStarted.load(std::memory_order_relaxed)) {
         return GST_PAD_PROBE_OK;
     }
 
-    // Upstream of the tee is always a parser (GstBaseParse), which pushes single buffers, never lists.
+    // As the one upstream of the tee, the recorder's parser pushes single buffers.
     GstBuffer* buf = gst_pad_probe_info_get_buffer(info);
     if (!buf || GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT) || !GST_BUFFER_PTS_IS_VALID(buf)) {
         return GST_PAD_PROBE_DROP;
@@ -558,13 +807,65 @@ GstPadProbeReturn RecordingBranch::_keyframeProbe(GstPad* pad, GstPadProbeInfo* 
         return GST_PAD_PROBE_DROP;
     }
 
-    // Starts the file at 0; only the elements downstream of the valve see the offset.
+    // Starts the file at 0; only the elements downstream of this pad see the offset.
     gst_pad_set_offset(pad, -static_cast<gint64>(runningTime));
 
     self->_fileStarted.store(true, std::memory_order_release);
     // Reported from the worker, which knows whether this recording is still the current one.
     const quint64 recording = watch->recording;
     self->_context.post([self, recording]() { self->_onFileOpened(recording); });
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn RecordingBranch::_capsProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    const auto* const watch = static_cast<const RecordingWatch*>(data);
+    RecordingBranch* const self = watch->branch;
+    GstEvent* const event = gst_pad_probe_info_get_event(info);
+    // Until its file starts the recorder takes the caps as they come, and one change is held at a time.
+    if (!event || (GST_EVENT_TYPE(event) != GST_EVENT_CAPS) || !self->_fileStarted.load(std::memory_order_acquire) ||
+        (self->_capsHold.load(std::memory_order_acquire) != 0)) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    // A sink pad takes up an event after its probes, so it still has the caps the file records.
+    GstCaps* caps = nullptr;
+    gst_event_parse_caps(event, &caps);
+    const GStreamer::GstCapsPtr recorded = GStreamer::adoptCaps(gst_pad_get_current_caps(pad));
+    const GStreamer::GstElementPtr valve = GStreamer::adoptElement(gst_pad_get_parent_element(pad));
+    if (!valve || (recorded && gst_caps_is_equal(recorded.get(), caps))) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    // matroskamux takes no other caps in a file it has begun, and qtmux only some (a resolution, not a pixel aspect
+    // ratio), which not every player follows. The event is held where the valve passes it on next, so the file ends
+    // before it and the next one begins with it. Not held by a probe that stays on that pad: one blocking probe left
+    // on a pad keeps it from letting go of what another one held.
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
+    self->_capsHold.store(
+        gst_pad_add_probe(valveSrc.get(),
+                          static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
+                          holdCapsEvent, gst_caps_ref(caps),
+                          [](gpointer held) { gst_caps_unref(static_cast<GstCaps*>(held)); }),
+        std::memory_order_release);
+    const quint64 recording = watch->recording;
+    self->_context.post([self, recording]() { self->_onCapsChanged(recording); });
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn RecordingBranch::_switchProbe([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    const GstBuffer* const buffer = gst_pad_probe_info_get_buffer(info);
+    if (!buffer || GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT) || !GST_BUFFER_PTS_IS_VALID(buffer)) {
+        // Passes, and the probe is asked again for the next buffer.
+        return GST_PAD_PROBE_PASS;
+    }
+
+    const auto* const watch = static_cast<const SwitchWatch*>(data);
+    RecordingBranch* const self = watch->branch;
+    const quint64 hold = watch->hold;
+    self->_context.post([self, hold]() { self->_onSwitchKeyframe(hold); });
+    // Blocks, with the keyframe, until the probe is removed.
     return GST_PAD_PROBE_OK;
 }
 

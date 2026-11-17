@@ -8,6 +8,8 @@
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
 #include <QtCore/QString>
+#include <QtMultimedia/QMediaFormat>
+#include <QtMultimedia/QMediaRecorder>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "VideoScreenshot.h"
@@ -17,7 +19,8 @@ class QQuickItem;
 class QVideoFrame;
 class QVideoSink;
 
-/// One network video stream: connects to a URI, shows it in a QML VideoOutput and records it.
+/// One video source: a network stream, which a backend's receiver connects to at the config's URI, or a local camera
+/// (UVCCameraController), which the URI names. Shows it in a QML VideoOutput, records it and takes its screenshots.
 ///
 /// Intent-based: callers state what they want (setConfig(), setActive(), setVideoOutput(), startRecording()) and the
 /// receiver gets there on its own, restarting after a config change and reconnecting after a failure. Call every
@@ -30,13 +33,13 @@ class VideoReceiver : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_PROPERTY(QString name READ name CONSTANT)
-    Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
-    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
-    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
-    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
-    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged FINAL)
+    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
+    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
+    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged FINAL)
+    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged FINAL)
 
 public:
     enum class State : uint8_t
@@ -60,7 +63,8 @@ public:
     struct Config
     {
         QString uri;
-        /// No data, or no decoded frame while displaying, for this long is a stream failure.
+        /// No data, or no decoded frame while displaying, for this long is a stream failure. Not before the first data
+        /// of a stream the receiver listens for on a UDP port, which may start at any time.
         std::chrono::seconds timeout{3};
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;
@@ -80,6 +84,17 @@ public:
         friend bool operator==(const DisplayConfig&, const DisplayConfig&) = default;
     };
 
+    /// How a receiver that encodes its recordings anew (encodesRecordings()) encodes them, as QtVideoRecorder::start()
+    /// takes it: from VideoSettings' uvcRecordingCodec and uvcRecordingQuality.
+    struct RecordingEncoding
+    {
+        /// Tried first; Unspecified for the first codec that encodes.
+        QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified;
+        QMediaRecorder::Quality quality = QMediaRecorder::HighQuality;
+
+        friend bool operator==(const RecordingEncoding&, const RecordingEncoding&) = default;
+    };
+
     explicit VideoReceiver(QObject* parent = nullptr);
     ~VideoReceiver() override;
 
@@ -89,8 +104,9 @@ public:
     static QString recordingComment();
     static bool isValidFileFormat(int format);
     /// The size @p frame is presented at: its format's viewport (the picture without decoder padding or crop), else the
-    /// whole frame, turned by the rotation Qt presents it with. Invalid for an invalid frame.
-    static QSize presentedSize(const QVideoFrame& frame);
+    /// whole frame, turned by the rotation Qt presents it with. Invalid for an invalid frame. A valid @p pictureSize
+    /// stands in for the viewport's, which is smaller where it leaves out the padding of a squeezed texture.
+    static QSize presentedSize(const QVideoFrame& frame, QSize pictureSize = {});
 
     QString name() const { return _name; }
 
@@ -113,6 +129,7 @@ public:
 
     bool recording() const { return _recording; }
 
+    /// The size of the frames as they are presented, before the orientation the VideoOutput adds.
     QSize videoSize() const { return _videoSize; }
 
     /// The stream's health, measured about once a second while it streams; invalid while it doesn't.
@@ -125,11 +142,26 @@ public:
     /// Stores @p config for the display sink restart() builds next.
     void setDisplayConfig(const DisplayConfig& config) { _displayConfig = config; }
 
+    /// True for a receiver that encodes its recordings anew, as recordingEncoding() says: a USB camera, or Qt
+    /// Multimedia's player. False for one that records the stream as it arrives.
+    virtual bool encodesRecordings() const { return false; }
+
+    const RecordingEncoding& recordingEncoding() const { return _recordingEncoding; }
+
+    /// Stores @p encoding for the recordings that start from now on; one in progress keeps its own.
+    void setRecordingEncoding(const RecordingEncoding& encoding) { _recordingEncoding = encoding; }
+
     /// Streams while true and the URI is set. False stops the stream, any pending reconnect and any recording.
     void setActive(bool active);
+    /// setActive(false) for a receiver that outlives its use, before the application goes away: once it has finished
+    /// what the exit would cut short.
+    virtual void shutDown();
     /// Tears the stream down and connects again now, skipping any reconnect backoff, and rebuilds the display sink so
     /// construct-only sink settings apply. No-op while inactive.
     void restart();
+    /// Connects again now when the stream is waiting out a reconnect backoff, and starts the backoff over: for when the
+    /// stream's source is likely back, as when its vehicle's link returned. Nothing otherwise.
+    void reconnectNow();
     /// Displays the stream in @p videoOutput, a QML VideoOutput; nullptr stops displaying. Decoding runs only while an
     /// output is set. Setting the current output again binds it anew, for one that moved to another window. The
     /// output's destruction is tracked: it detaches as if nullptr had been set.
@@ -137,39 +169,45 @@ public:
 
     /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
     /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
-    /// it arrives. After a reconnect the recording continues, into "<base>_part<N>.<ext>", N counting from 2, or in the
-    /// same file for a receiver that encodes the frames anew.
+    /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
+    /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as recordingEncoding() says, keeps
+    /// to the same file.
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
-    /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored, with
-    /// @p exif for a JPEG. Returns false, with a warning logged, when there is no output, no frame, or the file can't
-    /// be written.
-    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
+    /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored as the
+    /// frame and then the VideoOutput (its orientation and mirrored properties) say, with @p exif for a JPEG. The frame
+    /// is converted here; it is encoded and written on the thread pool. Returns false, with a warning logged, when
+    /// there is no output or no frame. A file that can't be written is reported later, through errorOccurred().
+    /// A receiver that takes photos saves one instead: see onTakeScreenshot().
+    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {});
 
 signals:
     void stateChanged(VideoReceiver::State state);
     void streamingChanged(bool streaming);
     void decodingChanged(bool decoding);
     void recordingChanged(bool recording);
-    /// A recording file opened: the first one after startRecording(), or the next part after a reconnect.
+    /// A recording file opened: the first one after startRecording(), or the recording's next part.
     void recordingStarted(const QString& file);
     /// A recording file closed. @p error is empty when the file was finalized cleanly.
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
     void statsChanged(const VideoStreamStats& stats);
-    /// A failure worth telling the user about (stream error with autoReconnect off, recording error). Not emitted for
-    /// failures the receiver recovers from by reconnecting.
+    /// A failure worth telling the user about (stream error with autoReconnect off, recording error, a screenshot that
+    /// couldn't be saved). Not emitted for failures the receiver recovers from by reconnecting.
     void errorOccurred(const QString& message);
 
 protected:
     virtual void onConfigChanged() = 0;
     virtual void onActiveChanged() = 0;
     virtual void onRestartRequested() = 0;
+    virtual void onReconnectRequested() = 0;
     /// Also called when the current output is set again.
     virtual void onVideoOutputChanged() = 0;
     virtual void onStartRecording(const QString& file, FileFormat format) = 0;
     virtual void onStopRecording() = 0;
+    /// takeScreenshot() with an output set: saves the frame on display, unless overridden.
+    virtual bool onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif);
 
     /// The VideoOutput's QVideoSink, or nullptr.
     QVideoSink* videoSink() const;
@@ -188,6 +226,7 @@ private:
     QString _name;
     Config _config;
     DisplayConfig _displayConfig;
+    RecordingEncoding _recordingEncoding;
     bool _active = false;
     QPointer<QQuickItem> _videoOutput;
     QMetaObject::Connection _videoOutputDestroyed;

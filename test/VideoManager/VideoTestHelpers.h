@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
@@ -41,9 +43,11 @@ public:
     int configChanges = 0;
     int activeChanges = 0;
     int restarts = 0;
+    int reconnects = 0;
     int videoOutputChanges = 0;
     QList<Recording> recordings;
     int recordingStops = 0;
+    int screenshots = 0;
 
 protected:
     void onConfigChanged() override { ++configChanges; }
@@ -52,11 +56,19 @@ protected:
 
     void onRestartRequested() override { ++restarts; }
 
+    void onReconnectRequested() override { ++reconnects; }
+
     void onVideoOutputChanged() override { ++videoOutputChanges; }
 
     void onStartRecording(const QString& file, FileFormat format) override { recordings.append({file, format}); }
 
     void onStopRecording() override { ++recordingStops; }
+
+    bool onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) override
+    {
+        ++screenshots;
+        return VideoReceiver::onTakeScreenshot(file, exif);
+    }
 };
 
 namespace VideoTestHelpers {
@@ -91,11 +103,12 @@ private:
 /// A camera's VIDEO_STREAM_INFORMATION.
 inline std::unique_ptr<QGCVideoStreamInfo> makeStreamInfo(VIDEO_STREAM_TYPE type, const char* uri,
                                                           VIDEO_STREAM_ENCODING encoding = VIDEO_STREAM_ENCODING_H264,
-                                                          bool thermal = false)
+                                                          bool thermal = false, quint16 rotation = 0)
 {
     mavlink_video_stream_information_t info{};
     info.type = type;
     info.encoding = encoding;
+    info.rotation = rotation;
     info.flags = thermal ? VIDEO_STREAM_STATUS_FLAGS_THERMAL : 0;
     info.resolution_h = 1280;
     info.resolution_v = 720;
@@ -103,6 +116,29 @@ inline std::unique_ptr<QGCVideoStreamInfo> makeStreamInfo(VIDEO_STREAM_TYPE type
     (void) qstrncpy(info.uri, uri, sizeof(info.uri));
     return std::make_unique<QGCVideoStreamInfo>(info);
 }
+
+/// An engine that makes objects of inline QML, which can import the application's QML modules.
+class InlineQmlEngine : public QQmlEngine
+{
+public:
+    InlineQmlEngine() { addImportPath(QStringLiteral("qrc:/qml")); }
+
+    /// What @p qml makes with @p properties; null when it makes nothing or no T, for the reason in error().
+    template <typename T = QObject>
+    std::unique_ptr<T> create(const char* qml, const QVariantMap& properties = {})
+    {
+        QQmlComponent component(this);
+        component.setData(qml, QUrl(QStringLiteral("qrc:/VideoTestHelpers/Inline.qml")));
+        std::unique_ptr<QObject> object(component.createWithInitialProperties(properties));
+        _error = component.errorString();
+        return std::unique_ptr<T>(qobject_cast<T*>(object.release()));
+    }
+
+    const QString& error() const { return _error; }
+
+private:
+    QString _error;
+};
 
 /// A QML VideoOutput of 64 × 48, as created by @p engine.
 inline std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
@@ -120,6 +156,39 @@ VideoOutput {
                       QUrl(QStringLiteral("qrc:/VideoTestHelpers/VideoOutput.qml")));
     std::unique_ptr<QObject> object(component.create());
     return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
+}
+
+/// 64 × 48, red in the top-left quadrant only.
+inline QImage redTopLeftQuadrant()
+{
+    QImage image(QSize(64, 48), QImage::Format_RGBA8888);
+    image.fill(Qt::blue);
+    for (int y = 0; y < 24; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            image.setPixelColor(x, y, Qt::red);
+        }
+    }
+    return image;
+}
+
+/// The corner of @p image whose quadrant is the red one; nullopt unless exactly one is.
+inline std::optional<Qt::Corner> redCorner(const QImage& image)
+{
+    std::optional<Qt::Corner> corner;
+    for (const Qt::Corner candidate :
+         {Qt::TopLeftCorner, Qt::TopRightCorner, Qt::BottomLeftCorner, Qt::BottomRightCorner}) {
+        const bool right = (candidate == Qt::TopRightCorner) || (candidate == Qt::BottomRightCorner);
+        const bool bottom = (candidate == Qt::BottomLeftCorner) || (candidate == Qt::BottomRightCorner);
+        const QColor color =
+            image.pixelColor(image.width() * (right ? 3 : 1) / 4, image.height() * (bottom ? 3 : 1) / 4);
+        if ((color.red() > 200) && (color.blue() < 50)) {
+            if (corner) {
+                return std::nullopt;
+            }
+            corner = candidate;
+        }
+    }
+    return corner;
 }
 
 /// Hands @p videoOutput's sink @p image as its next frame.

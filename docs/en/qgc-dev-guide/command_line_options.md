@@ -45,7 +45,7 @@ The options/command line arguments are listed in the table below.
 | `--simple-boot-test`                                      | Initializes the application subsystems and exits (a quick startup check).                                                         |
 | `--fake-mobile`                                           | (Desktop only) Simulates running on a mobile device.                                                                              |
 | `--allow-multiple`                                        | (Desktop only) Allows more than one instance of _QGroundControl_ to run at a time.                                                |
-| `--swrast`                                                | (Windows and macOS only) Forces software rendering.                                                                               |
+| `--swrast`                                                | (Windows and macOS only) Forces software rendering. Video decodes in software too, unless a decoder is selected in settings.      |
 | `--no-windows-assert-ui`                                  | (Windows only) Disables the assert dialog boxes.                                                                                  |
 
 ### Unit Test Options

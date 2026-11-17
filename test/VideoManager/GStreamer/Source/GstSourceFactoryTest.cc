@@ -1,0 +1,1062 @@
+#include "GstSourceFactoryTest.h"
+
+#ifdef QGC_GST_STREAMING
+
+#include <atomic>
+#include <gst/gst.h>
+#include <gst/sdp/gstsdpmessage.h>
+#include <gst/video/video.h>
+#include <thread>
+
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+
+#include "GStreamerTestHelpers.h"
+#include "GstRtpPacketProbe.h"
+#include "GstRtspSource.h"
+#include "GstScoped.h"
+#include "GstSourceFactory.h"
+#include "VideoStreamUri.h"
+
+namespace {
+
+/// What a bare test sink pad received: each buffer's bytes and PTS.
+struct ReceivedBuffers
+{
+    QList<QByteArray> data;
+    QList<GstClockTime> pts;
+};
+
+GstFlowReturn recordBuffer(GstPad* pad, [[maybe_unused]] GstObject* parent, GstBuffer* buffer)
+{
+    auto* const received = static_cast<ReceivedBuffers*>(gst_pad_get_element_private(pad));
+    GstMapInfo map;
+    if (gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+        received->data.append(QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)));
+        gst_buffer_unmap(buffer, &map);
+    }
+    received->pts.append(GST_BUFFER_PTS(buffer));
+    gst_buffer_unref(buffer);
+    return GST_FLOW_OK;
+}
+
+/// A src pad standing in for a depayloader's, linked to a sink pad recording into @p received, with @p caps sent.
+struct GatedPads
+{
+    GatedPads(ReceivedBuffers* received, const char* caps)
+        : src(GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC)))
+        , sink(GStreamer::adoptFloating(gst_pad_new("sink", GST_PAD_SINK)))
+    {
+        gst_pad_set_element_private(sink.get(), received);
+        gst_pad_set_chain_function(sink.get(), recordBuffer);
+        gst_pad_set_event_function(sink.get(), [](GstPad*, GstObject*, GstEvent* event) -> gboolean {
+            gst_event_unref(event);
+            return TRUE;
+        });
+        (void) gst_pad_set_active(src.get(), TRUE);
+        (void) gst_pad_set_active(sink.get(), TRUE);
+        linked = gst_pad_link(src.get(), sink.get()) == GST_PAD_LINK_OK;
+        (void) gst_pad_push_event(src.get(), gst_event_new_stream_start("parameter-set-gate"));
+        const GStreamer::GstCapsPtr streamCaps = GStreamer::adoptCaps(gst_caps_from_string(caps));
+        (void) gst_pad_push_event(src.get(), gst_event_new_caps(streamCaps.get()));
+        GstSegment segment;
+        gst_segment_init(&segment, GST_FORMAT_TIME);
+        (void) gst_pad_push_event(src.get(), gst_event_new_segment(&segment));
+    }
+
+    ~GatedPads()
+    {
+        (void) gst_pad_set_active(src.get(), FALSE);
+        (void) gst_pad_set_active(sink.get(), FALSE);
+    }
+
+    GatedPads(const GatedPads&) = delete;
+    GatedPads& operator=(const GatedPads&) = delete;
+
+    GstFlowReturn push(const QByteArray& bytes, GstClockTime pts) const
+    {
+        GstBuffer* const buffer = gst_buffer_new_memdup(bytes.constData(), static_cast<gsize>(bytes.size()));
+        GST_BUFFER_PTS(buffer) = pts;
+        return gst_pad_push(src.get(), buffer);
+    }
+
+    GStreamer::GstPadPtr src;
+    GStreamer::GstPadPtr sink;
+    bool linked = false;
+};
+
+GstStaticPadTemplate sH264RtpPadTemplate = GST_STATIC_PAD_TEMPLATE(
+    "video_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
+    GST_STATIC_CAPS("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"));
+
+/// An mpegts:// source bin, whose tsdemux the dynamic-pad test hands RTP pads to.
+struct MpegTsSource
+{
+    explicit MpegTsSource(const GStreamer::SourceFactory::Config& config)
+        : bin(GStreamer::SourceFactory::create(QStringLiteral("mpegts://127.0.0.1:5600"), config))
+        , demux(GstTest::findByFactory(bin.get(), "tsdemux"))
+        , parserSink(GStreamer::adoptPad(parserSinkPad(bin.get())))
+    {}
+
+    /// Built, and no pad reaches the parser yet.
+    bool isValid() const { return demux && parserSink && !gst_pad_is_linked(parserSink.get()); }
+
+    GstTest::TestPipeline bin;
+    GStreamer::GstElementPtr demux;
+    GStreamer::GstPadPtr parserSink;
+
+private:
+    static GstPad* parserSinkPad(GstElement* bin)
+    {
+        const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin, "parsebin");
+        return parser ? gst_element_get_static_pad(parser.get(), "sink") : nullptr;
+    }
+};
+
+/// An rtsp:// source bin in PAUSED whose rtspsrc stays in NULL and so connects nowhere: the tests add its pads by
+/// hand, as it adds one for each SSRC and payload type it receives, and what the bin plugs for them runs.
+struct RtspSource
+{
+    RtspSource()
+        : bin(GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"),
+                                               GStreamer::SourceFactory::Config{}))
+        , source(GstTest::findByFactory(bin.get(), "rtspsrc"))
+    {
+        started = source && gst_element_set_locked_state(source.get(), TRUE) &&
+                  (gst_element_set_state(bin.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    }
+
+    /// An RTP pad of video in @p encoding, added to rtspsrc: null when it refuses it. rtspsrc owns the pad.
+    GstPad* addPad(const QByteArray& name, const QByteArray& encoding) const
+    {
+        const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(
+            gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video", "clock-rate", G_TYPE_INT, 90000,
+                                "encoding-name", G_TYPE_STRING, encoding.constData(), nullptr));
+        GstPadTemplate* const padTemplate = gst_pad_template_new("rtp", GST_PAD_SRC, GST_PAD_SOMETIMES, caps.get());
+        GstPad* const pad = gst_pad_new_from_template(padTemplate, name.constData());
+        gst_object_unref(padTemplate);
+        return gst_element_add_pad(source.get(), pad) ? pad : nullptr;
+    }
+
+    /// Starts a stream on @p pad and pushes @p nals, the NAL units of one access unit, each in an RTP packet of
+    /// @p ssrc. False when the bin refuses them; that nothing is linked behind the bin is no refusal.
+    static bool pushAccessUnit(GstPad* pad, quint32 ssrc, const QList<QByteArray>& nals)
+    {
+        const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_pad_query_caps(pad, nullptr));
+        GstSegment segment;
+        gst_segment_init(&segment, GST_FORMAT_TIME);
+        bool pushed = gst_pad_set_active(pad, TRUE) && gst_pad_push_event(pad, gst_event_new_stream_start("qgc-rtp")) &&
+                      gst_pad_push_event(pad, gst_event_new_caps(caps.get())) &&
+                      gst_pad_push_event(pad, gst_event_new_segment(&segment));
+        auto sequence = static_cast<quint16>(ssrc);
+        for (const QByteArray& nal : nals) {
+            // The marker bit ends the access unit.
+            QByteArray packet =
+                QByteArray::fromHex((&nal == &nals.last()) ? "80e0" : "8060") + QByteArray(10, '\0') + nal;
+            auto* const header = reinterpret_cast<guint8*>(packet.data());
+            GST_WRITE_UINT16_BE(header + 2, sequence++);
+            GST_WRITE_UINT32_BE(header + 8, ssrc);
+            GstBuffer* const buffer = gst_buffer_new_memdup(packet.constData(), static_cast<gsize>(packet.size()));
+            GST_BUFFER_PTS(buffer) = 0;
+            const GstFlowReturn flow = gst_pad_push(pad, buffer);
+            pushed = pushed && ((flow == GST_FLOW_OK) || (flow == GST_FLOW_NOT_LINKED));
+        }
+        return pushed;
+    }
+
+    GstTest::TestPipeline bin;
+    GStreamer::GstElementPtr source;
+    bool started = false;
+};
+
+/// The NAL units of the Annex B @p data, without their start codes.
+QList<QByteArray> splitNalUnits(const QByteArray& data)
+{
+    QList<QByteArray> nals;
+    const QByteArrayView startCode("\x00\x00\x01", 3);
+    for (qsizetype start = data.indexOf(startCode); start >= 0;) {
+        const qsizetype next = data.indexOf(startCode, start + 3);
+        QByteArray nal = data.mid(start + 3, (next < 0) ? -1 : (next - start - 3));
+        // The zero ahead of the next start code is that one's.
+        while ((next >= 0) && nal.endsWith('\0')) {
+            nal.chop(1);
+        }
+        nals.append(nal);
+        start = next;
+    }
+    return nals;
+}
+
+}  // namespace
+
+void GstSourceFactoryTest::_testIsValidRtspUri()
+{
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtsp://127.0.0.1:8554/test"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtsp://user:pass@10.0.0.1/stream"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtspu://192.168.1.1:554/video"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtspt://example.com/live"));
+
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri(nullptr));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri(""));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("not-a-uri"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("http://example.com"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("udp://127.0.0.1:5600"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("rtsp://"));
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
+{
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
+    config.latencyMs = 80;
+    config.doRetransmission = true;
+
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
+    QVERIFY(bin);
+
+    const GStreamer::GstElementPtr jb = GstTest::findByFactory(bin.get(), "rtpjitterbuffer");
+    QVERIFY2(jb, "static UDP-RTP path must insert an rtpjitterbuffer at NULL state");
+
+    guint latency = 0;
+    gboolean doLost = TRUE, doRtx = TRUE, dropOnLatency = FALSE;
+    g_object_get(jb.get(), "latency", &latency, "do-lost", &doLost, "do-retransmission", &doRtx, "drop-on-latency",
+                 &dropOnLatency, nullptr);
+    QCOMPARE(latency, 80u);
+    QVERIFY2(!doLost, "as in rtspsrc's jitter buffers: nothing downstream acts on the events about lost packets");
+    QVERIFY2(!doRtx, "plain UDP has no RTCP back-channel, so retransmission requests could never reach the sender");
+    QCOMPARE(dropOnLatency, TRUE);
+
+    // Nothing reads the sender's address, which udpsrc otherwise attaches to every packet.
+    gboolean retrievesSenderAddress = TRUE;
+    g_object_get(GstTest::findByFactory(bin.get(), "udpsrc").get(), "retrieve-sender-address", &retrievesSenderAddress,
+                 nullptr);
+    QCOMPARE(retrievesSenderAddress, FALSE);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QByteArray>("optionalFactory");
+    QTest::addColumn<bool>("lowLatency");
+    QTest::addColumn<bool>("jitterBuffer");
+    QTest::addColumn<bool>("countsPackets");
+
+    const QByteArray none;
+    // RTP over UDP is counted by its jitter buffer, or without one by the bin itself: never by both.
+    QTest::newRow("udp") << QStringLiteral("udp://127.0.0.1:5600") << none << false << true << false;
+    QTest::newRow("udp, low latency") << QStringLiteral("udp://127.0.0.1:5600") << none << true << false << true;
+    QTest::newRow("udp265, low latency") << QStringLiteral("udp265://127.0.0.1:5600") << none << true << false << true;
+    // MPEG-TS carries no RTP, and rtspsrc brings jitter buffers of its own once it streams.
+    QTest::newRow("mpegts, low latency") << QStringLiteral("mpegts://127.0.0.1:5600") << QByteArray("tsdemux") << true
+                                         << false << false;
+    QTest::newRow("rtsp, low latency") << QStringLiteral("rtsp://127.0.0.1:8554/test") << QByteArray("rtspsrc") << true
+                                       << false << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer()
+{
+    QFETCH(QString, uri);
+    QFETCH(QByteArray, optionalFactory);
+    QFETCH(bool, lowLatency);
+    QFETCH(bool, jitterBuffer);
+    QFETCH(bool, countsPackets);
+
+    if (!optionalFactory.isEmpty()) {
+        GSTTEST_SKIP_UNLESS_FACTORIES(optionalFactory.constData());
+    }
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = lowLatency ? GStreamer::SourceFactory::JitterBuffer::None
+                                     : GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
+
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
+    QVERIFY(bin);
+
+    QCOMPARE(static_cast<bool>(GstTest::findByFactory(bin.get(), "rtpjitterbuffer")), jitterBuffer);
+    QCOMPARE(GStreamer::rtpPacketCounts(bin.get()).has_value(), countsPackets);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy_data()
+{
+    QTest::addColumn<int>("jitterBufferPolicy");
+    QTest::addColumn<bool>("doRetransmission");
+    QTest::addColumn<guint>("expectedLatencyMs");
+    QTest::addColumn<bool>("expectedRetransmission");
+    QTest::addColumn<bool>("expectedDropOnLatency");
+    QTest::addColumn<int>("expectedRtxDelay");
+    QTest::addColumn<int>("expectedRtxMaxRetries");
+
+    using JitterBuffer = GStreamer::SourceFactory::JitterBuffer;
+    // -1 is rtpjitterbuffer's "auto" default, i.e. the factory left the internal jitterbuffer untouched.
+    QTest::newRow("low-latency") << static_cast<int>(JitterBuffer::None) << true << 0u << false << true << -1 << -1;
+    QTest::newRow("drop-on-latency") << static_cast<int>(JitterBuffer::DropOnLatency) << true << 80u << true << true
+                                     << 25 << 1;
+    // RTSP is the only source with a back-channel for retransmission requests, so it's the one the option reaches.
+    QTest::newRow("no retransmission") << static_cast<int>(JitterBuffer::DropOnLatency) << false << 80u << false << true
+                                       << -1 << -1;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    QFETCH(int, jitterBufferPolicy);
+    QFETCH(bool, doRetransmission);
+    QFETCH(guint, expectedLatencyMs);
+    QFETCH(bool, expectedRetransmission);
+    QFETCH(bool, expectedDropOnLatency);
+    QFETCH(int, expectedRtxDelay);
+    QFETCH(int, expectedRtxMaxRetries);
+
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = static_cast<GStreamer::SourceFactory::JitterBuffer>(jitterBufferPolicy);
+    config.latencyMs = 80;
+    config.doRetransmission = doRetransmission;
+
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    QVERIFY(bin);
+
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+
+    guint latencyMs = 0;
+    gboolean retransmission = FALSE;
+    gboolean dropOnLatency = FALSE;
+    g_object_get(source.get(), "latency", &latencyMs, "do-retransmission", &retransmission, "drop-on-latency",
+                 &dropOnLatency, nullptr);
+    QCOMPARE(latencyMs, expectedLatencyMs);
+    QCOMPARE(retransmission, expectedRetransmission ? TRUE : FALSE);
+    QCOMPARE(dropOnLatency, expectedDropOnLatency ? TRUE : FALSE);
+
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"),
+             "rtspsrc owns its internal jitterbuffer; the factory must not add a second one");
+
+    // rtspsrc only creates its rtpbin during SETUP; drive the same signals it emits so the
+    // per-stream internal jitterbuffer policy can be checked without a server.
+    GStreamer::GstElementPtr manager = GStreamer::adoptElement(gst_element_factory_make("rtpbin", nullptr));
+    GStreamer::GstElementPtr internalBuffer =
+        GStreamer::adoptElement(gst_element_factory_make("rtpjitterbuffer", nullptr));
+    QVERIFY(manager);
+    QVERIFY(internalBuffer);
+    g_signal_emit_by_name(source.get(), "new-manager", manager.get());
+    g_signal_emit_by_name(manager.get(), "new-jitterbuffer", internalBuffer.get(), 0u, 0u);
+
+    gint rtxDelay = 0;
+    gint rtxMaxRetries = 0;
+    gboolean postsDrops = FALSE;
+    g_object_get(internalBuffer.get(), "rtx-delay", &rtxDelay, "rtx-max-retries", &rtxMaxRetries, "post-drop-messages",
+                 &postsDrops, nullptr);
+    QCOMPARE(rtxDelay, expectedRtxDelay);
+    QCOMPARE(rtxMaxRetries, expectedRtxMaxRetries);
+    QVERIFY2(postsDrops, "the packets rtspsrc's jitter buffers drop on latency are only told in their messages");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspUdpBufferSize()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const GStreamer::SourceFactory::Config config;
+    const GStreamer::GstElementPtr udpBin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr rtspBin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    const GStreamer::GstElementPtr udpsrc = GstTest::findByFactory(udpBin.get(), "udpsrc");
+    const GStreamer::GstElementPtr rtspsrc = GstTest::findByFactory(rtspBin.get(), "rtspsrc");
+    QVERIFY(udpsrc && rtspsrc);
+
+    // rtspsrc's default, 512 KiB, is more than a stock Linux allows a socket, which udpsrc warns about for every
+    // session, and less than udp:// streams get where the kernel allows more.
+    gint udpBufferSize = 0;
+    gint rtspUdpBufferSize = 0;
+    g_object_get(udpsrc.get(), "buffer-size", &udpBufferSize, nullptr);
+    g_object_get(rtspsrc.get(), "udp-buffer-size", &rtspUdpBufferSize, nullptr);
+    QVERIFY(udpBufferSize > 0);
+    QCOMPARE(rtspUdpBufferSize, udpBufferSize);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspTimestampsTcpPackets()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const GStreamer::GstElementPtr bin =
+        GstTest::createSource(QStringLiteral("rtspt://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+    if (!g_object_class_find_property(G_OBJECT_GET_CLASS(source.get()), "tcp-timestamp")) {
+        QSKIP("rtspsrc has no tcp-timestamp before GStreamer 1.24.10");
+    }
+
+    // Without it the packets of a TCP session are timed by the camera's clock alone, which drifts against ours.
+    gboolean tcpTimestamp = FALSE;
+    g_object_get(source.get(), "tcp-timestamp", &tcpTimestamp, nullptr);
+    QCOMPARE(tcpTimestamp, TRUE);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams_data()
+{
+    QTest::addColumn<QString>("capsName");
+    QTest::addColumn<QString>("media");
+    QTest::addColumn<bool>("expectedSelected");
+
+    // Before the first SETUP rtspsrc passes SDP-derived caps that are still named application/x-unknown.
+    const QString sdpCaps = QStringLiteral("application/x-unknown");
+    QTest::newRow("video") << sdpCaps << QStringLiteral("video") << true;
+    QTest::newRow("audio") << sdpCaps << QStringLiteral("audio") << false;
+    QTest::newRow("metadata") << sdpCaps << QStringLiteral("application") << false;
+    // On reconnect the stream caps already carry the transport media type.
+    QTest::newRow("reconnect-video") << QStringLiteral("application/x-rtp") << QStringLiteral("video") << true;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    QFETCH(QString, capsName);
+    QFETCH(QString, media);
+    QFETCH(bool, expectedSelected);
+
+    GStreamer::SourceFactory::Config config;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    QVERIFY(bin);
+
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+
+    const QByteArray capsNameUtf8 = capsName.toUtf8();
+    const QByteArray mediaUtf8 = media.toUtf8();
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_new_simple(
+        capsNameUtf8.constData(), "media", G_TYPE_STRING, mediaUtf8.constData(), "payload", G_TYPE_INT, 96,
+        "clock-rate", G_TYPE_INT, 90000, "encoding-name", G_TYPE_STRING, "H264", nullptr));
+    QVERIFY(caps);
+
+    gboolean selected = expectedSelected ? FALSE : TRUE;
+    g_signal_emit_by_name(source.get(), "select-stream", 0u, caps.get(), &selected);
+    QCOMPARE(selected, expectedSelected ? TRUE : FALSE);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspAdvertisesKeyframeRequests_data()
+{
+    QTest::addColumn<QByteArray>("media");
+    QTest::addColumn<int>("payloadType");
+    QTest::addColumn<QByteArrayList>("feedback");
+    QTest::addColumn<bool>("requestsKeyframes");
+
+    const QByteArray video = "m=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\n";
+    QTest::newRow("video") << video << 96 << QByteArrayList{"* nack pli"} << true;
+    QTest::newRow("video that takes NACK") << video + "a=rtcp-fb:96 nack\r\n"
+                                           << 96 << QByteArrayList{"96 nack", "* nack pli"} << true;
+    QTest::newRow("video that takes PLI") << video + "a=rtcp-fb:96 nack pli\r\n"
+                                          << 96 << QByteArrayList{"96 nack pli"} << true;
+    QTest::newRow("audio") << QByteArray("m=audio 0 RTP/AVP 97\r\na=rtpmap:97 OPUS/48000/2\r\n") << 97
+                           << QByteArrayList{} << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspAdvertisesKeyframeRequests()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    QFETCH(QByteArray, media);
+    QFETCH(int, payloadType);
+    QFETCH(QByteArrayList, feedback);
+    QFETCH(bool, requestsKeyframes);
+
+    const GStreamer::GstElementPtr bin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+
+    const QByteArray text = "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=QGC\r\nc=IN IP4 127.0.0.1\r\nt=0 0\r\n" + media;
+    GstSDPMessage* sdp = nullptr;
+    QCOMPARE(gst_sdp_message_new(&sdp), GST_SDP_OK);
+    const auto freeSdp = qScopeGuard([sdp] { gst_sdp_message_free(sdp); });
+    QCOMPARE(gst_sdp_message_parse_buffer(reinterpret_cast<const guint8*>(text.constData()),
+                                          static_cast<guint>(text.size()), sdp),
+             GST_SDP_OK);
+    QCOMPARE(gst_sdp_message_medias_len(sdp), 1U);
+
+    // As rtspsrc does once it has the SDP, before it derives the streams' caps from it.
+    g_signal_emit_by_name(source.get(), "on-sdp", sdp);
+
+    const GstSDPMedia* const described = gst_sdp_message_get_media(sdp, 0);
+    QByteArrayList advertised;
+    for (guint i = 0; const gchar* const value = gst_sdp_media_get_attribute_val_n(described, "rtcp-fb", i); ++i) {
+        advertised.append(value);
+    }
+    QCOMPARE(advertised, feedback);
+    // rtpbin sends a PLI only for a payload type whose caps have this field.
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_sdp_media_get_caps_from_media(described, payloadType));
+    QVERIFY(caps);
+    QCOMPARE(bool(gst_structure_has_field(gst_caps_get_structure(caps.get(), 0), "rtcp-fb-nack-pli")),
+             requestsKeyframes);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspCredentials()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    // The URI's credentials go to rtspsrc's authentication properties, decoded, and leave its location.
+    const GStreamer::GstElementPtr bin = GstTest::createSource(
+        QStringLiteral("rtsp://pilot:p%40ss%20word@127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+    gchar* user = nullptr;
+    gchar* password = nullptr;
+    gchar* location = nullptr;
+    g_object_get(source.get(), "user-id", &user, "user-pw", &password, "location", &location, nullptr);
+    const auto release = qScopeGuard([&] {
+        g_free(user);
+        g_free(password);
+        g_free(location);
+    });
+    QCOMPARE(QString::fromUtf8(user), QStringLiteral("pilot"));
+    QCOMPARE(QString::fromUtf8(password), QStringLiteral("p@ss word"));
+    QCOMPARE(QString::fromUtf8(location), QStringLiteral("rtsp://127.0.0.1:8554/test"));
+
+    // Without credentials, none are set.
+    const GStreamer::GstElementPtr anonymousBin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    QVERIFY(anonymousBin);
+    const GStreamer::GstElementPtr anonymous = GstTest::findByFactory(anonymousBin.get(), "rtspsrc");
+    QVERIFY(anonymous);
+    gchar* noUser = nullptr;
+    g_object_get(anonymous.get(), "user-id", &noUser, nullptr);
+    const auto releaseNoUser = qScopeGuard([&noUser] { g_free(noUser); });
+    QVERIFY(!noUser || (noUser[0] == '\0'));
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri()
+{
+    ignoreLogMessage(
+        "Video.GStreamer.GstSourceFactory", QtWarningMsg,
+        QRegularExpression(QStringLiteral("URI is not specified|Unsupported URI scheme|Invalid UDP port")));
+
+    GStreamer::SourceFactory::Config config;
+    QVERIFY(!GstTest::createSource(QString(), config));
+    QVERIFY(!GstTest::createSource(QStringLiteral("ftp://127.0.0.1/x"), config));
+    QVERIFY(!GstTest::createSource(QStringLiteral("udp://127.0.0.1"), config));
+    QVERIFY(!GstTest::createSource(QStringLiteral("udp://127.0.0.1:99999"), config));
+}
+
+void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("tcpclientsrc", "tsdemux");
+
+    GStreamer::SourceFactory::Config config;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("tcp://192.168.1.50:5600"), config);
+    QVERIFY(bin);
+
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "tcpclientsrc");
+    QVERIFY2(src, "tcp:// must build a tcpclientsrc");
+    gchar* rawHost = nullptr;
+    gint port = 0;
+    guint timeoutSeconds = 0;
+    g_object_get(src.get(), "host", &rawHost, "port", &port, "timeout", &timeoutSeconds, nullptr);
+    const GStreamer::GCharPtr host = GStreamer::adoptGChar(rawHost);
+    QCOMPARE(QString::fromUtf8(host.get()), QStringLiteral("192.168.1.50"));
+    QCOMPARE(port, 5600);
+    // It connects on the receiver's worker, which a receiver that is destroyed waits 5 s for.
+    QVERIFY2((timeoutSeconds > 0) && (timeoutSeconds < 5),
+             "tcpclientsrc must give up on a host that doesn't answer, while the worker can still be waited for");
+
+    QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRejectsBadTcpUri()
+{
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid TCP port|Missing host in TCP URI")));
+
+    GStreamer::SourceFactory::Config config;
+    QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://192.168.1.50"), config),
+             "tcp:// without a port must be rejected");
+    QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://:5600"), config), "tcp:// without a host must be rejected");
+    QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://192.168.1.50:0"), config),
+             "tcp:// with port 0 must be rejected");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpRtp_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("encodingName");
+    QTest::addColumn<QByteArray>("depayloader");
+    QTest::addColumn<QByteArray>("parser");
+
+    QTest::newRow("h264") << QStringLiteral("udp://127.0.0.1:5600") << QStringLiteral("H264")
+                          << QByteArray("rtph264depay") << QByteArray("h264parse");
+    QTest::newRow("h265") << QStringLiteral("udp265://127.0.0.1:5600") << QStringLiteral("H265")
+                          << QByteArray("rtph265depay") << QByteArray("h265parse");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpRtp()
+{
+    QFETCH(QString, uri);
+    QFETCH(QString, encodingName);
+    QFETCH(QByteArray, depayloader);
+    QFETCH(QByteArray, parser);
+
+    GStreamer::SourceFactory::Config config;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
+    QVERIFY(bin);
+
+    // Plain RTP has no SDP: the scheme names the codec, which udpsrc's caps announce.
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
+    QVERIFY(src);
+    GstCaps* rawCaps = nullptr;
+    g_object_get(src.get(), "caps", &rawCaps, nullptr);
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
+    QVERIFY2(caps, "RTP over UDP must set RTP caps on udpsrc");
+    const GstStructure* const rtp = gst_caps_get_structure(caps.get(), 0);
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(rtp, "media")), QStringLiteral("video"));
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(rtp, "encoding-name")), encodingName);
+
+    QVERIFY2(GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "the RTP path must insert a jitterbuffer");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "tsdemux"), "RTP is not MPEG-TS; no tsdemux");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "parsebin"), "RTP over UDP is depayloaded and parsed explicitly");
+    const GStreamer::GstElementPtr depay = GstTest::findByFactory(bin.get(), depayloader.constData());
+    QVERIFY2(depay, "RTP over UDP must be depayloaded explicitly");
+
+    // avc or hvc1 would leave the depayloader's caps unset until in-band parameter sets arrive
+    const GStreamer::GstPadPtr depaySrc = GStreamer::adoptPad(gst_element_get_static_pad(depay.get(), "src"));
+    QVERIFY(depaySrc);
+    const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depaySrc.get()));
+    QVERIFY2(allowed && !gst_caps_is_empty(allowed.get()), "the depayloader must link to the parser");
+    for (guint i = 0; i < gst_caps_get_size(allowed.get()); ++i) {
+        QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(allowed.get(), i), "stream-format")),
+                 QStringLiteral("byte-stream"));
+    }
+
+    const GStreamer::GstElementPtr parserElement = GstTest::findByFactory(bin.get(), parser.constData());
+    QVERIFY2(parserElement, "RTP over UDP must be parsed explicitly");
+    gint configInterval = 0;
+    g_object_get(parserElement.get(), "config-interval", &configInterval, nullptr);
+    QCOMPARE(configInterval, -1);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpListener_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("address");
+    QTest::addColumn<bool>("sharesPort");
+
+    // On a unicast address a second listener would take packets from the first without either being told.
+    QTest::newRow("loopback") << QStringLiteral("udp://127.0.0.1:5600") << QStringLiteral("127.0.0.1") << false;
+    QTest::newRow("uppercase scheme") << QStringLiteral("UDP://127.0.0.1:5600") << QStringLiteral("127.0.0.1") << false;
+    QTest::newRow("any address") << QStringLiteral("udp265://0.0.0.0:5600") << QStringLiteral("0.0.0.0") << false;
+    QTest::newRow("ipv6") << QStringLiteral("udp://[::1]:5600") << QStringLiteral("::1") << false;
+    // udpsrc would take a URI without a host for one it can't parse, and listen on its default port.
+    QTest::newRow("no host") << QStringLiteral("udp://:5600") << QStringLiteral("0.0.0.0") << false;
+    // Every member of a multicast group receives its packets.
+    QTest::newRow("multicast") << QStringLiteral("udp://239.255.12.42:5600") << QStringLiteral("239.255.12.42") << true;
+    QTest::newRow("ipv6 multicast") << QStringLiteral("udp265://[ff02::42]:5600") << QStringLiteral("ff02::42") << true;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpListener()
+{
+    QFETCH(QString, uri);
+    QFETCH(QString, address);
+    QFETCH(bool, sharesPort);
+
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, GStreamer::SourceFactory::Config{});
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
+    QVERIFY(src);
+
+    gchar* rawAddress = nullptr;
+    gint port = 0;
+    gboolean reuse = sharesPort ? FALSE : TRUE;
+    g_object_get(src.get(), "address", &rawAddress, "port", &port, "reuse", &reuse, nullptr);
+    const GStreamer::GCharPtr listenAddress = GStreamer::adoptGChar(rawAddress);
+    QCOMPARE(QString::fromUtf8(listenAddress.get()), address);
+    QCOMPARE(port, 5600);
+    QCOMPARE(bool(reuse), sharesPort);
+}
+
+void GstSourceFactoryTest::_testParameterSetGateHoldsUntilCompleteSet()
+{
+    const QByteArray aud = QByteArray::fromHex("0000000109f0");
+    const QByteArray sps = QByteArray::fromHex("0000000167640014acd9");
+    const QByteArray pps = QByteArray::fromHex("0000000168ebe3cb");
+    const QByteArray idr = QByteArray::fromHex("0000000165888400");
+    const QByteArray delta = QByteArray::fromHex("00000001419a2400");
+
+    ReceivedBuffers received;
+    const GatedPads pads(&received, "video/x-h264, stream-format=(string)byte-stream, alignment=(string)nal");
+    QVERIFY(pads.linked);
+    GStreamer::SourceFactory::gateOnParameterSets(pads.src.get(), false);
+
+    // A late join whose first keyframe lost its PPS (and IDR): nothing may pass on an SPS alone.
+    for (const QByteArray& nal : {aud, sps, delta, delta, aud, sps}) {
+        QCOMPARE(pads.push(nal, GST_SECOND), GST_FLOW_OK);
+    }
+    QVERIFY(received.data.isEmpty());
+
+    QCOMPARE(pads.push(pps, 2 * GST_SECOND), GST_FLOW_OK);
+    QVERIFY(received.data.isEmpty());
+    QCOMPARE(pads.push(idr, 3 * GST_SECOND), GST_FLOW_OK);
+    QCOMPARE(pads.push(delta, 4 * GST_SECOND), GST_FLOW_OK);
+
+    QCOMPARE(received.data.size(), 2);
+    QCOMPARE(received.data.at(0), sps + pps + idr);
+    QCOMPARE(received.pts.at(0), 3 * GST_SECOND);
+    QCOMPARE(received.data.at(1), delta);
+}
+
+void GstSourceFactoryTest::_testParameterSetGatePassesLengthPrefixedOutput()
+{
+    ReceivedBuffers received;
+    const GatedPads pads(&received, "video/x-h264, stream-format=(string)avc, alignment=(string)au");
+    QVERIFY(pads.linked);
+    GStreamer::SourceFactory::gateOnParameterSets(pads.src.get(), false);
+
+    // avc carries its parameter sets in codec_data, so its first slice passes as is.
+    const QByteArray lengthPrefixedSlice = QByteArray::fromHex("000000044188a5f0");
+    QCOMPARE(pads.push(lengthPrefixedSlice, 0), GST_FLOW_OK);
+    QCOMPARE(received.data, QList<QByteArray>{lengthPrefixedSlice});
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpMpegTs()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
+
+    GStreamer::SourceFactory::Config config;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
+    QVERIFY(bin);
+
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
+    QVERIFY2(src, "mpegts:// must build a udpsrc");
+    GstCaps* rawCaps = nullptr;
+    g_object_get(src.get(), "caps", &rawCaps, nullptr);
+    QVERIFY2(!GStreamer::adoptCaps(rawCaps), "raw MPEG-TS over UDP must not force RTP caps on udpsrc");
+
+    QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "mpegts:// must insert tsdemux");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryMpegTsLatency_data()
+{
+    QTest::addColumn<int>("latencyMs");
+    QTest::addColumn<int>("demuxLatencyMs");
+
+    // tsdemux's own default, 700 ms, is added to the latency of a live stream: every frame would be shown that late.
+    QTest::newRow("default") << GStreamer::SourceFactory::Config{}.latencyMs << 100;
+    QTest::newRow("less than a frame interval") << 0 << 100;
+    QTest::newRow("more than a frame interval") << 250 << 250;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryMpegTsLatency()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
+
+    QFETCH(int, latencyMs);
+    QFETCH(int, demuxLatencyMs);
+
+    GStreamer::SourceFactory::Config config;
+    config.latencyMs = latencyMs;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr demux = GstTest::findByFactory(bin.get(), "tsdemux");
+    QVERIFY(demux);
+
+    gint latency = -1;
+    g_object_get(demux.get(), "latency", &latency, nullptr);
+    QCOMPARE(latency, demuxLatencyMs);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
+{
+    GStreamer::SourceFactory::Config config;
+    config.latencyMs = -100;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
+    QVERIFY(bin);
+
+    const GStreamer::GstElementPtr jb = GstTest::findByFactory(bin.get(), "rtpjitterbuffer");
+    QVERIFY(jb);
+    guint latency = 99999;
+    g_object_get(jb.get(), "latency", &latency, nullptr);
+    QCOMPARE(latency, 0u);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
+
+    GStreamer::SourceFactory::Config config;
+    const MpegTsSource source(config);
+    QVERIFY(source.isValid());
+
+    // Mirrors an RTSP SDP listing audio before video: the first RTP pad must not claim the parser.
+    static GstStaticPadTemplate sAudioTemplate = GST_STATIC_PAD_TEMPLATE(
+        "audio_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
+        GST_STATIC_CAPS("application/x-rtp, media=(string)audio, clock-rate=(int)48000, encoding-name=(string)OPUS"));
+
+    // gst_element_add_pad emits pad-added and consumes the floating pad.
+    QVERIFY(gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sAudioTemplate, "audio_rtp")));
+    QVERIFY2(!gst_pad_is_linked(source.parserSink.get()), "an audio RTP pad must not be linked to the video parser");
+    QVERIFY2(!GstTest::findByFactory(source.bin.get(), "rtpjitterbuffer"),
+             "an audio RTP pad must not get a jitterbuffer");
+
+    QVERIFY(
+        gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sH264RtpPadTemplate, "video_rtp")));
+    QVERIFY2(gst_pad_is_linked(source.parserSink.get()), "the video RTP pad that follows must still reach the parser");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("sourceFactory");
+    QTest::addColumn<bool>("expectedRequestKeyframe");
+
+    // RTSP has RTCP to carry the request back to the camera; a plain UDP source has nothing to send it over.
+    QTest::newRow("rtsp") << QStringLiteral("rtsp://127.0.0.1:8554/test") << QStringLiteral("rtspsrc") << true;
+    QTest::newRow("mpegts-rtp") << QStringLiteral("mpegts://127.0.0.1:5600") << QStringLiteral("tsdemux") << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
+{
+    QFETCH(QString, uri);
+    QFETCH(QString, sourceFactory);
+    QFETCH(bool, expectedRequestKeyframe);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc", "tsdemux");
+
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), qPrintable(sourceFactory));
+    const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin.get(), "parsebin");
+    QVERIFY(source && parser);
+
+    // The source stays in NULL, so nothing connects: its RTP pad is added by hand, as it adds one after SETUP. The
+    // pad's encoding has the RTSP bin plug the depayloader; for the other source the stream caps make parsebin do it.
+    GstPad* const pad = gst_pad_new_from_static_template(&sH264RtpPadTemplate, "recv_rtp_src_0");
+    QVERIFY(gst_element_add_pad(source.get(), pad));
+    QVERIFY(gst_pad_is_linked(pad));
+    const auto stop = qScopeGuard([&parser, pad] {
+        (void) gst_element_set_state(parser.get(), GST_STATE_NULL);
+        (void) gst_pad_set_active(pad, FALSE);
+    });
+    QVERIFY(gst_element_set_state(parser.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(RtspSource::pushAccessUnit(pad, 1111, {}));
+
+    const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(bin.get(), "rtph264depay");
+    QVERIFY2(depayloader, "parsebin did not plug rtph264depay for H.264 RTP caps");
+    gboolean requestKeyframe = !expectedRequestKeyframe;
+    g_object_get(depayloader.get(), "request-keyframe", &requestKeyframe, nullptr);
+    QCOMPARE(bool(requestKeyframe), expectedRequestKeyframe);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec_data()
+{
+    QTest::addColumn<QByteArray>("encodingName");
+    QTest::addColumn<QByteArray>("depayloader");
+    QTest::addColumn<QByteArray>("parser");  // Empty: the stream is left to parsebin.
+
+    QTest::newRow("H264") << QByteArray("H264") << QByteArray("rtph264depay") << QByteArray("h264parse");
+    QTest::newRow("H265") << QByteArray("H265") << QByteArray("rtph265depay") << QByteArray("h265parse");
+    QTest::newRow("JPEG") << QByteArray("JPEG") << QByteArray("rtpjpegdepay") << QByteArray();
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec()
+{
+    QFETCH(QByteArray, encodingName);
+    QFETCH(QByteArray, depayloader);
+    QFETCH(QByteArray, parser);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+    QVERIFY2(GstTest::findByFactory(rtsp.bin.get(), "parsebin"), "the encoding isn't known before the SDP is");
+
+    GstPad* const pad = rtsp.addPad("recv_rtp_src_0_1111_96", encodingName);
+    QVERIFY(pad && gst_pad_is_linked(pad));
+    const GStreamer::GstPadPtr peer = GStreamer::adoptPad(gst_pad_get_peer(pad));
+    const GStreamer::GstElementPtr linkedTo = GStreamer::adoptElement(gst_pad_get_parent_element(peer.get()));
+    if (parser.isEmpty()) {
+        // As before the bin knew of encodings: parsebin plugs the depayloader once the stream's caps arrive.
+        QCOMPARE(linkedTo.get(), GstTest::findByFactory(rtsp.bin.get(), "parsebin").get());
+        QVERIFY(RtspSource::pushAccessUnit(pad, 1111, {}));
+        QVERIFY(GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()));
+        return;
+    }
+
+    // As for RTP over UDP: the codec's depayloader, its parser, and whole access units in byte-stream between them.
+    // They take parsebin's place, which leaves the bin from GStreamer's thread pool.
+    QVERIFY_TRUE_WAIT(!GstTest::findByFactory(rtsp.bin.get(), "parsebin"), TestTimeout::shortMs());
+    QCOMPARE(linkedTo.get(), GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()).get());
+    const GStreamer::GstPadPtr depayloaderSrc = GStreamer::adoptPad(gst_element_get_static_pad(linkedTo.get(), "src"));
+    const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depayloaderSrc.get()));
+    QVERIFY2(allowed && !gst_caps_is_empty(allowed.get()), "the depayloader must link to the parser");
+    for (guint i = 0; i < gst_caps_get_size(allowed.get()); ++i) {
+        const GstStructure* const format = gst_caps_get_structure(allowed.get(), i);
+        QCOMPARE(QByteArray(gst_structure_get_string(format, "stream-format")), QByteArray("byte-stream"));
+        QCOMPARE(QByteArray(gst_structure_get_string(format, "alignment")), QByteArray("au"));
+    }
+    const GStreamer::GstElementPtr parserElement = GstTest::findByFactory(rtsp.bin.get(), parser.constData());
+    QVERIFY(parserElement);
+    gint configInterval = 0;
+    gboolean requestKeyframe = FALSE;
+    g_object_get(parserElement.get(), "config-interval", &configInterval, nullptr);
+    QCOMPARE(configInterval, -1);
+    // rtph265depay asks for keyframes only from GStreamer 1.26 on.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(linkedTo.get()), "request-keyframe")) {
+        g_object_get(linkedTo.get(), "request-keyframe", &requestKeyframe, nullptr);
+        QCOMPARE(requestKeyframe, TRUE);
+    }
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPadAddedLeavesBinStateLock()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+
+    // rtspsrc adds its pads on a streaming thread, and a state change of the bin waits for that thread to stop with
+    // the bin's state lock held: a pad-added that takes the lock, as to dispose of parsebin at once, never returns.
+    std::atomic<bool> added = false;
+    GST_STATE_LOCK(rtsp.bin.get());
+    std::thread streaming([&rtsp, &added]() {
+        (void) rtsp.addPad("recv_rtp_src_0_1111_96", "H264");
+        added.store(true);
+    });
+    const bool addedUnderLock = QTest::qWaitFor([&added]() { return added.load(); }, TestTimeout::shortMs());
+    GST_STATE_UNLOCK(rtsp.bin.get());
+    streaming.join();
+    QVERIFY(addedUnderLock);
+    QVERIFY_TRUE_WAIT(!GstTest::findByFactory(rtsp.bin.get(), "parsebin"), TestTimeout::shortMs());
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPushesAccessUnitsAtOnce_data()
+{
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<QByteArray>("encodingName");
+    QTest::addColumn<QString>("mediaType");
+
+    QTest::newRow("h264") << QString::fromLatin1(GstTest::kH264Stream) << QByteArray("H264")
+                          << QStringLiteral("video/x-h264");
+    QTest::newRow("h265") << QString::fromLatin1(GstTest::kH265Stream) << QByteArray("H265")
+                          << QStringLiteral("video/x-h265");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPushesAccessUnitsAtOnce()
+{
+    QFETCH(QString, resource);
+    QFETCH(QByteArray, encodingName);
+    QFETCH(QString, mediaType);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+    QString loadError;
+    const QList<GstTest::AccessUnit> units = GstTest::loadAccessUnits(resource, &loadError);
+    QVERIFY2(!units.isEmpty() && units.first().keyframe, qPrintable(loadError));
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+    GstPad* const pad = rtsp.addPad("recv_rtp_src_0_1111_96", encodingName);
+    QVERIFY(pad && gst_pad_is_linked(pad));
+
+    // The bin's pad for the stream is there as soon as the stream's encoding is known.
+    const GStreamer::GstPadPtr binSrc = GStreamer::adoptPad(gst_element_get_static_pad(rtsp.bin.get(), "src"));
+    QVERIFY(binSrc);
+    std::atomic<int> frames{0};
+    QVERIFY(gst_pad_add_probe(binSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames, nullptr));
+
+    // The first frame of the stream, a keyframe with its parameter sets, and no more. A parser that gets it NAL unit
+    // by NAL unit, as from parsebin's depayloader, can't tell that it is complete until the next frame starts.
+    QVERIFY(RtspSource::pushAccessUnit(pad, 1111, splitNalUnits(units.first().bytes)));
+    QCOMPARE(frames.load(), 1);
+
+    const QString caps = GstTest::currentCapsString(binSrc.get());
+    QVERIFY2(caps.startsWith(mediaType), qPrintable(caps));
+    QVERIFY2(caps.contains(QLatin1String("alignment=(string)au")), qPrintable(caps));
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspFollowsStreamToNewPad_data()
+{
+    QTest::addColumn<QByteArray>("padName");
+    QTest::addColumn<QByteArray>("encodingName");
+    QTest::addColumn<bool>("takesOver");
+
+    // rtspsrc names its pads recv_rtp_src_<stream>_<SSRC>_<payload type>. The stream starts on recv_rtp_src_0_1111_96.
+    // A camera that starts its encoder over goes on under another SSRC, on a new pad.
+    QTest::newRow("new SSRC") << QByteArray("recv_rtp_src_0_2222_96") << QByteArray("H264") << true;
+    QTest::newRow("new payload type") << QByteArray("recv_rtp_src_0_1111_98") << QByteArray("H264") << true;
+    QTest::newRow("another video stream of the session")
+        << QByteArray("recv_rtp_src_1_2222_96") << QByteArray("H264") << false;
+    QTest::newRow("retransmissions of the stream")
+        << QByteArray("recv_rtp_src_0_2222_97") << QByteArray("RTX") << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspFollowsStreamToNewPad()
+{
+    QFETCH(QByteArray, padName);
+    QFETCH(QByteArray, encodingName);
+    QFETCH(bool, takesOver);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+    // A keyframe with its parameter sets.
+    const QList<QByteArray> keyframe{QByteArray::fromHex("67640014acd9"), QByteArray::fromHex("68ebe3cb"),
+                                     QByteArray::fromHex("65888400")};
+
+    GstPad* const first = rtsp.addPad("recv_rtp_src_0_1111_96", "H264");
+    QVERIFY(first && gst_pad_is_linked(first));
+    QVERIFY(RtspSource::pushAccessUnit(first, 1111, keyframe));
+
+    std::atomic<int> packets{0};
+    const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(rtsp.bin.get(), "rtph264depay");
+    QVERIFY(depayloader);
+    const GStreamer::GstPadPtr depayloaderSink =
+        GStreamer::adoptPad(gst_element_get_static_pad(depayloader.get(), "sink"));
+    QVERIFY(
+        gst_pad_add_probe(depayloaderSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &packets, nullptr));
+
+    GstPad* const second = rtsp.addPad(padName, encodingName);
+    QVERIFY(second);
+    QCOMPARE(bool(gst_pad_is_linked(second)), takesOver);
+    QCOMPARE(bool(gst_pad_is_linked(first)), !takesOver);
+    if (takesOver) {
+        // The depayloader the stream has goes on with it.
+        QVERIFY(RtspSource::pushAccessUnit(second, 2222, keyframe));
+        QCOMPARE(packets.load(), int(keyframe.size()));
+    }
+}
+
+void GstSourceFactoryTest::_testTransportFor_data()
+{
+    using VideoStreamUri::Transport;
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<int>("transport");       // -1: unsupported
+    QTest::addColumn<int>("connectGraceMs");  // -1: none, the first data may take any time
+
+    // RTSP may fall back from UDP to TCP; a UDP source only listens until somebody sends to it.
+    const int rtspGrace = int(GStreamer::SourceFactory::kRtspUdpTimeout.count());
+    QTest::newRow("rtsp") << QStringLiteral("rtsp://10.0.0.1:554/live") << int(Transport::Rtsp) << rtspGrace;
+    QTest::newRow("rtspt") << QStringLiteral("rtspt://10.0.0.1/live") << int(Transport::Rtsp) << rtspGrace;
+    QTest::newRow("upper-case rtsp") << QStringLiteral("RTSP://10.0.0.1/live") << int(Transport::Rtsp) << rtspGrace;
+    QTest::newRow("udp") << QStringLiteral("udp://0.0.0.0:5600") << int(Transport::RtpUdpH264) << -1;
+    QTest::newRow("udp265") << QStringLiteral("udp265://0.0.0.0:5600") << int(Transport::RtpUdpH265) << -1;
+    QTest::newRow("mpegts") << QStringLiteral("mpegts://0.0.0.0:5600") << int(Transport::MpegTsUdp) << -1;
+    QTest::newRow("tcp") << QStringLiteral("tcp://192.168.1.2:5000") << int(Transport::MpegTsTcp) << 0;
+    QTest::newRow("http") << QStringLiteral("http://10.0.0.1/video") << -1 << 0;
+    QTest::newRow("no scheme") << QStringLiteral("10.0.0.1:5600") << -1 << 0;
+}
+
+void GstSourceFactoryTest::_testTransportFor()
+{
+    QFETCH(QString, uri);
+    QFETCH(int, transport);
+    QFETCH(int, connectGraceMs);
+
+    const std::optional<VideoStreamUri::Transport> actual = VideoStreamUri::transportFor(QUrl(uri));
+    QCOMPARE(actual ? int(*actual) : -1, transport);
+    const std::optional<std::chrono::milliseconds> grace = GStreamer::SourceFactory::connectGracePeriod(uri);
+    QCOMPARE(grace ? int(grace->count()) : -1, connectGraceMs);
+}
+
+#endif
+
+UT_REGISTER_TEST(GstSourceFactoryTest, TestLabel::Unit)

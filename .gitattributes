@@ -31,8 +31,8 @@ test/GPS/Core/Protocols/**/*.sbf  binary
 test/GPS/Core/Protocols/**/*.ubx  binary
 
 # Encoded video the GStreamer self-test decodes and the GStreamer tests send.
-src/VideoManager/GStreamer/Runtime/Media/*.h264 binary
-src/VideoManager/GStreamer/Runtime/Media/*.h265 binary
+src/VideoManager/GStreamer/SelfTest/Media/*.h264 binary
+src/VideoManager/GStreamer/SelfTest/Media/*.h265 binary
 
 # Compiled Object files
 *.slo           binary

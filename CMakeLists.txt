@@ -272,6 +272,8 @@ find_package(
         Location
         LocationPrivate
         Multimedia
+        MultimediaPrivate
+        MultimediaQuickPrivate
         Network
         Positioning
         Qml
@@ -287,7 +289,7 @@ find_package(
         Xml
         Quick3D
         StateMachine
-    OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate OpenGL QuickTest SerialPort Test
+    OPTIONAL_COMPONENTS Bluetooth OpenGL QuickTest SerialPort Test
 )
 
 if(LINUX AND NOT ANDROID)

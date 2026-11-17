@@ -22,10 +22,6 @@ struct _GstQgcVideoSinkBin
     gboolean disable_par;
     /// Proxied to the inner basesink's "sync" so callers can configure clock sync on the bin.
     gboolean sync;
-    /// Proxied to the inner basesink's "qos"; default FALSE (off) preserves the existing no-QoS behavior.
-    gboolean qos;
-    /// Proxied to the inner basesink's "processing-deadline" (ns); default matches the basesink default.
-    guint64 processing_deadline;
 };
 
 enum
@@ -35,8 +31,6 @@ enum
     PROP_CONVERSION_ELEMENT,
     PROP_DISABLE_PAR,
     PROP_SYNC,
-    PROP_QOS,
-    PROP_PROCESSING_DEADLINE,
     PROP_LAST
 };
 
@@ -89,17 +83,6 @@ static void gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass* klass)
         g_param_spec_boolean("sync", "Sync", "Proxied to the inner basesink: sync rendering to the clock.", FALSE,
                              (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-    // Opt-in QoS: default FALSE leaves the existing no-QoS behavior unchanged (sync=FALSE means the
-    // basesink generates no QoS events anyway until a caller enables it).
-    properties[PROP_QOS] =
-        g_param_spec_boolean("qos", "QoS", "Proxied to the inner basesink: generate QoS events upstream.", FALSE,
-                             (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-    properties[PROP_PROCESSING_DEADLINE] = g_param_spec_uint64(
-        "processing-deadline", "Processing deadline",
-        "Proxied to the inner basesink: maximum buffer processing time in nanoseconds.", 0, G_MAXUINT64,
-        G_GUINT64_CONSTANT(20000000), (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
     g_object_class_install_properties(object_class, PROP_LAST, properties);
 
     gst_element_class_add_static_pad_template(GST_ELEMENT_CLASS(klass), &sink_factory);
@@ -115,8 +98,6 @@ static void gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin* self)
     self->conversion_element = NULL;
     self->disable_par = FALSE;
     self->sync = FALSE;
-    self->qos = FALSE;
-    self->processing_deadline = G_GUINT64_CONSTANT(20000000);
 }
 
 // A single-element converter: the conversion-element override, else a SoC converter, else videoconvertscale (GStreamer
@@ -124,13 +105,23 @@ static void gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin* self)
 static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSinkBin* self)
 {
     if (self->conversion_element && self->conversion_element[0] != '\0') {
-        GstElement* e = gst_element_factory_make(self->conversion_element, NULL);
-        if (e) {
+        const GStreamer::GstFactoryPtr factory =
+            GStreamer::adoptFactory(gst_element_factory_find(self->conversion_element));
+        const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+        if (factory &&
+            !GstQgc::converterSuitsRenderTarget(gst_plugin_feature_get_plugin_name(GST_PLUGIN_FEATURE(factory.get())),
+                                                self->conversion_element, target)) {
+            GST_WARNING_OBJECT(self,
+                               "conversion-element='%s' would draw on the device Qt renders with (%s) — falling "
+                               "through to defaults",
+                               self->conversion_element, GstQgc::toString(target.backend));
+        } else if (GstElement* e = factory ? gst_element_factory_create(factory.get(), NULL) : NULL) {
             GST_INFO_OBJECT(self, "Using conversion-element override '%s'", self->conversion_element);
             return e;
+        } else {
+            GST_WARNING_OBJECT(self, "conversion-element='%s' factory missing — falling through to defaults",
+                               self->conversion_element);
         }
-        GST_WARNING_OBJECT(self, "conversion-element='%s' factory missing — falling through to defaults",
-                           self->conversion_element);
     }
     // These SoCs' decoders output proprietary layouts under plain video/x-raw formats, which only their converter
     // reads.
@@ -195,8 +186,9 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
         GST_ERROR_OBJECT(self, "Failed to create qgcqvideosink element");
         return;
     }
-    g_object_set(videosink, "active", (gboolean) TRUE, "sync", (gboolean) self->sync, "qos", (gboolean) self->qos,
-                 "processing-deadline", self->processing_deadline, NULL);
+    // No QoS events upstream, which a GstVideoSink sends by default. Its "processing-deadline" stays the video sink's
+    // own (15 ms; GstBaseSink's is 20 ms): a live pipeline that syncs to the clock adds the deadline to its latency.
+    g_object_set(videosink, "active", (gboolean) TRUE, "sync", (gboolean) self->sync, "qos", (gboolean) FALSE, NULL);
     const GstQgc::GpuBinMode gpuBin = self->gpu_zerocopy ? select_gpu_bin(self) : GstQgc::GpuBinMode::Passthrough;
     GstQgc::configureSinkCaps(videosink, gpuBin, !self->disable_par);
 
@@ -294,16 +286,6 @@ static void gst_qgc_video_sink_bin_set_property(GObject* object, guint prop_id, 
             if (self->videosink)
                 g_object_set(self->videosink, "sync", (gboolean) self->sync, NULL);
             break;
-        case PROP_QOS:
-            self->qos = g_value_get_boolean(value);
-            if (self->videosink)
-                g_object_set(self->videosink, "qos", (gboolean) self->qos, NULL);
-            break;
-        case PROP_PROCESSING_DEADLINE:
-            self->processing_deadline = g_value_get_uint64(value);
-            if (self->videosink)
-                g_object_set(self->videosink, "processing-deadline", self->processing_deadline, NULL);
-            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
             break;
@@ -328,12 +310,6 @@ static void gst_qgc_video_sink_bin_get_property(GObject* object, guint prop_id, 
             break;
         case PROP_SYNC:
             g_value_set_boolean(value, self->sync);
-            break;
-        case PROP_QOS:
-            g_value_set_boolean(value, self->qos);
-            break;
-        case PROP_PROCESSING_DEADLINE:
-            g_value_set_uint64(value, self->processing_deadline);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);

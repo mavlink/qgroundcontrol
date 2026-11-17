@@ -36,7 +36,7 @@ public:
         /// Only for a backend that counts the bytes it receives: bitrateKbps is -1 without.
         std::optional<quint64> bytesReceived;
         quint64 framesDropped = 0;
-        /// Only for a stream that goes through an RTP jitter buffer.
+        /// Only for an RTP stream whose packets the backend counts.
         std::optional<RtpCounters> rtp;
     };
 

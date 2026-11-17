@@ -118,21 +118,14 @@
         },
         {
             "name": "rtspTimeout",
-            "shortDesc": "RTSP Video Timeout",
-            "longDesc": "How long to wait before assuming RTSP link is gone.",
+            "shortDesc": "How long an RTSP video stream may deliver nothing before it counts as lost.",
+            "longDesc": "An RTSP stream that delivers nothing for this long counts as lost; the first data of a connection may take 5 s longer. Auto-reconnect on stream loss decides whether the stream then reconnects or stops. Only RTSP streams use this setting, including those a camera announces. UDP, TCP and MPEG-TS streams count as lost after 3 s, and a UDP stream that hasn't started yet is awaited without limit.",
             "type": "uint32",
             "min": 1,
             "units": "s",
             "default": 8,
-            "label": "RTSP Video Timeout"
-        },
-        {
-            "name": "streamEnabled",
-            "shortDesc": "Video Stream Enabled",
-            "longDesc": "Start/Stop Video Stream.",
-            "type": "bool",
-            "default": true,
-            "label": "Video Stream Enabled"
+            "label": "RTSP Video Timeout",
+            "keywords": "rtsp,timeout,stream loss,stall"
         },
         {
             "name": "disableWhenDisarmed",
@@ -155,7 +148,7 @@
         {
             "name": "rtpJitterLatencyMs",
             "shortDesc": "RTP jitter-buffer playout latency (ms).",
-            "longDesc": "Latency budget for the RTP jitter buffer (rtspsrc.latency / rtpjitterbuffer.latency). Lower = less glass-to-glass delay; higher = more headroom for packet reordering and retransmission. The default of 80 ms allows RFC 4588 retransmission to recover lost packets before the playout deadline; values <40 ms effectively disable retransmission. Ignored when Low Latency Mode is enabled.",
+            "longDesc": "Latency budget for the RTP jitter buffer (rtspsrc.latency / rtpjitterbuffer.latency). Lower = less glass-to-glass delay; higher = more headroom for packet reordering and retransmission. The default of 80 ms allows RFC 4588 retransmission to recover lost packets before the playout deadline; values <40 ms effectively disable retransmission. An MPEG-TS stream over UDP is delayed by this value as well, and by at least 100 ms. Ignored when Low Latency Mode is enabled.",
             "type": "uint32",
             "min": 0,
             "max": 2000,
@@ -166,17 +159,17 @@
         },
         {
             "name": "rtspAutoReconnect",
-            "shortDesc": "Automatically restart the pipeline on watchdog timeout or pipeline error.",
-            "longDesc": "When enabled, the receiver reconnects with exponential backoff (1s → 30s) after a stream timeout or a fatal pipeline error. Disable to fall back to the legacy behaviour of giving up after one failure.",
+            "shortDesc": "Reconnects a lost or failed video stream of any transport: RTSP, UDP, TCP or MPEG-TS.",
+            "longDesc": "Applies to every network video stream, whatever its transport, whether it is the configured source or one a camera announces. When enabled, a stream that is lost or fails reconnects after 1 s, then after waits that double up to 30 s. When disabled, the stream stops after its first failure. USB cameras don't use this setting.",
             "type": "bool",
             "default": true,
             "label": "Auto-reconnect on stream loss",
-            "keywords": "rtsp,reconnect,watchdog,recovery,advanced"
+            "keywords": "reconnect,stream loss,timeout,recovery,rtsp,udp,tcp,mpegts"
         },
         {
             "name": "videoBackend",
             "shortDesc": "Plays network video streams with GStreamer, or with Qt Multimedia's player.",
-            "longDesc": "GStreamer plays every stream source and records them. Qt Multimedia plays them with FFmpeg: RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records a stream by encoding the video on display anew, and the decoder, CPU video path and RTP jitter latency settings don't apply to it. Changing it restarts the video stream.",
+            "longDesc": "GStreamer plays every stream source and records them. Qt Multimedia plays them with FFmpeg: RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records a stream by encoding the video on display anew, with the Recording Codec and Recording Quality settings, and the decoder, CPU video path and RTP jitter latency settings don't apply to it. Changing it restarts the video stream.",
             "type": "uint32",
             "enumStrings": "GStreamer,Qt Multimedia",
             "enumValues": "0,1",
@@ -221,6 +214,34 @@
             "default": false,
             "label": "Disable pixel-aspect-ratio normalization",
             "keywords": "pixel aspect ratio,v4l2,workaround,advanced"
+        },
+        {
+            "name": "maxVideoTiles",
+            "shortDesc": "How many other video sources are shown in tiles beside the main video. 0 shows none.",
+            "longDesc": "Besides the main video, the video view shows the other streams of the vehicle's cameras, and the USB camera chosen for a tile, each in a small tile: at most this many, fewer where the video is too narrow for them, 0 for none. Each tile takes a network connection and a video decoder, of which tablets have few.",
+            "type": "uint32",
+            "min": 0,
+            "max": 4,
+            "default": 3,
+            "label": "Video Tiles",
+            "keywords": "tile,tiles,multiple cameras,multi-camera,second stream,other streams"
+        },
+        {
+            "name": "uvcTileCamera",
+            "shortDesc": "USB camera shown in a tile beside the video stream.",
+            "longDesc": "While the video source is a stream, this USB camera plays in a tile beside it. Empty for none. A camera that isn't attached stays selected and plays once it is plugged in.",
+            "type": "string",
+            "default": "",
+            "label": "USB Camera Tile",
+            "keywords": "usb camera,uvc,webcam,tile,second camera,multi-camera"
+        },
+        {
+            "name": "uvcTileCameraAsMainPicture",
+            "shortDesc": "Show the tile's USB camera as the main picture, with the video stream in its tile.",
+            "longDesc": "Set by a tap on the USB camera's tile, and cleared by a tap on the stream's tile or when another USB camera is chosen for the tile. While it is set, the camera is the main picture whenever it plays beside the stream, also after a restart or after the camera was unplugged.",
+            "type": "bool",
+            "default": false,
+            "label": "USB Camera Tile As Main Picture"
         },
         {
             "name": "uvcCameraFormat",
@@ -300,12 +321,23 @@
         },
         {
             "name": "uvcRecordingCodec",
-            "shortDesc": "Video codec a USB camera recording tries first.",
-            "longDesc": "One of the codecs Qt can encode on this computer, by its QMediaFormat::VideoCodec key, such as \"H264\". Empty (Auto), or a codec the encoder turns down, records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes.",
+            "shortDesc": "Video codec tried first for the recordings QGroundControl encodes: a USB camera's, and a stream's with the Qt Multimedia video backend.",
+            "longDesc": "Applies to the recordings QGroundControl encodes itself: a USB camera's and, with the Qt Multimedia video backend, a stream's. Not to a stream GStreamer records, which is saved as it arrives. One of the codecs Qt can encode on this computer, by its QMediaFormat::VideoCodec key, such as \"H264\". Empty (Auto), or a codec the encoder turns down, records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes.",
             "type": "string",
             "default": "",
-            "label": "USB Camera Recording Codec",
-            "keywords": "usb camera,uvc,webcam,record,codec,encoder,h264,h265,av1,vp9"
+            "label": "Recording Codec",
+            "keywords": "record,codec,encoder,h264,h265,av1,vp9,usb camera,uvc,webcam,qt multimedia"
+        },
+        {
+            "name": "uvcRecordingQuality",
+            "shortDesc": "Quality of the recordings QGroundControl encodes: a USB camera's, and a stream's with the Qt Multimedia video backend.",
+            "longDesc": "Applies to the recordings QGroundControl encodes itself: a USB camera's and, with the Qt Multimedia video backend, a stream's. Not to a stream GStreamer records, which is saved as it arrives. How much detail such a recording keeps, which sets how large its file gets: Qt's encoders aim at a constant quality rather than a bit rate. On Android the quality sets a bit rate instead, and a defect in Qt 6.12 makes the files several times larger than that bit rate.",
+            "type": "uint32",
+            "enumStrings": "Very Low,Low,Normal,High,Very High",
+            "enumValues": "0,1,2,3,4",
+            "default": 3,
+            "label": "Recording Quality",
+            "keywords": "record,quality,file size,bit rate,usb camera,uvc,webcam,qt multimedia"
         }
     ]
 }

@@ -25,8 +25,6 @@ class SubtitleTrack : public QObject
     Q_PROPERTY(double fontSize READ fontSize NOTIFY sourceChanged)
     Q_PROPERTY(QVariantList events READ events NOTIFY eventsChanged)
 
-    friend class SubtitleTrackTest;
-
 public:
     explicit SubtitleTrack(QObject* parent = nullptr);
 

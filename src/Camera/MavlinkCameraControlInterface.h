@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QRectF>
@@ -225,6 +226,12 @@ public:
     virtual QGCVideoStreamInfo* thermalStreamInstance() = 0;
     virtual int currentStream() const = 0;
     virtual void setCurrentStream(int stream) = 0;
+    /// Names the streams on display besides the current one, by their stream ids. The camera is asked to transmit
+    /// them too (MAV_CMD_VIDEO_START_STREAMING), and to stop those no longer named (MAV_CMD_VIDEO_STOP_STREAMING).
+    /// A stream that stays on display while the current stream changes is neither stopped nor started again:
+    /// setCurrentStream() tells the camera only after QGCCameraManager::streamChanged(), whose handler names the
+    /// streams that go with the new current one.
+    virtual void setExtraStreams(const QList<quint8>& streamIds) = 0;
     virtual bool autoStream() const = 0;
     virtual quint32 recordTime() const = 0;
     virtual QString recordTimeStr() const = 0;

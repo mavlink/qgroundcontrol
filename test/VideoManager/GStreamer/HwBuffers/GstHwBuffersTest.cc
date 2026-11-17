@@ -2,11 +2,13 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
 #include <memory>
 #include <rhi/qrhi.h>
 #include <span>
+#include <thread>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QRect>
@@ -24,12 +26,11 @@
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
-#include "GstHwImportPreflight.h"
 #include "QGCRhiCapture.h"
 #endif
 
@@ -46,20 +47,29 @@ public:
         : GstContextBridgeBase("Test", contextTypes, &TestContextBridgeLog)
     {}
 
-    /// Unprimed, with zeroed counters.
+    /// Unprimed, with zeroed counters and its device known.
     void restart()
     {
         reset();
         primes = 0;
         clears = 0;
+        deviceKnown = true;
     }
+
+    /// As a device that reports its removal has its bridge do, on the thread it notifies on.
+    void removeDevice() { noteDeviceRemoved(); }
 
     int primes = 0;
     int clears = 0;
+    /// False while Qt's device isn't published yet: the bridge can't prime, and tries again when asked.
+    bool deviceKnown = true;
 
 private:
     bool primeLocked() override
     {
+        if (!deviceKnown) {
+            return retryLater();
+        }
         ++primes;
         _object = GST_OBJECT(gst_object_ref_sink(gst_element_factory_make("identity", nullptr)));
         return _object != nullptr;
@@ -102,16 +112,47 @@ int s_testCacheResets = 0;
 
 const HwPathDescriptor kTestBridgePathA = {
     .path = HwVideoBufferPath::GlMemory,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return false; },
+    .matches = [](GstMemory*) { return false; },
     .resetCaches = [] { ++s_testCacheResets; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeA(); },
 };
 
 const HwPathDescriptor kTestBridgePathB = {
     .path = HwVideoBufferPath::Vulkan,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return false; },
+    .matches = [](GstMemory*) { return false; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
 };
+
+/// True when @p element holds a context of bridge A's type that a TestContextBridge built.
+bool holdsTestBridgeContext(GstElement* element)
+{
+    const GStreamer::GstContextPtr context =
+        GStreamer::adoptContext(gst_element_get_context(element, kTestContextTypeA[0]));
+    return context && gst_structure_has_field(gst_context_get_structure(context.get()), "object");
+}
+
+/// Takes the next element message off @p pipeline's bus: whether it is the pipeline's own message @p name.
+bool nextElementMessageIs(GstElement* pipeline, const char* name)
+{
+    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline));
+    const GStreamer::GstMessagePtr message =
+        GStreamer::adoptMessage(gst_bus_pop_filtered(bus.get(), GST_MESSAGE_ELEMENT));
+    return message && gst_message_has_name(message.get(), name) &&
+           (GST_MESSAGE_SRC(message.get()) == GST_OBJECT(pipeline));
+}
+
+/// Whether a bridge posted on @p pipeline's bus that it served the pipeline after one of its elements had asked.
+bool servedLate(GstElement* pipeline)
+{
+    return nextElementMessageIs(pipeline, HwBuffers::kGraphicsDeviceServedMessage);
+}
+
+/// A new identity element in @p bin, which owns it; null when it couldn't be added.
+GstElement* addIdentityTo(GstElement* bin)
+{
+    GstElement* const element = gst_element_factory_make("identity", nullptr);
+    return (element && gst_bin_add(GST_BIN(bin), element)) ? element : nullptr;
+}
 
 }  // namespace
 #endif
@@ -130,9 +171,8 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
     });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA, &kTestBridgePathB});
 
-    GstElement* const identity = gst_element_factory_make("identity", nullptr);
-    QVERIFY(identity);
-    const GStreamer::GstElementPtr owner = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(identity)));
+    const GStreamer::GstElementPtr owner = GStreamer::makeElement("identity");
+    QVERIFY(owner);
     GstElement* const element = owner.get();
 
     // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
@@ -169,6 +209,124 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
 #endif
 }
 
+void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    testBridgeA().restart();
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
+
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    GstElement* const bin = gst_bin_new(nullptr);
+    QVERIFY(gst_bin_add(GST_BIN(pipeline.get()), bin));
+    GstElement* const asking = addIdentityTo(bin);
+    GstElement* const sibling = addIdentityTo(pipeline.get());
+    QVERIFY(asking && sibling);
+
+    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
+             GST_BUS_DROP);
+    QVERIFY(holdsTestBridgeContext(asking));
+    QVERIFY(holdsTestBridgeContext(sibling));
+
+    // An element the pipeline is given later takes its device from the pipeline, without asking the bridge.
+    GstElement* const later = addIdentityTo(pipeline.get());
+    QVERIFY(later);
+    QVERIFY(holdsTestBridgeContext(later));
+
+    // Served when it asked, the pipeline holds nothing on another device: its owner has nothing to replace.
+    QVERIFY(!servedLate(pipeline.get()));
+#endif
+}
+
+void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    testBridgeA().restart();
+    testBridgeA().deviceKnown = false;
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
+
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    GstElement* const asking = addIdentityTo(pipeline.get());
+    QVERIFY(asking);
+
+    // Left without an answer, an element makes a device of its own and posts it, which its pipeline keeps for the
+    // elements it is given later.
+    GstMessage* const unanswered = gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0]);
+    QCOMPARE(HwBuffers::onBusSyncMessage(unanswered), GST_BUS_PASS);
+    gst_message_unref(unanswered);
+    GstContext* const ownDevice = gst_context_new(kTestContextTypeA[0], TRUE);
+    gst_element_set_context(asking, ownDevice);
+    QVERIFY(gst_element_post_message(asking, gst_message_new_have_context(GST_OBJECT(asking), ownDevice)));
+    const GStreamer::GstContextPtr kept =
+        GStreamer::adoptContext(gst_element_get_context(pipeline.get(), kTestContextTypeA[0]));
+    QVERIFY2(kept && !holdsTestBridgeContext(pipeline.get()), "the pipeline did not keep the element's own device");
+
+    // Qt's device becomes known, as when the scene graph starts.
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
+    testBridgeA().deviceKnown = true;
+    const auto withdraw = qScopeGuard([] { QGCRhiCapture::publishDeviceSnapshotForTest(nullptr); });
+    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
+    QCOMPARE(testBridgeA().primes, 1);
+    // The element that made its own device keeps it, so the pipeline's owner is told to replace it.
+    QVERIFY(servedLate(pipeline.get()));
+
+    GstElement* const later = addIdentityTo(pipeline.get());
+    QVERIFY(later);
+    QVERIFY2(holdsTestBridgeContext(later), "an element added after the bridge primed got the device of another");
+#endif
+}
+
+void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    testBridgeA().restart();
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
+
+    const auto newPipeline = [] {
+        return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    };
+    // One pipeline got the device for a NEED_CONTEXT, one through a context query its sink answered, one not at all.
+    const GStreamer::GstElementPtr asked = newPipeline();
+    GstElement* const asking = addIdentityTo(asked.get());
+    QVERIFY(asking);
+    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
+             GST_BUS_DROP);
+    const GStreamer::GstElementPtr queried = newPipeline();
+    GstElement* const sink = addIdentityTo(queried.get());
+    QVERIFY(sink);
+    GstQuery* const query = gst_query_new_context(kTestContextTypeA[0]);
+    QVERIFY(HwBuffers::answerSinkBinContextQuery(query, sink));
+    gst_query_unref(query);
+    const GStreamer::GstElementPtr bystander = newPipeline();
+    QVERIFY(!HwBuffers::graphicsDeviceLost());
+
+    // A device notifies of its removal on a thread of its own.
+    std::thread([] { testBridgeA().removeDevice(); }).join();
+    QVERIFY(HwBuffers::graphicsDeviceLost());
+    // The GUI thread drops the device and tells the pipelines, which hold elements that work on it.
+    QTRY_COMPARE_WITH_TIMEOUT(testBridgeA().clears, 1, TestTimeout::mediumMs());
+    QVERIFY(nextElementMessageIs(asked.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(nextElementMessageIs(queried.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(!nextElementMessageIs(bystander.get(), HwBuffers::kGraphicsDeviceLostMessage));
+
+    // Lost until the bridge has a device again.
+    QVERIFY(HwBuffers::graphicsDeviceLost());
+    QVERIFY(testBridgeA().prime());
+    QVERIFY(!HwBuffers::graphicsDeviceLost());
+#endif
+}
+
 void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
 {
 #if !defined(QGC_HAS_ANY_GPU_PATH)
@@ -184,23 +342,11 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
 
-    const GStreamer::GErrorPtr ordinaryError = GStreamer::adoptError(
-        g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "ordinary stream error"));
-    HwBuffers::onPipelineError(ordinaryError.get(), "debug");
-    QCOMPARE(testBridgeA().clears, 1);
-    QCOMPARE(s_testCacheResets, 1);
-
-    const GStreamer::GErrorPtr deviceLostError =
-        GStreamer::adoptError(g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_FAILED, "DEVICE_REMOVED"));
-    HwBuffers::onPipelineError(deviceLostError.get(), "debug");
-    QCOMPARE(testBridgeA().clears, 2);
-    QCOMPARE(s_testCacheResets, 2);
-
     // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
     QVERIFY(testBridgeA().prime());
     HwBuffers::onPipelineRestart();
-    QCOMPARE(testBridgeA().clears, 2);
-    QCOMPARE(s_testCacheResets, 2);
+    QCOMPARE(testBridgeA().clears, 1);
+    QCOMPARE(s_testCacheResets, 1);
     QVERIFY(testBridgeA().prime());
     QCOMPARE(testBridgeA().primes, 2);
 #endif
@@ -211,36 +357,19 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("QGCRhiCapture not compiled in this build (no GPU path enabled)");
 #else
-    // cachedRhi() returns nullptr before any window has been connected.
-    QVERIFY(!QGCRhiCapture::cachedRhi());
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
 
-    // Create an offscreen window and connect it. The scene graph is never
-    // initialized here so cachedRhi() remains nullptr.
+    // Create an offscreen window and connect it. The scene graph is never initialized here, so the Null QRhi's device
+    // stands in for the one its render thread would publish.
     auto* window = new QQuickWindow();
     QGCRhiCapture::connectWindow(window);
-    QVERIFY(!QGCRhiCapture::cachedRhi());
+    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
+    QCOMPARE(QGCRhiCapture::deviceSnapshot().backend.load(), static_cast<int>(QRhi::Null));
 
-    // Destroying the window must clear the cache (no dangling QRhi*).
+    // Destroying the window must withdraw the device (no dangling handles).
     delete window;
-    QVERIFY(!QGCRhiCapture::cachedRhi());
-#endif
-}
-
-void GstHwBuffersTest::_testPreflightVerdictsDroppedWithRhi()
-{
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("Import preflight not compiled in this build (no GPU path enabled)");
-#else
-    std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
-    QVERIFY(rhi);
-    const QRhi* const address = rhi.get();
-    QVERIFY(GstHwImportPreflight::preflightOrRecord(rhi.get(), HwVideoBufferPath::DmaBuf,
-                                                    QVideoFrameFormat::Format_NV12, QSize(64, 64)));
-    QCOMPARE(GstHwImportPreflight::memoizedVerdictCountForTest(address), std::size_t(1));
-
-    // The next QRhi may be allocated at the same address; it must not inherit this one's verdicts.
-    rhi.reset();
-    QCOMPARE(GstHwImportPreflight::memoizedVerdictCountForTest(address), std::size_t(0));
+    QCOMPARE(QGCRhiCapture::deviceSnapshot().backend.load(), -1);
 #endif
 }
 
@@ -400,6 +529,76 @@ void GstHwBuffersTest::_testCpuCopyOddDimensions()
     }
 }
 
+void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer_data()
+{
+    QTest::addColumn<int>("metaWidth");
+    QTest::addColumn<QSize>("frameSize");
+
+    // A v4l2 stateless decoder's 1080p frame: 1080 rows in the caps, 1088 in the buffer's GstVideoMeta.
+    QTest::newRow("taller") << 32 << QSize(32, 1080);
+    // Padded columns as well, so the source's strides and plane offsets differ from the destination's.
+    QTest::newRow("taller-and-wider") << 48 << QSize(32, 1080);
+    // The buffer's whole frame, as the sink asks for it (frameGeometry()).
+    QTest::newRow("whole-frame") << 48 << QSize(48, 1088);
+}
+
+void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer()
+{
+    QFETCH(int, metaWidth);
+    QFETCH(QSize, frameSize);
+    constexpr int kMetaRows = 1088;
+
+    GstVideoInfo capsInfo;
+    GstVideoInfo metaInfo;
+    GstVideoInfo frameInfo;
+    QVERIFY(gst_video_info_set_format(&capsInfo, GST_VIDEO_FORMAT_NV12, 32, 1080));
+    QVERIFY(gst_video_info_set_format(&metaInfo, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows));
+    QVERIFY(gst_video_info_set_format(&frameInfo, GST_VIDEO_FORMAT_NV12, frameSize.width(), frameSize.height()));
+    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&metaInfo), nullptr);
+    QVERIFY(buffer);
+    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
+    gst_buffer_add_video_meta_full(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows,
+                                   GST_VIDEO_INFO_N_PLANES(&metaInfo), metaInfo.offset, metaInfo.stride);
+    GstMapInfo source;
+    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
+    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
+    for (gsize i = 0; i < source.size; ++i) {
+        source.data[i] = static_cast<guint8>(i % 251);
+    }
+
+    // The copy's destination comes from the pool: hand the pool one with guard bytes behind the frame, which a copy of
+    // the meta's rows would overwrite.
+    const QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
+    constexpr char kGuardByte = char(0xA5);
+    constexpr qsizetype guardBytes = 1024;
+    const auto frameBytes = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&frameInfo));
+    QByteArray backing;
+    backing.reserve(frameBytes + 1 + guardBytes);
+    backing.resize(frameBytes);
+    char* const guard = backing.data() + frameBytes + 1;
+    std::memset(guard, kGuardByte, static_cast<std::size_t>(guardBytes));
+    CpuVideoFramePool::instance().releaseBacking(format.frameSize(), format.pixelFormat(), std::move(backing));
+
+    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(buffer, capsInfo, format);
+    QVERIFY(frame.isValid());
+    QVERIFY(frame.map(QVideoFrame::ReadOnly));
+    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
+    QCOMPARE(reinterpret_cast<const char*>(frame.bits(0)), guard - frameBytes - 1);
+    QCOMPARE(frame.planeCount(), 2);
+    for (int plane = 0; plane < frame.planeCount(); ++plane) {
+        // NV12: both planes hold a byte per column in a row, the chroma plane half the rows.
+        const int rows = (plane == 0) ? frameSize.height() : (frameSize.height() / 2);
+        QCOMPARE(frame.mappedBytes(plane), rows * frame.bytesPerLine(plane));
+        const auto* const src = reinterpret_cast<const char*>(source.data + metaInfo.offset[plane]);
+        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
+        for (int row = 0; row < rows; ++row) {
+            QCOMPARE(QByteArray(dst + (row * frame.bytesPerLine(plane)), frameSize.width()),
+                     QByteArray(src + (row * metaInfo.stride[plane]), frameSize.width()));
+        }
+    }
+    QCOMPARE(QByteArray(guard, guardBytes), QByteArray(guardBytes, kGuardByte));
+}
+
 namespace {
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -408,7 +607,7 @@ class TestableHwVideoBuffer : public GstHwVideoBuffer
 {
 public:
     TestableHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat fmt)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, info, std::move(fmt))
+        : GstHwVideoBuffer(sample, info, std::move(fmt))
     {}
 
     /// Always fails, like a GPU import the active QRhi rejects.
@@ -455,15 +654,15 @@ std::unique_ptr<GstHwVideoBuffer> constructTestBuffer(TestPathState& state, GstS
 
 const HwPathDescriptor kTestSelectPathA = {
     .path = HwVideoBufferPath::GlMemory,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathA.matches; },
-    .admits = [] { return s_testPathA.admits; },
+    .matches = [](GstMemory*) { return s_testPathA.matches; },
+    .admits = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathA.admits; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathA, sample, info, format); },
 };
 
 const HwPathDescriptor kTestSelectPathB = {
     .path = HwVideoBufferPath::Vulkan,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathB.matches; },
+    .matches = [](GstMemory*) { return s_testPathB.matches; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathB, sample, info, format); },
 };
@@ -508,9 +707,8 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestSelectPathA, &kTestSelectPathB});
 
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 16, 16, &info);
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 16, 16, &info));
     QVERIFY(sample);
-    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -524,7 +722,7 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
                          QRegularExpression(QStringLiteral("failed plane-handle validation")));
     }
     const auto buffer =
-        makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+        makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), gst_sample_get_caps(sample.get()), info,
                           QVideoFrameFormat(QSize(16, 16), QVideoFrameFormat::Format_NV12), context, path, &cache);
     if (!aConstructs) {
         verifyExpectedLogMessage();
@@ -537,40 +735,23 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
 #endif
 }
 
-void GstHwBuffersTest::_testHwBufferCropMatrixIdentityWithoutMeta()
-{
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
-    GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 320, 240, &info);
-    QVERIFY(sample);
-    QVideoFrameFormat fmt(QSize(320, 240), QVideoFrameFormat::Format_NV12);
-    TestableHwVideoBuffer hw(sample, info, fmt);
-    // Default externalTextureMatrix from QHwVideoBuffer is identity; we don't override it
-    // for crop because Qt only consults externalTextureMatrix for Format_SamplerExternalOES.
-    QCOMPARE(hw.externalTextureMatrix(), QMatrix4x4());
-    gst_sample_unref(sample);
-#endif
-}
-
 void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
 {
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
 #else
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info);
+    GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info));
     QVERIFY(sample);
     QByteArray pixels(static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info)), Qt::Uninitialized);
     for (qsizetype i = 0; i < pixels.size(); ++i) {
         pixels[i] = static_cast<char>(i);
     }
-    gst_buffer_fill(gst_sample_get_buffer(sample), 0, pixels.constData(), static_cast<gsize>(pixels.size()));
+    gst_buffer_fill(gst_sample_get_buffer(sample.get()), 0, pixels.constData(), static_cast<gsize>(pixels.size()));
 
     auto hw = std::make_unique<TestableHwVideoBuffer>(
-        sample, info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
-    gst_sample_unref(sample);
+        sample.get(), info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
+    sample.reset();
     // A bundle from an earlier successful import takes its own sample ref; the CPU view must survive that.
     gst_sample_unref(hw->refSample());
     QVideoFrame frame(std::move(hw));
@@ -617,11 +798,10 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
     QFETCH(bool, expectMapped);
 
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_YUY2, 4, 2, &info);
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_YUY2, 4, 2, &info));
     QVERIFY(sample);
-    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
 
-    AdvertisingHwVideoBuffer hw(sample, info,
+    AdvertisingHwVideoBuffer hw(sample.get(), info,
                                 QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(memoryFormat)),
                                 QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(advertisedFormat)));
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
@@ -663,26 +843,57 @@ void GstHwBuffersTest::_testTexturePadsPicture()
 #endif
 }
 
-void GstHwBuffersTest::_testHwBufferCropMatrixFromVideoCropMeta()
+void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas_data()
 {
-    // GstVideoCropMeta reaches the frame as QVideoFrameFormat::viewport() (applyCropMeta), not through
+    QTest::addColumn<QSize>("metaSize");  // invalid: no GstVideoMeta
+    QTest::addColumn<QRect>("crop");      // null: no GstVideoCropMeta
+    QTest::addColumn<QSize>("frameSize");
+    QTest::addColumn<QRect>("viewport");
+
+    // Under 400x200 caps.
+    const QSize capsSize(400, 200);
+    const QRect capsRect(QPoint(0, 0), capsSize);
+    QTest::newRow("no-metas") << QSize() << QRect() << capsSize << capsRect;
+    QTest::newRow("meta-of-caps-size") << capsSize << QRect() << capsSize << capsRect;
+    // v4l2 stateless decoders: the meta has the coded size, and the picture is its top-left part.
+    QTest::newRow("padded") << QSize(400, 208) << QRect() << QSize(400, 208) << capsRect;
+    // gst-va with a left or top crop: the meta has the uncropped size, and the crop meta the picture in it.
+    QTest::newRow("padded-and-cropped") << QSize(416, 208) << QRect(8, 4, 400, 200) << QSize(416, 208)
+                                        << QRect(8, 4, 400, 200);
+    QTest::newRow("cropped") << QSize() << QRect(100, 50, 200, 100) << capsSize << QRect(100, 50, 200, 100);
+    // No frame gst_video_frame_map() would map.
+    QTest::newRow("meta-smaller-than-caps") << QSize(400, 192) << QRect() << capsSize << capsRect;
+}
+
+void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas()
+{
+    QFETCH(QSize, metaSize);
+    QFETCH(QRect, crop);
+    QFETCH(QSize, frameSize);
+    QFETCH(QRect, viewport);
+
+    // The geometry reaches the frame as QVideoFrameFormat's frame size and viewport, not through
     // externalTextureMatrix.
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info);
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info));
     QVERIFY(sample);
-    GstBuffer* buf = gst_sample_get_buffer(sample);
-    GstVideoCropMeta* crop = gst_buffer_add_video_crop_meta(buf);
-    crop->x = 100;
-    crop->y = 50;
-    crop->width = 200;
-    crop->height = 100;
+    GstBuffer* const buffer = gst_sample_get_buffer(sample.get());
+    if (metaSize.isValid()) {
+        gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12,
+                                  static_cast<guint>(metaSize.width()), static_cast<guint>(metaSize.height()));
+    }
+    if (!crop.isNull()) {
+        GstVideoCropMeta* const cropMeta = gst_buffer_add_video_crop_meta(buffer);
+        cropMeta->x = static_cast<guint>(crop.x());
+        cropMeta->y = static_cast<guint>(crop.y());
+        cropMeta->width = static_cast<guint>(crop.width());
+        cropMeta->height = static_cast<guint>(crop.height());
+    }
 
-    QVideoFrameFormat in(QSize(400, 200), QVideoFrameFormat::Format_NV12);
-    QVideoFrameFormat out = applyCropMeta(in, buf);
-    QCOMPARE(out.viewport(), QRect(100, 50, 200, 100));
-    QCOMPARE(out.frameSize(), QSize(400, 200));  // unchanged
-
-    gst_sample_unref(sample);
+    const QVideoFrameFormat format = withFrameGeometry(
+        QVideoFrameFormat(QSize(400, 200), QVideoFrameFormat::Format_NV12), frameGeometry(buffer, info));
+    QCOMPARE(format.frameSize(), frameSize);
+    QCOMPARE(format.viewport(), viewport);
 }
 
 void GstHwBuffersTest::_testTelemetryMapDurationEwma()
@@ -716,8 +927,6 @@ void GstHwBuffersTest::_testTelemetryFallbackReasonMatrix()
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch), quint64(2));
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
     QCOMPARE(delta(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch), quint64(0));
-    QCOMPARE(GstHwPathTelemetry::peekFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch),
-             after.count(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch));
 }
 
 void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
@@ -746,21 +955,8 @@ void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
 #if !defined(QGC_HAS_ANY_GPU_PATH)
     QSKIP("No GPU path compiled in this build");
 #else
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::DmaBuf;
-#elif defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::GlMemory;
-#elif defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::D3D11;
-#elif defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::D3D12;
-#elif defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::IOSurface;
-#elif defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::AHardwareBuffer;
-#else
-    constexpr HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
-#endif
+    // Any compiled path: those are the ones HwBuffers::extraPathStatsSince() reports.
+    const HwVideoBufferPath path = GstHwPathRegistry::paths().front()->path;
 
     const GstHwPathTelemetry::Snapshot receiverBaseline = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::record(path, GstHwPathTelemetry::Counter::MapFailures);

@@ -1,21 +1,18 @@
 #pragma once
 
-#include <utility>
+#include <chrono>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
-#include <QtCore/QList>
-#include <QtCore/QObject>
-#include <QtCore/QPointer>
+#include <QtCore/QMetaObject>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtMultimedia/QCamera>
-#include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QtVideoRecorder.h"
-#include "VideoScreenshot.h"
+#include "VideoReceiver.h"
 
 class QImageCapture;
 class QMediaCaptureSession;
@@ -23,50 +20,52 @@ class QMediaDevices;
 class QQuickItem;
 class QTimer;
 class QVideoFrame;
-class QVideoSink;
-class UVCFrameRelay;
 class UVCStreamMonitor;
 
-/// The USB (UVC) camera VideoManager selected: owns its QCamera and capture session, measures its frames, takes its
-/// photos and records it. The user hears of camera errors and of the camera being unplugged.
+/// A USB (UVC) camera as a VideoReceiver: the camera the config's URI names by its description, which is its video
+/// source name. Owns its QCamera and capture session, measures its frames, takes its photos and records it. The user
+/// hears of camera errors and of the camera being unplugged.
 ///
 /// The camera is tracked by its device id, so unplugging it is noticed even while another camera of the same name stays
 /// attached; the controller then runs that one. After an error the camera is recreated up to kMaxRetries times.
 ///
-/// The camera runs while one is selected and a QML VideoOutput is registered: registerVideoOutput() once it is created,
-/// unregisterVideoOutput() when it is destroyed (see UVCVideoOutput.qml).
-class UVCCameraController : public QObject
+/// The camera runs while the receiver is active and has a VideoOutput: a UVCVideoOutput.qml, which registers itself
+/// once it is created and turns and mirrors the picture as rotation and mirrored say, with its orientation and mirrored
+/// properties. Stopped until then, streaming from the camera's first frame, and reconnecting while it waits to retry
+/// after an error.
+class UVCCameraController : public VideoReceiver
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("UVCStreamMonitor.h")
 
-    Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT)
-    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged)
-    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT)
-    Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged)
-    Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged)
-    Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged)
-    Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged)
-    Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged)
+    Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT FINAL)
+    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged FINAL)
+    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT FINAL)
+    Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(int rotation READ rotation NOTIFY transformChanged FINAL)
+    Q_PROPERTY(bool mirrored READ mirrored NOTIFY transformChanged FINAL)
 
     friend class UVCCameraControllerTest;
+    friend class VideoManagerTest;
 
 public:
     static constexpr int kMaxRetries = 3;
-    static constexpr int kRetryIntervalMs = 2000;
+    static constexpr std::chrono::seconds kRetryInterval{2};
 
     explicit UVCCameraController(QObject* parent = nullptr);
     ~UVCCameraController() override;
 
     UVCStreamMonitor* monitor() const { return _monitor; }
 
-    /// The selected camera's description; empty while none is.
-    QString device() const { return _deviceName; }
+    /// The selected camera's description, the config's URI; empty while none is.
+    QString device() const { return config().uri; }
 
-    /// Selects the attached camera of description @p description, or none for an empty one.
-    void setDevice(const QString& description);
     /// Emits camerasChanged() from now on when a camera is plugged in or unplugged.
     void watchCameras();
 
@@ -109,40 +108,28 @@ public:
     /// doesn't read the focus range, so it can't set a focus distance.
     bool focusAdjustable() const;
 
-    /// Displays the camera in @p videoOutput, a QML VideoOutput, replacing any other.
+    /// For QML: setVideoOutput(), with @p videoOutput to display the camera in it, replacing any other, and with none
+    /// to stop displaying in @p videoOutput if it is the output set. That one happens on the next event loop pass,
+    /// unless another output registered by then: it takes the camera over without the camera stopping.
     Q_INVOKABLE void registerVideoOutput(QQuickItem* videoOutput);
-    /// Stops displaying in @p videoOutput, if it is the registered output.
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
-    /// Turns the camera's picture clockwise by @p rotation and then mirrors it when @p mirrored, on display, in
-    /// screenshots and in photos; recordings keep the camera's own picture. The frames themselves are turned, not the
-    /// VideoOutput, so what Qt draws over them (the telemetry overlay) stays upright.
+    /// Turns the camera's picture clockwise by @p rotation and then mirrors it when @p mirrored, on display and in
+    /// photos; recordings keep the camera's own picture. On display the VideoOutput does it, on top of the frames' own
+    /// rotation and mirroring: see rotation() and mirrored().
     void setTransform(QtVideo::Rotation rotation, bool mirrored);
 
-    /// True while the camera runs into a registered VideoOutput.
-    bool canTakeScreenshot() const;
-    /// Saves the frame on display to @p file, as displayed, with @p exif for a JPEG. False, with a warning logged,
-    /// without a VideoOutput.
-    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
+    /// The clockwise rotation, in degrees, and the mirroring after it, that a VideoOutput showing the camera applies
+    /// as its orientation and mirrored properties.
+    int rotation() const { return static_cast<int>(_rotation); }
 
-    /// Takes a photo into @p file, turned and mirrored as setTransform() says and saved off the GUI thread: a still
-    /// capture where Qt takes one (Android, Apple), else the frame on display. Saves the frame on display too while the
-    /// camera can't capture, or when a capture fails. A JPEG carries @p exif.
-    void capturePhoto(const QString& file, const VideoScreenshot::Exif& exif = {});
+    bool mirrored() const { return _mirrored; }
 
-    /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.
-    bool canRecord() const { return canTakeScreenshot(); }
+    bool encodesRecordings() const override { return true; }
 
-    bool recording() const { return _recorder->recording(); }
-
-    /// Records the camera's video to @p file as QtVideoRecorder::start() does. Recreating the camera (another device or
-    /// format, an unplug, a retry) ends the recording; Qt finishes writing the file.
-    void startRecording(const QString& file, QMediaFormat::FileFormat container,
-                        QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
-    void stopRecording();
-    /// Stops recording and waits up to @p timeoutMs for the file to be finished: Qt writes it on its own thread, which
-    /// the application's exit would cut short.
-    void stopRecordingAndWait(int timeoutMs);
+    /// Waits for a recording's file to be finished first: Qt writes it on its own thread, which the application's exit
+    /// would cut short.
+    void shutDown() override;
 
     /// For QML: QtVideoRecorder::recordingCodecs() and recordingCodecName().
     static QStringList recordingCodecs() { return QtVideoRecorder::recordingCodecs(); }
@@ -158,52 +145,75 @@ signals:
     void formatsChanged();
     /// The camera's adjustable controls, or its zoom range, changed.
     void controlsChanged();
-    void recordingChanged(bool recording);
-    void recordingStarted(const QString& file);
-    /// @p error is empty for a recording that finished normally.
-    void recordingFinished(const QString& file, const QString& error);
+    void transformChanged();
+
+protected:
+    void onConfigChanged() override;
+    void onActiveChanged() override;
+    void onRestartRequested() override;
+    void onReconnectRequested() override;
+    void onVideoOutputChanged() override;
+    /// Records the camera's video as QtVideoRecorder::start() does, while it runs. Recreating the camera (another
+    /// device or format, an unplug, a retry) ends the recording; Qt finishes writing the file.
+    void onStartRecording(const QString& file, FileFormat format) override;
+    void onStopRecording() override;
+    /// Takes a photo, turned and mirrored as setTransform() says and saved off the GUI thread: a still capture where
+    /// Qt takes one (Android, Apple), else the frame on display. Saves the frame on display too while the camera
+    /// can't capture, or when a capture fails, which errorOccurred() reports if there is none by then.
+    bool onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) override;
 
 private:
     void _createCamera();
     void _releaseCamera();
-    /// Connects the camera, the registered VideoOutput and the monitor, and runs the camera while both exist.
+    /// Connects the camera, the VideoOutput and the monitor, and runs the camera while both exist.
     void _connectVideoOutput();
-    /// Replaces the camera with a new one for the selected device, if one is attached.
+    /// Replaces the camera with a new one for the selected device, if the receiver is active and one is attached.
     void _recreateCamera();
+    /// _recreateCamera() with a new run of retries.
+    void _startOver();
+    void _updateState();
+    void _onVideoFrame(const QVideoFrame& frame);
     void _onCameraError(const QString& errorString);
     void _onVideoInputsChanged();
     void _onImageAvailable(int id, const QVideoFrame& frame);
     void _onImageCaptureError(int id, const QString& errorString);
     void _applyControls();
-    /// Saves the frame on display to @p file off the GUI thread; logs a warning without a VideoOutput.
-    void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const;
-    /// Whether the camera in use is attached; without one, whether a camera of the selected name is.
-    bool _cameraAttached() const;
-    QVideoSink* _videoSink() const;
-
-    UVCStreamMonitor* const _monitor;
-    /// Between the capture session and the registered VideoOutput.
-    UVCFrameRelay* const _frameRelay;
-    QMediaDevices* const _mediaDevices;
-    QTimer* const _retryTimer;
-    /// Outlives the capture sessions, like _recorder.
-    QImageCapture* const _imageCapture;
-    QtVideoRecorder* const _recorder;
-    QCamera* _camera = nullptr;
-    Controls _controls;
-    QMediaCaptureSession* _captureSession = nullptr;
-    QPointer<QQuickItem> _videoOutput;
-    QString _deviceName;
-    QString _formatName;
-    QStringList _formats;
-    QByteArray _cameraId;
-    int _retries = 0;
 
     struct PendingPhoto
     {
         QString file;
         VideoScreenshot::Exif exif;
     };
+
+    /// Saves the frame on display in place of @p photo, whose capture won't come.
+    void _savePhotoOnDisplay(const PendingPhoto& photo);
+    /// Saves @p frame, turned and mirrored as setTransform() says, to @p photo's file off the GUI thread.
+    void _savePhoto(const QVideoFrame& frame, const PendingPhoto& photo);
+    /// Whether the camera in use is attached; without one, whether a camera of the selected name is.
+    bool _cameraAttached() const;
+    /// The camera runs into a VideoOutput.
+    bool _running() const;
+
+    UVCStreamMonitor* const _monitor;
+    QMediaDevices* const _mediaDevices;
+    QTimer* const _retryTimer;
+    /// Outlives the capture sessions, like _recorder.
+    QImageCapture* const _imageCapture;
+    QtVideoRecorder* const _recorder;
+    QCamera* _camera = nullptr;
+    QtVideo::Rotation _rotation = QtVideo::Rotation::None;
+    bool _mirrored = false;
+    Controls _controls;
+    QMediaCaptureSession* _captureSession = nullptr;
+    QMetaObject::Connection _frameConnection;
+    QString _formatName;
+    QStringList _formats;
+    QByteArray _cameraId;
+    int _retries = 0;
+    /// The camera in use has shown a frame.
+    bool _framesArriving = false;
+    /// The camera in use failed, with its retries used up.
+    bool _gaveUp = false;
 
     /// The photos requested and not taken yet, by request id.
     QHash<int, PendingPhoto> _photoFiles;

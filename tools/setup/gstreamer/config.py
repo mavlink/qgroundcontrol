@@ -29,6 +29,7 @@ MESON_COMMON = {
 # The Meson option that builds each plugin of the allowlist (gstreamer.plugins in .github/build-config.json), which the
 # build must ship: auto_features=disabled leaves every other plugin out.
 PLUGIN_OPTIONS = {
+    "coretracers": "gstreamer:coretracers",
     "app": "gst-plugins-base:app",
     "opengl": "gst-plugins-base:gl",
     "playback": "gst-plugins-base:playback",

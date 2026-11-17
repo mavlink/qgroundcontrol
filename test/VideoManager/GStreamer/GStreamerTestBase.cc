@@ -30,12 +30,10 @@ void GStreamerTestBase::init()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("\"pxbackend\" \"Could not parse ignore mask")));
 
-    // On headless/software-GL CI the sink bin cannot honor construct-only GPU properties
-    // and the GL bridge is disabled. These warnings are environment-dependent.
+    // On headless/software-GL CI the sink bin cannot honor construct-only GPU properties. The warning is
+    // environment-dependent.
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("gpu-zerocopy.*can't be set after construction")));
-    ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Qt GL context exposes neither EGL nor GLX")));
 }
 
 #else

@@ -9,7 +9,8 @@
 #include <atomic>
 #include <cstddef>
 #include <gst/gst.h>
-// Not <gst/video/gstvideopool.h>: on GStreamer 1.28 it must not be the first video header (include cycle).
+// Not <gst/video/gstvideopool.h>. GStreamer defect, seen in GStreamer 1.28: it must not be the first video header
+// (include cycle).
 #include <gst/video/video.h>
 #include <memory>
 #include <private/qhwvideobuffer_p.h>
@@ -55,31 +56,19 @@ struct MapDiagnostics : GstHw::MapDiagnostics
     // the bridge lost.
     std::atomic<bool> loggedDeviceMismatch{false};
 
-    /// Re-arm every log-once flag so device-loss recovery surfaces warnings again.
+    /// Re-arm every log-once flag so device-loss recovery surfaces warnings again. A deriving struct's reset() calls
+    /// this and re-arms its own.
     void reset() noexcept
     {
-        loggedFirstSuccess.store(false, std::memory_order_release);
-        loggedNullSample.store(false, std::memory_order_release);
-        loggedBadBackend.store(false, std::memory_order_release);
-        loggedNullBuffer.store(false, std::memory_order_release);
-        loggedTextureCreateFail.store(false, std::memory_order_release);
-        loggedNonD3DMemory.store(false, std::memory_order_release);
-        loggedNullResource.store(false, std::memory_order_release);
-        loggedDeviceMismatch.store(false, std::memory_order_release);
+        GstHw::MapDiagnostics::reset();
+        for (std::atomic<bool>* flag : {&loggedNonD3DMemory, &loggedNullResource, &loggedDeviceMismatch}) {
+            flag->store(false, std::memory_order_relaxed);
+        }
     }
 };
 
-/// Pool key: a staging resource is reusable only for an identical (size, format, plane) layout. width is UINT64 to hold
-/// D3D12_RESOURCE_DESC::Width; D3D11's UINT widens losslessly.
-struct StagingKey
-{
-    quint64 width = 0;
-    quint32 height = 0;
-    quint32 format = 0;  // DXGI_FORMAT
-    int plane = 0;
-
-    bool operator==(const StagingKey& o) const noexcept = default;
-};
+static_assert(sizeof(MapDiagnostics) == sizeof(GstHw::MapDiagnostics) + (3 * sizeof(std::atomic<bool>)),
+              "MapDiagnostics::reset() must list every flag");
 
 /// Scope guard for the native handles a resolvePlanes() loop builds up: releases every owned handle on scope
 /// exit unless commit() transfers ownership on the success path.
@@ -88,6 +77,10 @@ struct PlaneResourceGuard
 {
     std::array<HandleT*, kMaxPlanes> handles{};
     int owned = 0;
+
+    PlaneResourceGuard() = default;
+    PlaneResourceGuard(const PlaneResourceGuard&) = delete;
+    PlaneResourceGuard& operator=(const PlaneResourceGuard&) = delete;
 
     ~PlaneResourceGuard()
     {
@@ -104,15 +97,15 @@ struct PlaneResourceGuard
 
 /// Streaming-thread resolve shared by D3D11 and D3D12, run once per buffer from each path's buffer constructor. For
 /// each memory: type check, native-device guard (plane 0) against the bridge's shared device, decoder sync, resource
-/// lookup, and either a slice copy into staging (QRhi::createFrom has no subresource selector) or an AddRef of the
-/// decoder's resource. Fills @p guard and returns the resolved plane count; 0 after warning the cause once.
+/// lookup, and an AddRef of the decoder's resource, or of what the API makes of a texture-array slice
+/// (QRhi::createFrom has no subresource selector). Fills @p guard and returns the resolved plane count; 0 after
+/// warning the cause once.
 ///
 /// @p Api supplies the API-specific pieces:
 ///   types Handle, Memory, Device; static kMemoryName, log(), isMemory(GstMemory*), bridgeDevice() (transfer-full),
 ///   sameDevice(Device*, Device*), resource(Memory*), subresource(Memory*, int plane), isArraySlice(Handle*, guint);
-///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane, Memory*)
-///   (returns an AddRef'd staging handle, or the slice's own resource when the API copies it later), finish()
-///   (flush/fence-wait the submitted copies).
+///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane) (returns the
+///   slice's own resource, AddRef'd, when the API copies it later, or null when it can't take a slice).
 /// proposePool() needs static kCapsFeature, newPool(Device*) and setAllocationParams(GstStructure* config, Device*,
 ///   const GstVideoInfo*).
 template <class Api>
@@ -161,18 +154,18 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
         }
         const guint subIdx = Api::subresource(d3dmem, i);
         if (Api::isArraySlice(resource, subIdx)) {
-            auto* staging = api.copySlice(resource, subIdx, i, d3dmem);
-            if (!staging) {
+            auto* slice = api.copySlice(resource, subIdx, i);
+            if (!slice) {
                 return 0;
             }
-            guard.handles[i] = staging;
+            guard.handles[i] = slice;
         } else {
             resource->AddRef();
             guard.handles[i] = resource;
         }
         guard.owned = i + 1;
     }
-    return api.finish() ? memCount : 0;
+    return memCount;
 }
 
 /// Wraps an array of D3D native handles (ID3D11Texture2D*/ID3D12Resource*) as QRhi-importable textures; releases them
@@ -197,25 +190,20 @@ public:
         }
     }
 
-    /// Keeps backend-owned state (D3D12 staging slot leases) alive for as long as QRhi may sample this bundle.
-    void setKeepAlive(std::shared_ptr<void> keepAlive) noexcept { _keepAlive = std::move(keepAlive); }
-
     /// The native resource plane @p plane wraps; null past the bundle's planes.
     HandleT* handle(int plane) const noexcept { return (plane >= 0 && plane < _count) ? _handles[plane] : nullptr; }
 
 private:
     std::array<HandleT*, kMaxPlanes> _handles;
-    std::shared_ptr<void> _keepAlive;
 };
 
 /// Shared D3D11/D3D12 render-thread tail run after the streaming-thread resolve: aliases a single NV12/P010 resource
-/// across its planes, then reuses the prior bundle when the pooled staging handles match or builds a fresh one over
-/// AddRef'd handles. `HandleT` is deduced from the resolved handle array (ID3D11Texture2D / ID3D12Resource).
+/// across its planes, then reuses the prior bundle when it wraps the same handles or builds a fresh one over AddRef'd
+/// handles. `HandleT` is deduced from the resolved handle array (ID3D11Texture2D / ID3D12Resource).
 template <class HandleT>
 QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, QVideoFrameTexturesUPtr& old,
                                             const GstHwMapTail& tail,
-                                            const std::array<HandleT*, kMaxPlanes>& resolvedHandles, int resolvedCount,
-                                            const std::shared_ptr<void>& keepAlive = {})
+                                            const std::array<HandleT*, kMaxPlanes>& resolvedHandles, int resolvedCount)
 {
     using BundleT = FrameTextures<HandleT>;
 
@@ -244,17 +232,13 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
         }
     }
 
-    // Reuse-eligible when the pooled staging handles are identical: the pool rotates a stable set of resources, so the
-    // existing QRhiTexture views transparently sample the newly-copied frame.
+    // Reuse-eligible when the handles are identical: a decoder's pool and a path's copy targets rotate a stable set of
+    // resources, so the existing QRhiTexture views sample the new frame.
     return GstHwFrameTexturesBase::finishMap<BundleT>(
         self, rhi, old, tail,
         [&](BundleT& prev) {
-            if (!prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat,
-                                    std::span<HandleT* const>(handles.data(), std::size_t(textureCount)))) {
-                return false;
-            }
-            prev.setKeepAlive(keepAlive);
-            return true;
+            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat,
+                                      std::span<HandleT* const>(handles.data(), std::size_t(textureCount)));
         },
         [&] {
             // The bundle owns these AddRef'd refs; the buffer dtor releases the originals independently.
@@ -262,16 +246,13 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
                 if (handles[i])
                     handles[i]->AddRef();
             }
-            auto textures = std::make_unique<BundleT>(&rhi, tail.frameSize, tail.pixelFormat, handles, textureCount);
-            textures->setKeepAlive(keepAlive);
-            return textures;
+            return std::make_unique<BundleT>(&rhi, tail.frameSize, tail.pixelFormat, handles, textureCount);
         });
 }
 
 /// The D3D11/D3D12 QHwVideoBuffer shell: the planes resolvePlanes() resolved on the streaming thread (AddRef'd, and
 /// released with the buffer), their check before import, and the start and end of mapTextures(). Each API's buffer
-/// adds what differs: D3D11 copies array slices and padded textures on the render thread, D3D12 stages them while
-/// resolving.
+/// adds what differs: D3D11 copies array slices and padded textures on the render thread.
 template <class Resolver>
 class VideoBuffer : public GstHwVideoBuffer
 {
@@ -303,7 +284,7 @@ public:
 protected:
     VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
                 HwVideoBufferPath path, MapDiagnostics& diag)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+        : GstHwVideoBuffer(sample, videoInfo, format)
         , _path(path)
         , _diag(diag)
     {}
@@ -338,8 +319,7 @@ protected:
 
     /// Imports @p planes, the resolved planes or copies of them, through mapResolvedTextures().
     QVideoFrameTexturesUPtr finishMap(QRhi& rhi, QVideoFrameTexturesUPtr& old,
-                                      const std::array<Handle*, kMaxPlanes>& planes,
-                                      const std::shared_ptr<void>& keepAlive = {})
+                                      const std::array<Handle*, kMaxPlanes>& planes)
     {
         const GstHwMapTail tail{.path = _path,
                                 .frameSize = _format.frameSize(),
@@ -347,7 +327,7 @@ protected:
                                 .log = &Resolver::log(),
                                 .diag = &_diag,
                                 .successTag = GstHw::toString(_path)};
-        return mapResolvedTextures(*this, rhi, old, tail, planes, _count, keepAlive);
+        return mapResolvedTextures(*this, rhi, old, tail, planes, _count);
     }
 
     std::array<Handle*, kMaxPlanes> _handles{};

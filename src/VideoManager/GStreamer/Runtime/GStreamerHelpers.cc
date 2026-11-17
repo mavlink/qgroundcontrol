@@ -4,6 +4,7 @@
 #include <gst/video/video-event.h>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QFile>
 #include <QtCore/QLatin1String>
 #include <QtCore/QString>
 
@@ -25,6 +26,10 @@ void removeAndStop(GstElement* element, bool flush)
 
     // gst_bin_remove drops the bin's ref, which may be the last one, before the element reaches NULL.
     const GstElementPtr keepAlive = adoptElement(GST_ELEMENT(gst_object_ref(element)));
+    // Under the bin's state lock, which a state change of the bin holds while it sets its children's states: one that
+    // took the element from the bin's children before the removal (as the continuation GStreamer's thread pool runs
+    // once an async sink is gone) would otherwise set it to the bin's state after it reached NULL here.
+    GST_STATE_LOCK(parent.get());
     (void) gst_bin_remove(GST_BIN(parent.get()), element);
     if (flush) {
         (void) gst_element_foreach_sink_pad(
@@ -38,6 +43,7 @@ void removeAndStop(GstElement* element, bool flush)
     // Synchronous: gst_element_change_state() commits an ASYNC return at once when the target is READY or NULL, so
     // the streaming threads have stopped when this returns.
     (void) gst_element_set_state(element, GST_STATE_NULL);
+    GST_STATE_UNLOCK(parent.get());
 }
 
 }  // namespace
@@ -50,6 +56,22 @@ void disposeChild(GstElement* element)
 void flushAndDisposeChild(GstElement* element)
 {
     removeAndStop(element, true);
+}
+
+void disposeChildAsync(GstElement* element)
+{
+    if (!element) {
+        return;
+    }
+#if GST_CHECK_VERSION(1, 28, 0)
+    // Replaces gst_element_call_async(), deprecated in 1.28.
+    gst_object_call_async(
+        GST_OBJECT_CAST(element), [](GstObject* object, gpointer /*data*/) { disposeChild(GST_ELEMENT_CAST(object)); },
+        nullptr);
+#else
+    gst_element_call_async(
+        element, [](GstElement* child, gpointer /*data*/) { disposeChild(child); }, nullptr, nullptr);
+#endif
 }
 
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
@@ -67,6 +89,15 @@ GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
         return nullptr;
     }
     return added;
+}
+
+QByteArray glibFileName(const QString& file)
+{
+#ifdef Q_OS_WIN
+    return file.toUtf8();
+#else
+    return QFile::encodeName(file);
+#endif
 }
 
 void requestKeyframe(GstPad* sinkPad)
@@ -90,14 +121,25 @@ void sendEventAsync(GstPad* pad, GstEvent* event)
         gst_event_unref(event);
         return;
     }
+    auto* const pending = new PendingEvent{.pad = adoptPad(GST_PAD(gst_object_ref(pad))), .event = adoptEvent(event)};
+#if GST_CHECK_VERSION(1, 28, 0)
+    // Replaces gst_element_call_async(), deprecated in 1.28. It takes no destroy notify: the call frees its data.
+    gst_object_call_async(
+        GST_OBJECT_CAST(parent.get()),
+        [](GstObject* /*object*/, gpointer data) {
+            const std::unique_ptr<PendingEvent> owned(static_cast<PendingEvent*>(data));
+            (void) gst_pad_send_event(owned->pad.get(), owned->event.release());
+        },
+        pending);
+#else
     gst_element_call_async(
         parent.get(),
         [](GstElement* /*element*/, gpointer data) {
-            auto* const pending = static_cast<PendingEvent*>(data);
-            (void) gst_pad_send_event(pending->pad.get(), pending->event.release());
+            auto* const queued = static_cast<PendingEvent*>(data);
+            (void) gst_pad_send_event(queued->pad.get(), queued->event.release());
         },
-        new PendingEvent{.pad = adoptPad(GST_PAD(gst_object_ref(pad))), .event = adoptEvent(event)},
-        [](gpointer data) { delete static_cast<PendingEvent*>(data); });
+        pending, [](gpointer data) { delete static_cast<PendingEvent*>(data); });
+#endif
 }
 
 GstPadPtr firstSrcPad(GstElement* element)
@@ -112,6 +154,13 @@ GstPadPtr firstSrcPad(GstElement* element)
         },
         &first);
     return adoptPad(first);
+}
+
+const char* factoryNameOf(GstObject* object)
+{
+    GstElementFactory* const factory =
+        (object && GST_IS_ELEMENT(object)) ? gst_element_get_factory(GST_ELEMENT_CAST(object)) : nullptr;
+    return factory ? GST_OBJECT_NAME(factory) : nullptr;
 }
 
 std::function<void()> holdPadUntilLinked(GstPad* pad, std::function<void(GstPad* pad)> link)

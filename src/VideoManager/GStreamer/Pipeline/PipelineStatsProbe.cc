@@ -5,15 +5,23 @@
 
 #include <QtCore/QString>
 
+#include "GStreamerHelpers.h"
+#include "GstRtpPacketProbe.h"
 #include "GstScoped.h"
 #include "VideoStreamStats.h"
+#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
+
+// On a jitter buffer: the packets its "drop-msg" messages told it dropped to stay within its latency. Kept with the
+// element, as its "stats" are, so that both go when rtspsrc replaces its jitter buffers on a reconnect.
+constexpr char kDroppedOnLatencyKey[] = "qgc-dropped-on-latency";
 
 struct JitterBufferTotals
 {
     bool found = false;
     quint64 packetsPushed = 0;
+    /// Never arrived ("num-lost"), or dropped on arrival to stay within the latency.
     quint64 packetsLost = 0;
     quint64 packetsLate = 0;
     quint64 packetsDuplicate = 0;
@@ -31,24 +39,18 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
     }
     const auto addStats = [](const GValue* item, gpointer data) {
         auto* const element = GST_ELEMENT(g_value_get_object(item));
-        GstElementFactory* const factory = gst_element_get_factory(element);
-        if (!factory || (g_strcmp0(GST_OBJECT_NAME(factory), "rtpjitterbuffer") != 0)) {
+        if (g_strcmp0(GStreamer::factoryNameOf(GST_OBJECT_CAST(element)), "rtpjitterbuffer") != 0) {
             return;
         }
         GstStructure* rawStats = nullptr;
         g_object_get(element, "stats", &rawStats, nullptr);
         const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-        const auto field = [&stats](const char* name) {
-            guint64 value = 0;
-            if (stats) {
-                (void) gst_structure_get_uint64(stats.get(), name, &value);
-            }
-            return value;
-        };
+        const auto field = [&stats](const char* name) -> guint64 { return GstQgc::frameStatsField(stats.get(), name); };
         auto* const sum = static_cast<JitterBufferTotals*>(data);
         sum->found = true;
         sum->packetsPushed += field("num-pushed");
-        sum->packetsLost += field("num-lost");
+        sum->packetsLost +=
+            field("num-lost") + GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(element), kDroppedOnLatencyKey));
         sum->packetsLate += field("num-late");
         sum->packetsDuplicate += field("num-duplicates");
         sum->rtxRequested += field("rtx-count");
@@ -103,6 +105,20 @@ void PipelineStatsProbe::noteBuffer(GstBuffer* buffer)
     }
 }
 
+void PipelineStatsProbe::noteElementMessage(GstMessage* message)
+{
+    const GstStructure* const structure = gst_message_get_structure(message);
+    GstObject* const jitterBuffer = GST_MESSAGE_SRC(message);
+    guint dropped = 0;
+    // "num-too-late", the message's other count, is "num-late" of the jitter buffer's stats.
+    if (!structure || !jitterBuffer || !gst_structure_has_name(structure, "drop-msg") ||
+        !gst_structure_get_uint(structure, "num-drop-on-latency", &dropped) || (dropped == 0)) {
+        return;
+    }
+    const gsize total = GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey)) + dropped;
+    g_object_set_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey, GSIZE_TO_POINTER(total));
+}
+
 void PipelineStatsProbe::_noteKeyframe(GstClockTime time)
 {
     if (_keyframeTimeCount > 0) {
@@ -128,10 +144,16 @@ void PipelineStatsProbe::_noteKeyframe(GstClockTime time)
 }
 
 void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstElement* tee,
-                                VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats) const
+                                VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats)
 {
     counters.bytesReceived = _bytesReceived.load(std::memory_order_relaxed);
 
+    counters.rtp.reset();
+    stats.jitterMs = -1.0;
+    stats.packetsLate = -1;
+    stats.packetsDuplicate = -1;
+    stats.rtxRequested = -1;
+    stats.rtxRecovered = -1;
     const JitterBufferTotals jitterBuffers = jitterBufferTotals(source);
     if (jitterBuffers.found) {
         counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = jitterBuffers.packetsPushed,
@@ -141,13 +163,13 @@ void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstEle
         stats.packetsDuplicate = static_cast<qint64>(jitterBuffers.packetsDuplicate);
         stats.rtxRequested = static_cast<qint64>(jitterBuffers.rtxRequested);
         stats.rtxRecovered = static_cast<qint64>(jitterBuffers.rtxRecovered);
-    } else {
-        counters.rtp.reset();
-        stats.jitterMs = -1.0;
-        stats.packetsLate = -1;
-        stats.packetsDuplicate = -1;
-        stats.rtxRequested = -1;
-        stats.rtxRecovered = -1;
+    } else if (const std::optional<GStreamer::RtpPacketCounts> packets = GStreamer::rtpPacketCounts(source)) {
+        // A packet that arrives late is no longer lost, but the meter takes a counter that shrank for one that started
+        // again from zero: the count it is given only grows, and the next packets lost make up for the late one.
+        _rtpPacketsLost = std::max(_rtpPacketsLost, packets->packetsLost);
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = packets->packetsReceived,
+                                                          .packetsLost = _rtpPacketsLost};
+        stats.jitterMs = packets->jitterMs;
     }
 
     const GstClockTime keyframeInterval = _keyframeInterval.load(std::memory_order_relaxed);

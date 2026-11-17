@@ -245,10 +245,13 @@ elseif(IOS)
             message(STATUS "QGC: No FFmpeg xcframeworks found at ${_ffmpeg_xcframework_dir}")
         endif()
 
-        set_property(
-            TARGET ${CMAKE_PROJECT_NAME}
-            APPEND
-            PROPERTY BUILD_RPATH "@executable_path/Frameworks"
+        # The app loads its frameworks from its bundle alone. As a build-tree binary it would also record the build
+        # machine's directories of every framework it links.
+        set_target_properties(
+            ${CMAKE_PROJECT_NAME}
+            PROPERTIES
+                BUILD_WITH_INSTALL_RPATH ON
+                INSTALL_RPATH "@executable_path/Frameworks"
         )
     endif()
 

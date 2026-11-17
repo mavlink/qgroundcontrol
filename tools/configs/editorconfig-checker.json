@@ -14,7 +14,7 @@
     "^src/Vehicle/Actuators/(Actuators|Mixer)\\.cc$",
     "^src/Vehicle/FTPManager\\.h$",
     "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$",
-    "^src/VideoManager/GStreamer/Runtime/Media/.*\\.h26[45]$"
+    "^src/VideoManager/GStreamer/SelfTest/Media/.*\\.h26[45]$"
   ],
   "Disable": {
     "IndentSize": true,
