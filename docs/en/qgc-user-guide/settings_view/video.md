@@ -7,7 +7,9 @@ Configure video streaming and recording settings.
 - **Source** — Video Stream Disabled / RTSP Video Stream / UDP h.264 / UDP h.265 / TCP-MPEG2 / MPEG-TS, or an attached
   USB camera by its name, such as Integrated Camera. The list follows the cameras as they are plugged in and unplugged.
   A selected camera stays selected while it is unplugged, listed as **(not connected)**, and plays again once it is
-  plugged back in.
+  plugged back in. On Android the list holds the cameras Android offers to apps: the device's own, as **Rear Camera**
+  and **Front Camera**, and a USB camera, as **External Camera**, only on devices whose Android supports external
+  cameras.
 - **USB Camera Tile** (while the source is a stream, unless **Video Tiles** is 0) — **None**, or an attached USB camera
   to show in a [tile](../fly_view/video.md#video-tiles) beside the stream. It lists the cameras as **Source** does, and
   a selected camera likewise stays selected while it is unplugged. A camera chosen here starts in the tile, also when
