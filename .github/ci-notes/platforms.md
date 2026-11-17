@@ -452,13 +452,16 @@ Version-marker tags on `master` (e.g. `v5.2.0-dev`, consumed by `git describe` f
 version numbers) do not match the trigger glob and never start a build.
 
 - The push of a release tag starts a staged Play Store production rollout at 20% (master pushes
-  complete a beta release), uploads the App Store build to TestFlight, and pushes the builder
+  complete a daily release), uploads the App Store build to TestFlight, and pushes the builder
   images to Docker Hub. The Play Store and TestFlight steps run only when their secrets and
   variables are set; otherwise they are skipped without failing the run (TestFlight with a
   notice). The
   packages reach S3 `builds/<tag>/` and `latest/`, and the tag's draft GitHub Release, through
   [Publish Builds](#publish-builds), once Linux, Windows, MacOS, and Android have all passed
   for the tag; `latest/` keeps a release that is newer than the tag.
+- Android stable builds use `org.mavlink.qgroundcontrol`; daily builds use
+  `org.mavlink.qgroundcontrolbeta`. They publish to their respective Play Store
+  production tracks.
 - **Only a push uploads to a store.** The Play Store step of `android.yml` and the TestFlight
   step of `ios.yml` name `github.event_name == 'push'` among their conditions, so a run that was
   started by hand, by a pull request, or by the merge queue uploads to neither, whatever ref it
@@ -469,7 +472,7 @@ version numbers) do not match the trigger glob and never start a build.
   `android.yml` the APK signed with the release keystore, and `ios.yml` the IPA signed for the
   App Store, with a notice that it stays a workflow artifact. Both packages are attested and
   kept as workflow artifacts, and Publish Builds, which counts `push` runs only, publishes no
-  download from them. `android.yml` dispatched on `master` builds the APK and leaves the beta
+  download from them. `android.yml` dispatched on `master` builds the APK and leaves the daily
   track alone; the App Bundle was a `master` push's alone before. To repeat a store upload that
   failed, re-run the failed job of the push run: a re-run keeps the event of its run.
 - Release builds use no compiler or moc cache ([caching.md](caching.md#release-tags)).

@@ -241,8 +241,12 @@ jobs:
         run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_link.py" --label "Android Lint reports"
 
       - name: Prepare Artifact
+        id: apk
         shell: bash
         run: |
+          package_id=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["android-package-name"])' \
+            "${RUNNER_TEMP}/build/android-QGroundControl-deployment-settings.json")
+          echo "package-id=${package_id}" >> "${GITHUB_OUTPUT}"
           python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/find_artifact.py" \
             --build-dir "${RUNNER_TEMP}/build/android-build" \
             --pattern '*.apk' --top-level \
@@ -289,7 +293,7 @@ jobs:
         uses: ./.github/actions/android-emulator-test
         with:
           apk-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-          package: org.mavlink.qgroundcontrol
+          package: ${{ steps.apk.outputs.package-id }}
           android-platform: ${{ steps.setup.outputs.android_platform }}
           diagnostics-name: ${{ matrix.host }}
 
@@ -312,16 +316,16 @@ jobs:
           subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}-aab
           publish: 'false'
 
-      # Tags start a 20% staged production rollout; master pushes complete a beta release. Only a
+      # Tags start a 20% staged production rollout; master pushes complete a daily release. Only a
       # push uploads: a run started by hand on the same ref would release that build a second time.
       - name: Deploy to Play Store
         if: ${{ !matrix.emulator && matrix.primary && github.event_name == 'push' && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-          packageName: org.mavlink.qgroundcontrol
+          packageName: ${{ steps.apk.outputs.package-id }}
           releaseFiles: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
-          track: ${{ github.ref_type == 'tag' && 'production' || 'beta' }}
+          track: production
           status: ${{ github.ref_type == 'tag' && 'inProgress' || 'completed' }}
           userFraction: ${{ github.ref_type == 'tag' && '0.2' || '' }}
           whatsNewDirectory: ${{ github.workspace }}/deploy/android/whatsnew

@@ -221,8 +221,8 @@ set(QGC_QT_ANDROID_MIN_SDK_VERSION
     CACHE STRING "Android minimum SDK version"
 )
 set(QGC_ANDROID_PACKAGE_NAME
-    "${QGC_PACKAGE_NAME}"
-    CACHE STRING "Android package identifier"
+    ""
+    CACHE STRING "Android package identifier (empty uses the build default)"
 )
 set(QGC_ANDROID_PACKAGE_SOURCE_DIR
     "${CMAKE_SOURCE_DIR}/android"
