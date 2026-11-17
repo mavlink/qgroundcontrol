@@ -38,8 +38,7 @@ public:
     quint64 observationRevision() const { return _observationRevision; }
 
     std::optional<GPSObservation> acceptedObservation(
-        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
-        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
+        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
 
     void updateObservation(const GPSObservation& observation);
     void invalidatePosition();
@@ -58,8 +57,7 @@ private:
     void _schedulePositionExpiry();
     /// Empty for a missing or future timestamp.
     std::optional<std::chrono::milliseconds> _age(quint64 timestampUs) const;
-    std::chrono::microseconds _remaining(quint64 timestampUs,
-                                         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
+    std::chrono::microseconds _remaining(quint64 timestampUs) const;
 
     struct PositionState
     {

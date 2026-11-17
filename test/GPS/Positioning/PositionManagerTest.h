@@ -27,7 +27,7 @@ private slots:
     void _positionReceiverIsTheOnlyReceiverSource();
     void _earlyExpiryTimerKeepsPublication();
     void _standbyReportsDoNotRepublish();
-    void _consumerMaximumAge();
+    void _ageOnSourceClock();
     void _policySelectionGates();
     void _sourceAndHealthLifetime();
     void _backendStatus();

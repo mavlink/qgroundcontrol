@@ -300,8 +300,7 @@ void RemoteIDManager::_sendSystem()
         }
     } else {
         PositionManager* positionManager = GPSManager::instance()->positionManager();
-        const auto observation = positionManager->acceptedObservation(GPSObservation::PositionUse::RemoteID,
-                                                                      GPSSourceHealth::FRESHNESS_TIMEOUT);
+        const auto observation = positionManager->acceptedObservation(GPSObservation::PositionUse::RemoteID);
         if (observation) {
             gcsPosition = observation->position.coordinate();
             // An altitude of unknown datum is still the best available operator altitude.

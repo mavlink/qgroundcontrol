@@ -32,23 +32,18 @@ std::optional<std::chrono::milliseconds> GPSSourceHealth::_age(quint64 timestamp
     return std::chrono::duration_cast<std::chrono::milliseconds>(*age);
 }
 
-std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(
-    GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
+std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(GPSObservation::PositionUse use) const
 {
     if (_position.invalidated ||
-        _remaining(_position.observation.monotonicTimestampUs, maximumAge) == std::chrono::microseconds::zero()) {
+        _remaining(_position.observation.monotonicTimestampUs) == std::chrono::microseconds::zero()) {
         return std::nullopt;
     }
     return _position.observation.projected(use);
 }
 
-std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
-                                                      std::optional<std::chrono::milliseconds> maximumAge) const
+std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs) const
 {
-    const auto lifetime = maximumAge ? (std::min) (_freshnessTimeout, *maximumAge) : _freshnessTimeout;
-    return lifetime > std::chrono::milliseconds::zero()
-               ? MonotonicClock::remaining(timestampUs, _scheduler->nowUs(), lifetime)
-               : std::chrono::microseconds::zero();
+    return MonotonicClock::remaining(timestampUs, _scheduler->nowUs(), _freshnessTimeout);
 }
 
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)

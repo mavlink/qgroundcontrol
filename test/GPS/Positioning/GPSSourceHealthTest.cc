@@ -544,43 +544,6 @@ void GPSSourceHealthTest::_futureReceiptRemainsRejected()
     QCOMPARE(health.acceptedObservation(use)->satellitesUsed, std::optional<int>(12));
 }
 
-void GPSSourceHealthTest::_maximumAge_data()
-{
-    QTest::addColumn<int>("sourceLifetimeMs");
-    QTest::newRow("stricter-source") << 2000;
-    QTest::newRow("same-lifetime") << 5000;
-    QTest::newRow("stricter-consumer") << 10000;
-}
-
-void GPSSourceHealthTest::_maximumAge()
-{
-    QFETCH(int, sourceLifetimeMs);
-    using Use = GPSObservation::PositionUse;
-    ManualScheduler scheduler;
-    GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeout(std::chrono::milliseconds(sourceLifetimeMs));
-    GPSObservation observation;
-    observation.monotonicTimestampUs = scheduler.nowUs();
-    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), QDateTime::fromMSecsSinceEpoch(1000).toUTC());
-    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
-    health.updateObservation(observation);
-    QVERIFY(!health.acceptedObservation(Use::RemoteID, 0ms));
-    QVERIFY(!health.acceptedObservation(Use::RemoteID, -1ms));
-    QVERIFY(health.acceptedObservation(Use::RemoteID, std::chrono::milliseconds::max()));
-    const auto lifetime = std::min(std::chrono::milliseconds(sourceLifetimeMs), 5000ms);
-    QVERIFY(scheduler.advanceBy(lifetime - 1us));
-    const auto accepted = health.acceptedObservation(Use::RemoteID, 5000ms);
-    QVERIFY(accepted);
-    QCOMPARE(accepted->monotonicTimestampUs, observation.monotonicTimestampUs);
-    QCOMPARE(accepted->position.timestamp(), observation.position.timestamp());
-    QVERIFY(scheduler.advanceBy(1us));
-    QVERIFY(!health.acceptedObservation(Use::RemoteID, 5000ms));
-    QCOMPARE(health.acceptedObservation(Use::RemoteID).has_value(), sourceLifetimeMs > 5000);
-    observation.monotonicTimestampUs = scheduler.nowUs();
-    health.updateObservation(observation);
-    QVERIFY(health.acceptedObservation(Use::RemoteID, 5000ms));
-}
-
 void GPSSourceHealthTest::_navigationObservation()
 {
     GPSNavigationValues navigation;

@@ -25,8 +25,6 @@ private slots:
     void _freshnessReconfiguration();
     void _futureReceiptRemainsRejected_data();
     void _futureReceiptRemainsRejected();
-    void _maximumAge_data();
-    void _maximumAge();
     void _receiptDeadlineBoundaries();
     void _navigationObservation();
     void _dopOnlyPosition_data();

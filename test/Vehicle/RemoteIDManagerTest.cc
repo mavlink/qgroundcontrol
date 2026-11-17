@@ -16,8 +16,6 @@
 #include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
 
-using namespace std::chrono_literals;
-
 namespace {
 
 constexpr const char* kValidFullOperatorID = "FIN87astrdge12k8-xyz";
@@ -400,7 +398,6 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     });
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeout(60000ms);
     auto registration = positioning->registerReceiver(&health);
     positioning->setConfiguration({.sourceMode = PositionManager::SourceMode::ReceiverOnly});
     settings->region()->setRawValue(int(RemoteIDSettings::RegionOperation::FAA));
@@ -421,11 +418,9 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     QVERIFY(manager->gcsPositionUsable());
 
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{1}));
-    QVERIFY(positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
-    QVERIFY(
-        !positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID, GPSSourceHealth::FRESHNESS_TIMEOUT));
+    QVERIFY(!positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
     expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("GCS GPS data is not valid")));
+                     QRegularExpression(QStringLiteral("Position data is stale")));
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     verifyExpectedLogMessage();
     QVERIFY(!manager->gcsPositionUsable());

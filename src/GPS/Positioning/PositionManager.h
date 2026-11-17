@@ -142,8 +142,7 @@ public:
     qreal gcsPositionHorizontalAccuracy() const { return _published.horizontalAccuracy; }
 
     std::optional<GPSObservation> acceptedObservation(
-        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
-        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
+        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
 
 signals:
     void selectionChanged();
@@ -178,8 +177,7 @@ private:
     void _emitChanges();
     void _setPositioningError(QGeoPositionInfoSource::Error error);
     std::optional<GPSObservation> _accepted(
-        SelectedSource kind, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
-        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
+        SelectedSource kind, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
     void _setupPositionSources();
     /// The datum of the altitudes that Qt's position backend @a sourceName reports.
     static GPSAltitudeDatum _backendAltitudeDatum(const QString& sourceName);

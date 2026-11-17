@@ -436,17 +436,15 @@ void PositionManager::_setPositioningError(QGeoPositionInfoSource::Error error)
     }
 }
 
-std::optional<GPSObservation> PositionManager::acceptedObservation(
-    GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
+std::optional<GPSObservation> PositionManager::acceptedObservation(GPSObservation::PositionUse use) const
 {
-    return _currentHealth && _authorized ? _accepted(_selectedKind, use, maximumAge) : std::nullopt;
+    return _currentHealth && _authorized ? _accepted(_selectedKind, use) : std::nullopt;
 }
 
-std::optional<GPSObservation> PositionManager::_accepted(SelectedSource kind, GPSObservation::PositionUse use,
-                                                         std::optional<std::chrono::milliseconds> maximumAge) const
+std::optional<GPSObservation> PositionManager::_accepted(SelectedSource kind, GPSObservation::PositionUse use) const
 {
     const GPSSourceHealth* const health = _sourceHealth(kind);
-    auto observation = health ? health->acceptedObservation(use, maximumAge) : std::nullopt;
+    auto observation = health ? health->acceptedObservation(use) : std::nullopt;
     if (observation && kind == SelectedSource::Receiver && _receiverSource().session != 0 &&
         observation->sessionId != _receiverSource().session) {
         return std::nullopt;

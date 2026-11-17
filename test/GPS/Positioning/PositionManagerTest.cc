@@ -548,28 +548,25 @@ void PositionManagerTest::_standbyReportsDoNotRepublish()
     QCOMPARE(coordinates.last().first().value<QGeoCoordinate>().latitude(), 47);
 }
 
-void PositionManagerTest::_consumerMaximumAge()
+void PositionManagerTest::_ageOnSourceClock()
 {
-    // How a consumer's age limit combines with source freshness is GPSSourceHealthTest::_maximumAge's; the manager
-    // measures the age on the source's clock rather than its own.
+    // The manager measures an observation's age on the source's clock rather than its own.
     using Use = GPSObservation::PositionUse;
     ManualScheduler serviceClock;
     ManualScheduler sourceClock;
     QVERIFY(sourceClock.advanceBy(1h));
     GPSSourceHealth health(nullptr, &sourceClock);
-    health.setFreshnessTimeout(10000ms);
     PositionManager service(nullptr, &serviceClock);
     auto registration = service.registerReceiver(&health, 7);
     const auto observation = fix(sourceClock, 47, 7);
     health.updateObservation(observation);
     QVERIFY(serviceClock.advanceBy(24h));
     QVERIFY(sourceClock.advanceBy(4999ms));
-    const auto accepted = service.acceptedObservation(Use::RemoteID, 5000ms);
+    const auto accepted = service.acceptedObservation(Use::RemoteID);
     QVERIFY(accepted);
     QCOMPARE(accepted->monotonicTimestampUs, observation.monotonicTimestampUs);
     QVERIFY(sourceClock.advanceBy(1ms));
-    QVERIFY(!service.acceptedObservation(Use::RemoteID, 5000ms));
-    QVERIFY(service.acceptedObservation(Use::RemoteID));
+    QVERIFY(!service.acceptedObservation(Use::RemoteID));
 }
 
 void PositionManagerTest::_policySelectionGates()
