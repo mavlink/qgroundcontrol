@@ -13,6 +13,7 @@ private:
     void _ignorePlayerLogs();
     /// Qt reports each format this platform can't encode, which the recorder moves past.
     void _ignoreEncoderFallbacks();
+    void _ignoreRtspServerLogs();
 
 private slots:
     void _testPlayerSource_data();

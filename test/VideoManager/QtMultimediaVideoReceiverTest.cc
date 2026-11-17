@@ -106,6 +106,15 @@ void QtMultimediaVideoReceiverTest::_ignoreEncoderFallbacks()
                      QRegularExpression(QStringLiteral("^Recording error: .* \"Could not initialize encoder\"$")));
 }
 
+void QtMultimediaVideoReceiverTest::_ignoreRtspServerLogs()
+{
+    // gst-rtsp-server defect, seen once with GStreamer 1.28.8 on a loaded macOS host: a client's socket is closed
+    // while a main context of the server still polls it. GLib polls with select() there, which fails for a closed
+    // descriptor where Linux's poll() only flags it, and GLib warns of the failure.
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("poll\\(2\\) failed due to: Bad file descriptor")));
+}
+
 void QtMultimediaVideoReceiverTest::_testPlayerSource_data()
 {
     QTest::addColumn<QString>("uri");
@@ -321,6 +330,7 @@ void QtMultimediaVideoReceiverTest::_testPlaysMockStreams()
     QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), port));
 
     _ignorePlayerLogs();
+    _ignoreRtspServerLogs();
     ReceiverUnderTest stream(server.servedUri());
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
@@ -483,6 +493,7 @@ void QtMultimediaVideoReceiverTest::_testPlaysRtspOverTcp()
     QUrl uri(server.servedUri());
     uri.setScheme(QStringLiteral("rtspt"));
     _ignorePlayerLogs();
+    _ignoreRtspServerLogs();
     ReceiverUnderTest stream(uri.toString());
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
