@@ -104,9 +104,11 @@ int makeMemfd(const QByteArray& bytes);
 /// The NAL unit types in the Annex B @p data, in order.
 QList<int> nalTypes(const QByteArray& data, bool h265);
 
-/// Demuxes the MP4/MOV at @p path to EOS. Returns the number of video samples, or -1 with @p failure set when the
-/// file can't be played to the end.
-int countPlayableFrames(const QString& path, QString& failure);
+/// Plays the file at @p path to EOS through @p chain: the demuxer, and what is to follow it, in gst-launch syntax.
+/// Returns the number of buffers the chain gives, with the first one's timestamp in @p firstPts, or -1 with @p failure
+/// set when the file can't be played to the end.
+int countPlayableFrames(const QString& path, QString& failure, const char* chain = "qtdemux",
+                        GstClockTime* firstPts = nullptr);
 
 /// A pipeline that is set to NULL and released on destruction.
 class TestPipeline
@@ -237,7 +239,7 @@ QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware = std::n
 
 /// An RTSP server on a free loopback port, for driving rtspsrc without gst-rtsp-server. Given an SDP, it answers
 /// OPTIONS and DESCRIBE and records each SETUP URL without answering it, so the client stops right after picking
-/// streams. Without one it never answers, as a camera whose RTSP service hung.
+/// streams. Without one it never answers, as a camera whose RTSP service hung, unless told to refuse (refuseWith()).
 class FakeRtspServer
 {
 public:
@@ -246,9 +248,17 @@ public:
     FakeRtspServer(const FakeRtspServer&) = delete;
     FakeRtspServer& operator=(const FakeRtspServer&) = delete;
 
+    /// From here on, answers every request with @p status and the authentication it wants, as a camera does that
+    /// refuses the request (401 for a wrong password, 404 for a wrong path).
+    void refuseWith(const QByteArray& status) { _refusal = status; }
+
     [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
 
-    QString uri() const { return QStringLiteral("rtsp://127.0.0.1:%1/test").arg(_server.serverPort()); }
+    /// @p userInfo: the "user:password@" of the URI, if any.
+    QString uri(const QString& userInfo = QString()) const
+    {
+        return QStringLiteral("rtsp://") + userInfo + QStringLiteral("127.0.0.1:%1/test").arg(_server.serverPort());
+    }
 
     int connections() const { return _connections; }
 
@@ -259,6 +269,7 @@ private:
 
     QTcpServer _server;
     QByteArray _sdp;
+    QByteArray _refusal;
     QHash<QTcpSocket*, QByteArray> _pending;
     QList<QByteArray> _setupUrls;
     int _connections = 0;

@@ -17,6 +17,8 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
+#include "BranchContext.h"
+#include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
 #include "GstVideoReceiver.h"
@@ -84,6 +86,22 @@ inline QString udpListenUri()
     return loopbackUri(QLatin1StringView("udp"), 0);
 }
 
+/// The head (@p factoryName: "queue" or "valve") of @p pipeline's tee branch @p branch, or null.
+inline GStreamer::GstElementPtr branchHead(GstElement* pipeline, GStreamer::PipelineBranch branch,
+                                           const char* factoryName)
+{
+    if (!pipeline) {
+        return nullptr;
+    }
+    for (GStreamer::GstElementPtr& element : GstTest::childElements(GST_BIN(pipeline))) {
+        if ((g_strcmp0(GStreamer::factoryNameOf(GST_OBJECT(element.get())), factoryName) == 0) &&
+            (GStreamer::branchOf(GST_OBJECT(element.get())) == branch)) {
+            return std::move(element);
+        }
+    }
+    return nullptr;
+}
+
 /// Holds a streaming thread inside a pad probe until released; shared with the probe, which may outlive the test.
 struct Gate
 {
@@ -106,6 +124,21 @@ struct Gate
     std::condition_variable released;
     bool open = false;
 };
+
+/// Holds the streaming thread that pushes into @p element's sink pad until @p gate opens.
+inline bool holdAtSink(GstElement* element, const std::shared_ptr<Gate>& gate)
+{
+    const GStreamer::GstPadPtr pad =
+        GStreamer::adoptPad(element ? gst_element_get_static_pad(element, "sink") : nullptr);
+    return pad && gst_pad_add_probe(
+                      pad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+                      [](GstPad*, GstPadProbeInfo*, gpointer data) {
+                          (*static_cast<std::shared_ptr<Gate>*>(data))->wait();
+                          return GST_PAD_PROBE_OK;
+                      },
+                      new std::shared_ptr<Gate>(gate),
+                      [](gpointer data) { delete static_cast<std::shared_ptr<Gate>*>(data); });
+}
 
 /// A GstVideoReceiver receiving @p uri, with spies on its signals, a VideoOutput in a shown window, and a sender of the
 /// test stream @p stream for its UDP port.
@@ -210,24 +243,45 @@ struct Receiver
                                           TestTimeout::mediumDuration(), u"frames sent");
     }
 
+    /// Adds @p probe to the pad @p padName of the head (@p factoryName: "queue" or "valve") of the tee branch
+    /// @p branch, on the worker.
+    [[nodiscard]] bool probeBranchHead(GStreamer::PadProbe& probe, GStreamer::PipelineBranch branch,
+                                       const char* factoryName, const char* padName, GstPadProbeType type,
+                                       GstPadProbeCallback callback, gpointer data) const
+    {
+        bool added = false;
+        (void) GstVideoReceiverTestBase::runOnPipeline(receiver.get(), [&](GstElement* pipeline) {
+            const GStreamer::GstElementPtr head = branchHead(pipeline, branch, factoryName);
+            const GStreamer::GstPadPtr pad =
+                GStreamer::adoptPad(head ? gst_element_get_static_pad(head.get(), padName) : nullptr);
+            added = pad && probe.add(pad.get(), type, callback, data);
+        });
+        return added;
+    }
+
     /// Holds the recorder's filesink until @p gate opens.
     [[nodiscard]] bool blockRecorder(const std::shared_ptr<Gate>& gate) const
     {
         bool blocked = false;
         (void) GstVideoReceiverTestBase::runOnPipeline(receiver.get(), [&blocked, gate](GstElement* pipeline) {
-            const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(pipeline, "filesink");
-            const GStreamer::GstPadPtr pad =
-                GStreamer::adoptPad(fileSink ? gst_element_get_static_pad(fileSink.get(), "sink") : nullptr);
-            blocked = pad && gst_pad_add_probe(
-                                 pad.get(), GST_PAD_PROBE_TYPE_BUFFER,
-                                 [](GstPad*, GstPadProbeInfo*, gpointer data) {
-                                     (*static_cast<std::shared_ptr<Gate>*>(data))->wait();
-                                     return GST_PAD_PROBE_OK;
-                                 },
-                                 new std::shared_ptr<Gate>(gate),
-                                 [](gpointer data) { delete static_cast<std::shared_ptr<Gate>*>(data); });
+            blocked = holdAtSink(GstTest::findByFactory(pipeline, "filesink").get(), gate);
         });
         return blocked;
+    }
+
+    /// Posts an ERROR message from the pipeline's @p factoryName element, as the element would.
+    [[nodiscard]] bool postError(const char* factoryName, GQuark domain, gint code, const char* text,
+                                 const char* debug = nullptr) const
+    {
+        bool posted = false;
+        (void) GstVideoReceiverTestBase::runOnPipeline(receiver.get(), [&](GstElement* pipeline) {
+            if (const GStreamer::GstElementPtr element = GstTest::findByFactory(pipeline, factoryName)) {
+                const GStreamer::GErrorPtr error = GStreamer::adoptError(g_error_new_literal(domain, code, text));
+                posted = gst_element_post_message(element.get(),
+                                                  gst_message_new_error(GST_OBJECT(element.get()), error.get(), debug));
+            }
+        });
+        return posted;
     }
 
     static QString lastFinished(const QSignalSpy& spy, int argument) { return spy.constLast().at(argument).toString(); }

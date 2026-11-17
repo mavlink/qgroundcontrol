@@ -18,20 +18,6 @@ using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
 
-/// Holds the frames that reach @p sink until @p gate opens, as a display that has stopped taking them.
-bool holdDisplayFrames(GstElement* sink, const std::shared_ptr<GstReceiverTest::Gate>& gate)
-{
-    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
-    return pad && gst_pad_add_probe(
-                      pad.get(), GST_PAD_PROBE_TYPE_BUFFER,
-                      [](GstPad*, GstPadProbeInfo*, gpointer data) {
-                          (*static_cast<std::shared_ptr<GstReceiverTest::Gate>*>(data))->wait();
-                          return GST_PAD_PROBE_OK;
-                      },
-                      new std::shared_ptr<GstReceiverTest::Gate>(gate),
-                      [](gpointer data) { delete static_cast<std::shared_ptr<GstReceiverTest::Gate>*>(data); });
-}
-
 }  // namespace
 
 void GstVideoReceiverStatsTest::_testStatsMeasureStream_data()
@@ -162,7 +148,8 @@ void GstVideoReceiverStatsTest::_testStatsCountFramesTheDisplayQueueLeaks()
     const auto gate = std::make_shared<GstReceiverTest::Gate>();
     // Before the receiver stops: its worker waits for the streaming thread the gate holds.
     const auto release = qScopeGuard([&gate] { gate->release(); });
-    QVERIFY(holdDisplayFrames(displaySink(receiving.receiver.get()), gate));
+    // A display that has stopped taking frames.
+    QVERIFY(GstReceiverTest::holdAtSink(displaySink(receiving.receiver.get()), gate));
     QVERIFY(receiving.startStreaming());
 
     // The decoder can't hand its frame on, so the stream backs up into the display queue, which leaks rather than

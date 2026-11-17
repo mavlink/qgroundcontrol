@@ -118,6 +118,8 @@ void GstVideoReceiverComponentsTest::_testFirstFrameGrace_data()
     QTest::newRow("rtsp fallback") << qint64(5000) << qint64(6001);
     // A UDP port nobody sends to yet hasn't stalled.
     QTest::newRow("listening") << kNoFrame << kNoFrame;
+    // A source that never delivers a frame must still time out, counted from the first check.
+    QTest::newRow("no grace") << qint64(0) << qint64(1001);
 }
 
 void GstVideoReceiverComponentsTest::_testFirstFrameGrace()
@@ -134,7 +136,9 @@ void GstVideoReceiverComponentsTest::_testFirstFrameGrace()
         QCOMPARE(watchdog.check(kNowMs + kHourMs, false).stall, StreamWatchdog::Stall::None);
     } else {
         QCOMPARE(watchdog.check(kNowMs + silentStallMs - 1, false).stall, StreamWatchdog::Stall::None);
-        QCOMPARE(watchdog.check(kNowMs + silentStallMs, false).stall, StreamWatchdog::Stall::Source);
+        const StreamWatchdog::Result result = watchdog.check(kNowMs + silentStallMs, false);
+        QCOMPARE(result.stall, StreamWatchdog::Stall::Source);
+        QCOMPARE(result.silentMs, silentStallMs);
     }
 
     // Once frames flow, the timeout applies.
@@ -157,18 +161,6 @@ void GstVideoReceiverComponentsTest::_testDecoderSilenceCountsFromInsertion()
     QVERIFY(!watchdog.noteSinkFrame(kNowMs + 2002));
     watchdog.startSinkClock(kNowMs + 2002);
     QVERIFY2(watchdog.noteSinkFrame(kNowMs + 2003), "A new decoder's first frame must be reported again");
-}
-
-void GstVideoReceiverComponentsTest::_testSourceTimeoutStartsAtFirstCheck()
-{
-    // A source that never delivers a frame must still time out, counted from the first check.
-    StreamWatchdog watchdog;
-    watchdog.start(std::chrono::seconds(1));
-    QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
-    QCOMPARE(watchdog.check(kNowMs + 1000, false).stall, StreamWatchdog::Stall::None);
-    const StreamWatchdog::Result result = watchdog.check(kNowMs + 1001, false);
-    QCOMPARE(result.stall, StreamWatchdog::Stall::Source);
-    QCOMPARE(result.silentMs, qint64(1001));
 }
 
 void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()

@@ -14,7 +14,6 @@ private slots:
     void _testFirstFrameGrace_data();
     void _testFirstFrameGrace();
     void _testDecoderSilenceCountsFromInsertion();
-    void _testSourceTimeoutStartsAtFirstCheck();
     void _testPipelineDotStaysInDirectory_data();
     void _testPipelineDotStaysInDirectory();
     void _testPipelineNamedAfterReceiver_data();

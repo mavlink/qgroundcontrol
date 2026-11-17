@@ -3,11 +3,8 @@
 #ifdef QGC_GST_STREAMING
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QHostAddress>
-#include <QtNetwork/QTcpServer>
-#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 
 namespace {
@@ -24,56 +21,6 @@ using GstReceiverTest::udpListenUri;
 // Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first one-second tick
 // and checked at the next two.
 constexpr int kSilentSourceWindowMs = 3500;
-
-/// An RTSP server on a free loopback port that answers every request with @p status and the authentication it wants,
-/// as a camera does that refuses the request (401 for a wrong password, 404 for a wrong path).
-class RefusingRtspServer
-{
-public:
-    explicit RefusingRtspServer(const QByteArray& status)
-        : _status(status)
-    {
-        QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
-            while (QTcpSocket* const socket = _server.nextPendingConnection()) {
-                ++_connections;
-                QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] { _refuse(socket); });
-            }
-        });
-    }
-
-    [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
-
-    /// @p userInfo: the "user:password@" of the URI, if any.
-    QString uri(const QString& userInfo = QString()) const
-    {
-        return QStringLiteral("rtsp://") + userInfo + QStringLiteral("127.0.0.1:%1/test").arg(_server.serverPort());
-    }
-
-    int connections() const { return _connections; }
-
-private:
-    void _refuse(QTcpSocket* socket)
-    {
-        QByteArray& pending = _pending[socket];
-        pending += socket->readAll();
-        for (qsizetype end = pending.indexOf("\r\n\r\n"); end >= 0; end = pending.indexOf("\r\n\r\n")) {
-            QByteArray cseq;
-            for (const QByteArray& line : pending.left(end).split('\n')) {
-                if (line.toLower().startsWith("cseq:")) {
-                    cseq = line.mid(5).trimmed();
-                }
-            }
-            pending.remove(0, end + 4);
-            (void) socket->write("RTSP/1.0 " + _status + "\r\nCSeq: " + cseq +
-                                 "\r\nWWW-Authenticate: Basic realm=\"QGC test\"\r\n\r\n");
-        }
-    }
-
-    const QByteArray _status;
-    QTcpServer _server;
-    QHash<QTcpSocket*, QByteArray> _pending;
-    int _connections = 0;
-};
 
 }  // namespace
 
@@ -220,7 +167,8 @@ void GstVideoReceiverReconnectTest::_testUnresponsiveRtspServer()
 void GstVideoReceiverReconnectTest::_testRtspUnauthorizedStops()
 {
     GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
-    RefusingRtspServer server(QByteArrayLiteral("401 Unauthorized"));
+    GstTest::FakeRtspServer server;
+    server.refuseWith(QByteArrayLiteral("401 Unauthorized"));
     QVERIFY(server.listen());
 
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
@@ -289,7 +237,8 @@ void GstVideoReceiverReconnectTest::_testFailureMessageNamesCause()
     }
     QUdpSocket portBlocker;
     QVERIFY(portBlocker.bind(QHostAddress::LocalHost, 0, QAbstractSocket::DontShareAddress));
-    RefusingRtspServer server(QByteArrayLiteral("404 Not Found"));
+    GstTest::FakeRtspServer server;
+    server.refuseWith(QByteArrayLiteral("404 Not Found"));
     QVERIFY(server.listen());
 
     // The log has the element's whole debug string, which spans lines; the user what it says of the cause.

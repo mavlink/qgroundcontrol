@@ -32,6 +32,7 @@
 
 namespace {
 
+using GstReceiverTest::branchHead;
 using GstReceiverTest::kFrameHeight;
 using GstReceiverTest::kFrameWidth;
 using GstReceiverTest::kRecordFrames;
@@ -247,19 +248,16 @@ bool stageDisplayQueue(GstVideoReceiver* receiver, const std::shared_ptr<Display
     };
     bool staged = false;
     (void) GstVideoReceiverTestBase::runOnPipeline(receiver, [&staged, &addProbe](GstElement* pipeline) {
-        for (const GStreamer::GstElementPtr& element : GstTest::childElements(GST_BIN(pipeline))) {
-            GstElementFactory* const factory = gst_element_get_factory(element.get());
-            if (!factory || (g_strcmp0(GST_OBJECT_NAME(factory), "queue") != 0) ||
-                (GStreamer::branchOf(GST_OBJECT(element.get())) != GStreamer::PipelineBranch::Decoding)) {
-                continue;
-            }
-            g_object_set(element.get(), "max-size-buffers", 0U, nullptr);
-            const GStreamer::GstPadPtr sink = GStreamer::adoptPad(gst_element_get_static_pad(element.get(), "sink"));
-            const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(element.get(), "src"));
-            // The gate is a probe on the queue's source pad, so its peer sees what the gate let through.
-            const GStreamer::GstPadPtr gated = GStreamer::adoptPad(src ? gst_pad_get_peer(src.get()) : nullptr);
-            staged = addProbe(sink.get(), displayQueueScenarioProbe) && addProbe(gated.get(), gatedStreamProbe);
+        const GStreamer::GstElementPtr queue = branchHead(pipeline, GStreamer::PipelineBranch::Decoding, "queue");
+        if (!queue) {
+            return;
         }
+        g_object_set(queue.get(), "max-size-buffers", 0U, nullptr);
+        const GStreamer::GstPadPtr sink = GStreamer::adoptPad(gst_element_get_static_pad(queue.get(), "sink"));
+        const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(queue.get(), "src"));
+        // The gate is a probe on the queue's source pad, so its peer sees what the gate let through.
+        const GStreamer::GstPadPtr gated = GStreamer::adoptPad(src ? gst_pad_get_peer(src.get()) : nullptr);
+        staged = addProbe(sink.get(), displayQueueScenarioProbe) && addProbe(gated.get(), gatedStreamProbe);
     });
     return staged && QTest::qWaitFor([&scenario]() { return scenario->gateOpen.load(); }, TestTimeout::mediumMs());
 }
@@ -872,14 +870,11 @@ void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream()
     if (!sinkTaken) {
         bool linked = false;
         QVERIFY(runOnPipeline(stream.receiver.get(), [&linked, &otherPad](GstElement* pipeline) {
-            // The display branch's only unlinked source pad is its valve's, where the decoder goes.
-            for (const GStreamer::GstElementPtr& element : GstTest::childElements(GST_BIN(pipeline))) {
-                const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(element.get(), "src"));
-                if (src && !gst_pad_is_linked(src.get()) &&
-                    (GStreamer::branchOf(GST_OBJECT(element.get())) == GStreamer::PipelineBranch::Decoding)) {
-                    linked = (gst_pad_link(src.get(), otherPad.get()) == GST_PAD_LINK_OK);
-                }
-            }
+            // The source pad of the display branch's valve is where the decoder goes.
+            const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Decoding, "valve");
+            const GStreamer::GstPadPtr src =
+                GStreamer::adoptPad(valve ? gst_element_get_static_pad(valve.get(), "src") : nullptr);
+            linked = src && (gst_pad_link(src.get(), otherPad.get()) == GST_PAD_LINK_OK);
         }));
         QVERIFY(linked);
     }

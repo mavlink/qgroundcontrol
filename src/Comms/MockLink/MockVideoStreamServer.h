@@ -50,8 +50,6 @@ public:
     /// Stop the stream and release all resources. Safe to call when not running.
     void stop();
 
-    bool isRunning() const { return _running; }
-
     QString servedUri() const { return _servedUri; }
 
     /// True when the encoder/muxer elements required for @p type are present in the
@@ -73,6 +71,5 @@ private:
 #endif
 
     GstElement* _pipeline = nullptr;
-    bool _running = false;
     QString _servedUri;
 };

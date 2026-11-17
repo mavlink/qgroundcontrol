@@ -8,9 +8,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
-#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 #include <QtMultimedia/QMediaMetaData>
@@ -22,43 +20,6 @@
 #include "VideoReceiver.h"
 
 namespace {
-
-struct DemuxPadContext
-{
-    GstElement* parser = nullptr;
-    std::atomic<bool> linked{false};
-};
-
-void linkH265DemuxPad([[maybe_unused]] GstElement* demux, GstPad* pad, gpointer userData)
-{
-    auto* context = static_cast<DemuxPadContext*>(userData);
-    GstCaps* caps = gst_pad_get_current_caps(pad);
-    if (!caps) {
-        caps = gst_pad_query_caps(pad, nullptr);
-    }
-    if (!caps || gst_caps_is_any(caps) || gst_caps_is_empty(caps)) {
-        gst_clear_caps(&caps);
-        return;
-    }
-
-    bool isH265 = false;
-    for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
-        if (gst_structure_has_name(gst_caps_get_structure(caps, i), "video/x-h265")) {
-            isH265 = true;
-            break;
-        }
-    }
-    gst_clear_caps(&caps);
-    if (!isH265) {
-        return;
-    }
-
-    GstPad* sinkPad = gst_element_get_static_pad(context->parser, "sink");
-    if (sinkPad) {
-        context->linked.store(gst_pad_link(pad, sinkPad) == GST_PAD_LINK_OK, std::memory_order_relaxed);
-        gst_clear_object(&sinkPad);
-    }
-}
 
 GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClockTime timestamp,
                              GstClockTime duration = GST_SECOND / 4)
@@ -73,6 +34,59 @@ GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClo
     GST_BUFFER_DURATION(buffer) = duration;
     return gst_app_src_push_buffer(GST_APP_SRC(appsrc), buffer);
 }
+
+/// The H.264 test stream's first frames through h264parse into RecordingBranch's file sink.
+struct SinkRecording
+{
+    /// Builds appsrc ! h264parse name=parse ! the file sink for @p path. Why not, or an empty string.
+    QString build(const QString& path, VideoReceiver::FileFormat format)
+    {
+        if (!pipeline.launch(QStringLiteral("appsrc name=src format=time "
+                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
+                                            "h264parse name=parse"))) {
+            return pipeline.error();
+        }
+        const GStreamer::GstCapsPtr recordingCaps =
+            GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
+        sinkBin = RecordingBranch::makeFileSink(path, format, recordingCaps.get());
+        if (!sinkBin || !gst_bin_add(pipeline.bin(), sinkBin.get()) ||
+            !gst_element_link(pipeline.element("parse").get(), sinkBin.get())) {
+            return QStringLiteral("%1: no file sink linked to the parser").arg(path);
+        }
+        return {};
+    }
+
+    /// Plays the first @p frames frames into the file, to EOS, and stops the pipeline. Why not, or an empty string.
+    QString record(int frames)
+    {
+        QString failure;
+        const QList<GstTest::AccessUnit> units =
+            GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &failure);
+        if (units.size() < frames) {
+            return QStringLiteral("%1 of %2 frames loaded %3").arg(units.size()).arg(frames).arg(failure);
+        }
+        if (!pipeline.play()) {
+            return QStringLiteral("the recording pipeline did not start");
+        }
+        const GStreamer::GstElementPtr source = pipeline.element("src");
+        constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
+        for (int frame = 0; frame < frames; ++frame) {
+            if (pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration) !=
+                GST_FLOW_OK) {
+                return QStringLiteral("frame %1 was not taken").arg(frame);
+            }
+        }
+        if (gst_app_src_end_of_stream(GST_APP_SRC(source.get())) != GST_FLOW_OK) {
+            return QStringLiteral("the end of the stream was not taken");
+        }
+        failure = pipeline.runToEos();
+        (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
+        return failure;
+    }
+
+    GstTest::TestPipeline pipeline;
+    GStreamer::GstElementPtr sinkBin;
+};
 
 }  // namespace
 
@@ -96,51 +110,29 @@ void GstRecordingSinkTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     QVERIFY(tempDir.isValid());
     const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("mid-stream.mp4"));
 
-    GstTest::TestPipeline pipeline(gst_pipeline_new("mid-stream-recording-test"));
-    QVERIFY(pipeline.get());
-
-    GstElement* source = gst_element_factory_make("appsrc", nullptr);
-    GstElement* upstreamParser = gst_element_factory_make("h265parse", nullptr);
-    GstElement* tee = gst_element_factory_make("tee", nullptr);
-    GstElement* displayQueue = gst_element_factory_make("queue", nullptr);
-    GstElement* displaySink = gst_element_factory_make("fakesink", nullptr);
-    GstElement* recorderQueue = gst_element_factory_make("queue", nullptr);
-    GstElement* recorderValve = gst_element_factory_make("valve", nullptr);
-    QVERIFY(source);
-    QVERIFY(upstreamParser);
-    QVERIFY(tee);
-    QVERIFY(displayQueue);
-    QVERIFY(displaySink);
-    QVERIFY(recorderQueue);
-    QVERIFY(recorderValve);
-
-    GstCaps* sourceCaps =
-        gst_caps_from_string("video/x-h265,stream-format=byte-stream,alignment=au,width=32,height=32,framerate=4/1");
-    QVERIFY(sourceCaps);
-    g_object_set(source, "caps", sourceCaps, "format", GST_FORMAT_TIME, nullptr);
-    gst_clear_caps(&sourceCaps);
-    g_object_set(upstreamParser, "config-interval", -1, nullptr);
-    g_object_set(displaySink, "sync", FALSE, "async", FALSE, nullptr);
-    g_object_set(recorderValve, "drop", TRUE, nullptr);
-    gst_util_set_object_arg(G_OBJECT(recorderValve), "drop-mode", "forward-sticky-events");
-
-    gst_bin_add_many(pipeline.bin(), source, upstreamParser, tee, displayQueue, displaySink, recorderQueue,
-                     recorderValve, nullptr);
-    QVERIFY(gst_element_link_many(source, upstreamParser, tee, nullptr));
-    QVERIFY(gst_element_link_many(tee, displayQueue, displaySink, nullptr));
-    QVERIFY(gst_element_link_many(tee, recorderQueue, recorderValve, nullptr));
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral(
+                 "appsrc name=src format=time "
+                 "caps=video/x-h265,stream-format=byte-stream,alignment=au,width=32,height=32,framerate=4/1 ! "
+                 "h265parse config-interval=-1 ! tee name=tee ! queue ! fakesink name=display sync=false async=false "
+                 "tee. ! queue ! valve name=valve drop=true drop-mode=forward-sticky-events")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    const GStreamer::GstElementPtr recorderValve = pipeline.element("valve");
 
     std::atomic<int> displayedBuffers{0};
-    const GStreamer::GstPadPtr displayPad = GStreamer::adoptPad(gst_element_get_static_pad(displaySink, "sink"));
+    const GStreamer::GstPadPtr displayPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("display").get(), "sink"));
     QVERIFY(displayPad);
     GStreamer::PadProbe displayProbe;
     QVERIFY(displayProbe.add(displayPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &displayedBuffers));
 
     QVERIFY(pipeline.play());
-    QVERIFY(pushAccessUnit(source, initialAu, 0) == GST_FLOW_OK);
+    QVERIFY(pushAccessUnit(source.get(), initialAu, 0) == GST_FLOW_OK);
     QTRY_VERIFY_WITH_TIMEOUT(displayedBuffers.load(std::memory_order_relaxed) >= 1, TestTimeout::shortMs());
 
-    const GStreamer::GstPadPtr valveSrcPad = GStreamer::adoptPad(gst_element_get_static_pad(recorderValve, "src"));
+    const GStreamer::GstPadPtr valveSrcPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(recorderValve.get(), "src"));
     QVERIFY(valveSrcPad);
     const GStreamer::GstCapsPtr recordingCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(valveSrcPad.get()));
     QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
@@ -149,57 +141,22 @@ void GstRecordingSinkTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
         RecordingBranch::makeFileSink(outputPath, VideoReceiver::FileFormat::Mp4, recordingCaps.get());
     QVERIFY(fileSink);
     QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
-    QVERIFY(gst_element_link(recorderValve, fileSink.get()));
+    QVERIFY(gst_element_link(recorderValve.get(), fileSink.get()));
     QVERIFY(gst_element_sync_state_with_parent(fileSink.get()));
-    g_object_set(recorderValve, "drop", FALSE, nullptr);
+    g_object_set(recorderValve.get(), "drop", FALSE, nullptr);
 
-    QVERIFY(pushAccessUnit(source, secondAu, GST_SECOND / 4) == GST_FLOW_OK);
-    QVERIFY(pushAccessUnit(source, thirdAu, GST_SECOND / 2) == GST_FLOW_OK);
-    QVERIFY(gst_app_src_end_of_stream(GST_APP_SRC(source)) == GST_FLOW_OK);
+    QVERIFY(pushAccessUnit(source.get(), secondAu, GST_SECOND / 4) == GST_FLOW_OK);
+    QVERIFY(pushAccessUnit(source.get(), thirdAu, GST_SECOND / 2) == GST_FLOW_OK);
+    QVERIFY(gst_app_src_end_of_stream(GST_APP_SRC(source.get())) == GST_FLOW_OK);
 
     const QString failure = pipeline.runToEos();
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
     (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
     QVERIFY2(QFileInfo(outputPath).size() > 0, "Recording did not produce an MP4 file");
 
-    GstTest::TestPipeline verifyPipeline(gst_pipeline_new("verify-mid-stream-recording"));
-    QVERIFY(verifyPipeline.get());
-
-    GstElement* fileSource = gst_element_factory_make("filesrc", nullptr);
-    GstElement* demux = gst_element_factory_make("qtdemux", nullptr);
-    GstElement* verifyParser = gst_element_factory_make("h265parse", nullptr);
-    GstElement* verifyDecoder = gst_element_factory_make("avdec_h265", nullptr);
-    GstElement* verifySink = gst_element_factory_make("fakesink", nullptr);
-    QVERIFY(fileSource);
-    QVERIFY(demux);
-    QVERIFY(verifyParser);
-    QVERIFY(verifyDecoder);
-    QVERIFY(verifySink);
-
-    const QByteArray outputPathBytes = QFile::encodeName(outputPath);
-    g_object_set(fileSource, "location", outputPathBytes.constData(), nullptr);
-    g_object_set(verifySink, "sync", FALSE, "async", FALSE, nullptr);
-    gst_bin_add_many(verifyPipeline.bin(), fileSource, demux, verifyParser, verifyDecoder, verifySink, nullptr);
-    QVERIFY(gst_element_link(fileSource, demux));
-    QVERIFY(gst_element_link_many(verifyParser, verifyDecoder, verifySink, nullptr));
-
-    DemuxPadContext demuxContext{verifyParser};
-    const gulong padAddedHandler = g_signal_connect(demux, "pad-added", G_CALLBACK(linkH265DemuxPad), &demuxContext);
-    QVERIFY(padAddedHandler != 0);
-    const auto padAddedCleanup = qScopeGuard([&] { g_signal_handler_disconnect(demux, padAddedHandler); });
-
-    std::atomic<int> verifiedBuffers{0};
-    const GStreamer::GstPadPtr verifyPad = GStreamer::adoptPad(gst_element_get_static_pad(verifySink, "sink"));
-    QVERIFY(verifyPad);
-    GStreamer::PadProbe verifyProbe;
-    QVERIFY(verifyProbe.add(verifyPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &verifiedBuffers));
-
-    QVERIFY(verifyPipeline.play());
-    const QString verifyFailure = verifyPipeline.runToEos();
-    QVERIFY2(verifyFailure.isEmpty(), qPrintable(verifyFailure));
-    QVERIFY2(demuxContext.linked.load(std::memory_order_relaxed), "MP4 has no H.265 video track");
-    QVERIFY2(verifiedBuffers.load(std::memory_order_relaxed) >= 2,
-             "Finalized MP4 did not decode the two mid-stream H.265 access units");
+    QString verifyFailure;
+    const int decoded = GstTest::countPlayableFrames(outputPath, verifyFailure, "qtdemux ! h265parse ! avdec_h265");
+    QVERIFY2(decoded >= 2, qPrintable(QStringLiteral("%1 frames decoded %2").arg(decoded).arg(verifyFailure)));
 }
 
 void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
@@ -210,16 +167,9 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     QVERIFY(tempDir.isValid());
     const QString outputPath = tempDir.filePath(QStringLiteral("dts-only.mp4"));
     constexpr int kFrames = 20;
-    QString loadError;
-    const QList<GstTest::AccessUnit> units =
-        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
-    QVERIFY2(units.size() >= kFrames, qPrintable(loadError));
-
-    GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src format=time "
-                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
-                                            "h264parse ! identity name=strip")),
-             qPrintable(pipeline.error()));
+    SinkRecording recording;
+    QString failure = recording.build(outputPath, VideoReceiver::FileFormat::Mp4);
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
 
     // After packet loss the parsers pass some frames on with only a DTS; qtmux alone would fail the recording.
     struct Stripped
@@ -229,7 +179,7 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     } stripped;
 
     const GStreamer::GstPadPtr stripPad =
-        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("strip").get(), "src"));
+        GStreamer::adoptPad(gst_element_get_static_pad(recording.pipeline.element("parse").get(), "src"));
     QVERIFY(stripPad);
     GStreamer::PadProbe stripProbe;
     QVERIFY(stripProbe.add(
@@ -248,25 +198,8 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
         },
         &stripped));
 
-    const GStreamer::GstCapsPtr recordingCaps =
-        GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
-    const GStreamer::GstElementPtr fileSink =
-        RecordingBranch::makeFileSink(outputPath, VideoReceiver::FileFormat::Mp4, recordingCaps.get());
-    QVERIFY(fileSink);
-    QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
-    QVERIFY(gst_element_link(pipeline.element("strip").get(), fileSink.get()));
-
-    QVERIFY(pipeline.play());
-    const GStreamer::GstElementPtr source = pipeline.element("src");
-    constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
-    for (int frame = 0; frame < kFrames; ++frame) {
-        QCOMPARE(pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration),
-                 GST_FLOW_OK);
-    }
-    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
-    const QString failure = pipeline.runToEos();
+    failure = recording.record(kFrames);
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
-    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
     QVERIFY2(stripped.count.load(std::memory_order_relaxed) > 0, "No frame lost its PTS; the test proves nothing");
 
     QString playbackFailure;
@@ -299,37 +232,12 @@ void GstRecordingSinkTest::_testRecordingSinkTagsFile()
     QVERIFY(tempDir.isValid());
     const auto fileFormat = static_cast<VideoReceiver::FileFormat>(format);
     const QString outputPath = tempDir.filePath(QStringLiteral("tagged.") + VideoReceiver::fileExtension(fileFormat));
-    constexpr int kFrames = 10;
-    QString loadError;
-    const QList<GstTest::AccessUnit> units =
-        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
-    QVERIFY2(units.size() >= kFrames, qPrintable(loadError));
-
-    GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src format=time "
-                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
-                                            "h264parse name=parse")),
-             qPrintable(pipeline.error()));
-    const GStreamer::GstCapsPtr recordingCaps =
-        GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
     const QDateTime started = QDateTime::currentDateTimeUtc();
-    const GStreamer::GstElementPtr fileSink =
-        RecordingBranch::makeFileSink(outputPath, fileFormat, recordingCaps.get());
-    QVERIFY(fileSink);
-    QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
-    QVERIFY(gst_element_link(pipeline.element("parse").get(), fileSink.get()));
-
-    QVERIFY(pipeline.play());
-    const GStreamer::GstElementPtr source = pipeline.element("src");
-    constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
-    for (int frame = 0; frame < kFrames; ++frame) {
-        QCOMPARE(pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration),
-                 GST_FLOW_OK);
-    }
-    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
-    const QString failure = pipeline.runToEos();
+    SinkRecording recording;
+    QString failure = recording.build(outputPath, fileFormat);
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
-    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
+    failure = recording.record(/*frames=*/10);
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
 
     // As other players (FFmpeg's) read them.
     QMediaPlayer player;
@@ -350,22 +258,9 @@ void GstRecordingSinkTest::_testMkvRecordingIsSynced()
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
-    constexpr int kFrames = 10;
-    QString loadError;
-    const QList<GstTest::AccessUnit> units =
-        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
-    QVERIFY2(units.size() >= kFrames, qPrintable(loadError));
-
-    GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src format=time "
-                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
-                                            "h264parse name=parse")),
-             qPrintable(pipeline.error()));
-    const GStreamer::GstCapsPtr recordingCaps =
-        GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
-    const GStreamer::GstElementPtr sinkBin = RecordingBranch::makeFileSink(
-        tempDir.filePath(QStringLiteral("synced.mkv")), VideoReceiver::FileFormat::Mkv, recordingCaps.get());
-    QVERIFY(sinkBin);
+    SinkRecording recording;
+    QString failure = recording.build(tempDir.filePath(QStringLiteral("synced.mkv")), VideoReceiver::FileFormat::Mkv);
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
 
     // What filesink is given, after the bin's own probe. matroskamux asks for no sync: without one, storage that
     // caches writes never reports a full disk, and the recording is lost without an error.
@@ -377,7 +272,7 @@ void GstRecordingSinkTest::_testMkvRecordingIsSynced()
     } written;
 
     const GStreamer::GstElementPtr fileSink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "filesink"));
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(recording.sinkBin.get()), "filesink"));
     QVERIFY(fileSink);
     const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink.get(), "sink"));
     GStreamer::PadProbe writtenProbe;
@@ -396,19 +291,8 @@ void GstRecordingSinkTest::_testMkvRecordingIsSynced()
         },
         &written));
 
-    QVERIFY(gst_bin_add(pipeline.bin(), sinkBin.get()));
-    QVERIFY(gst_element_link(pipeline.element("parse").get(), sinkBin.get()));
-    QVERIFY(pipeline.play());
-    const GStreamer::GstElementPtr source = pipeline.element("src");
-    constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
-    for (int frame = 0; frame < kFrames; ++frame) {
-        QCOMPARE(pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration),
-                 GST_FLOW_OK);
-    }
-    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
-    const QString failure = pipeline.runToEos();
+    failure = recording.record(/*frames=*/10);
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
-    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
 
     // From the first buffer, so that a disk already full is reported at once, and then now and again: not each one.
     QVERIFY(written.firstSynced.load(std::memory_order_relaxed));

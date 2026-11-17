@@ -1,5 +1,9 @@
 #pragma once
 
+#include <memory>
+
+#include <QtCore/QTemporaryDir>
+
 #include "GstVideoReceiverTestBase.h"
 
 /// GstVideoReceiver's recordings: finalized files across errors, reconnects, slow or hung storage and teardown.
@@ -9,6 +13,9 @@ class GstVideoReceiverRecordingTest : public GstVideoReceiverTestBase
 
 private slots:
 #ifdef QGC_GST_STREAMING
+    void init() override;
+    void cleanup() override;
+
     void _testDecoderFailureKeepsRecording();
     void _testReconnectResumesRecordingInNextPart();
     void _testLongRecordingContinuesInNextPart();
@@ -34,5 +41,10 @@ private slots:
     void _testRecordingStartKeepsPipelinePlaying();
     void _testDestroyWhileRecordingFinalizesFile();
     void _testDestroyWithHungRecorderIsBounded();
+#endif
+
+private:
+#ifdef QGC_GST_STREAMING
+    std::unique_ptr<QTemporaryDir> _tempDir;
 #endif
 };

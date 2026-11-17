@@ -188,18 +188,33 @@ QList<int> nalTypes(const QByteArray& data, bool h265)
     return types;
 }
 
-int countPlayableFrames(const QString& path, QString& failure)
+int countPlayableFrames(const QString& path, QString& failure, const char* chain, GstClockTime* firstPts)
 {
-    std::atomic<int> frames{0};
+    struct Played
+    {
+        std::atomic<int> frames{0};
+        std::atomic<GstClockTime> firstPts{GST_CLOCK_TIME_NONE};
+    } played;
+
     TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("filesrc name=src ! qtdemux ! fakesink name=sink sync=false"))) {
+    if (!pipeline.launch(
+            QStringLiteral("filesrc name=src ! %1 ! fakesink name=sink sync=false").arg(QLatin1StringView(chain)))) {
         failure = pipeline.error();
         return -1;
     }
     g_object_set(pipeline.element("src").get(), "location", QFile::encodeName(path).constData(), nullptr);
     const GStreamer::GstPadPtr sinkPad =
         GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("sink").get(), "sink"));
-    (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffers, &frames, nullptr);
+    (void) gst_pad_add_probe(
+        sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+        [](GstPad*, GstPadProbeInfo* info, gpointer data) {
+            auto* const seen = static_cast<Played*>(data);
+            if (seen->frames.fetch_add(1, std::memory_order_relaxed) == 0) {
+                seen->firstPts.store(GST_BUFFER_PTS(GST_PAD_PROBE_INFO_BUFFER(info)), std::memory_order_relaxed);
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &played, nullptr);
 
     if (!pipeline.play()) {
         failure = QStringLiteral("%1: demux pipeline failed to start").arg(path);
@@ -210,7 +225,10 @@ int countPlayableFrames(const QString& path, QString& failure)
         failure = QStringLiteral("%1: %2").arg(path, error);
         return -1;
     }
-    return frames.load(std::memory_order_relaxed);
+    if (firstPts) {
+        *firstPts = played.firstPts.load(std::memory_order_relaxed);
+    }
+    return played.frames.load(std::memory_order_relaxed);
 }
 
 TestPipeline::TestPipeline(GstElement* pipeline)
@@ -477,7 +495,7 @@ FakeRtspServer::FakeRtspServer(const QByteArray& sdp)
     QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
         while (QTcpSocket* const socket = _server.nextPendingConnection()) {
             ++_connections;
-            if (!_sdp.isEmpty()) {
+            if (!_sdp.isEmpty() || !_refusal.isEmpty()) {
                 QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] { _serve(socket); });
             }
         }
@@ -499,6 +517,12 @@ void FakeRtspServer::_serve(QTcpSocket* socket)
             if (line.toLower().startsWith("cseq:")) {
                 cseq = line.mid(5).trimmed();
             }
+        }
+
+        if (!_refusal.isEmpty()) {
+            (void) socket->write("RTSP/1.0 " + _refusal + "\r\nCSeq: " + cseq +
+                                 "\r\nWWW-Authenticate: Basic realm=\"QGC test\"\r\n\r\n");
+            continue;
         }
 
         if (method == "SETUP") {
