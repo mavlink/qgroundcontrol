@@ -144,7 +144,6 @@ target_sources(
         Runtime/GstScoped.h
         # Source: the source bins, from a stream's URI to its parsed stream.
         Source/GstH26xParameterSetGate.cc
-        Source/GstH26xParameterSetGate.h
         Source/GstRtpPacketProbe.cc
         Source/GstRtpPacketProbe.h
         Source/GstRtspSource.cc

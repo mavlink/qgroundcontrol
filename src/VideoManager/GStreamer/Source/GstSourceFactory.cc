@@ -14,7 +14,6 @@
 #include <QtNetwork/QHostAddress>
 
 #include "GStreamerHelpers.h"
-#include "GstH26xParameterSetGate.h"
 #include "GstRtpPacketProbe.h"
 #include "GstRtspSource.h"
 #include "GstScoped.h"

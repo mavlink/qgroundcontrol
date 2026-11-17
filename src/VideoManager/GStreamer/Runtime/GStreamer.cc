@@ -71,7 +71,7 @@ constexpr PluginFeature kPluginFeatures[] = {
     // its GST_ELEMENT_REGISTER side effect was stripped at link time.
     {"QGC video sink", true, "qgcqvideosink qgcvideosinkbin",
      "the qgc plugin registered without exposing its elements; link-time symbol stripping (iOS LTO / Android R8) "
-     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgcelements.cc to a -force_load / keep rule"},
+     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgc.cc to a -force_load / keep rule"},
     {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
     {"RTP/UDP video", true, "udpsrc rtpjitterbuffer parsebin rtph264depay h264parse rtph265depay h265parse"},
     {"RTSP video", false, "rtspsrc"},

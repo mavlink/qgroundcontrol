@@ -1,4 +1,5 @@
-#include "GstH26xParameterSetGate.h"
+// The H.264/H.265 part of GStreamer::SourceFactory, declared in GstSourceFactory.h: the setup of the depayloaders and
+// parsers, and the gate that holds a depayloader's output until its parameter sets have arrived.
 
 #include <gst/gst.h>
 
