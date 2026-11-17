@@ -60,6 +60,8 @@ configure configured=1 baud=0->115200 failure=none ready=1 elapsed=4060ms
     00000000000000000000000000009f93
   write "UBX-CFG-TMODE3 disabled readback" 8 readback-verified required
     b56206710000776b
+  write "UBX-CFG-RST GNSS hot start" 12 written required
+    b56206040400000002001068
   write "UBX-NAV-SVIN stopped" 8 readback-verified required
     b562013b00003cb5
   write "UBX-CFG-TMODE3" 48 acknowledged required

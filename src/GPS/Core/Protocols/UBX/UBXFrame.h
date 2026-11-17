@@ -60,6 +60,7 @@ inline constexpr MessageId ACK_NAK{MsgClass::ACK, 0x00};
 inline constexpr MessageId ACK_ACK{MsgClass::ACK, 0x01};
 inline constexpr MessageId CFG_PRT{MsgClass::CFG, 0x00};
 inline constexpr MessageId CFG_MSG{MsgClass::CFG, 0x01};
+inline constexpr MessageId CFG_RST{MsgClass::CFG, 0x04};
 inline constexpr MessageId CFG_RATE{MsgClass::CFG, 0x08};
 inline constexpr MessageId CFG_NAV5{MsgClass::CFG, 0x24};
 inline constexpr MessageId CFG_TMODE3{MsgClass::CFG, 0x71};
@@ -97,7 +98,7 @@ inline constexpr std::pair<MessageId, std::string_view> MESSAGE_NAMES[] = {
     {Msg::SEC_SIG, "UBX-SEC-SIG"},           {Msg::RTCM3_1005, "RTCM3-1005"},       {Msg::RTCM3_1074, "RTCM3-1074"},
     {Msg::RTCM3_1077, "RTCM3-1077"},         {Msg::RTCM3_1084, "RTCM3-1084"},       {Msg::RTCM3_1087, "RTCM3-1087"},
     {Msg::RTCM3_1094, "RTCM3-1094"},         {Msg::RTCM3_1097, "RTCM3-1097"},       {Msg::RTCM3_1124, "RTCM3-1124"},
-    {Msg::RTCM3_1127, "RTCM3-1127"},         {Msg::RTCM3_1230, "RTCM3-1230"},
+    {Msg::RTCM3_1127, "RTCM3-1127"},         {Msg::RTCM3_1230, "RTCM3-1230"},       {Msg::CFG_RST, "UBX-CFG-RST"},
 };
 
 /// The name of @a message, such as "UBX-CFG-VALSET", or its class and id in hex when it has none.

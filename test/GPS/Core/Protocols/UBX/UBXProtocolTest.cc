@@ -170,6 +170,9 @@ struct Fixture
         QVERIFY(configure());
         QVERIFY(driver.receiverReady());
         QCOMPARE(receiver.model.modes, std::vector<uint32_t>({0, 1}));
+        // The navigation is restarted once, outside time mode: a survey would otherwise average the position an
+        // earlier time mode held.
+        QCOMPARE(receiver.model.gnssRestarts, std::vector<unsigned>({0}));
         QCOMPARE(receiver.model.surveyPolls, expectedSurveyPolls);
         QCOMPARE(receiver.model.starts, 1);
         QCOMPARE(receiver.model.startSettings.at(Cfg::TMODE_SVIN_MIN_DUR.id), 60);
@@ -1753,8 +1756,9 @@ void reconfigureForgetsIdentity(GPSTestClock& clock)
     QCOMPARE(f.driver.identity(), QString());
 }
 
-/// A fixed base is given its position only once the receiver, outside time mode, computed one of its own, or after
-/// GPSFixedBaseCheck::WAIT without one. The two are compared, and the base starts whatever the result.
+/// A fixed base is given its position only once the receiver, outside time mode and with its navigation restarted,
+/// computed one of its own, or after GPSFixedBaseCheck::WAIT without one. The two are compared, and the base starts
+/// whatever the result.
 void fixedBaseCheck(GPSTestClock& clock)
 {
     using Result = GPSFixedBaseCheck::Result;
@@ -1791,8 +1795,10 @@ void fixedBaseCheck(GPSTestClock& clock)
         if (scenario.legacy) {
             f.receiver.model.module = "NEO-M8P";
         }
-        // Left in fixed mode by an earlier session, when it reports the position it holds.
+        // Left in fixed mode by an earlier session with the position it is given again: it reports that position,
+        // and goes on to after it left time mode, until its navigation is restarted.
         f.receiver.model.timeMode = 2;
+        f.receiver.model.heldPosition = GPSEllipsoidPosition{47, 8, 500};
         f.receiver.model.ownPosition = scenario.own;
         f.receiver.model.ownPositionFix = scenario.fix;
         f.base = fixedBaseAt(47, 8, 500, 1);
@@ -1801,6 +1807,7 @@ void fixedBaseCheck(GPSTestClock& clock)
         QVERIFY2(f.driver.receiverReady(), scenario.name);
         // Time mode is left for the receiver's own position, and the fixed position follows either way.
         QVERIFY2(f.receiver.model.modes == std::vector<uint32_t>({0, 2}), scenario.name);
+        QVERIFY2(f.receiver.model.gnssRestarts == std::vector<unsigned>({0}), scenario.name);
         QCOMPARE(f.receiver.model.timeMode, 2U);
         QCOMPARE(f.receiver.model.rtcmEnables, 1U);
         const auto statuses = f.receiver.log.reports<GPSBaseStatus>();
@@ -1842,6 +1849,7 @@ void fixedBaseCheck(GPSTestClock& clock)
     QVERIFY(kept.receiver.log.latest<GPSBaseStatus>().fixedCheck->result == Result::Unchecked);
     QVERIFY(std::ranges::find(kept.evidence(), QByteArray("UBX-NAV-PVT own position"),
                               &GPSConfigurationEvidence::command) == kept.evidence().end());
+    QVERIFY(kept.receiver.model.gnssRestarts.empty());
 
     // A base that surveys reports no check.
     Fixture survey(clock);

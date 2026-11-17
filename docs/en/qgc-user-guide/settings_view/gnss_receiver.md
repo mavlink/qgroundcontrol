@@ -179,6 +179,9 @@ Connecting configures the receiver again, which restarts a survey.
 So when a base stops sending, QGroundControl reports after a few seconds that no data arrives and keeps the connection for 30 seconds.
 Only if the receiver stays silent that long does the connection end and, with **Connect automatically**, get made again.
 
+A u-blox receiver also works out its position anew each time it is configured, since one that was a base keeps navigating from the position it held: a survey would otherwise repeat that position, and a fixed position would be compared with itself.
+After that it can take up to about half a minute before the base sends observations again.
+
 ::: info
 The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
 The process takes measurements over time, leading to increasing position accuracy.

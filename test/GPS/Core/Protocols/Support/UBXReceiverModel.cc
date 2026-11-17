@@ -11,6 +11,7 @@
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "UBX/UBXConfigKeys.h"
 #include "UBX/UBXFrame.h"
+#include "UBX/UBXPlan.h"
 
 namespace GPSTest {
 
@@ -262,10 +263,11 @@ QByteArray UBXReceiverModel::_ownPositionFrame() const
     set(20, ownPositionFix.fixType, 1);
     set(21, 0x01, 1);  // gnssFixOK
     set(23, 12, 1);    // numSV
-    set(24, scaled(ownPosition->longitudeDegrees, 1e-7), 4);
-    set(28, scaled(ownPosition->latitudeDegrees, 1e-7), 4);
-    set(32, scaled(ownPosition->altitudeMeters, 1e-3), 4);
-    set(36, scaled(ownPosition->altitudeMeters, 1e-3), 4);
+    const GPSEllipsoidPosition& position = heldPosition ? *heldPosition : *ownPosition;
+    set(24, scaled(position.longitudeDegrees, 1e-7), 4);
+    set(28, scaled(position.latitudeDegrees, 1e-7), 4);
+    set(32, scaled(position.altitudeMeters, 1e-3), 4);
+    set(36, scaled(position.altitudeMeters, 1e-3), 4);
     set(40, ownPositionFix.horizontalAccuracyMm, 4);
     set(44, ownPositionFix.verticalAccuracyMm, 4);
     return _frame(0x01, 0x07, payload);
@@ -433,10 +435,22 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
     if (configuration && !poll) {
         ++configurationWrites;
     }
-    if (configuration && ((message >> 8) == CFG_RST || (message >> 8) == CFG_CFG)) {
+    const bool gnssHotStart =
+        message == UBX::Msg::CFG_RST.value() && std::ranges::equal(bytesOf(payload), UBX::Plan::GNSS_HOT_START);
+    if (configuration && !gnssHotStart && ((message >> 8) == CFG_RST || (message >> 8) == CFG_CFG)) {
         ++resetCommands;
     }
     if (receiverBaud != 0 && !usb && hostBaud != receiverBaud) {
+        return true;
+    }
+    if (gnssHotStart) {
+        // Not acknowledged. The receiver finds itself anew, as after it left time mode.
+        gnssRestarts.push_back(timeMode);
+        heldPosition.reset();
+        if (ownPosition && timeMode == 0) {
+            _ownPositionDueUs =
+                _clock->nowUs() + static_cast<uint64_t>(std::chrono::microseconds(OWN_POSITION_DELAY).count());
+        }
         return true;
     }
 

@@ -156,6 +156,9 @@ public:
     /// Where the receiver finds itself outside time mode: it then sends ownPositionFix there OWN_POSITION_DELAY after
     /// time mode was disabled, once. Unset, as by default, the receiver has no position of its own.
     std::optional<GPSEllipsoidPosition> ownPosition;
+    /// The position a valid time mode held. A receiver that leaves time mode keeps navigating from it, and reports it
+    /// in place of ownPosition, until its GNSS is restarted (a ZED-F9P, HPG 1.13: 5 m off it after 40 s).
+    std::optional<GPSEllipsoidPosition> heldPosition;
 
     /// The fix of that position: NAV-PVT fixType, and its horizontal and vertical accuracy in millimetres.
     struct OwnPositionFix
@@ -210,7 +213,10 @@ public:
     uint64_t disabledAt = 0;
     uint64_t startedAt = 0;
     int optionalAckDelays = 0;
+    /// CFG-CFG, and every CFG-RST but the hot start of the GNSS alone, which gnssRestarts lists.
     int resetCommands = 0;
+    /// The time mode in effect at each hot start of the GNSS alone.
+    std::vector<unsigned> gnssRestarts;
 
 private:
     struct Response

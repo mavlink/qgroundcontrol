@@ -362,6 +362,8 @@ void GPSDriverTest::_ubloxRoleTransition()
     // Destroying the driver leaves the receiver in its base role.
     QCOMPARE(receiver.timeMode, fixed ? 2u : 1u);
     QCOMPARE(receiver.navigationModel, 2u);
+    // The one restart is that of the navigation, outside time mode; nothing resets the receiver or its settings.
+    QCOMPARE(receiver.gnssRestarts, std::vector<unsigned>({0}));
     QCOMPARE(receiver.resetCommands, 0);
     QVERIFY(receiver.wireValid);
 }

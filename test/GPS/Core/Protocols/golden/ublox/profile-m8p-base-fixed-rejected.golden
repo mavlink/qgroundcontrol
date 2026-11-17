@@ -1,6 +1,6 @@
 about M8P rejects the fixed position, after a position report ahead of the ACK of the time mode poll
 request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
-configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=30120ms
+configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=30620ms
   identity "NEO-M8P-2 HPG 1.40"
   error "u-blox receiver rejected 'UBX-CFG-TMODE3'"
   baud 115200 configured
@@ -49,6 +49,8 @@ configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=3012
     00000000000000000000000000009f93
   write "UBX-CFG-TMODE3 disabled readback" 8 readback-verified required
     b56206710000776b
+  write "UBX-CFG-RST GNSS hot start" 12 written required
+    b56206040400000002001068
   evidence "UBX-NAV-PVT own position" timed-out optional accepted=0 written=0
   write "UBX-CFG-TMODE3" 48 rejected required
     b562067128000000020180a1031c00b4c40450c3000000000000102700000000

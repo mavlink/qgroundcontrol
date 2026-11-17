@@ -40,6 +40,8 @@ configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=1020ms
     039120006e039120007003912000eb56
   write "UBX-CFG-VALSET" 17 acknowledged optional
     b562068a0900000100000100032000be7f
+  write "UBX-CFG-RST GNSS hot start" 12 written required
+    b56206040400000002001068
   evidence "UBX-NAV-PVT own position" readback-verified optional accepted=0 written=0
   write "UBX-CFG-VALSET" 69 acknowledged required
     b562068a3d0000010000010003200202000320010900034080a1031c0c000320

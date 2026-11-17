@@ -158,11 +158,17 @@ private:
     bool _configureLegacyDevice(GPSCommandChannel& channel);
     bool _restartSurveyIn(GPSCommandChannel& channel);
     bool _restartLegacySurveyIn(GPSCommandChannel& channel);
+    /// Leaves time mode, confirms it and restarts the receiver's navigation.
     bool _disableTimeMode(GPSCommandChannel& channel);
+    /// Has a receiver that left time mode compute its position anew. Its navigation otherwise stays on the position
+    /// time mode held (a ZED-F9P, HPG 1.13: within a metre of it after 20 s and 5 m after 40 s, whatever its accuracy
+    /// claims), which a fixed position would then be checked against and a survey-in would average.
+    bool _restartNavigation(GPSCommandChannel& channel);
     bool _waitForSurveyStop(GPSCommandChannel& channel);
     /// Compares @a fixed with a position the receiver computes itself, before it is given @a fixed: in time mode it
-    /// reports the position it holds. Reports that it waits, then leaves time mode and reads NAV-PVT for up to
-    /// GPSFixedBaseCheck::WAIT. A receiver that keeps its time mode, or has no position by then, goes unchecked.
+    /// reports the position it holds. Reports that it waits, then leaves time mode, restarts the navigation and
+    /// reads NAV-PVT for up to GPSFixedBaseCheck::WAIT. A receiver that keeps its time mode, or has no position by
+    /// then, goes unchecked.
     GPSFixedBaseCheck _checkFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed);
     /// Starts RTCM output for the fixed position the receiver accepted and, once it runs, reports the base valid, with
     /// @a check: no receiver message does, as NAV-SVIN describes a survey-in.

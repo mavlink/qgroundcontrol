@@ -117,6 +117,12 @@ inline constexpr std::chrono::milliseconds PORT_TIMEOUT{2000};
 inline constexpr std::chrono::milliseconds BAUD_PROBE_DRAIN{20};
 inline constexpr std::chrono::milliseconds SURVEY_STOP_TIMEOUT{3000};
 inline constexpr std::chrono::milliseconds SURVEY_STOP_POLL{100};
+/// UBX-CFG-RST of the GNSS alone as a hot start (navBbrMask 0, resetMode 2): the receiver keeps its configuration,
+/// its link and what it knows of the satellites, and computes its position anew. It is not acknowledged.
+inline constexpr std::array<uint8_t, 4> GNSS_HOT_START{0x00, 0x00, 0x02, 0x00};
+/// How long a receiver's positions are set aside after its GNSS was restarted: one it sent before the restart took
+/// effect is still the one time mode held, and the first new one takes longer than this.
+inline constexpr std::chrono::milliseconds GNSS_RESTART_SETTLE{500};
 /// An unwanted message is disabled at most this often; some cannot be disabled.
 inline constexpr std::chrono::microseconds DISABLE_MESSAGE_INTERVAL = std::chrono::seconds(1);
 
