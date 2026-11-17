@@ -553,6 +553,14 @@ elseif(SCENARIO STREQUAL "ios-link")
             OUTPUT_VARIABLE _app_symbols COMMAND_ERROR_IS_FATAL ANY
         )
         qgc_test_assert_not_matches("single core" " gst_[a-z_]+( |$)" "${_app_symbols}")
+        # The framework exports GStreamer's API, and keeps to itself a library the SDK bundles for its plugins: the
+        # app's own copy of that library must not be shadowed.
+        execute_process(
+            COMMAND "${_qgc_nm}" -D --defined-only "${_binary_dir}/libgstreamer_mobile.so"
+            OUTPUT_VARIABLE _framework_symbols COMMAND_ERROR_IS_FATAL ANY
+        )
+        qgc_test_assert_matches("exported API" " gst_registry_get( |$)" "${_framework_symbols}")
+        qgc_test_assert_not_matches("bundled library" " inflate( |$)" "${_framework_symbols}")
     endif()
 
     # Functions of optional libraries (the Debug RTSP server) are kept by name once the framework exists.
