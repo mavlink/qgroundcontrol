@@ -115,6 +115,13 @@ if(QGC_ANDROID_PACKAGE_NAME STREQUAL "")
     endif()
 endif()
 
+set(_qgc_android_app_name "${CMAKE_PROJECT_NAME}")
+set(_qgc_android_app_icon "@mipmap/ic_launcher")
+if(NOT QGC_STABLE_BUILD)
+    set(_qgc_android_app_name "${CMAKE_PROJECT_NAME} Daily")
+    set(_qgc_android_app_icon "@mipmap/ic_launcher_daily")
+endif()
+
 set_target_properties(
     ${CMAKE_PROJECT_NAME}
     PROPERTIES
@@ -127,8 +134,8 @@ set_target_properties(
         QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
         QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-        QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
-        QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
+        QT_ANDROID_APP_NAME "${_qgc_android_app_name}"
+        QT_ANDROID_APP_ICON "${_qgc_android_app_icon}"
         QT_ANDROID_LEGACY_PACKAGING $<BOOL:${QGC_ENABLE_ASAN}>
         QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
         # QT_QML_IMPORT_PATH
