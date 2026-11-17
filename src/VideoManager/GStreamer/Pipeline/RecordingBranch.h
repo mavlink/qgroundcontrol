@@ -24,7 +24,8 @@
 /// branch asks the listener for another file before the header space they reserve runs out, and when the stream's caps
 /// change (a new resolution or profile), where the running file ends and the other begins. A failing recorder (disk
 /// full, storage too slow to keep up) ends the recording, not the stream: its queue holds kQueueMaxBytes of backlog
-/// and then stops taking frames rather than holding up the tee and with it the display.
+/// and then stops taking frames rather than holding up the tee and with it the display. A finalized file is synced
+/// to the disk before it is reported closed.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -58,7 +59,8 @@ public:
         friend bool operator==(const Request&, const Request&) = default;
     };
 
-    /// How long a recording may take to finalize before it is closed anyway; covers slow storage.
+    /// How long a recording may take to finalize, its last sync to the disk included, before it is closed anyway;
+    /// covers slow storage.
     static constexpr std::chrono::seconds kFinalizeTimeout{3};
     /// Backlog the recording queue holds for slow storage before the recording gives up.
     static constexpr guint64 kQueueMaxBytes = 64 * 1024 * 1024;

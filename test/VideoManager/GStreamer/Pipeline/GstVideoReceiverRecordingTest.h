@@ -37,6 +37,7 @@ private slots:
     void _testRecordingErrorKeepsStreaming();
     void _testFullStorageNamedInRecordingError_data();
     void _testFullStorageNamedInRecordingError();
+    void _testFailedSyncAtEndFailsRecording();
     void _testFailedRecordingStartLeavesBranchUsable();
     void _testRecordingStartKeepsPipelinePlaying();
     void _testDestroyWhileRecordingFinalizesFile();

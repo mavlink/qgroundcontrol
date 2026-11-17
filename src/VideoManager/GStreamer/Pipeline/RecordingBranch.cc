@@ -104,6 +104,25 @@ GstPadProbeReturn syncPeriodically([[maybe_unused]] GstPad* pad, GstPadProbeInfo
     return GST_PAD_PROBE_OK;
 }
 
+/// Has filesink sync an MKV once more when matroskamux has finalized it, as qtmux asks with the last thing it writes:
+/// without that, a power cut takes the file's end with its index and duration, and a disk that was full for it goes
+/// unreported. Asked with a buffer ahead of the EOS, which follows the muxer's last write. filesink writes out what
+/// it holds back, and then syncs, only for a buffer that has a memory; an empty one adds nothing to the file. A sync
+/// that fails is filesink's error, as while recording.
+GstPadProbeReturn syncAtEnd(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
+{
+    const GstEvent* const event = gst_pad_probe_info_get_event(info);
+    if (!event || (GST_EVENT_TYPE(event) != GST_EVENT_EOS)) {
+        return GST_PAD_PROBE_OK;
+    }
+    GstBuffer* const buffer = gst_buffer_new();
+    gst_buffer_append_memory(buffer, gst_allocator_alloc(nullptr, 0, nullptr));
+    GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_SYNC_AFTER);
+    // From the thread that brings the EOS, which holds the pad's stream lock for it: the lock is recursive.
+    (void) gst_pad_chain(pad, buffer);
+    return GST_PAD_PROBE_OK;
+}
+
 /// The data of a probe that reports to its recording: which one that is.
 struct RecordingWatch
 {
@@ -219,6 +238,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
         const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink, "sink"));
         (void) gst_pad_add_probe(fileSinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, syncPeriodically, g_new0(gint64, 1),
                                  g_free);
+        (void) gst_pad_add_probe(fileSinkPad.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, syncAtEnd, nullptr, nullptr);
     }
 
     // No release_request_pad on failure: disposing the bin reclaims the pad.

@@ -14,5 +14,7 @@ private slots:
     void _testRecordingSinkTagsFile_data();
     void _testRecordingSinkTagsFile();
     void _testMkvRecordingIsSynced();
+    void _testRecordingIsSyncedAtItsEnd_data();
+    void _testRecordingIsSyncedAtItsEnd();
 #endif
 };

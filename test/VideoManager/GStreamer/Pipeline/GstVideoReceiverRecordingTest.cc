@@ -136,6 +136,22 @@ GstPadProbeReturn stripParameterSets([[maybe_unused]] GstPad* pad, GstPadProbeIn
     return GST_PAD_PROBE_OK;
 }
 
+/// Has the sync of a finished file fail for a full disk: posts what filesink does when its fsync fails, in place of
+/// the empty buffer that asks for the sync.
+GstPadProbeReturn failSyncAtEnd(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]] gpointer data)
+{
+    GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_SYNC_AFTER) || (gst_buffer_get_size(buffer) != 0)) {
+        return GST_PAD_PROBE_OK;
+    }
+    const GStreamer::GstElementPtr fileSink = GStreamer::adoptElement(gst_pad_get_parent_element(pad));
+    const GStreamer::GErrorPtr error = GStreamer::adoptError(
+        g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_WRITE, "Error while writing to file."));
+    (void) gst_element_post_message(fileSink.get(),
+                                    gst_message_new_error(GST_OBJECT(fileSink.get()), error.get(), g_strerror(ENOSPC)));
+    return GST_PAD_PROBE_DROP;
+}
+
 }  // namespace
 
 void GstVideoReceiverRecordingTest::init()
@@ -789,6 +805,34 @@ void GstVideoReceiverRecordingTest::_testFullStorageNamedInRecordingError()
     QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
     QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1),
              namedFull ? QStringLiteral("The storage is full.") : text);
+}
+
+void GstVideoReceiverRecordingTest::_testFailedSyncAtEndFailsRecording()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    const QString path = _tempDir->filePath(QStringLiteral("unsynced.mkv"));
+    QVERIFY(stream.record(path, FileFormat::Mkv));
+
+    // Storage that caches writes can be full for what a muxer wrote last, which only the sync of the finished file
+    // tells.
+    bool watched = false;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&watched](GstElement* pipeline) {
+        const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(pipeline, "filesink");
+        const GStreamer::GstPadPtr fileSinkPad =
+            GStreamer::adoptPad(fileSink ? gst_element_get_static_pad(fileSink.get(), "sink") : nullptr);
+        watched = fileSinkPad &&
+                  gst_pad_add_probe(fileSinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, failSyncAtEnd, nullptr, nullptr);
+    }));
+    QVERIFY(watched);
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Recording error:")));
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QStringLiteral("The storage is full."));
 }
 
 void GstVideoReceiverRecordingTest::_testFailedRecordingStartLeavesBranchUsable()

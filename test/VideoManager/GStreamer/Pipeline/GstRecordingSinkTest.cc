@@ -8,6 +8,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
@@ -300,6 +301,77 @@ void GstRecordingSinkTest::_testMkvRecordingIsSynced()
              qPrintable(QStringLiteral("%1 of %2 buffers synced")
                             .arg(written.synced.load(std::memory_order_relaxed))
                             .arg(written.buffers.load(std::memory_order_relaxed))));
+}
+
+void GstRecordingSinkTest::_testRecordingIsSyncedAtItsEnd_data()
+{
+    QTest::addColumn<int>("format");
+    QTest::addColumn<QString>("muxer");
+
+    QTest::newRow("mkv") << int(VideoReceiver::FileFormat::Mkv) << QStringLiteral("matroskamux");
+    // qtmux asks for this sync itself, with the last thing it writes: the row tells when it no longer does.
+    QTest::newRow("mp4") << int(VideoReceiver::FileFormat::Mp4) << QStringLiteral("mp4mux");
+}
+
+void GstRecordingSinkTest::_testRecordingIsSyncedAtItsEnd()
+{
+    QFETCH(int, format);
+    QFETCH(QString, muxer);
+    const QByteArray muxerFactory = muxer.toLatin1();
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "h264parse", muxerFactory.constData());
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const auto fileFormat = static_cast<VideoReceiver::FileFormat>(format);
+
+    // Whether the last buffer filesink is given asks for a sync, and what the file holds once the EOS that closes it
+    // follows. A muxer finalizes its file at the EOS: without a sync after that, a power cut takes the recording's
+    // end, and a disk that was full for it is never reported. Read once the pipeline, and its streaming threads with
+    // it, has stopped.
+    struct Ending
+    {
+        QString path;
+        bool lastSynced = false;
+        QByteArray written;
+    } ending;
+
+    ending.path = tempDir.filePath(QStringLiteral("ended.") + VideoReceiver::fileExtension(fileFormat));
+
+    SinkRecording recording;
+    QString failure = recording.build(ending.path, fileFormat);
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+    const GStreamer::GstElementPtr fileSink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(recording.sinkBin.get()), "filesink"));
+    QVERIFY(fileSink);
+    const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink.get(), "sink"));
+    GStreamer::PadProbe endingProbe;
+    QVERIFY(endingProbe.add(
+        fileSinkPad.get(),
+        static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
+        [](GstPad*, GstPadProbeInfo* info, gpointer data) -> GstPadProbeReturn {
+            auto* const seen = static_cast<Ending*>(data);
+            if (GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) {
+                seen->lastSynced = GST_BUFFER_FLAG_IS_SET(GST_PAD_PROBE_INFO_BUFFER(info), GST_BUFFER_FLAG_SYNC_AFTER);
+            } else if (GST_EVENT_TYPE(GST_PAD_PROBE_INFO_EVENT(info)) == GST_EVENT_EOS) {
+                QFile file(seen->path);
+                if (file.open(QIODevice::ReadOnly)) {
+                    seen->written = file.readAll();
+                }
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &ending));
+
+    failure = recording.record(/*frames=*/10);
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+
+    QVERIFY2(ending.lastSynced, "The last buffer of the file asks for no sync");
+    // filesink holds back what it is given, up to 64 KiB: a sync covers only what it has written.
+    QFile file(ending.path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const QByteArray finished = file.readAll();
+    QVERIFY(!finished.isEmpty());
+    QVERIFY2(ending.written == finished, "The file changed after its last sync");
 }
 
 #endif
