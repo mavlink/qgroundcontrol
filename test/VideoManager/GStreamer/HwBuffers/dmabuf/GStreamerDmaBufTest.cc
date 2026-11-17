@@ -24,7 +24,7 @@
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcRenderTarget.h"

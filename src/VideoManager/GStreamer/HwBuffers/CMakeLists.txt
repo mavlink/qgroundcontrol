@@ -10,8 +10,8 @@ include(GStreamer/Probe)
 target_sources(
     QGCGStreamer
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h

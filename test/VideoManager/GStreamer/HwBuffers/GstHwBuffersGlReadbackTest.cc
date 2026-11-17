@@ -54,7 +54,7 @@
 #include "GstGlContextBridge.h"
 #include "GstGlVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
 #endif
 

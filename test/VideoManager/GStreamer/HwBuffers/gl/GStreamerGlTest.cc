@@ -11,7 +11,7 @@
 #include <QtMultimedia/QVideoSink>
 
 #include "GStreamerTestHelpers.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 

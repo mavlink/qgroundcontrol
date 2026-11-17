@@ -9,8 +9,8 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/common/CpuVideoFramePool.h"
-#include "HwBuffers/common/HwBuffers.h"
 
 /// Sample-to-frame helpers for qgcqvideosink's show_frame; pure functions, streaming-thread safe.
 

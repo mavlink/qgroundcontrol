@@ -7,7 +7,7 @@
 #include "GStreamerEnvironment.h"
 #include "GStreamerSelfTest.h"
 #include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QtMultimediaVideoReceiver.h"
 

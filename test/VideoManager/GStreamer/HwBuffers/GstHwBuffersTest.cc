@@ -26,7 +26,7 @@
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcVideoFormats.h"

@@ -6,7 +6,7 @@
 #include "GStreamerHelpers.h"
 #include "GStreamerLibavWorkaround.h"
 #include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
 #include "gstqgc/GstQgcSinkStats.h"

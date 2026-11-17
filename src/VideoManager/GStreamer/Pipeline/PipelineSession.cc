@@ -9,7 +9,7 @@
 #include "GStreamerHelpers.h"
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
 #include "VideoStreamStats.h"

@@ -12,7 +12,7 @@
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 

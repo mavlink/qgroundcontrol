@@ -24,7 +24,7 @@
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"

@@ -6,9 +6,9 @@
 #include <QtCore/QtEnvironmentVariables>
 
 #include "GstScoped.h"
+#include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/common/CpuVideoFramePool.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
-#include "HwBuffers/common/HwBuffers.h"
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 #include <gst/gl/gstglsyncmeta.h>
 #endif

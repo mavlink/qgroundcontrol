@@ -19,7 +19,7 @@
 #include "GStreamerLogging.h"
 #include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcRenderTarget.h"

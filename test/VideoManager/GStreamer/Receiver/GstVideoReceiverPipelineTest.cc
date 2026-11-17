@@ -20,7 +20,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamerDecoderRanks.h"
 #include "GstScoped.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "MockVideoStreamServer.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)

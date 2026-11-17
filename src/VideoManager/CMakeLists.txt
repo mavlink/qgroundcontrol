@@ -13,8 +13,6 @@ target_sources(
         VideoManager.h
         VideoTelemetryOverlay.cc
         VideoTelemetryOverlay.h
-        Recording/QtVideoRecorder.cc
-        Recording/QtVideoRecorder.h
         Recording/SubtitleWriter.cc
         Recording/SubtitleWriter.h
         Recording/TelemetryBarValues.cc

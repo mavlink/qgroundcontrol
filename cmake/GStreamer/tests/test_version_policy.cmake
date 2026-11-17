@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 
-file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../src/VideoManager/GStreamer/Pipeline/GstSourceFactory.cc" _source_factory)
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../src/VideoManager/GStreamer/Source/GstSourceFactory.cc" _source_factory)
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../src/VideoManager/GStreamer/CMakeLists.txt" _gstreamer_cmake)
 if(NOT _gstreamer_cmake MATCHES "LINUX AND GStreamer_VERSION VERSION_LESS \"1\\.28\\.0\""
    OR NOT _gstreamer_cmake MATCHES "QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER=1"

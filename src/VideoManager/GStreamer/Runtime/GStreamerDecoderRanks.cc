@@ -8,7 +8,7 @@
 #include <QtCore/QString>
 
 #include "GstScoped.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_WIN
 #include "gstqgc/GstQgcRenderTarget.h"
