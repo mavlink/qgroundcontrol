@@ -52,7 +52,8 @@ QGC_LOGGING_CATEGORY(QGCAppMessageLog, "API.QGCApplication.AppMessage")
 namespace {
 
 // A test run has its own application name, which desktop platforms put in the path of the settings and cache
-// locations. Android and iOS do not: there these are the installed application's own directories.
+// locations. Android and iOS do not: there these are the installed application's own directories, as the save path
+// is on iOS, the application's Documents.
 bool isTestRunDirectory(const QDir& dir)
 {
     return dir.absolutePath().split(QLatin1Char('/')).contains(QCoreApplication::applicationName());
@@ -714,7 +715,7 @@ void QGCApplication::shutdown()
         }
 
         QDir appDir(SettingsManager::instance()->appSettings()->savePath()->rawValue().toString());
-        if (appDir.exists()) {
+        if (appDir.exists() && isTestRunDirectory(appDir)) {
             if (appDir.removeRecursively()) {
                 qCDebug(QGCApplicationLog) << "Removed test run app data directory:" << appDir.absolutePath();
             } else {
