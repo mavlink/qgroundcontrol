@@ -245,7 +245,7 @@ void QtMultimediaVideoReceiverTest::_testUdpListensUntilStreamStarts()
     QCOMPARE(stream.stateSpy.count(), 1);
     QVERIFY(stream.errorSpy.isEmpty());
 
-#if defined(QGC_GST_STREAMING) && defined(QGC_HAS_MOCK_VIDEO_STREAM_SERVER)
+#ifdef QGC_GST_STREAMING
     using StreamType = MockVideoStreamServer::StreamType;
     if (MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
         MockVideoStreamServer server;
@@ -311,9 +311,6 @@ void QtMultimediaVideoReceiverTest::_testPlaysMockStreams_data()
 
 void QtMultimediaVideoReceiverTest::_testPlaysMockStreams()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     QFETCH(int, streamType);
 
     using StreamType = MockVideoStreamServer::StreamType;
@@ -348,14 +345,10 @@ void QtMultimediaVideoReceiverTest::_testPlaysMockStreams()
     QCOMPARE(stream.receiver->state(), State::Stopped);
     QVERIFY(!stream.receiver->decoding());
     QVERIFY(!stream.receiver->stats().valid);
-#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testRestartReopensPort()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     using StreamType = MockVideoStreamServer::StreamType;
     if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
         QSKIP("This GStreamer install lacks an H.264 encoder");
@@ -377,14 +370,10 @@ void QtMultimediaVideoReceiverTest::_testRestartReopensPort()
     QVERIFY(!stream.stateSpy.contains(QVariantList{QVariant::fromValue(State::Reconnecting)}));
     QCOMPARE(stream.receiver->stats().reconnects, 0);
     QVERIFY(stream.errorSpy.isEmpty());
-#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testReconnectsAfterStreamLoss()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     using StreamType = MockVideoStreamServer::StreamType;
     if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
         QSKIP("This GStreamer install lacks an H.264 encoder");
@@ -408,14 +397,10 @@ void QtMultimediaVideoReceiverTest::_testReconnectsAfterStreamLoss()
     QVERIFY(stream.waitForDisplay());
     QCOMPARE(stream.receiver->stats().reconnects, 1);
     QVERIFY(stream.errorSpy.isEmpty());
-#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testStopsWithoutAutoReconnect()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     using StreamType = MockVideoStreamServer::StreamType;
     if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
         QSKIP("This GStreamer install lacks an H.264 encoder");
@@ -432,14 +417,10 @@ void QtMultimediaVideoReceiverTest::_testStopsWithoutAutoReconnect()
     QVERIFY(stream.waitForState(State::Stopped));
     QCOMPARE(stream.errorSpy.count(), 1);
     QVERIFY(!stream.stateSpy.contains(QVariantList{QVariant::fromValue(State::Reconnecting)}));
-#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testDetachingOutputDoesNotBlock()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     using StreamType = MockVideoStreamServer::StreamType;
     if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
         QSKIP("This GStreamer install lacks an H.264 encoder");
@@ -475,14 +456,10 @@ void QtMultimediaVideoReceiverTest::_testDetachingOutputDoesNotBlock()
     QVERIFY(stream.waitForDisplay());
     QCOMPARE(stream.receiver->stats().reconnects, 0);
     QVERIFY(stream.errorSpy.isEmpty());
-#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testPlaysRtspOverTcp()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     using StreamType = MockVideoStreamServer::StreamType;
     if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtspH264)) {
         QSKIP("This GStreamer install lacks the RTSP server or an H.264 encoder");
@@ -506,14 +483,10 @@ void QtMultimediaVideoReceiverTest::_testPlaysRtspOverTcp()
     QVERIFY(stream.waitForDisplay());
     QVERIFY(qgetenv("QT_FFMPEG_RTSP_TRANSPORT").isNull());
     QVERIFY(stream.errorSpy.isEmpty());
-#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testRecordsStream()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     using StreamType = MockVideoStreamServer::StreamType;
     if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
         QSKIP("This GStreamer install lacks an H.264 encoder");
@@ -558,7 +531,6 @@ void QtMultimediaVideoReceiverTest::_testRecordsStream()
     QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 2, TestTimeout::longMs());
     QVERIFY(!stream.receiver->recording());
     QVERIFY(stream.errorSpy.isEmpty());
-#endif
 }
 #endif
 

@@ -6,7 +6,6 @@
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
-#include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
@@ -15,11 +14,12 @@
 #include "UVCStreamMonitor.h"
 #include "VideoTestHelpers.h"
 
+namespace {
+
 using VideoTestHelpers::createVideoOutput;
+using VideoTestHelpers::InlineQmlEngine;
 using VideoTestHelpers::redTopLeftQuadrant;
 using VideoTestHelpers::showFrame;
-
-namespace {
 
 constexpr const char* kMissingCamera = "QGC Test Missing Camera";
 
@@ -106,13 +106,10 @@ void UVCCameraControllerTest::_testOutputFollowsTransform()
     const QString shot = tempDir.filePath(QStringLiteral("uvc.png"));
 
     UVCCameraController controller;
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kUvcVideoOutputQml, QUrl(QStringLiteral("qrc:/UVCCameraControllerTest/UVCVideoOutput.qml")));
-    const std::unique_ptr<QQuickItem> output(qobject_cast<QQuickItem*>(
-        component.createWithInitialProperties({{QStringLiteral("camera"), QVariant::fromValue(&controller)}})));
-    QVERIFY2(output, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> output =
+        engine.create<QQuickItem>(kUvcVideoOutputQml, {{QStringLiteral("camera"), QVariant::fromValue(&controller)}});
+    QVERIFY2(output, qPrintable(engine.error()));
     QCOMPARE(controller.videoOutput(), output.get());
     QCOMPARE(output->property("orientation").toInt(), 0);
     QVERIFY(!output->property("mirrored").toBool());

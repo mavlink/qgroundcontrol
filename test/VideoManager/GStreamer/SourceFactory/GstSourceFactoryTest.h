@@ -14,7 +14,6 @@ private slots:
     void _testSourceFactoryUdpRtpJitterBuffer();
     void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data();
     void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer();
-    void _testSourceFactoryNoRetransmission();
     void _testSourceFactoryRtspJitterBufferPolicy_data();
     void _testSourceFactoryRtspJitterBufferPolicy();
     void _testSourceFactoryRtspUdpBufferSize();
@@ -36,7 +35,6 @@ private slots:
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactoryMpegTsLatency_data();
     void _testSourceFactoryMpegTsLatency();
-    void _testSourceFactorySchemeCaseInsensitive();
     void _testTransportFor_data();
     void _testTransportFor();
     void _testSourceFactoryNegativeLatencyClamped();

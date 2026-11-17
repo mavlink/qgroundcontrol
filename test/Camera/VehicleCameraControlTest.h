@@ -2,6 +2,7 @@
 
 #include "UnitTest.h"
 
+class MavlinkCameraControlInterface;
 class MockConfiguration;
 class MockLink;
 class Vehicle;
@@ -28,6 +29,9 @@ private slots:
 
 private:
     void _connectVehicle(MockConfiguration* mockConfig);
+    /// The mock vehicle's first camera (MAV_COMP_ID_CAMERA), once both of its cameras are discovered; null if they
+    /// aren't in time.
+    MavlinkCameraControlInterface* _firstCamera();
 
     MockLink* _mockLink = nullptr;
     Vehicle* _vehicle = nullptr;

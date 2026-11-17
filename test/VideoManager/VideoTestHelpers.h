@@ -117,6 +117,29 @@ inline std::unique_ptr<QGCVideoStreamInfo> makeStreamInfo(VIDEO_STREAM_TYPE type
     return std::make_unique<QGCVideoStreamInfo>(info);
 }
 
+/// An engine that makes objects of inline QML, which can import the application's QML modules.
+class InlineQmlEngine : public QQmlEngine
+{
+public:
+    InlineQmlEngine() { addImportPath(QStringLiteral("qrc:/qml")); }
+
+    /// What @p qml makes with @p properties; null when it makes nothing or no T, for the reason in error().
+    template <typename T = QObject>
+    std::unique_ptr<T> create(const char* qml, const QVariantMap& properties = {})
+    {
+        QQmlComponent component(this);
+        component.setData(qml, QUrl(QStringLiteral("qrc:/VideoTestHelpers/Inline.qml")));
+        std::unique_ptr<QObject> object(component.createWithInitialProperties(properties));
+        _error = component.errorString();
+        return std::unique_ptr<T>(qobject_cast<T*>(object.release()));
+    }
+
+    const QString& error() const { return _error; }
+
+private:
+    QString _error;
+};
+
 /// A QML VideoOutput of 64 × 48, as created by @p engine.
 inline std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
 {

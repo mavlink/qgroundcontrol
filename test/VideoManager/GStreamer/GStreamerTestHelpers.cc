@@ -15,6 +15,7 @@
 #include <QtNetwork/QTcpSocket>
 
 #include "GStreamer.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerEnvironment.h"
 #include "GstSourceFactory.h"
 
@@ -444,15 +445,11 @@ void FixtureRtpSender::_needData(GstElement* appsrc, [[maybe_unused]] guint leng
 
 DecoderRankSnapshot::DecoderRankSnapshot()
 {
-    GList* const factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-    for (GList* node = factories; node; node = node->next) {
-        auto* const feature = GST_PLUGIN_FEATURE(node->data);
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [this](GstElementFactory* factory) {
+        auto* const feature = GST_PLUGIN_FEATURE(factory);
         _ranks.emplace_back(GStreamer::adoptFeature(GST_PLUGIN_FEATURE(gst_object_ref(feature))),
                             gst_plugin_feature_get_rank(feature));
-    }
-    gst_plugin_feature_list_free(factories);
+    });
 }
 
 DecoderRankSnapshot::~DecoderRankSnapshot()
@@ -460,6 +457,18 @@ DecoderRankSnapshot::~DecoderRankSnapshot()
     for (const auto& [feature, rank] : _ranks) {
         gst_plugin_feature_set_rank(feature.get(), rank);
     }
+}
+
+QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware)
+{
+    QHash<QByteArray, guint> ranks;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&](GstElementFactory* factory) {
+        if (!hardware || (*hardware == GStreamer::isHardwareDecoderFactory(factory))) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            ranks.insert(QByteArray(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
+        }
+    });
+    return ranks;
 }
 
 FakeRtspServer::FakeRtspServer(const QByteArray& sdp)

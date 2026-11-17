@@ -5,8 +5,6 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
-#include <QtQml/QQmlComponent>
-#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -14,9 +12,10 @@
 #include "UVCStreamMonitor.h"
 #include "VideoTestHelpers.h"
 
-using VideoTestHelpers::showsText;
-
 namespace {
+
+using VideoTestHelpers::InlineQmlEngine;
+using VideoTestHelpers::showsText;
 
 constexpr const char* kUvcStatsGroupQml = R"QML(
 import QtQuick
@@ -145,13 +144,10 @@ void UVCStreamMonitorTest::_testStatsGroupShowsCamera()
     QVideoSink sink;
     monitor.attach(nullptr, &sink);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kUvcStatsGroupQml, QUrl(QStringLiteral("qrc:/UVCStreamMonitorTest/StatsGroup.qml")));
-    const std::unique_ptr<QQuickItem> group(qobject_cast<QQuickItem*>(
-        component.createWithInitialProperties({{QStringLiteral("monitor"), QVariant::fromValue(&monitor)}})));
-    QVERIFY2(group, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> group =
+        engine.create<QQuickItem>(kUvcStatsGroupQml, {{QStringLiteral("monitor"), QVariant::fromValue(&monitor)}});
+    QVERIFY2(group, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     group->setParentItem(window.contentItem());

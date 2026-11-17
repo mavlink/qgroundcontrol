@@ -151,20 +151,13 @@ void GStreamerTest::_testLogDecoderRanks()
 
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
 {
-    const GStreamer::GstElementPtr pipeline = GStreamer::adoptFloating(gst_pipeline_new("safe-dot-test"));
-
-    GstElement* source = gst_element_factory_make("filesrc", "source");
-    GstElement* sink = gst_element_factory_make("fakesink", "sink");
-    QVERIFY(source);
-    QVERIFY(sink);
-
     constexpr auto kSecretLocation = "/tmp/qgc-dot-secret-token";
-    g_object_set(source, "location", kSecretLocation, nullptr);
-    gst_bin_add_many(GST_BIN(pipeline.get()), source, sink, nullptr);
-    QVERIFY(gst_element_link(source, sink));
+    GstTest::TestPipeline pipeline;
+    const QString description = QStringLiteral("filesrc name=source location=%1 ! fakesink name=sink");
+    QVERIFY2(pipeline.launch(description.arg(QLatin1String(kSecretLocation))), qPrintable(pipeline.error()));
 
-    const GStreamer::GCharPtr dotData = GStreamer::adoptGChar(
-        gst_debug_bin_to_dot_data(GST_BIN(pipeline.get()), PipelineDotDumper::kDiagnosticDotGraphDetails));
+    const GStreamer::GCharPtr dotData =
+        GStreamer::adoptGChar(gst_debug_bin_to_dot_data(pipeline.bin(), PipelineDotDumper::kDiagnosticDotGraphDetails));
     QVERIFY(dotData);
     const QByteArray dot(dotData.get());
 

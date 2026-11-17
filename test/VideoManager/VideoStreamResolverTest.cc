@@ -5,9 +5,9 @@
 #include "VideoStreamResolver.h"
 #include "VideoTestHelpers.h"
 
-using Role = VideoStreamResolver::Role;
-
 namespace {
+
+using Role = VideoStreamResolver::Role;
 
 constexpr int kNoStreamInfo = -1;
 constexpr uint32_t kRtspTimeoutSec = 12;

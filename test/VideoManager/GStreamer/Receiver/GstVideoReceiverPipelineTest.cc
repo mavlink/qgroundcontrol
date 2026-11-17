@@ -334,9 +334,6 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams_data()
 
 void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     QFETCH(int, streamType);
 
     using StreamType = MockVideoStreamServer::StreamType;
@@ -380,7 +377,6 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
     }
     QVERIFY(stream.waitForState(State::Streaming));
     QVERIFY(stream.display());
-#endif
 }
 
 void GstVideoReceiverPipelineTest::_testConfigChangeRestarts()
@@ -533,9 +529,6 @@ void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness_data()
 
 void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
 {
-#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
-#else
     QFETCH(int, streamType);
     QFETCH(QString, threadType);
 
@@ -578,7 +571,6 @@ void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
         }
     }));
     QCOMPARE(decoderThreadType, threadType);
-#endif
 }
 
 void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()

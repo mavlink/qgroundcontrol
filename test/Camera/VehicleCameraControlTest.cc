@@ -178,6 +178,23 @@ void VehicleCameraControlTest::_connectVehicle(MockConfiguration* mockConfig)
     }
 }
 
+MavlinkCameraControlInterface* VehicleCameraControlTest::_firstCamera()
+{
+    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
+    // MockLinkCamera creates two cameras.
+    if (!cameraManager || !waitForCondition([cameraManager] { return cameraManager->cameras()->count() >= 2; },
+                                            TestTimeout::longMs(), u"two cameras discovered")) {
+        return nullptr;
+    }
+    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
+        auto* const camera = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
+        if (camera && (camera->compID() == MAV_COMP_ID_CAMERA)) {
+            return camera;
+        }
+    }
+    return nullptr;
+}
+
 void VehicleCameraControlTest::_testConstructorBuildsCacheFileFromBoundedNames()
 {
     _connectVehicle(newMockConfiguration(QStringLiteral("CameraCacheFileTest")));
@@ -444,23 +461,8 @@ void VehicleCameraControlTest::_testCameraCapFlags()
         return;
     }
 
-    // Wait for camera manager to discover cameras
-    QGCCameraManager* cameraManager = _vehicle->cameraManager();
-    QVERIFY(cameraManager);
-
-    // MockLinkCamera creates two cameras; wait for both to be discovered
-    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
-
-    // Find Camera 1 (MAV_COMP_ID_CAMERA) which has our configured flags.
-    // Camera 2 (MAV_COMP_ID_CAMERA2) is always photo-only and not what we're testing.
-    MavlinkCameraControlInterface* camera = nullptr;
-    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
-        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
-        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
-            camera = cam;
-            break;
-        }
-    }
+    // Camera 1 has our configured flags. Camera 2 is always photo-only and not what we're testing.
+    MavlinkCameraControlInterface* const camera = _firstCamera();
     QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
 
     // Verify capability properties match expected values
@@ -493,18 +495,7 @@ void VehicleCameraControlTest::_testZoomTriggersCameraSettingsRequest()
         return;
     }
 
-    QGCCameraManager* cameraManager = _vehicle->cameraManager();
-    QVERIFY(cameraManager);
-    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
-
-    MavlinkCameraControlInterface* camera = nullptr;
-    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
-        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
-        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
-            camera = cam;
-            break;
-        }
-    }
+    MavlinkCameraControlInterface* const camera = _firstCamera();
     QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
     QVERIFY(camera->hasZoom());
 
@@ -548,18 +539,9 @@ void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
         return;
     }
 
-    QGCCameraManager* cameraManager = _vehicle->cameraManager();
-    QVERIFY(cameraManager);
-    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
-    MavlinkCameraControlInterface* camera = nullptr;
-    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
-        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
-        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
-            camera = cam;
-            break;
-        }
-    }
+    MavlinkCameraControlInterface* const camera = _firstCamera();
     QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
+    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
     // The mock camera advertises its streams 1 and 2.
     QVERIFY_TRUE_WAIT(camera->streamLabels().size() == 2, TestTimeout::longMs());
     QCOMPARE(camera->currentStream(), 0);

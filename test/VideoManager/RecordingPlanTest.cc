@@ -9,7 +9,7 @@ namespace {
 
 using namespace std::chrono_literals;
 
-bool writeFile(const QString& path, qint64 bytes)
+bool writeZeros(const QString& path, qint64 bytes)
 {
     QFile file(path);
     return file.open(QIODevice::WriteOnly) && (file.write(QByteArray(bytes, '\0')) == bytes);
@@ -92,13 +92,13 @@ void RecordingPlanTest::_testRecordingTimeAndSize()
 
     const QString part1 = plan.currentFile();
     QVERIFY(plan.onFileOpened(part1, start));
-    QVERIFY(writeFile(part1, 100));
+    QVERIFY(writeZeros(part1, 100));
     QCOMPARE(plan.bytesWritten(), qint64(100));
     plan.nextPart();
     plan.onFileClosed(part1);
     // The time counts from the first part's first frame, across parts.
     QVERIFY(plan.onFileOpened(plan.currentFile(), start + 5s));
-    QVERIFY(writeFile(plan.currentFile(), 50));
+    QVERIFY(writeZeros(plan.currentFile(), 50));
 
     QCOMPARE(plan.recordingMs(start + 7s), qint64(7000));
     QCOMPARE(plan.bytesWritten(), qint64(150));

@@ -2,12 +2,11 @@
 
 #include <memory>
 
-#include <QtQml/QQmlComponent>
-#include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "ColoredSvgImageProvider.h"
+#include "VideoManager/VideoTestHelpers.h"
 #include "VideoSettings.h"
 
 namespace {
@@ -52,15 +51,12 @@ void VideoSettingsTest::_videoSourcesFollowCameras()
     QCOMPARE(fixedSources.first().toString(), QString::fromLatin1(VideoSettings::videoDisabled));
     QVERIFY(fixedSources.contains(QString::fromLatin1(VideoSettings::videoSourceRTSP)));
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    VideoTestHelpers::InlineQmlEngine engine;
     // For the combo box's arrow.
     engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
-    QQmlComponent component(&engine);
-    component.setData(kVideoSourceComboBoxQml, QUrl(QStringLiteral("qrc:/VideoSettingsTest/VideoSourceComboBox.qml")));
-    const std::unique_ptr<QObject> comboBox(
-        component.createWithInitialProperties({{QStringLiteral("fact"), QVariant::fromValue(videoSource)}}));
-    QVERIFY2(comboBox, qPrintable(component.errorString()));
+    const std::unique_ptr<QObject> comboBox =
+        engine.create(kVideoSourceComboBoxQml, {{QStringLiteral("fact"), QVariant::fromValue(videoSource)}});
+    QVERIFY2(comboBox, qPrintable(engine.error()));
 
     // Cameras plugged in are offered after the fixed sources, in the settings page's combo box too.
     cameras = {kTestCamera, kOtherTestCamera};

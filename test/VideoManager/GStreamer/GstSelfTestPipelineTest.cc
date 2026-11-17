@@ -4,12 +4,13 @@
 
 #include <gst/gst.h>
 
-#include <QtCore/QMap>
+#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerSelfTest.h"
+#include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
 
 namespace {
@@ -70,16 +71,6 @@ void self_test_failing_decoder_init(SelfTestFailingDecoder* self)
     (void) gst_element_add_pad(GST_ELEMENT(self), gst_pad_new_from_static_template(&s_failingDecoderSrc, "src"));
 }
 
-QMap<QString, guint> videoDecoderRanks()
-{
-    QMap<QString, guint> ranks;
-    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&ranks](GstElementFactory* factory) {
-        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
-        ranks.insert(QString::fromUtf8(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
-    });
-    return ranks;
-}
-
 }  // namespace
 
 void GstSelfTestPipelineTest::_testSystemRuntimePasses()
@@ -109,7 +100,7 @@ void GstSelfTestPipelineTest::_testFailingHardwareDecoderFallsBackToSoftware()
         GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kFailingDecoderName));
     QVERIFY(failingDecoder);
     const auto unrank = qScopeGuard([&failingDecoder] { gst_plugin_feature_set_rank(failingDecoder.get(), 0); });
-    const QMap<QString, guint> ranks = videoDecoderRanks();
+    const QHash<QByteArray, guint> ranks = GstTest::videoDecoderRanks();
 
     ignoreLogMessage("Video.GStreamer.GStreamerAPI", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Simulated hardware decoder failure")));
@@ -119,7 +110,7 @@ void GstSelfTestPipelineTest::_testFailingHardwareDecoderFallsBackToSoftware()
                              .arg(QLatin1String(kFailingDecoderName))));
     QVERIFY(GStreamer::SelfTest::run({}));
     verifyExpectedLogMessage();
-    QCOMPARE(videoDecoderRanks(), ranks);
+    QCOMPARE(GstTest::videoDecoderRanks(), ranks);
 }
 
 #endif

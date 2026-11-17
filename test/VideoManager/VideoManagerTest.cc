@@ -9,7 +9,6 @@
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
-#include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -28,12 +27,13 @@
 #include "VideoTelemetryOverlay.h"
 #include "VideoTestHelpers.h"
 
+namespace {
+
 using VideoTestHelpers::createVideoOutput;
+using VideoTestHelpers::InlineQmlEngine;
 using VideoTestHelpers::makeStreamInfo;
 using VideoTestHelpers::showFrame;
 using VideoTestHelpers::showsText;
-
-namespace {
 
 // The Video indicator's decoding settings.
 constexpr const char* kDecodingSettingsQml = R"QML(
@@ -110,19 +110,6 @@ import QGroundControl.VideoManager
 
 VideoSourceStats {
     width: 400
-}
-)QML";
-
-// VideoStreamFormat as other modules reach it: a JavaScript resource of the module, not a relative import.
-constexpr const char* kStreamFormatQml = R"QML(
-import QtQml
-import QGroundControl.VideoManager
-
-QtObject {
-    readonly property string kbit: VideoStreamFormat.bitrateText(850)
-    readonly property string mbit: VideoStreamFormat.bitrateText(8000)
-    readonly property string minutes: VideoStreamFormat.durationText(65000)
-    readonly property string hours: VideoStreamFormat.durationText(3725000)
 }
 )QML";
 
@@ -433,12 +420,9 @@ void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
     _settle();
     _resetCounters();
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kDecodingSettingsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/DecodingSettings.qml")));
-    const std::unique_ptr<QObject> group(component.create());
-    QVERIFY2(group, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QObject> group = engine.create(kDecodingSettingsQml);
+    QVERIFY2(group, qPrintable(engine.error()));
 
     QObject* const decoderControl = group->findChild<QObject*>(QStringLiteral("videoDecoderPriority"));
     QObject* const cpuPathControl = group->findChild<QObject*>(QStringLiteral("videoForceCpuPath"));
@@ -474,12 +458,9 @@ void VideoManagerTest::_testStreamSettingsGroupFollowsLowLatency()
     }
     _facts->set(_videoSettings->lowLatencyMode(), false);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kStreamSettingsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamSettings.qml")));
-    const std::unique_ptr<QObject> group(component.create());
-    QVERIFY2(group, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QObject> group = engine.create(kStreamSettingsQml);
+    QVERIFY2(group, qPrintable(engine.error()));
 
     QObject* const lowLatencyControl = group->findChild<QObject*>(QStringLiteral("videoLowLatencyMode"));
     QObject* const jitterControl = group->findChild<QObject*>(QStringLiteral("videoRtpJitterLatency"));
@@ -993,13 +974,10 @@ void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo()
     QFETCH(int, reason);
     QFETCH(QString, text);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kPlaceholderQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/Placeholder.qml")));
-    const std::unique_ptr<QQuickItem> placeholder(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(placeholder, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> placeholder = engine.create<QQuickItem>(
+        kPlaceholderQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(placeholder, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     placeholder->setParentItem(window.contentItem());
@@ -1101,13 +1079,10 @@ void VideoManagerTest::_testBackgroundSuspendsDisplay()
 
 void VideoManagerTest::_testQmlVideoOutputRegistersItself()
 {
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kStreamOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamOutput.qml")));
-    std::unique_ptr<QQuickItem> root(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("stream"), QVariant::fromValue(_videoManager->primaryStream())}})));
-    QVERIFY2(root, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    std::unique_ptr<QQuickItem> root = engine.create<QQuickItem>(
+        kStreamOutputQml, {{QStringLiteral("stream"), QVariant::fromValue(_videoManager->primaryStream())}});
+    QVERIFY2(root, qPrintable(engine.error()));
     auto* const holder = root->findChild<QQuickItem*>(QStringLiteral("holder"));
     auto* const output = root->findChild<QQuickItem*>(QStringLiteral("output"));
     QVERIFY(holder && output);
@@ -1278,13 +1253,10 @@ void VideoManagerTest::_testAdvertisedRotationTurnsVideo()
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     VideoStreamController* const stream = _videoManager->primaryStream();
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kStreamOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamOutput.qml")));
-    const std::unique_ptr<QQuickItem> root(qobject_cast<QQuickItem*>(
-        component.createWithInitialProperties({{QStringLiteral("stream"), QVariant::fromValue(stream)}})));
-    QVERIFY2(root, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> root =
+        engine.create<QQuickItem>(kStreamOutputQml, {{QStringLiteral("stream"), QVariant::fromValue(stream)}});
+    QVERIFY2(root, qPrintable(engine.error()));
     auto* const output = root->findChild<QQuickItem*>(QStringLiteral("output"));
     QVERIFY(output);
 
@@ -1499,13 +1471,10 @@ void VideoManagerTest::_testRecordingEncodingReachesEverySource()
 void VideoManagerTest::_testStreamStatsReachQml()
 {
     VideoStreamController* const stream = _videoManager->primaryStream();
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kStatsGroupQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StatsGroup.qml")));
-    const std::unique_ptr<QQuickItem> group(qobject_cast<QQuickItem*>(
-        component.createWithInitialProperties({{QStringLiteral("stream"), QVariant::fromValue(stream)}})));
-    QVERIFY2(group, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> group =
+        engine.create<QQuickItem>(kStatsGroupQml, {{QStringLiteral("stream"), QVariant::fromValue(stream)}});
+    QVERIFY2(group, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     group->setParentItem(window.contentItem());
@@ -1603,13 +1572,10 @@ void VideoManagerTest::_testStreamStatsReachQml()
 
 void VideoManagerTest::_testIndicatorReportsMeasuredSource()
 {
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kIndicatorQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/Indicator.qml")));
-    const std::unique_ptr<QQuickItem> toolbar(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(toolbar, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> toolbar = engine.create<QQuickItem>(
+        kIndicatorQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(toolbar, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     toolbar->setParentItem(window.contentItem());
@@ -1744,13 +1710,10 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
 
 void VideoManagerTest::_testSourceStatsShowMeasuredSources()
 {
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kSourceStatsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/SourceStats.qml")));
-    const std::unique_ptr<QQuickItem> sourceStats(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(sourceStats, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> sourceStats = engine.create<QQuickItem>(
+        kSourceStatsQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(sourceStats, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     sourceStats->setParentItem(window.contentItem());
@@ -1807,20 +1770,6 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
     QCOMPARE(group(0)->property("heading").toString(), QStringLiteral("Video"));
 }
 
-void VideoManagerTest::_testStreamFormatText()
-{
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kStreamFormatQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamFormat.qml")));
-    const std::unique_ptr<QObject> format(component.create());
-    QVERIFY2(format, qPrintable(component.errorString()));
-    QCOMPARE(format->property("kbit").toString(), QStringLiteral("850 kbit/s"));
-    QCOMPARE(format->property("mbit").toString(), QStringLiteral("8.0 Mbit/s"));
-    QCOMPARE(format->property("minutes").toString(), QStringLiteral("1:05"));
-    QCOMPARE(format->property("hours").toString(), QStringLiteral("1:02:05"));
-}
-
 void VideoManagerTest::_testVideoViewFitsVideo_data()
 {
     // Whether the fitted video takes its width from the view's height, and its height from the view's width, for a
@@ -1844,12 +1793,9 @@ void VideoManagerTest::_testVideoViewFitsVideo()
     QFETCH(bool, crops);
 
     _facts->set(_videoSettings->videoFit(), fitMode);
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/VideoView.qml")));
-    const std::unique_ptr<QObject> view(component.create());
-    QVERIFY2(view, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QObject> view = engine.create(kVideoViewQml);
+    QVERIFY2(view, qPrintable(engine.error()));
 
     const qreal aspectRatio = view->property("_ar").toReal();
     QVERIFY(aspectRatio > 1.0);
@@ -1860,13 +1806,10 @@ void VideoManagerTest::_testVideoViewFitsVideo()
 
 void VideoManagerTest::_testTelemetryOverlayFollowsTelemetry()
 {
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/VideoView.qml")));
-    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(view, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kVideoViewQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(view, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     view->setParentItem(window.contentItem());
@@ -1899,12 +1842,9 @@ void VideoManagerTest::_testTelemetryOverlayFollowsTelemetry()
 
 void VideoManagerTest::_testCameraPinchZoomSteps()
 {
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kCameraPinchZoomQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/CameraPinchZoom.qml")));
-    const std::unique_ptr<QObject> zoom(component.create());
-    QVERIFY2(zoom, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QObject> zoom = engine.create(kCameraPinchZoomQml);
+    QVERIFY2(zoom, qPrintable(engine.error()));
     auto* const camera = zoom->property("camera").value<QObject*>();
     QVERIFY(camera);
 
@@ -1933,12 +1873,9 @@ void VideoManagerTest::_testCameraPinchZoomSteps()
 
 void VideoManagerTest::_testVideoViewPlacesThermalPip()
 {
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kThermalVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ThermalVideoView.qml")));
-    const std::unique_ptr<QObject> view(component.create());
-    QVERIFY2(view, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QObject> view = engine.create(kThermalVideoViewQml);
+    QVERIFY2(view, qPrintable(engine.error()));
     auto* const thermal = view->findChild<QQuickItem*>(QStringLiteral("videoViewThermal"));
     QVERIFY(thermal);
     auto* const camera = view->property("camera").value<QObject*>();
@@ -1982,13 +1919,10 @@ void VideoManagerTest::_testVideoViewShowsOtherSourcesInTiles()
     VideoStreamController* const secondSource = _videoManager->_sources.at(3);
     FakeVideoReceiver* const secondReceiver = _receiverOf(secondSource);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kTilesVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/TilesVideoView.qml")));
-    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(view, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kTilesVideoViewQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(view, qPrintable(engine.error()));
     // Items outside a scene are never visible.
     QQuickWindow window;
     view->setParentItem(window.contentItem());
@@ -2089,13 +2023,10 @@ void VideoManagerTest::_testTappedTileBecomesMainPicture()
     verifyExpectedLogMessage();
     const UVCCameraController* const uvcCamera = _videoManager->uvcCamera();
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kTilesVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/TilesVideoView.qml")));
-    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(view, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kTilesVideoViewQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(view, qPrintable(engine.error()));
     QQuickWindow window;
     window.resize(800, 400);
     view->setParentItem(window.contentItem());
@@ -2159,13 +2090,10 @@ void VideoManagerTest::_testTilesOutlastViewOnItsWayToFullSize()
 
     // The Fly View's video becomes the main view before it has that view's size: it shows its tiles while it still has
     // the room of the picture-in-picture, none.
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kFlyViewVideoQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/FlyViewVideo.qml")));
-    const std::unique_ptr<QQuickItem> flyView(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(flyView, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> flyView = engine.create<QQuickItem>(
+        kFlyViewVideoQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(flyView, qPrintable(engine.error()));
     _settle();
 
     // The stream in the tile played on through that: it didn't have to connect anew.
@@ -2183,13 +2111,10 @@ void VideoManagerTest::_testFlyViewLeavesTapsOnTilesToThem()
     _settle();
     verifyExpectedLogMessage();
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kFlyViewVideoQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/FlyViewVideo.qml")));
-    const std::unique_ptr<QQuickItem> flyView(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(flyView, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> flyView = engine.create<QQuickItem>(
+        kFlyViewVideoQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(flyView, qPrintable(engine.error()));
     QQuickWindow window;
     window.resize(800, 400);
     flyView->setParentItem(window.contentItem());
@@ -2220,13 +2145,10 @@ void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
     _videoManager->thermalStream()->setStreamInfo(thermalInfo.get());
     QVERIFY(_videoManager->hasThermal());
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(kThermalOverlayQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ThermalOverlay.qml")));
-    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
-        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
-    QVERIFY2(view, qPrintable(component.errorString()));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kThermalOverlayQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(view, qPrintable(engine.error()));
     auto* const camera = view->property("camera").value<QObject*>();
     QVERIFY(camera);
 

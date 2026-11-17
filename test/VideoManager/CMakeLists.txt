@@ -62,12 +62,3 @@ add_qgc_test(VideoScreenshotTest LABELS Unit)
 add_qgc_test(VideoStreamResolverTest LABELS Unit)
 add_qgc_test(VideoStreamStatsMeterTest LABELS Unit)
 add_qgc_test(VideoTelemetryOverlayTest LABELS Integration Vehicle)
-
-# MockVideoStreamServer is only compiled into single-config Debug builds (see its directory's CMakeLists.txt).
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set_property(
-        SOURCE QtMultimediaVideoReceiverTest.cc TARGET_DIRECTORY QGCUnitTests
-        APPEND
-        PROPERTY COMPILE_DEFINITIONS QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    )
-endif()

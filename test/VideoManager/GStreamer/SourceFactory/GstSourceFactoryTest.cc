@@ -275,28 +275,10 @@ void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer
     QCOMPARE(GStreamer::rtpPacketCounts(bin.get()).has_value(), countsPackets);
 }
 
-void GstSourceFactoryTest::_testSourceFactoryNoRetransmission()
-{
-    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
-
-    // RTSP is the only source with a back-channel for retransmission requests, so it's the one the option reaches.
-    GStreamer::SourceFactory::Config config;
-    config.doRetransmission = false;
-
-    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
-    QVERIFY(bin);
-
-    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
-    QVERIFY(source);
-
-    gboolean doRtx = TRUE;
-    g_object_get(source.get(), "do-retransmission", &doRtx, nullptr);
-    QCOMPARE(doRtx, FALSE);
-}
-
 void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy_data()
 {
     QTest::addColumn<int>("jitterBufferPolicy");
+    QTest::addColumn<bool>("doRetransmission");
     QTest::addColumn<guint>("expectedLatencyMs");
     QTest::addColumn<bool>("expectedRetransmission");
     QTest::addColumn<bool>("expectedDropOnLatency");
@@ -305,8 +287,12 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy_data()
 
     using JitterBuffer = GStreamer::SourceFactory::JitterBuffer;
     // -1 is rtpjitterbuffer's "auto" default, i.e. the factory left the internal jitterbuffer untouched.
-    QTest::newRow("low-latency") << static_cast<int>(JitterBuffer::None) << 0u << false << true << -1 << -1;
-    QTest::newRow("drop-on-latency") << static_cast<int>(JitterBuffer::DropOnLatency) << 80u << true << true << 25 << 1;
+    QTest::newRow("low-latency") << static_cast<int>(JitterBuffer::None) << true << 0u << false << true << -1 << -1;
+    QTest::newRow("drop-on-latency") << static_cast<int>(JitterBuffer::DropOnLatency) << true << 80u << true << true
+                                     << 25 << 1;
+    // RTSP is the only source with a back-channel for retransmission requests, so it's the one the option reaches.
+    QTest::newRow("no retransmission") << static_cast<int>(JitterBuffer::DropOnLatency) << false << 80u << false << true
+                                       << -1 << -1;
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
@@ -314,6 +300,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
     GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
 
     QFETCH(int, jitterBufferPolicy);
+    QFETCH(bool, doRetransmission);
     QFETCH(guint, expectedLatencyMs);
     QFETCH(bool, expectedRetransmission);
     QFETCH(bool, expectedDropOnLatency);
@@ -323,7 +310,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = static_cast<GStreamer::SourceFactory::JitterBuffer>(jitterBufferPolicy);
     config.latencyMs = 80;
-    config.doRetransmission = true;
+    config.doRetransmission = doRetransmission;
 
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
@@ -332,12 +319,12 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
     QVERIFY(source);
 
     guint latencyMs = 0;
-    gboolean doRetransmission = FALSE;
+    gboolean retransmission = FALSE;
     gboolean dropOnLatency = FALSE;
-    g_object_get(source.get(), "latency", &latencyMs, "do-retransmission", &doRetransmission, "drop-on-latency",
+    g_object_get(source.get(), "latency", &latencyMs, "do-retransmission", &retransmission, "drop-on-latency",
                  &dropOnLatency, nullptr);
     QCOMPARE(latencyMs, expectedLatencyMs);
-    QCOMPARE(doRetransmission, expectedRetransmission ? TRUE : FALSE);
+    QCOMPARE(retransmission, expectedRetransmission ? TRUE : FALSE);
     QCOMPARE(dropOnLatency, expectedDropOnLatency ? TRUE : FALSE);
 
     QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"),
@@ -653,6 +640,7 @@ void GstSourceFactoryTest::_testSourceFactoryUdpListener_data()
 
     // On a unicast address a second listener would take packets from the first without either being told.
     QTest::newRow("loopback") << QStringLiteral("udp://127.0.0.1:5600") << QStringLiteral("127.0.0.1") << false;
+    QTest::newRow("uppercase scheme") << QStringLiteral("UDP://127.0.0.1:5600") << QStringLiteral("127.0.0.1") << false;
     QTest::newRow("any address") << QStringLiteral("udp265://0.0.0.0:5600") << QStringLiteral("0.0.0.0") << false;
     QTest::newRow("ipv6") << QStringLiteral("udp://[::1]:5600") << QStringLiteral("::1") << false;
     // udpsrc would take a URI without a host for one it can't parse, and listen on its default port.
@@ -774,13 +762,6 @@ void GstSourceFactoryTest::_testSourceFactoryMpegTsLatency()
     QCOMPARE(latency, demuxLatencyMs);
 }
 
-void GstSourceFactoryTest::_testSourceFactorySchemeCaseInsensitive()
-{
-    GStreamer::SourceFactory::Config config;
-    QVERIFY2(GstTest::createSource(QStringLiteral("UDP://127.0.0.1:5600"), config),
-             "uppercase scheme must be accepted (scheme is lower-cased before matching)");
-}
-
 void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
 {
     GStreamer::SourceFactory::Config config;
@@ -856,14 +837,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
         (void) gst_pad_set_active(pad, FALSE);
     });
     QVERIFY(gst_element_set_state(parser.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
-    QVERIFY(gst_pad_set_active(pad, TRUE));
-    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
-        "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96"));
-    GstSegment segment;
-    gst_segment_init(&segment, GST_FORMAT_TIME);
-    QVERIFY(gst_pad_push_event(pad, gst_event_new_stream_start("qgc-rtp")));
-    QVERIFY(gst_pad_push_event(pad, gst_event_new_caps(caps.get())));
-    QVERIFY(gst_pad_push_event(pad, gst_event_new_segment(&segment)));
+    QVERIFY(RtspSource::pushAccessUnit(pad, 1111, {}));
 
     const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(bin.get(), "rtph264depay");
     QVERIFY2(depayloader, "parsebin did not plug rtph264depay for H.264 RTP caps");

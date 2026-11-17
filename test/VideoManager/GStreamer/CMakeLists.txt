@@ -66,8 +66,9 @@ target_sources(
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender): the app's self-test
-# samples, made by src/VideoManager/GStreamer/Runtime/Media/generate.sh.
+# The encoded stream the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by
+# src/VideoManager/GStreamer/Runtime/Media/generate.sh. The other two streams of that directory are the app's
+# self-test samples, which the tests read from the app's resources.
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
     set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/Runtime/Media")
     qt_add_resources(
@@ -75,9 +76,7 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         PREFIX "/unittest/video"
         BASE "${_qgc_gst_test_media}"
         FILES
-            "${_qgc_gst_test_media}/h264_160x120.h264"
             "${_qgc_gst_test_media}/h264_320x240.h264"
-            "${_qgc_gst_test_media}/h265_320x240.h265"
     )
 endif()
 
@@ -138,12 +137,3 @@ set_property(
     APPEND
     PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_MINIMUM_VERSION=\"${_qgc_gst_runtime_minimum}\""
 )
-
-# MockVideoStreamServer is only compiled into single-config Debug builds (see its directory's CMakeLists.txt).
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set_property(
-        SOURCE Receiver/GstVideoReceiverPipelineTest.cc TARGET_DIRECTORY QGCUnitTests
-        APPEND
-        PROPERTY COMPILE_DEFINITIONS QGC_HAS_MOCK_VIDEO_STREAM_SERVER
-    )
-endif()

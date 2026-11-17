@@ -17,7 +17,6 @@ private slots:
     void _testNativeDebugLogRequested_data();
     void _testNativeDebugLogRequested();
     void _testNativeDebugLogIsNotBridged();
-    void _testConfigureDebugLoggingIsIdempotent();
     void _testBridgedLogNamesItsSource();
     void _testConfigureDebugLoggingDefaultsToDisabled();
     void _testRedirectGLibLogging();
@@ -35,8 +34,6 @@ private slots:
     void _testUserFeatureRankKept();
     void _testPlanRanks_data();
     void _testPlanRanks();
-    void _testPlanRanksForSoftwareRendering_data();
-    void _testPlanRanksForSoftwareRendering();
     void _testScopedDecoderOptionRestoresThePreviousOption();
     void _testSetCodecPrioritiesDefault();
     void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
