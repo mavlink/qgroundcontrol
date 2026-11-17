@@ -30,7 +30,7 @@ inline constexpr const char* kTiledDropsField = "tiled-drops";
 /// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the qgcvideosinkbin around one; null for other elements.
 GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
 
-/// The guint64 @p field of a "frame-stats" structure; 0 without the structure or the field.
+/// The guint64 @p field of @p stats, a "frame-stats" or any other structure; 0 without the structure or the field.
 inline quint64 frameStatsField(const GstStructure* stats, const char* field) noexcept
 {
     guint64 value = 0;

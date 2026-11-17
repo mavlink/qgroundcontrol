@@ -259,8 +259,7 @@ void GStreamerHelpersTest::_testRequestKeyframe()
 void GStreamerHelpersTest::_testSendEventAsync()
 {
     // A pad without an element has no thread pool to send from: the event is dropped.
-    const GStreamer::GstPadPtr orphan =
-        GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("orphan", GST_PAD_SINK))));
+    const GStreamer::GstPadPtr orphan = GStreamer::adoptFloating(gst_pad_new("orphan", GST_PAD_SINK));
     GStreamer::sendEventAsync(orphan.get(), gst_event_new_eos());
     GStreamer::sendEventAsync(nullptr, gst_event_new_eos());
 
@@ -296,7 +295,7 @@ void GStreamerHelpersTest::_testFirstSrcPad()
 
 void GStreamerHelpersTest::_testHoldPadUntilLinked()
 {
-    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC))));
+    const GStreamer::GstPadPtr pad = GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC));
     GstPad* linked = nullptr;
     const std::function<void()> link =
         GStreamer::holdPadUntilLinked(pad.get(), [&linked](GstPad* held) { linked = held; });

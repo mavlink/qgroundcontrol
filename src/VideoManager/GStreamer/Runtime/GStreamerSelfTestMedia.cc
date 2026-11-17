@@ -23,23 +23,13 @@ GstCapsPtr byteStreamCaps(const Sample& sample)
 
 QString errorText(GstMessage* message)
 {
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_error(message, &rawError, &rawDebug);
-    const GErrorPtr error = adoptError(rawError);
-    const GCharPtr debug = adoptGChar(rawDebug);
+    const auto [error, debug] = parseMessageError(message);
     QString text = QStringLiteral("%1: %2").arg(QString::fromUtf8(GST_MESSAGE_SRC_NAME(message)),
                                                 error ? QString::fromUtf8(error->message) : QStringLiteral("error"));
     if (debug) {
         text += QStringLiteral(" (%1)").arg(QString::fromUtf8(debug.get()));
     }
     return text;
-}
-
-GstElementPtr newPipeline(const char* name)
-{
-    GstElement* const pipeline = gst_pipeline_new(name);
-    return adoptElement(pipeline ? GST_ELEMENT(gst_object_ref_sink(pipeline)) : nullptr);
 }
 
 /// Plays @p pipeline, hands its appsrc @p source, if any, @p data and the end of the stream, and waits for the EOS.
@@ -120,7 +110,7 @@ DecodeResult decodeSample(const Sample& sample, const QByteArray& data, std::chr
 {
     DecoderWatch watch;
     std::atomic<int> frames = 0;
-    const GstElementPtr pipeline = newPipeline("selftest-decode");
+    const GstElementPtr pipeline = adoptFloating(gst_pipeline_new("selftest-decode"));
     GstElementPtr sourceOwner = makeElement("appsrc");
     GstElementPtr parserOwner = makeElement(sample.parser);
     GstElementPtr decodebinOwner = makeElement("decodebin3");
@@ -168,7 +158,7 @@ DecodeResult decodeSample(const Sample& sample, const QByteArray& data, std::chr
 QString recordSample(const QString& file, VideoReceiver::FileFormat format, const QByteArray& h264,
                      std::chrono::milliseconds timeout)
 {
-    const GstElementPtr pipeline = newPipeline("selftest-record");
+    const GstElementPtr pipeline = adoptFloating(gst_pipeline_new("selftest-record"));
     const GstCapsPtr caps = byteStreamCaps(kH264Sample);
     GstElementPtr sourceOwner = makeElement("appsrc");
     GstElementPtr fileSinkOwner = RecordingBranch::makeFileSink(file, format, caps.get());
@@ -189,7 +179,7 @@ QString recordSample(const QString& file, VideoReceiver::FileFormat format, cons
 QString readBack(const QString& file, const char* demuxer, std::chrono::milliseconds timeout)
 {
     std::atomic<int> buffers = 0;
-    const GstElementPtr pipeline = newPipeline("selftest-read-back");
+    const GstElementPtr pipeline = adoptFloating(gst_pipeline_new("selftest-read-back"));
     GstElementPtr sourceOwner = makeElement("filesrc");
     GstElementPtr demuxerOwner = makeElement(demuxer);
     GstElementPtr sinkOwner = makeElement("fakesink");

@@ -27,11 +27,7 @@ void logBusWarning(GstMessage* message)
 {
     // GStreamer posts WARNING for caps mismatches, decoder fallbacks, clock drift: surfacing keeps these visible
     // without failing the stream.
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_warning(message, &rawError, &rawDebug);
-    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
-    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const auto [error, debug] = GStreamer::parseMessageError(message);
     qCWarning(GstVideoReceiverLog) << "GStreamer warning:" << (error ? error->message : "(no message)")
                                    << "debug:" << (debug ? debug.get() : "(none)");
 }
@@ -66,22 +62,12 @@ bool isRecoverableH265PaciError(GstMessage* msg, const GError* error, const gcha
         !g_strrstr(debug, "NAL unit type 50 not supported yet")) {
         return false;
     }
-
-    GstObject* src = GST_MESSAGE_SRC(msg);
-    if (!src || !GST_IS_ELEMENT(src)) {
-        return false;
-    }
-
-    GstElementFactory* factory = gst_element_get_factory(GST_ELEMENT(src));
-    return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtph265depay") == 0);
+    return g_strcmp0(GStreamer::factoryNameOf(GST_MESSAGE_SRC(msg)), "rtph265depay") == 0;
 }
 
 bool postedByRtspSrc(GstMessage* message)
 {
-    GstObject* const src = GST_MESSAGE_SRC(message);
-    GstElementFactory* const factory =
-        (src && GST_IS_ELEMENT(src)) ? gst_element_get_factory(GST_ELEMENT(src)) : nullptr;
-    return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtspsrc") == 0);
+    return g_strcmp0(GStreamer::factoryNameOf(GST_MESSAGE_SRC(message)), "rtspsrc") == 0;
 }
 
 /// The server refused the credentials (RTSP 401), or the stream needs some and has none.
@@ -175,12 +161,11 @@ PipelineSession::~PipelineSession()
     shutdown();
 }
 
-bool PipelineSession::start()
+std::optional<PipelineSession::Failure> PipelineSession::start()
 {
     qCDebug(GstVideoReceiverLog) << "Starting" << _settings.redactedUri << "lowLatency" << _settings.lowLatency;
 
-    GstElement* const pipeline = gst_pipeline_new(_dotDumper.pipelineName().constData());
-    _pipeline = GStreamer::adoptElement(pipeline ? GST_ELEMENT(gst_object_ref_sink(pipeline)) : nullptr);
+    _pipeline = GStreamer::adoptFloating(gst_pipeline_new(_dotDumper.pipelineName().constData()));
     // The sync handler is in place before anything can post: the context bridges must see NEED_CONTEXT, which upstream
     // queries during PAUSED->PLAYING.
     if (!_pipeline || !_bus.attach(
@@ -190,10 +175,9 @@ bool PipelineSession::start()
                                   _handleMessage(message);
                               }
                           })) {
-        _failure = {.reason = QStringLiteral("pipeline creation failed"),
-                    .message = tr("Unable to create the video pipeline."),
-                    .permanent = true};
-        return false;
+        return Failure{.reason = QStringLiteral("pipeline creation failed"),
+                       .message = tr("Unable to create the video pipeline."),
+                       .permanent = true};
     }
     // Branch EOS reaches the bus wrapped in GstBinForwarded, so the recorder's own EOS can be told apart.
     g_object_set(_pipeline.get(), "message-forward", TRUE, nullptr);
@@ -202,10 +186,9 @@ bool PipelineSession::start()
     const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(_tee ? gst_element_get_static_pad(_tee, "sink") : nullptr);
     // The probe feeds the watchdog; without it the watchdog fires spuriously instead of reporting a real failure.
     if (!teeSink || !_teeFrameProbe.add(teeSink.get(), GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this)) {
-        _failure = {.reason = QStringLiteral("tee creation failed"),
-                    .message = tr("Unable to create the video pipeline."),
-                    .permanent = true};
-        return false;
+        return Failure{.reason = QStringLiteral("tee creation failed"),
+                       .message = tr("Unable to create the video pipeline."),
+                       .permanent = true};
     }
 
     const BranchContext context{
@@ -219,10 +202,9 @@ bool PipelineSession::start()
     _decoding = std::make_unique<DecodingBranch>(context, _listener, _settings.lowLatency);
     _recording = std::make_unique<RecordingBranch>(context, _listener);
     if (!_decoding->build() || !_recording->build()) {
-        _failure = {.reason = QStringLiteral("branch creation failed"),
-                    .message = tr("Unable to create the video pipeline."),
-                    .permanent = true};
-        return false;
+        return Failure{.reason = QStringLiteral("branch creation failed"),
+                       .message = tr("Unable to create the video pipeline."),
+                       .permanent = true};
     }
     _displayValve = _decoding->valve();
     _recordingValve = _recording->valve();
@@ -237,11 +219,10 @@ bool PipelineSession::start()
     _source = GStreamer::SourceFactory::create(_settings.uri, sourceConfig);
     if (!_source || !gst_bin_add(GST_BIN(_pipeline.get()), _source)) {
         _source = nullptr;
-        _failure = {.reason = QStringLiteral("no source for the URI"),
-                    .message = tr("The video stream %1 is not supported, or a GStreamer plugin it needs is missing.")
-                                   .arg(_settings.redactedUri),
-                    .permanent = true};
-        return false;
+        return Failure{.reason = QStringLiteral("no source for the URI"),
+                       .message = tr("The video stream %1 is not supported, or a GStreamer plugin it needs is missing.")
+                                      .arg(_settings.redactedUri),
+                       .permanent = true};
     }
 
     if (const GStreamer::GstPadPtr srcPad = GStreamer::firstSrcPad(_source)) {
@@ -254,15 +235,14 @@ bool PipelineSession::start()
     if (gst_element_set_state(_pipeline.get(), GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
         const QString error = _takeStartError();
         qCWarning(GstVideoReceiverLog) << "Failed to start" << _settings.redactedUri;
-        _failure = {.reason = QStringLiteral("start failure"),
-                    .message = tr("Unable to start the video stream: %1").arg(error),
-                    .permanent = false};
-        return false;
+        return Failure{.reason = QStringLiteral("start failure"),
+                       .message = tr("Unable to start the video stream: %1").arg(error),
+                       .permanent = false};
     }
 
     _dotDumper.dump(_pipeline.get(), "pipeline-started");
     qCDebug(GstVideoReceiverLog) << "Started" << _settings.redactedUri;
-    return true;
+    return std::nullopt;
 }
 
 void PipelineSession::setVideoSink(GstElement* sink)
@@ -384,7 +364,6 @@ void PipelineSession::_fail(const Failure& failure)
         return;
     }
     _phase = Phase::Failed;
-    _failure = failure;
     _post([this, failure]() { _listener.onSessionFailed(failure); });
 }
 
@@ -442,11 +421,7 @@ void PipelineSession::_handleMessage(GstMessage* message)
 
 void PipelineSession::_onBusError(GstMessage* message)
 {
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_error(message, &rawError, &rawDebug);
-    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
-    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const auto [error, debug] = GStreamer::parseMessageError(message);
     const QString text = QString::fromUtf8(error ? error->message : "(no message)");
 
     if (isRecoverableH265PaciError(message, error.get(), debug.get())) {
@@ -508,11 +483,7 @@ QString PipelineSession::_takeStartError()
     if (!message) {
         return tr("unknown error");
     }
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_error(message.get(), &rawError, &rawDebug);
-    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
-    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const auto [error, debug] = GStreamer::parseMessageError(message.get());
     const QString text = QString::fromUtf8(error ? error->message : "(no message)");
     qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message.get()) << ":" << text
                                    << "debug:" << (debug ? debug.get() : "(none)");
@@ -572,27 +543,16 @@ GstBusSyncReply PipelineSession::_onBusSync(GstMessage* message)
         return GST_BUS_DROP;
     }
 
-    switch (GST_MESSAGE_TYPE(message)) {
-        case GST_MESSAGE_ERROR:
-            // Closed now, before the failing element returns its flow error: the valve reports OK for a push that
-            // fails after drop was set, which keeps the error out of the tee and so out of the other branch.
-            switch (GStreamer::branchOf(GST_MESSAGE_SRC(message))) {
-                case GStreamer::PipelineBranch::Decoding:
-                    if (_displayValve) {
-                        g_object_set(_displayValve, "drop", TRUE, nullptr);
-                    }
-                    break;
-                case GStreamer::PipelineBranch::Recording:
-                    if (_recordingValve) {
-                        g_object_set(_recordingValve, "drop", TRUE, nullptr);
-                    }
-                    break;
-                case GStreamer::PipelineBranch::None:
-                    break;
-            }
-            break;
-        default:
-            break;
+    if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
+        // Closed now, before the failing element returns its flow error: the valve reports OK for a push that fails
+        // after drop was set, which keeps the error out of the tee and so out of the other branch.
+        const GStreamer::PipelineBranch branch = GStreamer::branchOf(GST_MESSAGE_SRC(message));
+        GstElement* const valve = (branch == GStreamer::PipelineBranch::Decoding)
+                                      ? _displayValve
+                                      : ((branch == GStreamer::PipelineBranch::Recording) ? _recordingValve : nullptr);
+        if (valve) {
+            g_object_set(valve, "drop", TRUE, nullptr);
+        }
     }
     return GST_BUS_PASS;
 }

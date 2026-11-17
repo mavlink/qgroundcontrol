@@ -2,18 +2,13 @@
 
 #include <gst/gst.h>
 
+#include "GStreamerHelpers.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
 
 namespace GStreamer::SourceFactory {
 
 namespace {
-
-const char* elementFactoryName(GstElement* element)
-{
-    GstElementFactory* factory = gst_element_get_factory(element);
-    return factory ? gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)) : nullptr;
-}
 
 // NAL unit types (ITU-T H.264 and H.265, table 7-1). Slices are the types up to the last one named here.
 constexpr guint kH264NalSliceFirst = 1;
@@ -162,7 +157,7 @@ GstPadProbeReturn holdUntilParameterSets(GstPad* pad, GstPadProbeInfo* info, gpo
 
 void configureH26xParser(GstElement* element)
 {
-    const char* factoryName = elementFactoryName(element);
+    const char* factoryName = factoryNameOf(GST_OBJECT_CAST(element));
     if ((g_strcmp0(factoryName, "h264parse") == 0) || (g_strcmp0(factoryName, "h265parse") == 0)) {
         // Recording can begin long after RTSP setup. Repeat codec parameter sets at every IDR so
         // the late-opened recording branch can construct MP4/MOV codec_data without relying on
@@ -173,7 +168,7 @@ void configureH26xParser(GstElement* element)
 
 void configureH26xRtpDepayloader(GstElement* element, bool requestKeyframes)
 {
-    const char* factoryName = elementFactoryName(element);
+    const char* factoryName = factoryNameOf(GST_OBJECT_CAST(element));
     if (!isH26xRtpDepayloader(factoryName)) {
         return;
     }

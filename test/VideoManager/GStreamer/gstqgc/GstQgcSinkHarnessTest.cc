@@ -21,7 +21,7 @@ public:
     explicit SinkBinHarness(QVideoSink* videoSink)
     {
         GstElement* const bin = gst_element_factory_make("qgcvideosinkbin", nullptr);
-        _bin = GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
+        _bin = GStreamer::adoptFloating(bin);
         if (_bin && GStreamer::setupQVideoSinkElement(_bin.get(), videoSink, &_owner)) {
             _harness = gst_harness_new_with_element(_bin.get(), "sink", nullptr);
         }

@@ -77,7 +77,7 @@ public:
     explicit SinkHarness(QVideoSink* target, bool gpuZeroCopy = false, const char* memoryFeature = nullptr)
         : _sink(sinkElement(gpuZeroCopy))
         , _bus(GStreamer::adoptBus(gst_bus_new()))
-        , _src(GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC)))))
+        , _src(GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC)))
     {
         if (!_sink) {
             return;
@@ -178,7 +178,7 @@ private:
     static GStreamer::GstElementPtr sinkElement(bool gpuZeroCopy)
     {
         GstElement* const sink = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
-        return GStreamer::adoptElement(sink ? GST_ELEMENT(gst_object_ref_sink(sink)) : nullptr);
+        return GStreamer::adoptFloating(sink);
     }
 
     GStreamer::GstElementPtr _sink;
@@ -200,7 +200,7 @@ inline SinkBin makeSinkBin()
     if (!bin) {
         return {};
     }
-    SinkBin made{GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(bin))), nullptr};
+    SinkBin made{GStreamer::adoptFloating(bin), nullptr};
     made.qvideosink = GstQgcTest::qvideosink(bin);
     return made;
 }

@@ -5,9 +5,11 @@
 
 #include <QtCore/QString>
 
+#include "GStreamerHelpers.h"
 #include "GstRtpPacketProbe.h"
 #include "GstScoped.h"
 #include "VideoStreamStats.h"
+#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
 
@@ -37,20 +39,13 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
     }
     const auto addStats = [](const GValue* item, gpointer data) {
         auto* const element = GST_ELEMENT(g_value_get_object(item));
-        GstElementFactory* const factory = gst_element_get_factory(element);
-        if (!factory || (g_strcmp0(GST_OBJECT_NAME(factory), "rtpjitterbuffer") != 0)) {
+        if (g_strcmp0(GStreamer::factoryNameOf(GST_OBJECT_CAST(element)), "rtpjitterbuffer") != 0) {
             return;
         }
         GstStructure* rawStats = nullptr;
         g_object_get(element, "stats", &rawStats, nullptr);
         const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-        const auto field = [&stats](const char* name) {
-            guint64 value = 0;
-            if (stats) {
-                (void) gst_structure_get_uint64(stats.get(), name, &value);
-            }
-            return value;
-        };
+        const auto field = [&stats](const char* name) -> guint64 { return GstQgc::frameStatsField(stats.get(), name); };
         auto* const sum = static_cast<JitterBufferTotals*>(data);
         sum->found = true;
         sum->packetsPushed += field("num-pushed");

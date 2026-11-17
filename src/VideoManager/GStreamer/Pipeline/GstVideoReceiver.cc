@@ -1,12 +1,9 @@
 #include "GstVideoReceiver.h"
 
 #include <chrono>
-#include <memory>
-#include <mutex>
 #include <utility>
 
 #include <QtCore/QDeadlineTimer>
-#include <QtCore/QSemaphore>
 #include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
@@ -22,8 +19,6 @@ namespace {
 
 // The destructor's wait for the worker: a recording's finalization plus time for the pipeline to stop.
 constexpr std::chrono::seconds kWorkerShutdownTimeout = RecordingBranch::kFinalizeTimeout + std::chrono::seconds{2};
-// _runOnPipeline()'s wait for the worker to run a task.
-constexpr std::chrono::seconds kRunOnPipelineTimeout{10};
 
 }  // namespace
 
@@ -66,11 +61,6 @@ GstVideoReceiver::~GstVideoReceiver()
     if (_workerThread->isFinished()) {
         delete _workerThread;
     }
-}
-
-void GstVideoReceiver::dumpPipelineGraph(const QString& tag)
-{
-    _postToWorker([tag](GstReceiverWorker& worker) { worker.dumpPipelineGraph(tag); });
 }
 
 void GstVideoReceiver::onConfigChanged()
@@ -152,7 +142,7 @@ void GstVideoReceiver::_applyStatus(const GstReceiverStatus& status)
     if (wasDecoding && !status.decoding && _sinkController) {
         _sinkController->releaseFrame();
     }
-    _setDecoderName(status.decoderName);
+    _decoderName = status.decoderName;
     setRecording(status.recording);
     setStats(status.stats);
 }
@@ -178,12 +168,8 @@ void GstVideoReceiver::_releaseDisplaySink()
 bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
 {
     const DisplayConfig& display = displayConfig();
-    const GStreamer::VideoSinkConfig sinkConfig{
-        .conversionElement = display.conversionElement,
-        .disablePixelAspectRatio = display.disablePixelAspectRatio,
-        .gpuZeroCopy = display.gpuZeroCopy,
-    };
-    GStreamer::GstElementPtr sink = GStreamer::adoptElement(GStreamer::createVideoSink(sinkConfig));
+    GStreamer::GstElementPtr sink = GStreamer::adoptElement(
+        GStreamer::createVideoSink(display.conversionElement, display.disablePixelAspectRatio, display.gpuZeroCopy));
     QGCQVideoSinkController* const controller =
         sink ? GStreamer::setupQVideoSinkElement(sink.get(), videoSink, this) : nullptr;
     if (!controller) {
@@ -217,46 +203,4 @@ void GstVideoReceiver::_bindVideoSink(QVideoSink* videoSink)
     if (const QSize size = sizeOf(videoSink->videoFrame()); size.isValid()) {
         setVideoSize(size);
     }
-}
-
-void GstVideoReceiver::_setDecoderName(const QString& name)
-{
-    if (name != _decoderName) {
-        _decoderName = name;
-        emit decoderNameChanged();
-    }
-}
-
-bool GstVideoReceiver::_runOnPipeline(const std::function<void(GstElement*)>& task)
-{
-    // Not a BlockingQueuedConnection, which would wait for good on a worker that never gets to the task. The task
-    // runs under the mutex, so once the wait is given up it is either done or never runs.
-    struct Call
-    {
-        std::mutex mutex;
-        bool abandoned = false;
-        QSemaphore done;
-    };
-
-    const auto call = std::make_shared<Call>();
-    GstReceiverWorker* const worker = _worker;
-    const bool posted = QMetaObject::invokeMethod(
-        worker,
-        [worker, call, &task]() {
-            const std::lock_guard lock(call->mutex);
-            if (!call->abandoned) {
-                task(worker->pipeline());
-                call->done.release();
-            }
-        },
-        Qt::QueuedConnection);
-    if (!posted) {
-        return false;
-    }
-    if (call->done.tryAcquire(1, QDeadlineTimer(kRunOnPipelineTimeout))) {
-        return true;
-    }
-    const std::lock_guard lock(call->mutex);
-    call->abandoned = true;
-    return call->done.tryAcquire();
 }

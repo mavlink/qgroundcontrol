@@ -204,8 +204,7 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
         expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg,
                          QRegularExpression(QStringLiteral("failed to create parent directory")));
     }
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("receiver"))));
+    const GStreamer::GstElementPtr pipeline = GStreamer::adoptFloating(gst_pipeline_new("receiver"));
 
     const QString path = PipelineDotDumper::writePipelineDot(pipeline.get(), tag, directory);
     if (fileStem.isEmpty()) {
@@ -310,8 +309,7 @@ void GstVideoReceiverComponentsTest::_testBusPump()
 {
     GSTTEST_REQUIRE_GSTREAMER();
 
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("pump"))));
+    const GStreamer::GstElementPtr pipeline = GStreamer::adoptFloating(gst_pipeline_new("pump"));
     QVERIFY(pipeline);
 
     QStringList synced;
@@ -561,9 +559,8 @@ void GstVideoReceiverComponentsTest::_testStatsProbeCountsRtpPackets()
     GSTTEST_REQUIRE_GSTREAMER();
 
     // A source bin without a jitter buffer, and the pad its packets arrive on.
-    const GStreamer::GstElementPtr source =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(nullptr))));
-    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC))));
+    const GStreamer::GstElementPtr source = GStreamer::adoptFloating(gst_bin_new(nullptr));
+    const GStreamer::GstPadPtr pad = GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC));
     QVERIFY(gst_pad_set_active(pad.get(), TRUE));
     const auto push = [&pad](GstBuffer* packet) { return gst_pad_push(pad.get(), packet); };
 

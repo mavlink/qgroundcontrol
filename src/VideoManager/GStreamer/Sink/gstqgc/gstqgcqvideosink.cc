@@ -50,7 +50,6 @@ struct PrivState
     GstCaps* offered_caps = nullptr;
     GstQgc::SinkCapsPolicy offered_policy;
     // Negotiated state: set_caps/stop write it and show_frame reads it, all serialised by GstBaseSink.
-    std::atomic<bool> caps_valid{false};
     GstVideoInfo video_info = {};
     QVideoFrameFormat format;
     // The geometry of the last buffer and format for frames of it. Buffers of one stream share theirs, so show_frame
@@ -69,7 +68,8 @@ struct PrivState
     std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);
-    // Negotiated caps held from set_caps; avoids per-frame allocation and preserves DRM modifiers.
+    // Negotiated caps held from set_caps, null before it and after stop; avoids per-frame allocation and preserves
+    // DRM modifiers.
     GstCaps* cached_caps{nullptr};
     // The path frames take through the caps epoch; set_caps starts a new one, so a format change re-runs path
     // selection.
@@ -388,7 +388,6 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     p->cached_caps = gst_caps_ref(caps);
     p->gpu_caps = caps_carry_gpu_memory(caps);
     p->path_session.startEpoch();
-    p->caps_valid.store(true, std::memory_order_release);
 
     qCInfo(GstQgcQVideoSinkLog).noquote()
         << "set_caps: format=" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)) << w << "x" << h
@@ -404,7 +403,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     p->counters.noteInput();
     const GstQgc::SinkCapsPolicy policy = reconfigure_on_policy_change(self);
 
-    if (!p->caps_valid.load(std::memory_order_acquire)) {
+    if (!p->cached_caps) {
         // Should never happen — GstBaseSink calls set_caps before show_frame.
         return GST_FLOW_NOT_NEGOTIATED;
     }
@@ -518,7 +517,6 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
     PrivState* p = priv_of(self);
-    p->caps_valid.store(false, std::memory_order_release);
     gst_clear_caps(&p->cached_caps);
     p->gpu_caps = false;
     p->path_session.stop();

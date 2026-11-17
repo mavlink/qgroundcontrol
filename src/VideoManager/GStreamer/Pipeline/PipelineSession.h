@@ -76,10 +76,8 @@ public:
                     const PipelineDotDumper& dotDumper, QObject* parent = nullptr);
     ~PipelineSession() override;
 
-    /// Builds the pipeline and sets it PLAYING. False with failure() set when it can't; shut the session down then.
-    bool start();
-
-    const Failure& failure() const { return _failure; }
+    /// Builds the pipeline and sets it PLAYING. Returns why when it can't; shut the session down then.
+    [[nodiscard]] std::optional<Failure> start();
 
     void setVideoSink(GstElement* sink);
     void setRecording(const std::optional<RecordingBranch::Request>& request);
@@ -155,7 +153,6 @@ private:
     bool _tearingDown() const { return _phase >= Phase::TearingDown; }
 
     Phase _phase = Phase::Running;
-    Failure _failure;
     bool _streaming = false;
     /// The plugin last reported missing, as GStreamer describes it ("H.265 decoder"), and where.
     QString _missingPlugin;

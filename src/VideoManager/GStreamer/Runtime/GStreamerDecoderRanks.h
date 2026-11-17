@@ -36,9 +36,6 @@ VideoDecoderOption decoderFamilyForFactory(const char* factoryName);
 /// actually provide. Vulkan is only offered with the opt-in Vulkan GPU path.
 QList<VideoDecoderOption> availableDecoderFamilies();
 
-/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows.
-RankTraits currentRankTraits();
-
 /// Applies decoder rank plans (planRanks()) to the default registry. It remembers the rank each feature had before QGC
 /// first changed it, so a new option starts over from those rather than adding to the previous one. A feature named in
 /// GST_PLUGIN_FEATURE_RANK keeps the user's rank. One per process, as the registry is. GUI thread, except
@@ -51,9 +48,9 @@ public:
     DecoderRankApplier(const DecoderRankApplier&) = delete;
     DecoderRankApplier& operator=(const DecoderRankApplier&) = delete;
 
-    /// Restores the original ranks, then applies @p option's plan for the installed decoders and currentRankTraits().
+    /// Restores the original ranks, then applies @p option's plan for the installed decoders on this platform.
     void apply(VideoDecoderOption option);
-    /// apply() for the option applied last, when currentRankTraits() changed since: Qt's device became known.
+    /// apply() for the option applied last, when the platform's RankTraits changed since: Qt's device became known.
     void reapply();
     /// Restores the original ranks.
     void restore();

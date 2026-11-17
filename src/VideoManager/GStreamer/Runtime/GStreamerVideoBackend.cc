@@ -4,6 +4,9 @@
 
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
+#include "GStreamerEnvironment.h"
+#include "GStreamerSelfTest.h"
+#include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QtMultimediaVideoReceiver.h"
@@ -39,7 +42,7 @@ VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
     if (state() == State::Failed) {
         return new QtMultimediaVideoReceiver(parent);
     }
-    return GStreamer::createVideoReceiver(parent);
+    return new GstVideoReceiver(parent);
 }
 
 VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
@@ -47,7 +50,7 @@ VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
     if (state() != State::Unprepared) {
         qCWarning(GStreamerVideoBackendLog) << "Environment prepared again after GStreamer setup started";
     }
-    EnvPrepResult result = GStreamer::prepareEnvironment();
+    EnvPrepResult result = GStreamer::Environment::prepareEnvironment();
     State expected = State::Unprepared;
     (void) _state.compare_exchange_strong(expected, State::Prepared, std::memory_order_acq_rel);
     return result;
@@ -84,7 +87,7 @@ bool GStreamerVideoBackend::selfTest()
         qCWarning(GStreamerVideoBackendLog) << "GStreamer self-test skipped: GStreamer isn't initialized";
         return false;
     }
-    return GStreamer::selfTest();
+    return GStreamer::SelfTest::run(GStreamer::Environment::bundledRuntime());
 }
 
 void GStreamerVideoBackend::applyDecoderPriorities(VideoDecoderOption option)

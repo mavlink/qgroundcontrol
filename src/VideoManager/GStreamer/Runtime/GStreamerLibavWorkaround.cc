@@ -2,6 +2,8 @@
 
 #include <gst/gst.h>
 
+#include "GStreamerHelpers.h"
+
 namespace GStreamer {
 
 QLatin1StringView libavcodecVersion()
@@ -19,8 +21,7 @@ bool avoidHevcWavefrontDeadlock(GstElement* decoder, QLatin1StringView version)
         return false;
     }
 
-    GstElementFactory* const factory = decoder ? gst_element_get_factory(decoder) : nullptr;
-    if (!factory || (g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)), "avdec_h265") != 0)) {
+    if (g_strcmp0(factoryNameOf(GST_OBJECT_CAST(decoder)), "avdec_h265") != 0) {
         return false;
     }
 

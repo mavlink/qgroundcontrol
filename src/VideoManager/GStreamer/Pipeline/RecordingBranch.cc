@@ -167,8 +167,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
         return nullptr;
     }
 
-    GstElement* const rawBin = gst_bin_new("sinkbin");
-    GStreamer::GstElementPtr bin = GStreamer::adoptElement(rawBin ? GST_ELEMENT(gst_object_ref_sink(rawBin)) : nullptr);
+    GStreamer::GstElementPtr bin = GStreamer::adoptFloating(gst_bin_new("sinkbin"));
     if (!bin) {
         qCWarning(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
         return nullptr;

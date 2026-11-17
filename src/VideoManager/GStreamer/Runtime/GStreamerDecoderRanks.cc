@@ -175,8 +175,7 @@ QList<DecoderInfo> installedDecoders()
     return decoders;
 }
 
-}  // namespace
-
+/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows.
 RankTraits currentRankTraits()
 {
     RankTraits traits;
@@ -209,6 +208,8 @@ RankTraits currentRankTraits()
     traits.softwareRendering = HwBuffers::softwareRenderingRequested();
     return traits;
 }
+
+}  // namespace
 
 DecoderRankApplier& DecoderRankApplier::instance()
 {

@@ -62,11 +62,7 @@ guint64 lateFramesDroppedBy(GstElement* element)
     GstStructure* rawStats = nullptr;
     g_object_get(element, "stats", &rawStats, nullptr);
     const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-    guint64 dropped = 0;
-    if (stats) {
-        (void) gst_structure_get_uint64(stats.get(), "dropped", &dropped);
-    }
-    return dropped;
+    return GstQgc::frameStatsField(stats.get(), "dropped");
 }
 
 /// The frames @p sink, or the sinks inside it when it is a bin, dropped as late. A sink starts its count over when it
@@ -581,7 +577,7 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
     // Live streams: once a frame is late, a QoS event has the videodecoder base class drop the frames due before the
     // time it names. Turned off here, before the decoder sees data, for each decoder decodebin3 plugs, later swaps
     // included. That stops the base class only: avdec and amcvideodec act on the event's deadline themselves, and it
-    // is the sink bin's own "qos", off by default, that sends them none.
+    // is the sink bin, which keeps its sink's QoS off, that sends them none.
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(element), "qos")) {
         g_object_set(element, "qos", FALSE, nullptr);
     }

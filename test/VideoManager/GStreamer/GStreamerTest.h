@@ -21,7 +21,6 @@ private slots:
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCompleteInitNamesBlacklistedPlugins();
-    void _testCreateVideoReceiver();
     void _testVideoBackendForwards();
     void _testVideoBackendRunsInOrder();
     void _testRecordingSinkAcceptsElementaryStreams_data();

@@ -71,9 +71,7 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
     if (!raw) {
         // Caller's QVideoSink was destroyed between the call site and here — clear the
         // element's snapshot and gate show_frame until a replacement sink is installed.
-        g_object_set(_element.get(), "active", FALSE, "qvideosink", static_cast<gpointer>(nullptr), nullptr);
-        _bindingReleased = true;
-        _clearVideoSinkFrame();
+        _releaseElementBinding();
         return;
     }
     // Unbinding turned the element off: bound again, it goes on as setActive() last asked.

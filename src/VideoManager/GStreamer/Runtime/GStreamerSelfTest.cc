@@ -511,8 +511,3 @@ bool run(const Environment::BundledRuntime& runtime)
 }
 
 }  // namespace GStreamer::SelfTest
-
-bool GStreamer::selfTest()
-{
-    return SelfTest::run(Environment::bundledRuntime());
-}

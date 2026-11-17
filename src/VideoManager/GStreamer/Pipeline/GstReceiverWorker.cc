@@ -143,15 +143,6 @@ void GstReceiverWorker::_stopRecording()
     }
 }
 
-void GstReceiverWorker::dumpPipelineGraph(const QString& tag) const
-{
-    if (!_session) {
-        qCDebug(GstVideoReceiverLog) << "No running pipeline to dump";
-        return;
-    }
-    _session->snapshot(tag);
-}
-
 void GstReceiverWorker::shutdown()
 {
     _requested.active = false;
@@ -191,10 +182,9 @@ void GstReceiverWorker::_startSession()
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
     _watchdog.start(_requested.config.timeout, GStreamer::SourceFactory::connectGracePeriod(_requested.config.uri));
 
-    if (!_session->start()) {
-        const PipelineSession::Failure failure = _session->failure();
+    if (const std::optional<PipelineSession::Failure> failure = _session->start()) {
         _stopSession();
-        _recover(failure);
+        _recover(*failure);
         return;
     }
 

@@ -15,6 +15,7 @@
 #include <QtNetwork/QTcpSocket>
 
 #include "GStreamer.h"
+#include "GStreamerEnvironment.h"
 #include "GstSourceFactory.h"
 
 namespace GstTest {
@@ -27,7 +28,7 @@ QString initGStreamer()
     if (gst_is_initialized()) {
         return {};
     }
-    (void) GStreamer::prepareEnvironment();
+    (void) GStreamer::Environment::prepareEnvironment();
 
     GError* error = nullptr;
     if (!gst_init_check(nullptr, nullptr, &error)) {
@@ -51,11 +52,7 @@ QString firstMissingFactory(std::initializer_list<const char*> names)
 
 QString errorText(GstMessage* message, bool withDetails)
 {
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_error(message, &rawError, &rawDebug);
-    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
-    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const auto [error, debug] = GStreamer::parseMessageError(message);
     const QString text = error ? QString::fromUtf8(error->message) : QStringLiteral("unknown error");
     return withDetails ? QStringLiteral("%1 (%2)").arg(text, debug ? QString::fromUtf8(debug.get()) : QString()) : text;
 }
@@ -153,7 +150,7 @@ void watchRelease(GstMiniObject* object, bool* released)
 GStreamer::GstElementPtr createSource(const QString& uri, const GStreamer::SourceFactory::Config& config)
 {
     GstElement* const bin = GStreamer::SourceFactory::create(uri, config);
-    return GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
+    return GStreamer::adoptFloating(bin);
 }
 
 std::unique_ptr<QRhi> makeNullRhi()
@@ -239,7 +236,7 @@ bool TestPipeline::launch(const QString& description)
         }
         return false;
     }
-    _pipeline = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(pipeline)));
+    _pipeline = GStreamer::adoptFloating(pipeline);
     return true;
 }
 

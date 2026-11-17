@@ -74,7 +74,7 @@ void GStreamerInitTest::_testInitializeLogsFromItsFirstLine()
                      QRegularExpression(QStringLiteral("Initializing GStreamer Core Library")));
     const VideoBackend::InitParams params{
         .arguments = {QStringLiteral("QGroundControl"), QStringLiteral("--gst-debug-level=3")},
-        .environment = GStreamer::prepareEnvironment(),
+        .environment = GStreamer::Environment::prepareEnvironment(),
         .debugLevel = static_cast<int>(GST_LEVEL_INFO),
     };
     QVERIFY(GStreamer::initialize(params));

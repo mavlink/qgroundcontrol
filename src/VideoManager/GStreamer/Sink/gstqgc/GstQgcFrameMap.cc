@@ -101,49 +101,33 @@ QVideoFrameFormat::ColorRange toQtColorRange(GstVideoColorRange range)
 
 void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod method)
 {
-    switch (method) {
-        case GST_VIDEO_ORIENTATION_IDENTITY:
-            frame.setRotation(QtVideo::Rotation::None);
-            frame.setMirrored(false);
-            break;
-        case GST_VIDEO_ORIENTATION_90R:
-            frame.setRotation(QtVideo::Rotation::Clockwise90);
-            frame.setMirrored(false);
-            break;
-        case GST_VIDEO_ORIENTATION_180:
-            frame.setRotation(QtVideo::Rotation::Clockwise180);
-            frame.setMirrored(false);
-            break;
-        case GST_VIDEO_ORIENTATION_90L:
-            frame.setRotation(QtVideo::Rotation::Clockwise270);
-            frame.setMirrored(false);
-            break;
-        case GST_VIDEO_ORIENTATION_HORIZ:
-            frame.setRotation(QtVideo::Rotation::None);
-            frame.setMirrored(true);
-            break;
-        case GST_VIDEO_ORIENTATION_VERT:
-            frame.setRotation(QtVideo::Rotation::Clockwise180);
-            frame.setMirrored(true);
-            break;
-        case GST_VIDEO_ORIENTATION_UL_LR:
-            frame.setRotation(QtVideo::Rotation::Clockwise90);
-            frame.setMirrored(true);
-            break;
-        case GST_VIDEO_ORIENTATION_UR_LL:
-            frame.setRotation(QtVideo::Rotation::Clockwise270);
-            frame.setMirrored(true);
-            break;
-        default:
-            static std::atomic<bool> s_warnedUnhandled{false};
-            if (!s_warnedUnhandled.exchange(true, std::memory_order_relaxed)) {
-                qCWarning(GstQgcFrameMapLog)
-                    << "Unhandled GstVideoOrientationMethod" << method << "— treating as identity";
-            }
-            frame.setRotation(QtVideo::Rotation::None);
-            frame.setMirrored(false);
-            break;
+    struct Orientation
+    {
+        GstVideoOrientationMethod method;
+        QtVideo::Rotation rotation;
+        bool mirrored;
+    };
+
+    static constexpr Orientation kOrientations[] = {
+        {GST_VIDEO_ORIENTATION_IDENTITY, QtVideo::Rotation::None, false},
+        {GST_VIDEO_ORIENTATION_90R, QtVideo::Rotation::Clockwise90, false},
+        {GST_VIDEO_ORIENTATION_180, QtVideo::Rotation::Clockwise180, false},
+        {GST_VIDEO_ORIENTATION_90L, QtVideo::Rotation::Clockwise270, false},
+        {GST_VIDEO_ORIENTATION_HORIZ, QtVideo::Rotation::None, true},
+        {GST_VIDEO_ORIENTATION_VERT, QtVideo::Rotation::Clockwise180, true},
+        {GST_VIDEO_ORIENTATION_UL_LR, QtVideo::Rotation::Clockwise90, true},
+        {GST_VIDEO_ORIENTATION_UR_LL, QtVideo::Rotation::Clockwise270, true},
+    };
+    const Orientation* known = std::ranges::find(kOrientations, method, &Orientation::method);
+    if (known == std::end(kOrientations)) {
+        static std::atomic<bool> s_warnedUnhandled{false};
+        if (!s_warnedUnhandled.exchange(true, std::memory_order_relaxed)) {
+            qCWarning(GstQgcFrameMapLog) << "Unhandled GstVideoOrientationMethod" << method << "— treating as identity";
+        }
+        known = std::begin(kOrientations);
     }
+    frame.setRotation(known->rotation);
+    frame.setMirrored(known->mirrored);
 }
 
 void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int streamOrientation)

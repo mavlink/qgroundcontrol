@@ -60,8 +60,6 @@ struct RankChange
 {
     QByteArray feature;
     uint16_t rank = 0;
-
-    friend bool operator==(const RankChange&, const RankChange&) = default;
 };
 
 struct RankPlan

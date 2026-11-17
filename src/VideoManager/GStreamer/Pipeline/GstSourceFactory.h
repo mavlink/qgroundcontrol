@@ -30,7 +30,7 @@ struct Config
     bool doRetransmission = true;  ///< RTSP only: plain UDP/TCP sources have no RTCP back-channel for NACKs.
 };
 
-/// Build a source bin for `uri`: `source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`, or for RTP over UDP
+/// Build a source bin for `uri`: `source` [+ `tsdemux`] + `parsebin`, or for RTP over UDP
 /// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser, which also take the place of an RTSP bin's
 /// `parsebin` once `rtspsrc` tells that its stream is H.264 or H.265. Supported schemes: rtsp/rtspt,
 /// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with

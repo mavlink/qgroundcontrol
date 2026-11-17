@@ -10,8 +10,8 @@
 /// thread; then selfTest(), once initialized.
 ///
 /// gst_init() can't be undone, so initialize() runs GStreamer's setup once: a later call returns the first one's
-/// outcome, and a failed setup isn't retried. The receivers are then Qt Multimedia's. The free functions in GStreamer.h
-/// do the work.
+/// outcome, and a failed setup isn't retried. The receivers are then Qt Multimedia's. The free functions in
+/// GStreamer.h, GStreamerEnvironment.h and GStreamerSelfTest.h do the work.
 class GStreamerVideoBackend final : public VideoBackend
 {
 public:
@@ -29,12 +29,12 @@ public:
 
     VideoReceiver* createReceiver(QObject* parent) override;
     void configureQtGraphics(bool softwareRendering) override;
-    /// Points GStreamer at its plugins, scanner and registry (GStreamer::prepareEnvironment()).
+    /// Points GStreamer at its plugins, scanner and registry (GStreamer::Environment::prepareEnvironment()).
     EnvPrepResult prepareEnvironment() override;
     /// GStreamer::initialize() the first time; afterwards that call's outcome.
     bool initialize(const InitParams& params) override;
     QString initFailureMessage() const override;
-    /// GStreamer::selfTest() once initialized; false, logged, otherwise.
+    /// GStreamer::SelfTest::run() once initialized; false, logged, otherwise.
     bool selfTest() override;
     void applyDecoderPriorities(VideoDecoderOption option) override;
     QList<VideoDecoderOption> availableDecoderFamilies() override;

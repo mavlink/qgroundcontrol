@@ -866,10 +866,8 @@ void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream()
     QFETCH(QString, warning);
 
     // Before the receiver, which they outlive: what keeps its decoder out of the pipeline.
-    const GStreamer::GstElementPtr otherBin =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(nullptr))));
-    const GStreamer::GstPadPtr otherPad =
-        GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("other", GST_PAD_SINK))));
+    const GStreamer::GstElementPtr otherBin = GStreamer::adoptFloating(gst_bin_new(nullptr));
+    const GStreamer::GstPadPtr otherPad = GStreamer::adoptFloating(gst_pad_new("other", GST_PAD_SINK));
 
     Receiver stream;
     stream.window.show();

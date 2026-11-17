@@ -7,7 +7,7 @@
 #   h265_320x240.h265  H.265 Annex B, 320x240, 30 fps, 60 frames, main, IDR every 5 frames
 #   h264_160x120.h264  H.264 Annex B, 160x120, 30 fps, 30 frames, constrained baseline, IDR every 5 frames
 #
-# h264_160x120.h264 and h265_320x240.h265 are also the samples GStreamer::selfTest() decodes and records in the app;
+# h264_160x120.h264 and h265_320x240.h265 are also the samples the boot self-test decodes and records in the app;
 # NVIDIA's HEVC decoders reject frames under 144 pixels high, so its H.265 sample is the 320x240 one.
 # Every IDR repeats the parameter sets, so any keyframe starts a stream; there are no B-frames, so PTS equals DTS.
 # The streams carry no SEI: x264 and x265 write their name, version and options into one, and CI's artifact

@@ -24,8 +24,6 @@ struct BundleLayout
     QStringList gioModuleDirs;      ///< The first existing entry wins.
     QStringList scannerCandidates;  ///< The first existing entry wins.
     QStringList ptpCandidates;      ///< The first existing entry wins.
-
-    friend bool operator==(const BundleLayout&, const BundleLayout&) = default;
 };
 
 /// The desktop installs prepareEnvironment() knows how to point GStreamer into.

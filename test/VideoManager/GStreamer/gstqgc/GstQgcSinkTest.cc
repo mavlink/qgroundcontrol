@@ -76,7 +76,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
     const auto makeBin = [](gboolean gpuZeroCopy, gboolean disablePar) {
         GstElement* const bin = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", gpuZeroCopy,
                                                               "disable-par", disablePar, nullptr);
-        return GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
+        return GStreamer::adoptFloating(bin);
     };
 
     {
@@ -96,35 +96,29 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         {
             GstElement* const sink = gst_element_factory_make("qgcqvideosink", nullptr);
             QVERIFY(sink);
-            const GStreamer::GstElementPtr standalone = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(sink)));
+            const GStreamer::GstElementPtr standalone = GStreamer::adoptFloating(sink);
             g_object_get(standalone.get(), "processing-deadline", &sinkDeadline, NULL);
         }
 
         gboolean sync = TRUE;
         gboolean qos = TRUE;
         guint64 processingDeadline = 0;
-        g_object_get(bin.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(bin.get(), "sync", &sync, NULL);
         QCOMPARE(sync, FALSE);
-        QCOMPARE(qos, FALSE);
-        QCOMPARE(processingDeadline, sinkDeadline);
 
+        // The bin turns off the QoS events a video sink sends by default.
         g_object_get(qvideosink.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, FALSE);
         QCOMPARE(qos, FALSE);
         QCOMPARE(processingDeadline, sinkDeadline);
 
-        constexpr guint64 kUpdatedDeadline = G_GUINT64_CONSTANT(1234567);
-        g_object_set(bin.get(), "sync", TRUE, "qos", TRUE, "processing-deadline", kUpdatedDeadline, NULL);
+        g_object_set(bin.get(), "sync", TRUE, NULL);
 
-        g_object_get(bin.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(bin.get(), "sync", &sync, NULL);
         QCOMPARE(sync, TRUE);
-        QCOMPARE(qos, TRUE);
-        QCOMPARE(processingDeadline, kUpdatedDeadline);
 
-        g_object_get(qvideosink.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
+        g_object_get(qvideosink.get(), "sync", &sync, NULL);
         QCOMPARE(sync, TRUE);
-        QCOMPARE(qos, TRUE);
-        QCOMPARE(processingDeadline, kUpdatedDeadline);
 
         // The converter and qgcqvideosink, whose caps ask for square pixels.
         QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), withConverter({QStringLiteral("qgcqvideosink")}));
@@ -268,7 +262,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
 
     GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
-    const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr bin = GStreamer::adoptFloating(element);
     QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), children);
 
     const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(bin.get());
@@ -335,16 +329,14 @@ void GstQgcSinkTest::_testQgcVideoSinkBinRefusesDrawingD3D11Converter()
     GstElement* const element =
         gst_element_factory_make_full("qgcvideosinkbin", "conversion-element", converter.constData(), nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin");
-    const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr bin = GStreamer::adoptFloating(element);
     QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), withConverter({QStringLiteral("qgcqvideosink")}));
 }
 
 void GstQgcSinkTest::_testQgcVideoSinkBinRejectsFailedAdopt()
 {
-    const GStreamer::GstElementPtr target =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new("qgc-adopt-target"))));
-    const GStreamer::GstElementPtr parent =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new("qgc-adopt-existing-parent"))));
+    const GStreamer::GstElementPtr target = GStreamer::adoptFloating(gst_bin_new("qgc-adopt-target"));
+    const GStreamer::GstElementPtr parent = GStreamer::adoptFloating(gst_bin_new("qgc-adopt-existing-parent"));
     GstElement* const element = gst_element_factory_make("identity", "preparented");
     QVERIFY(element);
     QVERIFY(gst_bin_add(GST_BIN(parent.get()), element));
@@ -364,8 +356,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinRejectsFailedAdopt()
 
 void GstQgcSinkTest::_testQgcBinChainFailedAdoptDropsFloatingRefOnce()
 {
-    const GStreamer::GstElementPtr target =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new("qgc-adopt-target"))));
+    const GStreamer::GstElementPtr target = GStreamer::adoptFloating(gst_bin_new("qgc-adopt-target"));
     QVERIFY(gst_bin_add(GST_BIN(target.get()), gst_element_factory_make("identity", "taken")));
 
     // Floating, as from gst_element_factory_make(), plus a plain ref of the test's own.
@@ -543,10 +534,10 @@ void GstQgcSinkTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 
     GstElement* const element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "qgcvideosinkbin factory did not create an element");
-    const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr bin = GStreamer::adoptFloating(element);
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(bin.get(), "sink"));
     QVERIFY2(sinkPad, "qgcvideosinkbin has no sink pad");
-    const GStreamer::GstPadPtr src = GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC))));
+    const GStreamer::GstPadPtr src = GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC));
     QCOMPARE(gst_pad_link(src.get(), sinkPad.get()), GST_PAD_LINK_OK);
     QVERIFY(gst_pad_set_active(src.get(), TRUE));
     const auto stop = qScopeGuard([&bin, &src] {
@@ -594,7 +585,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation()
 
     GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
     QVERIFY2(element, "qgcqvideosink factory not found");
-    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr sink = GStreamer::adoptFloating(element);
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
     QVERIFY(sinkPad);
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
@@ -625,7 +616,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkAllocationNeedsCaps()
 {
     GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
     QVERIFY2(element, "qgcqvideosink factory not found");
-    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr sink = GStreamer::adoptFloating(element);
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
     QVERIFY(sinkPad);
 
@@ -1027,7 +1018,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkKeepsBaseSinkStats()
 {
     GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
     QVERIFY(element);
-    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr sink = GStreamer::adoptFloating(element);
 
     // Generic tools read GstBaseSink's "stats"; the sink's own accounting lives beside it in "frame-stats".
     QVERIFY(g_object_class_find_property(G_OBJECT_GET_CLASS(sink.get()), "frame-stats"));
@@ -1170,7 +1161,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
 
     GstElement* const element = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
     QVERIFY(element);
-    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstElementPtr sink = GStreamer::adoptFloating(element);
     const GStreamer::GstCapsPtr caps = sinkPadCaps(sink.get());
     QVERIFY(caps);
     QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
@@ -1355,11 +1346,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
     const GStreamer::GstMessagePtr msg =
         GStreamer::adoptMessage(gst_bus_pop_filtered(harness.bus(), GST_MESSAGE_ERROR));
     QVERIFY2(msg, "map-failure escalation must post an element error before returning GST_FLOW_ERROR");
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_error(msg.get(), &rawError, &rawDebug);
-    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
-    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const auto [error, debug] = GStreamer::parseMessageError(msg.get());
     QVERIFY(g_error_matches(error.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED));
     const QString details = QString::fromUtf8(debug ? debug.get() : "");
     QVERIFY2(details.contains(QStringLiteral("consecutive map failures (%1, format BGRA)").arg(stage)),

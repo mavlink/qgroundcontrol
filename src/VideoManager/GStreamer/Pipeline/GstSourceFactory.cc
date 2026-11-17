@@ -140,13 +140,6 @@ namespace {
 
 using VideoStreamUri::Transport;
 
-enum class SourceElement : uint8_t
-{
-    Rtsp,       ///< rtspsrc, which runs its own jitterbuffer
-    TcpClient,  ///< tcpclientsrc
-    Udp,        ///< udpsrc
-};
-
 /// The codec of RTP arriving on a plain UDP port, which the URI's scheme names as there is no SDP to tell.
 struct RtpCodec
 {
@@ -161,33 +154,7 @@ constexpr RtpCodec kRtpH264{"H264", "rtph264depay", "h264parse",
 constexpr RtpCodec kRtpH265{"H265", "rtph265depay", "h265parse",
                             "video/x-h265, stream-format=(string)byte-stream, alignment=(string)au"};
 
-// What create() builds for one Transport.
-struct TransportSpec
-{
-    SourceElement element;
-    const RtpCodec* rtpCodec;  ///< RTP on udpsrc, depayloaded and parsed for this codec; nullptr leaves it to parsebin
-    bool demuxMpegTs;          ///< tsdemux ahead of the parser: Android's parsebin can't detect MPEG-TS
-};
-
-constexpr TransportSpec specFor(Transport transport)
-{
-    switch (transport) {
-        case Transport::Rtsp:
-            return {SourceElement::Rtsp, nullptr, false};
-        case Transport::RtpUdpH264:
-            return {SourceElement::Udp, &kRtpH264, false};
-        case Transport::RtpUdpH265:
-            return {SourceElement::Udp, &kRtpH265, false};
-        case Transport::MpegTsUdp:
-            return {SourceElement::Udp, nullptr, true};
-        case Transport::MpegTsTcp:
-            return {SourceElement::TcpClient, nullptr, true};
-    }
-    return {SourceElement::Udp, nullptr, false};
-}
-
-// Shared by the static and dynamic (pad-added) link paths so both apply the identical jitter-buffer
-// policy. Retransmission stays off: these sources have no RTCP back-channel, so the jitterbuffer's
+// Retransmission stays off: these sources have no RTCP back-channel, so the jitterbuffer's
 // retransmission requests would only reach the source element, which drops them.
 GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
 {
@@ -210,8 +177,6 @@ struct DynamicLinkContext
 {
     /// What the source's video pad is linked into: parsebin, or the depayloader that took its place (plugRtspCodec()).
     GstElement* binParser;
-    guint latencyMs;
-    bool insertJitterBuffer;  // false for RTSP (rtspsrc has its own internal jitterbuffer) and JitterBuffer::None
     bool isRtsp;
     /// The codec whose depayloader and parser took parsebin's place.
     const RtpCodec* rtspCodec;
@@ -220,29 +185,6 @@ struct DynamicLinkContext
 };
 
 void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding);
-
-// Inserts a running rtpjitterbuffer linked to the parser; returns it (bin-owned) or nullptr to link directly.
-GstElement* insertDynamicJitterBuffer(const DynamicLinkContext* ctx)
-{
-    const GstObjectPtr bin = adoptObject(gst_object_get_parent(GST_OBJECT(ctx->binParser)));
-    if (!bin) {
-        return nullptr;
-    }
-
-    GstElement* buffer = addJitterBuffer(GST_ELEMENT(bin.get()), ctx->latencyMs);
-    if (!buffer) {
-        qCWarning(GstSourceFactoryLog) << "dynamic rtpjitterbuffer create/add failed; skipping jitter buffer";
-        return nullptr;
-    }
-
-    if (!gst_element_sync_state_with_parent(buffer) || !gst_element_link(buffer, ctx->binParser)) {
-        qCWarning(GstSourceFactoryLog) << "dynamic rtpjitterbuffer link/sync failed; linking pad straight to parser";
-        disposeChildAsync(buffer);
-        return nullptr;
-    }
-
-    return buffer;
-}
 
 // rtspsrc names the pad of each RTP stream it receives "recv_rtp_src_<stream>_<SSRC>_<payload type>", the stream
 // being the one of the session, in the SDP's order. nullopt for any other pad.
@@ -321,9 +263,9 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
     const std::lock_guard lock(ctx->linking);
 
     // Link only the first matching video pad. A second pad-added (another video stream of an RTSP session, or a
-    // later tsdemux elementary stream) must not stack a second jitterbuffer or re-link an occupied sink. But a pad
-    // that the linked RTSP stream goes on on takes its place: left unlinked, its data would be dropped without an
-    // error, as rtspsrc reports the flow of the pad that is linked, until the stream watchdog ends the session.
+    // later tsdemux elementary stream) must not re-link an occupied sink. But a pad that the linked RTSP stream goes
+    // on on takes its place: left unlinked, its data would be dropped without an error, as rtspsrc reports the flow
+    // of the pad that is linked, until the stream watchdog ends the session.
     const GstPadPtr parserSink = adoptPad(gst_element_get_static_pad(ctx->binParser, "sink"));
     if (parserSink && gst_pad_is_linked(parserSink.get())) {
         const GstPadPtr linkedPad = adoptPad(gst_pad_get_peer(parserSink.get()));
@@ -336,22 +278,9 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
         plugRtspCodec(ctx, rtpEncodingOfPad(pad));
     }
 
-    // Insert a jitterbuffer ahead of the parser for RTP pads on non-RTSP dynamic sources, matching the
-    // static path's policy. RTSP is excluded: rtspsrc owns an internal jitterbuffer (no double-buffering).
-    GstElement* dynamicBuffer = nullptr;
-    if (isRtp && ctx->insertJitterBuffer) {
-        dynamicBuffer = insertDynamicJitterBuffer(ctx);
-    }
-    GstElement* const downstream = dynamicBuffer ? dynamicBuffer : ctx->binParser;
-
     const GCharPtr name = adoptGChar(gst_pad_get_name(pad));
-    if (!name || !gst_element_link_pads(element, name.get(), downstream, "sink")) {
+    if (!name || !gst_element_link_pads(element, name.get(), ctx->binParser, "sink")) {
         qCWarning(GstSourceFactoryLog) << "gst_element_link_pads() failed for" << (name ? name.get() : "(unnamed pad)");
-        if (dynamicBuffer) {
-            // Unlinked at once: until the jitterbuffer is gone, the parser must not look taken to the next pad.
-            gst_element_unlink(dynamicBuffer, ctx->binParser);
-            disposeChildAsync(dynamicBuffer);
-        }
     }
 }
 
@@ -429,26 +358,26 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
 struct ParserStage
 {
     GstElementPtr parser;
-    GstElementPtr depay;  ///< Set only for TransportSpec::rtpCodec
+    GstElementPtr depay;  ///< Set only with an RtpCodec
 };
 
-// The parser (and, for RTP over UDP, the depayloader) for @p spec, configured but not yet in a bin.
-ParserStage buildParserStage(const TransportSpec& spec, bool isRtsp)
+// The parser and the depayloader of @p rtpCodec, or parsebin without one, configured but not yet in a bin.
+ParserStage buildParserStage(const RtpCodec* rtpCodec, bool isRtsp)
 {
-    const char* const parserFactory = spec.rtpCodec ? spec.rtpCodec->parser : "parsebin";
+    const char* const parserFactory = rtpCodec ? rtpCodec->parser : "parsebin";
     ParserStage stage{makeElement(parserFactory, "parser"), {}};
     if (!stage.parser) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << parserFactory << ") failed";
         return {};
     }
 
-    if (spec.rtpCodec) {
+    if (rtpCodec) {
         // RTP over UDP has no SDP/RTSP control plane. Make depayloading and parser config explicit
         // so hardware decoders, especially Android MediaCodec, see repeated parameter sets at IDR
         // boundaries instead of depending on parsebin's defaults after startup or reconnect.
-        stage.depay = makeElement(spec.rtpCodec->depayloader);
+        stage.depay = makeElement(rtpCodec->depayloader);
         if (!stage.depay) {
-            qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << spec.rtpCodec->depayloader << ") failed";
+            qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << rtpCodec->depayloader << ") failed";
             return {};
         }
         configureH26xParser(stage.parser.get());
@@ -528,17 +457,13 @@ void storeParsedCapsOnPad([[maybe_unused]] GstElement* parser, GstPad* pad, [[ma
     (void) gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, storeParsedCapsOnStream, nullptr, nullptr);
 }
 
-// Wires upstream → (optional rtpjitterbuffer) → binParser once upstream's video pad appears: rtspsrc and tsdemux
-// have no source pad before they stream.
-void linkSourceToParserOnPadAdded(GstElement* upstream, GstElement* binParser, const Config& config, guint latencyMs,
-                                  bool isRtsp)
+// Wires upstream → binParser once upstream's video pad appears: rtspsrc and tsdemux have no source pad before they
+// stream. Neither gets a jitter buffer here: rtspsrc runs its own, and tsdemux's pads carry no RTP.
+void linkSourceToParserOnPadAdded(GstElement* upstream, GstElement* binParser, bool isRtsp)
 {
-    // linkPad applies the jitter-buffer policy itself when an application/x-rtp pad appears on a
-    // non-RTSP source. The context lives as long as the handler: binParser may be replaced (plugRtspCodec()).
+    // The context lives as long as the handler: binParser may be replaced (plugRtspCodec()).
     auto* ctx = new DynamicLinkContext{
         .binParser = binParser,
-        .latencyMs = latencyMs,
-        .insertJitterBuffer = !isRtsp && (config.jitterBuffer != JitterBuffer::None),
         .isRtsp = isRtsp,
         .rtspCodec = nullptr,
         .linking = {},
@@ -609,7 +534,7 @@ void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding)
         return;
     }
 
-    ParserStage stage = buildParserStage(TransportSpec{SourceElement::Rtsp, codec, false}, true);
+    ParserStage stage = buildParserStage(codec, true);
     if (!stage.parser) {
         return;
     }
@@ -690,19 +615,26 @@ GstElement* create(const QString& uri, const Config& config)
         return nullptr;
     }
 
-    const TransportSpec spec = specFor(*transport);
-    const bool isRtsp = (spec.element == SourceElement::Rtsp);
+    const bool isRtsp = (*transport == Transport::Rtsp);
+    // RTP on udpsrc is depayloaded and parsed for the codec its scheme names; the others leave it to parsebin.
+    const RtpCodec* const rtpCodec = (*transport == Transport::RtpUdpH264)
+                                         ? &kRtpH264
+                                         : ((*transport == Transport::RtpUdpH265) ? &kRtpH265 : nullptr);
+    // tsdemux ahead of the parser: Android's parsebin can't detect MPEG-TS.
+    const bool demuxMpegTs = (*transport == Transport::MpegTsUdp) || (*transport == Transport::MpegTsTcp);
 
     GstElementPtr source;
-    switch (spec.element) {
-        case SourceElement::Rtsp:
+    switch (*transport) {
+        case Transport::Rtsp:
             source = buildRtspSource(uri, sourceUrl, config, latencyMs);
             break;
-        case SourceElement::TcpClient:
+        case Transport::MpegTsTcp:
             source = buildTcpSource(sourceUrl);
             break;
-        case SourceElement::Udp:
-            source = buildUdpSource(sourceUrl, spec.rtpCodec ? spec.rtpCodec->encodingName : nullptr);
+        case Transport::RtpUdpH264:
+        case Transport::RtpUdpH265:
+        case Transport::MpegTsUdp:
+            source = buildUdpSource(sourceUrl, rtpCodec ? rtpCodec->encodingName : nullptr);
             break;
     }
     if (!source) {
@@ -715,7 +647,7 @@ GstElement* create(const QString& uri, const Config& config)
         return nullptr;
     }
 
-    ParserStage parserStage = buildParserStage(spec, isRtsp);
+    ParserStage parserStage = buildParserStage(rtpCodec, isRtsp);
     if (!parserStage.parser) {
         return nullptr;
     }
@@ -728,7 +660,7 @@ GstElement* create(const QString& uri, const Config& config)
 
     GstElement* depay = nullptr;
     if (parserStage.depay) {
-        depay = addToBin(bin.get(), std::move(parserStage.depay), spec.rtpCodec->depayloader);
+        depay = addToBin(bin.get(), std::move(parserStage.depay), rtpCodec->depayloader);
         if (!depay) {
             return nullptr;
         }
@@ -739,7 +671,7 @@ GstElement* create(const QString& uri, const Config& config)
         return nullptr;
     }
 
-    if (spec.demuxMpegTs) {
+    if (demuxMpegTs) {
         upstream = addTsDemux(bin.get(), upstream, latencyMs);
         if (!upstream) {
             return nullptr;
@@ -748,15 +680,15 @@ GstElement* create(const QString& uri, const Config& config)
         (void) g_signal_connect(binParser, "pad-added", G_CALLBACK(storeParsedCapsOnPad), nullptr);
     }
 
-    if (spec.rtpCodec) {
-        if (!linkUdpRtpToDepayAndParser(bin.get(), upstream, depay, binParser, *spec.rtpCodec, config, latencyMs)) {
+    if (rtpCodec) {
+        if (!linkUdpRtpToDepayAndParser(bin.get(), upstream, depay, binParser, *rtpCodec, config, latencyMs)) {
             return nullptr;
         }
         if (!addStaticGhostPad(binParser)) {
             return nullptr;
         }
     } else {
-        linkSourceToParserOnPadAdded(upstream, binParser, config, latencyMs, isRtsp);
+        linkSourceToParserOnPadAdded(upstream, binParser, isRtsp);
     }
 
     return bin.release();

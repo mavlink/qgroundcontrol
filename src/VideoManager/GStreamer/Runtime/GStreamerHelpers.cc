@@ -156,6 +156,13 @@ GstPadPtr firstSrcPad(GstElement* element)
     return adoptPad(first);
 }
 
+const char* factoryNameOf(GstObject* object)
+{
+    GstElementFactory* const factory =
+        (object && GST_IS_ELEMENT(object)) ? gst_element_get_factory(GST_ELEMENT_CAST(object)) : nullptr;
+    return factory ? GST_OBJECT_NAME(factory) : nullptr;
+}
+
 std::function<void()> holdPadUntilLinked(GstPad* pad, std::function<void(GstPad* pad)> link)
 {
     // Returning OK from a blocking probe keeps the pad blocked until the probe is removed.

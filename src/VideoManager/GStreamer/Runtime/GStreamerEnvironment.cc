@@ -143,36 +143,6 @@ void _pruneUnusedRegistries(const QString& registry)
     }
 }
 
-// A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
-// each invalidate the other's plugin cache. The runtime version in the name keeps upgrades from reusing it, and the
-// install hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
-QString _usePrivateRegistry(const QString& cacheDir, const QString& installPath)
-{
-    if (cacheDir.isEmpty() || _setByUser("GST_REGISTRY_1_0") || _setByUser("GST_REGISTRY")) {
-        return {};
-    }
-    if (!QDir().mkpath(cacheDir)) {
-        qCWarning(GStreamerEnvLog) << "Cannot create the GStreamer registry directory" << cacheDir;
-        return {};
-    }
-
-    guint major = 0;
-    guint minor = 0;
-    guint micro = 0;
-    guint nano = 0;
-    gst_version(&major, &minor, &micro, &nano);
-    const QByteArray installHash =
-        QCryptographicHash::hash(_stableInstallPath(installPath).toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
-    QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
-                                                .arg(major)
-                                                .arg(minor)
-                                                .arg(micro)
-                                                .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(installHash)));
-    _setGstEnv("GST_REGISTRY", registry);
-    _pruneUnusedRegistries(registry);
-    return registry;
-}
-
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 void _setTmpDirVars(const QString& dir)
 {
@@ -244,13 +214,6 @@ void _unsetEnv(const char* name)
     }
 }
 
-void _setGstEnvIfExists(const char* name, const QString& path)
-{
-    if (QFileInfo::exists(path)) {
-        _setGstEnv(name, path);
-    }
-}
-
 bool _isExecutableFile(const QString& path)
 {
     const QFileInfo fileInfo(path);
@@ -289,8 +252,6 @@ void _setGstEnvIfExecutable(const char* name, const QString& path)
 {
     if (_isExecutableFile(path)) {
         _setGstEnv(name, path);
-    } else {
-        _unsetEnv(name);
     }
 }
 
@@ -300,7 +261,9 @@ void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const 
     qCDebug(GStreamerEnvLog) << "Applying GStreamer environment:";
 
     _clearManagedGstEnvVars();
-    _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
+    if (!gioModDir.isEmpty()) {
+        _setGstEnv("GIO_EXTRA_MODULES", gioModDir);
+    }
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
     _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER_1_0", scannerPath);
@@ -352,7 +315,8 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
     _warnIfScannerMissing(platformLabel, scanner);
     const QString gioModuleDir = _firstExistingPath(layout.gioModuleDirs);
     _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, _firstExistingPath(layout.ptpCandidates));
-    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation), pluginDirs);
+    (void) GStreamer::Environment::usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation),
+                                                      pluginDirs);
     s_bundledRuntime = {.pluginDirs = pluginDirs.split(QDir::listSeparator()), .gioModuleDir = gioModuleDir};
     return true;
 }
@@ -482,6 +446,10 @@ namespace GStreamer::Environment {
 
 BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
 {
+    const QString appLib = _cleanJoin(appDir, "../lib");
+    QStringList libDirs{appLib};
+    QStringList helperDirs{_cleanJoin(appDir, "../libexec/gstreamer-1.0")};
+    QString exeSuffix;
     switch (install) {
         case DesktopInstall::MacOSFramework:
         case DesktopInstall::MacOSFlat: {
@@ -495,41 +463,24 @@ BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
                 rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
             }
             const QString frameworkLib = _cleanJoin(rootDir, "lib");
-            const QString appLib = _cleanJoin(appDir, "../lib");
-            const QStringList libDirs = (install == DesktopInstall::MacOSFramework) ? QStringList{frameworkLib, appLib}
-                                                                                    : QStringList{appLib, frameworkLib};
-            const QStringList helperDirs = {_cleanJoin(appDir, "../libexec/gstreamer-1.0"),
-                                            _cleanJoin(rootDir, "libexec/gstreamer-1.0")};
-            return {
-                .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
-                .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
-                .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
-                .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
-            };
+            libDirs = (install == DesktopInstall::MacOSFramework) ? QStringList{frameworkLib, appLib}
+                                                                  : QStringList{appLib, frameworkLib};
+            helperDirs.append(_cleanJoin(rootDir, "libexec/gstreamer-1.0"));
+            break;
         }
-        case DesktopInstall::Windows: {
-            const QString libDir = _cleanJoin(appDir, "../lib");
-            const QString helperDir = _cleanJoin(appDir, "../libexec/gstreamer-1.0");
-            return {
-                .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
-                .gioModuleDirs = {_cleanJoin(libDir, "gio/modules")},
-                .scannerCandidates = {_cleanJoin(helperDir, "gst-plugin-scanner.exe")},
-                .ptpCandidates = {_cleanJoin(helperDir, "gst-ptp-helper.exe")},
-            };
-        }
-        case DesktopInstall::Linux: {
-            const QString libDir = _cleanJoin(appDir, "../lib");
-            const QStringList helperDirs = {_cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0"),
-                                            _cleanJoin(appDir, "../libexec/gstreamer-1.0")};
-            return {
-                .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
-                .gioModuleDirs = {_cleanJoin(libDir, "gio/modules")},
-                .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
-                .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
-            };
-        }
+        case DesktopInstall::Windows:
+            exeSuffix = QStringLiteral(".exe");
+            break;
+        case DesktopInstall::Linux:
+            helperDirs.prepend(_cleanJoin(appLib, "gstreamer1.0/gstreamer-1.0"));
+            break;
     }
-    return {};
+    return {
+        .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
+        .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
+        .scannerCandidates = _cleanJoinAll(helperDirs, QStringLiteral("gst-plugin-scanner") + exeSuffix),
+        .ptpCandidates = _cleanJoinAll(helperDirs, QStringLiteral("gst-ptp-helper") + exeSuffix),
+    };
 }
 
 VideoBackend::EnvPrepResult prepareEnvironment(const QString& appDir)
@@ -542,9 +493,34 @@ VideoBackend::EnvPrepResult prepareEnvironment(const QString& appDir)
     return _setGstEnvVars(appDir.isEmpty() ? QCoreApplication::applicationDirPath() : appDir);
 }
 
+// A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
+// each invalidate the other's plugin cache. The runtime version in the name keeps upgrades from reusing it, and the
+// install hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
 QString usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
-    return _usePrivateRegistry(cacheDir, installPath);
+    if (cacheDir.isEmpty() || _setByUser("GST_REGISTRY_1_0") || _setByUser("GST_REGISTRY")) {
+        return {};
+    }
+    if (!QDir().mkpath(cacheDir)) {
+        qCWarning(GStreamerEnvLog) << "Cannot create the GStreamer registry directory" << cacheDir;
+        return {};
+    }
+
+    guint major = 0;
+    guint minor = 0;
+    guint micro = 0;
+    guint nano = 0;
+    gst_version(&major, &minor, &micro, &nano);
+    const QByteArray installHash =
+        QCryptographicHash::hash(_stableInstallPath(installPath).toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
+    QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
+                                                .arg(major)
+                                                .arg(minor)
+                                                .arg(micro)
+                                                .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(installHash)));
+    _setGstEnv("GST_REGISTRY", registry);
+    _pruneUnusedRegistries(registry);
+    return registry;
 }
 
 bool writeIfChanged(const QString& path, QByteArrayView content)

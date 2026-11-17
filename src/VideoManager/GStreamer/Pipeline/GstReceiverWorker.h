@@ -37,7 +37,6 @@ public:
 
     /// Steers the stream towards @p request, acting on what differs from the previous one.
     void apply(const Request& request);
-    void dumpPipelineGraph(const QString& tag) const;
     /// Stops everything and quits the thread.
     void shutdown();
 

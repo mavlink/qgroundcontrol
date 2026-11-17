@@ -44,8 +44,8 @@ GstFlowReturn recordBuffer(GstPad* pad, [[maybe_unused]] GstObject* parent, GstB
 struct GatedPads
 {
     GatedPads(ReceivedBuffers* received, const char* caps)
-        : src(GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC)))))
-        , sink(GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("sink", GST_PAD_SINK)))))
+        : src(GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC)))
+        , sink(GStreamer::adoptFloating(gst_pad_new("sink", GST_PAD_SINK)))
     {
         gst_pad_set_element_private(sink.get(), received);
         gst_pad_set_chain_function(sink.get(), recordBuffer);
@@ -89,7 +89,7 @@ GstStaticPadTemplate sH264RtpPadTemplate = GST_STATIC_PAD_TEMPLATE(
     "video_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
     GST_STATIC_CAPS("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"));
 
-/// An mpegts:// source bin, whose tsdemux the dynamic-pad tests hand RTP pads to.
+/// An mpegts:// source bin, whose tsdemux the dynamic-pad test hands RTP pads to.
 struct MpegTsSource
 {
     explicit MpegTsSource(const GStreamer::SourceFactory::Config& config)
@@ -793,38 +793,6 @@ void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
     guint latency = 99999;
     g_object_get(jb.get(), "latency", &latency, nullptr);
     QCOMPARE(latency, 0u);
-}
-
-void GstSourceFactoryTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer()
-{
-    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
-
-    GStreamer::SourceFactory::Config config;
-    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
-    const MpegTsSource source(config);
-    QVERIFY(source.isValid());
-
-    // A running bin syncs the temporary jitterbuffer out of NULL, so removing it without a NULL
-    // transition raises GStreamer's "disposing element in READY/PLAYING" critical. The source stays
-    // locked in NULL so the test doesn't bind the UDP port.
-    const GStreamer::GstElementPtr udpsrc = GstTest::findByFactory(source.bin.get(), "udpsrc");
-    QVERIFY(udpsrc);
-    (void) gst_element_set_locked_state(udpsrc.get(), TRUE);
-    QCOMPARE(gst_element_set_state(source.bin.get(), GST_STATE_READY), GST_STATE_CHANGE_SUCCESS);
-
-    // Not added to tsdemux, so linking it to the jitterbuffer fails.
-    const GStreamer::GstPadPtr strayPad = GStreamer::adoptPad(
-        GST_PAD(gst_object_ref_sink(gst_pad_new_from_static_template(&sH264RtpPadTemplate, "stray_rtp"))));
-    QVERIFY(strayPad);
-
-    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("gst_element_link_pads\\(\\) failed")));
-    g_signal_emit_by_name(source.demux.get(), "pad-added", strayPad.get());
-
-    QVERIFY2(!gst_pad_is_linked(source.parserSink.get()),
-             "a failed dynamic RTP pad link must leave parsebin available for the next valid pad");
-    // A failed dynamic RTP pad link removes its temporary jitterbuffer, from GStreamer's thread pool.
-    QVERIFY_TRUE_WAIT(!GstTest::findByFactory(source.bin.get(), "rtpjitterbuffer"), TestTimeout::shortMs());
 }
 
 void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()

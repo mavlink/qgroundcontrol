@@ -151,8 +151,7 @@ void GStreamerTest::_testLogDecoderRanks()
 
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
 {
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("safe-dot-test"))));
+    const GStreamer::GstElementPtr pipeline = GStreamer::adoptFloating(gst_pipeline_new("safe-dot-test"));
 
     GstElement* source = gst_element_factory_make("filesrc", "source");
     GstElement* sink = gst_element_factory_make("fakesink", "sink");
@@ -224,13 +223,6 @@ void GStreamerTest::_testCompleteInitNamesBlacklistedPlugins()
     QVERIFY(GStreamer::completeInit());
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
-}
-
-void GStreamerTest::_testCreateVideoReceiver()
-{
-    std::unique_ptr<VideoReceiver> receiver(GStreamer::createVideoReceiver(nullptr));
-    QVERIFY2(receiver, "GStreamer::createVideoReceiver() returned nullptr");
-    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
 }
 
 void GStreamerTest::_testVideoBackendForwards()
@@ -325,7 +317,7 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 
     GstElement* const capsfilter = gst_element_factory_make("capsfilter", nullptr);
     QVERIFY(capsfilter);
-    const GStreamer::GstElementPtr source = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(capsfilter)));
+    const GStreamer::GstElementPtr source = GStreamer::adoptFloating(capsfilter);
     g_object_set(source.get(), "caps", inputCaps.get(), nullptr);
 
     const GStreamer::GstElementPtr sink =

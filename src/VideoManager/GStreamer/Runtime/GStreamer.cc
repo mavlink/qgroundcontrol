@@ -19,7 +19,6 @@
 #include "GStreamerLogging.h"
 #include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
-#include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
@@ -154,11 +153,6 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
     return missing;
 }
 
-VideoBackend::EnvPrepResult prepareEnvironment()
-{
-    return Environment::prepareEnvironment();
-}
-
 namespace {
 
 bool _initGstRuntime(const QStringList& args, const VideoBackend::EnvPrepResult& env)
@@ -261,10 +255,11 @@ bool initialize(const VideoBackend::InitParams& params)
 
 // Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
 // adopts. While decoding, the pipeline bin takes another on gst_bin_add (dropped by gst_bin_remove).
-GstElement* createVideoSink(const VideoSinkConfig& config)
+GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio,
+                            [[maybe_unused]] bool gpuZeroCopy)
 {
-    const gboolean disablePar = config.disablePixelAspectRatio ? TRUE : FALSE;
-    const char* const conversion = config.conversionElement.isEmpty() ? nullptr : config.conversionElement.constData();
+    const gboolean disablePar = disablePixelAspectRatio ? TRUE : FALSE;
+    const char* const conversion = conversionElement.isEmpty() ? nullptr : conversionElement.constData();
 
     const GstFactoryPtr factory = adoptFactory(gst_element_factory_find("qgcvideosinkbin"));
     if (!factory) {
@@ -275,8 +270,8 @@ GstElement* createVideoSink(const VideoSinkConfig& config)
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
     GstElement* videoSinkBin =
-        gst_element_factory_create_full(factory.get(), "gpu-zerocopy", config.gpuZeroCopy ? TRUE : FALSE,
-                                        "conversion-element", conversion, "disable-par", disablePar, NULL);
+        gst_element_factory_create_full(factory.get(), "gpu-zerocopy", gpuZeroCopy ? TRUE : FALSE, "conversion-element",
+                                        conversion, "disable-par", disablePar, NULL);
 #else
     GstElement* videoSinkBin = gst_element_factory_create_full(factory.get(), "conversion-element", conversion,
                                                                "disable-par", disablePar, NULL);
@@ -287,11 +282,6 @@ GstElement* createVideoSink(const VideoSinkConfig& config)
     }
     // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
     return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
-}
-
-VideoReceiver* createVideoReceiver(QObject* parent)
-{
-    return new GstVideoReceiver(parent);
 }
 
 QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent)

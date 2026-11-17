@@ -29,7 +29,6 @@ Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
-    Q_PROPERTY(QString decoderName READ decoderName NOTIFY decoderNameChanged FINAL)
 
 public:
     explicit GstVideoReceiver(QObject* parent = nullptr);
@@ -37,14 +36,8 @@ public:
     ~GstVideoReceiver() override;
 
     /// Factory name of the decoder decodebin3 plugged last; empty while the stream has no decoder: before it streams,
-    /// without a video output, and while a decoder is being replaced.
+    /// without a video output, and while a decoder is being replaced. For tests.
     QString decoderName() const { return _decoderName; }
-
-    /// Writes PipelineDotDumper::snapshot() under @p tag; callable from QML.
-    Q_INVOKABLE void dumpPipelineGraph(const QString& tag = QStringLiteral("manual"));
-
-signals:
-    void decoderNameChanged();
 
 protected:
     void onConfigChanged() override;
@@ -67,10 +60,6 @@ private:
     void _releaseDisplaySink();
     /// Binds the display sink, built first when there is none, to @p videoSink and follows the output's window.
     void _bindVideoSink(QVideoSink* videoSink);
-    void _setDecoderName(const QString& name);
-    /// Runs @p task with the current pipeline (or null) on the worker, and waits for it, for at most a few seconds:
-    /// false when the worker didn't get to it. For tests.
-    bool _runOnPipeline(const std::function<void(GstElement* pipeline)>& task);
 
     QThread* _workerThread = nullptr;
     GstReceiverWorker* _worker = nullptr;
