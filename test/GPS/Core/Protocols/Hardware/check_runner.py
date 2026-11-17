@@ -627,6 +627,27 @@ def main() -> None:
     checks = {item["name"]: item for item in absent["stages"][0]["checks"]}
     assert checks["fresh_survey"]["status"] == "inconclusive"
 
+    # A fixed base's position is compared with the one the scripted receiver finds itself at: 47.4, 8.5, 500 m.
+    fixed = [
+        "--action",
+        "configure",
+        "--base-mode",
+        "fixed",
+        "--longitude",
+        "8.5",
+        "--altitude",
+        "500",
+    ]
+    near = run(binary, [*fixed, "--latitude", "47.4001", "--observe-ms", "20"], 3)
+    checks = {item["name"]: item for item in near["stages"][0]["checks"]}
+    assert checks["fixed_base_position"]["status"] == "passed", near
+    assert "11.1 m" in checks["fixed_base_position"]["detail"], near
+    assert "fresh_survey" not in checks, near
+    far = run(binary, [*fixed, "--latitude=-47.4", "--observe-ms", "20"], 1)
+    checks = {item["name"]: item for item in far["stages"][0]["checks"]}
+    assert checks["fixed_base_position"]["status"] == "failed", far
+    assert far["stages"][0]["outcome"] == "failed", far
+
     for fault in ("nak", "wrong-readback", "cancel"):
         failed = run(
             binary,

@@ -65,6 +65,10 @@ int rtcmMessageId(const QByteArray& frame)
                                                                static_cast<size_t>(frame.size())));
 }
 
+/// Where the scripted receiver finds itself when it is asked for a fixed base, whose position is checked against it.
+constexpr GPSEllipsoidPosition SCRIPTED_OWN_POSITION{
+    .latitudeDegrees = 47.4, .longitudeDegrees = 8.5, .altitudeMeters = 500};
+
 std::atomic_flag interrupted = ATOMIC_FLAG_INIT;
 
 void interruptHandler(int)
@@ -145,6 +149,31 @@ int evidenceError(QJsonObject report, const QString& error)
 QJsonObject check(const QString& name, const QString& status, const QString& detail)
 {
     return {{"name", name}, {"status", status}, {"detail", detail}};
+}
+
+/// How a fixed base's position compares with the one its receiver computed itself, the one check of a fixed base
+/// that a run can make: a receiver that holds a fixed position reports only that one.
+QJsonObject fixedBasePositionCheck(const std::optional<GPSFixedBaseCheck>& fixedCheck)
+{
+    const QString name = "fixed_base_position";
+    if (!fixedCheck) {
+        return check(name, "inconclusive", "The receiver family does not compare a fixed position with its own");
+    }
+    switch (fixedCheck->result) {
+        case GPSFixedBaseCheck::Result::Plausible:
+            return check(name, "passed",
+                         QString("The receiver's own position lies %1 m from the fixed one")
+                             .arg(fixedCheck->distanceMeters, 0, 'f', 1));
+        case GPSFixedBaseCheck::Result::Implausible:
+            return check(name, "failed",
+                         QString("The receiver's own position lies %1 m from the fixed one: no rover can use "
+                                 "corrections for a position the base is not at")
+                             .arg(fixedCheck->distanceMeters, 0, 'f', 1));
+        case GPSFixedBaseCheck::Result::Waiting:
+        case GPSFixedBaseCheck::Result::Unchecked:
+            break;
+    }
+    return check(name, "inconclusive", "The receiver computed no position of its own to compare the fixed one with");
 }
 
 QJsonObject requestedConfig(const GPSReceiverConfig& config, bool passive)
@@ -337,6 +366,10 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     const QString baseMode = parser.value("base-mode");
     if (!QStringList{"survey", "fixed", "receiver-averaging"}.contains(baseMode)) {
         return "Unsupported base mode";
+    }
+    if (!options.passive && baseMode == "fixed" && !parser.isSet("timeout-ms")) {
+        // A fixed base may wait this long for its receiver's own position before it is given the fixed one.
+        options.timeoutMs += static_cast<int>(std::chrono::milliseconds(GPSFixedBaseCheck::WAIT).count());
     }
     if (!options.passive) {
         if ((baseMode != "survey" && (parser.isSet("survey-duration") || parser.isSet("survey-accuracy"))) ||
@@ -924,6 +957,10 @@ int run(const Options& options)
         } else if (options.fault == "cancel") {
             receiver->disableReply = UBXReceiverModel::DisableReply::Cancelled;
         }
+        if (std::holds_alternative<GPSBaseStationConfig::Fixed>(options.config.base.mode)) {
+            // Where the scripted receiver finds itself, which a fixed base's position is checked against.
+            receiver->ownPosition = SCRIPTED_OWN_POSITION;
+        }
         waits = std::make_unique<ScriptedWaits>(*receiver, scriptedClock, operationDeadline, deadlineExpired);
     }
     // A new link to the receiver. The scripted receiver is its model, which keeps its state from one link to the next.
@@ -990,6 +1027,7 @@ int run(const Options& options)
         GPSReceiverConfig config = options.config;
         stage.insert("requested", requestedConfig(config, options.passive));
         QJsonArray surveys;
+        std::optional<GPSFixedBaseCheck> fixedCheck;
         QJsonObject lastPosition;
         int positions = 0;
         int satellites = 0;
@@ -1020,6 +1058,9 @@ int run(const Options& options)
             correctionBytes[messageId] += static_cast<qint64>(frame.size());
         };
         sinks.onBaseStatus = [&](const GPSBaseStatus& survey) {
+            if (survey.fixedCheck) {
+                fixedCheck = survey.fixedCheck;
+            }
             const bool prior = survey.duration.count() > (now() - stageStartedMs) / 1000 + 2;
             const bool active = survey.state == GPSBaseState::Active;
             const bool valid = survey.state == GPSBaseState::Valid;
@@ -1179,6 +1220,9 @@ int run(const Options& options)
                                     "Freshness is reported separately; retained completion is not a fresh survey"));
                 checks.append(check("fresh_survey", "inconclusive",
                                     "A short active duration is consistent with freshness, not proof of a restart"));
+            } else if (!options.passive) {
+                checks.append(fixedBasePositionCheck(fixedCheck));
+                failed = failed || (fixedCheck && fixedCheck->result == GPSFixedBaseCheck::Result::Implausible);
             }
             checks.append(check("requested_settings_readback", "inconclusive",
                                 "Review setting-specific driver evidence and raw replies; unverified values "

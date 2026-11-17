@@ -257,6 +257,12 @@ and the recordings are kept. The runner reports `inconclusive` rather than `pass
 cannot prove, such as a fresh survey; copy that. A run against a receiver model, the simulator or
 a replay is not a row.
 
+A fixed base (`--base-mode fixed`) has the check `fixed_base_position`: how far the position it
+was given lies from the one the receiver found itself, for the families that compare the two. More
+than 50 m apart fails the stage, and a receiver without a position of its own leaves the check
+`inconclusive`. The deadline of such a stage is 30 seconds longer, the time a u-blox receiver is
+waited for.
+
 `--family automatic` runs the session QGroundControl runs with **Detect automatically**: the
 driver finds the receiver family and then configures it. Each stage reports what it found as
 `detected_family`, whose row the run belongs to, and the recordings are named `automatic`, as
