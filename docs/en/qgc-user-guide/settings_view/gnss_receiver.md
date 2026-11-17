@@ -157,6 +157,7 @@ The settings are:
   The other receivers send their own set. With _Detect automatically_ all four are offered, and a receiver that sends its own set does so whatever is selected, which the application log notes.
   **Constellations** in the [Corrections status](ntrip_rtk.md#corrections-status) shows what the base sends.
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.
+  A Trimble or Unicore base always sends MSM4, and a Septentrio or Femtomes base the form the receiver itself is set to.
 
 The notes on a Quectel base, on its restart and on what its survey counts, are shown once the receiver is known to be one: selected as the manufacturer, or identified by _Detect automatically_ for the connection that runs.
 
