@@ -15,6 +15,12 @@
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
 
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include <cerrno>
+#include <gst/allocators/gstdmabuf.h>
+#include <poll.h>
+#endif
+
 class QRhi;
 
 /// Pixel checks of GPU frames through QVideoFrame::toImage(), which converts them on a QRhi of their API: D3D11/D3D12,
@@ -107,6 +113,26 @@ inline QString firstImageMismatch(const QImage& actual, const QImage& expected, 
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 
+/// True once the driver has finished writing @p buffer's dma-bufs, whose write fences poll() waits for.
+inline bool waitForDmaBufWrites(GstBuffer* buffer, int timeoutMs)
+{
+    for (guint i = 0; i < gst_buffer_n_memory(buffer); ++i) {
+        GstMemory* const memory = gst_buffer_peek_memory(buffer, i);
+        if (!gst_is_dmabuf_memory(memory)) {
+            continue;
+        }
+        pollfd pfd = {gst_dmabuf_memory_get_fd(memory), POLLIN, 0};
+        int ret = 0;
+        do {
+            ret = ::poll(&pfd, 1, timeoutMs);
+        } while ((ret < 0) && (errno == EINTR));
+        if ((ret <= 0) || !(pfd.revents & POLLIN)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /// A frame a VA element left in DMABuf memory and the same frame downloaded to system memory, with the pipeline that
 /// made them.
 struct VaFramePair
@@ -161,6 +187,10 @@ inline void pullVaFramePair(VaFramePair& frames, const QString& source, const QS
     SamplePtr gpu = pipeline.lastSample("gpu");
     SamplePtr cpu = pipeline.lastSample("cpu");
     QVERIFY(gpu && cpu);
+    // The importer waits 100 ms for the driver to finish a frame, then shows it some other way. A busy GPU takes
+    // longer over a postprocessor's frame, and these tests are about the frame's layout, not about that wait.
+    QVERIFY2(waitForDmaBufWrites(gst_sample_get_buffer(gpu.get()), TestTimeout::mediumMs()),
+             "the VA driver did not finish writing the frame");
     frames.gpu = std::move(gpu);
     frames.cpu = std::move(cpu);
 }
