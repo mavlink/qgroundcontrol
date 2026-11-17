@@ -210,5 +210,8 @@ and build their release workflow and then run `cmake --install <build-dir> --con
 Android APK signing/deployment and iOS IPA assembly remain platform workflow steps rather than CPack
 operations.
 
+Android builds use `QGC_STABLE_BUILD` to select the default package identifier. Set
+`QGC_ANDROID_PACKAGE_NAME` to override it.
+
 Use `CMakeUserPresets.json` for machine-local paths or derived presets; it remains ignored by Git
 and `tools/clean.py` preserves it.
