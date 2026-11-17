@@ -1815,6 +1815,16 @@ void NTRIPManagerTest::_dataCapLoweredBelowTheCount()
     QCOMPARE(manager.connectionStatus(), Status::Error);
     QCOMPARE(manager.statusMessage(), kStoppedAtOneMB);
     QCOMPARE(attempts.hosts.size(), 1);
+
+    // The message names the limit as it is set, also one that changes and still leaves no room.
+    QSignalSpy messages(&manager, &NTRIPManager::statusMessageChanged);
+    configuration.dataCapMB = 2;
+    manager.setConfiguration(configuration);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(manager.connectionStatus(), Status::Error);
+    QCOMPARE(manager.statusMessage(), QStringLiteral("Stopped at the data limit of 2 MB"));
+    QCOMPARE(messages.size(), 1);
+    QCOMPARE(attempts.hosts.size(), 1);
 }
 
 void NTRIPManagerTest::_dataCapLeavesBrowsingAlone()

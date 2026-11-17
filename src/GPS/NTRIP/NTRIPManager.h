@@ -74,7 +74,7 @@ struct NTRIPManagerDependencies
 /// valid frames, over one run of the connection: from when it was turned on, or from Connect or Retry after an
 /// error, across reconnects, failover and waits for a vehicle. It is not kept when the application ends. Ended so,
 /// the connection stays ended whatever else is changed, until Connect, Retry, or a limit that leaves room; a limit
-/// that is raised or removed starts it again without a new count.
+/// that is raised or removed starts it again without a new count. Its message names the limit as it is set.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -228,7 +228,7 @@ private:
     {
         Failure,    ///< A failure that is not retried, or a configuration that is not valid: _lastFailureDetail.
         GaveUp,     ///< The last of MAX_RECONNECT_ATTEMPTS failed.
-        DataLimit,  ///< _stoppedAtCapMB megabytes arrived.
+        DataLimit,  ///< As much arrived as Configuration::dataCapMB allows.
     };
 
     /// Emits one change signal for each property that differs from what the signals last announced. Public operations
@@ -353,8 +353,6 @@ private:
     QString _lastFailureDetail;
     Wait _waitingFor = Wait::Delay;
     StopReason _stopReason = StopReason::Failure;
-    /// The data limit the connection ended at, which the setting may no longer be.
-    quint32 _stoppedAtCapMB = 0;
     /// Corrections have arrived over the current connection settings since they were last started, so a source
     /// table in place of the stream means the mountpoint went offline, not that it is wrong.
     bool _streamServed = false;

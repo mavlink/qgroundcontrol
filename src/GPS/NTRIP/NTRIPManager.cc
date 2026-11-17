@@ -181,7 +181,7 @@ QString NTRIPManager::_stateMessage() const
                         .arg(_lastFailureDetail);
                 case StopReason::DataLimit:
                     //: %1 is the limit, a number of megabytes
-                    return tr("Stopped at the data limit of %1 MB").arg(_stoppedAtCapMB);
+                    return tr("Stopped at the data limit of %1 MB").arg(_configuration.dataCapMB);
                 case StopReason::Failure:
                     break;
             }
@@ -445,7 +445,6 @@ bool NTRIPManager::_dataCapReached() const
 void NTRIPManager::_stopAtDataCap()
 {
     qCWarning(NTRIPManagerLog) << "NTRIP stopped at the data limit of" << _configuration.dataCapMB << "MB";
-    _stoppedAtCapMB = _configuration.dataCapMB;
     _halt(StopReason::DataLimit);
 }
 
