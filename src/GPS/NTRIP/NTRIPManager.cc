@@ -98,6 +98,8 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
     if (_vehicles) {
         connect(_vehicles, &NTRIPVehiclePresence::presentChanged, this, &NTRIPManager::_onVehiclePresenceChanged);
     }
+    // The message a connection has before it is first started is no change to announce.
+    _notified.message = _stateMessage();
 }
 
 NTRIPManager::~NTRIPManager()
@@ -307,7 +309,6 @@ void NTRIPManager::_start()
     }
     _settingsDebounceTask.cancel();
     _useEnteredCaster();
-    _everStarted = true;
     if (_shouldWaitForVehicle()) {
         _waitForVehicle();
         _stopStreaming();
@@ -340,8 +341,7 @@ void NTRIPManager::_publish()
         emit connectionStatusChanged();
     }
     const QString savedCaster = _savedCaster ? _savedCaster->name : QString();
-    // Until the connection is first started its message was announced by no signal, and is no change to announce.
-    const QString message = _everStarted ? _stateMessage() : QString();
+    const QString message = _stateMessage();
     const bool messageChanged = std::exchange(_notified.message, message) != message;
     if (std::exchange(_notified.savedCaster, savedCaster) != savedCaster || messageChanged) {
         emit statusMessageChanged();

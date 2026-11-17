@@ -365,8 +365,5 @@ private:
     /// What arrived from the caster in this run of the connection.
     quint64 _linkBytes = 0;
     bool _initialized = false;
-    /// _start() has run. A connection that is then stopped before its first message was announced still announces
-    /// one, as it did when the message was kept as text that was empty until then.
-    bool _everStarted = false;
     bool _shutdown = false;
 };
