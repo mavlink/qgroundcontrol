@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="72"
+            android:viewportHeight="72">
+            <path android:fillColor="#FFFFFF" android:pathData="M27 53H45V59H27z"/>
+        </vector>
+    </item>
+    <item android:drawable="@drawable/ic_launcher_foreground"/>
+    <item android:drawable="@drawable/ic_launcher_daily_ribbon"/>
+</layer-list>
