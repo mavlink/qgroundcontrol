@@ -3,31 +3,33 @@
 #include <limits>
 
 #include <QtCore/QLocale>
+#include <QtCore/QScopeGuard>
 
 #include "QGCFormat.h"
 
 namespace {
 constexpr quint64 QGC_FORMAT_TEST_MAX = std::numeric_limits<quint64>::max();
 
-/// The functions under test format with the default locale, so each test sets its own.
-class QGCFormatTestLocale
-{
-public:
-    explicit QGCFormatTestLocale(const QString& name) { QLocale::setDefault(QLocale(name)); }
-
-    ~QGCFormatTestLocale() { QLocale::setDefault(_previous); }
-
-private:
-    Q_DISABLE_COPY_MOVE(QGCFormatTestLocale)
-
-    const QLocale _previous;  // default-constructed: the default locale before this object changed it
-};
-
 void addQGCFormatTestColumns()
 {
     QTest::addColumn<QString>("locale");
     QTest::addColumn<quint64>("value");
     QTest::addColumn<QString>("expected");
+}
+
+/// Compares what @a format makes of the value of the current row with its expected text. The functions under test
+/// format with the default locale, which is the one of the row during the call.
+void checkQGCFormatRow(QString (*format)(quint64))
+{
+    QFETCH(QString, locale);
+    QFETCH(quint64, value);
+    QFETCH(QString, expected);
+
+    const QLocale previous;
+    QLocale::setDefault(QLocale(locale));
+    const auto restoreLocale = qScopeGuard([&previous]() { QLocale::setDefault(previous); });
+
+    QCOMPARE(format(value), expected);
 }
 }  // namespace
 
@@ -46,12 +48,7 @@ void QGCFormatTest::_numberToString_data()
 
 void QGCFormatTest::_numberToString()
 {
-    QFETCH(QString, locale);
-    QFETCH(quint64, value);
-    QFETCH(QString, expected);
-
-    const QGCFormatTestLocale defaultLocale(locale);
-    QCOMPARE(QGC::numberToString(value), expected);
+    checkQGCFormatRow(QGC::numberToString);
 }
 
 void QGCFormatTest::_bigSizeToString_data()
@@ -84,12 +81,7 @@ void QGCFormatTest::_bigSizeToString_data()
 
 void QGCFormatTest::_bigSizeToString()
 {
-    QFETCH(QString, locale);
-    QFETCH(quint64, value);
-    QFETCH(QString, expected);
-
-    const QGCFormatTestLocale defaultLocale(locale);
-    QCOMPARE(QGC::bigSizeToString(value), expected);
+    checkQGCFormatRow(QGC::bigSizeToString);
 }
 
 void QGCFormatTest::_bigSizeMBToString_data()
@@ -113,12 +105,7 @@ void QGCFormatTest::_bigSizeMBToString_data()
 
 void QGCFormatTest::_bigSizeMBToString()
 {
-    QFETCH(QString, locale);
-    QFETCH(quint64, value);
-    QFETCH(QString, expected);
-
-    const QGCFormatTestLocale defaultLocale(locale);
-    QCOMPARE(QGC::bigSizeMBToString(value), expected);
+    checkQGCFormatRow(QGC::bigSizeMBToString);
 }
 
 QGC_REGISTER_PORTABLE_TEST(QGCFormatTest, TestLabel::Unit, TestLabel::Utilities)

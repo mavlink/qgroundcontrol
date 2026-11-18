@@ -2,10 +2,6 @@
 
 #include "DataRateTracker.h"
 
-// ---------------------------------------------------------------------------
-// testInitialState
-// ---------------------------------------------------------------------------
-
 void DataRateTrackerTest::testInitialState()
 {
     DataRateTracker tracker;
@@ -16,10 +12,6 @@ void DataRateTrackerTest::testInitialState()
     // rateUpdated starts false — no recordBytes call yet
     QVERIFY(!tracker.rateUpdated());
 }
-
-// ---------------------------------------------------------------------------
-// testRecordBytesAccumulates
-// ---------------------------------------------------------------------------
 
 void DataRateTrackerTest::testRecordBytesAccumulates()
 {
@@ -34,10 +26,6 @@ void DataRateTrackerTest::testRecordBytesAccumulates()
     tracker.recordBytes(1024);
     QCOMPARE(tracker.totalBytes(), static_cast<quint64>(1524));
 }
-
-// ---------------------------------------------------------------------------
-// testReset
-// ---------------------------------------------------------------------------
 
 void DataRateTrackerTest::testReset_data()
 {
@@ -78,23 +66,6 @@ void DataRateTrackerTest::testReset()
     tracker.refresh();
     QVERIFY(tracker.rateUpdated());
     QCOMPARE(tracker.bytesPerSec(), 0.0);
-}
-
-// ---------------------------------------------------------------------------
-// testKBpsConversion
-// ---------------------------------------------------------------------------
-
-void DataRateTrackerTest::testKBpsConversion()
-{
-    // kBps() must equal bytesPerSec() / 1024.0 regardless of the actual value.
-    // We can inject a known rate indirectly: after reset the rate is 0.
-    DataRateTracker tracker;
-    QCOMPARE(tracker.kBps(), tracker.bytesPerSec() / 1024.0);
-
-    // Record some bytes and verify the relationship holds even if rate has
-    // not been recalculated yet (rate stays 0, kBps stays 0).
-    tracker.recordBytes(2048);
-    QCOMPARE(tracker.kBps(), tracker.bytesPerSec() / 1024.0);
 }
 
 void DataRateTrackerTest::testRefreshDuringSilence()

@@ -2,7 +2,6 @@
 
 #include <QtCore/QString>
 #include <QtSql/QSqlDatabase>
-#include <QtSql/QSqlQuery>
 
 #include <atomic>
 #include <optional>
@@ -48,10 +47,7 @@ public:
                               const QString& prefix = QStringLiteral("QGCSql"));
     ~ScopedConnection();
 
-    ScopedConnection(const ScopedConnection&) = delete;
-    ScopedConnection& operator=(const ScopedConnection&) = delete;
-    ScopedConnection(ScopedConnection&&) = delete;
-    ScopedConnection& operator=(ScopedConnection&&) = delete;
+    Q_DISABLE_COPY_MOVE(ScopedConnection)
 
     [[nodiscard]] bool isValid() const { return _valid; }
     [[nodiscard]] QSqlDatabase database() const;
@@ -76,10 +72,7 @@ public:
     explicit Transaction(QSqlDatabase db);
     ~Transaction();
 
-    Transaction(const Transaction&) = delete;
-    Transaction& operator=(const Transaction&) = delete;
-    Transaction(Transaction&&) = delete;
-    Transaction& operator=(Transaction&&) = delete;
+    Q_DISABLE_COPY_MOVE(Transaction)
 
     [[nodiscard]] bool ok() const { return _active; }
     bool commit();

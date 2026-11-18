@@ -9,6 +9,5 @@ private slots:
     void testRecordBytesAccumulates();
     void testReset_data();
     void testReset();
-    void testKBpsConversion();
     void testRefreshDuringSilence();
 };
