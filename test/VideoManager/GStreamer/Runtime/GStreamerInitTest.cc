@@ -43,9 +43,6 @@ struct NativeDebugLogEnvGuard
 
 void GStreamerInitTest::_testInitializeLogsFromItsFirstLine()
 {
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    QSKIP("GStreamer init deadlocks under AddressSanitizer, see GstTest::initGStreamer()");
-#else
     if (gst_is_initialized()) {
         QSKIP("GStreamer was initialized before this test could watch it");
     }
@@ -73,7 +70,6 @@ void GStreamerInitTest::_testInitializeLogsFromItsFirstLine()
 
     // The level GStreamer's own option set among the arguments is not replaced by the persisted one.
     QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_FIXME);
-#endif
 }
 
 void GStreamerInitTest::_testNativeDebugLogRequested_data()

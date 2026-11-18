@@ -21,9 +21,6 @@ namespace GstTest {
 
 QString initGStreamer()
 {
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    return QStringLiteral("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
-#else
     if (gst_is_initialized()) {
         return {};
     }
@@ -36,7 +33,6 @@ QString initGStreamer()
             .arg(owned ? QString::fromUtf8(owned->message) : QStringLiteral("unknown error"));
     }
     return {};
-#endif
 }
 
 QString firstMissingFactory(std::initializer_list<const char*> names)

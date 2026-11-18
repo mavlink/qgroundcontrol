@@ -263,6 +263,11 @@ leak:libQt
 leak:qt_
 leak:libfontconfig
 leak:libpulse
+# FFmpeg, under Qt Multimedia and gst-libav: it leaks a little per stream and per decoded frame, in stacks that end
+# at av_malloc.
+leak:libavutil
+# x265, which the tests' H.265 stream server encodes with, doesn't free its encoder's tables.
+leak:libx265
 leak:QGCCorePlugin::QGCCorePlugin
 leak:QGCOptions::QGCOptions
 leak:AirframeComponentAirframes::insert

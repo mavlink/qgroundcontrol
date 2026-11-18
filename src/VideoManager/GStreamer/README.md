@@ -659,7 +659,7 @@ Each class has a line here; the comment on the class in its header says more.
 A build without GStreamer (`QGC_ENABLE_GST_VIDEOSTREAMING=OFF`) has none of these classes:
 `test/VideoManager/GStreamer` isn't added to it. The classes derived from `GStreamerTestBase` fail in `initTestCase()`
 when `GStreamer::completeInit()` fails, as it does when an element video needs is missing, and their tests skip where
-GStreamer can't be initialized at all (as under AddressSanitizer). A test skips, rather than fails, when an optional
+GStreamer can't be initialized at all. A test skips, rather than fails, when an optional
 element it uses is missing (`GSTTEST_SKIP_UNLESS_FACTORIES` in `GStreamerTestHelpers.h`). The two `*HarnessTest`
 classes use GstHarness from gst-check (`gstreamer-check-1.0`), which test builds request as an optional GStreamer
 component (`Check`); they compile only where the SDK or distribution ships it. Receivers and servers in every
@@ -678,14 +678,14 @@ stream server does (`openh264enc`, falling back to `x264enc`; `x265enc` for H.26
 ctest --test-dir build -R '^(GStreamer|Gst)[A-Za-z]*Test(\.[0-9]+)?$' --output-on-failure
 ```
 
-CI runs these classes in the Linux coverage job and the macOS Debug leg with the rest of the suite (in the Linux
-sanitizer job the tests that need GStreamer initialized skip, as it can't be under AddressSanitizer), and on
-Windows in `windows.yml`'s `gstreamer-tests` job, a Debug build that runs only the GStreamer and video classes against
-the SDK's shipped plugins plus the sources and encoders the tests send streams with, with the D3D tests on WARP. The
-packages are checked beyond their boot test: every DLL the Windows install imports must ship or come with Windows
+CI runs these classes in the Linux coverage and sanitizer jobs and the macOS Debug leg with the rest of the suite, and
+on Windows in `windows.yml`'s `gstreamer-tests` job, a Debug build that runs only the GStreamer and video classes
+against the SDK's shipped plugins plus the sources and encoders the tests send streams with, with the D3D tests on WARP.
+The packages are checked beyond their boot test: every DLL the Windows install imports must ship or come with Windows
 (`pe_dependency_audit.py`), every library a Mach-O file in the macOS bundle loads must resolve inside the bundle or to
 macOS (`macho_bundle_audit.py`), and the AppImage must boot in clean Ubuntu 24.04 and Debian 13 containers without
-GStreamer or Qt (`appimage_container_boot.py`); see [`.github/ci-notes/platforms.md`](../../../.github/ci-notes/platforms.md#platform-notes).
+GStreamer or Qt (`appimage_container_boot.py`); see
+[`.github/ci-notes/platforms.md`](../../../.github/ci-notes/platforms.md#platform-notes).
 
 ### Boot self-test
 
