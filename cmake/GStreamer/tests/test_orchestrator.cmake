@@ -639,9 +639,10 @@ elseif(SCENARIO STREQUAL "homebrew")
 elseif(SCENARIO STREQUAL "install-macos")
     # The macOS bundle installers run on any host: everything must land under DESTDIR and the --prefix given at
     # install time, and nothing under the prefix known at configure time. The flat SDK's binaries are this host's own
-    # shared libraries, named like the SDK's dylibs, so the install's dependency closure can read them: libgstreamer
-    # needs GLib, the plugin, GIO module and scanner need libgstreamer, the libproxy GIO module needs libproxy, whose
-    # backend library lives in lib/libproxy, and the GPL x264 and an unused library are needed by nothing.
+    # shared libraries, named like the official SDK's dylibs and .so GIO modules, so the install's dependency closure
+    # can read them: libgstreamer needs GLib, the plugin, GIO module and scanner need libgstreamer, the libproxy GIO
+    # module needs libproxy, which loads its backend library in lib/libproxy by its Mach-O install name, and the GPL
+    # x264 and an unused library are needed by nothing.
     find_program(_qgc_cc NAMES cc gcc clang NO_CACHE)
     if(NOT _qgc_cc)
         message(STATUS "QGC_TEST_SKIPPED: no C compiler to build the fake SDK's libraries")
@@ -659,10 +660,10 @@ elseif(SCENARIO STREQUAL "install-macos")
             "lib/libx264.164.dylib|libx264.164.dylib|"
             "lib/libunused.dylib|libunused.dylib|"
             "lib/gstreamer-1.0/libgstcoreelements.dylib|libgstcoreelements.dylib|libgstreamer-1.0.0.dylib"
-            "lib/gio/modules/libgioopenssl.dylib|libgioopenssl.dylib|libglib-2.0.0.dylib"
-            "lib/libproxy/libpxbackend-1.0.dylib|libpxbackend-1.0.dylib|"
+            "lib/gio/modules/libgioopenssl.so|libgioopenssl.so|libglib-2.0.0.dylib"
+            "lib/libproxy/libpxbackend-1.0.dylib|@rpath/libproxy/libpxbackend-1.0.dylib|"
             "lib/libproxy.1.dylib|libproxy.1.dylib|libproxy/libpxbackend-1.0.dylib"
-            "lib/gio/modules/libgiolibproxy.dylib|libgiolibproxy.dylib|libproxy.1.dylib"
+            "lib/gio/modules/libgiolibproxy.so|libgiolibproxy.so|libproxy.1.dylib"
             "libexec/gstreamer-1.0/gst-plugin-scanner|exe|libgstreamer-1.0.0.dylib"
     )
         string(REPLACE "|" ";" _binary "${_binary}")
@@ -733,9 +734,10 @@ elseif(SCENARIO STREQUAL "install-macos")
             Frameworks/libgstreamer-1.0.0.dylib
             Frameworks/libglib-2.0.0.dylib
             Frameworks/libproxy.1.dylib
-            Frameworks/libpxbackend-1.0.dylib
+            Frameworks/libproxy/libpxbackend-1.0.dylib
             lib/gstreamer-1.0/libgstcoreelements.dylib
-            lib/gio/modules/libgioopenssl.dylib
+            lib/gio/modules/libgioopenssl.so
+            lib/gio/modules/libgiolibproxy.so
             libexec/gstreamer-1.0/gst-plugin-scanner
             Resources/licenses/gstreamer/NOTICE.txt
             Resources/licenses/gstreamer/LGPL-2.1.txt
@@ -748,16 +750,17 @@ elseif(SCENARIO STREQUAL "install-macos")
     if(EXISTS "${_bundle}/Resources/etc/ssl/certs/ca-certificates.crt")
         message(FATAL_ERROR "ASSERT [flat install]: the SDK's CA bundle was installed")
     endif()
-    # Only the libraries the installed plugin, GIO module and scanner load are bundled.
-    foreach(_file IN ITEMS libx264.164.dylib libunused.dylib)
+    # Only the libraries the installed plugin, GIO module and scanner load are bundled, and libproxy's backend only
+    # under the name libproxy loads.
+    foreach(_file IN ITEMS libx264.164.dylib libunused.dylib libpxbackend-1.0.dylib)
         if(EXISTS "${_bundle}/Frameworks/${_file}")
             message(FATAL_ERROR "ASSERT [dependency closure]: ${_file} was installed\n${_qgc_output}")
         endif()
     endforeach()
     # The rpath fixup visits the installed copies; without otool on this host it warns about each one.
-    qgc_test_assert_matches(
-        "rpath fixup" "otool -l failed for ${_bundle}/lib/gstreamer-1.0/libgstcoreelements.dylib" "${_qgc_output}"
-    )
+    foreach(_file IN ITEMS lib/gstreamer-1.0/libgstcoreelements.dylib lib/gio/modules/libgioopenssl.so)
+        qgc_test_assert_matches("rpath fixup" "otool -l failed for ${_bundle}/${_file}" "${_qgc_output}")
+    endforeach()
     if(EXISTS "${WORK_DIR}/configured-prefix" OR EXISTS "${WORK_DIR}/stage${WORK_DIR}/configured-prefix")
         message(FATAL_ERROR "ASSERT [install prefix]: files were installed under the configure-time prefix")
     endif()

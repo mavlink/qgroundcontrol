@@ -214,6 +214,7 @@ endfunction()
 # macOS GStreamer, which has no framework wrapper. gioopenssl verifies against the Keychain, so the SDK's CA bundle
 # stays out.
 function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(LIB_PATH _gst_lib_path)
     qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
     qgc_gst_layout_get(PLUGIN_SCANNER_PATH _gst_scanner_path)
     qgc_gst_layout_get(GIO_MODULE_PATH _gst_gio_module_path)
@@ -225,7 +226,12 @@ function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
     _qgc_gst_begin_runtime_closure()
     set(_plugin_dest "${_mac_lib_dest}/gstreamer-1.0")
     qgc_gst_install_plugins("${_gst_plugin_path}" "${_plugin_dest}" "libgst" "dylib")
-    qgc_gst_install_gio_modules("${_gst_gio_module_path}" "${_mac_lib_dest}/gio/modules" "dylib")
+    # The official SDK's GIO modules are .so files, unlike its plugins.
+    qgc_gst_install_gio_modules("${_gst_gio_module_path}" "${_mac_lib_dest}/gio/modules" "so")
+    # libproxy, which the giolibproxy module links, loads its backend as @rpath/libproxy/<backend>: from libproxy/
+    # beside the bundled libproxy, through the executable's rpath.
+    file(GLOB _gst_libproxy_backends "${_gst_lib_path}/libproxy/*.dylib")
+    _qgc_gst_install_files("${_mac_fw_dest}/libproxy" ${_gst_libproxy_backends})
     # Libexec helpers are installed before the rpath fixup below, which patches the installed copies.
     set(_gst_helpers "")
     foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
@@ -240,7 +246,7 @@ function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
     foreach(
         _rpath_dir IN
         ITEMS "${_plugin_dest}:@loader_path/../../Frameworks:*.dylib"
-              "${_mac_lib_dest}/gio/modules:@loader_path/../../../Frameworks:*.dylib"
+              "${_mac_lib_dest}/gio/modules:@loader_path/../../../Frameworks:*.so"
               "${_mac_libexec_dest}:@loader_path/../../Frameworks:*"
     )
         string(REPLACE ":" ";" _parts "${_rpath_dir}")
