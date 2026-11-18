@@ -20,19 +20,30 @@
 #include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
+// What the Java side of the USB serial ports logs, so that it is switched on with the other serial categories.
+QGC_LOGGING_CATEGORY(AndroidSerialJavaLog, "Android.AndroidSerial.Java")
 
 namespace AndroidInterface {
 
 static std::function<void(const QString&)> s_importCallback;
 
+/// The category of a message from Java, which starts with the tag that Java logged it under. The classes of the
+/// USB serial ports have tags that start alike.
+static const QLoggingCategory& javaLogCategory(const QString& message)
+{
+    return message.startsWith(QLatin1String("QGCUsbSerial")) ? AndroidSerialJavaLog() : AndroidInterfaceLog();
+}
+
 static void jniLogDebug(JNIEnv*, jobject, jstring message)
 {
-    qCDebug(AndroidInterfaceLog) << QJniObject(message).toString();
+    const QString text = QJniObject(message).toString();
+    qCDebug(javaLogCategory(text)).noquote() << text;
 }
 
 static void jniLogWarning(JNIEnv*, jobject, jstring message)
 {
-    qCWarning(AndroidInterfaceLog) << QJniObject(message).toString();
+    const QString text = QJniObject(message).toString();
+    qCWarning(javaLogCategory(text)).noquote() << text;
 }
 
 static void jniStoragePermissionsResult(JNIEnv*, jobject, jboolean granted)

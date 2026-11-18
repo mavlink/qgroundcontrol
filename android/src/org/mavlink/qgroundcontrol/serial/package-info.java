@@ -39,7 +39,9 @@
  * <ul>
  *   <li>The devices' lock guards the tracked devices and the table of open ports. It is held for lookups and
  *       updates only: never during a USB transfer, a call into Android's USB service, a call on a port, or a
- *       call into C++. A call on an open port finds the port by its handle without the lock.
+ *       call into C++ other than to log. {@link org.mavlink.qgroundcontrol.QGCLogger} hands a warning on to QGC's
+ *       own log there, which takes none of these locks and calls nothing back. A call on an open port finds the
+ *       port by its handle without the lock.
  *   <li>A port's lock serializes opening, closing and the starting of its threads. Opening holds it across USB
  *       transfers; reads and writes run without it, so that a close never waits for one.
  *   <li>A reader's lock and a writer's lock each guard which thread is its I/O thread, and the read thread

@@ -36,6 +36,18 @@ public class QGCActivity extends QtActivity {
         m_instance = this;
 
         QGCLogger.initialize(getApplicationContext());
+        // The native library, loaded by super.onCreate(), has registered the two native methods by now.
+        QGCLogger.setSink(new QGCLogger.Sink() {
+            @Override
+            public void debug(final String message) {
+                qgcLogDebug(message);
+            }
+
+            @Override
+            public void warning(final String message) {
+                qgcLogWarning(message);
+            }
+        });
         nativeInit();
         setupMulticastLock();
 
@@ -99,6 +111,8 @@ public class QGCActivity extends QtActivity {
 
         if (m_instance == this) {
             m_instance = null;
+            // super.onDestroy() ends the C++ side, which must be asked to log nothing from then on.
+            QGCLogger.setSink(null);
         }
         super.onDestroy();
     }
