@@ -10,6 +10,9 @@ namespace QGCSensors
 
 namespace {
 
+constexpr qreal minValidTemperatureC = -40.;
+constexpr qreal maxValidTemperatureC = 85.;
+
 /// Puts @a filter on the readings of @a sensor, connects it to its backend and logs what the backend offers.
 /// @a name is what the log calls the sensor.
 bool connectSensor(QSensor* sensor, QSensorFilter* filter, const char* name)
@@ -33,14 +36,11 @@ bool connectSensor(QSensor* sensor, QSensorFilter* filter, const char* name)
     const qrangelist dataRates = sensor->availableDataRates();
     if (!dataRates.isEmpty()) {
         qCDebug(QGCSensorsLog) << "Available Data Rates:" << dataRates;
-        // sensor->setDataRate(dataRates.first().first);
         qCDebug(QGCSensorsLog) << "Selected Data Rate:" << sensor->dataRate();
     }
 
     const qoutputrangelist outputRanges = sensor->outputRanges();
     if (!outputRanges.isEmpty()) {
-        // qCDebug(QGCSensorsLog) << "Output Ranges:" << outputRanges;
-        // sensor->setOutputRange(outputRanges.first().first);
         const int outputRangeIndex = sensor->outputRange();
         // The index is -1 unless an output range was selected
         if ((outputRangeIndex >= 0) && (outputRangeIndex < outputRanges.size())) {
@@ -55,7 +55,6 @@ bool connectSensor(QSensor* sensor, QSensorFilter* filter, const char* name)
 
 bool startSensor(QSensor* sensor, const char* name)
 {
-    // sensor->setActive(true);
     if (!sensor->start()) {
         qCWarning(QGCSensorsLog) << "Failed to start" << name;
         return false;
@@ -78,7 +77,6 @@ QGCAmbientTemperature* QGCAmbientTemperature::instance()
 QGCAmbientTemperature::QGCAmbientTemperature(QObject* parent)
     : QObject(parent)
     , _ambientTemperature(new QAmbientTemperatureSensor(this))
-    , _ambientTemperatureFilter(std::make_shared<QGCAmbientTemperatureFilter>())
 {
     connect(_ambientTemperature, &QAmbientTemperatureSensor::sensorError, this,
             [](int error) { qCWarning(QGCSensorsLog) << "QAmbientTemperature error:" << error; });
@@ -97,7 +95,7 @@ QGCAmbientTemperature::~QGCAmbientTemperature()
 
 bool QGCAmbientTemperature::init()
 {
-    if (!connectSensor(_ambientTemperature, _ambientTemperatureFilter.get(), "ambient temperature")) {
+    if (!connectSensor(_ambientTemperature, &_ambientTemperatureFilter, "ambient temperature")) {
         return false;
     }
 
@@ -119,20 +117,8 @@ bool QGCAmbientTemperature::init()
 
 void QGCAmbientTemperature::quit()
 {
-    // _ambientTemperature->setActive(false);
     _ambientTemperature->stop();
     _ambientTemperature->disconnect(_readingChangedConnection);
-}
-
-QGCAmbientTemperatureFilter::QGCAmbientTemperatureFilter()
-    : QAmbientTemperatureFilter()
-{
-    qCDebug(QGCSensorsLog) << this;
-}
-
-QGCAmbientTemperatureFilter::~QGCAmbientTemperatureFilter()
-{
-    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCAmbientTemperatureFilter::filter(QAmbientTemperatureReading *reading)
@@ -142,7 +128,7 @@ bool QGCAmbientTemperatureFilter::filter(QAmbientTemperatureReading *reading)
     }
 
     const qreal temperature = reading->temperature();
-    return ((temperature >= s_minValidTemperatureC) && (temperature <= s_maxValidTemperatureC));
+    return ((temperature >= minValidTemperatureC) && (temperature <= maxValidTemperatureC));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -157,7 +143,6 @@ QGCPressure* QGCPressure::instance()
 QGCPressure::QGCPressure(QObject* parent)
     : QObject(parent)
     , _pressure(new QPressureSensor(this))
-    , _pressureFilter(std::make_shared<QGCPressureFilter>())
 {
     connect(_pressure, &QPressureSensor::sensorError, this,
             [](int error) { qCWarning(QGCSensorsLog) << "QPressure error:" << error; });
@@ -176,7 +161,7 @@ QGCPressure::~QGCPressure()
 
 bool QGCPressure::init()
 {
-    if (!connectSensor(_pressure, _pressureFilter.get(), "pressure")) {
+    if (!connectSensor(_pressure, &_pressureFilter, "pressure")) {
         return false;
     }
 
@@ -198,20 +183,8 @@ bool QGCPressure::init()
 
 void QGCPressure::quit()
 {
-    // _pressure->setActive(false);
     _pressure->stop();
     _pressure->disconnect(_readingChangedConnection);
-}
-
-QGCPressureFilter::QGCPressureFilter()
-    : QPressureFilter()
-{
-    qCDebug(QGCSensorsLog) << this;
-}
-
-QGCPressureFilter::~QGCPressureFilter()
-{
-    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCPressureFilter::filter(QPressureReading *reading)
@@ -223,7 +196,7 @@ bool QGCPressureFilter::filter(QPressureReading *reading)
     // Tested as inside the range, so that NaN, which fails every comparison, is rejected
     const qreal temperature = reading->temperature();
     const qreal pressure = reading->pressure();
-    return ((temperature >= s_minValidTemperatureC) && (temperature <= s_maxValidTemperatureC) &&
+    return ((temperature >= minValidTemperatureC) && (temperature <= maxValidTemperatureC) &&
             (pressure >= s_minValidPressurePa) && (pressure <= s_maxValidPressurePa));
 }
 
@@ -239,10 +212,7 @@ QGCCompass* QGCCompass::instance()
 QGCCompass::QGCCompass(QObject* parent)
     : QObject(parent)
     , _compass(new QCompass(this))
-    , _compassFilter(std::make_shared<QGCCompassFilter>())
 {
-    // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
-
     (void) connect(_compass, &QCompass::sensorError, this,
                    [](int error) { qCWarning(QGCSensorsLog) << "Compass error:" << error; });
 
@@ -251,14 +221,9 @@ QGCCompass::QGCCompass(QObject* parent)
     }
 }
 
-QGCCompass::~QGCCompass()
-{
-    // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
-}
-
 bool QGCCompass::init()
 {
-    if (!connectSensor(_compass, _compassFilter.get(), "compass")) {
+    if (!connectSensor(_compass, &_compassFilter, "compass")) {
         return false;
     }
 
@@ -270,14 +235,14 @@ bool QGCCompass::init()
             return;
         }
 
-        _calibrationLevel = reading->calibrationLevel();
-        _azimuth = reading->azimuth();
+        const qreal calibrationLevel = reading->calibrationLevel();
+        const qreal azimuth = reading->azimuth();
 
-        emit compassUpdated(_azimuth);
+        emit compassUpdated(azimuth);
 
         QGeoPositionInfo update;
-        update.setAttribute(QGeoPositionInfo::Attribute::Direction, _azimuth);
-        update.setAttribute(QGeoPositionInfo::Attribute::DirectionAccuracy, _calibrationLevel);
+        update.setAttribute(QGeoPositionInfo::Attribute::Direction, azimuth);
+        update.setAttribute(QGeoPositionInfo::Attribute::DirectionAccuracy, calibrationLevel);
         update.setTimestamp(QDateTime::currentDateTimeUtc());
         emit positionUpdated(update);
     });
@@ -287,20 +252,8 @@ bool QGCCompass::init()
 
 void QGCCompass::quit()
 {
-    // _compass->setActive(false);
     _compass->stop();
     _compass->disconnect(_readingChangedConnection);
-}
-
-QGCCompassFilter::QGCCompassFilter()
-    : QCompassFilter()
-{
-    qCDebug(QGCSensorsLog) << this;
-}
-
-QGCCompassFilter::~QGCCompassFilter()
-{
-    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCCompassFilter::filter(QCompassReading *reading)

@@ -373,11 +373,6 @@ void QGCSensorsTest::_checkSensorReportsReadings()
     QVERIFY(!backend->sensor()->isActive());
     publishReading<Traits>(backend, true);
     QCOMPARE(updates.count(), 1);
-
-    QVERIFY(sensor.init());
-    QVERIFY(backend->sensor()->isActive());
-    publishReading<Traits>(backend, true);
-    QCOMPARE(updates.count(), 2);
 }
 
 template <typename Sensor>
@@ -403,6 +398,7 @@ void QGCSensorsTest::_checkRepeatedInit()
     QCOMPARE(updates.count(), 1);
 
     QVERIFY(sensor.init());
+    QVERIFY(backend->sensor()->isActive());
     publishReading<Traits>(backend, true);
     QCOMPARE(updates.count(), 2);
 
@@ -416,7 +412,7 @@ void QGCSensorsTest::_checkSensorLogsBackend()
 {
     using Traits = SensorTraits<Sensor>;
     const TestFixtures::LoggingCategoryFixture debugLog(QString::fromLatin1(kSensorsLogCategory));
-    // The sensor and its filter log their address when they are created and destroyed.
+    // The temperature and pressure sensors log their address when they are created and destroyed.
     ignoreLogMessage(kSensorsLogCategory, QtDebugMsg, QRegularExpression(QStringLiteral("0x[0-9a-f]+\\)?$")));
 
     FakeSensorRegistration<typename Traits::Reading> fake(Traits::qtSensorType());

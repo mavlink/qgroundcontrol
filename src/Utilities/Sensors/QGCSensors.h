@@ -13,14 +13,7 @@ namespace QGCSensors
 class QGCAmbientTemperatureFilter : public QAmbientTemperatureFilter
 {
 public:
-    QGCAmbientTemperatureFilter();
-    ~QGCAmbientTemperatureFilter();
-
     bool filter(QAmbientTemperatureReading *reading) final;
-
-private:
-    static constexpr const qreal s_minValidTemperatureC = -40.;
-    static constexpr const qreal s_maxValidTemperatureC = 85.;
 };
 
 class QGCAmbientTemperature : public QObject
@@ -43,7 +36,7 @@ signals:
 
 private:
     QAmbientTemperatureSensor* _ambientTemperature = nullptr;
-    std::shared_ptr<QGCAmbientTemperatureFilter> _ambientTemperatureFilter = nullptr;
+    QGCAmbientTemperatureFilter _ambientTemperatureFilter;
 
     QMetaObject::Connection _readingChangedConnection;
 
@@ -55,17 +48,11 @@ private:
 class QGCPressureFilter : public QPressureFilter
 {
 public:
-    QGCPressureFilter();
-    ~QGCPressureFilter();
-
     bool filter(QPressureReading *reading) final;
 
 private:
     static constexpr const qreal s_minValidPressurePa = 45000.;
     static constexpr const qreal s_maxValidPressurePa = 110000.;
-
-    static constexpr const qreal s_minValidTemperatureC = -40.;
-    static constexpr const qreal s_maxValidTemperatureC = 85.;
 };
 
 class QGCPressure : public QObject
@@ -89,7 +76,7 @@ signals:
 
 private:
     QPressureSensor* _pressure = nullptr;
-    std::shared_ptr<QGCPressureFilter> _pressureFilter = nullptr;
+    QGCPressureFilter _pressureFilter;
 
     QMetaObject::Connection _readingChangedConnection;
 
@@ -102,9 +89,6 @@ private:
 class QGCCompassFilter : public QCompassFilter
 {
 public:
-    QGCCompassFilter();
-    ~QGCCompassFilter();
-
     bool filter(QCompassReading *reading) final;
 
 private:
@@ -117,7 +101,6 @@ class QGCCompass : public QObject
 
 public:
     QGCCompass(QObject *parent = nullptr);
-    ~QGCCompass();
 
     static QGCCompass* instance();
 
@@ -130,12 +113,9 @@ signals:
 
 private:
     QCompass *_compass = nullptr;
-    std::shared_ptr<QGCCompassFilter> _compassFilter = nullptr;
+    QGCCompassFilter _compassFilter;
 
     QMetaObject::Connection _readingChangedConnection;
-
-    qreal _azimuth = 0;
-    qreal _calibrationLevel = 0;
 };
 
 ////////////////////////////////////////////////////////////////////
