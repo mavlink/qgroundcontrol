@@ -4,6 +4,10 @@
 #include <QtCore/QDir>
 #include <QtCore/QStandardPaths>
 
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(RunGuardLog, "Utilities.RunGuard")
+
 RunGuard::RunGuard(const QString &key)
     : _key(key)
     , _lockFilePath(lockDir() + QLatin1String("/qgc-") + generateKeyHash(key, QLatin1String("_lock")) + QLatin1String(".lock"))
@@ -35,21 +39,33 @@ bool RunGuard::isAnotherRunning()
     case QLockFile::LockFailedError:
         return true;
     case QLockFile::PermissionError:
-        qWarning() << "QLockFile PermissionError: Unable to access lock file at" << _lockFile.fileName();
+        qCWarning(RunGuardLog) << "QLockFile PermissionError: Unable to access lock file at" << _lockFile.fileName();
         break;
     case QLockFile::UnknownError:
-        qWarning() << "QLockFile UnknownError: An unknown error occurred with lock file at" << _lockFile.fileName();
+        qCWarning(RunGuardLog) << "QLockFile UnknownError: An unknown error occurred with lock file at"
+                               << _lockFile.fileName();
         break;
     default:
         break;
     }
 
-    return true;
+    return false;
 }
 
 bool RunGuard::tryToRun()
 {
-    return (_lockFile.isLocked() ? true : _lockFile.tryLock(0));
+    if (_lockFile.isLocked() || _lockFile.tryLock(0)) {
+        return true;
+    }
+
+    if (_lockFile.error() == QLockFile::LockFailedError) {
+        return false;
+    }
+
+    // The lock file could not be created, which says nothing about other instances: do not block start-up
+    qCWarning(RunGuardLog) << "Unable to create lock file" << _lockFile.fileName()
+                           << "QLockFile error:" << _lockFile.error();
+    return true;
 }
 
 void RunGuard::release()
@@ -70,13 +86,21 @@ QString RunGuard::generateKeyHash(const QString &key, const QString &salt)
 
 QString RunGuard::lockDir()
 {
-    QString dir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    QString dir;
+#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
+    // The temporary directory is shared between users here, and a user cannot remove another user's lock file.
+    // On the other platforms it is per-user already.
+    dir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+#endif
+    if (dir.isEmpty()) {
+        dir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    }
     if (dir.isEmpty()) {
         dir = QDir::tempPath();
     }
 
     if (!QDir().mkpath(dir)) {
-        qWarning() << "RunGuard: Failed to create lock directory:" << dir;
+        qCWarning(RunGuardLog) << "Failed to create lock directory:" << dir;
         return QString();
     }
 

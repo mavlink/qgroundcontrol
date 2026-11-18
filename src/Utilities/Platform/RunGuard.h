@@ -12,7 +12,8 @@ public:
     // Returns true if another instance holds the lock.
     bool isAnotherRunning();
 
-    // Attempts to acquire the single-instance lock.
+    // Attempts to acquire the single-instance lock. Returns false only if another instance holds it:
+    // a lock file that cannot be created for any other reason does not prevent running.
     bool tryToRun();
 
     // Releases the lock if held.

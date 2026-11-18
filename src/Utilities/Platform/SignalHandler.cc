@@ -44,6 +44,11 @@ int SignalHandler::consoleCtrlHandler(unsigned long evt)
             return 0;
         }
         (void) SetEvent(static_cast<HANDLE>(self->_signalEvent)); // non-blocking
+        if ((evt != CTRL_C_EVENT) && (evt != CTRL_BREAK_EVENT)) {
+            // Windows terminates the process when this handler returns, and after about 5 s in any case.
+            // Stay here so that the requested quit can run: a normal exit ends this thread earlier.
+            Sleep(5000);
+        }
         return 1;
     }
     default:
@@ -84,7 +89,7 @@ int SignalHandler::setupSignalHandlers()
             QCoreApplication::quit();
         } else {
             qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
-            _exit(0);
+            _exit(1);
         }
     });
 
@@ -105,6 +110,10 @@ int SignalHandler::setupSignalHandlers()
 #include <fcntl.h>
 
 #include <QtCore/QSocketNotifier>
+
+// The signal handlers may only use lock-free atomics
+static_assert(std::atomic<int>::is_always_lock_free);
+static_assert(std::atomic<SignalHandler*>::is_always_lock_free);
 
 SignalHandler::~SignalHandler()
 {
@@ -159,9 +168,11 @@ int SignalHandler::setupSignalHandlers()
     (void) fcntl(_sigTermFd[0], F_SETFD, fcntl(_sigTermFd[0], F_GETFD, 0) | FD_CLOEXEC);
     (void) fcntl(_sigTermFd[1], F_SETFD, fcntl(_sigTermFd[1], F_GETFD, 0) | FD_CLOEXEC);
 
-    // Non-blocking read ends
+    // Non-blocking on both ends: a signal handler must not block when its socket is full
     (void) fcntl(_sigIntFd[0],  F_SETFL, fcntl(_sigIntFd[0],  F_GETFL, 0) | O_NONBLOCK);
+    (void) fcntl(_sigIntFd[1], F_SETFL, fcntl(_sigIntFd[1], F_GETFL, 0) | O_NONBLOCK);
     (void) fcntl(_sigTermFd[0], F_SETFL, fcntl(_sigTermFd[0], F_GETFL, 0) | O_NONBLOCK);
+    (void) fcntl(_sigTermFd[1], F_SETFL, fcntl(_sigTermFd[1], F_GETFL, 0) | O_NONBLOCK);
 
     _notifierInt  = new QSocketNotifier(_sigIntFd[0],  QSocketNotifier::Read, this);
     _notifierTerm = new QSocketNotifier(_sigTermFd[0], QSocketNotifier::Read, this);
@@ -192,13 +203,9 @@ void SignalHandler::_onSigInt()
     char b;
     [[maybe_unused]] const ssize_t n = ::read(_sigIntFd[0], &b, 1); // single-byte drain
 
-    if (!std::exchange(_sigIntTriggered, true)) {
-        qCInfo(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
-        QCoreApplication::quit();
-    } else {
-        qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
-        _exit(0);
-    }
+    // A second SIGINT never gets here: _intSignalHandler() exits the process
+    qCInfo(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
+    QCoreApplication::quit();
 }
 
 void SignalHandler::_onSigTerm()
@@ -210,17 +217,22 @@ void SignalHandler::_onSigTerm()
     QCoreApplication::quit();
 }
 
+// The functions below run in signal context: async-signal-safe calls only (see signal-safety(7)), no logging.
+
 void SignalHandler::_intSignalHandler(int signum)
 {
     if (signum != SIGINT) {
         return;
     }
-    const SignalHandler* self = current();
+    SignalHandler* self = current();
     if (!self) {
         return;
     }
-    const char b = 1;
-    [[maybe_unused]] const ssize_t n = ::write(self->_sigIntFd[1], &b, sizeof(b)); // no logging from signal handler
+    // Decided here and not in _onSigInt(), which never runs when the event loop is blocked
+    if (self->_sigIntCount.fetch_add(1, std::memory_order_relaxed) > 0) {
+        ::_exit(128 + signum);
+    }
+    _wakeEventLoop(self->_sigIntFd[1]);
 }
 
 void SignalHandler::_termSignalHandler(int signum)
@@ -232,8 +244,16 @@ void SignalHandler::_termSignalHandler(int signum)
     if (!self) {
         return;
     }
+    _wakeEventLoop(self->_sigTermFd[1]);
+}
+
+void SignalHandler::_wakeEventLoop(int fd)
+{
+    const int savedErrno = errno;
     const char b = 1;
-    [[maybe_unused]] const ssize_t n = ::write(self->_sigTermFd[1], &b, sizeof(b)); // no logging from signal handler
+    // Fails when the socket is full, in which case a wake-up is already pending
+    [[maybe_unused]] const ssize_t n = ::write(fd, &b, sizeof(b));
+    errno = savedErrno;
 }
 
 #endif // POSIX
