@@ -167,9 +167,7 @@ void SkippableAsyncStateTest::_testConnectToCompletion()
                 state->connectToCompletion(&signalSource, &QObject::objectNameChanged);
             }
         });
-    auto* finalState = addFinalState(&machine);
-    skippableState->addTransition(skippableState, &QGCState::advance, finalState);
-    machine.setInitialState(skippableState);
+    finishOn(machine, skippableState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     QVERIFY(startAndWaitForEntered(&machine, skippableState));

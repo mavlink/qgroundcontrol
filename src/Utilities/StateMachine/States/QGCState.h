@@ -56,6 +56,11 @@ public:
     /// Convenience overload for setting visible state on widgets/controls
     void setVisible(QObject* object, bool visible);
 
+protected:
+    /// @return vehicle(). Without one, a warning that names the state is logged to @a category, for a state that
+    ///         fails because it has none.
+    Vehicle* vehicleOrWarn(const QLoggingCategory& (*category)() = QGCStateMachineLog) const;
+
 private:
     QAbstractState* _localErrorState = nullptr;
 };

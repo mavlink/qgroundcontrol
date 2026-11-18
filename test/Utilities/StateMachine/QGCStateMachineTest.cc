@@ -7,7 +7,6 @@
 
 #include "QGCStateMachine.h"
 #include "StateTestCommon.h"
-#include "WaitStateBase.h"
 
 namespace {
 float _spyFloatArg(const QSignalSpy& spy, int index)
@@ -15,28 +14,6 @@ float _spyFloatArg(const QSignalSpy& spy, int index)
     return spy.at(index).at(0).toFloat();
 }
 }
-
-/// Minimal concrete implementation of WaitStateBase for testing
-class MinimalTestWaitState : public WaitStateBase
-{
-    Q_OBJECT
-public:
-    MinimalTestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
-protected:
-    void connectWaitSignal() override {}
-    void disconnectWaitSignal() override {}
-};
-
-class ErroringAbstractState : public QGCAbstractState
-{
-public:
-    ErroringAbstractState(const QString& name, QState* parent)
-        : QGCAbstractState(name, parent) {}
-
-    void triggerError() { emit error(); }
-};
-
 
 void QGCStateMachineTest::_testQGCStateMachineFactories()
 {
@@ -95,7 +72,7 @@ void QGCStateMachineTest::_testGlobalErrorStateWithAbstractState()
     auto* errorState = new FunctionState(QStringLiteral("GlobalError"), &machine, []() {});
     machine.setGlobalErrorState(errorState);
 
-    auto* abstractState = new ErroringAbstractState(QStringLiteral("AbstractError"), &machine);
+    auto* abstractState = new TestAbstractState(QStringLiteral("AbstractError"), &machine);
     machine.registerState(abstractState);
 
     const auto transitions = abstractState->transitions();
@@ -115,7 +92,7 @@ void QGCStateMachineTest::_testGlobalErrorStateWithAbstractState()
     QSignalSpy errorSpy(abstractState, &QGCAbstractState::error);
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
     QVERIFY(startAndWaitForEntered(&machine, abstractState));
-    abstractState->triggerError();
+    abstractState->emitError();
     QVERIFY((errorSpy.count() > 0) || errorSpy.wait(TestTimeout::shortMs()));
     QVERIFY((stoppedSpy.count() > 0) || stoppedSpy.wait(TestTimeout::shortMs()));
 }
@@ -397,66 +374,6 @@ void QGCStateMachineTest::_testPropertyAssignment()
 // Transition Builder Tests
 // -----------------------------------------------------------------------------
 
-void QGCStateMachineTest::_testRetryTransitionBuilder()
-{
-    ignoreTimeoutWarnings();
-    QGCStateMachine machine(QStringLiteral("RetryBuilderTest"), nullptr);
-    int retryCount = 0;
-
-    expectLogMessage("Utilities.StateMachine.RetryTransition",
-                     QtWarningMsg,
-                     QRegularExpression("timeout after 2 retries, advancing"));
-
-    auto* state1 = new MinimalTestWaitState(QStringLiteral("State1"), &machine, 50);
-    auto* finalState = machine.addFinalState();
-
-    auto* retry = machine.addRetryTransition(state1, &WaitStateBase::timeout, finalState,
-                                              [&retryCount]() { retryCount++; }, 2);
-
-    machine.setInitialState(state1);
-
-    QCOMPARE(retry->maxRetries(), 2);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    verifyExpectedLogMessage();
-    QCOMPARE(retryCount, 2);
-}
-
-void QGCStateMachineTest::_testGuardedTransitionBuilder_data()
-{
-    QTest::addColumn<bool>("guardResult");
-
-    QTest::newRow("guard allows the transition") << true;
-    QTest::newRow("guard blocks the transition") << false;
-}
-
-void QGCStateMachineTest::_testGuardedTransitionBuilder()
-{
-    QFETCH(bool, guardResult);
-
-    QGCStateMachine machine(QStringLiteral("GuardedBuilderTest"), nullptr);
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* guarded = new QGCState(QStringLiteral("Guarded"), &machine);
-    auto* fallback = new QGCState(QStringLiteral("Fallback"), &machine);
-    auto* finalState = machine.addFinalState();
-
-    auto* transition =
-        machine.addGuardedTransition(state1, &QState::entered, guarded, [guardResult]() { return guardResult; });
-    state1->addTransition(state1, &QState::entered, fallback);
-    guarded->addTransition(guarded, &QState::entered, finalState);
-    fallback->addTransition(fallback, &QState::entered, finalState);
-    machine.setInitialState(state1);
-
-    QCOMPARE(transition->sourceState(), state1);
-    QCOMPARE(transition->targetState(), guarded);
-
-    QSignalSpy guardedEnteredSpy(guarded, &QState::entered);
-    QSignalSpy fallbackEnteredSpy(fallback, &QState::entered);
-    QVERIFY(startAndWaitForFinished(&machine));
-    QCOMPARE(guardedEnteredSpy.count(), guardResult ? 1 : 0);
-    QCOMPARE(fallbackEnteredSpy.count(), guardResult ? 0 : 1);
-}
-
 void QGCStateMachineTest::_testTransitionBuildersTakeSignalOfDerivedState()
 {
     // advance() is declared by a class derived from QState: the builders take it from a state of that class
@@ -715,7 +632,5 @@ void QGCStateMachineTest::_testStateHistoryLimit()
     machine.postEvent(QStringLiteral("finish"));
     QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
 }
-
-#include "QGCStateMachineTest.moc"
 
 UT_REGISTER_TEST(QGCStateMachineTest, TestLabel::Unit, TestLabel::Utilities)

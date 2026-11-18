@@ -1,30 +1,34 @@
 #pragma once
 
-#include "AsyncFunctionState.h"
-#include "DelayState.h"
-#include "FunctionState.h"
-#include "QGCAbstractTransition.h"
-#include "QGCSignalTransition.h"
-#include "GuardedTransition.h"
-#include "MachineEventTransition.h"
-#include "RetryTransition.h"
-#include "QGCAbstractState.h"
-#include "QGCFinalState.h"
-#include "QGCStateMachineEvent.h"
-#include "SendMavlinkCommandState.h"
-#include "SendMavlinkMessageState.h"
-#include "SkippableAsyncState.h"
-#include "RetryableRequestMessageState.h"
-#include "WaitForMavlinkMessageState.h"
-#include "WaitForParamResponseState.h"
-#include "WaitStateBase.h"
+#include <concepts>
+#include <functional>
+#include <type_traits>
 
-#include <QtStateMachine/QStateMachine>
 #include <QtCore/QAbstractAnimation>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtStateMachine/QStateMachine>
 
-#include <functional>
+#include "AsyncFunctionState.h"
+#include "CompletionWaitState.h"
+#include "DelayState.h"
+#include "FunctionState.h"
+#include "GuardedTransition.h"
+#include "MachineEventTransition.h"
+#include "QGCAbstractState.h"
+#include "QGCFinalState.h"
+#include "QGCSignalTransition.h"
+#include "QGCStateMachineEvent.h"
+#include "RetryTransition.h"
+#include "RetryableRequestMessageState.h"
+#include "SendMavlinkCommandState.h"
+#include "SendMavlinkMessageState.h"
+#include "SignalSender.h"
+#include "SkippableAsyncState.h"
+#include "VehicleMessageWaitState.h"
+#include "WaitForMavlinkMessageState.h"
+#include "WaitForParamResponseState.h"
+#include "WaitStateBase.h"
 
 class Vehicle;
 
@@ -162,16 +166,16 @@ public:
 
     /// The class of a state that is the source of a transition and the sender of the signal @p Func that triggers
     /// it: the class that declares the signal, or QState for a signal that QState inherits. A factory declares its
-    /// source state with it so that only the signal is deduced and the state converts to the signal's class.
+    /// source state with it so that only the signal is deduced and the state converts to the signal's class (see
+    /// SignalSender.h).
     template <typename Func>
     using SignalSourceState =
-        std::conditional_t<std::is_base_of_v<typename QtPrivate::FunctionPointer<Func>::Object, QState>, QState,
-                           typename QtPrivate::FunctionPointer<Func>::Object>;
+        std::conditional_t<std::is_base_of_v<SignalSender<Func>, QState>, QState, SignalSender<Func>>;
 
     /// Create a simple signal transition between states
     /// @param from Source state, which emits the signal
     template <typename Func>
-        requires std::is_base_of_v<QState, SignalSourceState<Func>>
+        requires std::derived_from<SignalSourceState<Func>, QState>
     QSignalTransition* addTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
                                      QAbstractAnimation* animation = nullptr)
     {
@@ -192,7 +196,7 @@ public:
     /// @param from Source state, which emits the signal
     /// @param guard Predicate that must return true for transition
     template <typename Func>
-        requires std::is_base_of_v<QState, SignalSourceState<Func>>
+        requires std::derived_from<SignalSourceState<Func>, QState>
     GuardedTransition* addGuardedTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
                                             GuardedTransition::Guard guard, QAbstractAnimation* animation = nullptr)
     {
@@ -210,16 +214,15 @@ public:
                                                QAbstractAnimation* animation = nullptr);
 
     /// Create a retry transition that retries an action before advancing
-    /// @param from Source state (must match signal's object type)
+    /// @param from Source state, which emits the signal
     /// @param signal Signal that triggers retry evaluation
     /// @param to Target state (used after max retries)
     /// @param retryAction Action to perform on retry
     /// @param maxRetries Maximum number of retries before advancing
-    template<typename SenderType, typename Func>
-    RetryTransition* addRetryTransition(SenderType* from, Func signal,
-                                        QAbstractState* to,
-                                        std::function<void()> retryAction,
-                                        int maxRetries = 1)
+    template <typename Func>
+        requires std::derived_from<SignalSourceState<Func>, QState>
+    RetryTransition* addRetryTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
+                                        std::function<void()> retryAction, int maxRetries = 1)
     {
         auto* transition = new RetryTransition(from, signal, to, std::move(retryAction), maxRetries);
         // Qualified, because a source state that is a QGCStateMachine has addTransition() in place of QState's
@@ -303,3 +306,12 @@ private:
     QStringList _stateHistory;
     int _stateHistoryLimit = 20;
 };
+
+/// @return The QGCStateMachine that @p state belongs to, nullptr if it belongs to another kind of machine or to none
+QGCStateMachine* qgcStateMachineOf(const QAbstractState* state);
+
+/// @overload
+QGCStateMachine* qgcStateMachineOf(const QAbstractTransition* transition);
+
+/// @return The name of @p state for a log line: "Machine:State" in a QGCStateMachine, the name of the state otherwise
+QString qualifiedStateName(const QAbstractState* state);

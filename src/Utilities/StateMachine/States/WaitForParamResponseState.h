@@ -3,8 +3,7 @@
 #include <cstdint>
 #include <functional>
 
-#include "MAVLinkMessageType.h"
-#include "WaitStateBase.h"
+#include "VehicleMessageWaitState.h"
 
 /// \brief Waits for either PARAM_VALUE (success) or PARAM_ERROR (rejection) from the vehicle.
 ///
@@ -12,7 +11,7 @@
 /// On PARAM_ERROR matching predicate: stores error info, calls waitFailed() (emits error())
 /// On timeout: existing timeout() signal fires (for retry path)
 ///
-class WaitForParamResponseState : public WaitStateBase
+class WaitForParamResponseState : public VehicleMessageWaitState
 {
     Q_OBJECT
     Q_DISABLE_COPY(WaitForParamResponseState)
@@ -35,11 +34,7 @@ public:
     QString lastParamErrorString() const { return _lastParamErrorString; }
 
 protected:
-    void connectWaitSignal() override;
-    void disconnectWaitSignal() override;
-
-private slots:
-    void _messageReceived(const mavlink_message_t &message);
+    void handleMessage(const mavlink_message_t& message) override;
 
 private:
     static QString _paramErrorToString(uint8_t errorCode);

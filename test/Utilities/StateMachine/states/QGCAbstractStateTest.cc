@@ -5,27 +5,6 @@
 
 #include "StateTestCommon.h"
 
-
-/// Concrete implementation for testing QGCAbstractState
-class TestAbstractState : public QGCAbstractState
-{
-    Q_OBJECT
-public:
-    TestAbstractState(const QString& name, QState* parent)
-        : QGCAbstractState(name, parent) {}
-
-    void emitAdvance() { emit advance(); }
-    void emitError() { emit error(); }
-    void invokeExitForTest() { onExit(nullptr); }
-
-    bool onEnterCalled = false;
-    bool onLeaveCalled = false;
-
-protected:
-    void onEnter() override { onEnterCalled = true; }
-    void onLeave() override { onLeaveCalled = true; }
-};
-
 void QGCAbstractStateTest::_testEntryAndExitHooks_data()
 {
     QTest::addColumn<bool>("withEntryCallback");
@@ -80,6 +59,17 @@ void QGCAbstractStateTest::_testStateName()
     QCOMPARE(state->objectName(), QStringLiteral("MyStateName"));
 }
 
+void QGCAbstractStateTest::_testStateNameInQGCStateMachine()
+{
+    QGCStateMachine machine(QStringLiteral("Machine"), nullptr);
+
+    auto* state = new TestAbstractState(QStringLiteral("State"), &machine);
+    auto* finalState = new QGCFinalState(QStringLiteral("Final"), &machine);
+
+    QCOMPARE(state->stateName(), QStringLiteral("Machine:State"));
+    QCOMPARE(finalState->stateName(), QStringLiteral("Machine:Final"));
+}
+
 void QGCAbstractStateTest::_testSignalStopsMachine_data()
 {
     QTest::addColumn<bool>("emitError");
@@ -132,7 +122,5 @@ void QGCAbstractStateTest::_testEventHandler()
     QCoreApplication::sendEvent(state, &event);
     QVERIFY(handlerCalled);
 }
-
-#include "QGCAbstractStateTest.moc"
 
 UT_REGISTER_TEST(QGCAbstractStateTest, TestLabel::Unit, TestLabel::Utilities)

@@ -49,8 +49,7 @@ void SendMavlinkCommandState::onWaitEntered()
         return;
     }
 
-    if (!vehicle()) {
-        qCWarning(QGCStateMachineLog) << "No vehicle available to send command" << stateName();
+    if (!vehicleOrWarn()) {
         waitFailed();
         return;
     }

@@ -46,9 +46,8 @@ void RetryableRequestMessageState::onWaitExited()
 
 void RetryableRequestMessageState::_sendRequest()
 {
-    Vehicle* v = vehicle();
+    Vehicle* v = vehicleOrWarn(RetryableRequestMessageStateLog);
     if (!v) {
-        qCWarning(RetryableRequestMessageStateLog) << stateName() << "No vehicle available";
         waitFailed();
         return;
     }

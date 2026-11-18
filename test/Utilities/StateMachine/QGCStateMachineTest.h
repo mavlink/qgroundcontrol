@@ -23,8 +23,6 @@ private slots:
     void _testPropertyAssignment();
 
     // Transition builders
-    void _testRetryTransitionBuilder();
-    UT_PARAMETERIZED_TEST(_testGuardedTransitionBuilder);
     void _testTransitionBuildersTakeSignalOfDerivedState();
 
     // Progress and state history

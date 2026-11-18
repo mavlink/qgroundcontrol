@@ -34,10 +34,7 @@ void RetryableRequestMessageStateTest::_testSuccessFirstAttempt()
         },
         2  // max retries
     );
-    auto* finalState = new QFinalState(&machine);
-
-    requestState->addTransition(requestState, &QGCState::advance, finalState);
-    machine.setInitialState(requestState);
+    finishOn(machine, requestState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
@@ -76,10 +73,7 @@ void RetryableRequestMessageStateTest::_testRetryOnFailure()
         MAV_COMP_ID_AUTOPILOT1,
         1000  // 1 second timeout per attempt
     );
-    auto* finalState = new QFinalState(&machine);
-
-    requestState->addTransition(requestState, &QGCState::advance, finalState);
-    machine.setInitialState(requestState);
+    finishOn(machine, requestState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
@@ -148,10 +142,7 @@ void RetryableRequestMessageStateTest::_testRetryAfterTimeout()
         QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG,
         [&handlerCallCount](Vehicle*, const mavlink_message_t&) { handlerCallCount++; }, maxRetries,
         MAV_COMP_ID_AUTOPILOT1, TestTimeout::shortMs());
-    auto* finalState = new QFinalState(&machine);
-
-    requestState->addTransition(requestState, &QGCState::advance, finalState);
-    machine.setInitialState(requestState);
+    finishOn(machine, requestState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
@@ -216,15 +207,13 @@ void RetryableRequestMessageStateTest::_testMaxRetriesExhausted()
         MAV_COMP_ID_AUTOPILOT1,
         500                     // Short timeout
     );
-    auto* finalState = new QFinalState(&machine);
 
     connect(requestState, &RetryableRequestMessageState::retriesExhausted, this, [&retriesExhaustedEmitted]() {
         retriesExhaustedEmitted = true;
     });
 
     // Default behavior: advance even after max retries (graceful degradation)
-    requestState->addTransition(requestState, &QGCState::advance, finalState);
-    machine.setInitialState(requestState);
+    finishOn(machine, requestState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
@@ -298,10 +287,7 @@ void RetryableRequestMessageStateTest::_testVehicleDestroyedWhileMachineAlive()
     QGCStateMachine machine(QStringLiteral("TestMachine"), _vehicle);
     auto* requestState =
         new RetryableRequestMessageState(QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG);
-    auto* finalState = new QFinalState(&machine);
-
-    requestState->addTransition(requestState, &QGCState::error, finalState);
-    machine.setInitialState(requestState);
+    finishOn(machine, requestState, &QGCState::error);
     QCOMPARE(machine.vehicle(), _vehicle);
 
     const QPointer<Vehicle> vehicleGuard(_vehicle);

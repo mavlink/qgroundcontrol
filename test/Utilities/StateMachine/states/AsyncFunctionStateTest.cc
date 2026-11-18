@@ -132,9 +132,7 @@ void AsyncFunctionStateTest::_testConnectToCompletion()
                 state->connectToCompletion(&signalSource, &QObject::objectNameChanged);
             }
         });
-    auto* finalState = addFinalState(&machine);
-    asyncState->addTransition(asyncState, &QGCState::advance, finalState);
-    machine.setInitialState(asyncState);
+    finishOn(machine, asyncState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     QVERIFY(startAndWaitForEntered(&machine, asyncState));

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "WaitStateBase.h"
-
 #include <functional>
+
+#include "CompletionWaitState.h"
 
 /// \brief Combines skip condition checking with async operation setup in a single state.
 ///
@@ -31,7 +31,7 @@
 /// missionState->addTransition(missionState, &SkippableAsyncState::skipped, nextState);
 /// @endcode
 ///
-class SkippableAsyncState : public WaitStateBase
+class SkippableAsyncState : public CompletionWaitState
 {
     Q_OBJECT
     Q_DISABLE_COPY(SkippableAsyncState)
@@ -55,31 +55,6 @@ public:
                         SkipAction skipAction = nullptr,
                         int timeoutMsecs = 0);
 
-    /// Call this to signal that the async operation has completed successfully
-    void complete() { waitComplete(); }
-
-    /// Call this to signal that the async operation has failed
-    void fail() { waitFailed(); }
-
-    /// Connect to an external signal that will trigger completion
-    /// @param sender The QObject that will emit the completion signal
-    /// @param signal The signal that indicates completion
-    template<typename Func>
-    void connectToCompletion(typename QtPrivate::FunctionPointer<Func>::Object* sender, Func signal)
-    {
-        _completionConnection = connect(sender, signal, this, [this]() {
-            complete();
-        });
-    }
-
-    /// Connect to an external signal that will trigger completion, with a slot
-    /// Useful when you need to process the signal data before completing
-    template<typename Func, typename Slot>
-    void connectToCompletion(typename QtPrivate::FunctionPointer<Func>::Object* sender, Func signal, Slot slot)
-    {
-        _completionConnection = connect(sender, signal, this, slot);
-    }
-
     /// Set the skip predicate
     void setSkipPredicate(SkipPredicate predicate) { _skipPredicate = std::move(predicate); }
 
@@ -94,13 +69,10 @@ signals:
     void skipped();
 
 protected:
-    void connectWaitSignal() override;
-    void disconnectWaitSignal() override;
     void onWaitEntered() override;
 
 private:
     SkipPredicate _skipPredicate;
     SetupFunction _setupFunction;
     SkipAction _skipAction;
-    QMetaObject::Connection _completionConnection;
 };

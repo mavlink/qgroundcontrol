@@ -1,8 +1,9 @@
 #pragma once
 
-#include "QGCSignalTransition.h"
-
 #include <functional>
+
+#include "QGCSignalTransition.h"
+#include "SignalSender.h"
 
 /// \brief A transition that only fires if a guard predicate returns true
 ///
@@ -21,11 +22,8 @@ public:
     /// @param signal Signal that triggers the transition
     /// @param target Target state
     /// @param guard Predicate that must return true for transition to fire
-    template<typename Func>
-    GuardedTransition(const typename QtPrivate::FunctionPointer<Func>::Object* sender,
-                      Func signalFn,
-                      QAbstractState* target,
-                      Guard guard)
+    template <typename Func>
+    GuardedTransition(const SignalSender<Func>* sender, Func signalFn, QAbstractState* target, Guard guard)
         : QGCSignalTransition(sender, signalFn)
         , _guard(std::move(guard))
     {
@@ -36,10 +34,8 @@ public:
     /// @param sender Object that emits the signal
     /// @param signal Signal that triggers the transition
     /// @param guard Predicate that must return true for transition to fire
-    template<typename Func>
-    GuardedTransition(const typename QtPrivate::FunctionPointer<Func>::Object* sender,
-                      Func signalFn,
-                      Guard guard)
+    template <typename Func>
+    GuardedTransition(const SignalSender<Func>* sender, Func signalFn, Guard guard)
         : QGCSignalTransition(sender, signalFn)
         , _guard(std::move(guard))
     {

@@ -3,30 +3,6 @@
 
 #include <QtCore/QCoreApplication>
 
-
-/// Concrete implementation for testing WaitStateBase
-class TestWaitState : public WaitStateBase
-{
-    Q_OBJECT
-public:
-    TestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
-
-    void triggerComplete() { waitComplete(); }
-    void triggerFailed() { waitFailed(); }
-
-    bool connectCalled = false;
-    bool disconnectCalled = false;
-    int waitExitedCalls = 0;
-
-protected:
-    void connectWaitSignal() override { connectCalled = true; }
-    void disconnectWaitSignal() override { disconnectCalled = true; }
-
-    void onWaitExited() override { waitExitedCalls++; }
-};
-
-
 void WaitStateBaseTest::_testTimeoutEmission()
 {
     ignoreTimeoutWarnings();
@@ -34,10 +10,7 @@ void WaitStateBaseTest::_testTimeoutEmission()
     const int timeoutMs = 50;
 
     auto* waitState = new TestWaitState(QStringLiteral("TestTimeout"), &machine, timeoutMs);
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::timeout, finalState);
-    machine.setInitialState(waitState);
+    finishOn(machine, waitState, &WaitStateBase::timeout);
 
     QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
     QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
@@ -199,10 +172,7 @@ void WaitStateBaseTest::_testNoTimeoutWhenZero()
 
     // Create with 0 timeout - should never timeout
     auto* waitState = new TestWaitState(QStringLiteral("TestNoTimeout"), &machine, 0);
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
-    machine.setInitialState(waitState);
+    finishOn(machine, waitState, &WaitStateBase::completed);
 
     QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
 
@@ -223,10 +193,7 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
     const int timeoutMs = 200;
 
     auto* waitState = new TestWaitState(QStringLiteral("TestCancelTimeout"), &machine, timeoutMs);
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
-    machine.setInitialState(waitState);
+    finishOn(machine, waitState, &WaitStateBase::completed);
 
     QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
     QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
@@ -243,7 +210,5 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
     QCOMPARE(completedSpy.count(), 1);
     QCOMPARE(timeoutSpy.count(), 0);  // Timeout should have been cancelled
 }
-
-#include "WaitStateBaseTest.moc"
 
 UT_REGISTER_TEST(WaitStateBaseTest, TestLabel::Unit, TestLabel::Utilities)

@@ -13,7 +13,7 @@ QGCSignalTransition::QGCSignalTransition(const QObject* sender, const char* sign
 
 QGCStateMachine* QGCSignalTransition::machine() const
 {
-    return qobject_cast<QGCStateMachine*>(QSignalTransition::machine());
+    return qgcStateMachineOf(this);
 }
 
 Vehicle* QGCSignalTransition::vehicle() const

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "QGCSignalTransition.h"
-
 #include <functional>
+
+#include "QGCSignalTransition.h"
+#include "SignalSender.h"
 
 /// \brief Transition that retries an action N times before advancing to target state.
 ///
@@ -37,11 +38,8 @@ public:
     /// @param target State to transition to after max retries exhausted
     /// @param retryAction Action to invoke on each retry attempt
     /// @param maxRetries Maximum retry attempts before transitioning (default: 1)
-    template<typename Func>
-    RetryTransition(const typename QtPrivate::FunctionPointer<Func>::Object* sender,
-                    Func signalFn,
-                    QAbstractState* target,
-                    RetryAction retryAction,
+    template <typename Func>
+    RetryTransition(const SignalSender<Func>* sender, Func signalFn, QAbstractState* target, RetryAction retryAction,
                     int maxRetries = 1)
         : QGCSignalTransition(sender, signalFn)
         , _retryAction(std::move(retryAction))

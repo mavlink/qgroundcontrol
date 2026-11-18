@@ -3,38 +3,16 @@
 #include <utility>
 
 #include "MAVLinkLib.h"
-#include "Vehicle.h"
 
-WaitForParamResponseState::WaitForParamResponseState(QState *parent, int timeoutMsecs,
-                                                     Predicate paramValuePredicate,
+WaitForParamResponseState::WaitForParamResponseState(QState* parent, int timeoutMsecs, Predicate paramValuePredicate,
                                                      Predicate paramErrorPredicate)
-    : WaitStateBase(QStringLiteral("WaitForParamResponseState"), parent, timeoutMsecs)
+    : VehicleMessageWaitState(QStringLiteral("WaitForParamResponseState"), parent, timeoutMsecs)
     , _paramValuePredicate(std::move(paramValuePredicate))
     , _paramErrorPredicate(std::move(paramErrorPredicate))
 {
 }
 
-void WaitForParamResponseState::connectWaitSignal()
-{
-    Vehicle* const sourceVehicle = vehicle();
-    if (!sourceVehicle) {
-        qCWarning(QGCStateMachineLog) << "No vehicle available to wait for parameter response" << stateName();
-        waitFailed();
-        return;
-    }
-
-    connect(sourceVehicle, &Vehicle::mavlinkMessageReceived, this, &WaitForParamResponseState::_messageReceived,
-            Qt::UniqueConnection);
-}
-
-void WaitForParamResponseState::disconnectWaitSignal()
-{
-    if (vehicle()) {
-        disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForParamResponseState::_messageReceived);
-    }
-}
-
-void WaitForParamResponseState::_messageReceived(const mavlink_message_t &message)
+void WaitForParamResponseState::handleMessage(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
         if (_paramValuePredicate && !_paramValuePredicate(message)) {

@@ -39,7 +39,7 @@ void QGCSignalTransitionTest::_testTransitionMachineAccessorAbstract()
     auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, []() {});
     auto* finalState = machine.addFinalState();
 
-    // Test QGCAbstractTransition::machine() via MachineEventTransition
+    // Test MachineEventTransition::machine()
     QGCStateMachine* capturedMachine = nullptr;
     MachineEventTransition* transition = nullptr;
     transition = new MachineEventTransition(

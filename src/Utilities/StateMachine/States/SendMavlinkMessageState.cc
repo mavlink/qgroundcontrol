@@ -27,9 +27,8 @@ void SendMavlinkMessageState::_sendMessage()
         return;
     }
 
-    Vehicle* const targetVehicle = vehicle();
+    Vehicle* const targetVehicle = vehicleOrWarn();
     if (!targetVehicle) {
-        qCWarning(QGCStateMachineLog) << "No vehicle available to send MAVLink message" << stateName();
         emit error();
         return;
     }

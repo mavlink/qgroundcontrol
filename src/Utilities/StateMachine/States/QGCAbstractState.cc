@@ -9,7 +9,7 @@ QGCAbstractState::QGCAbstractState(const QString& stateName, QState* parent)
 
 QGCStateMachine* QGCAbstractState::machine() const
 {
-    return qobject_cast<QGCStateMachine*>(QState::machine());
+    return qgcStateMachineOf(this);
 }
 
 Vehicle* QGCAbstractState::vehicle() const
@@ -19,11 +19,7 @@ Vehicle* QGCAbstractState::vehicle() const
 
 QString QGCAbstractState::stateName() const
 {
-    if (machine()) {
-        return QStringLiteral("%1:%2").arg(machine()->machineName(), objectName());
-    } else {
-        return objectName();
-    }
+    return qualifiedStateName(this);
 }
 
 void QGCAbstractState::setCallbacks(EntryCallback onEntry, ExitCallback onExit)

@@ -17,6 +17,15 @@ void QGCState::setLocalErrorState(QAbstractState* errorState)
     }
 }
 
+Vehicle* QGCState::vehicleOrWarn(const QLoggingCategory& (*category)()) const
+{
+    Vehicle* const stateVehicle = vehicle();
+    if (!stateVehicle) {
+        qCWarning(category) << "No vehicle available" << stateName();
+    }
+    return stateVehicle;
+}
+
 void QGCState::setProperty(QObject* object, const char* name, const QVariant& value)
 {
     assignProperty(object, name, value);

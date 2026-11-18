@@ -322,3 +322,19 @@ float QGCStateMachine::_calculateProgress() const
 
     return (completedWeight + currentWeight * _progressSubProgress) / static_cast<float>(_progressTotalWeight);
 }
+
+QGCStateMachine* qgcStateMachineOf(const QAbstractState* state)
+{
+    return qobject_cast<QGCStateMachine*>(state->machine());
+}
+
+QGCStateMachine* qgcStateMachineOf(const QAbstractTransition* transition)
+{
+    return qobject_cast<QGCStateMachine*>(transition->machine());
+}
+
+QString qualifiedStateName(const QAbstractState* state)
+{
+    const QGCStateMachine* const machine = qgcStateMachineOf(state);
+    return machine ? QStringLiteral("%1:%2").arg(machine->objectName(), state->objectName()) : state->objectName();
+}

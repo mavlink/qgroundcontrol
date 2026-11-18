@@ -1,16 +1,20 @@
 #pragma once
 
-#include "QGCAbstractTransition.h"
-#include "QGCStateMachineEvent.h"
+#include <functional>
 
 #include <QtCore/QString>
-#include <functional>
+#include <QtStateMachine/QAbstractTransition>
+
+#include "QGCStateMachineEvent.h"
+
+class QGCStateMachine;
+class Vehicle;
 
 /// \brief Transition that fires when a named event is posted to the state machine
 ///
 /// Use this for events posted via QGCStateMachine::postEvent/postDelayedEvent.
 ///
-class MachineEventTransition : public QGCAbstractTransition
+class MachineEventTransition : public QAbstractTransition
 {
     Q_OBJECT
     Q_DISABLE_COPY(MachineEventTransition)
@@ -34,8 +38,16 @@ public:
     /// Access the event data from the last matched event
     QVariant eventData() const { return _lastEventData; }
 
+    /// Get the QGCStateMachine this transition belongs to
+    QGCStateMachine* machine() const;
+
+    /// Get the Vehicle associated with the state machine
+    Vehicle* vehicle() const;
+
 protected:
     bool eventTest(QEvent* event) override;
+
+    void onTransition(QEvent*) override {}
 
 private:
     QString _eventName;

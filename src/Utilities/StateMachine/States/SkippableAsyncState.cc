@@ -2,30 +2,13 @@
 
 #include <QtCore/QMetaObject>
 
-SkippableAsyncState::SkippableAsyncState(const QString& stateName,
-                                         QState* parent,
-                                         SkipPredicate skipPredicate,
-                                         SetupFunction setupFunc,
-                                         SkipAction skipAction,
-                                         int timeoutMsecs)
-    : WaitStateBase(stateName, parent, timeoutMsecs)
+SkippableAsyncState::SkippableAsyncState(const QString& stateName, QState* parent, SkipPredicate skipPredicate,
+                                         SetupFunction setupFunc, SkipAction skipAction, int timeoutMsecs)
+    : CompletionWaitState(stateName, parent, timeoutMsecs)
     , _skipPredicate(std::move(skipPredicate))
     , _setupFunction(std::move(setupFunc))
     , _skipAction(std::move(skipAction))
 {
-}
-
-void SkippableAsyncState::connectWaitSignal()
-{
-    // Connection is set up dynamically via connectToCompletion() in the setup function
-}
-
-void SkippableAsyncState::disconnectWaitSignal()
-{
-    if (_completionConnection) {
-        disconnect(_completionConnection);
-        _completionConnection = {};
-    }
 }
 
 void SkippableAsyncState::onWaitEntered()

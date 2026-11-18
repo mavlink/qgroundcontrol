@@ -1,36 +1,16 @@
 #include "WaitForMavlinkMessageState.h"
-#include "Vehicle.h"
 
 #include <utility>
 
-WaitForMavlinkMessageState::WaitForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, Predicate predicate)
-    : WaitStateBase(QStringLiteral("WaitForMavlinkMessageState:%1").arg(messageId), parent, timeoutMsecs)
+WaitForMavlinkMessageState::WaitForMavlinkMessageState(QState* parent, uint32_t messageId, int timeoutMsecs,
+                                                       Predicate predicate)
+    : VehicleMessageWaitState(QStringLiteral("WaitForMavlinkMessageState:%1").arg(messageId), parent, timeoutMsecs)
     , _messageId(messageId)
     , _predicate(std::move(predicate))
 {
 }
 
-void WaitForMavlinkMessageState::connectWaitSignal()
-{
-    Vehicle* const sourceVehicle = vehicle();
-    if (!sourceVehicle) {
-        qCWarning(QGCStateMachineLog) << "No vehicle available to wait for message id" << _messageId << stateName();
-        waitFailed();
-        return;
-    }
-
-    connect(sourceVehicle, &Vehicle::mavlinkMessageReceived, this, &WaitForMavlinkMessageState::_messageReceived,
-            Qt::UniqueConnection);
-}
-
-void WaitForMavlinkMessageState::disconnectWaitSignal()
-{
-    if (vehicle()) {
-        disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForMavlinkMessageState::_messageReceived);
-    }
-}
-
-void WaitForMavlinkMessageState::_messageReceived(const mavlink_message_t &message)
+void WaitForMavlinkMessageState::handleMessage(const mavlink_message_t& message)
 {
     if (message.msgid != _messageId) {
         return;

@@ -1,16 +1,15 @@
 #pragma once
 
-#include "WaitStateBase.h"
-#include "MAVLinkMessageType.h"
-
 #include <cstdint>
 #include <functional>
+
+#include "VehicleMessageWaitState.h"
 
 /// \brief Waits for the specified MAVLink message from the vehicle
 ///
 /// Filters by message ID and optional predicate before advancing
 ///
-class WaitForMavlinkMessageState : public WaitStateBase
+class WaitForMavlinkMessageState : public VehicleMessageWaitState
 {
     Q_OBJECT
     Q_DISABLE_COPY(WaitForMavlinkMessageState)
@@ -28,11 +27,7 @@ public:
     uint32_t messageId() const { return _messageId; }
 
 protected:
-    void connectWaitSignal() override;
-    void disconnectWaitSignal() override;
-
-private slots:
-    void _messageReceived(const mavlink_message_t &message);
+    void handleMessage(const mavlink_message_t& message) override;
 
 private:
     uint32_t _messageId = 0U;

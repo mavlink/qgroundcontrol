@@ -22,16 +22,12 @@ QGCFinalState::QGCFinalState(QState* parent)
 
 QString QGCFinalState::stateName() const
 {
-    auto* m = machine();
-    if (m) {
-        return QStringLiteral("%1:%2").arg(objectName(), m->machineName());
-    }
-    return objectName();
+    return qualifiedStateName(this);
 }
 
 QGCStateMachine* QGCFinalState::machine() const
 {
-    return qobject_cast<QGCStateMachine*>(QFinalState::machine());
+    return qgcStateMachineOf(this);
 }
 
 Vehicle* QGCFinalState::vehicle() const

@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QtStateMachine/QSignalTransition>
 #include <QtCore/QString>
+#include <QtStateMachine/QSignalTransition>
+
+#include "SignalSender.h"
 
 class QGCStateMachine;
 class Vehicle;
@@ -17,9 +19,8 @@ public:
     QGCSignalTransition(QState* sourceState = nullptr);
     QGCSignalTransition(const QObject* sender, const char* signal, QState* sourceState = nullptr);
 
-    template<typename Func>
-    QGCSignalTransition(const typename QtPrivate::FunctionPointer<Func>::Object* sender,
-                        Func signalFn, QState* sourceState = nullptr)
+    template <typename Func>
+    QGCSignalTransition(const SignalSender<Func>* sender, Func signalFn, QState* sourceState = nullptr)
         : QSignalTransition(sender, signalFn, sourceState)
     {
     }

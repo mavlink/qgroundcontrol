@@ -10,6 +10,7 @@ target_sources(
         QGCStateMachine.h
         QGCStateMachineEvent.cc
         QGCStateMachineEvent.h
+        Helpers/SignalSender.h
         # States
         States/QGCAbstractState.cc
         States/QGCAbstractState.h
@@ -19,6 +20,8 @@ target_sources(
         States/QGCState.h
         States/AsyncFunctionState.cc
         States/AsyncFunctionState.h
+        States/CompletionWaitState.cc
+        States/CompletionWaitState.h
         States/DelayState.cc
         States/DelayState.h
         States/FunctionState.cc
@@ -29,6 +32,8 @@ target_sources(
         States/SendMavlinkMessageState.h
         States/SkippableAsyncState.cc
         States/SkippableAsyncState.h
+        States/VehicleMessageWaitState.cc
+        States/VehicleMessageWaitState.h
         States/WaitForMavlinkMessageState.cc
         States/WaitForMavlinkMessageState.h
         States/WaitForParamResponseState.cc
@@ -38,8 +43,6 @@ target_sources(
         States/RetryableRequestMessageState.cc
         States/RetryableRequestMessageState.h
         # Transitions
-        Transitions/QGCAbstractTransition.cc
-        Transitions/QGCAbstractTransition.h
         Transitions/QGCSignalTransition.cc
         Transitions/QGCSignalTransition.h
         Transitions/GuardedTransition.cc
@@ -54,6 +57,7 @@ target_include_directories(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Helpers
         ${CMAKE_CURRENT_SOURCE_DIR}/States
         ${CMAKE_CURRENT_SOURCE_DIR}/Transitions
 )

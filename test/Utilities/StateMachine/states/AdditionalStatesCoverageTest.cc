@@ -7,6 +7,7 @@
 #include "SendMavlinkCommandState.h"
 #include "SendMavlinkMessageState.h"
 #include "StateTestCommon.h"
+#include "Vehicle.h"
 #include "WaitForMavlinkMessageState.h"
 #include "WaitForParamResponseState.h"
 
@@ -49,16 +50,65 @@ void AdditionalStatesCoverageTest::_testVehicleStatesFailWithoutVehicle()
 
     QGCStateMachine machine(QStringLiteral("TestMachine"), nullptr);
     QGCState* const state = createState(&machine);
-    auto* finalState = addFinalState(&machine);
-
-    state->addTransition(state, &QGCState::error, finalState);
-    machine.setInitialState(state);
+    finishOn(machine, state, &QGCState::error);
 
     QSignalSpy errorSpy(state, &QGCState::error);
     expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("No vehicle"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QCOMPARE(errorSpy.count(), 1);
+}
+
+void AdditionalStatesCoverageTest::_testFunctionState()
+{
+    QStateMachine machine;
+    bool functionCalled = false;
+
+    auto* state =
+        new FunctionState(QStringLiteral("TestFunction"), &machine, [&functionCalled]() { functionCalled = true; });
+
+    QVERIFY(runStateToCompletion(state, &machine));
+    QVERIFY(functionCalled);
+}
+
+void AdditionalStatesCoverageTest::_testFunctionStateChain()
+{
+    QStateMachine machine;
+    QStringList executionOrder;
+
+    auto* state1 = new FunctionState(QStringLiteral("State1"), &machine,
+                                     [&executionOrder]() { executionOrder.append(QStringLiteral("state1")); });
+    auto* state2 = new FunctionState(QStringLiteral("State2"), &machine,
+                                     [&executionOrder]() { executionOrder.append(QStringLiteral("state2")); });
+    auto* state3 = new FunctionState(QStringLiteral("State3"), &machine,
+                                     [&executionOrder]() { executionOrder.append(QStringLiteral("state3")); });
+    auto* finalState = addFinalState(&machine);
+
+    state1->addTransition(state1, &QGCState::advance, state2);
+    state2->addTransition(state2, &QGCState::advance, state3);
+    state3->addTransition(state3, &QGCState::advance, finalState);
+    machine.setInitialState(state1);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(executionOrder.size(), 3);
+    QCOMPARE(executionOrder[0], QStringLiteral("state1"));
+    QCOMPARE(executionOrder[1], QStringLiteral("state2"));
+    QCOMPARE(executionOrder[2], QStringLiteral("state3"));
+}
+
+void AdditionalStatesCoverageTest::_testDelayState()
+{
+    QStateMachine machine;
+    const int delayMs = 100;
+
+    auto* delayState = new DelayState(&machine, delayMs);
+    finishOn(machine, delayState, &DelayState::delayComplete);
+
+    QElapsedTimer timer;
+    timer.start();
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QVERIFY(timer.elapsed() >= delayMs - 10);
 }
 
 void AdditionalStatesCoverageTest::_testDelayStateMachineStopEndsDelay_data()
@@ -138,6 +188,126 @@ void AdditionalStatesCoverageTest::_testDelayStateRestartStartsDelayOver()
     QCOMPARE(enteredSpy.count(), 2);
     QCOMPARE(delayCompleteSpy.count(), 1);
     QVERIFY2(delayTakenMs >= delayMs - delayMs / 10, qPrintable(QString::number(delayTakenMs)));
+}
+
+void AdditionalStatesCoverageTest::_testQGCStateEntryExitCallbacks()
+{
+    QStateMachine machine;
+    bool entryCalled = false;
+    bool exitCalled = false;
+
+    auto* state = new QGCState(QStringLiteral("TestState"), &machine);
+    state->setOnEntry([&entryCalled]() { entryCalled = true; });
+    state->setOnExit([&exitCalled]() { exitCalled = true; });
+
+    finishOn(machine, state, &QState::entered);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QVERIFY(entryCalled);
+    QVERIFY(exitCalled);
+}
+
+void AdditionalStatesCoverageTest::_testQGCStateOnEnterOnLeaveVirtuals()
+{
+    // Test that onEnter/onLeave virtuals are called in the correct order
+    class TestState : public QGCState
+    {
+    public:
+        TestState(QState* parent)
+            : QGCState(QStringLiteral("TestState"), parent)
+        {}
+
+        bool onEnterCalled = false;
+        bool onLeaveCalled = false;
+
+    protected:
+        void onEnter() override { onEnterCalled = true; }
+
+        void onLeave() override { onLeaveCalled = true; }
+    };
+
+    QStateMachine machine;
+    auto* state = new TestState(&machine);
+    finishOn(machine, state, &QState::entered);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QVERIFY(state->onEnterCalled);
+    QVERIFY(state->onLeaveCalled);
+}
+
+void AdditionalStatesCoverageTest::_testQGCFinalState()
+{
+    QGCStateMachine machine(QStringLiteral("FinalStateTest"), nullptr);
+
+    auto* startState = new FunctionState(QStringLiteral("Start"), &machine, []() {});
+    auto* finalState = new QGCFinalState(QStringLiteral("MyFinal"), &machine);
+
+    startState->addTransition(startState, &QGCState::advance, finalState);
+    machine.setInitialState(startState);
+
+    QCOMPARE(finalState->objectName(), QStringLiteral("MyFinal"));
+
+    QVERIFY(startAndWaitForFinished(&machine));
+}
+
+void AdditionalStatesCoverageTest::_testWaitForMavlinkMessageCompletesOnFirstMatch_data()
+{
+    QTest::addColumn<bool>("usePredicate");
+
+    QTest::newRow("any message with the id") << false;
+    QTest::newRow("message the predicate accepts") << true;
+}
+
+void AdditionalStatesCoverageTest::_testWaitForMavlinkMessageCompletesOnFirstMatch()
+{
+    QFETCH(bool, usePredicate);
+
+    // An offline vehicle, whose message signal the test emits
+    Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
+    QGCStateMachine machine(QStringLiteral("TestMachine"), &vehicle);
+
+    constexpr uint8_t acceptedSystemId = 7;
+    int predicateCallCount = 0;
+    WaitForMavlinkMessageState::Predicate predicate;
+    if (usePredicate) {
+        predicate = [&predicateCallCount](const mavlink_message_t& message) {
+            predicateCallCount++;
+            return message.sysid == acceptedSystemId;
+        };
+    }
+    auto* const state = new WaitForMavlinkMessageState(&machine, MAVLINK_MSG_ID_DEBUG, 0, predicate);
+    state->addTransition(state, &QGCState::advance, addFinalState(&machine));
+    machine.setInitialState(state);
+
+    QSignalSpy completedSpy(state, &WaitStateBase::completed);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, state));
+
+    mavlink_message_t message{};
+    message.sysid = acceptedSystemId;
+    message.msgid = MAVLINK_MSG_ID_DEBUG_VECT;
+    emit vehicle.mavlinkMessageReceived(message);
+    QCOMPARE(completedSpy.count(), 0);
+    QCOMPARE(predicateCallCount, 0);
+
+    message.msgid = MAVLINK_MSG_ID_DEBUG;
+    if (usePredicate) {
+        message.sysid = acceptedSystemId + 1;
+        emit vehicle.mavlinkMessageReceived(message);
+        QCOMPARE(completedSpy.count(), 0);
+        QCOMPARE(predicateCallCount, 1);
+        message.sysid = acceptedSystemId;
+    }
+
+    emit vehicle.mavlinkMessageReceived(message);
+    QCOMPARE(completedSpy.count(), 1);
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::shortMs());
+
+    // The state has stopped listening
+    const int predicateCallsWhenCompleted = predicateCallCount;
+    emit vehicle.mavlinkMessageReceived(message);
+    QCOMPARE(completedSpy.count(), 1);
+    QCOMPARE(predicateCallCount, predicateCallsWhenCompleted);
 }
 
 UT_REGISTER_TEST(AdditionalStatesCoverageTest, TestLabel::Unit, TestLabel::Utilities)

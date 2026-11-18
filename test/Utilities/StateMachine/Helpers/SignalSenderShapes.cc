@@ -14,6 +14,7 @@
 #include "QGCState.h"
 #include "QGCStateMachine.h"
 #include "RetryTransition.h"
+#include "SignalSender.h"
 #include "SkippableAsyncState.h"
 
 // Compile-time checks only: the senders and signals that the templates taking a signal accept, and those they
@@ -125,6 +126,13 @@ template struct State<ConnectToCompletion<AsyncFunctionState>::OnSignalWithSlot>
 template struct State<ConnectToCompletion<SkippableAsyncState>::OnSignal>;
 template struct State<ConnectToCompletion<SkippableAsyncState>::OnSignalWithSlot>;
 
+// The sender is of the class that declares the signal, whichever class the signal is named through
+static_assert(std::is_same_v<SignalSender<decltype(&QTimer::timeout)>, QTimer>);
+static_assert(std::is_same_v<SignalSender<decltype(&QTimer::objectNameChanged)>, QObject>);
+static_assert(std::is_same_v<SignalSender<ConstMember>, QObject>);
+static_assert(std::is_same_v<SignalSender<NoexceptMember>, QObject>);
+static_assert(std::is_same_v<SignalSender<ConstNoexceptMember>, QObject>);
+
 // A signal name selects the overload that takes the signal as a string
 static_assert(std::is_constructible_v<QGCSignalTransition, const QObject*, const char*>);
 static_assert(std::is_constructible_v<QGCSignalTransition, const QObject*, const char*, QState*>);
@@ -146,12 +154,22 @@ concept MachineAddsGuardedTransition =
              GuardedTransition::Guard guard) { machine.addGuardedTransition(from, signal, target, guard); };
 
 template <typename SourceState, typename Func>
+concept MachineAddsRetryTransition =
+    requires(QGCStateMachine& machine, SourceState from, Func signal, QAbstractState* target,
+             RetryTransition::RetryAction action) { machine.addRetryTransition(from, signal, target, action); };
+
+template <typename SourceState, typename Func>
 struct MachineTransition : std::bool_constant<MachineAddsTransition<SourceState, Func>>
 {
 };
 
 template <typename SourceState, typename Func>
 struct MachineGuardedTransition : std::bool_constant<MachineAddsGuardedTransition<SourceState, Func>>
+{
+};
+
+template <typename SourceState, typename Func>
+struct MachineRetryTransition : std::bool_constant<MachineAddsRetryTransition<SourceState, Func>>
 {
 };
 
@@ -181,6 +199,7 @@ struct SourceStateFactory
 
 template struct SourceStateFactory<MachineTransition>;
 template struct SourceStateFactory<MachineGuardedTransition>;
+template struct SourceStateFactory<MachineRetryTransition>;
 
 // A signal name selects the overload that takes the signal as a string
 static_assert(MachineAddsTransition<QState*, const char*>);

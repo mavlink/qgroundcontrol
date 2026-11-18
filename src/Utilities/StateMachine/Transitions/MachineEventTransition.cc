@@ -1,17 +1,28 @@
 #include "MachineEventTransition.h"
-#include "QGCState.h"
+
+#include "QGCStateMachine.h"
 
 MachineEventTransition::MachineEventTransition(const QString& eventName, QAbstractState* target)
-    : QGCAbstractTransition(target)
-    , _eventName(eventName)
+    : MachineEventTransition(eventName, target, Guard())
 {
 }
 
 MachineEventTransition::MachineEventTransition(const QString& eventName, QAbstractState* target, Guard guard)
-    : QGCAbstractTransition(target)
-    , _eventName(eventName)
+    : _eventName(eventName)
     , _guard(std::move(guard))
 {
+    setTargetState(target);
+}
+
+QGCStateMachine* MachineEventTransition::machine() const
+{
+    return qgcStateMachineOf(this);
+}
+
+Vehicle* MachineEventTransition::vehicle() const
+{
+    auto* m = machine();
+    return m ? m->vehicle() : nullptr;
 }
 
 bool MachineEventTransition::eventTest(QEvent* event)
