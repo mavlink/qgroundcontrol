@@ -22,12 +22,6 @@ QString QGCAbstractState::stateName() const
     return qualifiedStateName(this);
 }
 
-void QGCAbstractState::setCallbacks(EntryCallback onEntry, ExitCallback onExit)
-{
-    _entryCallback = std::move(onEntry);
-    _exitCallback = std::move(onExit);
-}
-
 void QGCAbstractState::onEntry(QEvent* event)
 {
     QState::onEntry(event);

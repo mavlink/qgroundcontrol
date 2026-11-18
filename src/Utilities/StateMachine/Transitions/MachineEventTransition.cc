@@ -14,17 +14,6 @@ MachineEventTransition::MachineEventTransition(const QString& eventName, QAbstra
     setTargetState(target);
 }
 
-QGCStateMachine* MachineEventTransition::machine() const
-{
-    return qgcStateMachineOf(this);
-}
-
-Vehicle* MachineEventTransition::vehicle() const
-{
-    auto* m = machine();
-    return m ? m->vehicle() : nullptr;
-}
-
 bool MachineEventTransition::eventTest(QEvent* event)
 {
     if (event->type() != QGCStateMachineEvent::EventType) {

@@ -8,7 +8,6 @@ DelayState::DelayState(QState* parentState, int delayMsecs)
     _delayTimer.setSingleShot(true);
     _delayTimer.setInterval(delayMsecs);
 
-    connect(&_delayTimer, &QTimer::timeout, this, &DelayState::delayComplete);
     connect(&_delayTimer, &QTimer::timeout, this, &DelayState::advance);
 
     connect(this, &QState::entered, this, [this, delayMsecs] ()

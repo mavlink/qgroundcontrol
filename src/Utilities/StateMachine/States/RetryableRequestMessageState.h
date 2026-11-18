@@ -26,7 +26,7 @@ class Vehicle;
 /// destroyed while its answer is awaited fails the state.
 ///
 /// Emits advance() on success or after all retries exhausted.
-/// Emits error() only if explicitly requested via failOnMaxRetries, preceded by timeout() when the
+/// Emits error() only if explicitly requested via failOnMaxRetries, preceded by timedOut() when the
 /// last attempt timed out.
 ///
 /// Example usage:
@@ -80,9 +80,6 @@ public:
 
     /// Get the failure code from the last attempt
     VehicleTypes::RequestMessageResultHandlerFailureCode_t lastFailureCode() const { return _lastFailureCode; }
-
-    /// Get the MAV_RESULT from the last attempt
-    MAV_RESULT lastResult() const { return _lastResult; }
 
     /// Get current retry count
     int retryCount() const { return _retryCount; }

@@ -23,9 +23,6 @@ public:
     /// @param predicate Optional predicate which further filters received messages
     WaitForMavlinkMessageState(QState *parent, uint32_t messageId, int timeoutMsecs, Predicate predicate = Predicate());
 
-    /// @return The message ID being waited for
-    uint32_t messageId() const { return _messageId; }
-
 protected:
     void handleMessage(const mavlink_message_t& message) override;
 

@@ -10,12 +10,10 @@ void WaitStateBaseTest::_testTimeoutEmission()
     const int timeoutMs = 50;
 
     auto* waitState = new TestWaitState(QStringLiteral("TestTimeout"), &machine, timeoutMs);
-    finishOn(machine, waitState, &WaitStateBase::timeout);
+    finishOn(machine, waitState, &WaitStateBase::timedOut);
 
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
     QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
     QVERIFY(startAndWaitForFinished(&machine));
-    QCOMPARE(timeoutSpy.count(), 1);
     QCOMPARE(timedOutSpy.count(), 1);
 }
 
@@ -41,12 +39,11 @@ void WaitStateBaseTest::_testCompleteAndFail()
     auto* errorState = new FunctionState(QStringLiteral("Error"), &machine, []() {});
     auto* finalState = new QFinalState(&machine);
 
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
+    waitState->addTransition(waitState, &QGCState::advance, finalState);
     waitState->addTransition(waitState, &QGCState::error, errorState);
     errorState->addTransition(errorState, &QGCState::advance, finalState);
     machine.setInitialState(waitState);
 
-    QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
     QSignalSpy advanceSpy(waitState, &QGCState::advance);
     QSignalSpy errorSpy(waitState, &QGCState::error);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
@@ -64,7 +61,6 @@ void WaitStateBaseTest::_testCompleteAndFail()
     }
 
     QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(completedSpy.count(), fail ? 0 : 1);
     QCOMPARE(advanceSpy.count(), fail ? 0 : 1);
     QCOMPARE(errorSpy.count(), fail ? 1 : 0);
     QVERIFY(waitState->disconnectCalled);
@@ -95,7 +91,7 @@ void WaitStateBaseTest::_testMachineStopEndsWait()
     QSignalSpy waitEnteredSpy(waitState, &QState::entered);
     QSignalSpy waitExitedSpy(waitState, &QState::exited);
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
+    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timedOut);
     QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
 
     QVERIFY(startAndWaitForEntered(&machine, firstState));
@@ -126,7 +122,7 @@ void WaitStateBaseTest::_testMachineStopAfterExitEndsNothing()
 
     auto* waitState = new TestWaitState(QStringLiteral("Wait"), &machine);
     auto* nextState = new QGCState(QStringLiteral("Next"), &machine);
-    waitState->addTransition(waitState, &WaitStateBase::completed, nextState);
+    waitState->addTransition(waitState, &QGCState::advance, nextState);
     machine.setInitialState(waitState);
 
     QSignalSpy nextEnteredSpy(nextState, &QState::entered);
@@ -172,9 +168,9 @@ void WaitStateBaseTest::_testNoTimeoutWhenZero()
 
     // Create with 0 timeout - should never timeout
     auto* waitState = new TestWaitState(QStringLiteral("TestNoTimeout"), &machine, 0);
-    finishOn(machine, waitState, &WaitStateBase::completed);
+    finishOn(machine, waitState, &QGCState::advance);
 
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
+    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timedOut);
 
     QVERIFY(startAndWaitForEntered(&machine, waitState));
 
@@ -193,10 +189,10 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
     const int timeoutMs = 200;
 
     auto* waitState = new TestWaitState(QStringLiteral("TestCancelTimeout"), &machine, timeoutMs);
-    finishOn(machine, waitState, &WaitStateBase::completed);
+    finishOn(machine, waitState, &QGCState::advance);
 
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
-    QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
+    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timedOut);
+    QSignalSpy advanceSpy(waitState, &QGCState::advance);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     QVERIFY(startAndWaitForEntered(&machine, waitState));
@@ -207,7 +203,7 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
     });
 
     QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(completedSpy.count(), 1);
+    QCOMPARE(advanceSpy.count(), 1);
     QCOMPARE(timeoutSpy.count(), 0);  // Timeout should have been cancelled
 }
 

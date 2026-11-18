@@ -144,17 +144,17 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
 
     skippableState->addTransition(skippableState, &QGCState::advance, finalState);
     skippableState->addTransition(skippableState, &SkippableAsyncState::skipped, finalState);
-    skippableState->addTransition(skippableState, &SkippableAsyncState::timeout, timeoutState);
+    skippableState->addTransition(skippableState, &SkippableAsyncState::timedOut, timeoutState);
     timeoutState->addTransition(timeoutState, &QGCState::advance, finalState);
     machine.setInitialState(skippableState);
 
-    // Use MultiSignalSpy to verify timeout() fired but advance() and skipped() did not
+    // Use MultiSignalSpy to verify timedOut() fired but advance() and skipped() did not
     MultiSignalSpy stateSpy;
     QVERIFY(stateSpy.init(skippableState));
 
     QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
-    QVERIFY_SIGNAL_EMITTED(stateSpy, "timeout");
+    QVERIFY_SIGNAL_EMITTED(stateSpy, "timedOut");
     QVERIFY_NO_SIGNAL(stateSpy, "advance");
     QVERIFY_NO_SIGNAL(stateSpy, "skipped");
 }

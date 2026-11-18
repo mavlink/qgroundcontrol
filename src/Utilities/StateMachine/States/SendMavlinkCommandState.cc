@@ -92,7 +92,6 @@ void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetCom
     } else {
         // MAV_RESULT_ACCEPTED
         qCDebug(QGCStateMachineLog) << QStringLiteral("%1 Command succeeded").arg(commandName);
-        emit success();
         waitComplete();
     }
 }

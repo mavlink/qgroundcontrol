@@ -170,23 +170,23 @@ void InitialConnectStateMachine::_createStates()
 
 void InitialConnectStateMachine::_wireTransitions()
 {
-    // Linear progression - use completed() for WaitStateBase-derived states (more semantic)
-    _stateAutopilotVersion->addTransition(_stateAutopilotVersion, &WaitStateBase::completed, _stateStandardModes);
-    _stateStandardModes->addTransition(_stateStandardModes, &WaitStateBase::completed, _stateCompInfo);
-    _stateCompInfo->addTransition(_stateCompInfo, &WaitStateBase::completed, _stateParameters);
+    // Linear progression
+    _stateAutopilotVersion->addTransition(_stateAutopilotVersion, &QGCState::advance, _stateStandardModes);
+    _stateStandardModes->addTransition(_stateStandardModes, &QGCState::advance, _stateCompInfo);
+    _stateCompInfo->addTransition(_stateCompInfo, &QGCState::advance, _stateParameters);
 
-    // SkippableAsyncStates: both completed and skipped go to next state
+    // SkippableAsyncStates: both advance and skipped go to next state
 
-    _stateParameters->addTransition(_stateParameters, &WaitStateBase::completed, _stateMission);
+    _stateParameters->addTransition(_stateParameters, &QGCState::advance, _stateMission);
     _stateParameters->addTransition(_stateParameters, &SkippableAsyncState::skipped, _stateMission);
 
-    _stateMission->addTransition(_stateMission, &WaitStateBase::completed, _stateGeoFence);
+    _stateMission->addTransition(_stateMission, &QGCState::advance, _stateGeoFence);
     _stateMission->addTransition(_stateMission, &SkippableAsyncState::skipped, _stateGeoFence);
 
-    _stateGeoFence->addTransition(_stateGeoFence, &WaitStateBase::completed, _stateRallyPoints);
+    _stateGeoFence->addTransition(_stateGeoFence, &QGCState::advance, _stateRallyPoints);
     _stateGeoFence->addTransition(_stateGeoFence, &SkippableAsyncState::skipped, _stateRallyPoints);
 
-    _stateRallyPoints->addTransition(_stateRallyPoints, &WaitStateBase::completed, _stateComplete);
+    _stateRallyPoints->addTransition(_stateRallyPoints, &QGCState::advance, _stateComplete);
     _stateRallyPoints->addTransition(_stateRallyPoints, &SkippableAsyncState::skipped, _stateComplete);
 
     // Complete -> Final (FunctionState emits advance() after its function)

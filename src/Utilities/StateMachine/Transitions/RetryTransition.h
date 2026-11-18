@@ -3,8 +3,8 @@
 #include <functional>
 
 #include <QtCore/QMetaObject>
+#include <QtStateMachine/QSignalTransition>
 
-#include "QGCSignalTransition.h"
 #include "SignalSender.h"
 
 /// \brief Transition that retries an action N times before advancing to target state.
@@ -21,7 +21,7 @@
 /// Example usage:
 /// @code
 /// auto* retry = new RetryTransition(
-///     state, &WaitStateBase::timeout,
+///     state, &WaitStateBase::timedOut,
 ///     nextState,
 ///     [this]() { _requestAutopilotVersion(_stateAutopilotVersion); },
 ///     1  // max retries
@@ -29,7 +29,7 @@
 /// state->addTransition(retry);
 /// @endcode
 ///
-class RetryTransition : public QGCSignalTransition
+class RetryTransition : public QSignalTransition
 {
     Q_OBJECT
     Q_DISABLE_COPY(RetryTransition)
@@ -46,7 +46,7 @@ public:
     template <typename Func>
     RetryTransition(const SignalSender<Func>* sender, Func signalFn, QAbstractState* target, RetryAction retryAction,
                     int maxRetries = 1)
-        : QGCSignalTransition(sender, signalFn)
+        : QSignalTransition(sender, signalFn)
         , _retryAction(std::move(retryAction))
         , _maxRetries(maxRetries)
     {

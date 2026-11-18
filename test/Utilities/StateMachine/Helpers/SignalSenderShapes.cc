@@ -10,7 +10,6 @@
 #include "AsyncFunctionState.h"
 #include "FunctionState.h"
 #include "GuardedTransition.h"
-#include "QGCSignalTransition.h"
 #include "QGCState.h"
 #include "QGCStateMachine.h"
 #include "RetryTransition.h"
@@ -32,16 +31,6 @@ using RefQualifiedMember = void (QObject::*)() &;
 using DataMember = int QObject::*;
 using FreeFunction = void (*)();
 using Functor = std::function<void()>;
-
-template <typename Sender, typename Func>
-struct SignalTransition : std::is_constructible<QGCSignalTransition, Sender, Func>
-{
-};
-
-template <typename Sender, typename Func>
-struct SignalTransitionWithSource : std::is_constructible<QGCSignalTransition, Sender, Func, QState*>
-{
-};
 
 template <typename Sender, typename Func>
 struct Guarded : std::is_constructible<GuardedTransition, Sender, Func, GuardedTransition::Guard>
@@ -116,8 +105,6 @@ struct State : Common<Accepts>
     static_assert(!Accepts<const QObject*, Signal>::value, "must reject a const sender");
 };
 
-template struct Transition<SignalTransition>;
-template struct Transition<SignalTransitionWithSource>;
 template struct Transition<Guarded>;
 template struct Transition<GuardedWithTarget>;
 template struct Transition<Retry>;
@@ -132,10 +119,6 @@ static_assert(std::is_same_v<SignalSender<decltype(&QTimer::objectNameChanged)>,
 static_assert(std::is_same_v<SignalSender<ConstMember>, QObject>);
 static_assert(std::is_same_v<SignalSender<NoexceptMember>, QObject>);
 static_assert(std::is_same_v<SignalSender<ConstNoexceptMember>, QObject>);
-
-// A signal name selects the overload that takes the signal as a string
-static_assert(std::is_constructible_v<QGCSignalTransition, const QObject*, const char*>);
-static_assert(std::is_constructible_v<QGCSignalTransition, const QObject*, const char*, QState*>);
 
 // The transition factories of QGCStateMachine that take one state as the source of the transition and as the
 // sender of its signal

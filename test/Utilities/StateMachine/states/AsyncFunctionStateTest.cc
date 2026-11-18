@@ -52,17 +52,17 @@ void AsyncFunctionStateTest::_testAsyncFunctionStateTimeout()
     auto* finalState = new QFinalState(&machine);
 
     asyncState->addTransition(asyncState, &QGCState::advance, finalState);
-    asyncState->addTransition(asyncState, &AsyncFunctionState::timeout, timeoutState);
+    asyncState->addTransition(asyncState, &AsyncFunctionState::timedOut, timeoutState);
     timeoutState->addTransition(timeoutState, &QGCState::advance, finalState);
     machine.setInitialState(asyncState);
 
-    // Use MultiSignalSpy to verify timeout() fired but advance() did not
+    // Use MultiSignalSpy to verify timedOut() fired but advance() did not
     MultiSignalSpy stateSpy;
     QVERIFY(stateSpy.init(asyncState));
 
     QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
-    QVERIFY_SIGNAL_EMITTED(stateSpy, "timeout");
+    QVERIFY_SIGNAL_EMITTED(stateSpy, "timedOut");
     QVERIFY_NO_SIGNAL(stateSpy, "advance");
 }
 

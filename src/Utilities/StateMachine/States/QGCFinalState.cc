@@ -24,14 +24,3 @@ QString QGCFinalState::stateName() const
 {
     return qualifiedStateName(this);
 }
-
-QGCStateMachine* QGCFinalState::machine() const
-{
-    return qgcStateMachineOf(this);
-}
-
-Vehicle* QGCFinalState::vehicle() const
-{
-    auto* m = machine();
-    return m ? m->vehicle() : nullptr;
-}

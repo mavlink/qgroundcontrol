@@ -39,9 +39,6 @@ public:
     /// @param errorState The state to transition to on error for this state only, nullptr for the global one again
     void setLocalErrorState(QAbstractState* errorState);
 
-    /// Get the per-state error state (nullptr if using global)
-    QAbstractState* localErrorState() const { return _localErrorState; }
-
 protected:
     /// @return vehicle(). Without one, a warning that names the state is logged to @a category, for a state that
     ///         fails because it has none.

@@ -55,15 +55,6 @@ public:
                         SkipAction skipAction = nullptr,
                         int timeoutMsecs = 0);
 
-    /// Set the skip predicate
-    void setSkipPredicate(SkipPredicate predicate) { _skipPredicate = std::move(predicate); }
-
-    /// Set the setup function
-    void setSetupFunction(SetupFunction setupFunc) { _setupFunction = std::move(setupFunc); }
-
-    /// Set the skip action
-    void setSkipAction(SkipAction skipAction) { _skipAction = std::move(skipAction); }
-
 signals:
     /// Emitted when skip predicate returns true and the state is skipped
     void skipped();

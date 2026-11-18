@@ -50,9 +50,6 @@ public:
     /// Set a callback to be invoked when the state is exited
     void setOnExit(ExitCallback callback) { _exitCallback = std::move(callback); }
 
-    /// Set both entry and exit callbacks
-    void setCallbacks(EntryCallback onEntry, ExitCallback onExit = nullptr);
-
     // -------------------------------------------------------------------------
     // Event Handling
     // -------------------------------------------------------------------------

@@ -102,7 +102,7 @@ void AdditionalStatesCoverageTest::_testDelayState()
     const int delayMs = 100;
 
     auto* delayState = new DelayState(&machine, delayMs);
-    finishOn(machine, delayState, &DelayState::delayComplete);
+    finishOn(machine, delayState, &QGCState::advance);
 
     QElapsedTimer timer;
     timer.start();
@@ -136,7 +136,6 @@ void AdditionalStatesCoverageTest::_testDelayStateMachineStopEndsDelay()
     QSignalSpy delayEnteredSpy(delayState, &QState::entered);
     QSignalSpy delayExitedSpy(delayState, &QState::exited);
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-    QSignalSpy delayCompleteSpy(delayState, &DelayState::delayComplete);
     QSignalSpy advanceSpy(delayState, &QGCState::advance);
 
     QVERIFY(startAndWaitForEntered(&machine, firstState));
@@ -153,8 +152,7 @@ void AdditionalStatesCoverageTest::_testDelayStateMachineStopEndsDelay()
 
     // Qt has not exited the state, and still the delay that was running does not end
     QCOMPARE(delayExitedSpy.count(), 0);
-    QVERIFY_NO_SIGNAL_WAIT(delayCompleteSpy, delayMs * 2);
-    QCOMPARE(advanceSpy.count(), 0);
+    QVERIFY_NO_SIGNAL_WAIT(advanceSpy, delayMs * 2);
 }
 
 void AdditionalStatesCoverageTest::_testDelayStateRestartStartsDelayOver()
@@ -164,29 +162,29 @@ void AdditionalStatesCoverageTest::_testDelayStateRestartStartsDelayOver()
 
     // The initial state, so that it is active when the machine restarts and the next run enters it again
     auto* delayState = new DelayState(&machine, delayMs);
-    delayState->addTransition(delayState, &DelayState::delayComplete, addFinalState(&machine));
+    delayState->addTransition(delayState, &QGCState::advance, addFinalState(&machine));
     machine.setInitialState(delayState);
 
     // The time since the state was last entered, taken when the delay ends
     QElapsedTimer sinceEntered;
     qint64 delayTakenMs = -1;
     connect(delayState, &QState::entered, delayState, [&sinceEntered]() { sinceEntered.start(); });
-    connect(delayState, &DelayState::delayComplete, delayState,
+    connect(delayState, &QGCState::advance, delayState,
             [&sinceEntered, &delayTakenMs]() { delayTakenMs = sinceEntered.elapsed(); });
 
     QSignalSpy enteredSpy(delayState, &QState::entered);
-    QSignalSpy delayCompleteSpy(delayState, &DelayState::delayComplete);
+    QSignalSpy advanceSpy(delayState, &QGCState::advance);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     // Restart when a part of the delay has passed
     QVERIFY(startAndWaitForEntered(&machine, delayState));
-    QVERIFY_NO_SIGNAL_WAIT(delayCompleteSpy, delayMs * 3 / 10);
+    QVERIFY_NO_SIGNAL_WAIT(advanceSpy, delayMs * 3 / 10);
     machine.restart();
 
     // One delay ends, and it is a whole one counted from the entry of the second run
     QVERIFY(spyTriggered(finishedSpy));
     QCOMPARE(enteredSpy.count(), 2);
-    QCOMPARE(delayCompleteSpy.count(), 1);
+    QCOMPARE(advanceSpy.count(), 1);
     QVERIFY2(delayTakenMs >= delayMs - delayMs / 10, qPrintable(QString::number(delayTakenMs)));
 }
 
@@ -279,7 +277,7 @@ void AdditionalStatesCoverageTest::_testWaitForMavlinkMessageCompletesOnFirstMat
     state->addTransition(state, &QGCState::advance, addFinalState(&machine));
     machine.setInitialState(state);
 
-    QSignalSpy completedSpy(state, &WaitStateBase::completed);
+    QSignalSpy advanceSpy(state, &QGCState::advance);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     QVERIFY(startAndWaitForEntered(&machine, state));
 
@@ -287,26 +285,26 @@ void AdditionalStatesCoverageTest::_testWaitForMavlinkMessageCompletesOnFirstMat
     message.sysid = acceptedSystemId;
     message.msgid = MAVLINK_MSG_ID_DEBUG_VECT;
     emit vehicle.mavlinkMessageReceived(message);
-    QCOMPARE(completedSpy.count(), 0);
+    QCOMPARE(advanceSpy.count(), 0);
     QCOMPARE(predicateCallCount, 0);
 
     message.msgid = MAVLINK_MSG_ID_DEBUG;
     if (usePredicate) {
         message.sysid = acceptedSystemId + 1;
         emit vehicle.mavlinkMessageReceived(message);
-        QCOMPARE(completedSpy.count(), 0);
+        QCOMPARE(advanceSpy.count(), 0);
         QCOMPARE(predicateCallCount, 1);
         message.sysid = acceptedSystemId;
     }
 
     emit vehicle.mavlinkMessageReceived(message);
-    QCOMPARE(completedSpy.count(), 1);
+    QCOMPARE(advanceSpy.count(), 1);
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::shortMs());
 
     // The state has stopped listening
     const int predicateCallsWhenCompleted = predicateCallCount;
     emit vehicle.mavlinkMessageReceived(message);
-    QCOMPARE(completedSpy.count(), 1);
+    QCOMPARE(advanceSpy.count(), 1);
     QCOMPARE(predicateCallCount, predicateCallsWhenCompleted);
 }
 

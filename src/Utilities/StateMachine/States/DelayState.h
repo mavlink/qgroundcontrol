@@ -6,8 +6,8 @@
 
 /// \brief Delays that state machine for the specified time in milliseconds
 ///
-/// The delay starts when the state is entered. It ends without delayComplete() when the state is exited before
-/// that, and when its machine stops.
+/// The delay starts when the state is entered and ends with advance(). It ends without it when the state is exited
+/// before that, and when its machine stops.
 ///
 class DelayState : public QGCState
 {
@@ -16,9 +16,6 @@ class DelayState : public QGCState
 
 public:
     DelayState(QState* parentState, int delayMsecs);
-
-signals:
-    void delayComplete();
 
 private:
     QTimer _delayTimer;

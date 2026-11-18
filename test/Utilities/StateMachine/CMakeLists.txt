@@ -59,8 +59,6 @@ target_sources(
     PRIVATE
         transitions/MachineEventTransitionTest.cc
         transitions/MachineEventTransitionTest.h
-        transitions/QGCSignalTransitionTest.cc
-        transitions/QGCSignalTransitionTest.h
         transitions/AdditionalTransitionsCoverageTest.cc
         transitions/AdditionalTransitionsCoverageTest.h
 )
@@ -76,6 +74,5 @@ add_qgc_test(SendMavlinkMessageStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(SkippableAsyncStateTest LABELS Unit Utilities)
 add_qgc_test(WaitStateBaseTest LABELS Unit Utilities)
 add_qgc_test(MachineEventTransitionTest LABELS Unit Utilities)
-add_qgc_test(QGCSignalTransitionTest LABELS Unit Utilities)
 add_qgc_test(AdditionalStatesCoverageTest LABELS Unit Utilities)
 add_qgc_test(AdditionalTransitionsCoverageTest LABELS Unit Utilities)

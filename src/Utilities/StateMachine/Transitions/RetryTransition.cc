@@ -14,7 +14,7 @@ bool RetryTransition::eventTest(QEvent* event)
         _resetOnEntry = connect(sourceState(), &QAbstractState::entered, this, &RetryTransition::reset);
     }
 
-    if (!QGCSignalTransition::eventTest(event)) {
+    if (!QSignalTransition::eventTest(event)) {
         return false;
     }
 

@@ -441,7 +441,7 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
     logSuccessState->addThisTransition          (&QGCState::advance, finalState);
 
     // Retry transitions (timeout path)
-    waitAckState->addTransition(waitAckState, &WaitStateBase::timeout, retryDecPendingWriteCountState);
+    waitAckState->addTransition(waitAckState, &WaitStateBase::timedOut, retryDecPendingWriteCountState);
     retryDecPendingWriteCountState->addThisTransition(&QGCState::advance, sendParamSetState);
 
     // PARAM_ERROR path (definitive rejection - no retries)
@@ -1147,7 +1147,7 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
     logSuccessState->addThisTransition          (&QGCState::advance, finalState);
 
     // Retry transitions (timeout path)
-    waitAckState->addTransition(waitAckState, &WaitStateBase::timeout, sendParamRequestReadState);
+    waitAckState->addTransition(waitAckState, &WaitStateBase::timedOut, sendParamRequestReadState);
 
     // PARAM_ERROR path (definitive rejection - no retries)
     waitAckState->addThisTransition(&QGCState::error, logFailureState);

@@ -17,7 +17,6 @@ private slots:
     void _testStopFromInProgressListenerIsHonored();
     void _testStartWhileInProgressIsCritical();
     void _testStartBypassIsCritical();
-    void _testSetInitialStateStartsMachine();
     void _testErrorInMachineIsCritical();
     UT_PARAMETERIZED_TEST(_testMachineAsStateOfAnotherMachine);
 

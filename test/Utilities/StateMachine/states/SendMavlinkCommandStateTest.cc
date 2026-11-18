@@ -42,7 +42,6 @@ void SendMavlinkCommandStateTest::_testCommandResult()
     state->addTransition(state, &QGCState::error, finalState);
     machine.setInitialState(state);
 
-    QSignalSpy successSpy(state, &SendMavlinkCommandState::success);
     QSignalSpy advanceSpy(state, &QGCState::advance);
     QSignalSpy errorSpy(state, &QGCState::error);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
@@ -58,7 +57,6 @@ void SendMavlinkCommandStateTest::_testCommandResult()
     }
 
     QCOMPARE(_mockLink->receivedMavCommandCount(command), 1);
-    QCOMPARE(successSpy.count(), accepted ? 1 : 0);
     QCOMPARE(advanceSpy.count(), accepted ? 1 : 0);
     QCOMPARE(errorSpy.count(), accepted ? 0 : 1);
 }

@@ -154,23 +154,9 @@ int QGCStateMachine::postDelayedEvent(const QString& eventName, int delayMsecs, 
     return eventId;
 }
 
-bool QGCStateMachine::cancelDelayedEvent(int eventId)
-{
-    qCDebug(QGCStateMachineLog) << objectName() << "cancelling delayed event id:" << eventId;
-    return QStateMachine::cancelDelayedEvent(eventId);
-}
-
 // -----------------------------------------------------------------------------
 // State Configuration
 // -----------------------------------------------------------------------------
-
-void QGCStateMachine::setInitialState(QAbstractState* state, bool autoStart)
-{
-    QStateMachine::setInitialState(state);
-    if (autoStart) {
-        start();
-    }
-}
 
 QGCFinalState* QGCStateMachine::addFinalState(const QString& stateName)
 {
@@ -335,11 +321,6 @@ float QGCStateMachine::_calculateProgress() const
 QGCStateMachine* qgcStateMachineOf(const QAbstractState* state)
 {
     return qobject_cast<QGCStateMachine*>(state->machine());
-}
-
-QGCStateMachine* qgcStateMachineOf(const QAbstractTransition* transition)
-{
-    return qobject_cast<QGCStateMachine*>(transition->machine());
 }
 
 QString qualifiedStateName(const QAbstractState* state)

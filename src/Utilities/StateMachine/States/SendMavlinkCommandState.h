@@ -5,6 +5,8 @@
 
 /// \brief Sends the specified MAVLink command to the vehicle and waits for the result
 ///
+/// Emits advance() when the vehicle accepts the command, error() for any other result.
+///
 class SendMavlinkCommandState : public WaitStateBase
 {
     Q_OBJECT
@@ -15,9 +17,6 @@ public:
     SendMavlinkCommandState(QState* parent);
 
     void setup(MAV_CMD command, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
-
-signals:
-    void success();
 
 protected:
     void connectWaitSignal() override;

@@ -27,16 +27,8 @@ public:
     void restartWait();
 
 signals:
-    /// Emitted when the wait condition is satisfied (alias for advance())
-    /// Prefer using completed() over advance() for clarity in wait states
-    void completed();
-
-    /// Emitted when the timeout expires before the wait condition is met
-    /// @note For transition wiring, timedOut() is preferred over timeout() for clarity
-    void timeout();
-
-    /// Emitted when the timeout expires (alias for timeout())
-    /// Prefer using timedOut() over timeout() for consistency with other signals
+    /// Emitted when the timeout expires before the wait condition is met. A wait that is satisfied emits advance(),
+    /// one that fails emits error().
     void timedOut();
 
 protected:
@@ -47,7 +39,7 @@ protected:
     /// call base implementation
     virtual void onWaitExited() {}
 
-    /// Called when the timeout expires - default emits timeout(), subclasses can override
+    /// Called when the timeout expires - default emits timedOut(), subclasses can override
     virtual void onWaitTimeout();
 
     /// Call this when the wait condition is satisfied

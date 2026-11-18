@@ -13,7 +13,7 @@ void QGCAbstractStateTest::_testEntryAndExitHooks_data()
     QTest::newRow("no callback") << false << false;
     QTest::newRow("setOnEntry") << true << false;
     QTest::newRow("setOnExit") << false << true;
-    QTest::newRow("setCallbacks") << true << true;
+    QTest::newRow("setOnEntry and setOnExit") << true << true;
 }
 
 void QGCAbstractStateTest::_testEntryAndExitHooks()
@@ -28,11 +28,10 @@ void QGCAbstractStateTest::_testEntryAndExitHooks()
     auto* state = new TestAbstractState(QStringLiteral("TestHooks"), &machine);
     const auto onEntry = [&entryCallbackCalled]() { entryCallbackCalled = true; };
     const auto onExit = [&exitCallbackCalled]() { exitCallbackCalled = true; };
-    if (withEntryCallback && withExitCallback) {
-        state->setCallbacks(onEntry, onExit);
-    } else if (withEntryCallback) {
+    if (withEntryCallback) {
         state->setOnEntry(onEntry);
-    } else if (withExitCallback) {
+    }
+    if (withExitCallback) {
         state->setOnExit(onExit);
     }
 

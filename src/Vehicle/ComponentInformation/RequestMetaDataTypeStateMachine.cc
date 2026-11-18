@@ -107,27 +107,28 @@ void RequestMetaDataTypeStateMachine::_createStates()
 
 void RequestMetaDataTypeStateMachine::_wireTransitions()
 {
-    // Use completed() for WaitStateBase-derived states (more semantic than advance())
-
     // RequestCompMetadata -> RequestDeprecated
-    _stateRequestCompInfo->addTransition(_stateRequestCompInfo, &WaitStateBase::completed, _stateRequestDeprecated);
+    _stateRequestCompInfo->addTransition(_stateRequestCompInfo, &QGCState::advance, _stateRequestDeprecated);
 
-    // RequestDeprecated -> RequestMetaDataJson (either via completed or skipped)
-    _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &WaitStateBase::completed, _stateRequestMetaDataJson);
+    // RequestDeprecated -> RequestMetaDataJson (either via advance or skipped)
+    _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &QGCState::advance, _stateRequestMetaDataJson);
     _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &SkippableAsyncState::skipped, _stateRequestMetaDataJson);
 
     // RequestMetaDataJson -> RequestMetaDataJsonFallback
-    _stateRequestMetaDataJson->addTransition(_stateRequestMetaDataJson, &WaitStateBase::completed, _stateRequestMetaDataJsonFallback);
+    _stateRequestMetaDataJson->addTransition(_stateRequestMetaDataJson, &QGCState::advance,
+                                             _stateRequestMetaDataJsonFallback);
 
     // RequestMetaDataJsonFallback -> RequestTranslationJson
-    _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &WaitStateBase::completed, _stateRequestTranslationJson);
+    _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &QGCState::advance,
+                                                     _stateRequestTranslationJson);
     _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &SkippableAsyncState::skipped, _stateRequestTranslationJson);
 
     // RequestTranslationJson -> RequestTranslate
-    _stateRequestTranslationJson->addTransition(_stateRequestTranslationJson, &WaitStateBase::completed, _stateRequestTranslate);
+    _stateRequestTranslationJson->addTransition(_stateRequestTranslationJson, &QGCState::advance,
+                                                _stateRequestTranslate);
 
     // RequestTranslate -> CompleteRequest
-    _stateRequestTranslate->addTransition(_stateRequestTranslate, &WaitStateBase::completed, _stateComplete);
+    _stateRequestTranslate->addTransition(_stateRequestTranslate, &QGCState::advance, _stateComplete);
     _stateRequestTranslate->addTransition(_stateRequestTranslate, &SkippableAsyncState::skipped, _stateComplete);
 
     // CompleteRequest -> Final (QGCState advance())

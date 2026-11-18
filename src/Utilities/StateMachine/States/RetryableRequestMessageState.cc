@@ -208,7 +208,7 @@ void RetryableRequestMessageState::onWaitTimeout()
         emit retriesExhausted();
 
         if (_failOnMaxRetries) {
-            WaitStateBase::onWaitTimeout();  // Emits timeout()
+            WaitStateBase::onWaitTimeout();  // Emits timedOut()
             waitFailed();                    // Emits error()
         } else {
             waitComplete();  // Advance anyway

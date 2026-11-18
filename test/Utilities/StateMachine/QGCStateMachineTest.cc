@@ -18,7 +18,7 @@ float _spyFloatArg(const QSignalSpy& spy, int index)
 void QGCStateMachineTest::_testQGCStateMachineFactories()
 {
     QGCStateMachine machine(QStringLiteral("FactoryTest"), nullptr);
-    QCOMPARE(machine.machineName(), QStringLiteral("FactoryTest"));
+    QCOMPARE(machine.objectName(), QStringLiteral("FactoryTest"));
     bool functionCalled = false;
 
     auto* funcState = machine.addFunctionState(QStringLiteral("Func"), [&functionCalled]() {
@@ -28,7 +28,7 @@ void QGCStateMachineTest::_testQGCStateMachineFactories()
     auto* finalState = machine.addFinalState(QStringLiteral("Final"));
 
     funcState->addTransition(funcState, &QGCState::advance, delayState);
-    delayState->addTransition(delayState, &DelayState::delayComplete, finalState);
+    delayState->addTransition(delayState, &QGCState::advance, finalState);
 
     machine.setInitialState(funcState);
 
@@ -321,19 +321,6 @@ void QGCStateMachineTest::_testStartBypassIsCritical()
     machine.postEvent(QStringLiteral("finish"));
     QVERIFY(spyTriggered(finishedSpy));
     QVERIFY(!machine.inProgress());
-}
-
-void QGCStateMachineTest::_testSetInitialStateStartsMachine()
-{
-    QGCStateMachine machine(QStringLiteral("AutoStartTest"), nullptr);
-    auto* state = new QGCState(QStringLiteral("State"), &machine);
-    QSignalSpy enteredSpy(state, &QState::entered);
-
-    machine.setInitialState(state, true);
-
-    QCOMPARE(machine.initialState(), state);
-    QVERIFY(machine.inProgress());
-    QVERIFY(spyTriggered(enteredSpy));
 }
 
 void QGCStateMachineTest::_testErrorInMachineIsCritical()

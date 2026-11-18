@@ -2,30 +2,7 @@
 
 #include <QtCore/QRegularExpression>
 
-#include "MAVLinkLib.h"
-#include "MachineEventTransition.h"
 #include "StateTestCommon.h"
-#include "Vehicle.h"
-
-void AdditionalTransitionsCoverageTest::_testMachineEventTransitionAccessors()
-{
-    // An offline vehicle: the transition only hands it out
-    Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
-    QGCStateMachine machine(QStringLiteral("EventTransitionAccessors"), &vehicle);
-    auto* sourceState = new QState(&machine);
-    auto* targetState = new QGCState(QStringLiteral("Target"), &machine);
-
-    auto* transition = new MachineEventTransition(QStringLiteral("go"), targetState);
-    QCOMPARE(transition->targetState(), targetState);
-    QCOMPARE(transition->eventName(), QStringLiteral("go"));
-    // Not in a machine before a state has it
-    QCOMPARE(transition->machine(), nullptr);
-    QCOMPARE(transition->vehicle(), nullptr);
-
-    sourceState->addTransition(transition);
-    QCOMPARE(transition->machine(), &machine);
-    QCOMPARE(transition->vehicle(), &vehicle);
-}
 
 void AdditionalTransitionsCoverageTest::_testGuardedTransitionGuardDecides_data()
 {
@@ -144,10 +121,10 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionRetriesThenAdvances(
     RetryTransition* retryTransition = nullptr;
     if (throughFactory) {
         retryTransition =
-            qgcMachine.addRetryTransition(startState, &WaitStateBase::timeout, targetState, retryAction, maxRetries);
+            qgcMachine.addRetryTransition(startState, &WaitStateBase::timedOut, targetState, retryAction, maxRetries);
     } else {
         retryTransition =
-            new RetryTransition(startState, &WaitStateBase::timeout, targetState, retryAction, maxRetries);
+            new RetryTransition(startState, &WaitStateBase::timedOut, targetState, retryAction, maxRetries);
         startState->addTransition(retryTransition);
     }
     // Must not be taken: the start state is left through the retry transition
@@ -184,7 +161,7 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionWaitRearmedBeforeRet
     auto* finalState = addFinalState(&machine);
 
     auto* retryTransition = new RetryTransition(
-        startState, &WaitStateBase::timeout, targetState,
+        startState, &WaitStateBase::timedOut, targetState,
         [&waitWasRearmedBeforeRetryAction, startState]() {
             waitWasRearmedBeforeRetryAction = startState->waitSignalConnected;
         },
@@ -210,7 +187,7 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionCountStartsAgainOnEn
     auto* waitState = new AsyncFunctionState(QStringLiteral("Wait"), &machine, [](AsyncFunctionState*) {}, 20);
     auto* detourState = new FunctionState(QStringLiteral("Detour"), &machine, []() {});
     machine.addRetryTransition(
-        waitState, &WaitStateBase::timeout, machine.addFinalState(),
+        waitState, &WaitStateBase::timedOut, machine.addFinalState(),
         [&machine, &retryActionCalls]() {
             // After its first retry the state is left through another transition, and entered again
             if (++retryActionCalls == 1) {

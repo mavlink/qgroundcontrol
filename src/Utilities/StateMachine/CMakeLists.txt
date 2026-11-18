@@ -43,8 +43,6 @@ target_sources(
         States/RetryableRequestMessageState.cc
         States/RetryableRequestMessageState.h
         # Transitions
-        Transitions/QGCSignalTransition.cc
-        Transitions/QGCSignalTransition.h
         Transitions/GuardedTransition.cc
         Transitions/GuardedTransition.h
         Transitions/MachineEventTransition.cc

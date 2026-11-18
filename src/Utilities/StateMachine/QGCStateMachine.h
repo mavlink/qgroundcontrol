@@ -16,7 +16,6 @@
 #include "MachineEventTransition.h"
 #include "QGCAbstractState.h"
 #include "QGCFinalState.h"
-#include "QGCSignalTransition.h"
 #include "QGCStateMachineEvent.h"
 #include "RetryTransition.h"
 #include "RetryableRequestMessageState.h"
@@ -54,7 +53,6 @@ public:
 
     /// @return The vehicle, nullptr if the machine has none or the vehicle has been destroyed
     Vehicle *vehicle() const { return _vehicle; }
-    QString machineName() const { return objectName(); }
 
     /// @return true from start() until the machine emits stopped or finished
     /// Unlike QStateMachine::isRunning(), this is already true before Qt processes the queued start.
@@ -115,22 +113,12 @@ public:
     /// @param eventName Name of the event
     /// @param delayMsecs Delay in milliseconds
     /// @param data Optional payload data
-    /// @return Event ID that can be used to cancel the event, -1 if the event was not posted
+    /// @return Event ID that QStateMachine::cancelDelayedEvent() takes, -1 if the event was not posted
     int postDelayedEvent(const QString& eventName, int delayMsecs, const QVariant& data = QVariant());
-
-    /// Cancel a previously posted delayed event
-    /// @param eventId The ID returned by postDelayedEvent
-    /// @return true if the event was cancelled, false if already delivered or not found
-    bool cancelDelayedEvent(int eventId);
 
     // -------------------------------------------------------------------------
     // State Configuration
     // -------------------------------------------------------------------------
-
-    /// Set the initial state and optionally start the machine
-    /// @param state The initial state
-    /// @param autoStart If true, starts the machine immediately
-    void setInitialState(QAbstractState* state, bool autoStart = false);
 
     /// Add a final state that will stop the machine when entered
     /// @return The created final state
@@ -279,9 +267,6 @@ private:
 
 /// @return The QGCStateMachine that @p state belongs to, nullptr if it belongs to another kind of machine or to none
 QGCStateMachine* qgcStateMachineOf(const QAbstractState* state);
-
-/// @overload
-QGCStateMachine* qgcStateMachineOf(const QAbstractTransition* transition);
 
 /// @return The name of @p state for a log line: "Machine:State" in a QGCStateMachine, the name of the state otherwise
 QString qualifiedStateName(const QAbstractState* state);

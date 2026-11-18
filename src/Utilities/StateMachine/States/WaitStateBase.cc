@@ -61,7 +61,6 @@ void WaitStateBase::_onTimeout()
 
 void WaitStateBase::onWaitTimeout()
 {
-    emit timeout();
     emit timedOut();
 }
 
@@ -75,7 +74,6 @@ void WaitStateBase::waitComplete()
     _timeoutTimer.stop();
     disconnectWaitSignal();
 
-    emit completed();
     emit advance();
 }
 
