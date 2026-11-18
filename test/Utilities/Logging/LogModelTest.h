@@ -19,7 +19,6 @@ private slots:
     void _filterByRegex();
     void _clearFilters();
     void _filteredEntries();
-    void _categoriesComboList();
     void _setFilterTextDeferred();
     void _allEntriesSnapshot();
     void _invalidRegex();

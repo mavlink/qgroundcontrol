@@ -112,14 +112,20 @@ QGCLoggingCategoryItem* LoggingCategoryFlatModel::findByFullName(const QString& 
 
 LoggingCategoryTreeModel::LoggingCategoryTreeModel(QObject* parent) : QAbstractItemModel(parent) {}
 
-LoggingCategoryTreeModel::~LoggingCategoryTreeModel() = default;
-
 LoggingCategoryTreeNode* LoggingCategoryTreeModel::nodeFromIndex(const QModelIndex& index) const
 {
     if (!index.isValid()) {
         return const_cast<LoggingCategoryTreeNode*>(&_root);
     }
     return static_cast<LoggingCategoryTreeNode*>(index.internalPointer());
+}
+
+QModelIndex LoggingCategoryTreeModel::indexForNode(const LoggingCategoryTreeNode* node) const
+{
+    if (!node || node == &_root) {
+        return {};
+    }
+    return createIndex(node->parent->children.indexOf(node), 0, node);
 }
 
 LoggingCategoryTreeNode* LoggingCategoryTreeModel::findChildNode(const LoggingCategoryTreeNode* parentNode,
@@ -150,14 +156,7 @@ QModelIndex LoggingCategoryTreeModel::parent(const QModelIndex& child) const
     if (!child.isValid()) {
         return {};
     }
-    auto* node = static_cast<LoggingCategoryTreeNode*>(child.internalPointer());
-    auto* parentNode = node->parent;
-    if (!parentNode || parentNode == &_root) {
-        return {};
-    }
-    auto* grandparent = parentNode->parent ? parentNode->parent : const_cast<LoggingCategoryTreeNode*>(&_root);
-    const int row = grandparent->children.indexOf(parentNode);
-    return createIndex(row, 0, parentNode);
+    return indexForNode(static_cast<LoggingCategoryTreeNode*>(child.internalPointer())->parent);
 }
 
 int LoggingCategoryTreeModel::rowCount(const QModelIndex& parent) const
@@ -282,29 +281,32 @@ LoggingCategoryTreeNode* LoggingCategoryTreeModel::findOrCreateIntermediateNode(
     }
 
     // Create intermediate (group) node
-    auto* item = new QGCLoggingCategoryItem(segment, fullPrefix, false, this);
+    auto* node = insertNode(parentNode, new QGCLoggingCategoryItem(segment, fullPrefix, false, this), segment);
+    connectItem(node);
+    return node;
+}
+
+LoggingCategoryTreeNode* LoggingCategoryTreeModel::insertNode(LoggingCategoryTreeNode* parentNode,
+                                                              QGCLoggingCategoryItem* item, const QString& name)
+{
     auto* node = new LoggingCategoryTreeNode;
     node->item = item;
     node->parent = parentNode;
 
-    const QModelIndex parentIndex = (parentNode == &_root) ? QModelIndex() : createIndex(
-        parentNode->parent ? parentNode->parent->children.indexOf(parentNode) : 0, 0, parentNode);
-    const int pos = insertionIndex(parentNode, segment);
-
-    beginInsertRows(parentIndex, pos, pos);
+    const int pos = insertionIndex(parentNode, name);
+    beginInsertRows(indexForNode(parentNode), pos, pos);
     parentNode->children.insert(pos, node);
     endInsertRows();
 
-    connect(item, &QGCLoggingCategoryItem::enabledChanged, this, [this, node]() {
-        auto* p = node->parent ? node->parent : &_root;
-        const int row = p->children.indexOf(node);
-        if (row >= 0) {
-            const QModelIndex idx = createIndex(row, 0, node);
-            emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole)});
-        }
-    });
-
     return node;
+}
+
+void LoggingCategoryTreeModel::connectItem(LoggingCategoryTreeNode* node)
+{
+    connect(node->item, &QGCLoggingCategoryItem::enabledChanged, this, [this, node]() {
+        const QModelIndex idx = indexForNode(node);
+        emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole)});
+    });
 }
 
 void LoggingCategoryTreeModel::insertCategory(const QStringList& pathSegments, QGCLoggingCategoryItem* item)
@@ -330,34 +332,12 @@ void LoggingCategoryTreeModel::insertCategory(const QStringList& pathSegments, Q
         // A longer name registered earlier created this row as a group; it now carries the category itself.
         QGCLoggingCategoryItem* const groupItem = node->item;
         node->item = item;
-        const QModelIndex nodeIndex = createIndex(currentParent->children.indexOf(node), 0, node);
+        const QModelIndex nodeIndex = indexForNode(node);
         emit dataChanged(nodeIndex, nodeIndex);
         delete groupItem;
     } else {
-        // Insert the leaf node
-        node = new LoggingCategoryTreeNode;
-        node->item = item;
-        node->parent = currentParent;
-
-        const QModelIndex parentIndex =
-            (currentParent == &_root)
-                ? QModelIndex()
-                : createIndex(currentParent->parent ? currentParent->parent->children.indexOf(currentParent) : 0, 0,
-                              currentParent);
-        const int pos = insertionIndex(currentParent, pathSegments.last());
-
-        beginInsertRows(parentIndex, pos, pos);
-        currentParent->children.insert(pos, node);
-        endInsertRows();
+        node = insertNode(currentParent, item, pathSegments.last());
     }
     node->isCategory = true;
-
-    connect(item, &QGCLoggingCategoryItem::enabledChanged, this, [this, node]() {
-        auto* p = node->parent ? node->parent : &_root;
-        const int row = p->children.indexOf(node);
-        if (row >= 0) {
-            const QModelIndex idx = createIndex(row, 0, node);
-            emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole)});
-        }
-    });
+    connectItem(node);
 }

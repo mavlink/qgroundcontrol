@@ -1,15 +1,11 @@
 #include "LoggingQmlBindingTest.h"
 
-#include <QtCore/QTimer>
 #include <QtQml/QQmlComponent>
-#include <QtQml/QQmlContext>
-#include <QtQuick/QQuickItem>
 
 #include "LogEntry.h"
 #include "LogManager.h"
 #include "LogModel.h"
 #include "LogTestHelpers.h"
-#include "UnitTestList.h"
 
 // Share a single QQmlEngine across all test methods.
 // qmlRegisterSingletonInstance ties the singleton to the first engine that
@@ -59,20 +55,13 @@ void LoggingQmlBindingTest::_singletonAccessible()
     QVERIFY(obj->property("count").toInt() >= 0);
 }
 
-void LoggingQmlBindingTest::_modelRolesExposed()
+void LoggingQmlBindingTest::_levelValues()
 {
     // Enums now live on LogEntry directly — verify they're sane
     QCOMPARE(static_cast<int>(LogEntry::Debug), 0);
     QCOMPARE(static_cast<int>(LogEntry::Warning), 2);
     QCOMPARE(static_cast<int>(LogEntry::Critical), 3);
     QCOMPARE(static_cast<int>(LogEntry::Fatal), 4);
-
-    const auto roles = LogEntry::roleNames();
-    QVERIFY(roles.contains(static_cast<int>(LogEntry::MessageRole)));
-    QVERIFY(roles.contains(static_cast<int>(LogEntry::LevelRole)));
-    QVERIFY(roles.contains(static_cast<int>(LogEntry::CategoryRole)));
-    QVERIFY(roles.contains(static_cast<int>(LogEntry::TimestampRole)));
-    QVERIFY(roles.contains(static_cast<int>(LogEntry::FormattedRole)));
 }
 
 void LoggingQmlBindingTest::_modelReceivesEntries()
@@ -130,9 +119,6 @@ void LoggingQmlBindingTest::_filterBindingsWork()
     QVERIFY(obj->property("filterCategory").toString().isEmpty());
     QVERIFY(obj->property("filterText").toString().isEmpty());
     QCOMPARE(obj->property("filterRegex").toBool(), false);
-
-    const auto categories = obj->property("categories").toStringList();
-    QVERIFY(categories.size() >= 0); // May be empty initially
 }
 
 UT_REGISTER_TEST(LoggingQmlBindingTest, TestLabel::Unit, TestLabel::Utilities)

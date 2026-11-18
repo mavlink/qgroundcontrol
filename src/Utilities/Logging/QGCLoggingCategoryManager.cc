@@ -284,10 +284,7 @@ void QGCLoggingCategoryItem::setEnabled(bool enabled)
 
 void QGCLoggingCategoryItem::setEnabledFromManager(bool enabled)
 {
-    if (enabled != _enabled) {
-        _updatingFromManager = true;
-        _enabled = enabled;
-        emit enabledChanged();
-        _updatingFromManager = false;
-    }
+    _updatingFromManager = true;
+    setEnabled(enabled);
+    _updatingFromManager = false;
 }

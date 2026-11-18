@@ -78,7 +78,6 @@ struct LoggingCategoryTreeNode
     QGCLoggingCategoryItem* item = nullptr;
     LoggingCategoryTreeNode* parent = nullptr;
     QList<LoggingCategoryTreeNode*> children;
-    bool expanded = false;
     bool isCategory = false;  ///< false: a group, whose item is a wildcard placeholder owned by the model
 
     ~LoggingCategoryTreeNode() { qDeleteAll(children); }
@@ -100,7 +99,6 @@ public:
     Q_ENUM(Roles)
 
     explicit LoggingCategoryTreeModel(QObject* parent = nullptr);
-    ~LoggingCategoryTreeModel() override;
 
     QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex& child) const override;
@@ -119,10 +117,17 @@ public:
 
 private:
     LoggingCategoryTreeNode* nodeFromIndex(const QModelIndex& index) const;
+    /// @return Invalid index for the root
+    QModelIndex indexForNode(const LoggingCategoryTreeNode* node) const;
     LoggingCategoryTreeNode* findChildNode(const LoggingCategoryTreeNode* parent, const QString& segment) const;
     LoggingCategoryTreeNode* findOrCreateIntermediateNode(LoggingCategoryTreeNode* parent, const QString& segment,
                                                           const QString& fullPrefix);
     int insertionIndex(LoggingCategoryTreeNode* parent, const QString& name) const;
+    /// Adds a row for @a item under @a parent, at the sorted position of @a name
+    LoggingCategoryTreeNode* insertNode(LoggingCategoryTreeNode* parent, QGCLoggingCategoryItem* item,
+                                        const QString& name);
+    /// Tells views when the item of @a node is enabled or disabled
+    void connectItem(LoggingCategoryTreeNode* node);
 
     LoggingCategoryTreeNode _root;
 };
