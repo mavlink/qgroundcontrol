@@ -335,7 +335,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc

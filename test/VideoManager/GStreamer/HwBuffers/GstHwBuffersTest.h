@@ -28,12 +28,6 @@ private slots:
     void _testHwFrameTexturesFinishMapReusesAcceptedBundle();
     void _testHwFrameTexturesFinishMapRejectsIncompleteBundle();
     void _testHwFrameTexturesKeepResourcesUntilDestroyed();
-    void _testHwImportCacheEvictsLeastRecentlyUsed();
-    void _testHwImportCacheReplaceDestroysPrevious();
-    void _testHwImportCacheEraseIfDestroysMatches();
-    void _testHwImportCachePinnedEntriesOutliveRemoval();
-    void _testHwImportCacheRejectsInsertWhenAllPinned();
-    void _testHwImportCacheDefersDestroyToOwnerThread();
     void _testHwPathRegistrySelection_data();
     void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();

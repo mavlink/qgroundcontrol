@@ -972,16 +972,11 @@ void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::GpuWaits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheMisses);
     const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
     const auto delta = [&](Counter counter) { return after.count(path, counter) - before.count(path, counter); };
     QCOMPARE(delta(Counter::CpuWaits), quint64(2));
     QCOMPARE(delta(Counter::GpuWaits), quint64(1));
-    QCOMPARE(delta(Counter::ImageCacheHits), quint64(2));
-    QCOMPARE(delta(Counter::ImageCacheMisses), quint64(1));
 }
 
 void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
@@ -1016,19 +1011,14 @@ void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
 
     const QString first = HwBuffers::extraPathStatsSince(before);
     QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
 
     const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
     QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
     QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
-    QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));
 #endif
 }
 

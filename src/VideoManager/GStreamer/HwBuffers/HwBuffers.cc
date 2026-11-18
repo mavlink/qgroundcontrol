@@ -299,7 +299,6 @@ QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline)
         {"reuse", Counter::TextureReuse},
         {"wait[gpu/cpu]", Counter::GpuWaits, Counter::CpuWaits},
         {"fence-timeouts", Counter::ProducerFenceTimeouts},
-        {"image-cache[hit/miss]", Counter::ImageCacheHits, Counter::ImageCacheMisses},
     };
     static constexpr std::pair<GstHwPathTelemetry::HwFallbackReason, const char*> kReasons[] = {
         {GstHwPathTelemetry::HwFallbackReason::NoExt, "no-ext"},

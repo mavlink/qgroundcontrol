@@ -19,7 +19,6 @@ target_sources(
         SelfTest/GstSelfTestPipelineTest.cc
         SelfTest/GstSelfTestPipelineTest.h
         HwBuffers/GStreamerHwFrameTexturesTest.cc
-        HwBuffers/GStreamerHwImportCacheTest.cc
         HwBuffers/GstHwBuffersGlReadbackTest.cc
         HwBuffers/GstHwBuffersGlReadbackTest.h
         HwBuffers/GstHwBuffersPipelineTest.cc
