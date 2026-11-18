@@ -7,6 +7,7 @@
 #   include(QGCTest)
 #   add_qgc_test(MyTest LABELS Unit)
 #   add_qgc_test(MyIntegrationTest LABELS Integration RESOURCE_LOCK MockLink)
+#   add_qgc_tests(MyTest MyOtherTest LABELS Unit)
 
 include_guard(GLOBAL)
 
@@ -315,6 +316,40 @@ function(add_qgc_test test_name)
         endif()
     endforeach()
 
+endfunction()
+
+# ----------------------------------------------------------------------------
+# add_qgc_tests()
+# ----------------------------------------------------------------------------
+# Lists each test of a directory once. For every path, relative to the calling directory, it adds
+# <path>.cc and <path>.h to QGCUnitTests and registers the test named by the file name of the path.
+# LABELS and every add_qgc_test() argument after it apply to each of the tests. Paths go before LABELS:
+# a value after it that names a test source of the directory is refused, because it would pass for a
+# label and its test would be neither built nor registered.
+#
+# Example:
+#   add_qgc_tests(QGCStateMachineTest states/DelayStateTest LABELS Unit Utilities)
+function(add_qgc_tests)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "LABELS")
+    if(NOT ARG_UNPARSED_ARGUMENTS OR NOT ARG_LABELS)
+        message(FATAL_ERROR "add_qgc_tests: expected <path>... LABELS <label>...")
+    endif()
+    foreach(_label IN LISTS ARG_LABELS)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_label}.cc")
+            message(FATAL_ERROR "add_qgc_tests: test path ${_label} follows LABELS, paths go before LABELS")
+        endif()
+    endforeach()
+
+    foreach(_test_path IN LISTS ARG_UNPARSED_ARGUMENTS)
+        target_sources(
+            QGCUnitTests
+            PRIVATE
+                ${_test_path}.cc
+                ${_test_path}.h
+        )
+        cmake_path(GET _test_path FILENAME _test_name)
+        add_qgc_test(${_test_name} LABELS ${ARG_LABELS})
+    endforeach()
 endfunction()
 
 # ----------------------------------------------------------------------------

@@ -824,6 +824,41 @@ if(TEST_CASE MATCHES "^qgc-test-")
         endif()
     elseif(TEST_CASE STREQUAL "qgc-test-invalid-shards")
         add_qgc_test(InvalidShards SHARDS 1)
+    elseif(TEST_CASE STREQUAL "qgc-test-list")
+        add_library(QGCUnitTests OBJECT main.cpp)
+        set(_listed_sources Listed.cc Listed.h nested/Nested.cc nested/Nested.h)
+        set_source_files_properties(
+            ${_listed_sources}
+            PROPERTIES
+                GENERATED ON
+        )
+        add_qgc_tests(
+            Listed
+            nested/Nested
+            LABELS Unit Utilities TIMEOUT 5
+        )
+        get_target_property(_sources QGCUnitTests SOURCES)
+        if(NOT _sources STREQUAL "main.cpp;${_listed_sources}")
+            message(FATAL_ERROR "Listed tests did not add their sources in order: ${_sources}")
+        endif()
+        foreach(_test Listed Nested)
+            get_test_property(${_test} LABELS _labels)
+            get_test_property(${_test} TIMEOUT _timeout)
+            if(NOT _labels STREQUAL "Unit;Utilities" OR NOT _timeout STREQUAL "5")
+                message(FATAL_ERROR "${_test} was not registered with its arguments: ${_labels} ${_timeout}")
+            endif()
+        endforeach()
+    elseif(TEST_CASE STREQUAL "qgc-test-list-missing-labels")
+        add_qgc_tests(
+            Listed
+            nested/Nested
+        )
+    elseif(TEST_CASE STREQUAL "qgc-test-list-path-after-labels")
+        # The refusal looks for the source of a test, so the call is made from a directory that has one.
+        set(_late_directory "${CMAKE_CURRENT_BINARY_DIR}/late")
+        file(WRITE "${_late_directory}/Late.cc" "")
+        file(WRITE "${_late_directory}/CMakeLists.txt" "add_qgc_tests(Listed LABELS Unit Late)\n")
+        add_subdirectory("${_late_directory}" late-build)
     else()
         message(FATAL_ERROR "Unknown QGC test TEST_CASE: ${TEST_CASE}")
     endif()
