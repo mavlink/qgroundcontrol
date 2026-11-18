@@ -58,16 +58,11 @@ int calculatePayloadSize(const QString &format);
 /// - 'e'/'E': Centi-units (divide by 100)
 /// - 'L': Lat/Lon (divide by 1e7)
 /// - 'g': Half-precision float (IEEE 754 binary16)
-/// @param data Pointer to binary data
-/// @param size Size of available data
-/// @param formatChar Format character
 /// @return Parsed little-endian value, or an invalid QVariant with a diagnostic on invalid input
 QVariant parseValue(const char* data, qint64 size, char formatChar);
 
 /// Parse message data into a map of field name -> value
 /// @param data Pointer to the message payload (after header)
-/// @param size Size of available payload data
-/// @param fmt Message format definition
 /// @return Map of column name to parsed value, or an empty map with a diagnostic on invalid input
 QMap<QString, QVariant> parseMessage(const char* data, qint64 size, const MessageFormat& fmt);
 
@@ -76,13 +71,10 @@ QMap<QString, QVariant> parseMessage(const char* data, qint64 size, const Messag
 // ============================================================================
 
 /// Check if data starts with a valid DataFlash header
-/// @param data Pointer to data
-/// @param size Size of available data
 /// @return true if data starts with 0xA3 0x95
 bool isValidHeader(const char *data, qint64 size);
 
 /// Find the next message header starting from offset
-/// @param data Pointer to data
 /// @param size Total size of data
 /// @param offset Starting position to search from
 /// @return Offset of next header, or -1 if not found or if offset is negative
@@ -94,13 +86,10 @@ qint64 findNextHeader(const char *data, qint64 size, qint64 offset);
 
 /// Parse an FMT message payload into a MessageFormat structure
 /// @param data Pointer to FMT payload (86 bytes: Type(1)+Length(1)+Name(4)+Format(16)+Columns(64))
-/// @return Parsed MessageFormat
 MessageFormat parseFmtPayload(const char *data);
 
 /// Parse all FMT messages from a DataFlash log (first pass)
 /// Also applies FMTU units to set MessageFormat::instanceColumn
-/// @param data Pointer to complete log data
-/// @param size Size of log data
 /// @param formats Output map of message type -> MessageFormat
 /// @return true if any FMT messages were found
 bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat> &formats);
@@ -110,20 +99,15 @@ bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat
 // ============================================================================
 
 /// Callback for message iteration
-/// @param msgType Message type
 /// @param payload Pointer to message payload (after header)
 /// @param payloadSize Size of payload
-/// @param fmt MessageFormat for this message type
 /// @return true to continue iteration, false to stop
 using MessageCallback = std::function<bool(uint8_t msgType, const char *payload,
                                             int payloadSize, const MessageFormat &fmt)>;
 
 /// Iterate over all messages in a DataFlash log
-/// @param data Pointer to complete log data
-/// @param size Size of log data
 /// @param formats Message formats from parseFmtMessages(). Messages of a format whose length is less than the
 ///        3 header bytes are skipped.
-/// @param callback Function called for each message
 /// @param progressCallback Optional callback invoked every ~1000 messages with byte-position progress (0.0–1.0)
 /// @return Number of messages processed
 int iterateMessages(const char *data, qint64 size,
@@ -136,8 +120,6 @@ int iterateMessages(const char *data, qint64 size,
 // ============================================================================
 
 /// Convert IEEE 754 binary16 (half-precision) to single-precision float
-/// @param bits 16-bit half-precision representation
-/// @return Converted float value
 float halfToFloat(uint16_t bits);
 
 } // namespace APMDataFlashUtility

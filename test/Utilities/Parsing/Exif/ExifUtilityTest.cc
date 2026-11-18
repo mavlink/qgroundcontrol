@@ -1,9 +1,9 @@
 #include "ExifUtilityTest.h"
 
-#include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
 
 #include "ExifUtility.h"
+#include "FileFixtures.h"
 
 namespace {
 
@@ -80,10 +80,8 @@ ExifData* exifDataOfSize(qsizetype size)
 
 void ExifUtilityTest::_testHasExifData()
 {
-    QFile file(":/unittest/DSCN0010.jpg");
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    const QByteArray buffer = file.readAll();
-    file.close();
+    const QByteArray buffer = TestFixtures::readFile(QStringLiteral(":/unittest/DSCN0010.jpg"));
+    QVERIFY(!buffer.isEmpty());
 
     QVERIFY(ExifUtility::hasExifData(buffer));
 }
@@ -105,20 +103,8 @@ void ExifUtilityTest::_testHasExifDataInvalid()
 
 void ExifUtilityTest::_testHasExifDataNoExif()
 {
-    // Valid JPEG header but no EXIF (APP0/JFIF instead of APP1/EXIF)
-    QByteArray jpegNoExif;
-    jpegNoExif.append('\xFF');
-    jpegNoExif.append('\xD8');  // SOI
-    jpegNoExif.append('\xFF');
-    jpegNoExif.append('\xE0');  // APP0 (JFIF, not EXIF)
-    jpegNoExif.append('\x00');
-    jpegNoExif.append('\x10');  // Length
-    jpegNoExif.append("JFIF");
-    jpegNoExif.append('\x00');
-    jpegNoExif.append(10, '\x00');
-    jpegNoExif.append('\xFF');
-    jpegNoExif.append('\xD9');  // EOI
-
+    // A JPEG without EXIF: an APP0 (JFIF) segment where an APP1 (EXIF) segment would be
+    const QByteArray jpegNoExif = jpegSoi() + jfifSegment() + jpegScan();
     QVERIFY(!ExifUtility::hasExifData(jpegNoExif));
 }
 
@@ -128,10 +114,8 @@ void ExifUtilityTest::_testHasExifDataNoExif()
 
 void ExifUtilityTest::_testLoadFromBuffer()
 {
-    QFile file(":/unittest/DSCN0010.jpg");
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    const QByteArray buffer = file.readAll();
-    file.close();
+    const QByteArray buffer = TestFixtures::readFile(QStringLiteral(":/unittest/DSCN0010.jpg"));
+    QVERIFY(!buffer.isEmpty());
 
     ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
@@ -148,45 +132,24 @@ void ExifUtilityTest::_testLoadFromBufferInvalid()
     // Note: libexif's exif_data_new_from_data returns an ExifData even for
     // invalid input - it just won't contain any useful data. We verify that
     // the loaded data has no meaningful EXIF entries.
-
-    // Empty buffer - libexif returns an ExifData but with no entries
-    QByteArray empty;
-    ExifData* emptyData = ExifUtility::loadFromBuffer(empty);
-    if (emptyData) {
-        // Should have no entries in IFD0
-        QCOMPARE(emptyData->ifd[EXIF_IFD_0]->count, 0U);
-        exif_data_unref(emptyData);
-    }
-
-    // Random data - may return ExifData but with no meaningful entries
-    QByteArray random(1024, 'x');
-    ExifData* randomData = ExifUtility::loadFromBuffer(random);
-    if (randomData) {
-        // Should have no entries
-        QCOMPARE(randomData->ifd[EXIF_IFD_0]->count, 0U);
-        exif_data_unref(randomData);
-    }
-
-    // PNG header - not JPEG, so no EXIF
-    QByteArray pngData;
-    pngData.append('\x89');
-    pngData.append('P');
-    pngData.append('N');
-    pngData.append('G');
-    pngData.append(1024, '\x00');
-    ExifData* pngResult = ExifUtility::loadFromBuffer(pngData);
-    if (pngResult) {
-        QCOMPARE(pngResult->ifd[EXIF_IFD_0]->count, 0U);
-        exif_data_unref(pngResult);
+    const QList<QByteArray> buffers{
+        QByteArray(),                                    // Empty buffer
+        QByteArray(1024, 'x'),                           // Random data
+        QByteArray("\x89PNG") + QByteArray(1024, '\0'),  // PNG header - not JPEG, so no EXIF
+    };
+    for (const QByteArray& buffer : buffers) {
+        ExifData* data = ExifUtility::loadFromBuffer(buffer);
+        if (data) {
+            QCOMPARE(data->ifd[EXIF_IFD_0]->count, 0U);
+            exif_data_unref(data);
+        }
     }
 }
 
 void ExifUtilityTest::_testSaveToBuffer()
 {
-    QFile file(":/unittest/DSCN0010.jpg");
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    QByteArray buffer = file.readAll();
-    file.close();
+    QByteArray buffer = TestFixtures::readFile(QStringLiteral(":/unittest/DSCN0010.jpg"));
+    QVERIFY(!buffer.isEmpty());
 
     const int originalSize = buffer.size();
 
@@ -204,40 +167,6 @@ void ExifUtilityTest::_testSaveToBuffer()
 
     // Size should be similar (minor differences due to re-encoding)
     QVERIFY(qAbs(buffer.size() - originalSize) < 1000);
-}
-
-void ExifUtilityTest::_testSaveToBufferRejectsNonJpeg()
-{
-    ExifData* data = ExifUtility::createNew();
-    QVERIFY(data != nullptr);
-
-    QByteArray notJpeg("plain-text-data");
-    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("Not a valid JPEG file"));
-    QVERIFY(!ExifUtility::saveToBuffer(data, notJpeg));
-    verifyExpectedLogMessage();
-
-    exif_data_unref(data);
-}
-
-void ExifUtilityTest::_testSaveToBufferRejectsTiff()
-{
-    ExifData* data = ExifUtility::createNew();
-    QVERIFY(data != nullptr);
-
-    // Minimal little-endian TIFF header: "II" + 0x002A
-    QByteArray tiffData;
-    tiffData.append('I');
-    tiffData.append('I');
-    tiffData.append('\x2A');
-    tiffData.append('\x00');
-    tiffData.append(16, '\x00');
-
-    QVERIFY(ExifUtility::isTiff(tiffData));
-    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("TIFF/DNG format not supported"));
-    QVERIFY(!ExifUtility::saveToBuffer(data, tiffData));
-    verifyExpectedLogMessage();
-
-    exif_data_unref(data);
 }
 
 void ExifUtilityTest::_testSaveToBufferKeepsOtherSegments_data()
@@ -327,43 +256,53 @@ void ExifUtilityTest::_testSaveToBufferRejectsOversizedExif()
     QCOMPARE(jpeg, original);
 }
 
-void ExifUtilityTest::_testSaveToBufferRejectsMalformedJpeg_data()
+void ExifUtilityTest::_testSaveToBufferRejectsInput_data()
 {
     QTest::addColumn<QByteArray>("original");
+    QTest::addColumn<bool>("isTiff");
+    QTest::addColumn<QString>("warning");
 
     const QByteArray soi = jpegSoi();
     const QByteArray jfif = jfifSegment();
-    QTest::newRow("ends-before-scan") << soi + jfif;
-    QTest::newRow("truncated-segment") << soi + jfif.chopped(1);
-    QTest::newRow("segment-length-below-minimum") << soi + QByteArray::fromHex("ffe00001") + jpegScan();
-    QTest::newRow("data-between-segments") << soi + jfif + QByteArray::fromHex("0000") + jpegScan();
+    const QString malformed = QStringLiteral("Malformed JPEG segments");
+    QTest::newRow("ends-before-scan") << soi + jfif << false << malformed;
+    QTest::newRow("truncated-segment") << soi + jfif.chopped(1) << false << malformed;
+    QTest::newRow("segment-length-below-minimum")
+        << soi + QByteArray::fromHex("ffe00001") + jpegScan() << false << malformed;
+    QTest::newRow("data-between-segments")
+        << soi + jfif + QByteArray::fromHex("0000") + jpegScan() << false << malformed;
+    QTest::newRow("not-a-jpeg") << QByteArray("plain-text-data") << false << QStringLiteral("Not a valid JPEG file");
+    // Minimal little-endian TIFF header: "II" + 0x002A
+    QTest::newRow("tiff") << QByteArray::fromHex("49492a00") + QByteArray(16, '\0') << true
+                          << QStringLiteral("TIFF/DNG format not supported");
 }
 
-void ExifUtilityTest::_testSaveToBufferRejectsMalformedJpeg()
+void ExifUtilityTest::_testSaveToBufferRejectsInput()
 {
     QFETCH(QByteArray, original);
+    QFETCH(bool, isTiff);
+    QFETCH(QString, warning);
 
     ExifData* data = ExifUtility::createNew();
     QVERIFY(data != nullptr);
     const auto release = qScopeGuard([data] { exif_data_unref(data); });
 
-    QByteArray jpeg = original;
-    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("Malformed JPEG segments"));
-    QVERIFY(!ExifUtility::saveToBuffer(data, jpeg));
+    QCOMPARE(ExifUtility::isTiff(original), isTiff);
+    QByteArray buffer = original;
+    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression(warning));
+    QVERIFY(!ExifUtility::saveToBuffer(data, buffer));
     verifyExpectedLogMessage();
-    QCOMPARE(jpeg, original);
+    QCOMPARE(buffer, original);
 }
 
 // ============================================================================
 // Tag Reading Tests
 // ============================================================================
 
-void ExifUtilityTest::_testReadString()
+void ExifUtilityTest::_testReadTags()
 {
-    QFile file(":/unittest/DSCN0010.jpg");
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    const QByteArray buffer = file.readAll();
-    file.close();
+    const QByteArray buffer = TestFixtures::readFile(QStringLiteral(":/unittest/DSCN0010.jpg"));
+    QVERIFY(!buffer.isEmpty());
 
     ExifData* data = ExifUtility::loadFromBuffer(buffer);
     QVERIFY(data != nullptr);
@@ -373,40 +312,13 @@ void ExifUtilityTest::_testReadString()
     QVERIFY(!dateTime.isEmpty());
     QVERIFY(dateTime.contains(":"));  // EXIF date format uses colons
 
-    // Read camera make/model from IFD0
-    QString make = ExifUtility::readString(data, EXIF_TAG_MAKE, EXIF_IFD_0);
-    // May or may not be present, just verify it doesn't crash
-
-    exif_data_unref(data);
-}
-
-void ExifUtilityTest::_testReadShort()
-{
-    QFile file(":/unittest/DSCN0010.jpg");
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    const QByteArray buffer = file.readAll();
-    file.close();
-
-    ExifData* data = ExifUtility::loadFromBuffer(buffer);
-    QVERIFY(data != nullptr);
+    // The camera make in IFD0 may or may not be present: reading it must not crash
+    (void) ExifUtility::readString(data, EXIF_TAG_MAKE, EXIF_IFD_0);
 
     // Read orientation (common EXIF tag)
     int orientation = ExifUtility::readShort(data, EXIF_TAG_ORIENTATION, EXIF_IFD_0);
     // Valid orientations are 1-8, or 0 if not present
     QVERIFY(orientation >= 0 && orientation <= 8);
-
-    exif_data_unref(data);
-}
-
-void ExifUtilityTest::_testReadRational()
-{
-    QFile file(":/unittest/DSCN0010.jpg");
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    const QByteArray buffer = file.readAll();
-    file.close();
-
-    ExifData* data = ExifUtility::loadFromBuffer(buffer);
-    QVERIFY(data != nullptr);
 
     // Try reading focal length (commonly a rational)
     double focalLength = ExifUtility::readRational(data, EXIF_TAG_FOCAL_LENGTH, EXIF_IFD_EXIF);
@@ -468,30 +380,6 @@ void ExifUtilityTest::_testCreateTag()
 // GPS Coordinate Tests
 // ============================================================================
 
-void ExifUtilityTest::_testWriteGpsCoordinate()
-{
-    ExifData* data = ExifUtility::createNew();
-    QVERIFY(data != nullptr);
-
-    ExifByteOrder order = exif_data_get_byte_order(data);
-
-    ExifEntry* entry = ExifUtility::createTag(data, EXIF_IFD_GPS, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE),
-                                              EXIF_FORMAT_RATIONAL, 3);
-    QVERIFY(entry != nullptr);
-
-    // Write a coordinate
-    const double testLat = 37.7749;
-    ExifUtility::writeGpsCoordinate(entry, order, testLat);
-
-    // Read it back
-    double readBack = ExifUtility::gpsRationalToDecimal(entry, order);
-
-    // Should be within tolerance (DMS conversion loses some precision)
-    QVERIFY2(qAbs(readBack - testLat) < 0.001, qPrintable(QString("Expected %1, got %2").arg(testLat).arg(readBack)));
-
-    exif_data_unref(data);
-}
-
 void ExifUtilityTest::_testWriteRational()
 {
     ExifData* data = ExifUtility::createNew();
@@ -529,11 +417,12 @@ void ExifUtilityTest::_testGpsRationalToDecimal()
     QVERIFY(entry != nullptr);
 
     // Test various coordinates
-    const double testCoords[] = {0.0, 45.5, 90.0, 122.4194, 179.9999};
+    const double testCoords[] = {0.0, 37.7749, 45.5, 90.0, 122.4194, 179.9999};
 
     for (double coord : testCoords) {
         ExifUtility::writeGpsCoordinate(entry, order, coord);
         double result = ExifUtility::gpsRationalToDecimal(entry, order);
+        // Within tolerance: the conversion to degrees, minutes and seconds loses some precision
         QVERIFY2(qAbs(result - coord) < 0.001,
                  qPrintable(QString("Coord %1: expected %2, got %3").arg(coord).arg(coord).arg(result)));
     }

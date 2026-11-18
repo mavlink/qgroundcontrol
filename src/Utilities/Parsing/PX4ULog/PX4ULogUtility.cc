@@ -25,10 +25,7 @@ bool isValidHeader(const char *data, qint64 size)
 
 int getVersion(const char *data, qint64 size)
 {
-    if (size <= kVersionOffset) {
-        return -1;
-    }
-    if (!isValidHeader(data, size)) {
+    if ((size <= kVersionOffset) || !isValidHeader(data, size)) {
         return -1;
     }
     return static_cast<uint8_t>(data[kVersionOffset]);
@@ -36,10 +33,7 @@ int getVersion(const char *data, qint64 size)
 
 uint64_t getHeaderTimestamp(const char *data, qint64 size)
 {
-    if (size < kHeaderSize) {
-        return 0;
-    }
-    if (!isValidHeader(data, size)) {
+    if ((size < kHeaderSize) || !isValidHeader(data, size)) {
         return 0;
     }
 

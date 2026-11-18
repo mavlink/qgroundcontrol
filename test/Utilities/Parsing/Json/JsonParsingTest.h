@@ -9,13 +9,10 @@ class JsonParsingTest : public UnitTest
 private slots:
     void _testValidateRequiredKeysSuccess();
     void _testValidateRequiredKeysMissing();
-    void _testValidateKeyTypesSuccess();
-    void _testValidateKeyTypesTypeMismatch();
-    void _testValidateKeyTypesListSizeMismatch();
-    void _testValidateKeyTypesNullAcceptsDouble();
+    void _testValidateKeyTypes_data();
+    void _testValidateKeyTypes();
     void _testPossibleNaNJsonValue();
     void _testIsJsonFileBytes();
-    void _testIsJsonFileInvalidBytes();
     void _testIsJsonFileCompressedResourceBytes();
     void _testIsJsonFileCompressedResourcePath();
     void _testIsJsonFileMissingPath();

@@ -46,21 +46,6 @@ void PX4ULogUtilityTest::_testIsValidHeaderInvalid()
     QVERIFY(!PX4ULogUtility::isValidHeader(nullptr, 0));
 }
 
-void PX4ULogUtilityTest::_testIsValidHeaderQByteArray()
-{
-    // Test QByteArray data with pointer/size API
-    QByteArray valid("ULog", 4);
-    valid.append('\x01');      // version
-    valid.append(11, '\x00');  // rest of header
-    QVERIFY(PX4ULogUtility::isValidHeader(valid.constData(), valid.size()));
-
-    QByteArray invalid("NotULog", 7);
-    QVERIFY(!PX4ULogUtility::isValidHeader(invalid.constData(), invalid.size()));
-
-    QByteArray empty;
-    QVERIFY(!PX4ULogUtility::isValidHeader(empty.constData(), empty.size()));
-}
-
 // ============================================================================
 // Version Detection Tests
 // ============================================================================
@@ -177,34 +162,28 @@ QByteArray buildTestULog(int count, uint64_t baseTimestamp = 500000ULL, float ba
     return QByteArray(reinterpret_cast<const char *>(buffer.data()), static_cast<int>(buffer.size()));
 }
 
-} // namespace
-
-void PX4ULogUtilityTest::_testIterateMessages()
+struct MessageCount
 {
-    const QByteArray ulog = buildTestULog(1, 1000000ULL, 3.14f);
-
-    int callCount = 0;
-    uint64_t gotTimestamp = 0;
-    float    gotValue     = 0.f;
-
+    bool parsed = false;
+    int count = 0;
     QString error;
-    const bool ok = PX4ULogUtility::iterateMessages(
-        ulog.constData(), ulog.size(), "test_msg",
-        [&](const ulog_cpp::TypedDataView &sample) {
-            ++callCount;
-            gotTimestamp = sample.at("timestamp").as<uint64_t>();
-            gotValue     = sample.at("value").as<float>();
+};
+
+/// Counts the messages named @p messageName in the first @p size bytes of @p ulog
+MessageCount countMessages(const QByteArray& ulog, qsizetype size, const std::string& messageName = "test_msg")
+{
+    MessageCount result;
+    result.parsed = PX4ULogUtility::iterateMessages(
+        ulog.constData(), size, messageName,
+        [&result](const ulog_cpp::TypedDataView&) {
+            ++result.count;
             return true;
         },
-        error);
-
-    QVERIFY2(ok, qPrintable(error));
-    QVERIFY(error.isEmpty());
-    QCOMPARE(callCount, 1);
-    QCOMPARE(gotTimestamp, 1000000ULL);
-    QVERIFY2(qAbs(gotValue - 3.14f) < 0.001f,
-             qPrintable(QStringLiteral("Expected 3.14, got %1").arg(static_cast<double>(gotValue))));
+        result.error);
+    return result;
 }
+
+}  // namespace
 
 void PX4ULogUtilityTest::_testIterateMessagesMultiple()
 {
@@ -227,6 +206,7 @@ void PX4ULogUtilityTest::_testIterateMessagesMultiple()
         error);
 
     QVERIFY2(ok, qPrintable(error));
+    QVERIFY(error.isEmpty());
     QCOMPARE(callCount, kCount);
 
     for (int i = 0; i < kCount; ++i) {
@@ -288,41 +268,25 @@ void PX4ULogUtilityTest::_testIterateMessagesUnknownMessage()
 {
     // Valid ULog, but we request a message type that isn't in it.
     const QByteArray ulog = buildTestULog(3);
+    const MessageCount result = countMessages(ulog, ulog.size(), "nonexistent_msg");
 
-    int callCount = 0;
-    QString error;
-    const bool ok = PX4ULogUtility::iterateMessages(
-        ulog.constData(), ulog.size(), "nonexistent_msg",
-        [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; },
-        error);
-
-    QVERIFY2(ok, qPrintable(error));   // parse still succeeds
-    QCOMPARE(callCount, 0);            // callback never fires
+    QVERIFY2(result.parsed, qPrintable(result.error));  // parse still succeeds
+    QCOMPARE(result.count, 0);                          // callback never fires
 }
 
 void PX4ULogUtilityTest::_testIterateMessagesFatalError()
 {
     // Garbage data that is not a valid ULog stream.
     const QByteArray garbage(64, static_cast<char>(0xFF));
-
-    int callCount = 0;
-    QString error;
-    const bool ok = PX4ULogUtility::iterateMessages(
-        garbage.constData(), garbage.size(), "test_msg",
-        [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; },
-        error);
-
-    QVERIFY(!ok);
-    QCOMPARE(callCount, 0);
+    const MessageCount garbageResult = countMessages(garbage, garbage.size());
+    QVERIFY(!garbageResult.parsed);
+    QCOMPARE(garbageResult.count, 0);
 
     // Empty data — header can never be complete
-    callCount = 0;
-    QString error2;
     const QByteArray empty;
-    QVERIFY(!PX4ULogUtility::iterateMessages(
-        empty.constData(), empty.size(), "test_msg",
-        [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; }, error2));
-    QCOMPARE(callCount, 0);
+    const MessageCount emptyResult = countMessages(empty, empty.size());
+    QVERIFY(!emptyResult.parsed);
+    QCOMPARE(emptyResult.count, 0);
 }
 
 void PX4ULogUtilityTest::_testIterateMessagesTruncated_data()
@@ -354,18 +318,10 @@ void PX4ULogUtilityTest::_testIterateMessagesTruncated()
     const QByteArray ulog = buildTestULog(3);
     QVERIFY(size <= ulog.size());
 
-    int callCount = 0;
-    QString error;
-    QCOMPARE(PX4ULogUtility::iterateMessages(
-                 ulog.constData(), size, "test_msg",
-                 [&callCount](const ulog_cpp::TypedDataView&) {
-                     ++callCount;
-                     return true;
-                 },
-                 error),
-             parsed);
-    QCOMPARE(error.isEmpty(), parsed);
-    QCOMPARE(callCount, messageCount);
+    const MessageCount result = countMessages(ulog, size);
+    QCOMPARE(result.parsed, parsed);
+    QCOMPARE(result.error.isEmpty(), parsed);
+    QCOMPARE(result.count, messageCount);
 }
 
 UT_REGISTER_TEST(PX4ULogUtilityTest, TestLabel::Unit, TestLabel::Utilities)

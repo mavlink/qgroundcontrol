@@ -20,7 +20,6 @@ private slots:
     void _testParseValue();
     void _testParseValueInvalid_data();
     void _testParseValueInvalid();
-    void _testParseValueStrings();
 
     // Half-precision float tests
     void _testHalfToFloat_data();

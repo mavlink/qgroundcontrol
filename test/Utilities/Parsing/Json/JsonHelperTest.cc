@@ -24,164 +24,83 @@ void JsonHelperTest::_saveAndValidateExternalHeader_test()
     QVERIFY(errorString.isEmpty());
 }
 
+void JsonHelperTest::_validateInternalQGCJsonFile_test_data()
+{
+    QTest::addColumn<QJsonObject>("object");
+    QTest::addColumn<int>("minVersion");
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<QString>("errorPart");
+
+    const auto header = [](const char* fileType, int version) {
+        return QJsonObject{{JsonParsing::jsonFileTypeKey, fileType}, {JsonParsing::jsonVersionKey, version}};
+    };
+    QTest::newRow("supported-version") << header("TestType", 2) << 1 << true << QString();
+    QTest::newRow("version-too-old") << header("TestType", 1) << 2 << false << QString();
+    QTest::newRow("version-too-new") << header("TestType", 5) << 1 << false << QString();
+    QTest::newRow("wrong-file-type") << header("WrongType", 2) << 1 << false << QStringLiteral("Incorrect file type");
+    // Neither the file type nor the version
+    QTest::newRow("missing-keys") << QJsonObject() << 1 << false << QString();
+}
+
 void JsonHelperTest::_validateInternalQGCJsonFile_test()
 {
-    QJsonObject obj;
-    obj[JsonParsing::jsonFileTypeKey] = "TestType";
-    obj[JsonParsing::jsonVersionKey] = 2;
+    QFETCH(QJsonObject, object);
+    QFETCH(int, minVersion);
+    QFETCH(bool, valid);
+    QFETCH(QString, errorPart);
 
     int version = 0;
     QString errorString;
-    QVERIFY(JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
-    QCOMPARE(version, 2);
-    QVERIFY(errorString.isEmpty());
+    QCOMPARE(JsonParsing::validateInternalQGCJsonFile(object, "TestType", minVersion, 3, version, errorString), valid);
+    QCOMPARE(errorString.isEmpty(), valid);
+    QVERIFY2(errorString.contains(errorPart), qPrintable(errorString));
+    if (valid) {
+        QCOMPARE(version, 2);
+    }
 }
 
-void JsonHelperTest::_validateInternalVersionTooOld_test()
+void JsonHelperTest::_validateKeys_test_data()
 {
-    QJsonObject obj;
-    obj[JsonParsing::jsonFileTypeKey] = "TestType";
-    obj[JsonParsing::jsonVersionKey] = 1;
+    using KeyInfo = QList<JsonParsing::KeyValidateInfo>;
 
-    int version = 0;
-    QString errorString;
-    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 2, 3, version, errorString));
-    QVERIFY(!errorString.isEmpty());
+    QTest::addColumn<QJsonObject>("object");
+    QTest::addColumn<KeyInfo>("keyInfo");
+    QTest::addColumn<bool>("strict");
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<QString>("errorPart");
+
+    const QJsonObject name{{"name", "test"}};
+    const QJsonObject nameAndCount{{"name", "test"}, {"count", 42}};
+    const KeyInfo requiredNameAndCount{{"name", QJsonValue::String, true}, {"count", QJsonValue::Double, true}};
+
+    QTest::newRow("required-keys") << nameAndCount << requiredNameAndCount << false << true << QString();
+    QTest::newRow("optional-key-absent") << name
+                                         << KeyInfo{{"name", QJsonValue::String, true},
+                                                    {"optional", QJsonValue::Double, false}}
+                                         << false << true << QString();
+    QTest::newRow("wrong-type") << QJsonObject{{"name", 123}} << KeyInfo{{"name", QJsonValue::String, true}} << false
+                                << false << QString();
+    QTest::newRow("strict-required-keys") << nameAndCount << requiredNameAndCount << true << true << QString();
+    QTest::newRow("strict-unknown-key") << QJsonObject{{"name", "test"}, {"count", 42}, {"extra", true}}
+                                        << requiredNameAndCount << true << false
+                                        << QStringLiteral("Unknown key: extra");
+    QTest::newRow("strict-required-key-absent") << name << requiredNameAndCount << true << false << QString();
 }
 
-void JsonHelperTest::_validateInternalVersionTooNew_test()
+void JsonHelperTest::_validateKeys_test()
 {
-    QJsonObject obj;
-    obj[JsonParsing::jsonFileTypeKey] = "TestType";
-    obj[JsonParsing::jsonVersionKey] = 5;
-
-    int version = 0;
-    QString errorString;
-    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
-    QVERIFY(!errorString.isEmpty());
-}
-
-void JsonHelperTest::_validateInternalWrongFileType_test()
-{
-    QJsonObject obj;
-    obj[JsonParsing::jsonFileTypeKey] = "WrongType";
-    obj[JsonParsing::jsonVersionKey] = 2;
-
-    int version = 0;
-    QString errorString;
-    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
-    QVERIFY(errorString.contains("Incorrect file type"));
-}
-
-void JsonHelperTest::_validateInternalMissingKeys_test()
-{
-    QJsonObject obj;
-    // Missing both fileType and version keys
-
-    int version = 0;
-    QString errorString;
-    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
-    QVERIFY(!errorString.isEmpty());
-}
-
-void JsonHelperTest::_validateKeysRequired_test()
-{
-    const QJsonObject obj = {
-        {"name", "test"},
-        {"count", 42},
-    };
-
-    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
-        {"name", QJsonValue::String, true},
-        {"count", QJsonValue::Double, true},
-    };
+    QFETCH(QJsonObject, object);
+    QFETCH(QList<JsonParsing::KeyValidateInfo>, keyInfo);
+    QFETCH(bool, strict);
+    QFETCH(bool, valid);
+    QFETCH(QString, errorPart);
 
     QString errorString;
-    QVERIFY(JsonParsing::validateKeys(obj, keyInfo, errorString));
-    QVERIFY(errorString.isEmpty());
-}
-
-void JsonHelperTest::_validateKeysOptional_test()
-{
-    const QJsonObject obj = {
-        {"name", "test"},
-    };
-
-    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
-        {"name", QJsonValue::String, true},
-        {"optional", QJsonValue::Double, false},
-    };
-
-    QString errorString;
-    QVERIFY(JsonParsing::validateKeys(obj, keyInfo, errorString));
-    QVERIFY(errorString.isEmpty());
-}
-
-void JsonHelperTest::_validateKeysWrongType_test()
-{
-    const QJsonObject obj = {
-        {"name", 123},
-    };
-
-    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
-        {"name", QJsonValue::String, true},
-    };
-
-    QString errorString;
-    QVERIFY(!JsonParsing::validateKeys(obj, keyInfo, errorString));
-    QVERIFY(!errorString.isEmpty());
-}
-
-void JsonHelperTest::_validateKeysStrictValid_test()
-{
-    const QJsonObject obj = {
-        {"name", "test"},
-        {"count", 42},
-    };
-
-    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
-        {"name", QJsonValue::String, true},
-        {"count", QJsonValue::Double, true},
-    };
-
-    QString errorString;
-    QVERIFY(JsonParsing::validateKeysStrict(obj, keyInfo, errorString));
-    QVERIFY(errorString.isEmpty());
-}
-
-void JsonHelperTest::_validateKeysStrictUnknownKey_test()
-{
-    const QJsonObject obj = {
-        {"name", "test"},
-        {"count", 42},
-        {"extra", true},
-    };
-
-    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
-        {"name", QJsonValue::String, true},
-        {"count", QJsonValue::Double, true},
-    };
-
-    QString errorString;
-    QVERIFY(!JsonParsing::validateKeysStrict(obj, keyInfo, errorString));
-    QVERIFY(errorString.contains("Unknown key"));
-    QVERIFY(errorString.contains("extra"));
-}
-
-void JsonHelperTest::_validateKeysStrictMissingRequired_test()
-{
-    const QJsonObject obj = {
-        {"name", "test"},
-    };
-
-    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
-        {"name", QJsonValue::String, true},
-        {"count", QJsonValue::Double, true},
-    };
-
-    QString errorString;
-    QVERIFY(!JsonParsing::validateKeysStrict(obj, keyInfo, errorString));
-    QVERIFY(!errorString.isEmpty());
+    QCOMPARE(strict ? JsonParsing::validateKeysStrict(object, keyInfo, errorString)
+                    : JsonParsing::validateKeys(object, keyInfo, errorString),
+             valid);
+    QCOMPARE(errorString.isEmpty(), valid);
+    QVERIFY2(errorString.contains(errorPart), qPrintable(errorString));
 }
 
 void JsonHelperTest::_loadSaveGeoCoordinate_test()

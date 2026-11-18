@@ -19,26 +19,21 @@ private slots:
     void _testLoadFromBuffer();
     void _testLoadFromBufferInvalid();
     void _testSaveToBuffer();
-    void _testSaveToBufferRejectsNonJpeg();
-    void _testSaveToBufferRejectsTiff();
     void _testSaveToBufferKeepsOtherSegments_data();
     void _testSaveToBufferKeepsOtherSegments();
     void _testSaveToBufferLargestExif();
     void _testSaveToBufferRejectsOversizedExif();
-    void _testSaveToBufferRejectsMalformedJpeg_data();
-    void _testSaveToBufferRejectsMalformedJpeg();
+    void _testSaveToBufferRejectsInput_data();
+    void _testSaveToBufferRejectsInput();
 
     // Tag reading
-    void _testReadString();
-    void _testReadShort();
-    void _testReadRational();
+    void _testReadTags();
 
     // Tag writing
     void _testInitTag();
     void _testCreateTag();
 
     // GPS coordinate helpers
-    void _testWriteGpsCoordinate();
     void _testWriteRational();
     void _testGpsRationalToDecimal();
     void _testWriteDateTimeOriginalRejectsInvalidInput();
