@@ -14,6 +14,19 @@ class QGCCompressionJob;
 
 /// \brief Watches directories for new archive files and optionally auto-decompresses them
 ///
+/// A file is reported once, after the debounce delay, when its name first appears in a watched directory.
+/// QFileSystemWatcher tells of the change at once where it has a native engine. Where it has none, on Linux
+/// when the user's inotify instances have run out, it looks at the directory once a second, and a file is
+/// reported up to that much later.
+///
+/// What a file is, is decided when it appears: by its name, or by its content if the name does not tell. A file
+/// that appears without content under such a name is decided when it is first written to.
+///
+/// The watcher does not know when a writer has finished. With auto-decompression, a file that is still being
+/// written when it is reported is extracted as it is, which fails, and is not tried again. A file that replaces
+/// one of the same name is not reported. A writer avoids both by writing the file elsewhere and renaming it into
+/// the directory, under a name that is not in use there.
+///
 /// Example usage:
 /// @code
 /// QGCArchiveWatcher watcher;
@@ -95,6 +108,8 @@ public:
     // ========================================================================
 
     /// Watch a directory for archive files
+    /// The files that are in the directory when its watch starts are not reported. That holds for every
+    /// directory that is not being watched, also one that was: its watch ends when it is removed.
     /// @param directoryPath Path to directory to watch
     /// @return true if directory was added to watch list
     bool watchDirectory(const QString &directoryPath);
@@ -155,11 +170,17 @@ signals:
 
 private slots:
     void _onDirectoryChanged(const QString &path);
+    void _onFileChanged(const QString& path);
     void _onExtractionFinished(bool success);
 
 private:
+    /// The files that are in a directory, by their absolute paths
+    static QSet<QString> _filesIn(const QString& directoryPath);
+    /// Drop what is known of a directory: its files, and the watches of those that wait for content
+    void _forgetDirectory(const QString& directoryPath);
     bool _isWatchedFormat(QGCCompression::Format format) const;
-    void _processNewFile(const QString &filePath);
+    /// @param directoryPath The watched directory that the file is in, by its key in _knownFiles
+    void _processNewFile(const QString& directoryPath, const QString& filePath);
     void _startExtraction(const QString &archivePath);
     /// Ask a running extraction to stop, and have its result dropped when it ends
     /// @param announce Whether to log that
@@ -182,6 +203,9 @@ private:
 
     // Track files to avoid duplicate processing
     QHash<QString, QSet<QString>> _knownFiles;  // directory -> known files
+
+    // New files that had no content to tell their format by: each is watched until it has some
+    QHash<QString, QSet<QString>> _filesWithoutContent;  // directory, by its key in _knownFiles -> files
 
     // Pending extractions queue
     QStringList _pendingExtractions;
