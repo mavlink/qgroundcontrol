@@ -23,6 +23,11 @@ RetryableRequestMessageState::RetryableRequestMessageState(
 {
 }
 
+RetryableRequestMessageState::~RetryableRequestMessageState()
+{
+    _cancelRequest();
+}
+
 void RetryableRequestMessageState::onWaitEntered()
 {
     WaitStateBase::onWaitEntered();
@@ -41,7 +46,30 @@ void RetryableRequestMessageState::onWaitEntered()
 void RetryableRequestMessageState::onWaitExited()
 {
     _requestActive = false;
+    _cancelRequest();
     WaitStateBase::onWaitExited();
+}
+
+void RetryableRequestMessageState::_cancelRequest()
+{
+    // Vehicle would otherwise call back a state that is no longer waiting, or one that has been destroyed
+    if (_requestVehicle) {
+        _requestVehicle->cancelRequestMessage(this);
+        _requestVehicle.clear();
+    }
+}
+
+void RetryableRequestMessageState::_vehicleDestroyed()
+{
+    if (!_requestActive) {
+        return;
+    }
+
+    // Nothing answers the outstanding request any more, and no timeout runs while a retry waits for it
+    qCWarning(RetryableRequestMessageStateLog)
+        << stateName() << "Vehicle destroyed while requesting message" << _messageId;
+    _requestActive = false;
+    waitFailed();
 }
 
 void RetryableRequestMessageState::_sendRequest()
@@ -56,6 +84,10 @@ void RetryableRequestMessageState::_sendRequest()
                                  << "attempt" << (_retryCount + 1) << "of" << (_maxRetries + 1);
 
     _requestActive = true;
+    _requestVehicle = v;
+    // Queued, so that a state deleted along with its vehicle is gone before this is delivered
+    connect(v, &QObject::destroyed, this, &RetryableRequestMessageState::_vehicleDestroyed,
+            static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
     v->requestMessage(
         [](void* resultHandlerData,
            MAV_RESULT result,

@@ -15,7 +15,8 @@ private slots:
     UT_PARAMETERIZED_TEST(_testRetryAfterTimeout);
     void _testMaxRetriesExhausted();
     void _testFailOnMaxRetries();
-    void _testVehicleDestroyedWhileMachineAlive();
+    void _testStateDestroyedWhileRequestOutstanding();
+    UT_PARAMETERIZED_TEST(_testVehicleDestroyedWhileMachineAlive);
 
 private:
     /// Waits until the vehicle's own requests to the autopilot are done, so a test request is sent right away.

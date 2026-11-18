@@ -1,5 +1,7 @@
 #include "RetryableRequestMessageStateTest.h"
 
+#include <memory>
+
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
@@ -279,8 +281,48 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
     _disconnectMockLink();
 }
 
+void RetryableRequestMessageStateTest::_testStateDestroyedWhileRequestOutstanding()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+    QVERIFY(_waitForNoAutopilotRequests());
+
+    // The request stays outstanding until the test sends the reply
+    TestFixtures::MavCommandAckTimeoutFixture ackTimeout(TestTimeout::longMs());
+    _mockLink->setRequestMessageNoResponse(MAVLINK_MSG_ID_DEBUG);
+    _mockLink->clearReceivedMavCommandCounts();
+
+    auto machine = std::make_unique<QGCStateMachine>(QStringLiteral("TestMachine"), _vehicle);
+    int handlerCallCount = 0;
+    auto* requestState = new RetryableRequestMessageState(
+        QStringLiteral("RequestDebug"), machine.get(), MAVLINK_MSG_ID_DEBUG,
+        [&handlerCallCount](Vehicle*, const mavlink_message_t&) { handlerCallCount++; });
+    finishOn(*machine, requestState, &QGCState::advance);
+    machine->start();
+    QVERIFY_TRUE_WAIT(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG) == 1,
+                      TestTimeout::shortMs());
+
+    // The vehicle holds a pointer to the state for the reply, which must not be used once the state is gone
+    machine.reset();
+    _sendWithheldDebugReply();
+    QVERIFY(_waitForNoAutopilotRequests());
+    QCOMPARE(handlerCallCount, 0);
+
+    _disconnectMockLink();
+}
+
+void RetryableRequestMessageStateTest::_testVehicleDestroyedWhileMachineAlive_data()
+{
+    QTest::addColumn<bool>("requestOutstanding");
+
+    QTest::newRow("before the machine starts") << false;
+    QTest::newRow("while the request is outstanding") << true;
+}
+
 void RetryableRequestMessageStateTest::_testVehicleDestroyedWhileMachineAlive()
 {
+    QFETCH(bool, requestOutstanding);
+
     _connectMockLinkNoInitialConnectSequence();
     QVERIFY(_vehicle);
 
@@ -289,16 +331,31 @@ void RetryableRequestMessageStateTest::_testVehicleDestroyedWhileMachineAlive()
         new RetryableRequestMessageState(QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG);
     finishOn(machine, requestState, &QGCState::error);
     QCOMPARE(machine.vehicle(), _vehicle);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+
+    // Only the loss of the vehicle ends the request
+    TestFixtures::MavCommandAckTimeoutFixture ackTimeout(TestTimeout::longMs());
+    if (requestOutstanding) {
+        QVERIFY(_waitForNoAutopilotRequests());
+        _mockLink->setRequestMessageNoResponse(MAVLINK_MSG_ID_DEBUG);
+        _mockLink->clearReceivedMavCommandCounts();
+        machine.start();
+        QVERIFY_TRUE_WAIT(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG) == 1,
+                          TestTimeout::shortMs());
+        expectLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                         QRegularExpression("Vehicle destroyed while requesting message"));
+    }
 
     const QPointer<Vehicle> vehicleGuard(_vehicle);
     _disconnectMockLink();
     QVERIFY_TRUE_WAIT(!vehicleGuard, TestTimeout::mediumMs());
     QVERIFY(!machine.vehicle());
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    expectLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
-                     QRegularExpression("No vehicle available"));
-    machine.start();
+    if (!requestOutstanding) {
+        expectLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                         QRegularExpression("No vehicle available"));
+        machine.start();
+    }
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::shortMs());
     verifyExpectedLogMessage();
 }

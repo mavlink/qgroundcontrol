@@ -9,12 +9,17 @@ class Vehicle;
 
 #include <functional>
 
+#include <QtCore/QPointer>
+
 /// \brief Requests a MAVLink message with built-in retry logic.
 ///
 /// On failure, retries up to maxRetries times before giving up. An attempt that times out counts as
 /// failed, but its request stays outstanding in Vehicle: the next request is sent once that one fails,
 /// and an answer to it is still accepted. No timeout runs while the state waits for that, so it waits
 /// for as long as Vehicle tracks the request; the timeout of the next attempt starts when it is sent.
+///
+/// The outstanding request is cancelled when the state is exited or destroyed. A vehicle that is
+/// destroyed while its answer is awaited fails the state.
 ///
 /// Emits advance() on success or after all retries exhausted.
 /// Emits error() only if explicitly requested via failOnMaxRetries, preceded by timeout() when the
@@ -57,6 +62,7 @@ public:
                                   int maxRetries = 1,
                                   int compId = MAV_COMP_ID_AUTOPILOT1,
                                   int timeoutMsecs = 5000);
+    ~RetryableRequestMessageState() override;
 
     /// Set handler called when all retries fail
     void setFailureHandler(FailureHandler handler) { _failureHandler = std::move(handler); }
@@ -94,8 +100,12 @@ protected:
     void onWaitExited() override;
     void onWaitTimeout() override;
 
+private slots:
+    void _vehicleDestroyed();
+
 private:
     void _sendRequest();
+    void _cancelRequest();
     void _queueRetry();
     void _handleResult(MAV_RESULT result,
                        VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
@@ -115,4 +125,7 @@ private:
 
     VehicleTypes::RequestMessageResultHandlerFailureCode_t _lastFailureCode = VehicleTypes::RequestMessageNoFailure;
     MAV_RESULT _lastResult = MAV_RESULT_ACCEPTED;
+
+    /// Vehicle the last request was made to. The machine cannot be asked for it while it deletes its states.
+    QPointer<Vehicle> _requestVehicle;
 };
