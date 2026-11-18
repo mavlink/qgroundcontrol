@@ -3,6 +3,7 @@
 #include <functional>
 #include <limits>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 
 #include "QGCCommandLineParser.h"
@@ -174,33 +175,62 @@ void QGCCommandLineParserTest::_testParseArgumentsRejectedValues_data()
 {
     QTest::addColumn<QStringList>("arguments");
     QTest::addColumn<QString>("expectedError");
+    QTest::addColumn<QStringList>("expectedUnknownOptions");
 
-    QTest::newRow("system-id zero") << QStringList{QStringLiteral("--system-id:0")}
-                                    << QStringLiteral("Invalid System ID (must be 1-4294967295): 0");
-    QTest::newRow("system-id not a number") << QStringList{QStringLiteral("--system-id:abc")}
-                                            << QStringLiteral("Invalid System ID (must be 1-4294967295): abc");
-    QTest::newRow("unittest-stress zero") << QStringList{QStringLiteral("--unittest-stress:0")}
-                                          << QStringLiteral("Invalid stress test count (must be > 0): 0");
-    QTest::newRow("unittest-stress not a number") << QStringList{QStringLiteral("--unittest-stress:many")}
-                                                  << QStringLiteral("Invalid stress test count (must be > 0): many");
-    QTest::newRow("unittest-shard past its count")
-        << QStringList{QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest-shard:4/3")}
-        << QStringLiteral("Invalid unit test shard (expected <index>/<count> with 1 <= index <= count): 4/3");
-    QTest::newRow("unittest-shard without a test")
-        << QStringList{QStringLiteral("--unittest-shard:1/3")}
-        << QStringLiteral("--unittest-shard requires exactly one --unittest:<name>.");
-    QTest::newRow("unittest-shard with two tests")
-        << QStringList{QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest:BarTest"),
-                       QStringLiteral("--unittest-shard:1/3")}
-        << QStringLiteral("--unittest-shard requires exactly one --unittest:<name>.");
-    QTest::newRow("positional argument") << QStringList{QStringLiteral("--clear-cache"), QStringLiteral("mission.plan")}
-                                         << QStringLiteral("Unexpected positional arguments: mission.plan");
+    const auto addRow = [](const char* name, const QStringList& arguments, const QString& expectedError,
+                           const QStringList& expectedUnknownOptions = {}) {
+        QTest::newRow(name) << arguments << expectedError << expectedUnknownOptions;
+    };
+
+    addRow("system-id zero", {QStringLiteral("--system-id:0")},
+           QStringLiteral("Invalid System ID (must be 1-4294967295): 0"));
+    addRow("system-id not a number", {QStringLiteral("--system-id:abc")},
+           QStringLiteral("Invalid System ID (must be 1-4294967295): abc"));
+    addRow("unittest-stress zero", {QStringLiteral("--unittest-stress:0")},
+           QStringLiteral("Invalid stress test count (must be > 0): 0"));
+    addRow("unittest-stress not a number", {QStringLiteral("--unittest-stress:many")},
+           QStringLiteral("Invalid stress test count (must be > 0): many"));
+    addRow("unittest-shard past its count",
+           {QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest-shard:4/3")},
+           QStringLiteral("Invalid unit test shard (expected <index>/<count> with 1 <= index <= count): 4/3"));
+    addRow("unittest-shard without a test", {QStringLiteral("--unittest-shard:1/3")},
+           QStringLiteral("--unittest-shard requires exactly one --unittest:<name>."));
+    addRow("unittest-shard with two tests",
+           {QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest:BarTest"),
+            QStringLiteral("--unittest-shard:1/3")},
+           QStringLiteral("--unittest-shard requires exactly one --unittest:<name>."));
+    addRow("positional argument", {QStringLiteral("--clear-cache"), QStringLiteral("mission.plan")},
+           QStringLiteral("Unexpected positional arguments: mission.plan"));
+
+    addRow("unknown option", {QStringLiteral("--no-such-option")}, QStringLiteral("Unknown options: no-such-option"),
+           {QStringLiteral("no-such-option")});
+    addRow("unknown options",
+           {QStringLiteral("--no-such-option"), QStringLiteral("--clear-cache"), QStringLiteral("-nor-this")},
+           QStringLiteral("Unknown options: no-such-option, nor-this"),
+           {QStringLiteral("no-such-option"), QStringLiteral("nor-this")});
+    // An option of another platform is unknown here, and the error says where it exists
+#ifndef Q_OS_WIN
+    addRow("no-windows-assert-ui off Windows", {QStringLiteral("--no-windows-assert-ui")},
+           QStringLiteral("--no-windows-assert-ui is only supported on Windows."),
+           {QStringLiteral("no-windows-assert-ui")});
+#endif
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
+    addRow("swrast off Windows and macOS", {QStringLiteral("--swrast")},
+           QStringLiteral("--swrast is only supported on Windows and macOS."), {QStringLiteral("swrast")});
+#endif
+
+    // The parser's own errors, in its words
+    addRow("option without its value", {QStringLiteral("--system-id")},
+           QStringLiteral("Missing value after '--system-id'."));
+    addRow("value for an option that takes none", {QStringLiteral("--clear-cache=1")},
+           QStringLiteral("Unexpected value after '--clear-cache'."));
 }
 
 void QGCCommandLineParserTest::_testParseArgumentsRejectedValues()
 {
     QFETCH(QStringList, arguments);
     QFETCH(QString, expectedError);
+    QFETCH(QStringList, expectedUnknownOptions);
 
     expectLogMessage("Utilities.QGCCommandLineParser", QtWarningMsg,
                      QRegularExpression(QRegularExpression::escape(expectedError)));
@@ -209,6 +239,62 @@ void QGCCommandLineParserTest::_testParseArgumentsRejectedValues()
 
     QCOMPARE(result.statusCode, CommandLineParseResult::Status::Error);
     QCOMPARE(result.errorString, std::optional<QString>(expectedError));
+    QCOMPARE(result.unknownOptions, expectedUnknownOptions);
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsEmptyList()
+{
+    // Not even the program name. There is no text for this error, and the one warning says what is wrong.
+    expectLogMessage("Utilities.QGCCommandLineParser", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("The argument list is empty")));
+    const CommandLineParseResult result = QGCCommandLineParser::parseArguments(QStringList());
+    verifyExpectedLogMessage();
+
+    QCOMPARE(result.statusCode, CommandLineParseResult::Status::Error);
+    QVERIFY(!result.errorString.has_value());
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsHelpAndVersion_data()
+{
+    QTest::addColumn<QStringList>("arguments");
+    QTest::addColumn<CommandLineParseResult::Status>("expectedStatus");
+
+    const auto addRow = [](const char* name, const QStringList& arguments,
+                           CommandLineParseResult::Status expectedStatus) {
+        QTest::newRow(name) << arguments << expectedStatus;
+    };
+    using Status = CommandLineParseResult::Status;
+
+    addRow("help", {QStringLiteral("--help")}, Status::HelpRequested);
+    addRow("help as short option", {QStringLiteral("-h")}, Status::HelpRequested);
+    addRow("help-all", {QStringLiteral("--help-all")}, Status::HelpRequested);
+    addRow("version", {QStringLiteral("--version")}, Status::VersionRequested);
+    addRow("version as short option", {QStringLiteral("-v")}, Status::VersionRequested);
+
+    // The order in which QCommandLineParser::process() answers
+    addRow("version before help", {QStringLiteral("--help"), QStringLiteral("--version")}, Status::VersionRequested);
+    addRow("help before a rejected value", {QStringLiteral("--system-id:0"), QStringLiteral("--help")},
+           Status::HelpRequested);
+    addRow("help before a positional argument", {QStringLiteral("--help"), QStringLiteral("mission.plan")},
+           Status::HelpRequested);
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsHelpAndVersion()
+{
+    QFETCH(QStringList, arguments);
+    QFETCH(CommandLineParseResult::Status, expectedStatus);
+
+    const CommandLineParseResult result = QGCCommandLineParser::parseArguments(commandLineWith(arguments));
+
+    QCOMPARE(result.statusCode, expectedStatus);
+    QVERIFY(!result.errorString.has_value());
+    if (expectedStatus == CommandLineParseResult::Status::HelpRequested) {
+        QVERIFY2(result.helpText.contains(QStringLiteral("--system-id")), qPrintable(result.helpText));
+        QVERIFY(result.versionText.isEmpty());
+    } else {
+        QCOMPARE(result.versionText, QCoreApplication::applicationVersion());
+        QVERIFY(result.helpText.isEmpty());
+    }
 }
 
 void QGCCommandLineParserTest::_testDetermineAppMode_Gui()

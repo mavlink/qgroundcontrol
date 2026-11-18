@@ -8,15 +8,18 @@
 /// process-global and populated by the test runner itself, so this suite
 /// covers what can be exercised inside a running QCoreApplication:
 ///   - CommandLineParseResult default-initialisation (ABI guard)
-///   - parseArguments() — the effect of each option, and the values it rejects
+///   - parseArguments() — the effect of each option, the values, the options and
+///     the empty argument list it rejects, and the status of a help or version request
 ///   - determineAppMode() — pure struct→enum mapping with #ifdef branches
 ///   - handleParseResult() — returns early-exit codes for Help/Version, nullopt for Ok
 ///   - parseSystemId() — --system-id range validation
 ///
 /// Not covered, because they end the process: handleParseResult() on
-/// Status::Error (QCommandLineParser::showMessageAndExit()), and
-/// parseArguments() on an unknown option, an option without its value, --help
-/// or --version (QCommandLineParser::process()).
+/// Status::Error (QCommandLineParser::showMessageAndExit()) and on the help or
+/// version request of a parsed command line (QCommandLineParser::showHelp(),
+/// showVersion() and process()). Its Help/Version cases here have no parser.
+/// The error for a unit-test option in a build without tests is not covered
+/// either: this suite only exists in builds with them.
 class QGCCommandLineParserTest : public PortableTest
 {
     Q_OBJECT
@@ -27,6 +30,9 @@ private slots:
     void _testParseArgumentsOptions();
     void _testParseArgumentsRejectedValues_data();
     void _testParseArgumentsRejectedValues();
+    void _testParseArgumentsEmptyList();
+    void _testParseArgumentsHelpAndVersion_data();
+    void _testParseArgumentsHelpAndVersion();
     void _testDetermineAppMode_Gui();
     void _testDetermineAppMode_BootTest();
     void _testDetermineAppMode_Test();

@@ -25,7 +25,7 @@ struct CommandLineParseResult
     std::unique_ptr<QCommandLineParser> parser;
 
     std::optional<QString> errorString;
-    QString helpText;
+    QString helpText;  ///< The help of --help, also for --help-all, whose longer text with Qt's options is only shown
     QString versionText;
 
     QStringList positional;
@@ -68,18 +68,23 @@ CommandLineParseResult parseCommandLine();
 /// @brief Parse @a arguments the way parseCommandLine() parses those of the application
 /// @param arguments The program name followed by its arguments, as QCoreApplication::arguments() returns them
 /// @return Parsed result with status and option values
+/// @note Returns for every command line: an unknown option, an option without its value, --help and --version
+///       are reported in the status of the result. An empty list is an error without a text
 CommandLineParseResult parseArguments(const QStringList& arguments);
 
 /// @brief Parse command-line arguments with automatic QCoreApplication management
 /// @param argc Argument count from main()
 /// @param argv Argument values from main()
 /// @return Parsed result with status and option values
-/// @note Creates a temporary QCoreApplication internally for parsing
+/// @note Creates a temporary QCoreApplication internally for parsing. A help or version request is answered here,
+///       through handleParseResult(), because Qt's help text needs that QCoreApplication
 CommandLineParseResult parse(int argc, char* argv[]);
 
 /// @brief Handle early exit conditions (help, version, error)
 /// @param result The parse result to check
 /// @return Exit code if main() should return immediately, std::nullopt to continue
+/// @note Shows an error, and the help or the version that the parser of @a result was asked for, the way
+///       QCommandLineParser::process() does: this ends the process. Without a parser there is nothing to show
 std::optional<int> handleParseResult(const CommandLineParseResult& result);
 
 /// @brief Application execution mode

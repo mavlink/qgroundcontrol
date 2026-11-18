@@ -1,5 +1,6 @@
 #include "QGCCommandLineParser.h"
 
+#include <cstdlib>
 #include <limits>
 
 #include <QtCore/QCommandLineOption>
@@ -17,6 +18,11 @@ namespace QGCCommandLineParser {
 // ============================================================================
 
 namespace {
+
+// --- Options that QCommandLineParser::addHelpOption() and addVersionOption() add ---
+constexpr QLatin1StringView kOptHelp = QLatin1StringView("help");
+constexpr QLatin1StringView kOptHelpAll = QLatin1StringView("help-all");
+constexpr QLatin1StringView kOptVersion = QLatin1StringView("version");
 
 // --- Core options ---
 constexpr QLatin1StringView kOptSystemId      = QLatin1StringView("system-id");
@@ -126,6 +132,13 @@ CommandLineParseResult parseCommandLine()
 CommandLineParseResult parseArguments(const QStringList& arguments)
 {
     CommandLineParseResult out{};
+    if (arguments.isEmpty()) {
+        // Not even the program name. QCommandLineParser has no error text for such a list, so the result has none.
+        out.statusCode = CommandLineParseResult::Status::Error;
+        qCWarning(QGCCommandLineParserLog) << "The argument list is empty: it must hold at least the program name";
+        return out;
+    }
+
     out.parser = std::make_unique<QCommandLineParser>();
 
     QCommandLineParser& parser = *out.parser;
@@ -134,8 +147,8 @@ CommandLineParseResult parseArguments(const QStringList& arguments)
     parser.setApplicationDescription(QStringLiteral(QGC_APP_DESCRIPTION));
 
     // --- Standard options ---
-    const QCommandLineOption helpOption = parser.addHelpOption();
-    const QCommandLineOption versionOption = parser.addVersionOption();
+    (void) parser.addHelpOption();
+    (void) parser.addVersionOption();
 
     // --- Core options (always available) ---
     const QCommandLineOption systemIdOpt(
@@ -243,7 +256,7 @@ CommandLineParseResult parseArguments(const QStringList& arguments)
 
     // --- Parse arguments ---
     const QStringList normalizedArgs = normalizeArgs(arguments);
-    parser.process(normalizedArgs);
+    const bool parsed = parser.parse(normalizedArgs);
 
     // --- Validate unknown options ---
     out.unknownOptions = parser.unknownOptionNames();
@@ -309,26 +322,35 @@ CommandLineParseResult parseArguments(const QStringList& arguments)
         return out;
     }
 
-    // --- Validate positional arguments ---
-    out.positional = parser.positionalArguments();
-    if (!out.positional.isEmpty()) {
+    if (!parsed) {
+        // An option without its value, or a value for an option that takes none
         out.statusCode = CommandLineParseResult::Status::Error;
-        out.errorString = QCoreApplication::translate("main", "Unexpected positional arguments: %1")
-            .arg(out.positional.join(QLatin1String(", ")));
+        out.errorString = parser.errorText();
         qCWarning(QGCCommandLineParserLog) << out.errorString.value();
         return out;
     }
 
     // --- Handle help/version requests ---
-    if (parser.isSet(helpOption)) {
+    // Before any other check and the version first, as QCommandLineParser::process() answers them
+    if (parser.isSet(kOptVersion)) {
+        out.statusCode = CommandLineParseResult::Status::VersionRequested;
+        out.versionText = QCoreApplication::applicationVersion();
+        return out;
+    }
+
+    if (parser.isSet(kOptHelp) || parser.isSet(kOptHelpAll)) {
         out.statusCode = CommandLineParseResult::Status::HelpRequested;
         out.helpText = parser.helpText();
         return out;
     }
 
-    if (parser.isSet(versionOption)) {
-        out.statusCode = CommandLineParseResult::Status::VersionRequested;
-        out.versionText = QCoreApplication::applicationVersion();
+    // --- Validate positional arguments ---
+    out.positional = parser.positionalArguments();
+    if (!out.positional.isEmpty()) {
+        out.statusCode = CommandLineParseResult::Status::Error;
+        out.errorString = QCoreApplication::translate("main", "Unexpected positional arguments: %1")
+                              .arg(out.positional.join(QLatin1String(", ")));
+        qCWarning(QGCCommandLineParserLog) << out.errorString.value();
         return out;
     }
 
@@ -467,7 +489,16 @@ CommandLineParseResult parse(int argc, char* argv[])
     overrideCommandLine(argc, argv);
 #endif
     const QCoreApplication app(argc, argv);
-    return parseCommandLine();
+    CommandLineParseResult result = parseCommandLine();
+
+    if ((result.statusCode == CommandLineParseResult::Status::HelpRequested) ||
+        (result.statusCode == CommandLineParseResult::Status::VersionRequested)) {
+        // Qt's help names the executable and, for --help-all, the generic options of the application object: it
+        // takes both from the QCoreApplication, so the request is answered while this one exists.
+        (void) handleParseResult(result);
+    }
+
+    return result;
 }
 
 std::optional<int> handleParseResult(const CommandLineParseResult& result)
@@ -475,11 +506,23 @@ std::optional<int> handleParseResult(const CommandLineParseResult& result)
     switch (result.statusCode) {
     case CommandLineParseResult::Status::Error: {
         const QString msg = result.errorString.value_or(QStringLiteral("Unknown error"));
-        QCommandLineParser::showMessageAndExit(QCommandLineParser::MessageType::Error, msg, 1);
+        QCommandLineParser::showMessageAndExit(QCommandLineParser::MessageType::Error, msg + QLatin1Char('\n'), 1);
         Q_UNREACHABLE();
     }
     case CommandLineParseResult::Status::HelpRequested:
+        if (result.parser) {
+            if (result.parser->isSet(kOptHelp)) {
+                result.parser->showHelp(EXIT_SUCCESS);
+            }
+            // --help-all: only process() shows the help that includes Qt's generic options. The first argument is
+            // the program name, which the parser skips.
+            result.parser->process(QStringList{QString(), QLatin1String("--") + kOptHelpAll});
+        }
+        return 0;
     case CommandLineParseResult::Status::VersionRequested:
+        if (result.parser) {
+            result.parser->showVersion();
+        }
         return 0;
     case CommandLineParseResult::Status::Ok:
         return std::nullopt;
