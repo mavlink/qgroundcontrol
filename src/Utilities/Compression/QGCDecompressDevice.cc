@@ -28,6 +28,10 @@ QGCDecompressDevice::QGCDecompressDevice(const QString &filePath, QObject *paren
 
 bool QGCDecompressDevice::open(OpenMode mode)
 {
+    // A second opening starts as the first: without the buffer, the end and the reader of the one before
+    if (isOpen()) {
+        close();
+    }
     _errorString.clear();
 
     if (mode != ReadOnly) {

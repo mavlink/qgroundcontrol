@@ -2817,6 +2817,80 @@ void QGCCompressionTest::_testDeviceAtEnd()
     }
 }
 
+void QGCCompressionTest::_testDeviceOpenedAgain_data()
+{
+    QTest::addColumn<bool>("archive");
+
+    QTest::newRow("QGCDecompressDevice") << false;
+    QTest::newRow("QGCArchiveFile") << true;
+}
+
+void QGCCompressionTest::_testDeviceOpenedAgain()
+{
+    QFETCH(bool, archive);
+
+    // Several of the blocks the devices decompress in, and no two lines of it alike
+    QByteArray payload;
+    for (int line = 0; line < 40000; ++line) {
+        payload += QByteArray::number(line) + '\n';
+    }
+    const QByteArray input =
+        archive ? _makeTar({{.name = "payload.txt", .data = payload}}) : _gzipMember(payload);
+    QBuffer source;
+    source.setData(input);
+    QVERIFY(source.open(QIODevice::ReadOnly));
+    std::unique_ptr<QGCArchiveDeviceBase> device;
+    if (archive) {
+        device = std::make_unique<QGCArchiveFile>(&source, QStringLiteral("payload.txt"));
+    } else {
+        device = std::make_unique<QGCDecompressDevice>(&source);
+    }
+
+    // open() closes a device that is open: the second opening has nothing of the first one left to read
+    QVERIFY(device->open(QIODevice::ReadOnly));
+    QCOMPARE(device->read(1000), payload.left(1000));
+    QVERIFY(source.seek(0));
+    QVERIFY2(device->open(QIODevice::ReadOnly), qPrintable(device->errorString()));
+    QVERIFY(device->readAll() == payload);
+    QVERIFY2(device->errorString().isEmpty(), qPrintable(device->errorString()));
+    if (!archive) {
+        return;
+    }
+
+    // A second open() that refuses its entry, or does not find it, leaves a device that is closed: what the
+    // first opening had buffered is not handed out, and neither is the body of the entry that was refused
+    struct Replacement
+    {
+        QByteArray archive;
+        const char* refusal;
+    };
+
+    for (const Replacement& replacement :
+         {Replacement{_makeTar({{.name = "payload.txt", .data = "body", .type = '1', .linkName = "other.txt"}}),
+                      "Entry is a hard link"},
+          Replacement{_makeTar({{.name = "other.txt", .data = "other"}}), "Entry not found"}}) {
+        source.close();
+        source.setData(input);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        QVERIFY(device->open(QIODevice::ReadOnly));
+        QCOMPARE(device->read(1000), payload.left(1000));
+
+        source.close();
+        source.setData(replacement.archive);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        QVERIFY2(!device->open(QIODevice::ReadOnly), replacement.refusal);
+        QVERIFY2(device->errorString().startsWith(QLatin1String(replacement.refusal)),
+                 qPrintable(device->errorString()));
+        QVERIFY2(!device->isOpen(), replacement.refusal);
+        expectLogMessage("default", QtWarningMsg, QRegularExpression("device not open"));
+        char byte = 0;
+        QCOMPARE(device->read(&byte, 1), -1);
+        verifyExpectedLogMessage();
+        QVERIFY2(device->errorString().startsWith(QLatin1String(replacement.refusal)),
+                 qPrintable(device->errorString()));
+    }
+}
+
 void QGCCompressionTest::_testArchiveFileLeavesOutLinks()
 {
     QBuffer source;

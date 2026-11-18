@@ -30,6 +30,10 @@ QGCArchiveFile::QGCArchiveFile(QIODevice *source, const QString &entryName, QObj
 
 bool QGCArchiveFile::open(OpenMode mode)
 {
+    // A second opening starts as the first: without the buffer, the end and the reader of the one before
+    if (isOpen()) {
+        close();
+    }
     _errorString.clear();
 
     if (mode != ReadOnly) {
