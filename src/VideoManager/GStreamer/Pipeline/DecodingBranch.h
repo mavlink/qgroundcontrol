@@ -6,8 +6,10 @@
 #include <memory>
 
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 
 #include "BranchContext.h"
+#include "ExponentialBackoff.h"
 #include "GstScoped.h"
 #include "HwBuffers/common/GstHwPathTelemetry.h"
 #include "TeeBranchHead.h"
@@ -20,10 +22,14 @@ struct PathStats;
 ///
 /// Takes the receiver's video sink, inserts decodebin3 once the source streams and links its pad to the sink, asking
 /// upstream for a keyframe so the picture starts soon. Decoding is reported from the first frame that reaches the sink.
-/// A failing or stalled decoder is replaced without touching the rest of the pipeline; one that keeps failing, or that
-/// can't be inserted at all, is reported to the listener. A hardware decoder whose replacement brought no frame either
-/// is taken out of autoplug before the next one, so decodebin3 plugs the decoder ranked after it. The sink outlives
-/// the session: the branch holds a ref and takes it out of the pipeline again.
+/// A failing or stalled decoder is replaced without touching the rest of the pipeline. One that keeps failing or
+/// can't be inserted is given up, as is a stream that no decoder takes: the branch takes the decoder out, tells the
+/// listener why, once, and leaves the stream without a picture, which the tee and a recording behind it don't notice.
+/// It then tries a decoder again as a failed stream connects again (StreamSupervisor::kDefaultBackoff), and at once
+/// for a new video sink. A hardware decoder that brought no frame is taken out of autoplug before the next one, so
+/// decodebin3 plugs the decoder ranked after it: when it was given a keyframe to decode, and in any case when it
+/// replaced one that failed. The sink outlives the session: the branch holds a ref and takes it out of the pipeline
+/// again.
 ///
 /// The queue drops the oldest frame when the decoder falls behind, so the tee (and with it the recording) never waits
 /// for the decoder. A decoder can't recover a dropped compressed frame, so after a drop the branch also drops delta
@@ -40,9 +46,11 @@ public:
     public:
         virtual void onDecodingChanged(bool decoding) = 0;
         virtual void onDecoderNameChanged(const QString& name) = 0;
-        /// The decoder kept failing: kMaxDecoderRestarts replacements in a row produced no frame, or one couldn't be
-        /// inserted, which leaves the stream without a picture until it is set up anew.
-        virtual void onDecoderFailing() = 0;
+        /// The decoder is given up for @p cause, a sentence for the user: kMaxDecoderRestarts replacements in a row
+        /// produced no frame, one couldn't be inserted, or no decoder takes the stream. The stream goes on without a
+        /// picture while the branch tries a decoder again. Not repeated for the tries that fail: the next report
+        /// follows a decoder that brought a frame.
+        virtual void onDecoderFailed(const QString& cause) = 0;
 
     protected:
         ~Listener() = default;
@@ -84,8 +92,12 @@ public:
     void setVideoSink(GstElement* sink);
     /// The first frame reached the tee: inserts the decoder when a video sink is waiting for it.
     void onSourceStreaming();
-    /// Replaces the decoder and resets the sink, leaving the rest of the pipeline (and a recording) running.
-    void restartDecoder(const char* reason);
+    /// Replaces the decoder and resets the sink, leaving the rest of the pipeline (and a recording) running. Gives the
+    /// decoder up instead once it keeps failing. @p reason is for the log, @p cause for the user.
+    void restartDecoder(const char* reason, const QString& cause);
+    /// Gives the decoder up for @p cause without replacing it first: it reported a plugin as missing, which one
+    /// plugged right away would miss as well.
+    void failDecoder(const QString& cause);
     /// The pipeline got the graphics device Qt renders with after its elements had asked for it
     /// (HwBuffers::kGraphicsDeviceServedMessage). A hardware decoder plugged meanwhile decodes on a device of its own,
     /// which it keeps, so its frames reach Qt through the CPU: replaces it by one that takes the pipeline's device.
@@ -115,12 +127,15 @@ public:
     bool hardwareDecoder() const { return _hardwareDecoder; }
 
 private:
-    /// Inserts the decoder and the video sink, or reports onDecoderFailing() when that fails.
+    /// Inserts the decoder and the video sink, or gives the decoder up when that fails.
     void _insertDecoder();
     /// False, logged, with neither the decoder nor the video sink left in the pipeline.
     [[nodiscard]] bool _tryInsertDecoder();
     /// Closes the valve and takes the video sink and the decoder out of the pipeline; keeps the sink.
     void _removeDecoder();
+    /// Takes the decoder out and tries one again after the backoff. Tells the listener @p cause, unless it was told
+    /// since a decoder last brought a frame.
+    void _giveUp(const QString& cause);
     void _linkDecoderPad(GstPad* pad);
     /// Takes the hardware decoder decodebin3 plugged out of autoplug, when another decoder can take the stream.
     void _demoteFailedDecoder();
@@ -179,9 +194,16 @@ private:
     std::atomic<quint64> _framesDropped = 0;
     /// Counts decoder insertions, so a first-frame report from a replaced decoder is ignored.
     std::atomic<quint64> _insertions = 0;
+    /// The decoder was given a keyframe since it was inserted, so it had a frame to show.
+    std::atomic<bool> _keyframeFed = false;
 
     bool _streaming = false;
     bool _decoding = false;
+    /// The decoder is given up, and the listener told, until one brings a frame: each try is one decoder.
+    bool _failing = false;
+    ExponentialBackoff _retryBackoff;
+    /// Runs while the decoder is given up and a video sink waits for one: tries a decoder again.
+    QTimer _retryTimer;
     int _restartsWithoutFrame = 0;
     quint64 _decoderRestarts = 0;
     QString _decoderName;

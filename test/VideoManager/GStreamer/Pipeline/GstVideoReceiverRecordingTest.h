@@ -16,7 +16,9 @@ private slots:
     void init() override;
     void cleanup() override;
 
+    void _testDecoderFailureKeepsRecording_data();
     void _testDecoderFailureKeepsRecording();
+    void _testUndecodableStreamIsRecorded();
     void _testReconnectResumesRecordingInNextPart();
     void _testLongRecordingContinuesInNextPart();
     void _testFileSwitchRequestsOneKeyframe();

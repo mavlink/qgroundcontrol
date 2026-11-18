@@ -1,6 +1,10 @@
 #include "DecodingBranch.h"
 
+#include <chrono>
 #include <gst/gst.h>
+#include <utility>
+
+#include <QtCore/QCoreApplication>
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
@@ -8,6 +12,8 @@
 #include "GstVideoReceiver.h"
 #include "HwBuffers/HwBuffers.h"
 #include "PipelineDotDumper.h"
+#include "PipelineStatsProbe.h"
+#include "StreamSupervisor.h"
 #include "StreamWatchdog.h"
 #include "gstqgc/GstQgcSinkStats.h"
 
@@ -133,6 +139,26 @@ void decodeWithoutDelay(GstElement* decoder)
     gst_util_set_object_arg(object, "compliance", "normal");
 }
 
+/// Whether the stream @p caps describe is compressed video that none of the decoders decodebin3 plugs, those ranked
+/// for autoplugging, takes. False for anything else, raw video included, which decodebin3 passes on as it is.
+bool lacksDecoder(const GstCaps* caps)
+{
+    if (!caps || gst_caps_is_any(caps) || gst_caps_is_empty(caps)) {
+        return false;
+    }
+    const gchar* const mediaType = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+    if (!(g_str_has_prefix(mediaType, "video/") || g_str_has_prefix(mediaType, "image/")) ||
+        (g_strcmp0(mediaType, "video/x-raw") == 0)) {
+        return false;
+    }
+    GList* const decoders = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECODER, GST_RANK_MARGINAL);
+    GList* const candidates = gst_element_factory_list_filter(decoders, caps, GST_PAD_SINK, FALSE);
+    gst_plugin_feature_list_free(decoders);
+    const bool lacking = (candidates == nullptr);
+    gst_plugin_feature_list_free(candidates);
+    return lacking;
+}
+
 bool isInside(GstObject* object, GstElement* element)
 {
     return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
@@ -166,7 +192,16 @@ DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener,
     : _context(context)
     , _listener(listener)
     , _lowLatency(lowLatency)
-{}
+    , _retryBackoff(StreamSupervisor::kDefaultBackoff)
+{
+    _retryTimer.setSingleShot(true);
+    (void) QObject::connect(&_retryTimer, &QTimer::timeout, &_retryTimer, [this]() {
+        if (_sink && _streaming && !_decoder) {
+            qCDebug(GstVideoReceiverLog) << "Trying a decoder again" << _context.redactedUri;
+            _insertDecoder();
+        }
+    });
+}
 
 DecodingBranch::~DecodingBranch()
 {
@@ -201,6 +236,7 @@ bool DecodingBranch::build()
 
 void DecodingBranch::reset()
 {
+    _retryTimer.stop();
     _keyframeGate.remove();
     _removeDecoder();
     _sinkFrameProbe.remove();
@@ -216,6 +252,9 @@ void DecodingBranch::setVideoSink(GstElement* sink)
         return;
     }
 
+    // A new sink gets a decoder at once, and the tries that follow one that fails start over.
+    _retryTimer.stop();
+    _retryBackoff.reset();
     _removeDecoder();
     _sinkFrameProbe.remove();
     _retireSinkCounts();
@@ -255,28 +294,40 @@ void DecodingBranch::onSourceStreaming()
     }
 }
 
-void DecodingBranch::restartDecoder(const char* reason)
+void DecodingBranch::restartDecoder(const char* reason, const QString& cause)
 {
     if (!_decoder) {
         return;
     }
 
-    if (++_restartsWithoutFrame > kMaxDecoderRestarts) {
-        qCDebug(GstVideoReceiverLog) << "Decoder failing after" << kMaxDecoderRestarts << "restarts, last:" << reason
-                                     << _context.redactedUri;
-        _context.post([this]() { _listener.onDecoderFailing(); });
+    // Once given up, each try is one decoder.
+    const bool givenUp = _failing || (++_restartsWithoutFrame > kMaxDecoderRestarts);
+    // A decoder that brought no frame, though it replaced one that failed or was given a keyframe to decode: with
+    // the same ranks decodebin3 would plug it again. One that only waits for a keyframe isn't at fault.
+    if (!_decoding && (_failing || (_restartsWithoutFrame > 1) || _keyframeFed.load(std::memory_order_relaxed))) {
+        _demoteFailedDecoder();
+    }
+    _removeDecoder();
+    _setDecoding(false);
+    if (givenUp) {
+        qCDebug(GstVideoReceiverLog) << "Decoder failing, last:" << reason << _context.redactedUri;
+        _giveUp(cause);
         return;
     }
 
     qCDebug(GstVideoReceiverLog) << "Restarting the decoder after" << reason << _context.redactedUri;
     ++_decoderRestarts;
-    // The restart before this one brought no frame: with the same ranks decodebin3 would plug the same decoder again.
-    if (_restartsWithoutFrame > 1) {
-        _demoteFailedDecoder();
+    _insertDecoder();
+}
+
+void DecodingBranch::failDecoder(const QString& cause)
+{
+    if (!_decoder) {
+        return;
     }
     _removeDecoder();
     _setDecoding(false);
-    _insertDecoder();
+    _giveUp(cause);
 }
 
 void DecodingBranch::onGraphicsDeviceServed()
@@ -356,11 +407,34 @@ void DecodingBranch::_countLateFrames()
 
 void DecodingBranch::_insertDecoder()
 {
+    _retryTimer.stop();
+    // decodebin3 gets no stream that no decoder takes. Not every decodebin3 reports the missing plugin for one
+    // (failDecoder()): GStreamer 1.24's refuses the stream's caps instead, which fails the push into it as not
+    // negotiated.
+    const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(gst_element_get_static_pad(_context.tee, "sink"));
+    const GStreamer::GstCapsPtr caps =
+        GStreamer::adoptCaps(teeSink ? gst_pad_get_current_caps(teeSink.get()) : nullptr);
+    if (lacksDecoder(caps.get())) {
+        _giveUp(QCoreApplication::translate("DecodingBranch", "No decoder for %1 video is available.")
+                    .arg(PipelineStatsProbe::codecName(caps.get())));
+        return;
+    }
     if (_tryInsertDecoder()) {
         return;
     }
     // Without a decoder no frame is due at the sink, so neither the watchdog nor a bus error would ever report this.
-    _context.post([this]() { _listener.onDecoderFailing(); });
+    _giveUp(QCoreApplication::translate("DecodingBranch", "The video decoder could not be set up."));
+}
+
+void DecodingBranch::_giveUp(const QString& cause)
+{
+    const std::chrono::milliseconds delay = _retryBackoff.next();
+    qCDebug(GstVideoReceiverLog) << "No decoder for now, the next try follows in" << delay.count() << "ms"
+                                 << _context.redactedUri;
+    _retryTimer.start(delay);
+    if (!std::exchange(_failing, true)) {
+        _listener.onDecoderFailed(cause);
+    }
 }
 
 bool DecodingBranch::_tryInsertDecoder()
@@ -400,6 +474,8 @@ bool DecodingBranch::_tryInsertDecoder()
     _gateClosed.store(false, std::memory_order_relaxed);
     // Without a keyframe the new decoder has nothing to start from until the stream's next one.
     _head.open();
+    // After the valve opened: a keyframe that passed the gate before went nowhere.
+    _keyframeFed.store(false, std::memory_order_relaxed);
 
     qCDebug(GstVideoReceiverLog) << "Decoder inserted" << _context.redactedUri;
     return true;
@@ -434,7 +510,8 @@ void DecodingBranch::_linkDecoderPad(GstPad* pad)
     if (linkResult != GST_PAD_LINK_OK) {
         qCWarning(GstVideoReceiverLog) << "Unable to link the decoder to the video sink:"
                                        << gst_pad_link_get_name(linkResult);
-        restartDecoder("link failure");
+        restartDecoder("link failure", QCoreApplication::translate(
+                                           "DecodingBranch", "The video decoder could not be linked to the display."));
         return;
     }
     (void) gst_element_sync_state_with_parent(_sink.get());
@@ -458,8 +535,7 @@ void DecodingBranch::_demoteFailedDecoder()
         GStreamer::adoptCaps(sinkPad ? gst_pad_get_current_caps(sinkPad.get()) : nullptr);
     if (caps && GStreamer::demoteFailedDecoder(_decoderName.toUtf8().constData(), caps.get())) {
         qCWarning(GstVideoReceiverLog) << "The hardware decoder" << _decoderName
-                                       << "brought no frame after a restart: the next decoder takes over"
-                                       << _context.redactedUri;
+                                       << "brought no frame: the next decoder takes over" << _context.redactedUri;
     }
 }
 
@@ -469,6 +545,8 @@ void DecodingBranch::_onFirstFrame(quint64 insertion)
         return;
     }
     _restartsWithoutFrame = 0;
+    _failing = false;
+    _retryBackoff.reset();
     _setDecoding(true);
 }
 
@@ -503,6 +581,10 @@ GstPadProbeReturn DecodingBranch::_gateProbe(GstPad* /*pad*/, GstPadProbeInfo* i
 {
     auto* const self = static_cast<DecodingBranch*>(data);
     const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    // The gate never drops a keyframe.
+    if (buffer && !GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
+        self->_keyframeFed.store(true, std::memory_order_relaxed);
+    }
     // The queue marks the buffer that follows a leak. Each overrun before it leaked one buffer, as the queue fills by
     // buffer count only. An overrun before a buffer without the mark leaked nothing, and is forgotten: it would be
     // taken for the leak behind a mark that upstream sets later, for a loss ahead of the tee.

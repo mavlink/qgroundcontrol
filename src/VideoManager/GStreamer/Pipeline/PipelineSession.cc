@@ -259,10 +259,10 @@ void PipelineSession::setRecording(const std::optional<RecordingBranch::Request>
     }
 }
 
-void PipelineSession::restartDecoder(const char* reason)
+void PipelineSession::restartDecoder(const char* reason, const QString& cause)
 {
     if (_decoding && !_tearingDown()) {
-        _decoding->restartDecoder(reason);
+        _decoding->restartDecoder(reason, cause);
     }
 }
 
@@ -453,12 +453,12 @@ void PipelineSession::_onBusError(GstMessage* message)
         }
         qCWarning(GstVideoReceiverLog) << "Decoder error from" << messageSourcePath(message) << ":" << text
                                        << "debug:" << debugText;
+        // Either way the stream goes on, for a recording if not for the display. A plugin one decoder misses, the
+        // next one misses too.
         if (isPermanentError(message, error.get())) {
-            _fail({.reason = QStringLiteral("decoder error"),
-                   .message = tr("Unable to decode the video: %1").arg(description),
-                   .permanent = true});
+            _decoding->failDecoder(description);
         } else {
-            _decoding->restartDecoder("decoder error");
+            _decoding->restartDecoder("decoder error", description);
         }
         return;
     }

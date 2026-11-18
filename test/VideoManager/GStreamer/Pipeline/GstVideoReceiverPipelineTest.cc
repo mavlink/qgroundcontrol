@@ -621,9 +621,10 @@ void GstVideoReceiverPipelineTest::_testFailingHardwareDecoderGivesWayToTheNext(
                      QRegularExpression(QStringLiteral("Simulated hardware decoder failure")));
     ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Decoder error from .*Simulated hardware decoder failure")));
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^The hardware decoder \"%1\" brought no frame after a restart")
-                                            .arg(QLatin1StringView(kStubDecoderName))));
+    expectLogMessage(
+        "Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+        QRegularExpression(
+            QStringLiteral("^The hardware decoder \"%1\" brought no frame").arg(QLatin1StringView(kStubDecoderName))));
 
     Receiver stream;
     QVERIFY(stream.startStreaming());
@@ -631,6 +632,34 @@ void GstVideoReceiverPipelineTest::_testFailingHardwareDecoderGivesWayToTheNext(
     verifyExpectedLogMessage();
     QCOMPARE(stream.receiver->decoderName(), QStringLiteral("avdec_h264"));
     QCOMPARE(stream.receiver->state(), State::Streaming);
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverPipelineTest::_testSilentHardwareDecoderGivesWayAfterOneStall()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+    // Without the host's hardware decoders, so the decoder ranked after the silent one is the same everywhere.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+    const StubDecoderRegistration silentDecoder;
+    QVERIFY(silentDecoder.registered());
+
+    expectLogMessage(
+        "Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+        QRegularExpression(
+            QStringLiteral("^The hardware decoder \"%1\" brought no frame").arg(QLatin1StringView(kStubDecoderName))));
+
+    // The decoder got the stream's keyframes and showed nothing for twice the stream's timeout. It isn't given
+    // as long again: the first decoder to replace it is the next one.
+    Receiver stream(udpListenUri(), /*autoReconnect=*/false, GstReceiverTest::kShortWatchdogTimeout);
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    QVERIFY(stream.startStreaming());
+    QVERIFY_TRUE_WAIT(stream.receiver->decoding(), TestTimeout::longMs());
+    verifyExpectedLogMessage();
+    // Statistics that name the decoder which decodes were measured after the last replacement.
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().decoder == QLatin1String("avdec_h264"), TestTimeout::mediumMs());
+    QCOMPARE(stream.receiver->stats().decoderRestarts, qint64(1));
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
@@ -783,10 +812,11 @@ void GstVideoReceiverPipelineTest::_testDecoderFailingOnALostGraphicsDeviceKeeps
                      QRegularExpression(QStringLiteral("Simulated hardware decoder failure")));
     ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Decoder error from .*Simulated hardware decoder failure")));
-    // No decoder works on a device that is gone, so none is taken out of autoplug for failing on it: the stream
-    // gives up with the same decoder it began with, where it would otherwise go on with the next one.
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Video stream stopped:.*The video decoder keeps failing")));
+    // No decoder works on a device that is gone, so none is taken out of autoplug for failing on it: the decoder the
+    // stream began with is given up, where the next one would otherwise have taken over.
+    expectLogMessage(
+        "Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+        QRegularExpression(QStringLiteral("^Video stream without a picture:.*Simulated hardware decoder failure")));
 
     Receiver stream;
     stream.window.show();
@@ -794,6 +824,7 @@ void GstVideoReceiverPipelineTest::_testDecoderFailingOnALostGraphicsDeviceKeeps
     QVERIFY(stream.startStreaming());
     QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
+    QCOMPARE(stream.receiver->state(), State::Streaming);
 
     const GStreamer::GstFeaturePtr stub =
         GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
@@ -849,7 +880,7 @@ void GstVideoReceiverPipelineTest::_testKeyframeGateOpensWithoutKeyframe()
     verifyExpectedLogMessage();
 }
 
-void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream_data()
+void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureKeepsStream_data()
 {
     QTest::addColumn<bool>("sinkTaken");
     QTest::addColumn<QString>("warning");
@@ -858,7 +889,7 @@ void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream_data(
     QTest::newRow("display valve already linked") << false << QStringLiteral("^Unable to insert the decoder");
 }
 
-void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream()
+void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureKeepsStream()
 {
     QFETCH(bool, sinkTaken);
     QFETCH(QString, warning);
@@ -886,16 +917,35 @@ void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream()
         }));
         QVERIFY(linked);
     }
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, QRegularExpression(warning));
+    const QRegularExpression insertionWarning(warning);
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, insertionWarning);
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Video stream stopped:")));
+                     QRegularExpression(QStringLiteral("^Video stream without a picture:")));
+    // Each later try that fails warns again: as many as it takes this test to clear the decoder's way.
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, insertionWarning);
 
-    // A stream that can't be shown fails like one whose decoder keeps failing, instead of running without a picture.
+    // A stream that can't be shown is still received, as one whose decoder keeps failing: only its picture is
+    // missing, which the user is told once.
     QVERIFY(stream.sender.start(stream.udpPort()));
     QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
-    QVERIFY(stream.waitForState(State::Stopped));
+    QVERIFY(stream.waitForState(State::Streaming));
+    QVERIFY(!stream.receiver->decoding());
+
+    // The decoder is tried again, and gets in once nothing is in its way.
+    if (sinkTaken) {
+        QVERIFY(gst_bin_remove(GST_BIN(otherBin.get()), displaySink(stream.receiver.get())));
+    } else {
+        QVERIFY(runOnPipeline(stream.receiver.get(), [&otherPad](GstElement* /*pipeline*/) {
+            const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_pad_get_peer(otherPad.get()));
+            (void) gst_pad_unlink(src.get(), otherPad.get());
+        }));
+    }
+    // The tries come further apart each time one fails.
+    QVERIFY_TRUE_WAIT(stream.receiver->decoding(), TestTimeout::longMs());
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+    QCOMPARE(stream.errorSpy.count(), 1);
 }
 
 void GstVideoReceiverPipelineTest::_testScreenshotSavesDisplayedFrame()
@@ -977,13 +1027,15 @@ void GstVideoReceiverPipelineTest::_testMissingDecoderIsNamed()
     Receiver stream;
     QVERIFY(stream.startStreaming());
     QVERIFY(stream.display());
+    stream.stateSpy.clear();
+    stream.decodingSpy.clear();
 
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Missing GStreamer plugin: .*H\\.265")));
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Decoder error from ")));
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Video stream stopped:")));
+                     QRegularExpression(QStringLiteral("^Video stream without a picture:")));
     // What decodebin3 posts for a stream no installed decoder takes: which one is missing, then that one is.
     QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* pipeline) {
         const GStreamer::GstElementPtr decoder = GstTest::findByFactory(pipeline, "decodebin3");
@@ -1002,7 +1054,15 @@ void GstVideoReceiverPipelineTest::_testMissingDecoderIsNamed()
     verifyExpectedLogMessage();
     const QString message = stream.errorSpy.constFirst().constFirst().toString();
     QVERIFY2(message.contains(QLatin1String("H.265")), qPrintable(message));
-    QVERIFY(stream.waitForState(State::Stopped));
+    // The picture is gone, not the stream, which a recording still gets.
+    QVERIFY(!stream.decodingSpy.isEmpty());
+    QCOMPARE(stream.decodingSpy.constFirst().constFirst().toBool(), false);
+
+    // A new video output gets a decoder at once, which this stream does have.
+    stream.receiver->setVideoOutput(nullptr);
+    QVERIFY(stream.display());
+    QVERIFY2(stream.stateSpy.isEmpty(), "A stream that only couldn't be decoded was set up anew");
+    QCOMPARE(stream.errorSpy.count(), 1);
 }
 
 void GstVideoReceiverPipelineTest::_testSilentFlowErrorStaysInItsBranch_data()

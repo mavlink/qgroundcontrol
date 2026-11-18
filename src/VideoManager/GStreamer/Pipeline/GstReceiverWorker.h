@@ -20,7 +20,8 @@ class QTimer;
 
 /// GstVideoReceiver's worker, on a thread of its own: steers a PipelineSession towards the receiver's latest
 /// GstReceiverRequest (active, config, video sink, restarts, reconnects, recording), reconnecting after a failure as
-/// its StreamSupervisor decides.
+/// its StreamSupervisor decides. A stream that only can't be decoded goes on, for its recording: the worker reports
+/// errorOccurred() for it, once until the stream is decoded or started anew.
 ///
 /// Reports back through its signals only, so it can outlive a receiver that stopped waiting for it.
 class GstReceiverWorker : public QObject, private PipelineSession::Listener
@@ -93,7 +94,7 @@ private:
     void onSessionGraphicsDeviceLost() override;
     void onDecodingChanged(bool decoding) override;
     void onDecoderNameChanged(const QString& name) override;
-    void onDecoderFailing() override;
+    void onDecoderFailed(const QString& cause) override;
     void onRecordingFileOpened(const QString& file) override;
     void onRecordingFileClosed(const QString& file, const QString& error) override;
     void onRecordingFailed(const QString& file, const QString& error, bool fileOpened) override;
@@ -112,6 +113,9 @@ private:
     std::chrono::milliseconds _maxRecordingPartDuration = RecordingPlan::kMaxPartDuration;
 
     PipelineSession* _session = nullptr;
+    /// errorOccurred() told that the stream can't be decoded: not told again by the sessions that follow, until one
+    /// is decoded or the stream is started anew.
+    bool _decoderFailureReported = false;
     int _statsTicks = 0;
     VideoStreamStatsSampler _statsSampler;
 };

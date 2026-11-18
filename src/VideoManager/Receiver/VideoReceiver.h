@@ -193,8 +193,9 @@ signals:
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
     void statsChanged(const VideoStreamStats& stats);
-    /// A failure worth telling the user about (stream error with autoReconnect off, recording error, a screenshot that
-    /// couldn't be saved). Not emitted for failures the receiver recovers from by reconnecting.
+    /// A failure worth telling the user about (stream error with autoReconnect off, a stream that is received but
+    /// can't be decoded, recording error, a screenshot that couldn't be saved). Not emitted for failures the receiver
+    /// recovers from by reconnecting.
     void errorOccurred(const QString& message);
 
 protected:

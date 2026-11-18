@@ -25,6 +25,10 @@ arms, and **VIDEO STOPPED** once the video was stopped.
 If a video decoder or a recording stops responding, _QGroundControl_ tells you after about a minute, and a picture
 that froze is taken off the screen. That video works again only once _QGroundControl_ is restarted.
 
+When a stream arrives but can't be decoded, as on a ground station that has no decoder for its codec, _QGroundControl_
+says why, once. The stream is still received and [can be recorded](#record-video-stream-on-gcs), and its picture
+appears as soon as a decoder works: one is tried again after a second, and then at intervals that grow to 30 seconds.
+
 On Android and iOS the video is not decoded while _QGroundControl_ is in the background, which saves battery. Back in
 the app, the view says **WAITING FOR VIDEO** until the stream's next keyframe arrives. A recording goes on for as long
 as the stream arrives.
@@ -94,9 +98,9 @@ dropdown shows, about once a second:
 - **Keyframe interval**: the time between the last two keyframes. A long interval makes the picture take longer to
   recover from packet loss.
 - **Decoder**: the video decoder, and whether it decodes in hardware or software. **Decoder restarts** counts the times
-  the decoder was replaced after an error or a stall. A hardware decoder that shows nothing after it was replaced is
-  left out from then on, and the next decoder takes over. It gets its turn again when the decoder setting changes or
-  QGroundControl restarts.
+  the decoder was replaced after an error or a stall. A hardware decoder that shows nothing, though the stream gave
+  it a keyframe to start from or it had replaced a decoder that failed, is left out from then on, and the next decoder
+  takes over. It gets its turn again when the decoder setting changes or QGroundControl restarts.
 - **Display path**: how decoded frames reach the screen: `CPU`, or the zero-copy GPU path (for example `DMABuf`, `GL`
   or `D3D11`). **GPU fallbacks** counts frames the GPU path couldn't import, which took the CPU path instead.
 - **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).

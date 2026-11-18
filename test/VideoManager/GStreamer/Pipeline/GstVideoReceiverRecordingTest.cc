@@ -6,12 +6,16 @@
 #include <cerrno>
 #include <gst/video/video-event.h>
 #include <memory>
+#include <optional>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+
+#include "DecodingBranch.h"
+#include "GStreamerDecoderRanks.h"
 
 namespace {
 
@@ -23,6 +27,8 @@ using GstReceiverTest::kFrameRate;
 using GstReceiverTest::kMinRecordedFrames;
 using GstReceiverTest::kRecordFrames;
 using GstReceiverTest::kShortWatchdogTimeout;
+using GstReceiverTest::kWatchdogTimeout;
+using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
@@ -55,6 +61,13 @@ GstPadProbeReturn countRecordingKeyframeRequests([[maybe_unused]] GstPad* pad, G
         static_cast<std::atomic<int>*>(data)->fetch_add(1, std::memory_order_relaxed);
     }
     return GST_PAD_PROBE_OK;
+}
+
+/// Keeps the stream from the decoder while the flag passed as data is set, so that the decoder shows no frame.
+GstPadProbeReturn starveDecoder([[maybe_unused]] GstPad* pad, [[maybe_unused]] GstPadProbeInfo* info, gpointer data)
+{
+    return static_cast<std::atomic<bool>*>(data)->load(std::memory_order_relaxed) ? GST_PAD_PROBE_DROP
+                                                                                  : GST_PAD_PROBE_OK;
 }
 
 /// Keeps the stream's keyframes from the recorder while held, as a camera that sends none for a while.
@@ -167,27 +180,93 @@ void GstVideoReceiverRecordingTest::cleanup()
     GstVideoReceiverTestBase::cleanup();
 }
 
+void GstVideoReceiverRecordingTest::_testDecoderFailureKeepsRecording_data()
+{
+    QTest::addColumn<bool>("givenUp");
+
+    // The decoder that replaces the failed one decodes.
+    QTest::newRow("decoder replaced") << false;
+    // Each replacement fails too: the stream goes on without a picture, until a decoder tried later decodes.
+    QTest::newRow("decoder given up") << true;
+}
+
 void GstVideoReceiverRecordingTest::_testDecoderFailureKeepsRecording()
 {
+    QFETCH(bool, givenUp);
+
+    // Before the receiver, which they outlive.
+    std::optional<GstTest::DecoderRankSnapshot> decoderRanks;
+    if (givenUp) {
+        // Failures in a row would take the host's hardware decoders out of autoplug, one after the other.
+        GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+        decoderRanks.emplace();
+        GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+    }
+
     Receiver stream;
     QVERIFY(stream.startStreaming());
     QVERIFY(stream.display());
     const QString path = _tempDir->filePath(QStringLiteral("decoder-failure.mp4"));
     QVERIFY(stream.record(path));
     const int decodingChanges = stream.decodingSpy.count();
+    stream.stateSpy.clear();
 
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Decoder error from .*injected decoder failure")));
-    QVERIFY(stream.postError("decodebin3", GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE, "injected decoder failure"));
+    // A replacement that gets no frame shows none, and so counts as failed when it posts an error too.
+    std::atomic<bool> starved{givenUp};
+    GStreamer::PadProbe starveProbe;
+    QVERIFY(stream.probeBranchHead(starveProbe, GStreamer::PipelineBranch::Decoding, "valve", "sink",
+                                   GST_PAD_PROBE_TYPE_BUFFER, starveDecoder, &starved));
+    const auto currentDecoder = [&stream] {
+        GStreamer::GstElementPtr decoder;
+        (void) runOnPipeline(stream.receiver.get(), [&decoder](GstElement* pipeline) {
+            decoder = GstTest::findByFactory(pipeline, "decodebin3");
+        });
+        return decoder;
+    };
 
-    // A new decoder takes over; the recording and the stream go on.
+    const QRegularExpression decoderError(QStringLiteral("^Decoder error from .*injected decoder failure"));
+    const int failures = givenUp ? (DecodingBranch::kMaxDecoderRestarts + 1) : 1;
+    if (givenUp) {
+        expectLogMessage(
+            "Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+            QRegularExpression(QStringLiteral("^Video stream without a picture:.*injected decoder failure")));
+    }
+    // Held, so that the decoder that replaces it can't get its address.
+    GStreamer::GstElementPtr failing = currentDecoder();
+    for (int failure = 0; failure < failures; ++failure) {
+        QVERIFY(failing);
+        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, decoderError);
+        QVERIFY(stream.postError("decodebin3", GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE, "injected decoder failure"));
+        // The worker has acted on the error once the decoder is another one, or gone.
+        GStreamer::GstElementPtr next;
+        QVERIFY_TRUE_WAIT((next = currentDecoder()).get() != failing.get(), TestTimeout::mediumMs());
+        failing = std::move(next);
+    }
+
+    if (givenUp) {
+        // Told once, with what the decoder said.
+        QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+        verifyExpectedLogMessage();
+        const QString message = stream.errorSpy.constFirst().constFirst().toString();
+        QVERIFY2(message.contains(QLatin1String("injected decoder failure")), qPrintable(message));
+        QVERIFY(!stream.receiver->decoding());
+        QVERIFY(stream.framesSent(kRecordFrames));
+        // The decoder tried next gets the stream.
+        starved.store(false);
+    }
+    for (int failure = 0; failure < failures; ++failure) {
+        verifyExpectedLogMessage();
+    }
+
+    // A new decoder takes over; the recording and the stream went on.
     QVERIFY_SIGNAL_COUNT_WAIT(stream.decodingSpy, decodingChanges + 2, TestTimeout::mediumMs());
     QVERIFY(stream.receiver->decoding());
-    verifyExpectedLogMessage();
     QVERIFY(stream.framesSent(kRecordFrames));
+    QVERIFY2(stream.stateSpy.isEmpty(), "A failing decoder restarted the stream");
     QCOMPARE(stream.receiver->state(), State::Streaming);
     QVERIFY(stream.recordingFinishedSpy.isEmpty());
-    QVERIFY_TRUE_WAIT(stream.receiver->stats().decoderRestarts == 1, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().decoderRestarts == (givenUp ? DecodingBranch::kMaxDecoderRestarts : 1),
+                      TestTimeout::mediumMs());
     QVERIFY(stream.receiver->stats().recordingMs >= 0);
     QVERIFY_TRUE_WAIT(stream.receiver->stats().recordingBytes > 0, TestTimeout::mediumMs());
 
@@ -196,6 +275,45 @@ void GstVideoReceiverRecordingTest::_testDecoderFailureKeepsRecording()
     QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
     QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
     QCOMPARE(stream.recordingStartedSpy.count(), 1);
+    QCOMPARE(stream.errorSpy.count(), givenUp ? 1 : 0);
+    const QString problem = recordingProblem(path);
+    QVERIFY2(problem.isEmpty(), qPrintable(problem));
+}
+
+void GstVideoReceiverRecordingTest::_testUndecodableStreamIsRecorded()
+{
+    // No decoder takes H.265 from here on, as on a machine that has none. Before the receiver, which it outlives.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    const GStreamer::GstCapsPtr h265 = GStreamer::adoptCaps(gst_caps_new_empty_simple("video/x-h265"));
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_MARGINAL, [&h265](GstElementFactory* factory) {
+        if (gst_element_factory_can_sink_any_caps(factory, h265.get())) {
+            gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE(factory), GST_RANK_NONE);
+        }
+    });
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Video stream without a picture:.*H\\.265")));
+
+    Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0), /*autoReconnect=*/false, kWatchdogTimeout,
+                    QString::fromLatin1(GstTest::kH265Stream));
+    QVERIFY2(stream.sender.error().isEmpty(), qPrintable(stream.sender.error()));
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    QVERIFY(stream.startStreaming());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    const QString message = stream.errorSpy.constFirst().constFirst().toString();
+    QVERIFY2(message.contains(QLatin1String("H.265")), qPrintable(message));
+
+    // Received all the same, and so recorded.
+    const QString path = _tempDir->filePath(QStringLiteral("undecodable.mp4"));
+    QVERIFY(stream.record(path));
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+    QVERIFY(!stream.receiver->decoding());
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    QCOMPARE(stream.errorSpy.count(), 1);
     const QString problem = recordingProblem(path);
     QVERIFY2(problem.isEmpty(), qPrintable(problem));
 }
