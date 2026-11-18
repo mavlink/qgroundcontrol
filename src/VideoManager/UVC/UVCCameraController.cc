@@ -18,6 +18,7 @@
 
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
+#include "QtVideoRecorder.h"
 #include "UVCDevices.h"
 #include "UVCStreamMonitor.h"
 #include "VideoScreenshot.h"

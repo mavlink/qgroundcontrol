@@ -11,7 +11,6 @@
 #include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QtVideoRecorder.h"
 #include "VideoReceiver.h"
 
 class QImageCapture;
@@ -20,6 +19,7 @@ class QMediaDevices;
 class QQuickItem;
 class QTimer;
 class QVideoFrame;
+class QtVideoRecorder;
 class UVCStreamMonitor;
 
 /// A USB (UVC) camera as a VideoReceiver: the camera the config's URI names by its description, which is its video
@@ -42,7 +42,6 @@ class UVCCameraController : public VideoReceiver
 
     Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT FINAL)
     Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged FINAL)
-    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT FINAL)
     Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged FINAL)
     Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged FINAL)
     Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged FINAL)
@@ -130,14 +129,6 @@ public:
     /// Waits for a recording's file to be finished first: Qt writes it on its own thread, which the application's exit
     /// would cut short.
     void shutDown() override;
-
-    /// For QML: QtVideoRecorder::recordingCodecs() and recordingCodecName().
-    static QStringList recordingCodecs() { return QtVideoRecorder::recordingCodecs(); }
-
-    Q_INVOKABLE static QString recordingCodecName(const QString& key)
-    {
-        return QtVideoRecorder::recordingCodecName(key);
-    }
 
 signals:
     /// A camera was plugged in or unplugged.

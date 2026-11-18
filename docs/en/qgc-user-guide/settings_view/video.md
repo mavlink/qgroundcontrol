@@ -16,7 +16,8 @@ Configure video streaming and recording settings.
   the one before it was made the main picture with a tap on its tile.
 - **USB Camera Format** (USB cameras only) — the resolution, frame rate and pixel format the camera runs in, from the
   ones it offers, best first. **Auto** lets Qt choose: the highest resolution at 30 fps or more, often an MJPEG format,
-  which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth.
+  which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth. A format chosen for
+  another camera stays selected, listed as **(not offered)**, and Qt chooses for this camera.
 - **USB Camera Rotation** and **Mirror USB Camera** (USB cameras only) — turn the picture clockwise, for a camera mounted
   on its side or upside down, and mirror it left to right after that. Photos follow; recordings keep the camera's own
   picture.
@@ -118,7 +119,8 @@ Recordings are saved in the `Video` folder of the [Application Load/Save Path](g
 - **Recording Codec** (USB cameras, and streams with the Qt Multimedia [video backend](#settings)) — the codec a
   recording that QGroundControl encodes tries first, from the ones Qt can encode on this computer. **Auto** records with
   the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes, which also follow a chosen codec the
-  encoder turns down. A codec the recording format's container can't hold goes into another container. GStreamer saves
+  encoder turns down, and a chosen codec Qt can't encode on this computer, listed as **(not available)**. A codec the
+  recording format's container can't hold goes into another container. GStreamer saves
   a stream as it arrives, without encoding it again, so this setting and the next don't apply to its recordings and are
   hidden.
 - **Recording Quality** (the same recordings) — Very Low / Low / Normal / High / Very High (default: High). A lower

@@ -1484,6 +1484,12 @@ void VideoManagerTest::_testUvcCameraFormatReachesCamera()
     QCOMPARE(camera->format(), QStringLiteral("640x480 30 fps YUYV"));
     _facts->set(_videoSettings->uvcCameraFormat(), QString());
     QVERIFY(camera->format().isEmpty());
+
+    // The formats the camera offers are the setting's choices, after Auto.
+    camera->_formats = {QStringLiteral("640x480 30 fps YUYV")};
+    emit camera->formatsChanged();
+    QCOMPARE(_videoSettings->uvcCameraFormat()->enumValues(),
+             QVariantList({QString(), QStringLiteral("640x480 30 fps YUYV")}));
 }
 
 void VideoManagerTest::_testUvcControlsReachCamera()

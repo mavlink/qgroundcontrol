@@ -290,6 +290,9 @@ void VideoManager::_connectSettings()
     _uvcCamera->setFormat(uvcCameraFormat->rawValue().toString());
     (void) connect(uvcCameraFormat, &Fact::rawValueChanged, this,
                    [this](const QVariant& value) { _uvcCamera->setFormat(value.toString()); });
+    const auto offerUvcCameraFormats = [this] { _videoSettings->offerCameraFormats(_uvcCamera->formats()); };
+    offerUvcCameraFormats();
+    (void) connect(_uvcCamera, &UVCCameraController::formatsChanged, this, offerUvcCameraFormats);
 
     const auto applyUvcTransform = [this] {
         // uvcCameraRotation's values are degrees, as QtVideo::Rotation's are.

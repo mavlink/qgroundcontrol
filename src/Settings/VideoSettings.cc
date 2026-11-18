@@ -3,6 +3,7 @@
 #include <QtCore/QVariantList>
 #include <QtMultimedia/QMediaDevices>
 
+#include "QtVideoRecorder.h"
 #include "UVCDevices.h"
 #include "VideoBackend.h"
 
@@ -77,10 +78,49 @@ void VideoSettings::_offerCameras(FactMetaData* metaData, Fact* fact, QVariantLi
         values.append(camera);
         labels.append(camera);
     }
+    _offerChoices(metaData, fact, values, labels, tr("%1 (not connected)"));
+}
+
+void VideoSettings::offerCameraFormats(const QStringList& formats)
+{
+    _cameraFormats = formats;
+    _updateCameraFormats();
+}
+
+void VideoSettings::_updateCameraFormats()
+{
+    QVariantList values{QString()};
+    QStringList labels{tr("Auto")};
+    for (const QString& format : std::as_const(_cameraFormats)) {
+        values.append(format);
+        labels.append(format);
+    }
+    _offerChoices(_nameToMetaDataMap.value(uvcCameraFormatName), _uvcCameraFormatFact, values, labels,
+                  tr("%1 (not offered)"));
+}
+
+void VideoSettings::_updateRecordingCodecs()
+{
+    QVariantList values{QString()};
+    QStringList labels{tr("Auto")};
+    for (const QString& key : QtVideoRecorder::recordingCodecs()) {
+        values.append(key);
+        labels.append(QtVideoRecorder::recordingCodecName(key));
+    }
+    _offerChoices(_nameToMetaDataMap.value(uvcRecordingCodecName), _uvcRecordingCodecFact, values, labels,
+                  tr("%1 (not available)"));
+}
+
+void VideoSettings::_offerChoices(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
+                                  const QString& absentLabel)
+{
+    if (!metaData) {
+        return;
+    }
     const QString selected = fact ? fact->rawValue().toString() : QString();
     if (!selected.isEmpty() && !values.contains(selected)) {
         values.append(selected);
-        labels.append(tr("%1 (not connected)").arg(selected));
+        labels.append(absentLabel.arg(selected));
     }
 
     if ((values == metaData->enumValues()) && (labels == metaData->enumStrings())) {
@@ -108,41 +148,34 @@ DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)
 DECLARE_SETTINGSFACT(VideoSettings, tcpUrl)
 DECLARE_SETTINGSFACT(VideoSettings, maxVideoTiles)
 DECLARE_SETTINGSFACT(VideoSettings, uvcTileCameraAsMainPicture)
-DECLARE_SETTINGSFACT(VideoSettings, uvcCameraFormat)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraRotation)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraMirror)
 DECLARE_SETTINGSFACT(VideoSettings, uvcWhiteBalance)
 DECLARE_SETTINGSFACT(VideoSettings, uvcZoom)
 DECLARE_SETTINGSFACT(VideoSettings, uvcExposureCompensation)
 DECLARE_SETTINGSFACT(VideoSettings, uvcFocusMode)
-DECLARE_SETTINGSFACT(VideoSettings, uvcRecordingCodec)
 DECLARE_SETTINGSFACT(VideoSettings, uvcRecordingQuality)
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
-{
-    if (!_videoSourceFact) {
-        _videoSourceFact = _createSettingsFact(videoSourceName);
-        // The stored source may be a camera that isn't attached, which is listed only while it is selected. Queued:
-        // the combo box that sets the source deletes its items when its model changes, which it mustn't do while one
-        // of them reports its click.
-        _updateVideoSources();
-        (void) connect(_videoSourceFact, &Fact::rawValueChanged, this, &VideoSettings::_updateVideoSources,
-                       Qt::QueuedConnection);
+// DECLARE_SETTINGSFACT for a setting whose choices UPDATE lists. It lists them as the Fact is created, when the stored
+// value may be one that is no longer offered, and after each change of the value. Queued: the combo box that sets the
+// value deletes its items when its model changes, which it mustn't do while one of them reports its click.
+#define DECLARE_VIDEO_SETTINGSFACT_OFFERED(NAME, UPDATE)                                                               \
+    DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, NAME)                                                                  \
+    {                                                                                                                  \
+        if (!_##NAME##Fact) {                                                                                          \
+            _##NAME##Fact = _createSettingsFact(NAME##Name);                                                           \
+            UPDATE();                                                                                                  \
+            (void) connect(_##NAME##Fact, &Fact::rawValueChanged, this, &VideoSettings::UPDATE, Qt::QueuedConnection); \
+        }                                                                                                              \
+        return _##NAME##Fact;                                                                                          \
     }
-    return _videoSourceFact;
-}
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, uvcTileCamera)
-{
-    if (!_uvcTileCameraFact) {
-        _uvcTileCameraFact = _createSettingsFact(uvcTileCameraName);
-        // As for videoSource: the stored camera may not be attached, and the list changes only after the click.
-        _updateVideoSources();
-        (void) connect(_uvcTileCameraFact, &Fact::rawValueChanged, this, &VideoSettings::_updateVideoSources,
-                       Qt::QueuedConnection);
-    }
-    return _uvcTileCameraFact;
-}
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(videoSource, _updateVideoSources)
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcTileCamera, _updateVideoSources)
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcCameraFormat, _updateCameraFormats)
+DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcRecordingCodec, _updateRecordingCodecs)
+
+#undef DECLARE_VIDEO_SETTINGSFACT_OFFERED
 
 // DECLARE_SETTINGSFACT for a setting shown only where VISIBLE holds, read as the Fact is created.
 #define DECLARE_VIDEO_SETTINGSFACT_VISIBLE(NAME, VISIBLE)    \
