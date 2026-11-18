@@ -17,5 +17,6 @@ private slots:
     void _testQgcVideoSinkBinScalesNonSquarePixels();
     void _testTeardownUnderLoad();
     void _testInactiveQgcQVideoSinkDropsAndCounts();
+    void _testLateFramesAreShown();
 #endif
 };

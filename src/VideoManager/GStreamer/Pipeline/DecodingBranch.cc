@@ -57,42 +57,6 @@ void setSinkSync(GstElement* sink, bool sync)
     gst_iterator_free(sinks);
 }
 
-/// The frames the base sink @p element dropped because they came too late for their time, from its "stats"
-/// (GStreamer 1.18); 0 without them.
-guint64 lateFramesDroppedBy(GstElement* element)
-{
-    GParamSpec* const spec = g_object_class_find_property(G_OBJECT_GET_CLASS(element), "stats");
-    if (!spec || (G_PARAM_SPEC_VALUE_TYPE(spec) != GST_TYPE_STRUCTURE)) {
-        return 0;
-    }
-    GstStructure* rawStats = nullptr;
-    g_object_get(element, "stats", &rawStats, nullptr);
-    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-    return GstQgc::frameStatsField(stats.get(), "dropped");
-}
-
-/// The frames @p sink, or the sinks inside it when it is a bin, dropped as late. A sink starts its count over when it
-/// flushes or leaves PLAYING.
-quint64 sinkLateFramesDropped(GstElement* sink)
-{
-    if (!sink) {
-        return 0;
-    }
-    if (!GST_IS_BIN(sink)) {
-        return lateFramesDroppedBy(sink);
-    }
-    guint64 dropped = 0;
-    GstIterator* const sinks = gst_bin_iterate_sinks(GST_BIN(sink));
-    (void) gst_iterator_foreach(
-        sinks,
-        [](const GValue* item, gpointer data) {
-            *static_cast<guint64*>(data) += lateFramesDroppedBy(GST_ELEMENT(g_value_get_object(item)));
-        },
-        &dropped);
-    gst_iterator_free(sinks);
-    return dropped;
-}
-
 /// Whether decodebin3 @p decodebin has plugged a hardware decoder. Read from its elements rather than from what the
 /// branch was told of them, which reaches the worker after the decoder is in place.
 bool hasHardwareDecoder(GstElement* decodebin)
@@ -373,12 +337,10 @@ DecodingBranch::StatsSample DecodingBranch::sampleStats()
         }
         _pathFramesAtSample[i] = frames;
     }
-    _countLateFrames();
-
     return {
         .framesDisplayed = _retiredFramesDisplayed + sinkCounts.displayed,
-        .framesDropped = _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded +
-                         sinkCounts.superseded + _lateFramesDropped,
+        .framesDropped =
+            _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded + sinkCounts.superseded,
         .displayPath = _displayPath,
         .gpuFallbacks = _retiredGpuFallbacks + sinkCounts.gpuFallbacks,
         .decoderRestarts = _decoderRestarts,
@@ -395,14 +357,6 @@ void DecodingBranch::_retireSinkCounts()
     _retiredFramesDisplayed += counts.displayed;
     _retiredFramesSuperseded += counts.superseded;
     _retiredGpuFallbacks += counts.gpuFallbacks;
-}
-
-void DecodingBranch::_countLateFrames()
-{
-    const quint64 dropped = sinkLateFramesDropped(_sink.get());
-    // A count below the last one started over.
-    _lateFramesDropped += (dropped >= _sinkLateFramesSeen) ? (dropped - _sinkLateFramesSeen) : dropped;
-    _sinkLateFramesSeen = dropped;
 }
 
 void DecodingBranch::_insertDecoder()
@@ -465,7 +419,7 @@ bool DecodingBranch::_tryInsertDecoder()
         return false;
     }
     // The clock paces frames stamped as they arrived. Behind a source that isn't live (tcp://) they are stamped from
-    // zero, while the pipeline's time has run since it started: each would be late for the clock, and dropped.
+    // zero, while the pipeline's time has run since it started: each would be late for the clock, which paces none.
     setSinkSync(_sink.get(), !_lowLatency && fedByLiveSource(_decoder.get()));
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-decoder");
 
@@ -486,10 +440,7 @@ void DecodingBranch::_removeDecoder()
     _head.close();
     // The sink first: going NULL releases a decoder thread waiting inside it, so the decoder can stop.
     if (_sink) {
-        // Leaving PLAYING starts the sink's count of late frames over.
-        _countLateFrames();
         GStreamer::disposeChild(_sink.get());
-        _sinkLateFramesSeen = 0;
     }
     if (_decoder) {
         _decoderPadAdded.disconnect();
