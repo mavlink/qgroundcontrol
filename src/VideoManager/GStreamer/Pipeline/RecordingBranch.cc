@@ -11,6 +11,7 @@
 #include "GStreamerHelpers.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
+#include "PipelineStatsProbe.h"
 #include "RecordingPlan.h"
 
 namespace {
@@ -50,19 +51,33 @@ const char* muxerFactory(VideoReceiver::FileFormat format)
     return nullptr;
 }
 
-const char* recordingParserFactory(const GstCaps* caps)
+/// Whether @p caps tell what a stream is.
+bool describesStream(const GstCaps* caps)
 {
-    if (!caps || gst_caps_is_any(caps) || gst_caps_is_empty(caps)) {
+    return caps && !gst_caps_is_any(caps) && !gst_caps_is_empty(caps);
+}
+
+/// The parser a recording puts ahead of its muxer for a codec: it brings the stream into the layout the muxer asks
+/// for (its stream-format and alignment), whichever the stream arrives in.
+struct RecordingParser
+{
+    const char* mediaType;
+    const char* factory;
+};
+
+const RecordingParser* recordingParser(const GstCaps* caps)
+{
+    static constexpr RecordingParser kParsers[] = {{"video/x-h264", "h264parse"}, {"video/x-h265", "h265parse"}};
+    if (!describesStream(caps)) {
         return nullptr;
     }
 
     for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
         const GstStructure* structure = gst_caps_get_structure(caps, i);
-        if (gst_structure_has_name(structure, "video/x-h264")) {
-            return "h264parse";
-        }
-        if (gst_structure_has_name(structure, "video/x-h265")) {
-            return "h265parse";
+        for (const RecordingParser& parser : kParsers) {
+            if (gst_structure_has_name(structure, parser.mediaType)) {
+                return &parser;
+            }
         }
     }
 
@@ -201,10 +216,10 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     }
 
     GstElement* parser = nullptr;
-    if (const char* parserFactory = recordingParserFactory(inputCaps)) {
-        GStreamer::GstElementPtr parserOwner = GStreamer::makeElement(parserFactory, "parser");
+    if (const RecordingParser* const recorderParser = recordingParser(inputCaps)) {
+        GStreamer::GstElementPtr parserOwner = GStreamer::makeElement(recorderParser->factory, "parser");
         if (!parserOwner) {
-            qCWarning(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << parserFactory;
+            qCWarning(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << recorderParser->factory;
             return nullptr;
         }
         g_object_set(parserOwner.get(), "config-interval", -1, nullptr);
@@ -287,6 +302,29 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     }
 
     return bin;
+}
+
+std::optional<VideoReceiver::FileFormat> RecordingBranch::containerFor(VideoReceiver::FileFormat format,
+                                                                       const GstCaps* inputCaps)
+{
+    if (!describesStream(inputCaps)) {
+        return format;
+    }
+    // Of a stream the recorder parses, only the codec counts: the parser gives the muxer the layout it asks for.
+    const RecordingParser* const parser = recordingParser(inputCaps);
+    const GStreamer::GstCapsPtr codec =
+        GStreamer::adoptCaps(parser ? gst_caps_new_empty_simple(parser->mediaType) : nullptr);
+    const GstCaps* const muxed = codec ? codec.get() : inputCaps;
+
+    for (const VideoReceiver::FileFormat container : {format, VideoReceiver::FileFormat::Mkv}) {
+        const char* const muxerName = muxerFactory(container);
+        const GStreamer::GstFactoryPtr muxer =
+            GStreamer::adoptFactory(muxerName ? gst_element_factory_find(muxerName) : nullptr);
+        if (muxer && gst_element_factory_can_sink_any_caps(muxer.get(), muxed)) {
+            return container;
+        }
+    }
+    return std::nullopt;
 }
 
 RecordingBranch::RecordingBranch(const BranchContext& context, Listener& listener)
@@ -392,8 +430,27 @@ void RecordingBranch::_reconcile()
     }
 }
 
-void RecordingBranch::_start(const Request& request)
+void RecordingBranch::_start(Request request)
 {
+    // forward-sticky-events keeps the negotiated caps on the closed valve; the query covers the moment before.
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
+    GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(valveSrc.get()));
+    if (!inputCaps) {
+        inputCaps = GStreamer::adoptCaps(gst_pad_query_caps(valveSrc.get(), nullptr));
+    }
+
+    const std::optional<VideoReceiver::FileFormat> container = containerFor(request.format, inputCaps.get());
+    if (container && (*container != request.format)) {
+        qCDebug(GstVideoReceiverLog) << "The container of" << request.file << "can't hold"
+                                     << PipelineStatsProbe::codecName(inputCaps.get()) << "video"
+                                     << _context.redactedUri;
+        // The listener's request for a file in that container starts it, from inside this call.
+        _listener.onRecordingNeedsFormat(request.file, *container);
+        if ((_state != State::Idle) || !_requested || (*_requested != request)) {
+            return;
+        }
+    }
+
     _current = request;
     (void) _recording.fetch_add(1, std::memory_order_relaxed);
     _failure.clear();
@@ -404,11 +461,11 @@ void RecordingBranch::_start(const Request& request)
 
     qCDebug(GstVideoReceiverLog) << "Starting recording" << request.file << _context.redactedUri;
 
-    // forward-sticky-events keeps the negotiated caps on the closed valve; the query covers the moment before.
-    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
-    GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(valveSrc.get()));
-    if (!inputCaps) {
-        inputCaps = GStreamer::adoptCaps(gst_pad_query_caps(valveSrc.get(), nullptr));
+    if (container != request.format) {
+        _failure = QCoreApplication::translate("RecordingBranch", "No recording format can hold %1 video.")
+                       .arg(PipelineStatsProbe::codecName(inputCaps.get()));
+        _finish(QString());
+        return;
     }
 
     _fileSink = makeFileSink(request.file, request.format, inputCaps.get());

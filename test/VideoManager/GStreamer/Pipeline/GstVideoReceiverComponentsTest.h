@@ -29,6 +29,9 @@ private slots:
     void _testRtpPacketCounterJitter_data();
     void _testRtpPacketCounterJitter();
     void _testStatsProbeCountsRtpPackets();
+    void _testRecordingContainerHoldsCodec_data();
+    void _testRecordingContainerHoldsCodec();
+    void _testRecordingNamesCodecNoContainerHolds();
 #else
     void _testGStreamerDisabled();
 #endif

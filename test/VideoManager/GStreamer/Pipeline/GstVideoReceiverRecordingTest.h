@@ -19,6 +19,7 @@ private slots:
     void _testDecoderFailureKeepsRecording_data();
     void _testDecoderFailureKeepsRecording();
     void _testUndecodableStreamIsRecorded();
+    void _testCodecMp4CannotHoldIsRecordedAsMatroska();
     void _testReconnectResumesRecordingInNextPart();
     void _testLongRecordingContinuesInNextPart();
     void _testFileSwitchRequestsOneKeyframe();

@@ -26,7 +26,9 @@
 /// full, storage too slow to keep up) ends the recording, not the stream: its queue holds kQueueMaxBytes of backlog
 /// and then stops taking frames rather than holding up the tee and with it the display. A finalized file is synced
 /// to the disk before it is reported closed. A recording that is stopped ends behind the frames its queue still
-/// holds, which it has kFinalizeTimeout more to take.
+/// holds, which it has kFinalizeTimeout more to take. A request whose container can't hold the stream's codec (MP4
+/// takes neither MJPEG, VP8 nor MPEG-2) isn't started: the branch asks the listener for a file in the container
+/// that does (containerFor()), and the recording fails, naming the codec, when none does.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -47,6 +49,9 @@ public:
         /// the stream's caps changed, and a file holds one format. The recording goes on, without losing a frame, in
         /// the file the listener requests in answer.
         virtual void onRecordingNeedsNewFile(const QString& file) = 0;
+        /// @p file wasn't started: its container can't hold the stream's codec, and @p format's can. The recording
+        /// goes into the file the listener requests in answer, which is to be in that format, and fails without one.
+        virtual void onRecordingNeedsFormat(const QString& file, VideoReceiver::FileFormat format) = 0;
 
     protected:
         ~Listener() = default;
@@ -79,6 +84,11 @@ public:
     /// filesink writing @p file. Returns an owned, non-floating ref, or null on failure.
     static GStreamer::GstElementPtr makeFileSink(const QString& file, VideoReceiver::FileFormat format,
                                                  const GstCaps* inputCaps);
+    /// The container a recording of a stream with @p inputCaps goes into when @p format is asked for: @p format where
+    /// its muxer takes the stream's codec, else Matroska, which holds every codec the receiver plays. nullopt when
+    /// neither muxer takes it. Without caps that tell the codec, @p format.
+    static std::optional<VideoReceiver::FileFormat> containerFor(VideoReceiver::FileFormat format,
+                                                                 const GstCaps* inputCaps);
 
     RecordingBranch(const BranchContext& context, Listener& listener);
     ~RecordingBranch();
@@ -124,7 +134,9 @@ private:
     };
 
     void _reconcile();
-    void _start(const Request& request);
+    /// Starts @p request, or asks the listener for a file in the container that holds the stream. By value: the
+    /// listener's answer replaces the request this one was read from.
+    void _start(Request request);
     /// Asks upstream for a keyframe and holds the stream's next one back until the current file is finished and the
     /// requested one linked, so that it starts the requested one.
     void _switchAtKeyframe();

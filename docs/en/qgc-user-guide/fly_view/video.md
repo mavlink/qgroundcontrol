@@ -165,6 +165,7 @@ If the stream drops out while recording, the recording continues once the stream
 A recording that runs for longer than an hour continues in a new part the same way, without losing a frame between the parts.
 An MP4 or MOV part ends sooner when the space the file sets aside for its index is about to run out, which a very high frame rate can cause.
 A new part also starts when the camera changes its resolution or encoding profile during a recording, so that each file holds video of one kind.
+A stream whose codec the recording format can't hold (MP4 holds neither MJPEG, VP8 nor MPEG-2 video, and MOV no MPEG-2) is recorded as Matroska instead, in files that end in `.mkv`.
 With the Qt Multimedia [video backend](../settings_view/video.md#settings) a stream is recorded as a USB camera is (below),
 from the video on display: it continues in the same file once the stream is back.
 Recordings carry the time they started and, as their comment, the _QGroundControl_ version that recorded them.

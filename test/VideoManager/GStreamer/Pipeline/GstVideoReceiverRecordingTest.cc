@@ -318,6 +318,47 @@ void GstVideoReceiverRecordingTest::_testUndecodableStreamIsRecorded()
     QVERIFY2(problem.isEmpty(), qPrintable(problem));
 }
 
+void GstVideoReceiverRecordingTest::_testCodecMp4CannotHoldIsRecordedAsMatroska()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "avenc_mpeg2video", "mpegtsmux", "tsdemux", "matroskamux",
+                                  "matroskademux");
+
+    Receiver stream(loopbackUri(QLatin1StringView("mpegts"), 0));
+    setMaxRecordingPartDuration(stream.receiver.get(), std::chrono::seconds(1));
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(State::Connecting));
+    // MPEG-2 video, which neither MP4 nor MOV holds, as an MPEG-TS camera of that kind sends it.
+    GstTest::TestPipeline camera;
+    QVERIFY2(camera.launch(QStringLiteral("videotestsrc is-live=true ! video/x-raw,width=320,height=240,framerate=30/1 "
+                                          "! avenc_mpeg2video gop-size=5 ! mpegtsmux ! "
+                                          "udpsink host=127.0.0.1 port=%1")
+                               .arg(stream.udpPort())),
+             qPrintable(camera.error()));
+    QVERIFY(camera.play());
+    QVERIFY(stream.waitForState(State::Streaming));
+
+    // The recording goes into the container that holds the stream, in files named for it: the first one, and the
+    // parts that follow.
+    const QStringList parts{_tempDir->filePath(QStringLiteral("mpeg2.mkv")),
+                            _tempDir->filePath(QStringLiteral("mpeg2_part2.mkv"))};
+    const QString asked = _tempDir->filePath(QStringLiteral("mpeg2.mp4"));
+    stream.receiver->startRecording(asked, FileFormat::Mp4);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, parts.size(), TestTimeout::mediumMs());
+    stream.receiver->stopRecording();
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, stream.recordingStartedSpy.count(), TestTimeout::mediumMs());
+    QVERIFY(stream.errorSpy.isEmpty());
+
+    for (qsizetype part = 0; part < parts.size(); ++part) {
+        QCOMPARE(stream.recordingStartedSpy.at(part).constFirst().toString(), parts.at(part));
+        QCOMPARE(stream.recordingFinishedSpy.at(part).at(0).toString(), parts.at(part));
+        QCOMPARE(stream.recordingFinishedSpy.at(part).at(1).toString(), QString());
+    }
+    QVERIFY(!QFile::exists(asked));
+    const QString problem = recordingProblem(parts.constFirst());
+    QVERIFY2(problem.isEmpty(), qPrintable(problem));
+}
+
 void GstVideoReceiverRecordingTest::_testReconnectResumesRecordingInNextPart()
 {
     Receiver stream(udpListenUri(), /*autoReconnect=*/true, kShortWatchdogTimeout);

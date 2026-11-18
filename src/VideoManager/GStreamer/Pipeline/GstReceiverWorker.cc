@@ -398,3 +398,13 @@ void GstReceiverWorker::onRecordingNeedsNewFile(const QString& file)
     qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
     _session->setRecording(_recordingRequest());
 }
+
+void GstReceiverWorker::onRecordingNeedsFormat(const QString& file, VideoReceiver::FileFormat format)
+{
+    if (!_session || !_recording || (file != _recording->currentFile())) {
+        return;
+    }
+    _recording->setFormat(format);
+    qCDebug(GstVideoReceiverLog) << "Recording to" << _recording->currentFile() << "instead of" << file;
+    _session->setRecording(_recordingRequest());
+}

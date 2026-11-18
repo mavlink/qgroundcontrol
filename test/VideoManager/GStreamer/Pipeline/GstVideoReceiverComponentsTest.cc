@@ -2,6 +2,7 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
 #include <QtCore/QDeadlineTimer>
@@ -9,16 +10,19 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "BranchContext.h"
 #include "GStreamerTestHelpers.h"
 #include "GstBusPump.h"
 #include "GstRtpPacketProbe.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "PipelineStatsProbe.h"
+#include "RecordingBranch.h"
 #include "RtpPacketCounter.h"
 #include "StreamWatchdog.h"
 #include "VideoStreamStats.h"
@@ -33,6 +37,8 @@ constexpr int kVideoClockRate = 90000;
 constexpr quint32 kSsrc = 0x1234ABCD;
 // Added to a sequence number of _testRtpPacketCounter: the packet is of another SSRC.
 constexpr int kOtherSender = 0x10000;
+// In place of a VideoReceiver::FileFormat in _testRecordingContainerHoldsCodec: no container holds the codec.
+constexpr int kNoContainer = -1;
 
 /// An RTP packet with a one-byte payload, stamped as arrived at @p arrivalMs.
 GstBuffer* makeRtpPacket(quint16 sequence, quint32 timestamp, qint64 arrivalMs, quint8 firstByte = 0x80)
@@ -603,6 +609,142 @@ void GstVideoReceiverComponentsTest::_testStatsProbeCountsRtpPackets()
     QCOMPARE(push(makeRtcpSenderReport(550)), GST_FLOW_NOT_LINKED);
     QCOMPARE(push(makeRtpPacket(108, 54000, 600)), GST_FLOW_NOT_LINKED);
     QCOMPARE(sample(), Counted(7, 2));
+}
+
+void GstVideoReceiverComponentsTest::_testRecordingContainerHoldsCodec_data()
+{
+    QTest::addColumn<QString>("caps");
+    QTest::addColumn<int>("format");
+    QTest::addColumn<int>("container");
+
+    const int mkv = int(VideoReceiver::FileFormat::Mkv);
+    const int mov = int(VideoReceiver::FileFormat::Mov);
+    const int mp4 = int(VideoReceiver::FileFormat::Mp4);
+
+    struct Codec
+    {
+        const char* name;
+        const char* caps;
+        int inMov;
+        int inMp4;
+    };
+
+    // The codecs a stream can bring, as the source bins hand them on: H.264 and H.265 in the byte-stream layout,
+    // which no muxer takes as it is, the others as their parsers give them.
+    const Codec codecs[] = {
+        {"H.264", "video/x-h264, stream-format=(string)byte-stream, alignment=(string)au", mov, mp4},
+        {"H.265", "video/x-h265, stream-format=(string)byte-stream, alignment=(string)au", mov, mp4},
+        {"AV1", "video/x-av1, stream-format=(string)obu-stream, alignment=(string)tu", mov, mp4},
+        {"VP9", "video/x-vp9, profile=(string)0, chroma-format=(string)4:2:0", mov, mp4},
+        {"MPEG-4", "video/mpeg, mpegversion=(int)4, systemstream=(boolean)false, parsed=(boolean)true", mov, mp4},
+        {"VP8", "video/x-vp8, width=(int)320, height=(int)240", mov, mkv},
+        {"MJPEG", "image/jpeg, parsed=(boolean)true, width=(int)320, height=(int)240", mov, mkv},
+        {"MPEG-2", "video/mpeg, mpegversion=(int)2, systemstream=(boolean)false, parsed=(boolean)true", mkv, mkv},
+        {"a codec no container holds", "video/x-qgc-test", kNoContainer, kNoContainer},
+    };
+    for (const Codec& codec : codecs) {
+        const QString caps = QString::fromLatin1(codec.caps);
+        const int inMkv = (codec.inMp4 == kNoContainer) ? kNoContainer : mkv;
+        QTest::addRow("%s asked for in MKV", codec.name) << caps << mkv << inMkv;
+        QTest::addRow("%s asked for in MOV", codec.name) << caps << mov << codec.inMov;
+        QTest::addRow("%s asked for in MP4", codec.name) << caps << mp4 << codec.inMp4;
+    }
+    // Nothing known of the stream yet: as asked for.
+    QTest::newRow("any caps") << QStringLiteral("ANY") << mp4 << mp4;
+}
+
+void GstVideoReceiverComponentsTest::_testRecordingContainerHoldsCodec()
+{
+    QFETCH(QString, caps);
+    QFETCH(int, format);
+    QFETCH(int, container);
+
+    GSTTEST_REQUIRE_GSTREAMER();
+    GSTTEST_SKIP_UNLESS_FACTORIES("matroskamux", "qtmux", "mp4mux");
+
+    const GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_caps_from_string(caps.toLatin1().constData()));
+    QVERIFY(inputCaps);
+    const std::optional<VideoReceiver::FileFormat> chosen =
+        RecordingBranch::containerFor(static_cast<VideoReceiver::FileFormat>(format), inputCaps.get());
+    QCOMPARE(chosen ? int(*chosen) : kNoContainer, container);
+
+    // The file sink of the container chosen links to a stream of these caps, as the recording will.
+    if (!chosen || gst_caps_is_any(inputCaps.get())) {
+        return;
+    }
+    const GStreamer::GstElementPtr source = GStreamer::makeElement("capsfilter");
+    QVERIFY(source);
+    g_object_set(source.get(), "caps", inputCaps.get(), nullptr);
+    const GStreamer::GstElementPtr sink =
+        RecordingBranch::makeFileSink(QStringLiteral("recording-test"), *chosen, inputCaps.get());
+    QVERIFY(sink);
+    QVERIFY(gst_element_link(source.get(), sink.get()));
+}
+
+void GstVideoReceiverComponentsTest::_testRecordingNamesCodecNoContainerHolds()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "matroskamux", "mp4mux");
+
+    struct Listener final : RecordingBranch::Listener
+    {
+        void onRecordingFileOpened(const QString& /*file*/) override {}
+
+        void onRecordingFileClosed(const QString& /*file*/, const QString& /*error*/) override {}
+
+        void onRecordingFailed(const QString& /*file*/, const QString& error, bool /*fileOpened*/) override
+        {
+            failures.append(error);
+        }
+
+        void onRecordingNeedsNewFile(const QString& /*file*/) override {}
+
+        void onRecordingNeedsFormat(const QString& /*file*/, VideoReceiver::FileFormat /*format*/) override
+        {
+            ++formatsAsked;
+        }
+
+        QStringList failures;
+        int formatsAsked = 0;
+    } listener;
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src caps=video/x-qgc-test ! tee name=tee")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr tee = pipeline.element("tee");
+    const PipelineDotDumper dotDumper;
+    const BranchContext context{
+        .pipeline = pipeline.get(),
+        .tee = tee.get(),
+        .redactedUri = QStringLiteral("test"),
+        .dotDumper = &dotDumper,
+        .watchdog = nullptr,
+        .post = [](std::function<void()> task) { task(); },
+    };
+    RecordingBranch branch(context, listener);
+    // Before the branch goes, which takes its pipeline to be stopped.
+    const auto stopPipeline =
+        qScopeGuard([&pipeline] { (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL); });
+    QVERIFY(branch.build());
+    QVERIFY(pipeline.play());
+    // The stream's first frame brings its caps to the branch's closed valve.
+    QCOMPARE(gst_app_src_push_buffer(GST_APP_SRC(pipeline.element("src").get()),
+                                     gst_buffer_new_allocate(nullptr, 16, nullptr)),
+             GST_FLOW_OK);
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(branch.valve(), "src"));
+    QVERIFY_TRUE_WAIT(gst_pad_has_current_caps(valveSrc.get()), TestTimeout::mediumMs());
+    branch.onSourceStreaming();
+
+    // Told as it is, where the muxer would only refuse the stream: no other container is worth asking for.
+    const QString file = dir.filePath(QStringLiteral("unknown.mp4"));
+    branch.setRequest(RecordingBranch::Request{.file = file, .format = VideoReceiver::FileFormat::Mp4});
+    QCOMPARE(listener.failures.size(), 1);
+    QVERIFY2(listener.failures.constFirst().contains(QLatin1String("video/x-qgc-test")),
+             qPrintable(listener.failures.constFirst()));
+    QCOMPARE(listener.formatsAsked, 0);
+    QVERIFY(!QFile::exists(file));
 }
 
 #else
