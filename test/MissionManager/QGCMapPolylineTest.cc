@@ -164,10 +164,10 @@ QString QGCMapPolylineTest::_copyRes(const QString& dirPath, const QString& name
 void QGCMapPolylineTest::_testShapeLoad()
 {
     QTemporaryDir tempDir;
-    (void)_copyRes(tempDir.path(), "pline.dbf");
-    (void)_copyRes(tempDir.path(), "pline.shx");
-    (void)_copyRes(tempDir.path(), "pline.prj");
-    const QString shpFile = _copyRes(tempDir.path(), "pline.shp");
+    (void) _copyRes(tempDir.path(), "polyline.dbf");
+    (void) _copyRes(tempDir.path(), "polyline.shx");
+    (void) _copyRes(tempDir.path(), "polyline.prj");
+    const QString shpFile = _copyRes(tempDir.path(), "polyline.shp");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(shpFile));
     const QString kmlFile = _copyRes(tempDir.path(), "polyline.kml");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(kmlFile));

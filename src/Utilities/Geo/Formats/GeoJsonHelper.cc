@@ -1,27 +1,29 @@
 #include "GeoJsonHelper.h"
-#include "JsonParsing.h"
-#include "QGCLoggingCategory.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonValue>
-#include <QtCore/QCoreApplication>
 #include <QtCore/QVariantMap>
 #include <QtLocation/private/qgeojson_p.h>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPath>
 #include <QtPositioning/QGeoPolygon>
 
+#include "JsonParsing.h"
+#include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
+
 QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
 namespace GeoJsonHelper
 {
-    QJsonDocument _loadFile(const QString &filePath, QString &errorString);
-    QVariantList _extractShapeValues(const QVariantList &values);
-    void _extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth = 0);
+bool _loadFile(const QString& filePath, QJsonDocument& jsonDoc, QString& errorString);
+QVariantList _extractShapeValues(const QVariantList& values);
+void _extractShapeValuesRecursive(const QVariant& value, QVariantList& shapes, int depth = 0);
 
-    constexpr int _maxRecursionDepth = 32;
-    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
+constexpr int _maxRecursionDepth = 32;
+constexpr const char* _errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
 }
 
 void GeoJsonHelper::_extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth)
@@ -56,7 +58,7 @@ QVariantList GeoJsonHelper::_extractShapeValues(const QVariantList &values)
     return shapes;
 }
 
-QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorString)
+bool GeoJsonHelper::_loadFile(const QString& filePath, QJsonDocument& jsonDoc, QString& errorString)
 {
     errorString.clear();
 
@@ -64,31 +66,31 @@ QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorSt
     if (!file.exists()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "File not found: %1").arg(filePath));
-        return QJsonDocument();
+        return false;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "Unable to open file: %1 error: %2")
                 .arg(filePath, file.errorString()));
-        return QJsonDocument();
+        return false;
     }
 
-    QJsonDocument jsonDoc;
     const QByteArray bytes = file.readAll();
     if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(errorString);
+        return false;
     }
 
-    return jsonDoc;
+    return true;
 }
 
 ShapeFileHelper::ShapeType GeoJsonHelper::determineShapeType(const QString &filePath, QString &errorString)
 {
     using ShapeType = ShapeFileHelper::ShapeType;
 
-    const QJsonDocument jsonDoc = GeoJsonHelper::_loadFile(filePath, errorString);
-    if (!errorString.isEmpty()) {
+    QJsonDocument jsonDoc;
+    if (!_loadFile(filePath, jsonDoc, errorString)) {
         return ShapeType::Error;
     }
 
@@ -123,13 +125,14 @@ ShapeFileHelper::ShapeType GeoJsonHelper::determineShapeType(const QString &file
     return ShapeType::Error;
 }
 
-bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoordinate> &vertices, QString &errorString)
+bool GeoJsonHelper::loadPolygonFromFile(const QString& filePath, QList<QGeoCoordinate>& vertices, QString& errorString,
+                                        double filterMeters)
 {
     errorString.clear();
     vertices.clear();
 
-    const QJsonDocument jsonDoc = GeoJsonHelper::_loadFile(filePath, errorString);
-    if (!errorString.isEmpty()) {
+    QJsonDocument jsonDoc;
+    if (!_loadFile(filePath, jsonDoc, errorString)) {
         return false;
     }
 
@@ -142,21 +145,25 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoord
     }
 
     for (const QVariant &shapeVar : shapes) {
+        QGeoPolygon poly;
         if (shapeVar.canConvert<QGeoPolygon>()) {
-            const QGeoPolygon poly = shapeVar.value<QGeoPolygon>();
-            vertices = poly.perimeter();
-            return true;
+            poly = shapeVar.value<QGeoPolygon>();
+        } else if (shapeVar.canConvert<QGeoShape>() && (shapeVar.value<QGeoShape>().type() == QGeoShape::PolygonType)) {
+            poly = QGeoPolygon(shapeVar.value<QGeoShape>());
+        } else {
+            continue;
         }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PolygonType) {
-                const QGeoPolygon poly(shape);
-                vertices = poly.perimeter();
-                if (!vertices.isEmpty()) {
-                    return true;
-                }
-            }
+
+        if (poly.perimeter().count() < 3) {
+            qCWarning(GeoJsonHelperLog) << "Skipping polygon with fewer than 3 vertices";
+            continue;
         }
+
+        vertices = poly.perimeter();
+        ShapeVertices::removeClosingVertex(vertices);
+        ShapeVertices::makeClockwise(vertices);
+        ShapeVertices::filterNearby(vertices, filterMeters, 3);
+        return true;
     }
 
     errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
@@ -164,13 +171,14 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoord
     return false;
 }
 
-bool GeoJsonHelper::loadPolylineFromFile(const QString &filePath, QList<QGeoCoordinate> &coords, QString &errorString)
+bool GeoJsonHelper::loadPolylineFromFile(const QString& filePath, QList<QGeoCoordinate>& coords, QString& errorString,
+                                         double filterMeters)
 {
     errorString.clear();
     coords.clear();
 
-    const QJsonDocument jsonDoc = GeoJsonHelper::_loadFile(filePath, errorString);
-    if (!errorString.isEmpty()) {
+    QJsonDocument jsonDoc;
+    if (!_loadFile(filePath, jsonDoc, errorString)) {
         return false;
     }
 
@@ -183,21 +191,23 @@ bool GeoJsonHelper::loadPolylineFromFile(const QString &filePath, QList<QGeoCoor
     }
 
     for (const QVariant &shapeVar : shapes) {
+        QGeoPath path;
         if (shapeVar.canConvert<QGeoPath>()) {
-            const QGeoPath path = shapeVar.value<QGeoPath>();
-            coords = path.path();
-            return true;
+            path = shapeVar.value<QGeoPath>();
+        } else if (shapeVar.canConvert<QGeoShape>() && (shapeVar.value<QGeoShape>().type() == QGeoShape::PathType)) {
+            path = QGeoPath(shapeVar.value<QGeoShape>());
+        } else {
+            continue;
         }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PathType) {
-                const QGeoPath path(shape);
-                coords = path.path();
-                if (!coords.isEmpty()) {
-                    return true;
-                }
-            }
+
+        if (path.path().count() < 2) {
+            qCWarning(GeoJsonHelperLog) << "Skipping polyline with fewer than 2 vertices";
+            continue;
         }
+
+        coords = path.path();
+        ShapeVertices::filterNearby(coords, filterMeters, 2);
+        return true;
     }
 
     errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
@@ -246,8 +256,8 @@ void GeoJsonHelper::saveGeoJsonCoordinate(const QGeoCoordinate &coordinate, bool
     jsonValue = QJsonValue(coordinateArray);
 }
 
-bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue &jsonValue, bool altitudeRequired, QGeoCoordinate &coordinate,
-                                      QString &errorString)
+bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue& jsonValue, bool altitudeRequired, QGeoCoordinate& coordinate,
+                                      QString& errorString)
 {
     if (!jsonValue.isArray()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", "value for coordinate is not array");
@@ -257,21 +267,22 @@ bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue &jsonValue, bool altitude
     const QJsonArray coordinateArray = jsonValue.toArray();
     const int requiredCount = altitudeRequired ? 3 : 2;
     if (coordinateArray.count() != requiredCount) {
-        errorString = QCoreApplication::translate("GeoJsonHelper", "Coordinate array must contain %1 values").arg(requiredCount);
+        errorString =
+            QCoreApplication::translate("GeoJsonHelper", "Coordinate array must contain %1 values").arg(requiredCount);
         return false;
     }
 
-    for (const QJsonValue &coordinateValue : coordinateArray) {
+    for (const QJsonValue& coordinateValue : coordinateArray) {
         if ((coordinateValue.type() != QJsonValue::Double) && (coordinateValue.type() != QJsonValue::Null)) {
-            errorString =
-                QCoreApplication::translate("GeoJsonHelper", "Coordinate array may only contain double values, found: %1").arg(coordinateValue.type());
+            errorString = QCoreApplication::translate("GeoJsonHelper",
+                                                      "Coordinate array may only contain double values, found: %1")
+                              .arg(coordinateValue.type());
             return false;
         }
     }
 
-    coordinate = QGeoCoordinate(
-        JsonParsing::possibleNaNJsonValue(coordinateArray[0]),
-        JsonParsing::possibleNaNJsonValue(coordinateArray[1]));
+    coordinate = QGeoCoordinate(JsonParsing::possibleNaNJsonValue(coordinateArray[0]),
+                                JsonParsing::possibleNaNJsonValue(coordinateArray[1]));
 
     if (altitudeRequired) {
         coordinate.setAltitude(JsonParsing::possibleNaNJsonValue(coordinateArray[2]));
@@ -280,7 +291,7 @@ bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue &jsonValue, bool altitude
     return true;
 }
 
-void GeoJsonHelper::saveGeoCoordinate(const QGeoCoordinate &coordinate, bool writeAltitude, QJsonValue &jsonValue)
+void GeoJsonHelper::saveGeoCoordinate(const QGeoCoordinate& coordinate, bool writeAltitude, QJsonValue& jsonValue)
 {
     QJsonArray coordinateArray;
     coordinateArray << coordinate.latitude() << coordinate.longitude();
@@ -292,8 +303,8 @@ void GeoJsonHelper::saveGeoCoordinate(const QGeoCoordinate &coordinate, bool wri
     jsonValue = QJsonValue(coordinateArray);
 }
 
-bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool altitudeRequired,
-                                           QVariantList &rgVarPoints, QString &errorString)
+bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitudeRequired,
+                                           QVariantList& rgVarPoints, QString& errorString)
 {
     if (!jsonValue.isArray()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", "value for coordinate array is not array");
@@ -303,7 +314,7 @@ bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool alt
     const QJsonArray rgJsonPoints = jsonValue.toArray();
 
     rgVarPoints.clear();
-    for (const QJsonValue &point : rgJsonPoints) {
+    for (const QJsonValue& point : rgJsonPoints) {
         QGeoCoordinate coordinate;
         if (!loadGeoCoordinate(point, altitudeRequired, coordinate, errorString)) {
             return false;
@@ -314,8 +325,8 @@ bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool alt
     return true;
 }
 
-bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool altitudeRequired,
-                                           QList<QGeoCoordinate> &rgPoints, QString &errorString)
+bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitudeRequired,
+                                           QList<QGeoCoordinate>& rgPoints, QString& errorString)
 {
     QVariantList rgVarPoints;
 
@@ -324,17 +335,17 @@ bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool alt
     }
 
     rgPoints.clear();
-    for (const QVariant &point : rgVarPoints) {
+    for (const QVariant& point : rgVarPoints) {
         rgPoints.append(point.value<QGeoCoordinate>());
     }
 
     return true;
 }
 
-void GeoJsonHelper::saveGeoCoordinateArray(const QVariantList &rgVarPoints, bool writeAltitude, QJsonValue &jsonValue)
+void GeoJsonHelper::saveGeoCoordinateArray(const QVariantList& rgVarPoints, bool writeAltitude, QJsonValue& jsonValue)
 {
     QJsonArray rgJsonPoints;
-    for (const QVariant &point : rgVarPoints) {
+    for (const QVariant& point : rgVarPoints) {
         QJsonValue jsonPoint;
         saveGeoCoordinate(point.value<QGeoCoordinate>(), writeAltitude, jsonPoint);
         rgJsonPoints.append(jsonPoint);
@@ -343,11 +354,11 @@ void GeoJsonHelper::saveGeoCoordinateArray(const QVariantList &rgVarPoints, bool
     jsonValue = rgJsonPoints;
 }
 
-void GeoJsonHelper::saveGeoCoordinateArray(const QList<QGeoCoordinate> &rgPoints, bool writeAltitude,
-                                           QJsonValue &jsonValue)
+void GeoJsonHelper::saveGeoCoordinateArray(const QList<QGeoCoordinate>& rgPoints, bool writeAltitude,
+                                           QJsonValue& jsonValue)
 {
     QVariantList rgVarPoints;
-    for (const QGeoCoordinate &coord : rgPoints) {
+    for (const QGeoCoordinate& coord : rgPoints) {
         rgVarPoints.append(QVariant::fromValue(coord));
     }
 

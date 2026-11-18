@@ -15,6 +15,10 @@ private slots:
     void _testLoadPolylinesFromSHP();
     void _testLoadPolygonsFromKML();
     void _testLoadPolylinesFromKML();
+    void _testLoadShapes_data();
+    void _testLoadShapes();
+    void _testLoadFailures_data();
+    void _testLoadFailures();
     void _testGetEntityCount();
     void _testDetermineShapeType();
     void _testUnsupportedProjectionError();
@@ -22,7 +26,14 @@ private slots:
     void _testVertexFiltering();
     void _testKMLVertexFiltering();
     void _testKMLAltitudeParsing();
+    void _testKMLUnparseableAltitude();
     void _testKMLCoordinateValidation();
+    void _testKMLNonFiniteCoordinates_data();
+    void _testKMLNonFiniteCoordinates();
+    void _testKMLNonFiniteAltitude_data();
+    void _testKMLNonFiniteAltitude();
+    void _testSHPCoordinateValidation_data();
+    void _testSHPCoordinateValidation();
     void _testKMLExportSchemaValidation();
 
 private:

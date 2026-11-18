@@ -1,5 +1,6 @@
 #include "GeoTest.h"
 
+#include <QtCore/QtNumeric>
 #include <QtGui/QVector3D>
 #include <QtTest/QTest>
 
@@ -81,19 +82,52 @@ void GeoTest::_convertGeoToUTM_test()
     QVERIFY(compareDoubles(northing, 5247092.44892));
 }
 
+void GeoTest::_convertGeoToUTMOutsideUTM_test_data()
+{
+    QTest::addColumn<double>("latitude");
+    QTest::addColumn<double>("longitude");
+
+    QTest::newRow("north-polar") << 85.0 << 10.0;
+    QTest::newRow("south-polar") << -81.0 << 10.0;
+    QTest::newRow("invalid") << qQNaN() << qQNaN();
+}
+
+void GeoTest::_convertGeoToUTMOutsideUTM_test()
+{
+    QFETCH(double, latitude);
+    QFETCH(double, longitude);
+
+    double easting = -1.;
+    double northing = -2.;
+    QCOMPARE(QGCGeo::convertGeoToUTM(QGeoCoordinate(latitude, longitude), easting, northing), 0);
+    QCOMPARE(easting, -1.);
+    QCOMPARE(northing, -2.);
+}
+
 void GeoTest::_convertUTMToGeo_test()
 {
     const double easting = 465886.092246;
     const double northing = 5247092.44892;
     const int zone = 32;
     const bool southhemi = false;
-    QGeoCoordinate coord(0, 0, 0);
+    QGeoCoordinate coord(0, 0, 123.5);
     const bool result = QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, coord);
     QVERIFY(result);
     QVERIFY(coord.isValid());
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
-    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+    // The altitude is the caller's: the shapefile loader relies on a coordinate without one staying without one
+    QCOMPARE(coord.altitude(), 123.5);
+    QGeoCoordinate withoutAltitude;
+    QVERIFY(QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, withoutAltitude));
+    QCOMPARE(withoutAltitude.type(), QGeoCoordinate::Coordinate2D);
+
+    // GeographicLib gives NaN for these instead of throwing
+    const QGeoCoordinate original(1.0, 2.0, 3.0);
+    QGeoCoordinate unchanged(original);
+    QVERIFY(!QGCGeo::convertUTMToGeo(qQNaN(), northing, zone, southhemi, unchanged));
+    QVERIFY(!QGCGeo::convertUTMToGeo(easting, qQNaN(), zone, southhemi, unchanged));
+    QCOMPARE(unchanged, original);
 }
 
 void GeoTest::_convertGeoToMGRS_test()
@@ -106,13 +140,36 @@ void GeoTest::_convertGeoToMGRS_test()
 void GeoTest::_convertMGRSToGeo_test()
 {
     const QString mgrs("32T MT 65886 47092");
-    QGeoCoordinate coord(0, 0, 0);
+    QGeoCoordinate coord(0, 0, 123.5);
     const bool result = QGCGeo::convertMGRSToGeo(mgrs, coord);
     QVERIFY(result);
     QVERIFY(coord.isValid());
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
-    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+    QCOMPARE(coord.altitude(), 123.5);
+    QGeoCoordinate withoutAltitude;
+    QVERIFY(QGCGeo::convertMGRSToGeo(mgrs, withoutAltitude));
+    QCOMPARE(withoutAltitude.type(), QGeoCoordinate::Coordinate2D);
+}
+
+void GeoTest::_convertMGRSToGeoInvalid_test_data()
+{
+    QTest::addColumn<QString>("mgrs");
+
+    // GeographicLib reads these as its "INVALID" result and does not throw
+    QTest::newRow("invalid-keyword") << QStringLiteral("INVALID");
+    QTest::newRow("invalid-prefix") << QStringLiteral(" inv 12345 ");
+    QTest::newRow("empty") << QString();
+}
+
+void GeoTest::_convertMGRSToGeoInvalid_test()
+{
+    QFETCH(QString, mgrs);
+
+    const QGeoCoordinate original(1.0, 2.0, 3.0);
+    QGeoCoordinate coord(original);
+    QVERIFY(!QGCGeo::convertMGRSToGeo(mgrs, coord));
+    QCOMPARE(coord, original);
 }
 
 void GeoTest::_convertDegreesToDMS_test()

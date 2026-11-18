@@ -1,6 +1,4 @@
 #include "SHPFileHelper.h"
-#include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
@@ -8,6 +6,9 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTextStream>
 
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
 #include "shapefil.h"
 
 QGC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")
@@ -149,7 +150,14 @@ namespace SHPFileHelper
 
     /// @param utmZone[out] Zone for UTM shape, 0 for lat/lon shape
     /// @param utmSouthernHemisphere[out] true/false for UTM hemisphere
+    /// @return nullptr on failure, with @a errorString set
     SHPHandle _loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString);
+
+    /// Converts vertex @a index of @a shpObject to a coordinate, from UTM when @a utmZone is not 0.
+    /// @param hasAltitude true when the shape type of the file carries Z values
+    /// @return false when the vertex is outside the range of the projection; a warning has been logged
+    bool _vertexCoordinate(const SHPObject* shpObject, int index, int utmZone, bool utmSouthernHemisphere,
+                           bool hasAltitude, QGeoCoordinate& coord);
 }
 
 bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString)
@@ -193,6 +201,7 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
 
         if (*utmZone == 0) {
             errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
+            return false;
         }
     } else {
         // Extract projection name from WKT for error reporting
@@ -212,9 +221,10 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
             errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(
                 QCoreApplication::translate("SHP", "Unable to parse projection from PRJ file. Supported projections are: WGS84 (GEOGCS[\"GCS_WGS_1984\"]) and UTM (PROJCS[\"WGS_1984_UTM_Zone_##N/S\"])."));
         }
+        return false;
     }
 
-    return errorString.isEmpty();
+    return true;
 }
 
 SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString)
@@ -237,6 +247,33 @@ SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *
     return shpHandle;
 }
 
+bool SHPFileHelper::_vertexCoordinate(const SHPObject* shpObject, int index, int utmZone, bool utmSouthernHemisphere,
+                                      bool hasAltitude, QGeoCoordinate& coord)
+{
+    if (utmZone) {
+        if (!QGCGeo::convertUTMToGeo(shpObject->padfX[index], shpObject->padfY[index], utmZone, utmSouthernHemisphere,
+                                     coord)) {
+            qCWarning(SHPFileHelperLog) << "UTM conversion failed for entity" << shpObject->nShapeId << "vertex"
+                                        << index;
+            return false;
+        }
+    } else {
+        coord = QGeoCoordinate(shpObject->padfY[index], shpObject->padfX[index]);
+        if (!coord.isValid()) {
+            qCWarning(SHPFileHelperLog) << "Latitude or longitude out of range for entity" << shpObject->nShapeId
+                                        << "vertex" << index << ":" << shpObject->padfY[index]
+                                        << shpObject->padfX[index];
+            return false;
+        }
+    }
+
+    if (hasAltitude && shpObject->padfZ) {
+        coord.setAltitude(shpObject->padfZ[index]);
+    }
+
+    return true;
+}
+
 ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpFile, QString &errorString)
 {
     using ShapeType = ShapeFileHelper::ShapeType;
@@ -248,28 +285,28 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
     int utmZone;
     bool utmSouthernHemisphere;
     SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (errorString.isEmpty()) {
-        Q_CHECK_PTR(shpHandle);
-
-        int cEntities, type;
-        SHPGetInfo(shpHandle, &cEntities, &type, nullptr, nullptr);
-        qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
-        if (cEntities < 1) {
-            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No entities found."));
-        } else if (type == SHPT_POLYGON || type == SHPT_POLYGONZ) {
-            shapeType = ShapeType::Polygon;
-        } else if (type == SHPT_ARC || type == SHPT_ARCZ) {
-            shapeType = ShapeType::Polyline;
-        } else if (type == SHPT_POINT || type == SHPT_POINTZ) {
-            shapeType = ShapeType::Point;
-        } else {
-            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No supported types found."));
-        }
+    if (!shpHandle) {
+        return ShapeType::Error;
     }
 
-    if (shpHandle) {
-        SHPClose(shpHandle);
+    int cEntities, type;
+    SHPGetInfo(shpHandle, &cEntities, &type, nullptr, nullptr);
+    qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
+    if (cEntities < 1) {
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix)
+                          .arg(QCoreApplication::translate("SHP", "No entities found."));
+    } else if (type == SHPT_POLYGON || type == SHPT_POLYGONZ) {
+        shapeType = ShapeType::Polygon;
+    } else if (type == SHPT_ARC || type == SHPT_ARCZ) {
+        shapeType = ShapeType::Polyline;
+    } else if (type == SHPT_POINT || type == SHPT_POINTZ) {
+        shapeType = ShapeType::Point;
+    } else {
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix)
+                          .arg(QCoreApplication::translate("SHP", "No supported types found."));
     }
+
+    SHPClose(shpHandle);
 
     return shapeType;
 }
@@ -282,7 +319,7 @@ int SHPFileHelper::getEntityCount(const QString &shpFile, QString &errorString)
     bool utmSouthernHemisphere;
     SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
     if (!shpHandle) {
-        return 0;
+        return -1;
     }
 
     int cEntities, type;
@@ -306,10 +343,9 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
     });
 
     shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (!errorString.isEmpty()) {
+    if (!shpHandle) {
         return false;
     }
-    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
@@ -328,9 +364,6 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
         }
         auto shpObjectCleanup = qScopeGuard([shpObject]() { SHPDestroyObject(shpObject); });
 
-        // Ensure clockwise winding for outer rings (QGC requirement)
-        SHPRewindObject(shpHandle, shpObject);
-
         // For multi-part polygons (e.g., polygons with holes), we extract only the outer ring.
         // In shapefiles, the first part is conventionally the outer boundary, and subsequent
         // parts are holes (inner rings). For QGC's use cases (survey areas, geofences), the
@@ -341,58 +374,37 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
                                       << "parts; using outer ring only (" << firstPartEnd << "vertices)";
         }
 
-        QList<QGeoCoordinate> vertices;
-        const bool entityHasAltitude = hasAltitude && shpObject->padfZ;
-
-        for (int i = 0; i < firstPartEnd; i++) {
-            QGeoCoordinate coord;
-            if (utmZone) {
-                if (!QGCGeo::convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
-                    qCWarning(SHPFileHelperLog) << "UTM conversion failed for entity" << entityIdx << "vertex" << i;
-                    continue;
+        const auto readVertices = [&]() {
+            QList<QGeoCoordinate> ring;
+            for (int i = 0; i < firstPartEnd; i++) {
+                QGeoCoordinate coord;
+                if (_vertexCoordinate(shpObject, i, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+                    ring.append(coord);
                 }
-            } else {
-                coord.setLatitude(shpObject->padfY[i]);
-                coord.setLongitude(shpObject->padfX[i]);
             }
-            if (entityHasAltitude) {
-                coord.setAltitude(shpObject->padfZ[i]);
-            }
-            vertices.append(coord);
-        }
+            return ring;
+        };
+
+        // The vertices are checked before the ring is wound: a warning then names a vertex by its place in the
+        // file, and shapelib, which winds a ring on its numbers as they stand, never sees one that is left out.
+        QList<QGeoCoordinate> vertices = readVertices();
 
         if (vertices.count() < 3) {
             qCWarning(SHPFileHelperLog) << "Skipping polygon entity" << entityIdx << "with less than 3 vertices";
             continue;
         }
 
-        // Filter nearby vertices if enabled
-        if (filterMeters > 0) {
-            const QGeoCoordinate firstVertex = vertices.first();
-
-            // Detect explicit closure vertex (shapefile rings often repeat first vertex as last).
-            // Use a very small threshold (0.01m) so we only treat truly identical points as closure.
-            constexpr double kClosureThreshold = 0.01;
-            const bool hadExplicitClosure = vertices.last().distanceTo(firstVertex) < kClosureThreshold;
-
-            // Filter consecutive vertices that are too close together
-            int i = 0;
-            while (i < (vertices.count() - 1)) {
-                if ((vertices.count() > 3) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
-                    vertices.removeAt(i + 1);
-                } else {
-                    i++;
-                }
-            }
-
-            // If the original polygon had an explicit closure vertex, remove a single trailing
-            // duplicate after filtering, but do not strip distinct vertices that merely happen
-            // to be within filterMeters of the first.
-            if (hadExplicitClosure && vertices.count() > 3 &&
-                vertices.last().distanceTo(firstVertex) < kClosureThreshold) {
-                vertices.removeLast();
-            }
+        // Ensure clockwise winding for outer rings (QGC requirement)
+        if (vertices.count() < firstPartEnd) {
+            ShapeVertices::makeClockwise(vertices);
+        } else if (SHPRewindObject(shpHandle, shpObject) > 0) {
+            vertices = readVertices();
         }
+
+        // The repeated first vertex goes before filtering, so that it does not count towards the three vertices
+        // the filter must leave.
+        ShapeVertices::removeClosingVertex(vertices);
+        ShapeVertices::filterNearby(vertices, filterMeters, 3);
 
         polygons.append(vertices);
     }
@@ -419,10 +431,9 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
     });
 
     shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (!errorString.isEmpty()) {
+    if (!shpHandle) {
         return false;
     }
-    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
@@ -451,23 +462,11 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
         }
 
         QList<QGeoCoordinate> vertices;
-        const bool entityHasAltitude = hasAltitude && shpObject->padfZ;
-
         for (int i = 0; i < firstPartEnd; i++) {
             QGeoCoordinate coord;
-            if (utmZone) {
-                if (!QGCGeo::convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
-                    qCWarning(SHPFileHelperLog) << "UTM conversion failed for entity" << entityIdx << "vertex" << i;
-                    continue;
-                }
-            } else {
-                coord.setLatitude(shpObject->padfY[i]);
-                coord.setLongitude(shpObject->padfX[i]);
+            if (_vertexCoordinate(shpObject, i, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+                vertices.append(coord);
             }
-            if (entityHasAltitude) {
-                coord.setAltitude(shpObject->padfZ[i]);
-            }
-            vertices.append(coord);
         }
 
         if (vertices.count() < 2) {
@@ -475,17 +474,7 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
             continue;
         }
 
-        // Filter nearby vertices if enabled
-        if (filterMeters > 0) {
-            int i = 0;
-            while (i < (vertices.count() - 1)) {
-                if ((vertices.count() > 2) && (vertices[i].distanceTo(vertices[i+1]) < filterMeters)) {
-                    vertices.removeAt(i+1);
-                } else {
-                    i++;
-                }
-            }
-        }
+        ShapeVertices::filterNearby(vertices, filterMeters, 2);
 
         polylines.append(vertices);
     }
@@ -512,10 +501,9 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
     });
 
     shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (!errorString.isEmpty()) {
+    if (!shpHandle) {
         return false;
     }
-    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
@@ -541,21 +529,9 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
         }
 
         QGeoCoordinate coord;
-        if (utmZone) {
-            if (!QGCGeo::convertUTMToGeo(shpObject->padfX[0], shpObject->padfY[0], utmZone, utmSouthernHemisphere, coord)) {
-                qCWarning(SHPFileHelperLog) << "UTM conversion failed for point entity" << entityIdx;
-                continue;
-            }
-        } else {
-            coord.setLatitude(shpObject->padfY[0]);
-            coord.setLongitude(shpObject->padfX[0]);
+        if (_vertexCoordinate(shpObject, 0, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+            points.append(coord);
         }
-
-        if (hasAltitude && shpObject->padfZ) {
-            coord.setAltitude(shpObject->padfZ[0]);
-        }
-
-        points.append(coord);
     }
 
     if (points.isEmpty()) {

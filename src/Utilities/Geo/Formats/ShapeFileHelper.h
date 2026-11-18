@@ -7,6 +7,8 @@
 
 /// \brief Routines for loading polygons or polylines from KML or SHP files.
 ///
+/// A load function that fails returns false with errorString set and loads nothing. One that returns true has
+/// loaded at least one shape and leaves errorString empty.
 class ShapeFileHelper : public QObject
 {
     Q_OBJECT
@@ -32,6 +34,7 @@ public:
     static ShapeType determineShapeType(const QString &file, QString &errorString);
 
     /// Get the number of geometry entities in the file
+    /// @return -1 if the file cannot be read
     static int getEntityCount(const QString &file, QString &errorString);
 
     /// Load all polygon entities

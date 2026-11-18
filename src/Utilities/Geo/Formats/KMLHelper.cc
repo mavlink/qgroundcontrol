@@ -1,48 +1,48 @@
 #include "KMLHelper.h"
-#include "KMLSchemaValidator.h"
-#include "QGCLoggingCategory.h"
+
+#include <cmath>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
 
-#include <algorithm>
+#include "KMLSchemaValidator.h"
+#include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
 
 QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
 namespace KMLHelper
 {
-    QDomDocument _loadFile(const QString &kmlFile, QString &errorString);
-    bool _parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString);
-    void _filterVertices(QList<QGeoCoordinate> &vertices, double filterMeters, int minVertices);
-    void _checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index);
+bool _loadFile(const QString& kmlFile, QDomDocument& doc, QString& errorString);
+bool _parseCoordinateString(const QString& coordinatesString, QList<QGeoCoordinate>& coords, QString& errorString);
+void _checkAltitudeMode(const QDomNode& geometryNode, const QString& geometryType, int index);
 
-    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
+constexpr const char* _errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
 }
 
-QDomDocument KMLHelper::_loadFile(const QString &kmlFile, QString &errorString)
+bool KMLHelper::_loadFile(const QString& kmlFile, QDomDocument& doc, QString& errorString)
 {
     errorString.clear();
 
     QFile file(kmlFile);
     if (!file.exists()) {
         errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "File not found: %1").arg(kmlFile));
-        return QDomDocument();
+        return false;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
         errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to open file: %1 error: %2").arg(kmlFile, file.errorString()));
-        return QDomDocument();
+        return false;
     }
 
-    QDomDocument doc;
     const QDomDocument::ParseResult result = doc.setContent(&file, QDomDocument::ParseOption::Default);
     if (!result) {
         errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(result.errorMessage).arg(result.errorLine));
-        return QDomDocument();
+        return false;
     }
 
-    return doc;
+    return true;
 }
 
 bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString)
@@ -67,7 +67,8 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         bool lonOk = false, latOk = false;
         const double lon = rgValueStrings[0].toDouble(&lonOk);
         const double lat = rgValueStrings[1].toDouble(&latOk);
-        if (!lonOk || !latOk) {
+        // toDouble() reads "nan" and "inf" as numbers
+        if (!lonOk || !latOk || !std::isfinite(lon) || !std::isfinite(lat)) {
             qCWarning(KMLHelperLog) << "Failed to parse coordinate values:" << coordinateString;
             continue;
         }
@@ -81,7 +82,13 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         }
         double alt = 0.0;
         if (rgValueStrings.size() >= 3) {
-            alt = rgValueStrings[2].toDouble();
+            bool altOk = false;
+            alt = rgValueStrings[2].toDouble(&altOk);
+            // toDouble() reads "nan" and "inf" as numbers, and gives infinity for a number beyond its range
+            if (!altOk || !std::isfinite(alt)) {
+                alt = 0.0;
+                qCWarning(KMLHelperLog) << "Failed to parse altitude, using" << alt << "in:" << coordinateString;
+            }
         }
         coords.append(QGeoCoordinate(lat, lon, alt));
     }
@@ -91,22 +98,6 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         return false;
     }
     return true;
-}
-
-void KMLHelper::_filterVertices(QList<QGeoCoordinate> &vertices, double filterMeters, int minVertices)
-{
-    if (filterMeters <= 0 || vertices.count() <= minVertices) {
-        return;
-    }
-
-    int i = 0;
-    while (i < (vertices.count() - 1)) {
-        if ((vertices.count() > minVertices) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
-            vertices.removeAt(i + 1);
-        } else {
-            i++;
-        }
-    }
 }
 
 void KMLHelper::_checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index)
@@ -135,8 +126,8 @@ ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile,
 {
     using ShapeType = ShapeFileHelper::ShapeType;
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return ShapeType::Error;
     }
 
@@ -161,9 +152,9 @@ ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile,
 
 int KMLHelper::getEntityCount(const QString &kmlFile, QString &errorString)
 {
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
-        return 0;
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
+        return -1;
     }
 
     int count = 0;
@@ -178,8 +169,8 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
     errorString.clear();
     polygons.clear();
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 
@@ -214,24 +205,9 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
             continue;
         }
 
-        // Remove duplicate closing vertex (KML polygons repeat first vertex at end)
-        if (rgCoords.count() > 3 && rgCoords.first().latitude() == rgCoords.last().latitude() &&
-            rgCoords.first().longitude() == rgCoords.last().longitude()) {
-            rgCoords.removeLast();
-        }
-
-        // Determine winding, reverse if needed. QGC wants clockwise winding
-        double sum = 0;
-        for (int i = 0; i < rgCoords.count(); i++) {
-            const QGeoCoordinate &coord1 = rgCoords[i];
-            const QGeoCoordinate &coord2 = rgCoords[(i + 1) % rgCoords.count()];
-            sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
-        }
-        if (sum < 0.0) {
-            std::reverse(rgCoords.begin(), rgCoords.end());
-        }
-
-        _filterVertices(rgCoords, filterMeters, 3);
+        ShapeVertices::removeClosingVertex(rgCoords);
+        ShapeVertices::makeClockwise(rgCoords);
+        ShapeVertices::filterNearby(rgCoords, filterMeters, 3);
         polygons.append(rgCoords);
     }
 
@@ -248,8 +224,8 @@ bool KMLHelper::loadPolylinesFromFile(const QString &kmlFile, QList<QList<QGeoCo
     errorString.clear();
     polylines.clear();
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 
@@ -284,7 +260,7 @@ bool KMLHelper::loadPolylinesFromFile(const QString &kmlFile, QList<QList<QGeoCo
             continue;
         }
 
-        _filterVertices(rgCoords, filterMeters, 2);
+        ShapeVertices::filterNearby(rgCoords, filterMeters, 2);
         polylines.append(rgCoords);
     }
 
@@ -301,8 +277,8 @@ bool KMLHelper::loadPointsFromFile(const QString &kmlFile, QList<QGeoCoordinate>
     errorString.clear();
     points.clear();
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 

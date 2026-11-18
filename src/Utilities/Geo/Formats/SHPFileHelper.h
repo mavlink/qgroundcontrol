@@ -10,6 +10,7 @@ namespace SHPFileHelper
     ShapeFileHelper::ShapeType determineShapeType(const QString &file, QString &errorString);
 
     /// Get the number of entities in the shapefile
+    /// @return -1 if the file cannot be read
     int getEntityCount(const QString &shpFile, QString &errorString);
 
     /// Load all polygon entities
