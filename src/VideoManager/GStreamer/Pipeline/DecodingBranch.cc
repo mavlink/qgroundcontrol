@@ -365,7 +365,6 @@ void DecodingBranch::_insertDecoder()
 
 bool DecodingBranch::_tryInsertDecoder()
 {
-    setSinkSync(_sink.get(), !_lowLatency);
     if (!gst_bin_add(GST_BIN(_context.pipeline), _sink.get())) {
         qCWarning(GstVideoReceiverLog) << "Failed to add the video sink" << _context.redactedUri;
         return false;
@@ -391,6 +390,9 @@ bool DecodingBranch::_tryInsertDecoder()
         _removeDecoder();
         return false;
     }
+    // The clock paces frames stamped as they arrived. Behind a source that isn't live (tcp://) they are stamped from
+    // zero, while the pipeline's time has run since it started: each would be late for the clock, and dropped.
+    setSinkSync(_sink.get(), !_lowLatency && fedByLiveSource(_decoder.get()));
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-decoder");
 
     (void) _insertions.fetch_add(1, std::memory_order_relaxed);

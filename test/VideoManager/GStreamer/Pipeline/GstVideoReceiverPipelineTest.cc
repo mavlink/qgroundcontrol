@@ -375,6 +375,14 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
     }
     QVERIFY(stream.waitForState(State::Streaming));
     QVERIFY(stream.display());
+    // Shown at the stream's 30 frames a second, not merely decoded: a sink that takes every frame for late shows one
+    // a second.
+    QVERIFY(UnitTest::waitForCondition(
+        [&stream] {
+            const VideoStreamStats stats = stream.receiver->stats();
+            return stats.valid && (stats.fps > 10.0);
+        },
+        TestTimeout::longDuration(), u"frame rate"));
 }
 
 void GstVideoReceiverPipelineTest::_testConfigChangeRestarts()
