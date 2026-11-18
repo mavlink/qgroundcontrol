@@ -426,10 +426,15 @@ void GstHwBuffersTest::_testGpuBinSelection_data()
     const int passthrough = int(GpuBinMode::Passthrough);
     const int openGl = int(RenderBackend::OpenGL);
     const int vulkan = int(RenderBackend::Vulkan);
-    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect.
+    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect. WGL and CGL contexts aren't
+    // wrapped, so there it is no GPU bin.
+#if defined(Q_OS_LINUX)
+    const int withoutEgl = dmaBufOrGlUpload;
+#else
+    const int withoutEgl = passthrough;
+#endif
     QTest::newRow("dmabuf-or-glupload-opengl-egl") << dmaBufOrGlUpload << false << openGl << true << dmaBufOrGlUpload;
-    QTest::newRow("dmabuf-or-glupload-opengl-not-egl")
-        << dmaBufOrGlUpload << false << openGl << false << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-opengl-not-egl") << dmaBufOrGlUpload << false << openGl << false << withoutEgl;
     QTest::newRow("dmabuf-or-glupload-vulkan") << dmaBufOrGlUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
     QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
