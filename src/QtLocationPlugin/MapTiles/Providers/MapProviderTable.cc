@@ -142,6 +142,7 @@ QList<Fact*> customUrlSourceSettings()
     return {mapTableAppSettings()->customURL()};
 }
 
+#ifndef QGC_NO_GOOGLE_MAPS
 // Google's layers: h roads only, m standard roadmap, p terrain, r altered roadmap, s satellite only, t terrain only,
 // y hybrid (s,h). Its tiles are 256x256 pixels, to zoom 20, from mt0 to mt3.google.com.
 constexpr MapFamily kMapFamilyGoogle = {
@@ -149,6 +150,7 @@ constexpr MapFamily kMapFamilyGoogle = {
     .referrer = "https://www.google.com/maps/preview",
     .attribution = "Google Maps",
 };
+#endif
 
 constexpr MapFamily kMapFamilyBing = {
     .url = TableMapProvider::bingUrl,
