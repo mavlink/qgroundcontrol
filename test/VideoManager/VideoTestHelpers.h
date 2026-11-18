@@ -6,12 +6,14 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QList>
+#include <QtCore/QRandomGenerator>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
+#include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
@@ -203,6 +205,25 @@ inline bool showsText(const QQuickItem* root, const QString& text)
     const QList<QQuickItem*> items = root->findChildren<QQuickItem*>();
     return std::ranges::any_of(
         items, [&text](const QQuickItem* item) { return item->isVisible() && (item->property("text") == text); });
+}
+
+/// A free UDP port, for a stream a receiver listens for, with the next one free for its RTCP. Below the ephemeral
+/// ranges (Windows 49152+, Linux 32768+), which hand out ports in turn on Windows: a sender's own socket would take
+/// the next one.
+inline quint16 freeUdpPort()
+{
+    constexpr int kFirst = 20000;
+    constexpr int kPairs = 6000;
+    const int start = static_cast<int>(QRandomGenerator::global()->bounded(kPairs));
+    for (int i = 0; i < kPairs; i++) {
+        const auto port = static_cast<quint16>(kFirst + (2 * ((start + i) % kPairs)));
+        QUdpSocket rtp;
+        QUdpSocket rtcp;
+        if (rtp.bind(QHostAddress::AnyIPv4, port) && rtcp.bind(QHostAddress::AnyIPv4, port + 1)) {
+            return port;
+        }
+    }
+    return 0;
 }
 
 }  // namespace VideoTestHelpers

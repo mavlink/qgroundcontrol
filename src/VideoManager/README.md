@@ -131,3 +131,10 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 `GStreamer/Source/` in `test/VideoManager/GStreamer/Source/`. `Qml/` has no folder there: `VideoManagerTest` tests the
 QML module. [GStreamer/README.md](GStreamer/README.md#automated-tests) lists the GStreamer classes and says how to
 run them.
+
+`VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common. Each of
+its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream: a port nobody sends
+to yet, a stream lost with and without auto-reconnect, a restart, and a recording ended by stopping the stream. What a
+backend does on its own stays in its tests. The Qt Multimedia receiver's are `QtMultimediaVideoReceiverTest`, which
+needs neither a stream nor GStreamer, and `QtMultimediaVideoReceiverStreamTest`, which plays the streams of
+`MockVideoStreamServer`. That class and the contract test are built only with GStreamer, which sends their streams.

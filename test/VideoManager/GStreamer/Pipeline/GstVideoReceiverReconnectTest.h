@@ -11,9 +11,6 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testPermanentFailureStops();
     void _testReconnectBacksOffAfterFailedStart();
-    void _testUdpListensUntilStreamStarts();
-    void _testStreamLossRestartPolicy_data();
-    void _testStreamLossRestartPolicy();
     void _testUnresponsiveRtspServer_data();
     void _testUnresponsiveRtspServer();
     void _testRtspUnauthorizedStops();

@@ -22,12 +22,6 @@ using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
 
-// How often the worker looks at a stream that is to stay silent, rather than once a second.
-constexpr std::chrono::milliseconds kSilentSourceWatchdogInterval{100};
-// Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first tick and checked
-// at the first one after it.
-constexpr int kSilentSourceWindowMs = 1500;
-
 // How often the receiver checks its worker while a test holds the worker: a stuck one is reported at the seventh
 // check, the sixth in a row at which it has run no task. The two windows are counted in checks, so they follow it.
 constexpr std::chrono::milliseconds kHeldWorkerHeartbeat{100};
@@ -91,59 +85,6 @@ void GstVideoReceiverReconnectTest::_testReconnectBacksOffAfterFailedStart()
     const qint64 earliestRetry = kFirstReconnectDelayMs * 95 / 100;
     QVERIFY2(retry >= earliestRetry, qPrintable(QStringLiteral("retried after %1 ms").arg(retry)));
     QVERIFY(stream.errorSpy.isEmpty());
-}
-
-void GstVideoReceiverReconnectTest::_testUdpListensUntilStreamStarts()
-{
-    // Without auto-reconnect a stream that fails stops, so one that stays Connecting didn't fail.
-    Receiver stream(GstReceiverTimings{.watchdogInterval = kSilentSourceWatchdogInterval}, udpListenUri(),
-                    /*autoReconnect=*/false, kShortWatchdogTimeout);
-    stream.receiver->setActive(true);
-    QVERIFY(stream.waitForState(State::Connecting));
-    const quint16 port = stream.udpPort();
-    QVERIFY(port != 0);
-
-    QVERIFY_NO_SIGNAL_WAIT(stream.stateSpy, kSilentSourceWindowMs);
-    // Still the first session's socket: nothing sent to it meanwhile would have been lost.
-    QCOMPARE(stream.udpPort(), port);
-
-    QVERIFY(stream.sender.start(port));
-    QVERIFY(stream.waitForState(State::Streaming));
-    QVERIFY(stream.errorSpy.isEmpty());
-}
-
-void GstVideoReceiverReconnectTest::_testStreamLossRestartPolicy_data()
-{
-    QTest::addColumn<bool>("autoReconnect");
-
-    QTest::newRow("auto-reconnect") << true;
-    QTest::newRow("no auto-reconnect") << false;
-}
-
-void GstVideoReceiverReconnectTest::_testStreamLossRestartPolicy()
-{
-    QFETCH(bool, autoReconnect);
-
-    Receiver stream(udpListenUri(), autoReconnect, kShortWatchdogTimeout);
-    QVERIFY(stream.startStreaming());
-
-    if (!autoReconnect) {
-        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("^Video stream stopped:")));
-    }
-    stream.sender.stop();
-
-    if (autoReconnect) {
-        QVERIFY(stream.waitForState(State::Reconnecting));
-        QVERIFY(stream.resumeSending());
-        QVERIFY(stream.errorSpy.isEmpty());
-    } else {
-        QVERIFY(stream.waitForState(State::Stopped));
-        QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::shortMs());
-        verifyExpectedLogMessage();
-        stream.stateSpy.clear();
-        QVERIFY_NO_SIGNAL_WAIT(stream.stateSpy, kNoReconnectWindowMs);
-    }
 }
 
 void GstVideoReceiverReconnectTest::_testUnresponsiveRtspServer_data()
