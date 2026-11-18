@@ -303,7 +303,7 @@ void QGCArchiveModelTest::_testInvalidArchive()
     model.setArchivePath(corruptPath);
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
-    QVERIFY(!model.errorString().isEmpty());
+    QCOMPARE(model.errorString(), QStringLiteral("Invalid or corrupt archive: ") + corruptPath);
     QCOMPARE(model.count(), 0);
 }
 

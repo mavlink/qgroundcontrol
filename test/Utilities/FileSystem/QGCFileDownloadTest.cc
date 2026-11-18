@@ -275,6 +275,36 @@ void QGCFileDownloadTest::_testAutoDecompressUncompressedFile()
     QFile::remove(resultLocalFile);
 }
 
+void QGCFileDownloadTest::_testAutoDecompressBodyNotCompressed()
+{
+    // The name ends in .gz and the content is not compressed, as it is when the HTTP client has taken a
+    // content encoding off: the download finishes with the content under the name without the extension
+    QTemporaryDir sourceDir;
+    QVERIFY(sourceDir.isValid());
+    const QByteArray content("{\"name\": \"not compressed\"}\n");
+    const QString sourcePath = sourceDir.filePath(QStringLiteral("content.json.gz"));
+    QFile sourceFile(sourcePath);
+    QVERIFY(sourceFile.open(QIODevice::WriteOnly));
+    QCOMPARE(sourceFile.write(content), content.size());
+    sourceFile.close();
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    QVERIFY(downloader.start(sourcePath));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    const QString localPath = args.at(1).toString();
+    QCOMPARE(QFileInfo(localPath).fileName(), QStringLiteral("content.json"));
+    QFile localFile(localPath);
+    QVERIFY(localFile.open(QIODevice::ReadOnly));
+    QCOMPARE(localFile.readAll(), content);
+    localFile.close();
+    QFile::remove(localPath);
+}
+
 // ============================================================================
 // Integration Tests (Download + Compression)
 // ============================================================================

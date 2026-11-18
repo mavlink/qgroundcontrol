@@ -1,8 +1,10 @@
 #include "QGCDecompressDevice.h"
-#include "QGCLoggingCategory.h"
 
 #include <archive.h>
 #include <archive_entry.h>
+
+#include "QGCLoggingCategory.h"
+#include "QGClibarchive.h"
 
 QGC_LOGGING_CATEGORY(QGCDecompressDeviceLog, "Utilities.QGCDecompressDevice")
 
@@ -26,8 +28,10 @@ QGCDecompressDevice::QGCDecompressDevice(const QString &filePath, QObject *paren
 
 bool QGCDecompressDevice::open(OpenMode mode)
 {
+    _errorString.clear();
+
     if (mode != ReadOnly) {
-        _errorString = QStringLiteral("QGCDecompressDevice only supports ReadOnly mode");
+        setError(QStringLiteral("QGCDecompressDevice only supports ReadOnly mode"));
         return false;
     }
 
@@ -55,12 +59,6 @@ bool QGCDecompressDevice::open(OpenMode mode)
 
 bool QGCDecompressDevice::initArchive()
 {
-    _archive = archive_read_new();
-    if (!_archive) {
-        _errorString = QStringLiteral("Failed to create archive reader");
-        return false;
-    }
-
     // Raw format for single-file decompression
     configureArchiveFormats(false);
 
@@ -71,10 +69,13 @@ bool QGCDecompressDevice::prepareForReading()
 {
     // Read the first (and only) entry header for raw format
     struct archive_entry *entry = nullptr;
-    if (archive_read_next_header(_archive, &entry) != ARCHIVE_OK) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
-        archive_read_free(_archive);
-        _archive = nullptr;
+    const int header = archive_read_next_header(_reader->handle(), &entry);
+    if (QGClibarchive::isEmptyStream(_reader->handle(), header)) {
+        // A stream of an empty file has no entry to read from
+        _eof = true;
+    } else if (header != ARCHIVE_OK) {
+        setError(QGClibarchive::streamHeaderError(_reader->handle(), header));
+        _reader.reset();
         return false;
     }
 

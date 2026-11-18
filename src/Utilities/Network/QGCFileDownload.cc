@@ -547,5 +547,7 @@ void QGCFileDownload::_startDecompression()
                 this, &QGCFileDownload::_onDecompressionFinished);
     }
 
-    _decompressionJob->decompressFile(_localPath, decompressedPath);
+    // The name of the file is all that says it is compressed. A body that the server sent with a content
+    // encoding has been decoded by the network stack, and is then the content as it is: the job copies it.
+    _decompressionJob->decompressOrCopyFile(_localPath, decompressedPath);
 }

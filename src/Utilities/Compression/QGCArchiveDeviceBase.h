@@ -9,7 +9,9 @@
 
 #include <memory>
 
-struct archive;
+namespace QGClibarchive {
+class ArchiveReader;
+}
 
 /// \brief Base class for QIODevice wrappers that use libarchive for decompression
 ///
@@ -28,8 +30,17 @@ public:
     bool isSequential() const override { return true; }
     qint64 bytesAvailable() const override;
 
-    /// Get error description
-    /// @return Error string if error occurred, empty otherwise
+    /// Whether everything has been read: the stream has ended, or cannot be read any further
+    /// Nothing is buffered before the first read, and between reads that took all there was, so this
+    /// decompresses the next block to find out. A read error it runs into is in errorString().
+    bool atEnd() const override;
+
+    /// Why open() or a read failed
+    /// The reason is also set as QIODevice's error string, for a caller that holds the device as a QIODevice:
+    /// QIODevice::errorString() is not virtual, and returns "Unknown error" while nothing has failed.
+    /// readAll() cannot fail. Of a truncated or corrupt stream it returns the part that could be decompressed,
+    /// so check for an error after it. read() returns -1 once that part has been handed out.
+    /// @return Reason of the failure, empty if nothing has failed since open() was last called
     QString errorString() const;
 
     /// Get detected archive format name (available after open)
@@ -75,11 +86,11 @@ protected:
     /// @return true if archive is initialized and ready
     virtual bool isReadyToRead() const = 0;
 
-    /// Configure libarchive format support (called during initArchive)
-    /// @param allFormats true for all archive formats, false for raw (single-file) format
+    /// Choose the formats openArchive() reads (called during initArchive)
+    /// @param allFormats true for the archive formats (ZIP, TAR, 7z), false for raw (single-file) format
     void configureArchiveFormats(bool allFormats);
 
-    /// Open the configured archive for reading
+    /// Open the source device as an archive of the configured formats
     /// @return true on success, sets _errorString on failure
     bool openArchive();
 
@@ -89,6 +100,9 @@ protected:
 
     /// Capture format info from the archive after first header read
     void captureFormatInfo();
+
+    /// Record why open() or a read failed, for errorString() and QIODevice::errorString()
+    void setError(const QString& reason);
 
     /// Reset all state (called by close())
     virtual void resetState();
@@ -100,7 +114,8 @@ protected:
     std::unique_ptr<QIODevice> _ownedSource;
 
     // libarchive state
-    struct archive *_archive = nullptr;
+    std::unique_ptr<QGClibarchive::ArchiveReader> _reader;  // Null unless the archive is open
+    bool _allFormats = false;
     QByteArray _resourceData;  // For Qt resources (must outlive archive)
     bool _eof = false;
 

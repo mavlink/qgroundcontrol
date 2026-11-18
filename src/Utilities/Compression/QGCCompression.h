@@ -24,16 +24,23 @@ enum class Error {
     None,               ///< No error (success)
     FileNotFound,       ///< Input file does not exist
     PermissionDenied,   ///< Cannot read input or write output
-    InvalidArchive,     ///< Archive is corrupt or invalid
-    UnsupportedFormat,  ///< Format not recognized or not supported
+    InvalidArchive,     ///< Archive or compressed stream cannot be read or is damaged
+    UnsupportedFormat,  ///< Format not recognized or not supported, or an archive entry that is not extracted
     SizeLimitExceeded,  ///< Decompressed size exceeded limit
     Cancelled,          ///< Operation cancelled by progress callback
     FileNotInArchive,   ///< Requested file not found in archive
-    IoError,            ///< General I/O error (read/write failure)
+    IoError,            ///< Output cannot be written, or a device to read from is not open
     InternalError       ///< Unexpected internal error
 };
 
 /// Get the error code from the last operation (thread-local)
+/// It tells why the last operation of the calling thread failed: read it on that thread, before the next
+/// operation. Every function that reports a failure through it sets it on each call, to Error::None on
+/// success, so it never tells of an earlier operation. The result alone does not tell a failure of
+/// decompressData(), extractFileData(), the two functions that read a device to memory and the three that
+/// list an archive: a compressed file or an entry without data, and an archive without entries, are
+/// returned as empty too.
+/// readFile(), computeFileHash() and parseCompressedJson() report in their own way: do not read it after them.
 Error lastError();
 
 /// Get a human-readable error message from the last operation (thread-local)
@@ -47,6 +54,17 @@ QString errorName(Error error);
 // ============================================================================
 
 /// Archive and compression format types (for decompression)
+///
+/// A function that takes a format uses it for the kind of its input: an archive (isArchiveFormat()) or a
+/// single compressed stream (isCompressionFormat()). It refuses the kind it does not handle with
+/// Error::UnsupportedFormat. With Format::Auto the kind is detected, from the file name and failing that from
+/// the content (detectFormat()), or from the content alone for data in memory, and an input whose format is
+/// not recognized is refused. Any other value is taken as given and nothing is detected.
+///
+/// The format does not choose the decoder. libarchive recognizes what it reads from the content, among all
+/// the formats this build supports, whichever format of that kind was passed: ZIP for a 7-Zip archive, or
+/// GZIP for an xz stream, reads the input all the same. Pass a format for an input whose kind Auto gets
+/// wrong, such as a .tar.gz archive under a name that does not tell, which Auto takes for a gzip stream.
 enum class Format {
     Auto,       ///< Auto-detect from file extension or magic bytes
     ZIP,        ///< ZIP archive (multiple files)
@@ -109,13 +127,16 @@ inline bool isArchiveFile(const QString &filePath) {
     return isArchiveFormat(detectFormat(filePath));
 }
 
-/// Get path with compression extension stripped (.gz, .xz, .zst removed)
-/// Returns original path if not a compressed file format
+/// Get the path a compressed file decompresses to: its compression extension removed
+/// (.gz, .gzip, .xz, .lzma, .zst, ...), or ".decompressed" appended when the format was
+/// detected from the content and the name has no such extension, so that the result
+/// differs from the input. Returns original path if not a compressed file format
 QString strippedPath(const QString &filePath);
 
 /// Get the detected archive format name from the last operation (thread-local)
 /// Returns names like "ZIP 2.0", "POSIX ustar", "RAW", etc.
-/// Empty string if no format was detected
+/// Every function that sets lastError() records the format when it has read the first header of its input.
+/// Empty string if no format was detected: the operation ended before that
 QString detectedFormatName();
 
 /// Get the detected compression filter name from the last operation (thread-local)
@@ -127,10 +148,23 @@ QString detectedFilterName();
 // Single-File Decompression
 // ============================================================================
 
+/// Default limit for decompressed data that is held in memory (256 MiB)
+constexpr qint64 kDefaultMaxDecompressedMemoryBytes = 256LL * 1024 * 1024;
+
+/// Default limit for a compressed file that is decompressed to another file (1 GiB)
+constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
+
 /// Decompress a single file
+/// A compressed file that holds no data, as a compressor writes for an empty file, gives an empty output file.
+/// A file without any bytes is not a compressed file, and is refused. So is a file that is taken for a
+/// compressed one, by its name or by the format passed, and is not compressed, and a bzip2 or LZ4 file in a
+/// build that cannot decode it: nothing is written, and lastError() is Error::UnsupportedFormat.
 /// @param inputPath Path to compressed file (or Qt resource path :/)
-/// @param outputPath Path for decompressed output (if empty, strips compression extension)
-/// @param format Compression format (Auto = detect from inputPath)
+/// @param outputPath Path for decompressed output. If empty: inputPath without the extension of the format
+///        (for GZIP .gz or .gzip), or with ".decompressed" appended if it does not end in one
+/// @param format Kind of input, see Format (Auto = detect from inputPath). A single-stream format decompresses
+///        the file and decides the default output path. An archive format extracts the file as extractArchive()
+///        does, after a warning, into the directory outputPath.
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
 /// @return true on success, false on failure or if size limit exceeded
@@ -139,20 +173,38 @@ bool decompressFile(const QString &inputPath, const QString &outputPath = QStrin
                     ProgressCallback progress = nullptr,
                     qint64 maxDecompressedBytes = 0);
 
+/// Decompress a single file, or copy it if it is not compressed
+/// For a file that has the name of a compressed one and can have been decompressed on its way: the body of a
+/// download is, when its server sends it with a content encoding, which the HTTP client takes off. Everything
+/// is as for decompressFile() with Format::Auto, except that a file which is taken for a compressed one and
+/// is not compressed is written to the output as it is, where decompressFile() refuses it. The size limit
+/// holds for the copy too, and the callback can cancel it. detectedFilterName() is "none" after a copy.
+/// A compressed file that is truncated or corrupt fails, as it does for decompressFile().
+/// @param inputPath Path to the file (or Qt resource path :/)
+/// @param outputPath Path for the output. If empty: as for decompressFile()
+/// @param progress Optional progress callback (return false to cancel)
+/// @param maxDecompressedBytes Maximum size of the output in bytes (0 = unlimited)
+/// @return true on success, false on failure or if size limit exceeded
+bool decompressOrCopyFile(const QString& inputPath, const QString& outputPath = QString(),
+                          ProgressCallback progress = nullptr, qint64 maxDecompressedBytes = 0);
+
 /// Decompress file if it's a compressed format, otherwise return original path
+/// The original path is also returned for a file that has the name of a compressed one and is not compressed.
 /// @param filePath Input file (may or may not be compressed)
 /// @param outputPath Output path (if empty, uses strippedPath)
 /// @param removeOriginal Remove compressed file after successful decompression (default: false)
-/// @return Path to result file (decompressed or original), empty string on failure
-QString decompressIfNeeded(const QString &filePath,
-                           const QString &outputPath = QString(),
-                           bool removeOriginal = false);
+/// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
+/// @return Path to result file (decompressed or original), empty string on failure or if size limit exceeded
+QString decompressIfNeeded(const QString& filePath, const QString& outputPath = QString(), bool removeOriginal = false,
+                           qint64 maxDecompressedBytes = kDefaultMaxDecompressedFileBytes);
 
 /// Decompress data in memory
 /// @param data Compressed input data
-/// @param format Compression format (Auto = detect from magic bytes)
+/// @param format Kind of input, a single-stream format here: see Format (Auto = detect from magic bytes)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
-/// @return Decompressed data, or empty on failure or if size limit exceeded
+/// @return Decompressed data. It is empty for a stream that holds no data, and also on failure or if the
+///         size limit is exceeded: lastError() is Error::None for the first. Data that is not compressed is
+///         not returned as it is: that is a failure, with Error::UnsupportedFormat
 QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
                           qint64 maxDecompressedBytes = 0);
 
@@ -161,9 +213,17 @@ QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
 // ============================================================================
 
 /// Extract an archive to a directory
+/// Nothing is written outside the output directory: entries whose path leaves it, hard links, and
+/// symbolic links with an absolute target or ".." in it are skipped with a warning. So are special files:
+/// a FIFO, a device node or a socket is not created.
+/// A failed extraction is undone only if it stopped at the size limit or was cancelled: the files and
+/// directories it created are then removed again. If the archive turns out to be truncated or corrupt, or an
+/// entry cannot be written, they stay: the entries before the failure, and the one it happened in, which
+/// holds what could be read of it and can be filled up with zeros to the size the archive declares for it.
+/// extractArchiveAtomic() leaves nothing behind.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
-/// @param format Archive format (Auto = detect from archivePath)
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxDecompressedBytes Maximum total decompressed size in bytes (0 = unlimited)
 /// @return true on success, false on failure or if size limit exceeded
@@ -177,7 +237,7 @@ bool extractArchive(const QString &archivePath, const QString &outputDirectoryPa
 /// If extraction or commit fails, the pre-existing output directory is restored.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
-/// @param format Archive format (Auto = detect from archivePath)
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxDecompressedBytes Maximum total decompressed size in bytes (0 = unlimited)
 /// @return true on success, false on failure or if size limit exceeded
@@ -187,6 +247,11 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
                           qint64 maxDecompressedBytes = 0);
 
 /// Extract an archive with per-entry filtering
+/// Only regular files are written, with the directories they are in. Hard and symbolic links are skipped with
+/// a warning, where extractArchive() creates the symbolic links that stay inside the output directory, and so
+/// are special files (FIFO, device node, socket).
+/// A failed extraction keeps the files it wrote before the failure, whatever stopped it, and nothing of the
+/// file it was writing.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
 /// @param filter Callback to decide which entries to extract (return true to extract)
@@ -200,33 +265,39 @@ bool extractArchiveFiltered(const QString &archivePath, const QString &outputDir
 
 /// List contents of an archive without extracting
 /// @param archivePath Path to archive file (or Qt resource path :/)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return List of file paths in archive, empty list on failure
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return List of file paths in archive. It is empty for an archive without entries and on failure:
+///         lastError() is Error::None for the first, and Error::InvalidArchive if the archive cannot be read
+///         or is damaged
 QStringList listArchive(const QString &archivePath, Format format = Format::Auto);
 
 /// List contents of an archive with detailed metadata
 /// @param archivePath Path to archive file (or Qt resource path :/)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return List of ArchiveEntry structs, empty list on failure
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return List of ArchiveEntry structs. It is empty for an archive without entries and on failure:
+///         lastError() tells which, as for listArchive()
 QList<ArchiveEntry> listArchiveDetailed(const QString &archivePath, Format format = Format::Auto);
 
 /// Get summary statistics for an archive without extracting
 /// @param archivePath Path to archive file (or Qt resource path :/)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return ArchiveStats struct (all zeros on failure)
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return ArchiveStats struct, all zeros for an archive without entries and on failure: lastError() tells
+///         which, as for listArchive()
 ArchiveStats getArchiveStats(const QString &archivePath, Format format = Format::Auto);
 
 /// Validate an archive's integrity without extracting
 /// @param archivePath Path to archive file
-/// @param format Archive format (Auto = detect from archivePath)
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
 /// @return true if archive is valid and all entries can be read
 bool validateArchive(const QString &archivePath, Format format = Format::Auto);
 
 /// Check if a file exists in an archive without extracting
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileName Name of file to check for (as shown by listArchive)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return true if file exists in archive
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return true if file exists in archive. false also if the archive could not be searched: lastError() is
+///         then Error::InvalidArchive for an archive that cannot be read or is damaged before the entry, and
+///         Error::FileNotInArchive only for one that was read to its end
 bool fileExists(const QString &archivePath, const QString &fileName,
                 Format format = Format::Auto);
 
@@ -234,8 +305,12 @@ bool fileExists(const QString &archivePath, const QString &fileName,
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileName Name of file inside archive (as shown by listArchive)
 /// @param outputPath Output file path (if empty, extracts to current directory)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return true on success, false if file not found or extraction failed
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return true on success. Otherwise lastError() is Error::FileNotInArchive if the archive was read to its
+///         end without the file, Error::UnsupportedFormat if it is a directory, a hard or symbolic link or a
+///         special file (FIFO, device node, socket), which are not extracted, Error::InvalidArchive if the
+///         archive cannot be read or is damaged, and Error::IoError if the output cannot be written, or
+///         Error::PermissionDenied if that is for lack of permission
 bool extractFile(const QString &archivePath, const QString &fileName,
                  const QString &outputPath = QString(),
                  Format format = Format::Auto);
@@ -243,29 +318,41 @@ bool extractFile(const QString &archivePath, const QString &fileName,
 /// Extract a single file from an archive directly to memory
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileName Name of file inside archive (as shown by listArchive)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return File contents, or empty QByteArray if not found or extraction failed
-QByteArray extractFileData(const QString &archivePath, const QString &fileName,
-                           Format format = Format::Auto);
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
+/// @return File contents. They are empty for a file without data, and also on failure. lastError() tells
+///         which: Error::None for the file without data, Error::FileNotInArchive if the archive was read to
+///         its end without the file, Error::UnsupportedFormat if it is a directory, a hard or symbolic link
+///         or a special file, which have no data to extract, Error::SizeLimitExceeded, or
+///         Error::InvalidArchive if the archive cannot be read or is damaged
+QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format = Format::Auto,
+                           qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 /// Extract multiple files from an archive in one pass
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return true if all files found and extracted, false otherwise
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return true if all files found and extracted, false otherwise: also if one of them is a directory, a
+///         hard or symbolic link or a special file, which is not extracted, or has a name that leaves the
+///         output directory. lastError() tells which, as for extractFile()
 bool extractFiles(const QString &archivePath, const QStringList &fileNames,
                   const QString &outputDirectoryPath,
                   Format format = Format::Auto);
 
 /// Extract files matching glob patterns from an archive
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
+/// Only regular files are written: a hard or symbolic link or a special file that matches is skipped with a
+/// warning.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param patterns Glob patterns to match (e.g., "*.json", "subdir/*", "file.txt")
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param extractedFiles Optional output list of files that were extracted
-/// @param format Archive format (Auto = detect from archivePath)
-/// @return true if at least one file matched and extracted, false on error or no matches
+/// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
+/// @return true if at least one file matched and extracted, false on error or no matches. lastError() is
+///         Error::FileNotInArchive if the archive was read to its end without a file that matches,
+///         Error::InvalidArchive if it cannot be read or is damaged, and Error::IoError if the output cannot
+///         be written, or Error::PermissionDenied if that is for lack of permission
 bool extractByPattern(const QString &archivePath, const QStringList &patterns,
                       const QString &outputDirectoryPath,
                       QStringList *extractedFiles = nullptr,
@@ -277,6 +364,8 @@ bool extractByPattern(const QString &archivePath, const QStringList &patterns,
 
 /// Decompress from QIODevice to file
 /// Enables streaming decompression from QNetworkReply, QBuffer, etc.
+/// What is read has to be a compressed stream, as for decompressFile(): one that is not compressed is refused
+/// with Error::UnsupportedFormat.
 /// @param device QIODevice to read from (must be open and readable)
 /// @param outputPath Output file path
 /// @param progress Optional progress callback
@@ -289,10 +378,13 @@ bool decompressFromDevice(QIODevice *device, const QString &outputPath,
 /// Decompress from QIODevice to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
-/// @return Decompressed data, or empty QByteArray on failure or if size limit exceeded
+/// @return Decompressed data. It is empty for a stream that holds no data, and also on failure or if the
+///         size limit is exceeded: lastError() is Error::None for the first, and Error::UnsupportedFormat for
+///         a stream that is not compressed
 QByteArray decompressFromDevice(QIODevice *device, qint64 maxDecompressedBytes = 0);
 
 /// Extract archive from QIODevice to directory
+/// What is written, and what a failed extraction leaves behind, is as for extractArchive().
 /// @param device QIODevice to read from (must be open and readable)
 /// @param outputDirectoryPath Output directory path
 /// @param progress Optional progress callback
@@ -305,8 +397,11 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// Extract a single file from archive device to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param fileName Name of file inside archive
-/// @return File contents, or empty QByteArray if not found
-QByteArray extractFileDataFromDevice(QIODevice *device, const QString &fileName);
+/// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
+/// @return File contents. They are empty for a file without data, and also on failure: lastError() tells
+///         which, as for extractFileData()
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
+                                     qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 // ============================================================================
 // In-Memory Compression (zlib via qCompress/qUncompress)
@@ -352,10 +447,18 @@ bool isDataCompressed(const QByteArray &data);
 int lastCompressionRatio();
 
 /// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
-QByteArray readFile(const QString &filePath, QString *errorString = nullptr,
-                    qint64 maxBytes = 0);
+/// A compressed file that is truncated or corrupt yields nothing, not the part that could be read.
+/// A file with such a name that is not compressed is read as it is.
+/// @param errorString Receives the reason if the file cannot be read, and is left as it is otherwise: pass an
+///        empty string to tell a file without content from a failure
+/// @param maxBytes Read at most this many bytes of the (decompressed) content (0 = all of it)
+/// @param maxDecompressedBytes Fail, returning nothing, if a compressed file expands beyond this
+///        many bytes before maxBytes is reached (0 = unlimited)
+QByteArray readFile(const QString& filePath, QString* errorString = nullptr, qint64 maxBytes = 0,
+                    qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 /// Hash file contents post-decompression.
+/// @return Hex digest, or an empty string if the file cannot be read to its end
 QString computeFileHash(const QString &filePath,
                         QCryptographicHash::Algorithm algorithm = QCryptographicHash::Sha256);
 
@@ -368,6 +471,8 @@ QString computeFileHash(const QString &filePath,
 bool looksLikeCompressedData(const QByteArray &data);
 
 /// Parse JSON from data that may be compressed. Auto-detects gzip/xz/zstd/bzip2/lz4.
-QJsonDocument parseCompressedJson(const QByteArray &data, QJsonParseError *error = nullptr);
+/// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
+QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error = nullptr,
+                                  qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 } // namespace QGCCompression
