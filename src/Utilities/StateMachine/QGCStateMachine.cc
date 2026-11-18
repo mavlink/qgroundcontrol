@@ -1,4 +1,7 @@
 #include "QGCStateMachine.h"
+
+#include <utility>
+
 #include "Vehicle.h"
 
 QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QObject* parent)
@@ -66,7 +69,7 @@ void QGCStateMachine::onEntry(QEvent* event)
     // Qt calls this for a machine that is a state of another machine. QStateMachine::onEntry() starts the machine
     // with QStateMachine::start(), which is not virtual, so this does what it does through start()
     start();
-    QState::onEntry(event);
+    QState::onEntry(event);  // NOLINT(bugprone-parent-virtual-call)
 }
 
 void QGCStateMachine::_setInProgress(bool inProgress)
@@ -226,7 +229,7 @@ MachineEventTransition* QGCStateMachine::addEventTransition(QState* from, const 
 void QGCStateMachine::setProgressWeights(const QList<QPair<QAbstractState*, int>>& stateWeights)
 {
     // Disconnect old connections before re-wiring
-    for (auto* state : _progressStates) {
+    for (auto* state : std::as_const(_progressStates)) {
         disconnect(state, &QAbstractState::entered, this, &QGCStateMachine::_onStateEntered);
     }
 
@@ -264,7 +267,7 @@ void QGCStateMachine::_onStateEntered()
     auto* state = qobject_cast<QAbstractState*>(sender());
     if (!state) return;
 
-    int index = _progressStates.indexOf(state);
+    const int index = static_cast<int>(_progressStates.indexOf(state));
     if (index >= 0 && index != _progressCurrentIndex) {
         _progressCurrentIndex = index;
         _progressSubProgress = 0.0f;
@@ -315,7 +318,8 @@ float QGCStateMachine::_calculateProgress() const
                             ? _progressWeights[_progressCurrentIndex]
                             : 1;
 
-    return (completedWeight + currentWeight * _progressSubProgress) / static_cast<float>(_progressTotalWeight);
+    return (static_cast<float>(completedWeight) + static_cast<float>(currentWeight) * _progressSubProgress) /
+           static_cast<float>(_progressTotalWeight);
 }
 
 QGCStateMachine* qgcStateMachineOf(const QAbstractState* state)

@@ -86,24 +86,21 @@ void RetryableRequestMessageState::_sendRequest()
     _requestActive = true;
     _requestRefused = false;
     _requestVehicle = v;
-    // Queued, so that a state deleted along with its vehicle is gone before this is delivered
-    connect(v, &QObject::destroyed, this, &RetryableRequestMessageState::_vehicleDestroyed,
-            static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection));
+    // Queued, so that a state deleted along with its vehicle is gone before this is delivered. The two flags are
+    // combined as Qt documents it, to a value that is not an enumerator.
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+    const auto queuedOnce = static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::UniqueConnection);
+    connect(v, &QObject::destroyed, this, &RetryableRequestMessageState::_vehicleDestroyed, queuedOnce);
     v->requestMessage(
-        [](void* resultHandlerData,
-           MAV_RESULT result,
-           VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
-           const mavlink_message_t& message) {
+        [](void* resultHandlerData, MAV_RESULT result,
+           VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message) {
             auto* self = static_cast<RetryableRequestMessageState*>(resultHandlerData);
             if (!self->_requestActive) {
                 return;
             }
             self->_handleResult(result, failureCode, message);
         },
-        this,
-        _compId,
-        _messageId
-    );
+        this, _compId, static_cast<int>(_messageId));
 }
 
 void RetryableRequestMessageState::_queueRetry()

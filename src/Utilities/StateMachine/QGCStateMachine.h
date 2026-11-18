@@ -59,10 +59,10 @@ public:
     bool inProgress() const { return _inProgress; }
 
     /// Use inProgress() instead: isRunning() is false until Qt processes the queued start
-    bool isRunning() const = delete;
+    bool isRunning() const = delete;  // NOLINT(bugprone-derived-method-shadowing-base-method)
 
     /// Use start() and stop() instead: setRunning() calls QStateMachine::start() and bypasses start()
-    void setRunning(bool running) = delete;
+    void setRunning(bool running) = delete;  // NOLINT(bugprone-derived-method-shadowing-base-method)
 
     // -------------------------------------------------------------------------
     // Event Handling
@@ -231,8 +231,9 @@ public:
     void resetProgress();
 
 public slots:
-    /// Start the state machine with debug logging
-    void start();
+    /// Start the machine. Takes the place of QStateMachine::start(), which is not virtual, so that inProgress()
+    /// is true from the call on.
+    void start();  // NOLINT(bugprone-derived-method-shadowing-base-method)
 
 signals:
     /// Emitted when progress changes (if progress tracking is enabled)

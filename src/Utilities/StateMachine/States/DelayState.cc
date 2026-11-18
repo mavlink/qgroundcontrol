@@ -14,8 +14,9 @@ DelayState::DelayState(QState* parentState, int delayMsecs)
         {
             qCDebug(QGCStateMachineLog) << stateName() << QStringLiteral("Starting delay for %1 secs").arg(delayMsecs / 1000.0) << " - " << Q_FUNC_INFO;
             // Qt exits no state of a machine that stops. The machine is not known before the state is entered.
-            if (const QStateMachine* const stateMachine = QAbstractState::machine()) {
-                connect(stateMachine, &QStateMachine::stopped, &_delayTimer, &QTimer::stop, Qt::UniqueConnection);
+            const QStateMachine* const qtMachine = QAbstractState::machine();  // clazy:exclude=skipped-base-method
+            if (qtMachine) {
+                connect(qtMachine, &QStateMachine::stopped, &_delayTimer, &QTimer::stop, Qt::UniqueConnection);
             }
             _delayTimer.start();
         });

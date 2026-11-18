@@ -18,10 +18,11 @@ void SendMavlinkMessageState::_sendMessage()
 {
     // _runCount is kept across the entries of one run of the machine, which are the retries, and starts again
     // with the next run. The machine is not known before the state is entered.
-    if (const QStateMachine* const stateMachine = QAbstractState::machine()) {
-        connect(stateMachine, &QStateMachine::finished, this, &SendMavlinkMessageState::_resetRunCount,
+    const QStateMachine* const qtMachine = QAbstractState::machine();  // clazy:exclude=skipped-base-method
+    if (qtMachine) {
+        connect(qtMachine, &QStateMachine::finished, this, &SendMavlinkMessageState::_resetRunCount,
                 Qt::UniqueConnection);
-        connect(stateMachine, &QStateMachine::stopped, this, &SendMavlinkMessageState::_resetRunCount,
+        connect(qtMachine, &QStateMachine::stopped, this, &SendMavlinkMessageState::_resetRunCount,
                 Qt::UniqueConnection);
     }
 

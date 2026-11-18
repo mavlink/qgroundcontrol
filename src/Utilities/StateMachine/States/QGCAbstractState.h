@@ -36,7 +36,9 @@ public:
 
     QGCAbstractState(const QString& stateName, QState* parent);
 
-    QGCStateMachine* machine() const;
+    /// @return The machine of the state as a QGCStateMachine, nullptr for a state in a plain QStateMachine.
+    ///         Takes the place of QAbstractState::machine(), which a state names in full when it wants any machine.
+    QGCStateMachine* machine() const;  // NOLINT(bugprone-derived-method-shadowing-base-method)
     Vehicle* vehicle() const;
     QString stateName() const;
 
