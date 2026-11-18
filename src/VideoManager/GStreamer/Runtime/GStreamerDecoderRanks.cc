@@ -334,11 +334,6 @@ ScopedDecoderOption::~ScopedDecoderOption()
     }
 }
 
-bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
-{
-    return DecoderRankApplier::instance().setRank(registry, featureName, rank);
-}
-
 void setCodecPriorities(VideoDecoderOption option)
 {
     DecoderRankApplier::instance().apply(option);

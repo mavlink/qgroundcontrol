@@ -97,9 +97,6 @@ private:
     const std::optional<VideoDecoderOption> _previous;
 };
 
-/// DecoderRankApplier::setRank() on the process's applier, so setCodecPriorities() restores the rank too.
-bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
-
 /// DecoderRankApplier::apply() on the process's applier. GUI thread.
 void setCodecPriorities(VideoDecoderOption option);
 

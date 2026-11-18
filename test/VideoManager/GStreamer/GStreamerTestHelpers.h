@@ -235,6 +235,15 @@ private:
 /// (true) or the software (false) ones, as GStreamer::isHardwareDecoderFactory() tells them.
 QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware = std::nullopt);
 
+/// The factory name of the stub decoder.
+inline constexpr char kStubDecoderName[] = "qgcstubh264dec";
+
+/// Registers the stub decoder, unranked, and returns its factory: an H.264 "hardware" decoder (so says its klass) that
+/// takes the stream and gives nothing back, no frame and no message either. With @p fails it posts an error for the
+/// first frame instead, as a hardware decoder may in a VM. The factory stays registered: the element class points at
+/// it for good. Null when the registry refuses it.
+GStreamer::GstFeaturePtr registerStubDecoder(bool fails = false);
+
 /// An RTSP server on a free loopback port, for driving rtspsrc without gst-rtsp-server. Given an SDP, it answers
 /// OPTIONS and DESCRIBE and records each SETUP URL without answering it, so the client stops right after picking
 /// streams. Without one it never answers, as a camera whose RTSP service hung, unless told to refuse (refuseWith()).

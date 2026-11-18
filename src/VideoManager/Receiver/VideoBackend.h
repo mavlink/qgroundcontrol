@@ -36,7 +36,7 @@ public:
 
     static VideoBackend& instance();
 
-    /// True when the backend is skipped under unit tests (opt back in with QGC_TEST_ENABLE_GSTREAMER).
+    /// True when the backend is skipped under unit tests.
     static bool disabledForUnitTests();
 
     /// The persisted gstDebugLevel setting, read before the settings system exists; nullopt when it was never set.

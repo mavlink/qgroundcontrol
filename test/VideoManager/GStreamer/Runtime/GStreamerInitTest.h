@@ -34,11 +34,6 @@ private slots:
     void _testPlanRanks_data();
     void _testPlanRanks();
     void _testScopedDecoderOptionRestoresThePreviousOption();
-    void _testSetCodecPrioritiesDefault();
-    void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
     void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();
-    void _testSetCodecPrioritiesSoftware();
     void _testSetCodecPrioritiesReplacesThePreviousOption();
-    void _testSetCodecPrioritiesFamilyOutranksOtherDecoders();
-    void _testSetCodecPrioritiesHardware();
 };

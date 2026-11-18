@@ -33,6 +33,8 @@ void GStreamerTest::_testIsHardwareDecoderFactory_data()
     QTest::newRow("vah264dec") << QStringLiteral("vah264dec") << true;
     QTest::newRow("vaapih264dec") << QStringLiteral("vaapih264dec") << true;
     QTest::newRow("vulkanh264dec") << QStringLiteral("vulkanh264dec") << true;
+    // No family's name: told by its klass, "Codec/Decoder/Video/Hardware". Registered by the test, so it runs anywhere.
+    QTest::newRow("hardware klass") << QString::fromLatin1(GstTest::kStubDecoderName) << true;
 }
 
 void GStreamerTest::_testIsHardwareDecoderFactory()
@@ -45,6 +47,9 @@ void GStreamerTest::_testIsHardwareDecoderFactory()
         return;
     }
 
+    if (factoryName == QLatin1StringView(GstTest::kStubDecoderName)) {
+        QVERIFY(GstTest::registerStubDecoder());
+    }
     const GStreamer::GstFactoryPtr factory =
         GStreamer::adoptFactory(gst_element_factory_find(factoryName.toUtf8().constData()));
     if (!factory) {
