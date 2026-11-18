@@ -71,50 +71,25 @@ endforeach()
 # Convenience Targets
 # ----------------------------------------------------------------------------
 
-add_custom_target(
-    check
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --no-tests=error --output-on-failure --parallel
-            ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running all tests"
-    VERBATIM
-)
+# Adds the target <name>, which builds the application and then runs CTest with <parallel_level> jobs and the
+# selection in ARGN.
+function(_qgc_add_check_target name parallel_level comment)
+    add_custom_target(
+        ${name}
+        COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" ${ARGN} --no-tests=error --output-on-failure
+                --parallel ${parallel_level}
+        USES_TERMINAL
+        COMMENT "${comment}"
+        VERBATIM
+    )
+    add_dependencies(${name} ${CMAKE_PROJECT_NAME})
+endfunction()
 
-add_custom_target(
-    check-unit
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Unit --no-tests=error --output-on-failure --parallel
-            ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running unit tests"
-    VERBATIM
-)
-
-add_custom_target(
-    check-integration
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Integration --no-tests=error --output-on-failure
-            --parallel 1
-    USES_TERMINAL
-    COMMENT "Running integration tests"
-    VERBATIM
-)
-
-add_custom_target(
-    check-fast
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE Slow --no-tests=error --output-on-failure --parallel
-            ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running fast tests (excluding Slow)"
-    VERBATIM
-)
-
-add_custom_target(
-    check-ci
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Flaky|Network" --no-tests=error --output-on-failure
-            --parallel ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running CI-safe tests"
-    VERBATIM
-)
+_qgc_add_check_target(check ${QGC_TEST_PARALLEL_LEVEL} "Running all tests")
+_qgc_add_check_target(check-unit ${QGC_TEST_PARALLEL_LEVEL} "Running unit tests" -L Unit)
+_qgc_add_check_target(check-integration 1 "Running integration tests" -L Integration)
+_qgc_add_check_target(check-fast ${QGC_TEST_PARALLEL_LEVEL} "Running fast tests (excluding Slow)" -LE Slow)
+_qgc_add_check_target(check-ci ${QGC_TEST_PARALLEL_LEVEL} "Running CI-safe tests" -LE "Flaky|Network")
 
 set(QGC_TEST_FLAKY_REPEAT
     3
@@ -123,40 +98,17 @@ set(QGC_TEST_FLAKY_REPEAT
 if(NOT QGC_TEST_FLAKY_REPEAT MATCHES "^[1-9][0-9]*$")
     message(FATAL_ERROR "QGC_TEST_FLAKY_REPEAT must be a positive integer")
 endif()
-add_custom_target(
-    check-flaky
-    COMMAND
-        "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
-        --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
-    VERBATIM
+_qgc_add_check_target(
+    check-flaky ${QGC_TEST_PARALLEL_LEVEL}
+    "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
+    -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
 )
 
-# Category-specific targets
-set(_qgc_test_categories MissionManager Vehicle Utilities MAVLink Comms)
-foreach(_category IN LISTS _qgc_test_categories)
+foreach(_category IN ITEMS MissionManager Vehicle Utilities MAVLink Comms)
     string(TOLOWER ${_category} _target_suffix)
-    add_custom_target(
-        check-${_target_suffix}
-        COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L ${_category} --no-tests=error --output-on-failure
-                --parallel ${QGC_TEST_PARALLEL_LEVEL}
-        USES_TERMINAL
-        COMMENT "Running ${_category} tests"
-        VERBATIM
+    _qgc_add_check_target(
+        check-${_target_suffix} ${QGC_TEST_PARALLEL_LEVEL} "Running ${_category} tests" -L ${_category}
     )
-endforeach()
-
-# Collect all check targets for build dependency injection
-set(_qgc_check_targets check check-unit check-integration check-fast check-ci check-flaky)
-foreach(_category IN LISTS _qgc_test_categories)
-    string(TOLOWER ${_category} _target_suffix)
-    list(APPEND _qgc_check_targets check-${_target_suffix})
-endforeach()
-
-# Ensure all check targets build the main executable first
-foreach(_target IN LISTS _qgc_check_targets)
-    add_dependencies(${_target} ${CMAKE_PROJECT_NAME})
 endforeach()
 
 # ----------------------------------------------------------------------------

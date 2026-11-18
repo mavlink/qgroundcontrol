@@ -192,6 +192,10 @@ parse:
     _gst_resolve_and_link_libraries:
       pargs: {nargs: '4+', flags: [HIDE, WARN_MISSING]}
 
+    # The target, its parallel level and its comment share a line; the CTest selection follows.
+    _qgc_add_check_target:
+      pargs: [[3], ['*']]
+
     _qgc_add_gpu_path:
       pargs: {nargs: '1+', flags: [UNSTABLE_API]}
       kwargs:
