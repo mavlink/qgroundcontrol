@@ -47,6 +47,32 @@ void forEachCompiledPath(Fn&& fn)
     }
 }
 
+/// Resets every context bridge, then the paths' caches. Returns the pipelines the bridges had given their device.
+std::vector<GStreamer::GstElementPtr> resetBridgesAndCaches()
+{
+    std::vector<GStreamer::GstElementPtr> pipelines;
+    const auto paths = GstHwPathRegistry::paths();
+    for (const HwPathDescriptor* path : paths) {
+        if (!path->bridge) {
+            continue;
+        }
+        for (GStreamer::GstElementPtr& pipeline : path->bridge().reset()) {
+            const bool known = std::ranges::any_of(pipelines, [&pipeline](const GStreamer::GstElementPtr& other) {
+                return other.get() == pipeline.get();
+            });
+            if (!known) {
+                pipelines.push_back(std::move(pipeline));
+            }
+        }
+    }
+    for (const HwPathDescriptor* path : paths) {
+        if (path->resetCaches) {
+            path->resetCaches();
+        }
+    }
+    return pipelines;
+}
+
 }  // namespace
 #endif
 
@@ -85,40 +111,15 @@ void onPipelineRestart()
 void resetCachedGpuResources()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    const auto paths = GstHwPathRegistry::paths();
-    for (const HwPathDescriptor* path : paths) {
-        if (path->bridge) {
-            path->bridge().reset();
-        }
-    }
-    for (const HwPathDescriptor* path : paths) {
-        if (path->resetCaches) {
-            path->resetCaches();
-        }
-    }
+    (void) resetBridgesAndCaches();
 #endif
 }
 
 void onGraphicsDeviceRemoved()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    // Before the reset, which forgets them.
-    std::vector<GStreamer::GstElementPtr> pipelines;
-    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (!path->bridge) {
-            continue;
-        }
-        for (GStreamer::GstElementPtr& pipeline : path->bridge().takeServed()) {
-            const bool known = std::ranges::any_of(pipelines, [&pipeline](const GStreamer::GstElementPtr& other) {
-                return other.get() == pipeline.get();
-            });
-            if (!known) {
-                pipelines.push_back(std::move(pipeline));
-            }
-        }
-    }
-    resetCachedGpuResources();
-    for (const GStreamer::GstElementPtr& pipeline : pipelines) {
+    // Every pipeline a bridge served until it dropped the device, a streaming thread's request meanwhile included.
+    for (const GStreamer::GstElementPtr& pipeline : resetBridgesAndCaches()) {
         (void) gst_element_post_message(
             pipeline.get(),
             gst_message_new_element(GST_OBJECT(pipeline.get()), gst_structure_new_empty(kGraphicsDeviceLostMessage)));

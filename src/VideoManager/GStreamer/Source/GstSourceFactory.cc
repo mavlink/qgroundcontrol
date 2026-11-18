@@ -85,18 +85,19 @@ gboolean filterParserCaps([[maybe_unused]] GstElement* bin, [[maybe_unused]] Gst
 }
 #endif
 
-void wrapWithGhostPad(GstElement* element, GstPad* pad, [[maybe_unused]] gpointer data)
+/// Exposes @p pad of @p element on the bin that holds the element. False when the bin didn't get the pad.
+bool addGhostPad(GstElement* element, GstPad* pad)
 {
     const GCharPtr name = adoptGChar(gst_pad_get_name(pad));
     if (!name) {
         qCWarning(GstSourceFactoryLog) << "gst_pad_get_name() failed";
-        return;
+        return false;
     }
 
     GstPadPtr ghostpad = adoptPad(gst_ghost_pad_new(name.get(), pad));
     if (!ghostpad) {
         qCWarning(GstSourceFactoryLog) << "gst_ghost_pad_new() failed";
-        return;
+        return false;
     }
 
     (void) gst_pad_set_active(ghostpad.get(), TRUE);
@@ -106,12 +107,19 @@ void wrapWithGhostPad(GstElement* element, GstPad* pad, [[maybe_unused]] gpointe
     const GstObjectPtr parent = adoptObject(gst_object_get_parent(GST_OBJECT(element)));
     if (!parent) {
         qCWarning(GstSourceFactoryLog) << "Element has no parent; bin already torn down?";
-        return;
+        return false;
     }
 
     if (!gst_element_add_pad(GST_ELEMENT(parent.get()), ghostpad.release())) {
         qCWarning(GstSourceFactoryLog) << "gst_element_add_pad() failed";
+        return false;
     }
+    return true;
+}
+
+void wrapWithGhostPad(GstElement* element, GstPad* pad, [[maybe_unused]] gpointer data)
+{
+    (void) addGhostPad(element, pad);
 }
 
 bool addStaticGhostPad(GstElement* element)
@@ -122,8 +130,7 @@ bool addStaticGhostPad(GstElement* element)
         return false;
     }
 
-    wrapWithGhostPad(element, srcPad.get(), nullptr);
-    return true;
+    return addGhostPad(element, srcPad.get());
 }
 
 bool isVideoRtp(const GstStructure* structure)
