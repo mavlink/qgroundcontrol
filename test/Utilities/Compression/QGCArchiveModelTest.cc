@@ -10,6 +10,7 @@
 
 #include "FileFixtures.h"
 #include "QGCArchiveModel.h"
+#include "QGCCompressionTest.h"
 #include "UnitTest.h"
 
 // ============================================================================
@@ -101,6 +102,43 @@ void QGCArchiveModelTest::_testGetMethod()
     QVERIFY(invalid.isEmpty());
     const QVariantMap outOfBounds = model.get(model.count() + 1);
     QVERIFY(outOfBounds.isEmpty());
+}
+
+void QGCArchiveModelTest::_testGetAgreesWithData()
+{
+    // A directory entry, a file in that directory and a file beside it
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("tree.tar");
+    QVERIFY(
+        TestFixtures::writeFile(archivePath, QGCCompressionTest::_makeTar({{.name = "sub/", .type = '5'},
+                                                                           {.name = "sub/nested.txt", .data = "nested"},
+                                                                           {.name = "top.txt", .data = "top"}})));
+    QGCArchiveModel model;
+    model.setArchivePath(archivePath);
+
+    struct Expected
+    {
+        const char* name;
+        const char* fileName;
+        const char* directory;
+    };
+
+    const QList<Expected> expected{
+        {"sub/", "sub/", "sub"}, {"sub/nested.txt", "nested.txt", "sub"}, {"top.txt", "top.txt", ""}};
+    QCOMPARE(model.count(), expected.size());
+
+    // get() tells of an entry what the roles tell of it, also where its name ends in the separator
+    const QHash<int, QByteArray> roles = model.roleNames();
+    for (int row = 0; row < model.count(); ++row) {
+        const QVariantMap entry = model.get(row);
+        QCOMPARE(entry.size(), roles.size());
+        for (const auto [role, roleName] : roles.asKeyValueRange()) {
+            QCOMPARE(entry.value(QString::fromLatin1(roleName)), model.data(model.index(row), role));
+        }
+        QCOMPARE(entry.value("name").toString(), QLatin1String(expected.at(row).name));
+        QCOMPARE(entry.value("fileName").toString(), QLatin1String(expected.at(row).fileName));
+        QCOMPARE(entry.value("directory").toString(), QLatin1String(expected.at(row).directory));
+    }
 }
 
 // ============================================================================

@@ -155,6 +155,9 @@ private slots:
     void _benchmarkListArchive();
 
 private:
+    // Builds the archive of its directory entry with _makeTar()
+    friend class QGCArchiveModelTest;
+
     // The test resources: one manifest.json, as an archive and as a single compressed stream
     static inline const QString _zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     static inline const QString _sevenZipResource = QStringLiteral(":/unittest/manifest.json.7z");

@@ -157,31 +157,16 @@ void QGCArchiveModel::clear()
     _setErrorString(QString());
 }
 
-QVariantMap QGCArchiveModel::get(int index) const
+QVariantMap QGCArchiveModel::get(int row) const
 {
     QVariantMap result;
 
-    if (index < 0 || index >= _filteredEntries.size()) {
-        return result;
-    }
-
-    const QGCCompression::ArchiveEntry &entry = _filteredEntries.at(index);
-
-    result[QStringLiteral("name")] = entry.name;
-    result[QStringLiteral("size")] = entry.size;
-    result[QStringLiteral("modified")] = entry.modified;
-    result[QStringLiteral("isDirectory")] = entry.isDirectory;
-    result[QStringLiteral("permissions")] = entry.permissions;
-    result[QStringLiteral("formattedSize")] = formatSize(entry.size);
-
-    // Compute fileName and directory
-    const int lastSlash = entry.name.lastIndexOf(QLatin1Char('/'));
-    if (lastSlash >= 0 && lastSlash < entry.name.size() - 1) {
-        result[QStringLiteral("fileName")] = entry.name.mid(lastSlash + 1);
-        result[QStringLiteral("directory")] = entry.name.left(lastSlash);
-    } else {
-        result[QStringLiteral("fileName")] = entry.name;
-        result[QStringLiteral("directory")] = QString();
+    const QModelIndex entry = index(row);
+    if (entry.isValid()) {
+        const QHash<int, QByteArray> roles = roleNames();
+        for (const auto [role, name] : roles.asKeyValueRange()) {
+            result.insert(QString::fromLatin1(name), data(entry, role));
+        }
     }
 
     return result;

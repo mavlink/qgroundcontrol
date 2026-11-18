@@ -112,8 +112,9 @@ public:
     /// Clear the model and reset all properties
     Q_INVOKABLE void clear();
 
-    /// Get entry at index (for C++ usage)
-    Q_INVOKABLE QVariantMap get(int index) const;
+    /// Get the entry of a row: what data() gives for each role, under the name of the role
+    /// @return Empty for a row the model does not have
+    Q_INVOKABLE QVariantMap get(int row) const;
 
     /// Check if a file exists in the archive
     Q_INVOKABLE bool contains(const QString &fileName) const;

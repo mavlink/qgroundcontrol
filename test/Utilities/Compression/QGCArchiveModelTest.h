@@ -14,6 +14,7 @@ private slots:
     void _testRoleNames();
     void _testDataAccess();
     void _testGetMethod();
+    void _testGetAgreesWithData();
 
     // Properties
     void _testArchivePathProperty();
