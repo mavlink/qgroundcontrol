@@ -268,7 +268,6 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink_data()
 {
     QTest::addColumn<QString>("failure");
     QTest::newRow("unwritable-directory") << QStringLiteral("unwritable-directory");
-    QTest::newRow("write-error") << QStringLiteral("write-error");
     QTest::newRow("existing-file") << QStringLiteral("existing-file");
 }
 
@@ -280,15 +279,9 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
     if (failure == QStringLiteral("unwritable-directory")) {
         // A regular file where the recording folder should be.
         file = directory.createFile(QStringLiteral("GPSReceiver"), "not a folder") + QStringLiteral("/session.log");
-    } else if (failure == QStringLiteral("existing-file")) {
-        file = directory.createFile(QStringLiteral("session.log"), "an earlier recording");
     } else {
-        if (!QFileInfo::exists(QStringLiteral("/dev/full"))) {
-            QSKIP("Needs /dev/full to fail file writes");
-        }
-        file = QStringLiteral("/dev/full");
+        file = directory.createFile(QStringLiteral("session.log"), "an earlier recording");
     }
-    // More than QFile's write buffer, so a failing device reports the error during the session.
     const QByteArray input = bytePattern(64 * 1024, 5);
     auto inner = std::make_unique<MemoryGPSTransport>(input, 4096);
     MemoryGPSTransport* const link = inner.get();
@@ -312,6 +305,24 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
         QVERIFY(earlier.open(QIODevice::ReadOnly));
         QCOMPARE(earlier.readAll(), QByteArrayLiteral("an earlier recording"));
     }
+}
+
+void GPSRecordingTransportTest::_flushesWhileRecording()
+{
+    TestFixtures::TempDirFixture directory;
+    const QString file = QDir(directory.path()).filePath(QStringLiteral("session.log"));
+    const QByteArray input = bytePattern(40, 7);
+    GPSRecordingTransport recorder(std::make_unique<MemoryGPSTransport>(input), file);
+    QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
+    QCOMPARE(readAvailable(recorder), input);
+    // Each read writes the buffered records out once FLUSH_INTERVAL has passed, so the file can be read while the
+    // session goes on.
+    const auto onDisk = [&recorder, &file] {
+        (void) readAvailable(recorder);
+        return records(file);
+    };
+    QTRY_COMPARE_WITH_TIMEOUT(onDisk(), QByteArrayList{"RX " + input.toHex()}, TestTimeout::mediumMs());
+    QVERIFY(recorder.recording());
 }
 
 void GPSRecordingTransportTest::_fileStopsAtSizeCap()

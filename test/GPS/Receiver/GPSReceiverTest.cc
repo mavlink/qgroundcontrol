@@ -972,6 +972,32 @@ void GPSReceiverTest::_recordingFileClearsWhenRecordingFails()
     receiver.shutdown();
 }
 
+void GPSReceiverTest::_sessionWithoutRecordingFolderIsNotRecorded_data()
+{
+    QTest::addColumn<bool>("folderAsked");
+    QTest::newRow("no-folder-source") << false;
+    QTest::newRow("empty-folder") << true;
+}
+
+void GPSReceiverTest::_sessionWithoutRecordingFolderIsNotRecorded()
+{
+    QFETCH(bool, folderAsked);
+    GPSReceiver::Dependencies dependencies;
+    if (folderAsked) {
+        dependencies.recordingDirectory = [] { return QString(); };
+    }
+    ScriptedGPSReceiver harness(nullptr, dependencies);
+    GPSReceiver& receiver = harness.receiver;
+    receiver.setRecordSessions(true);
+
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("No folder to record the receiver session to")));
+    QVERIFY(connectOverTcp(receiver));
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.hasReceiver());
+    QVERIFY(receiver.recordingFile().isEmpty());
+}
+
 #ifndef QGC_NO_SERIAL_LINK
 
 void GPSReceiverTest::_serialPortEntries()

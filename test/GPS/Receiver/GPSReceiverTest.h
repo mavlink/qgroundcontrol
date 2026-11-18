@@ -32,6 +32,8 @@ private slots:
     void _outputOverflowWarning();
     void _recordsSessionsStartedWhileOn();
     void _recordingFileClearsWhenRecordingFails();
+    void _sessionWithoutRecordingFolderIsNotRecorded_data();
+    void _sessionWithoutRecordingFolderIsNotRecorded();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialPortEntries();
     void _serialPortEntryValue_data();

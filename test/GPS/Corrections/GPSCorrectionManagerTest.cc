@@ -483,6 +483,14 @@ void GPSCorrectionManagerTest::_messageFilterLeavesNoStream()
     // The state is refreshed every second.
     QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + std::chrono::seconds(1)));
     QVERIFY(corrections.messageFilterError().isEmpty());
+
+    // A long list is cut after the lowest twelve.
+    for (uint16_t messageId = 1113; messageId > 1100; --messageId) {
+        QVERIFY(submit(local, messageId));
+    }
+    QVERIFY2(corrections.messageFilterError().contains(
+                 QStringLiteral("(1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, …)")),
+             qPrintable(corrections.messageFilterError()));
 }
 
 void GPSCorrectionManagerTest::_logsRoutedStream()

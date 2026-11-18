@@ -505,6 +505,13 @@ void RTCMConformanceTest::_messageIntervals()
     QCOMPARE(interval(1), 0.);
     model.record(1077, 10000);
     QCOMPARE(interval(1), 1.);
+
+    // A receipt time that goes back starts the interval over, and the count goes on.
+    model.record(1005, 5000);
+    QCOMPARE(interval(0), 0.);
+    QCOMPARE(model.index(0).data(RTCMMessageCountModel::CountRole).toULongLong(), quint64(3));
+    model.record(1005, 6000);
+    QCOMPARE(interval(0), 1.);
 }
 
 void RTCMConformanceTest::_stationPosition_data()
