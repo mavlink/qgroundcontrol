@@ -49,7 +49,6 @@ void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, 
                                       GeographicLib::Geocentric::WGS84());
     ltp.Forward(coord.latitude(), coord.longitude(), coordAlt, east, north, up);
 
-    // Convert ENU to NED
     x = north;
     y = east;
     z = -up;
@@ -57,12 +56,10 @@ void convertGeoToNed(const QGeoCoordinate &coord, const QGeoCoordinate &origin, 
 
 void convertNedToGeo(double x, double y, double z, const QGeoCoordinate &origin, QGeoCoordinate &coord)
 {
-    // Convert NED to ENU
     const double east = y;
     const double north = x;
     const double up = -z;
 
-    // Handle NaN altitude
     const double originAlt = std::isnan(origin.altitude()) ? 0.0 : origin.altitude();
 
     double lat, lon, alt;
@@ -117,30 +114,12 @@ QGeoCoordinate convertEcefToGeodetic(const QVector3D &ecef)
 
 QVector3D convertEcefToEnu(const QVector3D &ecef, const QGeoCoordinate &ref)
 {
-    // ECEF -> Geodetic
-    double lat, lon, h;
-    GeographicLib::Geocentric::WGS84().Reverse(ecef.x(), ecef.y(), ecef.z(), lat, lon, h);
-
-    // Geodetic -> ENU
-    double x, y, z;
-    GeographicLib::LocalCartesian ltp(ref.latitude(), ref.longitude(), ref.altitude(),
-                                      GeographicLib::Geocentric::WGS84());
-    ltp.Forward(lat, lon, h, x, y, z);
-    return QVector3D(x, y, z);
+    return convertGpsToEnu(convertEcefToGeodetic(ecef), ref);
 }
 
 QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref)
 {
-    // ENU -> Geodetic
-    double lat, lon, h;
-    GeographicLib::LocalCartesian ltp(ref.latitude(), ref.longitude(), ref.altitude(),
-                                      GeographicLib::Geocentric::WGS84());
-    ltp.Reverse(enu.x(), enu.y(), enu.z(), lat, lon, h);
-
-    // Geodetic -> ECEF
-    double x, y, z;
-    GeographicLib::Geocentric::WGS84().Forward(lat, lon, h, x, y, z);
-    return QVector3D(x, y, z);
+    return convertGeodeticToEcef(convertEnuToGps(enu, ref));
 }
 
 // ============================================================================
@@ -232,18 +211,9 @@ bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
         double x, y;
         GeographicLib::MGRS::Reverse(reference, zone, northp, x, y, prec);
 
-        double lat, lon;
-        GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
-
-        // GeographicLib returns NaN instead of throwing for strings that start with "INV"
-        if (!QGeoCoordinate(lat, lon).isValid()) {
-            qCDebug(QGCGeoLog) << "Invalid MGRS string" << mgrs;
-            return false;
-        }
-
-        coord.setLatitude(lat);
-        coord.setLongitude(lon);
-        return true;
+        // For a string that starts with "INV" GeographicLib returns NaN instead of throwing, which
+        // convertUTMToGeo() rejects
+        return convertUTMToGeo(x, y, zone, !northp, coord);
     } catch (const GeographicLib::GeographicErr &e) {
         qCDebug(QGCGeoLog) << e.what();
         return false;
@@ -374,7 +344,6 @@ double geodesicAzimuth(const QGeoCoordinate &from, const QGeoCoordinate &to)
     GeographicLib::Geodesic::WGS84().Inverse(from.latitude(), from.longitude(),
                                              to.latitude(), to.longitude(), distance, azimuth1, azimuth2);
 
-    // Normalize to [0, 360)
     if (azimuth1 < 0.0) {
         azimuth1 += 360.0;
     }
@@ -459,7 +428,6 @@ QList<QGeoCoordinate> interpolatePath(const QGeoCoordinate &from, const QGeoCoor
         return result;
     }
 
-    // Create GeodesicLine for efficient multi-point interpolation
     const GeographicLib::GeodesicLine line = GeographicLib::Geodesic::WGS84().InverseLine(
         from.latitude(), from.longitude(), to.latitude(), to.longitude());
 
@@ -498,7 +466,6 @@ QGeoCoordinate interpolateAtDistance(const QGeoCoordinate &from, const QGeoCoord
     double lat, lon;
     line.Position(distance, lat, lon);
 
-    // Linear altitude interpolation
     const double fraction = distance / totalDistance;
     const double alt = from.altitude() + (to.altitude() - from.altitude()) * fraction;
 

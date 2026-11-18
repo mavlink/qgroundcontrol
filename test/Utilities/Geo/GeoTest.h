@@ -55,9 +55,6 @@ private slots:
     // Benchmarks (nanobench)
     void _benchmarkCoordinateConversions();
 
-    // Benchmarks (QBENCHMARK)
-    void _qbenchmarkGeodesicDistance();
-
 private:
     /// Use ETH campus (47.3764° N, 8.5481° E)
     const QGeoCoordinate m_origin{47.3764, 8.5481, 0.0};

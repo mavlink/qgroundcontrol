@@ -8,9 +8,6 @@
 QGC_LOGGING_CATEGORY(KMLSchemaValidatorLog, "Utilities.KMLSchemaValidator")
 
 namespace {
-    // XSD namespace
-    [[maybe_unused]] constexpr const char *XS_NS = "http://www.w3.org/2001/XMLSchema";
-
     // Schema resource path (PREFIX "/kml" + FILES "ogckml22.xsd")
     constexpr const char *SCHEMA_RESOURCE = ":/kml/ogckml22.xsd";
 }
@@ -41,17 +38,11 @@ void KMLSchemaValidator::loadSchema()
         return;
     }
 
-    parseSchemaDocument(schemaDoc);
-    _loaded = true;
-    qCDebug(KMLSchemaValidatorLog) << "Loaded KML schema with" << _enumTypes.size() << "enum types and"
-                                   << _validElements.size() << "elements";
-}
-
-void KMLSchemaValidator::parseSchemaDocument(const QDomDocument &schemaDoc)
-{
     const QDomElement root = schemaDoc.documentElement();
     extractEnumTypes(root);
     extractElements(root);
+    qCDebug(KMLSchemaValidatorLog) << "Loaded KML schema with" << _enumTypes.size() << "enum types and"
+                                   << _validElements.size() << "elements";
 }
 
 void KMLSchemaValidator::extractEnumTypes(const QDomElement &root)
@@ -66,13 +57,11 @@ void KMLSchemaValidator::extractEnumTypes(const QDomElement &root)
             continue;
         }
 
-        // Look for restriction element
         const QDomElement restriction = simpleType.firstChildElement("restriction");
         if (restriction.isNull()) {
             continue;
         }
 
-        // Collect enumeration values
         QStringList enumValues;
         QDomElement enumEl = restriction.firstChildElement("enumeration");
         while (!enumEl.isNull()) {
@@ -92,7 +81,6 @@ void KMLSchemaValidator::extractEnumTypes(const QDomElement &root)
 
 void KMLSchemaValidator::extractElements(const QDomElement &root)
 {
-    // Find all xs:element definitions
     const QDomNodeList elements = root.elementsByTagName("element");
 
     for (int i = 0; i < elements.count(); i++) {
@@ -156,19 +144,16 @@ KMLSchemaValidator::ValidationResult KMLSchemaValidator::validate(const QDomDocu
 
     const QDomElement root = doc.documentElement();
 
-    // Check root element is <kml>
     if (root.tagName() != "kml") {
         result.addError(QString("Root element must be 'kml', found '%1'").arg(root.tagName()));
         return result;
     }
 
-    // Check namespace
     const QString ns = root.namespaceURI();
     if (!ns.isEmpty() && ns != KMLDomDocument::kmlNamespace) {
         result.addWarning(QString("Expected namespace '%1', found '%2'").arg(KMLDomDocument::kmlNamespace, ns));
     }
 
-    // Recursively validate all elements
     validateElement(root, result);
 
     return result;
@@ -183,7 +168,6 @@ void KMLSchemaValidator::validateElement(const QDomElement &element, ValidationR
         result.addWarning(QString("Unknown element: '%1'").arg(tagName));
     }
 
-    // Validate specific elements
     if (tagName == "altitudeMode") {
         const QString value = element.text();
         if (!value.isEmpty() && !isValidEnumValue("altitudeModeEnumType", value)) {
@@ -202,7 +186,6 @@ void KMLSchemaValidator::validateElement(const QDomElement &element, ValidationR
         validateCoordinates(element.text(), result);
     }
 
-    // Validate children recursively
     QDomElement child = element.firstChildElement();
     while (!child.isNull()) {
         validateElement(child, result);

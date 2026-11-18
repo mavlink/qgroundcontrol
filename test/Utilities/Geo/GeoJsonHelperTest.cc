@@ -1,13 +1,13 @@
 #include "GeoJsonHelperTest.h"
 
 #include <QtCore/QDir>
-#include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonValue>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "FileFixtures.h"
 #include "GeoJsonHelper.h"
 
 namespace {
@@ -15,12 +15,7 @@ namespace {
 QString _writeGeoJsonFile(const QString& dirPath, const QString& fileName, const QByteArray& contents)
 {
     const QString filePath = QDir(dirPath).filePath(fileName);
-    QFile file(filePath);
-    const bool opened = file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-    Q_ASSERT(opened);
-    Q_UNUSED(opened);
-    (void) file.write(contents);
-    file.close();
+    (void) TestFixtures::writeFile(filePath, contents);
     return filePath;
 }
 
@@ -147,164 +142,41 @@ const QByteArray kInvalidGeoJson = "{not valid json";
 
 } // namespace
 
-void GeoJsonHelperTest::_determineShapeTypePolygon_test()
+void GeoJsonHelperTest::_determineShapeType_test_data()
 {
+    QTest::addColumn<QByteArray>("document");    // null to write no file
+    QTest::addColumn<ShapeFileHelper::ShapeType>("expected");
+    QTest::addColumn<QString>("errorFragment");  // empty when a type is found
+
+    QTest::newRow("polygon") << kPolygonGeoJson << ShapeFileHelper::ShapeType::Polygon << QString();
+    QTest::newRow("polyline") << kPolylineGeoJson << ShapeFileHelper::ShapeType::Polyline << QString();
+    QTest::newRow("no shapes") << kNoShapesGeoJson << ShapeFileHelper::ShapeType::Error << "No shapes found";
+    QTest::newRow("missing file") << QByteArray() << ShapeFileHelper::ShapeType::Error << "File not found";
+    QTest::newRow("unsupported geometry") << kPointGeoJson << ShapeFileHelper::ShapeType::Error << "No supported type";
+    QTest::newRow("invalid json") << kInvalidGeoJson << ShapeFileHelper::ShapeType::Error
+                                  << "GeoJson file load failed.";
+}
+
+void GeoJsonHelperTest::_determineShapeType_test()
+{
+    QFETCH(QByteArray, document);
+    QFETCH(ShapeFileHelper::ShapeType, expected);
+    QFETCH(QString, errorFragment);
+
     QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "polygon.geojson", kPolygonGeoJson);
+    const QString filePath = tempDir.filePath("shape.geojson");
+    if (!document.isNull()) {
+        QVERIFY(TestFixtures::writeFile(filePath, document));
+    }
     QString error;
 
-    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
-    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Polygon);
-    QVERIFY(error.isEmpty());
+    QCOMPARE(GeoJsonHelper::determineShapeType(filePath, error), expected);
+    QVERIFY2(errorFragment.isEmpty() ? error.isEmpty() : error.contains(errorFragment), qPrintable(error));
 }
 
-void GeoJsonHelperTest::_determineShapeTypePolyline_test()
+void GeoJsonHelperTest::_loadShape_test_data()
 {
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "line.geojson", kPolylineGeoJson);
-    QString error;
-
-    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
-    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Polyline);
-    QVERIFY(error.isEmpty());
-}
-
-void GeoJsonHelperTest::_determineShapeTypeNoShapes_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "empty.geojson", kNoShapesGeoJson);
-    QString error;
-
-    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
-    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Error);
-    QVERIFY(!error.isEmpty());
-    QVERIFY(error.contains("No shapes found"));
-}
-
-void GeoJsonHelperTest::_determineShapeTypeMissingFile_test()
-{
-    QString error;
-    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType("missing-file.geojson", error);
-    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Error);
-    QVERIFY(!error.isEmpty());
-    QVERIFY(error.contains("File not found"));
-}
-
-void GeoJsonHelperTest::_determineShapeTypeUnsupportedGeometry_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "point.geojson", kPointGeoJson);
-    QString error;
-
-    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
-    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Error);
-    QVERIFY(!error.isEmpty());
-    QVERIFY(error.contains("No supported type"));
-}
-
-void GeoJsonHelperTest::_determineShapeTypeInvalidJson_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "invalid.geojson", kInvalidGeoJson);
-    QString error;
-
-    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
-    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Error);
-    QVERIFY(!error.isEmpty());
-}
-
-void GeoJsonHelperTest::_loadPolygonFromFile_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "polygon.geojson", kPolygonGeoJson);
-    QList<QGeoCoordinate> vertices;
-    QString error;
-
-    const bool loaded = GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error);
-    QVERIFY(loaded);
-    QVERIFY(error.isEmpty());
-    // The ring is counter-clockwise, as GeoJSON prescribes: it comes back clockwise, without its closing vertex.
-    QCOMPARE(vertices, (QList<QGeoCoordinate>{{47.1, 8.1}, {47.0, 8.1}, {47.0, 8.0}}));
-}
-
-void GeoJsonHelperTest::_loadPolylineFromFile_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "line.geojson", kPolylineGeoJson);
-    QList<QGeoCoordinate> coords;
-    QString error;
-
-    const bool loaded = GeoJsonHelper::loadPolylineFromFile(filePath, coords, error);
-    QVERIFY(loaded);
-    QVERIFY(error.isEmpty());
-    QCOMPARE(coords.size(), 2);
-    QCOMPARE(coords.at(0).latitude(), 47.5);
-    QCOMPARE(coords.at(0).longitude(), 8.5);
-    QCOMPARE(coords.at(1).latitude(), 47.6);
-    QCOMPARE(coords.at(1).longitude(), 8.6);
-}
-
-void GeoJsonHelperTest::_loadPolygonFromNestedGeometryCollection_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "nested-polygon.geojson", kNestedPolygonGeoJson);
-    QList<QGeoCoordinate> vertices;
-    QString error;
-
-    const bool loaded = GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error);
-    QVERIFY(loaded);
-    QVERIFY(error.isEmpty());
-    QCOMPARE(vertices, (QList<QGeoCoordinate>{{47.3, 8.3}, {47.2, 8.3}, {47.2, 8.2}}));
-}
-
-void GeoJsonHelperTest::_loadPolylineFromNestedGeometryCollection_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "nested-polyline.geojson", kNestedPolylineGeoJson);
-    QList<QGeoCoordinate> coords;
-    QString error;
-
-    const bool loaded = GeoJsonHelper::loadPolylineFromFile(filePath, coords, error);
-    QVERIFY(loaded);
-    QVERIFY(error.isEmpty());
-    QCOMPARE(coords.size(), 3);
-    QCOMPARE(coords.at(0).latitude(), 47.7);
-    QCOMPARE(coords.at(0).longitude(), 8.7);
-    QCOMPARE(coords.at(2).latitude(), 47.9);
-    QCOMPARE(coords.at(2).longitude(), 8.9);
-}
-
-void GeoJsonHelperTest::_loadPolygonFromPolylineFails_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "line.geojson", kPolylineGeoJson);
-    QList<QGeoCoordinate> vertices;
-    QString error;
-
-    const bool loaded = GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error);
-    QVERIFY(!loaded);
-    QVERIFY(vertices.isEmpty());
-    QVERIFY(!error.isEmpty());
-    QVERIFY(error.contains("No polygon"));
-}
-
-void GeoJsonHelperTest::_loadPolylineFromPolygonFails_test()
-{
-    QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "polygon.geojson", kPolygonGeoJson);
-    QList<QGeoCoordinate> coords;
-    QString error;
-
-    const bool loaded = GeoJsonHelper::loadPolylineFromFile(filePath, coords, error);
-    QVERIFY(!loaded);
-    QVERIFY(coords.isEmpty());
-    QVERIFY(!error.isEmpty());
-    QVERIFY(error.contains("No polyline"));
-}
-
-void GeoJsonHelperTest::_loadShapeCleanUp_test_data()
-{
-    QTest::addColumn<QByteArray>("geometry");
+    QTest::addColumn<QByteArray>("document");
     QTest::addColumn<double>("filterMeters");
     QTest::addColumn<QList<QGeoCoordinate>>("expected");
 
@@ -324,6 +196,16 @@ void GeoJsonHelperTest::_loadShapeCleanUp_test_data()
         "[8.00001, 47], [8, 47]";
     const char* denseLine = "[8, 47], [8, 47.00001], [8, 47.001], [8.001, 47.001]";
 
+    // The ring of a feature is counter-clockwise, as GeoJSON prescribes: it comes back clockwise, without its
+    // closing vertex.
+    QTest::newRow("polygon of a feature")
+        << kPolygonGeoJson << filtered << QList<QGeoCoordinate>{{47.1, 8.1}, {47.0, 8.1}, {47.0, 8.0}};
+    QTest::newRow("polyline of a feature")
+        << kPolylineGeoJson << filtered << QList<QGeoCoordinate>{{47.5, 8.5}, {47.6, 8.6}};
+    QTest::newRow("polygon in a geometry collection")
+        << kNestedPolygonGeoJson << filtered << QList<QGeoCoordinate>{{47.3, 8.3}, {47.2, 8.3}, {47.2, 8.2}};
+    QTest::newRow("polyline in a geometry collection")
+        << kNestedPolylineGeoJson << filtered << QList<QGeoCoordinate>{{47.7, 8.7}, {47.8, 8.8}, {47.9, 8.9}};
     QTest::newRow("polygon, closing vertex")
         << polygon("[8, 47], [8, 47.001], [8.001, 47.001], [8.001, 47], [8, 47]") << filtered << square;
     QTest::newRow("polygon, closed to within a centimetre")
@@ -352,18 +234,18 @@ void GeoJsonHelperTest::_loadShapeCleanUp_test_data()
         << lineString("[8, 47], [8, 47.00001]") << filtered << QList<QGeoCoordinate>{{47.0, 8.0}, {47.00001, 8.0}};
 }
 
-void GeoJsonHelperTest::_loadShapeCleanUp_test()
+void GeoJsonHelperTest::_loadShape_test()
 {
-    QFETCH(QByteArray, geometry);
+    QFETCH(QByteArray, document);
     QFETCH(double, filterMeters);
     QFETCH(QList<QGeoCoordinate>, expected);
 
     QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", geometry);
+    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", document);
     QList<QGeoCoordinate> vertices;
     QString error;
 
-    if (geometry.contains("Polygon")) {
+    if (document.contains("Polygon")) {
         QVERIFY2(GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error, filterMeters), qPrintable(error));
     } else {
         QVERIFY2(GeoJsonHelper::loadPolylineFromFile(filePath, vertices, error, filterMeters), qPrintable(error));
@@ -372,45 +254,60 @@ void GeoJsonHelperTest::_loadShapeCleanUp_test()
     QCOMPARE(vertices, expected);
 }
 
-void GeoJsonHelperTest::_loadTooFewVertices_test_data()
+void GeoJsonHelperTest::_loadFailure_test_data()
 {
-    QTest::addColumn<QByteArray>("geometry");
+    QTest::addColumn<QByteArray>("document");
     QTest::addColumn<bool>("polygon");
+    QTest::addColumn<QString>("warning");  // pattern of the warning the load logs, empty for none
 
-    QTest::newRow("polygon without rings") << QByteArray(R"({"type": "Polygon", "coordinates": []})") << true;
-    QTest::newRow("polygon with an empty ring") << QByteArray(R"({"type": "Polygon", "coordinates": [[]]})") << true;
+    const QString tooFewForPolygon = QStringLiteral("fewer than 3 vertices");
+    const QString tooFewForPolyline = QStringLiteral("fewer than 2 vertices");
+
+    QTest::newRow("polygon without rings")
+        << QByteArray(R"({"type": "Polygon", "coordinates": []})") << true << tooFewForPolygon;
+    QTest::newRow("polygon with an empty ring")
+        << QByteArray(R"({"type": "Polygon", "coordinates": [[]]})") << true << tooFewForPolygon;
     QTest::newRow("polygon of two vertices")
-        << QByteArray(R"({"type": "Polygon", "coordinates": [[[8.0, 47.0], [8.001, 47.0]]]})") << true;
+        << QByteArray(R"({"type": "Polygon", "coordinates": [[[8.0, 47.0], [8.001, 47.0]]]})") << true
+        << tooFewForPolygon;
     // Qt's importer drops the whole ring when one of its positions is not on the globe.
     QTest::newRow("polygon with a latitude out of range")
         << QByteArray(
                R"({"type": "Polygon", "coordinates": [[[8.0, 47.0], [8.0, 147.0], [8.001, 47.0], [8.0, 47.0]]]})")
-        << true;
-    QTest::newRow("polyline without vertices") << QByteArray(R"({"type": "LineString", "coordinates": []})") << false;
+        << true << tooFewForPolygon;
+    QTest::newRow("polyline without vertices")
+        << QByteArray(R"({"type": "LineString", "coordinates": []})") << false << tooFewForPolyline;
     QTest::newRow("polyline of one vertex")
-        << QByteArray(R"({"type": "LineString", "coordinates": [[8.0, 47.0]]})") << false;
+        << QByteArray(R"({"type": "LineString", "coordinates": [[8.0, 47.0]]})") << false << tooFewForPolyline;
+    // A shape of the other kind is passed over without a warning.
+    QTest::newRow("polyline as a polygon") << kPolylineGeoJson << true << QString();
+    QTest::newRow("polygon as a polyline") << kPolygonGeoJson << false << QString();
 }
 
-void GeoJsonHelperTest::_loadTooFewVertices_test()
+void GeoJsonHelperTest::_loadFailure_test()
 {
-    QFETCH(QByteArray, geometry);
+    QFETCH(QByteArray, document);
     QFETCH(bool, polygon);
+    QFETCH(QString, warning);
 
     QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", geometry);
+    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", document);
     QList<QGeoCoordinate> vertices;
     QString error;
 
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.GeoJsonHelper", QtWarningMsg, QRegularExpression(warning));
+    }
     if (polygon) {
-        expectLogMessage("Utilities.GeoJsonHelper", QtWarningMsg, QRegularExpression("fewer than 3 vertices"));
         QVERIFY(!GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error));
         QCOMPARE(error, QStringLiteral("GeoJson file load failed. No polygon found in GeoJson file."));
     } else {
-        expectLogMessage("Utilities.GeoJsonHelper", QtWarningMsg, QRegularExpression("fewer than 2 vertices"));
         QVERIFY(!GeoJsonHelper::loadPolylineFromFile(filePath, vertices, error));
         QCOMPARE(error, QStringLiteral("GeoJson file load failed. No polyline found in GeoJson file."));
     }
-    verifyExpectedLogMessage();
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
     QVERIFY(vertices.isEmpty());
 }
 

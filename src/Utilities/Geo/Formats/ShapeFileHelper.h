@@ -52,12 +52,4 @@ public:
 
     static constexpr const char *kmlFileExtension = ".kml";
     static constexpr const char *shpFileExtension = ".shp";
-
-private:
-    enum class ShapeFileType {
-        None,
-        KML,
-        SHP
-    };
-    static ShapeFileType _getShapeFileType(const QString &file, QString &errorString);
 };

@@ -1,10 +1,6 @@
 #include "KMLDomDocument.h"
-#include "QGCLoggingCategory.h"
 
-#include <QtGui/QColor>
 #include <QtPositioning/QGeoCoordinate>
-
-QGC_LOGGING_CATEGORY(KMLDomDocumentLog, "Utilities.KMLDomDocument")
 
 KMLDomDocument::KMLDomDocument(const QString &name)
 {
@@ -40,12 +36,10 @@ QString KMLDomDocument::kmlColorString(const QColor &color, double opacity)
 
 void KMLDomDocument::_addStandardStyles()
 {
-    QDomElement styleElementForBalloon = createElement("Style");
-    styleElementForBalloon.setAttribute("id", balloonStyleName);
+    QDomElement styleElementForBalloon = addStyle(balloonStyleName);
     QDomElement balloonStyleElement = createElement("BalloonStyle");
     addTextElement(balloonStyleElement, "text", "$[description]");
     (void) styleElementForBalloon.appendChild(balloonStyleElement);
-    (void) _rootDocumentElement.appendChild(styleElementForBalloon);
 }
 
 void KMLDomDocument::addTextElement(QDomElement &parentElement, const QString &name, const QString &value)

@@ -4,8 +4,8 @@
 #include <QtCore/QDir>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
-#include <QtCore/QTextStream>
 
+#include "FileFixtures.h"
 #include "KMLDomDocument.h"
 #include "KMLSchemaValidator.h"
 #include "ShapeFileHelper.h"
@@ -127,15 +127,9 @@ QString writeShapefile(const QString& dirPath, const QString& baseName, ShapeTyp
     };
 
     const QString basePath = QDir(dirPath).filePath(baseName);
-    const auto writeFile = [&basePath](const char* extension, const QByteArray& bytes) {
-        QFile file(basePath + extension);
-        if (file.open(QIODevice::WriteOnly)) {
-            (void) file.write(bytes);
-        }
-    };
-    writeFile(".shp", fileHeader(records.size()) + records);
-    writeFile(".shx", fileHeader(index.size()) + index);
-    writeFile(".prj", prj.toUtf8());
+    (void) TestFixtures::writeFile(basePath + QStringLiteral(".shp"), fileHeader(records.size()) + records);
+    (void) TestFixtures::writeFile(basePath + QStringLiteral(".shx"), fileHeader(index.size()) + index);
+    (void) TestFixtures::writeFile(basePath + QStringLiteral(".prj"), prj.toUtf8());
     return basePath + QStringLiteral(".shp");
 }
 
@@ -224,20 +218,6 @@ bool loadFirstPolygon(const QString& file, QList<QGeoCoordinate>& vertices, QStr
     return true;
 }
 
-bool loadFirstPolyline(const QString& file, QList<QGeoCoordinate>& vertices, QString& errorString, double filterMeters)
-{
-    QList<QList<QGeoCoordinate>> polylines;
-    if (!ShapeFileHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters)) {
-        return false;
-    }
-    if (polylines.isEmpty()) {
-        errorString = QStringLiteral("No polylines found");
-        return false;
-    }
-    vertices = polylines.first();
-    return true;
-}
-
 }  // namespace
 
 QString ShapeTest::_copyRes(const QString& dirPath, const QString& name)
@@ -249,83 +229,17 @@ QString ShapeTest::_copyRes(const QString& dirPath, const QString& name)
     return dstPath;
 }
 
-void ShapeTest::_writePrjFile(const QString& path, const QString& content)
-{
-    QFile file(path);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream stream(&file);
-        stream << content;
-    }
-}
-
 QString ShapeTest::_writeKmlFile(const QString& dirPath, const QString& name, const QString& content)
 {
     const QString path = QDir(dirPath).filePath(name);
-    QFile file(path);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QTextStream stream(&file);
-        stream << content;
-    }
+    (void) TestFixtures::writeFile(path, content.toUtf8());
     return path;
-}
-
-void ShapeTest::_testLoadPolylineFromSHP()
-{
-    QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polyline.shp");
-    (void) _copyRes(tempDir.path(), "polyline.dbf");
-    (void) _copyRes(tempDir.path(), "polyline.shx");
-    (void) _copyRes(tempDir.path(), "polyline.prj");
-    QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    // Use 0 for filterMeters to disable vertex filtering for test
-    QVERIFY(loadFirstPolyline(shpFile, rgCoords, errorString, 0));
-    QVERIFY(errorString.isEmpty());
-    QVERIFY(rgCoords.count() > 0);
-}
-
-void ShapeTest::_testLoadPolylineFromKML()
-{
-    QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polyline.kml");
-    QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    QVERIFY(loadFirstPolyline(shpFile, rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
-    QVERIFY(errorString.isEmpty());
-    QVERIFY(rgCoords.count() > 0);
-}
-
-void ShapeTest::_testLoadPolygonFromSHP()
-{
-    QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.dbf");
-    (void)_copyRes(tempDir.path(), "polygon.shx");
-    (void)_copyRes(tempDir.path(), "polygon.prj");
-    QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    // Use 0 for filterMeters to disable vertex filtering for test
-    QVERIFY(loadFirstPolygon(shpFile, rgCoords, errorString, 0));
-    QVERIFY(errorString.isEmpty());
-    QVERIFY(rgCoords.count() >= 3);
-}
-
-void ShapeTest::_testLoadPolygonFromKML()
-{
-    QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polygon.kml");
-    QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    QVERIFY(loadFirstPolygon(shpFile, rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
-    QVERIFY(errorString.isEmpty());
-    QVERIFY(rgCoords.count() >= 3);
 }
 
 void ShapeTest::_testLoadPolygonsFromSHP()
 {
     QTemporaryDir tempDir;
     const QString shpFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.dbf");
     (void)_copyRes(tempDir.path(), "polygon.shx");
     (void)_copyRes(tempDir.path(), "polygon.prj");
     QString errorString;
@@ -344,22 +258,37 @@ void ShapeTest::_testLoadPolygonsFromSHP()
              QStringLiteral("-81.24774078,43.03904529 -81.24725258,43.03985229"));
     QCOMPARE(coordinateText(polygons.last()), QStringLiteral("-81.22411259,42.92321617 -81.22096951,42.92351495 "
                                                              "-81.22080158,42.92238512 -81.22399066,42.92211327"));
+
+    QList<QList<QGeoCoordinate>> unfiltered;
+    QVERIFY(ShapeFileHelper::loadPolygonsFromFile(shpFile, unfiltered, errorString, 0));
+    QVERIFY(errorString.isEmpty());
+    QVERIFY(unfiltered.first().count() >= polygons.first().count());
+
+    QCOMPARE(ShapeFileHelper::determineShapeType(shpFile, errorString), ShapeType::Polygon);
+    QCOMPARE(ShapeFileHelper::getEntityCount(shpFile, errorString), 474);
+    QVERIFY(errorString.isEmpty());
 }
 
 void ShapeTest::_testLoadPolylinesFromSHP()
 {
     QTemporaryDir tempDir;
     const QString shpFile = _copyRes(tempDir.path(), "polyline.shp");
-    (void) _copyRes(tempDir.path(), "polyline.dbf");
     (void) _copyRes(tempDir.path(), "polyline.shx");
     (void) _copyRes(tempDir.path(), "polyline.prj");
     QString errorString;
     QList<QList<QGeoCoordinate>> polylines;
-    QVERIFY(ShapeFileHelper::loadPolylinesFromFile(shpFile, polylines, errorString));
+    // No two vertices are within the default filter distance, so the filter changes nothing.
+    for (const double filterMeters : {ShapeFileHelper::kDefaultVertexFilterMeters, 0.0}) {
+        QVERIFY(ShapeFileHelper::loadPolylinesFromFile(shpFile, polylines, errorString, filterMeters));
+        QVERIFY(errorString.isEmpty());
+        QCOMPARE(coordinateTexts(polylines),
+                 (QStringList{"11.325,46.473 11.326,46.4735 11.3272,46.4741 11.3285,46.4738 11.3299,46.4744",
+                              "11.331,46.475 11.3322,46.4758"}));
+    }
+
+    QCOMPARE(ShapeFileHelper::determineShapeType(shpFile, errorString), ShapeType::Polyline);
+    QCOMPARE(ShapeFileHelper::getEntityCount(shpFile, errorString), 2);
     QVERIFY(errorString.isEmpty());
-    QCOMPARE(coordinateTexts(polylines),
-             (QStringList{"11.325,46.473 11.326,46.4735 11.3272,46.4741 11.3285,46.4738 11.3299,46.4744",
-                          "11.331,46.475 11.3322,46.4758"}));
 }
 
 void ShapeTest::_testLoadPolygonsFromKML()
@@ -371,6 +300,10 @@ void ShapeTest::_testLoadPolygonsFromKML()
     QVERIFY(ShapeFileHelper::loadPolygonsFromFile(kmlFile, polygons, errorString));
     QVERIFY(errorString.isEmpty());
     QCOMPARE(coordinateTexts(polygons), QStringList{"-122,37,0 -122,38,0 -121,38,0 -121,37,0"});
+
+    QCOMPARE(ShapeFileHelper::determineShapeType(kmlFile, errorString), ShapeType::Polygon);
+    QCOMPARE(ShapeFileHelper::getEntityCount(kmlFile, errorString), 1);
+    QVERIFY(errorString.isEmpty());
 }
 
 void ShapeTest::_testLoadPolylinesFromKML()
@@ -386,6 +319,10 @@ void ShapeTest::_testLoadPolylinesFromKML()
              QStringList{"11.32613,46.47522,0 11.32704,46.47493,0 11.32754,46.47422,0 11.32704,46.47351,0 "
                          "11.32613,46.47322,0 11.32522,46.47351,0 11.32472,46.47422,0 11.32522,46.47493,0 "
                          "11.32613,46.47522,0"});
+
+    QCOMPARE(ShapeFileHelper::determineShapeType(kmlFile, errorString), ShapeType::Polyline);
+    QCOMPARE(ShapeFileHelper::getEntityCount(kmlFile, errorString), 1);
+    QVERIFY(errorString.isEmpty());
 }
 
 void ShapeTest::_testLoadShapes_data()
@@ -406,7 +343,8 @@ void ShapeTest::_testLoadShapes_data()
     // The square ending a millimetre from its first vertex.
     const QString nearlyClosedRing = QStringLiteral("8,47 8,47.001 8.001,47.001 8.001,47 8.00000001,47");
     const QString counterClockwiseRing = QStringLiteral("8,47 8.001,47 8.001,47.001 8,47.001 8,47");
-    const QString ringWithAltitude = QStringLiteral("8,47,10 8,47.001,20 8.001,47.001,30 8.001,47,40 8,47,10");
+    const QString ringWithAltitude =
+        QStringLiteral("8,47,100.5 8,47.001,200 8.001,47.001,150 8.001,47,175.5 8,47,100.5");
     const QString hole = QStringLiteral("8.0002,47.0002 8.0008,47.0002 8.0008,47.0008 8.0002,47.0008 8.0002,47.0002");
     // The square with extra vertices about a metre from their neighbours.
     const QString denseRing =
@@ -427,7 +365,7 @@ void ShapeTest::_testLoadShapes_data()
     // KML: a missing altitude loads as 0, and a counter-clockwise ring is reversed after its closing vertex is
     // dropped, so it starts at its last vertex.
     QTest::newRow("kml polygon") << kml << ShapeType::Polygon << QStringList{ringWithAltitude} << filtered
-                                 << QStringList{"8,47,10 8,47.001,20 8.001,47.001,30 8.001,47,40"};
+                                 << QStringList{"8,47,100.5 8,47.001,200 8.001,47.001,150 8.001,47,175.5"};
     QTest::newRow("kml polygon without altitude") << kml << ShapeType::Polygon << QStringList{ring} << filtered
                                                   << QStringList{"8,47,0 8,47.001,0 8.001,47.001,0 8.001,47,0"};
     QTest::newRow("kml polygon, open ring") << kml << ShapeType::Polygon << QStringList{openRing} << filtered
@@ -464,7 +402,7 @@ void ShapeTest::_testLoadShapes_data()
                                  << QStringList{openRing};
     QTest::newRow("shp polygon with altitude")
         << kWgs84Prj << ShapeType::Polygon << QStringList{ringWithAltitude} << filtered
-        << QStringList{"8,47,10 8,47.001,20 8.001,47.001,30 8.001,47,40"};
+        << QStringList{"8,47,100.5 8,47.001,200 8.001,47.001,150 8.001,47,175.5"};
     QTest::newRow("shp polygon, open ring")
         << kWgs84Prj << ShapeType::Polygon << QStringList{openRing} << filtered << QStringList{openRing};
     QTest::newRow("shp polygon, counter-clockwise")
@@ -591,6 +529,11 @@ void ShapeTest::_testLoadFailures_data()
     QTest::newRow("shp with empty prj")
         << "emptyprj.shp" << ShapeType::Polygon
         << shpFailed + "Unable to parse projection from PRJ file\\. Supported projections are: .+" << none << true;
+    QTest::newRow("shp with unsupported projection")
+        << "stateplane.shp" << ShapeType::Polygon
+        << shpFailed +
+               "Unsupported projection: NAD_1983_StatePlane_California_III\\. Supported projections are: WGS84 .+"
+        << none << true;
     QTest::newRow("shp with unknown utm zone")
         << "badzone.shp" << ShapeType::Polygon
         << shpFailed + "UTM projection is not in supported format\\. Must be PROJCS\\[\"WGS_1984_UTM_Zone_##N/S" << none
@@ -645,10 +588,12 @@ void ShapeTest::_testLoadFailures()
     (void) writeShapefile(dirPath, "shortline", ShapeType::Polyline, {"8,47"}, kWgs84Prj);
     (void) writeShapefile(dirPath, "metres", ShapeType::Point, {"424000,5205000"}, kWgs84Prj);
     (void) writeShapefile(dirPath, "emptyprj", ShapeType::Polygon, {ring}, QString());
+    (void) writeShapefile(dirPath, "stateplane", ShapeType::Polygon, {ring},
+                          "PROJCS[\"NAD_1983_StatePlane_California_III\",GEOGCS[\"GCS_North_American_1983\"]]");
     (void) writeShapefile(dirPath, "badzone", ShapeType::Polygon, {ring}, "PROJCS[\"WGS_1984_UTM_Zone_99N\"]");
     (void) writeShapefile(dirPath, "noprj", ShapeType::Polygon, {ring}, kWgs84Prj);
     QVERIFY(QFile::remove(tempDir.filePath("noprj.prj")));
-    _writePrjFile(tempDir.filePath("onlyprj.prj"), kWgs84Prj);
+    QVERIFY(TestFixtures::writeFile(tempDir.filePath("onlyprj.prj"), kWgs84Prj.toUtf8()));
 
     const QString file = tempDir.filePath(fileName);
     const char* category = fileName.endsWith(".kml") ? "Utilities.KMLHelper" : "Utilities.SHPFileHelper";
@@ -686,70 +631,6 @@ void ShapeTest::_testLoadFailures()
     }
 }
 
-void ShapeTest::_testGetEntityCount()
-{
-    QTemporaryDir tempDir;
-    // Test SHP entity count
-    const QString shpFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.dbf");
-    (void)_copyRes(tempDir.path(), "polygon.shx");
-    (void)_copyRes(tempDir.path(), "polygon.prj");
-    QString errorString;
-    const int shpCount = ShapeFileHelper::getEntityCount(shpFile, errorString);
-    QVERIFY(errorString.isEmpty());
-    QCOMPARE(shpCount, 474);
-    // Test KML polygon entity count
-    const QString kmlPolygonFile = _copyRes(tempDir.path(), "polygon.kml");
-    const int kmlPolygonCount = ShapeFileHelper::getEntityCount(kmlPolygonFile, errorString);
-    QVERIFY(errorString.isEmpty());
-    QCOMPARE(kmlPolygonCount, 1);
-    // Test KML polyline entity count
-    const QString kmlPolylineFile = _copyRes(tempDir.path(), "polyline.kml");
-    const int kmlPolylineCount = ShapeFileHelper::getEntityCount(kmlPolylineFile, errorString);
-    QVERIFY(errorString.isEmpty());
-    QCOMPARE(kmlPolylineCount, 1);
-}
-
-void ShapeTest::_testDetermineShapeType()
-{
-    QTemporaryDir tempDir;
-    // Test polygon type detection
-    const QString polygonFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.dbf");
-    (void)_copyRes(tempDir.path(), "polygon.shx");
-    (void)_copyRes(tempDir.path(), "polygon.prj");
-    QString errorString;
-    QCOMPARE(ShapeFileHelper::determineShapeType(polygonFile, errorString), ShapeFileHelper::ShapeType::Polygon);
-    QVERIFY(errorString.isEmpty());
-    // Test polyline type detection
-    const QString polylineFile = _copyRes(tempDir.path(), "pline.shp");
-    (void)_copyRes(tempDir.path(), "pline.dbf");
-    (void)_copyRes(tempDir.path(), "pline.shx");
-    (void)_copyRes(tempDir.path(), "pline.prj");
-    QCOMPARE(ShapeFileHelper::determineShapeType(polylineFile, errorString), ShapeFileHelper::ShapeType::Polyline);
-    QVERIFY(errorString.isEmpty());
-    // Test KML type detection
-    const QString kmlFile = _copyRes(tempDir.path(), "polygon.kml");
-    QCOMPARE(ShapeFileHelper::determineShapeType(kmlFile, errorString), ShapeFileHelper::ShapeType::Polygon);
-    QVERIFY(errorString.isEmpty());
-}
-
-void ShapeTest::_testUnsupportedProjectionError()
-{
-    QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.dbf");
-    (void)_copyRes(tempDir.path(), "polygon.shx");
-    // Write an unsupported projection PRJ file
-    const QString prjPath = tempDir.filePath("polygon.prj");
-    _writePrjFile(prjPath, "PROJCS[\"NAD_1983_StatePlane_California_III\",GEOGCS[\"GCS_North_American_1983\"]]");
-    QString errorString;
-    QList<QGeoCoordinate> rgCoords;
-    QVERIFY(!loadFirstPolygon(shpFile, rgCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
-    QVERIFY(errorString.contains("NAD_1983_StatePlane_California_III"));
-    QVERIFY(errorString.contains("WGS84"));
-}
-
 void ShapeTest::_testLoadFromQtResource()
 {
     // Test loading directly from Qt resource path (tests QFile hooks)
@@ -763,280 +644,108 @@ void ShapeTest::_testLoadFromQtResource()
     QVERIFY(rgCoords.count() >= 3);
 }
 
-void ShapeTest::_testVertexFiltering()
+void ShapeTest::_testSkippedVertices_data()
 {
-    QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.dbf");
-    (void)_copyRes(tempDir.path(), "polygon.shx");
-    (void)_copyRes(tempDir.path(), "polygon.prj");
-    QString errorString;
-    QList<QGeoCoordinate> unfilteredCoords;
-    QList<QGeoCoordinate> filteredCoords;
-    // Load without filtering
-    QVERIFY(loadFirstPolygon(shpFile, unfilteredCoords, errorString, 0));
-    QVERIFY(errorString.isEmpty());
-    // Load with filtering (default 5m)
-    QVERIFY(loadFirstPolygon(shpFile, filteredCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
-    QVERIFY(errorString.isEmpty());
-    // Filtered should have same or fewer vertices than unfiltered
-    QVERIFY(filteredCoords.count() <= unfilteredCoords.count());
-    // Both should have at least minimum valid polygon (3 vertices)
-    QVERIFY(unfilteredCoords.count() >= 3);
-    QVERIFY(filteredCoords.count() >= 3);
-}
-
-void ShapeTest::_testKMLVertexFiltering()
-{
-    QTemporaryDir tempDir;
-    // Create KML with closely spaced vertices (< 5m apart at equator)
-    // 0.00001 degrees ≈ 1.1m at equator
-    const QString kmlContent = R"(<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Placemark>
-    <Polygon>
-      <outerBoundaryIs>
-        <LinearRing>
-          <coordinates>
-            0.0,0.0,0 0.00001,0.0,0 0.00002,0.0,0 0.00003,0.0,0 0.001,0.001,0 0.0,0.001,0 0.0,0.0,0
-          </coordinates>
-        </LinearRing>
-      </outerBoundaryIs>
-    </Polygon>
-  </Placemark>
-</kml>)";
-    const QString kmlFile = _writeKmlFile(tempDir.path(), "dense_polygon.kml", kmlContent);
-    QString errorString;
-    QList<QGeoCoordinate> unfilteredCoords;
-    QList<QGeoCoordinate> filteredCoords;
-    // Load without filtering
-    QVERIFY(loadFirstPolygon(kmlFile, unfilteredCoords, errorString, 0));
-    QVERIFY(errorString.isEmpty());
-    QCOMPARE(unfilteredCoords.count(), 6);  // 7 coords - 1 duplicate closing = 6
-    // Load with filtering (default 5m)
-    QVERIFY(loadFirstPolygon(kmlFile, filteredCoords, errorString, ShapeFileHelper::kDefaultVertexFilterMeters));
-    QVERIFY(errorString.isEmpty());
-    // Filtered should have fewer vertices (the closely spaced ones should be filtered)
-    QVERIFY(filteredCoords.count() < unfilteredCoords.count());
-    QVERIFY(filteredCoords.count() >= 3);  // Minimum valid polygon
-}
-
-void ShapeTest::_testKMLAltitudeParsing()
-{
-    QTemporaryDir tempDir;
-    // Create KML with altitude values
-    const QString kmlContent = R"(<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Placemark>
-    <Polygon>
-      <outerBoundaryIs>
-        <LinearRing>
-          <coordinates>
-            -122.0,37.0,100.5 -122.0,38.0,200.0 -121.0,38.0,150.0 -121.0,37.0,175.5 -122.0,37.0,100.5
-          </coordinates>
-        </LinearRing>
-      </outerBoundaryIs>
-    </Polygon>
-  </Placemark>
-</kml>)";
-    const QString kmlFile = _writeKmlFile(tempDir.path(), "altitude_polygon.kml", kmlContent);
-    QString errorString;
-    QList<QGeoCoordinate> coords;
-    QVERIFY(loadFirstPolygon(kmlFile, coords, errorString, 0));
-    QVERIFY(errorString.isEmpty());
-    QCOMPARE(coords.count(), 4);  // 5 coords - 1 duplicate closing = 4
-    // Verify altitudes were parsed correctly
-    QCOMPARE(coords[0].altitude(), 100.5);
-    QCOMPARE(coords[1].altitude(), 200.0);
-    QCOMPARE(coords[2].altitude(), 150.0);
-    QCOMPARE(coords[3].altitude(), 175.5);
-    // Verify lat/lon as well
-    QCOMPARE(coords[0].latitude(), 37.0);
-    QCOMPARE(coords[0].longitude(), -122.0);
-}
-
-void ShapeTest::_testKMLUnparseableAltitude()
-{
-    QTemporaryDir tempDir;
-    const QString kmlFile =
-        _writeKmlFile(tempDir.path(), "altitude.kml",
-                      kmlShapeDocument(ShapeType::Polyline, {"8,47,10 8,47.001,high 8.001,47.001, 8.002,47.001,30"}));
-
-    // Unlike a latitude or longitude that is not a number, the vertex stays, with the altitude of a vertex that
-    // states none.
-    expectLogMessage("Utilities.KMLHelper", QtWarningMsg, QRegularExpression("altitude.*\"8,47\\.001,high\""));
-    expectLogMessage("Utilities.KMLHelper", QtWarningMsg, QRegularExpression("altitude.*\"8\\.001,47\\.001,\""));
-    QString errorString;
-    QList<QList<QGeoCoordinate>> loaded;
-    QVERIFY2(loadShapes(kmlFile, ShapeType::Polyline, loaded, errorString, 0), qPrintable(errorString));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-    QCOMPARE(coordinateTexts(loaded), QStringList{"8,47,10 8,47.001,0 8.001,47.001,0 8.002,47.001,30"});
-}
-
-void ShapeTest::_testKMLCoordinateValidation()
-{
-    QTemporaryDir tempDir;
-    // Create KML with some invalid coordinates mixed with valid ones
-    // Invalid: lat=91 (out of range), lon=200 (out of range), swapped lat/lon
-    const QString kmlContent = R"(<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Placemark>
-    <Polygon>
-      <outerBoundaryIs>
-        <LinearRing>
-          <coordinates>
-            -122.0,37.0,0 -122.0,91.0,0 200.0,38.0,0 -121.0,38.0,0 -121.0,37.0,0 -122.0,37.0,0
-          </coordinates>
-        </LinearRing>
-      </outerBoundaryIs>
-    </Polygon>
-  </Placemark>
-</kml>)";
-    const QString kmlFile = _writeKmlFile(tempDir.path(), "invalid_coords.kml", kmlContent);
-    // Expect warnings for invalid coordinates
-    expectLogMessage("Utilities.KMLHelper", QtWarningMsg, QRegularExpression("Latitude out of range.*91"));
-    expectLogMessage("Utilities.KMLHelper", QtWarningMsg, QRegularExpression("Longitude out of range.*200"));
-    QString errorString;
-    QList<QGeoCoordinate> coords;
-    // Should succeed but skip invalid coordinates
-    QVERIFY(loadFirstPolygon(kmlFile, coords, errorString, 0));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-    QVERIFY(errorString.isEmpty());
-    // Should have 3 valid coordinates (the two invalid ones skipped, plus duplicate closing removed)
-    // Valid: -122,37 | -121,38 | -121,37
-    // Invalid: -122,91 (lat>90) | 200,38 (lon>180)
-    QCOMPARE(coords.count(), 3);
-    // Verify the valid coordinates are present
-    QCOMPARE(coords[0].latitude(), 37.0);
-    QCOMPARE(coords[0].longitude(), -122.0);
-    QCOMPARE(coords[1].latitude(), 38.0);
-    QCOMPARE(coords[1].longitude(), -121.0);
-    QCOMPARE(coords[2].latitude(), 37.0);
-    QCOMPARE(coords[2].longitude(), -121.0);
-}
-
-void ShapeTest::_testKMLNonFiniteCoordinates_data()
-{
-    QTest::addColumn<QString>("tuple");
-
-    // QString::toDouble() reads these words as numbers
-    QTest::newRow("longitude nan") << "nan,47.0005";
-    QTest::newRow("latitude NaN") << "8.0005,NaN";
-    QTest::newRow("longitude inf") << "inf,47.0005";
-    QTest::newRow("latitude -inf") << "8.0005,-inf";
-}
-
-void ShapeTest::_testKMLNonFiniteCoordinates()
-{
-    QFETCH(QString, tuple);
-
-    QTemporaryDir tempDir;
-    const QString kmlFile =
-        _writeKmlFile(tempDir.path(), "nonfinite.kml",
-                      kmlShapeDocument(ShapeType::Polyline, {QStringLiteral("8,47 %1 8.001,47.001").arg(tuple)}));
-
-    // Like a latitude or longitude that is not a number at all, the vertex is left out with a warning.
-    expectLogMessage(
-        "Utilities.KMLHelper", QtWarningMsg,
-        QRegularExpression(
-            QStringLiteral("Failed to parse coordinate values: \"%1\"").arg(QRegularExpression::escape(tuple))));
-    QString errorString;
-    QList<QList<QGeoCoordinate>> loaded;
-    QVERIFY2(loadShapes(kmlFile, ShapeType::Polyline, loaded, errorString, 0), qPrintable(errorString));
-    verifyExpectedLogMessage();
-    QCOMPARE(coordinateTexts(loaded), QStringList{"8,47,0 8.001,47.001,0"});
-}
-
-void ShapeTest::_testKMLNonFiniteAltitude_data()
-{
-    QTest::addColumn<QString>("tuple");
-
-    // QString::toDouble() reads these words as numbers
-    QTest::newRow("nan") << "8.0005,47.0005,nan";
-    QTest::newRow("inf") << "8.0005,47.0005,inf";
-    QTest::newRow("-inf") << "8.0005,47.0005,-inf";
-    // and gives infinity for a number beyond the range of a double, which it reports as not converted
-    QTest::newRow("beyond the range of a double") << "8.0005,47.0005,1e999";
-}
-
-void ShapeTest::_testKMLNonFiniteAltitude()
-{
-    QFETCH(QString, tuple);
-
-    QTemporaryDir tempDir;
-    const QString kmlFile =
-        _writeKmlFile(tempDir.path(), "nonfinite.kml",
-                      kmlShapeDocument(ShapeType::Polyline, {QStringLiteral("8,47,10 %1 8.001,47.001,30").arg(tuple)}));
-
-    // Like an altitude that is not a number at all, the vertex stays, with the altitude of a vertex that states
-    // none.
-    expectLogMessage(
-        "Utilities.KMLHelper", QtWarningMsg,
-        QRegularExpression(
-            QStringLiteral("Failed to parse altitude, using 0 in: \"%1\"").arg(QRegularExpression::escape(tuple))));
-    QString errorString;
-    QList<QList<QGeoCoordinate>> loaded;
-    QVERIFY2(loadShapes(kmlFile, ShapeType::Polyline, loaded, errorString, 0), qPrintable(errorString));
-    verifyExpectedLogMessage();
-    QCOMPARE(coordinateTexts(loaded), QStringList{"8,47,10 8.0005,47.0005,0 8.001,47.001,30"});
-}
-
-void ShapeTest::_testSHPCoordinateValidation_data()
-{
-    QTest::addColumn<QString>("prj");
+    QTest::addColumn<QString>("prj");  // of the shapefile to write; empty to write a KML file
     QTest::addColumn<ShapeType>("kind");
     QTest::addColumn<QStringList>("shapes");
-    QTest::addColumn<QString>("warning");
+    QTest::addColumn<QStringList>("warnings");  // patterns of the warnings the load logs, in order
     QTest::addColumn<QStringList>("expected");
 
-    QTest::newRow("latitude out of range")
+    const QString kml;
+
+    // KML: a vertex is left out when its latitude or longitude is out of range or is not a number.
+    QTest::newRow("kml latitude and longitude out of range")
+        << kml << ShapeType::Polygon
+        << QStringList{"-122.0,37.0,0 -122.0,91.0,0 200.0,38.0,0 -121.0,38.0,0 -121.0,37.0,0 -122.0,37.0,0"}
+        << QStringList{"Latitude out of range.*91", "Longitude out of range.*200"}
+        << QStringList{"-122,37,0 -121,38,0 -121,37,0"};
+    const auto kmlNonFinitePosition = [&kml](const char* name, const QString& tuple) {
+        QTest::newRow(name) << kml << ShapeType::Polyline
+                            << QStringList{QStringLiteral("8,47 %1 8.001,47.001").arg(tuple)}
+                            << QStringList{QStringLiteral("Failed to parse coordinate values: \"%1\"")
+                                               .arg(QRegularExpression::escape(tuple))}
+                            << QStringList{"8,47,0 8.001,47.001,0"};
+    };
+    // QString::toDouble() reads these words as numbers
+    kmlNonFinitePosition("kml longitude nan", "nan,47.0005");
+    kmlNonFinitePosition("kml latitude NaN", "8.0005,NaN");
+    kmlNonFinitePosition("kml longitude inf", "inf,47.0005");
+    kmlNonFinitePosition("kml latitude -inf", "8.0005,-inf");
+
+    // Unlike a latitude or longitude that is not a number, an altitude that is not one leaves the vertex in,
+    // with the altitude of a vertex that states none.
+    QTest::newRow("kml altitude that is not a number")
+        << kml << ShapeType::Polyline << QStringList{"8,47,10 8,47.001,high 8.001,47.001, 8.002,47.001,30"}
+        << QStringList{"altitude.*\"8,47\\.001,high\"", "altitude.*\"8\\.001,47\\.001,\""}
+        << QStringList{"8,47,10 8,47.001,0 8.001,47.001,0 8.002,47.001,30"};
+    const auto kmlNonFiniteAltitude = [&kml](const char* name, const QString& tuple) {
+        QTest::newRow(name) << kml << ShapeType::Polyline
+                            << QStringList{QStringLiteral("8,47,10 %1 8.001,47.001,30").arg(tuple)}
+                            << QStringList{QStringLiteral("Failed to parse altitude, using 0 in: \"%1\"")
+                                               .arg(QRegularExpression::escape(tuple))}
+                            << QStringList{"8,47,10 8.0005,47.0005,0 8.001,47.001,30"};
+    };
+    // QString::toDouble() reads these words as numbers
+    kmlNonFiniteAltitude("kml altitude nan", "8.0005,47.0005,nan");
+    kmlNonFiniteAltitude("kml altitude inf", "8.0005,47.0005,inf");
+    kmlNonFiniteAltitude("kml altitude -inf", "8.0005,47.0005,-inf");
+    // and gives infinity for a number beyond the range of a double, which it reports as not converted
+    kmlNonFiniteAltitude("kml altitude beyond the range of a double", "8.0005,47.0005,1e999");
+
+    // SHP: like the KML loader, the SHP loader leaves out a vertex it cannot place and keeps the rest.
+    QTest::newRow("shp latitude out of range")
         << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8,147 8.001,47.001 8.001,47 8,47"}
-        << "out of range for entity 0 vertex 1" << QStringList{"8,47 8.001,47.001 8.001,47"};
-    QTest::newRow("longitude out of range")
+        << QStringList{"out of range for entity 0 vertex 1"} << QStringList{"8,47 8.001,47.001 8.001,47"};
+    QTest::newRow("shp longitude out of range")
         << kWgs84Prj << ShapeType::Polyline << QStringList{"8,47 208,47.001 8.001,47.001"}
-        << "out of range for entity 0 vertex 1" << QStringList{"8,47 8.001,47.001"};
+        << QStringList{"out of range for entity 0 vertex 1"} << QStringList{"8,47 8.001,47.001"};
     // Metres in a file whose .prj declares degrees.
-    QTest::newRow("point in metres") << kWgs84Prj << ShapeType::Point << QStringList{"8,47", "424000,5205000"}
-                                     << "out of range for entity 1 vertex 0" << QStringList{"8,47"};
-    QTest::newRow("utm northing out of range")
+    QTest::newRow("shp point in metres") << kWgs84Prj << ShapeType::Point << QStringList{"8,47", "424000,5205000"}
+                                         << QStringList{"out of range for entity 1 vertex 0"} << QStringList{"8,47"};
+    QTest::newRow("shp utm northing out of range")
         << kUtm32NorthPrj << ShapeType::Polygon
         << QStringList{"424000,5205000 424000,15205000 424100,5205100 424100,5205000 424000,5205000"}
-        << "UTM conversion failed for entity 0 vertex 1"
+        << QStringList{"UTM conversion failed for entity 0 vertex 1"}
         << QStringList{"8.000441856,46.99416047 8.001740103,46.99507168 8.00175686,46.99417194"};
-    QTest::newRow("utm easting that is not a number")
+    QTest::newRow("shp utm easting that is not a number")
         << kUtm32NorthPrj << ShapeType::Polygon
         << QStringList{"424000,5205000 nan,5205050 424100,5205100 424100,5205000 424000,5205000"}
-        << "UTM conversion failed for entity 0 vertex 1"
+        << QStringList{"UTM conversion failed for entity 0 vertex 1"}
         << QStringList{"8.000441856,46.99416047 8.001740103,46.99507168 8.00175686,46.99417194"};
     // The polygon winds clockwise without the vertex that is left out, whichever way the ring ran with it, and
     // the warning names that vertex by its place in the file.
-    QTest::newRow("clockwise ring that an out of range vertex makes counter-clockwise")
+    QTest::newRow("shp clockwise ring that an out of range vertex makes counter-clockwise")
         << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47 8.0005,147 8,47"}
-        << "out of range for entity 0 vertex 4" << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
-    QTest::newRow("counter-clockwise ring with a vertex that is not a number")
+        << QStringList{"out of range for entity 0 vertex 4"} << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
+    QTest::newRow("shp counter-clockwise ring with a vertex that is not a number")
         << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8.001,47 nan,47.0005 8.001,47.001 8,47.001 8,47"}
-        << "out of range for entity 0 vertex 2" << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
+        << QStringList{"out of range for entity 0 vertex 2"} << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
 }
 
-void ShapeTest::_testSHPCoordinateValidation()
+void ShapeTest::_testSkippedVertices()
 {
     QFETCH(QString, prj);
     QFETCH(ShapeType, kind);
     QFETCH(QStringList, shapes);
-    QFETCH(QString, warning);
+    QFETCH(QStringList, warnings);
     QFETCH(QStringList, expected);
 
     QTemporaryDir tempDir;
-    const QString file = writeShapefile(tempDir.path(), "shapes", kind, shapes, prj);
+    const QString file = prj.isEmpty() ? _writeKmlFile(tempDir.path(), "shapes.kml", kmlShapeDocument(kind, shapes))
+                                       : writeShapefile(tempDir.path(), "shapes", kind, shapes, prj);
 
-    // Like the KML loader, the SHP loader leaves out a vertex it cannot place and keeps the rest.
-    expectLogMessage("Utilities.SHPFileHelper", QtWarningMsg, QRegularExpression(warning));
+    const char* category = prj.isEmpty() ? "Utilities.KMLHelper" : "Utilities.SHPFileHelper";
+    for (const QString& warning : std::as_const(warnings)) {
+        expectLogMessage(category, QtWarningMsg, QRegularExpression(warning));
+    }
     QString errorString;
     QList<QList<QGeoCoordinate>> loaded;
     QVERIFY2(loadShapes(file, kind, loaded, errorString, 0), qPrintable(errorString));
-    verifyExpectedLogMessage();
+    for (qsizetype i = 0; i < warnings.count(); i++) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(errorString, QString());
     QCOMPARE(coordinateTexts(loaded), expected);
 }
 
@@ -1066,10 +775,7 @@ void ShapeTest::_testKMLExportSchemaValidation()
     placemark.appendChild(point);
     // Validate the document
     const auto result = validator->validate(doc);
-    if (!result.isValid) {
-        qWarning() << "KML validation errors:" << result.errors;
-    }
-    QVERIFY(result.isValid);
+    QVERIFY2(result.isValid, qPrintable(result.errors.join(QStringLiteral("; "))));
     QVERIFY(result.errors.isEmpty());
     // Test validation catches invalid altitudeMode
     const QString invalidKml = R"(<?xml version="1.0" encoding="UTF-8"?>

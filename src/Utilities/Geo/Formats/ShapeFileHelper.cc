@@ -1,109 +1,83 @@
 #include "ShapeFileHelper.h"
 #include "KMLHelper.h"
 #include "SHPFileHelper.h"
-#include "QGCLoggingCategory.h"
-
-QGC_LOGGING_CATEGORY(ShapeFileHelperLog, "Utilities.ShapeFileHelper")
 
 namespace {
 constexpr const char* _shapeFileErrorPrefix = QT_TRANSLATE_NOOP("ShapeFileHelper", "Shape file load failed. %1");
-}
 
-ShapeFileHelper::ShapeFileType ShapeFileHelper::_getShapeFileType(const QString &file, QString &errorString)
+/// What the helper of one file format offers.
+struct ShapeLoader
+{
+    const char* extension;
+    ShapeFileHelper::ShapeType (*determineShapeType)(const QString&, QString&);
+    int (*getEntityCount)(const QString&, QString&);
+    bool (*loadPolygons)(const QString&, QList<QList<QGeoCoordinate>>&, QString&, double);
+    bool (*loadPolylines)(const QString&, QList<QList<QGeoCoordinate>>&, QString&, double);
+    bool (*loadPoints)(const QString&, QList<QGeoCoordinate>&, QString&);
+};
+
+constexpr ShapeLoader shapeLoaders[] = {
+    {ShapeFileHelper::kmlFileExtension, KMLHelper::determineShapeType, KMLHelper::getEntityCount,
+     KMLHelper::loadPolygonsFromFile, KMLHelper::loadPolylinesFromFile, KMLHelper::loadPointsFromFile},
+    {ShapeFileHelper::shpFileExtension, SHPFileHelper::determineShapeType, SHPFileHelper::getEntityCount,
+     SHPFileHelper::loadPolygonsFromFile, SHPFileHelper::loadPolylinesFromFile, SHPFileHelper::loadPointsFromFile},
+};
+
+/// @return the loader for the format that the extension of @a file names, or nullptr with @a errorString set
+const ShapeLoader* shapeLoaderFor(const QString& file, QString& errorString)
 {
     errorString.clear();
 
-    if (file.endsWith(kmlFileExtension, Qt::CaseInsensitive)) {
-        return ShapeFileType::KML;
-    } else if (file.endsWith(shpFileExtension, Qt::CaseInsensitive)) {
-        return ShapeFileType::SHP;
-    } else {
-        // Strip leading dots for user-friendly error message
-        const QString kmlExt = QString(kmlFileExtension).mid(1);
-        const QString shpExt = QString(shpFileExtension).mid(1);
-        errorString = tr(_shapeFileErrorPrefix)
-                          .arg(tr("Unsupported file type. Only %1 and %2 are supported.").arg(kmlExt, shpExt));
+    for (const ShapeLoader& loader : shapeLoaders) {
+        if (file.endsWith(loader.extension, Qt::CaseInsensitive)) {
+            return &loader;
+        }
     }
 
-    return ShapeFileType::None;
+    // Strip leading dots for user-friendly error message
+    const QString kmlExt = QString(ShapeFileHelper::kmlFileExtension).mid(1);
+    const QString shpExt = QString(ShapeFileHelper::shpFileExtension).mid(1);
+    errorString =
+        ShapeFileHelper::tr(_shapeFileErrorPrefix)
+            .arg(ShapeFileHelper::tr("Unsupported file type. Only %1 and %2 are supported.").arg(kmlExt, shpExt));
+    return nullptr;
 }
+}  // namespace
 
 ShapeFileHelper::ShapeType ShapeFileHelper::determineShapeType(const QString &file, QString &errorString)
 {
-    errorString.clear();
-
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::determineShapeType(file, errorString);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::determineShapeType(file, errorString);
-    case ShapeFileType::None:
-    default:
-        return ShapeType::Error;
-    }
+    const ShapeLoader* const loader = shapeLoaderFor(file, errorString);
+    return loader ? loader->determineShapeType(file, errorString) : ShapeType::Error;
 }
 
 int ShapeFileHelper::getEntityCount(const QString &file, QString &errorString)
 {
-    errorString.clear();
-
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::getEntityCount(file, errorString);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::getEntityCount(file, errorString);
-    case ShapeFileType::None:
-    default:
-        return -1;
-    }
+    const ShapeLoader* const loader = shapeLoaderFor(file, errorString);
+    return loader ? loader->getEntityCount(file, errorString) : -1;
 }
 
 bool ShapeFileHelper::loadPolygonsFromFile(const QString &file, QList<QList<QGeoCoordinate>> &polygons, QString &errorString, double filterMeters)
 {
-    errorString.clear();
     polygons.clear();
 
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::loadPolygonsFromFile(file, polygons, errorString, filterMeters);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::loadPolygonsFromFile(file, polygons, errorString, filterMeters);
-    case ShapeFileType::None:
-    default:
-        return false;
-    }
+    const ShapeLoader* const loader = shapeLoaderFor(file, errorString);
+    return loader && loader->loadPolygons(file, polygons, errorString, filterMeters);
 }
 
 bool ShapeFileHelper::loadPolylinesFromFile(const QString &file, QList<QList<QGeoCoordinate>> &polylines, QString &errorString, double filterMeters)
 {
-    errorString.clear();
     polylines.clear();
 
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::loadPolylinesFromFile(file, polylines, errorString, filterMeters);
-    case ShapeFileType::None:
-    default:
-        return false;
-    }
+    const ShapeLoader* const loader = shapeLoaderFor(file, errorString);
+    return loader && loader->loadPolylines(file, polylines, errorString, filterMeters);
 }
 
 bool ShapeFileHelper::loadPointsFromFile(const QString &file, QList<QGeoCoordinate> &points, QString &errorString)
 {
-    errorString.clear();
     points.clear();
 
-    switch (_getShapeFileType(file, errorString)) {
-    case ShapeFileType::KML:
-        return KMLHelper::loadPointsFromFile(file, points, errorString);
-    case ShapeFileType::SHP:
-        return SHPFileHelper::loadPointsFromFile(file, points, errorString);
-    case ShapeFileType::None:
-    default:
-        return false;
-    }
+    const ShapeLoader* const loader = shapeLoaderFor(file, errorString);
+    return loader && loader->loadPoints(file, points, errorString);
 }
 
 QStringList ShapeFileHelper::fileDialogKMLFilters()
