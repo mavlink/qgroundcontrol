@@ -4,10 +4,14 @@
 #ifdef QGC_GST_STREAMING
 
 #include <atomic>
+#include <cerrno>
 #include <gst/gst.h>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <rhi/qrhi.h>
 #include <span>
+#include <thread>
 #include <vector>
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <gst/allocators/gstdmabuf.h>
@@ -16,6 +20,7 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
@@ -76,6 +81,76 @@ enum class ImportedBetween
     OtherStream,
     SameStream,
 };
+
+}  // namespace
+#endif
+
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+namespace {
+
+/// What stands in for a Vulkan device where the import's bookkeeping is tested without one: it creates images unless
+/// told to refuse them, its fences signal once the test lets the GPU be done, and it counts what is destroyed.
+struct StandInVulkanDevice
+{
+    std::atomic<bool> refusesImages{false};
+    std::atomic<bool> gpuDone{false};
+    std::atomic<int> imagesDestroyed{0};
+    std::atomic<int> memoriesFreed{0};
+    std::atomic<int> fencesDestroyed{0};
+    std::atomic<Qt::HANDLE> imageDestroyedOn{nullptr};
+
+    void restart()
+    {
+        refusesImages = false;
+        gpuDone = false;
+        imagesDestroyed = 0;
+        memoriesFreed = 0;
+        fencesDestroyed = 0;
+        imageDestroyedOn = nullptr;
+    }
+
+    void finishGpuWork()
+    {
+        gpuDone = true;
+        gpuDone.notify_all();
+    }
+};
+
+// Process-wide: the entry points below are plain functions, and a waiter thread may outlive a failed test.
+StandInVulkanDevice s_standInVulkanDevice;
+
+/// The entry points of s_standInVulkanDevice that importing a plane up to its fd and releasing a frame call.
+GstDmaBufVulkan::DeviceFns standInVulkanDeviceFns()
+{
+    GstDmaBufVulkan::DeviceFns fns;
+    fns.createImage = [](VkDevice, const VkImageCreateInfo*, const VkAllocationCallbacks*, VkImage* image) {
+        if (s_standInVulkanDevice.refusesImages) {
+            return VK_ERROR_FORMAT_NOT_SUPPORTED;
+        }
+        *image = VkImage(quintptr(1));
+        return VK_SUCCESS;
+    };
+    fns.destroyImage = [](VkDevice, VkImage, const VkAllocationCallbacks*) {
+        ++s_standInVulkanDevice.imagesDestroyed;
+        s_standInVulkanDevice.imageDestroyedOn = QThread::currentThreadId();
+    };
+    fns.freeMemory = [](VkDevice, VkDeviceMemory, const VkAllocationCallbacks*) {
+        ++s_standInVulkanDevice.memoriesFreed;
+    };
+    fns.createFence = [](VkDevice, const VkFenceCreateInfo*, const VkAllocationCallbacks*, VkFence* fence) {
+        *fence = VkFence(quintptr(1));
+        return VK_SUCCESS;
+    };
+    fns.destroyFence = [](VkDevice, VkFence, const VkAllocationCallbacks*) { ++s_standInVulkanDevice.fencesDestroyed; };
+    fns.getFenceStatus = [](VkDevice, VkFence) { return s_standInVulkanDevice.gpuDone ? VK_SUCCESS : VK_NOT_READY; };
+    fns.waitForFences = [](VkDevice, uint32_t, const VkFence*, VkBool32, uint64_t) {
+        s_standInVulkanDevice.gpuDone.wait(false);
+        return VK_SUCCESS;
+    };
+    fns.queueSubmit = [](VkQueue, uint32_t, const VkSubmitInfo*, VkFence) { return VK_SUCCESS; };
+    fns.queueWaitIdle = [](VkQueue) { return VK_SUCCESS; };
+    return fns;
+}
 
 }  // namespace
 #endif
@@ -523,9 +598,15 @@ void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
         << int(Outcome::Rejected) << false << int(ImportedBetween::SameStream) << never << QString();
     QTest::newRow("a LINEAR frame the QRhi can't import is left to the CPU map")
         << int(Outcome::NotImportable) << false << int(ImportedBetween::Nothing) << never << QString();
+    // The process is out of file descriptors, which is not the driver's refusal.
+    QTest::newRow("a LINEAR frame whose fd can't be duplicated is left to the CPU map")
+        << int(Outcome::FdDupFailed) << false << int(ImportedBetween::Nothing) << never << QString();
 #if GST_CHECK_VERSION(1, 24, 0)
     QTest::newRow("a tiled frame the QRhi can't import has no other way out")
         << int(Outcome::NotImportable) << true << int(ImportedBetween::Nothing) << limit << failed;
+    QTest::newRow("a tiled frame whose fd can't be duplicated has no other way out either")
+        << int(Outcome::FdDupFailed) << true << int(ImportedBetween::Nothing) << limit
+        << QStringLiteral("could not be duplicated");
 #endif
 #endif
 }
@@ -721,6 +802,101 @@ void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions()
 
     GstDmaBufVulkan::requestDeviceExtensions();
     QCOMPARE(qgetenv(kVariable), after);
+#endif
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
+{
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf import under Vulkan not compiled in this build");
+#else
+    using GstDmaBufVulkan::ImportFailure;
+    const auto resetGuard = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
+    const GstDmaBufVulkan::DeviceFns fns = standInVulkanDeviceFns();
+    // No open descriptor has this number: fcntl() fails on it with EBADF, as it fails on any with EMFILE once the
+    // process has none left.
+    const GstQtDmaBufImport::Plane plane{.fd = (std::numeric_limits<int>::max)(), .pitch = 64};
+
+    // For comparison, an image the driver refuses.
+    GstDmaBufVideoBuffer::resetCachedState();
+    s_standInVulkanDevice.restart();
+    s_standInVulkanDevice.refusesImages = true;
+    expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBufVulkan", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("vkCreateImage failed")));
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::Rejected);
+    verifyExpectedLogMessage();
+
+    // Warned about once, with the errno, until the scene graph is recreated.
+    GstDmaBufVideoBuffer::resetCachedState();
+    s_standInVulkanDevice.restart();
+    expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBufVulkan", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("dma-buf fd failed: errno %1 ").arg(EBADF)));
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::FdDupFailed);
+    verifyExpectedLogMessage();
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::FdDupFailed);
+
+    // And counted apart from the imports a driver refused.
+    GstVideoInfo info;
+    GstTest::SamplePtr sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    const GstDmaBufVideoBuffer frame(sample.get(), info,
+                                     QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12), EGL_NO_DISPLAY);
+    sample.reset();
+    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
+    frame.noteImportOutcomeForTest(GstDmaBufVideoBuffer::ImportOutcome::FdDupFailed);
+    const QString stats = HwBuffers::extraPathStatsSince(before);
+    QVERIFY2(stats.contains(QStringLiteral("DMABuf-fallback[fd-dup-failed=1]")), qPrintable(stats));
+#endif
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data()
+{
+    QTest::addColumn<bool>("rhiDestroyedFirst");
+
+    QTest::newRow("the GPU finishes while the QRhi lives") << false;
+    QTest::newRow("the QRhi is destroyed before the GPU finishes") << true;
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame()
+{
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf import under Vulkan not compiled in this build");
+#else
+    QFETCH(bool, rhiDestroyedFirst);
+
+    std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
+    StandInVulkanDevice& device = s_standInVulkanDevice;
+    device.restart();
+    // Lets the buffer's waiter go when the test fails before the GPU is done.
+    const auto gpuGuard = qScopeGuard([&device] { device.finishGpuWork(); });
+    GstBuffer* const buffer = gst_buffer_new();
+    const auto bufferGuard = qScopeGuard([buffer] { gst_buffer_unref(buffer); });
+    const auto bufferRefs = [buffer] { return GST_MINI_OBJECT_REFCOUNT_VALUE(buffer); };
+
+    // Qt destroys a frame's bundle while the GPU still samples its images: the decoder must not get the buffer yet.
+    GstDmaBufVulkan::deferredReleaseForTest(*rhi, standInVulkanDeviceFns(), buffer)();
+    QCOMPARE(bufferRefs(), 2);
+
+    if (rhiDestroyedFirst) {
+        // The teardown waits for the GPU, which finishes meanwhile.
+        std::thread gpu;
+        rhi->addCleanupCallback([&gpu, &device](QRhi*) { gpu = std::thread([&device] { device.finishGpuWork(); }); });
+        rhi.reset();
+        gpu.join();
+        QCOMPARE(bufferRefs(), 1);
+    } else {
+        // The GPU finishes. The stream has ended: no other frame is imported or released, and the QRhi lives on.
+        device.finishGpuWork();
+        QTRY_COMPARE_WITH_TIMEOUT(bufferRefs(), 1, TestTimeout::mediumMs());
+        QCOMPARE(device.imagesDestroyed.load(), 0);
+        rhi.reset();
+    }
+    // The images, their memory and the fence are the QRhi's thread's to destroy, at its teardown at the latest.
+    QCOMPARE(device.imagesDestroyed.load(), 1);
+    QCOMPARE(device.memoriesFreed.load(), 1);
+    QCOMPARE(device.fencesDestroyed.load(), 1);
+    QCOMPARE(device.imageDestroyedOn.load(), QThread::currentThreadId());
 #endif
 }
 

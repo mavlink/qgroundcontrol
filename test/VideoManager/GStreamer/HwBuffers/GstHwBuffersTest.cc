@@ -810,6 +810,38 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 #endif
 }
 
+void GstHwBuffersTest::_testWithPixelFormatKeepsOtherProperties()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
+#else
+    // Every property QVideoFrameFormat has a setter for (Qt 6.12), each away from its default.
+    QVideoFrameFormat format(QSize(64, 48), QVideoFrameFormat::Format_YUYV);
+    format.setViewport(QRect(2, 4, 60, 40));
+    format.setScanLineDirection(QVideoFrameFormat::BottomToTop);
+    format.setStreamFrameRate(25.0);
+    format.setColorSpace(QVideoFrameFormat::ColorSpace_BT2020);
+    format.setColorTransfer(QVideoFrameFormat::ColorTransfer_ST2084);
+    format.setColorRange(QVideoFrameFormat::ColorRange_Full);
+    format.setMirrored(true);
+    format.setRotation(QtVideo::Rotation::Clockwise90);
+    format.setMaxLuminance(1000.0f);
+
+    const QVideoFrameFormat rgba = GstHw::withPixelFormat(format, QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.frameSize(), format.frameSize());
+    QCOMPARE(rgba.viewport(), format.viewport());
+    QCOMPARE(rgba.scanLineDirection(), format.scanLineDirection());
+    QCOMPARE(rgba.streamFrameRate(), format.streamFrameRate());
+    QCOMPARE(rgba.colorSpace(), format.colorSpace());
+    QCOMPARE(rgba.colorTransfer(), format.colorTransfer());
+    QCOMPARE(rgba.colorRange(), format.colorRange());
+    QCOMPARE(rgba.isMirrored(), format.isMirrored());
+    QCOMPARE(rgba.rotation(), format.rotation());
+    QCOMPARE(rgba.maxLuminance(), format.maxLuminance());
+#endif
+}
+
 void GstHwBuffersTest::_testTexturePadsPicture_data()
 {
     QTest::addColumn<QSize>("textureSize");

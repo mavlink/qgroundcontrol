@@ -167,7 +167,7 @@ void disableImport(GstHwPathTelemetry::HwFallbackReason reason, const char* caus
 }
 
 /// Feeds @p outcome of importing a frame of @p layout into the disable latch: a refusal by the driver counts in the
-/// layout's run of failures, as does any failure of a @p tiled frame.
+/// layout's run of failures, as does a @p tiled frame that could not be imported, whatever kept it from being.
 void noteLayoutImportOutcome(const ImportLayout& layout, bool tiled, GstDmaBufVideoBuffer::ImportOutcome outcome)
 {
     using ImportOutcome = GstDmaBufVideoBuffer::ImportOutcome;
@@ -183,6 +183,15 @@ void noteLayoutImportOutcome(const ImportLayout& layout, bool tiled, GstDmaBufVi
             GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                      GstHwPathTelemetry::HwFallbackReason::MapFailed);
             break;
+        case ImportOutcome::FdDupFailed:
+            // The process is out of file descriptors, which no driver refused: counted under a reason of its own. As
+            // below, only a tiled frame has no other way to the screen.
+            GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
+                                                     GstHwPathTelemetry::HwFallbackReason::FdDupFailed);
+            if (!tiled) {
+                return;
+            }
+            break;
         case ImportOutcome::NotImportable:
             // Qt shows a LINEAR frame through map() instead, and another QRhi may import it. A tiled one is not shown
             // at all, so only renegotiating without DMABuf brings its stream back.
@@ -191,7 +200,13 @@ void noteLayoutImportOutcome(const ImportLayout& layout, bool tiled, GstDmaBufVi
             }
             break;
     }
-    if (s_importFailures.noteFailure(layout) >= GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures) {
+    if (s_importFailures.noteFailure(layout) < GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures) {
+        return;
+    }
+    if (outcome == ImportOutcome::FdDupFailed) {
+        disableImport(GstHwPathTelemetry::HwFallbackReason::FdDupFailed,
+                      "The dma-buf fds of a stream's recent frames could not be duplicated");
+    } else {
         disableImport(GstHwPathTelemetry::HwFallbackReason::MapFailed, "Every recent DMABuf import of a stream failed");
     }
 }
@@ -212,17 +227,6 @@ quint32 eglfsPackedYuvFourcc(QVideoFrameFormat::PixelFormat format)
         return DRM_FORMAT_UYVY;
     }
     return 0;
-}
-
-QVideoFrameFormat withPixelFormat(const QVideoFrameFormat& format, QVideoFrameFormat::PixelFormat pixelFormat)
-{
-    QVideoFrameFormat out(format.frameSize(), pixelFormat);
-    out.setStreamFrameRate(format.streamFrameRate());
-    out.setColorRange(format.colorRange());
-    out.setColorSpace(format.colorSpace());
-    out.setColorTransfer(format.colorTransfer());
-    out.setViewport(format.viewport());
-    return out;
 }
 
 // Best-effort GPU-side wait on the producer's fences: export a sync_file from each dma-buf, import it as an
@@ -469,7 +473,7 @@ GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo
     // Advertised for the GPU import only; the base class keeps the memory's format, so map() refuses the CPU upload Qt
     // would otherwise read as RGBA.
     if (_packedYuvFourcc != 0) {
-        _format = withPixelFormat(_format, QVideoFrameFormat::Format_RGBA8888);
+        _format = GstHw::withPixelFormat(_format, QVideoFrameFormat::Format_RGBA8888);
     }
 #if GST_CHECK_VERSION(1, 24, 0)
     if (GstCaps* caps = gst_sample_get_caps(sample); caps && gst_video_is_dma_drm_caps(caps)) {
@@ -691,12 +695,19 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, GstBuffer*
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    bool rejected = false;
+    GstDmaBufVulkan::ImportFailure vulkanFailure = GstDmaBufVulkan::ImportFailure::NotImportable;
     QVideoFrameTexturesUPtr textures =
         GstDmaBufVulkan::importTextures(*this, rhi, old, std::span(planes.data(), std::size_t(fourccs.count)),
-                                        pixelFormat, _format.frameSize(), buffer, rejected);
-    if (rejected) {
-        failure = ImportOutcome::Rejected;
+                                        pixelFormat, _format.frameSize(), buffer, vulkanFailure);
+    switch (vulkanFailure) {
+        case GstDmaBufVulkan::ImportFailure::NotImportable:
+            break;
+        case GstDmaBufVulkan::ImportFailure::Rejected:
+            failure = ImportOutcome::Rejected;
+            break;
+        case GstDmaBufVulkan::ImportFailure::FdDupFailed:
+            failure = ImportOutcome::FdDupFailed;
+            break;
     }
     return textures;
 }

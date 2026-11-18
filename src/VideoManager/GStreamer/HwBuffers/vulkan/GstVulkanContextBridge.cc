@@ -98,11 +98,18 @@ gboolean takeGraphicsQueue(GstVulkanDevice* device, GstVulkanQueue* queue, gpoin
     return FALSE;
 }
 
-/// GstVulkanInstance::create-device handler: the bridge's device, @p bridgeDevice, for an element of the bridge's
-/// instance that found no device on its pads.
-GstVulkanDevice* provideBridgeDevice(GstVulkanInstance* /*instance*/, guint /*deviceIndex*/, gpointer bridgeDevice)
+/// GstVulkanInstance::create-device handler of gst-vulkan before 1.26, whose signal has no parameter: the bridge's
+/// device, @p bridgeDevice, for an element of the bridge's instance that found no device on its pads.
+GstVulkanDevice* provideBridgeDevice(GstVulkanInstance* /*instance*/, gpointer bridgeDevice)
 {
     return GST_VULKAN_DEVICE(gst_object_ref(bridgeDevice));
+}
+
+/// The handler from gst-vulkan 1.26 on, whose signal names the physical device asked for: the bridge has one device,
+/// on the physical device Qt renders on, whichever that is.
+GstVulkanDevice* provideBridgeDeviceForIndex(GstVulkanInstance* instance, guint /*deviceIndex*/, gpointer bridgeDevice)
+{
+    return provideBridgeDevice(instance, bridgeDevice);
 }
 
 constexpr const char* kContextTypes[] = {
@@ -127,7 +134,7 @@ private:
     GstVulkanInstance* _instance = nullptr;
     GstVulkanDevice* _device = nullptr;
     GstVulkanQueue* _queue = nullptr;
-    /// provideBridgeDevice() on _instance; 0 where gst-vulkan has no create-device signal.
+    /// The create-device handler on _instance; 0 when none fits its signal.
     gulong _createDeviceHandler = 0;
 };
 
@@ -173,13 +180,13 @@ bool VulkanContextBridge::primeLocked()
     }
 
     // gst-vulkan asks for an instance on the bus, but for a device on its pads only: an element that isn't linked to
-    // the sink yet opens one of its own, on the first physical device. From 1.26 its instance's create-device signal
-    // makes that device instead. Looked up by name, so this builds against older releases too. The handler holds
-    // the device, which holds the instance: clearLocked() disconnects it.
-    if (g_signal_lookup("create-device", GST_TYPE_VULKAN_INSTANCE) != 0) {
-        _createDeviceHandler = g_signal_connect_data(
-            _instance, "create-device", G_CALLBACK(&provideBridgeDevice), gst_object_ref(_device),
-            +[](gpointer device, GClosure*) { gst_object_unref(device); }, GConnectFlags(0));
+    // the sink yet has its instance create one, on the first physical device unless the instance's create-device
+    // signal makes that device instead. The handler holds the device, which holds the instance: clearLocked()
+    // disconnects it.
+    _createDeviceHandler = GstVulkanContextBridge::connectCreateDevice(G_OBJECT(_instance), GST_OBJECT(_device));
+    if (_createDeviceHandler == 0) {
+        qCWarning(GstVulkanBridgeLog) << "gst-vulkan's create-device signal takes parameters this build doesn't know: "
+                                         "an element that isn't linked to the sink opens the first physical device";
     }
 
     qCInfo(GstVulkanBridgeLog) << "Vulkan bridge primed on Qt's physical device" << phys->properties.deviceName
@@ -232,6 +239,30 @@ void VulkanContextBridge::clearLocked()
 GstContextBridgeBase& GstVulkanContextBridge::instance()
 {
     return s_bridge;
+}
+
+gulong GstVulkanContextBridge::connectCreateDevice(GObject* instance, GstObject* device)
+{
+    // The signal is older than its parameter (upstream's gstvkinstance.c: none in 1.20 to 1.24, a guint from 1.26),
+    // and GLib calls a handler with the signal's arguments, whatever the handler declares.
+    GSignalQuery query = {};
+    if (const guint id = g_signal_lookup("create-device", G_OBJECT_TYPE(instance)); id != 0) {
+        g_signal_query(id, &query);
+    }
+    GCallback handler = nullptr;
+    if ((query.signal_id != 0) && ((query.return_type & ~G_SIGNAL_TYPE_STATIC_SCOPE) == GST_TYPE_VULKAN_DEVICE)) {
+        if (query.n_params == 0) {
+            handler = G_CALLBACK(&provideBridgeDevice);
+        } else if ((query.n_params == 1) && ((query.param_types[0] & ~G_SIGNAL_TYPE_STATIC_SCOPE) == G_TYPE_UINT)) {
+            handler = G_CALLBACK(&provideBridgeDeviceForIndex);
+        }
+    }
+    if (!handler) {
+        return 0;
+    }
+    return g_signal_connect_data(
+        instance, "create-device", handler, gst_object_ref(device),
+        +[](gpointer held, GClosure*) { gst_object_unref(held); }, GConnectFlags(0));
 }
 
 #endif  // QGC_HAS_GST_VULKAN_GPU_PATH

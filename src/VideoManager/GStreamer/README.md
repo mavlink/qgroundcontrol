@@ -298,9 +298,10 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
     puts GStreamer's device on the physical device Qt renders on. A VulkanImage frame that did reach the sink would
     not be shown: gst-vulkan's pools allocate device-local memory, which it doesn't map on the CPU either. In a build
     with the path, `GstHwBuffersVulkanReadbackTest` checks the bridge's device and the refused import. gst-vulkan
-    looks for a device on its pads only, so an element that isn't linked to the sink when it opens its device gets
-    the bridge's only from gst-vulkan 1.26, through the instance's `create-device` signal; before, it opens the first
-    physical device.
+    looks for a device on its pads only, so an element that isn't linked to the sink when it opens its device has its
+    instance create one, and gets the bridge's through the instance's `create-device` signal. That signal has no
+    parameter before gst-vulkan 1.26 and the device's index from then on, so the bridge connects the handler that fits
+    it.
   - **CUDA** (`cuda/`, gst-cuda's CUDAMemory): never run on NVIDIA hardware, only compiled, against a stub `cuda.h`.
     The path wraps the fd of `gst_cuda_memory_export()` as a dma-buf for the DMABuf path. gst-cuda exports only memory
     of a `GST_CUDA_MEMORY_ALLOC_MMAP` pool, which nothing in QGC proposes to a decoder, so a decoder's frames aren't
@@ -520,11 +521,16 @@ neither gst-vulkan nor a link to the Vulkan loader.
 - Vulkan doesn't wait on a dma-buf's implicit fences, and QRhi's submission can't be handed the producer's fence, so
   the import first blocks, for at most 100 ms, until `poll()` reports the producer's writes complete, and takes the
   CPU path when it doesn't. The frame's buffer stays referenced until the GPU has finished the last frame that sampled
-  its images, so the decoder can't write the next picture into it meanwhile.
+  its images, so the decoder can't write the next picture into it meanwhile. A thread of its own waits for that and
+  hands the buffer back, so a decoder with a fixed pool gets it without another frame being drawn. The images and
+  their memory are destroyed on the render thread, when it next releases a frame or its QRhi is destroyed.
 - The import gives QRhi the images in `VK_IMAGE_LAYOUT_GENERAL`, the layout that keeps a foreign producer's contents,
   without the queue-family transfer from `VK_QUEUE_FAMILY_FOREIGN_EXT` the specification describes: QRhi issues the
   barriers and has no hook for one.
-- Failed imports count towards the DMABuf path's disable latch as under OpenGL.
+- Failed imports count towards the DMABuf path's disable latch as under OpenGL. One that failed because a plane's
+  dma-buf fd could not be duplicated, as when the process is out of file descriptors, is no driver's refusal: it is
+  warned about once, with the `errno`, counted as `fd-dup-failed` among the path's fallback reasons, and counts
+  towards the latch only for a tiled frame, which has no other way to the screen.
 
 `GstHwBuffersVulkanReadbackTest` imports VA-API frames (a decoder's NV12, and I420, P010, RGBA and BGRA from the
 postprocessor, in whichever of the offered layouts the driver picks) into a Vulkan QRhi and compares
@@ -615,7 +621,7 @@ define no class of their own, the cases of one GPU path in that path's folder
 | `GstQgcSinkControllerTest` | Unit | `QGCQVideoSinkController` binding `qgcqvideosink` to a `QVideoSink`: inactive without a window, unbound when its owner or the `QVideoSink` goes away or the sink is released, and active again, when it was, once a `QVideoSink` is bound again. |
 | `GstQgcVideoFormatsTest` | Unit | The sink's format tables: GStreamer formats, colorimetry and orientations mapped to Qt's, and the formats the sink advertises. |
 | `GstSourceFactoryTest` | Unit | The source bin built for each URI, its jitter-buffer and retransmission policy, the RTP packet count of the bins without a jitter buffer, RTSP stream selection, credentials and keyframe requests (from RTSP depayloaders, and let through by the SDP), dynamic-pad linking, the depayloader and parser an RTSP stream's encoding selects and the frames they push without waiting for the next, an RTSP stream followed onto a new pad, and the parameter-set gate, without a stream. |
-| `GstHwBuffersTest` | Unit | The `HwBuffers` paths without a GPU: path selection, import caches, frame-texture bundles on the Null `QRhi`, DMABuf modifier policy, CPU fallbacks, the frame geometry a buffer's metas give, and telemetry. |
+| `GstHwBuffersTest` | Unit | The `HwBuffers` paths without a GPU: path selection, import caches, frame-texture bundles on the Null `QRhi`, DMABuf modifier policy, the DMABuf import under Vulkan against a stand-in for the device (a frame's buffer handed back once its fence signals, a dma-buf fd that can't be duplicated told from a driver's refusal), CPU fallbacks, the frame geometry a buffer's metas give, and telemetry. |
 | `GstQgcSinkHarnessTest` | Unit | `qgcvideosinkbin` under GstHarness, bound to a `QVideoSink`: resolution and format changes renegotiated through the converter, and orientation tags crossing it. |
 | `GstSourceFactoryHarnessTest` | Unit | The parameter-set gate on a real H.264/H.265 depayloader under GstHarness, fed RTP payloaded from the test streams as a receiver joining mid-GOP sees it. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components without a stream: stall detection, recording finalization by ancestry, the container a recording goes into for each codec and the error for a codec none holds, pipeline and `.dot` file names, the size `VideoReceiver::presentedSize()` reports for a padded, cropped or rotated frame, and the RTP packet counter (loss, late and duplicate packets, wraparound, a sender that starts over, a stray packet of another one, the packet rate that tells a long loss from a sender starting over, jitter) with the probe that feeds it. |
@@ -626,7 +632,7 @@ define no class of their own, the cases of one GPU path in that path's folder
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
 | `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API, D3D12 frames on a Direct3D 11 QRhi too, and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter, where the NV12 D3D12 frame on Direct3D 11 is skipped (WARP opens it without chroma). The D3D bridges drop a device GStreamer reports removed. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`), also when padded beyond their caps; the frame's own GL sync meta left alone; and a 10-bit planar CPU frame as Qt's shaders convert it. |
-| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | VA-API DMABuf frames imported into a Vulkan QRhi and converted with `QVideoFrame::toImage()`, and a VA stream into the sink under a Vulkan render target (xcb). With `QGC_GST_ENABLE_VULKAN`: the gst-vulkan bridge's device and a VulkanImage frame's refused import. |
+| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | VA-API DMABuf frames imported into a Vulkan QRhi and converted with `QVideoFrame::toImage()`, and a VA stream into the sink under a Vulkan render target (xcb). With `QGC_GST_ENABLE_VULKAN`: the gst-vulkan bridge's device, which its instance's `create-device` signal answers with in either form of the signal, and a VulkanImage frame's refused import. |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, display, restarts, config changes, a decoder that can't be inserted or is missing, which costs the stream its picture until a later try gets one in, a hardware decoder that shows nothing replaced by the next one after one stall, a hardware decoder replaced when Qt's graphics device reaches its pipeline late, the stream restarted when that device is lost, a branch element that fails a push without an error message, a mid-stream resolution change, H.265, MockLink's streams, screenshots. Receivers and servers in every `GstVideoReceiver*Test` listen on port 0, so parallel runs never collide. |
 | `GstVideoReceiverReconnectTest` | Integration | Permanent failures, reconnect backoff after a failed start, the restart policy on stream loss, an RTSP server that never answers, refuses the credentials, or offers no video stream, and the cause a failure message names. A worker that a decoder's streaming thread holds, reported once and again after it went on, with the picture kept only while its frames arrive, and a worker behind with a row of slow tasks, which isn't reported. |
 | `GstVideoReceiverRecordingTest` | Integration | Recordings that stay playable: decoder-only recovery, with a decoder that is given up and with a stream no decoder takes, a codec MP4 can't hold recorded as Matroska, across reconnects, from part to part (after the part's time, before its header space runs out, and when the stream changes its resolution) with the keyframe asked for, started at a keyframe that has its parameter sets or failed without one, slow and hung storage, recorder errors, a full disk named as such, also when only the sync at a file's end tells, stream end, deactivation and bounded teardown. |

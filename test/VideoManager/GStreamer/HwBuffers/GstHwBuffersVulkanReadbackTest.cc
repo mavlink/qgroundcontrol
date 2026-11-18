@@ -39,6 +39,7 @@
 #undef slots
 #include <gst/vulkan/gstvkdevice.h>
 #include <gst/vulkan/gstvkimagememory.h>
+#include <gst/vulkan/gstvkinstance.h>
 #pragma pop_macro("slots")
 
 #include "GstHwPathTelemetry.h"
@@ -158,6 +159,21 @@ GStreamer::GstObjectPtr primeVulkanBridgeOn(QRhi& rhi)
         context ? gst_structure_get_value(gst_context_get_structure(context), "gst.vulkan.device") : nullptr;
     return (device && G_VALUE_HOLDS_OBJECT(device)) ? GStreamer::adoptObject(GST_OBJECT(g_value_dup_object(device)))
                                                     : GStreamer::GstObjectPtr();
+}
+
+/// A GObject type named @p name whose create-device signal returns a GstVulkanDevice, as GstVulkanInstance's does,
+/// and takes one @p parameter, or none for G_TYPE_NONE. Registered once: GLib keeps its types.
+GType createDeviceSignalType(const char* name, GType parameter)
+{
+    GType type = g_type_from_name(name);
+    if (type == 0) {
+        type = g_type_register_static_simple(G_TYPE_OBJECT, name, sizeof(GObjectClass), nullptr, sizeof(GObject),
+                                             nullptr, GTypeFlags(0));
+        const bool hasParameter = (parameter != G_TYPE_NONE);
+        g_signal_newv("create-device", type, G_SIGNAL_RUN_LAST, nullptr, nullptr, nullptr, nullptr,
+                      GST_TYPE_VULKAN_DEVICE, hasParameter ? 1 : 0, hasParameter ? &parameter : nullptr);
+    }
+    return type;
 }
 
 }  // namespace
@@ -383,6 +399,96 @@ void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice(
     g_object_get(physicalDevice, "name", &name, nullptr);
     const GStreamer::GCharPtr nameOwner(name);
     QCOMPARE(QByteArray(name), rhi->driverInfo().deviceName);
+#endif
+}
+
+void GstHwBuffersVulkanReadbackTest::_testGstVulkanInstanceCreatesBridgeDevice()
+{
+#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    QSKIP("gst-vulkan path not compiled in this build (QGC_GST_ENABLE_VULKAN)");
+#else
+    QString unavailable;
+    const std::unique_ptr<QRhi> rhi = createGstVulkanTestRhi(/*software=*/false, unavailable);
+    if (!rhi) {
+        QSKIP(qPrintable(unavailable));
+    }
+    const auto withdraw = qScopeGuard([this] { _withdrawPublishedRhi(); });
+    const GStreamer::GstObjectPtr device = primeVulkanBridgeOn(*rhi);
+    QVERIFY2(device, "GStreamer's Vulkan instance has no physical device matching the QRhi's");
+
+    // What a gst-vulkan element does that finds no device on its pads, as one that isn't linked to the sink yet: the
+    // instance's create-device signal, which every gst-vulkan release emits its own way, must answer with the
+    // bridge's device.
+    GError* error = nullptr;
+    const GStreamer::GstObjectPtr created = GStreamer::adoptObject(
+        GST_OBJECT(gst_vulkan_instance_create_device(GST_VULKAN_DEVICE(device.get())->instance, &error)));
+    const QByteArray failure = error ? QByteArray(error->message) : QByteArray("no device");
+    g_clear_error(&error);
+    QVERIFY2(created, failure.constData());
+    QCOMPARE(created.get(), device.get());
+#endif
+}
+
+void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal_data()
+{
+    QTest::addColumn<QByteArray>("typeName");
+    QTest::addColumn<quint64>("parameter");
+    QTest::addColumn<bool>("served");
+
+    QTest::newRow("no parameter: gst-vulkan 1.20 to 1.24")
+        << QByteArray("QgcTestCreateDeviceWithoutParameter") << quint64(G_TYPE_NONE) << true;
+    QTest::newRow("the device's index: gst-vulkan 1.26 on")
+        << QByteArray("QgcTestCreateDeviceWithIndex") << quint64(G_TYPE_UINT) << true;
+    // Not connected, rather than called with arguments its handler doesn't declare.
+    QTest::newRow("a parameter no release has")
+        << QByteArray("QgcTestCreateDeviceWithString") << quint64(G_TYPE_STRING) << false;
+}
+
+void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal()
+{
+#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+    QSKIP("gst-vulkan path not compiled in this build (QGC_GST_ENABLE_VULKAN)");
+#else
+    QFETCH(QByteArray, typeName);
+    QFETCH(quint64, parameter);
+    QFETCH(bool, served);
+
+    // Any GstVulkanDevice, which need not be opened: the handlers only hand it out.
+    const GStreamer::GstObjectPtr vulkan = GStreamer::adoptObject(GST_OBJECT(gst_vulkan_instance_new()));
+    if (!gst_vulkan_instance_open(GST_VULKAN_INSTANCE(vulkan.get()), nullptr) ||
+        (GST_VULKAN_INSTANCE(vulkan.get())->n_physical_devices == 0)) {
+        QSKIP("GStreamer finds no Vulkan device");
+    }
+    const GStreamer::GstObjectPtr device =
+        GStreamer::adoptObject(GST_OBJECT(gst_vulkan_device_new_with_index(GST_VULKAN_INSTANCE(vulkan.get()), 0)));
+    QVERIFY(device);
+    const gint refsBefore = GST_OBJECT_REFCOUNT_VALUE(device.get());
+
+    const auto parameterType = static_cast<GType>(parameter);
+    GObject* const source =
+        G_OBJECT(g_object_new(createDeviceSignalType(typeName.constData(), parameterType), nullptr));
+    const auto sourceGuard = qScopeGuard([source] { g_object_unref(source); });
+    const gulong handler = GstVulkanContextBridge::connectCreateDevice(source, device.get());
+    QCOMPARE(handler != 0, served);
+
+    // As gst_vulkan_instance_create_device() emits it in a release whose signal has these parameters.
+    GstVulkanDevice* created = nullptr;
+    if (parameterType == G_TYPE_NONE) {
+        g_signal_emit_by_name(source, "create-device", &created);
+    } else if (parameterType == G_TYPE_UINT) {
+        g_signal_emit_by_name(source, "create-device", guint(1), &created);
+    } else {
+        g_signal_emit_by_name(source, "create-device", "", &created);
+    }
+    const GStreamer::GstObjectPtr createdOwner = GStreamer::adoptObject(GST_OBJECT(created));
+    QCOMPARE(GST_OBJECT(created), served ? device.get() : nullptr);
+
+    // The handler holds the device for as long as it is connected, and each answer is a reference of its own.
+    QCOMPARE(GST_OBJECT_REFCOUNT_VALUE(device.get()), refsBefore + (served ? 2 : 0));
+    if (served) {
+        g_signal_handler_disconnect(source, handler);
+        QCOMPARE(GST_OBJECT_REFCOUNT_VALUE(device.get()), refsBefore + 1);
+    }
 #endif
 }
 

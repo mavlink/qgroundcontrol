@@ -45,6 +45,7 @@ public:
         NotImportable,  ///< Stopped before the driver was asked: by the QRhi mapping it, or by the frame's layout.
         Rejected,       ///< The driver refused the frame.
         Unrecoverable,  ///< The driver refused it in a way no later frame avoids (EGL_BAD_MATCH).
+        FdDupFailed,    ///< A plane's dma-buf fd could not be duplicated (EMFILE, EBADF): no fault of the driver's.
     };
 
     /// True once an import failed in a way later frames can't avoid; cleared by resetCachedState().
@@ -64,7 +65,8 @@ public:
 #endif
 
 private:
-    /// The import itself; without textures, @p failure tells why when the driver refused.
+    /// The import itself; without textures, @p failure tells why when the driver refused or a dma-buf fd could not be
+    /// duplicated.
     QVideoFrameTexturesUPtr importFrame(QRhi& rhi, QVideoFrameTexturesUPtr& old, ImportOutcome& failure);
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, GstBuffer* buffer, QVideoFrameTexturesUPtr& old,
@@ -72,7 +74,8 @@ private:
 #endif
     QVideoFrameTexturesUPtr importGl(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
     /// Counts @p outcome in the run of failed imports of this frame's layout, which disables the path at
-    /// kMaxConsecutiveImportFailures: a refusal by the driver, and any failure of a tiled frame.
+    /// kMaxConsecutiveImportFailures: a refusal by the driver, and a tiled frame that could not be imported. An fd
+    /// that could not be duplicated counts for a tiled frame alone, which has no other way to the screen.
     void noteImportOutcome(ImportOutcome outcome) const;
     /// A vendor tiling from DMA_DRM caps: the memory has no CPU-readable layout.
     bool isTiled() const noexcept;

@@ -16,6 +16,21 @@ bool GstHw::texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes)
     return (textureSize.width() > rounded(picture.width())) || (textureSize.height() > rounded(picture.height()));
 }
 
+QVideoFrameFormat GstHw::withPixelFormat(const QVideoFrameFormat& format, QVideoFrameFormat::PixelFormat pixelFormat)
+{
+    QVideoFrameFormat out(format.frameSize(), pixelFormat);
+    out.setViewport(format.viewport());
+    out.setScanLineDirection(format.scanLineDirection());
+    out.setStreamFrameRate(format.streamFrameRate());
+    out.setColorSpace(format.colorSpace());
+    out.setColorTransfer(format.colorTransfer());
+    out.setColorRange(format.colorRange());
+    out.setMirrored(format.isMirrored());
+    out.setRotation(format.rotation());
+    out.setMaxLuminance(format.maxLuminance());
+    return out;
+}
+
 GstHwVideoBuffer::GstHwVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, QVideoFrameFormat format)
     : QHwVideoBuffer(QVideoFrame::RhiTextureHandle)
     , _sample(sample ? gst_sample_ref(sample) : nullptr)
