@@ -145,6 +145,26 @@ void QtMultimediaVideoReceiverTest::_testStartWhileRecordingIsRefused()
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
+void QtMultimediaVideoReceiverTest::_testClosingEndsRecordingNotStarted()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString file = dir.filePath(QStringLiteral("first.mkv"));
+
+    _ignorePlayerLogs();
+    _ignoreEncoderFallbacks();
+    {
+        // Nobody sends the stream, so the recorder waits for its first frame, with the file open.
+        ReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
+        stream.receiver->setActive(true);
+        stream.receiver->startRecording(file, VideoReceiver::FileFormat::Mkv);
+        QVERIFY(stream.receiver->_recorder->active());
+        QVERIFY(QFile::exists(file));
+    }
+    // The receiver waited for the recorder to close the file, which is then removed as any recording without a frame.
+    QVERIFY(!QFile::exists(file));
+}
+
 void QtMultimediaVideoReceiverTest::_testRecordingUsesEncodingSet()
 {
     QTemporaryDir dir;

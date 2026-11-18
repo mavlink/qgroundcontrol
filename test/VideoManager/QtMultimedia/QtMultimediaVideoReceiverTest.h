@@ -25,6 +25,7 @@ private slots:
     void _testUnplayableUri();
     void _testRecordingNeedsActiveStream();
     void _testStartWhileRecordingIsRefused();
+    void _testClosingEndsRecordingNotStarted();
     void _testRecordingUsesEncodingSet();
     void _testRecordingTimes_data();
     void _testRecordingTimes();

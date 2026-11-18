@@ -49,7 +49,8 @@ public:
                QMediaRecorder::Quality quality = QMediaRecorder::HighQuality);
     void stop();
     /// Stops recording and waits up to @p timeout for the file to be finished: Qt writes it on its own thread, which
-    /// the application's exit would cut short.
+    /// the application's exit would cut short. Also for a recorder still waiting for its first frame, which holds the
+    /// file open until it has stopped.
     void stopAndWait(std::chrono::milliseconds timeout = kFinishTimeout);
 
     /// The formats start() tries for @p container, best first: @p codec where Qt can encode it, then H.264 and the
