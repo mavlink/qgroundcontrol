@@ -23,7 +23,9 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "PipelineDotDumper.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "RecordingBranch.h"
+#include "SettingsManager.h"
 #include "VideoBackend.h"
+#include "VideoSettings.h"
 
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
@@ -103,6 +105,17 @@ void GStreamerTest::_testAvailableDecoderFamilies()
     installed.removeAll(VideoDecoderOption::Vulkan);
 #endif
     QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
+
+    // The decoder setting offers a hardware family where a decoder of it is installed, and nowhere else: no platform
+    // has a list of its own.
+    VideoSettings* const settings = SettingsManager::instance()->videoSettings();
+    settings->pruneUnavailableDecoders();
+    const QVariantList offered = settings->forceVideoDecoder()->enumValues();
+    for (const VideoDecoderOption family :
+         {VideoDecoderOption::NVIDIA, VideoDecoderOption::VAAPI, VideoDecoderOption::DirectX3D,
+          VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel, VideoDecoderOption::Vulkan}) {
+        QCOMPARE(offered.contains(QVariant(static_cast<int>(family))), installed.contains(family));
+    }
 }
 
 void GStreamerTest::_testStoredDecoderOption_data()

@@ -115,7 +115,6 @@ public:
     static constexpr const char* videoSourceHerelinkHotspot   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink Hotspot");
 
 private:
-    void _setForceVideoDecodeList();
     /// Lists what videoSource offers: no video, the stream sources, the attached cameras and, when it is none of those,
     /// the selected source. That one is a camera that isn't attached: it stays selected, so that it plays once it is
     /// plugged in. Lists what uvcTileCamera offers the same way: no camera, then the cameras.

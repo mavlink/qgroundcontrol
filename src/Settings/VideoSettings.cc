@@ -26,8 +26,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
     (void) connect(new QMediaDevices(this), &QMediaDevices::videoInputsChanged, this,
                    &VideoSettings::_updateVideoSources);
 
-    _setForceVideoDecodeList();
-
     _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
 }
 
@@ -176,37 +174,6 @@ DECLARE_VIDEO_SETTINGSFACT_VISIBLE(disablePixelAspectRatio, hasPipelineSettings(
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspTimeout, hasStreaming())
 
 #undef DECLARE_VIDEO_SETTINGSFACT_VISIBLE
-
-void VideoSettings::_setForceVideoDecodeList()
-{
-    if (!hasPipelineSettings()) {
-        return;
-    }
-    static const QList<VideoDecoderOption> removeForceVideoDecodeList{
-#if defined(Q_OS_ANDROID)
-        VideoDecoderOption::DirectX3D, VideoDecoderOption::VideoToolbox, VideoDecoderOption::VAAPI,
-        VideoDecoderOption::NVIDIA,    VideoDecoderOption::Intel,
-#elif defined(Q_OS_LINUX)
-        VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VideoToolbox,
-#elif defined(Q_OS_WIN)
-        VideoDecoderOption::VideoToolbox,
-        VideoDecoderOption::Vulkan,
-#elif defined(Q_OS_MACOS)
-        VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VAAPI,
-#elif defined(Q_OS_IOS)
-        VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VAAPI,
-        VideoDecoderOption::NVIDIA,
-        VideoDecoderOption::Intel,
-#endif
-    };
-
-    for (const VideoDecoderOption option : removeForceVideoDecodeList) {
-        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(static_cast<int>(option));
-    }
-}
 
 void VideoSettings::pruneUnavailableDecoders()
 {
