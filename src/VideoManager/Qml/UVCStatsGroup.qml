@@ -22,9 +22,10 @@ QGCGroupBox {
     visible: _stats.valid
 
     LabelledLabel {
-        label:      qsTr("Camera")
-        labelText:  root.cameraName
-        visible:    labelText !== ""
+        label:              qsTr("Camera")
+        labelText:          root.cameraName
+        labelTextFormat:    Text.PlainText
+        visible:            labelText !== ""
     }
 
     LabelledLabel {

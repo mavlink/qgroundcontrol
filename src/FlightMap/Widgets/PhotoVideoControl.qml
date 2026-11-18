@@ -69,7 +69,7 @@ Rectangle {
             QGCLabel {
                 Layout.alignment: Qt.AlignHCenter
                 text: _camera.modelName
-                visible: _cameraManager.cameras.length > 1
+                visible: _cameraManager.cameras.count > 1
             }
 
             // Photo/Video Mode Selector
@@ -299,24 +299,28 @@ Rectangle {
 
             //-- Status Information
             ColumnLayout {
+                id: statusInfo
+
+                // Not the labels' own visible: under a hidden parent it reads false, and the column would stay hidden.
+                readonly property bool _storageReady: _camera.storageStatus === MavlinkCameraControlInterface.STORAGE_READY
+                readonly property bool _batteryReported: _camera.batteryRemaining >= 0
+
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 0
-                visible: storageStatus.visible || batteryStatus.visible
+                visible: _storageReady || _batteryReported
 
                 QGCLabel {
-                    id: storageStatus
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Free: ") + _camera.storageFreeStr
                     font.pointSize: ScreenTools.defaultFontPointSize
-                    visible: _camera.storageStatus === MavlinkCameraControlInterface.STORAGE_READY
+                    visible: statusInfo._storageReady
                 }
 
                 QGCLabel {
-                    id: batteryStatus
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Battery: ") + _camera.batteryRemainingStr
                     font.pointSize: ScreenTools.defaultFontPointSize
-                    visible: _camera.batteryRemaining >= 0
+                    visible: statusInfo._batteryReported
                 }
             }
 

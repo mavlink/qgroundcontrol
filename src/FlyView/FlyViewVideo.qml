@@ -41,19 +41,16 @@ Item {
     }
 
     QGCLabel {
+        id: fullScreenHint
+
         text: qsTr("Double-click to exit full screen")
         font.pointSize: ScreenTools.largeFontPointSize
         visible: root.videoManager.fullScreen
         anchors.centerIn: parent
 
-        onVisibleChanged: {
-            if (visible) {
-                labelAnimation.start()
-            }
-        }
-
+        // Starts over each time the hint is shown. Left to itself it runs once, from when the view was created.
         PropertyAnimation on opacity {
-            id: labelAnimation
+            running: fullScreenHint.visible
             duration: 10000
             from: 1.0
             to: 0.0

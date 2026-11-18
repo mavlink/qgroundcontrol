@@ -42,15 +42,18 @@ QGCGroupBox {
     LabelledLabel {
         label:              qsTr("URL")
         labelText:          root.stream.uri
+        labelTextFormat:    Text.PlainText
         labelTextElide:     Text.ElideMiddle
         labelMaximumWidth:  ScreenTools.defaultFontPixelWidth * 40
         visible:            root.stream.uri !== ""
     }
 
     LabelledLabel {
-        label:      qsTr("Camera stream")
-        labelText:  root._info ? root._info.name : ""
-        visible:    labelText !== ""
+        label:              qsTr("Camera stream")
+        // The camera names it.
+        labelText:          root._info ? root._info.name : ""
+        labelTextFormat:    Text.PlainText
+        visible:            labelText !== ""
     }
 
     // Frames shown: none for a stream that isn't decoded, as the thermal stream while its view is off.
