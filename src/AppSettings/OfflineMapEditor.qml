@@ -18,9 +18,8 @@ FlightMap {
 
     property var _settingsManager: QGroundControl.settingsManager
     property var _settings: _settingsManager.offlineMapsSettings
-    property var _fmSettings: _settingsManager.flightMapSettings
 
-    property string mapType: _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+    property string mapType: QGroundControl.mapCatalog.chosenMap
     property bool isMapInteractive: false
     property bool _showPreview: true
     property bool _defaultSet: tileSet && tileSet.defaultSet
@@ -39,7 +38,7 @@ FlightMap {
 
     readonly property int _maxTilesForDownload: _settings.maxTilesForDownload.rawValue
 
-    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    property bool isSatelliteMap: QGroundControl.mapCatalog.isSatelliteMap(activeMapType.name)
 
     QGCPalette { id: qgcPal }
 
@@ -77,7 +76,7 @@ FlightMap {
     function addNewSet() {
         _addNewSetViewObject = addNewSetViewComponent.createObject(_map)
         isMapInteractive = true
-        mapType = _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+        mapType = QGroundControl.mapCatalog.chosenMap
         resetMapToDefaults()
         handleChanges()
     }
@@ -332,7 +331,7 @@ FlightMap {
                     zoomLevel: sliderMinZoom.value
                     visible: _showPreview
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                    property bool isSatelliteMap: QGroundControl.mapCatalog.isSatelliteMap(activeMapType.name)
 
                     plugin: Plugin { name: "QGroundControl" }
 
@@ -370,7 +369,7 @@ FlightMap {
                     zoomLevel: sliderMaxZoom.value
                     visible: _showPreview
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                    property bool isSatelliteMap: QGroundControl.mapCatalog.isSatelliteMap(activeMapType.name)
 
                     plugin: Plugin { name: "QGroundControl" }
 
@@ -475,7 +474,7 @@ FlightMap {
                                 id: mapCombo
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                model: QGroundControl.mapEngineManager.mapList
+                                model: QGroundControl.mapCatalog.mapList
                                 onActivated: (index) => {
                                     mapType = textAt(index)
                                 }

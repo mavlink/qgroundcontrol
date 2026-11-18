@@ -17,10 +17,12 @@
 
 #include "ElevationMapProvider.h"
 #include "HeightField.h"
-#include "QGeoFileTileCacheQGC.h"
+#include "MapProvider.h"
+#include "QGCMapEngine.h"
 #include "TerrariumTileFetcher.h"
 #include "TileMath.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 // These tests run the production terrarium pipeline: tile cache misses are served
 // synthetic terrarium PNGs built from the UnitTestTerrainData regions (see
@@ -117,6 +119,13 @@ protected:
     }
 };
 }  // namespace
+
+void TerrariumTileFetcherTest::initTestCase()
+{
+    TerrainTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
 
 void TerrariumTileFetcherTest::_deliversFlatRegionHeights()
 {
@@ -459,8 +468,10 @@ void TerrariumTileFetcherTest::_cachedUnusableTileFallsBackToNetwork()
     // shared per-process cache DB
     const TileMath::TileKey key{centerKey.x + 2, centerKey.y, zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
-    QGeoFileTileCacheQGC::cacheTile(QString::fromLatin1(TerrariumElevationProvider::kProviderKey), key.x, key.y,
-                                    key.zoom, QByteArrayLiteral("garbage"), QStringLiteral("png"));
+    const QString type = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
+    QGCMapEngine::instance()->cacheTile(
+        type, UrlFactory::getMapProviderFromProviderType(type)->getTileHash(key.x, key.y, key.zoom),
+        QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
     MockNam nam;
     nam.body = UnitTestTileGenerator::syntheticTerrariumTileData(key.x, key.y, key.zoom);

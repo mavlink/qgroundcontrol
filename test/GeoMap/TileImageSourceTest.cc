@@ -1,5 +1,7 @@
 #include "TileImageSourceTest.h"
 
+#include <cstring>
+
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
@@ -9,13 +11,12 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
-#include <cstring>
-
-#include "QGCMapUrlEngine.h"
-#include "QGeoFileTileCacheQGC.h"
+#include "MapProvider.h"
+#include "QGCMapEngine.h"
 #include "TileImageSource.h"
 #include "TileMath.h"
 #include "UnitTestTileGenerator.h"
+#include "UrlFactory.h"
 
 namespace {
 
@@ -122,6 +123,13 @@ QByteArray pngBody()
 
 }  // namespace
 
+void TileImageSourceTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
+
 void TileImageSourceTest::_tileDelivered()
 {
     const QString type = mapType();
@@ -190,7 +198,7 @@ void TileImageSourceTest::_multipleRequestsIndependent()
 void TileImageSourceTest::_unknownProviderFails()
 {
     // Both the provider lookup and the source itself deliberately warn once at construction
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
+    expectLogMessage("MapTiles.UrlFactory", QtWarningMsg,
                      QRegularExpression(QStringLiteral("type not found: \"No Such Provider\"")));
     expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("unknown map type")));
     TileImageSource source(QStringLiteral("No Such Provider"));
@@ -305,7 +313,7 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
     UnitTestTileGenerator::setForcedMissCount(2);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
-    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("failed to decode")));
+    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("network body is not")));
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(failedSpy.count(), 1, 5000);
     verifyExpectedLogMessage();
@@ -339,7 +347,7 @@ void TileImageSourceTest::_bingPlaceholderNotDelivered()
     UnitTestTileGenerator::setForcedMissCount(1);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
-    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("no-tile placeholder")));
+    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("no-tile picture")));
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(failedSpy.count(), 1, 5000);
     verifyExpectedLogMessage();
@@ -356,7 +364,9 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 15, kKey.y, kKey.zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
-    QGeoFileTileCacheQGC::cacheTile(type, key.x, key.y, key.zoom, QByteArrayLiteral("garbage"), QStringLiteral("png"));
+    QGCMapEngine::instance()->cacheTile(
+        type, UrlFactory::getMapProviderFromProviderType(type)->getTileHash(key.x, key.y, key.zoom),
+        QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
     MockNam nam;
     nam.body = pngBody();
@@ -371,11 +381,10 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     QCOMPARE(nam.requestCount, 1);  // cache hit rejected, recovered from the network
     QVERIFY(failedSpy.isEmpty());
 
-    // Write-back is INSERT OR IGNORE, so the bad entry survives: a repeat
-    // request pays another network fetch but still delivers
+    // The fetched tile took the place of the bad entry: a repeat request is served from the cache
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 2, 5000);
-    QCOMPARE(nam.requestCount, 2);
+    QCOMPARE(nam.requestCount, 1);
     QVERIFY(failedSpy.isEmpty());
 }
 

@@ -35,16 +35,38 @@ private slots:
     void _testOperationsAfterDisconnect();
     void _testPruneCacheCleansSetTiles();
     void _testDeleteTileSetCleansTiles();
+    void _testDeleteTileSetWithMoreTilesThanSqlParameters();
     void _testImportSetsMergeDeduplicatesName();
     void _testGetTileDownloadListBatch();
     void _testSaveTileLinksToDifferentSet();
     void _testExportImportNoLingeringConnections();
     void _testCreateTileSet();
-    void _testDeleteBingNoTileTiles();
     void _testDeleteDefaultSetInvalidatesCache();
     void _testPruneCacheMultipleBatches();
     void _testSchemaVersionSetOnFreshDB();
     void _testSchemaVersionResetsLegacyDB();
+    void _testMigrateVersion1RenumbersProviders();
+    void _testMigrateVersion1KeepsPermanentIds();
+    void _testMigrateFailureResetsCache();
+    void _testResetFailureFailsInit();
+    void _testImportVersion1_data();
+    void _testImportVersion1();
+    void _testImportRefusesVersion_data();
+    void _testImportRefusesVersion();
+    void _testImportMigrateFailureKeepsCache_data();
+    void _testImportMigrateFailureKeepsCache();
+    void _testImportReplaceCopyFailureKeepsCache();
+    void _testVersion2TilesGetCacheVariant_data();
+    void _testVersion2TilesGetCacheVariant();
+    void _testVersion1TilesGetCacheVariantOfPermanentId();
+    void _testCreateTileSetKeysTilesByCacheVariant();
+    void _testCreateTileSetAcrossAntimeridian();
+    void _testNewFileHasIncrementalAutoVacuum();
+    void _testFreePagesReleasedInBatches_data();
+    void _testFreePagesReleasedInBatches();
+    void _testFreePagesKeptWithoutAutoVacuum();
+    void _testResetGivesSpaceBack();
+    void _testResetGivesOldFileAutoVacuum();
     void _testSaveTileTypeStoredAsInteger();
     void _testCreateTileSetTypeStoredAsInteger();
     void _testTablesExist();
@@ -56,7 +78,7 @@ private slots:
     void _testForeignKeyCascadeDelete();
 
 private:
-    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir &tempDir);
+    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir& tempDir);
     void _insertTileSet(QGCTileCacheDatabase* db, const QString& name, quint64& outSetID);
     void _insertDownloadRecord(QGCTileCacheDatabase* db, quint64 setID, const QString& hash, int state = 0);
     void _linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID);

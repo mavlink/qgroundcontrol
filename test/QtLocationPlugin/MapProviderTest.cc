@@ -2,12 +2,9 @@
 
 #include <QtCore/QtMath>
 
-#include <array>
-#include <memory>
-
-#include "GenericMapProvider.h"
 #include "MapProvider.h"
 #include "QGCTileSet.h"
+#include "UrlFactory.h"
 
 class TestableMapProvider : public MapProvider
 {
@@ -16,43 +13,17 @@ public:
                                  const QString& imageFormat = QStringLiteral("png"),
                                  quint32 avgSize = QGC_AVERAGE_TILE_SIZE)
         : MapProvider(name, QString(), imageFormat, avgSize, MapProvider::CustomMap)
-    {
-    }
+    {}
 
     using MapProvider::_getServerNum;
+    using MapProvider::_hasSha256;
     using MapProvider::_tileXYToQuadKey;
 
 private:
-    QString _getURL(int, int, int) const override
-    {
-        return {};
-    }
+    QString _getURL(int, int, int) const override { return {}; }
 };
 
 // --- Image format detection ---
-
-void MapProviderTest::_testProviderLayerUrls_data()
-{
-    QTest::addColumn<int>("provider");
-    QTest::addColumn<QString>("expectedPath");
-    QTest::newRow("japan-standard") << 0 << QStringLiteral("/xyz/std/6/53/23.png");
-    QTest::newRow("japan-photo") << 1 << QStringLiteral("/xyz/seamlessphoto/6/53/23.jpg");
-    QTest::newRow("statkart-topo") << 2 << QStringLiteral("/v1/wmts/1.0.0/topo/default/webmercator/6/23/53.png");
-    QTest::newRow("statkart-basemap") << 3 << QStringLiteral("/v1/wmts/1.0.0/topo/default/webmercator/6/23/53.png");
-    QTest::newRow("mapquest") << 4 << QStringLiteral("/tiles/1.0.0/map/6/53/23.jpg");
-    QTest::newRow("vworld") << 5 << QStringLiteral("/Base/6/23/53.png");
-}
-
-void MapProviderTest::_testProviderLayerUrls()
-{
-    QFETCH(int, provider);
-    QFETCH(QString, expectedPath);
-    const std::array<std::shared_ptr<MapProvider>, 6> providers = {
-        std::make_shared<JapanStdMapProvider>(),     std::make_shared<JapanSeamlessMapProvider>(),
-        std::make_shared<StatkartTopoMapProvider>(), std::make_shared<StatkartBaseMapProvider>(),
-        std::make_shared<MapQuestMapMapProvider>(),  std::make_shared<VWorldStreetMapProvider>()};
-    QVERIFY(providers[provider]->getTileURL(53, 23, 6).path().endsWith(expectedPath));
-}
 
 void MapProviderTest::_testGetImageFormatPng()
 {
@@ -177,6 +148,19 @@ void MapProviderTest::_testGetTileCountSizeMatchesAvg()
     QCOMPARE(set.tileSize, set.tileCount * static_cast<quint64>(5000));
 }
 
+void MapProviderTest::_testGetTileCountAcrossAntimeridian()
+{
+    TestableMapProvider p;
+    // z=3: 8 columns. The region covers the last column and the first one, and the rows 3 and 4.
+    const auto set = p.getTileCount(3, 170.0, 10.0, -170.0, -10.0);
+    QCOMPARE(set.tileX0, 7);
+    QCOMPARE(set.tileX1, 8);
+    QCOMPARE(set.tileX1 % p.tileColumns(3), 0);
+    QCOMPARE(set.tileY0, 3);
+    QCOMPARE(set.tileY1, 4);
+    QCOMPARE(set.tileCount, static_cast<quint64>(4));
+}
+
 // --- QuadKey encoding ---
 
 void MapProviderTest::_testQuadKeyLevel1()
@@ -234,8 +218,38 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     QCOMPARE(p.getAverageSize(), static_cast<quint32>(7777));
     QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
     QVERIFY(!p.isElevationProvider());
-    QVERIFY(!p.isBingProvider());
-    QVERIFY(p.getMapId() > 0);
+}
+
+// --- Attribution ---
+
+void MapProviderTest::_testFixedSourcesHaveAttribution()
+{
+    // Only the map of the URL that the user sets has no one to credit
+    const QString userSource = QStringLiteral("CustomURL Custom");
+    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
+        QVERIFY2(provider->attribution().isEmpty() == (provider->getMapName() == userSource),
+                 qPrintable(provider->getMapName()));
+    }
+}
+
+// --- Refusal images ---
+
+// The refusal that OpenStreetMap sends is told by its content: a tile of the same size is a tile
+void MapProviderTest::_testTileIsNoRefusalImage()
+{
+    constexpr qsizetype kRefusalSize = 6672;
+    const SharedMapProvider openStreetMap = UrlFactory::getMapProviderFromProviderType(QStringLiteral("Street Map"));
+    QVERIFY(openStreetMap);
+    QVERIFY(!openStreetMap->isRefusalImage(QByteArray(kRefusalSize, 'x')));
+}
+
+// The refusal itself is not in the sources. What tells it is: the size and the SHA-256 of an image, here those of
+// the test vector "abc" of FIPS 180-2.
+void MapProviderTest::_testImageToldBySizeAndSha256()
+{
+    constexpr QByteArrayView kAbcSha256("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    QVERIFY(TestableMapProvider::_hasSha256(QByteArrayView("abc"), 3, kAbcSha256));
+    QVERIFY(!TestableMapProvider::_hasSha256(QByteArrayView("abd"), 3, kAbcSha256));
 }
 
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)

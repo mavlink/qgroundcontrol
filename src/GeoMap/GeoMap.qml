@@ -198,8 +198,7 @@ Item {
         terrain: true
         statsEnabled: root.renderStats
         // Drape the map imagery the rest of QGC uses (empty disables imagery)
-        mapType: QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue
-                 + " " + QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
+        mapType: QGroundControl.mapCatalog.chosenMap
     }
 
     MapPositionTracker {

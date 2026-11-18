@@ -17,6 +17,8 @@ class MissionCommandTree;
 class MultiVehicleManager;
 class PositionManager;
 class QGCCorePlugin;
+class QGCMapCatalog;
+class QGCMapCredits;
 class QGCMapEngineManager;
 class QGCPalette;
 class SettingsManager;
@@ -31,6 +33,8 @@ Q_MOC_INCLUDE("MissionCommandTree.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
 Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("QGCCorePlugin.h")
+Q_MOC_INCLUDE("QGCMapCatalog.h")
+Q_MOC_INCLUDE("QGCMapCredits.h")
 Q_MOC_INCLUDE("QGCMapEngineManager.h")
 Q_MOC_INCLUDE("QGCPalette.h")
 Q_MOC_INCLUDE("SettingsManager.h")
@@ -63,6 +67,8 @@ public:
     Q_PROPERTY(QObject* serialPortManager READ serialPortManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
+    Q_PROPERTY(QGCMapCatalog* mapCatalog READ mapCatalog CONSTANT)
+    Q_PROPERTY(QGCMapCredits* mapCredits READ mapCredits CONSTANT)
     Q_PROPERTY(PositionManager* positionManager READ positionManager CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
@@ -155,6 +161,10 @@ public:
 
     QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
 
+    QGCMapCatalog* mapCatalog() { return _mapCatalog; }
+
+    QGCMapCredits* mapCredits() { return _mapCredits; }
+
     PositionManager* positionManager() const;
 
     MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
@@ -226,6 +236,8 @@ signals:
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
+    QGCMapCatalog* _mapCatalog = nullptr;
+    QGCMapCredits* _mapCredits = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     MAVLinkSigningKeys*     _mavlinkSigningKeys     = nullptr;

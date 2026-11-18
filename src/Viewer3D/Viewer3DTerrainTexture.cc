@@ -2,12 +2,10 @@
 
 #include <tuple>
 
-#include "Fact.h"
-#include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMapCatalog.h"
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
-#include "SettingsManager.h"
+#include "UrlFactory.h"
 #include "Viewer3DMapProvider.h"
 #include "Viewer3DTileQuery.h"
 #include "Viewer3DTileStatistics.h"
@@ -15,11 +13,13 @@
 QGC_LOGGING_CATEGORY(Viewer3DTerrainTextureLog, "Viewer3d.Viewer3DTerrainTexture")
 
 Viewer3DTerrainTexture::Viewer3DTerrainTexture()
-    : _flightMapSettings(SettingsManager::instance()->flightMapSettings())
 {
     _onMapTypeChanged();
 
-    connect(_flightMapSettings->mapType(), &Fact::rawValueChanged, this, &Viewer3DTerrainTexture::_onMapTypeChanged);
+    connect(QGCMapCatalog::instance(), &QGCMapCatalog::chosenMapChanged, this,
+            &Viewer3DTerrainTexture::_onMapTypeChanged);
+    connect(QGCMapEngine::instance(), &QGCMapEngine::tileSourceChanged, this,
+            &Viewer3DTerrainTexture::_onTileSourceChanged);
 }
 
 void Viewer3DTerrainTexture::loadTexture()
@@ -48,7 +48,7 @@ void Viewer3DTerrainTexture::loadTexture()
     connect(_terrainTileLoader, &Viewer3DTileQuery::loadingMapCompleted, this, &Viewer3DTerrainTexture::_updateTexture, Qt::UniqueConnection);
     connect(_terrainTileLoader, &Viewer3DTileQuery::textureGeometryReady, this, &Viewer3DTerrainTexture::setTextureGeometry, Qt::UniqueConnection);
 
-    _terrainTileLoader->adaptiveMapTilesLoader(_mapType, _mapId, bbMin, bbMax);
+    _terrainTileLoader->adaptiveMapTilesLoader(_mapId, bbMin, bbMax);
 }
 
 std::pair<QGeoCoordinate, QGeoCoordinate> Viewer3DTerrainTexture::_fallbackBoundingBox(const QGeoCoordinate &center)
@@ -110,11 +110,14 @@ void Viewer3DTerrainTexture::_updateTexture()
 
 void Viewer3DTerrainTexture::_onMapTypeChanged()
 {
-    _mapType = _flightMapSettings->mapProvider()->rawValue().toString()
-             + QStringLiteral(" ")
-             + _flightMapSettings->mapType()->rawValue().toString();
+    const QString mapType = QGCMapCatalog::instance()->chosenMap();
+    // Saved settings can name no map
+    if (!QGCMapCatalog::mapList().contains(mapType)) {
+        return;
+    }
+    _mapType = mapType;
 
-    const int mapId = UrlFactory::getQtMapIdFromProviderType(_mapType);
+    const int mapId = UrlFactory::getMapIdFromProviderType(_mapType);
 
     if (mapId == _mapId) {
         return;
@@ -122,6 +125,22 @@ void Viewer3DTerrainTexture::_onMapTypeChanged()
 
     qCDebug(Viewer3DTerrainTextureLog) << "Map type changed:" << _mapType << "mapId:" << mapId;
     _mapId = mapId;
+    loadTexture();
+}
+
+void Viewer3DTerrainTexture::_onTileSourceChanged(int mapId)
+{
+    if (mapId != _mapId) {
+        return;
+    }
+
+    // The texture is made of tiles of the source the provider had, and so is one that is being loaded: start over.
+    // Disconnect first: the loader stays alive until the deferred delete runs and could still emit.
+    if (_terrainTileLoader) {
+        disconnect(_terrainTileLoader, nullptr, this, nullptr);
+        _terrainTileLoader->deleteLater();
+        _terrainTileLoader = nullptr;
+    }
     loadTexture();
 }
 

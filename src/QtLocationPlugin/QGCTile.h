@@ -6,7 +6,8 @@
 
 struct QGCTile
 {
-    enum TileState {
+    enum TileState
+    {
         StatePending = 0,
         StateDownloading,
         StateError,
