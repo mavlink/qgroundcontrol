@@ -179,8 +179,7 @@ Video stream recording is configured in the [Application Settings > General tab]
 - [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
 
   ::: info
-  Videos are saved in Matroska format (.mkv) by default.
-  This format is relatively robust against corruption in case of errors.
+  Videos are saved in MP4 format (.mp4) by default; MOV and Matroska (.mkv) can be chosen instead.
   :::
 
 - [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
