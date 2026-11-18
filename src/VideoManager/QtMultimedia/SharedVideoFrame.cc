@@ -3,28 +3,12 @@
 #include <memory>
 #include <utility>
 
-#include <QtMultimedia/private/qhwvideobuffer_p.h>
-#include <QtMultimedia/private/qvideoframe_p.h>
+#include <QtMultimedia/QAbstractVideoBuffer>
 
 namespace {
 
-/// Maps another frame's buffer through that frame, which counts the mappings of both.
-QAbstractVideoBuffer::MapData mapThrough(QVideoFrame& frame, QVideoFrame::MapMode mode)
-{
-    QAbstractVideoBuffer::MapData data;
-    if (!frame.map(mode)) {
-        return data;
-    }
-    data.planeCount = frame.planeCount();
-    for (int plane = 0; plane < data.planeCount; plane++) {
-        data.bytesPerLine[plane] = frame.bytesPerLine(plane);
-        data.data[plane] = frame.bits(plane);
-        data.dataSize[plane] = frame.mappedBytes(plane);
-    }
-    return data;
-}
-
-/// The buffer of a frame in memory, shared with another frame.
+/// A frame's buffer, shared with another frame. It is mapped through the frame, which counts the mappings of both and
+/// reads a picture in GPU textures back.
 class SharedVideoBuffer final : public QAbstractVideoBuffer
 {
 public:
@@ -32,50 +16,27 @@ public:
         : _frame(std::move(frame))
     {}
 
-    MapData map(QVideoFrame::MapMode mode) override { return mapThrough(_frame, mode); }
-
-    void unmap() override { _frame.unmap(); }
-
-    QVideoFrameFormat format() const override { return _frame.surfaceFormat(); }
-
-private:
-    QVideoFrame _frame;
-};
-
-/// The buffer of a frame with GPU textures, shared with another frame: its textures are the other frame's.
-class SharedHwVideoBuffer final : public QHwVideoBuffer
-{
-public:
-    explicit SharedHwVideoBuffer(QVideoFrame frame)
-        : QHwVideoBuffer(frame.handleType())
-        , _frame(std::move(frame))
-        , _source(QVideoFramePrivate::hwBuffer(_frame))
-    {}
-
-    MapData map(QVideoFrame::MapMode mode) override { return mapThrough(_frame, mode); }
-
-    void unmap() override { _frame.unmap(); }
-
-    QVideoFrameFormat format() const override { return _frame.surfaceFormat(); }
-
-    QRhi* associatedCurrentThreadRhi() const override { return _source->associatedCurrentThreadRhi(); }
-
-    QMatrix4x4 externalTextureMatrix() const override { return _source->externalTextureMatrix(); }
-
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override
+    MapData map(QVideoFrame::MapMode mode) override
     {
-        return _source->mapTextures(rhi, oldTextures);
+        MapData data;
+        if (!_frame.map(mode)) {
+            return data;
+        }
+        data.planeCount = _frame.planeCount();
+        for (int plane = 0; plane < data.planeCount; plane++) {
+            data.bytesPerLine[plane] = _frame.bytesPerLine(plane);
+            data.data[plane] = _frame.bits(plane);
+            data.dataSize[plane] = _frame.mappedBytes(plane);
+        }
+        return data;
     }
 
-    void initTextureConverter(QRhi& rhi) override { _source->initTextureConverter(rhi); }
+    void unmap() override { _frame.unmap(); }
 
-    bool isDmaBuf() const override { return _source->isDmaBuf(); }
-
-    quint64 textureHandle(QRhi& rhi, int plane) override { return _source->textureHandle(rhi, plane); }
+    QVideoFrameFormat format() const override { return _frame.surfaceFormat(); }
 
 private:
     QVideoFrame _frame;
-    QHwVideoBuffer* const _source;
 };
 
 }  // namespace
@@ -85,10 +46,7 @@ QVideoFrame SharedVideoFrame::withOwnMetadata(const QVideoFrame& frame)
     if (!frame.isValid()) {
         return frame;
     }
-    QVideoFrame result =
-        QVideoFramePrivate::hwBuffer(frame)
-            ? QVideoFramePrivate::createFrame(std::make_unique<SharedHwVideoBuffer>(frame), frame.surfaceFormat())
-            : QVideoFramePrivate::createFrame(std::make_unique<SharedVideoBuffer>(frame), frame.surfaceFormat());
+    QVideoFrame result(std::make_unique<SharedVideoBuffer>(frame));
     result.setStartTime(frame.startTime());
     result.setEndTime(frame.endTime());
     result.setRotation(frame.rotation());
