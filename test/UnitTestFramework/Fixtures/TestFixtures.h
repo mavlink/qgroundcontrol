@@ -6,7 +6,7 @@
 /// Include this header to get access to all test fixtures:
 /// - Coord namespace: origin(), zurich(), sanFrancisco(), polygon(), waypointPath()
 /// - Mission namespace: addWaypoints(), addTakeoff(), addLand(), addRTL()
-/// - NetworkReplyFixture, SingleInstanceLockFixture
+/// - NetworkReplyFixture
 /// - TempFileFixture, TempJsonFileFixture, TempDirFixture
 
 #include "CoordFixtures.h"

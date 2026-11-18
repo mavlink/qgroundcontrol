@@ -18,7 +18,6 @@
 #include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
 
-class RunGuard;
 class Fact;
 
 /// @file
@@ -96,30 +95,13 @@ private:
 };
 
 // ============================================================================
-// SingleInstanceLockFixture - RAII wrapper for RunGuard lock ownership
+// ensureRuntimeDir - a runtime directory for the single-instance lock
 // ============================================================================
 
-/// On XDG platforms the lock is kept in the runtime directory. A process whose environment names none is given a
-/// private one (XDG_RUNTIME_DIR) by its first fixture, which production code that takes the lock then uses too.
-class SingleInstanceLockFixture
-{
-public:
-    explicit SingleInstanceLockFixture(const QString& lockKey, bool acquireOnCreate = true);
-    ~SingleInstanceLockFixture();
-
-    SingleInstanceLockFixture(const SingleInstanceLockFixture&) = delete;
-    SingleInstanceLockFixture& operator=(const SingleInstanceLockFixture&) = delete;
-
-    bool tryAcquire();
-    void release();
-
-    bool isLocked() const;
-    QString key() const;
-
-private:
-    QString _lockKey;
-    std::unique_ptr<RunGuard> _guard;
-};
+/// RunGuard keeps its lock in the runtime directory on XDG platforms. Where the environment names none, as on a
+/// CI runner, Qt makes one up and warns: the process gets a private one (XDG_RUNTIME_DIR) instead, for the rest of
+/// its life, which production code that takes the lock then uses too. Call this before a RunGuard is made.
+void ensureRuntimeDir();
 
 // ============================================================================
 // TempFileFixture - RAII wrapper for temporary files

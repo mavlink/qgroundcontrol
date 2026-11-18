@@ -55,6 +55,8 @@ bool startCachedDownload(QGCCachedFileDownload& downloader, int entryPoint, cons
 QList<QVariant> runCachedDownload(QGCCachedFileDownload& downloader, const QString& url,
                                   int entryPoint = CachedDownload, int maxCacheAgeSec = 3600)
 {
+    // A test runs several downloads: a wait that times out names this one
+    TEST_CONTEXT(url);
     QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
     if (!startCachedDownload(downloader, entryPoint, url, maxCacheAgeSec)) {
         return {false, QString(), QStringLiteral("The download did not start: ") + downloader.errorString(), false};

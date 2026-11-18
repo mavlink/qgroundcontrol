@@ -13,7 +13,6 @@
 #include "FileFixtures.h"
 #include "QGCArchiveModel.h"
 #include "QGCCompressionTest.h"
-#include "UnitTest.h"
 
 bool QGCArchiveModelTest::_load(QGCArchiveModel& model, const std::function<void()>& startLoad)
 {

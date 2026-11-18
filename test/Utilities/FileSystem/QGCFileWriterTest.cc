@@ -25,8 +25,8 @@
 // Whether the kernel has the thread asleep, as it is while it waits for another thread to exit
 static bool fileWriterTestThreadSleeps(long kernelThreadId)
 {
-    QFile status(QStringLiteral("/proc/self/task/%1/status").arg(kernelThreadId));
-    return status.open(QIODevice::ReadOnly) && status.readAll().contains("\nState:\tS");
+    return TestFixtures::readFile(QStringLiteral("/proc/self/task/%1/status").arg(kernelThreadId))
+        .contains("\nState:\tS");
 }
 #endif
 
@@ -75,7 +75,7 @@ void QGCFileWriterTest::_testFlushAfterManyWrites()
     writer.write(large);
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
     QCOMPARE(writer.pendingBytes(), qint64(0));
-    QVERIFY(TestFixtures::readFile(_path) == expected);
+    QVERIFY(fileContentsEqual(_path, expected));
 }
 
 void QGCFileWriterTest::_testConsecutiveFlushes()

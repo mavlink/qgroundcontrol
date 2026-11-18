@@ -6,6 +6,7 @@
 
 #include "GeoJsonHelper.h"
 #include "JsonParsing.h"
+#include "UnitTestCoords.h"
 #include "UnitTestMath.h"
 
 void JsonHelperTest::_saveAndValidateExternalHeader_test()
@@ -115,8 +116,7 @@ void JsonHelperTest::_loadSaveGeoCoordinate_test()
     QString errorString;
     QVERIFY(GeoJsonHelper::loadGeoCoordinate(jsonValue, false, loaded, errorString));
     QVERIFY(errorString.isEmpty());
-    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
-    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
+    QVERIFY_COORDS_NEAR(loaded, original, 0.005);
 }
 
 void JsonHelperTest::_loadSaveGeoCoordinateWithAltitude_test()
@@ -130,8 +130,7 @@ void JsonHelperTest::_loadSaveGeoCoordinateWithAltitude_test()
     QString errorString;
     QVERIFY(GeoJsonHelper::loadGeoCoordinate(jsonValue, true, loaded, errorString));
     QVERIFY(errorString.isEmpty());
-    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
-    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
+    QVERIFY_COORDS_NEAR(loaded, original, 0.005);
     QCOMPARE_FUZZY(loaded.altitude(), original.altitude(), 1e-7);
 }
 
@@ -177,8 +176,7 @@ void JsonHelperTest::_loadSaveGeoCoordinateArray_test()
 
     for (int i = 0; i < originals.count(); ++i) {
         const auto loaded = loadedVarPoints[i].value<QGeoCoordinate>();
-        QCOMPARE_FUZZY(loaded.latitude(), originals[i].latitude(), 1e-7);
-        QCOMPARE_FUZZY(loaded.longitude(), originals[i].longitude(), 1e-7);
+        QVERIFY_COORDS_NEAR(loaded, originals[i], 0.005);
         QCOMPARE_FUZZY(loaded.altitude(), originals[i].altitude(), 1e-7);
     }
 }
@@ -201,8 +199,7 @@ void JsonHelperTest::_loadSaveGeoCoordinateArrayQList_test()
     QCOMPARE(loadedPoints.count(), originals.count());
 
     for (int i = 0; i < originals.count(); ++i) {
-        QCOMPARE_FUZZY(loadedPoints[i].latitude(), originals[i].latitude(), 1e-7);
-        QCOMPARE_FUZZY(loadedPoints[i].longitude(), originals[i].longitude(), 1e-7);
+        QVERIFY_COORDS_NEAR(loadedPoints[i], originals[i], 0.005);
     }
 }
 

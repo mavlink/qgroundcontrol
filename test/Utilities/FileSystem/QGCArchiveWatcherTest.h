@@ -16,7 +16,6 @@ class QGCArchiveWatcherTest : public UnitTest
 
 private slots:
     void init() override;
-    void cleanup() override;
 
     // Configuration tests
     void _testDefaultConfiguration();

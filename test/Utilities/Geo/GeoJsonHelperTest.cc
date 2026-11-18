@@ -1,6 +1,5 @@
 #include "GeoJsonHelperTest.h"
 
-#include <QtCore/QDir>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonValue>
 #include <QtCore/QRegularExpression>
@@ -9,15 +8,9 @@
 
 #include "FileFixtures.h"
 #include "GeoJsonHelper.h"
+#include "UnitTestCoords.h"
 
 namespace {
-
-QString _writeGeoJsonFile(const QString& dirPath, const QString& fileName, const QByteArray& contents)
-{
-    const QString filePath = QDir(dirPath).filePath(fileName);
-    (void) TestFixtures::writeFile(filePath, contents);
-    return filePath;
-}
 
 const QByteArray kPolygonGeoJson = R"JSON(
 {
@@ -241,7 +234,7 @@ void GeoJsonHelperTest::_loadShape_test()
     QFETCH(QList<QGeoCoordinate>, expected);
 
     QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", document);
+    const QString filePath = TestFixtures::writeFileIn(tempDir.path(), "shape.geojson", document);
     QList<QGeoCoordinate> vertices;
     QString error;
 
@@ -291,7 +284,7 @@ void GeoJsonHelperTest::_loadFailure_test()
     QFETCH(QString, warning);
 
     QTemporaryDir tempDir;
-    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", document);
+    const QString filePath = TestFixtures::writeFileIn(tempDir.path(), "shape.geojson", document);
     QList<QGeoCoordinate> vertices;
     QString error;
 
@@ -329,8 +322,7 @@ void GeoJsonHelperTest::_loadSaveGeoJsonCoordinate_test()
     QString errorString;
     QVERIFY(GeoJsonHelper::loadGeoJsonCoordinate(jsonValue, false, loaded, errorString));
     QVERIFY(errorString.isEmpty());
-    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
-    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
+    QVERIFY_COORDS_NEAR(loaded, original, 0.005);
 }
 
 void GeoJsonHelperTest::_loadSaveGeoJsonCoordinateWithAltitude_test()
@@ -344,8 +336,7 @@ void GeoJsonHelperTest::_loadSaveGeoJsonCoordinateWithAltitude_test()
     QString errorString;
     QVERIFY(GeoJsonHelper::loadGeoJsonCoordinate(jsonValue, true, loaded, errorString));
     QVERIFY(errorString.isEmpty());
-    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
-    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
+    QVERIFY_COORDS_NEAR(loaded, original, 0.005);
 }
 
 UT_REGISTER_TEST(GeoJsonHelperTest, TestLabel::Unit, TestLabel::Utilities)

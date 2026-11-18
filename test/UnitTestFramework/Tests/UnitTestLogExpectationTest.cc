@@ -2,6 +2,8 @@
 
 #include <QtCore/QRegularExpression>
 
+#include "MultiSignalSpy.h"
+
 void UnitTestLogExpectationTest::_testExpectVerifySingleMessage()
 {
     expectLogMessage("Test.UnitTest", QtWarningMsg, QRegularExpression(QStringLiteral("single expected log")));
@@ -13,10 +15,13 @@ void UnitTestLogExpectationTest::_testExpectVerifySingleMessage()
 
 void UnitTestLogExpectationTest::_testExpectVerifyCategoryScopedMessage()
 {
-    expectLogMessage("Test.UnitTest",
-                     QtWarningMsg,
-                     QRegularExpression(QStringLiteral("category scoped expected log")));
+    const QRegularExpression pattern(QStringLiteral("category scoped expected log"));
+    expectLogMessage("Test.UnitTest", QtWarningMsg, pattern);
+    ignoreLogMessage("Test.MultiSignalSpy", QtWarningMsg, pattern);
 
+    // The same text in another category, logged first: taken for the expected message, it would leave that
+    // one as a message nothing expects
+    qCWarning(MultiSignalSpyLog) << "category scoped expected log";
     qCWarning(UnitTestLog) << "category scoped expected log";
 
     verifyExpectedLogMessage();

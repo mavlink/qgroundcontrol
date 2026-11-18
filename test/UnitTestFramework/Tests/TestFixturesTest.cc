@@ -5,21 +5,18 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QJsonObject>
-#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QTimer>
-#include <QtCore/QUuid>
 #include <QtNetwork/QNetworkRequest>
-#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "AppSettings.h"
 #include "Fact.h"
+#include "Fixtures/FileFixtures.h"
 #include "Fixtures/TestFixtures.h"
 #include "QGCLoggingCategoryManager.h"
 #include "SettingsManager.h"
-#include "SignalEmitter.h"
 #include "UnitTest.h"
+#include "UnitTestCoords.h"
 using namespace TestFixtures;
 
 // ============================================================================
@@ -117,6 +114,30 @@ void TestFixturesTest::_testCoordWaypointPath()
     QVERIFY(eastPath[2].longitude() > eastPath[1].longitude());
 }
 
+void TestFixturesTest::_testCompareCoords()
+{
+    const QGeoCoordinate zurich = Coord::zurich();
+    const QGeoCoordinate fourMetresEast = zurich.atDistanceAndAzimuth(4.0, 90.0);
+    QVERIFY(QTest::compareCoords(fourMetresEast, zurich, 5.0));
+    QVERIFY_COORDS_NEAR(fourMetresEast, zurich, 5.0);
+
+    QString message;
+    QVERIFY(!QTest::compareCoords(fourMetresEast, zurich, 3.0, message));
+    QVERIFY2(message.startsWith(QStringLiteral("Coordinates differ by 4.000m (tolerance: 3.000m)")),
+             qPrintable(message));
+    // Both positions are told
+    QVERIFY2(message.contains(QString::number(fourMetresEast.longitude(), 'f', 7)), qPrintable(message));
+    QVERIFY2(message.contains(QString::number(zurich.longitude(), 'f', 7)), qPrintable(message));
+
+    // QGeoCoordinate::distanceTo() is 0 for a coordinate that is not valid
+    for (const bool actualValid : {false, true}) {
+        message.clear();
+        QVERIFY(!QTest::compareCoords(actualValid ? zurich : QGeoCoordinate(), actualValid ? QGeoCoordinate() : zurich,
+                                      5.0, message));
+        QVERIFY2(message.startsWith(QStringLiteral("Coordinates are not both valid")), qPrintable(message));
+    }
+}
+
 // ============================================================================
 // TempFile/TempDir Fixtures Tests
 // ============================================================================
@@ -198,6 +219,33 @@ void TestFixturesTest::_testTempDirFixtureCreateFile()
     QCOMPARE(file.readAll(), content);
 }
 
+void TestFixturesTest::_testWriteFileIn()
+{
+    QTemporaryDir tempDir;
+    const QString name = QStringLiteral("file.txt");
+    const QByteArray data("in a directory");
+    const QString path = writeFileIn(tempDir.path(), name, data);
+    QCOMPARE(path, tempDir.filePath(name));
+    QCOMPARE(readFile(path), data);
+    // A file that cannot be written has no path
+    QCOMPARE(writeFileIn(tempDir.filePath(QStringLiteral("absent")), name, data), QString());
+}
+
+void TestFixturesTest::_testCopyResource()
+{
+    QTemporaryDir tempDir;
+    const QString name = QStringLiteral("polyline.prj");
+    const QByteArray content = readFile(QStringLiteral(":/unittest/") + name);
+    QVERIFY(!content.isEmpty());
+    // The copy replaces a file of that name
+    QVERIFY(writeFile(tempDir.filePath(name), "in the way"));
+    const QString path = copyResource(tempDir.path(), name);
+    QCOMPARE(path, tempDir.filePath(name));
+    QCOMPARE(readFile(path), content);
+    QCOMPARE(copyResource(tempDir.path(), QStringLiteral("absent.prj")), QString());
+    QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("absent.prj"))));
+}
+
 void TestFixturesTest::_testNetworkReplyFixture()
 {
     const QByteArray body = R"({"ok":true})";
@@ -214,46 +262,6 @@ void TestFixturesTest::_testNetworkReplyFixture()
     QCOMPARE(reply.header(QNetworkRequest::ContentTypeHeader).toString(), QStringLiteral("application/json"));
     QCOMPARE(reply.header(QNetworkRequest::ContentLengthHeader).toLongLong(), static_cast<qint64>(body.size()));
     QCOMPARE(reply.readAll(), body);
-}
-
-void TestFixturesTest::_testSingleInstanceLockFixture()
-{
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    QSKIP("Single-instance lock fixture is only relevant on desktop targets");
-#else
-    const QString key = QStringLiteral("SingleInstanceLockFixtureTest_%1")
-                            .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
-
-    SingleInstanceLockFixture primary(key);
-    QVERIFY(primary.isLocked());
-
-    SingleInstanceLockFixture secondary(key, false);
-    QVERIFY(!secondary.isLocked());
-    QVERIFY(!secondary.tryAcquire());
-
-    primary.release();
-    QVERIFY(!primary.isLocked());
-
-    QVERIFY(secondary.tryAcquire());
-    QVERIFY(secondary.isLocked());
-#endif
-}
-
-void TestFixturesTest::_testWaitForSignalCountHelper()
-{
-    TestFixturesSignalEmitter emitter;
-    QSignalSpy spy(&emitter, &TestFixturesSignalEmitter::valueChanged);
-    QVERIFY(spy.isValid());
-
-    QTimer::singleShot(20, &emitter, [&emitter]() { emitter.emitValueChanged(1); });
-    QTimer::singleShot(40, &emitter, [&emitter]() { emitter.emitValueChanged(2); });
-
-    QVERIFY_SIGNAL_COUNT_WAIT(spy, 2, TestTimeout::mediumMs());
-    QCOMPARE(spy.count(), 2);
-
-    expectLogMessage("Test.UnitTest", QtWarningMsg, QRegularExpression(QStringLiteral("Timeout waiting for signal count")));
-    QVERIFY(!UnitTest::waitForSignalCount(spy, 3, 100, QStringLiteral("valueChanged")));
-    verifyExpectedLogMessage();
 }
 
 // ============================================================================

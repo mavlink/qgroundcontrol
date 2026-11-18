@@ -36,9 +36,6 @@ private slots:
     void _testAutoDecompressBodyNotCompressed_data();
     void _testAutoDecompressBodyNotCompressed();
 
-    // Integration tests (download + compression)
-    void _testDownloadAndExtractZip();
-
 private:
     /// Expects a warning for each "category|pattern"
     void _expectWarnings(const QStringList& warnings);

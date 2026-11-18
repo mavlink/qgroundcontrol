@@ -3,7 +3,6 @@
 #include <cstring>
 #include <memory>
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QTemporaryDir>
@@ -15,7 +14,6 @@
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
 #include "QGCMAVLink.h"
-#include "RunGuard.h"
 #include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
@@ -158,13 +156,9 @@ qint64 NetworkReplyFixture::readData(char* data, qint64 maxSize)
 }
 
 // ============================================================================
-// SingleInstanceLockFixture Implementation
+// ensureRuntimeDir Implementation
 // ============================================================================
 
-namespace {
-
-/// RunGuard keeps its lock in the runtime directory on XDG platforms. Where the environment names none, as on a
-/// CI runner, Qt makes one up and warns: the process gets a private one instead, for the rest of its life.
 void ensureRuntimeDir()
 {
 #if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
@@ -177,46 +171,6 @@ void ensureRuntimeDir()
         (void) qputenv("XDG_RUNTIME_DIR", QFile::encodeName(runtimeDir.path()));
     }
 #endif
-}
-
-}  // namespace
-
-SingleInstanceLockFixture::SingleInstanceLockFixture(const QString& lockKey, bool acquireOnCreate)
-    : _lockKey(lockKey)
-{
-    ensureRuntimeDir();
-    _guard = std::make_unique<RunGuard>(lockKey);
-
-    if (acquireOnCreate) {
-        (void) tryAcquire();
-    }
-}
-
-SingleInstanceLockFixture::~SingleInstanceLockFixture()
-{
-    release();
-}
-
-bool SingleInstanceLockFixture::tryAcquire()
-{
-    return _guard && _guard->tryToRun();
-}
-
-void SingleInstanceLockFixture::release()
-{
-    if (_guard && _guard->isLocked()) {
-        _guard->release();
-    }
-}
-
-bool SingleInstanceLockFixture::isLocked() const
-{
-    return _guard && _guard->isLocked();
-}
-
-QString SingleInstanceLockFixture::key() const
-{
-    return _lockKey;
 }
 
 // ============================================================================

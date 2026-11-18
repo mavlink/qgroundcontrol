@@ -199,19 +199,34 @@ QString currentTestName()
     return testName;
 }
 
-void logRecentDebugMessages(const char* header)
+void logTestContext()
+{
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+}
+
+void logRecentDebugMessages()
 {
     const QStringList debugMessages = TestDebug::recentMessages();
     if (debugMessages.isEmpty()) {
         return;
     }
 
-    qCWarning(UnitTestLog) << header;
+    qCWarning(UnitTestLog) << "Recent test debug messages:";
 
     const int startIndex = qMax(0, debugMessages.size() - kMaxTimeoutDebugMessages);
     for (int i = startIndex; i < debugMessages.size(); ++i) {
         qCWarning(UnitTestLog) << "  " << debugMessages.at(i);
     }
+}
+
+/// What a wait that failed logs after its own warning
+void logFailureContext()
+{
+    logTestContext();
+    logRecentDebugMessages();
 }
 
 }  // anonymous namespace
@@ -398,12 +413,7 @@ bool UnitTest::waitForSignal(QSignalSpy& spy, std::chrono::milliseconds timeout,
                            << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms, count:" << spy.count()
                            << ")";
 
-    const QString context = TestContext::current();
-    if (!context.isEmpty()) {
-        qCWarning(UnitTestLog) << "Context:" << context;
-    }
-
-    logRecentDebugMessages("Recent test debug messages:");
+    logFailureContext();
 
     return false;
 }
@@ -424,12 +434,7 @@ bool UnitTest::waitForNoSignal(QSignalSpy& spy, std::chrono::milliseconds timeou
                            << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms, initial:" << initialCount
                            << ", current:" << spy.count() << ")";
 
-    const QString context = TestContext::current();
-    if (!context.isEmpty()) {
-        qCWarning(UnitTestLog) << "Context:" << context;
-    }
-
-    logRecentDebugMessages("Recent test debug messages:");
+    logFailureContext();
     return false;
 }
 
@@ -459,12 +464,7 @@ bool UnitTest::waitForSignalCount(QSignalSpy& spy, int expectedCount, std::chron
                            << "after" << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms, expected:"
                            << expectedCount << ", actual:" << spy.count() << ")";
 
-    const QString context = TestContext::current();
-    if (!context.isEmpty()) {
-        qCWarning(UnitTestLog) << "Context:" << context;
-    }
-
-    logRecentDebugMessages("Recent test debug messages:");
+    logFailureContext();
 
     return false;
 }
@@ -482,12 +482,7 @@ bool UnitTest::waitForCondition(const std::function<bool()>& condition, std::chr
     qCWarning(UnitTestLog) << "Timeout waiting for condition" << displayName << "in" << currentTestName() << "after"
                            << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms)";
 
-    const QString context = TestContext::current();
-    if (!context.isEmpty()) {
-        qCWarning(UnitTestLog) << "Context:" << context;
-    }
-
-    logRecentDebugMessages("Recent test debug messages:");
+    logFailureContext();
 
     return false;
 }
@@ -521,12 +516,7 @@ bool UnitTest::waitForDeleted(const QPointer<QObject>& objectPtr, std::chrono::m
                            << "after" << waitTimer.elapsed() << "ms (timeout:" << timeout.count()
                            << "ms, ptr:" << objectPtr.data() << ")";
 
-    const QString context = TestContext::current();
-    if (!context.isEmpty()) {
-        qCWarning(UnitTestLog) << "Context:" << context;
-    }
-
-    logRecentDebugMessages("Recent test debug messages:");
+    logFailureContext();
 
     return false;
 }
@@ -707,11 +697,7 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
             qCWarning(UnitTestLog) << "│ FAILED:" << test->objectName();
             qCWarning(UnitTestLog) << "╰─────────────────────────────────────────────────────────────╯";
 
-            // Print test context if available
-            const QString context = TestContext::current();
-            if (!context.isEmpty()) {
-                qCWarning(UnitTestLog) << "Context:" << context;
-            }
+            logTestContext();
 
             // Print recent debug messages
             const QStringList& debugMsgs = TestDebug::recentMessages();
@@ -1030,10 +1016,7 @@ void UnitTest::dumpFailureContextIfTestFailed(QStringView reason)
                                << reason.toString() << ")";
     }
 
-    const QString context = TestContext::current();
-    if (!context.isEmpty()) {
-        qCWarning(UnitTestLog) << "Context:" << context;
-    }
+    logTestContext();
 
     const QString fixtureSummary = failureContextSummary();
     if (!fixtureSummary.isEmpty()) {
@@ -1044,7 +1027,7 @@ void UnitTest::dumpFailureContextIfTestFailed(QStringView reason)
         }
     }
 
-    logRecentDebugMessages("Recent test debug messages:");
+    logRecentDebugMessages();
 }
 
 QString UnitTest::failureContextSummary() const

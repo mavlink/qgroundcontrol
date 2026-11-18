@@ -3,11 +3,10 @@
 #include <cmath>
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QDir>
-#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 
+#include "FileFixtures.h"
 #include "MultiSignalSpy.h"
 #include "QGCMapPolyline.h"
 #include "QGCQGeoCoordinate.h"
@@ -111,9 +110,9 @@ void QGCMapPolylineTest::_testVertexManipulation()
     QCoreApplication::processEvents();
     QVERIFY2(_multiSpyPolyline->onlyEmittedOnce("pathChanged", "dirtyChanged"),
              qPrintable(_multiSpyPolyline->summary()));
-    QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));
-    QVERIFY(multiSpyGeoCoord->emittedOnce("coordinateChanged"));
-    QVERIFY(multiSpyGeoCoord->emittedOnce("dirtyChanged"));
+    QVERIFY_ONLY_SIGNAL(*_multiSpyModel, "dirtyChanged");
+    QVERIFY_SIGNAL(*multiSpyGeoCoord, "coordinateChanged");
+    QVERIFY_SIGNAL(*multiSpyGeoCoord, "dirtyChanged");
     QCOMPARE(geoCoord->coordinate(), adjustCoord);
     QList<QGeoCoordinate> vertexList = _mapPolyline->coordinateList();
     QCOMPARE(vertexList[0], _linePoints[0]);
@@ -152,23 +151,14 @@ void QGCMapPolylineTest::_testVertexManipulation()
     delete multiSpyGeoCoord;
 }
 
-QString QGCMapPolylineTest::_copyRes(const QString& dirPath, const QString& name)
-{
-    const QString dstPath = QDir(dirPath).filePath(name);
-    (void)QFile::remove(dstPath);
-    const QString resPath = QStringLiteral(":/unittest/%1").arg(name);
-    (void)QFile(resPath).copy(dstPath);
-    return dstPath;
-}
-
 void QGCMapPolylineTest::_testShapeLoad()
 {
     QTemporaryDir tempDir;
-    (void) _copyRes(tempDir.path(), "polyline.shx");
-    (void) _copyRes(tempDir.path(), "polyline.prj");
-    const QString shpFile = _copyRes(tempDir.path(), "polyline.shp");
+    (void) TestFixtures::copyResource(tempDir.path(), "polyline.shx");
+    (void) TestFixtures::copyResource(tempDir.path(), "polyline.prj");
+    const QString shpFile = TestFixtures::copyResource(tempDir.path(), "polyline.shp");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(shpFile));
-    const QString kmlFile = _copyRes(tempDir.path(), "polyline.kml");
+    const QString kmlFile = TestFixtures::copyResource(tempDir.path(), "polyline.kml");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(kmlFile));
 }
 

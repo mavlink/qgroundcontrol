@@ -15,12 +15,6 @@ namespace {
 
 constexpr char kPiperLogCategory[] = "Utilities.PiperTtsEngine";
 
-bool writePiperStandIn(const QString& path, const QByteArray& script)
-{
-    return TestFixtures::writeFile(path, script) &&
-           QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
-}
-
 /// What a stand-in does once the engine has started it with a voice.
 enum class PiperStandIn
 {
@@ -71,19 +65,19 @@ public:
                 "    echo \"Wrote $4/$count.wav\"\n"
                 "done\n";
         }
-        return writePiperStandIn(_dir.filePath(name), script);
+        return TestFixtures::writeExecutable(_dir.filePath(name), script);
     }
 
     /// Installs a program with Piper's name that is something else.
     bool installOtherProgram(const QString& name)
     {
-        return writePiperStandIn(_dir.filePath(name), "#!/bin/sh\necho \"usage: piper [--version]\"\n");
+        return TestFixtures::writeExecutable(_dir.filePath(name), "#!/bin/sh\necho \"usage: piper [--version]\"\n");
     }
 
     /// Installs an executable file that cannot be started.
     bool installBrokenProgram(const QString& name)
     {
-        return writePiperStandIn(_dir.filePath(name), "#!/nonexistent/interpreter\n");
+        return TestFixtures::writeExecutable(_dir.filePath(name), "#!/nonexistent/interpreter\n");
     }
 
     /// True if a stand-in of installPiper() has been started, with any arguments.

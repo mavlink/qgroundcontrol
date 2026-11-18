@@ -4,7 +4,6 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 

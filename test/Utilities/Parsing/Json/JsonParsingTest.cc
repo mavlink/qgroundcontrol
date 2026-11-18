@@ -1,6 +1,5 @@
 #include "JsonParsingTest.h"
 
-#include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QTemporaryFile>

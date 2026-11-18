@@ -17,6 +17,7 @@ private slots:
     void _testCoordEdgeCases();
     void _testCoordPolygon();
     void _testCoordWaypointPath();
+    void _testCompareCoords();
 
     // TempFile/TempDir Fixtures
     void _testTempFileFixture();
@@ -24,10 +25,9 @@ private slots:
     void _testTempJsonFileFixture();
     void _testTempDirFixture();
     void _testTempDirFixtureCreateFile();
+    void _testWriteFileIn();
+    void _testCopyResource();
     void _testNetworkReplyFixture();
-    void _testSingleInstanceLockFixture();
-
-    void _testWaitForSignalCountHelper();
 
     // SettingsFixture
     void _testSettingsFixtureRestore();

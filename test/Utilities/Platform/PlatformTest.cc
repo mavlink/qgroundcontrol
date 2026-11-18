@@ -12,13 +12,16 @@
 #include "GraphicsSetup.h"
 #include "Platform.h"
 #include "QGCCommandLineParser.h"
+#include "RunGuard.h"
 #include "qgc_version.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 void PlatformTest::_testCheckSingleInstanceWhileLockIsHeld()
 {
     const QString lockKey = QStringLiteral("%1 RunGuardKey").arg(QLatin1String(QGC_APP_NAME));
-    TestFixtures::SingleInstanceLockFixture heldLock(lockKey);
+    TestFixtures::ensureRuntimeDir();
+    RunGuard heldLock(lockKey);
+    (void) heldLock.tryToRun();
     if (!heldLock.isLocked()) {
         QSKIP("Single-instance lock is already held by another process.");
     }

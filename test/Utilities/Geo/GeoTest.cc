@@ -7,6 +7,7 @@
 #include "Benchmarking.h"
 #include "PropertyTesting.h"
 #include "QGCGeo.h"
+#include "UnitTestCoords.h"
 #include "UnitTestMath.h"
 
 namespace {
@@ -62,8 +63,7 @@ void GeoTest::_convertNedToGeo_test()
     QGeoCoordinate coord(0, 0, 0);
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), 47.364869, 0.00001);
-    QCOMPARE_FUZZY(coord.longitude(), 8.594398, 0.00001);
+    QVERIFY_COORDS_NEAR(coord, QGeoCoordinate(47.364869, 8.594398), 0.75);
     QCOMPARE_FUZZY(coord.altitude(), 0.0, 0.01);
 }
 
@@ -75,8 +75,7 @@ void GeoTest::_convertNedToGeoAtOrigin_test()
     QGeoCoordinate coord(0, 0, 0);
     QGCGeo::convertNedToGeo(x, y, z, m_origin, coord);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), m_origin.latitude(), 0.00001);
-    QCOMPARE_FUZZY(coord.longitude(), m_origin.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(coord, m_origin, 0.75);
     QCOMPARE_FUZZY(coord.altitude(), m_origin.altitude(), 0.00001);
 }
 
@@ -123,8 +122,7 @@ void GeoTest::_convertUTMToGeo_test()
     const bool result = QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, coord);
     QVERIFY(result);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), m_origin.latitude(), 0.00001);
-    QCOMPARE_FUZZY(coord.longitude(), m_origin.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(coord, m_origin, 0.75);
     // The altitude is the caller's: the shapefile loader relies on a coordinate without one staying without one
     QCOMPARE(coord.altitude(), 123.5);
     QGeoCoordinate withoutAltitude;
@@ -153,8 +151,7 @@ void GeoTest::_convertMGRSToGeo_test()
     const bool result = QGCGeo::convertMGRSToGeo(mgrs, coord);
     QVERIFY(result);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), m_origin.latitude(), 0.00001);
-    QCOMPARE_FUZZY(coord.longitude(), m_origin.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(coord, m_origin, 0.75);
     QCOMPARE(coord.altitude(), 123.5);
     QGeoCoordinate withoutAltitude;
     QVERIFY(QGCGeo::convertMGRSToGeo(mgrs, withoutAltitude));
@@ -246,8 +243,7 @@ void GeoTest::_convertDMSToGeo_test()
 {
     QGeoCoordinate coord(0, 0, 123.0);
     QVERIFY(QGCGeo::convertDMSToGeo(QStringLiteral("47 22 35.04 N"), QStringLiteral("8 32 53.16 E"), coord));
-    QCOMPARE_FUZZY(coord.latitude(), m_origin.latitude(), 0.00001);
-    QCOMPARE_FUZZY(coord.longitude(), m_origin.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(coord, m_origin, 0.75);
     QCOMPARE_FUZZY(coord.altitude(), 123.0, 0.00001);
 
     // A failed parse leaves the coordinate untouched
@@ -283,8 +279,7 @@ void GeoTest::_convertEcefToGeodetic_test()
     const QVector3D ecef(4278990.18f, 643172.29f, 4670276.60f);
     const QGeoCoordinate coord = QGCGeo::convertEcefToGeodetic(ecef);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), m_origin.latitude(), 0.0001);
-    QCOMPARE_FUZZY(coord.longitude(), m_origin.longitude(), 0.0001);
+    QVERIFY_COORDS_NEAR(coord, m_origin, 7.5);
     QCOMPARE_FUZZY(coord.altitude(), 100.0, 1.0);
 }
 
@@ -303,8 +298,7 @@ void GeoTest::_convertEnuToGps_test()
     const QVector3D enu(3497.22f, -1280.96f, 48.91f);
     const QGeoCoordinate coord = QGCGeo::convertEnuToGps(enu, m_origin);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), 47.364869, 0.0001);
-    QCOMPARE_FUZZY(coord.longitude(), 8.594398, 0.0001);
+    QVERIFY_COORDS_NEAR(coord, QGeoCoordinate(47.364869, 8.594398), 7.5);
     QCOMPARE_FUZZY(coord.altitude(), 50.0, 0.2);
 }
 
@@ -329,8 +323,7 @@ void GeoTest::_convertEnuToEcef_test()
     // Note: QVector3D uses float, so ECEF round-trips have reduced precision
     const QGeoCoordinate coord = QGCGeo::convertEcefToGeodetic(ecef);
     QVERIFY(coord.isValid());
-    QCOMPARE_FUZZY(coord.latitude(), 47.364869, 0.001);
-    QCOMPARE_FUZZY(coord.longitude(), 8.594398, 0.001);
+    QVERIFY_COORDS_NEAR(coord, QGeoCoordinate(47.364869, 8.594398), 75.0);
     QCOMPARE_FUZZY(coord.altitude(), 50.0, 1.0);
 }
 
@@ -444,10 +437,8 @@ void GeoTest::_interpolatePath_test()
     const QGeoCoordinate dest = QGCGeo::geodesicDestination(m_origin, 45.0, 10000.0);
     const auto twoPoints = QGCGeo::interpolatePath(m_origin, dest, 2);
     QCOMPARE(twoPoints.size(), 2);
-    QCOMPARE_FUZZY(twoPoints.first().latitude(), m_origin.latitude(), 0.00001);
-    QCOMPARE_FUZZY(twoPoints.first().longitude(), m_origin.longitude(), 0.00001);
-    QCOMPARE_FUZZY(twoPoints.last().latitude(), dest.latitude(), 0.00001);
-    QCOMPARE_FUZZY(twoPoints.last().longitude(), dest.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(twoPoints.first(), m_origin, 0.75);
+    QVERIFY_COORDS_NEAR(twoPoints.last(), dest, 0.75);
     // Test with 11 points (10 segments of 1000m each)
     const QGeoCoordinate end = QGCGeo::geodesicDestination(m_origin, 0.0, 10000.0);
     const auto elevenPoints = QGCGeo::interpolatePath(m_origin, end, 11);
@@ -474,12 +465,10 @@ void GeoTest::_interpolateAtDistance_test()
     // Test at distance 0
     const QGeoCoordinate dest = QGCGeo::geodesicDestination(m_origin, 0.0, 5000.0);
     const auto atZero = QGCGeo::interpolateAtDistance(m_origin, dest, 0.0);
-    QCOMPARE_FUZZY(atZero.latitude(), m_origin.latitude(), 0.00001);
-    QCOMPARE_FUZZY(atZero.longitude(), m_origin.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(atZero, m_origin, 0.75);
     // Test at distance beyond end (should clamp to end)
     const auto beyondEnd = QGCGeo::interpolateAtDistance(m_origin, dest, 10000.0);
-    QCOMPARE_FUZZY(beyondEnd.latitude(), dest.latitude(), 0.00001);
-    QCOMPARE_FUZZY(beyondEnd.longitude(), dest.longitude(), 0.00001);
+    QVERIFY_COORDS_NEAR(beyondEnd, dest, 0.75);
     // Test midpoint
     const auto midpoint = QGCGeo::interpolateAtDistance(m_origin, dest, 2500.0);
     const double distToMid = QGCGeo::geodesicDistance(m_origin, midpoint);
@@ -562,8 +551,7 @@ void GeoTest::_nedRoundtripProperty_test()
 
         // Should match within reasonable tolerance
         RC_ASSERT(result.isValid());
-        RC_ASSERT(qAbs(result.latitude() - original.latitude()) < 0.0001);
-        RC_ASSERT(qAbs(result.longitude() - original.longitude()) < 0.0001);
+        RC_ASSERT(QTest::compareCoords(result, original, 7.5));
         RC_ASSERT(qAbs(result.altitude() - original.altitude()) < 0.1);
     });
 }

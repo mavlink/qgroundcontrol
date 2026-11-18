@@ -25,8 +25,6 @@ private slots:
     void _testAtomicWrite_data();
     void _testAtomicWrite();
     void _testAtomicWriteEmptyPath();
-    void _testReadCompressedFile();
-    void _testReadCompressedFileMaxBytes();
 
     // Disk space utilities tests
     void _testAvailableDiskSpaceBasic();
@@ -37,7 +35,6 @@ private slots:
 
     // URL/Path utilities tests
     void _testToLocalPathFromUrl();
-    void _testToLocalPathCompressionInterop();
     void _testLocalPaths_data();
     void _testLocalPaths();
     void _testIsQtResource();
@@ -45,7 +42,6 @@ private slots:
     // Checksum utilities tests
     void _testComputeHash();
     void _testComputeFileHash();
-    void _testComputeDecompressedFileHash();
     void _testVerifyFileHash();
     void _testHashAlgorithmName();
 

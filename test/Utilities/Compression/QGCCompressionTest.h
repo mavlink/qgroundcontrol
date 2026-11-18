@@ -48,6 +48,7 @@ private slots:
     void _testDecompressRejectsStreamWithoutData();
     void _testDecompressPlainInput_data();
     void _testDecompressPlainInput();
+    void _testComputeFileHashOfUncompressedFile();
     void _testDecompressFileCopiesPlainInput_data();
     void _testDecompressFileCopiesPlainInput();
 

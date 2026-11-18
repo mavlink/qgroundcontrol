@@ -23,8 +23,6 @@ private slots:
     void _testOffset();
 
 private:
-    QString _copyRes(const QString& dirPath, const QString& name);
-
     MultiSignalSpy* _multiSpyPolyline = nullptr;
     MultiSignalSpy* _multiSpyModel = nullptr;
     QGCMapPolyline* _mapPolyline = nullptr;

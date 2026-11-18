@@ -135,7 +135,7 @@ QString writeShapefile(const QString& dirPath, const QString& baseName, ShapeTyp
 }
 
 /// A KML document with one placemark per entry of @a shapes, each "lon,lat[,alt]" tuples separated by spaces.
-QString kmlShapeDocument(ShapeType kind, const QStringList& shapes)
+QByteArray kmlShapeDocument(ShapeType kind, const QStringList& shapes)
 {
     QString placemarks;
     for (const QString& coordinates : shapes) {
@@ -158,7 +158,8 @@ QString kmlShapeDocument(ShapeType kind, const QStringList& shapes)
     return QStringLiteral(
                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                "<kml xmlns=\"http://www.opengis.net/kml/2.2\"><Document>%1</Document></kml>")
-        .arg(placemarks);
+        .arg(placemarks)
+        .toUtf8();
 }
 
 /// The vertices as "lon,lat[,alt]" tuples separated by spaces, rounded to ten digits (a millimetre or so).
@@ -221,28 +222,12 @@ bool loadFirstPolygon(const QString& file, QList<QGeoCoordinate>& vertices, QStr
 
 }  // namespace
 
-QString ShapeTest::_copyRes(const QString& dirPath, const QString& name)
-{
-    const QString dstPath = QDir(dirPath).filePath(name);
-    (void)QFile::remove(dstPath);
-    const QString resPath = QStringLiteral(":/unittest/%1").arg(name);
-    (void)QFile(resPath).copy(dstPath);
-    return dstPath;
-}
-
-QString ShapeTest::_writeKmlFile(const QString& dirPath, const QString& name, const QString& content)
-{
-    const QString path = QDir(dirPath).filePath(name);
-    (void) TestFixtures::writeFile(path, content.toUtf8());
-    return path;
-}
-
 void ShapeTest::_testLoadPolygonsFromSHP()
 {
     QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polygon.shp");
-    (void)_copyRes(tempDir.path(), "polygon.shx");
-    (void)_copyRes(tempDir.path(), "polygon.prj");
+    const QString shpFile = TestFixtures::copyResource(tempDir.path(), "polygon.shp");
+    (void) TestFixtures::copyResource(tempDir.path(), "polygon.shx");
+    (void) TestFixtures::copyResource(tempDir.path(), "polygon.prj");
     QString errorString;
     QList<QList<QGeoCoordinate>> polygons;
     QVERIFY(ShapeFileHelper::loadPolygonsFromFile(shpFile, polygons, errorString));
@@ -273,9 +258,9 @@ void ShapeTest::_testLoadPolygonsFromSHP()
 void ShapeTest::_testLoadPolylinesFromSHP()
 {
     QTemporaryDir tempDir;
-    const QString shpFile = _copyRes(tempDir.path(), "polyline.shp");
-    (void) _copyRes(tempDir.path(), "polyline.shx");
-    (void) _copyRes(tempDir.path(), "polyline.prj");
+    const QString shpFile = TestFixtures::copyResource(tempDir.path(), "polyline.shp");
+    (void) TestFixtures::copyResource(tempDir.path(), "polyline.shx");
+    (void) TestFixtures::copyResource(tempDir.path(), "polyline.prj");
     QString errorString;
     QList<QList<QGeoCoordinate>> polylines;
     // No two vertices are within the default filter distance, so the filter changes nothing.
@@ -295,7 +280,7 @@ void ShapeTest::_testLoadPolylinesFromSHP()
 void ShapeTest::_testLoadPolygonsFromKML()
 {
     QTemporaryDir tempDir;
-    const QString kmlFile = _copyRes(tempDir.path(), "polygon.kml");
+    const QString kmlFile = TestFixtures::copyResource(tempDir.path(), "polygon.kml");
     QString errorString;
     QList<QList<QGeoCoordinate>> polygons;
     QVERIFY(ShapeFileHelper::loadPolygonsFromFile(kmlFile, polygons, errorString));
@@ -310,7 +295,7 @@ void ShapeTest::_testLoadPolygonsFromKML()
 void ShapeTest::_testLoadPolylinesFromKML()
 {
     QTemporaryDir tempDir;
-    const QString kmlFile = _copyRes(tempDir.path(), "polyline.kml");
+    const QString kmlFile = TestFixtures::copyResource(tempDir.path(), "polyline.kml");
     QString errorString;
     QList<QList<QGeoCoordinate>> polylines;
     QVERIFY(ShapeFileHelper::loadPolylinesFromFile(kmlFile, polylines, errorString));
@@ -493,8 +478,9 @@ void ShapeTest::_testLoadShapes()
     QFETCH(QStringList, expected);
 
     QTemporaryDir tempDir;
-    const QString file = prj.isEmpty() ? _writeKmlFile(tempDir.path(), "shapes.kml", kmlShapeDocument(kind, shapes))
-                                       : writeShapefile(tempDir.path(), "shapes", kind, shapes, prj);
+    const QString file = prj.isEmpty()
+                             ? TestFixtures::writeFileIn(tempDir.path(), "shapes.kml", kmlShapeDocument(kind, shapes))
+                             : writeShapefile(tempDir.path(), "shapes", kind, shapes, prj);
 
     QString errorString;
     QList<QList<QGeoCoordinate>> loaded;
@@ -596,15 +582,17 @@ void ShapeTest::_testLoadFailures()
     QTemporaryDir tempDir;
     const QString dirPath = tempDir.path();
     const QString ring = QStringLiteral("8,47 8,47.001 8.001,47.001 8.001,47 8,47");
-    (void) _writeKmlFile(dirPath, "notxml.kml", "hello");
-    (void) _writeKmlFile(dirPath, "polygon.kml", kmlShapeDocument(ShapeType::Polygon, {ring}));
-    (void) _writeKmlFile(dirPath, "line.kml", kmlShapeDocument(ShapeType::Polyline, {ring}));
-    (void) _writeKmlFile(dirPath, "shortpolygon.kml", kmlShapeDocument(ShapeType::Polygon, {"8,47 8,47.001"}));
-    (void) _writeKmlFile(dirPath, "nocoordinates.kml",
-                         "<kml><Polygon><outerBoundaryIs><LinearRing/></outerBoundaryIs></Polygon></kml>");
-    (void) _writeKmlFile(dirPath, "badcoordinates.kml", kmlShapeDocument(ShapeType::Polygon, {"north,east"}));
-    (void) _writeKmlFile(dirPath, "shortline.kml", kmlShapeDocument(ShapeType::Polyline, {"8,47"}));
-    (void) _writeKmlFile(dirPath, "badpoint.kml", kmlShapeDocument(ShapeType::Point, {"8,97"}));
+    (void) TestFixtures::writeFileIn(dirPath, "notxml.kml", "hello");
+    (void) TestFixtures::writeFileIn(dirPath, "polygon.kml", kmlShapeDocument(ShapeType::Polygon, {ring}));
+    (void) TestFixtures::writeFileIn(dirPath, "line.kml", kmlShapeDocument(ShapeType::Polyline, {ring}));
+    (void) TestFixtures::writeFileIn(dirPath, "shortpolygon.kml",
+                                     kmlShapeDocument(ShapeType::Polygon, {"8,47 8,47.001"}));
+    (void) TestFixtures::writeFileIn(dirPath, "nocoordinates.kml",
+                                     "<kml><Polygon><outerBoundaryIs><LinearRing/></outerBoundaryIs></Polygon></kml>");
+    (void) TestFixtures::writeFileIn(dirPath, "badcoordinates.kml",
+                                     kmlShapeDocument(ShapeType::Polygon, {"north,east"}));
+    (void) TestFixtures::writeFileIn(dirPath, "shortline.kml", kmlShapeDocument(ShapeType::Polyline, {"8,47"}));
+    (void) TestFixtures::writeFileIn(dirPath, "badpoint.kml", kmlShapeDocument(ShapeType::Point, {"8,97"}));
     (void) writeShapefile(dirPath, "polygon", ShapeType::Polygon, {ring}, kWgs84Prj);
     (void) writeShapefile(dirPath, "line", ShapeType::Polyline, {ring}, kWgs84Prj);
     (void) writeShapefile(dirPath, "empty", ShapeType::Polygon, {}, kWgs84Prj);
@@ -764,8 +752,9 @@ void ShapeTest::_testSkippedVertices()
     QFETCH(QStringList, expected);
 
     QTemporaryDir tempDir;
-    const QString file = prj.isEmpty() ? _writeKmlFile(tempDir.path(), "shapes.kml", kmlShapeDocument(kind, shapes))
-                                       : writeShapefile(tempDir.path(), "shapes", kind, shapes, prj);
+    const QString file = prj.isEmpty()
+                             ? TestFixtures::writeFileIn(tempDir.path(), "shapes.kml", kmlShapeDocument(kind, shapes))
+                             : writeShapefile(tempDir.path(), "shapes", kind, shapes, prj);
 
     const char* category = prj.isEmpty() ? "Utilities.KMLHelper" : "Utilities.SHPFileHelper";
     for (const QString& warning : std::as_const(warnings)) {
@@ -810,7 +799,7 @@ void ShapeTest::_testKMLExportSchemaValidation()
     QVERIFY2(result.isValid, qPrintable(result.errors.join(QStringLiteral("; "))));
     QVERIFY(result.errors.isEmpty());
     // Test validation catches invalid altitudeMode
-    const QString invalidKml = R"(<?xml version="1.0" encoding="UTF-8"?>
+    const QByteArray invalidKml = R"(<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <Placemark>
@@ -821,12 +810,12 @@ void ShapeTest::_testKMLExportSchemaValidation()
     </Placemark>
   </Document>
 </kml>)";
-    const QString invalidKmlPath = _writeKmlFile(tempDir.path(), "invalid.kml", invalidKml);
+    const QString invalidKmlPath = TestFixtures::writeFileIn(tempDir.path(), "invalid.kml", invalidKml);
     const auto invalidResult = validator->validateFile(invalidKmlPath);
     QVERIFY(!invalidResult.isValid);
     QVERIFY(invalidResult.errors.first().contains("invalidMode"));
     // Test validation catches out-of-range coordinates
-    const QString badCoordsKml = R"(<?xml version="1.0" encoding="UTF-8"?>
+    const QByteArray badCoordsKml = R"(<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <Placemark>
@@ -836,7 +825,7 @@ void ShapeTest::_testKMLExportSchemaValidation()
     </Placemark>
   </Document>
 </kml>)";
-    const QString badCoordsPath = _writeKmlFile(tempDir.path(), "bad_coords.kml", badCoordsKml);
+    const QString badCoordsPath = TestFixtures::writeFileIn(tempDir.path(), "bad_coords.kml", badCoordsKml);
     const auto badCoordsResult = validator->validateFile(badCoordsPath);
     QVERIFY(!badCoordsResult.isValid);
     QVERIFY(badCoordsResult.errors.size() >= 2);  // lat and lon both out of range

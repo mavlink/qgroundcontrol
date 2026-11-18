@@ -15,4 +15,6 @@ private slots:
     void _testWaitForConditionSuccess();
     void _testWaitForConditionTimeout();
     void _testWaitMacros();
+    void _testFailedWaitLogsContext_data();
+    void _testFailedWaitLogsContext();
 };

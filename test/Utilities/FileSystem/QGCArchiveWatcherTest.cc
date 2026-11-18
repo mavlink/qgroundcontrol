@@ -23,12 +23,6 @@ void QGCArchiveWatcherTest::init()
     QVERIFY(QDir().mkpath(_outputDirPath));
 }
 
-void QGCArchiveWatcherTest::cleanup()
-{
-    _outputDirPath.clear();
-    UnitTest::cleanup();
-}
-
 // ============================================================================
 // Helper Methods
 // ============================================================================

@@ -14,7 +14,6 @@
 #include "FileFixtures.h"
 #include "QGCArchiveFile.h"
 #include "QGCDecompressDevice.h"
-#include "UnitTest.h"
 
 // ============================================================================
 // Both Devices

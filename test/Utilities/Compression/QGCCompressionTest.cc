@@ -17,6 +17,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "FileFixtures.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "QGCArchiveFile.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
@@ -149,17 +150,7 @@ QStringList QGCCompressionTest::_entriesBelow(const QString& directoryPath)
 bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount, const QByteArray& firstMember)
 {
     const QByteArray member = TestFixtures::gzipMember(QByteArray(64 * 1024, '\0'));
-
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly) || (file.write(firstMember) != firstMember.size())) {
-        return false;
-    }
-    for (int i = 0; i < memberCount; ++i) {
-        if (file.write(member) != member.size()) {
-            return false;
-        }
-    }
-    return true;
+    return TestFixtures::writeFile(path, firstMember + member.repeated(memberCount));
 }
 
 QByteArray QGCCompressionTest::_makeStreamedZip(const QList<ZipEntry>& entries, bool endRecord)
@@ -175,8 +166,7 @@ QByteArray QGCCompressionTest::_makeStreamedZip(const QList<ZipEntry>& entries, 
     directory.setByteOrder(QDataStream::LittleEndian);
 
     for (const ZipEntry& entry : entries) {
-        const QByteArray zlibStream = qCompress(entry.data);
-        const QByteArray deflated = zlibStream.mid(6, zlibStream.size() - 10);
+        const QByteArray deflated = TestFixtures::deflate(entry.data);
         const quint32 localHeaderOffset = zip.size();
         // Local file header, data, data descriptor
         out << quint32(0x04034B50) << quint16(20) << lengthAtEnd << deflate << quint32(0) << quint32(0) << quint32(0)
@@ -745,7 +735,7 @@ void QGCCompressionTest::_testDecompressEveryFormat_data()
     extensions.append(QStringLiteral("lz4"));
 #endif
     for (const QString& extension : std::as_const(extensions)) {
-        for (const char* api : {"decompressFile", "decompressData"}) {
+        for (const char* api : {"decompressFile", "decompressData", "readFile", "computeFileHash"}) {
             QTest::addRow("%s %s", qPrintable(extension), api)
                 << api << (QStringLiteral(":/unittest/manifest.json.") + extension);
         }
@@ -759,10 +749,22 @@ void QGCCompressionTest::_testDecompressEveryFormat()
 
     QTemporaryDir tempDir;
     const QString outputPath = tempDir.filePath("manifest.json");
-    Results results;
-    const QGCCompression::Outcome outcome = _call(api, {.path = resource, .output = outputPath}, &results);
-    QVERIFY2(outcome, qPrintable(outcome.message));
-    const QByteArray content = (api == "decompressData") ? results.data : TestFixtures::readFile(outputPath);
+    QByteArray content;
+    if (api == "readFile") {
+        QString readError;
+        content = QGCCompression::readFile(resource, &readError);
+        QVERIFY2(readError.isEmpty(), qPrintable(readError));
+    } else if (api == "computeFileHash") {
+        // The hash is that of the content, and not of the compressed file
+        QVERIFY(QGCCompression::decompressData(TestFixtures::readFile(resource), content));
+        QCOMPARE(QGCCompression::computeFileHash(resource),
+                 QString::fromLatin1(QCryptographicHash::hash(content, QCryptographicHash::Sha256).toHex()));
+    } else {
+        Results results;
+        const QGCCompression::Outcome outcome = _call(api, {.path = resource, .output = outputPath}, &results);
+        QVERIFY2(outcome, qPrintable(outcome.message));
+        content = (api == "decompressData") ? results.data : TestFixtures::readFile(outputPath);
+    }
     QVERIFY(content.contains("\"name\""));
 }
 
@@ -1096,6 +1098,16 @@ void QGCCompressionTest::_testDecompressPlainInput()
     QCOMPARE(TestFixtures::readFile(inputPath), plain);
 }
 
+void QGCCompressionTest::_testComputeFileHashOfUncompressedFile()
+{
+    // Neither the name nor the content tells of a compression: the hash is that of the file as it is
+    const QString resource = QStringLiteral(":/unittest/arducopter.apj");
+    const QByteArray content = TestFixtures::readFile(resource);
+    QVERIFY(!content.isEmpty());
+    QCOMPARE(QGCCompression::computeFileHash(resource),
+             QString::fromLatin1(QCryptographicHash::hash(content, QCryptographicHash::Sha256).toHex()));
+}
+
 void QGCCompressionTest::_testDecompressFileCopiesPlainInput_data()
 {
     QTest::addColumn<QString>("input");
@@ -1393,15 +1405,12 @@ void QGCCompressionTest::_testNoExternalDecompressors()
     QVERIFY(QDir().mkpath(binPath));
     // Stand-ins for the programs libarchive runs when it has no built-in decoder for a filter
     for (const char* program : {"bzip2", "lz4", "lrzip"}) {
-        const QString scriptPath = binPath + QLatin1Char('/') + QLatin1String(program);
-        QVERIFY(TestFixtures::writeFile(
-            scriptPath, "#!/bin/sh\n: > '" + QFile::encodeName(markerPath) + "'\nwhile read -r _; do :; done\n"));
-        QVERIFY(QFile::setPermissions(scriptPath,
-                                      QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+        QVERIFY(TestFixtures::writeExecutable(
+            binPath + QLatin1Char('/') + QLatin1String(program),
+            "#!/bin/sh\n: > '" + QFile::encodeName(markerPath) + "'\nwhile read -r _; do :; done\n"));
     }
-    const QByteArray originalPath = qgetenv("PATH");
+    const TestFixtures::EnvVarFixture restorePath("PATH");
     qputenv("PATH", QFile::encodeName(binPath));
-    const auto restorePath = qScopeGuard([&originalPath]() { qputenv("PATH", originalPath); });
 
     const QByteArray padding(32, '\0');
 
@@ -3743,7 +3752,5 @@ void QGCCompressionTest::_benchmarkListArchive()
         (void) QGCCompression::listArchiveDetailed(_zipResource, entries);
     }
 }
-
-#include "UnitTest.h"
 
 UT_REGISTER_TEST_LIGHTWEIGHT(QGCCompressionTest, TestLabel::Unit, TestLabel::Utilities)
