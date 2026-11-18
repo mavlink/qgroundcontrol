@@ -11,7 +11,6 @@ class ComponentInformationManager;
 class CompInfo;
 class AsyncFunctionState;
 class SkippableAsyncState;
-class ConditionalState;
 class QGCState;
 
 class RequestMetaDataTypeStateMachine : public QGCStateMachine

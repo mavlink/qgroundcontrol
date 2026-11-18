@@ -2,9 +2,6 @@
 #include "TransitionTestCommon.h"
 
 #include "QGCAbstractTransition.h"
-#include "QGCEventTransition.h"
-
-#include <QtCore/QTimerEvent>
 
 namespace {
 
@@ -25,100 +22,7 @@ protected:
     }
 };
 
-class OneShotTimerEmitter : public QObject
-{
-public:
-    void trigger()
-    {
-        _timerId = startTimer(1);
-    }
-
-protected:
-    void timerEvent(QTimerEvent* event) override
-    {
-        if ((_timerId != 0) && (event->timerId() == _timerId)) {
-            killTimer(_timerId);
-            _timerId = 0;
-        }
-        QObject::timerEvent(event);
-    }
-
-private:
-    int _timerId = 0;
-};
-
 } // namespace
-
-void AdditionalTransitionsCoverageTest::_testQGCEventTransitionMatchesEvent()
-{
-    QStateMachine machine;
-    OneShotTimerEmitter watchedObject;
-    bool targetReached = false;
-
-    auto* sourceState = new QState(&machine);
-    auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() {
-        targetReached = true;
-    });
-    auto* finalState = addFinalState(&machine);
-
-    sourceState->addTransition(new QGCEventTransition(&watchedObject, QEvent::Timer, targetState));
-    targetState->addTransition(targetState, &QGCState::advance, finalState);
-    machine.setInitialState(sourceState);
-
-    QSignalSpy enteredSpy(sourceState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    watchedObject.trigger();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(targetReached);
-}
-
-void AdditionalTransitionsCoverageTest::_testQGCEventTransitionGuardBlocksThenFallbackTakesEvent()
-{
-    QStateMachine machine;
-    OneShotTimerEmitter watchedObject;
-    bool guardCalled = false;
-    bool blockedStateReached = false;
-    bool fallbackStateReached = false;
-
-    auto* sourceState = new QState(&machine);
-    auto* blockedState = new FunctionState(QStringLiteral("Blocked"), &machine, [&blockedStateReached]() {
-        blockedStateReached = true;
-    });
-    auto* fallbackState = new FunctionState(QStringLiteral("Fallback"), &machine, [&fallbackStateReached]() {
-        fallbackStateReached = true;
-    });
-    auto* finalState = addFinalState(&machine);
-
-    sourceState->addTransition(new QGCEventTransition(
-        &watchedObject, QEvent::Timer, blockedState,
-        [&guardCalled](QEvent*) {
-            guardCalled = true;
-            return false;
-        }));
-    sourceState->addTransition(new QGCEventTransition(&watchedObject, QEvent::Timer, fallbackState));
-
-    blockedState->addTransition(blockedState, &QGCState::advance, finalState);
-    fallbackState->addTransition(fallbackState, &QGCState::advance, finalState);
-    machine.setInitialState(sourceState);
-
-    QSignalSpy enteredSpy(sourceState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    watchedObject.trigger();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(guardCalled);
-    QVERIFY(!blockedStateReached);
-    QVERIFY(fallbackStateReached);
-}
 
 void AdditionalTransitionsCoverageTest::_testQGCAbstractTransitionAccessorsAndCustomEventTransition()
 {

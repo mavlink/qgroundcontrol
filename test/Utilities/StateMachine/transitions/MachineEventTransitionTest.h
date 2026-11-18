@@ -8,6 +8,7 @@ class MachineEventTransitionTest : public StateMachineTest
 
 private slots:
     void _testMachineEventTransition();
+    void _testMachineEventTransitionWithGuard();
     void _testDelayedEvent();
     void _testDelayedEventCancel();
     void _testEventPriority();

@@ -41,10 +41,6 @@ public:
     Vehicle* vehicle() const;
     QString stateName() const;
 
-    /// Get the state machine's context for inter-state data passing
-    /// @return Pointer to the context, or nullptr if not in a QGCStateMachine
-    class StateContext* context() const;
-
     // -------------------------------------------------------------------------
     // Entry/Exit Callbacks
     // -------------------------------------------------------------------------

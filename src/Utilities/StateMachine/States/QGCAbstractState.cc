@@ -18,11 +18,6 @@ Vehicle* QGCAbstractState::vehicle() const
     return machine() ? machine()->vehicle() : nullptr;
 }
 
-StateContext* QGCAbstractState::context() const
-{
-    return machine() ? &machine()->context() : nullptr;
-}
-
 QString QGCAbstractState::stateName() const
 {
     if (machine()) {

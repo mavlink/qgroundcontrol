@@ -1,5 +1,4 @@
 #include "WaitStateBase.h"
-#include "QGCStateMachine.h"
 #include "QGCLoggingCategory.h"
 
 WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
@@ -18,18 +17,8 @@ void WaitStateBase::_onEntered()
     connectWaitSignal();
     onWaitEntered();
 
-    // Check for runtime timeout override
-    int effectiveTimeout = _timeoutMsecs;
-    if (machine()) {
-        int override = machine()->timeoutOverride(objectName());
-        if (override >= 0) {
-            effectiveTimeout = override;
-            qCDebug(QGCStateMachineLog) << stateName() << "using timeout override:" << effectiveTimeout << "ms";
-        }
-    }
-
-    if (effectiveTimeout > 0) {
-        _timeoutTimer.start(effectiveTimeout);
+    if (_timeoutMsecs > 0) {
+        _timeoutTimer.start(_timeoutMsecs);
     }
 }
 
@@ -47,11 +36,6 @@ void WaitStateBase::_onTimeout()
     }
 
     qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutTimer.interval() << "ms";
-
-    // Record timeout for statistics
-    if (machine()) {
-        machine()->recordTimeout(objectName());
-    }
 
     disconnectWaitSignal();
     onWaitTimeout();
@@ -111,15 +95,7 @@ void WaitStateBase::restartWait()
     disconnectWaitSignal();
     connectWaitSignal();
 
-    int effectiveTimeout = _timeoutMsecs;
-    if (machine()) {
-        const int override = machine()->timeoutOverride(objectName());
-        if (override >= 0) {
-            effectiveTimeout = override;
-        }
-    }
-
-    if (effectiveTimeout > 0) {
-        _timeoutTimer.start(effectiveTimeout);
+    if (_timeoutMsecs > 0) {
+        _timeoutTimer.start(_timeoutMsecs);
     }
 }

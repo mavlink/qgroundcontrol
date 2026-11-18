@@ -98,18 +98,7 @@ void RequestMetaDataTypeStateMachine::_createStates()
     registerState(_stateRequestTranslate);
 
     // State 7: Complete request
-    // Use ErrorRecoveryState shape (without retries/fallback) so completion
-    // stays in the unified recovery framework used by this utility.
-    _stateComplete = addErrorRecoveryState(
-        "CompleteRequest",
-        [this]() {
-            _completeRequest();
-            return true;
-        },
-        0,
-        0,
-        ErrorRecoveryBuilder::EmitError
-    );
+    _stateComplete = addFunctionState("CompleteRequest", [this]() { _completeRequest(); });
 
     _stateFinal = addFinalState("Final");
 

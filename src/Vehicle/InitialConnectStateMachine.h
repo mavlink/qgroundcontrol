@@ -7,7 +7,7 @@ class Vehicle;
 class SkippableAsyncState;
 class AsyncFunctionState;
 class RetryableRequestMessageState;
-class RetryState;
+class FunctionState;
 
 /// \brief State machine for initial vehicle connection sequence.
 ///
@@ -66,7 +66,7 @@ private:
     SkippableAsyncState* _stateMission = nullptr;
     SkippableAsyncState* _stateGeoFence = nullptr;
     SkippableAsyncState* _stateRallyPoints = nullptr;
-    RetryState* _stateComplete = nullptr;
+    FunctionState* _stateComplete = nullptr;
     QGCFinalState* _stateFinal = nullptr;
 
     static constexpr int _autopilotVersionMaxRetries = 1;

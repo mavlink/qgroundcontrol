@@ -647,7 +647,7 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
         QCOMPARE(rawValueChangedSpy.count(), 2);
         QVERIFY(QGC::fuzzyCompare(rawValueChangedSpy[1][0].toDouble(), originalDouble, 0.00001));
         // We should have also alerted the user of the failure
-        // Note that we can't easily check for the ShowAppMessageState usage here due to the
+        // Note that we can't easily check for the user notify state here due to the
         // complexity of the state machine and timing of the signals.
     }
     _mockLink->setParamSetFailureMode(MockLink::FailParamSetNone);

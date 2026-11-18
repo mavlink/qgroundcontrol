@@ -33,7 +33,7 @@ At first online vehicle connection, QGC runs a linear state machine to gather cr
 5. **Request Mission** (`SkippableAsyncState`)
 6. **Request Geofence** (`SkippableAsyncState`)
 7. **Request Rally Points** (`SkippableAsyncState`)
-8. **Signal Complete** (`RetryState` with zero retries)
+8. **Signal Complete** (`FunctionState`)
 9. **Final** (`QGCFinalState`)
 
 The state machine is started from `Vehicle` construction for normal vehicles.

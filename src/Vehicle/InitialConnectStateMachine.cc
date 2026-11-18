@@ -162,19 +162,7 @@ void InitialConnectStateMachine::_createStates()
     );
 
     // State 7: Signal completion
-    // Use RetryState with zero retries so completion participates in the unified
-    // retry/error state family while preserving immediate success behavior.
-    _stateComplete = new RetryState(
-        QStringLiteral("SignalComplete"),
-        this,
-        [this]() {
-            _signalComplete();
-            return true;
-        },
-        0,
-        0,
-        RetryState::EmitError
-    );
+    _stateComplete = new FunctionState(QStringLiteral("SignalComplete"), this, [this]() { _signalComplete(); });
 
     // Final state
     _stateFinal = new QGCFinalState(QStringLiteral("Final"), this);
@@ -201,7 +189,7 @@ void InitialConnectStateMachine::_wireTransitions()
     _stateRallyPoints->addTransition(_stateRallyPoints, &WaitStateBase::completed, _stateComplete);
     _stateRallyPoints->addTransition(_stateRallyPoints, &SkippableAsyncState::skipped, _stateComplete);
 
-    // Complete -> Final (RetryState emits advance() on success)
+    // Complete -> Final (FunctionState emits advance() after its function)
     _stateComplete->addTransition(_stateComplete, &QGCState::advance, _stateFinal);
 }
 
