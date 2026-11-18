@@ -14,6 +14,7 @@ private slots:
     void _testDisposeChildOutlastsBinStateChange();
     void _testFlushAndDisposeChildFlushes();
     void _testTeeBranchHead();
+    void _testTeeBranchHeadOpensBehindPushInFlight();
     void _testRequestKeyframe();
     void _testSendEventAsync();
     void _testFirstSrcPad();

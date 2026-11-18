@@ -43,6 +43,17 @@ GstElement* parentOf(GstElement* element)
     return GST_ELEMENT(GST_OBJECT_PARENT(element));
 }
 
+/// Has the appsrc @p source push one buffer.
+bool pushBuffer(GstElement* source)
+{
+    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, 16, nullptr);
+    GstFlowReturn result = GST_FLOW_ERROR;
+    // The signal takes a ref of its own.
+    g_signal_emit_by_name(source, "push-buffer", buffer, &result);
+    gst_buffer_unref(buffer);
+    return result == GST_FLOW_OK;
+}
+
 // Enough children disposed of for some to meet a state change of their bin at the wrong moment: without the bin's
 // state lock at least four in a thousand did.
 constexpr int kDisposalsDuringStateChanges = 2000;
@@ -231,6 +242,62 @@ void GStreamerHelpersTest::_testTeeBranchHead()
     head.open();
     head.close();
     QCOMPARE(requests.load(), 1);
+}
+
+void GStreamerHelpersTest::_testTeeBranchHeadOpensBehindPushInFlight()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc");
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src ! tee name=tee")), qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    const GStreamer::GstElementPtr tee = pipeline.element("tee");
+    TeeBranchHead head;
+    QVERIFY(head.build(pipeline.get(), tee.get(), GStreamer::PipelineBranch::Decoding, "test"));
+    GstElement* const first =
+        GStreamer::addToBin(pipeline.get(), GStreamer::makeElement("fakesink", "first"), "fakesink");
+    QVERIFY(first && gst_element_link(head.valve(), first));
+    QVERIFY(pipeline.play());
+    head.open();
+
+    // A push is under way in what follows the valve...
+    const GStreamer::GstPadPtr firstSink = GStreamer::adoptPad(gst_element_get_static_pad(first, "sink"));
+    std::atomic<int> held{0};
+    GStreamer::PadProbe hold;
+    QVERIFY(hold.add(firstSink.get(),
+                     static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
+                     GstTest::countBuffers, &held));
+    QVERIFY(pushBuffer(source.get()));
+    QTRY_COMPARE_WITH_TIMEOUT(held.load(), 1, TestTimeout::mediumMs());
+
+    // ... while the branch replaces that part by another.
+    head.close();
+    gst_element_unlink(head.valve(), first);
+    GstElement* const second =
+        GStreamer::addToBin(pipeline.get(), GStreamer::makeElement("fakesink", "second"), "fakesink");
+    QVERIFY(second && gst_element_sync_state_with_parent(second) && gst_element_link(head.valve(), second));
+    const GStreamer::GstPadPtr secondSink = GStreamer::adoptPad(gst_element_get_static_pad(second, "sink"));
+    std::atomic<int> arrived{0};
+    GStreamer::PadProbe arrival;
+    QVERIFY(arrival.add(secondSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &arrived));
+
+    // The valve stays closed until that push is back: it comes back flushing, as from a part that was stopped, which
+    // an open valve would hand to the queue, whose streaming thread would stop for it.
+    std::atomic<bool> opening{false};
+    std::thread opener([&head, &opening] {
+        opening.store(true);
+        head.open();
+    });
+    QTRY_VERIFY_WITH_TIMEOUT(opening.load(), TestTimeout::mediumMs());
+    gboolean drop = FALSE;
+    g_object_get(head.valve(), "drop", &drop, nullptr);
+    const bool closedDuringPush = drop;
+    (void) gst_pad_send_event(firstSink.get(), gst_event_new_flush_start());
+    opener.join();
+    QVERIFY(closedDuringPush);
+
+    // The queue still passes on what follows.
+    QVERIFY(pushBuffer(source.get()));
+    QTRY_COMPARE_WITH_TIMEOUT(arrived.load(), 1, TestTimeout::mediumMs());
 }
 
 void GStreamerHelpersTest::_testRequestKeyframe()
