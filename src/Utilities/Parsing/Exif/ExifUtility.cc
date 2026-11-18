@@ -9,6 +9,68 @@ QGC_LOGGING_CATEGORY(ExifUtilityLog, "Utilities.ExifUtility")
 namespace ExifUtility
 {
 
+namespace {
+
+/// Byte range of a JPEG's EXIF APP1 segment; empty at the place for a new one when the image has none.
+struct ExifSegmentRange
+{
+    qsizetype start = 0;
+    qsizetype end = 0;
+};
+
+/// Walks the marker segments that follow SOI, up to SOS or EOI.
+/// @return false if they are malformed
+bool findExifSegment(const QByteArray& jpeg, ExifSegmentRange& range)
+{
+    const QByteArrayView exifIdentifier("Exif\0\0", 6);
+    const auto byteAt = [&jpeg](qsizetype index) { return static_cast<unsigned char>(jpeg[index]); };
+
+    qsizetype pos = 2;
+    // A new EXIF segment goes after the JFIF APP0 segments, which have to stay first
+    qsizetype insertPos = pos;
+    bool leadingApp0 = true;
+
+    while (pos + 1 < jpeg.size()) {
+        if (byteAt(pos) != 0xFF) {
+            return false;
+        }
+        const unsigned char marker = byteAt(pos + 1);
+        if (marker == 0xFF) {  // Fill byte before a marker
+            pos++;
+            continue;
+        }
+        if (marker == 0xDA || marker == 0xD9) {  // SOS, EOI
+            range = {insertPos, insertPos};
+            return true;
+        }
+        // Every other marker allowed here starts a segment with a length field
+        if (marker < 0xC0 || (marker >= 0xD0 && marker <= 0xD8) || pos + 4 > jpeg.size()) {
+            return false;
+        }
+        const qsizetype segmentLen = (byteAt(pos + 2) << 8) | byteAt(pos + 3);
+        const qsizetype segmentEnd = pos + 2 + segmentLen;
+        if (segmentLen < 2 || segmentEnd > jpeg.size()) {
+            return false;
+        }
+
+        // XMP metadata is stored in APP1 too
+        if (marker == 0xE1 && QByteArrayView(jpeg).sliced(pos + 4, segmentLen - 2).startsWith(exifIdentifier)) {
+            range = {pos, segmentEnd};
+            return true;
+        }
+        if (leadingApp0 && marker == 0xE0) {
+            insertPos = segmentEnd;
+        } else {
+            leadingApp0 = false;
+        }
+        pos = segmentEnd;
+    }
+
+    return false;
+}
+
+}  // namespace
+
 // ============================================================================
 // EXIF Data Management
 // ============================================================================
@@ -51,6 +113,12 @@ bool saveToBuffer(ExifData *data, QByteArray &buffer)
         return false;
     }
 
+    ExifSegmentRange exifSegment;
+    if (!findExifSegment(buffer, exifSegment)) {
+        qCWarning(ExifUtilityLog) << "Malformed JPEG segments";
+        return false;
+    }
+
     // Generate EXIF output
     unsigned char *exifBuffer = nullptr;
     unsigned int exifSize = 0;
@@ -62,34 +130,11 @@ bool saveToBuffer(ExifData *data, QByteArray &buffer)
         return false;
     }
 
-    // Find existing APP1 marker
-    int app1Start = -1;
-    int app1End = -1;
-    int pos = 2;
-
-    while (pos < buffer.size() - 3) {
-        if (static_cast<unsigned char>(buffer[pos]) == 0xFF) {
-            unsigned char marker = static_cast<unsigned char>(buffer[pos + 1]);
-
-            if (marker == 0xE1) {  // APP1 (EXIF)
-                app1Start = pos;
-                int segmentLen = (static_cast<unsigned char>(buffer[pos + 2]) << 8) |
-                                 static_cast<unsigned char>(buffer[pos + 3]);
-                app1End = pos + 2 + segmentLen;
-                break;
-            } else if (marker == 0xDA) {  // SOS - stop searching
-                break;
-            } else if (marker >= 0xE0 && marker <= 0xEF) {  // Other APPn
-                int segmentLen = (static_cast<unsigned char>(buffer[pos + 2]) << 8) |
-                                 static_cast<unsigned char>(buffer[pos + 3]);
-                pos += 2 + segmentLen;
-                continue;
-            } else if (marker == 0xD8 || marker == 0xD9 || marker == 0x00) {
-                pos++;
-                continue;
-            }
-        }
-        pos++;
+    // The 16-bit segment length counts its own two bytes
+    if (exifSize > 0xFFFF - 2) {
+        qCWarning(ExifUtilityLog) << "EXIF data does not fit in one JPEG segment:" << exifSize << "bytes";
+        free(exifBuffer);
+        return false;
     }
 
     // Build new APP1 segment
@@ -104,22 +149,12 @@ bool saveToBuffer(ExifData *data, QByteArray &buffer)
 
     free(exifBuffer);
 
-    // Reconstruct JPEG
+    // Reconstruct JPEG with the new APP1 in place of the old one
     QByteArray newBuffer;
     newBuffer.reserve(buffer.size() + newApp1.size());
-
-    // SOI marker
-    newBuffer.append(buffer.left(2));
-
-    // New APP1
+    newBuffer.append(buffer.first(exifSegment.start));
     newBuffer.append(newApp1);
-
-    // Rest of image (skip old APP1 if found)
-    if (app1Start > 0 && app1End > app1Start && app1End <= buffer.size()) {
-        newBuffer.append(buffer.mid(app1End));
-    } else {
-        newBuffer.append(buffer.mid(2));
-    }
+    newBuffer.append(buffer.sliced(exifSegment.end));
 
     buffer = newBuffer;
     return true;

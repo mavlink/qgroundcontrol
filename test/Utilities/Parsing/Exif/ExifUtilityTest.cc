@@ -1,8 +1,78 @@
 #include "ExifUtilityTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QScopeGuard>
 
 #include "ExifUtility.h"
+
+namespace {
+
+QByteArray jpegSegment(char marker, const QByteArray& payload)
+{
+    const qsizetype length = payload.size() + 2;
+    QByteArray segment;
+    segment.append('\xFF');
+    segment.append(marker);
+    segment.append(static_cast<char>((length >> 8) & 0xFF));
+    segment.append(static_cast<char>(length & 0xFF));
+    segment.append(payload);
+    return segment;
+}
+
+QByteArray jpegSoi()
+{
+    return QByteArray::fromHex("ffd8");
+}
+
+QByteArray jfifSegment()
+{
+    return jpegSegment('\xE0', QByteArray::fromHex("4a46494600010100000100010000"));
+}
+
+QByteArray xmpSegment()
+{
+    return jpegSegment('\xE1', QByteArray("http://ns.adobe.com/xap/1.0/\0", 29) + QByteArray("<x:xmpmeta/>"));
+}
+
+/// A quantization table whose values are @p tableBytes repeated
+QByteArray quantTableSegment(const QByteArray& tableBytes)
+{
+    return jpegSegment('\xDB', QByteArray(1, '\0') + tableBytes.repeated(64 / tableBytes.size()));
+}
+
+/// SOS segment, entropy-coded data and EOI
+QByteArray jpegScan()
+{
+    return jpegSegment('\xDA', QByteArray::fromHex("010100003f00")) + QByteArray::fromHex("12ff0034ffd9");
+}
+
+QByteArray exifBlock(ExifData* data)
+{
+    unsigned char* bytes = nullptr;
+    unsigned int size = 0;
+    exif_data_save_data(data, &bytes, &size);
+    const QByteArray block(reinterpret_cast<const char*>(bytes), size);
+    free(bytes);
+    return block;
+}
+
+/// The APP1 segment that saving @p data writes
+QByteArray exifApp1Segment(ExifData* data)
+{
+    return jpegSegment('\xE1', exifBlock(data));
+}
+
+/// EXIF data whose block is @p size bytes (an even number), padded with a comment
+ExifData* exifDataOfSize(qsizetype size)
+{
+    ExifData* data = ExifUtility::createNew();
+    // A tag takes a 12 byte directory entry and its value
+    const qsizetype commentSize = size - exifBlock(data).size() - 12;
+    ExifUtility::createTag(data, EXIF_IFD_EXIF, EXIF_TAG_USER_COMMENT, EXIF_FORMAT_UNDEFINED, commentSize);
+    return data;
+}
+
+}  // namespace
 
 // ============================================================================
 // EXIF Data Detection Tests
@@ -168,6 +238,120 @@ void ExifUtilityTest::_testSaveToBufferRejectsTiff()
     verifyExpectedLogMessage();
 
     exif_data_unref(data);
+}
+
+void ExifUtilityTest::_testSaveToBufferKeepsOtherSegments_data()
+{
+    QTest::addColumn<QByteArray>("before");
+    QTest::addColumn<QByteArray>("existingExif");
+    QTest::addColumn<QByteArray>("after");
+
+    ExifData* oldData = ExifUtility::createNew();
+    ExifUtility::writeDateTimeOriginal(oldData, QDateTime(QDate(2001, 1, 1), QTime(0, 0), QTimeZone::UTC));
+    const QByteArray oldExif = exifApp1Segment(oldData);
+    exif_data_unref(oldData);
+
+    const QByteArray soi = jpegSoi();
+    const QByteArray jfif = jfifSegment();
+    const QByteArray xmp = xmpSegment();
+    const QByteArray image = quantTableSegment(QByteArray::fromHex("10")) + jpegScan();
+    // Table values that read as an APP1 marker and its length
+    const QByteArray markerLikeTable = quantTableSegment(QByteArray::fromHex("ffe10008"));
+    const QByteArray fill(1, '\xFF');
+
+    QTest::newRow("jfif-then-exif") << soi + jfif << oldExif << image;
+    QTest::newRow("jfif-without-exif") << soi + jfif << QByteArray() << image;
+    QTest::newRow("no-app-segments") << soi << QByteArray() << image;
+    QTest::newRow("xmp-without-exif") << soi + jfif << QByteArray() << xmp + image;
+    QTest::newRow("xmp-then-exif") << soi + xmp << oldExif << image;
+    QTest::newRow("exif-then-xmp") << soi << oldExif << xmp + image;
+    QTest::newRow("marker-bytes-in-table") << soi << QByteArray() << markerLikeTable + jpegScan();
+    QTest::newRow("fill-bytes") << soi + jfif + fill << oldExif << fill + image;
+}
+
+void ExifUtilityTest::_testSaveToBufferKeepsOtherSegments()
+{
+    QFETCH(QByteArray, before);
+    QFETCH(QByteArray, existingExif);
+    QFETCH(QByteArray, after);
+
+    ExifData* data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+    const auto release = qScopeGuard([data] { exif_data_unref(data); });
+    QVERIFY(ExifUtility::writeDateTimeOriginal(data, QDateTime(QDate(2025, 2, 14), QTime(12, 34, 56), QTimeZone::UTC)));
+
+    QByteArray jpeg = before + existingExif + after;
+    QVERIFY(ExifUtility::saveToBuffer(data, jpeg));
+    QCOMPARE(jpeg, before + exifApp1Segment(data) + after);
+
+    ExifData* saved = ExifUtility::loadFromBuffer(jpeg);
+    QVERIFY(saved != nullptr);
+    const QString dateTime = ExifUtility::readString(saved, EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_IFD_EXIF);
+    exif_data_unref(saved);
+    QCOMPARE(dateTime, QStringLiteral("2025:02:14 12:34:56"));
+}
+
+void ExifUtilityTest::_testSaveToBufferLargestExif()
+{
+    // A segment holds 65533 bytes; the EXIF blocks written here have even sizes
+    constexpr qsizetype exifSize = 65532;
+    ExifData* data = exifDataOfSize(exifSize);
+    QVERIFY(data != nullptr);
+    const auto release = qScopeGuard([data] { exif_data_unref(data); });
+    QCOMPARE(exifBlock(data).size(), exifSize);
+
+    QByteArray jpeg = jpegSoi() + jfifSegment() + jpegScan();
+    QVERIFY(ExifUtility::saveToBuffer(data, jpeg));
+    QCOMPARE(jpeg, jpegSoi() + jfifSegment() + exifApp1Segment(data) + jpegScan());
+
+    ExifData* saved = ExifUtility::loadFromBuffer(jpeg);
+    QVERIFY(saved != nullptr);
+    const bool hasComment = exif_content_get_entry(saved->ifd[EXIF_IFD_EXIF], EXIF_TAG_USER_COMMENT) != nullptr;
+    exif_data_unref(saved);
+    QVERIFY(hasComment);
+}
+
+void ExifUtilityTest::_testSaveToBufferRejectsOversizedExif()
+{
+    constexpr qsizetype exifSize = 65534;
+    ExifData* data = exifDataOfSize(exifSize);
+    QVERIFY(data != nullptr);
+    const auto release = qScopeGuard([data] { exif_data_unref(data); });
+    QCOMPARE(exifBlock(data).size(), exifSize);
+
+    const QByteArray original = jpegSoi() + jfifSegment() + jpegScan();
+    QByteArray jpeg = original;
+    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("does not fit in one JPEG segment"));
+    QVERIFY(!ExifUtility::saveToBuffer(data, jpeg));
+    verifyExpectedLogMessage();
+    QCOMPARE(jpeg, original);
+}
+
+void ExifUtilityTest::_testSaveToBufferRejectsMalformedJpeg_data()
+{
+    QTest::addColumn<QByteArray>("original");
+
+    const QByteArray soi = jpegSoi();
+    const QByteArray jfif = jfifSegment();
+    QTest::newRow("ends-before-scan") << soi + jfif;
+    QTest::newRow("truncated-segment") << soi + jfif.chopped(1);
+    QTest::newRow("segment-length-below-minimum") << soi + QByteArray::fromHex("ffe00001") + jpegScan();
+    QTest::newRow("data-between-segments") << soi + jfif + QByteArray::fromHex("0000") + jpegScan();
+}
+
+void ExifUtilityTest::_testSaveToBufferRejectsMalformedJpeg()
+{
+    QFETCH(QByteArray, original);
+
+    ExifData* data = ExifUtility::createNew();
+    QVERIFY(data != nullptr);
+    const auto release = qScopeGuard([data] { exif_data_unref(data); });
+
+    QByteArray jpeg = original;
+    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("Malformed JPEG segments"));
+    QVERIFY(!ExifUtility::saveToBuffer(data, jpeg));
+    verifyExpectedLogMessage();
+    QCOMPARE(jpeg, original);
 }
 
 // ============================================================================

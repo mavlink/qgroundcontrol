@@ -22,9 +22,11 @@ ExifData* loadFromBuffer(const QByteArray &buffer);
 ExifData* createNew();
 
 /// Save EXIF data back to a JPEG buffer
+/// Replaces the image's EXIF segment, or adds one after any leading JFIF segments. All other bytes are kept.
 /// @param data The EXIF data to save
-/// @param buffer The original JPEG buffer (modified in place)
-/// @return true if successful
+/// @param buffer The original JPEG buffer (modified in place, unchanged on failure)
+/// @return true if successful, false if the EXIF data exceeds one segment (65533 bytes) or the JPEG's
+///         segments are malformed
 /// @note Only JPEG format is supported for writing. TIFF/DNG files return false.
 bool saveToBuffer(ExifData *data, QByteArray &buffer);
 

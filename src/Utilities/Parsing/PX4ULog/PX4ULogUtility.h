@@ -19,9 +19,10 @@ namespace PX4ULogUtility
 // Constants
 // ============================================================================
 
-/// ULog file magic bytes: "ULog" followed by 0x01 (version 1) followed by 0x12 (file compat)
+/// Start of the 7 ULog file magic bytes ("ULog" 0x01 0x12 0x35), which the version byte follows
 constexpr char kMagicBytes[] = {'U', 'L', 'o', 'g'};
 constexpr int kMagicSize = 4;
+constexpr int kVersionOffset = 7;
 constexpr int kHeaderSize = 16;  // Full header size
 
 // ============================================================================
@@ -35,7 +36,7 @@ constexpr int kHeaderSize = 16;  // Full header size
 bool isValidHeader(const char *data, qint64 size);
 
 /// Get the ULog format version from header
-/// @param data Pointer to data (must be at least 5 bytes)
+/// @param data Pointer to data (must be at least 8 bytes)
 /// @param size Size of available data
 /// @return Version number (typically 1), or -1 if invalid
 int getVersion(const char *data, qint64 size);
@@ -86,6 +87,9 @@ public:
     /// Get the number of messages processed
     int messageCount() const { return _messageCount; }
 
+    /// Check if the callback asked to stop; no further messages are passed to it
+    bool stopRequested() const { return _stopRequested; }
+
     /// Check if the target message format was found
     bool hasMessageFormat() const { return _messageFormat != nullptr; }
 
@@ -97,6 +101,7 @@ private:
     std::set<uint16_t> _messageIds;
     bool _hadFatalError = false;
     bool _headerComplete = false;
+    bool _stopRequested = false;
     int _messageCount = 0;
 };
 
@@ -106,7 +111,7 @@ private:
 /// @param messageName Name of the message to filter for
 /// @param callback Function called for each matching message
 /// @param errorMessage Output error message if parsing fails
-/// @return true on success (even if no messages found), false on parse error
+/// @return true on success (even if no messages found or the callback stopped early), false on parse error
 bool iterateMessages(const char *data, qint64 size,
                      const std::string &messageName,
                      const MessageCallback &callback,

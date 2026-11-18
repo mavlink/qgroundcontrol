@@ -25,13 +25,13 @@ bool isValidHeader(const char *data, qint64 size)
 
 int getVersion(const char *data, qint64 size)
 {
-    if (size < 5) {
+    if (size <= kVersionOffset) {
         return -1;
     }
     if (!isValidHeader(data, size)) {
         return -1;
     }
-    return static_cast<uint8_t>(data[4]);
+    return static_cast<uint8_t>(data[kVersionOffset]);
 }
 
 uint64_t getHeaderTimestamp(const char *data, qint64 size)
@@ -95,7 +95,7 @@ void MessageHandler::headerComplete()
 
 void MessageHandler::data(const ulog_cpp::Data &data)
 {
-    if (!_headerComplete || !_messageFormat) {
+    if (_stopRequested || !_headerComplete || !_messageFormat) {
         return;
     }
 
@@ -107,8 +107,8 @@ void MessageHandler::data(const ulog_cpp::Data &data)
         const ulog_cpp::TypedDataView typedData(data, *_messageFormat);
         ++_messageCount;
         if (!_callback(typedData)) {
-            // Callback returned false, stop processing
-            // Note: ulog_cpp doesn't support early termination, so we just skip remaining
+            // readChunk() can't be aborted, so the remaining messages of the chunk are ignored
+            _stopRequested = true;
         }
     } catch (const ulog_cpp::AccessException &exception) {
         qCWarning(PX4ULogUtilityLog) << "Failed to parse" << QString::fromStdString(_targetMessageName)
@@ -134,7 +134,15 @@ bool iterateMessages(const char *data, qint64 size,
 
     auto handler = std::make_shared<MessageHandler>(messageName, callback, errorMessage);
     ulog_cpp::Reader parser(handler);
-    parser.readChunk(reinterpret_cast<const uint8_t*>(data), static_cast<size_t>(size));
+
+    // readChunk() takes an int length
+    static constexpr qint64 kChunkSize = 64 * 1024;
+    qint64 offset = 0;
+    do {
+        const qint64 chunk = qBound<qint64>(0, size - offset, kChunkSize);
+        parser.readChunk(reinterpret_cast<const uint8_t*>(data) + offset, static_cast<int>(chunk));
+        offset += chunk;
+    } while (offset < size && !handler->stopRequested());
 
     if (handler->hadFatalError()) {
         errorMessage = QStringLiteral("Could not parse ULog");

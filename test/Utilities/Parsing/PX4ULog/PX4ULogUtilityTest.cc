@@ -67,12 +67,12 @@ void PX4ULogUtilityTest::_testIsValidHeaderQByteArray()
 
 void PX4ULogUtilityTest::_testGetVersion()
 {
-    // Version 1 ULog
-    char v1[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x00, 0x00};
+    // Version 1 ULog: the version byte follows the 7 magic bytes
+    char v1[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35, 0x01};
     QCOMPARE(PX4ULogUtility::getVersion(v1, sizeof(v1)), 1);
 
     // Hypothetical version 2
-    char v2[8] = {'U', 'L', 'o', 'g', 0x02, 0x12, 0x00, 0x00};
+    char v2[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35, 0x02};
     QCOMPARE(PX4ULogUtility::getVersion(v2, sizeof(v2)), 2);
 }
 
@@ -83,7 +83,7 @@ void PX4ULogUtilityTest::_testGetVersionInvalid()
     QCOMPARE(PX4ULogUtility::getVersion(invalid, sizeof(invalid)), -1);
 
     // Too short to contain version
-    char short_data[4] = {'U', 'L', 'o', 'g'};
+    char short_data[7] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35};
     QCOMPARE(PX4ULogUtility::getVersion(short_data, sizeof(short_data)), -1);
 
     // Empty
@@ -239,6 +239,51 @@ void PX4ULogUtilityTest::_testIterateMessagesMultiple()
     }
 }
 
+void PX4ULogUtilityTest::_testIterateMessagesStops()
+{
+    const QByteArray ulog = buildTestULog(5);
+
+    int callCount = 0;
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView&) {
+            ++callCount;
+            return false;
+        },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));
+    QCOMPARE(callCount, 1);
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesAcrossChunks()
+{
+    // The reader is fed 64 KiB at a time; 17-byte records make messages straddle the chunk boundaries
+    constexpr int kCount = 10000;
+    const QByteArray ulog = buildTestULog(kCount, 0ULL, 0.0f);
+    QVERIFY(ulog.size() > 2 * 64 * 1024);
+
+    int callCount = 0;
+    int outOfOrder = 0;
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView& sample) {
+            if (sample.at("timestamp").as<uint64_t>() != static_cast<uint64_t>(callCount) * 500000ULL) {
+                ++outOfOrder;
+            }
+            ++callCount;
+            return true;
+        },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));
+    QVERIFY(error.isEmpty());
+    QCOMPARE(callCount, kCount);
+    QCOMPARE(outOfOrder, 0);
+}
+
 void PX4ULogUtilityTest::_testIterateMessagesUnknownMessage()
 {
     // Valid ULog, but we request a message type that isn't in it.
@@ -278,6 +323,49 @@ void PX4ULogUtilityTest::_testIterateMessagesFatalError()
         empty.constData(), empty.size(), "test_msg",
         [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; }, error2));
     QCOMPARE(callCount, 0);
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesTruncated_data()
+{
+    QTest::addColumn<int>("size");
+    QTest::addColumn<bool>("parsed");
+    QTest::addColumn<int>("messageCount");
+
+    // The definitions end with the 14 byte message that subscribes test_msg; each record after it takes 17 bytes
+    const int definitions = static_cast<int>(buildTestULog(0).size());
+    const int whole = definitions + 3 * 17;
+    QTest::newRow("inside-file-header") << 8 << false << 0;
+    QTest::newRow("file-header-only") << 16 << false << 0;
+    QTest::newRow("without-subscription") << definitions - 14 << false << 0;
+    QTest::newRow("subscription-cut") << definitions - 1 << false << 0;
+    QTest::newRow("without-records") << definitions << true << 0;
+    QTest::newRow("first-record-cut") << definitions + 16 << true << 0;
+    QTest::newRow("last-record-missing") << whole - 17 << true << 2;
+    QTest::newRow("last-record-cut") << whole - 1 << true << 2;
+    QTest::newRow("whole-log") << whole << true << 3;
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesTruncated()
+{
+    QFETCH(int, size);
+    QFETCH(bool, parsed);
+    QFETCH(int, messageCount);
+
+    const QByteArray ulog = buildTestULog(3);
+    QVERIFY(size <= ulog.size());
+
+    int callCount = 0;
+    QString error;
+    QCOMPARE(PX4ULogUtility::iterateMessages(
+                 ulog.constData(), size, "test_msg",
+                 [&callCount](const ulog_cpp::TypedDataView&) {
+                     ++callCount;
+                     return true;
+                 },
+                 error),
+             parsed);
+    QCOMPARE(error.isEmpty(), parsed);
+    QCOMPARE(callCount, messageCount);
 }
 
 UT_REGISTER_TEST(PX4ULogUtilityTest, TestLabel::Unit, TestLabel::Utilities)

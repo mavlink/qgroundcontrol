@@ -3,6 +3,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QTemporaryFile>
 #include <QtCore/qnumeric.h>
 
 #include "JsonParsing.h"
@@ -138,6 +139,46 @@ void JsonParsingTest::_testIsJsonFileMissingPath()
 
     QVERIFY(!JsonParsing::isJsonFile(QStringLiteral("/definitely/missing/file.json"), document, errorString));
     QVERIFY(!errorString.isEmpty());
+}
+
+void JsonParsingTest::_testIsJsonFileReplacesStaleError_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<bool>("fromFile");
+    QTest::addColumn<bool>("isJson");
+
+    QTest::newRow("valid-bytes") << QByteArrayLiteral("{}") << false << true;
+    QTest::newRow("valid-file") << QByteArrayLiteral("{}") << true << true;
+    QTest::newRow("invalid-bytes") << QByteArrayLiteral("{") << false << false;
+    QTest::newRow("invalid-file") << QByteArrayLiteral("{") << true << false;
+    // No content and an error text: what a file that could not be read gives
+    QTest::newRow("empty-file") << QByteArray() << true << false;
+}
+
+void JsonParsingTest::_testIsJsonFileReplacesStaleError()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(bool, fromFile);
+    QFETCH(bool, isJson);
+
+    QTemporaryFile file;
+    QVERIFY(file.open());
+    QCOMPARE(file.write(content), content.size());
+    file.close();
+
+    const auto parse = [&](QString& errorString) {
+        QJsonDocument document;
+        return fromFile ? JsonParsing::isJsonFile(file.fileName(), document, errorString)
+                        : JsonParsing::isJsonFile(content, document, errorString);
+    };
+
+    QString freshError;
+    QCOMPARE(parse(freshError), isJson);
+    QCOMPARE(freshError.isEmpty(), isJson);
+
+    QString staleError = QStringLiteral("error of an earlier call");
+    QCOMPARE(parse(staleError), isJson);
+    QCOMPARE(staleError, freshError);
 }
 
 UT_REGISTER_TEST(JsonParsingTest, TestLabel::Unit, TestLabel::Utilities)
