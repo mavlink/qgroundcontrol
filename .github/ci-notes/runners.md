@@ -82,11 +82,12 @@ runner debugging. The [CI overview](../ci-overview.md) has the contributor-facin
 
 ## Build Timelines and Runner Debugging
 
-- The build and test jobs of Linux (Release, coverage and sanitizers, custom plugin), Windows,
-  macOS, Android, iOS, and Docker register `Kesin11/actions-timeline` before checkout, adding
-  runner queueing and step timing to the job summary. Windows's `gstreamer-tests` and Linux's
-  `appimage-distros` jobs register none. Each timeline is a snapshot at that job's completion;
-  matrix siblings may still be running, and nested composite steps stay collapsed.
+- The build and test jobs of Linux (Release, coverage and sanitizers, custom plugin, opt-in GPU
+  paths), Windows, macOS, Android, iOS, and Docker register `Kesin11/actions-timeline` before
+  checkout, adding runner queueing and step timing to the job summary. Windows's
+  `gstreamer-tests` and Linux's `appimage-distros` jobs register none. Each timeline is a snapshot
+  at that job's completion; matrix siblings may still be running, and nested composite steps stay
+  collapsed.
 - To inspect a failed runner, manually dispatch one of those workflows on a branch with
   `debug_runner` enabled. The run has a concurrency group of its own, so it neither waits behind
   the branch's pushes nor replaces a waiting push run

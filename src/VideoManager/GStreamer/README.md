@@ -291,8 +291,9 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   [GPU bin selection](#gpu-bin-selection).
 - **Opt-in paths**: the CUDA, AHardwareBuffer and Vulkan paths are compiled only with `QGC_GST_ENABLE_<PATH>=ON`,
   because no stream reaches them: no bin advertises CUDAMemory or VulkanImage caps, and Android's glupload bin offers
-  only GLMemory. Configure lists the compiled paths that the sink can't reach at runtime. None of them is a zero-copy
-  path that works today:
+  only GLMemory. Configure lists the compiled paths that the sink can't reach at runtime. CI compiles the Vulkan and
+  CUDA ones, and runs neither (the `gpu-opt-in` job of `linux.yml`). None of them is a zero-copy path that works
+  today:
   - **Vulkan** (`vulkan/`, gst-vulkan's VulkanImage memory): gst-vulkan creates its own `VkDevice` and has no way to
     wrap Qt's (`gst_vulkan_device_new()` takes a physical device; so in 1.24, 1.28 and on `main`), and QRhi can't
     sample an image of another device. `GstVulkanVideoBuffer` therefore imports no frame, and the Vulkan bridge only
