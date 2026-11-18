@@ -1,7 +1,5 @@
 #include "GstQgcSinkTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <array>
 #include <atomic>
 #include <cstring>
@@ -1434,6 +1432,5 @@ void GstQgcSinkTest::_testPathSessionFailurePolicy()
     QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kStreamDemotionsField), quint64(2));
     QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kTiledDropsField), quint64(3));
 }
-#endif
 
 UT_REGISTER_TEST(GstQgcSinkTest, TestLabel::Unit)

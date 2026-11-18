@@ -1,11 +1,5 @@
 #include "GStreamerTest.h"
 
-#include "QGCLoggingCategory.h"
-
-QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
-
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <memory>
 
@@ -21,11 +15,14 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamerVideoBackend.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
+#include "QGCLoggingCategory.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "RecordingBranch.h"
 #include "SettingsManager.h"
 #include "VideoBackend.h"
 #include "VideoSettings.h"
+
+QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
@@ -351,7 +348,5 @@ void GStreamerTest::_testRuntimeVersionCheck()
                                     << GST_VERSION_MINOR << "but runtime is" << major << "." << minor;
     }
 }
-
-#endif
 
 UT_REGISTER_TEST(GStreamerTest, TestLabel::Unit)

@@ -1,20 +1,16 @@
 #include "GstHwBuffersGlReadbackTest.h"
 
-#include <rhi/qrhi.h>
-
-#include <QtGui/QOffscreenSurface>
-
-#ifdef QGC_GST_STREAMING
-
 #include <array>
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <memory>
+#include <rhi/qrhi.h>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QOffscreenSurface>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -63,8 +59,6 @@
 #include <QtGui/qopenglcontext_platform.h>
 #endif
 
-#endif  // QGC_GST_STREAMING
-
 GstHwBuffersGlReadbackTest::GstHwBuffersGlReadbackTest() = default;
 GstHwBuffersGlReadbackTest::~GstHwBuffersGlReadbackTest() = default;
 
@@ -94,8 +88,6 @@ QRhi* GstHwBuffersGlReadbackTest::_glRhi()
     return nullptr;
 #endif
 }
-
-#ifdef QGC_GST_STREAMING
 
 void GstHwBuffersGlReadbackTest::init()
 {
@@ -877,7 +869,5 @@ void GstHwBuffersGlReadbackTest::_testGlBridgeKeepsGstGlInQtsApi()
     QVERIFY(GstGlContextBridge::sharesQtContext(created));
 #endif
 }
-
-#endif  // QGC_GST_STREAMING
 
 UT_REGISTER_TEST(GstHwBuffersGlReadbackTest, TestLabel::Integration)

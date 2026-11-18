@@ -1,7 +1,5 @@
 #include "GstVideoReceiverPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <algorithm>
 #include <atomic>
 #include <gst/base/gstbasesink.h>
@@ -1136,7 +1134,5 @@ void GstVideoReceiverPipelineTest::_testSilentFlowErrorStaysInItsBranch()
     QVERIFY2(stream.stateSpy.isEmpty(), "A branch's flow error restarted the stream");
     QVERIFY(stream.errorSpy.isEmpty());
 }
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverPipelineTest, TestLabel::Integration)

@@ -1,7 +1,5 @@
 #include "GstVideoReceiverReconnectTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <array>
 
 #include <QtCore/QElapsedTimer>
@@ -327,7 +325,5 @@ void GstVideoReceiverReconnectTest::_testBusyWorkerIsNotReported()
     QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* /*pipeline*/) {}));
     QCOMPARE(stream.receiver->state(), State::Streaming);
 }
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverReconnectTest, TestLabel::Integration)

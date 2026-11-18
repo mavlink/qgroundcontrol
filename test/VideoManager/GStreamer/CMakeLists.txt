@@ -74,16 +74,14 @@ target_include_directories(
 # The encoded stream the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by
 # src/VideoManager/GStreamer/SelfTest/Media/generate.sh. The other two streams of that directory are the app's
 # self-test samples, which the tests read from the app's resources.
-if(QGC_ENABLE_GST_VIDEOSTREAMING)
-    set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/SelfTest/Media")
-    qt_add_resources(
-        ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
-        PREFIX "/unittest/video"
-        BASE "${_qgc_gst_test_media}"
-        FILES
-            "${_qgc_gst_test_media}/h264_320x240.h264"
-    )
-endif()
+set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/SelfTest/Media")
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
+    PREFIX "/unittest/video"
+    BASE "${_qgc_gst_test_media}"
+    FILES
+        "${_qgc_gst_test_media}/h264_320x240.h264"
+)
 
 # Pipeline-free cases run in the Unit pass; classes that play pipelines, open sockets or use the GPU are Integration, so
 # a crash in a GPU path only takes down its own class.

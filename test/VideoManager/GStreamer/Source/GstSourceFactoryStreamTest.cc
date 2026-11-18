@@ -1,7 +1,5 @@
 #include "GstSourceFactoryStreamTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/gst.h>
 #include <thread>
@@ -450,7 +448,5 @@ void GstSourceFactoryStreamTest::_testUdpSourceStopsRightAfterPlaying()
         QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
     }
 }
-
-#endif
 
 UT_REGISTER_TEST(GstSourceFactoryStreamTest, TestLabel::Integration)

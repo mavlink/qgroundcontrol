@@ -1,7 +1,5 @@
 #include "GstVideoReceiverTestBase.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QSemaphore>
 #include <QtTest/QTest>
@@ -71,5 +69,3 @@ void GstVideoReceiverTestBase::initTestCase()
         GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtmux", "qtdemux");
     }
 }
-
-#endif

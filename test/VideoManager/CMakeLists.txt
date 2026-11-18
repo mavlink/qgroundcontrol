@@ -2,8 +2,6 @@
 # VideoManager Tests
 # ============================================================================
 
-add_subdirectory(GStreamer)
-
 target_sources(
     QGCUnitTests
     PRIVATE
@@ -66,8 +64,10 @@ add_qgc_test(VideoStreamResolverTest LABELS Unit)
 add_qgc_test(VideoStreamStatsMeterTest LABELS Unit)
 add_qgc_test(VideoTelemetryOverlayTest LABELS Integration Vehicle)
 
-# A stream reaches a receiver from GStreamer, whichever backend the receiver is.
+# Without GStreamer its tests aren't built, nor those of a receiver playing a stream: GStreamer sends the stream,
+# whichever backend the receiver is.
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    add_subdirectory(GStreamer)
     target_sources(
         QGCUnitTests
         PRIVATE

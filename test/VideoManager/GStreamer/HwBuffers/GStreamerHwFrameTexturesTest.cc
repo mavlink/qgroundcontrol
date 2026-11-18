@@ -1,7 +1,5 @@
 #include "GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #if defined(QGC_HAS_ANY_GPU_PATH)
 
 #include <array>
@@ -267,7 +265,5 @@ void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 {
     QSKIP("No GPU path compiled in this build");
 }
-
-#endif
 
 #endif

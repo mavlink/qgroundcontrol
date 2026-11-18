@@ -8,7 +8,6 @@ class GStreamerTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testIsHardwareDecoderFactory_data();
     void _testIsHardwareDecoderFactory();
     void _testDecoderFamilyForFactory_data();
@@ -26,5 +25,4 @@ private slots:
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
     void _testRuntimeVersionCheck();
-#endif
 };

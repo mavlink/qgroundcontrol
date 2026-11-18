@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
@@ -1036,7 +1034,5 @@ void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
     QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));
 #endif
 }
-
-#endif
 
 UT_REGISTER_TEST(GstHwBuffersTest, TestLabel::Unit)

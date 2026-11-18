@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <chrono>
 #include <gst/gst.h>
@@ -296,5 +294,3 @@ private:
             QSKIP(qPrintable(QStringLiteral("GStreamer factory unavailable: %1").arg(gstTestMissing))); \
         }                                                                                               \
     } while (false)
-
-#endif

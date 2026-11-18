@@ -1,14 +1,11 @@
 #include "GstHwBuffersVulkanReadbackTest.h"
 
-#include <rhi/qrhi.h>
-
-#ifdef QGC_GST_STREAMING
-
 #include <array>
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <memory>
+#include <rhi/qrhi.h>
 #include <string>
 
 #include <QtCore/QByteArray>
@@ -91,14 +88,12 @@ std::unique_ptr<QRhi> createGstVulkanTestRhi(bool software, QString& unavailable
 }  // namespace
 #endif
 
-#endif  // QGC_GST_STREAMING
-
 GstHwBuffersVulkanReadbackTest::GstHwBuffersVulkanReadbackTest() = default;
 GstHwBuffersVulkanReadbackTest::~GstHwBuffersVulkanReadbackTest() = default;
 
 QRhi* GstHwBuffersVulkanReadbackTest::_vulkanRhi()
 {
-#if defined(QGC_GST_STREAMING) && defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     if (_rhiProbed) {
         return _rhi.get();
     }
@@ -121,8 +116,6 @@ QRhi* GstHwBuffersVulkanReadbackTest::_vulkanRhi()
     return nullptr;
 #endif
 }
-
-#ifdef QGC_GST_STREAMING
 
 void GstHwBuffersVulkanReadbackTest::init()
 {
@@ -551,7 +544,5 @@ void GstHwBuffersVulkanReadbackTest::_withdrawPublishedRhi()
     _rhiProbed = false;
 #endif
 }
-
-#endif  // QGC_GST_STREAMING
 
 UT_REGISTER_TEST(GstHwBuffersVulkanReadbackTest, TestLabel::Integration)

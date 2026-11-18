@@ -8,7 +8,6 @@ class GStreamerEnvironmentTest : public UnitTest
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testPrivateRegistry();
     void _testPrivateRegistryStableInstall_data();
     void _testPrivateRegistryStableInstall();
@@ -23,7 +22,4 @@ private slots:
     void _testBundledRuntime();
     void _testEnvironmentSetup();
     void _testWriteIfChanged();
-#else
-    void _testGStreamerDisabled();
-#endif
 };

@@ -1,7 +1,5 @@
 #include "GstSelfTestPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 
 #include <QtCore/QHash>
@@ -112,7 +110,5 @@ void GstSelfTestPipelineTest::_testFailingHardwareDecoderFallsBackToSoftware()
     verifyExpectedLogMessage();
     QCOMPARE(GstTest::videoDecoderRanks(), ranks);
 }
-
-#endif
 
 UT_REGISTER_TEST(GstSelfTestPipelineTest, TestLabel::Integration)

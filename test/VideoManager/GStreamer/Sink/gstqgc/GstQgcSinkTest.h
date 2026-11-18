@@ -9,7 +9,6 @@ class GstQgcSinkTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
     void _testQgcVideoSinkBinGpuBinVariant_data();
     void _testQgcVideoSinkBinGpuBinVariant();
@@ -55,5 +54,4 @@ private slots:
     void _testAdapterFlushDropsInFlightSamples();
     void _testFrameDeliveryKeepsTheLatestFrame();
     void _testPathSessionFailurePolicy();
-#endif
 };

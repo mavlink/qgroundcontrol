@@ -1,7 +1,5 @@
 #include "GStreamerHelpersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/video/video-event.h>
@@ -320,7 +318,5 @@ void GStreamerHelpersTest::_testForEachPlugin()
     });
     QVERIFY(names.contains(QStringLiteral("coreelements")));
 }
-
-#endif
 
 UT_REGISTER_TEST(GStreamerHelpersTest, TestLabel::Integration)

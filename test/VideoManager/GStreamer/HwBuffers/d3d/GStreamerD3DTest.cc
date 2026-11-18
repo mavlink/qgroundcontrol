@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
@@ -566,5 +564,3 @@ void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
     QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
 #endif
 }
-
-#endif

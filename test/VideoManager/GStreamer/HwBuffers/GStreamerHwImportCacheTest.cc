@@ -1,7 +1,5 @@
 #include "GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <algorithm>
 #include <vector>
 
@@ -141,5 +139,3 @@ void GstHwBuffersTest::_testHwImportCacheDefersDestroyToOwnerThread()
     QCOMPARE(s_destroyed, std::vector<int>{10});
     QCOMPARE(cache.parkedCount(), std::size_t(0));
 }
-
-#endif

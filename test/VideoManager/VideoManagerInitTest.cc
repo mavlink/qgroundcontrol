@@ -4,7 +4,6 @@
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 
-#include "GStreamerTestHelpers.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
@@ -12,6 +11,10 @@
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 #include "VideoTestHelpers.h"
+
+#ifdef QGC_GST_STREAMING
+#include "GStreamerTestHelpers.h"
+#endif
 
 namespace {
 

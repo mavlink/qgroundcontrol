@@ -1,13 +1,8 @@
 #pragma once
 
-#include <functional>
-
-#include "GStreamerTestBase.h"
-
-#ifdef QGC_GST_STREAMING
-
 #include <chrono>
 #include <condition_variable>
+#include <functional>
 #include <gst/gst.h>
 #include <memory>
 #include <mutex>
@@ -19,6 +14,7 @@
 
 #include "BranchContext.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerTestBase.h"
 #include "GStreamerTestHelpers.h"
 #include "GstReceiverTimings.h"
 #include "GstScoped.h"
@@ -30,30 +26,22 @@ namespace GstReceiverTest {
 struct Gate;
 }
 
-#endif
-
 /// Base of the tests that drive GstVideoReceiver end to end against in-process H.264 and H.265 streams on loopback.
 class GstVideoReceiverTestBase : public GStreamerTestBase
 {
     Q_OBJECT
 
 public:
-#ifdef QGC_GST_STREAMING
     /// Runs @p task with @p receiver's pipeline (null when none runs) on the worker thread that owns it, and waits for
     /// it, for at most a few seconds: false when the worker didn't get to it.
     static bool runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
     static GstElement* displaySink(const GstVideoReceiver* receiver);
     /// Posts @p receiver's worker a task that keeps it busy until @p gate opens.
     static void holdWorker(GstVideoReceiver* receiver, const std::shared_ptr<GstReceiverTest::Gate>& gate);
-#endif
 
 protected slots:
-#ifdef QGC_GST_STREAMING
     void initTestCase() override;
-#endif
 };
-
-#ifdef QGC_GST_STREAMING
 
 namespace GstReceiverTest {
 
@@ -333,5 +321,3 @@ struct Receiver
 };
 
 }  // namespace GstReceiverTest
-
-#endif

@@ -1,7 +1,5 @@
 #include "GStreamerEnvironmentTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <vector>
 
@@ -420,14 +418,5 @@ void GStreamerEnvironmentTest::_testWriteIfChanged()
     QVERIFY(GStreamer::Environment::writeIfChanged(path, "other bundle"));
     QCOMPARE(content(), QByteArrayLiteral("other bundle"));
 }
-
-#else
-
-void GStreamerEnvironmentTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif
 
 UT_REGISTER_TEST(GStreamerEnvironmentTest, TestLabel::Unit)

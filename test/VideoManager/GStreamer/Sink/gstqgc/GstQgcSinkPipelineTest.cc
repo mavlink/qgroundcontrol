@@ -1,7 +1,5 @@
 #include "GstQgcSinkPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
@@ -259,7 +257,5 @@ void GstQgcSinkPipelineTest::_testLateFramesAreShown()
     g_object_get(qvideosink.get(), "frames-input", &input, nullptr);
     QCOMPARE(input, guint64(kFrames));
 }
-
-#endif
 
 UT_REGISTER_TEST(GstQgcSinkPipelineTest, TestLabel::Integration)

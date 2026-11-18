@@ -8,7 +8,6 @@ class GStreamerHelpersTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testAddToBin();
     void _testAddToBinRejects();
     void _testDisposeChild();
@@ -20,5 +19,4 @@ private slots:
     void _testFirstSrcPad();
     void _testHoldPadUntilLinked();
     void _testForEachPlugin();
-#endif
 };

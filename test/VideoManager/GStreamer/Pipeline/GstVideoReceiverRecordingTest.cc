@@ -1,7 +1,5 @@
 #include "GstVideoReceiverRecordingTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <cerrno>
 #include <gst/video/video-event.h>
@@ -1163,7 +1161,5 @@ void GstVideoReceiverRecordingTest::_testDestroyWithHungRecorderIsBounded()
         },
         TestTimeout::mediumDuration(), u"abandoned pipeline released"));
 }
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverRecordingTest, TestLabel::Integration)

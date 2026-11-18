@@ -1,7 +1,5 @@
 #include "GstVideoReceiverComponentsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
@@ -746,14 +744,5 @@ void GstVideoReceiverComponentsTest::_testRecordingNamesCodecNoContainerHolds()
     QCOMPARE(listener.formatsAsked, 0);
     QVERIFY(!QFile::exists(file));
 }
-
-#else
-
-void GstVideoReceiverComponentsTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverComponentsTest, TestLabel::Unit)

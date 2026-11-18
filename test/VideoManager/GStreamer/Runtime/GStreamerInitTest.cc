@@ -1,7 +1,5 @@
 #include "GStreamerInitTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <algorithm>
 #include <gst/gst.h>
 #include <utility>
@@ -814,14 +812,5 @@ void GStreamerInitTest::_testSetCodecPrioritiesHardware()
     });
     QVERIFY2(rankedSoftware.isEmpty(), qPrintable(rankedSoftware.join(QStringLiteral(", "))));
 }
-
-#else
-
-void GStreamerInitTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif
 
 UT_REGISTER_TEST(GStreamerInitTest, TestLabel::Unit)

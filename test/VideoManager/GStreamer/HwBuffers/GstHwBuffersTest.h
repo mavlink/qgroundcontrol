@@ -9,7 +9,6 @@ class GstHwBuffersTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testDmaDrmModifierPolicy_data();
     void _testDmaDrmModifierPolicy();
     void _testDmaDrmPlaneFourccsMatchQtImporter();
@@ -76,5 +75,4 @@ private slots:
     void _testTelemetrySyncWaitSplit();
     void _testTelemetryMapFailuresReportedInExtraStats();
     void _testTelemetryDmaBufExtraStats();
-#endif
 };

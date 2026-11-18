@@ -1,8 +1,6 @@
 #include "HwBuffers/GstHwBuffersPipelineTest.h"
 #include "HwBuffers/GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <cerrno>
 #include <gst/gst.h>
@@ -1029,5 +1027,3 @@ void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
     QCOMPARE(releases, 1);
 #endif
 }
-
-#endif

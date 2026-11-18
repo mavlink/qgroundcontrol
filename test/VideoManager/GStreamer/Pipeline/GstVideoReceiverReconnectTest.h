@@ -8,7 +8,6 @@ class GstVideoReceiverReconnectTest : public GstVideoReceiverTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testPermanentFailureStops();
     void _testReconnectBacksOffAfterFailedStart();
     void _testUnresponsiveRtspServer_data();
@@ -20,5 +19,4 @@ private slots:
     void _testStuckWorkerIsReported();
     void _testStuckWorkerKeepsMovingPicture();
     void _testBusyWorkerIsNotReported();
-#endif
 };

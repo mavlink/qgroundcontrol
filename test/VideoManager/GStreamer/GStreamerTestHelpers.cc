@@ -1,7 +1,5 @@
 #include "GStreamerTestHelpers.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -545,5 +543,3 @@ void FakeRtspServer::_serve(QTcpSocket* socket)
 }
 
 }  // namespace GstTest
-
-#endif

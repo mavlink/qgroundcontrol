@@ -9,7 +9,6 @@ class GstSourceFactoryTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testIsValidRtspUri();
     void _testSourceFactoryUdpRtpJitterBuffer();
     void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data();
@@ -48,5 +47,4 @@ private slots:
     void _testSourceFactoryRtspPushesAccessUnitsAtOnce();
     void _testSourceFactoryRtspFollowsStreamToNewPad_data();
     void _testSourceFactoryRtspFollowsStreamToNewPad();
-#endif
 };

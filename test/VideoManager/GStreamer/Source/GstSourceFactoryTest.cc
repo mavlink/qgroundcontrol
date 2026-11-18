@@ -1,7 +1,5 @@
 #include "GstSourceFactoryTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/sdp/gstsdpmessage.h>
@@ -1056,7 +1054,5 @@ void GstSourceFactoryTest::_testTransportFor()
     const std::optional<std::chrono::milliseconds> grace = GStreamer::SourceFactory::connectGracePeriod(uri);
     QCOMPARE(grace ? int(grace->count()) : -1, connectGraceMs);
 }
-
-#endif
 
 UT_REGISTER_TEST(GstSourceFactoryTest, TestLabel::Unit)
