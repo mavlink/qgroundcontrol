@@ -297,75 +297,49 @@ void QGCCommandLineParserTest::_testParseArgumentsHelpAndVersion()
     }
 }
 
-void QGCCommandLineParserTest::_testDetermineAppMode_Gui()
+void QGCCommandLineParserTest::_testDetermineAppMode_data()
 {
-    // All flags default → GUI mode.
-    CommandLineParseResult result;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::Gui);
-}
+    QTest::addColumn<bool>("simpleBootTest");
+    QTest::addColumn<bool>("runningUnitTests");
+    QTest::addColumn<bool>("listTests");
+    QTest::addColumn<AppMode>("expectedMode");
 
-void QGCCommandLineParserTest::_testDetermineAppMode_BootTest()
-{
-    CommandLineParseResult result;
-    result.simpleBootTest = true;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::BootTest);
-}
-
-void QGCCommandLineParserTest::_testDetermineAppMode_Test()
-{
-#ifdef QGC_UNITTEST_BUILD
-    // In the unit-test build both Test and ListTests short-circuit ahead of
-    // simpleBootTest, so set simpleBootTest too to prove precedence.
-    CommandLineParseResult result;
-    result.runningUnitTests = true;
-    result.simpleBootTest   = true;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::Test);
-#else
-    QSKIP("Test mode only exists in QGC_UNITTEST_BUILD");
-#endif
-}
-
-void QGCCommandLineParserTest::_testDetermineAppMode_ListTests()
-{
-#ifdef QGC_UNITTEST_BUILD
+    QTest::newRow("no flags") << false << false << false << AppMode::Gui;
+    QTest::newRow("boot test") << true << false << false << AppMode::BootTest;
+    // Both Test and ListTests short-circuit ahead of simpleBootTest, so it is set too to prove precedence.
+    QTest::newRow("unit tests before boot test") << true << true << false << AppMode::Test;
     // listTests must win over both runningUnitTests and simpleBootTest.
-    CommandLineParseResult result;
-    result.listTests        = true;
-    result.runningUnitTests = true;
-    result.simpleBootTest   = true;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::ListTests);
-#else
-    QSKIP("ListTests mode only exists in QGC_UNITTEST_BUILD");
-#endif
+    QTest::newRow("list tests before unit tests and boot test") << true << true << true << AppMode::ListTests;
 }
 
-void QGCCommandLineParserTest::_testHandleParseResult_OkReturnsNullopt()
+void QGCCommandLineParserTest::_testDetermineAppMode()
 {
+    QFETCH(bool, simpleBootTest);
+    QFETCH(bool, runningUnitTests);
+    QFETCH(bool, listTests);
+    QFETCH(AppMode, expectedMode);
+
     CommandLineParseResult result;
+    result.simpleBootTest = simpleBootTest;
+    result.runningUnitTests = runningUnitTests;
+    result.listTests = listTests;
+
+    QCOMPARE(QGCCommandLineParser::determineAppMode(result), expectedMode);
+}
+
+void QGCCommandLineParserTest::_testHandleParseResult()
+{
+    // These results have no parser: with one, a help or version request is shown and ends the process.
+    CommandLineParseResult result;
+
     result.statusCode = CommandLineParseResult::Status::Ok;
+    QCOMPARE(QGCCommandLineParser::handleParseResult(result), std::optional<int>());
 
-    const std::optional<int> exitCode = QGCCommandLineParser::handleParseResult(result);
-    QVERIFY(!exitCode.has_value());
-}
-
-void QGCCommandLineParserTest::_testHandleParseResult_HelpReturnsZero()
-{
-    CommandLineParseResult result;
     result.statusCode = CommandLineParseResult::Status::HelpRequested;
+    QCOMPARE(QGCCommandLineParser::handleParseResult(result), std::optional<int>(0));
 
-    const std::optional<int> exitCode = QGCCommandLineParser::handleParseResult(result);
-    QVERIFY(exitCode.has_value());
-    QCOMPARE(exitCode.value(), 0);
-}
-
-void QGCCommandLineParserTest::_testHandleParseResult_VersionReturnsZero()
-{
-    CommandLineParseResult result;
     result.statusCode = CommandLineParseResult::Status::VersionRequested;
-
-    const std::optional<int> exitCode = QGCCommandLineParser::handleParseResult(result);
-    QVERIFY(exitCode.has_value());
-    QCOMPARE(exitCode.value(), 0);
+    QCOMPARE(QGCCommandLineParser::handleParseResult(result), std::optional<int>(0));
 }
 
 void QGCCommandLineParserTest::_testNormalizeArgs_data()

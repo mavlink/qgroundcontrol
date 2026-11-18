@@ -110,9 +110,11 @@ std::optional<quint32> parseSystemId(const QString& value);
 /// @return The 1-based shard index and shard count, or std::nullopt unless 1 <= index <= count
 std::optional<std::pair<uint, uint>> parseUnitTestShard(const QString& value);
 
-#ifdef QGC_UNITTEST_BUILD
+/// @brief Rewrite --option:value arguments as --option value, the form the parser reads
+/// @return The arguments as parseArguments() gives them to its parser
 QStringList normalizeArgs(const QStringList &args);
 
+#ifdef QGC_UNITTEST_BUILD
 /// @brief Developer helper: Override argc/argv for debugging specific tests.
 ///
 /// To use: set enabled=true in the implementation, modify the arguments,

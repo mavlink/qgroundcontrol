@@ -33,13 +33,9 @@ private slots:
     void _testParseArgumentsEmptyList();
     void _testParseArgumentsHelpAndVersion_data();
     void _testParseArgumentsHelpAndVersion();
-    void _testDetermineAppMode_Gui();
-    void _testDetermineAppMode_BootTest();
-    void _testDetermineAppMode_Test();
-    void _testDetermineAppMode_ListTests();
-    void _testHandleParseResult_OkReturnsNullopt();
-    void _testHandleParseResult_HelpReturnsZero();
-    void _testHandleParseResult_VersionReturnsZero();
+    void _testDetermineAppMode_data();
+    void _testDetermineAppMode();
+    void _testHandleParseResult();
     void _testNormalizeArgs_data();
     void _testNormalizeArgs();
     void _testParseSystemId_data();
