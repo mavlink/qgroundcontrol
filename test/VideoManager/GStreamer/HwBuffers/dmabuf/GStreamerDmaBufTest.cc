@@ -1,6 +1,3 @@
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
-#include "HwBuffers/GstHwBuffersTest.h"
-
 #include <atomic>
 #include <cerrno>
 #include <gst/gst.h>
@@ -30,6 +27,8 @@
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/GstHwBuffersTest.h"
 #include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
