@@ -43,7 +43,6 @@ public:
     ~QGCArchiveFile() override = default;
 
     // QIODevice interface
-    bool open(OpenMode mode) override;
     qint64 size() const override;
 
     /// Get entry name being read
@@ -65,12 +64,9 @@ public:
 protected:
     bool initArchive() override;
     bool prepareForReading() override;
-    bool isReadyToRead() const override { return _entryFound; }
     void resetState() override;
 
 private:
-    bool seekToEntry();
-
     QString _entryName;
     bool _entryFound = false;
     qint64 _entrySize = -1;

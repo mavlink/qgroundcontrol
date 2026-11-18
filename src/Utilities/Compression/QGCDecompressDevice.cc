@@ -23,50 +23,13 @@ QGCDecompressDevice::QGCDecompressDevice(const QString &filePath, QObject *paren
 }
 
 // ============================================================================
-// QIODevice Interface
-// ============================================================================
-
-bool QGCDecompressDevice::open(OpenMode mode)
-{
-    // A second opening starts as the first: without the buffer, the end and the reader of the one before
-    if (isOpen()) {
-        close();
-    }
-    _errorString.clear();
-
-    if (mode != ReadOnly) {
-        setError(QStringLiteral("QGCDecompressDevice only supports ReadOnly mode"));
-        return false;
-    }
-
-    // Handle file path constructor
-    if (!_filePath.isEmpty()) {
-        if (!initSourceFromPath()) {
-            return false;
-        }
-    }
-
-    if (!initArchive()) {
-        return false;
-    }
-
-    if (!prepareForReading()) {
-        return false;
-    }
-
-    return QIODevice::open(mode);
-}
-
-// ============================================================================
 // Protected Implementation
 // ============================================================================
 
 bool QGCDecompressDevice::initArchive()
 {
     // Raw format for single-file decompression
-    configureArchiveFormats(false);
-
-    return openArchive();
+    return openArchive(false);
 }
 
 bool QGCDecompressDevice::prepareForReading()
@@ -83,17 +46,9 @@ bool QGCDecompressDevice::prepareForReading()
         return false;
     }
 
-    _headerRead = true;
-    captureFormatInfo();
+    _reader->captureFormat();
 
-    qCDebug(QGCDecompressDeviceLog) << "Opened compressed stream, format:" << _formatName
-                                     << "filter:" << _filterName;
+    qCDebug(QGCDecompressDeviceLog) << "Opened compressed stream, format:" << formatName() << "filter:" << filterName();
 
     return true;
-}
-
-void QGCDecompressDevice::resetState()
-{
-    QGCArchiveDeviceBase::resetState();
-    _headerRead = false;
 }

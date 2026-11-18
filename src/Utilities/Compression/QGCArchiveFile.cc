@@ -28,42 +28,6 @@ QGCArchiveFile::QGCArchiveFile(QIODevice *source, const QString &entryName, QObj
 // QIODevice Interface
 // ============================================================================
 
-bool QGCArchiveFile::open(OpenMode mode)
-{
-    // A second opening starts as the first: without the buffer, the end and the reader of the one before
-    if (isOpen()) {
-        close();
-    }
-    _errorString.clear();
-
-    if (mode != ReadOnly) {
-        setError(QStringLiteral("QGCArchiveFile only supports ReadOnly mode"));
-        return false;
-    }
-
-    if (_entryName.isEmpty()) {
-        setError(QStringLiteral("Entry name cannot be empty"));
-        return false;
-    }
-
-    // Handle file path constructor
-    if (!_filePath.isEmpty()) {
-        if (!initSourceFromPath()) {
-            return false;
-        }
-    }
-
-    if (!initArchive()) {
-        return false;
-    }
-
-    if (!prepareForReading()) {
-        return false;
-    }
-
-    return QIODevice::open(mode);
-}
-
 qint64 QGCArchiveFile::size() const
 {
     return _entrySize >= 0 ? _entrySize : QIODevice::size();
@@ -75,41 +39,22 @@ qint64 QGCArchiveFile::size() const
 
 bool QGCArchiveFile::initArchive()
 {
-    // All formats for archives
-    configureArchiveFormats(true);
+    if (_entryName.isEmpty()) {
+        setError(QStringLiteral("Entry name cannot be empty"));
+        return false;
+    }
 
-    return openArchive();
+    // All formats for archives
+    return openArchive(true);
 }
 
 bool QGCArchiveFile::prepareForReading()
-{
-    return seekToEntry();
-}
-
-void QGCArchiveFile::resetState()
-{
-    QGCArchiveDeviceBase::resetState();
-    _entryFound = false;
-    _entrySize = -1;
-    _entryModified = QDateTime();
-}
-
-// ============================================================================
-// Private Methods
-// ============================================================================
-
-bool QGCArchiveFile::seekToEntry()
 {
     _entryFound = false;
     const char* skippedKind = nullptr;
 
     const QGClibarchive::EntryWalk walk =
-        QGClibarchive::forEachEntry(_reader->handle(), [this, &skippedKind](struct archive_entry* entry) {
-            // Capture format info on first header
-            if (_formatName.isEmpty()) {
-                captureFormatInfo();
-            }
-
+        QGClibarchive::forEachEntry(*_reader, [this, &skippedKind](struct archive_entry* entry) {
             if (QString::fromUtf8(archive_entry_pathname(entry)) != _entryName) {
                 return true;
             }
@@ -145,4 +90,12 @@ bool QGCArchiveFile::seekToEntry()
         setError(QStringLiteral("Entry not found in archive: ") + _entryName);
     }
     return false;
+}
+
+void QGCArchiveFile::resetState()
+{
+    QGCArchiveDeviceBase::resetState();
+    _entryFound = false;
+    _entrySize = -1;
+    _entryModified = QDateTime();
 }

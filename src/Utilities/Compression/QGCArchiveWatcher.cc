@@ -23,10 +23,7 @@ QGCArchiveWatcher::QGCArchiveWatcher(QObject *parent)
 
 QGCArchiveWatcher::~QGCArchiveWatcher()
 {
-    if (_extractionJob != nullptr && _extractionJob->isRunning()) {
-        _cancelPending = true;
-        _extractionJob->cancel();
-    }
+    _cancelJob();
 }
 
 // ============================================================================
@@ -128,12 +125,7 @@ void QGCArchiveWatcher::clear()
     _setExtracting(false);
     _setProgress(0.0);
 
-    if (_extractionJob) {
-        if (_extractionJob->isRunning()) {
-            _cancelPending = true;
-            _extractionJob->cancel();
-        }
-    }
+    _cancelJob();
 }
 
 // ============================================================================
@@ -152,7 +144,7 @@ QStringList QGCArchiveWatcher::scanDirectory(const QString &directoryPath) const
     const QStringList entries = dir.entryList(QDir::Files);
     for (const QString &entry : entries) {
         const QString fullPath = dir.absoluteFilePath(entry);
-        if (_isWatchedFormat(fullPath)) {
+        if (_isWatchedFormat(QGCCompression::detectFormat(fullPath))) {
             archives.append(fullPath);
         }
     }
@@ -162,11 +154,7 @@ QStringList QGCArchiveWatcher::scanDirectory(const QString &directoryPath) const
 
 void QGCArchiveWatcher::cancelExtraction()
 {
-    if (_extractionJob != nullptr && _extractionJob->isRunning()) {
-        qCDebug(QGCArchiveWatcherLog) << "Cancelling extraction";
-        _cancelPending = true;
-        _extractionJob->cancel();
-    }
+    _cancelJob(true);
     _pendingExtractions.clear();
     _currentArchive.clear();
     _setExtracting(false);
@@ -206,44 +194,36 @@ void QGCArchiveWatcher::_onDirectoryChanged(const QString &path)
     }
 }
 
-void QGCArchiveWatcher::_onExtractionProgress(qreal progress)
-{
-    _setProgress(progress);
-}
-
 void QGCArchiveWatcher::_onExtractionFinished(bool success)
 {
-    if (_cancelPending) {
-        _cancelPending = false;
-        _currentArchive.clear();
-        _setExtracting(false);
-        _setProgress(0.0);
-        return;
-    }
+    // The result of an extraction that was cancelled is not reported, and nothing is started after it
+    const bool cancelled = _cancelPending;
+    _cancelPending = false;
 
-    qCDebug(QGCArchiveWatcherLog) << "Extraction finished:" << _currentArchive
-                                   << "success:" << success;
+    if (!cancelled) {
+        qCDebug(QGCArchiveWatcherLog) << "Extraction finished:" << _currentArchive << "success:" << success;
 
-    QString outputPath = _extractionJob->outputPath();
-    QString errorString = success ? QString() : _extractionJob->errorString();
+        QString outputPath = _extractionJob->outputPath();
+        QString errorString = success ? QString() : _extractionJob->errorString();
 
-    // Remove source archive if configured and extraction succeeded
-    if (success && _removeAfterExtraction) {
-        if (QFile::remove(_currentArchive)) {
-            qCDebug(QGCArchiveWatcherLog) << "Removed source archive:" << _currentArchive;
-        } else {
-            qCWarning(QGCArchiveWatcherLog) << "Failed to remove source archive:" << _currentArchive;
+        // Remove source archive if configured and extraction succeeded
+        if (success && _removeAfterExtraction) {
+            if (QFile::remove(_currentArchive)) {
+                qCDebug(QGCArchiveWatcherLog) << "Removed source archive:" << _currentArchive;
+            } else {
+                qCWarning(QGCArchiveWatcherLog) << "Failed to remove source archive:" << _currentArchive;
+            }
         }
-    }
 
-    emit extractionComplete(_currentArchive, outputPath, success, errorString);
+        emit extractionComplete(_currentArchive, outputPath, success, errorString);
+    }
 
     _currentArchive.clear();
     _setExtracting(false);
     _setProgress(0.0);
 
     // Process next pending extraction
-    if (!_pendingExtractions.isEmpty()) {
+    if (!cancelled && !_pendingExtractions.isEmpty()) {
         const QString next = _pendingExtractions.takeFirst();
         _startExtraction(next);
     }
@@ -253,10 +233,8 @@ void QGCArchiveWatcher::_onExtractionFinished(bool success)
 // Private Methods
 // ============================================================================
 
-bool QGCArchiveWatcher::_isWatchedFormat(const QString &filePath) const
+bool QGCArchiveWatcher::_isWatchedFormat(QGCCompression::Format format) const
 {
-    const QGCCompression::Format format = QGCCompression::detectFormat(filePath);
-
     switch (_filterMode) {
     case FilterMode::Archives:
         return QGCCompression::isArchiveFormat(format);
@@ -272,11 +250,10 @@ bool QGCArchiveWatcher::_isWatchedFormat(const QString &filePath) const
 
 void QGCArchiveWatcher::_processNewFile(const QString &filePath)
 {
-    if (!_isWatchedFormat(filePath)) {
+    const QGCCompression::Format format = QGCCompression::detectFormat(filePath);
+    if (!_isWatchedFormat(format)) {
         return;
     }
-
-    const QGCCompression::Format format = QGCCompression::detectFormat(filePath);
 
     qCDebug(QGCArchiveWatcherLog) << "Detected archive:" << filePath
                                    << "format:" << QGCCompression::formatName(format);
@@ -326,8 +303,7 @@ void QGCArchiveWatcher::_startExtraction(const QString &archivePath)
     // Create extraction job if needed
     if (_extractionJob == nullptr) {
         _extractionJob = new QGCCompressionJob(this);
-        connect(_extractionJob, &QGCCompressionJob::progressChanged,
-                this, &QGCArchiveWatcher::_onExtractionProgress);
+        connect(_extractionJob, &QGCCompressionJob::progressChanged, this, &QGCArchiveWatcher::_setProgress);
         connect(_extractionJob, &QGCCompressionJob::finished,
                 this, &QGCArchiveWatcher::_onExtractionFinished);
     }
@@ -340,6 +316,18 @@ void QGCArchiveWatcher::_startExtraction(const QString &archivePath)
         const QString decompressedPath = outputPath + "/" + strippedName;
         _extractionJob->decompressFile(archivePath, decompressedPath);
     }
+}
+
+void QGCArchiveWatcher::_cancelJob(bool announce)
+{
+    if (_extractionJob == nullptr || !_extractionJob->isRunning()) {
+        return;
+    }
+    if (announce) {
+        qCDebug(QGCArchiveWatcherLog) << "Cancelling extraction";
+    }
+    _cancelPending = true;
+    _extractionJob->cancel();
 }
 
 void QGCArchiveWatcher::_setExtracting(bool extracting)

@@ -19,10 +19,8 @@ private slots:
     void _testArchivePathProperty();
     void _testCountProperties();
     void _testLoadingProperty();
-    void _testErrorProperty();
 
     // Filtering
-    void _testFilterModeAll();
     void _testFilterModeFilesOnly();
     void _testFilterModeDirectoriesOnly();
 
@@ -45,4 +43,7 @@ private slots:
     void _testModelTesterLoaded();
     void _testModelTesterFilterChange();
     void _testModelTesterClearAndReload();
+
+private:
+    static inline const QString _zipResource = QStringLiteral(":/unittest/manifest.json.zip");
 };

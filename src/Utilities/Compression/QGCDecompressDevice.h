@@ -38,15 +38,7 @@ public:
 
     ~QGCDecompressDevice() override = default;
 
-    // QIODevice interface
-    bool open(OpenMode mode) override;
-
 protected:
     bool initArchive() override;
     bool prepareForReading() override;
-    bool isReadyToRead() const override { return _headerRead; }
-    void resetState() override;
-
-private:
-    bool _headerRead = false;
 };

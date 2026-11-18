@@ -336,8 +336,8 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
     QDir().mkpath(extractDir);
     QVERIFY(!extractDir.isEmpty());
     // Extract the downloaded archive using QGCCompression
-    const bool extractResult = QGCCompression::extractArchive(resultLocalFile, extractDir);
-    QVERIFY2(extractResult, qPrintable("Extraction failed: " + QGCCompression::lastErrorString()));
+    const QGCCompression::Outcome extractResult = QGCCompression::extractArchive(resultLocalFile, extractDir);
+    QVERIFY2(extractResult, qPrintable("Extraction failed: " + extractResult.message));
     // Verify extracted content
     const QString extractedFile = extractDir + "/manifest.json";
     QVERIFY2(QFile::exists(extractedFile), qPrintable("Extracted file doesn't exist: " + extractedFile));

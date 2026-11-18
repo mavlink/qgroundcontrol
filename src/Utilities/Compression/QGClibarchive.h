@@ -9,7 +9,6 @@
 #include <memory>
 
 #include <QtCore/QByteArray>
-#include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -22,12 +21,11 @@ namespace QGClibarchive {
 // Types (re-export from QGCCompression for internal use)
 // ============================================================================
 
+using Error = QGCCompression::Error;
 using ProgressCallback = QGCCompression::ProgressCallback;
 using ArchiveEntry = QGCCompression::ArchiveEntry;
 using ArchiveStats = QGCCompression::ArchiveStats;
 using EntryFilter = QGCCompression::EntryFilter;
-
-using QGCCompression::kDefaultFilePermissions;
 
 // ============================================================================
 // Archive Reader Mode
@@ -40,25 +38,8 @@ enum class ReaderMode {
 };
 
 // ============================================================================
-// Reader Set-up
+// Header of a Single Compressed Stream
 // ============================================================================
-
-/// Register the filters and formats QGC reads on a new libarchive reader
-/// Only decoders built into libarchive are registered. Its reader for a filter whose
-/// library is not compiled in runs an external program (e.g. "bzip2 -d") on the input.
-/// @param a Reader created by archive_read_new(), not yet opened
-/// @param mode Format support mode (AllFormats or RawFormat)
-void configureReader(struct archive* a, ReaderMode mode);
-
-/// Size of the stream signature undecodableStreamReason() looks at
-constexpr qsizetype kStreamSignatureSize = 4;
-
-/// Tell why this build cannot decode a single compressed stream
-/// With RawFormat libarchive hands data through unchanged when no registered filter
-/// recognizes it, so bzip2 and LZ4 streams have to be refused when their decoder is missing.
-/// @param signature At least the first kStreamSignatureSize bytes of the stream
-/// @return The reason for a bzip2 or LZ4 stream that cannot be decoded, or an empty string
-QString undecodableStreamReason(const QByteArray& signature);
 
 /// Tell a compressed stream that decompresses to nothing from an input that cannot be read
 /// libarchive's raw format reads a stream as one entry, and has none for an input that is empty once it is
@@ -98,8 +79,7 @@ struct DeviceSource
 /// \brief RAII wrapper for libarchive reader with automatic cleanup
 ///
 /// Every libarchive reader is set up by one of the open functions: created, given the filters and
-/// formats of its mode by configureReader() and, in RawFormat mode, refused for the reason
-/// undecodableStreamReason() gives if this build cannot decode the stream.
+/// formats of its mode and, in RawFormat mode, refused if this build cannot decode the stream.
 class ArchiveReader {
 public:
     ArchiveReader() = default;
@@ -134,7 +114,7 @@ public:
     /// @param data Archive or compressed stream (shared with the reader, not copied)
     /// @param mode Format support mode (AllFormats or RawFormat)
     /// @return true on success
-    bool openMemory(const QByteArray& data, ReaderMode mode);
+    bool open(const QByteArray& data, ReaderMode mode);
 
     /// Close the archive. The reader can be opened again.
     void close();
@@ -148,17 +128,26 @@ public:
     /// Whether the last open refused the input because this build cannot decode its compression
     bool unsupportedStream() const { return _unsupportedStream; }
 
+    /// Mode of the last open
+    ReaderMode mode() const { return _mode; }
+
     /// Get the total data size (for progress reporting)
     /// @return Size in bytes: size of the data in memory, file size, or device size (0 if unknown)
     qint64 dataSize() const;
 
-    /// Get the detected archive format name (after reading first header)
-    /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty if not detected
-    QString formatName() const;
+    /// Record the format and the filter of the input, which libarchive knows once it has read the first header
+    /// forEachEntry() does it. A caller that reads the first header of the open reader itself does it then.
+    void captureFormat();
+
+    /// Get the detected archive format name
+    /// Everything that tells the format or the filter of an input asks here.
+    /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "raw", or empty if no header has been read
+    ///         since the last open. It stays when the reader is closed
+    QString formatName() const { return _formatName; }
 
     /// Get the detected compression filter name
-    /// @return Filter name like "gzip", "xz", "zstd", "none", or empty if not detected
-    QString filterName() const;
+    /// @return Filter name like "gzip", "xz", "zstd", "none", or empty as formatName() is
+    QString filterName() const { return _filterName; }
 
 private:
     struct Deleter
@@ -167,69 +156,25 @@ private:
     };
 
     /// Close the archive and create the reader for the next one
-    /// @param signature Start of the input (see undecodableStreamReason()), looked at in RawFormat mode
+    /// @param signature Start of the input, which tells in RawFormat mode whether this build can decode it
     /// @param reason Receives why the reader was not created, which is not logged
     /// @return false if the reader was not created
     bool _create(ReaderMode mode, const QByteArray& signature, QString& reason);
 
     // Declared before the reader, which reads from them and so is the first to go
-    QByteArray _memoryData;  // Data read from memory: a Qt resource, or the bytes given to openMemory()
+    QByteArray _memoryData;  // Data read from memory: a Qt resource, or the bytes given to open()
     DeviceSource _source;    // Device for streaming reads
     std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
+    QString _formatName;
+    QString _filterName;
+    ReaderMode _mode = ReaderMode::AllFormats;
     bool _unsupportedStream = false;
 };
 
 // ============================================================================
-// QIODevice Streaming Callbacks
-// ============================================================================
-
-/// Read callback for QIODevice streaming
-/// @param clientData DeviceSource pointer
-/// @param buffer Output pointer to buffer
-/// @return Bytes read, 0 at the end of the device (which a sequential device can answer a read with -1 at), or
-///         ARCHIVE_FATAL on error
-la_ssize_t deviceReadCallback(struct archive *a, void *clientData, const void **buffer);
-
-/// Skip callback for QIODevice streaming
-/// @param clientData DeviceSource pointer
-/// @param request Bytes to skip
-/// @return Bytes actually skipped
-la_int64_t deviceSkipCallback(struct archive *a, void *clientData, la_int64_t request);
-
-/// Close callback for QIODevice streaming (does not close device)
-/// @param clientData DeviceSource pointer
-/// @return ARCHIVE_OK
-int deviceCloseCallback(struct archive *a, void *clientData);
-
-/// Seek callback for random-access QIODevice (improves ZIP performance)
-/// @param clientData DeviceSource pointer
-/// @param offset Seek offset
-/// @param whence SEEK_SET, SEEK_CUR, or SEEK_END
-/// @return New position, or ARCHIVE_FATAL on error
-la_int64_t deviceSeekCallback(struct archive *a, void *clientData, la_int64_t offset, int whence);
-
-// ============================================================================
 // Entry Iteration
 // ============================================================================
-
-/// Outcome of advancing to the next entry of an archive
-enum class NextEntry
-{
-    Found,  ///< An entry header was read
-    End,    ///< The archive ended cleanly
-    Error   ///< The archive is truncated or corrupt (a warning has been logged)
-};
-
-/// Advance to the next entry header, first skipping whatever is unread of the current entry's data
-/// forEachEntry() is the loop over this function. Testing archive_read_next_header() against
-/// ARCHIVE_OK instead makes a truncated or corrupt archive look like one that has ended.
-/// ARCHIVE_WARN is logged and the entry returned: libarchive documents it as success with a
-/// warning (for example a pathname it could not convert) and the entry is usable.
-/// ARCHIVE_RETRY, ARCHIVE_FAILED and ARCHIVE_FATAL are all reported as Error.
-/// @param a Archive reader
-/// @param entry Receives the entry when Found is returned
-NextEntry readNextEntry(struct archive* a, struct archive_entry** entry);
 
 /// How a walk over the entries of an archive ended
 enum class EntryWalk
@@ -244,11 +189,13 @@ using EntryVisitor = std::function<bool(struct archive_entry* entry)>;
 
 /// Visit the entries of an archive in order
 /// Every loop over archive entries is this one. Only Completed says that the archive was read to
-/// its end, so a caller cannot take a read error for the end of the archive. The first entry
-/// also sets what lastDetectedFormatName() and lastDetectedFilterName() return.
-/// @param a Archive reader
-/// @param visitor Called with each entry header, when the data of that entry can be read from @a a
-EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor);
+/// its end, so a caller cannot take a read error for the end of the archive. What is unread of the
+/// data of an entry is skipped before the next one. An entry libarchive reads with a warning (for
+/// example a pathname it could not convert) is usable: the warning is logged and the entry visited.
+/// The first entry also sets what the reader tells of the format.
+/// @param reader Open archive reader
+/// @param visitor Called with each entry header, when the data of that entry can be read from @a reader
+EntryWalk forEachEntry(ArchiveReader& reader, const EntryVisitor& visitor);
 
 // ============================================================================
 // Utility Functions
@@ -271,227 +218,80 @@ ArchiveEntry toArchiveEntry(struct archive_entry *entry);
 // Low-level Operations
 // ============================================================================
 
-/// Open an archive for reading, handling both Qt resources and regular files
-/// Qt resources are loaded into resourceData; regular files are streamed
-/// @param a Initialized archive reader (call archive_read_support_* first)
-/// @param filePath Path to file (Qt resource :/ or filesystem path)
-/// @param resourceData Output buffer for Qt resource data (must stay alive until archive is closed)
-/// @return true on success
-bool openArchiveForReading(struct archive *a, const QString &filePath, QByteArray &resourceData);
+// Each operation below is what the function of QGCCompression that calls it does once its arguments are
+// checked: that function documents it. The operation opens the reader it is given, which tells the caller
+// the format of the input afterwards and more of a failure (mode(), unsupportedStream()), and returns how it
+// ended:
+//   None               Every entry asked for was read to its end, and written if it was to be
+//   FileNotInArchive   The archive was read to its end without an entry that was asked for
+//   UnsupportedFormat  An entry asked for by name is one that is not extracted: a directory, a link, a special
+//                      file, or a name that would be written outside the output directory. Of a RawFormat
+//                      reader: the input is not compressed, or this build cannot decode its compression
+//   IoError            The output directory or a file in it could not be written
+//   PermissionDenied   As IoError, and the reason is that the output may not be written to
+//   Cancelled          The progress callback returned false
+//   SizeLimitExceeded  What the input holds is larger than maxBytes (0 = unlimited)
+//   InvalidArchive     The input cannot be read or is damaged
+// A failure has been logged as a warning, but for Cancelled and for patterns that match nothing. Data that an
+// operation returns is empty unless it returns None.
+//
+// An operation that takes a Source is written once for what ArchiveReader::open() takes. QGClibarchive.cc
+// defines it for a path and for a QIODevice, and decompressToMemory() for a QByteArray instead of a path.
 
-/// How an operation that reads an archive or a compressed stream, and returns its data or writes it to files,
-/// ended
-/// An entry without data is returned as an empty QByteArray, which is also what a failure returns.
-enum class ReadResult
-{
-    Completed,      ///< Every entry asked for was read to its end, and written if it was to be
-    EntryNotFound,  ///< The archive was read to its end without an entry that was asked for
-    EntrySkipped,   ///< An entry asked for by name is one that is not extracted: a directory, a link, a special
-                    ///< file, or a name that would be written outside the output directory (a warning has been
-                    ///< logged)
-    WriteFailed,    ///< The output directory or a file in it could not be written
-    WriteDenied,    ///< As WriteFailed, and the reason is that the output may not be written to
-    Cancelled,      ///< The progress callback returned false
-    NotCompressed,  ///< What was to be decompressed as a single stream is not compressed: no decompression filter
-                    ///< recognizes it (a warning has been logged)
-    Unsupported,    ///< What was to be decompressed as a single stream has a compression this build cannot decode
-                    ///< (a warning has been logged)
-    Failed          ///< The input cannot be read or is damaged, or what it holds is larger than maxBytes
-};
+/// Extract an archive (ZIP, 7z, TAR plain or compressed) to a directory
+/// @param filter Which entries to extract (not set = all of them)
+template <typename Source>
+Error extractAnyArchive(ArchiveReader& reader, const Source& source, const QString& outputDirectoryPath,
+                        const EntryFilter& filter, const ProgressCallback& progress, qint64 maxBytes);
 
-/// Extract any supported archive format using libarchive's auto-detection
-/// Supports: ZIP, 7z, TAR (plain or compressed)
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param outputDirectoryPath Path where files will be extracted
-/// @param progress Optional progress callback (return false to cancel)
-/// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return true on success, false on failure or size limit exceeded
-bool extractAnyArchive(const QString& archivePath, const QString& outputDirectoryPath,
-                       ProgressCallback progress = nullptr, qint64 maxBytes = 0, ReadResult* result = nullptr);
+/// Extract an archive into a staging directory next to the output directory, which it then takes the place of
+/// A failure leaves the output directory as it was. Needs about twice the space of the entries meanwhile.
+Error extractArchiveAtomic(ArchiveReader& reader, const QString& archivePath, const QString& outputDirectoryPath,
+                           const ProgressCallback& progress, qint64 maxBytes);
 
-/// Extract archive atomically using a temporary staging directory
-/// Provides all-or-nothing semantics: if extraction fails, no partial files remain.
-/// Uses a staging directory and atomic rename/swap in the output parent directory.
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param outputDirectoryPath Path where files will be extracted
-/// @param progress Optional progress callback (return false to cancel)
-/// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return true on success, false on failure (no partial files left on failure)
-/// @note Requires ~2x disk space during extraction for staging
-bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath,
-                          ProgressCallback progress = nullptr, qint64 maxBytes = 0, ReadResult* result = nullptr);
+/// Extract the file called @a fileName to @a outputPath
+Error extractSingleFile(ArchiveReader& reader, const QString& archivePath, const QString& fileName,
+                        const QString& outputPath);
 
-/// Extract a single file from any archive by name
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param fileName Name of file inside archive
-/// @param outputPath Output file path
-/// @param result If not null, receives how the extraction ended
-/// @return true on success, false if not found, a directory, a link or a special file, or extraction failed
-bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
-                       ReadResult* result = nullptr);
+/// Read the file called @a fileName (not empty) into @a data
+template <typename Source>
+Error extractFileToMemory(ArchiveReader& reader, const Source& source, const QString& fileName, qint64 maxBytes,
+                          QByteArray& data);
 
-/// Extract a single file from any archive directly to memory
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param fileName Name of file inside archive
-/// @param maxBytes Maximum size of the file (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return File contents, or empty QByteArray if not found, larger than maxBytes or extraction failed
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes = 0,
-                               ReadResult* result = nullptr);
+/// Extract the files called @a fileNames (at least one) in one pass, as extractAnyArchive() writes its entries
+Error extractMultipleFiles(ArchiveReader& reader, const QString& archivePath, const QStringList& fileNames,
+                           const QString& outputDirectoryPath);
 
-/// Extract multiple files from any archive by name in one pass
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param fileNames Names of files inside archive
-/// @param outputDirectoryPath Output directory
-/// @param result If not null, receives how the extraction ended
-/// @return true if all files found and extracted. A directory, a link or a special file is not extracted.
-bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
-                          ReadResult* result = nullptr);
+/// Extract the files that match one of the glob patterns (at least one), which libarchive's archive_match reads,
+/// as extractAnyArchive() writes its entries
+/// @param extractedFiles If not null, the names of the files that were extracted are appended to it
+/// @return FileNotInArchive if no file matched
+Error extractByPattern(ArchiveReader& reader, const QString& archivePath, const QStringList& patterns,
+                       const QString& outputDirectoryPath, QStringList* extractedFiles);
 
-/// Extract files matching glob patterns from archive (uses libarchive archive_match)
-/// Supports wildcards: * (any chars), ? (single char), [...] (char class)
-/// A link or a special file that matches is skipped with a warning.
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt")
-/// @param outputDirectoryPath Output directory
-/// @param extractedFiles Optional output list of files that were extracted
-/// @param result If not null, receives how the extraction ended: EntryNotFound if no file matched
-/// @return true if at least one file matched and extracted, false on error or no matches
-bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
-                      QStringList* extractedFiles = nullptr, ReadResult* result = nullptr);
+/// Read every entry of an archive to its end
+Error validateArchive(ArchiveReader& reader, const QString& archivePath);
 
-/// Validate archive integrity by reading all entries
-/// @param archivePath Path to the archive file
-/// @return true if archive is valid
-bool validateArchive(const QString &archivePath);
+/// Look for an entry in an archive without reading its data
+/// @return None if the archive has the entry, FileNotInArchive if it was read to its end without it
+Error findEntryInArchive(ArchiveReader& reader, const QString& archivePath, const QString& fileName);
 
-/// Look for an entry in an archive without extracting it
-/// The result tells an archive that does not have the entry from one that could not be searched.
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param fileName Name of the entry to look for
-/// @return Found, End if the archive was read to its end without the entry, or Error (after a warning) if
-///         the archive cannot be opened or is damaged before the entry
-NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName);
+/// List the entries of an archive in the order they have in it
+Error listArchiveEntriesDetailed(ArchiveReader& reader, const QString& archivePath, QList<ArchiveEntry>& entries);
 
-/// List all entries in an archive
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param ok If not null, receives whether the archive was read to its end: one without entries lists as
-///        empty too
-/// @return List of entry names, empty on failure
-QStringList listArchiveEntries(const QString& archivePath, bool* ok = nullptr);
+/// Count the entries of an archive
+/// @param stats Receives the statistics, all zeros unless None is returned
+Error getArchiveStats(ArchiveReader& reader, const QString& archivePath, ArchiveStats& stats);
 
-/// List all entries in an archive with detailed metadata
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param ok If not null, receives whether the archive was read to its end: one without entries lists as
-///        empty too
-/// @return List of ArchiveEntry structs, empty on failure
-QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool* ok = nullptr);
-
-/// Get summary statistics for an archive
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param ok If not null, receives whether the archive was read to its end: one without entries has all
-///        zeros too
-/// @return ArchiveStats struct (all zeros on failure)
-ArchiveStats getArchiveStats(const QString& archivePath, bool* ok = nullptr);
-
-/// Extract archive with per-entry filtering
-/// A link or a special file the filter accepts is skipped with a warning.
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param outputDirectoryPath Path where files will be extracted
-/// @param filter Callback to decide which entries to extract
-/// @param progress Optional progress callback (return false to cancel)
-/// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return true on success (even if all entries filtered out), false on failure
-bool extractWithFilter(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
-                       ProgressCallback progress = nullptr, qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-// ============================================================================
-// Single-File Decompression
-// ============================================================================
-
-/// Decompress a single compressed file (.gz, .xz, .zst, etc.) to disk
-/// @param inputPath Path to compressed file (or Qt resource path)
-/// @param outputPath Path for decompressed output
-/// @param progress Optional progress callback
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the decompression ended
+/// Decompress a single compressed stream (.gz, .xz, .zst, etc.) to a file
 /// @param copyPlainInput Whether an input that is not compressed is written to the output as it is, within
-///        maxBytes, instead of being refused as NotCompressed
-/// @return true on success, false on failure or size limit exceeded
-bool decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress = nullptr,
-                          qint64 maxBytes = 0, ReadResult* result = nullptr, bool copyPlainInput = false);
+///        maxBytes, instead of being refused as UnsupportedFormat
+template <typename Source>
+Error decompressSingleFile(ArchiveReader& reader, const Source& source, const QString& outputPath,
+                           const ProgressCallback& progress, qint64 maxBytes, bool copyPlainInput = false);
 
-/// Decompress data in memory
-/// @param data Compressed input data
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the decompression ended: a stream of an empty file gives nothing
-///        too
-/// @return Decompressed data, or empty on failure or size limit exceeded
-QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-// ============================================================================
-// QIODevice-based Operations (streaming)
-// ============================================================================
-
-/// Extract archive from QIODevice to directory
-/// @param device QIODevice to read from (must be open and readable)
-/// @param outputDirectoryPath Path where files will be extracted
-/// @param progress Optional progress callback (return false to cancel)
-/// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return true on success, false on failure or size limit exceeded
-bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, ProgressCallback progress = nullptr,
-                       qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-/// Extract a single file from archive device directly to memory
-/// @param device QIODevice to read from (must be open and readable)
-/// @param fileName Name of file inside archive
-/// @param maxBytes Maximum size of the file (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return File contents, or empty QByteArray if not found or larger than maxBytes
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes = 0,
-                                     ReadResult* result = nullptr);
-
-/// Decompress single-file format from QIODevice to disk
-/// @param device QIODevice to read from (must be open and readable)
-/// @param outputPath Output file path
-/// @param progress Optional progress callback
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the decompression ended
-/// @return true on success, false on failure or size limit exceeded
-bool decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress = nullptr,
-                          qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-/// Decompress single-file format from QIODevice to memory
-/// @param device QIODevice to read from (must be open and readable)
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the decompression ended: a stream of an empty file gives nothing
-///        too
-/// @return Decompressed data, or empty QByteArray on failure or size limit exceeded
-QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-// ============================================================================
-// Format Detection (Thread-Local State)
-// ============================================================================
-
-/// Get the detected format name from the last archive operation (thread-local)
-/// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty
-QString lastDetectedFormatName();
-
-/// Get the detected filter name from the last archive operation (thread-local)
-/// @return Filter name like "gzip", "xz", "zstd", "none", or empty
-QString lastDetectedFilterName();
-
-/// Forget the format and filter detected on this thread (thread-local)
-/// They are recorded when the first header of an archive is read. An operation that fails before that
-/// records nothing, and would be described by what the operation before it detected.
-void clearLastDetectedFormat();
-
-/// Tell whether an operation on this thread stopped at its maxBytes limit since the last call
-/// (thread-local). Resets the flag, so call it once for each failed operation that takes a limit.
-bool takeSizeLimitExceeded();
+/// Decompress a single compressed stream (not empty) into @a data
+template <typename Source>
+Error decompressToMemory(ArchiveReader& reader, const Source& source, qint64 maxBytes, QByteArray& data);
 
 } // namespace QGClibarchive

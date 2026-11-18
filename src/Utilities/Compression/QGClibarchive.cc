@@ -1,40 +1,23 @@
 #include "QGClibarchive.h"
 
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
-#include <QtCore/QSaveFile>
-#include <QtCore/QSet>
-#include <QtCore/QTemporaryDir>
-
 #include <archive.h>
 #include <archive_entry.h>
+#include <optional>
+
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QSaveFile>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QSet>
+#include <QtCore/QTemporaryDir>
 
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGClibarchiveLog, "Utilities.QGClibarchive")
 
-// ============================================================================
-// Thread-Local Format Detection State
-// ============================================================================
-
 namespace {
-
-struct FormatState
-{
-    QString formatName;
-    QString filterName;
-};
-
-thread_local FormatState t_formatState;
-
-thread_local bool t_sizeLimitExceeded = false;
-
-void reportSizeLimitExceeded(qint64 maxBytes)
-{
-    qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
-    t_sizeLimitExceeded = true;
-}
 
 /// Why libarchive could not open a reader
 /// libarchive has no text for some failures: 3.8.8 has none for a gzip stream that ends before its trailer
@@ -45,61 +28,15 @@ QString openFailureReason(struct archive* a)
                                                       : QStringLiteral("Truncated or unreadable input");
 }
 
-void updateFormatState(struct archive* a)
-{
-    if (!a) {
-        t_formatState.formatName.clear();
-        t_formatState.filterName.clear();
-        return;
-    }
-
-    // Get format name
-    const char* fmt = archive_format_name(a);
-    t_formatState.formatName = fmt ? QString::fromUtf8(fmt) : QString();
-
-    // Get compression filter name (index 0 is the outermost filter)
-    const char* flt = archive_filter_name(a, 0);
-    t_formatState.filterName = flt ? QString::fromUtf8(flt) : QStringLiteral("none");
-
-    if (!t_formatState.formatName.isEmpty()) {
-        qCDebug(QGClibarchiveLog) << "Detected format:" << t_formatState.formatName
-                                  << "filter:" << t_formatState.filterName;
-    }
-}
-
 }  // namespace
-
-namespace QGClibarchive {
-
-QString lastDetectedFormatName()
-{
-    return t_formatState.formatName;
-}
-
-QString lastDetectedFilterName()
-{
-    return t_formatState.filterName;
-}
-
-void clearLastDetectedFormat()
-{
-    updateFormatState(nullptr);
-}
-
-bool takeSizeLimitExceeded()
-{
-    const bool exceeded = t_sizeLimitExceeded;
-    t_sizeLimitExceeded = false;
-    return exceeded;
-}
-
-}  // namespace QGClibarchive
 
 // ============================================================================
 // libarchive callbacks for QIODevice streaming
 // ============================================================================
 
 namespace QGClibarchive {
+
+namespace {
 
 la_ssize_t deviceReadCallback(struct archive*, void* clientData, const void** buffer)
 {
@@ -135,23 +72,8 @@ la_int64_t deviceSkipCallback(struct archive*, void* clientData, la_int64_t requ
         }
     }
 
-    // For sequential devices or failed seek, read and discard
-    char discardBuffer[QGCFileHelper::kBufferSizeMax];
-    la_int64_t skipped = 0;
-    while (skipped < request) {
-        const qint64 toRead = qMin(static_cast<qint64>(sizeof(discardBuffer)), request - skipped);
-        const qint64 bytesRead = device->read(discardBuffer, toRead);
-        if (bytesRead <= 0)
-            break;
-        skipped += bytesRead;
-    }
-    return skipped;
-}
-
-int deviceCloseCallback(struct archive*, void*)
-{
-    // Don't close the device - caller owns it
-    return ARCHIVE_OK;
+    // A device that cannot seek, or a seek that failed: libarchive reads and discards what is not skipped here
+    return 0;
 }
 
 la_int64_t deviceSeekCallback(struct archive*, void* clientData, la_int64_t offset, int whence)
@@ -184,42 +106,39 @@ la_int64_t deviceSeekCallback(struct archive*, void* clientData, la_int64_t offs
     return newPos;
 }
 
+}  // namespace
+
 // ============================================================================
 // Utility Functions
 // ============================================================================
 
-NextEntry readNextEntry(struct archive* a, struct archive_entry** entry)
+EntryWalk forEachEntry(ArchiveReader& reader, const EntryVisitor& visitor)
 {
-    switch (archive_read_next_header(a, entry)) {
-        case ARCHIVE_OK:
-            return NextEntry::Found;
-        case ARCHIVE_EOF:
-            return NextEntry::End;
-        case ARCHIVE_WARN:
-            qCWarning(QGClibarchiveLog) << "Archive entry read with a warning:" << archive_error_string(a);
-            return NextEntry::Found;
-        default:
-            qCWarning(QGClibarchiveLog) << "Failed to read archive entry:" << archive_error_string(a);
-            return NextEntry::Error;
-    }
-}
-
-EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor)
-{
+    struct archive* const a = reader.handle();
     struct archive_entry* entry = nullptr;
     bool formatKnown = false;
-    NextEntry next;
-    while ((next = readNextEntry(a, &entry)) == NextEntry::Found) {
-        // libarchive knows the format once it has read the first header
+    while (true) {
+        // Testing for ARCHIVE_OK alone would make a truncated or corrupt archive look like one that has ended
+        switch (archive_read_next_header(a, &entry)) {
+            case ARCHIVE_EOF:
+                return EntryWalk::Completed;
+            case ARCHIVE_WARN:
+                qCWarning(QGClibarchiveLog) << "Archive entry read with a warning:" << archive_error_string(a);
+                break;
+            case ARCHIVE_OK:
+                break;
+            default:
+                qCWarning(QGClibarchiveLog) << "Failed to read archive entry:" << archive_error_string(a);
+                return EntryWalk::Failed;
+        }
         if (!formatKnown) {
-            updateFormatState(a);
+            reader.captureFormat();
             formatKnown = true;
         }
         if (!visitor(entry)) {
             return EntryWalk::Stopped;
         }
     }
-    return (next == NextEntry::End) ? EntryWalk::Completed : EntryWalk::Failed;
 }
 
 ArchiveEntry toArchiveEntry(struct archive_entry* entry)
@@ -237,8 +156,6 @@ ArchiveEntry toArchiveEntry(struct archive_entry* entry)
 
     return info;
 }
-
-}  // namespace QGClibarchive
 
 // ============================================================================
 // Internal helpers (anonymous namespace)
@@ -263,25 +180,24 @@ using EntryMatchPtr = std::unique_ptr<struct archive, EntryMatchDeleter>;
 /// Size limit and progress reporting of one operation, shared by all the entries whose data it copies
 struct DataTransfer
 {
-    qint64 maxBytes = 0;                            ///< Bytes the operation may write (0 = unlimited)
-    QGClibarchive::ProgressCallback progress = {};  ///< Optional; cancels the operation by returning false
-    qint64 totalSize = 0;                           ///< Size of the input for the progress callback (0 if unknown)
-    qint64 bytesWritten = 0;                        ///< Bytes written so far
+    qint64 maxBytes = 0;             ///< Bytes the operation may write (0 = unlimited)
+    ProgressCallback progress = {};  ///< Optional; cancels the operation by returning false
+    qint64 totalSize = 0;            ///< Size of the input for the progress callback (0 if unknown)
+    /// What the warning for data that is truncated or corrupt starts with (nullptr: the caller logs it)
+    const char* damageReport = "Read error:";
+    qint64 bytesWritten = 0;  ///< Bytes written so far
 };
 
-/// How copyEntryData() ended
-enum class CopyResult
+/// Log that an operation stopped at its size limit
+Error sizeLimitExceeded(qint64 maxBytes)
 {
-    Completed,          ///< The data ended cleanly and all of it was written
-    ReadFailed,         ///< The archive is truncated or corrupt: archive_error_string() tells how
-    WriteFailed,        ///< The sink could not take a block (it has logged a warning)
-    WriteDenied,        ///< The file to write to may not be created or written (a warning has been logged)
-    SizeLimitExceeded,  ///< The data did not fit in the operation's limit (a warning has been logged)
-    Cancelled           ///< The progress callback returned false
-};
+    qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+    return Error::SizeLimitExceeded;
+}
 
-/// Takes one block of an entry's data, which belongs at @a offset of the entry. Returns false if it cannot.
-using DataSink = std::function<bool(const char* data, qint64 size, qint64 offset)>;
+/// Takes one block of an entry's data, which belongs at @a offset of the entry
+/// @return Error::None, or why it cannot take the block, which it has logged
+using DataSink = std::function<Error(const char* data, qint64 size, qint64 offset)>;
 
 /// Copy the data of the current entry to a sink
 /// Every loop over entry data is this one: it holds the operation to its size limit, reports progress,
@@ -289,7 +205,9 @@ using DataSink = std::function<bool(const char* data, qint64 size, qint64 offset
 /// @param a Archive handle (must have entry header already read)
 /// @param transfer Limit and progress of the operation, updated with the bytes written
 /// @param sink Called with each block, in the order of the offsets
-CopyResult copyEntryData(struct archive* a, DataTransfer& transfer, const DataSink& sink)
+/// @return Error::None, what the sink returned, SizeLimitExceeded or Cancelled, or InvalidArchive for data that is
+///         truncated or corrupt, which is logged as @a transfer says
+Error copyEntryData(struct archive* a, DataTransfer& transfer, const DataSink& sink)
 {
     const void* buff = nullptr;
     size_t size = 0;
@@ -299,85 +217,79 @@ CopyResult copyEntryData(struct archive* a, DataTransfer& transfer, const DataSi
     while ((r = archive_read_data_block(a, &buff, &size, &offset)) == ARCHIVE_OK) {
         const qint64 blockSize = static_cast<qint64>(size);
         if (transfer.maxBytes > 0 && (transfer.bytesWritten + blockSize) > transfer.maxBytes) {
-            reportSizeLimitExceeded(transfer.maxBytes);
-            return CopyResult::SizeLimitExceeded;
+            return sizeLimitExceeded(transfer.maxBytes);
         }
 
-        if (!sink(static_cast<const char*>(buff), blockSize, offset)) {
-            return CopyResult::WriteFailed;
+        if (const Error taken = sink(static_cast<const char*>(buff), blockSize, offset); taken != Error::None) {
+            return taken;
         }
         transfer.bytesWritten += blockSize;
 
         // Progress is the position in the input, whose size is all that is known beforehand
         if (transfer.progress && !transfer.progress(archive_filter_bytes(a, -1), transfer.totalSize)) {
             qCDebug(QGClibarchiveLog) << "Cancelled by the progress callback";
-            return CopyResult::Cancelled;
+            return Error::Cancelled;
         }
     }
 
-    return (r == ARCHIVE_EOF) ? CopyResult::Completed : CopyResult::ReadFailed;
+    if (r == ARCHIVE_EOF) {
+        return Error::None;
+    }
+    if (transfer.damageReport != nullptr) {
+        qCWarning(QGClibarchiveLog) << transfer.damageReport << archive_error_string(a);
+    }
+    return Error::InvalidArchive;
 }
 
-/// Read all data from archive into QByteArray
+/// Read the data of the current entry into a QByteArray
 /// @param a Archive handle (must have header already read)
 /// @param expectedSize Size the entry's header declares (0 if unknown). Memory is set aside for it up to
 ///        kMaxReservedBytes only: a damaged or hostile archive declares any size.
 /// @param maxBytes Maximum bytes to read (0 = unlimited)
-/// @param completed If not null, receives whether the data was read to its end: there may be none to read
-/// @return Data read, or empty QByteArray on error or size limit exceeded
-QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint64 maxBytes = 0,
-                               bool* completed = nullptr)
+/// @param data Receives the data, which is empty unless Error::None is returned
+Error readArchiveToMemory(struct archive* a, qint64 expectedSize, qint64 maxBytes, QByteArray& data)
 {
     constexpr qint64 kMaxReservedBytes = 16 * 1024 * 1024;
 
-    QByteArray result;
+    data.clear();
     if (expectedSize > 0) {
-        result.reserve(static_cast<qsizetype>(qMin(expectedSize, kMaxReservedBytes)));
+        data.reserve(static_cast<qsizetype>(qMin(expectedSize, kMaxReservedBytes)));
     }
 
     DataTransfer transfer{.maxBytes = maxBytes};
-    const CopyResult copied =
-        copyEntryData(a, transfer, [&result, maxBytes](const char* data, qint64 size, qint64 offset) {
-            // The holes of a sparse entry read as zeros. They take memory, so they count towards the limit.
-            const qint64 hole = offset - result.size();
-            if (hole < 0) {
-                qCWarning(QGClibarchiveLog) << "Read error: out-of-order sparse blocks";
-                return false;
-            }
-            if (maxBytes > 0 && (offset + size) > maxBytes) {
-                reportSizeLimitExceeded(maxBytes);
-                return false;
-            }
-            result.append(static_cast<qsizetype>(hole), '\0');
-            result.append(data, static_cast<qsizetype>(size));
-            return true;
-        });
+    const Error copied = copyEntryData(a, transfer, [&data, maxBytes](const char* block, qint64 size, qint64 offset) {
+        // The holes of a sparse entry read as zeros. They take memory, so they count towards the limit.
+        const qint64 hole = offset - data.size();
+        if (hole < 0) {
+            qCWarning(QGClibarchiveLog) << "Read error: out-of-order sparse blocks";
+            return Error::InvalidArchive;
+        }
+        if (maxBytes > 0 && (offset + size) > maxBytes) {
+            return sizeLimitExceeded(maxBytes);
+        }
+        data.append(static_cast<qsizetype>(hole), '\0');
+        data.append(block, static_cast<qsizetype>(size));
+        return Error::None;
+    });
 
-    if (copied == CopyResult::ReadFailed) {
-        qCWarning(QGClibarchiveLog) << "Read error:" << archive_error_string(a);
+    if (copied != Error::None) {
+        data.clear();
     }
-    if (completed != nullptr) {
-        *completed = (copied == CopyResult::Completed);
-    }
-
-    return (copied == CopyResult::Completed) ? result : QByteArray();
+    return copied;
 }
 
 /// Read the data of the archive entry whose header was just read into a QByteArray
 /// An entry that says it does not fit in @a maxBytes is not started. One that says less than it holds, or
 /// nothing, is stopped at the limit while it is read.
 /// @param maxBytes Maximum size of the entry (0 = unlimited)
-/// @param completed Receives whether the entry was read to its end: it may have no data
-/// @return Data read, or empty QByteArray on error or size limit exceeded
-QByteArray readEntryToMemory(struct archive* a, struct archive_entry* entry, qint64 maxBytes, bool& completed)
+/// @param data Empty, and receives the data if Error::None is returned
+Error readEntryToMemory(struct archive* a, struct archive_entry* entry, qint64 maxBytes, QByteArray& data)
 {
-    completed = false;
     const qint64 declaredSize = archive_entry_size(entry);
     if (maxBytes > 0 && declaredSize > maxBytes) {
-        reportSizeLimitExceeded(maxBytes);
-        return {};
+        return sizeLimitExceeded(maxBytes);
     }
-    return readArchiveToMemory(a, declaredSize, maxBytes, &completed);
+    return readArchiveToMemory(a, declaredSize, maxBytes, data);
 }
 
 /// Whether a file or a directory that could not be created at @a path was refused for lack of permission
@@ -399,35 +311,41 @@ bool isWriteDenied(const QString& path)
     return existing.isDir() && !existing.isWritable();
 }
 
+/// Why a file or a directory could not be created at @a path
+Error writeFailure(const QString& path)
+{
+    return isWriteDenied(path) ? Error::PermissionDenied : Error::IoError;
+}
+
 /// Write the data of the current archive entry to a file atomically
 /// @param a Archive handle (must have entry header already read)
 /// @param outputPath Output file path (parent directory must exist)
 /// @param transfer Limit and progress of the operation the entry is part of
-/// @return Completed on success; otherwise no partial file is left
+/// @return As copyEntryData(). No partial file is left unless it is Error::None
 /// @note Uses QSaveFile for atomic writes - writes to temp file, then renames on commit
 /// @note Writes each block at its offset to preserve sparse file structure
-CopyResult copyEntryToFile(struct archive* a, const QString& outputPath, DataTransfer& transfer)
+Error copyEntryToFile(struct archive* a, const QString& outputPath, DataTransfer& transfer)
 {
     QSaveFile outFile(outputPath);
     if (!outFile.open(QIODevice::WriteOnly)) {
         qCWarning(QGClibarchiveLog) << "Failed to open output file:" << outputPath << outFile.errorString();
-        return isWriteDenied(outputPath) ? CopyResult::WriteDenied : CopyResult::WriteFailed;
+        return writeFailure(outputPath);
     }
 
-    const CopyResult copied = copyEntryData(a, transfer, [&outFile](const char* data, qint64 size, qint64 offset) {
+    const Error copied = copyEntryData(a, transfer, [&outFile](const char* data, qint64 size, qint64 offset) {
         // Seek to offset - creates sparse hole if gap from previous position
         if (offset != outFile.pos() && !outFile.seek(offset)) {
             qCWarning(QGClibarchiveLog) << "Failed to seek:" << outFile.errorString();
-            return false;
+            return Error::IoError;
         }
         if (outFile.write(data, size) != size) {
             qCWarning(QGClibarchiveLog) << "Failed to write output:" << outFile.errorString();
-            return false;
+            return Error::IoError;
         }
-        return true;
+        return Error::None;
     });
 
-    if (copied != CopyResult::Completed) {
+    if (copied != Error::None) {
         outFile.cancelWriting();
         return copied;
     }
@@ -435,29 +353,43 @@ CopyResult copyEntryToFile(struct archive* a, const QString& outputPath, DataTra
     // Atomically commit - renames temp file to final path
     if (!outFile.commit()) {
         qCWarning(QGClibarchiveLog) << "Failed to commit output file:" << outFile.errorString();
-        return CopyResult::WriteFailed;
+        return Error::IoError;
     }
 
-    return CopyResult::Completed;
+    return Error::None;
+}
+
+/// Log that an entry of @a kind is skipped
+/// @param target Of a link: what it points to, which a link can be without
+/// @return true, which is what the functions below answer for an entry they log
+bool logSkipped(struct archive_entry* entry, const char* kind, std::optional<const char*> target = {})
+{
+    const QString skipping = QStringLiteral("Skipping %1:").arg(QLatin1String(kind));
+    if (target) {
+        qCWarning(QGClibarchiveLog).noquote() << skipping << archive_entry_pathname(entry) << "->" << *target;
+    } else {
+        qCWarning(QGClibarchiveLog).noquote() << skipping << archive_entry_pathname(entry);
+    }
+    return true;
+}
+
+/// Whether an entry is a hard link, which is then logged as skipped
+/// No extraction writes one: libarchive's disk writer resolves the target against the working directory, not
+/// the output directory, and writes the entry's data through the link.
+bool skipHardLinkEntry(struct archive_entry* entry)
+{
+    const char* const target = archive_entry_hardlink(entry);
+    return (target != nullptr) && logSkipped(entry, "hard link", target);
 }
 
 /// Whether an entry is a hard or symbolic link, which is then logged as skipped
-/// The functions that write an entry with writeArchiveEntryToFile() leave links out: QSaveFile makes regular
-/// files, so a link would become an empty one. extractArchiveEntries() creates the symbolic links that stay
-/// inside its output directory instead.
+/// The functions that hand over one entry, as a file with a path of its own or as data, leave links out:
+/// QSaveFile makes regular files, so a link would become an empty one. extractArchiveEntries() creates the
+/// symbolic links that stay inside its output directory instead.
 bool skipLinkEntry(struct archive_entry* entry)
 {
-    if (archive_entry_hardlink(entry) != nullptr) {
-        qCWarning(QGClibarchiveLog) << "Skipping hard link:" << archive_entry_pathname(entry) << "->"
-                                    << archive_entry_hardlink(entry);
-        return true;
-    }
-    if (archive_entry_filetype(entry) == AE_IFLNK) {
-        qCWarning(QGClibarchiveLog) << "Skipping symlink:" << archive_entry_pathname(entry) << "->"
-                                    << archive_entry_symlink(entry);
-        return true;
-    }
-    return false;
+    return skipHardLinkEntry(entry) ||
+           ((archive_entry_filetype(entry) == AE_IFLNK) && logSkipped(entry, "symlink", archive_entry_symlink(entry)));
 }
 
 /// What kind of special file an entry is, nullptr if it is none
@@ -483,59 +415,23 @@ const char* specialFileKind(struct archive_entry* entry)
 /// any of them.
 bool skipSpecialEntry(struct archive_entry* entry)
 {
-    const char* kind = specialFileKind(entry);
-    if (kind == nullptr) {
-        return false;
-    }
-    qCWarning(QGClibarchiveLog).noquote()
-        << QStringLiteral("Skipping %1:").arg(QLatin1String(kind)) << archive_entry_pathname(entry);
-    return true;
+    const char* const kind = specialFileKind(entry);
+    return (kind != nullptr) && logSkipped(entry, kind);
 }
 
-/// Whether an entry that was asked for by name is one that is not extracted, which is then logged
-/// A directory is refused as a link and a special file are: it is not a file without data, which is what
-/// writing it with writeArchiveEntryToFile() or returning its data would make of it. The functions that walk
-/// the archive make the directories of the files they write.
+/// Whether an entry is a directory, which is then logged as skipped
+/// A directory that is asked for by name is refused: there is one file to hand over then, which a directory is
+/// not. The functions that walk the archive make the directories.
+bool skipDirectoryEntry(struct archive_entry* entry)
+{
+    return (archive_entry_filetype(entry) == AE_IFDIR) && logSkipped(entry, "directory");
+}
+
+/// Whether an entry that is handed over alone, as a file or as data, is one that is not extracted, which is
+/// then logged: a directory, a link or a special file would look like a file without data
 bool skipNamedEntry(struct archive_entry* entry)
 {
-    if (archive_entry_filetype(entry) == AE_IFDIR) {
-        qCWarning(QGClibarchiveLog) << "Skipping directory:" << archive_entry_pathname(entry);
-        return true;
-    }
-    return skipLinkEntry(entry) || skipSpecialEntry(entry);
-}
-
-/// Write current archive entry data to a file atomically
-/// @param a Archive handle (must have entry header already read)
-/// @param outputPath Output file path (parent directory must exist)
-/// @param transfer Limit and progress of the operation the entry is part of
-/// @return Completed on success; otherwise no partial file is left, and a warning has been logged
-CopyResult writeArchiveEntryToFile(struct archive* a, const QString& outputPath, DataTransfer& transfer)
-{
-    const CopyResult copied = copyEntryToFile(a, outputPath, transfer);
-    if (copied == CopyResult::ReadFailed) {
-        qCWarning(QGClibarchiveLog) << "Read error:" << archive_error_string(a);
-    }
-    return copied;
-}
-
-/// What the way an entry was written to a file means for the extraction it is part of
-QGClibarchive::ReadResult toReadResult(CopyResult copied)
-{
-    switch (copied) {
-        case CopyResult::Completed:
-            return QGClibarchive::ReadResult::Completed;
-        case CopyResult::WriteFailed:
-            return QGClibarchive::ReadResult::WriteFailed;
-        case CopyResult::WriteDenied:
-            return QGClibarchive::ReadResult::WriteDenied;
-        case CopyResult::Cancelled:
-            return QGClibarchive::ReadResult::Cancelled;
-        case CopyResult::ReadFailed:
-        case CopyResult::SizeLimitExceeded:
-            break;
-    }
-    return QGClibarchive::ReadResult::Failed;
+    return skipDirectoryEntry(entry) || skipLinkEntry(entry) || skipSpecialEntry(entry);
 }
 
 /// Decompress archive stream to file atomically with progress and size limit
@@ -544,33 +440,51 @@ QGClibarchive::ReadResult toReadResult(CopyResult copied)
 /// @param progress Optional progress callback
 /// @param totalSize Total size for progress reporting (0 if unknown)
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @return Completed on success; otherwise no partial file is left
-QGClibarchive::ReadResult decompressStreamToFile(struct archive* a, const QString& outputPath,
-                                                 const QGClibarchive::ProgressCallback& progress, qint64 totalSize,
-                                                 qint64 maxBytes)
+/// @return Error::None on success; otherwise no partial file is left
+Error decompressStreamToFile(struct archive* a, const QString& outputPath, const ProgressCallback& progress,
+                             qint64 totalSize, qint64 maxBytes)
 {
-    DataTransfer transfer{.maxBytes = maxBytes, .progress = progress, .totalSize = totalSize};
-    const CopyResult copied = copyEntryToFile(a, outputPath, transfer);
-    if (copied == CopyResult::ReadFailed) {
-        qCWarning(QGClibarchiveLog) << "Decompression error:" << archive_error_string(a);
-    }
-    if (copied == CopyResult::Completed) {
+    DataTransfer transfer{
+        .maxBytes = maxBytes, .progress = progress, .totalSize = totalSize, .damageReport = "Decompression error:"};
+    const Error copied = copyEntryToFile(a, outputPath, transfer);
+    if (copied == Error::None) {
         qCDebug(QGClibarchiveLog) << "Decompressed" << transfer.bytesWritten << "bytes to" << outputPath;
     }
-    return toReadResult(copied);
+    return copied;
 }
 
 /// Create the directory an extraction writes to, with the directories above it
-/// @return Completed, or after a warning WriteDenied or WriteFailed if the directory is not there and cannot
-///         be made
-QGClibarchive::ReadResult createOutputDirectory(const QString& directoryPath)
+/// @return Error::None, or after a warning why the directory is not there and cannot be made
+Error createOutputDirectory(const QString& directoryPath)
 {
     if (QGCFileHelper::ensureDirectoryExists(directoryPath)) {
-        return QGClibarchive::ReadResult::Completed;
+        return Error::None;
     }
     qCWarning(QGClibarchiveLog) << "Failed to create output directory:" << directoryPath;
-    return isWriteDenied(directoryPath) ? QGClibarchive::ReadResult::WriteDenied
-                                        : QGClibarchive::ReadResult::WriteFailed;
+    return writeFailure(directoryPath);
+}
+
+/// Whether the entries of an archive fit in the free space of the directory they are extracted to
+/// An archive whose statistics could not be read has none, and is taken to fit: the extraction tells what is
+/// wrong with it.
+/// @param copies How many times the entries are on disk at once
+bool hasSpaceFor(const ArchiveStats& stats, const QString& directoryPath, int copies = 1)
+{
+    return QGCFileHelper::hasSufficientDiskSpace(directoryPath, stats.totalUncompressedSize * copies);
+}
+
+/// As above, for an archive file that is about to be extracted: its statistics are read first
+bool hasSpaceFor(ArchiveReader& reader, const QString& archivePath, const QString& directoryPath)
+{
+    ArchiveStats stats;
+    (void) getArchiveStats(reader, archivePath, stats);
+    return hasSpaceFor(stats, directoryPath);
+}
+
+/// A device is read only once, so what the archive in it holds is not known before it is extracted
+bool hasSpaceFor(ArchiveReader&, QIODevice*, const QString&)
+{
+    return true;
 }
 
 /// Remove only files/directories created during extraction (safe cleanup)
@@ -687,14 +601,7 @@ QString diskEntryPath(struct archive_entry* entry, const QString& canonicalOutpu
         return {};
     }
 
-    // Security: libarchive resolves a hard link's target against the working directory, not the
-    // output directory, and writes the entry's data through the link
-    if (archive_entry_hardlink(entry) != nullptr) {
-        qCWarning(QGClibarchiveLog) << "Skipping hard link:" << currentFile << "->" << archive_entry_hardlink(entry);
-        return {};
-    }
-
-    if (skipSpecialEntry(entry)) {
+    if (skipHardLinkEntry(entry) || skipSpecialEntry(entry)) {
         return {};
     }
 
@@ -733,22 +640,33 @@ QString diskEntryPath(struct archive_entry* entry, const QString& canonicalOutpu
     return outputPath;
 }
 
+/// Which entries extractArchiveEntries() writes, for the functions that do not extract the whole archive
+struct EntrySelection
+{
+    /// Whether the entry is one to write (not set: every entry is)
+    std::function<bool(struct archive_entry* entry)> wanted = {};
+    /// Whether the entries were asked for by name. One that is not written, which is otherwise skipped, then
+    /// fails the extraction, and so does a directory: there is a file to hand over for each name.
+    bool byName = false;
+    /// Told the name of each entry once it is written. Returns false to end the extraction as complete.
+    std::function<bool(const QString& entryName)> written = {};
+};
+
 /// Extract entries from an open archive to a directory
+/// Every function that extracts into a directory writes its entries here.
 /// @param reader Archive reader (already opened with format support configured)
 /// @param outputDirectoryPath Directory to extract to (must exist)
+/// @param selection Which entries to write
 /// @param progress Optional progress callback
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @return Completed on success
-QGClibarchive::ReadResult extractArchiveEntries(const QGClibarchive::ArchiveReader& reader,
-                                                const QString& outputDirectoryPath,
-                                                const QGClibarchive::ProgressCallback& progress, qint64 maxBytes)
+/// @return Error::None on success
+Error extractArchiveEntries(ArchiveReader& reader, const QString& outputDirectoryPath, const EntrySelection& selection,
+                            const ProgressCallback& progress, qint64 maxBytes)
 {
-    using QGClibarchive::ReadResult;
-
     DiskWriterPtr writer(archive_write_disk_new());
     if (!writer) {
         qCWarning(QGClibarchiveLog) << "Failed to create disk writer";
-        return ReadResult::WriteFailed;
+        return Error::IoError;
     }
     struct archive* const a = reader.handle();
     struct archive* const ext = writer.get();
@@ -762,9 +680,11 @@ QGClibarchive::ReadResult extractArchiveEntries(const QGClibarchive::ArchiveRead
         ext, ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_SECURE_NODOTDOT | ARCHIVE_EXTRACT_SECURE_SYMLINKS);
     archive_write_disk_set_standard_lookup(ext);
 
-    ReadResult result = ReadResult::Completed;
-    DataTransfer transfer{.maxBytes = maxBytes, .progress = progress, .totalSize = reader.dataSize()};
-    CopyResult copied = CopyResult::Completed;
+    Error result = Error::None;
+    DataTransfer transfer{.maxBytes = maxBytes,
+                          .progress = progress,
+                          .totalSize = reader.dataSize(),
+                          .damageReport = "Failed to read data:"};
 
     // Track created entries for safe cleanup on failure
     QStringList createdFiles;
@@ -774,9 +694,20 @@ QGClibarchive::ReadResult extractArchiveEntries(const QGClibarchive::ArchiveRead
     const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     existingDirs.insert(canonicalOutputDir);
 
-    const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(a, [&](struct archive_entry* entry) {
-        const QString outputPath = diskEntryPath(entry, canonicalOutputDir);
+    const EntryWalk walk = forEachEntry(reader, [&](struct archive_entry* entry) {
+        if (selection.wanted && !selection.wanted(entry)) {
+            return true;
+        }
+        // The entry is given the path it is written to below
+        const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
+
+        const QString outputPath =
+            (selection.byName && skipDirectoryEntry(entry)) ? QString() : diskEntryPath(entry, canonicalOutputDir);
         if (outputPath.isEmpty()) {
+            if (selection.byName) {
+                result = Error::UnsupportedFormat;
+                return false;
+            }
             return true;
         }
 
@@ -798,7 +729,7 @@ QGClibarchive::ReadResult extractArchiveEntries(const QGClibarchive::ArchiveRead
         if (archive_write_header(ext, entry) != ARCHIVE_OK) {
             qCWarning(QGClibarchiveLog) << "Failed to write header for" << outputPath << ":"
                                         << archive_error_string(ext);
-            result = isWriteDenied(outputPath) ? ReadResult::WriteDenied : ReadResult::WriteFailed;
+            result = writeFailure(outputPath);
             return false;
         }
 
@@ -814,65 +745,65 @@ QGClibarchive::ReadResult extractArchiveEntries(const QGClibarchive::ArchiveRead
 
         // An entry of a streamed ZIP has data but no size in its header
         if (!archive_entry_size_is_set(entry) || archive_entry_size(entry) > 0) {
-            copied = copyEntryData(a, transfer, [ext](const char* data, qint64 size, qint64 offset) {
+            result = copyEntryData(a, transfer, [ext](const char* data, qint64 size, qint64 offset) {
                 if (archive_write_data_block(ext, data, static_cast<size_t>(size), offset) != ARCHIVE_OK) {
                     qCWarning(QGClibarchiveLog) << "Failed to write data:" << archive_error_string(ext);
-                    return false;
+                    return Error::IoError;
                 }
-                return true;
+                return Error::None;
             });
 
-            if (copied == CopyResult::ReadFailed) {
-                qCWarning(QGClibarchiveLog) << "Failed to read data:" << archive_error_string(a);
-            }
-            if (copied != CopyResult::Completed) {
-                result = toReadResult(copied);
+            if (result != Error::None) {
                 return false;
             }
         }
 
         if (archive_write_finish_entry(ext) != ARCHIVE_OK) {
             qCWarning(QGClibarchiveLog) << "Failed to finish entry:" << archive_error_string(ext);
-            result = ReadResult::WriteFailed;
+            result = Error::IoError;
             return false;
         }
 
-        return true;
+        return !selection.written || selection.written(entryName);
     });
 
-    if (walk == QGClibarchive::EntryWalk::Failed) {
-        result = ReadResult::Failed;
+    if (walk == EntryWalk::Failed) {
+        result = Error::InvalidArchive;
     }
 
     // Closes the file being written, which has to happen before it can be removed
     writer.reset();
 
     // Clean up only created entries on cancellation or size limit exceeded
-    if (copied == CopyResult::Cancelled || copied == CopyResult::SizeLimitExceeded) {
+    if (result == Error::Cancelled || result == Error::SizeLimitExceeded) {
         cleanupCreatedEntries(createdFiles, createdDirs);
     }
 
     return result;
 }
 
-/// Extract all of an archive file to a directory. The archive is closed again on return, so the
+/// Extract entries of an archive to a directory. The archive is closed again on return, so the
 /// caller can move the directory even if the archive is inside it.
-QGClibarchive::ReadResult extractArchiveFile(const QString& archivePath, const QString& outputDirectoryPath,
-                                             const QGClibarchive::ProgressCallback& progress, qint64 maxBytes)
+template <typename Source>
+Error extractArchiveFrom(ArchiveReader& reader, const Source& source, const QString& outputDirectoryPath,
+                         const EntrySelection& selection = {}, const ProgressCallback& progress = {},
+                         qint64 maxBytes = 0)
 {
-    QGClibarchive::ArchiveReader reader;
-    if (!reader.open(archivePath, QGClibarchive::ReaderMode::AllFormats)) {
-        return QGClibarchive::ReadResult::Failed;
+    if (!reader.open(source, ReaderMode::AllFormats)) {
+        return Error::InvalidArchive;
     }
-    return extractArchiveEntries(reader, outputDirectoryPath, progress, maxBytes);
+    const Error result = extractArchiveEntries(reader, outputDirectoryPath, selection, progress, maxBytes);
+    reader.close();
+    return result;
 }
 
 /// Advance to the entry called @a fileName, whose data can then be read
-/// @param entry If not null, receives the entry when Found is returned
-/// @return Found, End if the archive has no such entry, or Error if the archive is damaged
-QGClibarchive::NextEntry findEntry(struct archive* a, const QString& fileName, struct archive_entry** entry = nullptr)
+/// @param entry If not null, receives the entry when it is found
+/// @return Error::None if the reader is on the entry, FileNotInArchive if the archive has no such entry, or
+///         InvalidArchive if the archive is damaged before it
+Error findEntry(ArchiveReader& reader, const QString& fileName, struct archive_entry** entry = nullptr)
 {
-    const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(a, [&](struct archive_entry* candidate) {
+    const EntryWalk walk = forEachEntry(reader, [&](struct archive_entry* candidate) {
         if (QString::fromUtf8(archive_entry_pathname(candidate)) != fileName) {
             return true;
         }
@@ -883,57 +814,29 @@ QGClibarchive::NextEntry findEntry(struct archive* a, const QString& fileName, s
     });
 
     switch (walk) {
-        case QGClibarchive::EntryWalk::Stopped:
-            return QGClibarchive::NextEntry::Found;
-        case QGClibarchive::EntryWalk::Completed:
-            return QGClibarchive::NextEntry::End;
-        case QGClibarchive::EntryWalk::Failed:
+        case EntryWalk::Stopped:
+            return Error::None;
+        case EntryWalk::Completed:
+            return Error::FileNotInArchive;
+        case EntryWalk::Failed:
             break;
     }
-    return QGClibarchive::NextEntry::Error;
+    return Error::InvalidArchive;
 }
 
-/// As findEntry(), for a caller that reads the entry: a warning is logged if the archive does not have it
-/// @return Found if the reader is on the entry
-QGClibarchive::NextEntry findEntryToRead(struct archive* a, const QString& fileName,
-                                         struct archive_entry** entry = nullptr)
+/// As findEntry(), for a caller that hands the entry over alone, as a file or as data
+/// A warning is logged if the archive does not have the entry, or has it and it is one that is not extracted,
+/// which is UnsupportedFormat: none of those has data, so it would look like a file that is empty.
+Error findEntryToRead(ArchiveReader& reader, const QString& fileName, struct archive_entry*& entry)
 {
-    const QGClibarchive::NextEntry found = findEntry(a, fileName, entry);
-    if (found == QGClibarchive::NextEntry::End) {
+    const Error found = findEntry(reader, fileName, &entry);
+    if (found == Error::FileNotInArchive) {
         qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
     }
+    if ((found == Error::None) && skipNamedEntry(entry)) {
+        return Error::UnsupportedFormat;
+    }
     return found;
-}
-
-/// Read the entry called @a fileName, which the reader has not passed yet, into a QByteArray
-/// @param maxBytes Maximum size of the entry (0 = unlimited)
-/// @param result Receives how the read ended
-/// @return Data of the entry, or empty QByteArray unless @a result is Completed
-QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qint64 maxBytes,
-                                  QGClibarchive::ReadResult& result)
-{
-    struct archive_entry* entry = nullptr;
-    switch (findEntryToRead(a, fileName, &entry)) {
-        case QGClibarchive::NextEntry::Found:
-            break;
-        case QGClibarchive::NextEntry::End:
-            result = QGClibarchive::ReadResult::EntryNotFound;
-            return {};
-        case QGClibarchive::NextEntry::Error:
-            result = QGClibarchive::ReadResult::Failed;
-            return {};
-    }
-
-    // None of them has data to return, which would make it look like a file that is empty
-    if (skipNamedEntry(entry)) {
-        result = QGClibarchive::ReadResult::EntrySkipped;
-        return {};
-    }
-
-    bool completed = false;
-    QByteArray data = readEntryToMemory(a, entry, maxBytes, completed);
-    result = completed ? QGClibarchive::ReadResult::Completed : QGClibarchive::ReadResult::Failed;
-    return data;
 }
 
 /// What the header of a single compressed stream says of it
@@ -948,12 +851,13 @@ enum class StreamHeader
 /// Read the header of the one entry that a single compressed stream is read as
 /// @param plainAllowed Whether an input that is not compressed is read as it is (Data) instead of being refused
 ///        (NotCompressed)
-StreamHeader readStreamHeader(struct archive* a, bool plainAllowed = false)
+StreamHeader readStreamHeader(ArchiveReader& reader, bool plainAllowed = false)
 {
+    struct archive* const a = reader.handle();
     struct archive_entry* entry = nullptr;
     const int header = archive_read_next_header(a, &entry);
     if (header == ARCHIVE_OK) {
-        updateFormatState(a);
+        reader.captureFormat();
         // The raw format takes any input that has bytes, also one that no decompression filter is in the chain
         // for, which it hands through as it is
         if (archive_filter_count(a) <= 1) {
@@ -965,60 +869,143 @@ StreamHeader readStreamHeader(struct archive* a, bool plainAllowed = false)
         }
         return StreamHeader::Data;
     }
-    if (QGClibarchive::isEmptyStream(a, header)) {
-        updateFormatState(a);
+    if (isEmptyStream(a, header)) {
+        reader.captureFormat();
         return StreamHeader::Empty;
     }
 
-    qCWarning(QGClibarchiveLog).noquote() << "Failed to read header:" << QGClibarchive::streamHeaderError(a, header);
+    qCWarning(QGClibarchiveLog).noquote() << "Failed to read header:" << streamHeaderError(a, header);
     return StreamHeader::Failed;
 }
 
 /// How an operation ends whose reader for a single compressed stream could not be opened
-QGClibarchive::ReadResult streamOpenFailure(const QGClibarchive::ArchiveReader& reader)
+Error streamOpenFailure(const ArchiveReader& reader)
 {
-    return reader.unsupportedStream() ? QGClibarchive::ReadResult::Unsupported : QGClibarchive::ReadResult::Failed;
+    return reader.unsupportedStream() ? Error::UnsupportedFormat : Error::InvalidArchive;
 }
 
 /// Write the output of a compressed stream that decompresses to nothing: a file without content
-QGClibarchive::ReadResult writeEmptyFile(const QString& outputPath)
+Error writeEmptyFile(const QString& outputPath)
 {
     QSaveFile outFile(outputPath);
     if (!outFile.open(QIODevice::WriteOnly) || !outFile.commit()) {
         qCWarning(QGClibarchiveLog) << "Failed to write output file:" << outputPath << outFile.errorString();
-        return isWriteDenied(outputPath) ? QGClibarchive::ReadResult::WriteDenied
-                                         : QGClibarchive::ReadResult::WriteFailed;
+        return writeFailure(outputPath);
     }
-    return QGClibarchive::ReadResult::Completed;
+    return Error::None;
 }
 
-/// Decompress the single stream of a RawFormat reader into a QByteArray
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result Receives how the decompression ended: a stream that was read to its end may hold no data
-/// @return Decompressed data, or empty QByteArray unless @a result is Completed
-QByteArray readStreamToMemory(struct archive* a, qint64 maxBytes, QGClibarchive::ReadResult& result)
+bool bzip2DecoderAvailable()
 {
-    result = QGClibarchive::ReadResult::Failed;
+#ifdef QGC_ENABLE_BZIP2
+    return archive_bzlib_version() != nullptr;
+#else
+    return false;
+#endif
+}
 
-    switch (readStreamHeader(a)) {
-        case StreamHeader::Data:
+bool lz4DecoderAvailable()
+{
+#ifdef QGC_ENABLE_LZ4
+    return archive_liblz4_version() != nullptr;
+#else
+    return false;
+#endif
+}
+
+/// Register the filters and formats QGC reads on a new libarchive reader, which is not yet opened
+void configureReader(struct archive* a, ReaderMode mode)
+{
+    // archive_read_support_filter_all() and _format_all() are deliberately not used: the input is
+    // untrusted, and a filter without its library compiled in is decoded by an external program.
+    if (archive_zlib_version() != nullptr) {
+        archive_read_support_filter_gzip(a);
+    }
+    if (archive_liblzma_version() != nullptr) {
+        archive_read_support_filter_xz(a);
+        archive_read_support_filter_lzma(a);
+    }
+    if (archive_libzstd_version() != nullptr) {
+        archive_read_support_filter_zstd(a);
+    }
+    if (bzip2DecoderAvailable()) {
+        archive_read_support_filter_bzip2(a);
+    }
+    if (lz4DecoderAvailable()) {
+        archive_read_support_filter_lz4(a);
+    }
+
+    switch (mode) {
+        case ReaderMode::AllFormats:
+            archive_read_support_format_zip(a);
+            archive_read_support_format_tar(a);
+            archive_read_support_format_7zip(a);
             break;
-        case StreamHeader::Empty:
-            result = QGClibarchive::ReadResult::Completed;
-            return {};
-        case StreamHeader::NotCompressed:
-            result = QGClibarchive::ReadResult::NotCompressed;
-            return {};
-        case StreamHeader::Failed:
-            return {};
+        case ReaderMode::RawFormat:
+            archive_read_support_format_raw(a);
+            // The raw format takes any input that has bytes once it is decompressed: see isEmptyStream()
+            archive_read_support_format_empty(a);
+            break;
+    }
+}
+
+/// Size of the stream signature undecodableStreamReason() looks at
+constexpr qsizetype kStreamSignatureSize = 4;
+
+/// Tell why this build cannot decode a single compressed stream
+/// With RawFormat libarchive hands data through unchanged when no registered filter
+/// recognizes it, so bzip2 and LZ4 streams have to be refused when their decoder is missing.
+/// @param signature At least the first kStreamSignatureSize bytes of the stream
+/// @return The reason for a bzip2 or LZ4 stream that cannot be decoded, or an empty string
+QString undecodableStreamReason(const QByteArray& signature)
+{
+    if (!bzip2DecoderAvailable() && signature.startsWith("BZh")) {
+        return QStringLiteral("bzip2 decompression is not supported by this build");
+    }
+    if (!lz4DecoderAvailable() && signature.startsWith(QByteArrayView("\x04\x22\x4D\x18", 4))) {
+        return QStringLiteral("LZ4 decompression is not supported by this build");
+    }
+    return {};
+}
+
+/// Open a reader on a file. A Qt resource is loaded into @a resourceData, which has to stay alive until the
+/// reader is closed; a regular file is streamed.
+/// @param a Reader that configureReader() has set up
+/// @return false, after a warning, if the file cannot be opened
+bool openArchiveForReading(struct archive* a, const QString& filePath, QByteArray& resourceData)
+{
+    const bool isResource = QGCFileHelper::isQtResource(filePath);
+
+    if (isResource) {
+        // Qt resources must be loaded into memory
+        QFile inputFile(filePath);
+        if (!inputFile.open(QIODevice::ReadOnly)) {
+            qCWarning(QGClibarchiveLog) << "Failed to open file:" << filePath << inputFile.errorString();
+            return false;
+        }
+        resourceData = inputFile.readAll();
+        inputFile.close();
+
+        if (resourceData.isEmpty()) {
+            qCWarning(QGClibarchiveLog) << "File is empty:" << filePath;
+            return false;
+        }
+
+        if (archive_read_open_memory(a, resourceData.constData(), static_cast<size_t>(resourceData.size())) !=
+            ARCHIVE_OK) {
+            qCWarning(QGClibarchiveLog) << "Failed to open data:" << qUtf8Printable(openFailureReason(a));
+            return false;
+        }
+    } else {
+        // Stream directly from file (memory efficient)
+        if (archive_read_open_filename(a, filePath.toLocal8Bit().constData(),
+                                       QGCFileHelper::optimalBufferSize(filePath)) != ARCHIVE_OK) {
+            qCWarning(QGClibarchiveLog) << "Failed to open file:" << filePath << qUtf8Printable(openFailureReason(a));
+            return false;
+        }
     }
 
-    bool completed = false;
-    QByteArray data = readArchiveToMemory(a, 0, maxBytes, &completed);
-    if (completed) {
-        result = QGClibarchive::ReadResult::Completed;
-    }
-    return data;
+    return true;
 }
 
 }  // namespace
@@ -1026,8 +1013,6 @@ QByteArray readStreamToMemory(struct archive* a, qint64 maxBytes, QGClibarchive:
 // ============================================================================
 // QGClibarchive Implementation
 // ============================================================================
-
-namespace QGClibarchive {
 
 // ----------------------------------------------------------------------------
 // ArchiveReader
@@ -1047,30 +1032,17 @@ qint64 ArchiveReader::dataSize() const
     return 0;
 }
 
-QString ArchiveReader::formatName() const
+void ArchiveReader::captureFormat()
 {
-    if (!_archive) {
-        return {};
-    }
-    const char* name = archive_format_name(_archive.get());
-    return name ? QString::fromUtf8(name) : QString();
-}
+    const char* format = archive_format_name(_archive.get());
+    _formatName = format ? QString::fromUtf8(format) : QString();
+    // Filter 0 is the one the format reads from: the decompression, or the input itself, which is called "none"
+    const char* filter = archive_filter_name(_archive.get(), 0);
+    _filterName = filter ? QString::fromUtf8(filter) : QStringLiteral("none");
 
-QString ArchiveReader::filterName() const
-{
-    if (!_archive) {
-        return {};
+    if (!_formatName.isEmpty()) {
+        qCDebug(QGClibarchiveLog) << "Detected format:" << _formatName << "filter:" << _filterName;
     }
-    // Get the outermost compression filter (index 0 is the format, 1+ are filters)
-    // archive_filter_count returns total filters including format at index 0
-    const int filterCount = archive_filter_count(_archive.get());
-    if (filterCount <= 1) {
-        return QStringLiteral("none");
-    }
-    // Index 0 is innermost (format), higher indices are outer filters
-    // We want the first compression filter (index 1)
-    const char* name = archive_filter_name(_archive.get(), 0);
-    return name ? QString::fromUtf8(name) : QStringLiteral("none");
 }
 
 void ArchiveReader::close()
@@ -1084,7 +1056,10 @@ void ArchiveReader::close()
 bool ArchiveReader::_create(ReaderMode mode, const QByteArray& signature, QString& reason)
 {
     close();
+    _mode = mode;
     _unsupportedStream = false;
+    _formatName.clear();
+    _filterName.clear();
 
     if (mode == ReaderMode::RawFormat) {
         reason = undecodableStreamReason(signature);
@@ -1131,11 +1106,6 @@ bool ArchiveReader::open(const QString& path, ReaderMode mode)
 
 bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
 {
-    if (!device || !device->isOpen() || !device->isReadable()) {
-        qCWarning(QGClibarchiveLog) << "Device is null, not open, or not readable";
-        return false;
-    }
-
     QString errorString;
     if (!open(device, mode, errorString)) {
         qCWarning(QGClibarchiveLog).noquote() << "Failed to open device:" << errorString;
@@ -1165,9 +1135,9 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorStrin
         archive_read_set_seek_callback(_archive.get(), deviceSeekCallback);
     }
 
-    const int result = archive_read_open2(_archive.get(), &_source,
-                                          nullptr,  // open callback (not needed)
-                                          deviceReadCallback, deviceSkipCallback, deviceCloseCallback);
+    // No open and no close callback: the device is open, and stays open for its owner to close
+    const int result =
+        archive_read_open2(_archive.get(), &_source, nullptr, deviceReadCallback, deviceSkipCallback, nullptr);
 
     if (result != ARCHIVE_OK) {
         errorString = openFailureReason(_archive.get());
@@ -1178,7 +1148,7 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorStrin
     return true;
 }
 
-bool ArchiveReader::openMemory(const QByteArray& data, ReaderMode mode)
+bool ArchiveReader::open(const QByteArray& data, ReaderMode mode)
 {
     QString reason;
     if (!_create(mode, data, reason)) {
@@ -1202,70 +1172,6 @@ bool ArchiveReader::openMemory(const QByteArray& data, ReaderMode mode)
 // ----------------------------------------------------------------------------
 // Helper Functions
 // ----------------------------------------------------------------------------
-
-static bool bzip2DecoderAvailable()
-{
-#ifdef QGC_ENABLE_BZIP2
-    return archive_bzlib_version() != nullptr;
-#else
-    return false;
-#endif
-}
-
-static bool lz4DecoderAvailable()
-{
-#ifdef QGC_ENABLE_LZ4
-    return archive_liblz4_version() != nullptr;
-#else
-    return false;
-#endif
-}
-
-void configureReader(struct archive* a, ReaderMode mode)
-{
-    // archive_read_support_filter_all() and _format_all() are deliberately not used: the input is
-    // untrusted, and a filter without its library compiled in is decoded by an external program.
-    if (archive_zlib_version() != nullptr) {
-        archive_read_support_filter_gzip(a);
-    }
-    if (archive_liblzma_version() != nullptr) {
-        archive_read_support_filter_xz(a);
-        archive_read_support_filter_lzma(a);
-    }
-    if (archive_libzstd_version() != nullptr) {
-        archive_read_support_filter_zstd(a);
-    }
-    if (bzip2DecoderAvailable()) {
-        archive_read_support_filter_bzip2(a);
-    }
-    if (lz4DecoderAvailable()) {
-        archive_read_support_filter_lz4(a);
-    }
-
-    switch (mode) {
-        case ReaderMode::AllFormats:
-            archive_read_support_format_zip(a);
-            archive_read_support_format_tar(a);
-            archive_read_support_format_7zip(a);
-            break;
-        case ReaderMode::RawFormat:
-            archive_read_support_format_raw(a);
-            // The raw format takes any input that has bytes once it is decompressed: see isEmptyStream()
-            archive_read_support_format_empty(a);
-            break;
-    }
-}
-
-QString undecodableStreamReason(const QByteArray& signature)
-{
-    if (!bzip2DecoderAvailable() && signature.startsWith("BZh")) {
-        return QStringLiteral("bzip2 decompression is not supported by this build");
-    }
-    if (!lz4DecoderAvailable() && signature.startsWith(QByteArrayView("\x04\x22\x4D\x18", 4))) {
-        return QStringLiteral("LZ4 decompression is not supported by this build");
-    }
-    return {};
-}
 
 bool isEmptyStream(struct archive* a, int headerResult)
 {
@@ -1296,107 +1202,56 @@ const char* skippedEntryKind(struct archive_entry* entry)
     return specialFileKind(entry);
 }
 
-bool openArchiveForReading(struct archive* a, const QString& filePath, QByteArray& resourceData)
-{
-    const bool isResource = QGCFileHelper::isQtResource(filePath);
-
-    if (isResource) {
-        // Qt resources must be loaded into memory
-        QFile inputFile(filePath);
-        if (!inputFile.open(QIODevice::ReadOnly)) {
-            qCWarning(QGClibarchiveLog) << "Failed to open file:" << filePath << inputFile.errorString();
-            return false;
-        }
-        resourceData = inputFile.readAll();
-        inputFile.close();
-
-        if (resourceData.isEmpty()) {
-            qCWarning(QGClibarchiveLog) << "File is empty:" << filePath;
-            return false;
-        }
-
-        if (archive_read_open_memory(a, resourceData.constData(), static_cast<size_t>(resourceData.size())) !=
-            ARCHIVE_OK) {
-            qCWarning(QGClibarchiveLog) << "Failed to open data:" << qUtf8Printable(openFailureReason(a));
-            return false;
-        }
-    } else {
-        // Stream directly from file (memory efficient)
-        if (archive_read_open_filename(a, filePath.toLocal8Bit().constData(),
-                                       QGCFileHelper::optimalBufferSize(filePath)) != ARCHIVE_OK) {
-            qCWarning(QGClibarchiveLog) << "Failed to open file:" << filePath << qUtf8Printable(openFailureReason(a));
-            return false;
-        }
-    }
-
-    return true;
-}
-
 // ----------------------------------------------------------------------------
 // Archive Extraction
 // ----------------------------------------------------------------------------
 
-bool extractAnyArchive(const QString& archivePath, const QString& outputDirectoryPath, ProgressCallback progress,
-                       qint64 maxBytes, ReadResult* result)
+template <typename Source>
+Error extractAnyArchive(ArchiveReader& reader, const Source& source, const QString& outputDirectoryPath,
+                        const EntryFilter& filter, const ProgressCallback& progress, qint64 maxBytes)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-
-    outcome = createOutputDirectory(outputDirectoryPath);
-    if (outcome != ReadResult::Completed) {
-        return false;
+    if (const Error created = createOutputDirectory(outputDirectoryPath); created != Error::None) {
+        return created;
     }
 
-    // Pre-check: verify sufficient disk space before extraction
-    const ArchiveStats stats = getArchiveStats(archivePath);
-    if (stats.totalUncompressedSize > 0) {
-        if (!QGCFileHelper::hasSufficientDiskSpace(outputDirectoryPath, stats.totalUncompressedSize)) {
-            outcome = ReadResult::WriteFailed;
-            return false;
-        }
+    // The size of the whole archive is the upper bound of what a filter lets through
+    if (!hasSpaceFor(reader, source, outputDirectoryPath)) {
+        return Error::IoError;
     }
 
-    outcome = extractArchiveFile(archivePath, outputDirectoryPath, progress, maxBytes);
-    return outcome == ReadResult::Completed;
+    EntrySelection selection;
+    if (filter) {
+        selection.wanted = [&filter](struct archive_entry* entry) { return filter(toArchiveEntry(entry)); };
+    }
+    return extractArchiveFrom(reader, source, outputDirectoryPath, selection, progress, maxBytes);
 }
 
-bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, ProgressCallback progress,
-                          qint64 maxBytes, ReadResult* result)
+Error extractArchiveAtomic(ArchiveReader& reader, const QString& archivePath, const QString& outputDirectoryPath,
+                           const ProgressCallback& progress, qint64 maxBytes)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    // What fails here is the output, except where the archive is read
-    outcome = ReadResult::WriteFailed;
-
     const QFileInfo outputInfo(outputDirectoryPath);
     if (outputInfo.fileName().isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Invalid output directory path:" << outputDirectoryPath;
-        return false;
+        return Error::IoError;
     }
 
     const QString parentDirectoryPath = outputInfo.absoluteDir().absolutePath();
     if (!QGCFileHelper::ensureDirectoryExists(parentDirectoryPath)) {
         qCWarning(QGClibarchiveLog) << "Failed to create output parent directory:" << parentDirectoryPath;
-        if (isWriteDenied(parentDirectoryPath)) {
-            outcome = ReadResult::WriteDenied;
-        }
-        return false;
+        return writeFailure(parentDirectoryPath);
     }
 
     // Pre-check: verify archive can be opened and get stats for disk space check
-    const ArchiveStats stats = getArchiveStats(archivePath);
-    if (stats.totalEntries == 0) {
+    ArchiveStats stats;
+    if ((getArchiveStats(reader, archivePath, stats) != Error::None) || (stats.totalEntries == 0)) {
         qCWarning(QGClibarchiveLog) << "Archive is empty or invalid:" << archivePath;
-        outcome = ReadResult::Failed;
-        return false;
+        return Error::InvalidArchive;
     }
 
     // Need ~2x space: one for temp extraction, one for final location
     // (though move on same filesystem doesn't need extra space)
-    if (stats.totalUncompressedSize > 0) {
-        if (!QGCFileHelper::hasSufficientDiskSpace(outputDirectoryPath, stats.totalUncompressedSize * 2)) {
-            return false;
-        }
+    if (!hasSpaceFor(stats, outputDirectoryPath, 2)) {
+        return Error::IoError;
     }
 
     const QString outputDirectoryName = outputInfo.fileName();
@@ -1406,10 +1261,7 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
                                                      QStringLiteral("%1.qgc_stage_XXXXXX").arg(outputDirectoryName)));
     if (!stagingDir.isValid()) {
         qCWarning(QGClibarchiveLog) << "Failed to create staging directory:" << stagingDir.errorString();
-        if (isWriteDenied(parentDirectoryPath)) {
-            outcome = ReadResult::WriteDenied;
-        }
-        return false;
+        return writeFailure(parentDirectoryPath);
     }
     stagingDir.setAutoRemove(false);
 
@@ -1417,16 +1269,17 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     const QFileInfo stagingInfo(stagingPath);
     const QString stagingName = stagingInfo.fileName();
 
+    // What is staged goes again on every return but the one that has made it the output directory
+    auto removeStaging = qScopeGuard([&stagingPath]() { (void) QDir(stagingPath).removeRecursively(); });
+
     qCDebug(QGClibarchiveLog) << "Atomic extraction: staging to" << stagingPath;
 
     // Extract to temporary directory
-    outcome = extractArchiveFile(archivePath, stagingPath, progress, maxBytes);
-    if (outcome != ReadResult::Completed) {
+    if (const Error extracted = extractArchiveFrom(reader, archivePath, stagingPath, {}, progress, maxBytes);
+        extracted != Error::None) {
         qCDebug(QGClibarchiveLog) << "Staged extraction failed, cleaning up";
-        (void) QDir(stagingPath).removeRecursively();
-        return false;
+        return extracted;
     }
-    outcome = ReadResult::WriteFailed;
 
     QDir parentDir(parentDirectoryPath);
     QString backupPath;
@@ -1436,8 +1289,7 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     if (existingOutputInfo.exists()) {
         if (!existingOutputInfo.isDir()) {
             qCWarning(QGClibarchiveLog) << "Output path exists and is not a directory:" << outputDirectoryPath;
-            (void) QDir(stagingPath).removeRecursively();
-            return false;
+            return Error::IoError;
         }
 
         QTemporaryDir backupDir(QGCFileHelper::joinPath(parentDirectoryPath,
@@ -1445,8 +1297,7 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
         if (!backupDir.isValid()) {
             qCWarning(QGClibarchiveLog) << "Failed to create backup directory placeholder:"
                                         << backupDir.errorString();
-            (void) QDir(stagingPath).removeRecursively();
-            return false;
+            return Error::IoError;
         }
         backupDir.setAutoRemove(false);
         backupPath = backupDir.path();
@@ -1455,14 +1306,12 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
 
         if (!parentDir.rename(outputDirectoryName, backupName)) {
             qCWarning(QGClibarchiveLog) << "Failed to move existing output to backup:" << outputDirectoryPath;
-            (void) QDir(stagingPath).removeRecursively();
-            return false;
+            return Error::IoError;
         }
     }
 
     if (!parentDir.rename(stagingName, outputDirectoryName)) {
         qCWarning(QGClibarchiveLog) << "Failed to commit staged extraction for" << outputDirectoryPath;
-        (void) QDir(stagingPath).removeRecursively();
 
         if (!backupName.isEmpty()) {
             if (!parentDir.rename(backupName, outputDirectoryName)) {
@@ -1470,236 +1319,134 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
             }
         }
 
-        return false;
+        return Error::IoError;
     }
+    removeStaging.dismiss();
 
     if (!backupPath.isEmpty()) {
         (void) QDir(backupPath).removeRecursively();
     }
 
     qCDebug(QGClibarchiveLog) << "Atomic extraction committed:" << outputDirectoryPath;
-    outcome = ReadResult::Completed;
-    return true;
+    return Error::None;
 }
 
-bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
-                       ReadResult* result)
+Error extractSingleFile(ArchiveReader& reader, const QString& archivePath, const QString& fileName,
+                        const QString& outputPath)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
+        return Error::InvalidArchive;
     }
 
     struct archive_entry* entry = nullptr;
-    switch (findEntryToRead(reader.handle(), fileName, &entry)) {
-        case NextEntry::Found:
-            break;
-        case NextEntry::End:
-            outcome = ReadResult::EntryNotFound;
-            return false;
-        case NextEntry::Error:
-            return false;
-    }
-    if (skipNamedEntry(entry)) {
-        outcome = ReadResult::EntrySkipped;
-        return false;
+    if (const Error found = findEntryToRead(reader, fileName, entry); found != Error::None) {
+        return found;
     }
 
     QGCFileHelper::ensureParentExists(outputPath);
     DataTransfer unlimited;
-    outcome = toReadResult(writeArchiveEntryToFile(reader.handle(), outputPath, unlimited));
-    return outcome == ReadResult::Completed;
+    return copyEntryToFile(reader.handle(), outputPath, unlimited);
 }
 
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes, ReadResult* result)
+template <typename Source>
+Error extractFileToMemory(ArchiveReader& reader, const Source& source, const QString& fileName, qint64 maxBytes,
+                          QByteArray& data)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (fileName.isEmpty()) {
-        qCWarning(QGClibarchiveLog) << "Empty file name";
-        return QByteArray();
+    data.clear();
+    if (!reader.open(source, ReaderMode::AllFormats)) {
+        return Error::InvalidArchive;
     }
 
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return QByteArray();
+    struct archive_entry* entry = nullptr;
+    if (const Error found = findEntryToRead(reader, fileName, entry); found != Error::None) {
+        return found;
     }
 
-    QByteArray data = readNamedEntryToMemory(reader.handle(), fileName, maxBytes, outcome);
-    if (outcome == ReadResult::Completed) {
+    const Error read = readEntryToMemory(reader.handle(), entry, maxBytes, data);
+    if (read == Error::None) {
         qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "to memory:" << data.size() << "bytes";
     }
-    return data;
+    return read;
 }
 
-bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
-                          ReadResult* result)
+Error extractMultipleFiles(ArchiveReader& reader, const QString& archivePath, const QStringList& fileNames,
+                           const QString& outputDirectoryPath)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (fileNames.isEmpty()) {
-        outcome = ReadResult::Completed;
-        return true;
+    if (const Error created = createOutputDirectory(outputDirectoryPath); created != Error::None) {
+        return created;
     }
 
-    outcome = createOutputDirectory(outputDirectoryPath);
-    if (outcome != ReadResult::Completed) {
-        return false;
-    }
-    outcome = ReadResult::Failed;
-
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
-    }
-
-    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
-    QSet<QString> targetFiles(fileNames.begin(), fileNames.end());
-    QSet<QString> extractedFiles;
-    DataTransfer unlimited;
-    bool failed = false;
-
-    // The walk stops at the last of the files asked for, without reading the rest of the archive
-    const EntryWalk walk = forEachEntry(reader.handle(), [&](struct archive_entry* entry) {
-        const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
-
-        if (!targetFiles.contains(entryName)) {
-            return true;
-        }
-
-        // Asked for by name, so an entry that is left out fails the extraction
-        if (skipNamedEntry(entry)) {
-            outcome = ReadResult::EntrySkipped;
-            failed = true;
-            return false;
-        }
-
-        const QString outputPath = containedEntryPath(canonicalOutputDir, entryName);
-        if (outputPath.isEmpty()) {
-            qCWarning(QGClibarchiveLog) << "Path traversal attempt:" << entryName;
-            outcome = ReadResult::EntrySkipped;
-            failed = true;
-            return false;
-        }
-        QGCFileHelper::ensureParentExists(outputPath);
-
-        const CopyResult copied = writeArchiveEntryToFile(reader.handle(), outputPath, unlimited);
-        if (copied != CopyResult::Completed) {
-            outcome = toReadResult(copied);
-            failed = true;
-            return false;
-        }
-
-        extractedFiles.insert(entryName);
-
-        return extractedFiles.size() != targetFiles.size();
-    });
-
-    if (failed || walk == EntryWalk::Failed) {
-        return false;
+    const QSet<QString> wanted(fileNames.begin(), fileNames.end());
+    QSet<QString> written;
+    const EntrySelection selection{
+        .wanted =
+            [&wanted](struct archive_entry* entry) {
+                return wanted.contains(QString::fromUtf8(archive_entry_pathname(entry)));
+            },
+        .byName = true,
+        // The walk stops at the last of the files asked for, without reading the rest of the archive
+        .written =
+            [&wanted, &written](const QString& entryName) {
+                written.insert(entryName);
+                return written.size() != wanted.size();
+            },
+    };
+    if (const Error extracted = extractArchiveFrom(reader, archivePath, outputDirectoryPath, selection);
+        extracted != Error::None) {
+        return extracted;
     }
 
-    if (extractedFiles.size() != targetFiles.size()) {
+    if (written.size() != wanted.size()) {
         for (const QString& name : fileNames) {
-            if (!extractedFiles.contains(name)) {
+            if (!written.contains(name)) {
                 qCWarning(QGClibarchiveLog) << "File not found in archive:" << name;
             }
         }
-        outcome = ReadResult::EntryNotFound;
-        return false;
+        return Error::FileNotInArchive;
     }
 
-    outcome = ReadResult::Completed;
-    return true;
+    return Error::None;
 }
 
-bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
-                      QStringList* extractedFiles, ReadResult* result)
+Error extractByPattern(ArchiveReader& reader, const QString& archivePath, const QStringList& patterns,
+                       const QString& outputDirectoryPath, QStringList* extractedFiles)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (patterns.isEmpty()) {
-        outcome = ReadResult::EntryNotFound;
-        return false;
+    if (const Error created = createOutputDirectory(outputDirectoryPath); created != Error::None) {
+        return created;
     }
-
-    outcome = createOutputDirectory(outputDirectoryPath);
-    if (outcome != ReadResult::Completed) {
-        return false;
-    }
-    outcome = ReadResult::Failed;
 
     const EntryMatchPtr match(archive_match_new());
     if (!match) {
         qCWarning(QGClibarchiveLog) << "Failed to create archive_match";
-        return false;
+        return Error::InvalidArchive;
     }
 
     for (const QString& pattern : patterns) {
         if (archive_match_include_pattern(match.get(), pattern.toUtf8().constData()) != ARCHIVE_OK) {
             qCWarning(QGClibarchiveLog) << "Invalid pattern:" << pattern;
-            outcome = ReadResult::EntryNotFound;
-            return false;
+            return Error::FileNotInArchive;
         }
     }
 
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
-    }
-
-    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
-    DataTransfer unlimited;
     int matchCount = 0;
-
-    const EntryWalk walk = forEachEntry(reader.handle(), [&](struct archive_entry* entry) {
-        if (archive_match_excluded(match.get(), entry)) {
-            return true;
-        }
-
-        if (archive_entry_filetype(entry) == AE_IFDIR) {
-            return true;
-        }
-
-        if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
-            return true;
-        }
-
-        const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
-        const QString outputPath = containedEntryPath(canonicalOutputDir, entryName);
-        if (outputPath.isEmpty()) {
-            qCWarning(QGClibarchiveLog) << "Skipping path traversal attempt:" << entryName;
-            return true;
-        }
-
-        QGCFileHelper::ensureParentExists(outputPath);
-
-        const CopyResult copied = writeArchiveEntryToFile(reader.handle(), outputPath, unlimited);
-        if (copied != CopyResult::Completed) {
-            outcome = toReadResult(copied);
-            return false;
-        }
-
-        matchCount++;
-        if (extractedFiles) {
-            extractedFiles->append(entryName);
-        }
-        return true;
-    });
-
-    // The walk is only stopped by an entry that could not be written
-    if (walk != EntryWalk::Completed) {
-        return false;
+    const EntrySelection selection{
+        // A directory that matches is passed over: the files in a directory are what makes it
+        .wanted =
+            [&match](struct archive_entry* entry) {
+                return !archive_match_excluded(match.get(), entry) && (archive_entry_filetype(entry) != AE_IFDIR);
+            },
+        .written =
+            [&matchCount, extractedFiles](const QString& entryName) {
+                matchCount++;
+                if (extractedFiles) {
+                    extractedFiles->append(entryName);
+                }
+                return true;
+            },
+    };
+    if (const Error extracted = extractArchiveFrom(reader, archivePath, outputDirectoryPath, selection);
+        extracted != Error::None) {
+        return extracted;
     }
 
     if (archive_match_path_unmatched_inclusions(match.get()) > 0) {
@@ -1710,24 +1457,22 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     }
 
     qCDebug(QGClibarchiveLog) << "Extracted" << matchCount << "files matching patterns from" << archivePath;
-    outcome = (matchCount > 0) ? ReadResult::Completed : ReadResult::EntryNotFound;
-    return matchCount > 0;
+    return (matchCount > 0) ? Error::None : Error::FileNotInArchive;
 }
 
-bool validateArchive(const QString& archivePath)
+Error validateArchive(ArchiveReader& reader, const QString& archivePath)
 {
-    ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
+        return Error::InvalidArchive;
     }
 
-    // Read through all entries and their data to validate
-    DataTransfer unlimited;
-    const EntryWalk walk = forEachEntry(reader.handle(), [&reader, &unlimited](struct archive_entry* entry) {
+    // Read through all entries and their data to validate. The failure is logged here, with the name of the entry
+    DataTransfer unlimited{.damageReport = nullptr};
+    const EntryWalk walk = forEachEntry(reader, [&reader, &unlimited](struct archive_entry* entry) {
         // Read and discard data to verify it can be decompressed
-        const CopyResult copied =
-            copyEntryData(reader.handle(), unlimited, [](const char*, qint64, qint64) { return true; });
-        if (copied != CopyResult::Completed) {
+        const Error copied =
+            copyEntryData(reader.handle(), unlimited, [](const char*, qint64, qint64) { return Error::None; });
+        if (copied != Error::None) {
             qCWarning(QGClibarchiveLog) << "Validation failed for entry:" << archive_entry_pathname(entry)
                                         << archive_error_string(reader.handle());
             return false;
@@ -1735,362 +1480,130 @@ bool validateArchive(const QString& archivePath)
         return true;
     });
 
-    return walk == EntryWalk::Completed;
+    return (walk == EntryWalk::Completed) ? Error::None : Error::InvalidArchive;
 }
 
-NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName)
+Error findEntryInArchive(ArchiveReader& reader, const QString& archivePath, const QString& fileName)
 {
-    ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return NextEntry::Error;
+        return Error::InvalidArchive;
     }
 
-    return findEntry(reader.handle(), fileName);
+    return findEntry(reader, fileName);
 }
 
-QStringList listArchiveEntries(const QString& archivePath, bool* ok)
+Error listArchiveEntriesDetailed(ArchiveReader& reader, const QString& archivePath, QList<ArchiveEntry>& entries)
 {
-    if (ok != nullptr) {
-        *ok = false;
-    }
-
-    ArchiveReader reader;
+    entries.clear();
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return {};
+        return Error::InvalidArchive;
     }
 
-    QStringList entries;
-    const EntryWalk walk = forEachEntry(reader.handle(), [&entries](struct archive_entry* entry) {
-        entries.append(QString::fromUtf8(archive_entry_pathname(entry)));
-        return true;
-    });
-    if (walk != EntryWalk::Completed) {
-        return {};
-    }
-    if (ok != nullptr) {
-        *ok = true;
-    }
-
-    qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries in" << archivePath;
-    return entries;
-}
-
-QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool* ok)
-{
-    if (ok != nullptr) {
-        *ok = false;
-    }
-
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return {};
-    }
-
-    QList<ArchiveEntry> entries;
-    const EntryWalk walk = forEachEntry(reader.handle(), [&entries](struct archive_entry* entry) {
+    const EntryWalk walk = forEachEntry(reader, [&entries](struct archive_entry* entry) {
         entries.append(toArchiveEntry(entry));
         return true;
     });
     if (walk != EntryWalk::Completed) {
-        return {};
-    }
-    if (ok != nullptr) {
-        *ok = true;
+        entries.clear();
+        return Error::InvalidArchive;
     }
 
     qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries with metadata in" << archivePath;
-    return entries;
+    return Error::None;
 }
 
-ArchiveStats getArchiveStats(const QString& archivePath, bool* ok)
+Error getArchiveStats(ArchiveReader& reader, const QString& archivePath, ArchiveStats& stats)
 {
-    if (ok != nullptr) {
-        *ok = false;
-    }
-
-    ArchiveReader reader;
+    stats = {};
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return {};
+        return Error::InvalidArchive;
     }
 
-    ArchiveStats stats;
-
-    const EntryWalk walk = forEachEntry(reader.handle(), [&stats](struct archive_entry* entry) {
-        stats.totalEntries++;
-
-        if (archive_entry_filetype(entry) == AE_IFDIR) {
-            stats.directoryCount++;
-        } else {
-            stats.fileCount++;
-            const qint64 size = archive_entry_size(entry);
-            stats.totalUncompressedSize += size;
-
-            if (size > stats.largestFileSize) {
-                stats.largestFileSize = size;
-                stats.largestFileName = QString::fromUtf8(archive_entry_pathname(entry));
-            }
-        }
+    const EntryWalk walk = forEachEntry(reader, [&stats](struct archive_entry* entry) {
+        addTo(stats, toArchiveEntry(entry));
         return true;
     });
-
     if (walk != EntryWalk::Completed) {
-        return {};
-    }
-    if (ok != nullptr) {
-        *ok = true;
+        stats = {};
+        return Error::InvalidArchive;
     }
 
     qCDebug(QGClibarchiveLog) << "Archive stats:" << stats.fileCount << "files," << stats.directoryCount << "dirs,"
                               << stats.totalUncompressedSize << "bytes total";
-    return stats;
-}
-
-bool extractWithFilter(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
-                       ProgressCallback progress, qint64 maxBytes, ReadResult* result)
-{
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (!filter) {
-        qCWarning(QGClibarchiveLog) << "No filter provided";
-        return false;
-    }
-
-    outcome = createOutputDirectory(outputDirectoryPath);
-    if (outcome != ReadResult::Completed) {
-        return false;
-    }
-
-    // Pre-check: verify sufficient disk space (uses total archive size as upper bound)
-    const ArchiveStats stats = getArchiveStats(archivePath);
-    if (stats.totalUncompressedSize > 0) {
-        if (!QGCFileHelper::hasSufficientDiskSpace(outputDirectoryPath, stats.totalUncompressedSize)) {
-            outcome = ReadResult::WriteFailed;
-            return false;
-        }
-    }
-    outcome = ReadResult::Failed;
-
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
-    }
-
-    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
-    DataTransfer transfer{.maxBytes = maxBytes, .progress = progress, .totalSize = reader.dataSize()};
-    qint64 bytesExtracted = 0;
-    int extractedCount = 0;
-    int skippedCount = 0;
-
-    const EntryWalk walk = forEachEntry(reader.handle(), [&](struct archive_entry* entry) {
-        // Build ArchiveEntry for filter callback
-        const ArchiveEntry info = toArchiveEntry(entry);
-
-        // Check filter
-        if (!filter(info)) {
-            skippedCount++;
-            return true;
-        }
-
-        // Skip directories for extraction (they're created by ensureParentExists)
-        if (info.isDirectory) {
-            return true;
-        }
-
-        if (skipLinkEntry(entry) || skipSpecialEntry(entry)) {
-            return true;
-        }
-
-        // An entry that says it does not fit is not started. One that says less than it holds, or
-        // nothing, is stopped at the limit while it is written.
-        if (maxBytes > 0 && (bytesExtracted + info.size) > maxBytes) {
-            reportSizeLimitExceeded(maxBytes);
-            return false;
-        }
-
-        const QString outputPath = containedEntryPath(canonicalOutputDir, info.name);
-        if (outputPath.isEmpty()) {
-            qCWarning(QGClibarchiveLog) << "Skipping path traversal attempt:" << info.name;
-            return true;
-        }
-        QGCFileHelper::ensureParentExists(outputPath);
-
-        const CopyResult copied = writeArchiveEntryToFile(reader.handle(), outputPath, transfer);
-        if (copied != CopyResult::Completed) {
-            outcome = toReadResult(copied);
-            return false;
-        }
-
-        bytesExtracted += info.size;
-        extractedCount++;
-        return true;
-    });
-
-    // The walk is only stopped by the size limit, a failed write or a cancellation
-    if (walk != EntryWalk::Completed) {
-        return false;
-    }
-
-    qCDebug(QGClibarchiveLog) << "Extracted" << extractedCount << "files, skipped" << skippedCount;
-    outcome = ReadResult::Completed;
-    return true;
+    return Error::None;
 }
 
 // ----------------------------------------------------------------------------
 // Single-File Decompression
 // ----------------------------------------------------------------------------
 
-bool decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress,
-                          qint64 maxBytes, ReadResult* result, bool copyPlainInput)
+template <typename Source>
+Error decompressSingleFile(ArchiveReader& reader, const Source& source, const QString& outputPath,
+                           const ProgressCallback& progress, qint64 maxBytes, bool copyPlainInput)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    ArchiveReader reader;
-    if (!reader.open(inputPath, ReaderMode::RawFormat)) {
-        outcome = streamOpenFailure(reader);
-        return false;
+    if (!reader.open(source, ReaderMode::RawFormat)) {
+        return streamOpenFailure(reader);
     }
 
-    const StreamHeader header = readStreamHeader(reader.handle(), copyPlainInput);
+    const StreamHeader header = readStreamHeader(reader, copyPlainInput);
     if (header == StreamHeader::Failed) {
-        return false;
+        return Error::InvalidArchive;
     }
     if (header == StreamHeader::NotCompressed) {
-        outcome = ReadResult::NotCompressed;
-        return false;
+        return Error::UnsupportedFormat;
     }
 
     QGCFileHelper::ensureParentExists(outputPath);
 
     if (header == StreamHeader::Empty) {
-        outcome = writeEmptyFile(outputPath);
-    } else {
-        outcome = decompressStreamToFile(reader.handle(), outputPath, progress, reader.dataSize(), maxBytes);
+        return writeEmptyFile(outputPath);
     }
-    return outcome == ReadResult::Completed;
+    return decompressStreamToFile(reader.handle(), outputPath, progress, reader.dataSize(), maxBytes);
 }
 
-QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes, ReadResult* result)
+template <typename Source>
+Error decompressToMemory(ArchiveReader& reader, const Source& source, qint64 maxBytes, QByteArray& data)
 {
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (data.isEmpty()) {
-        qCWarning(QGClibarchiveLog) << "Cannot decompress empty data";
-        return {};
+    // The reader has what it reads once it is open: the data may be given back in the source
+    const bool opened = reader.open(source, ReaderMode::RawFormat);
+    data.clear();
+    if (!opened) {
+        return streamOpenFailure(reader);
     }
 
-    ArchiveReader reader;
-    if (!reader.openMemory(data, ReaderMode::RawFormat)) {
-        outcome = streamOpenFailure(reader);
-        return {};
-    }
-
-    QByteArray decompressed = readStreamToMemory(reader.handle(), maxBytes, outcome);
-    qCDebug(QGClibarchiveLog) << "Decompressed" << data.size() << "bytes to" << decompressed.size() << "bytes";
-    return decompressed;
-}
-
-// ----------------------------------------------------------------------------
-// QIODevice-based Operations
-// ----------------------------------------------------------------------------
-
-bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, ProgressCallback progress,
-                       qint64 maxBytes, ReadResult* result)
-{
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-
-    outcome = createOutputDirectory(outputDirectoryPath);
-    if (outcome != ReadResult::Completed) {
-        return false;
-    }
-    outcome = ReadResult::Failed;
-
-    ArchiveReader reader;
-    if (!reader.open(device, ReaderMode::AllFormats)) {
-        return false;
-    }
-
-    outcome = extractArchiveEntries(reader, outputDirectoryPath, progress, maxBytes);
-    return outcome == ReadResult::Completed;
-}
-
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes, ReadResult* result)
-{
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    if (fileName.isEmpty()) {
-        qCWarning(QGClibarchiveLog) << "Empty file name";
-        return {};
-    }
-
-    ArchiveReader reader;
-    if (!reader.open(device, ReaderMode::AllFormats)) {
-        return {};
-    }
-
-    QByteArray data = readNamedEntryToMemory(reader.handle(), fileName, maxBytes, outcome);
-    if (outcome == ReadResult::Completed) {
-        qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "from device:" << data.size() << "bytes";
-    }
-    return data;
-}
-
-bool decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress, qint64 maxBytes,
-                          ReadResult* result)
-{
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
-
-    ArchiveReader reader;
-    if (!reader.open(device, ReaderMode::RawFormat)) {
-        outcome = streamOpenFailure(reader);
-        return false;
-    }
-
-    QGCFileHelper::ensureParentExists(outputPath);
-
-    switch (readStreamHeader(reader.handle())) {
+    Error read = Error::None;
+    switch (readStreamHeader(reader)) {
         case StreamHeader::Data:
-            outcome = decompressStreamToFile(reader.handle(), outputPath, progress, reader.dataSize(), maxBytes);
+            read = readArchiveToMemory(reader.handle(), 0, maxBytes, data);
             break;
         case StreamHeader::Empty:
-            outcome = writeEmptyFile(outputPath);
             break;
         case StreamHeader::NotCompressed:
-            outcome = ReadResult::NotCompressed;
+            read = Error::UnsupportedFormat;
             break;
         case StreamHeader::Failed:
+            read = Error::InvalidArchive;
             break;
     }
-    return outcome == ReadResult::Completed;
+    qCDebug(QGClibarchiveLog) << "Decompressed to memory:" << data.size() << "bytes";
+    return read;
 }
 
-QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes, ReadResult* result)
-{
-    ReadResult unused = ReadResult::Failed;
-    ReadResult& outcome = (result != nullptr) ? *result : unused;
-    outcome = ReadResult::Failed;
+// ----------------------------------------------------------------------------
+// The sources each of these operations is used with
+// ----------------------------------------------------------------------------
 
-    ArchiveReader reader;
-    if (!reader.open(device, ReaderMode::RawFormat)) {
-        outcome = streamOpenFailure(reader);
-        return {};
-    }
-
-    QByteArray decompressed = readStreamToMemory(reader.handle(), maxBytes, outcome);
-    if (!decompressed.isEmpty()) {
-        qCDebug(QGClibarchiveLog) << "Decompressed from device:" << decompressed.size() << "bytes";
-    }
-    return decompressed;
-}
+template Error extractAnyArchive(ArchiveReader&, const QString&, const QString&, const EntryFilter&,
+                                 const ProgressCallback&, qint64);
+template Error extractAnyArchive(ArchiveReader&, QIODevice* const&, const QString&, const EntryFilter&,
+                                 const ProgressCallback&, qint64);
+template Error extractFileToMemory(ArchiveReader&, const QString&, const QString&, qint64, QByteArray&);
+template Error extractFileToMemory(ArchiveReader&, QIODevice* const&, const QString&, qint64, QByteArray&);
+template Error decompressSingleFile(ArchiveReader&, const QString&, const QString&, const ProgressCallback&, qint64,
+                                    bool);
+template Error decompressSingleFile(ArchiveReader&, QIODevice* const&, const QString&, const ProgressCallback&, qint64,
+                                    bool);
+template Error decompressToMemory(ArchiveReader&, const QByteArray&, qint64, QByteArray&);
+template Error decompressToMemory(ArchiveReader&, QIODevice* const&, qint64, QByteArray&);
 
 }  // namespace QGClibarchive

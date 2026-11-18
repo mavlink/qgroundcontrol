@@ -1,5 +1,6 @@
 #pragma once
 
+#include "QGCCompression.h"
 #include "UnitTest.h"
 
 /// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
@@ -20,15 +21,13 @@ private slots:
     void _testFormatParameter();
 
     // Archive extraction from Qt resources
-    void _testZipFromResource();
-    void _test7zFromResource();
-    void _testExtractArchiveAtomic();
+    void _testExtractFromResource_data();
+    void _testExtractFromResource();
     void _testExtractArchiveAtomicReplacesExistingDirectory();
     void _testExtractArchiveAtomicFailureKeepsExistingDirectory();
-    void _testListArchive();
-    void _testListArchiveDetailed();
+    void _testListOneFile_data();
+    void _testListOneFile();
     void _testListArchiveNaturalSort();
-    void _testGetArchiveStats();
     void _testValidateArchive();
     void _testFileExists();
     void _testExtractArchiveFiltered();
@@ -38,8 +37,8 @@ private slots:
     void _testExtractByPattern();
 
     // Single-file decompression from Qt resources
-    void _testDecompressFromResource();
-    void _testDecompressData();
+    void _testDecompressEveryFormat_data();
+    void _testDecompressEveryFormat();
     void _testDecompressIfNeeded();
     void _testDecompressIfNeededDefaultOutput_data();
     void _testDecompressIfNeededDefaultOutput();
@@ -49,22 +48,22 @@ private slots:
     void _testDecompressRejectsStreamWithoutData();
     void _testDecompressPlainInput_data();
     void _testDecompressPlainInput();
-    void _testDecompressOrCopyFile_data();
-    void _testDecompressOrCopyFile();
+    void _testDecompressFileCopiesPlainInput_data();
+    void _testDecompressFileCopiesPlainInput();
 
     // Progress callbacks
     void _testProgressCallbackExtract_data();
     void _testProgressCallbackExtract();
 
-    // Format reported for the last operation
+    // Format reported by an operation
     void _testDetectedFormat_data();
     void _testDetectedFormat();
     void _testDetectedFormatAfterFailure_data();
     void _testDetectedFormatAfterFailure();
 
     // Edge cases and error handling
-    void _testCorruptArchive();
-    void _testNonExistentInput();
+    void _testMissingInput_data();
+    void _testMissingInput();
     void _testNoExternalDecompressors();
     void _testTruncatedArchive_data();
     void _testTruncatedArchive();
@@ -74,19 +73,18 @@ private slots:
     void _testSequentialDeviceEnd_data();
     void _testSequentialDeviceEnd();
     void _testSequentialDeviceReadError();
+    void _testSequentialDeviceSkip();
     void _testExtractFileDataErrors_data();
     void _testExtractFileDataErrors();
     void _testExtractToFileErrors_data();
     void _testExtractToFileErrors();
     void _testDecompressDataErrors();
-    void _testOutputWithoutPermission_data();
-    void _testOutputWithoutPermission();
+    void _testUnwritableOutput_data();
+    void _testUnwritableOutput();
     void _testInputWithoutPermission_data();
     void _testInputWithoutPermission();
-    void _testBlockedOutput_data();
-    void _testBlockedOutput();
-    void _testOperationStartsWithoutError_data();
-    void _testOperationStartsWithoutError();
+    void _testOutcomeBeforeInput_data();
+    void _testOutcomeBeforeInput();
 
     // QIODevice-based operations
     void _testDecompressFromDevice();
@@ -109,19 +107,17 @@ private slots:
     void _testCompressionJobErrorString();
     void _testCompressionJobPlainInput_data();
     void _testCompressionJobPlainInput();
+    void _testCompressionJobWork();
 
     // Sparse file handling
     void _testSparseFileExtraction_data();
     void _testSparseFileExtraction();
 
     // Thread safety
-    void _testThreadLocalState();
     void _testConcurrentExtractions();
 
     // Boundary conditions
     void _testEmptyArchive();
-    void _testSingleByteFile();
-    void _testLargeFileDecompression();
     void _testDecompressToFileSizeLimit();
     void _testDecompressToMemorySizeLimit();
     void _testExtractionStopsCleanly_data();
@@ -130,7 +126,6 @@ private slots:
     void _testDecompressionCancelled();
     void _testExtractArchiveKeepsEntriesBeforeDamage_data();
     void _testExtractArchiveKeepsEntriesBeforeDamage();
-    void _testMaxEntriesArchive();
     void _testOverstatedEntrySize();
     void _testExtractFileDataSizeLimit_data();
     void _testExtractFileDataSizeLimit();
@@ -138,39 +133,83 @@ private slots:
     void _testUncompressDataSizeLimit();
 
     // Cross-platform path handling
-    void _testWindowsPathSeparators();
     void _testExtractArchiveToSymlinkedOutputPath();
     void _testExtractRejectsEscapingNames_data();
     void _testExtractRejectsEscapingNames();
     void _testExtractRejectsEscapingLinks();
-    void _testExtractLeavesOutLinks_data();
-    void _testExtractLeavesOutLinks();
+    void _testExtractLinks_data();
+    void _testExtractLinks();
+    void _testExtractRestoresModificationTime_data();
+    void _testExtractRestoresModificationTime();
     void _testExtractLeavesOutSpecialFiles_data();
     void _testExtractLeavesOutSpecialFiles();
-    void _testSpecialCharactersInPath();
-    void _testUnicodePaths();
+    void _testExtractToUnusualPath_data();
+    void _testExtractToUnusualPath();
 
     // Benchmarks (run with --benchmark flag)
-    void _benchmarkExtractZip();
-    void _benchmarkExtract7z();
-    void _benchmarkDecompressGzip();
-    void _benchmarkDecompressXz();
+    void _benchmarkExtract_data();
+    void _benchmarkExtract();
+    void _benchmarkDecompress_data();
+    void _benchmarkDecompress();
     void _benchmarkConcurrentExtraction();
     void _benchmarkListArchive();
 
 private:
-    bool _compareFiles(const QString& file1, const QString& file2);
+    // The test resources: one manifest.json, as an archive and as a single compressed stream
+    static inline const QString _zipResource = QStringLiteral(":/unittest/manifest.json.zip");
+    static inline const QString _sevenZipResource = QStringLiteral(":/unittest/manifest.json.7z");
+    static inline const QString _gzResource = QStringLiteral(":/unittest/manifest.json.gz");
+    static inline const QString _xzResource = QStringLiteral(":/unittest/manifest.json.xz");
+    static inline const QString _zstResource = QStringLiteral(":/unittest/manifest.json.zst");
 
-    static quint32 _crc32(const QByteArray& data);
+    /// What a test hands to an entry point of QGCCompression, which takes of it what it has a parameter for
+    struct Inputs
+    {
+        /// The archive or the compressed file. An entry point that reads a device or data is given this file
+        /// as a device, or its content.
+        QString path = {};
+        /// Where to write: the directory to extract into, which a single entry is written to under its own
+        /// name, or the file for a decompressed stream
+        QString output = {};
+        /// The entries asked for by name, or the patterns. An entry point for one entry takes the first.
+        QStringList names = {QStringLiteral("manifest.json")};
+        QGCCompression::EntryFilter filter = [](const QGCCompression::ArchiveEntry&) { return true; };
+        QGCCompression::Format format = QGCCompression::Format::Auto;
+        QGCCompression::ProgressCallback progress = {};
+        qint64 maxBytes = 0;
+    };
 
-    static bool _writeFile(const QString& path, const QByteArray& data);
-    static QByteArray _readFile(const QString& path);
+    /// What an entry point of QGCCompression gives back besides its outcome
+    struct Results
+    {
+        QByteArray data = {};                              ///< Of the entry points that read to memory
+        QStringList names = {};                            ///< Of listArchive
+        QList<QGCCompression::ArchiveEntry> entries = {};  ///< Of listArchiveDetailed
+        QGCCompression::ArchiveStats stats = {};           ///< Of getArchiveStats
+
+        /// Whether nothing came back, which is so for an entry point that gives nothing back
+        bool isEmpty() const
+        {
+            return data.isEmpty() && names.isEmpty() && entries.isEmpty() && (stats.totalEntries == 0) &&
+                   (stats.fileCount == 0) && (stats.totalUncompressedSize == 0);
+        }
+    };
+
+    /// Calls the entry point of QGCCompression that a row of test data names: a function, or
+    /// "decompressFromDevice-file" and "decompressFromDevice-memory" for the two of that name
+    /// @param results If not null, receives what the entry point gave back. Where the entry point is handed
+    ///        something to fill, it is handed it with content, so that a failure has to empty it
+    /// @return What the entry point returned
+    static QGCCompression::Outcome _call(const QString& api, const Inputs& inputs, Results* results = nullptr);
+
+    /// Whether @a api decompresses a single stream, and not an archive
+    static bool _isStreamEntryPoint(const QString& api) { return api.startsWith(QLatin1String("decompress")); }
+
+    /// Bytes for a stream of several blocks, which do not repeat from one block to the next
+    static QByteArray _payload(qsizetype size, char first = 'a');
 
     /// Paths of everything below @a directoryPath, relative to it and sorted
     static QStringList _entriesBelow(const QString& directoryPath);
-
-    /// One member of a gzip file, holding @a payload
-    static QByteArray _gzipMember(const QByteArray& payload);
 
     /// Writes a gzip file of @a firstMember followed by @a memberCount members, each expanding to 64 KiB of zeros
     static bool _writeGzipOfZeros(const QString& path, int memberCount, const QByteArray& firstMember = {});
@@ -193,6 +232,7 @@ private:
         QByteArray linkName = {};
         QList<TarSparseData> sparseData = {};  ///< For 'S': where the data belongs in the file, at most four parts
         qint64 sparseFileSize = 0;             ///< For 'S': size of the file with its holes
+        qint64 modified = 0;                   ///< Modification time in seconds since the epoch
     };
 
     /// Entry of a hand-built ZIP archive

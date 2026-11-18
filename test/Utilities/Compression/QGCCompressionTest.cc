@@ -1,68 +1,136 @@
 #include "QGCCompressionTest.h"
 
-#include <algorithm>
 #include <atomic>
 #include <functional>
 #include <initializer_list>
 #include <memory>
-#include <vector>
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QBuffer>
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
-#include <QtCore/QEventLoop>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QMutex>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QThread>
-#include <QtCore/QTimer>
-#include <QtCore/QWaitCondition>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "QGCArchiveFile.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCDecompressDevice.h"
 
-bool QGCCompressionTest::_compareFiles(const QString& file1, const QString& file2)
+QGCCompression::Outcome QGCCompressionTest::_call(const QString& api, const Inputs& inputs, Results* results)
 {
-    QFile f1(file1);
-    QFile f2(file2);
-    if (!f1.open(QIODevice::ReadOnly) || !f2.open(QIODevice::ReadOnly)) {
-        return false;
+    using namespace QGCCompression;
+    using EntryPoint = std::function<Outcome(const Inputs&, Results&)>;
+
+    static const auto open = [](QFile& device, const Inputs& in) {
+        device.setFileName(in.path);
+        (void) device.open(QIODevice::ReadOnly);
+        return &device;
+    };
+
+    static const QHash<QString, EntryPoint> entryPoints{
+        {"extractArchive",
+         [](const Inputs& in, Results&) {
+             return extractArchive(in.path, in.output, in.format, in.progress, in.maxBytes);
+         }},
+        {"extractArchiveAtomic",
+         [](const Inputs& in, Results&) {
+             return extractArchiveAtomic(in.path, in.output, in.format, in.progress, in.maxBytes);
+         }},
+        {"extractArchiveFiltered",
+         [](const Inputs& in, Results&) {
+             return extractArchiveFiltered(in.path, in.output, in.filter, in.progress, in.maxBytes);
+         }},
+        {"extractFromDevice",
+         [](const Inputs& in, Results&) {
+             QFile device;
+             return extractFromDevice(open(device, in), in.output, in.progress, in.maxBytes);
+         }},
+        {"extractFiles",
+         [](const Inputs& in, Results&) { return extractFiles(in.path, in.names, in.output, in.format); }},
+        {"extractByPattern",
+         [](const Inputs& in, Results&) { return extractByPattern(in.path, in.names, in.output, nullptr, in.format); }},
+        {"extractFile",
+         [](const Inputs& in, Results&) {
+             // The output is the path of a file, also where the name of the entry is that of a directory
+             const QString name = in.names.constFirst();
+             const QString fileName = name.endsWith(QLatin1Char('/')) ? name.chopped(1) : name;
+             return extractFile(in.path, name, in.output + QLatin1Char('/') + fileName, in.format);
+         }},
+        {"extractFileData",
+         [](const Inputs& in, Results& out) {
+             out.data = "to be replaced";
+             return extractFileData(in.path, in.names.constFirst(), out.data, in.format, in.maxBytes);
+         }},
+        {"extractFileDataFromDevice",
+         [](const Inputs& in, Results& out) {
+             QFile device;
+             out.data = "to be replaced";
+             return extractFileDataFromDevice(open(device, in), in.names.constFirst(), out.data, in.maxBytes);
+         }},
+        {"listArchive",
+         [](const Inputs& in, Results& out) {
+             out.names = {QStringLiteral("to be replaced")};
+             return listArchive(in.path, out.names, in.format);
+         }},
+        {"listArchiveDetailed",
+         [](const Inputs& in, Results& out) {
+             out.entries = {ArchiveEntry{}};
+             return listArchiveDetailed(in.path, out.entries, in.format);
+         }},
+        {"getArchiveStats",
+         [](const Inputs& in, Results& out) {
+             out.stats.totalEntries = 1;
+             out.stats.fileCount = 1;
+             out.stats.totalUncompressedSize = 1;
+             return getArchiveStats(in.path, out.stats, in.format);
+         }},
+        {"validateArchive", [](const Inputs& in, Results&) { return validateArchive(in.path, in.format); }},
+        {"fileExists",
+         [](const Inputs& in, Results&) { return fileExists(in.path, in.names.constFirst(), in.format); }},
+        {"decompressFile",
+         [](const Inputs& in, Results&) {
+             return decompressFile(in.path, in.output, in.format, in.progress, in.maxBytes);
+         }},
+        {"decompressData",
+         [](const Inputs& in, Results& out) {
+             out.data = "to be replaced";
+             return decompressData(TestFixtures::readFile(in.path), out.data, in.format, in.maxBytes);
+         }},
+        {"decompressFromDevice-file",
+         [](const Inputs& in, Results&) {
+             QFile device;
+             return decompressFromDevice(open(device, in), in.output, in.progress, in.maxBytes);
+         }},
+        {"decompressFromDevice-memory",
+         [](const Inputs& in, Results& out) {
+             QFile device;
+             out.data = "to be replaced";
+             return decompressFromDevice(open(device, in), out.data, in.maxBytes);
+         }},
+    };
+
+    const auto entryPoint = entryPoints.constFind(api);
+    if (entryPoint == entryPoints.constEnd()) {
+        QTest::qFail(qPrintable(QStringLiteral("No entry point is called %1").arg(api)), __FILE__, __LINE__);
+        return {.error = Error::InternalError};
     }
-    QCryptographicHash hash1(QCryptographicHash::Sha256);
-    QCryptographicHash hash2(QCryptographicHash::Sha256);
-    hash1.addData(&f1);
-    hash2.addData(&f2);
-    return hash1.result() == hash2.result();
+    Results unused;
+    return (*entryPoint)(inputs, (results != nullptr) ? *results : unused);
 }
 
-quint32 QGCCompressionTest::_crc32(const QByteArray& data)
+QByteArray QGCCompressionTest::_payload(qsizetype size, char first)
 {
-    quint32 crc = 0xFFFFFFFFU;
-    for (const char byte : data) {
-        crc ^= static_cast<quint8>(byte);
-        for (int bit = 0; bit < 8; ++bit) {
-            crc = (crc >> 1) ^ (0xEDB88320U & (0U - (crc & 1U)));
-        }
+    QByteArray data(size, Qt::Uninitialized);
+    for (qsizetype i = 0; i < size; ++i) {
+        data[i] = static_cast<char>(first + ((i * 7) + (i / 13)) % 23);
     }
-    return ~crc;
-}
-
-bool QGCCompressionTest::_writeFile(const QString& path, const QByteArray& data)
-{
-    QFile file(path);
-    return file.open(QIODevice::WriteOnly) && (file.write(data) == data.size());
-}
-
-QByteArray QGCCompressionTest::_readFile(const QString& path)
-{
-    QFile file(path);
-    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+    return data;
 }
 
 QStringList QGCCompressionTest::_entriesBelow(const QString& directoryPath)
@@ -78,23 +146,9 @@ QStringList QGCCompressionTest::_entriesBelow(const QString& directoryPath)
     return entries;
 }
 
-QByteArray QGCCompressionTest::_gzipMember(const QByteArray& payload)
-{
-    // qCompress() output: 4-byte length, 2-byte zlib header, deflate stream, 4-byte Adler-32
-    const QByteArray zlibStream = qCompress(payload);
-    QByteArray member = QByteArray::fromHex("1f8b08000000000000ff");
-    member.append(zlibStream.mid(6, zlibStream.size() - 10));
-    for (const quint32 field : {_crc32(payload), static_cast<quint32>(payload.size())}) {
-        for (int shift = 0; shift < 32; shift += 8) {
-            member.append(static_cast<char>((field >> shift) & 0xFFU));
-        }
-    }
-    return member;
-}
-
 bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount, const QByteArray& firstMember)
 {
-    const QByteArray member = _gzipMember(QByteArray(64 * 1024, '\0'));
+    const QByteArray member = TestFixtures::gzipMember(QByteArray(64 * 1024, '\0'));
 
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly) || (file.write(firstMember) != firstMember.size())) {
@@ -129,11 +183,12 @@ QByteArray QGCCompressionTest::_makeStreamedZip(const QList<ZipEntry>& entries, 
             << quint32(0) << quint16(entry.name.size()) << quint16(0);
         out.writeRawData(entry.name.constData(), entry.name.size());
         out.writeRawData(deflated.constData(), deflated.size());
-        out << quint32(0x08074B50) << _crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size());
+        out << quint32(0x08074B50) << TestFixtures::crc32(entry.data) << quint32(deflated.size())
+            << quint32(entry.data.size());
         // Central directory header. An entry made on Unix (3) has its mode in the upper half of the attributes.
         const quint16 madeBy = (entry.unixMode != 0) ? ((3 << 8) | 20) : 20;
         directory << quint32(0x02014B50) << madeBy << quint16(20) << lengthAtEnd << deflate << quint32(0)
-                  << _crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size())
+                  << TestFixtures::crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size())
                   << quint16(entry.name.size()) << quint16(0) << quint16(0) << quint16(0) << quint16(0)
                   << quint32(entry.unixMode << 16) << localHeaderOffset;
         directory.writeRawData(entry.name.constData(), entry.name.size());
@@ -173,7 +228,7 @@ QByteArray QGCCompressionTest::_tarHeader(const TarEntry& entry, qint64 dataSize
         }
         setField(124, binary);
     }
-    setField(136, "00000000000");
+    setField(136, octal(entry.modified));
     setField(148, "        ");
     header[156] = entry.type;
     setField(157, entry.linkName.left(100));
@@ -260,20 +315,15 @@ void QGCCompressionTest::_testDetectFormatFromFile_data()
     QTest::addColumn<QString>("resource");
     QTest::addColumn<int>("expected");
 
-    QTest::newRow("zip") << QStringLiteral(":/unittest/manifest.json.zip")
-                         << static_cast<int>(QGCCompression::Format::ZIP);
-    QTest::newRow("gz") << QStringLiteral(":/unittest/manifest.json.gz")
-                        << static_cast<int>(QGCCompression::Format::GZIP);
-    QTest::newRow("xz") << QStringLiteral(":/unittest/manifest.json.xz")
-                        << static_cast<int>(QGCCompression::Format::XZ);
-    QTest::newRow("zst") << QStringLiteral(":/unittest/manifest.json.zst")
-                         << static_cast<int>(QGCCompression::Format::ZSTD);
+    QTest::newRow("zip") << _zipResource << static_cast<int>(QGCCompression::Format::ZIP);
+    QTest::newRow("gz") << _gzResource << static_cast<int>(QGCCompression::Format::GZIP);
+    QTest::newRow("xz") << _xzResource << static_cast<int>(QGCCompression::Format::XZ);
+    QTest::newRow("zst") << _zstResource << static_cast<int>(QGCCompression::Format::ZSTD);
 #ifdef QGC_ENABLE_BZIP2
     QTest::newRow("bz2") << QStringLiteral(":/unittest/manifest.json.bz2")
                          << static_cast<int>(QGCCompression::Format::BZIP2);
 #endif
-    QTest::newRow("7z") << QStringLiteral(":/unittest/manifest.json.7z")
-                        << static_cast<int>(QGCCompression::Format::SEVENZ);
+    QTest::newRow("7z") << _sevenZipResource << static_cast<int>(QGCCompression::Format::SEVENZ);
 }
 
 void QGCCompressionTest::_testDetectFormatFromFile()
@@ -316,13 +366,7 @@ void QGCCompressionTest::_testFormatDetectionFromContent()
     // Test content fallback in detectFormat()
     // Copy a .gz file to a file without extension and verify detection
     const QString noExtFile = tempDir.filePath("compressed_no_ext");
-    {
-        QFile source(":/unittest/manifest.json.gz");
-        QVERIFY(source.open(QIODevice::ReadOnly));
-        QFile dest(noExtFile);
-        QVERIFY(dest.open(QIODevice::WriteOnly));
-        dest.write(source.readAll());
-    }
+    QVERIFY(QFile::copy(_gzResource, noExtFile));
     // With content fallback enabled, should detect as GZIP
     QCOMPARE(QGCCompression::detectFormat(noExtFile, true), QGCCompression::Format::GZIP);
     // Without content fallback, should return Auto
@@ -374,112 +418,105 @@ void QGCCompressionTest::_testFormatParameter()
 {
     using QGCCompression::Error;
     using QGCCompression::Format;
+    using QGCCompression::Outcome;
 
     QTemporaryDir tempDir;
-    const QString zip = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString sevenZip = QStringLiteral(":/unittest/manifest.json.7z");
-    const QByteArray gzData = _readFile(QStringLiteral(":/unittest/manifest.json.gz"));
-    const QByteArray xzData = _readFile(QStringLiteral(":/unittest/manifest.json.xz"));
+    const QByteArray gzData = TestFixtures::readFile(_gzResource);
+    const QByteArray xzData = TestFixtures::readFile(_xzResource);
     const QStringList manifestOnly{QStringLiteral("manifest.json")};
 
     // The format does not choose the decoder: one of the right kind that is not the input's reads it all the same
-    QVERIFY(QGCCompression::extractArchive(sevenZip, tempDir.filePath("mismatched"), Format::ZIP));
-    QVERIFY2(QGCCompression::detectedFormatName().startsWith("7-Zip"),
-             qPrintable(QGCCompression::detectedFormatName()));
+    const Outcome mismatched =
+        QGCCompression::extractArchive(_sevenZipResource, tempDir.filePath("mismatched"), Format::ZIP);
+    QVERIFY(mismatched);
+    QVERIFY2(mismatched.formatName.startsWith("7-Zip"), qPrintable(mismatched.formatName));
     QCOMPARE(_entriesBelow(tempDir.filePath("mismatched")), manifestOnly);
-    QCOMPARE(QGCCompression::listArchive(zip, Format::TAR_XZ), manifestOnly);
-    const QByteArray manifest = QGCCompression::decompressData(gzData);
+    QStringList names;
+    QVERIFY(QGCCompression::listArchive(_zipResource, names, Format::TAR_XZ));
+    QCOMPARE(names, manifestOnly);
+    QByteArray manifest;
+    QVERIFY(QGCCompression::decompressData(gzData, manifest));
     QVERIFY(!manifest.isEmpty());
-    QCOMPARE(QGCCompression::decompressData(xzData, Format::GZIP), manifest);
-    QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("xz"));
+    QByteArray fromXz;
+    const Outcome asGzip = QGCCompression::decompressData(xzData, fromXz, Format::GZIP);
+    QCOMPARE(fromXz, manifest);
+    QCOMPARE(asGzip.filterName, QStringLiteral("xz"));
 
     // It tells the kind of the input, and each function refuses the kind it does not handle
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Not an archive format"));
-    QVERIFY(!QGCCompression::extractArchive(zip, tempDir.filePath("stream_kind"), Format::GZIP));
+    const Outcome streamKind =
+        QGCCompression::extractArchive(_zipResource, tempDir.filePath("stream_kind"), Format::GZIP);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QCOMPARE(streamKind.error, Error::UnsupportedFormat);
     QVERIFY(!QFileInfo::exists(tempDir.filePath("stream_kind")));
 
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Invalid decompression format"));
-    QVERIFY(QGCCompression::decompressData(gzData, Format::ZIP).isEmpty());
+    QByteArray refused("stale");
+    const Outcome archiveKind = QGCCompression::decompressData(gzData, refused, Format::ZIP);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QCOMPARE(archiveKind.error, Error::UnsupportedFormat);
+    QVERIFY(refused.isEmpty());
 
     // Auto detects the kind from the name and then the content. Neither tells that this gzip stream holds a
     // TAR archive, so only the format says that it is to be extracted
     const QString unnamedArchive = tempDir.filePath("bundle");
-    QVERIFY(_writeFile(unnamedArchive, _gzipMember(_makeTar({{.name = "good.txt", .data = "good"}}))));
+    QVERIFY(TestFixtures::writeFile(unnamedArchive,
+                                    TestFixtures::gzipMember(_makeTar({{.name = "good.txt", .data = "good"}}))));
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Not an archive format"));
-    QVERIFY(!QGCCompression::extractArchive(unnamedArchive, tempDir.filePath("detected")));
+    const Outcome detected = QGCCompression::extractArchive(unnamedArchive, tempDir.filePath("detected"));
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QCOMPARE(detected.error, Error::UnsupportedFormat);
     QVERIFY(QGCCompression::extractArchive(unnamedArchive, tempDir.filePath("told"), Format::TAR_GZ));
-    QCOMPARE(_readFile(tempDir.filePath("told/good.txt")), QByteArray("good"));
+    QCOMPARE(TestFixtures::readFile(tempDir.filePath("told/good.txt")), QByteArray("good"));
 
     // For decompressFile() it also decides between extracting and decompressing, and names the default output:
     // GZIP takes the gzip layer off a .tar.gz file and leaves the archive
     const QString tarGz = tempDir.filePath("bundle.tar.gz");
     QVERIFY(QFile::copy(unnamedArchive, tarGz));
     QVERIFY(QGCCompression::decompressFile(tarGz, QString(), Format::GZIP));
-    QCOMPARE(QGCCompression::listArchive(tempDir.filePath("bundle.tar")), QStringList{QStringLiteral("good.txt")});
+    QVERIFY(QGCCompression::listArchive(tempDir.filePath("bundle.tar"), names));
+    QCOMPARE(names, QStringList{QStringLiteral("good.txt")});
 }
 
 // ============================================================================
 // Archive Extraction Tests (from Qt resources)
 // ============================================================================
-void QGCCompressionTest::_testZipFromResource()
+void QGCCompressionTest::_testExtractFromResource_data()
 {
-    QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputPath = tempDir.path() + "/resource_output";
-    QVERIFY2(QGCCompression::extractArchive(zipResource, outputPath), "Failed to extract ZIP from Qt resource");
-    QVERIFY2(QDir(outputPath).exists(), "Output directory not created");
-    QDir outputDir(outputPath);
-    QStringList files = outputDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
-    QVERIFY2(!files.isEmpty(), "No files extracted from ZIP");
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<QGCCompression::Format>("format");
+
+    using QGCCompression::Format;
+
+    QTest::newRow("ZIP") << "extractArchive" << _zipResource << Format::Auto;
+    QTest::newRow("7z") << "extractArchive" << _sevenZipResource << Format::SEVENZ;
+    QTest::newRow("ZIP, atomically") << "extractArchiveAtomic" << _zipResource << Format::Auto;
 }
 
-void QGCCompressionTest::_test7zFromResource()
+void QGCCompressionTest::_testExtractFromResource()
 {
-    QTemporaryDir tempDir;
-    const QString archiveResource = QStringLiteral(":/unittest/manifest.json.7z");
-    const QString outputPath = tempDir.path() + "/7z_output";
-    QVERIFY2(QGCCompression::extractArchive(archiveResource, outputPath, QGCCompression::Format::SEVENZ),
-             "Failed to extract 7z from Qt resource");
-    QVERIFY2(QDir(outputPath).exists(), "Output directory not created");
-    QDir outputDir(outputPath);
-    QStringList files = outputDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
-    QVERIFY2(!files.isEmpty(), "No files extracted from 7z");
-    QVERIFY2(QFile::exists(outputPath + "/manifest.json"), "manifest.json not extracted");
-}
+    QFETCH(QString, api);
+    QFETCH(QString, resource);
+    QFETCH(QGCCompression::Format, format);
 
-void QGCCompressionTest::_testExtractArchiveAtomic()
-{
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputPath = tempDir.path() + "/atomic_output";
-
-    QVERIFY2(QGCCompression::extractArchiveAtomic(zipResource, outputPath),
-             "Failed to atomically extract ZIP from Qt resource");
-    QVERIFY2(QDir(outputPath).exists(), "Output directory not created");
-    QVERIFY2(QFile::exists(outputPath + "/manifest.json"), "manifest.json not extracted");
+    const QString outputPath = tempDir.filePath("output");
+    const QGCCompression::Outcome outcome = _call(api, {.path = resource, .output = outputPath, .format = format});
+    QVERIFY2(outcome, qPrintable(outcome.message));
+    QCOMPARE(_entriesBelow(outputPath), QStringList{QStringLiteral("manifest.json")});
 }
 
 void QGCCompressionTest::_testExtractArchiveAtomicReplacesExistingDirectory()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     const QString outputPath = tempDir.path() + "/atomic_replace";
     QVERIFY(QDir().mkpath(outputPath));
 
     const QString staleFilePath = outputPath + "/stale.txt";
-    QFile staleFile(staleFilePath);
-    QVERIFY(staleFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
-    staleFile.write("stale");
-    staleFile.close();
-    QVERIFY(QFile::exists(staleFilePath));
+    QVERIFY(TestFixtures::writeFile(staleFilePath, "stale"));
 
-    QVERIFY2(QGCCompression::extractArchiveAtomic(zipResource, outputPath),
+    QVERIFY2(QGCCompression::extractArchiveAtomic(_zipResource, outputPath),
              "Atomic extraction into existing directory failed");
     QVERIFY(QFile::exists(outputPath + "/manifest.json"));
     QVERIFY(!QFile::exists(staleFilePath));
@@ -492,17 +529,11 @@ void QGCCompressionTest::_testExtractArchiveAtomicFailureKeepsExistingDirectory(
     QVERIFY(QDir().mkpath(outputPath));
 
     const QString retainedFilePath = outputPath + "/retained.txt";
-    QFile retainedFile(retainedFilePath);
-    QVERIFY(retainedFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
     const QByteArray retainedContent("keep-me");
-    retainedFile.write(retainedContent);
-    retainedFile.close();
+    QVERIFY(TestFixtures::writeFile(retainedFilePath, retainedContent));
 
     const QString corruptArchivePath = tempDir.path() + "/corrupt_atomic.zip";
-    QFile corrupt(corruptArchivePath);
-    QVERIFY(corrupt.open(QIODevice::WriteOnly | QIODevice::Truncate));
-    corrupt.write("not-an-archive");
-    corrupt.close();
+    QVERIFY(TestFixtures::writeFile(corruptArchivePath, "not-an-archive"));
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(".*Unrecognized archive format.*"));
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Archive is empty or invalid.*"));
@@ -510,45 +541,54 @@ void QGCCompressionTest::_testExtractArchiveAtomicFailureKeepsExistingDirectory(
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 
-    QFile retainedAfter(retainedFilePath);
-    QVERIFY(retainedAfter.open(QIODevice::ReadOnly));
-    QCOMPARE(retainedAfter.readAll(), retainedContent);
-    retainedAfter.close();
+    QCOMPARE(TestFixtures::readFile(retainedFilePath), retainedContent);
+
+    // So does an extraction that fails once its entries are being staged, and what it staged is gone
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    QCOMPARE(
+        QGCCompression::extractArchiveAtomic(_zipResource, outputPath, QGCCompression::Format::Auto, nullptr, 1).error,
+        QGCCompression::Error::SizeLimitExceeded);
+    verifyExpectedLogMessage();
+    const QStringList asBefore{QStringLiteral("atomic_rollback"), QStringLiteral("atomic_rollback/retained.txt"),
+                               QStringLiteral("corrupt_atomic.zip")};
+    QCOMPARE(_entriesBelow(tempDir.path()), asBefore);
+    QCOMPARE(TestFixtures::readFile(retainedFilePath), retainedContent);
 }
 
-void QGCCompressionTest::_testListArchive()
+void QGCCompressionTest::_testListOneFile_data()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    QStringList entries = QGCCompression::listArchive(zipResource);
-    QVERIFY2(!entries.isEmpty(), "listArchive returned empty list");
-    bool foundManifest = false;
-    for (const QString& entry : entries) {
-        if (entry.contains("manifest.json")) {
-            foundManifest = true;
-            break;
-        }
-    }
-    QVERIFY2(foundManifest, "manifest.json not found in archive listing");
-    // Test auto-detection
-    QStringList autoEntries = QGCCompression::listArchive(zipResource, QGCCompression::Format::Auto);
-    QCOMPARE(autoEntries.size(), entries.size());
+    QTest::addColumn<QString>("resource");
+
+    QTest::newRow("ZIP") << _zipResource;
+    QTest::newRow("7z") << _sevenZipResource;
 }
 
-void QGCCompressionTest::_testListArchiveDetailed()
+void QGCCompressionTest::_testListOneFile()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    QList<QGCCompression::ArchiveEntry> entries = QGCCompression::listArchiveDetailed(zipResource);
-    QVERIFY(!entries.isEmpty());
-    bool foundManifest = false;
-    for (const auto& entry : entries) {
-        if (entry.name == "manifest.json") {
-            foundManifest = true;
-            QVERIFY(entry.size > 0);
-            QVERIFY(!entry.isDirectory);
-            break;
-        }
-    }
-    QVERIFY2(foundManifest, "manifest.json not found in detailed listing");
+    QFETCH(QString, resource);
+
+    // The archive holds manifest.json and nothing else
+    const QString name = QStringLiteral("manifest.json");
+    QByteArray content;
+    QVERIFY(QGCCompression::extractFileData(resource, name, content));
+    QVERIFY(!content.isEmpty());
+
+    QList<QGCCompression::ArchiveEntry> entries;
+    QVERIFY(QGCCompression::listArchiveDetailed(resource, entries));
+    QCOMPARE(entries.size(), 1);
+    QCOMPARE(entries.constFirst().name, name);
+    QCOMPARE(entries.constFirst().size, content.size());
+    QVERIFY(!entries.constFirst().isDirectory);
+    QVERIFY(entries.constFirst().permissions > 0);
+
+    QGCCompression::ArchiveStats stats;
+    QVERIFY(QGCCompression::getArchiveStats(resource, stats));
+    QCOMPARE(stats.totalEntries, 1);
+    QCOMPARE(stats.fileCount, 1);
+    QCOMPARE(stats.directoryCount, 0);
+    QCOMPARE(stats.totalUncompressedSize, content.size());
+    QCOMPARE(stats.largestFileSize, content.size());
+    QCOMPARE(stats.largestFileName, name);
 }
 
 void QGCCompressionTest::_testListArchiveNaturalSort()
@@ -556,341 +596,186 @@ void QGCCompressionTest::_testListArchiveNaturalSort()
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("natural.tar");
     // Stored in an order which neither the archive's own nor that of the character codes would keep
-    QVERIFY(_writeFile(archivePath, _makeTar({{.name = "file10.txt"},
-                                              {.name = "File2.txt"},
-                                              {.name = "file1.txt"},
-                                              {.name = "dir/file11.txt"},
-                                              {.name = "file20.txt"},
-                                              {.name = "dir/file3.txt"}})));
+    QVERIFY(TestFixtures::writeFile(archivePath, _makeTar({{.name = "file10.txt"},
+                                                           {.name = "File2.txt"},
+                                                           {.name = "file1.txt"},
+                                                           {.name = "dir/file11.txt"},
+                                                           {.name = "file20.txt"},
+                                                           {.name = "dir/file3.txt"}})));
 
     // Numbers compare by their value, and an upper case letter does not come before the lower case ones
     const QStringList expected{QStringLiteral("dir/file3.txt"), QStringLiteral("dir/file11.txt"),
                                QStringLiteral("file1.txt"),     QStringLiteral("File2.txt"),
                                QStringLiteral("file10.txt"),    QStringLiteral("file20.txt")};
-    QCOMPARE(QGCCompression::listArchive(archivePath), expected);
+    QStringList names;
+    QVERIFY(QGCCompression::listArchive(archivePath, names));
+    QCOMPARE(names, expected);
 
+    QList<QGCCompression::ArchiveEntry> entries;
+    QVERIFY(QGCCompression::listArchiveDetailed(archivePath, entries));
     QStringList detailedNames;
-    for (const QGCCompression::ArchiveEntry& entry : QGCCompression::listArchiveDetailed(archivePath)) {
+    for (const QGCCompression::ArchiveEntry& entry : std::as_const(entries)) {
         detailedNames.append(entry.name);
     }
     QCOMPARE(detailedNames, expected);
 }
 
-void QGCCompressionTest::_testGetArchiveStats()
-{
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QGCCompression::ArchiveStats stats = QGCCompression::getArchiveStats(zipResource);
-    // Should have at least one file
-    QVERIFY(stats.totalEntries > 0);
-    QVERIFY(stats.fileCount > 0);
-    QVERIFY(stats.totalUncompressedSize > 0);
-    QVERIFY(stats.largestFileSize > 0);
-    QVERIFY(!stats.largestFileName.isEmpty());
-    // File count + directory count should equal total entries
-    QCOMPARE(stats.totalEntries, stats.fileCount + stats.directoryCount);
-    // Largest file size should not exceed total size
-    QVERIFY(stats.largestFileSize <= stats.totalUncompressedSize);
-    // Test with 7z archive
-    const QString archiveResource = QStringLiteral(":/unittest/manifest.json.7z");
-    const QGCCompression::ArchiveStats stats7z = QGCCompression::getArchiveStats(archiveResource);
-    QVERIFY(stats7z.totalEntries > 0);
-    QVERIFY(stats7z.fileCount > 0);
-    // Test non-existent file returns zero stats
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    const QGCCompression::ArchiveStats emptyStats = QGCCompression::getArchiveStats("/nonexistent/file.zip");
-    verifyExpectedLogMessage();
-    QCOMPARE(emptyStats.totalEntries, 0);
-    QCOMPARE(emptyStats.fileCount, 0);
-    QCOMPARE(emptyStats.totalUncompressedSize, 0);
-}
-
 void QGCCompressionTest::_testValidateArchive()
 {
-    QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    QVERIFY(QGCCompression::validateArchive(zipResource));
-    // Test corrupt archive fails validation
-    const QString corruptZip = tempDir.path() + "/corrupt_validate.zip";
-    QFile corrupt(corruptZip);
-    QVERIFY(corrupt.open(QIODevice::WriteOnly));
-    corrupt.write("This is not a valid ZIP file");
-    corrupt.close();
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
-                     QRegularExpression("Failed to open file.*Unrecognized archive format"));
-    QVERIFY(!QGCCompression::validateArchive(corruptZip));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    // Test non-existent file
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    QVERIFY(!QGCCompression::validateArchive("/nonexistent/path/file.zip"));
-    verifyExpectedLogMessage();
+    QVERIFY(QGCCompression::validateArchive(_zipResource));
 }
 
 void QGCCompressionTest::_testFileExists()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     // File that exists
-    QVERIFY(QGCCompression::fileExists(zipResource, "manifest.json"));
+    QVERIFY(QGCCompression::fileExists(_zipResource, "manifest.json"));
     // File that doesn't exist
-    QVERIFY(!QGCCompression::fileExists(zipResource, "nonexistent.txt"));
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
-    // Empty file name
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
-    QVERIFY(!QGCCompression::fileExists(zipResource, ""));
-    verifyExpectedLogMessage();
-    // Non-existent archive
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    QVERIFY(!QGCCompression::fileExists("/nonexistent/path/file.zip", "test.txt"));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotFound);
-    // A file that is not an archive cannot be said to be without the entry
-    QTemporaryDir tempDir;
-    const QString notAnArchive = tempDir.filePath("not_an_archive.zip");
-    QVERIFY(_writeFile(notAnArchive, "This is not a valid ZIP file"));
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Unrecognized archive format"));
-    QVERIFY(!QGCCompression::fileExists(notAnArchive, "manifest.json"));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+    QCOMPARE(QGCCompression::fileExists(_zipResource, "nonexistent.txt").error,
+             QGCCompression::Error::FileNotInArchive);
 }
 
 void QGCCompressionTest::_testExtractArchiveFiltered()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    // Test filter that accepts all files
-    const QString outputDir1 = tempDir.path() + "/filtered_all";
-    int extractedCount = 0;
-    bool success = QGCCompression::extractArchiveFiltered(
-        zipResource, outputDir1, [&extractedCount](const QGCCompression::ArchiveEntry& entry) -> bool {
-            Q_UNUSED(entry);
-            extractedCount++;
-            return true;  // Accept all
-        });
-    QVERIFY2(success, "extractArchiveFiltered with accept-all filter failed");
-    QVERIFY(extractedCount > 0);
-    QVERIFY(QFile::exists(outputDir1 + "/manifest.json"));
-    // Test filter that rejects all files
-    const QString outputDir2 = tempDir.path() + "/filtered_none";
-    success = QGCCompression::extractArchiveFiltered(zipResource, outputDir2,
-                                                     [](const QGCCompression::ArchiveEntry&) -> bool {
-                                                         return false;  // Reject all
-                                                     });
-    QVERIFY2(success, "extractArchiveFiltered with reject-all filter should still succeed");
-    // Directory should exist but be empty (or not created at all)
-    QDir dir2(outputDir2);
-    if (dir2.exists()) {
-        QStringList files = dir2.entryList(QDir::Files | QDir::NoDotAndDotDot);
-        QVERIFY2(files.isEmpty(), "No files should be extracted when filter rejects all");
-    }
-    // Test filter by extension (only .json files)
-    const QString outputDir3 = tempDir.path() + "/filtered_json";
-    QStringList extractedNames;
-    success = QGCCompression::extractArchiveFiltered(
-        zipResource, outputDir3, [&extractedNames](const QGCCompression::ArchiveEntry& entry) -> bool {
-            if (entry.name.endsWith(".json")) {
-                extractedNames.append(entry.name);
-                return true;
-            }
-            return false;
-        });
-    QVERIFY(success);
-    QVERIFY(extractedNames.contains("manifest.json"));
-    // Test filter receives correct metadata
-    bool metadataCorrect = true;
-    success =
-        QGCCompression::extractArchiveFiltered(zipResource, tempDir.path() + "/filtered_meta",
-                                               [&metadataCorrect](const QGCCompression::ArchiveEntry& entry) -> bool {
-                                                   if (entry.name == "manifest.json") {
-                                                       // Verify metadata is populated
-                                                       if (entry.size <= 0)
-                                                           metadataCorrect = false;
-                                                       if (entry.isDirectory)
-                                                           metadataCorrect = false;
-                                                   }
-                                                   return true;
-                                               });
-    QVERIFY(success);
-    QVERIFY2(metadataCorrect, "Filter did not receive correct metadata");
-    // Test with non-existent file
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    success = QGCCompression::extractArchiveFiltered("/nonexistent/file.zip", outputDir1,
-                                                     [](const QGCCompression::ArchiveEntry&) { return true; });
-    QVERIFY(!success);
-    verifyExpectedLogMessage();
+
+    // The filter is asked about each entry with what the archive tells of it, and what it accepts is extracted
+    const QString acceptedDir = tempDir.filePath("accepted");
+    QList<QGCCompression::ArchiveEntry> asked;
+    QVERIFY(QGCCompression::extractArchiveFiltered(_zipResource, acceptedDir,
+                                                   [&asked](const QGCCompression::ArchiveEntry& entry) {
+                                                       asked.append(entry);
+                                                       return true;
+                                                   }));
+    QCOMPARE(asked.size(), 1);
+    QCOMPARE(asked.constFirst().name, QStringLiteral("manifest.json"));
+    QVERIFY(asked.constFirst().size > 0);
+    QVERIFY(!asked.constFirst().isDirectory);
+    QCOMPARE(_entriesBelow(acceptedDir), QStringList{QStringLiteral("manifest.json")});
+
+    // What it refuses is left out: the extraction still succeeds, and writes nothing
+    const QString refusedDir = tempDir.filePath("refused");
+    QVERIFY(QGCCompression::extractArchiveFiltered(_zipResource, refusedDir,
+                                                   [](const QGCCompression::ArchiveEntry&) { return false; }));
+    QCOMPARE(_entriesBelow(refusedDir), QStringList());
 }
 
 void QGCCompressionTest::_testExtractSingleFile()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     const QString extractedPath = tempDir.path() + "/extracted_manifest.json";
-    QVERIFY(QGCCompression::extractFile(zipResource, "manifest.json", extractedPath));
+    QVERIFY(QGCCompression::extractFile(_zipResource, "manifest.json", extractedPath));
     QVERIFY(QFile::exists(extractedPath));
     QVERIFY(QFileInfo(extractedPath).size() > 0);
     // Verify content contains expected JSON structure
-    QFile extracted(extractedPath);
-    QVERIFY(extracted.open(QIODevice::ReadOnly));
-    const QByteArray content = extracted.readAll();
-    QVERIFY(content.contains("\"name\""));
-    extracted.close();
+    QVERIFY(TestFixtures::readFile(extractedPath).contains("\"name\""));
     // Test non-existent file returns false
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
-    QVERIFY(!QGCCompression::extractFile(zipResource, "nonexistent.txt", tempDir.path() + "/nope.txt"));
+    const QGCCompression::Outcome notFound =
+        QGCCompression::extractFile(_zipResource, "nonexistent.txt", tempDir.path() + "/nope.txt");
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
+    QCOMPARE(notFound.error, QGCCompression::Error::FileNotInArchive);
 }
 
 void QGCCompressionTest::_testExtractFileData()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QByteArray extracted = QGCCompression::extractFileData(zipResource, "manifest.json");
+    QByteArray extracted;
+    QVERIFY(QGCCompression::extractFileData(_zipResource, "manifest.json", extracted));
     QVERIFY(!extracted.isEmpty());
     QVERIFY(extracted.contains("\"name\""));
     // Test non-existent file returns empty
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
-    const QByteArray notFound = QGCCompression::extractFileData(zipResource, "nonexistent.txt");
+    QByteArray notFound = extracted;
+    const QGCCompression::Outcome missing = QGCCompression::extractFileData(_zipResource, "nonexistent.txt", notFound);
     QVERIFY(notFound.isEmpty());
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
-    // Test empty file name returns empty
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
-    const QByteArray emptyName = QGCCompression::extractFileData(zipResource, "");
-    QVERIFY(emptyName.isEmpty());
-    verifyExpectedLogMessage();
+    QCOMPARE(missing.error, QGCCompression::Error::FileNotInArchive);
 }
 
 void QGCCompressionTest::_testExtractMultipleFiles()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     // Extract available file(s)
     const QString outputDir = tempDir.path() + "/multi_extract";
     QStringList filesToExtract = {"manifest.json"};
-    QVERIFY(QGCCompression::extractFiles(zipResource, filesToExtract, outputDir));
+    QVERIFY(QGCCompression::extractFiles(_zipResource, filesToExtract, outputDir));
     QVERIFY(QFile::exists(outputDir + "/manifest.json"));
     // Test with non-existent file in list - should fail
     const QString outputDir2 = tempDir.path() + "/multi_extract2";
     QStringList badFiles = {"manifest.json", "nonexistent.txt"};
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
-    QVERIFY(!QGCCompression::extractFiles(zipResource, badFiles, outputDir2));
+    const QGCCompression::Outcome notAll = QGCCompression::extractFiles(_zipResource, badFiles, outputDir2);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
-    // Test empty list succeeds (no-op)
-    QVERIFY(QGCCompression::extractFiles(zipResource, {}, outputDir));
+    QCOMPARE(notAll.error, QGCCompression::Error::FileNotInArchive);
 }
 
 void QGCCompressionTest::_testExtractByPattern()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     // Test wildcard pattern matching
     const QString outputDir = tempDir.path() + "/pattern_extract";
     QStringList extractedFiles;
-    QVERIFY(QGCCompression::extractByPattern(zipResource, {"*.json"}, outputDir, &extractedFiles));
+    QVERIFY(QGCCompression::extractByPattern(_zipResource, {"*.json"}, outputDir, &extractedFiles));
     QVERIFY(!extractedFiles.isEmpty());
     QVERIFY(extractedFiles.contains("manifest.json"));
     QVERIFY(QFile::exists(outputDir + "/manifest.json"));
     // Test exact filename as pattern (should work like extractFiles)
     const QString outputDir2 = tempDir.path() + "/pattern_exact";
     QStringList exactFiles;
-    QVERIFY(QGCCompression::extractByPattern(zipResource, {"manifest.json"}, outputDir2, &exactFiles));
+    QVERIFY(QGCCompression::extractByPattern(_zipResource, {"manifest.json"}, outputDir2, &exactFiles));
     QCOMPARE(exactFiles.size(), 1);
     QCOMPARE(exactFiles.first(), QStringLiteral("manifest.json"));
     // Test no matches returns false
     const QString outputDir3 = tempDir.path() + "/pattern_nomatch";
-    QVERIFY(!QGCCompression::extractByPattern(zipResource, {"*.xyz"}, outputDir3));
-    // Test empty patterns returns false
-    const QString outputDir4 = tempDir.path() + "/pattern_empty";
-    QVERIFY(!QGCCompression::extractByPattern(zipResource, {}, outputDir4));
+    QVERIFY(!QGCCompression::extractByPattern(_zipResource, {"*.xyz"}, outputDir3));
 }
 
 // ============================================================================
 // Single-File Decompression Tests (from Qt resources)
 // ============================================================================
-void QGCCompressionTest::_testDecompressFromResource()
+void QGCCompressionTest::_testDecompressEveryFormat_data()
 {
-    QTemporaryDir tempDir;
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("resource");
 
-    struct ResourceTest
-    {
-        const char* resource;
-        const char* outputName;
-        const char* name;
-    };
-
-    std::vector<ResourceTest> resources = {
-        {":/unittest/manifest.json.gz", "manifest_gz.json", "GZIP"},
-        {":/unittest/manifest.json.xz", "manifest_xz.json", "XZ"},
-        {":/unittest/manifest.json.zst", "manifest_zst.json", "ZSTD"},
+    QStringList extensions{QStringLiteral("gz"), QStringLiteral("xz"), QStringLiteral("zst")};
 #ifdef QGC_ENABLE_BZIP2
-        {":/unittest/manifest.json.bz2", "manifest_bz2.json", "BZip2"},
+    extensions.append(QStringLiteral("bz2"));
 #endif
 #ifdef QGC_ENABLE_LZ4
-        {":/unittest/manifest.json.lz4", "manifest_lz4.json", "LZ4"},
+    extensions.append(QStringLiteral("lz4"));
 #endif
-    };
-    for (const auto& res : resources) {
-        const QString outputFile = tempDir.path() + "/" + res.outputName;
-        QVERIFY2(QGCCompression::decompressFile(res.resource, outputFile),
-                 qPrintable(QString("Failed to decompress %1 file").arg(res.name)));
-        QVERIFY(QFile::exists(outputFile));
-        QVERIFY(QFileInfo(outputFile).size() > 0);
+    for (const QString& extension : std::as_const(extensions)) {
+        for (const char* api : {"decompressFile", "decompressData"}) {
+            QTest::addRow("%s %s", qPrintable(extension), api)
+                << api << (QStringLiteral(":/unittest/manifest.json.") + extension);
+        }
     }
 }
 
-void QGCCompressionTest::_testDecompressData()
+void QGCCompressionTest::_testDecompressEveryFormat()
 {
-    // Read compressed data from resources and decompress in memory
-    struct ResourceTest
-    {
-        const char* resource;
-        const char* name;
-    };
+    QFETCH(QString, api);
+    QFETCH(QString, resource);
 
-    std::vector<ResourceTest> resources = {
-        {":/unittest/manifest.json.gz", "GZIP"},   {":/unittest/manifest.json.xz", "XZ"},
-        {":/unittest/manifest.json.zst", "ZSTD"},
-#ifdef QGC_ENABLE_BZIP2
-        {":/unittest/manifest.json.bz2", "BZip2"},
-#endif
-#ifdef QGC_ENABLE_LZ4
-        {":/unittest/manifest.json.lz4", "LZ4"},
-#endif
-    };
-    for (const auto& res : resources) {
-        QFile resourceFile(res.resource);
-        QVERIFY2(resourceFile.open(QIODevice::ReadOnly),
-                 qPrintable(QString("Failed to open resource: %1").arg(res.resource)));
-        const QByteArray compressedData = resourceFile.readAll();
-        resourceFile.close();
-        QVERIFY2(!compressedData.isEmpty(), qPrintable(QString("Resource is empty: %1").arg(res.resource)));
-        const QByteArray decompressed = QGCCompression::decompressData(compressedData);
-        QVERIFY2(!decompressed.isEmpty(), qPrintable(QString("%1 decompression returned empty data").arg(res.name)));
-        QVERIFY2(decompressed.contains("\"name\""),
-                 qPrintable(QString("%1 decompressed content invalid").arg(res.name)));
-    }
+    QTemporaryDir tempDir;
+    const QString outputPath = tempDir.filePath("manifest.json");
+    Results results;
+    const QGCCompression::Outcome outcome = _call(api, {.path = resource, .output = outputPath}, &results);
+    QVERIFY2(outcome, qPrintable(outcome.message));
+    const QByteArray content = (api == "decompressData") ? results.data : TestFixtures::readFile(outputPath);
+    QVERIFY(content.contains("\"name\""));
 }
 
 void QGCCompressionTest::_testDecompressIfNeeded()
 {
     QTemporaryDir tempDir;
     // Test with compressed file
-    const QString gzResource = QStringLiteral(":/unittest/manifest.json.gz");
     const QString outputPath = tempDir.path() + "/decompress_if_needed.json";
-    QString result = QGCCompression::decompressIfNeeded(gzResource, outputPath);
+    QString result = QGCCompression::decompressIfNeeded(_gzResource, outputPath);
     QVERIFY2(!result.isEmpty(), "decompressIfNeeded should return output path");
     QCOMPARE(result, outputPath);
     QVERIFY(QFile::exists(outputPath));
     QVERIFY(QFileInfo(outputPath).size() > 0);
-    // Test with non-compressed file (should return original path)
-    const QString plainFile = tempDir.path() + "/plain.txt";
-    QFile plain(plainFile);
-    QVERIFY(plain.open(QIODevice::WriteOnly));
-    plain.write("plain text content");
-    plain.close();
-    result = QGCCompression::decompressIfNeeded(plainFile);
-    QCOMPARE(result, plainFile);
-    QVERIFY(QFile::exists(plainFile));
     // Test with non-existent file
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Decompression failed.*"));
@@ -906,16 +791,12 @@ void QGCCompressionTest::_testDecompressIfNeededDefaultOutput_data()
     QTest::addColumn<QString>("inputName");
     QTest::addColumn<QString>("expectedOutputName");
 
-    const QString gz = QStringLiteral(":/unittest/manifest.json.gz");
-    const QString xz = QStringLiteral(":/unittest/manifest.json.xz");
-    const QString zst = QStringLiteral(":/unittest/manifest.json.zst");
-
-    QTest::newRow("gz") << gz << "manifest.json.gz" << "manifest.json";
-    QTest::newRow("gzip") << gz << "manifest.json.gzip" << "manifest.json";
-    QTest::newRow("xz") << xz << "manifest.json.xz" << "manifest.json";
-    QTest::newRow("lzma") << xz << "manifest.json.lzma" << "manifest.json";
-    QTest::newRow("zst") << zst << "manifest.json.zst" << "manifest.json";
-    QTest::newRow("zstd") << zst << "manifest.json.zstd" << "manifest.json";
+    QTest::newRow("gz") << _gzResource << "manifest.json.gz" << "manifest.json";
+    QTest::newRow("gzip") << _gzResource << "manifest.json.gzip" << "manifest.json";
+    QTest::newRow("xz") << _xzResource << "manifest.json.xz" << "manifest.json";
+    QTest::newRow("lzma") << _xzResource << "manifest.json.lzma" << "manifest.json";
+    QTest::newRow("zst") << _zstResource << "manifest.json.zst" << "manifest.json";
+    QTest::newRow("zstd") << _zstResource << "manifest.json.zstd" << "manifest.json";
 #ifdef QGC_ENABLE_BZIP2
     const QString bz2 = QStringLiteral(":/unittest/manifest.json.bz2");
     QTest::newRow("bz2") << bz2 << "manifest.json.bz2" << "manifest.json";
@@ -924,9 +805,9 @@ void QGCCompressionTest::_testDecompressIfNeededDefaultOutput_data()
 #ifdef QGC_ENABLE_LZ4
     QTest::newRow("lz4") << QStringLiteral(":/unittest/manifest.json.lz4") << "manifest.json.lz4" << "manifest.json";
 #endif
-    QTest::newRow("uppercase") << gz << "MANIFEST.JSON.GZIP" << "MANIFEST.JSON";
-    QTest::newRow("no-extension") << gz << "manifest" << "manifest.decompressed";
-    QTest::newRow("unrecognised-extension") << gz << "manifest.bin" << "manifest.bin.decompressed";
+    QTest::newRow("uppercase") << _gzResource << "MANIFEST.JSON.GZIP" << "MANIFEST.JSON";
+    QTest::newRow("no-extension") << _gzResource << "manifest" << "manifest.decompressed";
+    QTest::newRow("unrecognised-extension") << _gzResource << "manifest.bin" << "manifest.bin.decompressed";
 }
 
 void QGCCompressionTest::_testDecompressIfNeededDefaultOutput()
@@ -935,31 +816,23 @@ void QGCCompressionTest::_testDecompressIfNeededDefaultOutput()
     QFETCH(QString, inputName);
     QFETCH(QString, expectedOutputName);
 
-    QFile resourceFile(resource);
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressed = resourceFile.readAll();
+    const QByteArray compressed = TestFixtures::readFile(resource);
+    QVERIFY(!compressed.isEmpty());
 
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath(inputName);
-    QFile input(inputPath);
-    QVERIFY(input.open(QIODevice::WriteOnly));
-    QCOMPARE(input.write(compressed), compressed.size());
-    input.close();
+    QVERIFY(TestFixtures::writeFile(inputPath, compressed));
 
     const QString expectedPath = tempDir.filePath(expectedOutputName);
     QCOMPARE(QGCCompression::decompressIfNeeded(inputPath), expectedPath);
     QCOMPARE(QGCCompression::strippedPath(inputPath), expectedPath);
 
-    QFile output(expectedPath);
-    QVERIFY(output.open(QIODevice::ReadOnly));
-    QVERIFY(output.readAll().contains("\"name\""));
-    QVERIFY(input.open(QIODevice::ReadOnly));
-    QCOMPARE(input.readAll(), compressed);
-    output.close();
+    QVERIFY(TestFixtures::readFile(expectedPath).contains("\"name\""));
+    QCOMPARE(TestFixtures::readFile(inputPath), compressed);
 
     // decompressFile() without an output path writes to the same place
     const QStringList inputAndOutput = _entriesBelow(tempDir.path());
-    QVERIFY(output.remove());
+    QVERIFY(QFile::remove(expectedPath));
     QVERIFY(QGCCompression::decompressFile(inputPath));
     QCOMPARE(_entriesBelow(tempDir.path()), inputAndOutput);
 }
@@ -998,7 +871,7 @@ void QGCCompressionTest::_testDecompressEmptyStream_data()
     for (const EmptyStream& stream : streams) {
         for (const char* api :
              {"decompressFile", "decompressData", "decompressFromDevice-file", "decompressFromDevice-memory",
-              "decompressIfNeeded", "QGCDecompressDevice", "readFile", "computeFileHash"}) {
+              "decompressIfNeeded", "QGCDecompressDevice", "QGCDecompressDevice-file", "readFile", "computeFileHash"}) {
             QTest::addRow("%s %s", stream.filterName, api)
                 << api << stream.extension << stream.format << stream.filterName << QByteArray::fromHex(stream.hex);
         }
@@ -1013,50 +886,36 @@ void QGCCompressionTest::_testDecompressEmptyStream()
     QFETCH(QString, filterName);
     QFETCH(QByteArray, stream);
     using QGCCompression::Error;
+    using QGCCompression::Format;
 
     // An empty log or parameter file is compressed to a valid stream that holds no data
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath("empty.log." + extension);
     const QString outputPath = tempDir.filePath("output.log");
-    QVERIFY(_writeFile(inputPath, stream));
-    QBuffer device;
-    device.setData(stream);
-    QVERIFY(device.open(QIODevice::ReadOnly));
+    QVERIFY(TestFixtures::writeFile(inputPath, stream));
     const auto isEmptyFile = [](const QString& path) {
         const QFileInfo info(path);
         return info.isFile() && (info.size() == 0);
     };
 
-    // No data is also what a failure returns from the functions that decompress to memory
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    QVERIFY(!QGCCompression::fileExists(QStringLiteral("/nonexistent/archive.zip"), QStringLiteral("a")));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::FileNotFound);
-
-    if (api == "decompressFile") {
-        QVERIFY(QGCCompression::decompressFile(inputPath, outputPath));
-        QVERIFY(isEmptyFile(outputPath));
-        QCOMPARE(QGCCompression::lastError(), Error::None);
-        QCOMPARE(QGCCompression::detectedFilterName(), filterName);
-    } else if (api == "decompressData") {
-        const bool detected = (QGCCompression::detectFormatFromData(stream) == format);
-        QVERIFY(QGCCompression::decompressData(stream, detected ? QGCCompression::Format::Auto : format).isEmpty());
-        QCOMPARE(QGCCompression::lastError(), Error::None);
-        QCOMPARE(QGCCompression::detectedFilterName(), filterName);
-    } else if (api == "decompressFromDevice-file") {
-        QVERIFY(QGCCompression::decompressFromDevice(&device, outputPath));
-        QVERIFY(isEmptyFile(outputPath));
-        QCOMPARE(QGCCompression::lastError(), Error::None);
-    } else if (api == "decompressFromDevice-memory") {
-        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
-        QCOMPARE(QGCCompression::lastError(), Error::None);
-    } else if (api == "decompressIfNeeded") {
+    if (api == "decompressIfNeeded") {
         const QString defaultOutput = tempDir.filePath("empty.log");
         QCOMPARE(QGCCompression::decompressIfNeeded(inputPath), defaultOutput);
         QVERIFY(isEmptyFile(defaultOutput));
-        QCOMPARE(QGCCompression::lastError(), Error::None);
-    } else if (api == "QGCDecompressDevice") {
-        QGCDecompressDevice decompressor(&device);
+        // The signature that tells how it ended writes the file again
+        QVERIFY(QFile::remove(defaultOutput));
+        QGCCompression::Outcome outcome;
+        QCOMPARE(QGCCompression::decompressIfNeeded(inputPath, outcome), defaultOutput);
+        QVERIFY(isEmptyFile(defaultOutput));
+        QCOMPARE(outcome.error, Error::None);
+    } else if (api.startsWith("QGCDecompressDevice")) {
+        // The device reads a file that it opens, or a device that it is given
+        QBuffer source;
+        source.setData(stream);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        QGCDecompressDevice ofFile(inputPath);
+        QGCDecompressDevice ofDevice(&source);
+        QGCDecompressDevice& decompressor = api.endsWith("-file") ? ofFile : ofDevice;
         QVERIFY2(decompressor.open(QIODevice::ReadOnly), qPrintable(decompressor.errorString()));
         QCOMPARE(decompressor.filterName(), filterName);
         QVERIFY(decompressor.atEnd());
@@ -1072,7 +931,21 @@ void QGCCompressionTest::_testDecompressEmptyStream()
         QCOMPARE(QGCCompression::computeFileHash(inputPath),
                  QString::fromLatin1(QCryptographicHash::hash(QByteArray(), QCryptographicHash::Sha256).toHex()));
     } else {
-        QFAIL("Unknown row");
+        // A file has a name to tell its format. Data has its signature, but for the stream of LZMA, which has none
+        const bool tellFormat = (api == "decompressData") && (QGCCompression::detectFormatFromData(stream) != format);
+        // No data is also what a failure gives from the functions that decompress to memory, which are handed
+        // an array with content
+        Results results;
+        const QGCCompression::Outcome outcome = _call(
+            api, {.path = inputPath, .output = outputPath, .format = tellFormat ? format : Format::Auto}, &results);
+        QCOMPARE(outcome.error, Error::None);
+        QCOMPARE(outcome.filterName, filterName);
+        // The output is a file without content, or no data
+        if (api.endsWith("-memory") || (api == "decompressData")) {
+            QVERIFY(results.data.isEmpty());
+        } else {
+            QVERIFY(isEmptyFile(outputPath));
+        }
     }
 }
 
@@ -1097,38 +970,27 @@ void QGCCompressionTest::_testDecompressRejectsStreamWithoutData()
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath("nothing.gz");
     const QString outputPath = tempDir.filePath("nothing");
-    QVERIFY(_writeFile(inputPath, stream));
-    QBuffer device;
-    device.setData(stream);
-    QVERIFY(device.open(QIODevice::ReadOnly));
+    QVERIFY(TestFixtures::writeFile(inputPath, stream));
     const QRegularExpression failure(reason);
 
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
-    QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
-
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
-    QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
-
-    QVERIFY(device.seek(0));
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
-    QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
-
-    if (!stream.isEmpty()) {
-        // decompressData() refuses data of no bytes before it is looked at: see _testDecompressDataErrors
+    for (const char* api :
+         {"decompressFile", "decompressFromDevice-file", "decompressFromDevice-memory", "decompressData"}) {
+        if (stream.isEmpty() && (qstrcmp(api, "decompressData") == 0)) {
+            // decompressData() refuses data of no bytes before it is looked at: see _testDecompressDataErrors
+            continue;
+        }
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
-        QVERIFY(QGCCompression::decompressData(stream).isEmpty());
+        Results results;
+        const QGCCompression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
+        QVERIFY2(outcome.error == Error::InvalidArchive, api);
+        QVERIFY2(results.isEmpty(), api);
     }
 
     // The device does not log: the reason is in its error string
-    QVERIFY(device.seek(0));
+    QBuffer device;
+    device.setData(stream);
+    QVERIFY(device.open(QIODevice::ReadOnly));
     QGCDecompressDevice decompressor(&device);
     QVERIFY(!decompressor.open(QIODevice::ReadOnly));
     QVERIFY2(decompressor.errorString().contains(failure), qPrintable(decompressor.errorString()));
@@ -1171,42 +1033,40 @@ void QGCCompressionTest::_testDecompressPlainInput()
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath("plain.json.gz");
     const QString outputPath = tempDir.filePath("output.json");
-    QVERIFY(_writeFile(inputPath, plain));
-    QBuffer device;
-    device.setData(plain);
-    QVERIFY(device.open(QIODevice::ReadOnly));
+    QVERIFY(TestFixtures::writeFile(inputPath, plain));
     const auto expectNotCompressed = [this]() {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Input is not compressed"));
     };
 
-    if (api == "decompressFile") {
+    QGCCompression::Outcome outcome;
+    Results results;
+    if (refused) {
+        // Data has no name, and this has no signature to detect a format by, so the caller says what it is taken for
+        const bool isData = (api == "decompressData");
         expectNotCompressed();
-        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
-        verifyExpectedLogMessage();
-    } else if (api == "decompressData") {
-        // The data has no signature to detect a format by, so the caller says what it is taken for
-        expectNotCompressed();
-        QVERIFY(QGCCompression::decompressData(plain, QGCCompression::Format::GZIP).isEmpty());
-        verifyExpectedLogMessage();
-    } else if (api == "decompressFromDevice-file") {
-        expectNotCompressed();
-        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
-        verifyExpectedLogMessage();
-    } else if (api == "decompressFromDevice-memory") {
-        expectNotCompressed();
-        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
+        outcome = _call(api,
+                        {.path = inputPath,
+                         .output = outputPath,
+                         .format = isData ? QGCCompression::Format::GZIP : QGCCompression::Format::Auto},
+                        &results);
         verifyExpectedLogMessage();
     } else if (api == "decompressIfNeeded") {
         expectNotCompressed();
         QCOMPARE(QGCCompression::decompressIfNeeded(inputPath), inputPath);
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), Error::None);
+        expectNotCompressed();
+        QCOMPARE(QGCCompression::decompressIfNeeded(inputPath, outcome), inputPath);
+        verifyExpectedLogMessage();
+        QCOMPARE(outcome.error, Error::None);
     } else if (api == "decompressIfNeeded-output") {
         // The file is the result, so it is not removed as a compressed file is once it has been decompressed
         expectNotCompressed();
         QCOMPARE(QGCCompression::decompressIfNeeded(inputPath, outputPath, true), inputPath);
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), Error::None);
+        expectNotCompressed();
+        QCOMPARE(QGCCompression::decompressIfNeeded(inputPath, outcome, outputPath, true), inputPath);
+        verifyExpectedLogMessage();
+        QCOMPARE(outcome.error, Error::None);
     } else if (api == "QGCDecompressDevice") {
         QGCDecompressDevice decompressor(inputPath);
         QVERIFY2(decompressor.open(QIODevice::ReadOnly), qPrintable(decompressor.errorString()));
@@ -1224,18 +1084,19 @@ void QGCCompressionTest::_testDecompressPlainInput()
     }
 
     if (refused) {
-        QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
-        QVERIFY2(QGCCompression::lastErrorString().endsWith(": the input is not compressed"),
-                 qPrintable(QGCCompression::lastErrorString()));
+        QCOMPARE(outcome.error, Error::UnsupportedFormat);
+        QVERIFY2(outcome.message.endsWith(": the input is not compressed"), qPrintable(outcome.message));
         // What was read is on record: the input as it is, which no decompression filter took
-        QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("none"));
+        QCOMPARE(outcome.filterName, QStringLiteral("none"));
+        // And it is not handed back as the data
+        QVERIFY(results.isEmpty());
     }
     // A copy of the input is not a decompressed file: nothing is written, and the input stays
     QCOMPARE(_entriesBelow(tempDir.path()), QStringList{QStringLiteral("plain.json.gz")});
-    QCOMPARE(_readFile(inputPath), plain);
+    QCOMPARE(TestFixtures::readFile(inputPath), plain);
 }
 
-void QGCCompressionTest::_testDecompressOrCopyFile_data()
+void QGCCompressionTest::_testDecompressFileCopiesPlainInput_data()
 {
     QTest::addColumn<QString>("input");
     QTest::addColumn<int>("limitOffset");  // The limit is the size of the content and this; none if negative
@@ -1247,7 +1108,7 @@ void QGCCompressionTest::_testDecompressOrCopyFile_data()
     constexpr int noLimit = -1;
 
     QTest::newRow("compressed") << "compressed" << noLimit << false << "" << Error::None;
-    // What decompressFile() refuses: a file that only has the name of a compressed one
+    // What decompressFile() refuses unless it is told to copy: a file that only has the name of a compressed one
     QTest::newRow("not compressed") << "plain" << noLimit << false << "" << Error::None;
     // The copy is held to the limit and can be cancelled, as a decompression is
     QTest::newRow("not compressed, at the limit") << "plain" << 0 << false << "" << Error::None;
@@ -1259,7 +1120,7 @@ void QGCCompressionTest::_testDecompressOrCopyFile_data()
         << "truncated" << noLimit << false << "(?i)truncated gzip input" << Error::InvalidArchive;
 }
 
-void QGCCompressionTest::_testDecompressOrCopyFile()
+void QGCCompressionTest::_testDecompressFileCopiesPlainInput()
 {
     QFETCH(QString, input);
     QFETCH(int, limitOffset);
@@ -1269,16 +1130,16 @@ void QGCCompressionTest::_testDecompressOrCopyFile()
     using QGCCompression::Error;
 
     const QByteArray content = QByteArray("{\"name\": \"content of the file\"}\n").repeated(100);
-    const QByteArray compressed = _gzipMember(content);
+    const QByteArray compressed = TestFixtures::gzipMember(content);
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath("manifest.json.gz");
     const QString outputPath = tempDir.filePath("manifest.json");
     if (input == "plain") {
-        QVERIFY(_writeFile(inputPath, content));
+        QVERIFY(TestFixtures::writeFile(inputPath, content));
     } else if (input == "compressed") {
-        QVERIFY(_writeFile(inputPath, compressed));
+        QVERIFY(TestFixtures::writeFile(inputPath, compressed));
     } else {
-        QVERIFY(_writeFile(inputPath, compressed.left(compressed.size() / 2)));
+        QVERIFY(TestFixtures::writeFile(inputPath, compressed.left(compressed.size() / 2)));
     }
     const qint64 limit = (limitOffset == -1) ? 0 : (content.size() + 1 + limitOffset);
     QGCCompression::ProgressCallback progress;
@@ -1289,22 +1150,22 @@ void QGCCompressionTest::_testDecompressOrCopyFile()
     if (!warning.isEmpty()) {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
     }
-    const bool written = QGCCompression::decompressOrCopyFile(inputPath, outputPath, progress, limit);
+    const QGCCompression::Outcome outcome = QGCCompression::decompressFile(
+        inputPath, outputPath, QGCCompression::Format::Auto, progress, limit, QGCCompression::PlainInput::Copy);
     if (!warning.isEmpty()) {
         verifyExpectedLogMessage();
     }
 
-    QCOMPARE(written, expectedError == Error::None);
-    QCOMPARE(QGCCompression::lastError(), expectedError);
+    QCOMPARE(outcome.error, expectedError);
+    const bool written = (expectedError == Error::None);
     // The output holds the content, decompressed or as it was, and a failure leaves none. The input stays.
     const QStringList inputOnly{QStringLiteral("manifest.json.gz")};
     const QStringList outputAndInput{QStringLiteral("manifest.json"), QStringLiteral("manifest.json.gz")};
     QCOMPARE(_entriesBelow(tempDir.path()), written ? outputAndInput : inputOnly);
     if (written) {
-        QCOMPARE(_readFile(outputPath), content);
+        QCOMPARE(TestFixtures::readFile(outputPath), content);
         // The filter tells a copy from a decompression
-        QCOMPARE(QGCCompression::detectedFilterName(),
-                 (input == "plain") ? QStringLiteral("none") : QStringLiteral("gzip"));
+        QCOMPARE(outcome.filterName, (input == "plain") ? QStringLiteral("none") : QStringLiteral("gzip"));
     }
 }
 
@@ -1328,12 +1189,11 @@ void QGCCompressionTest::_testProgressCallbackExtract()
     const QString archivePath = tempDir.filePath("compressible.zip");
     const QString outputPath = tempDir.filePath("output");
     // Each entry is many times larger than the archive
-    QVERIFY(_writeFile(archivePath, _makeStreamedZip({{.name = "first.txt", .data = QByteArray(64 * 1024, 'a')},
+    QVERIFY(TestFixtures::writeFile(archivePath,
+                                    _makeStreamedZip({{.name = "first.txt", .data = QByteArray(64 * 1024, 'a')},
                                                       {.name = "second.txt", .data = QByteArray(64 * 1024, 'b')}},
                                                      true)));
     const qint64 archiveSize = QFileInfo(archivePath).size();
-    QFile device(archivePath);
-    QVERIFY(device.open(QIODevice::ReadOnly));
 
     qint64 lastProgress = 0;
     int callCount = 0;
@@ -1349,128 +1209,82 @@ void QGCCompressionTest::_testProgressCallbackExtract()
         return true;  // Continue
     };
 
-    if (api == "extractArchive") {
-        QVERIFY(QGCCompression::extractArchive(archivePath, outputPath, QGCCompression::Format::ZIP, progress));
-    } else if (api == "extractFromDevice") {
-        QVERIFY(QGCCompression::extractFromDevice(&device, outputPath, progress));
-    } else {
-        QVERIFY(QGCCompression::extractArchiveFiltered(
-            archivePath, outputPath, [](const QGCCompression::ArchiveEntry&) { return true; }, progress));
-    }
+    // extractArchive() is told the format, which the other two take no parameter for
+    QVERIFY(_call(
+        api, {.path = archivePath, .output = outputPath, .format = QGCCompression::Format::ZIP, .progress = progress}));
     QVERIFY2(progressValid, "Progress values were invalid");
     QVERIFY(callCount > 0);
     QCOMPARE(_entriesBelow(outputPath), (QStringList{QStringLiteral("first.txt"), QStringLiteral("second.txt")}));
 }
 
 // ============================================================================
-// Format Reported for the Last Operation
+// Format Reported by an Operation
 // ============================================================================
 void QGCCompressionTest::_testDetectedFormat_data()
 {
     QTest::addColumn<QString>("api");
     QTest::addColumn<QString>("resource");
+    QTest::addColumn<QString>("entryName");
+    QTest::addColumn<bool>("succeeds");
     QTest::addColumn<QString>("format");
     QTest::addColumn<QString>("filter");
 
-    const QString gz = QStringLiteral(":/unittest/manifest.json.gz");
-    const QString xz = QStringLiteral(":/unittest/manifest.json.xz");
-    const QString zst = QStringLiteral(":/unittest/manifest.json.zst");
-    const QString zip = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString sevenZip = QStringLiteral(":/unittest/manifest.json.7z");
+    const auto addRow = [](const char* api, const QString& resource, const char* format, const char* filter) {
+        QTest::newRow(api) << api << resource << "manifest.json" << true << format << filter;
+    };
 
-    QTest::newRow("decompressFile") << "decompressFile" << gz << "^raw$" << "gzip";
-    QTest::newRow("decompressData") << "decompressData" << xz << "^raw$" << "xz";
-    QTest::newRow("decompressFromDevice-file") << "decompressFromDevice-file" << zst << "^raw$" << "zstd";
-    QTest::newRow("decompressFromDevice-memory") << "decompressFromDevice-memory" << gz << "^raw$" << "gzip";
-    QTest::newRow("extractArchive") << "extractArchive" << zip << "^ZIP" << "none";
-    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << sevenZip << "^7-Zip" << "none";
-    QTest::newRow("extractFromDevice") << "extractFromDevice" << zip << "^ZIP" << "none";
-    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << zip << "^ZIP" << "none";
-    QTest::newRow("extractFileDataFromDevice") << "extractFileDataFromDevice" << sevenZip << "^7-Zip" << "none";
-    QTest::newRow("extractFile") << "extractFile" << zip << "^ZIP" << "none";
-    QTest::newRow("extractFileData") << "extractFileData" << sevenZip << "^7-Zip" << "none";
-    QTest::newRow("extractFiles") << "extractFiles" << zip << "^ZIP" << "none";
-    QTest::newRow("extractByPattern") << "extractByPattern" << sevenZip << "^7-Zip" << "none";
-    QTest::newRow("listArchive") << "listArchive" << zip << "^ZIP" << "none";
-    QTest::newRow("listArchiveDetailed") << "listArchiveDetailed" << sevenZip << "^7-Zip" << "none";
-    QTest::newRow("getArchiveStats") << "getArchiveStats" << zip << "^ZIP" << "none";
-    QTest::newRow("validateArchive") << "validateArchive" << sevenZip << "^7-Zip" << "none";
-    QTest::newRow("fileExists") << "fileExists" << zip << "^ZIP" << "none";
+    addRow("decompressFile", _gzResource, "^raw$", "gzip");
+    addRow("decompressData", _xzResource, "^raw$", "xz");
+    addRow("decompressFromDevice-file", _zstResource, "^raw$", "zstd");
+    addRow("decompressFromDevice-memory", _gzResource, "^raw$", "gzip");
+    addRow("extractArchive", _zipResource, "^ZIP", "none");
+    addRow("extractArchiveAtomic", _sevenZipResource, "^7-Zip", "none");
+    addRow("extractFromDevice", _zipResource, "^ZIP", "none");
+    addRow("extractArchiveFiltered", _zipResource, "^ZIP", "none");
+    addRow("extractFileDataFromDevice", _sevenZipResource, "^7-Zip", "none");
+    addRow("extractFile", _zipResource, "^ZIP", "none");
+    addRow("extractFileData", _sevenZipResource, "^7-Zip", "none");
+    addRow("extractFiles", _zipResource, "^ZIP", "none");
+    QTest::newRow("extractByPattern") << "extractByPattern" << _sevenZipResource << "*.json" << true << "^7-Zip"
+                                      << "none";
+    addRow("listArchive", _zipResource, "^ZIP", "none");
+    addRow("listArchiveDetailed", _sevenZipResource, "^7-Zip", "none");
+    addRow("getArchiveStats", _zipResource, "^ZIP", "none");
+    addRow("validateArchive", _sevenZipResource, "^7-Zip", "none");
+    addRow("fileExists", _zipResource, "^ZIP", "none");
     // The archive was opened and its first header read, which is what tells the format
-    QTest::newRow("fileExists of an absent entry") << "fileExists-absent" << sevenZip << "^7-Zip" << "none";
+    QTest::newRow("fileExists of an absent entry")
+        << "fileExists" << _sevenZipResource << "absent.txt" << false << "^7-Zip" << "none";
 }
 
 void QGCCompressionTest::_testDetectedFormat()
 {
     QFETCH(QString, api);
     QFETCH(QString, resource);
+    QFETCH(QString, entryName);
+    QFETCH(bool, succeeds);
     QFETCH(QString, format);
     QFETCH(QString, filter);
 
     QTemporaryDir tempDir;
-    const QString outputPath = tempDir.filePath("output");
-    const QByteArray data = _readFile(resource);
-    QBuffer device;
-    device.setData(data);
-    QVERIFY(device.open(QIODevice::ReadOnly));
+    Results results;
+    const QGCCompression::Outcome outcome =
+        _call(api, {.path = resource, .output = tempDir.filePath("output"), .names = {entryName}}, &results);
 
-    // An operation of the other kind first: what it detected must not be what is reported afterwards
-    const bool isArchive = QGCCompression::isArchiveFile(resource);
-    if (isArchive) {
-        QVERIFY(!QGCCompression::decompressData(_readFile(QStringLiteral(":/unittest/manifest.json.xz"))).isEmpty());
-        QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("xz"));
-    } else {
-        QVERIFY(
-            QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), tempDir.filePath("other")));
-        QVERIFY(QGCCompression::detectedFormatName().startsWith("ZIP"));
-    }
-
-    if (api == "decompressFile") {
-        QVERIFY(QGCCompression::decompressFile(resource, outputPath));
-    } else if (api == "decompressData") {
-        QVERIFY(!QGCCompression::decompressData(data).isEmpty());
-    } else if (api == "decompressFromDevice-file") {
-        QVERIFY(QGCCompression::decompressFromDevice(&device, outputPath));
-    } else if (api == "decompressFromDevice-memory") {
-        QVERIFY(!QGCCompression::decompressFromDevice(&device).isEmpty());
-    } else if (api == "extractArchive") {
-        QVERIFY(QGCCompression::extractArchive(resource, outputPath));
-    } else if (api == "extractArchiveAtomic") {
-        QVERIFY(QGCCompression::extractArchiveAtomic(resource, outputPath));
-    } else if (api == "extractFromDevice") {
-        QVERIFY(QGCCompression::extractFromDevice(&device, outputPath));
-    } else if (api == "extractArchiveFiltered") {
-        QVERIFY(QGCCompression::extractArchiveFiltered(resource, outputPath,
-                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
-    } else if (api == "extractFileDataFromDevice") {
-        QVERIFY(!QGCCompression::extractFileDataFromDevice(&device, QStringLiteral("manifest.json")).isEmpty());
-    } else if (api == "extractFile") {
-        QVERIFY(QGCCompression::extractFile(resource, QStringLiteral("manifest.json"), outputPath));
-    } else if (api == "extractFileData") {
-        QVERIFY(!QGCCompression::extractFileData(resource, QStringLiteral("manifest.json")).isEmpty());
-    } else if (api == "extractFiles") {
-        QVERIFY(QGCCompression::extractFiles(resource, {QStringLiteral("manifest.json")}, outputPath));
-    } else if (api == "extractByPattern") {
-        QVERIFY(QGCCompression::extractByPattern(resource, {QStringLiteral("*.json")}, outputPath));
-    } else if (api == "listArchive") {
-        QVERIFY(!QGCCompression::listArchive(resource).isEmpty());
+    QCOMPARE(static_cast<bool>(outcome), succeeds);
+    QVERIFY2(QRegularExpression(format).match(outcome.formatName).hasMatch(), qPrintable(outcome.formatName));
+    QCOMPARE(outcome.filterName, filter);
+    // What an entry point gives back is what it read, and not what it was handed to fill
+    if (api == "listArchive") {
+        QCOMPARE(results.names, QStringList{entryName});
     } else if (api == "listArchiveDetailed") {
-        QVERIFY(!QGCCompression::listArchiveDetailed(resource).isEmpty());
+        QCOMPARE(results.entries.size(), 1);
+        QCOMPARE(results.entries.constFirst().name, entryName);
     } else if (api == "getArchiveStats") {
-        QCOMPARE(QGCCompression::getArchiveStats(resource).fileCount, 1);
-    } else if (api == "validateArchive") {
-        QVERIFY(QGCCompression::validateArchive(resource));
-    } else if (api == "fileExists") {
-        QVERIFY(QGCCompression::fileExists(resource, QStringLiteral("manifest.json")));
-    } else if (api == "fileExists-absent") {
-        QVERIFY(!QGCCompression::fileExists(resource, QStringLiteral("absent.txt")));
-    } else {
-        QFAIL("Unknown row");
+        QCOMPARE(results.stats.fileCount, 1);
+    } else if (api.contains("Data") || api.endsWith("-memory")) {
+        QVERIFY2(results.data.contains("\"name\""), results.data.constData());
     }
-
-    const QString detectedFormat = QGCCompression::detectedFormatName();
-    QVERIFY2(QRegularExpression(format).match(detectedFormat).hasMatch(), qPrintable(detectedFormat));
-    QCOMPARE(QGCCompression::detectedFilterName(), filter);
 }
 
 void QGCCompressionTest::_testDetectedFormatAfterFailure_data()
@@ -1488,6 +1302,10 @@ void QGCCompressionTest::_testDetectedFormatAfterFailure_data()
     QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << 2;
     QTest::newRow("extractFromDevice") << "extractFromDevice" << 1;
     QTest::newRow("extractFileDataFromDevice") << "extractFileDataFromDevice" << 1;
+    QTest::newRow("listArchive") << "listArchive" << 1;
+    QTest::newRow("validateArchive") << "validateArchive" << 1;
+    // A file that is not an archive cannot be said to be without the entry
+    QTest::newRow("fileExists") << "fileExists" << 1;
 }
 
 void QGCCompressionTest::_testDetectedFormatAfterFailure()
@@ -1497,130 +1315,71 @@ void QGCCompressionTest::_testDetectedFormatAfterFailure()
 
     // Neither input gets as far as the header that tells its format: a gzip stream that ends with its own
     // header, and bytes that are no archive
-    const bool isStream = api.startsWith("decompress");
+    const bool isStream = _isStreamEntryPoint(api);
     const QByteArray data =
         isStream ? QByteArray::fromHex("1f8b08000000000000ff") : QByteArray("This is not an archive of any format");
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath(isStream ? "cut.gz" : "garbage.zip");
     const QString outputPath = tempDir.filePath("output");
-    QVERIFY(_writeFile(inputPath, data));
-    QBuffer device;
-    device.setData(data);
-    QVERIFY(device.open(QIODevice::ReadOnly));
+    QVERIFY(TestFixtures::writeFile(inputPath, data));
 
-    // What the operation before it detected must not be reported for the one that fails
-    QVERIFY(QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), tempDir.filePath("other")));
-    QVERIFY(QGCCompression::detectedFormatName().startsWith("ZIP"));
-    QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("none"));
-
+    // The warning tells what could not be opened and why: the stream is cut, the text is no archive
+    const QString source = api.contains("FromDevice")  ? QStringLiteral("device")
+                           : (api == "decompressData") ? QStringLiteral("compressed data")
+                                                       : QStringLiteral("file");
+    const QRegularExpression report(QStringLiteral("Failed to open %1.*%2")
+                                        .arg(source, isStream ? QStringLiteral("truncated gzip input")
+                                                              : QStringLiteral("Unrecognized archive format")));
+    // An atomic extraction opens the archive once, and then says with a warning of its own that it has nothing
+    const QRegularExpression nothingToExtract("Archive is empty or invalid");
     for (int i = 0; i < reports; ++i) {
-        expectLogMessage(
-            "Utilities.QGClibarchive", QtWarningMsg,
-            QRegularExpression("truncated gzip input|Unrecognized archive format|Archive is empty or invalid"));
+        const bool ownWarning = (api == "extractArchiveAtomic") && (i == reports - 1);
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, ownWarning ? nothingToExtract : report);
     }
-    if (api == "decompressFile") {
-        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
-    } else if (api == "decompressData") {
-        QVERIFY(QGCCompression::decompressData(data).isEmpty());
-    } else if (api == "decompressFromDevice-file") {
-        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
-    } else if (api == "decompressFromDevice-memory") {
-        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
-    } else if (api == "extractArchive") {
-        QVERIFY(!QGCCompression::extractArchive(inputPath, outputPath));
-    } else if (api == "extractArchiveAtomic") {
-        QVERIFY(!QGCCompression::extractArchiveAtomic(inputPath, outputPath));
-    } else if (api == "extractArchiveFiltered") {
-        QVERIFY(!QGCCompression::extractArchiveFiltered(inputPath, outputPath,
-                                                        [](const QGCCompression::ArchiveEntry&) { return true; }));
-    } else if (api == "extractFromDevice") {
-        QVERIFY(!QGCCompression::extractFromDevice(&device, outputPath));
-    } else if (api == "extractFileDataFromDevice") {
-        QVERIFY(QGCCompression::extractFileDataFromDevice(&device, QStringLiteral("manifest.json")).isEmpty());
-    } else {
-        QFAIL("Unknown row");
-    }
+    Results results;
+    const QGCCompression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
     for (int i = 0; i < reports; ++i) {
         verifyExpectedLogMessage();
     }
 
-    QCOMPARE(QGCCompression::detectedFormatName(), QString());
-    QCOMPARE(QGCCompression::detectedFilterName(), QString());
+    QCOMPARE(outcome.error, QGCCompression::Error::InvalidArchive);
+    QVERIFY(results.isEmpty());
+    QCOMPARE(outcome.formatName, QString());
+    QCOMPARE(outcome.filterName, QString());
 }
 
 // ============================================================================
 // Edge Cases and Error Handling Tests
 // ============================================================================
-void QGCCompressionTest::_testCorruptArchive()
+void QGCCompressionTest::_testMissingInput_data()
 {
-    QTemporaryDir tempDir;
-    // Create a file with garbage data pretending to be a ZIP
-    const QString corruptZip = tempDir.path() + "/corrupt.zip";
-    QFile file(corruptZip);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.write("This is not a valid ZIP file - just garbage data!");
-    file.close();
-    // Attempt to extract - should fail gracefully
-    // extractAnyArchive opens the archive twice: once in getArchiveStats, once directly
-    const QString outputPath = tempDir.path() + "/corrupt_output";
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
-                     QRegularExpression("Failed to open file.*Unrecognized archive format"));
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
-                     QRegularExpression("Failed to open file.*Unrecognized archive format"));
-    bool success = QGCCompression::extractArchive(corruptZip, outputPath);
-    QVERIFY2(!success, "Extracting corrupt archive should fail");
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    // Attempt to list - should return empty or fail
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
-                     QRegularExpression("Failed to open file.*Unrecognized archive format"));
-    QStringList entries = QGCCompression::listArchive(corruptZip);
-    QVERIFY2(entries.isEmpty(), "Listing corrupt archive should return empty list");
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    // Test corrupt compressed file with valid GZIP header but truncated data
-    const QString corruptGz = tempDir.path() + "/corrupt.gz";
-    QFile gzFile(corruptGz);
-    QVERIFY(gzFile.open(QIODevice::WriteOnly));
-    const char corruptGzipData[] = {
-        '\x1f', '\x8b',                  // GZIP magic
-        '\x08',                          // Deflate method
-        '\x00',                          // Flags
-        '\x00', '\x00', '\x00', '\x00',  // Modification time
-        '\x00',                          // Extra flags
-        '\xff',                          // OS (unknown)
-    };
-    gzFile.write(corruptGzipData, sizeof(corruptGzipData));
-    gzFile.close();
-    const QString decompressedPath = tempDir.path() + "/corrupt_decompressed";
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
-                     QRegularExpression("Failed to open file.*truncated gzip input"));
-    success = QGCCompression::decompressFile(corruptGz, decompressedPath);
-    QVERIFY2(!success, "Decompressing truncated GZIP file should fail");
-    verifyExpectedLogMessage();
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"decompressFile", "extractArchive", "extractArchiveAtomic", "extractArchiveFiltered",
+                            "extractFile", "extractFileData", "extractFiles", "extractByPattern", "listArchive",
+                            "listArchiveDetailed", "getArchiveStats", "validateArchive", "fileExists"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
 }
 
-void QGCCompressionTest::_testNonExistentInput()
+void QGCCompressionTest::_testMissingInput()
 {
+    QFETCH(QString, api);
+
     QTemporaryDir tempDir;
-    const QString nonExistent = "/path/that/does/not/exist/file.txt";
-    const QString outputPath = tempDir.path() + "/output";
-    // Test decompressFile with non-existent input
+    const QString inputPath = tempDir.filePath(_isStreamEntryPoint(api) ? "absent.gz" : "absent.zip");
+
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    QVERIFY2(!QGCCompression::decompressFile(nonExistent + ".gz", outputPath),
-             "decompressFile should fail for non-existent input");
+    Results results;
+    const QGCCompression::Outcome outcome =
+        _call(api, {.path = inputPath, .output = tempDir.filePath("output")}, &results);
     verifyExpectedLogMessage();
-    // Test extractArchive with non-existent archive
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    QVERIFY2(!QGCCompression::extractArchive(nonExistent + ".zip", outputPath),
-             "extractArchive should fail for non-existent archive");
-    verifyExpectedLogMessage();
-    // Test listArchive with non-existent file
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-    QStringList entries = QGCCompression::listArchive(nonExistent + ".zip");
-    QVERIFY2(entries.isEmpty(), "listArchive should return empty for non-existent file");
-    verifyExpectedLogMessage();
+
+    // The file is refused before anything is read or written, and what was handed in to fill is emptied
+    QCOMPARE(outcome.error, QGCCompression::Error::FileNotFound);
+    QVERIFY2(outcome.message.endsWith(inputPath), qPrintable(outcome.message));
+    QVERIFY(results.isEmpty());
+    QCOMPARE(_entriesBelow(tempDir.path()), QStringList());
 }
 
 void QGCCompressionTest::_testNoExternalDecompressors()
@@ -1634,11 +1393,11 @@ void QGCCompressionTest::_testNoExternalDecompressors()
     QVERIFY(QDir().mkpath(binPath));
     // Stand-ins for the programs libarchive runs when it has no built-in decoder for a filter
     for (const char* program : {"bzip2", "lz4", "lrzip"}) {
-        QFile script(binPath + QLatin1Char('/') + QLatin1String(program));
-        QVERIFY(script.open(QIODevice::WriteOnly));
-        script.write("#!/bin/sh\n: > '" + QFile::encodeName(markerPath) + "'\nwhile read -r _; do :; done\n");
-        script.close();
-        QVERIFY(script.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+        const QString scriptPath = binPath + QLatin1Char('/') + QLatin1String(program);
+        QVERIFY(TestFixtures::writeFile(
+            scriptPath, "#!/bin/sh\n: > '" + QFile::encodeName(markerPath) + "'\nwhile read -r _; do :; done\n"));
+        QVERIFY(QFile::setPermissions(scriptPath,
+                                      QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
     }
     const QByteArray originalPath = qgetenv("PATH");
     qputenv("PATH", QFile::encodeName(binPath));
@@ -1648,58 +1407,46 @@ void QGCCompressionTest::_testNoExternalDecompressors()
 
     // lrzip is always decoded by an external program
     const QString lrzipTar = tempDir.filePath("lrzip.tar");
-    QFile lrzipFile(lrzipTar);
-    QVERIFY(lrzipFile.open(QIODevice::WriteOnly));
-    lrzipFile.write(QByteArray("LRZI\x00\x06", 6) + padding);
-    lrzipFile.close();
+    QVERIFY(TestFixtures::writeFile(lrzipTar, QByteArray("LRZI\x00\x06", 6) + padding));
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Unrecognized archive format"));
-    QVERIFY(QGCCompression::listArchive(lrzipTar).isEmpty());
+    QStringList lrzipEntries;
+    QVERIFY(!QGCCompression::listArchive(lrzipTar, lrzipEntries));
     verifyExpectedLogMessage();
+    QVERIFY(lrzipEntries.isEmpty());
 
 #ifndef QGC_ENABLE_BZIP2
     // Each way of opening a single stream refuses one this build cannot decode
     const QByteArray bzip2Stream = QByteArray("BZh91AY&SY") + padding;
     const QString bzip2Path = tempDir.filePath("stream.bz2");
-    QVERIFY(_writeFile(bzip2Path, bzip2Stream));
+    QVERIFY(TestFixtures::writeFile(bzip2Path, bzip2Stream));
+
+    for (const char* api :
+         {"decompressData", "decompressFile", "decompressFromDevice-memory", "decompressFromDevice-file"}) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("bzip2.*not supported"));
+        Results results;
+        const QGCCompression::Outcome outcome =
+            _call(api, {.path = bzip2Path, .output = tempDir.filePath("stream")}, &results);
+        verifyExpectedLogMessage();
+        QVERIFY2(outcome.error == QGCCompression::Error::UnsupportedFormat, api);
+        QVERIFY2(results.isEmpty(), api);
+        QVERIFY2(!QFile::exists(tempDir.filePath("stream")), api);
+    }
+
+    // The device does not log: the reason is in its error string
     QBuffer bzip2Device;
     bzip2Device.setData(bzip2Stream);
     QVERIFY(bzip2Device.open(QIODevice::ReadOnly));
-    const auto expectBzip2Refused = [this]() {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("bzip2.*not supported"));
-    };
-
-    expectBzip2Refused();
-    QVERIFY(QGCCompression::decompressData(bzip2Stream).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
-
-    expectBzip2Refused();
-    QVERIFY(!QGCCompression::decompressFile(bzip2Path, tempDir.filePath("stream")));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
-    QVERIFY(!QFile::exists(tempDir.filePath("stream")));
-
-    expectBzip2Refused();
-    QVERIFY(QGCCompression::decompressFromDevice(&bzip2Device).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
-
-    expectBzip2Refused();
-    QVERIFY(!QGCCompression::decompressFromDevice(&bzip2Device, tempDir.filePath("stream")));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
-    QVERIFY(!QFile::exists(tempDir.filePath("stream")));
-
-    // The device does not log: the reason is in its error string
     QGCDecompressDevice bzip2Decompressor(&bzip2Device);
     QVERIFY(!bzip2Decompressor.open(QIODevice::ReadOnly));
     QCOMPARE(bzip2Decompressor.errorString(), QStringLiteral("bzip2 decompression is not supported by this build"));
 #endif
 #ifndef QGC_ENABLE_LZ4
+    QByteArray lz4Decoded("to be replaced");
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("LZ4.*not supported"));
-    QVERIFY(QGCCompression::decompressData(QByteArray("\x04\x22\x4D\x18\x64\x40\xA7", 7) + padding).isEmpty());
+    QCOMPARE(QGCCompression::decompressData(QByteArray("\x04\x22\x4D\x18\x64\x40\xA7", 7) + padding, lz4Decoded).error,
+             QGCCompression::Error::UnsupportedFormat);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
+    QVERIFY(lz4Decoded.isEmpty());
 #endif
 
     QVERIFY2(!QFile::exists(markerPath), "An external decompression program was run");
@@ -1716,8 +1463,8 @@ void QGCCompressionTest::_testTruncatedArchive_data()
     const QByteArray tar = _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
                                      {.name = "second.txt", .data = QByteArray(600, 'b')},
                                      {.name = "third.txt", .data = "c"}});
-    const QByteArray zip = _readFile(QStringLiteral(":/unittest/manifest.json.zip"));
-    const QByteArray sevenZip = _readFile(QStringLiteral(":/unittest/manifest.json.7z"));
+    const QByteArray zip = TestFixtures::readFile(_zipResource);
+    const QByteArray sevenZip = TestFixtures::readFile(_sevenZipResource);
 
     // first.txt takes three 512-byte blocks: its header and two of data
     QTest::newRow("tar-inside-header") << "cut.tar" << tar.left(3 * 512 + 256) << QString();
@@ -1736,7 +1483,7 @@ void QGCCompressionTest::_testTruncatedArchive()
 
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(fileName);
-    QVERIFY(_writeFile(archivePath, data));
+    QVERIFY(TestFixtures::writeFile(archivePath, data));
 
     // Each call reports the damage once, where it meets it: at an entry header or in entry data
     const QRegularExpression readFailure(
@@ -1745,97 +1492,57 @@ void QGCCompressionTest::_testTruncatedArchive()
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, readFailure);
     };
 
-    expectReadFailure();
-    QVERIFY(!QGCCompression::validateArchive(archivePath));
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-
-    // An archive without entries lists as empty too: the error is what tells a damaged one
-    expectReadFailure();
-    QVERIFY(QGCCompression::listArchive(archivePath).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-
-    expectReadFailure();
-    QVERIFY(QGCCompression::listArchiveDetailed(archivePath).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-
-    expectReadFailure();
-    QCOMPARE(QGCCompression::getArchiveStats(archivePath).totalEntries, 0);
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-
-    // Once for the size pre-check and once for the extraction itself
-    expectReadFailure();
-    expectReadFailure();
-    QVERIFY(!QGCCompression::extractArchive(archivePath, tempDir.filePath("output")));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+    using QGCCompression::Error;
 
     const QString atomicOutput = tempDir.filePath("atomic_output");
     expectReadFailure();
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Archive is empty or invalid"));
-    QVERIFY(!QGCCompression::extractArchiveAtomic(archivePath, atomicOutput));
+    QCOMPARE(QGCCompression::extractArchiveAtomic(archivePath, atomicOutput).error, Error::InvalidArchive);
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     QVERIFY(!QFileInfo::exists(atomicOutput));
 
-    // A search for an entry the archive does not have reads the headers up to the damage, which is
-    // then what is reported: the entry is not said to be missing
+    // The error tells a damaged archive from one without entries, which lists as empty too, and from one
+    // without the entry asked for: a search for an entry the archive does not have reads the headers up to
+    // the damage, which is then what is reported. Nothing is handed back.
     const QString absent = QStringLiteral("absent.txt");
-    const QString absentOutput = tempDir.filePath("absent_output");
-    const QString partialDir = tempDir.filePath("partial");
     const auto rejectAll = [](const QGCCompression::ArchiveEntry&) { return false; };
-    QFile archiveFile(archivePath);
-    QVERIFY(archiveFile.open(QIODevice::ReadOnly));
 
-    struct Search
+    struct Call
     {
-        const char* name;
+        const char* api;
         int reports;
-        std::function<bool()> failed;
     };
 
-    const QList<Search> searches{
-        {"extractFile", 1, [&]() { return !QGCCompression::extractFile(archivePath, absent, absentOutput); }},
-        {"extractFileData", 1, [&]() { return QGCCompression::extractFileData(archivePath, absent).isEmpty(); }},
-        {"extractFiles", 1, [&]() { return !QGCCompression::extractFiles(archivePath, {absent}, partialDir); }},
-        {"extractByPattern", 1, [&]() { return !QGCCompression::extractByPattern(archivePath, {absent}, partialDir); }},
-        {"fileExists", 1, [&]() { return !QGCCompression::fileExists(archivePath, absent); }},
-        // Once for the size pre-check and once for the extraction itself
-        {"extractArchiveFiltered", 2,
-         [&]() { return !QGCCompression::extractArchiveFiltered(archivePath, partialDir, rejectAll); }},
-        {"extractFromDevice", 1,
-         [&]() { return !QGCCompression::extractFromDevice(&archiveFile, tempDir.filePath("device_output")); }},
-        {"extractFileDataFromDevice", 1,
-         [&]() {
-             return archiveFile.seek(0) && QGCCompression::extractFileDataFromDevice(&archiveFile, absent).isEmpty();
-         }},
-        {"QGCArchiveFile", 1,
-         [&]() {
-             QGCArchiveFile entry(archivePath, absent);
-             return !entry.open(QIODevice::ReadOnly) && !entry.errorString().contains("not found");
-         }},
-    };
-    for (const Search& search : searches) {
-        for (int i = 0; i < search.reports; ++i) {
+    for (const Call& call : {Call{"validateArchive", 1}, Call{"listArchive", 1}, Call{"listArchiveDetailed", 1},
+                             Call{"getArchiveStats", 1}, Call{"extractFile", 1}, Call{"extractFileData", 1},
+                             Call{"extractFiles", 1}, Call{"extractByPattern", 1}, Call{"fileExists", 1},
+                             // Once for the size pre-check and once for the extraction itself
+                             Call{"extractArchive", 2}, Call{"extractArchiveFiltered", 2}, Call{"extractFromDevice", 1},
+                             Call{"extractFileDataFromDevice", 1}}) {
+        for (int i = 0; i < call.reports; ++i) {
             expectReadFailure();
         }
-        QVERIFY2(search.failed(), search.name);
-        for (int i = 0; i < search.reports; ++i) {
+        Results results;
+        const QGCCompression::Outcome outcome = _call(call.api,
+                                                      {.path = archivePath,
+                                                       .output = tempDir.filePath(QLatin1String(call.api)),
+                                                       .names = {absent},
+                                                       .filter = rejectAll},
+                                                      &results);
+        QVERIFY2(outcome.error == Error::InvalidArchive, call.api);
+        QVERIFY2(results.isEmpty(), call.api);
+        for (int i = 0; i < call.reports; ++i) {
             verifyExpectedLogMessage();
         }
     }
-    QVERIFY(!QFileInfo::exists(absentOutput));
+    QVERIFY(!QFileInfo::exists(tempDir.filePath("extractFile")));
 
-    // fileExists() answers no for two reasons, and the error is all that tells them apart
     expectReadFailure();
-    QVERIFY(!QGCCompression::fileExists(archivePath, absent));
+    QGCArchiveFile absentEntry(archivePath, absent);
+    QVERIFY(!absentEntry.open(QIODevice::ReadOnly));
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+    QVERIFY2(!absentEntry.errorString().contains("not found"), qPrintable(absentEntry.errorString()));
 
     if (cutEntry.isEmpty()) {
         return;
@@ -1844,39 +1551,41 @@ void QGCCompressionTest::_testTruncatedArchive()
     // An entry whose header comes before the damage is there
     QVERIFY(QGCCompression::fileExists(archivePath, cutEntry));
 
-    // An entry whose data is cut is found, and fails while it is copied: no part of it is kept
+    // An entry whose data is cut is found, and fails while it is copied. Handed over alone, as a file or as
+    // data, no part of it is kept
     const auto expectDataFailure = [this]() {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Read error"));
     };
     const QString cutOutput = tempDir.filePath("cut_output");
-    const QString cutDir = tempDir.filePath("cut");
-    const auto acceptAll = [](const QGCCompression::ArchiveEntry&) { return true; };
 
     expectDataFailure();
     QVERIFY(!QGCCompression::extractFile(archivePath, cutEntry, cutOutput));
     verifyExpectedLogMessage();
     QVERIFY(!QFileInfo::exists(cutOutput));
 
+    QByteArray cutData("to be replaced");
     expectDataFailure();
-    QVERIFY(QGCCompression::extractFileData(archivePath, cutEntry).isEmpty());
+    QVERIFY(!QGCCompression::extractFileData(archivePath, cutEntry, cutData));
     verifyExpectedLogMessage();
+    QVERIFY(cutData.isEmpty());
 
-    expectDataFailure();
-    QVERIFY(!QGCCompression::extractFiles(archivePath, {cutEntry}, cutDir));
-    verifyExpectedLogMessage();
-
-    expectDataFailure();
-    QVERIFY(!QGCCompression::extractByPattern(archivePath, {cutEntry}, cutDir));
-    verifyExpectedLogMessage();
-
-    expectReadFailure();
-    expectDataFailure();
-    QVERIFY(!QGCCompression::extractArchiveFiltered(archivePath, cutDir, acceptAll));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-
-    QVERIFY(!QFileInfo::exists(cutDir + QLatin1Char('/') + cutEntry));
+    // The functions that select what they extract into a directory leave what extractArchive() leaves: the
+    // entry, with what could be read of it
+    for (const Call& selection : {Call{"extractFiles", 1}, Call{"extractByPattern", 1},
+                                  // Once for the size pre-check and once for the extraction itself
+                                  Call{"extractArchiveFiltered", 2}}) {
+        const QString outputDir = tempDir.filePath(QStringLiteral("cut_") + QLatin1String(selection.api));
+        for (int i = 0; i < selection.reports; ++i) {
+            expectReadFailure();
+        }
+        const QGCCompression::Outcome outcome =
+            _call(selection.api, {.path = archivePath, .output = outputDir, .names = {cutEntry}});
+        for (int i = 0; i < selection.reports; ++i) {
+            verifyExpectedLogMessage();
+        }
+        QVERIFY2(outcome.error == Error::InvalidArchive, selection.api);
+        QVERIFY2(QFileInfo::exists(outputDir + QLatin1Char('/') + cutEntry), selection.api);
+    }
 }
 
 void QGCCompressionTest::_testTruncatedStream_data()
@@ -1899,36 +1608,16 @@ void QGCCompressionTest::_testTruncatedStream()
     const QString outputPath = tempDir.filePath("cut.bin");
     // Four members of 64 KiB each, cut inside the third: the damage is met after data has been decompressed
     QVERIFY(_writeGzipOfZeros(inputPath, 4));
-    const QByteArray whole = _readFile(inputPath);
+    const QByteArray whole = TestFixtures::readFile(inputPath);
     const QByteArray cut = whole.left(whole.size() * 5 / 8);
-    QVERIFY(_writeFile(inputPath, cut));
+    QVERIFY(TestFixtures::writeFile(inputPath, cut));
     QBuffer device;
     device.setData(cut);
     QVERIFY(device.open(QIODevice::ReadOnly));
 
     const QRegularExpression fileFailure("Decompression error.*truncated");
     const QRegularExpression memoryFailure("Read error.*truncated");
-    if (api == "decompressFile") {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, fileFailure);
-        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
-        verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    } else if (api == "decompressData") {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, memoryFailure);
-        QVERIFY(QGCCompression::decompressData(cut).isEmpty());
-        verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    } else if (api == "decompressFromDevice-file") {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, fileFailure);
-        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
-        verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    } else if (api == "decompressFromDevice-memory") {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, memoryFailure);
-        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
-        verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
-    } else if (api == "readFile") {
+    if (api == "readFile") {
         QString errorString;
         expectLogMessage("Utilities.QGCArchiveDeviceBase", QtWarningMsg, memoryFailure);
         QVERIFY(QGCCompression::readFile(inputPath, &errorString).isEmpty());
@@ -1955,7 +1644,7 @@ void QGCCompressionTest::_testTruncatedStream()
         QVERIFY2(decompressor.errorString().contains("truncated"), qPrintable(decompressor.errorString()));
         char byte = 0;
         QCOMPARE(decompressor.read(&byte, 1), -1);
-    } else {
+    } else if (api == "QGCDecompressDevice") {
         QGCDecompressDevice decompressor(&device);
         QVERIFY(decompressor.open(QIODevice::ReadOnly));
         QByteArray buffer(64 * 1024, Qt::Uninitialized);
@@ -1967,6 +1656,16 @@ void QGCCompressionTest::_testTruncatedStream()
         // The stream does not just end
         QCOMPARE(bytesRead, -1);
         QVERIFY2(decompressor.errorString().contains("truncated"), qPrintable(decompressor.errorString()));
+    } else {
+        // The functions that write a file and those that return data log the damage with their own words
+        const bool toMemory = api.endsWith("-memory") || (api == "decompressData");
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, toMemory ? memoryFailure : fileFailure);
+        Results results;
+        QCOMPARE(_call(api, {.path = inputPath, .output = outputPath}, &results).error,
+                 QGCCompression::Error::InvalidArchive);
+        verifyExpectedLogMessage();
+        // The members before the cut are not handed back as the data
+        QVERIFY(results.isEmpty());
     }
 
     // Nothing of the damaged stream is kept
@@ -2035,9 +1734,7 @@ void QGCCompressionTest::_testExtractStreamedZipEntry()
     QTemporaryDir tempDir;
     QVERIFY(QGCCompression::extractFromDevice(&device, tempDir.path()));
 
-    QFile extracted(tempDir.filePath(QString::fromLatin1(name)));
-    QVERIFY(extracted.open(QIODevice::ReadOnly));
-    QCOMPARE(extracted.readAll(), content);
+    QCOMPARE(TestFixtures::readFile(tempDir.filePath(QString::fromLatin1(name))), content);
 }
 
 void QGCCompressionTest::_testSequentialDeviceEnd_data()
@@ -2053,15 +1750,17 @@ void QGCCompressionTest::_testSequentialDeviceEnd()
 {
     QFETCH(QString, resource);
     using End = QGCCompressionTestSequentialDevice::End;
-    const QByteArray stream = _readFile(resource);
-    const QByteArray content = QGCCompression::decompressData(stream);
+    const QByteArray stream = TestFixtures::readFile(resource);
+    QByteArray content;
+    QVERIFY(QGCCompression::decompressData(stream, content));
     QVERIFY(!content.isEmpty());
 
     // A read of -1 is the end of a device that has no more bytes to give
     QGCCompressionTestSequentialDevice finished(stream, End::MinusOne);
     QVERIFY(finished.open(QIODevice::ReadOnly));
-    QCOMPARE(QGCCompression::decompressFromDevice(&finished), content);
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
+    QByteArray fromDevice;
+    QCOMPARE(QGCCompression::decompressFromDevice(&finished, fromDevice).error, QGCCompression::Error::None);
+    QCOMPARE(fromDevice, content);
 }
 
 void QGCCompressionTest::_testSequentialDeviceReadError()
@@ -2076,9 +1775,32 @@ void QGCCompressionTest::_testSequentialDeviceReadError()
     QTemporaryDir tempDir;
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
                      QRegularExpression("Failed to read archive entry.*Truncated tar archive"));
-    QVERIFY(!QGCCompression::extractFromDevice(&broken, tempDir.filePath("out")));
+    QCOMPARE(QGCCompression::extractFromDevice(&broken, tempDir.filePath("out")).error,
+             QGCCompression::Error::InvalidArchive);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+}
+
+void QGCCompressionTest::_testSequentialDeviceSkip()
+{
+    // The entry before the one asked for is larger than the block a device is read in, so it is not passed
+    // over within what has been read. A device that cannot seek has it read and discarded.
+    const QByteArray tar =
+        _makeTar({{.name = "before.bin", .data = QByteArray(300000, 'b')}, {.name = "wanted.txt", .data = "wanted"}});
+    QGCCompressionTestSequentialDevice device(tar);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    QByteArray data;
+    QVERIFY(QGCCompression::extractFileDataFromDevice(&device, QStringLiteral("wanted.txt"), data));
+    QCOMPARE(data, QByteArray("wanted"));
+
+    // A device that ends inside the entry that is passed over holds an archive that is cut there
+    QGCCompressionTestSequentialDevice cut(tar.left(200000));
+    QVERIFY(cut.open(QIODevice::ReadOnly));
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
+                     QRegularExpression("Failed to read archive entry.*Truncated input file"));
+    QCOMPARE(QGCCompression::extractFileDataFromDevice(&cut, QStringLiteral("wanted.txt"), data).error,
+             QGCCompression::Error::InvalidArchive);
+    verifyExpectedLogMessage();
+    QVERIFY(data.isEmpty());
 }
 
 void QGCCompressionTest::_testExtractFileDataErrors_data()
@@ -2103,51 +1825,48 @@ void QGCCompressionTest::_testExtractFileDataErrors()
                                      {.name = "folder/", .type = '5'}});
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("entries.tar");
-    QVERIFY(_writeFile(archivePath, tar));
+    QVERIFY(TestFixtures::writeFile(archivePath, tar));
     // Cut inside the data of full.txt, which follows the headers of empty.txt and of full.txt itself
     const QString damagedPath = tempDir.filePath("damaged.tar");
-    QVERIFY(_writeFile(damagedPath, tar.left(2 * 512 + 100)));
+    QVERIFY(TestFixtures::writeFile(damagedPath, tar.left(2 * 512 + 100)));
 
-    const auto extract = [fromDevice](const QString& path, const char* entryName, qint64 limit = 0) {
-        if (!fromDevice) {
-            return QGCCompression::extractFileData(path, entryName, QGCCompression::Format::Auto, limit);
-        }
-        QFile device(path);
-        if (!device.open(QIODevice::ReadOnly)) {
-            return QByteArray("could not open the archive");
-        }
-        return QGCCompression::extractFileDataFromDevice(&device, entryName, limit);
+    // What the entry holds is replaced by each call
+    Results results;
+    const QByteArray& data = results.data;
+    const auto extract = [fromDevice, &results](const QString& path, const char* entryName, qint64 limit = 0) {
+        return _call(fromDevice ? "extractFileDataFromDevice" : "extractFileData",
+                     {.path = path, .names = {entryName}, .maxBytes = limit}, &results);
     };
 
     // An entry without data gives nothing either, so the error is what tells it from each kind of failure
-    QVERIFY(extract(archivePath, "empty.txt").isEmpty());
-    QCOMPARE(QGCCompression::lastError(), Error::None);
+    QCOMPARE(extract(archivePath, "empty.txt").error, Error::None);
+    QVERIFY(data.isEmpty());
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
-    QVERIFY(extract(archivePath, "absent.txt").isEmpty());
+    QCOMPARE(extract(archivePath, "absent.txt").error, Error::FileNotInArchive);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::FileNotInArchive);
+    QVERIFY(data.isEmpty());
 
     // The search for the entry runs into the damage: the archive is not said to be without it
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to read archive entry"));
-    QVERIFY(extract(damagedPath, "absent.txt").isEmpty());
+    QCOMPARE(extract(damagedPath, "absent.txt").error, Error::InvalidArchive);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
+    QVERIFY(data.isEmpty());
 
     // The entry is found, and its data is cut
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Read error"));
-    QVERIFY(extract(damagedPath, "full.txt").isEmpty());
+    QCOMPARE(extract(damagedPath, "full.txt").error, Error::InvalidArchive);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
+    QVERIFY(data.isEmpty());
 
     // An entry before the damage is read as from a whole archive
-    QVERIFY(extract(damagedPath, "empty.txt").isEmpty());
-    QCOMPARE(QGCCompression::lastError(), Error::None);
+    QCOMPARE(extract(damagedPath, "empty.txt").error, Error::None);
+    QVERIFY(data.isEmpty());
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-    QVERIFY(extract(archivePath, "full.txt", 100).isEmpty());
+    QCOMPARE(extract(archivePath, "full.txt", 100).error, Error::SizeLimitExceeded);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::SizeLimitExceeded);
+    QVERIFY(data.isEmpty());
 
     // A link has no data of its own, and a special file and a directory have none: none of them is
     // extracted, and none is an entry without data
@@ -2162,14 +1881,14 @@ void QGCCompressionTest::_testExtractFileDataErrors()
           SkippedEntry{"hard.txt", "Skipping hard link: hard.txt -> full.txt"},
           SkippedEntry{"pipe", "Skipping FIFO: pipe"}, SkippedEntry{"folder/", "Skipping directory: folder/"}}) {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(skipped.report));
-        QVERIFY(extract(archivePath, skipped.name).isEmpty());
+        QCOMPARE(extract(archivePath, skipped.name).error, Error::UnsupportedFormat);
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+        QVERIFY(data.isEmpty());
     }
 
-    // The error of a failure is gone after the next extraction
-    QCOMPARE(extract(archivePath, "last.txt"), QByteArray("z"));
-    QCOMPARE(QGCCompression::lastError(), Error::None);
+    // An entry with data, which comes after all of them in the archive
+    QCOMPARE(extract(archivePath, "last.txt").error, Error::None);
+    QCOMPARE(data, QByteArray("z"));
 }
 
 void QGCCompressionTest::_testExtractToFileErrors_data()
@@ -2180,6 +1899,7 @@ void QGCCompressionTest::_testExtractToFileErrors_data()
     QTest::addColumn<bool>("blockedOutput");
     QTest::addColumn<QString>("warning");
     QTest::addColumn<QGCCompression::Error>("expectedError");
+    QTest::addColumn<bool>("entryLeft");  // Whether the entry is in the output afterwards
 
     using QGCCompression::Error;
 
@@ -2188,26 +1908,32 @@ void QGCCompressionTest::_testExtractToFileErrors_data()
         const bool oneFile = (qstrcmp(api, "extractFile") == 0);
         const auto addRow = [api](const char* name) -> QTestData& { return QTest::addRow("%s %s", api, name) << api; };
 
-        addRow("extracted") << "whole" << "last.txt" << false << "" << Error::None;
+        addRow("extracted") << "whole" << "last.txt" << false << "" << Error::None << true;
         // A pattern that matches nothing is not worth a warning
         addRow("absent") << "whole" << "absent.txt" << false << (byName ? "File not found in archive" : "")
-                         << Error::FileNotInArchive;
+                         << Error::FileNotInArchive << false;
         addRow("damaged before the entry")
-            << "damaged" << "absent.txt" << false << "Failed to read archive entry" << Error::InvalidArchive;
-        addRow("damaged inside the entry") << "damaged" << "full.txt" << false << "Read error" << Error::InvalidArchive;
+            << "damaged" << "absent.txt" << false << "Failed to read archive entry" << Error::InvalidArchive << false;
+        // The file that is given a path of its own is not written. Extracted into a directory, the entry stays
+        // with what could be read of it, as extractArchive() leaves it
+        addRow("damaged inside the entry")
+            << "damaged" << "full.txt" << false << (oneFile ? "Read error" : "Failed to read data")
+            << Error::InvalidArchive << !oneFile;
         addRow("not an archive") << "garbage" << "last.txt" << false << "Unrecognized archive format"
-                                 << Error::InvalidArchive;
+                                 << Error::InvalidArchive << false;
         // What cannot be made is the output directory, or the file for the function that is given its path
         addRow("output cannot be written")
             << "whole" << "last.txt" << true
-            << (oneFile ? "Failed to open output file" : "Failed to create output directory") << Error::IoError;
-        // Asked for by name, the link fails the call. A pattern is left with nothing that matches it.
-        addRow("link") << "whole" << "soft.txt" << false << "Skipping symlink: soft.txt"
-                       << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
-        // As is the directory, which is not a file without data. A pattern passes over it without a word:
-        // the files in a directory are what makes it.
+            << (oneFile ? "Failed to open output file" : "Failed to create output directory") << Error::IoError
+            << false;
+        // A link is no file to write to a path of its own. In a directory it is created, as extractArchive()
+        // creates the symbolic links that stay inside it
+        addRow("link") << "whole" << "soft.txt" << false << (oneFile ? "Skipping symlink: soft.txt" : "")
+                       << (oneFile ? Error::UnsupportedFormat : Error::None) << !oneFile;
+        // Asked for by name, the directory fails the call: it is not a file without data. A pattern passes
+        // over it without a word: the files in a directory are what makes it.
         addRow("directory") << "whole" << "folder/" << false << (byName ? "Skipping directory: folder/" : "")
-                            << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
+                            << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive) << false;
     }
 }
 
@@ -2219,6 +1945,7 @@ void QGCCompressionTest::_testExtractToFileErrors()
     QFETCH(bool, blockedOutput);
     QFETCH(QString, warning);
     QFETCH(QGCCompression::Error, expectedError);
+    QFETCH(bool, entryLeft);
     using QGCCompression::Error;
 
     const QByteArray tar = _makeTar({{.name = "empty.txt"},
@@ -2229,174 +1956,165 @@ void QGCCompressionTest::_testExtractToFileErrors()
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(archive + ".tar");
     if (archive == "whole") {
-        QVERIFY(_writeFile(archivePath, tar));
+        QVERIFY(TestFixtures::writeFile(archivePath, tar));
     } else if (archive == "damaged") {
         // Cut inside the data of full.txt, which follows the headers of empty.txt and of full.txt itself
-        QVERIFY(_writeFile(archivePath, tar.left(2 * 512 + 100)));
+        QVERIFY(TestFixtures::writeFile(archivePath, tar.left(2 * 512 + 100)));
     } else {
-        QVERIFY(_writeFile(archivePath, "This is not an archive of any format"));
+        QVERIFY(TestFixtures::writeFile(archivePath, "This is not an archive of any format"));
     }
     // A directory cannot be made below a file
     const QString blockerPath = tempDir.filePath("blocker");
-    QVERIFY(_writeFile(blockerPath, "in the way"));
+    QVERIFY(TestFixtures::writeFile(blockerPath, "in the way"));
     const QString outputDir = blockedOutput ? (blockerPath + "/output") : tempDir.filePath("output");
 
     if (!warning.isEmpty()) {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
     }
-    bool extracted = false;
-    if (api == "extractFile") {
-        // The output is the path of a file, also where the name of the entry is that of a directory
-        const QString fileName = entryName.endsWith(QLatin1Char('/')) ? entryName.chopped(1) : entryName;
-        extracted = QGCCompression::extractFile(archivePath, entryName, outputDir + QLatin1Char('/') + fileName);
-    } else if (api == "extractFiles") {
-        extracted = QGCCompression::extractFiles(archivePath, {entryName}, outputDir);
-    } else {
-        extracted = QGCCompression::extractByPattern(archivePath, {entryName}, outputDir);
-    }
+    const QGCCompression::Outcome extracted =
+        _call(api, {.path = archivePath, .output = outputDir, .names = {entryName}});
     if (!warning.isEmpty()) {
         verifyExpectedLogMessage();
     }
 
-    QCOMPARE(extracted, expectedError == Error::None);
-    QCOMPARE(QGCCompression::lastError(), expectedError);
-    // Nothing is left of an entry that was not extracted
-    QCOMPARE(_entriesBelow(tempDir.filePath("output")), extracted ? QStringList{entryName} : QStringList());
-    QCOMPARE(_readFile(blockerPath), QByteArray("in the way"));
+    QCOMPARE(extracted.error, expectedError);
+    // The message ends with which of the two it is that failed
+    if (expectedError == Error::IoError) {
+        QVERIFY2(extracted.message.endsWith(": the output cannot be written"), qPrintable(extracted.message));
+    } else if (expectedError == Error::InvalidArchive) {
+        QVERIFY2(extracted.message.endsWith(": the archive cannot be read or is damaged"),
+                 qPrintable(extracted.message));
+    }
+    QCOMPARE(_entriesBelow(tempDir.filePath("output")), entryLeft ? QStringList{entryName} : QStringList());
+    QCOMPARE(TestFixtures::readFile(blockerPath), QByteArray("in the way"));
 }
 
 void QGCCompressionTest::_testDecompressDataErrors()
 {
     using QGCCompression::Error;
 
-    const QByteArray compressed = _readFile(QStringLiteral(":/unittest/manifest.json.gz"));
-    const auto leaveAnErrorBehind = [this]() {
-        expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
-        const bool exists = QGCCompression::fileExists(QStringLiteral("/nonexistent/archive.zip"), QStringLiteral("a"));
-        verifyExpectedLogMessage();
-        return !exists && (QGCCompression::lastError() == Error::FileNotFound);
-    };
+    const QByteArray compressed = TestFixtures::readFile(_gzResource);
 
-    // lastError() is only of use if each call sets it
-    QVERIFY(leaveAnErrorBehind());
-    QVERIFY(!QGCCompression::decompressData(compressed).isEmpty());
-    QCOMPARE(QGCCompression::lastError(), Error::None);
+    QByteArray data;
+    QCOMPARE(QGCCompression::decompressData(compressed, data).error, Error::None);
+    QVERIFY(!data.isEmpty());
 
-    QVERIFY(leaveAnErrorBehind());
+    // The data can be given back in the array it was read from
+    QByteArray inPlace = compressed;
+    QVERIFY(QGCCompression::decompressData(inPlace, inPlace));
+    QCOMPARE(inPlace, data);
+
+    // Data that is refused leaves nothing in the output
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Cannot decompress empty data"));
-    QVERIFY(QGCCompression::decompressData(QByteArray()).isEmpty());
+    QCOMPARE(QGCCompression::decompressData(QByteArray(), data).error, Error::UnsupportedFormat);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QVERIFY(data.isEmpty());
 
-    QVERIFY(leaveAnErrorBehind());
+    data = compressed;
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Could not detect format"));
-    QVERIFY(QGCCompression::decompressData(QByteArray("not a compressed stream")).isEmpty());
+    QCOMPARE(QGCCompression::decompressData(QByteArray("not a compressed stream"), data).error,
+             Error::UnsupportedFormat);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QVERIFY(data.isEmpty());
 }
 
-void QGCCompressionTest::_testOutputWithoutPermission_data()
+void QGCCompressionTest::_testUnwritableOutput_data()
 {
     QTest::addColumn<QString>("api");
-    // Whether the output directory is there, or has to be made in the directory that may not be written to
-    QTest::addColumn<bool>("outputExists");
+    // What keeps the output from being written: the output directory is "locked", it has to be made "in locked",
+    // a directory that may not be written to, or it has to be made "below a file"
+    QTest::addColumn<QString>("obstacle");
     QTest::addColumn<QString>("warning");
 
     const char* const noFile = "Failed to open output file";
     const char* const noEntry = "Failed to write header";
-    QTest::newRow("extractArchive") << "extractArchive" << true << noEntry;
-    QTest::newRow("extractFromDevice") << "extractFromDevice" << true << noEntry;
-    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << true << "Failed to create staging directory";
-    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << true << noFile;
-    QTest::newRow("extractFile") << "extractFile" << true << noFile;
-    QTest::newRow("extractFiles") << "extractFiles" << true << noFile;
-    QTest::newRow("extractByPattern") << "extractByPattern" << true << noFile;
-    QTest::newRow("decompressFile") << "decompressFile" << true << noFile;
+    QTest::newRow("extractArchive") << "extractArchive" << "locked" << noEntry;
+    QTest::newRow("extractFromDevice") << "extractFromDevice" << "locked" << noEntry;
+    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << "locked" << "Failed to create staging directory";
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << "locked" << noEntry;
+    QTest::newRow("extractFile") << "extractFile" << "locked" << noFile;
+    QTest::newRow("extractFiles") << "extractFiles" << "locked" << noEntry;
+    QTest::newRow("extractByPattern") << "extractByPattern" << "locked" << noEntry;
+    QTest::newRow("decompressFile") << "decompressFile" << "locked" << noFile;
     QTest::newRow("decompressFile of an empty stream")
-        << "decompressFile-empty" << true << "Failed to write output file";
-    QTest::newRow("decompressFromDevice") << "decompressFromDevice" << true << noFile;
+        << "decompressFile-empty" << "locked" << "Failed to write output file";
+    QTest::newRow("decompressFromDevice") << "decompressFromDevice-file" << "locked" << noFile;
 
+    // A directory is made neither where that is not permitted nor below a file
     const char* const noDirectory = "Failed to create output directory";
-    QTest::newRow("extractArchive, no directory") << "extractArchive" << false << noDirectory;
-    QTest::newRow("extractFromDevice, no directory") << "extractFromDevice" << false << noDirectory;
-    QTest::newRow("extractArchiveAtomic, no directory")
-        << "extractArchiveAtomic" << false << "Failed to create output parent directory";
-    QTest::newRow("extractArchiveFiltered, no directory") << "extractArchiveFiltered" << false << noDirectory;
-    QTest::newRow("extractFiles, no directory") << "extractFiles" << false << noDirectory;
-    QTest::newRow("extractByPattern, no directory") << "extractByPattern" << false << noDirectory;
-    // A function that is given the path of a file fails where the file is opened
-    QTest::newRow("extractFile, no directory") << "extractFile" << false << noFile;
-    QTest::newRow("decompressFile, no directory") << "decompressFile" << false << noFile;
+    for (const char* obstacle : {"in locked", "below a file"}) {
+        QTest::addRow("extractArchive, %s", obstacle) << "extractArchive" << obstacle << noDirectory;
+        QTest::addRow("extractFromDevice, %s", obstacle) << "extractFromDevice" << obstacle << noDirectory;
+        QTest::addRow("extractArchiveAtomic, %s", obstacle)
+            << "extractArchiveAtomic" << obstacle << "Failed to create output parent directory";
+        QTest::addRow("extractArchiveFiltered, %s", obstacle) << "extractArchiveFiltered" << obstacle << noDirectory;
+        // A function that is given the path of a file fails where the file is opened
+        QTest::addRow("decompressFile, %s", obstacle) << "decompressFile" << obstacle << noFile;
+    }
+    QTest::newRow("extractFiles, in locked") << "extractFiles" << "in locked" << noDirectory;
+    QTest::newRow("extractByPattern, in locked") << "extractByPattern" << "in locked" << noDirectory;
+    QTest::newRow("extractFile, in locked") << "extractFile" << "in locked" << noFile;
+    QTest::newRow("decompressFromDevice, below a file") << "decompressFromDevice-file" << "below a file" << noFile;
 }
 
-void QGCCompressionTest::_testOutputWithoutPermission()
+void QGCCompressionTest::_testUnwritableOutput()
 {
-#ifndef Q_OS_UNIX
-    QSKIP("Needs a directory that the permissions of POSIX keep from being written to");
-#else
     QFETCH(QString, api);
-    QFETCH(bool, outputExists);
+    QFETCH(QString, obstacle);
     QFETCH(QString, warning);
     using QGCCompression::Error;
 
     QTemporaryDir tempDir;
-    const QString lockedPath = tempDir.filePath("locked");
-    QVERIFY(QDir().mkdir(lockedPath));
-    QVERIFY(QFile::setPermissions(lockedPath, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
-    const auto unlock = qScopeGuard([&lockedPath]() {
-        QFile::setPermissions(lockedPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    const QString obstaclePath = tempDir.filePath("obstacle");
+    const bool belowFile = (obstacle == "below a file");
+    const auto unlock = qScopeGuard([&obstaclePath, belowFile]() {
+        if (!belowFile) {
+            QFile::setPermissions(obstaclePath,
+                                  QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+        }
     });
-    if (QFileInfo(lockedPath).isWritable()) {
-        QSKIP("This user may write to a directory whatever its permissions are");
+    if (belowFile) {
+        // A directory cannot be made below a file, whoever asks
+        QVERIFY(TestFixtures::writeFile(obstaclePath, "in the way"));
+    } else {
+#ifndef Q_OS_UNIX
+        QSKIP("Needs a directory that the permissions of POSIX keep from being written to");
+#else
+        QVERIFY(QDir().mkdir(obstaclePath));
+        QVERIFY(QFile::setPermissions(obstaclePath, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        if (QFileInfo(obstaclePath).isWritable()) {
+            QSKIP("This user may write to a directory whatever its permissions are");
+        }
+#endif
     }
 
-    const QString zipPath = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString gzipPath = QStringLiteral(":/unittest/manifest.json.gz");
     const QString emptyGzipPath = tempDir.filePath("empty.gz");
-    QVERIFY(_writeFile(emptyGzipPath, QByteArray::fromHex("1f8b080000000000000303000000000000000000")));
-    QFile zip(zipPath);
-    QVERIFY(zip.open(QIODevice::ReadOnly));
-    QFile gzip(gzipPath);
-    QVERIFY(gzip.open(QIODevice::ReadOnly));
-    const QString outputDir = outputExists ? lockedPath : (lockedPath + "/made");
-    const QString outputFile = outputDir + "/manifest.json";
-    const auto everyEntry = [](const QGCCompression::ArchiveEntry&) { return true; };
+    QVERIFY(TestFixtures::writeFile(emptyGzipPath, QByteArray::fromHex("1f8b080000000000000303000000000000000000")));
+    const QString outputDir = (obstacle == "locked") ? obstaclePath : (obstaclePath + "/made");
+    const bool emptyStream = api.endsWith("-empty");
+    const bool isStream = _isStreamEntryPoint(api);
+    // The directory an atomic extraction replaces is made beside the one it extracts to
+    const QString archiveOutput = (api == "extractArchiveAtomic") ? (outputDir + "/atomic") : outputDir;
+    const QString entry = (api == "extractByPattern") ? QStringLiteral("*.json") : QStringLiteral("manifest.json");
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
-    bool written = true;
-    if (api == "extractArchive") {
-        written = QGCCompression::extractArchive(zipPath, outputDir);
-    } else if (api == "extractFromDevice") {
-        written = QGCCompression::extractFromDevice(&zip, outputDir);
-    } else if (api == "extractArchiveAtomic") {
-        // The directory it replaces is made beside the one it extracts to
-        written = QGCCompression::extractArchiveAtomic(zipPath, outputDir + "/atomic");
-    } else if (api == "extractArchiveFiltered") {
-        written = QGCCompression::extractArchiveFiltered(zipPath, outputDir, everyEntry);
-    } else if (api == "extractFile") {
-        written = QGCCompression::extractFile(zipPath, QStringLiteral("manifest.json"), outputFile);
-    } else if (api == "extractFiles") {
-        written = QGCCompression::extractFiles(zipPath, {QStringLiteral("manifest.json")}, outputDir);
-    } else if (api == "extractByPattern") {
-        written = QGCCompression::extractByPattern(zipPath, {QStringLiteral("*.json")}, outputDir);
-    } else if (api == "decompressFile") {
-        written = QGCCompression::decompressFile(gzipPath, outputFile);
-    } else if (api == "decompressFile-empty") {
-        written = QGCCompression::decompressFile(emptyGzipPath, outputFile);
-    } else if (api == "decompressFromDevice") {
-        written = QGCCompression::decompressFromDevice(&gzip, outputFile);
-    } else {
-        QFAIL("Unknown row");
-    }
+    const QGCCompression::Outcome written =
+        _call(emptyStream ? api.chopped(6) : api,
+              {.path = emptyStream ? emptyGzipPath : (isStream ? _gzResource : _zipResource),
+               .output = isStream ? (outputDir + "/manifest.json") : archiveOutput,
+               .names = {entry}});
     verifyExpectedLogMessage();
 
-    // The input is whole and the output could be written elsewhere: the code tells what to change
-    QVERIFY(!written);
-    QCOMPARE(QGCCompression::lastError(), Error::PermissionDenied);
-    QVERIFY2(QGCCompression::lastErrorString().endsWith(": no permission to write the output"),
-             qPrintable(QGCCompression::lastErrorString()));
-    QCOMPARE(_entriesBelow(lockedPath), QStringList());
-#endif
+    if (belowFile) {
+        // The input is whole: what failed is the output, and not for lack of permission
+        QCOMPARE(written.error, Error::IoError);
+        QCOMPARE(TestFixtures::readFile(obstaclePath), QByteArray("in the way"));
+    } else {
+        // The input is whole and the output could be written elsewhere: the code tells what to change
+        QCOMPARE(written.error, Error::PermissionDenied);
+        QVERIFY2(written.message.endsWith(": no permission to write the output"), qPrintable(written.message));
+        QCOMPARE(_entriesBelow(obstaclePath), QStringList());
+    }
 }
 
 void QGCCompressionTest::_testInputWithoutPermission_data()
@@ -2425,91 +2143,25 @@ void QGCCompressionTest::_testInputWithoutPermission()
     const QString inputPath = tempDir.filePath(fileName);
     const QString outputPath = tempDir.filePath("output");
     const bool isStream = fileName.endsWith(".gz");
-    QVERIFY(_writeFile(inputPath, _readFile(isStream ? QStringLiteral(":/unittest/manifest.json.gz")
-                                                     : QStringLiteral(":/unittest/manifest.json.zip"))));
+    QVERIFY(TestFixtures::writeFile(inputPath, TestFixtures::readFile(isStream ? _gzResource : _zipResource)));
     QVERIFY(QFile::setPermissions(inputPath, QFileDevice::WriteOwner));
     if (QFileInfo(inputPath).isReadable()) {
         QSKIP("This user may read a file whatever its permissions are");
     }
 
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("No permission to read"));
-    if (api == "listArchive") {
-        QVERIFY(QGCCompression::listArchive(inputPath).isEmpty());
-    } else if (api == "extractArchive") {
-        QVERIFY(!QGCCompression::extractArchive(inputPath, outputPath));
-    } else if (api == "extractFileData") {
-        QVERIFY(QGCCompression::extractFileData(inputPath, QStringLiteral("manifest.json")).isEmpty());
-    } else if (api == "decompressFile") {
-        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
-    } else {
-        QFAIL("Unknown row");
-    }
+    Results results;
+    const QGCCompression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
     verifyExpectedLogMessage();
 
     // The file is there and may be whole: it is not said to be damaged, or of a format that is not known
-    QCOMPARE(QGCCompression::lastError(), Error::PermissionDenied);
+    QCOMPARE(outcome.error, Error::PermissionDenied);
+    QVERIFY(results.isEmpty());
     QVERIFY(!QFileInfo::exists(outputPath));
 #endif
 }
 
-void QGCCompressionTest::_testBlockedOutput_data()
-{
-    QTest::addColumn<QString>("api");
-    QTest::addColumn<QString>("warning");
-
-    const char* const noDirectory = "Failed to create output directory";
-    QTest::newRow("extractArchive") << "extractArchive" << noDirectory;
-    QTest::newRow("extractFromDevice") << "extractFromDevice" << noDirectory;
-    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << "Failed to create output parent directory";
-    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << noDirectory;
-    QTest::newRow("decompressFile") << "decompressFile" << "Failed to open output file";
-    QTest::newRow("decompressFromDevice") << "decompressFromDevice" << "Failed to open output file";
-}
-
-void QGCCompressionTest::_testBlockedOutput()
-{
-    QFETCH(QString, api);
-    QFETCH(QString, warning);
-
-    // A directory cannot be made below a file, whoever asks
-    QTemporaryDir tempDir;
-    const QString blockerPath = tempDir.filePath("blocker");
-    QVERIFY(_writeFile(blockerPath, "in the way"));
-    const QString outputDir = blockerPath + "/output";
-    const QString zipPath = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString gzipPath = QStringLiteral(":/unittest/manifest.json.gz");
-    QFile zip(zipPath);
-    QVERIFY(zip.open(QIODevice::ReadOnly));
-    QFile gzip(gzipPath);
-    QVERIFY(gzip.open(QIODevice::ReadOnly));
-
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
-    bool written = true;
-    if (api == "extractArchive") {
-        written = QGCCompression::extractArchive(zipPath, outputDir);
-    } else if (api == "extractFromDevice") {
-        written = QGCCompression::extractFromDevice(&zip, outputDir);
-    } else if (api == "extractArchiveAtomic") {
-        written = QGCCompression::extractArchiveAtomic(zipPath, outputDir + "/atomic");
-    } else if (api == "extractArchiveFiltered") {
-        written = QGCCompression::extractArchiveFiltered(zipPath, outputDir,
-                                                         [](const QGCCompression::ArchiveEntry&) { return true; });
-    } else if (api == "decompressFile") {
-        written = QGCCompression::decompressFile(gzipPath, outputDir + "/manifest.json");
-    } else if (api == "decompressFromDevice") {
-        written = QGCCompression::decompressFromDevice(&gzip, outputDir + "/manifest.json");
-    } else {
-        QFAIL("Unknown row");
-    }
-    verifyExpectedLogMessage();
-
-    // The input is whole: what failed is the output, and not for lack of permission
-    QVERIFY(!written);
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
-    QCOMPARE(_readFile(blockerPath), QByteArray("in the way"));
-}
-
-void QGCCompressionTest::_testOperationStartsWithoutError_data()
+void QGCCompressionTest::_testOutcomeBeforeInput_data()
 {
     QTest::addColumn<QString>("api");
     QTest::addColumn<QGCCompression::Error>("expectedError");
@@ -2526,54 +2178,49 @@ void QGCCompressionTest::_testOperationStartsWithoutError_data()
     QTest::newRow("extractArchiveFiltered without a filter") << "extractArchiveFiltered" << Error::InternalError;
 }
 
-void QGCCompressionTest::_testOperationStartsWithoutError()
+void QGCCompressionTest::_testOutcomeBeforeInput()
 {
     QFETCH(QString, api);
     QFETCH(QGCCompression::Error, expectedError);
-    using QGCCompression::Error;
 
     QTemporaryDir tempDir;
-    const QString zipPath = QStringLiteral(":/unittest/manifest.json.zip");
     const QString plainPath = tempDir.filePath("plain.txt");
-    QVERIFY(_writeFile(plainPath, "plain text content"));
+    QVERIFY(TestFixtures::writeFile(plainPath, "plain text content"));
 
-    // An operation that fails after it has detected a format leaves both an error and a format behind
-    QFile zip(zipPath);
-    QVERIFY(zip.open(QIODevice::ReadOnly));
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
-    QVERIFY(QGCCompression::extractFileDataFromDevice(&zip, QStringLiteral("absent.txt")).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::FileNotInArchive);
-    QVERIFY(QGCCompression::detectedFormatName().startsWith("ZIP"));
-
+    QGCCompression::Outcome outcome;
     if (api == "decompressIfNeeded") {
+        // With or without the outcome
         QCOMPARE(QGCCompression::decompressIfNeeded(plainPath), plainPath);
+        QCOMPARE(QGCCompression::decompressIfNeeded(plainPath, outcome), plainPath);
     } else if (api == "extractFiles") {
-        QVERIFY(QGCCompression::extractFiles(zipPath, {}, tempDir.filePath("output")));
+        outcome = QGCCompression::extractFiles(_zipResource, {}, tempDir.filePath("output"));
     } else if (api == "fileExists") {
         expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
-        QVERIFY(!QGCCompression::fileExists(zipPath, QString()));
+        outcome = QGCCompression::fileExists(_zipResource, QString());
         verifyExpectedLogMessage();
     } else if (api == "extractFile") {
         expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
-        QVERIFY(!QGCCompression::extractFile(zipPath, QString(), tempDir.filePath("output.txt")));
+        outcome = QGCCompression::extractFile(_zipResource, QString(), tempDir.filePath("output.txt"));
         verifyExpectedLogMessage();
     } else if (api == "extractFileData") {
+        QByteArray data("to be replaced");
         expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
-        QVERIFY(QGCCompression::extractFileData(zipPath, QString()).isEmpty());
+        outcome = QGCCompression::extractFileData(_zipResource, QString(), data);
         verifyExpectedLogMessage();
+        QVERIFY(data.isEmpty());
     } else if (api == "extractByPattern") {
-        QVERIFY(!QGCCompression::extractByPattern(zipPath, {}, tempDir.filePath("output")));
+        outcome = QGCCompression::extractByPattern(_zipResource, {}, tempDir.filePath("output"));
     } else if (api == "extractArchiveFiltered") {
-        QVERIFY(!QGCCompression::extractArchiveFiltered(zipPath, tempDir.filePath("output"), nullptr));
+        outcome = QGCCompression::extractArchiveFiltered(_zipResource, tempDir.filePath("output"), nullptr);
     } else {
         QFAIL("Unknown row");
     }
 
-    // What lastError() and the detected format tell is of this operation, not of the one before it
-    QCOMPARE(QGCCompression::lastError(), expectedError);
-    QCOMPARE(QGCCompression::detectedFormatName(), QString());
-    QCOMPARE(QGCCompression::detectedFilterName(), QString());
+    // No input was read, so there is no format to tell
+    QCOMPARE(outcome.error, expectedError);
+    QCOMPARE(outcome.formatName, QString());
+    QCOMPARE(outcome.filterName, QString());
+    QCOMPARE(TestFixtures::readFile(plainPath), QByteArray("plain text content"));
 }
 
 // ============================================================================
@@ -2583,10 +2230,7 @@ void QGCCompressionTest::_testDecompressFromDevice()
 {
     QTemporaryDir tempDir;
     // Load compressed data from Qt resource into a QBuffer
-    QFile resourceFile(":/unittest/manifest.json.gz");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resourceFile.readAll();
-    resourceFile.close();
+    const QByteArray compressedData = TestFixtures::readFile(_gzResource);
     QVERIFY(!compressedData.isEmpty());
     // Test decompression to file using QBuffer as device
     QBuffer buffer;
@@ -2597,17 +2241,14 @@ void QGCCompressionTest::_testDecompressFromDevice()
     QVERIFY(QFile::exists(outputPath));
     QVERIFY(QFileInfo(outputPath).size() > 0);
     // Verify content
-    QFile decompressed(outputPath);
-    QVERIFY(decompressed.open(QIODevice::ReadOnly));
-    const QByteArray content = decompressed.readAll();
+    const QByteArray content = TestFixtures::readFile(outputPath);
     QVERIFY(content.contains("\"name\""));
-    decompressed.close();
     buffer.close();
     // Test decompression to memory
     buffer.setData(compressedData);
     QVERIFY(buffer.open(QIODevice::ReadOnly));
-    const QByteArray memoryResult = QGCCompression::decompressFromDevice(&buffer);
-    QVERIFY2(!memoryResult.isEmpty(), "Decompress to memory from device failed");
+    QByteArray memoryResult;
+    QVERIFY2(QGCCompression::decompressFromDevice(&buffer, memoryResult), "Decompress to memory from device failed");
     QVERIFY(memoryResult.contains("\"name\""));
     QCOMPARE(memoryResult, content);
     buffer.close();
@@ -2629,10 +2270,7 @@ void QGCCompressionTest::_testExtractFromDevice()
 {
     QTemporaryDir tempDir;
     // Load ZIP from Qt resource into a QBuffer
-    QFile resourceFile(":/unittest/manifest.json.zip");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray zipData = resourceFile.readAll();
-    resourceFile.close();
+    const QByteArray zipData = TestFixtures::readFile(_zipResource);
     QVERIFY(!zipData.isEmpty());
     // Extract using QBuffer as device
     QBuffer buffer;
@@ -2655,24 +2293,27 @@ void QGCCompressionTest::_testExtractFromDevice()
 void QGCCompressionTest::_testExtractFileDataFromDevice()
 {
     // Load ZIP from Qt resource into a QBuffer
-    QFile resourceFile(":/unittest/manifest.json.zip");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray zipData = resourceFile.readAll();
-    resourceFile.close();
+    const QByteArray zipData = TestFixtures::readFile(_zipResource);
     QVERIFY(!zipData.isEmpty());
     // Extract single file from device to memory
     QBuffer buffer;
     buffer.setData(zipData);
     QVERIFY(buffer.open(QIODevice::ReadOnly));
-    const QByteArray extracted = QGCCompression::extractFileDataFromDevice(&buffer, "manifest.json");
-    QVERIFY2(!extracted.isEmpty(), "Failed to extract file data from device");
+    QByteArray extracted;
+    QVERIFY2(QGCCompression::extractFileDataFromDevice(&buffer, "manifest.json", extracted),
+             "Failed to extract file data from device");
     QVERIFY(extracted.contains("\"name\""));
     buffer.close();
     // Test non-existent file
     buffer.setData(zipData);
     QVERIFY(buffer.open(QIODevice::ReadOnly));
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
-    const QByteArray notFound = QGCCompression::extractFileDataFromDevice(&buffer, "nonexistent.txt");
+    QByteArray notFound = extracted;
+    const QGCCompression::Outcome absent =
+        QGCCompression::extractFileDataFromDevice(&buffer, "nonexistent.txt", notFound);
+    QCOMPARE(absent.error, QGCCompression::Error::FileNotInArchive);
+    // The archive was read to its end, which tells its format
+    QVERIFY2(absent.formatName.startsWith("ZIP"), qPrintable(absent.formatName));
     QVERIFY(notFound.isEmpty());
     verifyExpectedLogMessage();
     buffer.close();
@@ -2680,13 +2321,15 @@ void QGCCompressionTest::_testExtractFileDataFromDevice()
     buffer.setData(zipData);
     QVERIFY(buffer.open(QIODevice::ReadOnly));
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
-    const QByteArray emptyName = QGCCompression::extractFileDataFromDevice(&buffer, "");
+    QByteArray emptyName = extracted;
+    QVERIFY(!QGCCompression::extractFileDataFromDevice(&buffer, "", emptyName));
     QVERIFY(emptyName.isEmpty());
     verifyExpectedLogMessage();
     buffer.close();
     // Test null device
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Device is null"));
-    const QByteArray nullDevice = QGCCompression::extractFileDataFromDevice(nullptr, "manifest.json");
+    QByteArray nullDevice = extracted;
+    QVERIFY(!QGCCompression::extractFileDataFromDevice(nullptr, "manifest.json", nullDevice));
     QVERIFY(nullDevice.isEmpty());
     verifyExpectedLogMessage();
 }
@@ -2695,20 +2338,13 @@ void QGCCompressionTest::_testInterleavedDeviceReaders()
 {
     // Each stream expands to several of the blocks it is decompressed in, so it is partly read
     // when the other one is read from
-    const auto payload = [](char first) {
-        QByteArray data(400000, Qt::Uninitialized);
-        for (qsizetype i = 0; i < data.size(); ++i) {
-            data[i] = static_cast<char>(first + ((i * 7) + (i / 13)) % 23);
-        }
-        return data;
-    };
-    const QByteArray firstPayload = payload('a');
-    const QByteArray secondPayload = payload('A');
+    const QByteArray firstPayload = _payload(400000, 'a');
+    const QByteArray secondPayload = _payload(400000, 'A');
     QBuffer firstSource;
-    firstSource.setData(_gzipMember(firstPayload));
+    firstSource.setData(TestFixtures::gzipMember(firstPayload));
     QVERIFY(firstSource.open(QIODevice::ReadOnly));
     QBuffer secondSource;
-    secondSource.setData(_gzipMember(secondPayload));
+    secondSource.setData(TestFixtures::gzipMember(secondPayload));
     QVERIFY(secondSource.open(QIODevice::ReadOnly));
 
     QGCDecompressDevice first(&firstSource);
@@ -2749,14 +2385,11 @@ void QGCCompressionTest::_testDeviceAtEnd()
     QFETCH(bool, archive);
 
     // Several of the blocks the devices decompress in, and not a whole number of them
-    QByteArray payload(300000, Qt::Uninitialized);
-    for (qsizetype i = 0; i < payload.size(); ++i) {
-        payload[i] = static_cast<char>('a' + ((i * 7) + (i / 13)) % 23);
-    }
+    const QByteArray payload = _payload(300000);
     const QByteArray input = archive ? _makeTar({{.name = "first.txt", .data = "first"},
                                                  {.name = "payload.bin", .data = payload},
                                                  {.name = "empty.txt"}})
-                                     : _gzipMember(payload);
+                                     : TestFixtures::gzipMember(payload);
     const auto makeDevice = [archive](QIODevice* source,
                                       const char* entryName) -> std::unique_ptr<QGCArchiveDeviceBase> {
         if (archive) {
@@ -2803,6 +2436,12 @@ void QGCCompressionTest::_testDeviceAtEnd()
     QVERIFY(readable > 0);
     QVERIFY(readable < payload.size());
     QVERIFY(!cutDevice->errorString().isEmpty());
+    // What the device told of its input when it was opened, it tells until it is closed
+    QCOMPARE(cutDevice->filterName(), archive ? QStringLiteral("none") : QStringLiteral("gzip"));
+    QVERIFY(!cutDevice->formatName().isEmpty());
+    cutDevice->close();
+    QCOMPARE(cutDevice->filterName(), QString());
+    QCOMPARE(cutDevice->formatName(), QString());
 
     if (archive) {
         // An entry without data is at its end before anything is read
@@ -2835,7 +2474,7 @@ void QGCCompressionTest::_testDeviceOpenedAgain()
         payload += QByteArray::number(line) + '\n';
     }
     const QByteArray input =
-        archive ? _makeTar({{.name = "payload.txt", .data = payload}}) : _gzipMember(payload);
+        archive ? _makeTar({{.name = "payload.txt", .data = payload}}) : TestFixtures::gzipMember(payload);
     QBuffer source;
     source.setData(input);
     QVERIFY(source.open(QIODevice::ReadOnly));
@@ -2932,7 +2571,6 @@ void QGCCompressionTest::_testArchiveFileLeavesOutLinks()
 void QGCCompressionTest::_testCompressionJobExtract()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     const QString outputDir = tempDir.path() + "/job_extract";
     QGCCompressionJob job;
     // Set up signal spies
@@ -2947,7 +2585,7 @@ void QGCCompressionTest::_testCompressionJobExtract()
     QCOMPARE(job.progress(), 0.0);
     QVERIFY(job.errorString().isEmpty());
     // Start extraction
-    job.extractArchive(zipResource, outputDir);
+    job.extractArchive(_zipResource, outputDir);
     // Should be running immediately
     QVERIFY(job.isRunning());
     // Wait for completion (with timeout)
@@ -2971,9 +2609,7 @@ void QGCCompressionTest::_testCompressionJobExtract()
 void QGCCompressionTest::_testCompressionJobReentrantStartFromFinished()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     const QString firstOutputDir = tempDir.path() + "/job_reentrant_extract";
-    const QString gzResource = QStringLiteral(":/unittest/manifest.json.gz");
     const QString secondOutputFile = tempDir.path() + "/job_reentrant_decompress.json";
 
     QGCCompressionJob job;
@@ -2986,12 +2622,12 @@ void QGCCompressionTest::_testCompressionJobReentrantStartFromFinished()
     connect(&job, &QGCCompressionJob::finished, this, [&](bool success) {
         if (!secondStartAttempted && success) {
             secondStartAttempted = true;
-            job.decompressFile(gzResource, secondOutputFile);
+            job.decompressFile(_gzResource, secondOutputFile);
             secondStartAccepted = job.isRunning();
         }
     });
 
-    job.extractArchive(zipResource, firstOutputDir);
+    job.extractArchive(_zipResource, firstOutputDir);
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 2, TestTimeout::mediumMs());
 
     QCOMPARE(finishedSpy.count(), 2);
@@ -3008,14 +2644,14 @@ void QGCCompressionTest::_testCompressionJobAsyncStatic()
 {
     QTemporaryDir tempDir;
     // Test the static async method that returns QFuture directly
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     const QString outputDir = tempDir.path() + "/async_static";
     // Use the static method
-    QFuture<bool> future = QGCCompressionJob::extractArchiveAsync(zipResource, outputDir);
+    using Outcome = QGCCompression::Outcome;
+    QFuture<Outcome> future = QGCCompressionJob::extractArchiveAsync(_zipResource, outputDir);
     // Create a watcher to monitor progress
-    QFutureWatcher<bool> watcher;
-    QSignalSpy progressSpy(&watcher, &QFutureWatcher<bool>::progressValueChanged);
-    QSignalSpy finishedSpy(&watcher, &QFutureWatcher<bool>::finished);
+    QFutureWatcher<Outcome> watcher;
+    QSignalSpy progressSpy(&watcher, &QFutureWatcher<Outcome>::progressValueChanged);
+    QSignalSpy finishedSpy(&watcher, &QFutureWatcher<Outcome>::finished);
     watcher.setFuture(future);
     // Wait for completion
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
@@ -3023,20 +2659,22 @@ void QGCCompressionTest::_testCompressionJobAsyncStatic()
     QVERIFY(future.isFinished());
     QVERIFY(!future.isCanceled());
     QVERIFY2(future.result(), "Static async extraction failed");
+    // The future carries what the worker thread found out
+    QVERIFY2(future.result().formatName.startsWith("ZIP"), qPrintable(future.result().formatName));
     QVERIFY(!progressSpy.isEmpty());
     QCOMPARE(progressSpy.last().first().toInt(), 100);
     // Verify extracted file exists
     QVERIFY(QFileInfo::exists(outputDir + "/manifest.json"));
     // Test decompressFileAsync as well
-    const QString gzResource = QStringLiteral(":/unittest/manifest.json.gz");
     const QString decompressOutput = tempDir.path() + "/async_decompress.json";
-    QFuture<bool> decompressFuture = QGCCompressionJob::decompressFileAsync(gzResource, decompressOutput);
-    QFutureWatcher<bool> decompressWatcher;
-    QSignalSpy decompressFinishedSpy(&decompressWatcher, &QFutureWatcher<bool>::finished);
+    QFuture<Outcome> decompressFuture = QGCCompressionJob::decompressFileAsync(_gzResource, decompressOutput);
+    QFutureWatcher<Outcome> decompressWatcher;
+    QSignalSpy decompressFinishedSpy(&decompressWatcher, &QFutureWatcher<Outcome>::finished);
     decompressWatcher.setFuture(decompressFuture);
     QVERIFY_SIGNAL_WAIT(decompressFinishedSpy, TestTimeout::mediumMs());
     QVERIFY(decompressFuture.isFinished());
     QVERIFY2(decompressFuture.result(), "Static async decompression failed");
+    QCOMPARE(decompressFuture.result().filterName, QStringLiteral("gzip"));
     QVERIFY(QFileInfo::exists(decompressOutput));
 }
 
@@ -3061,7 +2699,7 @@ void QGCCompressionTest::_testCompressionJobCancel()
     if (extract) {
         // One entry of that size: its header, its data and a last member with the zero blocks which end a tar archive
         const QByteArray header = _tarHeader({.name = "zeros.bin"}, static_cast<qint64>(memberCount) * 64 * 1024);
-        QVERIFY(_writeGzipOfZeros(inputPath, memberCount + 1, _gzipMember(header)));
+        QVERIFY(_writeGzipOfZeros(inputPath, memberCount + 1, TestFixtures::gzipMember(header)));
     } else {
         QVERIFY(_writeGzipOfZeros(inputPath, memberCount));
     }
@@ -3105,10 +2743,11 @@ void QGCCompressionTest::_testCompressionJobCancelFuture()
     const QString outputPath = tempDir.filePath("cancel.bin");
     QVERIFY(_writeGzipOfZeros(inputPath, 8192));
 
-    QFuture<bool> future = QGCCompressionJob::decompressFileAsync(inputPath, outputPath);
-    QFutureWatcher<bool> watcher;
-    QSignalSpy finishedSpy(&watcher, &QFutureWatcher<bool>::finished);
-    connect(&watcher, &QFutureWatcher<bool>::progressValueChanged, &watcher, [&future]() { future.cancel(); });
+    using Outcome = QGCCompression::Outcome;
+    QFuture<Outcome> future = QGCCompressionJob::decompressFileAsync(inputPath, outputPath);
+    QFutureWatcher<Outcome> watcher;
+    QSignalSpy finishedSpy(&watcher, &QFutureWatcher<Outcome>::finished);
+    connect(&watcher, &QFutureWatcher<Outcome>::progressValueChanged, &watcher, [&future]() { future.cancel(); });
     watcher.setFuture(future);
 
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::longMs());
@@ -3120,10 +2759,7 @@ void QGCCompressionTest::_testCompressionJobErrorString()
 {
     QTemporaryDir tempDir;
     const QString corruptZip = tempDir.filePath("corrupt.zip");
-    QFile file(corruptZip);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.write("This is not a valid ZIP file");
-    file.close();
+    QVERIFY(TestFixtures::writeFile(corruptZip, "This is not a valid ZIP file"));
 
     QGCCompressionJob job;
     QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
@@ -3143,8 +2779,8 @@ void QGCCompressionTest::_testCompressionJobPlainInput_data()
 {
     QTest::addColumn<bool>("copy");
 
-    QTest::newRow("decompressFile") << false;
-    QTest::newRow("decompressOrCopyFile") << true;
+    QTest::newRow("PlainInput::Refuse") << false;
+    QTest::newRow("PlainInput::Copy") << true;
 }
 
 void QGCCompressionTest::_testCompressionJobPlainInput()
@@ -3156,13 +2792,15 @@ void QGCCompressionTest::_testCompressionJobPlainInput()
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath("manifest.json.gz");
     const QString outputPath = tempDir.filePath("manifest.json");
-    QVERIFY(_writeFile(inputPath, plain));
+    QVERIFY(TestFixtures::writeFile(inputPath, plain));
 
     QGCCompressionJob job;
     QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
     if (copy) {
-        job.decompressOrCopyFile(inputPath, outputPath);
+        job.decompressFile(inputPath, outputPath, QGCCompression::kDefaultMaxDecompressedFileBytes,
+                           QGCCompression::PlainInput::Copy);
     } else {
+        // The default, which is what QGCArchiveWatcher runs
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Input is not compressed"));
         job.decompressFile(inputPath, outputPath);
     }
@@ -3171,16 +2809,49 @@ void QGCCompressionTest::_testCompressionJobPlainInput()
         verifyExpectedLogMessage();
     }
 
-    // Only the job that was asked to takes the file as it is. The one QGCArchiveWatcher runs fails for it.
+    // Only the job that was asked to takes the file as it is
     QCOMPARE(finishedSpy.first().first().toBool(), copy);
     if (copy) {
         QVERIFY2(job.errorString().isEmpty(), qPrintable(job.errorString()));
-        QCOMPARE(_readFile(outputPath), plain);
+        QCOMPARE(TestFixtures::readFile(outputPath), plain);
     } else {
         QVERIFY2(job.errorString().endsWith(": the input is not compressed"), qPrintable(job.errorString()));
         QVERIFY(!QFileInfo::exists(outputPath));
     }
-    QCOMPARE(_readFile(inputPath), plain);
+    QCOMPARE(TestFixtures::readFile(inputPath), plain);
+}
+
+void QGCCompressionTest::_testCompressionJobWork()
+{
+    using QGCCompression::Error;
+    using QGCCompression::Outcome;
+
+    // Work that is no function of QGCCompression: it tells how far it is and how it ended
+    const QGCCompressionJob::Work work = [](QGCCompression::ProgressCallback progress) {
+        const bool cancelled = !progress(50, 100);
+        return Outcome{.error = cancelled ? Error::Cancelled : Error::IoError,
+                       .message = QStringLiteral("the work failed")};
+    };
+
+    QGCCompressionJob job;
+    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
+    job.start(work, QStringLiteral("from"), QStringLiteral("to"));
+    QVERIFY(job.isRunning());
+    QCOMPARE(job.currentOperation(), QGCCompressionJob::Operation::Custom);
+    QCOMPARE(job.sourcePath(), QStringLiteral("from"));
+    QCOMPARE(job.outputPath(), QStringLiteral("to"));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY(!finishedSpy.first().first().toBool());
+    QCOMPARE(job.errorString(), QStringLiteral("the work failed"));
+    QCOMPARE(job.progress(), 0.5);
+    QCOMPARE(job.future().result().error, Error::IoError);
+
+    // The same work without a job
+    QFuture<Outcome> future = QGCCompressionJob::run(work);
+    future.waitForFinished();
+    QCOMPARE(future.result().error, Error::IoError);
+    QCOMPARE(future.result().message, QStringLiteral("the work failed"));
+    QCOMPARE(future.progressValue(), 50);
 }
 
 // ============================================================================
@@ -3211,28 +2882,30 @@ void QGCCompressionTest::_testSparseFileExtraction()
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("sparse.tar");
     const QString outputPath = tempDir.filePath("output");
-    QVERIFY(_writeFile(archivePath, _makeTar({{.name = entryName.toLatin1(),
-                                               .data = firstPart + secondPart,
-                                               .type = 'S',
-                                               .sparseData = {{.offset = 2 * blockSize, .size = blockSize},
-                                                              {.offset = 8 * blockSize, .size = blockSize}},
-                                               .sparseFileSize = expected.size()}})));
+    QVERIFY(
+        TestFixtures::writeFile(archivePath, _makeTar({{.name = entryName.toLatin1(),
+                                                        .data = firstPart + secondPart,
+                                                        .type = 'S',
+                                                        .sparseData = {{.offset = 2 * blockSize, .size = blockSize},
+                                                                       {.offset = 8 * blockSize, .size = blockSize}},
+                                                        .sparseFileSize = expected.size()}})));
 
     QByteArray extracted;
-    if (api == "extractArchive") {
-        // The limit is that of the data: holes are not written, so they do not count
-        QVERIFY(QGCCompression::extractArchive(archivePath, outputPath, QGCCompression::Format::Auto, nullptr,
-                                               2 * blockSize));
-        extracted = _readFile(outputPath + QLatin1Char('/') + entryName);
-    } else if (api == "extractFile") {
-        QVERIFY(QGCCompression::extractFile(archivePath, entryName, outputPath));
-        extracted = _readFile(outputPath);
-    } else if (api == "extractFileData") {
-        extracted = QGCCompression::extractFileData(archivePath, entryName);
-    } else {
+    if (api == "QGCArchiveFile") {
         QGCArchiveFile entry(archivePath, entryName);
         QVERIFY(entry.open(QIODevice::ReadOnly));
         extracted = entry.readAll();
+    } else {
+        // The limit of an extraction is that of the data: holes are not written, so they do not count
+        Results results;
+        QVERIFY(_call(api,
+                      {.path = archivePath,
+                       .output = outputPath,
+                       .names = {entryName},
+                       .maxBytes = (api == "extractArchive") ? (2 * blockSize) : 0},
+                      &results));
+        extracted = (api == "extractFileData") ? results.data
+                                               : TestFixtures::readFile(outputPath + QLatin1Char('/') + entryName);
     }
 
     // Each part is where it belongs, with zeros in the holes
@@ -3243,76 +2916,6 @@ void QGCCompressionTest::_testSparseFileExtraction()
 // ============================================================================
 // Thread Safety Tests
 // ============================================================================
-void QGCCompressionTest::_testThreadLocalState()
-{
-    QTemporaryDir tempDir;
-    // Test that thread-local error state is isolated between threads
-    // Each thread should have its own lastError() and lastErrorString()
-    QMutex syncMutex;
-    QWaitCondition thread1Ready;
-    bool thread1HasErrorState = false;
-    std::atomic<bool> thread1Done{false};
-    std::atomic<bool> thread2Done{false};
-    std::atomic<bool> thread2ObservedThread1{false};
-    QGCCompression::Error thread1Error = QGCCompression::Error::None;
-    QGCCompression::Error thread2Error = QGCCompression::Error::None;
-    QString thread1ErrorString;
-    QString thread2ErrorString;
-    // Thread 1: Trigger FileNotFound error
-    QThread* t1 = QThread::create([&]() {
-        // This should fail and set error state
-        QGCCompression::extractArchive("/nonexistent/path/file.zip", tempDir.path() + "/thread1_output");
-        thread1Error = QGCCompression::lastError();
-        thread1ErrorString = QGCCompression::lastErrorString();
-        {
-            QMutexLocker locker(&syncMutex);
-            thread1HasErrorState = true;
-            thread1Ready.wakeOne();
-        }
-        thread1Done = true;
-    });
-    // Thread 2: Successful operation (should have no error)
-    QThread* t2 = QThread::create([&tempDir, &syncMutex, &thread1Ready, &thread1HasErrorState, &thread2ObservedThread1,
-                                   &thread2Error, &thread2ErrorString, &thread2Done]() {
-        {
-            QMutexLocker locker(&syncMutex);
-            if (!thread1HasErrorState) {
-                thread2ObservedThread1 = thread1Ready.wait(&syncMutex, TestTimeout::mediumMs());
-            } else {
-                thread2ObservedThread1 = true;
-            }
-        }
-        if (!thread2ObservedThread1.load()) {
-            thread2Done = true;
-            return;
-        }
-
-        // This should succeed
-        const QString outputDir = tempDir.path() + "/thread2_output";
-        QGCCompression::extractArchive(":/unittest/manifest.json.zip", outputDir);
-        thread2Error = QGCCompression::lastError();
-        thread2ErrorString = QGCCompression::lastErrorString();
-        thread2Done = true;
-    });
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist.*"));
-    t1->start();
-    t2->start();
-    // Wait for both threads
-    QVERIFY(t1->wait(TestTimeout::mediumMs()));
-    verifyExpectedLogMessage();
-    QVERIFY(t2->wait(TestTimeout::mediumMs()));
-    delete t1;
-    delete t2;
-    // Verify thread isolation
-    QVERIFY(thread1Done.load());
-    QVERIFY(thread2Done.load());
-    QVERIFY(thread2ObservedThread1.load());
-    QCOMPARE(thread1Error, QGCCompression::Error::FileNotFound);
-    QVERIFY(!thread1ErrorString.isEmpty());
-    // Thread 2 should have its own clean state (success = no error)
-    QCOMPARE(thread2Error, QGCCompression::Error::None);
-}
-
 void QGCCompressionTest::_testConcurrentExtractions()
 {
     QTemporaryDir tempDir;
@@ -3327,9 +2930,9 @@ void QGCCompressionTest::_testConcurrentExtractions()
             // Alternate between different archive types
             QString archivePath;
             if (i % 2 == 0) {
-                archivePath = QStringLiteral(":/unittest/manifest.json.zip");
+                archivePath = _zipResource;
             } else {
-                archivePath = QStringLiteral(":/unittest/manifest.json.7z");
+                archivePath = _sevenZipResource;
             }
             if (QGCCompression::extractArchive(archivePath, outputDir)) {
                 if (QFile::exists(outputDir + "/manifest.json")) {
@@ -3359,8 +2962,6 @@ void QGCCompressionTest::_testEmptyArchive()
     // Create an empty ZIP file (valid but contains no entries)
     // ZIP empty archive signature: PK\x05\x06 followed by 18 zero bytes
     const QString emptyZip = tempDir.path() + "/empty.zip";
-    QFile file(emptyZip);
-    QVERIFY(file.open(QIODevice::WriteOnly));
     // Minimal empty ZIP (End of Central Directory record only)
     const char emptyZipData[] = {
         '\x50', '\x4b', '\x05', '\x06',  // End of central dir signature
@@ -3372,75 +2973,17 @@ void QGCCompressionTest::_testEmptyArchive()
         '\x00', '\x00', '\x00', '\x00',  // Offset of central directory
         '\x00', '\x00'                   // Comment length
     };
-    file.write(emptyZipData, sizeof(emptyZipData));
-    file.close();
-    // List should return empty list (not error)
-    const QStringList entries = QGCCompression::listArchive(emptyZip);
-    QVERIFY(entries.isEmpty());
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
-    QVERIFY(QGCCompression::listArchiveDetailed(emptyZip).isEmpty());
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
-    // Stats should show zero entries
-    const QGCCompression::ArchiveStats stats = QGCCompression::getArchiveStats(emptyZip);
-    QCOMPARE(stats.totalEntries, 0);
-    QCOMPARE(stats.fileCount, 0);
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
+    QVERIFY(TestFixtures::writeFile(emptyZip, QByteArray(emptyZipData, sizeof(emptyZipData))));
+    // The lists are empty and the statistics show no entries, which is no error
+    for (const char* api : {"listArchive", "listArchiveDetailed", "getArchiveStats"}) {
+        Results results;
+        QVERIFY2(_call(api, {.path = emptyZip}, &results).error == QGCCompression::Error::None, api);
+        QVERIFY2(results.isEmpty(), api);
+        QCOMPARE(results.stats.fileCount, 0);
+    }
     // Extract should succeed (nothing to extract)
     const QString outputDir = tempDir.path() + "/empty_extract";
     QVERIFY(QGCCompression::extractArchive(emptyZip, outputDir));
-}
-
-void QGCCompressionTest::_testSingleByteFile()
-{
-    // Test that small files decompress correctly
-    // Use the existing .gz resource and verify size is small but non-zero
-    const QString gzResource = QStringLiteral(":/unittest/manifest.json.gz");
-    // Decompress to memory
-    QFile resourceFile(gzResource);
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resourceFile.readAll();
-    resourceFile.close();
-    const QByteArray decompressed = QGCCompression::decompressData(compressedData);
-    QVERIFY(!decompressed.isEmpty());
-    // Verify decompressed size is reasonable (small file)
-    QVERIFY(decompressed.size() > 0);
-    QVERIFY(decompressed.size() < 1024);  // Should be a small manifest file
-    // Test boundary: decompress with exact size limit matching actual size
-    const QByteArray exactLimit =
-        QGCCompression::decompressData(compressedData, QGCCompression::Format::Auto, decompressed.size());
-    QCOMPARE(exactLimit.size(), decompressed.size());
-    // Test boundary: size limit of exactly 1 byte should fail for this file
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-    const QByteArray tooSmall = QGCCompression::decompressData(compressedData, QGCCompression::Format::Auto, 1);
-    QVERIFY(tooSmall.isEmpty());  // Should fail - file is bigger than 1 byte
-    verifyExpectedLogMessage();
-}
-
-void QGCCompressionTest::_testLargeFileDecompression()
-{
-    // Test decompression with size limit enforcement
-    // Use the manifest.json.gz which we know is small
-    QFile resourceFile(":/unittest/manifest.json.gz");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resourceFile.readAll();
-    resourceFile.close();
-    // First, decompress without limit to get actual size
-    const QByteArray fullDecompressed = QGCCompression::decompressData(compressedData);
-    QVERIFY(!fullDecompressed.isEmpty());
-    const qint64 fullSize = fullDecompressed.size();
-    // Now test with a limit smaller than the actual size
-    if (fullSize > 10) {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-        const QByteArray limitedDecompressed =
-            QGCCompression::decompressData(compressedData, QGCCompression::Format::Auto, 10);
-        // Should return empty due to size limit exceeded
-        QVERIFY(limitedDecompressed.isEmpty());
-        verifyExpectedLogMessage();
-    }
-    // Test with limit larger than actual size (should succeed)
-    const QByteArray unlimitedDecompressed =
-        QGCCompression::decompressData(compressedData, QGCCompression::Format::Auto, fullSize * 2);
-    QCOMPARE(unlimitedDecompressed.size(), fullSize);
 }
 
 void QGCCompressionTest::_testDecompressToFileSizeLimit()
@@ -3452,10 +2995,12 @@ void QGCCompressionTest::_testDecompressToFileSizeLimit()
     constexpr qint64 limit = 1024;
     const QStringList inputOnly{QStringLiteral("zeros.gz")};
 
+    using QGCCompression::Error;
+
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-    QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, nullptr, limit));
+    QCOMPARE(QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, nullptr, limit).error,
+             Error::SizeLimitExceeded);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
     QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
@@ -3463,15 +3008,22 @@ void QGCCompressionTest::_testDecompressToFileSizeLimit()
     QVERIFY(QGCCompression::decompressIfNeeded(inputPath, outputPath, false, limit).isEmpty());
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
+
+    QGCCompression::Outcome needed;
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Decompression failed"));
+    QVERIFY(QGCCompression::decompressIfNeeded(inputPath, needed, outputPath, false, limit).isEmpty());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(needed.error, Error::SizeLimitExceeded);
     QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
 
     QFile device(inputPath);
     QVERIFY(device.open(QIODevice::ReadOnly));
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-    QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath, nullptr, limit));
+    QCOMPARE(QGCCompression::decompressFromDevice(&device, outputPath, nullptr, limit).error, Error::SizeLimitExceeded);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
     QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
     device.close();
 
@@ -3488,39 +3040,41 @@ void QGCCompressionTest::_testDecompressToFileSizeLimit()
 
 void QGCCompressionTest::_testDecompressToMemorySizeLimit()
 {
-    QFile resourceFile(":/unittest/manifest.json.gz");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressed = resourceFile.readAll();
+    const QByteArray compressed = TestFixtures::readFile(_gzResource);
     constexpr qint64 limit = 10;
 
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-    QVERIFY(QGCCompression::decompressData(compressed, QGCCompression::Format::Auto, limit).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    for (const char* api : {"decompressData", "decompressFromDevice-memory"}) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+        Results results;
+        const QGCCompression::Outcome outcome = _call(api, {.path = _gzResource, .maxBytes = limit}, &results);
+        verifyExpectedLogMessage();
+        QVERIFY2(outcome.error == QGCCompression::Error::SizeLimitExceeded, api);
+        QVERIFY2(results.isEmpty(), api);
+    }
 
-    QBuffer device;
-    device.setData(compressed);
-    QVERIFY(device.open(QIODevice::ReadOnly));
-    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
-    QVERIFY(QGCCompression::decompressFromDevice(&device, limit).isEmpty());
-    verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    // A limit of the size of the data lets it through, and so does a larger one
+    QByteArray whole;
+    QVERIFY(QGCCompression::decompressData(compressed, whole));
+    QVERIFY(whole.size() > limit);
+    for (const qint64 enough : {qint64(whole.size()), qint64(2 * whole.size())}) {
+        QByteArray limited;
+        QVERIFY(QGCCompression::decompressData(compressed, limited, QGCCompression::Format::Auto, enough));
+        QCOMPARE(limited, whole);
+    }
 
     QJsonParseError parseError;
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
     QVERIFY(QGCCompression::parseCompressedJson(compressed, &parseError, limit).isNull());
     verifyExpectedLogMessage();
     QVERIFY(parseError.error != QJsonParseError::NoError);
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
     QVERIFY(QGCCompression::parseCompressedJson(compressed, &parseError).isObject());
 
-    const QString gzResource = QStringLiteral(":/unittest/manifest.json.gz");
     QString errorString;
-    QVERIFY(QGCCompression::readFile(gzResource, &errorString, 0, limit).isEmpty());
+    QVERIFY(QGCCompression::readFile(_gzResource, &errorString, 0, limit).isEmpty());
     QVERIFY2(errorString.contains("exceeds the limit"), qPrintable(errorString));
     // A read that stops within the limit is not an error
     errorString.clear();
-    QCOMPARE(QGCCompression::readFile(gzResource, &errorString, limit, limit).size(), limit);
+    QCOMPARE(QGCCompression::readFile(_gzResource, &errorString, limit, limit).size(), limit);
     QVERIFY2(errorString.isEmpty(), qPrintable(errorString));
 }
 
@@ -3529,23 +3083,14 @@ void QGCCompressionTest::_testExtractionStopsCleanly_data()
     QTest::addColumn<QString>("api");
     QTest::addColumn<bool>("declaredSizes");  // Whether the archive tells the size of an entry before its data
     QTest::addColumn<bool>("cancel");         // Otherwise the size limit stops the extraction
-    QTest::addColumn<QStringList>("remaining");
 
-    const QStringList nothing;
-    QTest::newRow("extractArchive-limit") << "extractArchive" << true << false << nothing;
-    QTest::newRow("extractArchive-cancel") << "extractArchive" << true << true << nothing;
-    QTest::newRow("extractFromDevice-limit") << "extractFromDevice" << true << false << nothing;
-    QTest::newRow("extractFromDevice-cancel") << "extractFromDevice" << true << true << nothing;
-    // Filtered extraction keeps the entries it wrote before it was stopped
-    QTest::newRow("extractArchiveFiltered-limit")
-        << "extractArchiveFiltered" << true << false << QStringList{QStringLiteral("first.txt")};
-    // The entry that is being written when the callback cancels is not kept, its directory is
-    QTest::newRow("extractArchiveFiltered-cancel")
-        << "extractArchiveFiltered" << true << true
-        << QStringList{QStringLiteral("first.txt"), QStringLiteral("nested")};
+    for (const char* api : {"extractArchive", "extractFromDevice", "extractArchiveFiltered"}) {
+        QTest::addRow("%s-limit", api) << api << true << false;
+        QTest::addRow("%s-cancel", api) << api << true << true;
+    }
     // The limit is on what is written, whatever the archive says or leaves out about the sizes
-    QTest::newRow("extractArchive-limit-undeclared") << "extractArchive" << false << false << nothing;
-    QTest::newRow("extractArchiveFiltered-limit-undeclared") << "extractArchiveFiltered" << false << false << nothing;
+    QTest::newRow("extractArchive-limit-undeclared") << "extractArchive" << false << false;
+    QTest::newRow("extractArchiveFiltered-limit-undeclared") << "extractArchiveFiltered" << false << false;
 }
 
 void QGCCompressionTest::_testExtractionStopsCleanly()
@@ -3553,24 +3098,22 @@ void QGCCompressionTest::_testExtractionStopsCleanly()
     QFETCH(QString, api);
     QFETCH(bool, declaredSizes);
     QFETCH(bool, cancel);
-    QFETCH(QStringList, remaining);
 
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(declaredSizes ? "three.tar" : "streamed.zip");
     const QString outputDir = tempDir.filePath("output");
     if (declaredSizes) {
-        QVERIFY(_writeFile(archivePath, _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
-                                                  {.name = "nested/second.txt", .data = QByteArray(600, 'b')},
-                                                  {.name = "third.txt", .data = QByteArray(600, 'c')}})));
+        QVERIFY(
+            TestFixtures::writeFile(archivePath, _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                                           {.name = "nested/second.txt", .data = QByteArray(600, 'b')},
+                                                           {.name = "third.txt", .data = QByteArray(600, 'c')}})));
     } else {
         // Already the first entry is larger than the limit
-        QVERIFY(_writeFile(archivePath,
-                           _makeStreamedZip({{.name = "first.txt", .data = QByteArray(64 * 1024, 'a')},
-                                             {.name = "nested/second.txt", .data = QByteArray(64 * 1024, 'b')}},
-                                            false)));
+        QVERIFY(TestFixtures::writeFile(
+            archivePath, _makeStreamedZip({{.name = "first.txt", .data = QByteArray(64 * 1024, 'a')},
+                                           {.name = "nested/second.txt", .data = QByteArray(64 * 1024, 'b')}},
+                                          false)));
     }
-    QFile device(archivePath);
-    QVERIFY(device.open(QIODevice::ReadOnly));
 
     // In the TAR archive the second entry is the one that does not fit, and the one during which the
     // extraction is cancelled
@@ -3583,59 +3126,48 @@ void QGCCompressionTest::_testExtractionStopsCleanly()
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
     }
 
-    if (api == "extractArchive") {
-        QVERIFY(!QGCCompression::extractArchive(archivePath, outputDir, QGCCompression::Format::Auto, progress, limit));
-    } else if (api == "extractFromDevice") {
-        QVERIFY(!QGCCompression::extractFromDevice(&device, outputDir, progress, limit));
-    } else {
-        QVERIFY(!QGCCompression::extractArchiveFiltered(
-            archivePath, outputDir, [](const QGCCompression::ArchiveEntry&) { return true; }, progress, limit));
-    }
+    const QGCCompression::Outcome outcome =
+        _call(api, {.path = archivePath, .output = outputDir, .progress = progress, .maxBytes = limit});
 
     if (cancel) {
         QCOMPARE(progressCalls, 2);
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::Cancelled);
+        QCOMPARE(outcome.error, QGCCompression::Error::Cancelled);
     } else {
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+        QCOMPARE(outcome.error, QGCCompression::Error::SizeLimitExceeded);
     }
-    QCOMPARE(_entriesBelow(outputDir), remaining);
+    // What the extraction had written before it was stopped is removed again
+    QCOMPARE(_entriesBelow(outputDir), QStringList());
 }
 
 void QGCCompressionTest::_testDecompressionCancelled_data()
 {
-    QTest::addColumn<bool>("fromDevice");
+    QTest::addColumn<QString>("api");
 
-    QTest::newRow("decompressFile") << false;
-    QTest::newRow("decompressFromDevice") << true;
+    QTest::newRow("decompressFile") << "decompressFile";
+    QTest::newRow("decompressFromDevice") << "decompressFromDevice-file";
 }
 
 void QGCCompressionTest::_testDecompressionCancelled()
 {
-    QFETCH(bool, fromDevice);
+    QFETCH(QString, api);
 
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath("zeros.gz");
     const QString outputPath = tempDir.filePath("zeros.bin");
     QVERIFY(_writeGzipOfZeros(inputPath, 4));
-    QFile device(inputPath);
-    QVERIFY(device.open(QIODevice::ReadOnly));
 
     int progressCalls = 0;
     const QGCCompression::ProgressCallback cancel = [&progressCalls](qint64, qint64) {
         ++progressCalls;
         return false;
     };
-    if (fromDevice) {
-        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath, cancel));
-    } else {
-        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, cancel));
-    }
+    const QGCCompression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath, .progress = cancel});
 
     // The caller that cancelled is told so, and not that the input or the output failed
     QCOMPARE(progressCalls, 1);
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::Cancelled);
-    QVERIFY2(QGCCompression::lastErrorString().endsWith(": cancelled"), qPrintable(QGCCompression::lastErrorString()));
+    QCOMPARE(outcome.error, QGCCompression::Error::Cancelled);
+    QVERIFY2(outcome.message.endsWith(": cancelled"), qPrintable(outcome.message));
     QCOMPARE(_entriesBelow(tempDir.path()), QStringList{QStringLiteral("zeros.gz")});
 }
 
@@ -3658,54 +3190,28 @@ void QGCCompressionTest::_testExtractArchiveKeepsEntriesBeforeDamage()
     const QString archivePath = tempDir.filePath("cut.tar");
     const QString outputDir = tempDir.filePath("output");
     // first.txt takes three 512-byte blocks: the cut is 100 bytes into the data of the second entry
-    QVERIFY(_writeFile(archivePath, tar.left(4 * 512 + 100)));
-    QFile device(archivePath);
-    QVERIFY(device.open(QIODevice::ReadOnly));
+    QVERIFY(TestFixtures::writeFile(archivePath, tar.left(4 * 512 + 100)));
 
     if (!fromDevice) {
         // The size pre-check reads the headers and finds the archive cut where the third one should be
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to read archive entry"));
     }
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to read data"));
-    if (fromDevice) {
-        QVERIFY(!QGCCompression::extractFromDevice(&device, outputDir));
-    } else {
-        QVERIFY(!QGCCompression::extractArchive(archivePath, outputDir));
+    const QGCCompression::Outcome outcome =
+        _call(fromDevice ? "extractFromDevice" : "extractArchive", {.path = archivePath, .output = outputDir});
+    if (!fromDevice) {
         verifyExpectedLogMessage();
     }
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+    QCOMPARE(outcome.error, QGCCompression::Error::InvalidArchive);
 
     // Unlike a size limit or a cancellation, damage does not undo the extraction. The entries before it stay,
     // and so does the damaged one: what could be read of it, filled up with zeros to the size it declares
     const QStringList written{QStringLiteral("first.txt"), QStringLiteral("nested"),
                               QStringLiteral("nested/second.txt")};
     QCOMPARE(_entriesBelow(outputDir), written);
-    QCOMPARE(_readFile(outputDir + "/first.txt"), QByteArray(600, 'a'));
-    QCOMPARE(_readFile(outputDir + "/nested/second.txt"), QByteArray(100, 'b') + QByteArray(500, '\0'));
-}
-
-void QGCCompressionTest::_testMaxEntriesArchive()
-{
-    // Test listing an archive with many entries
-    // We'll use the existing ZIP and verify the listing mechanism
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    // Get detailed listing
-    const QList<QGCCompression::ArchiveEntry> entries = QGCCompression::listArchiveDetailed(zipResource);
-    // Verify each entry has valid data
-    for (const auto& entry : entries) {
-        QVERIFY(!entry.name.isEmpty());
-        if (!entry.isDirectory) {
-            QVERIFY(entry.size >= 0);
-        }
-        // Permissions should be reasonable (not zero for files)
-        if (!entry.isDirectory && entry.size > 0) {
-            QVERIFY(entry.permissions > 0);
-        }
-    }
-    // Verify stats match entry count
-    const QGCCompression::ArchiveStats stats = QGCCompression::getArchiveStats(zipResource);
-    QCOMPARE(stats.totalEntries, static_cast<int>(entries.size()));
+    QCOMPARE(TestFixtures::readFile(outputDir + "/first.txt"), QByteArray(600, 'a'));
+    QCOMPARE(TestFixtures::readFile(outputDir + "/nested/second.txt"), QByteArray(100, 'b') + QByteArray(500, '\0'));
 }
 
 void QGCCompressionTest::_testOverstatedEntrySize()
@@ -3714,33 +3220,41 @@ void QGCCompressionTest::_testOverstatedEntrySize()
     const QString entryName = QStringLiteral("overstated.bin");
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("overstated.tar");
-    QVERIFY(
-        _writeFile(archivePath, _tarHeader({.name = entryName.toLatin1()}, Q_INT64_C(1) << 50) + QByteArray(512, 'x')));
+    QVERIFY(TestFixtures::writeFile(
+        archivePath, _tarHeader({.name = entryName.toLatin1()}, Q_INT64_C(1) << 50) + QByteArray(512, 'x')));
     QFile device(archivePath);
     QVERIFY(device.open(QIODevice::ReadOnly));
 
     // Without a limit, no memory is set aside on the word of the header: the entry fails where its data runs out
     const QRegularExpression dataRanOut("Read error.*Truncated");
+    QByteArray data("to be replaced");
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, dataRanOut);
-    QVERIFY(QGCCompression::extractFileData(archivePath, entryName, QGCCompression::Format::Auto, 0).isEmpty());
+    QVERIFY(!QGCCompression::extractFileData(archivePath, entryName, data, QGCCompression::Format::Auto, 0));
     verifyExpectedLogMessage();
+    QVERIFY(data.isEmpty());
 
+    data = "to be replaced";
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, dataRanOut);
-    QVERIFY(QGCCompression::extractFileDataFromDevice(&device, entryName, 0).isEmpty());
+    QVERIFY(!QGCCompression::extractFileDataFromDevice(&device, entryName, data, 0));
     verifyExpectedLogMessage();
+    QVERIFY(data.isEmpty());
 
     // The default limit is far below what the header declares, so the entry is not started
     const QRegularExpression overTheLimit("Size limit exceeded");
+    data = "to be replaced";
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, overTheLimit);
-    QVERIFY(QGCCompression::extractFileData(archivePath, entryName).isEmpty());
+    QCOMPARE(QGCCompression::extractFileData(archivePath, entryName, data).error,
+             QGCCompression::Error::SizeLimitExceeded);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QVERIFY(data.isEmpty());
 
     QVERIFY(device.seek(0));
+    data = "to be replaced";
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, overTheLimit);
-    QVERIFY(QGCCompression::extractFileDataFromDevice(&device, entryName).isEmpty());
+    QCOMPARE(QGCCompression::extractFileDataFromDevice(&device, entryName, data).error,
+             QGCCompression::Error::SizeLimitExceeded);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QVERIFY(data.isEmpty());
 }
 
 void QGCCompressionTest::_testExtractFileDataSizeLimit_data()
@@ -3764,38 +3278,37 @@ void QGCCompressionTest::_testExtractFileDataSizeLimit()
     const QByteArray content(3000, 'a');
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(declaredSize ? "entry.tar" : "entry.zip");
-    QVERIFY(_writeFile(archivePath, declaredSize ? _makeTar({{.name = entryName, .data = content}})
+    QVERIFY(TestFixtures::writeFile(archivePath,
+                                    declaredSize ? _makeTar({{.name = entryName, .data = content}})
                                                  : _makeStreamedZip({{.name = entryName, .data = content}}, false)));
 
+    Results results;
+    const QByteArray& data = results.data;
     const auto extract = [&](const QString& path, qint64 limit) {
-        if (!fromDevice) {
-            return QGCCompression::extractFileData(path, entryName, QGCCompression::Format::Auto, limit);
-        }
-        QFile device(path);
-        if (!device.open(QIODevice::ReadOnly)) {
-            return QByteArray();
-        }
-        return QGCCompression::extractFileDataFromDevice(&device, entryName, limit);
+        return _call(fromDevice ? "extractFileDataFromDevice" : "extractFileData",
+                     {.path = path, .names = {QString::fromLatin1(entryName)}, .maxBytes = limit}, &results);
     };
 
     // One byte short of the entry
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded: 2999 bytes"));
-    QVERIFY(extract(archivePath, content.size() - 1).isEmpty());
+    QCOMPARE(extract(archivePath, content.size() - 1).error, QGCCompression::Error::SizeLimitExceeded);
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QVERIFY(data.isEmpty());
 
-    QCOMPARE(extract(archivePath, content.size()), content);
-    QCOMPARE(extract(archivePath, 0), content);
+    QVERIFY(extract(archivePath, content.size()));
+    QCOMPARE(data, content);
+    QVERIFY(extract(archivePath, 0));
+    QCOMPARE(data, content);
 
     if (declaredSize) {
         // An entry that says it does not fit is not started: its data, cut short here, is never read
         const QString overstatedPath = tempDir.filePath("overstated.tar");
-        QVERIFY(_writeFile(overstatedPath, _tarHeader({.name = entryName}, 5000) + QByteArray(512, 'x')));
+        QVERIFY(TestFixtures::writeFile(overstatedPath, _tarHeader({.name = entryName}, 5000) + QByteArray(512, 'x')));
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
                          QRegularExpression("Size limit exceeded: 4000 bytes"));
-        QVERIFY(extract(overstatedPath, 4000).isEmpty());
+        QCOMPARE(extract(overstatedPath, 4000).error, QGCCompression::Error::SizeLimitExceeded);
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+        QVERIFY(data.isEmpty());
     }
 }
 
@@ -3836,38 +3349,9 @@ void QGCCompressionTest::_testUncompressDataSizeLimit()
 // ============================================================================
 // Cross-Platform Path Handling Tests
 // ============================================================================
-void QGCCompressionTest::_testWindowsPathSeparators()
-{
-    QTemporaryDir tempDir;
-    // Test that paths with Windows-style separators are handled correctly
-    // libarchive archives may contain entries with backslashes
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    // Get entries and verify none have issues
-    const QStringList entries = QGCCompression::listArchive(zipResource);
-    for (const QString& entry : entries) {
-        // Entry names should not contain backslashes after processing
-        // (or if they do, they should be handled correctly)
-        // Just verify no crashes or issues accessing these entries
-        const bool exists = QGCCompression::fileExists(zipResource, entry);
-        Q_UNUSED(exists);  // Just testing it doesn't crash
-    }
-    // Test path joining with mixed separators
-    // QGCFileHelper::joinPath should normalize these
-    // Create a test file with normal path
-    const QString testDir = tempDir.path() + "/path_test";
-    QVERIFY(QDir().mkpath(testDir));
-    QFile testFile(testDir + "/test.txt");
-    QVERIFY(testFile.open(QIODevice::WriteOnly));
-    testFile.write("test");
-    testFile.close();
-    // Verify the file exists regardless of separator style used in creation
-    QVERIFY(QFile::exists(testDir + "/test.txt"));
-}
-
 void QGCCompressionTest::_testExtractArchiveToSymlinkedOutputPath()
 {
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
     const QString realOutputDir = tempDir.path() + "/symlink_real_output";
     const QString symlinkOutputDir = tempDir.path() + "/symlink_alias_output";
     QVERIFY(QDir().mkpath(realOutputDir));
@@ -3878,7 +3362,7 @@ void QGCCompressionTest::_testExtractArchiveToSymlinkedOutputPath()
 
     QFileInfo symlinkInfo(symlinkOutputDir);
     QVERIFY(symlinkInfo.isSymLink());
-    QVERIFY(QGCCompression::extractArchive(zipResource, symlinkOutputDir));
+    QVERIFY(QGCCompression::extractArchive(_zipResource, symlinkOutputDir));
     QVERIFY(QFile::exists(realOutputDir + "/manifest.json"));
     QVERIFY(QFile::exists(symlinkOutputDir + "/manifest.json"));
 }
@@ -3900,34 +3384,25 @@ void QGCCompressionTest::_testExtractRejectsEscapingNames()
     const QString outputDir = tempDir.filePath("output");
     const QString absolutePath = tempDir.filePath("absolute.txt");
     const QString archivePath = tempDir.filePath("hostile.tar");
-    QFile archive(archivePath);
-    QVERIFY(archive.open(QIODevice::WriteOnly));
-    archive.write(_makeTar({{.name = "../escape.txt", .data = "escaped"},
-                            {.name = QFile::encodeName(absolutePath), .data = "absolute"},
-                            {.name = "good.txt", .data = "good"}}));
-    archive.close();
+    QVERIFY(
+        TestFixtures::writeFile(archivePath, _makeTar({{.name = "../escape.txt", .data = "escaped"},
+                                                       {.name = QFile::encodeName(absolutePath), .data = "absolute"},
+                                                       {.name = "good.txt", .data = "good"}})));
 
+    // Asked for by name, so refusing the entry fails the call. The others leave it out and go on
+    const bool byName = (api == "extractFiles");
+    const QStringList names = byName ? QStringList{"../escape.txt", "good.txt"} : QStringList{"*.txt"};
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("ath traversal attempt.*escape"));
-    if (api == "extractArchive") {
-        QVERIFY(QGCCompression::extractArchive(archivePath, outputDir));
-    } else if (api == "extractArchiveFiltered") {
-        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
-                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
-    } else if (api == "extractByPattern") {
-        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir));
-    } else {
-        // Asked for by name, so refusing the entry fails the call
-        QVERIFY(!QGCCompression::extractFiles(archivePath, {"../escape.txt", "good.txt"}, outputDir));
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::UnsupportedFormat);
-    }
+    const QGCCompression::Outcome outcome = _call(api, {.path = archivePath, .output = outputDir, .names = names});
     verifyExpectedLogMessage();
+    QCOMPARE(outcome.error, byName ? QGCCompression::Error::UnsupportedFormat : QGCCompression::Error::None);
 
     QVERIFY(!QFile::exists(tempDir.filePath("escape.txt")));
     QVERIFY(!QFile::exists(absolutePath));
     const QStringList archiveAndOutput{QStringLiteral("hostile.tar"), QStringLiteral("output")};
     QCOMPARE(QDir(tempDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
              archiveAndOutput);
-    if (api != "extractFiles") {
+    if (!byName) {
         QVERIFY(QFile::exists(outputDir + "/good.txt"));
         // The absolute name is kept, below the output directory
         QVERIFY(QFile::exists(outputDir + absolutePath));
@@ -3943,24 +3418,20 @@ void QGCCompressionTest::_testExtractRejectsEscapingLinks()
     const QString outputDir = tempDir.filePath("output");
     const QString archivePath = tempDir.filePath("hostile.tar");
     const QString victimPath = tempDir.filePath("victim.txt");
-    QFile victim(victimPath);
-    QVERIFY(victim.open(QIODevice::WriteOnly));
-    victim.write("original");
-    victim.close();
+    QVERIFY(TestFixtures::writeFile(victimPath, "original"));
 
-    QFile archive(archivePath);
-    QVERIFY(archive.open(QIODevice::WriteOnly));
-    archive.write(_makeTar({
-        // "climb" only leaves the output directory through "inside", which a check of the names alone misses
-        {.name = "inside", .type = '2', .linkName = "."},
-        {.name = "climb", .type = '2', .linkName = "inside/.."},
-        {.name = "absolute", .type = '2', .linkName = "/"},
-        {.name = "parent", .type = '2', .linkName = ".."},
-        {.name = "hard.txt", .type = '1', .linkName = "victim.txt"},
-        {.name = "good.txt", .data = "good"},
-        {.name = "climb/made_dir/inner.txt", .data = "inner"},
-    }));
-    archive.close();
+    QVERIFY(TestFixtures::writeFile(
+        archivePath,
+        _makeTar({
+            // "climb" only leaves the output directory through "inside", which a check of the names alone misses
+            {.name = "inside", .type = '2', .linkName = "."},
+            {.name = "climb", .type = '2', .linkName = "inside/.."},
+            {.name = "absolute", .type = '2', .linkName = "/"},
+            {.name = "parent", .type = '2', .linkName = ".."},
+            {.name = "hard.txt", .type = '1', .linkName = "victim.txt"},
+            {.name = "good.txt", .data = "good"},
+            {.name = "climb/made_dir/inner.txt", .data = "inner"},
+        })));
 
     // libarchive resolves a hard link target against the working directory
     const QString originalDir = QDir::currentPath();
@@ -3972,14 +3443,13 @@ void QGCCompressionTest::_testExtractRejectsEscapingLinks()
                          QRegularExpression(QStringLiteral("Skipping symlink.*%1").arg(QLatin1String(skipped))));
     }
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Skipping hard link.*hard.txt"));
-    const bool extracted = QGCCompression::extractArchive(archivePath, outputDir);
+    const QGCCompression::Outcome extracted = QGCCompression::extractArchive(archivePath, outputDir);
     for (int i = 0; i < 4; ++i) {
         verifyExpectedLogMessage();
     }
 
     QVERIFY(!QFileInfo::exists(outputDir + "/hard.txt"));
-    QVERIFY(victim.open(QIODevice::ReadOnly));
-    QCOMPARE(victim.readAll(), QByteArray("original"));
+    QCOMPARE(TestFixtures::readFile(victimPath), QByteArray("original"));
     for (const char* link : {"climb", "absolute", "parent"}) {
         QVERIFY2(!QFileInfo(outputDir + QLatin1Char('/') + QLatin1String(link)).isSymLink(), link);
     }
@@ -3994,28 +3464,28 @@ void QGCCompressionTest::_testExtractRejectsEscapingLinks()
 #endif
 }
 
-void QGCCompressionTest::_testExtractLeavesOutLinks_data()
+void QGCCompressionTest::_testExtractLinks_data()
 {
     QTest::addColumn<QString>("api");
 
-    for (const char* api : {"extractArchiveFiltered", "extractByPattern", "extractFiles", "extractFile"}) {
+    for (const char* api :
+         {"extractArchive", "extractArchiveFiltered", "extractByPattern", "extractFiles", "extractFile"}) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
 
-void QGCCompressionTest::_testExtractLeavesOutLinks()
+void QGCCompressionTest::_testExtractLinks()
 {
     QFETCH(QString, api);
 
-    // Both links stay inside the output directory. These functions write the data of regular files and
-    // cannot make a link, and a link is not an empty file.
+    // Both links stay inside the output directory
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("links.tar");
     const QString outputDir = tempDir.filePath("output");
-    QVERIFY(_writeFile(archivePath, _makeTar({{.name = "target.txt", .data = "target"},
-                                              {.name = "soft.txt", .type = '2', .linkName = "target.txt"},
-                                              {.name = "hard.txt", .type = '1', .linkName = "target.txt"}})));
-    const QStringList targetOnly{QStringLiteral("target.txt")};
+    QVERIFY(
+        TestFixtures::writeFile(archivePath, _makeTar({{.name = "target.txt", .data = "target"},
+                                                       {.name = "soft.txt", .type = '2', .linkName = "target.txt"},
+                                                       {.name = "hard.txt", .type = '1', .linkName = "target.txt"}})));
     const auto expectSkipped = [this](const char* kind, const char* name) {
         expectLogMessage(
             "Utilities.QGClibarchive", QtWarningMsg,
@@ -4023,30 +3493,8 @@ void QGCCompressionTest::_testExtractLeavesOutLinks()
                 QStringLiteral("Skipping %1.*%2 -> target.txt").arg(QLatin1String(kind), QLatin1String(name))));
     };
 
-    if (api == "extractArchiveFiltered") {
-        expectSkipped("symlink", "soft.txt");
-        expectSkipped("hard link", "hard.txt");
-        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
-                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
-        verifyExpectedLogMessage();
-        verifyExpectedLogMessage();
-    } else if (api == "extractByPattern") {
-        QStringList extractedFiles;
-        expectSkipped("symlink", "soft.txt");
-        expectSkipped("hard link", "hard.txt");
-        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir, &extractedFiles));
-        verifyExpectedLogMessage();
-        verifyExpectedLogMessage();
-        QCOMPARE(extractedFiles, targetOnly);
-    } else if (api == "extractFiles") {
-        // Asked for by name, so leaving the entry out fails the call
-        expectSkipped("symlink", "soft.txt");
-        QVERIFY(!QGCCompression::extractFiles(archivePath, {"target.txt", "soft.txt"}, outputDir));
-        verifyExpectedLogMessage();
-        expectSkipped("hard link", "hard.txt");
-        QVERIFY(!QGCCompression::extractFiles(archivePath, {"hard.txt"}, outputDir));
-        verifyExpectedLogMessage();
-    } else {
+    if (api == "extractFile") {
+        // The function that writes one file to a path of its own cannot make a link, and a link is not an empty file
         QVERIFY(QGCCompression::extractFile(archivePath, "target.txt", outputDir + "/target.txt"));
         expectSkipped("symlink", "soft.txt");
         QVERIFY(!QGCCompression::extractFile(archivePath, "soft.txt", outputDir + "/soft.txt"));
@@ -4054,10 +3502,64 @@ void QGCCompressionTest::_testExtractLeavesOutLinks()
         expectSkipped("hard link", "hard.txt");
         QVERIFY(!QGCCompression::extractFile(archivePath, "hard.txt", outputDir + "/hard.txt"));
         verifyExpectedLogMessage();
+        QCOMPARE(_entriesBelow(outputDir), QStringList{QStringLiteral("target.txt")});
+        QCOMPARE(TestFixtures::readFile(outputDir + "/target.txt"), QByteArray("target"));
+        return;
     }
 
-    QCOMPARE(_entriesBelow(outputDir), targetOnly);
-    QCOMPARE(_readFile(outputDir + "/target.txt"), QByteArray("target"));
+#ifndef Q_OS_UNIX
+    QSKIP("The archive holds POSIX links");
+#else
+    // The functions that write into a directory create the symbolic link, whichever way their entries are
+    // chosen, and leave out the hard link: libarchive would resolve its target outside the directory
+    const QStringList targetAndLink{QStringLiteral("soft.txt"), QStringLiteral("target.txt")};
+    expectSkipped("hard link", "hard.txt");
+    if (api == "extractByPattern") {
+        QStringList extractedFiles;
+        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir, &extractedFiles));
+        extractedFiles.sort();
+        QCOMPARE(extractedFiles, targetAndLink);
+    } else if (api == "extractFiles") {
+        // Asked for by name, so the entry that is left out fails the call
+        QCOMPARE(_call(api, {.path = archivePath, .output = outputDir, .names = {"target.txt", "soft.txt", "hard.txt"}})
+                     .error,
+                 QGCCompression::Error::UnsupportedFormat);
+    } else {
+        QVERIFY(_call(api, {.path = archivePath, .output = outputDir}));
+    }
+    verifyExpectedLogMessage();
+
+    QCOMPARE(_entriesBelow(outputDir), targetAndLink);
+    QVERIFY(QFileInfo(outputDir + "/soft.txt").isSymLink());
+    QCOMPARE(TestFixtures::readFile(outputDir + "/soft.txt"), QByteArray("target"));
+#endif
+}
+
+void QGCCompressionTest::_testExtractRestoresModificationTime_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchive", "extractArchiveFiltered", "extractByPattern", "extractFiles"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
+void QGCCompressionTest::_testExtractRestoresModificationTime()
+{
+    QFETCH(QString, api);
+
+    // Every function that writes into a directory gives a file the time the archive has for it
+    constexpr qint64 modified = 1000000000;
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("dated.tar");
+    const QString outputDir = tempDir.filePath("output");
+    QVERIFY(
+        TestFixtures::writeFile(archivePath, _makeTar({{.name = "dated.txt", .data = "dated", .modified = modified}})));
+
+    const QString entry = (api == "extractByPattern") ? QStringLiteral("*.txt") : QStringLiteral("dated.txt");
+    QVERIFY(_call(api, {.path = archivePath, .output = outputDir, .names = {entry}}));
+
+    QCOMPARE(QFileInfo(outputDir + "/dated.txt").lastModified().toSecsSinceEpoch(), modified);
 }
 
 void QGCCompressionTest::_testExtractLeavesOutSpecialFiles_data()
@@ -4078,13 +3580,13 @@ void QGCCompressionTest::_testExtractLeavesOutSpecialFiles()
     // socket, which a reader that can seek learns from the central directory.
     QTemporaryDir tempDir;
     const QString tarPath = tempDir.filePath("special.tar");
-    QVERIFY(_writeFile(tarPath, _makeTar({{.name = "before.txt", .data = "before"},
-                                          {.name = "pipe", .type = '6'},
-                                          {.name = "tty", .type = '3'},
-                                          {.name = "disk", .type = '4'},
-                                          {.name = "after.txt", .data = "after"}})));
+    QVERIFY(TestFixtures::writeFile(tarPath, _makeTar({{.name = "before.txt", .data = "before"},
+                                                       {.name = "pipe", .type = '6'},
+                                                       {.name = "tty", .type = '3'},
+                                                       {.name = "disk", .type = '4'},
+                                                       {.name = "after.txt", .data = "after"}})));
     const QString zipPath = tempDir.filePath("socket.zip");
-    QVERIFY(_writeFile(
+    QVERIFY(TestFixtures::writeFile(
         zipPath,
         _makeStreamedZip({{.name = "sock", .unixMode = 0140644}, {.name = "file.txt", .data = "file"}}, true)));
     const QString tarOutput = tempDir.filePath("from-tar");
@@ -4094,194 +3596,120 @@ void QGCCompressionTest::_testExtractLeavesOutSpecialFiles()
             "Utilities.QGClibarchive", QtWarningMsg,
             QRegularExpression(QStringLiteral("Skipping %1: %2").arg(QLatin1String(kind), QLatin1String(name))));
     };
-    const auto expectTarEntriesSkipped = [&expectSkipped]() {
-        expectSkipped("FIFO", "pipe");
-        expectSkipped("character device", "tty");
-        expectSkipped("block device", "disk");
-    };
-    const auto everyEntry = [](const QGCCompression::ArchiveEntry&) { return true; };
 
-    if (api == "extractFiles") {
+    if ((api == "extractFiles") || (api == "extractFile")) {
         // Asked for by name, so leaving the entry out fails the call
-        expectSkipped("FIFO", "pipe");
-        QVERIFY(!QGCCompression::extractFiles(tarPath, {"before.txt", "pipe"}, tarOutput));
-        verifyExpectedLogMessage();
-        expectSkipped("character device", "tty");
-        QVERIFY(!QGCCompression::extractFiles(tarPath, {"tty"}, tarOutput));
-        verifyExpectedLogMessage();
-        expectSkipped("block device", "disk");
-        QVERIFY(!QGCCompression::extractFiles(tarPath, {"disk"}, tarOutput));
-        verifyExpectedLogMessage();
+        struct Skipped
+        {
+            const char* kind;
+            const char* name;
+        };
+
+        for (const Skipped& skipped :
+             {Skipped{"FIFO", "pipe"}, Skipped{"character device", "tty"}, Skipped{"block device", "disk"}}) {
+            expectSkipped(skipped.kind, skipped.name);
+            QVERIFY(!_call(api, {.path = tarPath, .output = tarOutput, .names = {skipped.name}}));
+            verifyExpectedLogMessage();
+        }
         expectSkipped("socket", "sock");
-        QVERIFY(!QGCCompression::extractFiles(zipPath, {"sock"}, zipOutput));
-        verifyExpectedLogMessage();
-        QCOMPARE(_entriesBelow(tarOutput), QStringList{QStringLiteral("before.txt")});
-        QCOMPARE(_entriesBelow(zipOutput), QStringList());
-        return;
-    }
-    if (api == "extractFile") {
-        expectSkipped("FIFO", "pipe");
-        QVERIFY(!QGCCompression::extractFile(tarPath, "pipe", tarOutput + "/pipe"));
-        verifyExpectedLogMessage();
-        expectSkipped("character device", "tty");
-        QVERIFY(!QGCCompression::extractFile(tarPath, "tty", tarOutput + "/tty"));
-        verifyExpectedLogMessage();
-        expectSkipped("block device", "disk");
-        QVERIFY(!QGCCompression::extractFile(tarPath, "disk", tarOutput + "/disk"));
-        verifyExpectedLogMessage();
-        expectSkipped("socket", "sock");
-        QVERIFY(!QGCCompression::extractFile(zipPath, "sock", zipOutput + "/sock"));
+        QVERIFY(!_call(api, {.path = zipPath, .output = zipOutput, .names = {"sock"}}));
         verifyExpectedLogMessage();
         QCOMPARE(_entriesBelow(tarOutput), QStringList());
         QCOMPARE(_entriesBelow(zipOutput), QStringList());
+        if (api == "extractFiles") {
+            // A file that is asked for along with such an entry is extracted, and stays
+            expectSkipped("FIFO", "pipe");
+            QVERIFY(!_call(api, {.path = tarPath, .output = tarOutput, .names = {"before.txt", "pipe"}}));
+            verifyExpectedLogMessage();
+            QCOMPARE(_entriesBelow(tarOutput), QStringList{QStringLiteral("before.txt")});
+        }
         return;
     }
 
     // The functions that walk the archive go on with the entries that follow
-    expectTarEntriesSkipped();
-    if (api == "extractArchive") {
-        QVERIFY(QGCCompression::extractArchive(tarPath, tarOutput));
-    } else if (api == "extractArchiveAtomic") {
-        QVERIFY(QGCCompression::extractArchiveAtomic(tarPath, tarOutput));
-    } else if (api == "extractFromDevice") {
-        QFile tar(tarPath);
-        QVERIFY(tar.open(QIODevice::ReadOnly));
-        QVERIFY(QGCCompression::extractFromDevice(&tar, tarOutput));
-    } else if (api == "extractArchiveFiltered") {
-        QVERIFY(QGCCompression::extractArchiveFiltered(tarPath, tarOutput, everyEntry));
-    } else if (api == "extractByPattern") {
-        QVERIFY(QGCCompression::extractByPattern(tarPath, {"*"}, tarOutput));
-    } else {
-        QFAIL("Unknown row");
-    }
+    expectSkipped("FIFO", "pipe");
+    expectSkipped("character device", "tty");
+    expectSkipped("block device", "disk");
+    QVERIFY(_call(api, {.path = tarPath, .output = tarOutput, .names = {"*"}}));
     for (int i = 0; i < 3; ++i) {
         verifyExpectedLogMessage();
     }
     const QStringList regularFiles{QStringLiteral("after.txt"), QStringLiteral("before.txt")};
     QCOMPARE(_entriesBelow(tarOutput), regularFiles);
-    QCOMPARE(_readFile(tarOutput + "/after.txt"), QByteArray("after"));
+    QCOMPARE(TestFixtures::readFile(tarOutput + "/after.txt"), QByteArray("after"));
 
     expectSkipped("socket", "sock");
-    if (api == "extractArchive") {
-        QVERIFY(QGCCompression::extractArchive(zipPath, zipOutput));
-    } else if (api == "extractArchiveAtomic") {
-        QVERIFY(QGCCompression::extractArchiveAtomic(zipPath, zipOutput));
-    } else if (api == "extractFromDevice") {
-        QFile zip(zipPath);
-        QVERIFY(zip.open(QIODevice::ReadOnly));
-        QVERIFY(QGCCompression::extractFromDevice(&zip, zipOutput));
-    } else if (api == "extractArchiveFiltered") {
-        QVERIFY(QGCCompression::extractArchiveFiltered(zipPath, zipOutput, everyEntry));
-    } else {
-        QVERIFY(QGCCompression::extractByPattern(zipPath, {"*"}, zipOutput));
-    }
+    QVERIFY(_call(api, {.path = zipPath, .output = zipOutput, .names = {"*"}}));
     verifyExpectedLogMessage();
     QCOMPARE(_entriesBelow(zipOutput), QStringList{QStringLiteral("file.txt")});
 }
 
-void QGCCompressionTest::_testSpecialCharactersInPath()
+void QGCCompressionTest::_testExtractToUnusualPath_data()
 {
-    QTemporaryDir tempDir;
-    // Test paths with special characters (spaces, unicode, etc.)
-    // Create directory with space in name
-    const QString dirWithSpace = tempDir.path() + "/dir with space";
-    QVERIFY(QDir().mkpath(dirWithSpace));
-    // Extract to directory with space
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    QVERIFY(QGCCompression::extractArchive(zipResource, dirWithSpace));
-    QVERIFY(QFile::exists(dirWithSpace + "/manifest.json"));
-    // Create directory with special chars (parentheses, brackets)
-    const QString dirWithSpecial = tempDir.path() + "/dir(1)[test]";
-    QVERIFY(QDir().mkpath(dirWithSpecial));
-    // Extract to directory with special chars
-    QVERIFY(QGCCompression::extractArchive(zipResource, dirWithSpecial));
-    QVERIFY(QFile::exists(dirWithSpecial + "/manifest.json"));
-    // Test with ampersand and equals (common in URLs that get saved as files)
-    const QString dirWithAmp = tempDir.path() + "/dir&param=value";
-    QVERIFY(QDir().mkpath(dirWithAmp));
-    QVERIFY(QGCCompression::extractArchive(zipResource, dirWithAmp));
-    QVERIFY(QFile::exists(dirWithAmp + "/manifest.json"));
+    QTest::addColumn<QString>("directoryName");
+
+    QTest::newRow("space") << "dir with space";
+    QTest::newRow("parentheses and brackets") << "dir(1)[test]";
+    // Common in URLs that get saved as files
+    QTest::newRow("ampersand and equals") << "dir&param=value";
+    QTest::newRow("Japanese, Chinese and Greek") << QString::fromUtf8("日本語_中文_αβγ");
+    QTest::newRow("accented Latin") << QString::fromUtf8("café_naïve_résumé");
+    QTest::newRow("Cyrillic") << QString::fromUtf8("Привет_мир");
 }
 
-void QGCCompressionTest::_testUnicodePaths()
+void QGCCompressionTest::_testExtractToUnusualPath()
 {
+    QFETCH(QString, directoryName);
+
     QTemporaryDir tempDir;
-    // Test paths with Unicode characters
-    // Create directory with Unicode name (Japanese, Chinese, emoji-like)
-    const QString unicodeDir = tempDir.path() + QString::fromUtf8("/日本語_中文_αβγ");
-    QVERIFY(QDir().mkpath(unicodeDir));
-    // Extract to Unicode directory
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    QVERIFY2(QGCCompression::extractArchive(zipResource, unicodeDir), "Failed to extract to Unicode path");
-    QVERIFY(QFile::exists(unicodeDir + "/manifest.json"));
-    // Verify content is intact
-    QFile extracted(unicodeDir + "/manifest.json");
-    QVERIFY(extracted.open(QIODevice::ReadOnly));
-    const QByteArray content = extracted.readAll();
-    QVERIFY(content.contains("\"name\""));
-    extracted.close();
-    // Test with accented Latin characters
-    const QString accentedDir = tempDir.path() + QString::fromUtf8("/café_naïve_résumé");
-    QVERIFY(QDir().mkpath(accentedDir));
-    QVERIFY(QGCCompression::extractArchive(zipResource, accentedDir));
-    QVERIFY(QFile::exists(accentedDir + "/manifest.json"));
-    // Test with Cyrillic
-    const QString cyrillicDir = tempDir.path() + QString::fromUtf8("/Привет_мир");
-    QVERIFY(QDir().mkpath(cyrillicDir));
-    QVERIFY(QGCCompression::extractArchive(zipResource, cyrillicDir));
-    QVERIFY(QFile::exists(cyrillicDir + "/manifest.json"));
+    const QString outputDir = tempDir.filePath(directoryName);
+    QVERIFY(QDir().mkpath(outputDir));
+    QVERIFY(QGCCompression::extractArchive(_zipResource, outputDir));
+    QVERIFY(TestFixtures::readFile(outputDir + "/manifest.json").contains("\"name\""));
 }
 
 // ============================================================================
 // Benchmarks
 // ============================================================================
-void QGCCompressionTest::_benchmarkExtractZip()
+void QGCCompressionTest::_benchmarkExtract_data()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
+    QTest::addColumn<QString>("resource");
+
+    QTest::newRow("ZIP") << _zipResource;
+    QTest::newRow("7z") << _sevenZipResource;
+}
+
+void QGCCompressionTest::_benchmarkExtract()
+{
+    QFETCH(QString, resource);
+
     int iteration = 0;
     QBENCHMARK
     {
         QTemporaryDir tempDir;
-        const QString outputDir = tempDir.path() + QString("/bench_zip_%1").arg(iteration++);
-        QGCCompression::extractArchive(zipResource, outputDir);
+        const QString outputDir = tempDir.path() + QString("/bench_%1").arg(iteration++);
+        (void) QGCCompression::extractArchive(resource, outputDir);
     }
 }
 
-void QGCCompressionTest::_benchmarkExtract7z()
+void QGCCompressionTest::_benchmarkDecompress_data()
 {
-    const QString archive = QStringLiteral(":/unittest/manifest.json.7z");
-    int iteration = 0;
-    QBENCHMARK
-    {
-        QTemporaryDir tempDir;
-        const QString outputDir = tempDir.path() + QString("/bench_7z_%1").arg(iteration++);
-        QGCCompression::extractArchive(archive, outputDir);
-    }
+    QTest::addColumn<QString>("resource");
+
+    QTest::newRow("gzip") << _gzResource;
+    QTest::newRow("xz") << _xzResource;
 }
 
-void QGCCompressionTest::_benchmarkDecompressGzip()
+void QGCCompressionTest::_benchmarkDecompress()
 {
+    QFETCH(QString, resource);
+
     // Load compressed data once
-    QFile resourceFile(":/unittest/manifest.json.gz");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resourceFile.readAll();
-    resourceFile.close();
+    const QByteArray compressedData = TestFixtures::readFile(resource);
+    QByteArray decompressed;
     QBENCHMARK
     {
-        QGCCompression::decompressData(compressedData);
-    }
-}
-
-void QGCCompressionTest::_benchmarkDecompressXz()
-{
-    // Load compressed data once
-    QFile resourceFile(":/unittest/manifest.json.xz");
-    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resourceFile.readAll();
-    resourceFile.close();
-    QBENCHMARK
-    {
-        QGCCompression::decompressData(compressedData);
+        (void) QGCCompression::decompressData(compressedData, decompressed);
     }
 }
 
@@ -4292,12 +3720,12 @@ void QGCCompressionTest::_benchmarkConcurrentExtraction()
     QBENCHMARK
     {
         QTemporaryDir tempDir;
-        QList<QFuture<bool>> futures;
+        QList<QFuture<QGCCompression::Outcome>> futures;
         for (int i = 0; i < kNumExtractions; ++i) {
             const int iteration = baseIteration * kNumExtractions + i;
             futures.append(QtConcurrent::run([iteration, &tempDir]() {
                 const QString outputDir = tempDir.path() + QString("/bench_concurrent_%1").arg(iteration);
-                return QGCCompression::extractArchive(":/unittest/manifest.json.zip", outputDir);
+                return QGCCompression::extractArchive(_zipResource, outputDir);
             }));
         }
         for (auto& future : futures) {
@@ -4309,14 +3737,12 @@ void QGCCompressionTest::_benchmarkConcurrentExtraction()
 
 void QGCCompressionTest::_benchmarkListArchive()
 {
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
+    QList<QGCCompression::ArchiveEntry> entries;
     QBENCHMARK
     {
-        QGCCompression::listArchiveDetailed(zipResource);
+        (void) QGCCompression::listArchiveDetailed(_zipResource, entries);
     }
 }
-
-#include <QtCore/QTemporaryDir>
 
 #include "UnitTest.h"
 

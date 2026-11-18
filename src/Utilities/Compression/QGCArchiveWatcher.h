@@ -155,13 +155,15 @@ signals:
 
 private slots:
     void _onDirectoryChanged(const QString &path);
-    void _onExtractionProgress(qreal progress);
     void _onExtractionFinished(bool success);
 
 private:
-    bool _isWatchedFormat(const QString &filePath) const;
+    bool _isWatchedFormat(QGCCompression::Format format) const;
     void _processNewFile(const QString &filePath);
     void _startExtraction(const QString &archivePath);
+    /// Ask a running extraction to stop, and have its result dropped when it ends
+    /// @param announce Whether to log that
+    void _cancelJob(bool announce = false);
     void _setExtracting(bool extracting);
     void _setProgress(qreal progress);
 
