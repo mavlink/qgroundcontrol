@@ -8,10 +8,9 @@
 
 QGC_LOGGING_CATEGORY(RunGuardLog, "Utilities.RunGuard")
 
-RunGuard::RunGuard(const QString &key)
-    : _key(key)
-    , _lockFilePath(lockDir() + QLatin1String("/qgc-") + generateKeyHash(key, QLatin1String("_lock")) + QLatin1String(".lock"))
-    , _lockFile(_lockFilePath)
+RunGuard::RunGuard(const QString& key)
+    : _lockFile(lockDir() + QLatin1String("/qgc-") + generateKeyHash(key, QLatin1String("_lock")) +
+                QLatin1String(".lock"))
 {
     // Recover instantly from stale locks after crashes.
     _lockFile.setStaleLockTime(0);
@@ -70,9 +69,7 @@ bool RunGuard::tryToRun()
 
 void RunGuard::release()
 {
-    if (_lockFile.isLocked()) {
-        _lockFile.unlock();
-    }
+    _lockFile.unlock();
 }
 
 QString RunGuard::generateKeyHash(const QString &key, const QString &salt)

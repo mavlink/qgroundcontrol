@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "SignalHandler.h"
-#include "UnitTest.h"
 
 #ifdef Q_OS_UNIX
 #include <cerrno>
@@ -13,6 +12,9 @@
 #include <unistd.h>
 
 namespace {
+
+/// Expected exit code of a child that the signal terminates
+constexpr int KILLED_BY_SIGNAL = -1;
 
 /// Raises @a signum @a count times in a forked child and returns the child's wait status, or -1.
 /// The child inherits the installed handlers but runs no event loop, so only the handlers themselves can react.
@@ -52,24 +54,14 @@ int raiseSignalInForkedChild(int signum, int count)
 
 void SignalHandlerTest::_testConstruction()
 {
-    // Save the original handler (app may have one set up)
-    SignalHandler* originalHandler = SignalHandler::current();
     {
         SignalHandler handler;
         // New handler should become current
         QCOMPARE(SignalHandler::current(), &handler);
     }
     // After destruction, current should be cleared
-    // (Note: this clears to nullptr, not back to original)
+    // (Note: this clears to nullptr, not back to the handler the app may have set up)
     QVERIFY(SignalHandler::current() == nullptr);
-    Q_UNUSED(originalHandler);
-}
-
-void SignalHandlerTest::_testCurrentReturnsInstance()
-{
-    SignalHandler handler;
-    // current() should return the handler we just created
-    QCOMPARE(SignalHandler::current(), &handler);
 }
 
 void SignalHandlerTest::_testSetupReturnsSuccess()
@@ -78,16 +70,6 @@ void SignalHandlerTest::_testSetupReturnsSuccess()
     // Setup should succeed (return 0)
     const int result = handler.setupSignalHandlers();
     QCOMPARE(result, 0);
-}
-
-void SignalHandlerTest::_testDestructorClearsCurrent()
-{
-    {
-        SignalHandler handler;
-        QVERIFY(SignalHandler::current() != nullptr);
-    }
-    // After handler goes out of scope, current should be null
-    QVERIFY(SignalHandler::current() == nullptr);
 }
 
 void SignalHandlerTest::_testCurrentUpdatesWithNewHandler()
@@ -106,65 +88,48 @@ void SignalHandlerTest::_testCurrentUpdatesWithNewHandler()
     QVERIFY(SignalHandler::current() == nullptr);
 }
 
-void SignalHandlerTest::_testFirstSigIntLeavesProcessRunning()
+void SignalHandlerTest::_testSignalInChild_data()
 {
 #ifdef Q_OS_UNIX
-    SignalHandler handler;
-    QCOMPARE(handler.setupSignalHandlers(), 0);
+    QTest::addColumn<int>("signum");
+    QTest::addColumn<int>("count");
+    QTest::addColumn<bool>("handlerDestroyed");
+    QTest::addColumn<int>("expectedExitCode");
 
-    const int status = raiseSignalInForkedChild(SIGINT, 1);
-    QVERIFY(status != -1);
-    QVERIFY2(WIFEXITED(status), "The child was terminated by a signal");
-    QVERIFY2(WEXITSTATUS(status) == EXIT_SUCCESS, "The signal handler ended the child or changed errno");
-#else
-    QSKIP("POSIX signals only");
+    // The handler neither ends the child nor changes errno
+    QTest::newRow("first SIGINT leaves the process running") << SIGINT << 1 << false << EXIT_SUCCESS;
+    QTest::newRow("second SIGINT exits from the handler") << SIGINT << 2 << false << (128 + SIGINT);
+    // The application object owns the handler, so the rest of the process exit runs without it
+    QTest::newRow("SIGINT after destruction terminates") << SIGINT << 1 << true << KILLED_BY_SIGNAL;
+    // Far more signals than the socket to the event loop can hold while nothing reads it. A handler that blocked
+    // would be terminated by the child's alarm, and one that changed errno would make the child fail.
+    QTest::newRow("repeated SIGTERM does not block the handler") << SIGTERM << 10000 << false << EXIT_SUCCESS;
 #endif
 }
 
-void SignalHandlerTest::_testSecondSigIntExitsFromHandler()
+void SignalHandlerTest::_testSignalInChild()
 {
 #ifdef Q_OS_UNIX
-    SignalHandler handler;
-    QCOMPARE(handler.setupSignalHandlers(), 0);
+    QFETCH(int, signum);
+    QFETCH(int, count);
+    QFETCH(bool, handlerDestroyed);
+    QFETCH(int, expectedExitCode);
 
-    const int status = raiseSignalInForkedChild(SIGINT, 2);
-    QVERIFY(status != -1);
-    QVERIFY2(WIFEXITED(status), "The child was terminated by a signal");
-    QCOMPARE(WEXITSTATUS(status), 128 + SIGINT);
-#else
-    QSKIP("POSIX signals only");
-#endif
-}
-
-void SignalHandlerTest::_testSigIntAfterDestructionTerminates()
-{
-#ifdef Q_OS_UNIX
-    {
-        SignalHandler handler;
-        QCOMPARE(handler.setupSignalHandlers(), 0);
+    auto handler = std::make_unique<SignalHandler>();
+    QCOMPARE(handler->setupSignalHandlers(), 0);
+    if (handlerDestroyed) {
+        handler.reset();
     }
 
-    // The application object owns the handler, so the rest of the process exit runs without it
-    const int status = raiseSignalInForkedChild(SIGINT, 1);
+    const int status = raiseSignalInForkedChild(signum, count);
     QVERIFY(status != -1);
-    QVERIFY2(WIFSIGNALED(status), "The signal was swallowed");
-    QCOMPARE(WTERMSIG(status), SIGINT);
-#else
-    QSKIP("POSIX signals only");
-#endif
-}
-
-void SignalHandlerTest::_testRepeatedSigTermDoesNotBlockHandler()
-{
-#ifdef Q_OS_UNIX
-    SignalHandler handler;
-    QCOMPARE(handler.setupSignalHandlers(), 0);
-
-    // Far more signals than the socket to the event loop can hold while nothing reads it
-    const int status = raiseSignalInForkedChild(SIGTERM, 10000);
-    QVERIFY(status != -1);
-    QVERIFY2(WIFEXITED(status), "The signal handler blocked until the child was terminated");
-    QVERIFY2(WEXITSTATUS(status) == EXIT_SUCCESS, "The signal handler changed errno");
+    if (expectedExitCode == KILLED_BY_SIGNAL) {
+        QVERIFY2(WIFSIGNALED(status), "The signal was swallowed");
+        QCOMPARE(WTERMSIG(status), signum);
+    } else {
+        QVERIFY2(WIFEXITED(status), "The child was terminated by a signal");
+        QCOMPARE(WEXITSTATUS(status), expectedExitCode);
+    }
 #else
     QSKIP("POSIX signals only");
 #endif

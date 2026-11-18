@@ -12,7 +12,6 @@
 #include "GraphicsSetup.h"
 #include "Platform.h"
 #include "QGCCommandLineParser.h"
-#include "UnitTest.h"
 #include "qgc_version.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)

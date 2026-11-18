@@ -6,7 +6,6 @@
 #include <QtCore/QUuid>
 
 #include "RunGuard.h"
-#include "UnitTest.h"
 
 // Generate unique keys for each test to avoid interference
 static QString uniqueKey()
@@ -39,24 +38,12 @@ QStringList RunGuardTest::_lockFilesInRuntimeDir() const
     return QDir(_runtimeDir->path()).entryList({QStringLiteral("qgc-*.lock")}, QDir::Files);
 }
 
-void RunGuardTest::_testInitialState()
+void RunGuardTest::_testLockLifecycle()
 {
     RunGuard guard(uniqueKey());
     // Initially should not be locked
     QVERIFY(!guard.isLocked());
-}
-
-void RunGuardTest::_testTryToRunSucceeds()
-{
-    RunGuard guard(uniqueKey());
     // First tryToRun should succeed
-    QVERIFY(guard.tryToRun());
-    QVERIFY(guard.isLocked());
-}
-
-void RunGuardTest::_testReleaseUnlocks()
-{
-    RunGuard guard(uniqueKey());
     QVERIFY(guard.tryToRun());
     QVERIFY(guard.isLocked());
     guard.release();
@@ -78,7 +65,7 @@ void RunGuardTest::_testDestructorReleases()
     QVERIFY(guard2.isLocked());
 }
 
-void RunGuardTest::_testSecondGuardBlocked()
+void RunGuardTest::_testSecondGuardBlockedUntilRelease()
 {
     const QString key = uniqueKey();
     RunGuard guard1(key);
@@ -90,15 +77,6 @@ void RunGuardTest::_testSecondGuardBlocked()
     QVERIFY(!guard2.isLocked());
     // First guard should still be locked
     QVERIFY(guard1.isLocked());
-}
-
-void RunGuardTest::_testSecondGuardSucceedsAfterRelease()
-{
-    const QString key = uniqueKey();
-    RunGuard guard1(key);
-    QVERIFY(guard1.tryToRun());
-    RunGuard guard2(key);
-    QVERIFY(!guard2.tryToRun());
     // Release first guard
     guard1.release();
     QVERIFY(!guard1.isLocked());
@@ -107,17 +85,12 @@ void RunGuardTest::_testSecondGuardSucceedsAfterRelease()
     QVERIFY(guard2.isLocked());
 }
 
-void RunGuardTest::_testIsAnotherRunningNoLock()
-{
-    RunGuard guard(uniqueKey());
-    // No lock held, so no other instance is running
-    QVERIFY(!guard.isAnotherRunning());
-}
-
-void RunGuardTest::_testIsAnotherRunningWithLock()
+void RunGuardTest::_testIsAnotherRunning()
 {
     const QString key = uniqueKey();
     RunGuard guard1(key);
+    // No lock held, so no other instance is running
+    QVERIFY(!guard1.isAnotherRunning());
     QVERIFY(guard1.tryToRun());
     // From guard1's perspective, no other is running (we hold the lock)
     QVERIFY(!guard1.isAnotherRunning());

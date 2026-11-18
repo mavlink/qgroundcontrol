@@ -1,11 +1,6 @@
 #include "SignalHandler.h"
 
 #include <QtCore/QCoreApplication>
-#ifdef Q_OS_WIN
-#include <QtCore/QWinEventNotifier>
-#else
-#include <QtCore/QSocketNotifier>
-#endif
 
 #include "QGCLoggingCategory.h"
 
@@ -129,21 +124,11 @@ SignalHandler::~SignalHandler()
         _notifierTerm->setEnabled(false);
     }
 
-    if (_sigIntFd[0] >= 0) {
-        (void) ::close(_sigIntFd[0]);
-        _sigIntFd[0] = -1;
-    }
-    if (_sigIntFd[1] >= 0) {
-        (void) ::close(_sigIntFd[1]);
-        _sigIntFd[1] = -1;
-    }
-    if (_sigTermFd[0] >= 0) {
-        (void) ::close(_sigTermFd[0]);
-        _sigTermFd[0] = -1;
-    }
-    if (_sigTermFd[1] >= 0) {
-        (void) ::close(_sigTermFd[1]);
-        _sigTermFd[1] = -1;
+    for (int* fd : {&_sigIntFd[0], &_sigIntFd[1], &_sigTermFd[0], &_sigTermFd[1]}) {
+        if (*fd >= 0) {
+            (void) ::close(*fd);
+            *fd = -1;
+        }
     }
 
     s_current.store(nullptr, std::memory_order_release);
@@ -162,36 +147,26 @@ int SignalHandler::setupSignalHandlers()
         return 2;
     }
 
-    // Close-on-exec to prevent fd leaks into children
-    (void) fcntl(_sigIntFd[0],  F_SETFD, fcntl(_sigIntFd[0],  F_GETFD, 0) | FD_CLOEXEC);
-    (void) fcntl(_sigIntFd[1],  F_SETFD, fcntl(_sigIntFd[1],  F_GETFD, 0) | FD_CLOEXEC);
-    (void) fcntl(_sigTermFd[0], F_SETFD, fcntl(_sigTermFd[0], F_GETFD, 0) | FD_CLOEXEC);
-    (void) fcntl(_sigTermFd[1], F_SETFD, fcntl(_sigTermFd[1], F_GETFD, 0) | FD_CLOEXEC);
-
-    // Non-blocking on both ends: a signal handler must not block when its socket is full
-    (void) fcntl(_sigIntFd[0],  F_SETFL, fcntl(_sigIntFd[0],  F_GETFL, 0) | O_NONBLOCK);
-    (void) fcntl(_sigIntFd[1], F_SETFL, fcntl(_sigIntFd[1], F_GETFL, 0) | O_NONBLOCK);
-    (void) fcntl(_sigTermFd[0], F_SETFL, fcntl(_sigTermFd[0], F_GETFL, 0) | O_NONBLOCK);
-    (void) fcntl(_sigTermFd[1], F_SETFL, fcntl(_sigTermFd[1], F_GETFL, 0) | O_NONBLOCK);
+    for (const int fd : {_sigIntFd[0], _sigIntFd[1], _sigTermFd[0], _sigTermFd[1]}) {
+        // Close-on-exec to prevent fd leaks into children
+        (void) fcntl(fd, F_SETFD, fcntl(fd, F_GETFD, 0) | FD_CLOEXEC);
+        // Non-blocking on both ends: a signal handler must not block when its socket is full
+        (void) fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+    }
 
     _notifierInt  = new QSocketNotifier(_sigIntFd[0],  QSocketNotifier::Read, this);
     _notifierTerm = new QSocketNotifier(_sigTermFd[0], QSocketNotifier::Read, this);
     (void) connect(_notifierInt,  &QSocketNotifier::activated, this, &SignalHandler::_onSigInt);
     (void) connect(_notifierTerm, &QSocketNotifier::activated, this, &SignalHandler::_onSigTerm);
 
-    struct sigaction sa_int{};
-    sigemptyset(&sa_int.sa_mask);
-    sa_int.sa_flags = 0;
-    sa_int.sa_handler = SignalHandler::_intSignalHandler;
-    if (sigaction(SIGINT, &sa_int, nullptr)) {
+    struct sigaction sa{};
+    sigemptyset(&sa.sa_mask);
+    sa.sa_handler = SignalHandler::_intSignalHandler;
+    if (sigaction(SIGINT, &sa, nullptr)) {
         return 3;
     }
-
-    struct sigaction sa_term{};
-    sigemptyset(&sa_term.sa_mask);
-    sa_term.sa_flags = 0;
-    sa_term.sa_handler = SignalHandler::_termSignalHandler;
-    if (sigaction(SIGTERM, &sa_term, nullptr)) {
+    sa.sa_handler = SignalHandler::_termSignalHandler;
+    if (sigaction(SIGTERM, &sa, nullptr)) {
         return 4;
     }
 
@@ -221,9 +196,6 @@ void SignalHandler::_onSigTerm()
 
 void SignalHandler::_intSignalHandler(int signum)
 {
-    if (signum != SIGINT) {
-        return;
-    }
     SignalHandler* self = current();
     if (!self) {
         return;
@@ -235,11 +207,8 @@ void SignalHandler::_intSignalHandler(int signum)
     _wakeEventLoop(self->_sigIntFd[1]);
 }
 
-void SignalHandler::_termSignalHandler(int signum)
+void SignalHandler::_termSignalHandler([[maybe_unused]] int signum)
 {
-    if (signum != SIGTERM) {
-        return;
-    }
     const SignalHandler* self = current();
     if (!self) {
         return;

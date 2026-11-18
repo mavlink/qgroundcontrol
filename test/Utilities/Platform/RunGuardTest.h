@@ -19,18 +19,14 @@ protected slots:
 
 private slots:
     // Basic lock lifecycle
-    void _testInitialState();
-    void _testTryToRunSucceeds();
-    void _testReleaseUnlocks();
+    void _testLockLifecycle();
     void _testDestructorReleases();
 
     // Multiple guards with same key
-    void _testSecondGuardBlocked();
-    void _testSecondGuardSucceedsAfterRelease();
+    void _testSecondGuardBlockedUntilRelease();
 
     // isAnotherRunning behavior
-    void _testIsAnotherRunningNoLock();
-    void _testIsAnotherRunningWithLock();
+    void _testIsAnotherRunning();
 
     // Different keys don't interfere
     void _testDifferentKeysIndependent();

@@ -33,14 +33,10 @@ bool envFlag(const char* name)
     return qEnvironmentVariableIsSet(name) && (qEnvironmentVariable(name) != QLatin1String("0"));
 }
 
-bool envEnabledByDefault(const char* name)
-{
-    return !qEnvironmentVariableIsSet(name) || (qEnvironmentVariable(name) != QLatin1String("0"));
-}
-
 void configurePipelineCache(QQuickGraphicsConfiguration& config)
 {
-    if (!envEnabledByDefault(kEnvRhiPipelineCache)) {
+    // On unless the variable is "0"
+    if (qEnvironmentVariable(kEnvRhiPipelineCache) == QLatin1String("0")) {
         return;
     }
 
@@ -84,13 +80,6 @@ bool parseHex32(const QString& spec, quint32& value)
     return ok;
 }
 
-qint32 signExtend32(quint32 value)
-{
-    const qint64 signedValue =
-        (value <= 0x7FFFFFFFU) ? static_cast<qint64>(value) : (static_cast<qint64>(value) - 0x100000000LL);
-    return static_cast<qint32>(signedValue);
-}
-
 bool parseLuid(const QString& spec, quint32& low, qint32& high)
 {
     const QStringList parts = spec.split(QLatin1Char(':'));
@@ -103,7 +92,7 @@ bool parseLuid(const QString& spec, quint32& low, qint32& high)
         return false;
     }
 
-    high = signExtend32(highRaw);
+    high = static_cast<qint32>(highRaw);
     return true;
 }
 
@@ -262,13 +251,14 @@ void configureMainWindow(QQuickWindow* window)
     if (!envFlag(kEnvRhiDebug) && !envFlag(kEnvHdrOutput)) {
         return;
     }
-    QQuickWindow* win = window;
-    if (win->rhi()) {
-        win->scheduleRenderJob(QRunnable::create([win]() { probeHdr(win); }), QQuickWindow::BeforeSynchronizingStage);
-        win->update();
+    if (window->rhi()) {
+        window->scheduleRenderJob(QRunnable::create([window]() { probeHdr(window); }),
+                                  QQuickWindow::BeforeSynchronizingStage);
+        window->update();
     } else {
         QObject::connect(
-            win, &QQuickWindow::sceneGraphInitialized, win, [win]() { probeHdr(win); }, Qt::DirectConnection);
+            window, &QQuickWindow::sceneGraphInitialized, window, [window]() { probeHdr(window); },
+            Qt::DirectConnection);
     }
 }
 

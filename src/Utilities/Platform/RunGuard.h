@@ -26,8 +26,6 @@ private:
     static QString generateKeyHash(const QString &key, const QString &salt);
     static QString lockDir();
 
-    const QString _key;
-    const QString _lockFilePath;
     QLockFile _lockFile;
 
     Q_DISABLE_COPY(RunGuard)
