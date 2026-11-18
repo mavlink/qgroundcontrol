@@ -27,7 +27,6 @@
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
 #include "UVCDevices.h"
-#include "UVCStreamMonitor.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VideoBackend.h"
@@ -114,7 +113,7 @@ VideoManager::VideoManager(QObject* parent)
         _cameraSource->scheduleApply();
     });
     // The frame rate the camera is set up for may change without its figures.
-    (void) connect(_uvcCamera->monitor(), &UVCStreamMonitor::statsChanged, this, &VideoManager::_updateSourceSummary);
+    (void) connect(_uvcCamera, &UVCCameraController::cameraFrameRateChanged, this, &VideoManager::_updateSourceSummary);
     (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
                    &VideoManager::telemetryOverlayTextChanged);
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -198,8 +197,8 @@ void VideoManager::_updateSourceSummary()
         // A stream that isn't decoded, as the thermal stream while its view is off, shows no frames to compare with
         // the frame rate its camera advertises.
         const QGCVideoStreamInfo* const streamInfo = source->decoding() ? source->streamInfo() : nullptr;
-        const double cameraFps = (source == _cameraSource) ? _uvcCamera->monitor()->cameraFrameRate()
-                                                           : (streamInfo ? streamInfo->framerate() : 0.0);
+        const double cameraFps =
+            (source == _cameraSource) ? _uvcCamera->cameraFrameRate() : (streamInfo ? streamInfo->framerate() : 0.0);
         degraded = degraded || stats.degraded(cameraFps);
     }
     if (!measured) {

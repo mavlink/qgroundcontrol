@@ -18,7 +18,6 @@
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
-#include "UVCStreamMonitor.h"
 #include "VideoBackend.h"
 #include "VideoDecoderOptions.h"
 #include "VideoManager.h"
@@ -1766,11 +1765,12 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
     info.framerate = static_cast<float>(cameraFps);
     (void) qstrncpy(info.uri, "5601", sizeof(info.uri));
     QGCVideoStreamInfo cameraStream(info);
-    UVCStreamMonitor* const cameraMonitor = _videoManager->uvcCamera()->monitor();
+    UVCCameraController* const camera = _videoManager->uvcCamera();
     QSignalSpy degradedSpy(_videoManager.get(), &VideoManager::degradedChanged);
 
     if (usbCamera) {
-        cameraMonitor->_publish(stats, QSize(1280, 720), cameraFps);
+        camera->_setCameraFrameRate(cameraFps);
+        camera->setStats(stats);
     } else {
         if (cameraFps > 0) {
             _videoManager->primaryStream()->setStreamInfo(&cameraStream);
@@ -1782,7 +1782,8 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
     QCOMPARE(degradedSpy.count(), degraded ? 1 : 0);
 
     // A source that is no longer measured doesn't fall short.
-    cameraMonitor->_publish({}, QSize(), 0.0);
+    camera->setStats({});
+    camera->_setCameraFrameRate(0.0);
     _primary->setStats({});
     QVERIFY(!_videoManager->degraded());
     _videoManager->primaryStream()->setStreamInfo(nullptr);
@@ -1814,7 +1815,7 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
     QCOMPARE(group(1)->property("stream").value<VideoStreamController*>(), _videoManager->thermalStream());
     QCOMPARE(group(1)->property("heading").toString(), QStringLiteral("Thermal"));
     UVCCameraController* const camera = _videoManager->uvcCamera();
-    QCOMPARE(group(2)->property("monitor").value<UVCStreamMonitor*>(), camera->monitor());
+    QCOMPARE(group(2)->property("camera").value<UVCCameraController*>(), camera);
 
     // A group shows while its source is measured.
     const std::array<std::function<void(const VideoStreamStats&)>, 3> setStats{

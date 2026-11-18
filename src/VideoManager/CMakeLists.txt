@@ -27,8 +27,6 @@ target_sources(
         UVC/UVCCameraController.h
         UVC/UVCDevices.cc
         UVC/UVCDevices.h
-        UVC/UVCStreamMonitor.cc
-        UVC/UVCStreamMonitor.h
 )
 
 target_include_directories(

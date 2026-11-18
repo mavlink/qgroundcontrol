@@ -29,7 +29,7 @@ and also says how the sources and tiles of `VideoManager` behave.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
   `QMediaRecorder` that it and the USB camera record with, and `SharedVideoFrame`.
-- `UVC/`: the USB camera: `UVCCameraController` (a `QCamera` as a receiver), `UVCDevices` and `UVCStreamMonitor`.
+- `UVC/`: the USB camera: `UVCCameraController` (a `QCamera` as a receiver) and `UVCDevices`.
 - `Qml/`: the `QGroundControl.VideoManager` QML module: `VideoView`, the tiles, the video outputs, and the statistics
   and settings groups. `src/FlyView`, `src/FlightMap/Widgets`, `src/Toolbar` and the video settings page import it.
 
@@ -85,7 +85,8 @@ The other receivers take fewer steps. `QtMultimedia/QtMultimediaVideoReceiver` h
 `QVideoSink`. `UVC/UVCCameraController` puts a `QCamera` in a capture session, which `Qml/UVCVideoOutput.qml` shows.
 
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
-`GStreamer/Sink/gstqgc/GstQgcSinkCounters`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`, `UVC/UVCStreamMonitor`),
+`GStreamer/Sink/gstqgc/GstQgcSinkCounters`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
+`UVC/UVCCameraController`),
 and `Receiver/VideoStreamStatsMeter` and `Receiver/VideoStreamStatsSampler` make the `VideoStreamStats` of the
 counters that `Qml/VideoStreamStatsGroup.qml` shows.
 

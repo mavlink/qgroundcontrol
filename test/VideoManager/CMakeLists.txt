@@ -23,8 +23,6 @@ target_sources(
         UVC/UVCCameraControllerTest.h
         UVC/UVCDevicesTest.cc
         UVC/UVCDevicesTest.h
-        UVC/UVCStreamMonitorTest.cc
-        UVC/UVCStreamMonitorTest.h
         VideoManagerInitTest.cc
         VideoManagerInitTest.h
         VideoManagerTest.cc
@@ -54,7 +52,6 @@ add_qgc_test(StreamSupervisorTest LABELS Unit)
 add_qgc_test(SubtitleWriterTest LABELS Integration Vehicle)
 add_qgc_test(UVCCameraControllerTest LABELS Unit)
 add_qgc_test(UVCDevicesTest LABELS Unit)
-add_qgc_test(UVCStreamMonitorTest LABELS Unit)
 add_qgc_test(VideoManagerInitTest LABELS Unit)
 add_qgc_test(VideoManagerTest LABELS Unit)
 add_qgc_test(VideoManagerVehicleTest LABELS Integration Vehicle)
