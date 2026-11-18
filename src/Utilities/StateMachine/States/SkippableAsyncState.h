@@ -103,5 +103,4 @@ private:
     SetupFunction _setupFunction;
     SkipAction _skipAction;
     QMetaObject::Connection _completionConnection;
-    bool _wasSkipped = false;
 };

@@ -37,8 +37,3 @@ bool MachineEventTransition::eventTest(QEvent* event)
     qCDebug(QGCStateMachineLog) << "MachineEventTransition matched event:" << _eventName;
     return true;
 }
-
-void MachineEventTransition::onTransition(QEvent* event)
-{
-    Q_UNUSED(event);
-}

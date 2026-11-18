@@ -1,5 +1,4 @@
 #include "SendMavlinkCommandState.h"
-#include "MultiVehicleManager.h"
 #include "MissionCommandTree.h"
 #include "Vehicle.h"
 

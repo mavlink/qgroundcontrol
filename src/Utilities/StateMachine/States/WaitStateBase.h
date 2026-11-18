@@ -38,10 +38,10 @@ signals:
 
 protected:
     /// Called when the state is entered - subclasses should call base implementation
-    virtual void onWaitEntered();
+    virtual void onWaitEntered() {}
 
     /// Called when the state is exited - subclasses should call base implementation
-    virtual void onWaitExited();
+    virtual void onWaitExited() {}
 
     /// Called when the timeout expires - default emits timeout(), subclasses can override
     virtual void onWaitTimeout();
@@ -68,6 +68,8 @@ private slots:
     void _onTimeout();
 
 private:
+    void _startTimeoutTimer();
+
     int _timeoutMsecs = 0;
     QTimer _timeoutTimer;
     bool _completed = false;

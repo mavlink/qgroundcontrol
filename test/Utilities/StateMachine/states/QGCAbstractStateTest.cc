@@ -22,114 +22,47 @@ protected:
     void onLeave() override { onLeaveCalled = true; }
 };
 
-
-void QGCAbstractStateTest::_testEntryCallback()
+void QGCAbstractStateTest::_testEntryAndExitHooks_data()
 {
-    QStateMachine machine;
-    bool callbackCalled = false;
+    QTest::addColumn<bool>("withEntryCallback");
+    QTest::addColumn<bool>("withExitCallback");
 
-    auto* state = new TestAbstractState(QStringLiteral("TestEntry"), &machine);
-    state->setOnEntry([&callbackCalled]() { callbackCalled = true; });
-
-    auto* finalState = new QFinalState(&machine);
-
-    // Use machine event to transition out
-    machine.addTransition(state, &QGCAbstractState::advance, finalState);
-
-    machine.setInitialState(state);
-
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(callbackCalled);
-
-    // Cleanup - emit advance to exit
-    state->emitAdvance();
+    QTest::newRow("no callback") << false << false;
+    QTest::newRow("setOnEntry") << true << false;
+    QTest::newRow("setOnExit") << false << true;
+    QTest::newRow("setCallbacks") << true << true;
 }
 
-void QGCAbstractStateTest::_testExitCallback()
+void QGCAbstractStateTest::_testEntryAndExitHooks()
 {
-    QStateMachine machine;
-    bool callbackCalled = false;
+    QFETCH(bool, withEntryCallback);
+    QFETCH(bool, withExitCallback);
 
-    auto* state = new TestAbstractState(QStringLiteral("TestExit"), &machine);
-    state->setOnExit([&callbackCalled]() { callbackCalled = true; });
-
-    machine.setInitialState(state);
-
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(!callbackCalled);  // Not called yet
-
-    state->emitAdvance();
-    state->invokeExitForTest();
-    QVERIFY(callbackCalled);  // Called on exit
-}
-
-void QGCAbstractStateTest::_testBothCallbacks()
-{
     QStateMachine machine;
     bool entryCallbackCalled = false;
     bool exitCallbackCalled = false;
 
-    auto* state = new TestAbstractState(QStringLiteral("TestBoth"), &machine);
-    state->setCallbacks(
-        [&entryCallbackCalled]() { entryCallbackCalled = true; },
-        [&exitCallbackCalled]() { exitCallbackCalled = true; }
-    );
+    auto* state = new TestAbstractState(QStringLiteral("TestHooks"), &machine);
+    const auto onEntry = [&entryCallbackCalled]() { entryCallbackCalled = true; };
+    const auto onExit = [&exitCallbackCalled]() { exitCallbackCalled = true; };
+    if (withEntryCallback && withExitCallback) {
+        state->setCallbacks(onEntry, onExit);
+    } else if (withEntryCallback) {
+        state->setOnEntry(onEntry);
+    } else if (withExitCallback) {
+        state->setOnExit(onExit);
+    }
 
     machine.setInitialState(state);
 
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(entryCallbackCalled);
-    QVERIFY(!exitCallbackCalled);
-
-    state->emitAdvance();
-    state->invokeExitForTest();
-    QVERIFY(exitCallbackCalled);
-}
-
-void QGCAbstractStateTest::_testOnEnterOverride()
-{
-    QStateMachine machine;
-
-    auto* state = new TestAbstractState(QStringLiteral("TestOnEnter"), &machine);
-    auto* finalState = new QFinalState(&machine);
-
-    machine.addTransition(state, &QGCAbstractState::advance, finalState);
-
-    machine.setInitialState(state);
-
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, state));
+    QCOMPARE(entryCallbackCalled, withEntryCallback);
     QVERIFY(state->onEnterCalled);
-
-    state->emitAdvance();
-}
-
-void QGCAbstractStateTest::_testOnLeaveOverride()
-{
-    QStateMachine machine;
-
-    auto* state = new TestAbstractState(QStringLiteral("TestOnLeave"), &machine);
-    machine.setInitialState(state);
-
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(!exitCallbackCalled);
     QVERIFY(!state->onLeaveCalled);
 
-    state->emitAdvance();
     state->invokeExitForTest();
+    QCOMPARE(exitCallbackCalled, withExitCallback);
     QVERIFY(state->onLeaveCalled);
 }
 
@@ -143,48 +76,38 @@ void QGCAbstractStateTest::_testStateName()
     QCOMPARE(state->objectName(), QStringLiteral("MyStateName"));
 }
 
-void QGCAbstractStateTest::_testAdvanceSignal()
+void QGCAbstractStateTest::_testSignalStopsMachine_data()
 {
-    QStateMachine machine;
+    QTest::addColumn<bool>("emitError");
 
-    auto* state = new TestAbstractState(QStringLiteral("TestAdvance"), &machine);
-    machine.setInitialState(state);
-    QObject::connect(state, &QGCAbstractState::advance, &machine, &QStateMachine::stop);
-
-    QSignalSpy advanceSpy(state, &QGCAbstractState::advance);
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    state->emitAdvance();
-
-    QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
-    QCOMPARE(advanceSpy.count(), 1);
+    QTest::newRow("advance") << false;
+    QTest::newRow("error") << true;
 }
 
-void QGCAbstractStateTest::_testErrorSignal()
+void QGCAbstractStateTest::_testSignalStopsMachine()
 {
+    QFETCH(bool, emitError);
+    const auto signal = emitError ? &QGCAbstractState::error : &QGCAbstractState::advance;
+
     QStateMachine machine;
 
-    auto* state = new TestAbstractState(QStringLiteral("TestError"), &machine);
+    auto* state = new TestAbstractState(QStringLiteral("TestSignal"), &machine);
     machine.setInitialState(state);
-    QObject::connect(state, &QGCAbstractState::error, &machine, &QStateMachine::stop);
+    QObject::connect(state, signal, &machine, &QStateMachine::stop);
 
-    QSignalSpy errorSpy(state, &QGCAbstractState::error);
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
+    QSignalSpy signalSpy(state, signal);
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
 
-    machine.start();
+    QVERIFY(startAndWaitForEntered(&machine, state));
 
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    state->emitError();
+    if (emitError) {
+        state->emitError();
+    } else {
+        state->emitAdvance();
+    }
 
     QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
-    QCOMPARE(errorSpy.count(), 1);
+    QCOMPARE(signalSpy.count(), 1);
 }
 
 void QGCAbstractStateTest::_testEventHandler()
@@ -205,10 +128,7 @@ void QGCAbstractStateTest::_testEventHandler()
 
     machine.setInitialState(state);
 
-    QSignalSpy enteredSpy(state, &QAbstractState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, state));
 
     // Event handler was called during state machine processing
     // (the exact timing depends on Qt's event handling)

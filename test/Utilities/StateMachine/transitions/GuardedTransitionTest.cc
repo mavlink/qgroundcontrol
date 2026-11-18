@@ -1,6 +1,6 @@
 #include "GuardedTransitionTest.h"
-#include "TransitionTestCommon.h"
 
+#include "StateTestCommon.h"
 
 void GuardedTransitionTest::_testGuardedTransitionAllowed()
 {

@@ -20,7 +20,6 @@
 #include "WaitStateBase.h"
 
 #include <QtStateMachine/QStateMachine>
-#include <QtStateMachine/QFinalState>
 #include <QtCore/QAbstractAnimation>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
@@ -83,7 +82,6 @@ public:
     /// @param errorState The state to transition to on error
     void setGlobalErrorState(QAbstractState* errorState);
 
-    /// Get the global error state
     QAbstractState* globalErrorState() const { return _globalErrorState; }
 
     /// Register a QGCState with the machine and automatically wire up error transitions
@@ -96,23 +94,18 @@ public:
     void registerState(QGCAbstractState* state);
 
     /// Create and register a FunctionState
-    /// @param stateName Name for the state
     /// @param function Function to execute
-    /// @return The created state
     FunctionState* addFunctionState(const QString& stateName, std::function<void()> function);
 
     /// Create and register an AsyncFunctionState
-    /// @param stateName Name for the state
     /// @param setupFunction Function to execute on entry
     /// @param timeoutMsecs Optional timeout
-    /// @return The created state
     AsyncFunctionState* addAsyncFunctionState(const QString& stateName,
                                                AsyncFunctionState::SetupFunction setupFunction,
                                                int timeoutMsecs = 0);
 
     /// Create and register a DelayState
     /// @param delayMsecs Delay duration
-    /// @return The created state
     DelayState* addDelayState(int delayMsecs);
 
     /// Post a named event to be processed immediately
@@ -144,7 +137,6 @@ public:
     void setInitialState(QAbstractState* state, bool autoStart = false);
 
     /// Add a final state that will stop the machine when entered
-    /// @param stateName Name for the state
     /// @return The created final state
     QGCFinalState* addFinalState(const QString& stateName = QString());
 
@@ -160,10 +152,6 @@ public:
     // -------------------------------------------------------------------------
 
     /// Create a simple signal transition between states
-    /// @param from Source state
-    /// @param signal Signal that triggers the transition
-    /// @param to Target state
-    /// @param animation Optional animation to play during transition
     template<typename Func>
     QSignalTransition* addTransition(QState* from, Func signal, QAbstractState* to,
                                       QAbstractAnimation* animation = nullptr)
@@ -176,11 +164,7 @@ public:
     }
 
     /// Create a guarded transition between states
-    /// @param from Source state
-    /// @param signal Signal that triggers the transition
-    /// @param to Target state
     /// @param guard Predicate that must return true for transition
-    /// @param animation Optional animation to play during transition
     template<typename Func>
     GuardedTransition* addGuardedTransition(QState* from, Func signal, QAbstractState* to,
                                             GuardedTransition::Guard guard,
@@ -195,10 +179,7 @@ public:
     }
 
     /// Create a machine event transition
-    /// @param from Source state
     /// @param eventName Event name to match
-    /// @param to Target state
-    /// @param animation Optional animation to run during transition
     MachineEventTransition* addEventTransition(QState* from, const QString& eventName, QAbstractState* to,
                                                QAbstractAnimation* animation = nullptr);
 

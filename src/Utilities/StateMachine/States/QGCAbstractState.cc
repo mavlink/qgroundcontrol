@@ -1,6 +1,5 @@
 #include "QGCAbstractState.h"
 #include "QGCStateMachine.h"
-#include "QGCLoggingCategory.h"
 
 QGCAbstractState::QGCAbstractState(const QString& stateName, QState* parent)
     : QState(QState::ExclusiveStates, parent)

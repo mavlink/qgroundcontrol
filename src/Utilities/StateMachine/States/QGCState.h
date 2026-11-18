@@ -6,9 +6,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 
-class QGCStateMachine;
-class Vehicle;
-
 /// \brief Full-featured base class for QGroundControl state machine states.
 ///
 /// Extends QGCAbstractState with:

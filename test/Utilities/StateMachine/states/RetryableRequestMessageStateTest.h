@@ -12,8 +12,7 @@ class RetryableRequestMessageStateTest : public VehicleTestManualConnect
 private slots:
     void _testSuccessFirstAttempt();
     void _testRetryOnFailure();
-    void _testRetryAfterTimeout_data();
-    void _testRetryAfterTimeout();
+    UT_PARAMETERIZED_TEST(_testRetryAfterTimeout);
     void _testMaxRetriesExhausted();
     void _testFailOnMaxRetries();
 

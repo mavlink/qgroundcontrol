@@ -42,10 +42,10 @@ target_sources(
         states/QGCAbstractStateTest.h
         states/SendMavlinkCommandStateTest.cc
         states/SendMavlinkCommandStateTest.h
-        states/SendMavlinkMessageStateTest.cc
-        states/SendMavlinkMessageStateTest.h
         states/WaitForMavlinkMessageStateTest.cc
         states/WaitForMavlinkMessageStateTest.h
+        states/AdditionalStatesCoverageTest.cc
+        states/AdditionalStatesCoverageTest.h
 )
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/states)
@@ -56,8 +56,6 @@ target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/stat
 target_sources(
     QGCUnitTests
     PRIVATE
-        transitions/TransitionTestCommon.cc
-        transitions/TransitionTestCommon.h
         transitions/GuardedTransitionTest.cc
         transitions/GuardedTransitionTest.h
         transitions/MachineEventTransitionTest.cc
@@ -81,7 +79,6 @@ add_qgc_test(QGCFinalStateTest LABELS Unit Utilities)
 add_qgc_test(QGCStateTest LABELS Unit Utilities)
 add_qgc_test(RetryableRequestMessageStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(SendMavlinkCommandStateTest LABELS Unit Utilities)
-add_qgc_test(SendMavlinkMessageStateTest LABELS Unit Utilities)
 add_qgc_test(SkippableAsyncStateTest LABELS Unit Utilities)
 add_qgc_test(WaitForMavlinkMessageStateTest LABELS Unit Utilities)
 add_qgc_test(WaitStateBaseTest LABELS Unit Utilities)
@@ -89,4 +86,5 @@ add_qgc_test(GuardedTransitionTest LABELS Unit Utilities)
 add_qgc_test(MachineEventTransitionTest LABELS Unit Utilities)
 add_qgc_test(QGCSignalTransitionTest LABELS Unit Utilities)
 add_qgc_test(RetryTransitionTest LABELS Unit Utilities)
+add_qgc_test(AdditionalStatesCoverageTest LABELS Unit Utilities)
 add_qgc_test(AdditionalTransitionsCoverageTest LABELS Unit Utilities)

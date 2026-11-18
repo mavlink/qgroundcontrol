@@ -6,8 +6,6 @@
 #include <cstdint>
 #include <functional>
 
-class Vehicle;
-
 /// \brief Sends the specified MAVLink message to the vehicle
 ///
 class SendMavlinkMessageState : public QGCState

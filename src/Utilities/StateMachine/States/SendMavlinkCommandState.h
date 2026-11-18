@@ -1,9 +1,7 @@
 #pragma once
 
+#include "MAVLinkEnums.h"
 #include "WaitStateBase.h"
-#include "QGCMAVLink.h"
-
-class Vehicle;
 
 /// \brief Sends the specified MAVLink command to the vehicle and waits for the result
 ///

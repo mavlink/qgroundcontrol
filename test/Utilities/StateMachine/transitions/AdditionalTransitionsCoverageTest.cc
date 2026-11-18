@@ -1,7 +1,7 @@
 #include "AdditionalTransitionsCoverageTest.h"
-#include "TransitionTestCommon.h"
 
 #include "QGCAbstractTransition.h"
+#include "StateTestCommon.h"
 
 namespace {
 
@@ -40,11 +40,9 @@ void AdditionalTransitionsCoverageTest::_testQGCAbstractTransitionAccessorsAndCu
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(sourceState);
 
-    QSignalSpy enteredSpy(sourceState, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, sourceState));
 
     QCOMPARE(transition->machine(), &machine);
     QCOMPARE(transition->vehicle(), nullptr);

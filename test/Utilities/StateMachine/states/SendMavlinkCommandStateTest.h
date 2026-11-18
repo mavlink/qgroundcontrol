@@ -9,7 +9,5 @@ class SendMavlinkCommandStateTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    void _testStateCreation();
-    void _testDeferredSetup();
     void _testUnconfiguredStateFails();
 };

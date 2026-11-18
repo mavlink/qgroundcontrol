@@ -1,7 +1,6 @@
 #include "QGCFinalState.h"
 #include "QGCState.h"
 #include "QGCStateMachine.h"
-#include "Vehicle.h"
 
 QGCFinalState::QGCFinalState(const QString& stateName, QState* parent)
     : QFinalState(parent)

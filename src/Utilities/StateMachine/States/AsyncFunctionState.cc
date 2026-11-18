@@ -1,5 +1,4 @@
 #include "AsyncFunctionState.h"
-#include "QGCLoggingCategory.h"
 
 AsyncFunctionState::AsyncFunctionState(const QString& stateName, QState* parent, SetupFunction setupFunction, int timeoutMsecs)
     : WaitStateBase(stateName, parent, timeoutMsecs)

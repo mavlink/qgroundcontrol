@@ -29,7 +29,6 @@ void RetryableRequestMessageState::onWaitEntered()
     _retryCount = 0;
     _retryWhenRequestFails = false;
 
-    // Check skip predicate
     if (_skipPredicate && _skipPredicate()) {
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Skipping request (skip predicate returned true)";
         waitComplete();
@@ -106,7 +105,6 @@ void RetryableRequestMessageState::_handleResult(
     _lastFailureCode = effectiveFailureCode;
 
     if (effectiveFailureCode == VehicleTypes::RequestMessageNoFailure) {
-        // Success
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Message received successfully";
 
         if (_messageHandler) {
@@ -117,7 +115,6 @@ void RetryableRequestMessageState::_handleResult(
         return;
     }
 
-    // Failure - check if we should retry
     qCDebug(RetryableRequestMessageStateLog) << stateName() << "Request failed, failureCode:" << effectiveFailureCode;
 
     if (_retryWhenRequestFails) {
@@ -130,7 +127,6 @@ void RetryableRequestMessageState::_handleResult(
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Retrying, attempt" << (_retryCount + 1);
         _queueRetry();
     } else {
-        // Max retries exhausted
         qCWarning(RetryableRequestMessageStateLog) << stateName() << "Max retries exhausted";
 
         if (_failureHandler) {

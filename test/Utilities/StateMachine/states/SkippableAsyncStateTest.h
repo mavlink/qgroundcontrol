@@ -8,7 +8,6 @@ class SkippableAsyncStateTest : public StateMachineTest
 
 private slots:
     void _testSkippableAsyncStateExecute();
-    void _testSkippableAsyncStateSkip();
+    UT_PARAMETERIZED_TEST(_testSkippableAsyncStateSkip);
     void _testSkippableAsyncStateTimeout();
-    void _testSkippableAsyncStateWithSkipAction();
 };

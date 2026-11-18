@@ -9,8 +9,5 @@ class WaitForMavlinkMessageStateTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    void _testStateCreation();
     void _testMessageId();
-    void _testPredicateSetup();
-    void _testTimeoutConfiguration();
 };

@@ -1,14 +1,23 @@
 #include "MachineEventTransitionTest.h"
-#include "TransitionTestCommon.h"
 
 #include <QtCore/QCoreApplication>
 
+#include "StateTestCommon.h"
+
+void MachineEventTransitionTest::_testMachineEventTransition_data()
+{
+    QTest::addColumn<bool>("delayed");
+
+    QTest::newRow("posted event") << false;
+    QTest::newRow("delayed event") << true;
+}
 
 void MachineEventTransitionTest::_testMachineEventTransition()
 {
+    QFETCH(bool, delayed);
+
     QGCStateMachine machine(QStringLiteral("EventTest"), nullptr);
     bool eventHandled = false;
-    QVariant receivedData;
 
     auto* waitState = new QGCState(QStringLiteral("Wait"), &machine);
     auto* eventState = new FunctionState(QStringLiteral("EventHandler"), &machine, [&eventHandled]() {
@@ -22,13 +31,15 @@ void MachineEventTransitionTest::_testMachineEventTransition()
 
     machine.setInitialState(waitState);
 
-    QSignalSpy enteredSpy(waitState, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
-    machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("testData"));
+    if (delayed) {
+        machine.postDelayedEvent(QStringLiteral("myEvent"), 100);
+    } else {
+        machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("testData"));
+    }
 
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(eventHandled);
@@ -55,11 +66,9 @@ void MachineEventTransitionTest::_testMachineEventTransitionWithGuard()
 
     machine.setInitialState(waitState);
 
-    QSignalSpy enteredSpy(waitState, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
     // This should NOT trigger (guard blocks)
     machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("blocked"));
@@ -71,36 +80,6 @@ void MachineEventTransitionTest::_testMachineEventTransitionWithGuard()
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(guardCalled);
     QVERIFY(transitioned);
-}
-
-void MachineEventTransitionTest::_testDelayedEvent()
-{
-    QGCStateMachine machine(QStringLiteral("DelayedEventTest"), nullptr);
-    bool eventReceived = false;
-
-    auto* waitState = new QGCState(QStringLiteral("Wait"), &machine);
-    auto* eventState = new FunctionState(QStringLiteral("EventReceived"), &machine, [&eventReceived]() {
-        eventReceived = true;
-    });
-    auto* finalState = new QGCFinalState(QStringLiteral("Final"), &machine);
-
-    auto* transition = new MachineEventTransition(QStringLiteral("testEvent"), eventState);
-    waitState->addTransition(transition);
-    eventState->addTransition(eventState, &QGCState::advance, finalState);
-
-    machine.setInitialState(waitState);
-
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Post delayed event
-    machine.postDelayedEvent(QStringLiteral("testEvent"), 100);
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(eventReceived);
 }
 
 void MachineEventTransitionTest::_testDelayedEventCancel()
@@ -118,12 +97,8 @@ void MachineEventTransitionTest::_testDelayedEventCancel()
 
     machine.setInitialState(waitState);
 
-    QSignalSpy enteredSpy(waitState, &QState::entered);
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Post delayed event and then cancel it
     int eventId = machine.postDelayedEvent(QStringLiteral("testEvent"), 200);
     QVERIFY(machine.cancelDelayedEvent(eventId));
 
@@ -159,9 +134,7 @@ void MachineEventTransitionTest::_testEventPriority()
 
     machine.setInitialState(waitState);
 
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
     // Post normal event first, then high priority - high should be processed first
     machine.postEvent(QStringLiteral("normalEvent"));

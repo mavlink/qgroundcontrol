@@ -1,6 +1,8 @@
 #include "DelayStateTest.h"
-#include "StateTestCommon.h"
 
+#include <QtCore/QElapsedTimer>
+
+#include "StateTestCommon.h"
 
 void DelayStateTest::_testDelayState()
 {

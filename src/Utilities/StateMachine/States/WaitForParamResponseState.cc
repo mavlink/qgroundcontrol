@@ -3,7 +3,6 @@
 #include <utility>
 
 #include "MAVLinkLib.h"
-#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
 WaitForParamResponseState::WaitForParamResponseState(QState *parent, int timeoutMsecs,

@@ -60,14 +60,10 @@ void AsyncFunctionStateTest::_testAsyncFunctionStateTimeout()
     MultiSignalSpy stateSpy;
     QVERIFY(stateSpy.init(asyncState));
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
-    // Verify timeout path taken, not success path
-    QVERIFY(stateSpy.emitted("timeout"));
-    QVERIFY(stateSpy.notEmitted("advance"));
+    QVERIFY_SIGNAL_EMITTED(stateSpy, "timeout");
+    QVERIFY_NO_SIGNAL(stateSpy, "advance");
 }
 
 void AsyncFunctionStateTest::_testErrorTransition()
@@ -101,15 +97,11 @@ void AsyncFunctionStateTest::_testErrorTransition()
     MultiSignalSpy stateSpy;
     QVERIFY(stateSpy.init(asyncState));
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QVERIFY(errorHandled);
-    // Verify error path taken, not success path
-    QVERIFY(stateSpy.emitted("error"));
-    QVERIFY(stateSpy.notEmitted("advance"));
+    QVERIFY_SIGNAL_EMITTED(stateSpy, "error");
+    QVERIFY_NO_SIGNAL(stateSpy, "advance");
 }
 
 UT_REGISTER_TEST(AsyncFunctionStateTest, TestLabel::Unit, TestLabel::Utilities)

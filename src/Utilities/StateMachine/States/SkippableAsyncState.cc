@@ -1,5 +1,4 @@
 #include "SkippableAsyncState.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QMetaObject>
 
@@ -31,14 +30,9 @@ void SkippableAsyncState::disconnectWaitSignal()
 
 void SkippableAsyncState::onWaitEntered()
 {
-    _wasSkipped = false;
-
-    // Evaluate skip predicate
     if (_skipPredicate && _skipPredicate()) {
         qCDebug(QGCStateMachineLog) << "Skip condition met, skipping" << stateName();
-        _wasSkipped = true;
 
-        // Execute skip action if provided
         if (_skipAction) {
             _skipAction();
         }
@@ -49,7 +43,6 @@ void SkippableAsyncState::onWaitEntered()
         return;
     }
 
-    // Not skipped - execute the setup function
     qCDebug(QGCStateMachineLog) << "Condition not met, executing" << stateName();
     if (_setupFunction) {
         _setupFunction(this);

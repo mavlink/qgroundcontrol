@@ -1,5 +1,4 @@
 #include "WaitStateBase.h"
-#include "QGCLoggingCategory.h"
 
 WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
     : QGCState(stateName, parent)
@@ -16,7 +15,11 @@ void WaitStateBase::_onEntered()
     _completed = false;
     connectWaitSignal();
     onWaitEntered();
+    _startTimeoutTimer();
+}
 
+void WaitStateBase::_startTimeoutTimer()
+{
     if (_timeoutMsecs > 0) {
         _timeoutTimer.start(_timeoutMsecs);
     }
@@ -39,16 +42,6 @@ void WaitStateBase::_onTimeout()
 
     disconnectWaitSignal();
     onWaitTimeout();
-}
-
-void WaitStateBase::onWaitEntered()
-{
-    // Default implementation does nothing - subclasses can override
-}
-
-void WaitStateBase::onWaitExited()
-{
-    // Default implementation does nothing - subclasses can override
 }
 
 void WaitStateBase::onWaitTimeout()
@@ -94,8 +87,5 @@ void WaitStateBase::restartWait()
     // state need an explicit rearm of both wait connections and timeout timer.
     disconnectWaitSignal();
     connectWaitSignal();
-
-    if (_timeoutMsecs > 0) {
-        _timeoutTimer.start(_timeoutMsecs);
-    }
+    _startTimeoutTimer();
 }

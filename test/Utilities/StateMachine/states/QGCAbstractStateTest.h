@@ -7,13 +7,8 @@ class QGCAbstractStateTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    void _testEntryCallback();
-    void _testExitCallback();
-    void _testBothCallbacks();
-    void _testOnEnterOverride();
-    void _testOnLeaveOverride();
+    UT_PARAMETERIZED_TEST(_testEntryAndExitHooks);
     void _testStateName();
-    void _testAdvanceSignal();
-    void _testErrorSignal();
+    UT_PARAMETERIZED_TEST(_testSignalStopsMachine);
     void _testEventHandler();
 };

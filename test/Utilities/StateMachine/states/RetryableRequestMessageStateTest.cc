@@ -63,23 +63,17 @@ void RetryableRequestMessageStateTest::_testRetryOnFailure()
 
     QGCStateMachine machine(QStringLiteral("TestMachine"), vehicle);
     bool messageReceived = false;
-    int handlerCallCount = 0;
 
     // First attempt will fail (message not sent), then succeed on retry
     // MockLink doesn't have a "fail once then succeed" mode, so we test the timeout retry path
     _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageCommandAcceptedMsgNotSent);
 
     auto* requestState = new RetryableRequestMessageState(
-        QStringLiteral("RequestDebug"),
-        &machine,
-        MAVLINK_MSG_ID_DEBUG,
-        [&messageReceived, &handlerCallCount](Vehicle*, const mavlink_message_t&) {
-            handlerCallCount++;
-            messageReceived = true;
-        },
-        2,                      // max retries
+        QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG,
+        [&messageReceived](Vehicle*, const mavlink_message_t&) { messageReceived = true; },
+        2,    // max retries
         MAV_COMP_ID_AUTOPILOT1,
-        1000                    // 1 second timeout per attempt
+        1000  // 1 second timeout per attempt
     );
     auto* finalState = new QFinalState(&machine);
 

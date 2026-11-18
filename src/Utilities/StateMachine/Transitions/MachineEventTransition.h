@@ -36,7 +36,6 @@ public:
 
 protected:
     bool eventTest(QEvent* event) override;
-    void onTransition(QEvent* event) override;
 
 private:
     QString _eventName;

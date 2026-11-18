@@ -1,11 +1,4 @@
 #include "QGCStateMachine.h"
-#include "AudioOutput.h"
-#include "MultiVehicleManager.h"
-#include "Vehicle.h"
-
-#include <QtStateMachine/QSignalTransition>
-
-#include <memory>
 
 QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QObject* parent)
     : QStateMachine (parent)
@@ -81,7 +74,6 @@ void QGCStateMachine::setGlobalErrorState(QAbstractState* errorState)
 
 void QGCStateMachine::registerState(QGCState* state)
 {
-    // Only add global error transition if no local error state is set
     if (_globalErrorState && !state->localErrorState()) {
         state->addTransition(state, &QGCState::error, _globalErrorState);
     }
@@ -163,11 +155,7 @@ void QGCStateMachine::restart()
 {
     if (inProgress()) {
         // stop() is asynchronous, so connect to stopped signal to start again
-        auto conn = std::make_shared<QMetaObject::Connection>();
-        *conn = connect(this, &QStateMachine::stopped, this, [this, conn]() {
-            disconnect(*conn);
-            start();
-        });
+        connect(this, &QStateMachine::stopped, this, &QGCStateMachine::start, Qt::SingleShotConnection);
         stop();
     } else {
         start();
@@ -222,7 +210,6 @@ void QGCStateMachine::_onStateEntered()
     auto* state = qobject_cast<QAbstractState*>(sender());
     if (!state) return;
 
-    // Update QML state history
     QString stateName = state->objectName();
     if (!stateName.isEmpty()) {
         _stateHistory.append(stateName);
@@ -233,7 +220,6 @@ void QGCStateMachine::_onStateEntered()
         emit currentStateNameChanged();
     }
 
-    // Update progress tracking
     int index = _progressStates.indexOf(state);
     if (index >= 0 && index != _progressCurrentIndex) {
         _progressCurrentIndex = index;

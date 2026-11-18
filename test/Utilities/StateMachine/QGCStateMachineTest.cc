@@ -1,13 +1,13 @@
 #include "QGCStateMachineTest.h"
 
-#include "MultiSignalSpy.h"
-#include "QGCStateMachine.h"
-#include "WaitStateBase.h"
-
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
+
+#include "QGCStateMachine.h"
+#include "StateTestCommon.h"
+#include "WaitStateBase.h"
 
 namespace {
 float _spyFloatArg(const QSignalSpy& spy, int index)
@@ -109,12 +109,9 @@ void QGCStateMachineTest::_testGlobalErrorStateWithAbstractState()
 
     machine.setInitialState(abstractState);
     QObject::connect(abstractState, &QGCAbstractState::error, &machine, &QStateMachine::stop);
-    QSignalSpy enteredSpy(abstractState, &QAbstractState::entered);
     QSignalSpy errorSpy(abstractState, &QGCAbstractState::error);
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, abstractState));
     abstractState->triggerError();
     QVERIFY((errorSpy.count() > 0) || errorSpy.wait(TestTimeout::shortMs()));
     QVERIFY((stoppedSpy.count() > 0) || stoppedSpy.wait(TestTimeout::shortMs()));
@@ -310,17 +307,11 @@ void QGCStateMachineTest::_testPropertyAssignment()
 
     machine.setInitialState(state1);
 
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-
-    // Wait for state1 to be entered
-    QVERIFY(state1EnteredSpy.wait(TestTimeout::shortMs()));
-    // Property should be set to 42 while in state1
+    QVERIFY(startAndWaitForEntered(&machine, state1));
     QCOMPARE(target.property("testProp").toInt(), 42);
 
-    // Trigger transition to state2
     machine.postEvent(QStringLiteral("next"));
 
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
@@ -345,18 +336,15 @@ void QGCStateMachineTest::_testRetryTransitionBuilder()
     auto* state1 = new MinimalTestWaitState(QStringLiteral("State1"), &machine, 50);
     auto* finalState = machine.addFinalState();
 
-    // Use the builder to add a retry transition
     auto* retry = machine.addRetryTransition(state1, &WaitStateBase::timeout, finalState,
                                               [&retryCount]() { retryCount++; }, 2);
 
     machine.setInitialState(state1);
 
-    QVERIFY(retry != nullptr);
     QCOMPARE(retry->maxRetries(), 2);
 
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
-    // Should have retried twice before advancing
     QCOMPARE(retryCount, 2);
 }
 
@@ -374,12 +362,10 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     machine.setInitialState(state1);
 
     QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
     QSignalSpy state2EnteredSpy(state2, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, state1));
 
     machine.setSubProgress(0.5f);
     machine.postEvent(QStringLiteral("toState2"));
@@ -416,14 +402,12 @@ void QGCStateMachineTest::_testStateHistoryLimit()
     machine.setProgressWeights({{state1, 1}, {state2, 1}, {state3, 1}});
     machine.setInitialState(state1);
 
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
     QSignalSpy state2EnteredSpy(state2, &QState::entered);
     QSignalSpy state3EnteredSpy(state3, &QState::entered);
     QSignalSpy historySpy(&machine, &QGCStateMachine::stateHistoryChanged);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, state1));
     machine.postEvent(QStringLiteral("toState2"));
     QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
     machine.postEvent(QStringLiteral("toState3"));

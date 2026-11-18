@@ -1,9 +1,7 @@
 #include "SendMavlinkMessageState.h"
 #include "MAVLinkProtocol.h"
-#include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "QGCLoggingCategory.h"
 
 SendMavlinkMessageState::SendMavlinkMessageState(QState *parent, MessageEncoder encoder, int retryCount)
     : QGCState(QStringLiteral("SendMavlinkMessageState"), parent)
@@ -39,7 +37,6 @@ void SendMavlinkMessageState::_sendMessage()
     mavlink_message_t message{};
 
     const quint32 systemId = MAVLinkProtocol::instance()->getSystemId();
-    const uint8_t componentId [[maybe_unused]] = MAVLinkProtocol::getComponentId();
     const uint8_t channel = sharedLink->mavlinkChannel();
 
     _encoder(systemId, channel, &message);

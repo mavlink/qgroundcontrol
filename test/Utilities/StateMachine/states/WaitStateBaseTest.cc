@@ -38,67 +38,60 @@ void WaitStateBaseTest::_testTimeoutEmission()
 
     QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
     QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(timeoutSpy.count(), 1);
     QCOMPARE(timedOutSpy.count(), 1);
 }
 
-void WaitStateBaseTest::_testWaitComplete()
+void WaitStateBaseTest::_testCompleteAndFail_data()
 {
-    QStateMachine machine;
+    QTest::addColumn<bool>("fail");
+    QTest::addColumn<int>("calls");
 
-    auto* waitState = new TestWaitState(QStringLiteral("TestComplete"), &machine, 0);
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
-    machine.setInitialState(waitState);
-
-    QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
-    QSignalSpy advanceSpy(waitState, &QGCState::advance);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Trigger completion
-    waitState->triggerComplete();
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(completedSpy.count(), 1);
-    QCOMPARE(advanceSpy.count(), 1);
+    QTest::newRow("complete once") << false << 1;
+    QTest::newRow("complete twice") << false << 2;
+    QTest::newRow("fail once") << true << 1;
+    QTest::newRow("fail twice") << true << 2;
 }
 
-void WaitStateBaseTest::_testWaitFailed()
+void WaitStateBaseTest::_testCompleteAndFail()
 {
+    QFETCH(bool, fail);
+    QFETCH(int, calls);
+
     QStateMachine machine;
 
-    auto* waitState = new TestWaitState(QStringLiteral("TestFailed"), &machine, 0);
+    auto* waitState = new TestWaitState(QStringLiteral("TestCompleteAndFail"), &machine, 0);
     auto* errorState = new FunctionState(QStringLiteral("Error"), &machine, []() {});
     auto* finalState = new QFinalState(&machine);
 
+    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
     waitState->addTransition(waitState, &QGCState::error, errorState);
     errorState->addTransition(errorState, &QGCState::advance, finalState);
     machine.setInitialState(waitState);
 
+    QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
+    QSignalSpy advanceSpy(waitState, &QGCState::advance);
     QSignalSpy errorSpy(waitState, &QGCState::error);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
+    QVERIFY(waitState->connectCalled);
 
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Trigger failure
-    waitState->triggerFailed();
+    // Only the first call may have an effect
+    for (int i = 0; i < calls; i++) {
+        if (fail) {
+            waitState->triggerFailed();
+        } else {
+            waitState->triggerComplete();
+        }
+    }
 
     QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(errorSpy.count(), 1);
+    QCOMPARE(completedSpy.count(), fail ? 0 : 1);
+    QCOMPARE(advanceSpy.count(), fail ? 0 : 1);
+    QCOMPARE(errorSpy.count(), fail ? 1 : 0);
+    QVERIFY(waitState->disconnectCalled);
 }
 
 void WaitStateBaseTest::_testNoTimeoutWhenZero()
@@ -113,11 +106,8 @@ void WaitStateBaseTest::_testNoTimeoutWhenZero()
     machine.setInitialState(waitState);
 
     QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
 
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
     // Zero-timeout state arms no timer; a single event-loop flush is enough
     // to prove no spurious timeout fires.
@@ -126,60 +116,6 @@ void WaitStateBaseTest::_testNoTimeoutWhenZero()
 
     // Complete manually to end the test
     waitState->triggerComplete();
-}
-
-void WaitStateBaseTest::_testDoubleCompleteProtection()
-{
-    QStateMachine machine;
-
-    auto* waitState = new TestWaitState(QStringLiteral("TestDoubleComplete"), &machine, 0);
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
-    machine.setInitialState(waitState);
-
-    QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Call complete twice - should only emit once
-    waitState->triggerComplete();
-    waitState->triggerComplete();
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(completedSpy.count(), 1);
-}
-
-void WaitStateBaseTest::_testDoubleFailProtection()
-{
-    QStateMachine machine;
-
-    auto* waitState = new TestWaitState(QStringLiteral("TestDoubleFail"), &machine, 0);
-    auto* errorState = new FunctionState(QStringLiteral("Error"), &machine, []() {});
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &QGCState::error, errorState);
-    errorState->addTransition(errorState, &QGCState::advance, finalState);
-    machine.setInitialState(waitState);
-
-    QSignalSpy errorSpy(waitState, &QGCState::error);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Call fail twice - should only emit once
-    waitState->triggerFailed();
-    waitState->triggerFailed();
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(errorSpy.count(), 1);
 }
 
 void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
@@ -195,12 +131,9 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
 
     QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
     QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
     // Complete before timeout
     QTimer::singleShot(50, waitState, [waitState]() {
@@ -210,30 +143,6 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
     QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(completedSpy.count(), 1);
     QCOMPARE(timeoutSpy.count(), 0);  // Timeout should have been cancelled
-}
-
-void WaitStateBaseTest::_testSignalDisconnectOnExit()
-{
-    QStateMachine machine;
-
-    auto* waitState = new TestWaitState(QStringLiteral("TestDisconnect"), &machine, 0);
-    auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
-    machine.setInitialState(waitState);
-
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-    QVERIFY(waitState->connectCalled);
-
-    waitState->triggerComplete();
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QVERIFY(waitState->disconnectCalled);
 }
 
 #include "WaitStateBaseTest.moc"

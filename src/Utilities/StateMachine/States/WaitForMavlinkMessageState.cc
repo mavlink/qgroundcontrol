@@ -1,6 +1,5 @@
 #include "WaitForMavlinkMessageState.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 
 #include <utility>
 

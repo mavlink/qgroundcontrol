@@ -1,6 +1,6 @@
 #include "QGCSignalTransitionTest.h"
-#include "TransitionTestCommon.h"
 
+#include "StateTestCommon.h"
 
 void QGCSignalTransitionTest::_testTransitionMachineAccessor()
 {
@@ -54,11 +54,9 @@ void QGCSignalTransitionTest::_testTransitionMachineAccessorAbstract()
 
     machine.setInitialState(waitState);
 
-    QSignalSpy enteredSpy(waitState, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
 
     machine.postEvent(QStringLiteral("testEvent"));
 

@@ -1,12 +1,10 @@
 #pragma once
 
-#include "WaitStateBase.h"
-#include "QGCMAVLink.h"
-
 #include <cstdint>
 #include <functional>
 
-class Vehicle;
+#include "MAVLinkMessageType.h"
+#include "WaitStateBase.h"
 
 /// \brief Waits for either PARAM_VALUE (success) or PARAM_ERROR (rejection) from the vehicle.
 ///
