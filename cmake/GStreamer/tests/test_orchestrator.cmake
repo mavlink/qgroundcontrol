@@ -418,11 +418,8 @@ elseif(SCENARIO STREQUAL "android-mobile")
     # source|path staged under the build directory
     set(_ndk_build "${_sdk_a}/share/gst-android/ndk-build")
     set(_java androidmedia/GstAhcCallback.java)
-    set(_staged
-        "${_ndk_build}/${_java}|extra_java_sources/org/freedesktop/gstreamer/${_java}"
-        "${_ndk_build}/fontconfig/fonts.conf|extra_assets/fontconfig/fonts.conf"
-        "${_ndk_build}/fontconfig/fonts/Ubuntu-R.ttf|extra_assets/fontconfig/fonts/truetype/Ubuntu-R.ttf"
-        "${_sdk_a}/etc/ssl/certs/ca-certificates.crt|extra_assets/ssl/certs/ca-certificates.crt"
+    set(_staged "${_ndk_build}/${_java}|extra_java_sources/org/freedesktop/gstreamer/${_java}"
+                "${_sdk_a}/etc/ssl/certs/ca-certificates.crt|extra_assets/ssl/certs/ca-certificates.crt"
     )
     foreach(_entry IN LISTS _staged)
         qgc_test_split("${_entry}" _source)
@@ -441,7 +438,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     file(WRITE "${_sdk_a}/lib/pkgconfig/gstudp.pc" "${_pc}")
     # Copies earlier builds wrote into the package sources would duplicate the staged files; other files stay.
     set(_legacy_copies "${_package}/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java"
-                       "${_package}/assets/fontconfig/fonts.conf"
+                       "${_package}/assets/ssl/certs/ca-certificates.crt"
     )
     foreach(
         _file IN
@@ -453,7 +450,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
     _qgc_configure_ok("Android mobile target" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android})
     _qgc_link_line(_link)
 
-    # Configure stages the plugin Java sources and fonts/CA assets into the build directory, never the package sources.
+    # Configure stages the plugin Java sources and the CA bundle into the build directory, never the package sources.
     foreach(_entry IN LISTS _staged)
         qgc_test_split("${_entry}" _source _path)
         execute_process(

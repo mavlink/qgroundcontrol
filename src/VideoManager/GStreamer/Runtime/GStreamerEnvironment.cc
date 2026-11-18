@@ -399,7 +399,6 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
 
         if (!filesDir.isEmpty()) {
             _setGstEnv("HOME", filesDir);
-            _setGstEnv("FONTCONFIG_PATH", _cleanJoin(filesDir, "fontconfig"));
             const QString caBundle = _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt");
             if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle)) {
                 _setCaBundleIfUnset(caBundle);
