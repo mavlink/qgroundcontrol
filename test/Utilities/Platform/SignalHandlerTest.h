@@ -16,6 +16,5 @@ private slots:
     void _testCurrentUpdatesWithNewHandler();
 
     // Signal delivery (POSIX)
-    void _testSignalInChild_data();
-    void _testSignalInChild();
+    UT_PARAMETERIZED_TEST(_testSignalInChild);
 };

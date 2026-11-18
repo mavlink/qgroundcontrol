@@ -26,20 +26,13 @@ class QGCCommandLineParserTest : public PortableTest
 
 private slots:
     void _testDefaultResult();
-    void _testParseArgumentsOptions_data();
-    void _testParseArgumentsOptions();
-    void _testParseArgumentsRejectedValues_data();
-    void _testParseArgumentsRejectedValues();
+    UT_PARAMETERIZED_TEST(_testParseArgumentsOptions);
+    UT_PARAMETERIZED_TEST(_testParseArgumentsRejectedValues);
     void _testParseArgumentsEmptyList();
-    void _testParseArgumentsHelpAndVersion_data();
-    void _testParseArgumentsHelpAndVersion();
-    void _testDetermineAppMode_data();
-    void _testDetermineAppMode();
+    UT_PARAMETERIZED_TEST(_testParseArgumentsHelpAndVersion);
+    UT_PARAMETERIZED_TEST(_testDetermineAppMode);
     void _testHandleParseResult();
-    void _testNormalizeArgs_data();
-    void _testNormalizeArgs();
-    void _testParseSystemId_data();
-    void _testParseSystemId();
-    void _testParseUnitTestShard_data();
-    void _testParseUnitTestShard();
+    UT_PARAMETERIZED_TEST(_testNormalizeArgs);
+    UT_PARAMETERIZED_TEST(_testParseSystemId);
+    UT_PARAMETERIZED_TEST(_testParseUnitTestShard);
 };

@@ -18,10 +18,8 @@ private slots:
     void _testFlushWritesQueuedData();
     void _testFlushAfterManyWrites();
     void _testConsecutiveFlushes();
-    void _testRecoversAfterError_data();
-    void _testRecoversAfterError();
-    void _testCloseReportsWriteError_data();
-    void _testCloseReportsWriteError();
+    UT_PARAMETERIZED_TEST(_testRecoversAfterError);
+    UT_PARAMETERIZED_TEST(_testCloseReportsWriteError);
     void _testWriteWhileClosingAfterError();
     void _testDestructorWritesQueuedData();
     void _testCloseWritesQueuedDataAndNextWriteReopens();
@@ -29,8 +27,7 @@ private slots:
     void _testAppendsAndReportsFileSize();
     void _testWritesKeepQueueOrder();
     void _testWritesOverPendingLimitAreDropped();
-    void _testWriteWithoutPathIsDropped_data();
-    void _testWriteWithoutPathIsDropped();
+    UT_PARAMETERIZED_TEST(_testWriteWithoutPathIsDropped);
 
 private:
     std::optional<QTemporaryDir> _tempDir;  ///< Exists from init() to cleanup()

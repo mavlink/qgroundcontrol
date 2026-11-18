@@ -7,8 +7,6 @@ class MonotonicClockTest : public PortableTest
     Q_OBJECT
 
 private slots:
-    void _fresh_data();
-    void _fresh();
-    void _age_data();
-    void _age();
+    UT_PARAMETERIZED_TEST(_fresh);
+    UT_PARAMETERIZED_TEST(_age);
 };

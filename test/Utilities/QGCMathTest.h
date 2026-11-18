@@ -14,8 +14,7 @@ private slots:
     void _fuzzyCompareFloat_test();
     void _fuzzyCompareCustomTolerance_test();
     void _fuzzyCompareFloatCustomTolerance_test();
-    void _limitAngleToPMPI_test_data();
-    void _limitAngleToPMPI_test();
+    UT_PARAMETERIZED_TEST(_limitAngleToPMPI_test);
     void _crc32Empty_test();
     void _crc32KnownVector_test();
 };

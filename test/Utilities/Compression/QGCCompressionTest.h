@@ -10,23 +10,18 @@ class QGCCompressionTest : public UnitTest
 
 private slots:
     // Format detection
-    void _testFormatDetection_data();
-    void _testFormatDetection();
-    void _testDetectFormatFromFile_data();
-    void _testDetectFormatFromFile();
-    void _testDetectFormatFromMagicBytes_data();
-    void _testDetectFormatFromMagicBytes();
+    UT_PARAMETERIZED_TEST(_testFormatDetection);
+    UT_PARAMETERIZED_TEST(_testDetectFormatFromFile);
+    UT_PARAMETERIZED_TEST(_testDetectFormatFromMagicBytes);
     void _testFormatDetectionFromContent();
     void _testFormatHelpers();
     void _testFormatParameter();
 
     // Archive extraction from Qt resources
-    void _testExtractFromResource_data();
-    void _testExtractFromResource();
+    UT_PARAMETERIZED_TEST(_testExtractFromResource);
     void _testExtractArchiveAtomicReplacesExistingDirectory();
     void _testExtractArchiveAtomicFailureKeepsExistingDirectory();
-    void _testListOneFile_data();
-    void _testListOneFile();
+    UT_PARAMETERIZED_TEST(_testListOneFile);
     void _testListArchiveNaturalSort();
     void _testValidateArchive();
     void _testFileExists();
@@ -37,82 +32,59 @@ private slots:
     void _testExtractByPattern();
 
     // Single-file decompression from Qt resources
-    void _testDecompressEveryFormat_data();
-    void _testDecompressEveryFormat();
+    UT_PARAMETERIZED_TEST(_testDecompressEveryFormat);
     void _testDecompressIfNeeded();
-    void _testDecompressIfNeededDefaultOutput_data();
-    void _testDecompressIfNeededDefaultOutput();
-    void _testDecompressEmptyStream_data();
-    void _testDecompressEmptyStream();
-    void _testDecompressRejectsStreamWithoutData_data();
-    void _testDecompressRejectsStreamWithoutData();
-    void _testDecompressPlainInput_data();
-    void _testDecompressPlainInput();
+    UT_PARAMETERIZED_TEST(_testDecompressIfNeededDefaultOutput);
+    UT_PARAMETERIZED_TEST(_testDecompressEmptyStream);
+    UT_PARAMETERIZED_TEST(_testDecompressRejectsStreamWithoutData);
+    UT_PARAMETERIZED_TEST(_testDecompressPlainInput);
     void _testComputeFileHashOfUncompressedFile();
-    void _testDecompressFileCopiesPlainInput_data();
-    void _testDecompressFileCopiesPlainInput();
+    UT_PARAMETERIZED_TEST(_testDecompressFileCopiesPlainInput);
 
     // Progress callbacks
-    void _testProgressCallbackExtract_data();
-    void _testProgressCallbackExtract();
+    UT_PARAMETERIZED_TEST(_testProgressCallbackExtract);
 
     // Format reported by an operation
-    void _testDetectedFormat_data();
-    void _testDetectedFormat();
-    void _testDetectedFormatAfterFailure_data();
-    void _testDetectedFormatAfterFailure();
+    UT_PARAMETERIZED_TEST(_testDetectedFormat);
+    UT_PARAMETERIZED_TEST(_testDetectedFormatAfterFailure);
 
     // Edge cases and error handling
-    void _testMissingInput_data();
-    void _testMissingInput();
+    UT_PARAMETERIZED_TEST(_testMissingInput);
     void _testNoExternalDecompressors();
-    void _testTruncatedArchive_data();
-    void _testTruncatedArchive();
-    void _testTruncatedStream_data();
-    void _testTruncatedStream();
+    UT_PARAMETERIZED_TEST(_testTruncatedArchive);
+    UT_PARAMETERIZED_TEST(_testTruncatedStream);
     void _testExtractStreamedZipEntry();
-    void _testSequentialDeviceEnd_data();
-    void _testSequentialDeviceEnd();
+    UT_PARAMETERIZED_TEST(_testSequentialDeviceEnd);
     void _testSequentialDeviceReadError();
     void _testSequentialDeviceSkip();
-    void _testExtractFileDataErrors_data();
-    void _testExtractFileDataErrors();
-    void _testExtractToFileErrors_data();
-    void _testExtractToFileErrors();
+    UT_PARAMETERIZED_TEST(_testExtractFileDataErrors);
+    UT_PARAMETERIZED_TEST(_testExtractToFileErrors);
     void _testDecompressDataErrors();
-    void _testUnwritableOutput_data();
-    void _testUnwritableOutput();
-    void _testInputWithoutPermission_data();
-    void _testInputWithoutPermission();
-    void _testOutcomeBeforeInput_data();
-    void _testOutcomeBeforeInput();
+    UT_PARAMETERIZED_TEST(_testUnwritableOutput);
+    UT_PARAMETERIZED_TEST(_testInputWithoutPermission);
+    UT_PARAMETERIZED_TEST(_testOutcomeBeforeInput);
 
     // QIODevice-based operations
     void _testDecompressFromDevice();
     void _testExtractFromDevice();
     void _testExtractFileDataFromDevice();
     void _testInterleavedDeviceReaders();
-    void _testDeviceAtEnd_data();
-    void _testDeviceAtEnd();
-    void _testDeviceOpenedAgain_data();
-    void _testDeviceOpenedAgain();
+    UT_PARAMETERIZED_TEST(_testDeviceAtEnd);
+    UT_PARAMETERIZED_TEST(_testDeviceOpenedAgain);
     void _testArchiveFileLeavesOutLinks();
 
     // QGCCompressionJob (async operations)
     void _testCompressionJobExtract();
     void _testCompressionJobReentrantStartFromFinished();
-    void _testCompressionJobCancel_data();
-    void _testCompressionJobCancel();
+    UT_PARAMETERIZED_TEST(_testCompressionJobCancel);
     void _testCompressionJobAsyncStatic();
     void _testCompressionJobCancelFuture();
     void _testCompressionJobErrorString();
-    void _testCompressionJobPlainInput_data();
-    void _testCompressionJobPlainInput();
+    UT_PARAMETERIZED_TEST(_testCompressionJobPlainInput);
     void _testCompressionJobWork();
 
     // Sparse file handling
-    void _testSparseFileExtraction_data();
-    void _testSparseFileExtraction();
+    UT_PARAMETERIZED_TEST(_testSparseFileExtraction);
 
     // Thread safety
     void _testConcurrentExtractions();
@@ -121,37 +93,25 @@ private slots:
     void _testEmptyArchive();
     void _testDecompressToFileSizeLimit();
     void _testDecompressToMemorySizeLimit();
-    void _testExtractionStopsCleanly_data();
-    void _testExtractionStopsCleanly();
-    void _testDecompressionCancelled_data();
-    void _testDecompressionCancelled();
-    void _testExtractArchiveKeepsEntriesBeforeDamage_data();
-    void _testExtractArchiveKeepsEntriesBeforeDamage();
+    UT_PARAMETERIZED_TEST(_testExtractionStopsCleanly);
+    UT_PARAMETERIZED_TEST(_testDecompressionCancelled);
+    UT_PARAMETERIZED_TEST(_testExtractArchiveKeepsEntriesBeforeDamage);
     void _testOverstatedEntrySize();
-    void _testExtractFileDataSizeLimit_data();
-    void _testExtractFileDataSizeLimit();
-    void _testUncompressDataSizeLimit_data();
-    void _testUncompressDataSizeLimit();
+    UT_PARAMETERIZED_TEST(_testExtractFileDataSizeLimit);
+    UT_PARAMETERIZED_TEST(_testUncompressDataSizeLimit);
 
     // Cross-platform path handling
     void _testExtractArchiveToSymlinkedOutputPath();
-    void _testExtractRejectsEscapingNames_data();
-    void _testExtractRejectsEscapingNames();
+    UT_PARAMETERIZED_TEST(_testExtractRejectsEscapingNames);
     void _testExtractRejectsEscapingLinks();
-    void _testExtractLinks_data();
-    void _testExtractLinks();
-    void _testExtractRestoresModificationTime_data();
-    void _testExtractRestoresModificationTime();
-    void _testExtractLeavesOutSpecialFiles_data();
-    void _testExtractLeavesOutSpecialFiles();
-    void _testExtractToUnusualPath_data();
-    void _testExtractToUnusualPath();
+    UT_PARAMETERIZED_TEST(_testExtractLinks);
+    UT_PARAMETERIZED_TEST(_testExtractRestoresModificationTime);
+    UT_PARAMETERIZED_TEST(_testExtractLeavesOutSpecialFiles);
+    UT_PARAMETERIZED_TEST(_testExtractToUnusualPath);
 
     // Benchmarks (run with --benchmark flag)
-    void _benchmarkExtract_data();
-    void _benchmarkExtract();
-    void _benchmarkDecompress_data();
-    void _benchmarkDecompress();
+    UT_PARAMETERIZED_TEST(_benchmarkExtract);
+    UT_PARAMETERIZED_TEST(_benchmarkDecompress);
     void _benchmarkConcurrentExtraction();
     void _benchmarkListArchive();
 

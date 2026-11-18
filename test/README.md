@@ -119,7 +119,8 @@ table-driven pattern (`_data()` + `QTest::addColumn`/`QFETCH`) rather than copy-
 near-identical method bodies. Each row gets its own failure tag, so a single bad
 permutation is identified without re-running the whole method. See
 `Utilities/Compression/QGCCompressionTest.cc` (`_testFormatDetection`,
-`_testDetectFormatFromMagicBytes`) for the canonical shape.
+`_testDetectFormatFromMagicBytes`) for the canonical shape. `UT_PARAMETERIZED_TEST(_myCase);` in the
+class declares the test slot and its `_data()` companion.
 
 ### Register in CMakeLists.txt
 

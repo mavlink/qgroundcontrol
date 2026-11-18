@@ -7,10 +7,7 @@ class QGCFormatTest : public PortableTest
     Q_OBJECT
 
 private slots:
-    void _numberToString_data();
-    void _numberToString();
-    void _bigSizeToString_data();
-    void _bigSizeToString();
-    void _bigSizeMBToString_data();
-    void _bigSizeMBToString();
+    UT_PARAMETERIZED_TEST(_numberToString);
+    UT_PARAMETERIZED_TEST(_bigSizeToString);
+    UT_PARAMETERIZED_TEST(_bigSizeMBToString);
 };

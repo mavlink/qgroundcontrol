@@ -9,23 +9,15 @@ class QGCSensorsTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _testAmbientTemperatureFilter_data();
-    void _testAmbientTemperatureFilter();
-    void _testPressureFilter_data();
-    void _testPressureFilter();
-    void _testCompassFilter_data();
-    void _testCompassFilter();
+    UT_PARAMETERIZED_TEST(_testAmbientTemperatureFilter);
+    UT_PARAMETERIZED_TEST(_testPressureFilter);
+    UT_PARAMETERIZED_TEST(_testCompassFilter);
 
-    void _testSensorAbsent_data();
-    void _testSensorAbsent();
-    void _testSensorFailsToStart_data();
-    void _testSensorFailsToStart();
-    void _testSensorReportsReadings_data();
-    void _testSensorReportsReadings();
-    void _testRepeatedInit_data();
-    void _testRepeatedInit();
-    void _testSensorLogsBackend_data();
-    void _testSensorLogsBackend();
+    UT_PARAMETERIZED_TEST(_testSensorAbsent);
+    UT_PARAMETERIZED_TEST(_testSensorFailsToStart);
+    UT_PARAMETERIZED_TEST(_testSensorReportsReadings);
+    UT_PARAMETERIZED_TEST(_testRepeatedInit);
+    UT_PARAMETERIZED_TEST(_testSensorLogsBackend);
     void _testCompassReportsDirection();
 
 private:

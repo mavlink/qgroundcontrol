@@ -15,17 +15,14 @@ private slots:
     void _convertNedToGeoAtOrigin_test();
 
     void _convertGeoToUTM_test();
-    void _convertGeoToUTMOutsideUTM_test_data();
-    void _convertGeoToUTMOutsideUTM_test();
+    UT_PARAMETERIZED_TEST(_convertGeoToUTMOutsideUTM_test);
     void _convertUTMToGeo_test();
     void _convertGeoToMGRS_test();
     void _convertMGRSToGeo_test();
-    void _convertMGRSToGeoInvalid_test_data();
-    void _convertMGRSToGeoInvalid_test();
+    UT_PARAMETERIZED_TEST(_convertMGRSToGeoInvalid_test);
 
     void _convertDegreesToDMS_test();
-    void _convertDMSToDegrees_test_data();
-    void _convertDMSToDegrees_test();
+    UT_PARAMETERIZED_TEST(_convertDMSToDegrees_test);
     void _convertDMSToGeo_test();
     void _dmsRoundTrip_test();
 

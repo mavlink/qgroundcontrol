@@ -10,8 +10,7 @@ class QGCStreamingDecompressionTest : public UnitTest
 
 private slots:
     // Both devices
-    void _testReadsContent_data();
-    void _testReadsContent();
+    UT_PARAMETERIZED_TEST(_testReadsContent);
 
     // QGCDecompressDevice tests
     void _testDecompressDeviceWithQTextStream();
@@ -29,6 +28,5 @@ private slots:
     // Edge cases
     void _testPartialReads();
     void _testMultipleOpens();
-    void _testErrorString_data();
-    void _testErrorString();
+    UT_PARAMETERIZED_TEST(_testErrorString);
 };

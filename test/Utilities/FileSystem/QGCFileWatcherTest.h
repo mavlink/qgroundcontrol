@@ -30,6 +30,5 @@ private slots:
     void _testWatchFilePersistent();
 
     // Error handling
-    void _testWatchRefused_data();
-    void _testWatchRefused();
+    UT_PARAMETERIZED_TEST(_testWatchRefused);
 };

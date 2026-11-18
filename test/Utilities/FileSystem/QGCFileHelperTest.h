@@ -15,15 +15,13 @@ private slots:
     void _testExistsQtResource();
 
     // ensureDirectoryExists() and ensureParentExists() tests
-    void _testEnsureDirectory_data();
-    void _testEnsureDirectory();
+    UT_PARAMETERIZED_TEST(_testEnsureDirectory);
 
     // optimalBufferSize() tests
     void _testOptimalBufferSize();
 
     // atomicWrite() tests
-    void _testAtomicWrite_data();
-    void _testAtomicWrite();
+    UT_PARAMETERIZED_TEST(_testAtomicWrite);
     void _testAtomicWriteEmptyPath();
 
     // Disk space utilities tests
@@ -35,8 +33,7 @@ private slots:
 
     // URL/Path utilities tests
     void _testToLocalPathFromUrl();
-    void _testLocalPaths_data();
-    void _testLocalPaths();
+    UT_PARAMETERIZED_TEST(_testLocalPaths);
     void _testIsQtResource();
 
     // Checksum utilities tests

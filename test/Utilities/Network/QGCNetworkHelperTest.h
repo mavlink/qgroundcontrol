@@ -9,15 +9,12 @@ class QGCNetworkHelperTest : public UnitTest
 
 private slots:
     // HTTP status code helpers tests
-    void _testHttpStatusClass_data();
-    void _testHttpStatusClass();
-    void _testHttpStatusText_data();
-    void _testHttpStatusText();
+    UT_PARAMETERIZED_TEST(_testHttpStatusClass);
+    UT_PARAMETERIZED_TEST(_testHttpStatusText);
     void _testHttpStatusTextUnknown();
 
     // HTTP methods tests
-    void _testHttpMethodNames_data();
-    void _testHttpMethodNames();
+    UT_PARAMETERIZED_TEST(_testHttpMethodNames);
     void _testParseHttpMethodCaseInsensitive();
     void _testParseHttpMethodUnknown();
 

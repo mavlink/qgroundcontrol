@@ -74,6 +74,11 @@ private:
 };
 
 #define QGC_REGISTER_PORTABLE_TEST(className, ...) QTEST_GUILESS_MAIN(className)
+
+/// Stand-in for UT_PARAMETERIZED_TEST of UnitTest.h: a data-driven test slot and its _data() companion
+#define UT_PARAMETERIZED_TEST(testName) \
+    void testName();                    \
+    void testName##_data()
 #else
 #include "UnitTest.h"
 

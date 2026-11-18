@@ -8,10 +8,8 @@ class JsonHelperTest : public PortableTest
 
 private slots:
     void _saveAndValidateExternalHeader_test();
-    void _validateInternalQGCJsonFile_test_data();
-    void _validateInternalQGCJsonFile_test();
-    void _validateKeys_test_data();
-    void _validateKeys_test();
+    UT_PARAMETERIZED_TEST(_validateInternalQGCJsonFile_test);
+    UT_PARAMETERIZED_TEST(_validateKeys_test);
     void _loadSaveGeoCoordinate_test();
     void _loadSaveGeoCoordinateWithAltitude_test();
     void _loadGeoCoordinateInvalidArray_test();

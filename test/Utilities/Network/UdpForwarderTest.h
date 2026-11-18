@@ -12,6 +12,5 @@ private slots:
     void testConfigureInvalid();
     void testForward();
     void testStop();
-    void testReconfigure_data();
-    void testReconfigure();
+    UT_PARAMETERIZED_TEST(testReconfigure);
 };

@@ -28,29 +28,21 @@ private slots:
     void _testWatchedDirectoriesAndClear();
 
     // Archive detection tests
-    void _testScanDirectory_data();
-    void _testScanDirectory();
-    void _testArchiveDetectedSignal_data();
-    void _testArchiveDetectedSignal();
-    void _testFileBeforeWatchIsAdded_data();
-    void _testFileBeforeWatchIsAdded();
-    void _testWatchAfterDirectoryWasRemoved_data();
-    void _testWatchAfterDirectoryWasRemoved();
+    UT_PARAMETERIZED_TEST(_testScanDirectory);
+    UT_PARAMETERIZED_TEST(_testArchiveDetectedSignal);
+    UT_PARAMETERIZED_TEST(_testFileBeforeWatchIsAdded);
+    UT_PARAMETERIZED_TEST(_testWatchAfterDirectoryWasRemoved);
     void _testWatchAfterWatchFailed();
     void _testFileCreatedEmptyIsReportedWithContent();
-    void _testFileWithoutContentIsForgottenWhenUnwatched_data();
-    void _testFileWithoutContentIsForgottenWhenUnwatched();
-    void _testFileWithoutContentIsForgottenWithItsDirectory_data();
-    void _testFileWithoutContentIsForgottenWithItsDirectory();
+    UT_PARAMETERIZED_TEST(_testFileWithoutContentIsForgottenWhenUnwatched);
+    UT_PARAMETERIZED_TEST(_testFileWithoutContentIsForgottenWithItsDirectory);
 
     // Auto-decompress tests
-    void _testAutoDecompress_data();
-    void _testAutoDecompress();
+    UT_PARAMETERIZED_TEST(_testAutoDecompress);
     void _testCancelExtractionResetsState();
 
     // Error handling
-    void _testWatchRefused_data();
-    void _testWatchRefused();
+    UT_PARAMETERIZED_TEST(_testWatchRefused);
 
 private:
     /// Copies a test resource to a file that can be written and removed

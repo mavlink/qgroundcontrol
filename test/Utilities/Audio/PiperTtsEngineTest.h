@@ -16,14 +16,12 @@ private slots:
     void _testNoExecutable();
     void _testExecutableIsNotPiper();
     void _testAvailabilityRunsNoCandidate();
-    void _testSkipsUnusableCandidate_data();
-    void _testSkipsUnusableCandidate();
+    UT_PARAMETERIZED_TEST(_testSkipsUnusableCandidate);
     void _testStartsPiperWithCurrentVoice();
     void _testPiperExitIsAnError();
     void _testChangingLocaleRestartsPiper();
     void _testSaysEachTextAsOneLine();
-    void _testEmptyTextKeepsEarlierUtterance_data();
-    void _testEmptyTextKeepsEarlierUtterance();
+    UT_PARAMETERIZED_TEST(_testEmptyTextKeepsEarlierUtterance);
     void _testStopDiscardsCanceledUtterances();
 
 private:

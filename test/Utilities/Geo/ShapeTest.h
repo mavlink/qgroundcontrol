@@ -11,12 +11,9 @@ private slots:
     void _testLoadPolylinesFromSHP();
     void _testLoadPolygonsFromKML();
     void _testLoadPolylinesFromKML();
-    void _testLoadShapes_data();
-    void _testLoadShapes();
-    void _testLoadFailures_data();
-    void _testLoadFailures();
+    UT_PARAMETERIZED_TEST(_testLoadShapes);
+    UT_PARAMETERIZED_TEST(_testLoadFailures);
     void _testLoadFromQtResource();
-    void _testSkippedVertices_data();
-    void _testSkippedVertices();
+    UT_PARAMETERIZED_TEST(_testSkippedVertices);
     void _testKMLExportSchemaValidation();
 };

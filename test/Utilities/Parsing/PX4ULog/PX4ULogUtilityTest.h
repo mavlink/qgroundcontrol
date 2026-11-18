@@ -19,8 +19,7 @@ private slots:
     void _testGetVersionInvalid();
 
     // Timestamp tests
-    void _testGetHeaderTimestamp_data();
-    void _testGetHeaderTimestamp();
+    UT_PARAMETERIZED_TEST(_testGetHeaderTimestamp);
 
     // Message iteration tests
     void _testIterateMessagesMultiple();
@@ -28,6 +27,5 @@ private slots:
     void _testIterateMessagesAcrossChunks();
     void _testIterateMessagesUnknownMessage();
     void _testIterateMessagesFatalError();
-    void _testIterateMessagesTruncated_data();
-    void _testIterateMessagesTruncated();
+    UT_PARAMETERIZED_TEST(_testIterateMessagesTruncated);
 };

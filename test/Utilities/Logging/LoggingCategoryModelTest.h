@@ -32,8 +32,7 @@ private slots:
     void _testTreeModelEmptyState();
     void _testTreeModelInsertSingleLevel();
     void _testTreeModelInsertNestedCreatesIntermediate();
-    void _testTreeModelCategoryWithChildren_data();
-    void _testTreeModelCategoryWithChildren();
+    UT_PARAMETERIZED_TEST(_testTreeModelCategoryWithChildren);
     void _testTreeModelDataRoles();
     void _testTreeModelRoleNames();
 };

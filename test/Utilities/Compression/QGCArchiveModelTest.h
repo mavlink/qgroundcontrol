@@ -24,10 +24,8 @@ private slots:
     void _testArchivePathProperty();
     void _testCountProperties();
     void _testLoadingProperty();
-    void _testAbandonedLoad_data();
-    void _testAbandonedLoad();
-    void _testErrorClearedWithArchive_data();
-    void _testErrorClearedWithArchive();
+    UT_PARAMETERIZED_TEST(_testAbandonedLoad);
+    UT_PARAMETERIZED_TEST(_testErrorClearedWithArchive);
 
     // Filtering
     void _testFilterModeFilesOnly();
@@ -40,8 +38,7 @@ private slots:
     void _testRefresh();
 
     // Edge cases
-    void _testInvalidArchive_data();
-    void _testInvalidArchive();
+    UT_PARAMETERIZED_TEST(_testInvalidArchive);
     void _testNonExistentArchive();
     void _testEmptyArchive();
     void _testDirectoryEntries();
