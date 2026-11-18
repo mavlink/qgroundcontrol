@@ -79,6 +79,7 @@ struct LoggingCategoryTreeNode
     LoggingCategoryTreeNode* parent = nullptr;
     QList<LoggingCategoryTreeNode*> children;
     bool expanded = false;
+    bool isCategory = false;  ///< false: a group, whose item is a wildcard placeholder owned by the model
 
     ~LoggingCategoryTreeNode() { qDeleteAll(children); }
 };
@@ -111,11 +112,14 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     bool hasChildren(const QModelIndex& parent = QModelIndex()) const override;
 
+    /// Adds the category at @a pathSegments. Each segment has one row, whatever order categories arrive in:
+    /// a category that is also the prefix of other categories shares its row with their group.
     void insertCategory(const QStringList& pathSegments, QGCLoggingCategoryItem* item);
     void forEachItem(const std::function<void(QGCLoggingCategoryItem*)>& fn);
 
 private:
     LoggingCategoryTreeNode* nodeFromIndex(const QModelIndex& index) const;
+    LoggingCategoryTreeNode* findChildNode(const LoggingCategoryTreeNode* parent, const QString& segment) const;
     LoggingCategoryTreeNode* findOrCreateIntermediateNode(LoggingCategoryTreeNode* parent, const QString& segment,
                                                           const QString& fullPrefix);
     int insertionIndex(LoggingCategoryTreeNode* parent, const QString& name) const;
