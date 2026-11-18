@@ -1,7 +1,8 @@
 name: Install Dependencies
 description: >-
-  Install platform build dependencies: apt packages on Linux, Homebrew packages and GStreamer on
-  macOS, and MSVC with NSIS on Windows. CMake, Ninja, ccache, and mold come from build-setup.
+  Install platform build dependencies: apt packages on Linux, Homebrew packages on macOS, and MSVC
+  with NSIS on Windows. CMake, Ninja, ccache, and mold come from build-setup, and the GStreamer SDK
+  of macOS and Windows from CMake, which downloads it at configure time.
 
 inputs:
   msvc-arm64:
@@ -74,7 +75,7 @@ runs:
         path: ~/.cache/qgc-apt-archives
         key: ${{ steps.apt-plan.outputs.key }}
 
-    - name: Install dependencies (macOS)
+    - name: Install Homebrew packages (macOS)
       if: runner.os == 'macOS'
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py" macos

@@ -132,7 +132,14 @@ How CI runs, retries, and reports the application tests is described in
 ## Platform Notes
 
 - **macOS**: the Debug leg builds for arm64 only and runs the Unit and Integration suites; only the
-  universal (x86_64h + arm64) Release leg packages and uploads the DMG. The job's `MACOS_SIGN`
+  universal (x86_64h + arm64) Release leg packages and uploads the DMG. Both build, test and package
+  with the official GStreamer SDK that configure downloads into the CPM cache, as Windows does:
+  `install-dependencies` installs no `GStreamer.framework` (as `install_dependencies --skip-gstreamer`
+  does), which configure would prefer to the download, and the step after configure fails a leg whose
+  `CMakeCache.txt` does not record a downloaded SDK (`QGC_GST_RESOLVED_AUTO`). The DMG therefore
+  bundles that flat SDK's allowlisted plugins, GIO modules and helpers with only the libraries they
+  and QGC load ([details](../../src/VideoManager/GStreamer/README.md#macos--windows--ios)), not a
+  whole framework. The job's `MACOS_SIGN`
   gates signing and notarization (CMake option, certificate import, and secrets) to non-PR Release
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.

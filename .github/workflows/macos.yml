@@ -106,6 +106,11 @@ jobs:
             -DQGC_MACOS_UNIVERSAL_BUILD=${{ matrix.build_type == 'Release' && 'ON' || 'OFF' }}
             -DQGC_UNITY_BUILD=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
 
+      # Configure prefers a GStreamer.framework in /Library/Frameworks to the SDK it downloads. No
+      # hosted image brings one; a runner that did must not build, test and package with it unnoticed.
+      - name: Require the downloaded GStreamer SDK
+        run: grep -x 'QGC_GST_RESOLVED_AUTO:INTERNAL=TRUE' "${RUNNER_TEMP}/build/CMakeCache.txt"
+
       - name: Build
         id: build
         uses: ./.github/actions/cmake-build

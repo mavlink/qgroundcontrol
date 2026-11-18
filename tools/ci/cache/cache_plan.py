@@ -378,8 +378,14 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
         f"{CPM_KEY_PREFIX}-{host}-{target}-{scope}-",
         f"{CPM_KEY_PREFIX}-{host}-{target}-shared-",
     )
-    # Desktop Linux and macOS builds use the system GStreamer.
-    if target.lower().startswith("win") or _same(target, "android") or _same(target, "ios"):
+    # Desktop Linux builds use the system GStreamer. macOS, Windows, Android and iOS builds download
+    # an SDK, and a macOS host builds for nothing else.
+    if (
+        _same(host, "mac")
+        or target.lower().startswith("win")
+        or _same(target, "android")
+        or _same(target, "ios")
+    ):
         outputs["gst_mode"] = dependency_mode
         outputs["gst_key"] = (
             f"gst-sdk-v1-{host}-{target}-{compute_gstreamer_fingerprint(root)}"

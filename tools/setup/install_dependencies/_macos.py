@@ -28,8 +28,13 @@ def _install_homebrew() -> bool:
     return True
 
 
-def install_macos(dry_run: bool = False, packages: list[str] | None = None) -> bool:
-    """Install macOS dependencies: Homebrew packages (default: the full list) and GStreamer."""
+def install_macos(
+    dry_run: bool = False, packages: list[str] | None = None, skip_gstreamer: bool = False
+) -> bool:
+    """Install the Homebrew packages (default: the full list) and the GStreamer framework.
+
+    With skip_gstreamer no framework is installed, and CMake downloads the SDK at configure time.
+    """
     _c.log_info("Installing macOS dependencies...")
 
     if not _c.has_command("brew"):
@@ -48,7 +53,9 @@ def install_macos(dry_run: bool = False, packages: list[str] | None = None) -> b
 
     gst_version = _c.get_build_config_value("gstreamer.version.macos")
     macos_gst_root = Path("/Library/Frameworks/GStreamer.framework")
-    if not gst_version:
+    if skip_gstreamer:
+        print("\nSkipping GStreamer installation")
+    elif not gst_version:
         print()
         _c.log_warn("GSTREAMER_MACOS_VERSION not found in build-config.json")
         _c.log_warn("Skipping GStreamer installation")

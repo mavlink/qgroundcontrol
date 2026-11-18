@@ -256,6 +256,30 @@ def test_install_macos_installs_the_requested_homebrew_packages() -> None:
     brew.assert_called_once_with(["nasm"])
 
 
+def test_install_macos_without_gstreamer_installs_only_homebrew_packages() -> None:
+    with (
+        patch.object(_macos._c, "has_command", return_value=True),
+        patch.object(_macos._c, "is_ci", return_value=True),
+        patch.object(_macos._c, "get_brew_install_command", return_value=["brew", "install"]),
+        patch.object(_macos.Path, "exists", return_value=False),
+        patch.object(_macos._c, "download_file") as download,
+        patch.object(_macos._c, "run_command", return_value=True) as run_command,
+    ):
+        assert _macos.install_macos(skip_gstreamer=True) is True
+
+    download.assert_not_called()
+    assert [entry.args[0] for entry in run_command.call_args_list] == [["brew", "install"]]
+
+
+@pytest.mark.parametrize("skip", [False, True])
+def test_macos_installs_gstreamer_unless_asked_to_skip_it(skip: bool) -> None:
+    argv = ["--platform", "macos", *(["--skip-gstreamer"] if skip else [])]
+    with patch.object(_cli, "install_macos", return_value=True) as install:
+        assert _cli.main(argv) == 0
+
+    install.assert_called_once_with(False, skip_gstreamer=skip)
+
+
 @pytest.mark.parametrize(
     ("table", "platform"), [(FEDORA_PACKAGES, "fedora"), (ARCH_PACKAGES, "arch")]
 )
