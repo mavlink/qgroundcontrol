@@ -9,15 +9,13 @@ class QGCFileWatcherTest : public UnitTest
 
 private slots:
     // File watching tests
-    void _testWatchFile();
+    void _testWatchAndUnwatchFile();
     void _testWatchFileWithCallback();
-    void _testUnwatchFile();
     void _testWatchedFiles();
 
     // Directory watching tests
-    void _testWatchDirectory();
+    void _testWatchAndUnwatchDirectory();
     void _testWatchDirectoryWithCallback();
-    void _testUnwatchDirectory();
     void _testWatchedDirectories();
 
     // Bulk operations
@@ -32,7 +30,6 @@ private slots:
     void _testWatchFilePersistent();
 
     // Error handling
-    void _testWatchNonExistentFile();
-    void _testWatchNonExistentDirectory();
-    void _testWatchEmptyPath();
+    void _testWatchRefused_data();
+    void _testWatchRefused();
 };

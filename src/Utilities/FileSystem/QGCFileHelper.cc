@@ -33,14 +33,7 @@ QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxByt
         return {};
     }
 
-    QByteArray data;
-    if (maxBytes > 0) {
-        data = file.read(maxBytes);
-    } else {
-        data = file.readAll();
-    }
-    file.close();
-    return data;
+    return (maxBytes > 0) ? file.read(maxBytes) : file.readAll();
 }
 
 size_t optimalBufferSize(const QString &path)
@@ -124,7 +117,6 @@ bool copyDirectoryRecursively(const QString &sourcePath, const QString &destPath
         return false;
     }
 
-    // Copy files
     const QStringList files = sourceDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
     for (const QString &fileName : files) {
         const QString srcFilePath = joinPath(sourcePath, fileName);
@@ -135,7 +127,6 @@ bool copyDirectoryRecursively(const QString &sourcePath, const QString &destPath
         }
     }
 
-    // Recursively copy subdirectories
     const QStringList dirs = sourceDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QString &dirName : dirs) {
         const QString srcSubDir = joinPath(sourcePath, dirName);
@@ -192,7 +183,6 @@ bool atomicWrite(const QString &filePath, const QByteArray &data)
         return false;
     }
 
-    // Ensure parent directory exists
     if (!ensureParentExists(filePath)) {
         qCWarning(QGCFileHelperLog) << "failed to create parent directory for:" << filePath;
         return false;
@@ -225,7 +215,6 @@ qint64 availableDiskSpace(const QString &path)
         return -1;
     }
 
-    // Get storage info for the path
     QStorageInfo storage(path);
     if (!storage.isValid()) {
         // Try parent directory if path doesn't exist yet
@@ -297,13 +286,11 @@ QString toLocalPath(const QString &urlOrPath)
         return urlOrPath;
     }
 
-    // Check if it's a URL (handles qrc:// -> :/ conversion)
     QUrl url(urlOrPath);
     if (url.isValid() && !url.scheme().isEmpty()) {
         return toLocalPath(url);
     }
 
-    // Plain path - return as-is
     return urlOrPath;
 }
 
@@ -311,21 +298,15 @@ QString toLocalPath(const QUrl &url)
 {
     if (!url.isValid()) {
         // QUrl(":/resource") is invalid but still carries the usable path.
-        const QString path = url.path();
-        if (!path.isEmpty()) {
-            return path;
-        }
-        return {};
+        return url.path();
     }
 
     const QString scheme = url.scheme().toLower();
 
-    // file:// URL
     if (scheme == QLatin1String("file")) {
         return url.toLocalFile();
     }
 
-    // qrc:// URL -> :/ resource path
     if (scheme == QLatin1String("qrc")) {
         QString path = url.path();
         if (!path.startsWith(QLatin1Char('/'))) {
@@ -359,7 +340,6 @@ bool isLocalPath(const QString &urlOrPath)
         return true;
     }
 
-    // Check if it looks like a URL
     QUrl url(urlOrPath);
     if (url.isValid() && !url.scheme().isEmpty()) {
         const QString scheme = url.scheme().toLower();
@@ -367,7 +347,6 @@ bool isLocalPath(const QString &urlOrPath)
                scheme == QLatin1String("qrc");
     }
 
-    // Plain filesystem path
     return true;
 }
 
@@ -520,7 +499,6 @@ std::unique_ptr<QTemporaryFile> createTempFile(const QByteArray &data, const QSt
         return nullptr;
     }
 
-    // Seek to beginning for reading
     temp->seek(0);
 
     qCDebug(QGCFileHelperLog) << "created" << temp->fileName() << "with" << data.size() << "bytes";
@@ -565,13 +543,11 @@ bool replaceFileFromTemp(QTemporaryFile *tempFile, const QString &targetPath, co
         return false;
     }
 
-    // Ensure parent directory exists
     if (!ensureParentExists(targetPath)) {
         qCWarning(QGCFileHelperLog) << "failed to create parent directory";
         return false;
     }
 
-    // Flush and close temp file
     tempFile->flush();
 
     // Create backup of existing file if requested
@@ -584,7 +560,6 @@ bool replaceFileFromTemp(QTemporaryFile *tempFile, const QString &targetPath, co
         qCDebug(QGCFileHelperLog) << "backed up to" << backupPath;
     }
 
-    // Remove existing target
     QFile::remove(targetPath);
 
     // Keep temp file around (don't auto-remove) and rename it

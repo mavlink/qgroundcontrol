@@ -18,6 +18,7 @@
 #include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "QGCFileWriter.h"
 
 #ifdef Q_OS_LINUX
@@ -29,38 +30,35 @@ static bool fileWriterTestThreadSleeps(long kernelThreadId)
 }
 #endif
 
-QByteArray QGCFileWriterTest::_fileContents(const QString& path)
+void QGCFileWriterTest::init()
 {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return {};
-    }
-    return file.readAll();
+    UnitTest::init();
+    _tempDir.emplace();
+    QVERIFY(_tempDir->isValid());
+    _path = _tempDir->filePath(QStringLiteral("out.log"));
+}
+
+void QGCFileWriterTest::cleanup()
+{
+    _tempDir.reset();
+    UnitTest::cleanup();
 }
 
 void QGCFileWriterTest::_testFlushWritesQueuedData()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-
     QGCFileWriter writer;
-    writer.setFilePath(path);
+    writer.setFilePath(_path);
     writer.write("first");
     writer.writeDeferred([]() { return QByteArray("second"); });
 
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(path), QByteArray("firstsecond"));
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("firstsecond"));
 }
 
 void QGCFileWriterTest::_testFlushAfterManyWrites()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-
     QGCFileWriter writer;
-    writer.setFilePath(path);
+    writer.setFilePath(_path);
 
     // Let the worker finish several batches before the flush under test.
     QByteArray expected;
@@ -77,16 +75,13 @@ void QGCFileWriterTest::_testFlushAfterManyWrites()
     writer.write(large);
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
     QCOMPARE(writer.pendingBytes(), qint64(0));
-    QVERIFY(_fileContents(path) == expected);
+    QVERIFY(TestFixtures::readFile(_path) == expected);
 }
 
 void QGCFileWriterTest::_testConsecutiveFlushes()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
     QGCFileWriter writer;
-    writer.setFilePath(tempDir.filePath(QStringLiteral("out.log")));
+    writer.setFilePath(_path);
     writer.write("data");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
 
@@ -119,9 +114,7 @@ void QGCFileWriterTest::_testRecoversAfterError()
         QSKIP("Needs /dev/full to provoke a write error");
     }
 
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString failingPath = writeError ? fullDevice : tempDir.filePath(QStringLiteral("missing/out.log"));
+    const QString failingPath = writeError ? fullDevice : _tempDir->filePath(QStringLiteral("missing/out.log"));
 
     QGCFileWriter writer;
     QSignalSpy errorSpy(&writer, &QGCFileWriter::errorOccurred);
@@ -144,7 +137,7 @@ void QGCFileWriterTest::_testRecoversAfterError()
 
     QString goodPath = failingPath;
     if (changePath) {
-        goodPath = tempDir.filePath(QStringLiteral("out.log"));
+        goodPath = _path;
         writer.setFilePath(goodPath);
     } else {
         QVERIFY(QDir().mkpath(QFileInfo(failingPath).absolutePath()));
@@ -157,7 +150,7 @@ void QGCFileWriterTest::_testRecoversAfterError()
     writer.write("recovered");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
     QVERIFY(!writer.hasError());
-    QCOMPARE(_fileContents(goodPath), QByteArray("recovered"));
+    QCOMPARE(TestFixtures::readFile(goodPath), QByteArray("recovered"));
     QCOMPARE(errorSpy.count(), 1);
 }
 
@@ -183,10 +176,6 @@ void QGCFileWriterTest::_testCloseReportsWriteError()
         QSKIP("Needs /dev/full to provoke a write error");
     }
 
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString goodPath = tempDir.filePath(QStringLiteral("out.log"));
-
     QGCFileWriter writer;
     QSignalSpy errorSpy(&writer, &QGCFileWriter::errorOccurred);
     writer.setFilePath(fullDevice);
@@ -208,11 +197,11 @@ void QGCFileWriterTest::_testCloseReportsWriteError()
     QCOMPARE(writer.pendingBytes(), qint64(0));
     QVERIFY_SIGNAL_COUNT_WAIT(errorSpy, 1, TestTimeout::mediumMs());
 
-    writer.setFilePath(goodPath);
+    writer.setFilePath(_path);
     QVERIFY(!writer.hasError());
     writer.write("recovered");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(goodPath), QByteArray("recovered"));
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("recovered"));
     QCOMPARE(errorSpy.count(), 1);
 }
 
@@ -224,10 +213,6 @@ void QGCFileWriterTest::_testWriteWhileClosingAfterError()
     if (!QFile::exists(fullDevice)) {
         QSKIP("Needs /dev/full to provoke a write error");
     }
-
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString goodPath = tempDir.filePath(QStringLiteral("out.log"));
 
     QSemaphore workerExiting;
     QSemaphore releaseWorker;
@@ -289,10 +274,10 @@ void QGCFileWriterTest::_testWriteWhileClosingAfterError()
     QVERIFY(!writer.hasError());
     QCOMPARE(writer.pendingBytes(), qint64(5));
 
-    writer.setFilePath(goodPath);
+    writer.setFilePath(_path);
     writer.write("next;");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(goodPath), QByteArray("kept;next;"));
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("kept;next;"));
     QVERIFY_SIGNAL_COUNT_WAIT(errorSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(errorSpy.count(), 1);
 #else
@@ -302,14 +287,10 @@ void QGCFileWriterTest::_testWriteWhileClosingAfterError()
 
 void QGCFileWriterTest::_testDestructorWritesQueuedData()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-
     QByteArray expected;
     {
         QGCFileWriter writer;
-        writer.setFilePath(path);
+        writer.setFilePath(_path);
         for (int i = 0; i < 100; ++i) {
             const QByteArray chunk = QByteArray::number(i) + ';';
             writer.write(chunk);
@@ -317,18 +298,15 @@ void QGCFileWriterTest::_testDestructorWritesQueuedData()
         }
     }
 
-    QCOMPARE(_fileContents(path), expected);
+    QCOMPARE(TestFixtures::readFile(_path), expected);
 }
 
 void QGCFileWriterTest::_testCloseWritesQueuedDataAndNextWriteReopens()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-    const QString rotatedPath = tempDir.filePath(QStringLiteral("out.1.log"));
+    const QString rotatedPath = _tempDir->filePath(QStringLiteral("out.1.log"));
 
     QGCFileWriter writer;
-    writer.setFilePath(path);
+    writer.setFilePath(_path);
     QByteArray expected;
     for (int i = 0; i < 100; ++i) {
         const QByteArray chunk = QByteArray::number(i) + ';';
@@ -337,36 +315,34 @@ void QGCFileWriterTest::_testCloseWritesQueuedDataAndNextWriteReopens()
     }
     writer.close();
 
-    QCOMPARE(_fileContents(path), expected);
+    QCOMPARE(TestFixtures::readFile(_path), expected);
     QVERIFY(!writer.isRunning());
     QVERIFY(!writer.isOpen());
     QCOMPARE(writer.pendingBytes(), qint64(0));
 
     // LogManager rotates its log this way: close, rename the file, write on to the same path.
-    QVERIFY(QFile::rename(path, rotatedPath));
+    QVERIFY(QFile::rename(_path, rotatedPath));
     writer.write("next;");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(path), QByteArray("next;"));
-    QCOMPARE(_fileContents(rotatedPath), expected);
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("next;"));
+    QCOMPARE(TestFixtures::readFile(rotatedPath), expected);
 }
 
 void QGCFileWriterTest::_testChangingPathSwitchesFile()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString firstPath = tempDir.filePath(QStringLiteral("first.log"));
-    const QString secondPath = tempDir.filePath(QStringLiteral("second.log"));
+    const QString firstPath = _tempDir->filePath(QStringLiteral("first.log"));
+    const QString secondPath = _tempDir->filePath(QStringLiteral("second.log"));
 
     QGCFileWriter writer;
     writer.setFilePath(firstPath);
     writer.write("one;");
     // What is queued for the first file is written to it before the path changes.
     writer.setFilePath(secondPath);
-    QCOMPARE(_fileContents(firstPath), QByteArray("one;"));
+    QCOMPARE(TestFixtures::readFile(firstPath), QByteArray("one;"));
 
     writer.write("two;");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(secondPath), QByteArray("two;"));
+    QCOMPARE(TestFixtures::readFile(secondPath), QByteArray("two;"));
 
     // An empty path turns writing off.
     writer.setFilePath(QString());
@@ -375,27 +351,20 @@ void QGCFileWriterTest::_testChangingPathSwitchesFile()
     QVERIFY(writer.flush(TestTimeout::shortMs()));
     QVERIFY(!writer.isRunning());
     QVERIFY(!writer.hasError());
-    QCOMPARE(_fileContents(firstPath), QByteArray("one;"));
-    QCOMPARE(_fileContents(secondPath), QByteArray("two;"));
+    QCOMPARE(TestFixtures::readFile(firstPath), QByteArray("one;"));
+    QCOMPARE(TestFixtures::readFile(secondPath), QByteArray("two;"));
 }
 
 void QGCFileWriterTest::_testAppendsAndReportsFileSize()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-    {
-        QFile existing(path);
-        QVERIFY(existing.open(QIODevice::WriteOnly));
-        QCOMPARE(existing.write("old;"), qint64(4));
-    }
+    QVERIFY(TestFixtures::writeFile(_path, "old;"));
 
     QGCFileWriter writer;
     QSignalSpy sizeSpy(&writer, &QGCFileWriter::fileSizeChanged);
-    writer.setFilePath(path);
+    writer.setFilePath(_path);
     writer.write("new;");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(path), QByteArray("old;new;"));
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("old;new;"));
 
     // LogManager rotates on this size, so it has to count what the file already held.
     QCOMPARE(writer.fileSize(), qint64(8));
@@ -405,16 +374,12 @@ void QGCFileWriterTest::_testAppendsAndReportsFileSize()
 
 void QGCFileWriterTest::_testWritesKeepQueueOrder()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-
     QSemaphore workerHeld;
     QSemaphore releaseWorker;
     QGCFileWriter writer;
     // Runs before the writer is destroyed, which waits for its worker.
     const auto releaseOnExit = qScopeGuard([&releaseWorker]() { releaseWorker.release(); });
-    writer.setFilePath(path);
+    writer.setFilePath(_path);
 
     // Holds the worker in its first batch, so that everything else is queued behind it.
     writer.writeDeferred([&workerHeld, &releaseWorker]() {
@@ -441,22 +406,18 @@ void QGCFileWriterTest::_testWritesKeepQueueOrder()
     releaseWorker.release();
 
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(path), expected);
+    QCOMPARE(TestFixtures::readFile(_path), expected);
     QCOMPARE(formatted.load(), 25);
 }
 
 void QGCFileWriterTest::_testWritesOverPendingLimitAreDropped()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString path = tempDir.filePath(QStringLiteral("out.log"));
-
     QSemaphore workerHeld;
     QSemaphore releaseWorker;
     QGCFileWriter writer;
     // Runs before the writer is destroyed, which waits for its worker.
     const auto releaseOnExit = qScopeGuard([&releaseWorker]() { releaseWorker.release(); });
-    writer.setFilePath(path);
+    writer.setFilePath(_path);
     writer.setMaxPendingBytes(10);
 
     // Holds the worker, so that the writes below stay pending.
@@ -477,12 +438,12 @@ void QGCFileWriterTest::_testWritesOverPendingLimitAreDropped()
     releaseWorker.release();
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
     QCOMPARE(writer.pendingBytes(), qint64(0));
-    QCOMPARE(_fileContents(path), QByteArray("12345678abcdefgh"));
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("12345678abcdefgh"));
 
     // With the backlog written, writes are accepted again.
     writer.write("more");
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
-    QCOMPARE(_fileContents(path), QByteArray("12345678abcdefghmore"));
+    QCOMPARE(TestFixtures::readFile(_path), QByteArray("12345678abcdefghmore"));
 }
 
 void QGCFileWriterTest::_testWriteWithoutPathIsDropped_data()

@@ -32,22 +32,12 @@ void QGCArchiveWatcherTest::cleanup()
 // ============================================================================
 // Helper Methods
 // ============================================================================
-void QGCArchiveWatcherTest::_createTestArchive(const QString& path)
+void QGCArchiveWatcherTest::_copyResource(const QString& resource, const QString& path)
 {
-    // Copy test ZIP from resources
-    QFile resourceFile(":/unittest/manifest.json.zip");
+    QFile resourceFile(resource);
     QVERIFY(resourceFile.exists());
     QVERIFY(resourceFile.copy(path));
     // Make writable (copy from resource is read-only)
-    QFile::setPermissions(path, QFile::ReadOwner | QFile::WriteOwner);
-}
-
-void QGCArchiveWatcherTest::_createTestCompressedFile(const QString& path)
-{
-    // Copy test gzipped file from resources
-    QFile resourceFile(":/unittest/manifest.json.gz");
-    QVERIFY(resourceFile.exists());
-    QVERIFY(resourceFile.copy(path));
     QFile::setPermissions(path, QFile::ReadOwner | QFile::WriteOwner);
 }
 
@@ -145,40 +135,20 @@ void QGCArchiveWatcherTest::_testSetOutputDirectory()
 // ============================================================================
 // Directory watching tests
 // ============================================================================
-void QGCArchiveWatcherTest::_testWatchDirectory()
+void QGCArchiveWatcherTest::_testWatchAndUnwatchDirectory()
 {
     QGCArchiveWatcher watcher;
     QVERIFY(watcher.watchDirectory(_tempDir.path()));
     QCOMPARE(watcher.watchedDirectories().size(), 1);
     QVERIFY(watcher.watchedDirectories().contains(QFileInfo(_tempDir.path()).absoluteFilePath()));
-}
-
-void QGCArchiveWatcherTest::_testUnwatchDirectory()
-{
-    QGCArchiveWatcher watcher;
-    QVERIFY(watcher.watchDirectory(_tempDir.path()));
-    QCOMPARE(watcher.watchedDirectories().size(), 1);
     QVERIFY(watcher.unwatchDirectory(_tempDir.path()));
     QVERIFY(watcher.watchedDirectories().isEmpty());
 }
 
-void QGCArchiveWatcherTest::_testWatchedDirectories()
+void QGCArchiveWatcherTest::_testWatchedDirectoriesAndClear()
 {
-    // Create subdirectories
     const QString dir1 = _tempDir.filePath("watch1");
     const QString dir2 = _tempDir.filePath("watch2");
-    QVERIFY(QDir().mkdir(dir1));
-    QVERIFY(QDir().mkdir(dir2));
-    QGCArchiveWatcher watcher;
-    QVERIFY(watcher.watchDirectory(dir1));
-    QVERIFY(watcher.watchDirectory(dir2));
-    QCOMPARE(watcher.watchedDirectories().size(), 2);
-}
-
-void QGCArchiveWatcherTest::_testClear()
-{
-    const QString dir1 = _tempDir.filePath("cleardir1");
-    const QString dir2 = _tempDir.filePath("cleardir2");
     QVERIFY(QDir().mkdir(dir1));
     QVERIFY(QDir().mkdir(dir2));
     QGCArchiveWatcher watcher;
@@ -192,20 +162,35 @@ void QGCArchiveWatcherTest::_testClear()
 // ============================================================================
 // Archive detection tests
 // ============================================================================
+void QGCArchiveWatcherTest::_testScanDirectory_data()
+{
+    QTest::addColumn<int>("filterMode");
+    QTest::addColumn<QStringList>("found");
+
+    const QString archive = QStringLiteral("archive.zip");
+    const QString compressed = QStringLiteral("compressed.gz");
+    QTest::newRow("archives") << int(QGCArchiveWatcher::FilterMode::Archives) << QStringList{archive};
+    QTest::newRow("compressed files") << int(QGCArchiveWatcher::FilterMode::Compressed) << QStringList{compressed};
+    QTest::newRow("both") << int(QGCArchiveWatcher::FilterMode::Both) << QStringList{archive, compressed};
+}
+
 void QGCArchiveWatcherTest::_testScanDirectory()
 {
-    // Create test archives in temp directory
-    _createTestArchive(_tempDir.filePath("test1.zip"));
-    _createTestCompressedFile(_tempDir.filePath("test2.gz"));
-    // Create a non-archive file
-    QFile nonArchive(_tempDir.filePath("readme.txt"));
-    QVERIFY(nonArchive.open(QIODevice::WriteOnly));
-    nonArchive.write("not an archive");
-    nonArchive.close();
+    QFETCH(int, filterMode);
+    QFETCH(QStringList, found);
+
+    _copyResource(_zipResource, _tempDir.filePath("archive.zip"));
+    _copyResource(_gzipResource, _tempDir.filePath("compressed.gz"));
+    QVERIFY(TestFixtures::writeFile(_tempDir.filePath("readme.txt"), "not an archive"));
+
     QGCArchiveWatcher watcher;
-    watcher.setFilterMode(QGCArchiveWatcher::FilterMode::Both);
-    const QStringList archives = watcher.scanDirectory(_tempDir.path());
-    QCOMPARE(archives.size(), 2);
+    watcher.setFilterMode(static_cast<QGCArchiveWatcher::FilterMode>(filterMode));
+    QStringList names;
+    for (const QString& path : watcher.scanDirectory(_tempDir.path())) {
+        names.append(QFileInfo(path).fileName());
+    }
+    names.sort();
+    QCOMPARE(names, found);
 }
 
 void QGCArchiveWatcherTest::_testArchiveDetectedSignal_data()
@@ -231,7 +216,7 @@ void QGCArchiveWatcherTest::_testArchiveDetectedSignal()
     QVERIFY(watcher->watchDirectory(_tempDir.path()));
     // Copy archive to watched directory (simulates file appearing)
     const QString archivePath = _tempDir.filePath("detected.zip");
-    _createTestArchive(archivePath);
+    _copyResource(_zipResource, archivePath);
     QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, _detectionTimeoutMs());
     QCOMPARE(spy.count(), 1);
     QCOMPARE(spy.at(0).at(0).toString(), archivePath);
@@ -239,7 +224,7 @@ void QGCArchiveWatcherTest::_testArchiveDetectedSignal()
 
     // A file that appears after the directory was last looked at is reported the next time, and only that file
     const QString laterPath = _tempDir.filePath("later.json.gz");
-    _createTestCompressedFile(laterPath);
+    _copyResource(_gzipResource, laterPath);
     QVERIFY_SIGNAL_COUNT_WAIT(spy, 2, _detectionTimeoutMs());
     QCOMPARE(spy.count(), 2);
     QCOMPARE(spy.at(1).at(0).toString(), laterPath);
@@ -275,7 +260,7 @@ void QGCArchiveWatcherTest::_testFileBeforeWatchIsAdded()
     const QString landedPath = watchedPath + "/landed.zip";
     QVERIFY(QFile::link(targetPath, landedPath));
     QVERIFY(watcher.watchDirectory(watchedPath));
-    _createTestArchive(targetPath);
+    _copyResource(_zipResource, targetPath);
 
     // Watching the directory looks at it again once the watch is in place, and reports the file after the
     // debounce delay if it is still there then
@@ -290,7 +275,7 @@ void QGCArchiveWatcherTest::_testFileBeforeWatchIsAdded()
 
     // The archive that follows is reported after it, or alone
     const QString laterPath = watchedPath + "/later.zip";
-    _createTestArchive(laterPath);
+    _copyResource(_zipResource, laterPath);
     expected.append(laterPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(laterPath), _detectionTimeoutMs());
     QCOMPARE(_reportedArchives(spy), expected);
@@ -319,7 +304,7 @@ void QGCArchiveWatcherTest::_testWatchAfterDirectoryWasRemoved()
     QSignalSpy spy(&watcher, &QGCArchiveWatcher::archiveDetected);
     const QString watchedPath = _tempDir.filePath("incoming");
     QVERIFY(QDir().mkdir(watchedPath));
-    _createTestArchive(watchedPath + "/old.zip");
+    _copyResource(_zipResource, watchedPath + "/old.zip");
     QVERIFY(watcher.watchDirectory(watchedPath));
 
     // The watch ends with the directory
@@ -328,17 +313,17 @@ void QGCArchiveWatcherTest::_testWatchAfterDirectoryWasRemoved()
 
     // Another directory under the same path, with a file under a name the first one had and one under a new name
     QVERIFY(QDir().mkdir(watchedPath));
-    _createTestArchive(watchedPath + "/old.zip");
-    _createTestArchive(watchedPath + "/other.zip");
+    _copyResource(_zipResource, watchedPath + "/old.zip");
+    _copyResource(_zipResource, watchedPath + "/other.zip");
     QVERIFY(watcher.watchDirectory(watchedPath));
 
     // Both were there before the directory was watched, and neither is reported, as for any directory that
     // is not being watched. The two files that follow are, the second after anything the watch started with.
     const QString laterPath = watchedPath + "/later.zip";
-    _createTestArchive(laterPath);
+    _copyResource(_zipResource, laterPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(laterPath), _detectionTimeoutMs());
     const QString lastPath = watchedPath + "/last.zip";
-    _createTestArchive(lastPath);
+    _copyResource(_zipResource, lastPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(lastPath), _detectionTimeoutMs());
     QCOMPARE(_reportedArchives(spy), (QStringList{laterPath, lastPath}));
 #endif
@@ -354,7 +339,7 @@ void QGCArchiveWatcherTest::_testWatchAfterWatchFailed()
     QSignalSpy spy(&watcher, &QGCArchiveWatcher::archiveDetected);
     const QString watchedPath = _tempDir.filePath("incoming");
     QVERIFY(QDir().mkdir(watchedPath));
-    _createTestArchive(watchedPath + "/present.zip");
+    _copyResource(_zipResource, watchedPath + "/present.zip");
 
     // A directory that may not be read cannot be listed, and inotify refuses to watch it. QFileSystemWatcher
     // tells of the refusal in a message without a category, which can be neither expected nor ignored, so
@@ -375,10 +360,10 @@ void QGCArchiveWatcherTest::_testWatchAfterWatchFailed()
     // The watch that is added now starts from the file that is there, which the one that failed did not see
     QVERIFY(watcher.watchDirectory(watchedPath));
     const QString laterPath = watchedPath + "/later.zip";
-    _createTestArchive(laterPath);
+    _copyResource(_zipResource, laterPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(laterPath), _detectionTimeoutMs());
     const QString lastPath = watchedPath + "/last.zip";
-    _createTestArchive(lastPath);
+    _copyResource(_zipResource, lastPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(lastPath), _detectionTimeoutMs());
     QCOMPARE(_reportedArchives(spy), (QStringList{laterPath, lastPath}));
 #endif
@@ -397,7 +382,7 @@ void QGCArchiveWatcherTest::_testFileCreatedEmptyIsReportedWithContent()
 
     // The archive is created after it, so the watcher has looked at the empty file when it reports the archive
     const QString archivePath = _tempDir.filePath("marker.zip");
-    _createTestArchive(archivePath);
+    _copyResource(_zipResource, archivePath);
     QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, _detectionTimeoutMs());
     QCOMPARE(_reportedArchives(spy), QStringList{archivePath});
 
@@ -436,7 +421,7 @@ void QGCArchiveWatcherTest::_testFileWithoutContentIsForgottenWhenUnwatched()
     const QString downloadPath = directoryPath + "/download";
     QVERIFY(TestFixtures::writeFile(downloadPath, QByteArray()));
     const QString markerPath = directoryPath + "/marker.zip";
-    _createTestArchive(markerPath);
+    _copyResource(_zipResource, markerPath);
     QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, _detectionTimeoutMs());
 
     // The watch of the file ends with that of its directory, so the file is not reported when it is written
@@ -446,7 +431,7 @@ void QGCArchiveWatcherTest::_testFileWithoutContentIsForgottenWhenUnwatched()
     // The watcher hears of a changed file before it hears of a directory that changed after it: a report of
     // the file would come before that of the archive in the other directory
     const QString laterPath = otherPath + "/later.zip";
-    _createTestArchive(laterPath);
+    _copyResource(_zipResource, laterPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(laterPath), _detectionTimeoutMs());
     QCOMPARE(_reportedArchives(spy), (QStringList{markerPath, laterPath}));
 }
@@ -480,7 +465,7 @@ void QGCArchiveWatcherTest::_testFileWithoutContentIsForgottenWithItsDirectory()
     const QString downloadPath = directoryPath + "/download";
     QVERIFY(TestFixtures::writeFile(downloadPath, QByteArray()));
     const QString markerPath = directoryPath + "/marker.zip";
-    _createTestArchive(markerPath);
+    _copyResource(_zipResource, markerPath);
     QVERIFY_SIGNAL_COUNT_WAIT(spy, 1, _detectionTimeoutMs());
 
     // The watches end with the directory. Another one under the same path has a compressed file of that name.
@@ -493,112 +478,54 @@ void QGCArchiveWatcherTest::_testFileWithoutContentIsForgottenWithItsDirectory()
     // That file was there before the directory was watched. The end of the first one's watch, which the
     // watcher hears of before it reports the archive that follows, does not make it a file that was written.
     const QString laterPath = directoryPath + "/later.zip";
-    _createTestArchive(laterPath);
+    _copyResource(_zipResource, laterPath);
     QVERIFY_TRUE_WAIT(_reportedArchives(spy).contains(laterPath), _detectionTimeoutMs());
     QCOMPARE(_reportedArchives(spy), (QStringList{markerPath, laterPath}));
 #endif
 }
 
-void QGCArchiveWatcherTest::_testFilterModeArchivesOnly()
-{
-    QGCArchiveWatcher watcher;
-    watcher.setFilterMode(QGCArchiveWatcher::FilterMode::Archives);
-    // Create both archive and compressed file
-    _createTestArchive(_tempDir.filePath("archive.zip"));
-    _createTestCompressedFile(_tempDir.filePath("compressed.gz"));
-    const QStringList detected = watcher.scanDirectory(_tempDir.path());
-    // Should only detect ZIP, not .gz
-    QCOMPARE(detected.size(), 1);
-    QVERIFY(detected.at(0).endsWith(".zip"));
-}
-
-void QGCArchiveWatcherTest::_testFilterModeCompressedOnly()
-{
-    QGCArchiveWatcher watcher;
-    watcher.setFilterMode(QGCArchiveWatcher::FilterMode::Compressed);
-    // Create both archive and compressed file
-    _createTestArchive(_tempDir.filePath("archive.zip"));
-    _createTestCompressedFile(_tempDir.filePath("compressed.gz"));
-    const QStringList detected = watcher.scanDirectory(_tempDir.path());
-    // Should only detect .gz, not ZIP
-    QCOMPARE(detected.size(), 1);
-    QVERIFY(detected.at(0).endsWith(".gz"));
-}
-
-void QGCArchiveWatcherTest::_testFilterModeBoth()
-{
-    QGCArchiveWatcher watcher;
-    watcher.setFilterMode(QGCArchiveWatcher::FilterMode::Both);
-    // Create both archive and compressed file
-    _createTestArchive(_tempDir.filePath("archive.zip"));
-    _createTestCompressedFile(_tempDir.filePath("compressed.gz"));
-    const QStringList detected = watcher.scanDirectory(_tempDir.path());
-    // Should detect both
-    QCOMPARE(detected.size(), 2);
-}
-
 // ============================================================================
 // Auto-decompress tests
 // ============================================================================
-void QGCArchiveWatcherTest::_testAutoDecompressArchive()
+void QGCArchiveWatcherTest::_testAutoDecompress_data()
 {
-    QGCArchiveWatcher watcher;
-    watcher.setDebounceDelay(50);
-    watcher.setAutoDecompress(true);
-    watcher.setOutputDirectory(_outputDirPath);
-    QSignalSpy extractionSpy(&watcher, &QGCArchiveWatcher::extractionComplete);
-    QSignalSpy progressSpy(&watcher, &QGCArchiveWatcher::progressChanged);
-    QVERIFY(watcher.watchDirectory(_tempDir.path()));
-    // Copy archive to watched directory
-    const QString archivePath = _tempDir.filePath("auto_extract.zip");
-    _createTestArchive(archivePath);
-    // Wait for extraction to complete
-    QVERIFY_SIGNAL_WAIT(extractionSpy, TestTimeout::mediumMs());
-    QCOMPARE(extractionSpy.count(), 1);
-    QCOMPARE(extractionSpy.at(0).at(0).toString(), archivePath);
-    QVERIFY(extractionSpy.at(0).at(2).toBool());  // success
-    // Verify file was extracted
-    QVERIFY(QFileInfo::exists(QDir(_outputDirPath).filePath("manifest.json")));
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<QString>("fileName");
+    QTest::addColumn<QString>("outputName");
+    QTest::addColumn<bool>("removeAfterExtraction");
+
+    QTest::newRow("archive") << _zipResource << QStringLiteral("auto_extract.zip") << QStringLiteral("manifest.json")
+                             << false;
+    QTest::newRow("compressed file") << _gzipResource << QStringLiteral("auto_decompress.json.gz")
+                                     << QStringLiteral("auto_decompress.json") << false;
+    QTest::newRow("archive, removed after extraction")
+        << _zipResource << QStringLiteral("remove_after_extract.zip") << QStringLiteral("manifest.json") << true;
 }
 
-void QGCArchiveWatcherTest::_testAutoDecompressCompressedFile()
+void QGCArchiveWatcherTest::_testAutoDecompress()
 {
+    QFETCH(QString, resource);
+    QFETCH(QString, fileName);
+    QFETCH(QString, outputName);
+    QFETCH(bool, removeAfterExtraction);
+
     QGCArchiveWatcher watcher;
     watcher.setDebounceDelay(50);
     watcher.setAutoDecompress(true);
+    watcher.setRemoveAfterExtraction(removeAfterExtraction);
     watcher.setOutputDirectory(_outputDirPath);
     QSignalSpy extractionSpy(&watcher, &QGCArchiveWatcher::extractionComplete);
     QVERIFY(watcher.watchDirectory(_tempDir.path()));
-    // Copy compressed file to watched directory
-    const QString compressedPath = _tempDir.filePath("auto_decompress.json.gz");
-    _createTestCompressedFile(compressedPath);
-    // Wait for decompression to complete
+
+    // The file appears in the watched directory
+    const QString sourcePath = _tempDir.filePath(fileName);
+    _copyResource(resource, sourcePath);
     QVERIFY_SIGNAL_WAIT(extractionSpy, TestTimeout::mediumMs());
     QCOMPARE(extractionSpy.count(), 1);
-    QCOMPARE(extractionSpy.at(0).at(0).toString(), compressedPath);
+    QCOMPARE(extractionSpy.at(0).at(0).toString(), sourcePath);
     QVERIFY(extractionSpy.at(0).at(2).toBool());  // success
-    // Verify file was decompressed
-    QVERIFY(QFileInfo::exists(QDir(_outputDirPath).filePath("auto_decompress.json")));
-}
-
-void QGCArchiveWatcherTest::_testRemoveAfterExtraction()
-{
-    QGCArchiveWatcher watcher;
-    watcher.setDebounceDelay(50);
-    watcher.setAutoDecompress(true);
-    watcher.setRemoveAfterExtraction(true);
-    watcher.setOutputDirectory(_outputDirPath);
-
-    QSignalSpy extractionSpy(&watcher, &QGCArchiveWatcher::extractionComplete);
-    QVERIFY(watcher.watchDirectory(_tempDir.path()));
-
-    const QString archivePath = _tempDir.filePath("remove_after_extract.zip");
-    _createTestArchive(archivePath);
-
-    QVERIFY_SIGNAL_WAIT(extractionSpy, TestTimeout::mediumMs());
-    QCOMPARE(extractionSpy.count(), 1);
-    QVERIFY(extractionSpy.at(0).at(2).toBool());
-    QVERIFY(!QFile::exists(archivePath));
+    QVERIFY(QFileInfo::exists(QDir(_outputDirPath).filePath(outputName)));
+    QCOMPARE(QFile::exists(sourcePath), !removeAfterExtraction);
 }
 
 void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
@@ -612,7 +539,7 @@ void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
     QVERIFY(watcher.watchDirectory(_tempDir.path()));
 
     const QString archivePath = _tempDir.filePath("cancel_extract.zip");
-    _createTestArchive(archivePath);
+    _copyResource(_zipResource, archivePath);
 
     QVERIFY_TRUE_WAIT(watcher.isExtracting() || extractionSpy.count() > 0, _detectionTimeoutMs());
     watcher.cancelExtraction();
@@ -628,20 +555,24 @@ void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
 // ============================================================================
 // Error handling
 // ============================================================================
-void QGCArchiveWatcherTest::_testWatchNonExistentDirectory()
+void QGCArchiveWatcherTest::_testWatchRefused_data()
 {
-    QGCArchiveWatcher watcher;
-    expectLogMessage("Utilities.QGCArchiveWatcher", QtWarningMsg, QRegularExpression("watchDirectory: not a directory:"));
-    QVERIFY(!watcher.watchDirectory("/nonexistent/path/to/directory"));
-    verifyExpectedLogMessage();
-    QVERIFY(watcher.watchedDirectories().isEmpty());
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<QString>("warning");
+
+    QTest::newRow("missing directory") << QStringLiteral("/nonexistent/path/to/directory")
+                                       << QStringLiteral("watchDirectory: not a directory:");
+    QTest::newRow("empty path") << QString() << QStringLiteral("watchDirectory: empty path");
 }
 
-void QGCArchiveWatcherTest::_testWatchEmptyPath()
+void QGCArchiveWatcherTest::_testWatchRefused()
 {
+    QFETCH(QString, path);
+    QFETCH(QString, warning);
+
     QGCArchiveWatcher watcher;
-    expectLogMessage("Utilities.QGCArchiveWatcher", QtWarningMsg, QRegularExpression("watchDirectory: empty path"));
-    QVERIFY(!watcher.watchDirectory(QString()));
+    expectLogMessage("Utilities.QGCArchiveWatcher", QtWarningMsg, QRegularExpression(warning));
+    QVERIFY(!watcher.watchDirectory(path));
     verifyExpectedLogMessage();
     QVERIFY(watcher.watchedDirectories().isEmpty());
 }

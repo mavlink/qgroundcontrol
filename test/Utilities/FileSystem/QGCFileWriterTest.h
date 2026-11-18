@@ -1,5 +1,9 @@
 #pragma once
 
+#include <optional>
+
+#include <QtCore/QTemporaryDir>
+
 #include "UnitTest.h"
 
 /// Tests for QGCFileWriter (background file appender)
@@ -8,6 +12,9 @@ class QGCFileWriterTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void init() override;
+    void cleanup() override;
+
     void _testFlushWritesQueuedData();
     void _testFlushAfterManyWrites();
     void _testConsecutiveFlushes();
@@ -26,5 +33,6 @@ private slots:
     void _testWriteWithoutPathIsDropped();
 
 private:
-    static QByteArray _fileContents(const QString& path);
+    std::optional<QTemporaryDir> _tempDir;  ///< Exists from init() to cleanup()
+    QString _path;                          ///< A file in _tempDir that does not exist when a test starts
 };

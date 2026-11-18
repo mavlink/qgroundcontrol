@@ -25,12 +25,11 @@ private slots:
     void _testSetOutputDirectory();
 
     // Directory watching tests
-    void _testWatchDirectory();
-    void _testUnwatchDirectory();
-    void _testWatchedDirectories();
-    void _testClear();
+    void _testWatchAndUnwatchDirectory();
+    void _testWatchedDirectoriesAndClear();
 
     // Archive detection tests
+    void _testScanDirectory_data();
     void _testScanDirectory();
     void _testArchiveDetectedSignal_data();
     void _testArchiveDetectedSignal();
@@ -44,23 +43,22 @@ private slots:
     void _testFileWithoutContentIsForgottenWhenUnwatched();
     void _testFileWithoutContentIsForgottenWithItsDirectory_data();
     void _testFileWithoutContentIsForgottenWithItsDirectory();
-    void _testFilterModeArchivesOnly();
-    void _testFilterModeCompressedOnly();
-    void _testFilterModeBoth();
 
     // Auto-decompress tests
-    void _testAutoDecompressArchive();
-    void _testAutoDecompressCompressedFile();
-    void _testRemoveAfterExtraction();
+    void _testAutoDecompress_data();
+    void _testAutoDecompress();
     void _testCancelExtractionResetsState();
 
     // Error handling
-    void _testWatchNonExistentDirectory();
-    void _testWatchEmptyPath();
+    void _testWatchRefused_data();
+    void _testWatchRefused();
 
 private:
-    void _createTestArchive(const QString& path);
-    void _createTestCompressedFile(const QString& path);
+    /// Copies a test resource to a file that can be written and removed
+    void _copyResource(const QString& resource, const QString& path);
+
+    static inline const QString _zipResource = QStringLiteral(":/unittest/manifest.json.zip");
+    static inline const QString _gzipResource = QStringLiteral(":/unittest/manifest.json.gz");
 
     /// A watcher whose QFileSystemWatcher polls, as it does on Linux once the user has no inotify instance left.
     /// Null where that cannot be arranged.

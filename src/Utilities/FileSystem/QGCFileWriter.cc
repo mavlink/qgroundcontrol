@@ -11,7 +11,7 @@ QGCFileWriter::QGCFileWriter(QObject *parent)
 
 QGCFileWriter::~QGCFileWriter()
 {
-    _stop();
+    close();
 }
 
 void QGCFileWriter::setFilePath(const QString &path)
@@ -26,17 +26,13 @@ void QGCFileWriter::setFilePath(const QString &path)
     }
 
     if (wasRunning) {
-        _stop();
+        close();
     }
 
-    {
-        const QMutexLocker locker(&_mutex);
-        _filePath = path;
-        _clearErrorLocked();
-    }
-
+    const QMutexLocker locker(&_mutex);
+    _filePath = path;
+    _clearErrorLocked();
     if (wasRunning && !path.isEmpty()) {
-        const QMutexLocker locker(&_mutex);
         _startLocked();
     }
 }
@@ -69,20 +65,7 @@ void QGCFileWriter::write(const QByteArray &data)
         return;
     }
 
-    {
-        const QMutexLocker locker(&_mutex);
-        if (_filePath.isEmpty()) {
-            return;
-        }
-        _clearErrorLocked();
-        if (!_thread) {
-            _startLocked();
-        }
-        _queue.append(WorkItem{data, {}});
-        ++_queuedCount;
-        _pendingBytes.fetch_add(data.size(), std::memory_order_relaxed);
-    }
-    _condition.wakeOne();
+    _enqueue(WorkItem{data, {}});
 }
 
 void QGCFileWriter::writeDeferred(FormatFunc formatter)
@@ -91,17 +74,23 @@ void QGCFileWriter::writeDeferred(FormatFunc formatter)
         return;
     }
 
+    _enqueue(WorkItem{{}, std::move(formatter)});
+}
+
+void QGCFileWriter::_enqueue(WorkItem item)
+{
     {
-        QMutexLocker locker(&_mutex);
+        const QMutexLocker locker(&_mutex);
         if (_filePath.isEmpty()) {
             return;
         }
         _clearErrorLocked();
-        if (!_thread) {
-            _startLocked();
-        }
-        _queue.append(WorkItem{{}, std::move(formatter)});
+        _startLocked();
+        // 0 for a deferred item, whose data the worker does not count either
+        const qsizetype pendingBytes = item.data.size();
+        _queue.append(std::move(item));
         ++_queuedCount;
+        _pendingBytes.fetch_add(pendingBytes, std::memory_order_relaxed);
     }
     _condition.wakeOne();
 }
@@ -120,11 +109,6 @@ bool QGCFileWriter::flush(int timeoutMs)
     return !_hasError.load(std::memory_order_relaxed);
 }
 
-void QGCFileWriter::close()
-{
-    _stop();
-}
-
 void QGCFileWriter::clearError()
 {
     const QMutexLocker locker(&_mutex);
@@ -138,7 +122,7 @@ void QGCFileWriter::_clearErrorLocked()
     }
 
     // The failed worker is exiting and no longer locks the mutex (see _setError()), so it can be joined here.
-    // That lets the next write start a new one. A worker which _stop() is waiting for is left to _stop().
+    // That lets the next write start a new one. A worker which close() is waiting for is left to close().
     if (_thread && !_stopping) {
         _thread->wait();
         _thread->deleteLater();
@@ -160,7 +144,7 @@ void QGCFileWriter::_startLocked()
     _thread->start();
 }
 
-void QGCFileWriter::_stop()
+void QGCFileWriter::close()
 {
     // One caller at a time: the worker is joined without _mutex, which it needs to write what is queued
     const QMutexLocker stopLocker(&_stopMutex);

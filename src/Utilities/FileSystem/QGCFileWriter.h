@@ -52,7 +52,6 @@ signals:
 private:
     void _workerLoop();
     void _startLocked();
-    void _stop();
     void _setError(const QString& message);
     void _clearErrorLocked();
 
@@ -61,8 +60,10 @@ private:
         FormatFunc formatter;
     };
 
+    void _enqueue(WorkItem item);
+
     mutable QMutex _mutex;
-    QMutex _stopMutex;  ///< Held by _stop() from start to end. Locked before _mutex.
+    QMutex _stopMutex;  ///< Held by close() from start to end. Locked before _mutex.
     QWaitCondition _condition;
     QWaitCondition _flushedCondition;
     QList<WorkItem> _queue;
@@ -74,7 +75,7 @@ private:
     QString _lastError;
 
     QThread *_thread = nullptr;
-    // Guarded by _mutex. While set, _thread belongs to _stop(): nothing else joins, deletes or replaces it.
+    // Guarded by _mutex. While set, _thread belongs to close(): nothing else joins, deletes or replaces it.
     bool _stopping = false;
     std::atomic<bool> _isOpen{false};
     std::atomic<bool> _hasError{false};

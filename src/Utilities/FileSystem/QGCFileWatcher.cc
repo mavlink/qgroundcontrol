@@ -1,8 +1,10 @@
 #include "QGCFileWatcher.h"
-#include "QGCLoggingCategory.h"
 
-#include <QtCore/QDir>
+#include <algorithm>
+
 #include <QtCore/QFileInfo>
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCFileWatcherLog, "Utilities.QGCFileWatcher")
 
@@ -45,36 +47,7 @@ void QGCFileWatcher::setDebounceDelay(int milliseconds)
 
 bool QGCFileWatcher::watchFile(const QString &filePath, ChangeCallback callback)
 {
-    if (filePath.isEmpty()) {
-        qCWarning(QGCFileWatcherLog) << "empty path";
-        return false;
-    }
-
-    const QString canonicalPath = QFileInfo(filePath).absoluteFilePath();
-
-    if (!QFileInfo::exists(canonicalPath)) {
-        qCWarning(QGCFileWatcherLog) << "file does not exist:" << filePath;
-        return false;
-    }
-
-    if (_watcher->addPath(canonicalPath)) {
-        if (callback) {
-            _fileCallbacks[canonicalPath] = callback;
-        }
-        qCDebug(QGCFileWatcherLog) << "Watching file:" << canonicalPath;
-        return true;
-    }
-
-    // Already watching
-    if (_watcher->files().contains(canonicalPath)) {
-        if (callback) {
-            _fileCallbacks[canonicalPath] = callback;
-        }
-        return true;
-    }
-
-    qCWarning(QGCFileWatcherLog) << "failed to add:" << filePath;
-    return false;
+    return _watch(filePath, std::move(callback), false);
 }
 
 bool QGCFileWatcher::unwatchFile(const QString &filePath)
@@ -110,36 +83,7 @@ QStringList QGCFileWatcher::watchedFiles() const
 
 bool QGCFileWatcher::watchDirectory(const QString &directoryPath, ChangeCallback callback)
 {
-    if (directoryPath.isEmpty()) {
-        qCWarning(QGCFileWatcherLog) << "empty path";
-        return false;
-    }
-
-    const QString canonicalPath = QFileInfo(directoryPath).absoluteFilePath();
-
-    if (!QFileInfo(canonicalPath).isDir()) {
-        qCWarning(QGCFileWatcherLog) << "not a directory:" << directoryPath;
-        return false;
-    }
-
-    if (_watcher->addPath(canonicalPath)) {
-        if (callback) {
-            _directoryCallbacks[canonicalPath] = callback;
-        }
-        qCDebug(QGCFileWatcherLog) << "Watching directory:" << canonicalPath;
-        return true;
-    }
-
-    // Already watching
-    if (_watcher->directories().contains(canonicalPath)) {
-        if (callback) {
-            _directoryCallbacks[canonicalPath] = callback;
-        }
-        return true;
-    }
-
-    qCWarning(QGCFileWatcherLog) << "failed to add:" << directoryPath;
-    return false;
+    return _watch(directoryPath, std::move(callback), true);
 }
 
 bool QGCFileWatcher::unwatchDirectory(const QString &directoryPath)
@@ -174,24 +118,14 @@ QStringList QGCFileWatcher::watchedDirectories() const
 
 int QGCFileWatcher::watchFiles(const QStringList &filePaths, ChangeCallback callback)
 {
-    int count = 0;
-    for (const QString &path : filePaths) {
-        if (watchFile(path, callback)) {
-            count++;
-        }
-    }
-    return count;
+    return static_cast<int>(
+        std::ranges::count_if(filePaths, [&](const QString& path) { return watchFile(path, callback); }));
 }
 
 int QGCFileWatcher::watchDirectories(const QStringList &directoryPaths, ChangeCallback callback)
 {
-    int count = 0;
-    for (const QString &path : directoryPaths) {
-        if (watchDirectory(path, callback)) {
-            count++;
-        }
-    }
-    return count;
+    return static_cast<int>(
+        std::ranges::count_if(directoryPaths, [&](const QString& path) { return watchDirectory(path, callback); }));
 }
 
 void QGCFileWatcher::clear()
@@ -273,13 +207,42 @@ void QGCFileWatcher::_onDirectoryChanged(const QString &path)
                 _watcher->addPath(persistentPath);
                 qCDebug(QGCFileWatcherLog) << "Re-added persistent file:" << persistentPath;
 
-                // Trigger callback for recreated file
                 _scheduleCallback(persistentPath, false);
             }
         }
     }
 
     _scheduleCallback(path, true);
+}
+
+bool QGCFileWatcher::_watch(const QString& path, ChangeCallback callback, bool isDirectory)
+{
+    if (path.isEmpty()) {
+        qCWarning(QGCFileWatcherLog) << "empty path";
+        return false;
+    }
+
+    const QString canonicalPath = QFileInfo(path).absoluteFilePath();
+
+    if (isDirectory ? !QFileInfo(canonicalPath).isDir() : !QFileInfo::exists(canonicalPath)) {
+        qCWarning(QGCFileWatcherLog) << (isDirectory ? "not a directory:" : "file does not exist:") << path;
+        return false;
+    }
+
+    const bool added = _watcher->addPath(canonicalPath);
+    // A path that is watched already is not added again
+    if (!added && !(isDirectory ? _watcher->directories() : _watcher->files()).contains(canonicalPath)) {
+        qCWarning(QGCFileWatcherLog) << "failed to add:" << path;
+        return false;
+    }
+
+    if (callback) {
+        (isDirectory ? _directoryCallbacks : _fileCallbacks)[canonicalPath] = std::move(callback);
+    }
+    if (added) {
+        qCDebug(QGCFileWatcherLog) << (isDirectory ? "Watching directory:" : "Watching file:") << canonicalPath;
+    }
+    return true;
 }
 
 void QGCFileWatcher::_scheduleCallback(const QString &path, bool isDirectory)
