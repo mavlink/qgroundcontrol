@@ -12,6 +12,7 @@
 #include <QtMultimedia/QVideoSink>
 
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 #include "QtVideoRecorder.h"
 #include "SharedVideoFrame.h"
 #include "VideoStreamStats.h"
@@ -222,9 +223,9 @@ void QtMultimediaVideoReceiver::_start()
         return;
     }
     if (!playerSource(config().uri)) {
-        qCWarning(QtMultimediaVideoReceiverLog) << name() << "can't play" << config().uri;
+        qCWarning(QtMultimediaVideoReceiverLog) << name() << "can't play" << _redactedUri();
         _supervisor->stop();
-        emit errorOccurred(tr("Unable to play the video stream %1.").arg(config().uri));
+        emit errorOccurred(tr("Unable to play the video stream %1.").arg(_redactedUri()));
         return;
     }
     _supervisor->sessionStarted();
@@ -273,7 +274,7 @@ void QtMultimediaVideoReceiver::_open()
         (void) sdp->open(QIODevice::ReadOnly);
         _player->setSourceDevice(sdp, source->url);
     }
-    qCDebug(QtMultimediaVideoReceiverLog) << name() << "playing" << config().uri;
+    qCDebug(QtMultimediaVideoReceiverLog) << name() << "playing" << _redactedUri();
     _sinceFrame.start();
     _sampleTimer.start();
     _player->play();
@@ -282,6 +283,9 @@ void QtMultimediaVideoReceiver::_open()
 void QtMultimediaVideoReceiver::_stopSession()
 {
     _sampleTimer.stop();
+    // Until _open() binds the sink again: the player keeps playing until the event loop unloads it, and a frame it
+    // emits meanwhile would arrive after the next session opened and count as that session's.
+    (void) disconnect(_frameConnection);
     if (_player) {
         QMediaPlayer* const player = std::exchange(_player, nullptr);
         (void) disconnect(player, nullptr, this, nullptr);
@@ -301,6 +305,11 @@ void QtMultimediaVideoReceiver::_stopSession()
     _gpuFrames = false;
     setDecoding(false);
     setStats(_statsSampler.stats());
+}
+
+QString QtMultimediaVideoReceiver::_redactedUri() const
+{
+    return QGCNetworkHelper::redactedUrlForLogging(config().uri);
 }
 
 bool QtMultimediaVideoReceiver::_awaitingSender() const

@@ -171,12 +171,15 @@ void QtMultimediaVideoReceiverTest::_testUnplayableUri()
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("0.0.0.0:5600")));
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("udp://0.0.0.0")));
 
-    ReceiverUnderTest stream(QStringLiteral("udp://0.0.0.0"));
-    expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("can't play")));
+    // The URI's credentials stay out of the log and the message.
+    ReceiverUnderTest stream(QStringLiteral("udp://user:secret@0.0.0.0"));
+    expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^(?!.*secret).*can't play")));
     stream.receiver->setActive(true);
     verifyExpectedLogMessage();
     QCOMPARE(stream.receiver->state(), State::Stopped);
     QCOMPARE(stream.errorSpy.count(), 1);
+    QVERIFY(!stream.errorSpy.first().first().toString().contains(QStringLiteral("secret")));
 }
 
 void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
