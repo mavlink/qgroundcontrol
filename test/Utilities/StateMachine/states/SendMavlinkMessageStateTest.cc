@@ -80,4 +80,34 @@ void SendMavlinkMessageStateTest::_testFailsOnceRetriesAreUsedUp()
                       TestTimeout::mediumMs());
 }
 
+void SendMavlinkMessageStateTest::_testSendsAgainInNextRun()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+
+    int encoderCallCount = 0;
+    const auto encoder = [&encoderCallCount](quint32 systemId, uint8_t channel, mavlink_message_t* message) {
+        encoderCallCount++;
+        (void) mavlink_msg_debug_pack_chan(systemId, MAVLinkProtocol::getComponentId(), channel, message, 0, 0, 0.0f);
+    };
+
+    // Without a retry the state sends once in each run of its machine
+    QGCStateMachine machine(QStringLiteral("TestMachine"), _vehicle);
+    auto* const sendState = new SendMavlinkMessageState(&machine, encoder, 0);
+    auto* const finalState = new QFinalState(&machine);
+    sendState->addTransition(sendState, &QGCState::advance, finalState);
+    sendState->addTransition(sendState, &QGCState::error, finalState);
+    machine.setInitialState(sendState);
+
+    QSignalSpy errorSpy(sendState, &QGCState::error);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    machine.start();
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    machine.start();
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 2, TestTimeout::mediumMs());
+
+    QCOMPARE(errorSpy.count(), 0);
+    QCOMPARE(encoderCallCount, 2);
+}
+
 UT_REGISTER_TEST(SendMavlinkMessageStateTest, TestLabel::Integration, TestLabel::Vehicle, TestLabel::Utilities)

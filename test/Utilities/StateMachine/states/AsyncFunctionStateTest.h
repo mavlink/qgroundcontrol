@@ -12,4 +12,5 @@ private slots:
     void _testErrorTransition();
     UT_PARAMETERIZED_TEST(_testSetupFunctionEndsState);
     UT_PARAMETERIZED_TEST(_testConnectToCompletion);
+    void _testEveryCompletionConnectionEndsWithWait();
 };

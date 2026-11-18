@@ -1,4 +1,7 @@
 #include "SendMavlinkMessageState.h"
+
+#include <QtStateMachine/QStateMachine>
+
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -9,12 +12,19 @@ SendMavlinkMessageState::SendMavlinkMessageState(QState *parent, MessageEncoder 
     , _retryCount(retryCount)
 {
     connect(this, &QState::entered, this, &SendMavlinkMessageState::_sendMessage);
-    // Note: _runCount is NOT reset on exit - it tracks retries across re-entries.
-    // The state machine is expected to be one-shot (delete after finished).
 }
 
 void SendMavlinkMessageState::_sendMessage()
 {
+    // _runCount is kept across the entries of one run of the machine, which are the retries, and starts again
+    // with the next run. The machine is not known before the state is entered.
+    if (const QStateMachine* const stateMachine = QAbstractState::machine()) {
+        connect(stateMachine, &QStateMachine::finished, this, &SendMavlinkMessageState::_resetRunCount,
+                Qt::UniqueConnection);
+        connect(stateMachine, &QStateMachine::stopped, this, &SendMavlinkMessageState::_resetRunCount,
+                Qt::UniqueConnection);
+    }
+
     if (++_runCount > _retryCount + 1  /* +1 for initial attempt */) {
         qCDebug(QGCStateMachineLog) << "Exceeded maximum retries" << stateName();
         emit error();

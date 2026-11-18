@@ -170,4 +170,31 @@ void AsyncFunctionStateTest::_testConnectToCompletion()
     QCOMPARE(receivedName, withSlot ? QStringLiteral("done") : QString());
 }
 
+void AsyncFunctionStateTest::_testEveryCompletionConnectionEndsWithWait()
+{
+    QStateMachine machine;
+    QObject firstSource;
+    QObject secondSource;
+    int slotCalls = 0;
+
+    auto* asyncState = new AsyncFunctionState(
+        QStringLiteral("TestAsync"), &machine, [&firstSource, &secondSource, &slotCalls](AsyncFunctionState* state) {
+            state->connectToCompletion(&firstSource, &QObject::objectNameChanged, [state, &slotCalls](const QString&) {
+                slotCalls++;
+                state->complete();
+            });
+            state->connectToCompletion(&secondSource, &QObject::objectNameChanged);
+        });
+    finishOn(machine, asyncState, &QGCState::advance);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, asyncState));
+    secondSource.setObjectName(QStringLiteral("done"));
+    QVERIFY(spyTriggered(finishedSpy));
+
+    // The wait has ended, so the slot of the connection that did not end it is not called any more
+    firstSource.setObjectName(QStringLiteral("late"));
+    QCOMPARE(slotCalls, 0);
+}
+
 UT_REGISTER_TEST(AsyncFunctionStateTest, TestLabel::Unit, TestLabel::Utilities)

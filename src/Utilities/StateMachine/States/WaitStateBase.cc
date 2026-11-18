@@ -22,7 +22,9 @@ void WaitStateBase::_onEntered()
     }
     connectWaitSignal();
     onWaitEntered();
-    _startTimeoutTimer();
+    if (!_completed) {
+        _startTimeoutTimer();
+    }
 }
 
 void WaitStateBase::_startTimeoutTimer()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QList>
 #include <QtCore/QMetaObject>
 
 #include "SignalSender.h"
@@ -8,8 +9,8 @@
 /// \brief Base class for states that wait until a signal they connected to is emitted, or until complete() or
 /// fail() is called
 ///
-/// The connection made with connectToCompletion() is the wait signal of the state: it is removed when the state
-/// completes, fails, times out or is exited.
+/// The connections made with connectToCompletion() are the wait signals of the state: all of them are removed when
+/// the state completes, fails, times out or is exited.
 ///
 class CompletionWaitState : public WaitStateBase
 {
@@ -29,7 +30,7 @@ public:
     template <typename Func>
     void connectToCompletion(SignalSender<Func>* sender, Func signal)
     {
-        _completionConnection = connect(sender, signal, this, [this]() { complete(); });
+        _completionConnections.append(connect(sender, signal, this, [this]() { complete(); }));
     }
 
     /// Connect to an external signal that will trigger completion, with a slot
@@ -37,7 +38,7 @@ public:
     template <typename Func, typename Slot>
     void connectToCompletion(SignalSender<Func>* sender, Func signal, Slot slot)
     {
-        _completionConnection = connect(sender, signal, this, slot);
+        _completionConnections.append(connect(sender, signal, this, slot));
     }
 
 protected:
@@ -48,8 +49,8 @@ protected:
 
     void disconnectWaitSignal() override;
 
-    bool hasCompletionConnection() const { return static_cast<bool>(_completionConnection); }
+    bool hasCompletionConnection() const { return !_completionConnections.isEmpty(); }
 
 private:
-    QMetaObject::Connection _completionConnection;
+    QList<QMetaObject::Connection> _completionConnections;
 };

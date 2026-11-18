@@ -9,6 +9,6 @@ class SendMavlinkCommandStateTest : public VehicleTestManualConnect
 
 private slots:
     UT_PARAMETERIZED_TEST(_testCommandResult);
-    void _testIgnoresResultOfOtherCommand();
+    UT_PARAMETERIZED_TEST(_testIgnoresResultThatIsNotItsOwn);
     void _testUnconfiguredStateFails();
 };

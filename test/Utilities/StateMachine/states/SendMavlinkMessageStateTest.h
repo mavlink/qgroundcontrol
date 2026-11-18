@@ -10,4 +10,5 @@ class SendMavlinkMessageStateTest : public VehicleTestManualConnect
 private slots:
     void _testSendsEncodedMessage();
     void _testFailsOnceRetriesAreUsedUp();
+    void _testSendsAgainInNextRun();
 };

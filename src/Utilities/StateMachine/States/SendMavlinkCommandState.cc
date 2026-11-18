@@ -56,23 +56,15 @@ void SendMavlinkCommandState::onWaitEntered()
 
     qCDebug(QGCStateMachineLog) << QStringLiteral("Sending %1 command").arg(MissionCommandTree::instance()->friendlyName(_command));
 
-    vehicle()->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
-                              _command,
-                              false /* showError */,
-                              static_cast<float>(_param1),
-                              static_cast<float>(_param2),
-                              static_cast<float>(_param3),
-                              static_cast<float>(_param4),
-                              static_cast<float>(_param5),
-                              static_cast<float>(_param6),
-                              static_cast<float>(_param7));
+    vehicle()->sendMavCommand(_targetComponent, _command, false /* showError */, static_cast<float>(_param1),
+                              static_cast<float>(_param2), static_cast<float>(_param3), static_cast<float>(_param4),
+                              static_cast<float>(_param5), static_cast<float>(_param6), static_cast<float>(_param7));
 }
 
 void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult,
                                                 int failureCode)
 {
     Q_UNUSED(vehicleId);
-    Q_UNUSED(targetComponent);
 
     Vehicle* senderVehicle = qobject_cast<Vehicle*>(sender());
     if (!senderVehicle) {
@@ -82,8 +74,8 @@ void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetCom
     if (senderVehicle != vehicle()) {
         return; // Not for us
     }
-    if (command != _command) {
-        return; // Not our command
+    if ((command != _command) || (targetComponent != _targetComponent)) {
+        return;  // Not our command, or the same command sent to another component
     }
 
     QString commandName = MissionCommandTree::instance()->friendlyName(_command);

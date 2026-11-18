@@ -63,8 +63,18 @@ void SendMavlinkCommandStateTest::_testCommandResult()
     QCOMPARE(errorSpy.count(), accepted ? 0 : 1);
 }
 
-void SendMavlinkCommandStateTest::_testIgnoresResultOfOtherCommand()
+void SendMavlinkCommandStateTest::_testIgnoresResultThatIsNotItsOwn_data()
 {
+    QTest::addColumn<bool>("sameCommand");
+
+    QTest::newRow("result of another command") << false;
+    QTest::newRow("result of the same command sent to another component") << true;
+}
+
+void SendMavlinkCommandStateTest::_testIgnoresResultThatIsNotItsOwn()
+{
+    QFETCH(bool, sameCommand);
+
     _connectMockLinkNoInitialConnectSequence();
     QVERIFY(_vehicle);
 
@@ -82,11 +92,17 @@ void SendMavlinkCommandStateTest::_testIgnoresResultOfOtherCommand()
     QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE) == 1,
                       TestTimeout::mediumMs());
 
-    QSignalSpy resultSpy(_vehicle, &Vehicle::mavCommandResult);
-    _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED,
-                             false /* showError */);
-    QVERIFY_SIGNAL_COUNT_WAIT(resultSpy, 1, TestTimeout::mediumMs());
-    QCOMPARE(resultSpy.first().at(2).toInt(), static_cast<int>(MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED));
+    if (sameCommand) {
+        // As the vehicle reports the result of a command that something else has sent to a camera
+        emit _vehicle->mavCommandResult(_vehicle->id(), MAV_COMP_ID_CAMERA, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE,
+                                        MAV_RESULT_ACCEPTED, Vehicle::MavCmdResultCommandResultOnly);
+    } else {
+        QSignalSpy resultSpy(_vehicle, &Vehicle::mavCommandResult);
+        _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED,
+                                 false /* showError */);
+        QVERIFY_SIGNAL_COUNT_WAIT(resultSpy, 1, TestTimeout::mediumMs());
+        QCOMPARE(resultSpy.first().at(2).toInt(), static_cast<int>(MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED));
+    }
 
     QCOMPARE(advanceSpy.count(), 0);
     QCOMPARE(errorSpy.count(), 0);

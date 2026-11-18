@@ -28,6 +28,8 @@ private slots:
     void _mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult, int failureCode);
 
 private:
+    static constexpr int _targetComponent = MAV_COMP_ID_AUTOPILOT1;
+
     MAV_CMD     _command = MAV_CMD(0);
     double      _param1 = 0.0;
     double      _param2 = 0.0;
