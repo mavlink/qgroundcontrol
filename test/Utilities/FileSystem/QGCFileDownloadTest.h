@@ -7,15 +7,14 @@ class QGCFileDownloadTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _testFileDownload_data();
     void _testFileDownload();
     void _testFileDownloadEmptyUrl();
     void _testFileDownloadConcurrentStartRejected();
     void _testFileDownloadHashVerificationFailure();
-    void _testFileDownloadHashVerificationSuccess();
-    void _testFileDownloadCustomOutputPath();
-    void _testFileDownloadNonExistentLocalFile();
     void _testFileDownloadOutputPathIsDirectory();
-    void _testFileDownloadCancelSingleCompletion();
+    void _testFileDownloadCancel_data();
+    void _testFileDownloadCancel();
     void _testFileDownloadSameFileNameStaysSeparate();
     void _testFileDownloadLocalSourceInTempDirSurvives();
     void _testFileDownloadFailureRemovesPartialFile_data();
@@ -32,16 +31,16 @@ private slots:
     void _testStartToMemoryFailsAsStart();
     void _testStartToMemoryLimit_data();
     void _testStartToMemoryLimit();
-    void _testStartToMemoryAutoDecompress_data();
-    void _testStartToMemoryAutoDecompress();
-    void _testStartToMemoryCancel();
-    void _testAutoDecompressGzip();
-    void _testAutoDecompressDisabled();
-    void _testAutoDecompressUncompressedFile();
+    void _testAutoDecompress_data();
+    void _testAutoDecompress();
     void _testAutoDecompressBodyNotCompressed_data();
     void _testAutoDecompressBodyNotCompressed();
 
     // Integration tests (download + compression)
     void _testDownloadAndExtractZip();
-    void _testDownloadDecompressAndParse();
+
+private:
+    /// Expects a warning for each "category|pattern"
+    void _expectWarnings(const QStringList& warnings);
+    void _verifyWarnings(const QStringList& warnings);
 };

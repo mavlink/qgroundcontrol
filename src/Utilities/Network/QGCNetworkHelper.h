@@ -18,7 +18,6 @@
 #include "QGCNetworkClient.h"
 
 class QIODevice;
-class QNetworkAccessManager;
 class QNetworkInformation;
 
 /// Network utility functions for HTTP requests, URL handling, and connectivity
@@ -192,30 +191,6 @@ void setJsonHeaders(QNetworkRequest& request);
 void setFormHeaders(QNetworkRequest& request);
 
 // ============================================================================
-// Authentication Helpers
-// ============================================================================
-
-/// Set HTTP Basic Authentication header
-/// @param request Request to modify
-/// @param credentials Base64-encoded "username:password" string
-void setBasicAuth(QNetworkRequest& request, const QString& credentials);
-
-/// Set HTTP Basic Authentication header from username and password
-/// @param request Request to modify
-/// @param username The username
-/// @param password The password
-void setBasicAuth(QNetworkRequest& request, const QString& username, const QString& password);
-
-/// Set Bearer token authentication header
-/// @param request Request to modify
-/// @param token The bearer token (without "Bearer " prefix)
-void setBearerToken(QNetworkRequest& request, const QString& token);
-
-/// Create Basic Auth credentials string from username and password
-/// @return Base64-encoded "username:password" string
-QString createBasicAuthCredentials(const QString& username, const QString& password);
-
-// ============================================================================
 // Multipart Form Data Helpers
 // ============================================================================
 
@@ -384,12 +359,5 @@ QString sslVersion();
 /// Initialize network proxy support (call once at application startup)
 /// Enables system proxy configuration for all network requests
 void initializeProxySupport();
-
-/// Create a network access manager with recommended settings
-/// Caller takes ownership of the returned pointer
-QNetworkAccessManager* createNetworkManager(QObject* parent);
-
-/// Set up default proxy configuration on a network manager
-void configureProxy(QNetworkAccessManager* manager);
 
 }  // namespace QGCNetworkHelper

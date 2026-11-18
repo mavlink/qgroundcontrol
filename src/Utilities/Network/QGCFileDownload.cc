@@ -100,7 +100,6 @@ QGCNetworkHelper::RequestConfig QGCFileDownload::_defaultRequestConfig() const
 {
     QGCNetworkHelper::RequestConfig config;
     config.timeoutMs = _timeoutMs;
-    config.allowRedirects = true;
     return config;
 }
 
@@ -118,7 +117,6 @@ bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::R
         return false;
     }
 
-    // Parse URL
     QUrl url;
     if (QGCFileHelper::isLocalPath(remoteUrl)) {
         url = QUrl::fromLocalFile(QGCFileHelper::toLocalPath(remoteUrl));
@@ -135,7 +133,6 @@ bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::R
         return false;
     }
 
-    // Reset state
     _cleanup();
     _url = url;
     emit urlChanged(_url);
@@ -150,7 +147,6 @@ bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::R
     _toMemory = toMemory;
     _maxMemoryBytes = maxMemoryBytes;
 
-    // Determine output path
     _localPath = _generateOutputPath(remoteUrl);
     if (_localPath.isEmpty()) {
         _setErrorString(tr("Unable to determine output path"));
@@ -158,30 +154,25 @@ bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::R
     }
     emit localPathChanged(_localPath);
 
-    // Ensure parent directory exists
     if (!QGCFileHelper::ensureParentExists(_localPath)) {
         _setErrorString(tr("Cannot create output directory"));
         return false;
     }
 
-    // Open output file for streaming write
     _outputFile = new QFile(_localPath, this);
     if (!_outputFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         _setErrorString(tr("Cannot open output file: %1").arg(_outputFile->errorString()));
-        delete _outputFile;
-        _outputFile = nullptr;
+        _closeOutput();
         _removeDownloadDir();
         return false;
     }
 
-    // Create request with configuration
     QNetworkRequest request = QGCNetworkHelper::createRequest(url, config);
 
     qCDebug(QGCFileDownloadLog) << "Starting download:"
                                 << url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment)
                                 << "to" << _localPath;
 
-    // Start download
     _currentReply = _networkManager->get(request);
     if (_currentReply == nullptr) {
         qCWarning(QGCFileDownloadLog) << "QNetworkAccessManager::get failed";
@@ -192,7 +183,6 @@ bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::R
 
     QGCNetworkHelper::ignoreSslErrorsIfNeeded(_currentReply);
 
-    // Connect signals for streaming download
     connect(_currentReply, &QNetworkReply::downloadProgress,
             this, &QGCFileDownload::_onDownloadProgress);
     connect(_currentReply, &QNetworkReply::readyRead,
@@ -208,10 +198,7 @@ bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::R
 
 void QGCFileDownload::cancel()
 {
-    const bool shouldEmitCancel = (_state != State::Idle && _state != State::Completed
-                                   && _state != State::Failed && _state != State::Cancelled);
-
-    if (shouldEmitCancel) {
+    if (isRunning()) {
         _setState(State::Cancelled);
         _setErrorString(tr("Download cancelled"));
         _emitFinished(false, QString(), _errorString);
@@ -256,7 +243,6 @@ void QGCFileDownload::_onReadyRead()
         return;
     }
 
-    // Stream data directly to file (memory-efficient)
     const QByteArray data = _currentReply->readAll();
     if (_toMemory && ((_outputFile->pos() + data.size()) > _maxMemoryBytes)) {
         // Nothing this large is handed over, so the transfer stops here instead of filling the disk
@@ -285,23 +271,15 @@ void QGCFileDownload::_onDownloadFinished()
 
     _lastResultFromCache = reply->attribute(QNetworkRequest::SourceIsFromCacheAttribute).toBool();
 
-    // Close output file
     if (_outputFile != nullptr) {
-        // Write any remaining data
-        const QByteArray remaining = reply->readAll();
-        if (!_writeReplyData(remaining)) {
-            _outputFile->close();
-            delete _outputFile;
-            _outputFile = nullptr;
+        const bool written = _writeReplyData(reply->readAll());
+        _closeOutput();
+        if (!written) {
             _failForWriteError(QStringLiteral("finished"));
             return;
         }
-        _outputFile->close();
-        delete _outputFile;
-        _outputFile = nullptr;
     }
 
-    // Check for errors
     if (reply->error() != QNetworkReply::NoError) {
         // Error already handled in _onDownloadError
         if (_state == State::Downloading || _state == State::Verifying) {
@@ -311,7 +289,6 @@ void QGCFileDownload::_onDownloadFinished()
         return;
     }
 
-    // Check HTTP status for non-local files
     if (!reply->url().isLocalFile()) {
         const int statusCode = QGCNetworkHelper::httpStatusCode(reply);
         if (!QGCNetworkHelper::isHttpSuccess(statusCode)) {
@@ -328,7 +305,6 @@ void QGCFileDownload::_onDownloadFinished()
     qCDebug(QGCFileDownloadLog) << "Download finished:" << _localPath
                                  << "size:" << QFileInfo(_localPath).size();
 
-    // Verify hash if expected
     if (!_expectedHash.isEmpty()) {
         _setState(State::Verifying);
         if (!_verifyHash()) {
@@ -338,7 +314,6 @@ void QGCFileDownload::_onDownloadFinished()
         }
     }
 
-    // Auto-decompress if enabled and file is compressed
     if (_autoDecompress && QGCCompression::isCompressedFile(_localPath)) {
         _startDecompression();
         return;
@@ -399,7 +374,6 @@ void QGCFileDownload::_onDecompressionFinished(bool success)
         const QString decompressedPath = _decompressionJob->outputPath();
         qCDebug(QGCFileDownloadLog) << "Decompression completed:" << decompressedPath;
 
-        // Remove compressed file if different from output
         if (_compressedFilePath != decompressedPath && QFile::exists(_compressedFilePath)) {
             QFile::remove(_compressedFilePath);
         }
@@ -413,8 +387,6 @@ void QGCFileDownload::_onDecompressionFinished(bool success)
         qCWarning(QGCFileDownloadLog) << error;
         _setErrorString(error);
         _setState(State::Failed);
-
-        // Return compressed file path on decompression failure
         _emitFinished(false, _compressedFilePath, error);
     }
 
@@ -462,13 +434,13 @@ void QGCFileDownload::_cleanup()
         _currentReply = nullptr;
     }
 
-    if (_outputFile != nullptr) {
-        if (_outputFile->isOpen()) {
-            _outputFile->close();
-        }
-        delete _outputFile;
-        _outputFile = nullptr;
-    }
+    _closeOutput();
+}
+
+void QGCFileDownload::_closeOutput()
+{
+    delete _outputFile;
+    _outputFile = nullptr;
 }
 
 void QGCFileDownload::_finishSuccess()
@@ -514,12 +486,7 @@ void QGCFileDownload::_emitFinished(bool success, const QString& localPath, cons
 
 void QGCFileDownload::_removeOutput()
 {
-    if (_outputFile != nullptr) {
-        _outputFile->close();
-        delete _outputFile;
-        _outputFile = nullptr;
-    }
-
+    _closeOutput();
     QFile::remove(_localPath);
     _removeDownloadDir();
 }
@@ -573,11 +540,10 @@ QString QGCFileDownload::_memoryLimitError() const
     return tr("Download is larger than the limit of %1 bytes").arg(_maxMemoryBytes);
 }
 
-bool QGCFileDownload::_failForWriteError(const QString &context)
+void QGCFileDownload::_failForWriteError(const QString& context)
 {
     _failDownload(tr("Failed to write downloaded file (%1): %2")
                       .arg(context, _outputFile != nullptr ? _outputFile->errorString() : QString()));
-    return false;
 }
 
 void QGCFileDownload::_failDownload(const QString& error)
@@ -604,19 +570,16 @@ QString QGCFileDownload::_generateOutputPath(const QString& remoteUrl)
         return _outputPath;
     }
 
-    // Extract filename from URL
     QString fileName = QUrl(remoteUrl).fileName();
     if (fileName.isEmpty()) {
         fileName = QStringLiteral("DownloadedFile");
     }
 
-    // Strip query parameters
     const int queryIndex = fileName.indexOf(QLatin1Char('?'));
     if (queryIndex != -1) {
         fileName = fileName.left(queryIndex);
     }
 
-    // Find writable directory
     QString downloadDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     if (downloadDir.isEmpty()) {
         downloadDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);

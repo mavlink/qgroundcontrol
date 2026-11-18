@@ -1,7 +1,7 @@
 #pragma once
 
 /// @file QGCFileDownload.h
-/// @brief Unified file download utility with decompression, verification, and QML support
+/// @brief Unified file download utility with decompression and verification
 
 #include "QGCNetworkHelper.h"
 
@@ -25,7 +25,6 @@ class QFile;
 /// - Optional SHA-256 hash verification
 /// - Streaming to file (memory-efficient)
 /// - Content handed over in memory, with a size limit and no file left behind (startToMemory)
-/// - QML-compatible properties and signals
 ///
 /// Example C++ usage:
 /// @code
@@ -39,23 +38,6 @@ class QFile;
 ///     }
 /// });
 /// download->start("https://example.com/file.zip");
-/// @endcode
-///
-/// Example QML usage:
-/// @code
-/// QGCFileDownload {
-///     id: downloader
-///     autoDecompress: true
-///     onProgressChanged: progressBar.value = progress
-///     onFinished: (success, path, error) => {
-///         if (!success) console.log("Error:", error)
-///     }
-/// }
-/// Button {
-///     text: downloader.running ? "Cancel" : "Download"
-///     onClicked: downloader.running ? downloader.cancel()
-///                                   : downloader.start(urlField.text)
-/// }
 /// @endcode
 ///
 class QGCFileDownload : public QObject
@@ -174,37 +156,16 @@ public slots:
     void cancel();
 
 signals:
-    /// Emitted when download progress changes
     void progressChanged(qreal progress);
-
-    /// Emitted when running state changes
     void runningChanged(bool running);
-
-    /// Emitted when error string changes
     void errorStringChanged(const QString &errorString);
-
-    /// Emitted when URL changes
     void urlChanged(const QUrl &url);
-
-    /// Emitted when local path changes
     void localPathChanged(const QString &localPath);
-
-    /// Emitted when total bytes changes
     void totalBytesChanged(qint64 totalBytes);
-
-    /// Emitted when bytes received changes
     void bytesReceivedChanged(qint64 bytesReceived);
-
-    /// Emitted when auto-decompress setting changes
     void autoDecompressChanged(bool autoDecompress);
-
-    /// Emitted when output path setting changes
     void outputPathChanged(const QString &outputPath);
-
-    /// Emitted when expected hash setting changes
     void expectedHashChanged(const QString &expectedHash);
-
-    /// Emitted when state changes
     void stateChanged(State state);
 
     /// Emitted when download completes (success or failure)
@@ -239,6 +200,7 @@ private:
     void _setProgress(qreal progress);
     void _setErrorString(const QString &error);
     void _cleanup();
+    void _closeOutput();
     QGCNetworkHelper::RequestConfig _defaultRequestConfig() const;
     bool _start(const QString& remoteUrl, const QGCNetworkHelper::RequestConfig& config, bool toMemory,
                 qint64 maxMemoryBytes);
@@ -248,7 +210,7 @@ private:
     bool _readOutput(QByteArray& data, QString& error) const;
     QString _memoryLimitError() const;
     bool _writeReplyData(const QByteArray &data);
-    bool _failForWriteError(const QString &context);
+    void _failForWriteError(const QString& context);
     void _failDownload(const QString& error);
     void _removeOutput();
     void _removeDownloadDir();

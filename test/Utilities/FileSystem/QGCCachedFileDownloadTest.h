@@ -12,7 +12,7 @@ private slots:
     void _testCachedFileDownloadMaxCacheSize();
     void _testCachedFileDownloadRejectedStart_data();
     void _testCachedFileDownloadRejectedStart();
-    void _testCachedFileDownloadNoCacheNeedsNoCacheDirectory();
+    void _testCachedFileDownloadDownload_data();
     void _testCachedFileDownloadDownload();
     void _testCachedFileDownloadSyntheticCacheHit();
     void _testCachedFileDownloadCacheHitKeepsTimestamp();
@@ -24,15 +24,9 @@ private slots:
     void _testCachedFileDownloadNoCacheDoesNotFallBack();
     void _testCachedFileDownloadFailedFallbackReportsNetworkError();
     void _testCachedFileDownloadCachedPath();
-    void _testCachedFileDownloadPreferCache();
-    void _testCachedFileDownloadNoCache();
-    void _testCachedFileDownloadIsCached();
+    void _testCachedFileDownloadEmptyCache();
     void _testCachedFileDownloadIsCachedInvalidTimestamp();
-    void _testCachedFileDownloadCacheAge();
-    void _testCachedFileDownloadClearCache();
-    void _testCachedFileDownloadRemoveFromCache();
     void _testCachedFileDownloadCancel();
     void _testCachedFileDownloadConcurrentDownloadRejected();
     void _testCachedFileDownloadReentrantStartFromCompletion();
-    void _testCachedFileDownloadSignals();
 };

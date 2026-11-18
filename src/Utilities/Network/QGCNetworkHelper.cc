@@ -8,13 +8,11 @@
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QHttpPart>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkInformation>
 #include <QtNetwork/QNetworkProxyFactory>
 #include <QtNetwork/QSslSocket>
 #include <chrono>
 
-#include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")
@@ -46,139 +44,93 @@ HttpStatusClass classifyHttpStatus(int statusCode)
     return HttpStatusClass::Unknown;
 }
 
+namespace {
+
+struct HttpStatusName
+{
+    HttpStatusCode code;
+    const char* text;
+};
+
+constexpr HttpStatusName kHttpStatusNames[] = {
+    // 1xx Informational
+    {HttpStatusCode::Continue, "Continue"},
+    {HttpStatusCode::SwitchingProtocols, "Switching Protocols"},
+    {HttpStatusCode::Processing, "Processing"},
+    // 2xx Success
+    {HttpStatusCode::Ok, "OK"},
+    {HttpStatusCode::Created, "Created"},
+    {HttpStatusCode::Accepted, "Accepted"},
+    {HttpStatusCode::NonAuthoritativeInformation, "Non-Authoritative Information"},
+    {HttpStatusCode::NoContent, "No Content"},
+    {HttpStatusCode::ResetContent, "Reset Content"},
+    {HttpStatusCode::PartialContent, "Partial Content"},
+    {HttpStatusCode::MultiStatus, "Multi-Status"},
+    {HttpStatusCode::AlreadyReported, "Already Reported"},
+    {HttpStatusCode::IMUsed, "IM Used"},
+    // 3xx Redirection
+    {HttpStatusCode::MultipleChoices, "Multiple Choices"},
+    {HttpStatusCode::MovedPermanently, "Moved Permanently"},
+    {HttpStatusCode::Found, "Found"},
+    {HttpStatusCode::SeeOther, "See Other"},
+    {HttpStatusCode::NotModified, "Not Modified"},
+    {HttpStatusCode::UseProxy, "Use Proxy"},
+    {HttpStatusCode::TemporaryRedirect, "Temporary Redirect"},
+    {HttpStatusCode::PermanentRedirect, "Permanent Redirect"},
+    // 4xx Client Errors
+    {HttpStatusCode::BadRequest, "Bad Request"},
+    {HttpStatusCode::Unauthorized, "Unauthorized"},
+    {HttpStatusCode::PaymentRequired, "Payment Required"},
+    {HttpStatusCode::Forbidden, "Forbidden"},
+    {HttpStatusCode::NotFound, "Not Found"},
+    {HttpStatusCode::MethodNotAllowed, "Method Not Allowed"},
+    {HttpStatusCode::NotAcceptable, "Not Acceptable"},
+    {HttpStatusCode::ProxyAuthenticationRequired, "Proxy Authentication Required"},
+    {HttpStatusCode::RequestTimeout, "Request Timeout"},
+    {HttpStatusCode::Conflict, "Conflict"},
+    {HttpStatusCode::Gone, "Gone"},
+    {HttpStatusCode::LengthRequired, "Length Required"},
+    {HttpStatusCode::PreconditionFailed, "Precondition Failed"},
+    {HttpStatusCode::PayloadTooLarge, "Payload Too Large"},
+    {HttpStatusCode::UriTooLong, "URI Too Long"},
+    {HttpStatusCode::UnsupportedMediaType, "Unsupported Media Type"},
+    {HttpStatusCode::RequestRangeNotSatisfiable, "Range Not Satisfiable"},
+    {HttpStatusCode::ExpectationFailed, "Expectation Failed"},
+    {HttpStatusCode::ImATeapot, "I'm a teapot"},
+    {HttpStatusCode::MisdirectedRequest, "Misdirected Request"},
+    {HttpStatusCode::UnprocessableEntity, "Unprocessable Entity"},
+    {HttpStatusCode::Locked, "Locked"},
+    {HttpStatusCode::FailedDependency, "Failed Dependency"},
+    {HttpStatusCode::UpgradeRequired, "Upgrade Required"},
+    {HttpStatusCode::PreconditionRequired, "Precondition Required"},
+    {HttpStatusCode::TooManyRequests, "Too Many Requests"},
+    {HttpStatusCode::RequestHeaderFieldsTooLarge, "Request Header Fields Too Large"},
+    {HttpStatusCode::UnavailableForLegalReasons, "Unavailable For Legal Reasons"},
+    // 5xx Server Errors
+    {HttpStatusCode::InternalServerError, "Internal Server Error"},
+    {HttpStatusCode::NotImplemented, "Not Implemented"},
+    {HttpStatusCode::BadGateway, "Bad Gateway"},
+    {HttpStatusCode::ServiceUnavailable, "Service Unavailable"},
+    {HttpStatusCode::GatewayTimeout, "Gateway Timeout"},
+    {HttpStatusCode::HttpVersionNotSupported, "HTTP Version Not Supported"},
+    {HttpStatusCode::VariantAlsoNegotiates, "Variant Also Negotiates"},
+    {HttpStatusCode::InsufficientStorage, "Insufficient Storage"},
+    {HttpStatusCode::LoopDetected, "Loop Detected"},
+    {HttpStatusCode::NotExtended, "Not Extended"},
+    {HttpStatusCode::NetworkAuthenticationRequired, "Network Authentication Required"},
+    {HttpStatusCode::NetworkConnectTimeoutError, "Network Connect Timeout Error"},
+};
+
+}  // namespace
+
 QString httpStatusText(HttpStatusCode statusCode)
 {
-    switch (statusCode) {
-        // 1xx Informational
-        case HttpStatusCode::Continue:
-            return QStringLiteral("Continue");
-        case HttpStatusCode::SwitchingProtocols:
-            return QStringLiteral("Switching Protocols");
-        case HttpStatusCode::Processing:
-            return QStringLiteral("Processing");
-        // 2xx Success
-        case HttpStatusCode::Ok:
-            return QStringLiteral("OK");
-        case HttpStatusCode::Created:
-            return QStringLiteral("Created");
-        case HttpStatusCode::Accepted:
-            return QStringLiteral("Accepted");
-        case HttpStatusCode::NonAuthoritativeInformation:
-            return QStringLiteral("Non-Authoritative Information");
-        case HttpStatusCode::NoContent:
-            return QStringLiteral("No Content");
-        case HttpStatusCode::ResetContent:
-            return QStringLiteral("Reset Content");
-        case HttpStatusCode::PartialContent:
-            return QStringLiteral("Partial Content");
-        case HttpStatusCode::MultiStatus:
-            return QStringLiteral("Multi-Status");
-        case HttpStatusCode::AlreadyReported:
-            return QStringLiteral("Already Reported");
-        case HttpStatusCode::IMUsed:
-            return QStringLiteral("IM Used");
-        // 3xx Redirection
-        case HttpStatusCode::MultipleChoices:
-            return QStringLiteral("Multiple Choices");
-        case HttpStatusCode::MovedPermanently:
-            return QStringLiteral("Moved Permanently");
-        case HttpStatusCode::Found:
-            return QStringLiteral("Found");
-        case HttpStatusCode::SeeOther:
-            return QStringLiteral("See Other");
-        case HttpStatusCode::NotModified:
-            return QStringLiteral("Not Modified");
-        case HttpStatusCode::UseProxy:
-            return QStringLiteral("Use Proxy");
-        case HttpStatusCode::TemporaryRedirect:
-            return QStringLiteral("Temporary Redirect");
-        case HttpStatusCode::PermanentRedirect:
-            return QStringLiteral("Permanent Redirect");
-        // 4xx Client Errors
-        case HttpStatusCode::BadRequest:
-            return QStringLiteral("Bad Request");
-        case HttpStatusCode::Unauthorized:
-            return QStringLiteral("Unauthorized");
-        case HttpStatusCode::PaymentRequired:
-            return QStringLiteral("Payment Required");
-        case HttpStatusCode::Forbidden:
-            return QStringLiteral("Forbidden");
-        case HttpStatusCode::NotFound:
-            return QStringLiteral("Not Found");
-        case HttpStatusCode::MethodNotAllowed:
-            return QStringLiteral("Method Not Allowed");
-        case HttpStatusCode::NotAcceptable:
-            return QStringLiteral("Not Acceptable");
-        case HttpStatusCode::ProxyAuthenticationRequired:
-            return QStringLiteral("Proxy Authentication Required");
-        case HttpStatusCode::RequestTimeout:
-            return QStringLiteral("Request Timeout");
-        case HttpStatusCode::Conflict:
-            return QStringLiteral("Conflict");
-        case HttpStatusCode::Gone:
-            return QStringLiteral("Gone");
-        case HttpStatusCode::LengthRequired:
-            return QStringLiteral("Length Required");
-        case HttpStatusCode::PreconditionFailed:
-            return QStringLiteral("Precondition Failed");
-        case HttpStatusCode::PayloadTooLarge:
-            return QStringLiteral("Payload Too Large");
-        case HttpStatusCode::UriTooLong:
-            return QStringLiteral("URI Too Long");
-        case HttpStatusCode::UnsupportedMediaType:
-            return QStringLiteral("Unsupported Media Type");
-        case HttpStatusCode::RequestRangeNotSatisfiable:
-            return QStringLiteral("Range Not Satisfiable");
-        case HttpStatusCode::ExpectationFailed:
-            return QStringLiteral("Expectation Failed");
-        case HttpStatusCode::ImATeapot:
-            return QStringLiteral("I'm a teapot");
-        case HttpStatusCode::MisdirectedRequest:
-            return QStringLiteral("Misdirected Request");
-        case HttpStatusCode::UnprocessableEntity:
-            return QStringLiteral("Unprocessable Entity");
-        case HttpStatusCode::Locked:
-            return QStringLiteral("Locked");
-        case HttpStatusCode::FailedDependency:
-            return QStringLiteral("Failed Dependency");
-        case HttpStatusCode::UpgradeRequired:
-            return QStringLiteral("Upgrade Required");
-        case HttpStatusCode::PreconditionRequired:
-            return QStringLiteral("Precondition Required");
-        case HttpStatusCode::TooManyRequests:
-            return QStringLiteral("Too Many Requests");
-        case HttpStatusCode::RequestHeaderFieldsTooLarge:
-            return QStringLiteral("Request Header Fields Too Large");
-        case HttpStatusCode::UnavailableForLegalReasons:
-            return QStringLiteral("Unavailable For Legal Reasons");
-        // 5xx Server Errors
-        case HttpStatusCode::InternalServerError:
-            return QStringLiteral("Internal Server Error");
-        case HttpStatusCode::NotImplemented:
-            return QStringLiteral("Not Implemented");
-        case HttpStatusCode::BadGateway:
-            return QStringLiteral("Bad Gateway");
-        case HttpStatusCode::ServiceUnavailable:
-            return QStringLiteral("Service Unavailable");
-        case HttpStatusCode::GatewayTimeout:
-            return QStringLiteral("Gateway Timeout");
-        case HttpStatusCode::HttpVersionNotSupported:
-            return QStringLiteral("HTTP Version Not Supported");
-        case HttpStatusCode::VariantAlsoNegotiates:
-            return QStringLiteral("Variant Also Negotiates");
-        case HttpStatusCode::InsufficientStorage:
-            return QStringLiteral("Insufficient Storage");
-        case HttpStatusCode::LoopDetected:
-            return QStringLiteral("Loop Detected");
-        case HttpStatusCode::NotExtended:
-            return QStringLiteral("Not Extended");
-        case HttpStatusCode::NetworkAuthenticationRequired:
-            return QStringLiteral("Network Authentication Required");
-        case HttpStatusCode::NetworkConnectTimeoutError:
-            return QStringLiteral("Network Connect Timeout Error");
-        default:
-            return QStringLiteral("Unknown Status (%1)").arg(static_cast<int>(statusCode));
+    for (const HttpStatusName& entry : kHttpStatusNames) {
+        if (entry.code == statusCode) {
+            return QString::fromLatin1(entry.text);
+        }
     }
+    return QStringLiteral("Unknown Status (%1)").arg(static_cast<int>(statusCode));
 }
 
 QString httpStatusText(int statusCode)
@@ -190,56 +142,40 @@ QString httpStatusText(int statusCode)
 // HTTP Methods
 // ============================================================================
 
+namespace {
+
+struct HttpMethodEntry
+{
+    HttpMethod method;
+    const char* name;
+};
+
+constexpr HttpMethodEntry kHttpMethods[] = {
+    {HttpMethod::Get, "GET"},       {HttpMethod::Post, "POST"},       {HttpMethod::Put, "PUT"},
+    {HttpMethod::Delete, "DELETE"}, {HttpMethod::Head, "HEAD"},       {HttpMethod::Options, "OPTIONS"},
+    {HttpMethod::Patch, "PATCH"},   {HttpMethod::Connect, "CONNECT"}, {HttpMethod::Trace, "TRACE"},
+};
+
+}  // namespace
+
 QString httpMethodName(HttpMethod method)
 {
-    switch (method) {
-        case HttpMethod::Get:
-            return QStringLiteral("GET");
-        case HttpMethod::Post:
-            return QStringLiteral("POST");
-        case HttpMethod::Put:
-            return QStringLiteral("PUT");
-        case HttpMethod::Delete:
-            return QStringLiteral("DELETE");
-        case HttpMethod::Head:
-            return QStringLiteral("HEAD");
-        case HttpMethod::Options:
-            return QStringLiteral("OPTIONS");
-        case HttpMethod::Patch:
-            return QStringLiteral("PATCH");
-        case HttpMethod::Connect:
-            return QStringLiteral("CONNECT");
-        case HttpMethod::Trace:
-            return QStringLiteral("TRACE");
-        default:
-            return QStringLiteral("GET");
+    for (const HttpMethodEntry& entry : kHttpMethods) {
+        if (entry.method == method) {
+            return QString::fromLatin1(entry.name);
+        }
     }
+    return QStringLiteral("GET");
 }
 
 HttpMethod parseHttpMethod(const QString& methodStr)
 {
     const QByteArray upper = methodStr.toUpper().toLatin1();
-    const char* str = upper.constData();
-
-    if (qstrcmp(str, "GET") == 0)
-        return HttpMethod::Get;
-    if (qstrcmp(str, "POST") == 0)
-        return HttpMethod::Post;
-    if (qstrcmp(str, "PUT") == 0)
-        return HttpMethod::Put;
-    if (qstrcmp(str, "DELETE") == 0)
-        return HttpMethod::Delete;
-    if (qstrcmp(str, "HEAD") == 0)
-        return HttpMethod::Head;
-    if (qstrcmp(str, "OPTIONS") == 0)
-        return HttpMethod::Options;
-    if (qstrcmp(str, "PATCH") == 0)
-        return HttpMethod::Patch;
-    if (qstrcmp(str, "CONNECT") == 0)
-        return HttpMethod::Connect;
-    if (qstrcmp(str, "TRACE") == 0)
-        return HttpMethod::Trace;
-
+    for (const HttpMethodEntry& entry : kHttpMethods) {
+        if (qstrcmp(upper.constData(), entry.name) == 0) {
+            return entry.method;
+        }
+    }
     return HttpMethod::Get;
 }
 
@@ -306,18 +242,11 @@ QUrl ensureScheme(const QUrl& url, const QString& defaultScheme)
 
 QUrl buildUrl(const QString& baseUrl, const QMap<QString, QString>& params)
 {
-    QUrl url(baseUrl);
-    if (!url.isValid()) {
-        return url;
-    }
-
-    QUrlQuery query;
+    QList<QPair<QString, QString>> items;
     for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
-        query.addQueryItem(it.key(), it.value());
+        items.append({it.key(), it.value()});
     }
-    url.setQuery(query);
-
-    return url;
+    return buildUrl(baseUrl, items);
 }
 
 QUrl buildUrl(const QString& baseUrl, const QList<QPair<QString, QString>>& params)
@@ -478,29 +407,18 @@ QString redactedUrlForLogging(const QString& url)
 
 void configureRequest(QNetworkRequest& request, const RequestConfig& config)
 {
-    // Timeout
     request.setTransferTimeout(config.timeoutMs);
 
-    // Redirect policy
-    if (config.allowRedirects) {
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-    } else {
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
-    }
+    const auto redirectPolicy =
+        config.allowRedirects ? QNetworkRequest::NoLessSafeRedirectPolicy : QNetworkRequest::ManualRedirectPolicy;
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, redirectPolicy);
 
-    // HTTP/2
     request.setAttribute(QNetworkRequest::Http2AllowedAttribute, config.http2Allowed);
 
-    // Caching
-    if (config.cacheEnabled) {
-        request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-        request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
-    } else {
-        request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
-        request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-    }
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
+                         config.cacheEnabled ? QNetworkRequest::PreferCache : QNetworkRequest::AlwaysNetwork);
+    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, config.cacheEnabled);
 
-    // Background request
     request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, config.backgroundRequest);
 
     using WK = QHttpHeaders::WellKnownHeader;
@@ -676,16 +594,10 @@ QJsonDocument parseJson(const QByteArray& data, QJsonParseError* error)
 
 QJsonDocument parseJsonReply(QNetworkReply* reply, QJsonParseError* error)
 {
-    if (reply == nullptr) {
-        if (error != nullptr) {
-            error->error = QJsonParseError::UnterminatedObject;
-            error->offset = 0;
+    if ((reply == nullptr) || (reply->error() != QNetworkReply::NoError)) {
+        if (reply != nullptr) {
+            qCWarning(QGCNetworkHelperLog) << "Network error before JSON parse:" << reply->errorString();
         }
-        return {};
-    }
-
-    if (reply->error() != QNetworkReply::NoError) {
-        qCWarning(QGCNetworkHelperLog) << "Network error before JSON parse:" << reply->errorString();
         if (error != nullptr) {
             error->error = QJsonParseError::UnterminatedObject;
             error->offset = 0;
@@ -698,10 +610,6 @@ QJsonDocument parseJsonReply(QNetworkReply* reply, QJsonParseError* error)
 
 bool looksLikeJson(const QByteArray& data)
 {
-    if (data.isEmpty()) {
-        return false;
-    }
-
     // Skip leading whitespace
     for (int i = 0; i < data.size(); ++i) {
         const char c = data.at(i);
@@ -748,12 +656,10 @@ QString errorMessage(const QNetworkReply* reply)
         return QStringLiteral("No reply");
     }
 
-    // Check for network error first
     if (reply->error() != QNetworkReply::NoError) {
         return reply->errorString();
     }
 
-    // Check HTTP status code
     const int status = httpStatusCode(reply);
     if (status >= 400) {
         return QStringLiteral("HTTP %1: %2").arg(status).arg(httpStatusText(status));
