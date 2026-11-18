@@ -68,23 +68,16 @@ endfunction()
 # zlib Integration
 # ============================================================================
 
-set(ZLIB_EXTRA_OPTIONS)
-if(WIN32)
-    set(ZLIB_EXTRA_OPTIONS "ZLIB_INSTALL_COMPAT_DLL OFF")
-endif()
-
 CPMAddPackage(
     NAME ZLIB
     GITHUB_REPOSITORY madler/zlib
-    VERSION 1.3.2
-    GIT_TAG v1.3.2
+    VERSION 1.4
+    GIT_TAG v1.4
     OPTIONS
         "ZLIB_BUILD_TESTING OFF"
         "ZLIB_BUILD_SHARED OFF"
         "ZLIB_BUILD_STATIC ON"
         "ZLIB_INSTALL OFF"
-        "ZLIB_PREFIX OFF"
-        "${ZLIB_EXTRA_OPTIONS}"
 )
 
 if(ZLIB_ADDED)
@@ -99,9 +92,9 @@ endif()
 
 CPMAddPackage(
     NAME LibLZMA
-    VERSION 5.8.3
+    VERSION 5.8.4
     GITHUB_REPOSITORY tukaani-project/xz
-    GIT_TAG v5.8.3
+    GIT_TAG v5.8.4
     OPTIONS
         "BUILD_TESTING OFF"
         "BUILD_SHARED_LIBS OFF"
@@ -230,9 +223,9 @@ message(STATUS "Zstandard support enabled")
 if(QGC_ENABLE_LZ4)
     CPMAddPackage(
         NAME lz4
-        VERSION 1.10.0
+        VERSION 1.11.1
         GITHUB_REPOSITORY lz4/lz4
-        GIT_TAG v1.10.0
+        GIT_TAG v1.11.1
         SOURCE_SUBDIR build/cmake
         OPTIONS
             "LZ4_BUILD_CLI OFF"
@@ -291,9 +284,9 @@ endif()
 
 CPMAddPackage(
     NAME LibArchive
-    VERSION 3.8.8
+    VERSION 3.8.11
     GITHUB_REPOSITORY libarchive/libarchive
-    GIT_TAG v3.8.8
+    GIT_TAG v3.8.11
     OPTIONS
         "ENABLE_WERROR OFF"
         "ENABLE_TEST OFF"
@@ -309,10 +302,11 @@ CPMAddPackage(
         "ENABLE_MBEDTLS OFF"
         "ENABLE_NETTLE OFF"
         "ENABLE_CNG OFF"
-        "ENABLE_LIBMD OFF"
+        "ENABLE_MD OFF"
         "ENABLE_LIBB2 OFF"
         "ENABLE_LIBXML2 OFF"
         "ENABLE_EXPAT OFF"
+        "ENABLE_BSDXML OFF"
         "ENABLE_PCREPOSIX OFF"
         "ENABLE_PCRE2POSIX OFF"
         "POSIX_REGEX_LIB LIBC"
