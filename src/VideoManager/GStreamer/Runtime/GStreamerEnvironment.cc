@@ -39,7 +39,7 @@ using GStreamer::Environment::BundleLayout;
 using GStreamer::Environment::DesktopInstall;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
-// and logDiagnostics from drifting. Each site layers its own extras (GIO/PTP, registry) on top.
+// and logDiagnostics from drifting. Each site layers its own extras (GIO, registry) on top.
 constexpr const char* kManagedGstPathVars[] = {
     "GST_PLUGIN_PATH",    "GST_PLUGIN_PATH_1_0",    "GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0",
     "GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0",
@@ -236,11 +236,9 @@ QString _joinExistingPaths(const QStringList& paths)
 
 void _clearManagedGstEnvVars()
 {
-    static constexpr const char* gioPtpVars[] = {
-        "GIO_EXTRA_MODULES", "GIO_MODULE_DIR", "GIO_USE_VFS", "GST_PTP_HELPER_1_0", "GST_PTP_HELPER",
-    };
+    static constexpr const char* gioVars[] = {"GIO_EXTRA_MODULES", "GIO_MODULE_DIR", "GIO_USE_VFS"};
 
-    for (const char* name : gioPtpVars) {
+    for (const char* name : gioVars) {
         _unsetEnv(name);
     }
     for (const char* name : kManagedGstPathVars) {
@@ -255,8 +253,7 @@ void _setGstEnvIfExecutable(const char* name, const QString& path)
     }
 }
 
-void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const QString& scannerPath,
-                      const QString& ptpPath)
+void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const QString& scannerPath)
 {
     qCDebug(GStreamerEnvLog) << "Applying GStreamer environment:";
 
@@ -264,8 +261,6 @@ void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const 
     if (!gioModDir.isEmpty()) {
         _setGstEnv("GIO_EXTRA_MODULES", gioModDir);
     }
-    _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
-    _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER_1_0", scannerPath);
     _setGstEnvIfExecutable("GST_PLUGIN_SCANNER", scannerPath);
     // SYSTEM_PATH replaces the default system/user plugin dirs. GST_PLUGIN_PATH (cleared above) would
@@ -314,7 +309,7 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
     const QString scanner = _firstExistingPath(layout.scannerCandidates);
     _warnIfScannerMissing(platformLabel, scanner);
     const QString gioModuleDir = _firstExistingPath(layout.gioModuleDirs);
-    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, _firstExistingPath(layout.ptpCandidates));
+    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner);
     (void) GStreamer::Environment::usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation),
                                                       pluginDirs);
     s_bundledRuntime = {.pluginDirs = pluginDirs.split(QDir::listSeparator()), .gioModuleDir = gioModuleDir};
@@ -479,7 +474,6 @@ BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
         .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
         .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
         .scannerCandidates = _cleanJoinAll(helperDirs, QStringLiteral("gst-plugin-scanner") + exeSuffix),
-        .ptpCandidates = _cleanJoinAll(helperDirs, QStringLiteral("gst-ptp-helper") + exeSuffix),
     };
 }
 

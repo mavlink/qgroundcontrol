@@ -129,7 +129,7 @@ function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_return_discovery()
 endfunction()
 
-# Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
+# Windows: the plugins, GIO modules, libproxy backends and plugin scanner, the SDK DLLs they and QGC load, and the
 # notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
 function(qgc_gst_install_windows_sdk app_name plugin_dest_out)
     qgc_gst_layout_get(ROOT_DIR _gst_root)
@@ -144,7 +144,7 @@ function(qgc_gst_install_windows_sdk app_name plugin_dest_out)
     # directory on PATH, so they go there too.
     file(GLOB _gst_libproxy_backends "${_gst_root}/lib/libproxy/*.dll")
     _qgc_gst_install_files("${CMAKE_INSTALL_BINDIR}" ${_gst_libproxy_backends})
-    file(GLOB _gst_helpers "${_gst_scanner_path}/*.exe")
+    file(GLOB _gst_helpers "${_gst_scanner_path}/gst-plugin-scanner.exe")
     _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
     _qgc_gst_install_runtime_closure("${CMAKE_INSTALL_BINDIR}")
     _qgc_gst_install_notice(share/licenses/gstreamer)

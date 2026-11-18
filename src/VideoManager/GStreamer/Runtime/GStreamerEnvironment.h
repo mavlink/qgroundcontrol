@@ -23,7 +23,6 @@ struct BundleLayout
     QStringList pluginDirs;         ///< Every existing entry is searched.
     QStringList gioModuleDirs;      ///< The first existing entry wins.
     QStringList scannerCandidates;  ///< The first existing entry wins.
-    QStringList ptpCandidates;      ///< The first existing entry wins.
 };
 
 /// The desktop installs prepareEnvironment() knows how to point GStreamer into.
