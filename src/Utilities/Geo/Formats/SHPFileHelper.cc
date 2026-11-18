@@ -184,12 +184,11 @@ bool _openForType(const QString& shpFile, int type, int zType, const QString& wr
 template <typename Visit>
 void _forEachEntity(const ShapeFile& shape, const char* what, Visit visit);
 
-/// @return the number of vertices in the first part of @a shpObject, the only part that is loaded
+/// Reads the vertices of the first part of @a shpObject, the only part that is loaded, leaving out those that
+/// _vertexCoordinate() rejects. With @a clockwise the part is a ring and is returned clockwise, as QGC polygons wind.
 /// @param entityName,partName what the log calls the entity and its first part when there are more parts
-int _firstPartEnd(const SHPObject* shpObject, const char* entityName, const char* partName);
-
-/// Reads the first @a count vertices of @a shpObject, leaving out those that _vertexCoordinate() rejects.
-QList<QGeoCoordinate> _vertices(const ShapeFile& shape, const SHPObject* shpObject, int count);
+QList<QGeoCoordinate> _firstPartVertices(const ShapeFile& shape, const SHPObject* shpObject, const char* entityName,
+                                         const char* partName, bool clockwise);
 
 /// Converts vertex @a index of @a shpObject to a coordinate, from UTM when the zone of @a shape is not 0.
 /// @return false when the vertex is outside the range of the projection; a warning has been logged
@@ -326,23 +325,36 @@ void SHPFileHelper::_forEachEntity(const ShapeFile& shape, const char* what, Vis
     }
 }
 
-int SHPFileHelper::_firstPartEnd(const SHPObject* shpObject, const char* entityName, const char* partName)
+QList<QGeoCoordinate> SHPFileHelper::_firstPartVertices(const ShapeFile& shape, const SHPObject* shpObject,
+                                                        const char* entityName, const char* partName, bool clockwise)
 {
     const int firstPartEnd = (shpObject->nParts > 1) ? shpObject->panPartStart[1] : shpObject->nVertices;
     if (shpObject->nParts > 1) {
         qCDebug(SHPFileHelperLog) << entityName << "entity" << shpObject->nShapeId << "has" << shpObject->nParts
                                   << "parts; using" << partName << "only (" << firstPartEnd << "vertices)";
     }
-    return firstPartEnd;
-}
 
-QList<QGeoCoordinate> SHPFileHelper::_vertices(const ShapeFile& shape, const SHPObject* shpObject, int count)
-{
     QList<QGeoCoordinate> vertices;
-    for (int i = 0; i < count; i++) {
+    QList<int> kept;
+    for (int i = 0; i < firstPartEnd; i++) {
         QGeoCoordinate coord;
         if (_vertexCoordinate(shape, shpObject, i, coord)) {
             vertices.append(coord);
+            kept.append(i);
+        }
+    }
+
+    if (clockwise) {
+        // Twice the area of the ring that the kept vertices make, summed as SHPRewindObject() sums it, on the
+        // numbers of the file: longitudes converted from UTM jump where a ring crosses the 180 degree meridian.
+        double sum = 0;
+        for (qsizetype i = 0; i < kept.count(); i++) {
+            const int previous = kept[(i + kept.count() - 1) % kept.count()];
+            const int next = kept[(i + 1) % kept.count()];
+            sum += shpObject->padfX[kept[i]] * (shpObject->padfY[next] - shpObject->padfY[previous]);
+        }
+        if (sum > 0.0) {
+            vertices = QList<QGeoCoordinate>(vertices.crbegin(), vertices.crend());
         }
     }
     return vertices;
@@ -418,27 +430,16 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString& shpFile, QList<QList<QGe
         return false;
     }
 
-    _forEachEntity(shape, "polygon", [&](SHPObject* shpObject, int entityIdx) {
+    _forEachEntity(shape, "polygon", [&](const SHPObject* shpObject, int entityIdx) {
         // For multi-part polygons (e.g., polygons with holes), we extract only the outer ring.
         // In shapefiles, the first part is conventionally the outer boundary, and subsequent
         // parts are holes (inner rings). For QGC's use cases (survey areas, geofences), the
         // outer boundary is what matters for mission planning.
-        const int firstPartEnd = _firstPartEnd(shpObject, "Polygon", "outer ring");
-
-        // The vertices are checked before the ring is wound: a warning then names a vertex by its place in the
-        // file, and shapelib, which winds a ring on its numbers as they stand, never sees one that is left out.
-        QList<QGeoCoordinate> vertices = _vertices(shape, shpObject, firstPartEnd);
+        QList<QGeoCoordinate> vertices = _firstPartVertices(shape, shpObject, "Polygon", "outer ring", true);
 
         if (vertices.count() < 3) {
             qCWarning(SHPFileHelperLog) << "Skipping polygon entity" << entityIdx << "with less than 3 vertices";
             return;
-        }
-
-        // Ensure clockwise winding for outer rings (QGC requirement)
-        if (vertices.count() < firstPartEnd) {
-            ShapeVertices::makeClockwise(vertices);
-        } else if (SHPRewindObject(shape.handle, shpObject) > 0) {
-            vertices = _vertices(shape, shpObject, firstPartEnd);
         }
 
         // The repeated first vertex goes before filtering, so that it does not count towards the three vertices
@@ -468,13 +469,11 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
         return false;
     }
 
-    _forEachEntity(shape, "polyline", [&](SHPObject* shpObject, int entityIdx) {
+    _forEachEntity(shape, "polyline", [&](const SHPObject* shpObject, int entityIdx) {
         // For multi-part polylines (disconnected segments), we extract only the first part.
         // This maintains consistency with polygon handling and provides the primary path.
         // Each part in a multi-part polyline is typically a separate disconnected segment.
-        const int firstPartEnd = _firstPartEnd(shpObject, "Polyline", "first part");
-
-        QList<QGeoCoordinate> vertices = _vertices(shape, shpObject, firstPartEnd);
+        QList<QGeoCoordinate> vertices = _firstPartVertices(shape, shpObject, "Polyline", "first part", false);
 
         if (vertices.count() < 2) {
             qCWarning(SHPFileHelperLog) << "Skipping polyline entity" << entityIdx << "with less than 2 vertices";

@@ -20,6 +20,7 @@ const QString kWgs84Prj = QStringLiteral(
     "PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.017453292519943295]]");
 const QString kUtm32NorthPrj = QStringLiteral("PROJCS[\"WGS_1984_UTM_Zone_32N\",GEOGCS[\"GCS_WGS_1984\"]]");
 const QString kUtm32SouthPrj = QStringLiteral("PROJCS[\"WGS_1984_UTM_Zone_32S\",GEOGCS[\"GCS_WGS_1984\"]]");
+const QString kUtm60SouthPrj = QStringLiteral("PROJCS[\"WGS_1984_UTM_Zone_60S\",GEOGCS[\"GCS_WGS_1984\"]]");
 
 /// A shapefile position: degrees or UTM metres, as the .prj written with it declares.
 struct ShapefileVertex
@@ -346,6 +347,8 @@ void ShapeTest::_testLoadShapes_data()
     const QString ringWithAltitude =
         QStringLiteral("8,47,100.5 8,47.001,200 8.001,47.001,150 8.001,47,175.5 8,47,100.5");
     const QString hole = QStringLiteral("8.0002,47.0002 8.0008,47.0002 8.0008,47.0008 8.0002,47.0008 8.0002,47.0002");
+    const QString clockwiseHole =
+        QStringLiteral("8.0002,47.0002 8.0002,47.0008 8.0008,47.0008 8.0008,47.0002 8.0002,47.0002");
     // The square with extra vertices about a metre from their neighbours.
     const QString denseRing =
         QStringLiteral("8,47 8,47.00001 8,47.00002 8,47.001 8.001,47.001 8.001,47 8.00001,47 8,47");
@@ -361,6 +364,10 @@ void ShapeTest::_testLoadShapes_data()
     const QString utmRingNorth = QStringLiteral(
         "8.000441856,46.99416047 8.000425078,46.99506021 "
         "8.001740103,46.99507168 8.00175686,46.99417194");
+    // A ring of 40 km by 11 km in zone 60 south that crosses the 180 degree meridian, checked the same way.
+    const QString utmRingAcross180 = QStringLiteral(
+        "179.8172243,-16.9845355 179.8157457,-16.88522062 "
+        "-179.8092197,-16.8797189 -179.8075449,-16.97899952");
 
     // KML: a missing altitude loads as 0, and a counter-clockwise ring is reversed after its closing vertex is
     // dropped, so it starts at its last vertex.
@@ -419,6 +426,13 @@ void ShapeTest::_testLoadShapes_data()
         << kWgs84Prj << ShapeType::Polygon << QStringList{nearlyClosedRing} << filtered << QStringList{openRing};
     QTest::newRow("shp polygon with a hole")
         << kWgs84Prj << ShapeType::Polygon << QStringList{ring + " | " + hole} << filtered << QStringList{openRing};
+    // The first part is wound clockwise by its own vertices, also when it lies inside another part of its entity.
+    QTest::newRow("shp polygon, first part inside the second")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{hole + " | " + ring} << filtered
+        << QStringList{"8.0002,47.0002 8.0002,47.0008 8.0008,47.0008 8.0008,47.0002"};
+    QTest::newRow("shp polygon, clockwise first part inside the second")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{clockwiseHole + " | " + ring} << filtered
+        << QStringList{"8.0002,47.0002 8.0002,47.0008 8.0008,47.0008 8.0008,47.0002"};
     QTest::newRow("shp two polygons") << kWgs84Prj << ShapeType::Polygon << QStringList{ring, hole} << filtered
                                       << QStringList{openRing,
                                                      "8.0002,47.0002 8.0002,47.0008 8.0008,47.0008 "
@@ -430,6 +444,16 @@ void ShapeTest::_testLoadShapes_data()
         << QStringList{
                "8.062949963,-43.30399415 8.062963793,-43.30309381 8.064196574,-43.3031039 "
                "8.064182762,-43.30400425"};
+    // A ring in zone 60 that crosses the 180 degree meridian, where the longitudes jump from 180 to -180: it is
+    // wound on the eastings and northings of the file, clockwise on the ground whichever way it is stored.
+    QTest::newRow("shp polygon, utm across the 180 degree meridian")
+        << kUtm60SouthPrj << ShapeType::Polygon
+        << QStringList{"800000,8120000 800000,8131000 840000,8131000 840000,8120000 800000,8120000"} << filtered
+        << QStringList{utmRingAcross180};
+    QTest::newRow("shp polygon, utm across the 180 degree meridian, counter-clockwise")
+        << kUtm60SouthPrj << ShapeType::Polygon
+        << QStringList{"800000,8120000 840000,8120000 840000,8131000 800000,8131000 800000,8120000"} << filtered
+        << QStringList{utmRingAcross180};
     QTest::newRow("shp polygon, utm with altitude")
         << kUtm32NorthPrj << ShapeType::Polygon << QStringList{utmRingWithAltitude} << filtered
         << QStringList{
@@ -721,6 +745,14 @@ void ShapeTest::_testSkippedVertices_data()
     QTest::newRow("shp counter-clockwise ring with a vertex that is not a number")
         << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8.001,47 nan,47.0005 8.001,47.001 8,47.001 8,47"}
         << QStringList{"out of range for entity 0 vertex 2"} << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
+    // A ring that crosses the 180 degree meridian is wound on the numbers of the file with a vertex left out too.
+    QTest::newRow("shp utm ring across the 180 degree meridian with a northing out of range")
+        << kUtm60SouthPrj << ShapeType::Polygon
+        << QStringList{"800000,8120000 800000,8131000 800000,25000000 840000,8131000 840000,8120000 800000,8120000"}
+        << QStringList{"UTM conversion failed for entity 0 vertex 2"}
+        << QStringList{
+               "179.8172243,-16.9845355 179.8157457,-16.88522062 -179.8092197,-16.8797189 "
+               "-179.8075449,-16.97899952"};
 }
 
 void ShapeTest::_testSkippedVertices()
