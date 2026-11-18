@@ -10,4 +10,5 @@ private slots:
     void _testSpokenReplacements();
     void _abbreviationsReplacedAtTokenBoundaries_data();
     void _abbreviationsReplacedAtTokenBoundaries();
+    void _piperAvailabilityRunsNoCandidate();
 };
