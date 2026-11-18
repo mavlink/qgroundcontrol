@@ -72,6 +72,8 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping_data()
     for (const int mode : {0, 1, 2}) {
         QTest::addRow("automatic-mode-%d", mode) << 0 << mode << true;
     }
+    // A stored mode that names none.
+    QTest::newRow("invalid-mode-is-survey-in") << 0 << 9 << true;
 }
 
 void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
@@ -100,7 +102,15 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
     QVERIFY(type);
     ScriptedGPSReceiver harness;
     auto& receiver = harness.receiver;
+    const bool validMode = baseMode >= 0 && baseMode <= 2;
+    if (!validMode) {
+        expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Invalid base mode; using survey-in")));
+    }
     GPSSettingsBindings::bindReceiver(&settings, &receiver);
+    if (!validMode) {
+        verifyExpectedLogMessage();
+    }
     QCOMPARE(receiver.connectReceiver(), accepted);
     QCOMPARE(receiver.hasReceiver(), accepted);
     QCOMPARE(receiver.errorMessage().isEmpty(), accepted);

@@ -2,12 +2,15 @@
 
 #include <memory>
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QMetaEnum>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
 #include "Fact.h"
 #include "FactGroup.h"
 #include "Fixtures/RAIIFixtures.h"
@@ -26,6 +29,7 @@
 #include "PositionManager.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "RTKSettings.h"
+#include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
 #include "Support/GPSQmlTestHelpers.h"
@@ -273,6 +277,28 @@ void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum()
     QCOMPARE(ntrip->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     QCOMPARE(transport->sentNmea.size(), 1);
     QVERIFY(transport->sentNmea.first().contains(altitude));
+}
+
+void GPSManagerTest::_filesGoBelowSavePath()
+{
+    TestFixtures::TempDirFixture directory;
+    TestFixtures::SettingsFixture saved;
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler);
+    // The save location is read as a log or a recording starts.
+    saved.setFactValue(SettingsManager::instance()->appSettings()->savePath(), directory.path());
+    const QDir savePath(directory.path());
+
+    manager.corrections()->setLogToFile(true);
+    QCOMPARE(QFileInfo(manager.corrections()->logFile()).absolutePath(),
+             savePath.filePath(QStringLiteral("GPSCorrections")));
+
+    GPSTest::ScriptedReceiverWorkerFactory workers;
+    GPSReceiver* const receiver = manager.receiver();
+    receiver->setWorkerFactory(workers.workerFactory());
+    receiver->setRecordSessions(true);
+    QVERIFY(GPSTest::connectOverTcp(*receiver));
+    QCOMPARE(QFileInfo(receiver->recordingFile()).absolutePath(), savePath.filePath(QStringLiteral("GPSReceiver")));
 }
 
 void GPSManagerTest::_qmlServicesAvailableBeforeInit()

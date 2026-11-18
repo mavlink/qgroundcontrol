@@ -15,5 +15,6 @@ private slots:
     void _vehicleEstimateTracking();
     void _groundStationGgaReportsAnyAltitudeDatum_data();
     void _groundStationGgaReportsAnyAltitudeDatum();
+    void _filesGoBelowSavePath();
     void _qmlServicesAvailableBeforeInit();
 };

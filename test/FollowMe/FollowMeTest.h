@@ -10,4 +10,5 @@ private slots:
     void _testFollowMe();
     void _motionPolicyReports_data();
     void _motionPolicyReports();
+    void _noFollowTargetWithoutAltitude();
 };

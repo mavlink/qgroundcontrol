@@ -582,6 +582,19 @@ void transactionalFrames(GPSTestClock& clock)
     const auto empty = driver.decode(ubxFrame(Msg::NAV_SAT.value(), Bytes{0, 0, 0, 0, 1, 0, 0, 0}));
     QCOMPARE(empty.events.size(), 1);
     QCOMPARE(std::get<GPSDecodedSatellites>(empty.events.front()).constellations[0].inView, 0);
+    // Receivers before protocol 15 report channels, which do not name their constellation.
+    Bytes channels(8 + 3 * 12, 0);
+    channels[4] = 3;
+    channels[8 + 2] = 1;
+    channels[8 + 2 * 12 + 2] = 1;
+    const auto legacy = driver.decode(ubxFrame(Msg::NAV_SVINFO.value(), channels));
+    QCOMPARE(legacy.events.size(), 1);
+    const auto& tracked = std::get<GPSDecodedSatellites>(legacy.events.front()).constellations[0];
+    QCOMPARE(tracked.constellation, GPSConstellation::Unknown);
+    QCOMPARE(tracked.inView, 3);
+    QCOMPARE(tracked.inUse, std::optional(2));
+    channels[4] = 2;
+    QVERIFY(driver.decode(ubxFrame(Msg::NAV_SVINFO.value(), channels)).events.empty());
     const QString originalIdentity = driver.identity();
     Bytes version(70, 0);
     const std::string module = "MOD=NEO-M9N";

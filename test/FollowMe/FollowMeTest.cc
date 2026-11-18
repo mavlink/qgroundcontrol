@@ -5,6 +5,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "FirmwarePlugin.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "FollowMe.h"
 #include "GPSManager.h"
@@ -181,6 +182,20 @@ void FollowMeTest::_motionPolicyReports()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
     sent.clear();
     QVERIFY(QMetaObject::invokeMethod(&follow, "_sendGCSMotionReport", Qt::DirectConnection));
+    QVERIFY(sent.isEmpty());
+}
+
+void FollowMeTest::_noFollowTargetWithoutAltitude()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(vehicle());
+    // Neither the ground station's altitude above mean sea level nor the vehicle's home is known.
+    QGeoCoordinate noHome;
+    vehicle()->_setHomePosition(noHome);
+    FollowMe::GCSMotionReport report{};
+    report.altMetersAMSL = qQNaN();
+    QSignalSpy sent(vehicle(), &Vehicle::messagesSentChanged);
+    vehicle()->firmwarePlugin()->sendGCSMotionReport(vehicle(), report, 1 << FollowMe::POS);
     QVERIFY(sent.isEmpty());
 }
 

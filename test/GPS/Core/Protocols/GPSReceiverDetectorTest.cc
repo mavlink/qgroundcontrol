@@ -292,4 +292,17 @@ void GPSReceiverDetectorTest::_cancellation()
     QCOMPARE(b->evidence().back().outcome, GPSCommandOutcome::Cancelled);
 }
 
+void GPSReceiverDetectorTest::_linkFailureEndsDetection()
+{
+    auto b = bench(std::nullopt, 0);
+    b->receiver->failNextRead({GPSReadStatus::Closed, 0, QStringLiteral("Receiver unplugged")});
+    const auto detection = b->detect();
+    QVERIFY(!detection.found());
+    QCOMPARE(detection.error, GPSProtocolError::Transport);
+    QCOMPARE(detection.errorDetail, QStringLiteral("Receiver unplugged"));
+    // The link failed while the detector listened at the first rate, before any query.
+    QCOMPARE(b->rates, QList<unsigned>{115200});
+    QVERIFY(b->detection->writes.empty());
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSReceiverDetectorTest, TestLabel::Unit)
