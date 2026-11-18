@@ -26,6 +26,8 @@ private slots:
     void _testDiscoveredCameraReceiverSettingsVisible();
     void _testRecordingEncodingSettingsVisible();
     void _testUsbCameraSettingsShowForTileCamera();
+    void _testVideoDisplaySettingsShown();
+    void _testVideoIndicatorShownWithoutStream();
 
 private:
     QQuickItem* _clickSettingsButton(const QString& pageName);

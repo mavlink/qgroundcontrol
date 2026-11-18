@@ -94,6 +94,16 @@ Connection settings vary by source type:
   restarts the video stream.
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Only the families of the installed decoders are listed, and Vulkan only in builds with the Vulkan GPU path (`QGC_GST_ENABLE_VULKAN`). Changing it restarts the video stream.
 
+## Video Display
+
+How the video is shown in the Fly View. The [Video indicator](../fly_view/fly_view_toolbar.md#video)'s expanded page
+has the same settings.
+
+- **Video Display Fit** — Fit Width / Fit Height / Fill / No Crop (default: Fit Height)
+- **Video Grid Lines** — draw a grid over the video
+- **Telemetry Overlay** — show the telemetry bar's values along the bottom of the video
+  (see [Live Overlay](../fly_view/video_overlay.md#live-overlay))
+
 ## Local Video Storage
 
 - **Record File Format** — mp4 / mov / mkv

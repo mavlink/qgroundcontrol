@@ -1651,7 +1651,6 @@ void VideoManagerTest::_testIndicatorReportsMeasuredSource()
     toolbar->setParentItem(window.contentItem());
     const QQuickItem* const indicator = toolbar->findChild<QQuickItem*>(QStringLiteral("toolbar_videoStreamIndicator"));
     QVERIFY(indicator);
-    QVERIFY(!indicator->property("showIndicator").toBool());
 
     // Only the thermal stream is measured: the figures are its own.
     VideoStreamStats thermalStats;
@@ -1675,7 +1674,9 @@ void VideoManagerTest::_testIndicatorReportsMeasuredSource()
     // The USB camera, which runs in the primary stream's place, has no bitrate to show: its resolution instead.
     _primary->setStats({});
     _thermal->setStats({});
-    QVERIFY(!indicator->property("showIndicator").toBool());
+    // No source is measured, and the video is awaited: the indicator says so in place of the figures.
+    QVERIFY(indicator->property("showIndicator").toBool());
+    QVERIFY(showsText(indicator, QStringLiteral("Waiting")));
     UVCCameraController* const camera = _videoManager->uvcCamera();
     VideoStreamStats cameraStats;
     cameraStats.valid = true;
