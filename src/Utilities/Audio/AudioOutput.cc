@@ -15,8 +15,19 @@
 #include <algorithm>
 
 QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
-// qt.speech.tts.flite
-// qt.speech.tts.android
+
+namespace {
+
+/// Replaces what @p group of @p regex captured, until the text has no match left
+QString replaceCaptureUntilNoMatch(QString text, const QRegularExpression& regex, int group, const QString& replacement)
+{
+    for (auto match = regex.match(text); match.hasMatch(); match = regex.match(text)) {
+        (void) text.replace(match.capturedStart(group), match.capturedLength(group), replacement);
+    }
+    return text;
+}
+
+}  // namespace
 
 // Keys in both tables must not end in a digit: trailing instance digits are split off before lookup.
 const QHash<QString, QString> AudioOutput::_textHash = {
@@ -65,7 +76,6 @@ AudioOutput::AudioOutput(QObject* parent)
     : QObject(parent)
     , _engine(new QTextToSpeech(_engineName(), this))
 {
-    // qCDebug(AudioOutputLog) << this;
 }
 
 QString AudioOutput::_engineName()
@@ -98,11 +108,6 @@ void AudioOutput::_fallBackToDefaultEngine()
     // QTextToSpeech carries the volume over to the new engine.
     _engineSwitched = true;
     (void) _engine->setEngine(QString());
-}
-
-AudioOutput::~AudioOutput()
-{
-    // qCDebug(AudioOutputLog) << this;
 }
 
 AudioOutput *AudioOutput::instance()
@@ -182,13 +187,9 @@ void AudioOutput::_finishInit()
 {
     _applyEngineSettings();
 
-    (void) connect(_volumeFact, &Fact::valueChanged, this, [this]() {
-        _setVolume();
-    });
-
-    (void) connect(_mutedFact, &Fact::valueChanged, this, [this]() {
-        _setVolume();
-    });
+    for (const Fact* fact : {_volumeFact, _mutedFact}) {
+        (void) connect(fact, &Fact::valueChanged, this, &AudioOutput::_setVolume);
+    }
 
     if (AudioOutputLog().isDebugEnabled()) {
         (void) connect(_engine, &QTextToSpeech::localeChanged, this, [](const QLocale &locale) {
@@ -401,41 +402,25 @@ QString AudioOutput::_replaceDecimalPoints(const QString &input)
 {
     static const QRegularExpression realNumRegex(QStringLiteral("([0-9]+)(\\.)([0-9]+)"));
 
-    QString output = input;
-    QRegularExpressionMatch realNumRegexMatch = realNumRegex.match(output);
-    while (realNumRegexMatch.hasMatch()) {
-        if (!realNumRegexMatch.captured(2).isNull()) {
-            (void) output.replace(realNumRegexMatch.capturedStart(2), realNumRegexMatch.capturedEnd(2) - realNumRegexMatch.capturedStart(2), QStringLiteral(" point "));
-        }
-        realNumRegexMatch = realNumRegex.match(output);
-    }
-
-    return output;
+    return replaceCaptureUntilNoMatch(input, realNumRegex, 2, QStringLiteral(" point "));
 }
 
 QString AudioOutput::_replaceMeters(const QString &input)
 {
     static const QRegularExpression realNumMeterRegex(QStringLiteral("[0-9]*\\.?[0-9]\\s?(m)([^A-Za-z]|$)"));
 
-    QString output = input;
-    QRegularExpressionMatch realNumMeterRegexMatch = realNumMeterRegex.match(output);
-    while (realNumMeterRegexMatch.hasMatch()) {
-        if (!realNumMeterRegexMatch.captured(1).isNull()) {
-            (void) output.replace(realNumMeterRegexMatch.capturedStart(1), realNumMeterRegexMatch.capturedEnd(1) - realNumMeterRegexMatch.capturedStart(1), QStringLiteral(" meters"));
-        }
-        realNumMeterRegexMatch = realNumMeterRegex.match(output);
-    }
-
-    return output;
+    return replaceCaptureUntilNoMatch(input, realNumMeterRegex, 1, QStringLiteral(" meters"));
 }
 
 QString AudioOutput::_convertMilliseconds(const QString &input)
 {
+    static const QRegularExpression msRegex("((?<number>[0-9]+)ms)");
+
     QString result = input;
 
-    QString match;
-    int number;
-    if (_getMillisecondString(input, match, number) && (number >= 1000)) {
+    const QRegularExpressionMatch match = msRegex.match(input);
+    const int number = match.captured("number").toInt();
+    if (match.hasMatch() && (number >= 1000)) {
         QString newNumber;
         if (number < 60000) {
             const int seconds = number / 1000;
@@ -452,24 +437,7 @@ QString AudioOutput::_convertMilliseconds(const QString &input)
                 (void) newNumber.append(QStringLiteral(" and %1 second%2").arg(seconds).arg(seconds > 1 ? "s" : ""));
             }
         }
-        (void) result.replace(match, newNumber);
-    }
-
-    return result;
-}
-
-bool AudioOutput::_getMillisecondString(const QString &string, QString &match, int &number)
-{
-    static const QRegularExpression msRegex("((?<number>[0-9]+)ms)");
-
-    bool result = false;
-
-    QRegularExpressionMatch regexpMatch = msRegex.match(string);
-    if (regexpMatch.hasMatch()) {
-        match = regexpMatch.captured(0);
-        const QString numberStr = regexpMatch.captured("number");
-        number = numberStr.toInt();
-        result = true;
+        (void) result.replace(match.captured(0), newNumber);
     }
 
     return result;

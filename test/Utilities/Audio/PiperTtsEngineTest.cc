@@ -47,6 +47,9 @@ public:
         // Only shell built-ins: PATH holds nothing else.
         QByteArray script =
             "#!/bin/sh\n"
+            ": > '" +
+            recordPath("started") +
+            "'\n"
             "if [ \"$1\" = \"--help\" ]; then\n"
             "    echo \"usage: piper [-h] -m MODEL [-d OUTPUT_DIR]\"\n"
             "    echo \"  -m MODEL, --model MODEL\"\n"
@@ -83,24 +86,25 @@ public:
         return writePiperStandIn(_dir.filePath(name), "#!/nonexistent/interpreter\n");
     }
 
+    /// True if a stand-in of installPiper() has been started, with any arguments.
+    bool wasStarted() const { return QFile::exists(_dir.filePath(QStringLiteral("started"))); }
+
     /// The path and the arguments of the stand-in the engine last started with a voice.
-    QStringList arguments() const
-    {
-        return QString::fromUtf8(TestFixtures::readFile(_dir.filePath(QStringLiteral("arguments"))))
-            .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-    }
+    QStringList arguments() const { return recordedLines("arguments"); }
 
     /// The lines the stand-in has read.
-    QStringList utterances() const
-    {
-        return QString::fromUtf8(TestFixtures::readFile(_dir.filePath(QStringLiteral("utterances"))))
-            .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-    }
+    QStringList utterances() const { return recordedLines("utterances"); }
 
     QString filePath(const QString& name) const { return _dir.filePath(name); }
 
 private:
     QByteArray recordPath(const char* name) const { return _dir.filePath(QLatin1StringView(name)).toUtf8(); }
+
+    QStringList recordedLines(const char* name) const
+    {
+        return QString::fromUtf8(TestFixtures::readFile(_dir.filePath(QLatin1StringView(name))))
+            .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    }
 
     QTemporaryDir _dir;
     TestFixtures::EnvVarFixture _restorePath;
@@ -216,6 +220,16 @@ void PiperTtsEngineTest::_testExecutableIsNotPiper()
     QCOMPARE(engine.state(), QTextToSpeech::State::Error);
     QCOMPARE(engine.errorReason(), QTextToSpeech::ErrorReason::Initialization);
     QVERIFY(!engine.errorString().isEmpty());
+}
+
+void PiperTtsEngineTest::_testAvailabilityRunsNoCandidate()
+{
+    PiperSearchPath searchPath;
+    QVERIFY(searchPath.isValid());
+    QVERIFY(searchPath.installPiper());
+
+    QVERIFY(PiperTtsEngine::isAvailable());
+    QVERIFY2(!searchPath.wasStarted(), "Checking for Piper while the application starts must not run it");
 }
 
 void PiperTtsEngineTest::_testSkipsUnusableCandidate_data()

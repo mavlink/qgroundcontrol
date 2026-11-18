@@ -15,6 +15,7 @@ private slots:
 
     void _testNoExecutable();
     void _testExecutableIsNotPiper();
+    void _testAvailabilityRunsNoCandidate();
     void _testSkipsUnusableCandidate_data();
     void _testSkipsUnusableCandidate();
     void _testStartsPiperWithCurrentVoice();
