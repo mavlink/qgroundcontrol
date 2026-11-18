@@ -1,6 +1,6 @@
 # Video Overlay
 
-When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Whichever telemetry values are selected for display in the telemetry [values widget](hud.md#instrument_panel) will also be exported to the overlay. The overlay values are updated at 1Hz, and each update carries the date and time it was taken, shown at the top left of the video.
+When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Whichever telemetry values are selected for display in the telemetry [values widget](instrument_panel.md) will also be exported to the overlay. The overlay values are updated at 1Hz, and each update carries the date and time it was taken, shown at the top left of the video.
 
 The selected values are laid out in three columns to optimize the screen utilization.
 

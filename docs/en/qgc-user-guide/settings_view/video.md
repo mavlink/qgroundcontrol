@@ -112,6 +112,8 @@ has the same settings.
 
 ## Local Video Storage
 
+Recordings are saved in the `Video` folder of the [Application Load/Save Path](general.md#load_save_path).
+
 - **Record File Format** — mp4 / mov / mkv
 - **Recording Codec** (USB cameras, and streams with the Qt Multimedia [video backend](#settings)) — the codec a
   recording that QGroundControl encodes tries first, from the ones Qt can encode on this computer. **Auto** records with
