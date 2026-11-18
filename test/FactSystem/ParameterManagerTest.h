@@ -27,6 +27,8 @@ private slots:
     void _paramWriteUInt16();
     void _paramReadFirstAttemptNoResponseRetry();
     void _paramReadNoResponse();
+    void _requestStateMachineDeletedWhenFinished_data();
+    void _requestStateMachineDeletedWhenFinished();
     void _paramWriteParamError();
     void _paramReadParamError_data();
     void _paramReadParamError();

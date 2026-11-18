@@ -456,6 +456,9 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
     userNotifyState->addThisTransition  (&QGCState::advance, paramRefreshState);
     paramRefreshState->addThisTransition(&QGCState::advance, finalState);
 
+    // Every path ends in finalState and nothing else owns the machine
+    connect(stateMachine, &QGCStateMachine::finished, stateMachine, &QGCStateMachine::deleteLater);
+
     qCDebug(ParameterManagerLog) << "Starting state machine for PARAM_SET on: " << paramName << _vehicleAndComponentString(componentId);
     stateMachine->start();
 }
@@ -1159,6 +1162,9 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
         logFailureState->addThisTransition  (&QGCState::advance, finalState);
     }
     userNotifyState->addThisTransition  (&QGCState::advance, finalState);
+
+    // Every path ends in finalState and nothing else owns the machine
+    connect(stateMachine, &QGCStateMachine::finished, stateMachine, &QGCStateMachine::deleteLater);
 
     qCDebug(ParameterManagerLog) << "Starting state machine for PARAM_REQUEST_READ on: " << paramName << _vehicleAndComponentString(componentId);
     stateMachine->start();

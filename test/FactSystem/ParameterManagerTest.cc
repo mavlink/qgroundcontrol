@@ -17,6 +17,7 @@
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCMath.h"
+#include "QGCStateMachine.h"
 #include "Vehicle.h"
 
 // Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
@@ -467,6 +468,62 @@ void ParameterManagerTest::_paramReadNoResponse()
     QCOMPARE(paramReadFailureSpy.count(), 1);
     QCOMPARE(vehicleUpdatedSpy.count(), 0);
     verifyExpectedLogMessage();
+    _disconnectMockLink();
+}
+
+void ParameterManagerTest::_requestStateMachineDeletedWhenFinished_data()
+{
+    QTest::addColumn<bool>("write");
+    QTest::addColumn<bool>("vehicleResponds");
+
+    QTest::newRow("write acked") << true << true;
+    QTest::newRow("write retries exhausted") << true << false;
+    QTest::newRow("read answered") << false << true;
+    QTest::newRow("read retries exhausted") << false << false;
+}
+
+void ParameterManagerTest::_requestStateMachineDeletedWhenFinished()
+{
+    QFETCH(bool, write);
+    QFETCH(bool, vehicleResponds);
+
+    if (!vehicleResponds) {
+        _ignoreParamResponseTimeouts();
+    }
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+    Fact* const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
+    QVERIFY(fact);
+    QVERIFY(paramManager->findChildren<QGCStateMachine*>().isEmpty());
+
+    if (write) {
+        _mockLink->setParamSetFailureMode(vehicleResponds ? MockLink::FailParamSetNone : MockLink::FailParamSetNoAck);
+        expectAppMessage(QRegularExpression("Vehicle reboot required for changes to take effect"));
+        if (!vehicleResponds) {
+            expectAppMessage(QRegularExpression("Parameter write failed"));
+        }
+        fact->setRawValue(fact->rawValue().toDouble() + 0.1);
+    } else {
+        _mockLink->setParamRequestReadFailureMode(vehicleResponds ? MockLink::FailParamRequestReadNone
+                                                                  : MockLink::FailParamRequestReadNoResponse);
+        paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name(), false /* notifyFailure */);
+    }
+    QVERIFY(!paramManager->findChildren<QGCStateMachine*>().isEmpty());
+
+    // A failed write is followed by a refresh of the parameter, which runs a machine of its own
+    QVERIFY_TRUE_WAIT(paramManager->findChildren<QGCStateMachine*>().isEmpty(), TestTimeout::mediumMs());
+    if (write) {
+        verifyExpectedLogMessage();
+        if (!vehicleResponds) {
+            verifyExpectedLogMessage();
+        }
+    }
+    _mockLink->setParamSetFailureMode(MockLink::FailParamSetNone);
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNone);
     _disconnectMockLink();
 }
 
