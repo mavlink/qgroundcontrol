@@ -65,6 +65,11 @@ struct CommandLineParseResult
 /// @note Prefer using parse() which manages the QCoreApplication lifecycle
 CommandLineParseResult parseCommandLine();
 
+/// @brief Parse @a arguments the way parseCommandLine() parses those of the application
+/// @param arguments The program name followed by its arguments, as QCoreApplication::arguments() returns them
+/// @return Parsed result with status and option values
+CommandLineParseResult parseArguments(const QStringList& arguments);
+
 /// @brief Parse command-line arguments with automatic QCoreApplication management
 /// @param argc Argument count from main()
 /// @param argv Argument values from main()
