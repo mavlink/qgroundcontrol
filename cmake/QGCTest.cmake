@@ -262,8 +262,8 @@ function(add_qgc_test test_name)
 
         # Per-test isolated temp dir so tests writing under QDir::tempPath() /
         # QStandardPaths::TempLocation (both honor TMPDIR on Unix, TMP/TEMP on
-        # Windows) never collide. This replaces the shared TempFiles RESOURCE_LOCK
-        # and needs no C++ change — QTemporaryDir/QStandardPaths pick it up.
+        # Windows) never collide and need no RESOURCE_LOCK for their temporary files.
+        # It needs no C++ change — QTemporaryDir/QStandardPaths pick it up.
         set(_test_env ${_base_test_env})
         set(_test_tmpdir "${CMAKE_BINARY_DIR}/test-tmp/${_ctest_name}")
         file(MAKE_DIRECTORY "${_test_tmpdir}")
@@ -305,14 +305,7 @@ function(add_qgc_test test_name)
                 set_tests_properties(${_ctest_name} PROPERTIES PROCESSORS 2)
             endif()
         elseif(ARG_RESOURCE_LOCK)
-            # TempFiles is now handled by per-test isolated TMPDIR above; strip it so
-            # those tests parallelize. Genuinely serial locks (MockLink, Joystick,
-            # Settings, fixed ports, PlanViewSettings) are preserved.
-            set(_resource_lock ${ARG_RESOURCE_LOCK})
-            list(REMOVE_ITEM _resource_lock TempFiles)
-            if(_resource_lock)
-                set_tests_properties(${_ctest_name} PROPERTIES RESOURCE_LOCK "${_resource_lock}")
-            endif()
+            set_tests_properties(${_ctest_name} PROPERTIES RESOURCE_LOCK "${ARG_RESOURCE_LOCK}")
         endif()
     endforeach()
 
