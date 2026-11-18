@@ -314,7 +314,7 @@ void QGCFileWatcherTest::_testWatchFilePersistent()
 void QGCFileWatcherTest::_testWatchNonExistentFile()
 {
     QGCFileWatcher watcher;
-    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("watchFile: file does not exist:"));
+    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("^file does not exist:"));
     QVERIFY(!watcher.watchFile("/nonexistent/path/to/file.txt", nullptr));
     verifyExpectedLogMessage();
     QVERIFY(watcher.watchedFiles().isEmpty());
@@ -323,7 +323,7 @@ void QGCFileWatcherTest::_testWatchNonExistentFile()
 void QGCFileWatcherTest::_testWatchNonExistentDirectory()
 {
     QGCFileWatcher watcher;
-    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("watchDirectory: not a directory:"));
+    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("^not a directory:"));
     QVERIFY(!watcher.watchDirectory("/nonexistent/path/to/directory", nullptr));
     verifyExpectedLogMessage();
     QVERIFY(watcher.watchedDirectories().isEmpty());
@@ -332,10 +332,10 @@ void QGCFileWatcherTest::_testWatchNonExistentDirectory()
 void QGCFileWatcherTest::_testWatchEmptyPath()
 {
     QGCFileWatcher watcher;
-    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("watchFile: empty path"));
+    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("^empty path$"));
     QVERIFY(!watcher.watchFile(QString(), nullptr));
     verifyExpectedLogMessage();
-    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("watchDirectory: empty path"));
+    expectLogMessage("Utilities.QGCFileWatcher", QtWarningMsg, QRegularExpression("^empty path$"));
     QVERIFY(!watcher.watchDirectory(QString(), nullptr));
     verifyExpectedLogMessage();
 }

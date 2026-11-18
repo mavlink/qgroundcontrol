@@ -46,14 +46,14 @@ void QGCFileWatcher::setDebounceDelay(int milliseconds)
 bool QGCFileWatcher::watchFile(const QString &filePath, ChangeCallback callback)
 {
     if (filePath.isEmpty()) {
-        qCWarning(QGCFileWatcherLog) << "watchFile: empty path";
+        qCWarning(QGCFileWatcherLog) << "empty path";
         return false;
     }
 
     const QString canonicalPath = QFileInfo(filePath).absoluteFilePath();
 
     if (!QFileInfo::exists(canonicalPath)) {
-        qCWarning(QGCFileWatcherLog) << "watchFile: file does not exist:" << filePath;
+        qCWarning(QGCFileWatcherLog) << "file does not exist:" << filePath;
         return false;
     }
 
@@ -73,7 +73,7 @@ bool QGCFileWatcher::watchFile(const QString &filePath, ChangeCallback callback)
         return true;
     }
 
-    qCWarning(QGCFileWatcherLog) << "watchFile: failed to add:" << filePath;
+    qCWarning(QGCFileWatcherLog) << "failed to add:" << filePath;
     return false;
 }
 
@@ -111,14 +111,14 @@ QStringList QGCFileWatcher::watchedFiles() const
 bool QGCFileWatcher::watchDirectory(const QString &directoryPath, ChangeCallback callback)
 {
     if (directoryPath.isEmpty()) {
-        qCWarning(QGCFileWatcherLog) << "watchDirectory: empty path";
+        qCWarning(QGCFileWatcherLog) << "empty path";
         return false;
     }
 
     const QString canonicalPath = QFileInfo(directoryPath).absoluteFilePath();
 
     if (!QFileInfo(canonicalPath).isDir()) {
-        qCWarning(QGCFileWatcherLog) << "watchDirectory: not a directory:" << directoryPath;
+        qCWarning(QGCFileWatcherLog) << "not a directory:" << directoryPath;
         return false;
     }
 
@@ -138,7 +138,7 @@ bool QGCFileWatcher::watchDirectory(const QString &directoryPath, ChangeCallback
         return true;
     }
 
-    qCWarning(QGCFileWatcherLog) << "watchDirectory: failed to add:" << directoryPath;
+    qCWarning(QGCFileWatcherLog) << "failed to add:" << directoryPath;
     return false;
 }
 
