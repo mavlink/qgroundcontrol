@@ -1,7 +1,5 @@
 #include "SkippableAsyncState.h"
 
-#include <QtCore/QMetaObject>
-
 SkippableAsyncState::SkippableAsyncState(const QString& stateName, QState* parent, SkipPredicate skipPredicate,
                                          SetupFunction setupFunc, SkipAction skipAction, int timeoutMsecs)
     : CompletionWaitState(stateName, parent, timeoutMsecs)
@@ -20,9 +18,9 @@ void SkippableAsyncState::onWaitEntered()
             _skipAction();
         }
 
-        // Defer signal emission to avoid firing during state entry
-        // This ensures the state machine finishes entering before transitions are evaluated
-        QMetaObject::invokeMethod(this, &SkippableAsyncState::skipped, Qt::QueuedConnection);
+        // The machine takes the transition once the state is entered: Qt queues a signal that a state emits
+        // while it is entered
+        emit skipped();
         return;
     }
 

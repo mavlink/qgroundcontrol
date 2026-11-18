@@ -141,6 +141,56 @@ void QGCStateMachineTest::_testLocalErrorState()
     QVERIFY(localErrorHandled);    // Local error should be called
 }
 
+void QGCStateMachineTest::_testLocalErrorStateSetLast_data()
+{
+    // Names of the error states given to setLocalErrorState(), an empty name for none
+    QTest::addColumn<QStringList>("beforeRegistered");
+    QTest::addColumn<QStringList>("afterRegistered");
+    QTest::addColumn<QString>("expectedErrorState");
+
+    QTest::newRow("set after the state is registered")
+        << QStringList() << QStringList{QStringLiteral("Local")} << QStringLiteral("Local");
+    QTest::newRow("set before and again after the state is registered")
+        << QStringList{QStringLiteral("Local")} << QStringList{QStringLiteral("OtherLocal")}
+        << QStringLiteral("OtherLocal");
+    QTest::newRow("set, and removed after the state is registered")
+        << QStringList{QStringLiteral("Local")} << QStringList{QString()} << QStringLiteral("Global");
+}
+
+void QGCStateMachineTest::_testLocalErrorStateSetLast()
+{
+    QFETCH(QStringList, beforeRegistered);
+    QFETCH(QStringList, afterRegistered);
+    QFETCH(QString, expectedErrorState);
+
+    QGCStateMachine machine(QStringLiteral("LocalErrorStateSetLastTest"), nullptr);
+    QStringList enteredErrorStates;
+    QHash<QString, QAbstractState*> errorStates;
+    auto* finalState = machine.addFinalState();
+    for (const QString& name : {QStringLiteral("Global"), QStringLiteral("Local"), QStringLiteral("OtherLocal")}) {
+        auto* errorState =
+            new FunctionState(name, &machine, [&enteredErrorStates, name]() { enteredErrorStates.append(name); });
+        errorState->addTransition(errorState, &QGCState::advance, finalState);
+        errorStates.insert(name, errorState);
+    }
+    machine.setGlobalErrorState(errorStates.value(QStringLiteral("Global")));
+
+    auto* failingState =
+        new AsyncFunctionState(QStringLiteral("Failing"), &machine, [](AsyncFunctionState* state) { state->fail(); });
+    for (const QString& name : beforeRegistered) {
+        failingState->setLocalErrorState(errorStates.value(name));
+    }
+    // As the factories of the machine do for the states they create
+    machine.registerState(failingState);
+    for (const QString& name : afterRegistered) {
+        failingState->setLocalErrorState(errorStates.value(name));
+    }
+    machine.setInitialState(failingState);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(enteredErrorStates, QStringList{expectedErrorState});
+}
+
 void QGCStateMachineTest::_testInProgressSpansQueuedStart_data()
 {
     QTest::addColumn<bool>("hasInitialState");
@@ -284,6 +334,35 @@ void QGCStateMachineTest::_testSetInitialStateStartsMachine()
     QCOMPARE(machine.initialState(), state);
     QVERIFY(machine.inProgress());
     QVERIFY(spyTriggered(enteredSpy));
+}
+
+void QGCStateMachineTest::_testErrorInMachineIsCritical()
+{
+    QGCStateMachine machine(QStringLiteral("MachineErrorTest"), nullptr);
+    // Qt cannot enter a state that has child states and no initial state, and stops the machine
+    auto* compoundState = new QGCState(QStringLiteral("Compound"), &machine);
+    auto* childState = new QGCState(QStringLiteral("Child"), compoundState);
+    machine.setInitialState(compoundState);
+
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+    expectLogMessage("default", QtWarningMsg,
+                     QRegularExpression("Unrecoverable error detected in running state machine"));
+    expectLogMessage(
+        "Utilities.QGCStateMachine", QtCriticalMsg,
+        QRegularExpression("\"MachineErrorTest\" stopped after an error in the machine: \"Missing initial state"));
+    machine.start();
+    QVERIFY(spyTriggered(stoppedSpy));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QVERIFY(!machine.inProgress());
+    QCOMPARE(machine.error(), QStateMachine::NoInitialStateError);
+
+    // The machine can be corrected and run again, and a run that is stopped then reports no error of this one
+    compoundState->setInitialState(childState);
+    QVERIFY(startAndWaitForEntered(&machine, childState));
+    QCOMPARE(machine.error(), QStateMachine::NoError);
+    machine.stop();
+    QVERIFY_SIGNAL_COUNT_WAIT(stoppedSpy, 2, TestTimeout::shortMs());
 }
 
 void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine_data()
@@ -558,6 +637,38 @@ void QGCStateMachineTest::_testRestartWhenFinishedResetsProgress()
     machine.setSubProgress(0.5f);
     QCOMPARE(progressSpy.count(), 1);
     QCOMPARE(machine.progress(), 0.5f);
+}
+
+void QGCStateMachineTest::_testProgressWeightsReplaced()
+{
+    QGCStateMachine machine(QStringLiteral("ProgressWeightsReplacedTest"), nullptr);
+    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
+    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
+    machine.addEventTransition(state1, QStringLiteral("next"), state2);
+    machine.setProgressWeights({{state1, 1}, {state2, 1}});
+    machine.setInitialState(state1);
+
+    QSignalSpy state2EnteredSpy(state2, &QState::entered);
+    QVERIFY(startAndWaitForEntered(&machine, state1));
+    machine.postEvent(QStringLiteral("next"));
+    QVERIFY(spyTriggered(state2EnteredSpy));
+    QCOMPARE(machine.progress(), 0.5f);
+
+    // The progress of a new list starts at 0, and stays there until one of its states is entered. An entry
+    // without a state or without a weight is left out.
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    const QRegularExpression ignored(QStringLiteral("progress weight ignored"));
+    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, ignored);
+    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, ignored);
+    machine.setProgressWeights({{state1, 2}, {nullptr, 1}, {state2, 0}});
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(_spyFloatArg(progressSpy, 0), 0.0f);
+    QCOMPARE(machine.progress(), 0.0f);
+    machine.setSubProgress(1.0f);
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.0f);
 }
 
 UT_REGISTER_TEST(QGCStateMachineTest, TestLabel::Unit, TestLabel::Utilities)

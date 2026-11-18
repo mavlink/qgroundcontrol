@@ -18,6 +18,10 @@ class Vehicle;
 /// and an answer to it is still accepted. No timeout runs while the state waits for that, so it waits
 /// for as long as Vehicle tracks the request; the timeout of the next attempt starts when it is sent.
 ///
+/// Vehicle refuses a request while another one for the same message is outstanding. An attempt that is
+/// refused ends at its timeout like one that is not answered, so the retries are spread over the time the
+/// other request may take. Without a timeout the attempt fails at once.
+///
 /// The outstanding request is cancelled when the state is exited or destroyed. A vehicle that is
 /// destroyed while its answer is awaited fails the state.
 ///
@@ -122,6 +126,7 @@ private:
 
     bool _requestActive = false;
     bool _retryWhenRequestFails = false;
+    bool _requestRefused = false;
 
     VehicleTypes::RequestMessageResultHandlerFailureCode_t _lastFailureCode = VehicleTypes::RequestMessageNoFailure;
     MAV_RESULT _lastResult = MAV_RESULT_ACCEPTED;

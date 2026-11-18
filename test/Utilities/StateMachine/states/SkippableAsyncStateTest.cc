@@ -98,6 +98,27 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
     QVERIFY_NO_SIGNAL(stateSpy, "advance");
 }
 
+void SkippableAsyncStateTest::_testSkippedBeforeMachineStops()
+{
+    QGCStateMachine machine(QStringLiteral("SkippedBeforeStoppedTest"), nullptr);
+    QStringList signalOrder;
+
+    // The skip action stops the machine while the state is entered
+    auto* skippableState = new SkippableAsyncState(
+        QStringLiteral("Skipped"), &machine, []() { return true; }, [](SkippableAsyncState*) {},
+        [&machine]() { machine.stop(); });
+    machine.setInitialState(skippableState);
+    connect(skippableState, &SkippableAsyncState::skipped, &machine,
+            [&signalOrder]() { signalOrder.append(QStringLiteral("skipped")); });
+    connect(&machine, &QStateMachine::stopped, &machine,
+            [&signalOrder]() { signalOrder.append(QStringLiteral("stopped")); });
+
+    machine.start();
+    QTRY_COMPARE_WITH_TIMEOUT(signalOrder.size(), 2, TestTimeout::shortMs());
+    // The state does not report that it was skipped to a machine that has stopped
+    QCOMPARE(signalOrder, QStringList({QStringLiteral("skipped"), QStringLiteral("stopped")}));
+}
+
 void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
 {
     ignoreTimeoutWarnings();

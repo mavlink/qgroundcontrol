@@ -1,6 +1,9 @@
 #include "MachineEventTransitionTest.h"
 
+#include <memory>
+
 #include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
 
 #include "StateTestCommon.h"
 
@@ -112,6 +115,60 @@ void MachineEventTransitionTest::_testDelayedEventCancel()
     QVERIFY(!eventReceived);
 
     machine.stop();
+}
+
+void MachineEventTransitionTest::_testEventThatIsNotPostedIsDeleted_data()
+{
+    QTest::addColumn<bool>("started");
+    QTest::addColumn<bool>("running");
+
+    QTest::newRow("machine never started") << false << false;
+    QTest::newRow("between start() and the entry of the initial state") << true << false;
+    QTest::newRow("running machine, negative delay") << true << true;
+}
+
+void MachineEventTransitionTest::_testEventThatIsNotPostedIsDeleted()
+{
+    QFETCH(bool, started);
+    QFETCH(bool, running);
+
+    QGCStateMachine machine(QStringLiteral("EventNotPostedTest"), nullptr);
+    auto* waitState = new QGCState(QStringLiteral("Wait"), &machine);
+    machine.addEventTransition(waitState, QStringLiteral("go"), machine.addFinalState());
+    machine.setInitialState(waitState);
+
+    QSignalSpy enteredSpy(waitState, &QState::entered);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    if (started) {
+        machine.start();
+    }
+    if (running) {
+        QVERIFY(spyTriggered(enteredSpy));
+    }
+
+    // An event holds a copy of its data for as long as it exists
+    const auto payload = std::make_shared<int>(0);
+    if (running) {
+        expectLogMessage("default", QtWarningMsg, QRegularExpression("postDelayedEvent: delay cannot be negative"));
+        QCOMPARE(machine.postDelayedEvent(QStringLiteral("go"), -1, QVariant::fromValue(payload)), -1);
+        verifyExpectedLogMessage();
+    } else {
+        const QRegularExpression notPosted(QStringLiteral("event not posted, the machine is not running: \"go\""));
+        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, notPosted);
+        machine.postEvent(QStringLiteral("go"), QVariant::fromValue(payload));
+        verifyExpectedLogMessage();
+        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, notPosted);
+        QCOMPARE(machine.postDelayedEvent(QStringLiteral("go"), 0, QVariant::fromValue(payload)), -1);
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(payload.use_count(), 1);
+
+    if (started) {
+        // The machine has taken no event
+        QVERIFY(spyTriggered(enteredSpy));
+        QCoreApplication::processEvents();
+        QCOMPARE(finishedSpy.count(), 0);
+    }
 }
 
 void MachineEventTransitionTest::_testEventPriority()

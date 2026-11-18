@@ -2,6 +2,8 @@
 
 #include <functional>
 
+#include <QtCore/QMetaObject>
+
 #include "QGCSignalTransition.h"
 #include "SignalSender.h"
 
@@ -12,6 +14,9 @@
 /// On each trigger (e.g., timeout signal):
 /// - If retry count < max: increment count, invoke retryAction, block transition
 /// - If retry count >= max: reset count, allow transition to target
+///
+/// The count starts again each time the source state is entered, so a state that was left through another
+/// transition after some retries has all of them the next time.
 ///
 /// Example usage:
 /// @code
@@ -48,7 +53,7 @@ public:
         setTargetState(target);
     }
 
-    /// Reset retry count (call when re-entering the source state)
+    /// Reset retry count. Done when the source state is entered and when the transition is taken.
     void reset() { _retryCount = 0; }
 
     /// Get current retry count
@@ -69,4 +74,5 @@ private:
     RetryAction _retryAction;
     int _maxRetries = 1;
     int _retryCount = 0;
+    QMetaObject::Connection _resetOnEntry;
 };

@@ -66,6 +66,9 @@ protected:
 
     int timeoutMsecs() const { return _timeoutMsecs; }
 
+    /// @return true once waitComplete() or waitFailed() has ended the wait that began when the state was entered
+    bool waitEnded() const { return _completed; }
+
 private slots:
     void _onEntered();
     void _stopWaiting();

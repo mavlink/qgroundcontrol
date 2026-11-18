@@ -70,14 +70,16 @@ public:
     // Event Handling
     // -------------------------------------------------------------------------
 
-    /// Set a global error state that all QGCState errors will transition to
+    /// Set a global error state that all QGCState errors will transition to. Set it before the states are
+    /// registered: registerState() gives a state the global error state that the machine has at that time.
     /// @param errorState The state to transition to on error
     void setGlobalErrorState(QAbstractState* errorState);
 
     QAbstractState* globalErrorState() const { return _globalErrorState; }
 
     /// Register a QGCState with the machine and automatically wire up error transitions
-    /// If a global error state is set, the state's error() signal will transition to it
+    /// If a global error state is set, the state's error() signal will transition to it, unless the state has a
+    /// local error state or is given one later (QGCState::setLocalErrorState())
     /// @param state The state to register
     void registerState(QGCState* state);
 
@@ -101,17 +103,19 @@ public:
     DelayState* addDelayState(int delayMsecs);
 
     /// Post a named event to be processed immediately
+    /// The machine must be running, which it is from the entry of its initial state and not yet when start()
+    /// returns: an event for a machine that is not running is not posted, and a warning says so.
     /// @param eventName Name of the event
     /// @param data Optional payload data
     /// @param priority Event priority (HighPriority events are processed before NormalPriority)
     void postEvent(const QString& eventName, const QVariant& data = QVariant(),
                    EventPriority priority = NormalPriority);
 
-    /// Post a named event with a delay
+    /// Post a named event with a delay. The machine must be running, as for postEvent().
     /// @param eventName Name of the event
     /// @param delayMsecs Delay in milliseconds
     /// @param data Optional payload data
-    /// @return Event ID that can be used to cancel the event
+    /// @return Event ID that can be used to cancel the event, -1 if the event was not posted
     int postDelayedEvent(const QString& eventName, int delayMsecs, const QVariant& data = QVariant());
 
     /// Cancel a previously posted delayed event
@@ -220,6 +224,9 @@ public:
     /// });
     /// @endcode
     ///
+    /// The progress starts over, as after resetProgress(). An entry without a state or with a weight of 0 or less
+    /// is ignored with a warning.
+    ///
     /// @param stateWeights List of state/weight pairs in order of execution
     void setProgressWeights(const QList<QPair<QAbstractState*, int>>& stateWeights);
 
@@ -253,6 +260,7 @@ protected:
 private:
     void _onStateEntered();
     void _setInProgress(bool inProgress);
+    bool _canPostEvent(const QString& eventName) const;
     float _calculateProgress() const;
 
     Vehicle* _vehicle = nullptr;

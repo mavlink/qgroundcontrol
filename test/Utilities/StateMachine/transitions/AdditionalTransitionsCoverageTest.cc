@@ -1,5 +1,7 @@
 #include "AdditionalTransitionsCoverageTest.h"
 
+#include <QtCore/QRegularExpression>
+
 #include "MAVLinkLib.h"
 #include "MachineEventTransition.h"
 #include "StateTestCommon.h"
@@ -196,6 +198,38 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionWaitRearmedBeforeRet
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QVERIFY(waitWasRearmedBeforeRetryAction);
+}
+
+void AdditionalTransitionsCoverageTest::_testRetryTransitionCountStartsAgainOnEntry()
+{
+    ignoreTimeoutWarnings();
+    QGCStateMachine machine(QStringLiteral("RetryReentryTest"), nullptr);
+    int retryActionCalls = 0;
+
+    // Never completes, so every wait ends in a timeout
+    auto* waitState = new AsyncFunctionState(QStringLiteral("Wait"), &machine, [](AsyncFunctionState*) {}, 20);
+    auto* detourState = new FunctionState(QStringLiteral("Detour"), &machine, []() {});
+    machine.addRetryTransition(
+        waitState, &WaitStateBase::timeout, machine.addFinalState(),
+        [&machine, &retryActionCalls]() {
+            // After its first retry the state is left through another transition, and entered again
+            if (++retryActionCalls == 1) {
+                machine.postEvent(QStringLiteral("detour"));
+            }
+        },
+        1);
+    machine.addEventTransition(waitState, QStringLiteral("detour"), detourState);
+    detourState->addTransition(detourState, &QGCState::advance, waitState);
+    machine.setInitialState(waitState);
+
+    QSignalSpy waitEnteredSpy(waitState, &QState::entered);
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression("timeout after 1 retries, advancing"));
+    QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
+    QCOMPARE(waitEnteredSpy.count(), 2);
+    // The state has its one retry each time it is entered
+    QCOMPARE(retryActionCalls, 2);
 }
 
 UT_REGISTER_TEST(AdditionalTransitionsCoverageTest, TestLabel::Unit, TestLabel::Utilities)

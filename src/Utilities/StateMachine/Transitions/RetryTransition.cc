@@ -8,6 +8,12 @@ QGC_LOGGING_CATEGORY(RetryTransitionLog, "Utilities.StateMachine.RetryTransition
 
 bool RetryTransition::eventTest(QEvent* event)
 {
+    // The source state is known once the transition has been added to it. That is early enough here: the count
+    // changes only below.
+    if (!_resetOnEntry && sourceState()) {
+        _resetOnEntry = connect(sourceState(), &QAbstractState::entered, this, &RetryTransition::reset);
+    }
+
     if (!QGCSignalTransition::eventTest(event)) {
         return false;
     }

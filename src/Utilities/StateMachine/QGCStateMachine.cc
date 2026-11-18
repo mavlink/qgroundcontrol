@@ -24,6 +24,10 @@ QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, Q
     // Cleared before anything else reacts to stopped/finished so handlers, including the final progress update,
     // already see the machine as no longer in progress
     connect(this, &QGCStateMachine::stopped, this, [this]() {
+        if (error() != QStateMachine::NoError) {
+            // Qt stops a machine that it finds wrongly built, and says so only in a warning of its own
+            qCCritical(QGCStateMachineLog) << objectName() << "stopped after an error in the machine:" << errorString();
+        }
         _setInProgress(false);
         qCDebug(QGCStateMachineLog) << "State machine stopped:" << objectName();
     });
@@ -49,6 +53,8 @@ void QGCStateMachine::start()
         qCCritical(QGCStateMachineLog) << objectName() << "start() called without an initial state";
         return;
     }
+    // Qt keeps the error of an earlier run
+    clearError();
     _inProgress = true;
     QStateMachine::start();
     // Emitted after Qt's start so a stop() from a listener is honored
@@ -78,9 +84,7 @@ void QGCStateMachine::setGlobalErrorState(QAbstractState* errorState)
 
 void QGCStateMachine::registerState(QGCState* state)
 {
-    if (_globalErrorState && !state->localErrorState()) {
-        state->addTransition(state, &QGCState::error, _globalErrorState);
-    }
+    state->_setGlobalErrorState(_globalErrorState);
 }
 
 void QGCStateMachine::registerState(QGCAbstractState* state)
@@ -114,8 +118,22 @@ DelayState* QGCStateMachine::addDelayState(int delayMsecs)
     return state;
 }
 
+bool QGCStateMachine::_canPostEvent(const QString& eventName) const
+{
+    // Qt takes no event for a machine that is not running and does not delete the one it is given, and it drops
+    // the events posted between start() and the entry of the initial state
+    if (!QStateMachine::isRunning()) {
+        qCWarning(QGCStateMachineLog) << objectName() << "event not posted, the machine is not running:" << eventName;
+        return false;
+    }
+    return true;
+}
+
 void QGCStateMachine::postEvent(const QString& eventName, const QVariant& data, EventPriority priority)
 {
+    if (!_canPostEvent(eventName)) {
+        return;
+    }
     qCDebug(QGCStateMachineLog) << objectName() << "posting event:" << eventName
                                  << (priority == HighPriority ? "(high priority)" : "");
     QStateMachine::postEvent(new QGCStateMachineEvent(eventName, data), priority);
@@ -123,8 +141,17 @@ void QGCStateMachine::postEvent(const QString& eventName, const QVariant& data, 
 
 int QGCStateMachine::postDelayedEvent(const QString& eventName, int delayMsecs, const QVariant& data)
 {
+    if (!_canPostEvent(eventName)) {
+        return -1;
+    }
     qCDebug(QGCStateMachineLog) << objectName() << "posting delayed event:" << eventName << "delay:" << delayMsecs << "ms";
-    return QStateMachine::postDelayedEvent(new QGCStateMachineEvent(eventName, data), delayMsecs);
+    auto* const event = new QGCStateMachineEvent(eventName, data);
+    const int eventId = QStateMachine::postDelayedEvent(event, delayMsecs);
+    if (eventId == -1) {
+        // Refused by Qt, for a negative delay or for want of a timer, and still owned here
+        delete event;
+    }
+    return eventId;
 }
 
 bool QGCStateMachine::cancelDelayedEvent(int eventId)
@@ -220,8 +247,20 @@ void QGCStateMachine::setProgressWeights(const QList<QPair<QAbstractState*, int>
     _progressStates.clear();
     _progressWeights.clear();
     _progressTotalWeight = 0;
+    // The index and the progress reported so far are those of the list that is replaced
+    const bool hadProgress = progress() > 0.0f;
+    resetProgress();
+    if (hadProgress) {
+        emit progressUpdate(0.0f);
+    }
 
     for (const auto& pair : stateWeights) {
+        if (!pair.first || (pair.second <= 0)) {
+            qCWarning(QGCStateMachineLog)
+                << objectName() << "progress weight ignored, it needs a state and a weight above 0:"
+                << (pair.first ? pair.first->objectName() : QStringLiteral("no state")) << pair.second;
+            continue;
+        }
         _progressStates.append(pair.first);
         _progressWeights.append(pair.second);
         _progressTotalWeight += pair.second;

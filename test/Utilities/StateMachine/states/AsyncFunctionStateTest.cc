@@ -104,6 +104,33 @@ void AsyncFunctionStateTest::_testErrorTransition()
     QVERIFY_NO_SIGNAL(stateSpy, "advance");
 }
 
+void AsyncFunctionStateTest::_testSetupFunctionEndsState_data()
+{
+    QTest::addColumn<bool>("fails");
+
+    QTest::newRow("the setup function completes the state") << false;
+    QTest::newRow("the setup function fails the state") << true;
+}
+
+void AsyncFunctionStateTest::_testSetupFunctionEndsState()
+{
+    QFETCH(bool, fails);
+
+    QStateMachine machine;
+    // Without a completion connection and without a timeout, which is reported only for a state that waits
+    auto* asyncState =
+        new AsyncFunctionState(QStringLiteral("TestAsync"), &machine, [fails](AsyncFunctionState* state) {
+            if (fails) {
+                state->fail();
+            } else {
+                state->complete();
+            }
+        });
+    finishOn(machine, asyncState, fails ? &QGCState::error : &QGCState::advance);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+}
+
 void AsyncFunctionStateTest::_testConnectToCompletion_data()
 {
     QTest::addColumn<bool>("withSlot");

@@ -84,6 +84,7 @@ void RetryableRequestMessageState::_sendRequest()
                                  << "attempt" << (_retryCount + 1) << "of" << (_maxRetries + 1);
 
     _requestActive = true;
+    _requestRefused = false;
     _requestVehicle = v;
     // Queued, so that a state deleted along with its vehicle is gone before this is delivered
     connect(v, &QObject::destroyed, this, &RetryableRequestMessageState::_vehicleDestroyed,
@@ -125,17 +126,20 @@ void RetryableRequestMessageState::_handleResult(
     VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
     const mavlink_message_t& message)
 {
-    VehicleTypes::RequestMessageResultHandlerFailureCode_t effectiveFailureCode = failureCode;
-    if (failureCode == VehicleTypes::RequestMessageFailureDuplicate) {
-        // Retryable request flows can re-enter while Vehicle still tracks the prior
-        // request as active. Treat duplicate as an in-flight timeout-equivalent.
-        effectiveFailureCode = VehicleTypes::RequestMessageFailureMessageNotReceived;
+    _lastResult = result;
+    _lastFailureCode = failureCode;
+
+    if ((failureCode == VehicleTypes::RequestMessageFailureDuplicate) && !_retryWhenRequestFails &&
+        (timeoutMsecs() > 0)) {
+        // Vehicle has refused the request, because another one for this message is outstanding. A retry sent now
+        // would be refused as well, and nothing of this state is outstanding that could call it back: the attempt
+        // ends at its timeout.
+        qCDebug(RetryableRequestMessageStateLog) << stateName() << "Request refused as a duplicate";
+        _requestRefused = true;
+        return;
     }
 
-    _lastResult = result;
-    _lastFailureCode = effectiveFailureCode;
-
-    if (effectiveFailureCode == VehicleTypes::RequestMessageNoFailure) {
+    if (failureCode == VehicleTypes::RequestMessageNoFailure) {
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Message received successfully";
 
         if (_messageHandler) {
@@ -146,7 +150,7 @@ void RetryableRequestMessageState::_handleResult(
         return;
     }
 
-    qCDebug(RetryableRequestMessageStateLog) << stateName() << "Request failed, failureCode:" << effectiveFailureCode;
+    qCDebug(RetryableRequestMessageStateLog) << stateName() << "Request failed, failureCode:" << failureCode;
 
     if (_retryWhenRequestFails) {
         // This attempt was counted when it timed out
@@ -161,7 +165,7 @@ void RetryableRequestMessageState::_handleResult(
         qCWarning(RetryableRequestMessageStateLog) << stateName() << "Max retries exhausted";
 
         if (_failureHandler) {
-            _failureHandler(effectiveFailureCode, result);
+            _failureHandler(failureCode, result);
         }
         emit retriesExhausted();
 
@@ -177,15 +181,21 @@ void RetryableRequestMessageState::onWaitTimeout()
 {
     qCDebug(RetryableRequestMessageStateLog) << stateName() << "Timeout waiting for message";
 
-    _lastFailureCode = VehicleTypes::RequestMessageFailureMessageNotReceived;
+    _lastFailureCode = _requestRefused ? VehicleTypes::RequestMessageFailureDuplicate
+                                       : VehicleTypes::RequestMessageFailureMessageNotReceived;
 
     if (_retryCount < _maxRetries) {
         _retryCount++;
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Retrying after timeout, attempt" << (_retryCount + 1);
-        // Vehicle still tracks the request that timed out and rejects a second one for the same message as a
-        // duplicate. The retry is sent once that request fails; if it is answered after all, the answer is used.
-        // No timeout runs until then: one that fired first would use up a retry that could not be sent.
-        _retryWhenRequestFails = true;
+        if (_requestRefused) {
+            // Vehicle tracks nothing for a request that it refused
+            _queueRetry();
+        } else {
+            // Vehicle still tracks the request that timed out and rejects a second one for the same message as a
+            // duplicate. The retry is sent once that request fails; if it is answered after all, the answer is
+            // used. No timeout runs until then: one that fired first would use up a retry that could not be sent.
+            _retryWhenRequestFails = true;
+        }
     } else {
         qCWarning(RetryableRequestMessageStateLog) << stateName() << "Max retries exhausted after timeout";
 

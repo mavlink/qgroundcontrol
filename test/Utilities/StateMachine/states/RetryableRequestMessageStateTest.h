@@ -13,6 +13,7 @@ private slots:
     void _testSuccessFirstAttempt();
     void _testRetryOnFailure();
     UT_PARAMETERIZED_TEST(_testRetryAfterTimeout);
+    void _testRefusedRequestEndsAtItsTimeout();
     void _testMaxRetriesExhausted();
     void _testFailOnMaxRetries();
     void _testStateDestroyedWhileRequestOutstanding();

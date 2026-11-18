@@ -13,6 +13,9 @@
 /// Useful for async operations like loading from vehicle where you call a function
 /// and wait for a completion signal.
 ///
+/// A state that only a later call to complete() or fail() ends needs a timeout: without one, and without a
+/// completion connection, nothing ends it if that call never comes, and entering it is reported as a coding error.
+///
 class AsyncFunctionState : public CompletionWaitState
 {
     Q_OBJECT

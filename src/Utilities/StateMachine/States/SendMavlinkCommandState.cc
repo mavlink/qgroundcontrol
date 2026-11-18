@@ -76,7 +76,7 @@ void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetCom
 
     Vehicle* senderVehicle = qobject_cast<Vehicle*>(sender());
     if (!senderVehicle) {
-        qWarning() << "Vehicle dynamic cast on sender() failed!";
+        qCWarning(QGCStateMachineLog) << "Vehicle dynamic cast on sender() failed!";
         return;
     }
     if (senderVehicle != vehicle()) {

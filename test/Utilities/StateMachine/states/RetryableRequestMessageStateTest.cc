@@ -180,6 +180,60 @@ void RetryableRequestMessageStateTest::_testRetryAfterTimeout()
     _disconnectMockLink();
 }
 
+void RetryableRequestMessageStateTest::_testRefusedRequestEndsAtItsTimeout()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+    QVERIFY(_waitForNoAutopilotRequests());
+
+    // Another request for the message is outstanding until the test sends the reply, so the vehicle refuses the
+    // request of the state
+    TestFixtures::MavCommandAckTimeoutFixture ackTimeout(TestTimeout::longMs());
+    _mockLink->setRequestMessageNoResponse(MAVLINK_MSG_ID_DEBUG);
+    _mockLink->clearReceivedMavCommandCounts();
+    int otherRequestResults = 0;
+    _vehicle->requestMessage([](void* resultHandlerData, MAV_RESULT, Vehicle::RequestMessageResultHandlerFailureCode_t,
+                                const mavlink_message_t&) { ++*static_cast<int*>(resultHandlerData); },
+                             &otherRequestResults, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG);
+    QVERIFY_TRUE_WAIT(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG) == 1,
+                      TestTimeout::shortMs());
+
+    QGCStateMachine machine(QStringLiteral("TestMachine"), _vehicle);
+    int handlerCallCount = 0;
+    const int maxRetries = 1;
+    auto* requestState = new RetryableRequestMessageState(
+        QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG,
+        [&handlerCallCount](Vehicle*, const mavlink_message_t&) { handlerCallCount++; }, maxRetries,
+        MAV_COMP_ID_AUTOPILOT1, TestTimeout::shortMs());
+    finishOn(machine, requestState, &QGCState::advance);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    expectLogMessage("Vehicle.RequestMessageCoordinator", QtWarningMsg, QRegularExpression("failing exact duplicate"));
+    QVERIFY(startAndWaitForEntered(&machine, requestState));
+    verifyExpectedLogMessage();
+    QCOMPARE(requestState->lastFailureCode(), Vehicle::RequestMessageFailureDuplicate);
+
+    // The other request is answered while the refused attempt waits for its timeout
+    _mockLink->setRequestMessageNoResponse(MAVLINK_MSG_ID_DEBUG, false);
+    _sendWithheldDebugReply();
+    QVERIFY_TRUE_WAIT(otherRequestResults == 1, TestTimeout::shortMs());
+    QCOMPARE(requestState->retryCount(), 0);
+    QCOMPARE(finishedSpy.count(), 0);
+
+    // The retry is sent at the timeout, when the vehicle takes it
+    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(handlerCallCount, 1);
+    QCOMPARE(requestState->retryCount(), 1);
+    QCOMPARE(requestState->lastFailureCode(), Vehicle::RequestMessageNoFailure);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG), 2);
+    QCOMPARE(otherRequestResults, 1);
+
+    _disconnectMockLink();
+}
+
 void RetryableRequestMessageStateTest::_testMaxRetriesExhausted()
 {
     TestFixtures::MavCommandAckTimeoutFixture shortAckTimeout;
