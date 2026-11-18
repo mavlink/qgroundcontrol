@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include <QtConcurrent/QtConcurrentRun>
+
 #include "QGCCompression.h"
 #include "QGCFileHelper.h"
 #include "QGCFormat.h"
@@ -13,6 +15,7 @@ QGC_LOGGING_CATEGORY(QGCArchiveModelLog, "Utilities.QGCArchiveModel")
 QGCArchiveModel::QGCArchiveModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+    connect(&_loadWatcher, &QFutureWatcherBase::finished, this, &QGCArchiveModel::_onLoadFinished);
 }
 
 QGCArchiveModel::~QGCArchiveModel() = default;
@@ -132,6 +135,14 @@ void QGCArchiveModel::refresh()
 
 void QGCArchiveModel::clear()
 {
+    // A load that is still running delivers its result to _onLoadFinished(), which drops it
+    _setLoading(false);
+    _resetEntries();
+    _setErrorString(QString());
+}
+
+void QGCArchiveModel::_resetEntries()
+{
     if (_filteredEntries.isEmpty() && _allEntries.isEmpty()) {
         return;
     }
@@ -153,8 +164,6 @@ void QGCArchiveModel::clear()
     if (hadFiles) emit fileCountChanged();
     if (hadDirs) emit directoryCountChanged();
     if (hadSize) emit totalSizeChanged();
-
-    _setErrorString(QString());
 }
 
 QVariantMap QGCArchiveModel::get(int row) const
@@ -185,23 +194,36 @@ QString QGCArchiveModel::formatSize(qint64 bytes)
 
 void QGCArchiveModel::_loadArchive()
 {
-    clear();
+    _resetEntries();
+    _setErrorString(QString());
 
     if (_archivePath.isEmpty()) {
+        _setLoading(false);
         emit loadingComplete(true);
         return;
     }
 
-    _setLoading(true);
-    _setErrorString(QString());
-
     qCDebug(QGCArchiveModelLog) << "Loading archive:" << _archivePath;
 
-    // Load entries using QGCCompression (already sorted with QCollator)
-    QList<QGCCompression::ArchiveEntry> entries;
-    const QGCCompression::Outcome listed = QGCCompression::listArchiveDetailed(_archivePath, entries);
-    if (!listed) {
-        _setErrorString(listed.message);
+    _setLoading(true);
+    // Replaces the future of a load that is still running: the watcher then ignores that load
+    _loadWatcher.setFuture(QtConcurrent::run([archivePath = _archivePath]() {
+        Listing listing;
+        // Load entries using QGCCompression (already sorted with QCollator)
+        listing.outcome = QGCCompression::listArchiveDetailed(archivePath, listing.entries);
+        return listing;
+    }));
+}
+
+void QGCArchiveModel::_onLoadFinished()
+{
+    if (!_loading) {
+        return;
+    }
+
+    Listing listing = _loadWatcher.result();
+    if (!listing.outcome) {
+        _setErrorString(listing.outcome.message);
         _setLoading(false);
         emit loadingComplete(false);
         return;
@@ -209,14 +231,14 @@ void QGCArchiveModel::_loadArchive()
 
     // Calculate statistics
     QGCCompression::ArchiveStats stats;
-    for (const auto &entry : entries) {
+    for (const auto& entry : std::as_const(listing.entries)) {
         QGCCompression::addTo(stats, entry);
     }
 
     // Store all entries
-    _allEntries = std::move(entries);
+    _allEntries = std::move(listing.entries);
 
-    // Update statistics, which clear() has set to zero: one that is not zero now has changed
+    // Update statistics, which the start of the load has set to zero: one that is not zero now has changed
     _fileCount = stats.fileCount;
     _directoryCount = stats.directoryCount;
     _totalSize = stats.totalUncompressedSize;
