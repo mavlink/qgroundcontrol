@@ -517,7 +517,7 @@ decoder's tiled output is compared with its system-memory output on real hardwar
 
 #### DMABuf under Vulkan
 
-Linux builds pin Qt Quick to OpenGL (`HwBuffers::configureQtGraphics()`); `QSG_RHI_BACKEND=vulkan` selects Vulkan
+Qt Quick renders with OpenGL on Linux unless told otherwise; `QSG_RHI_BACKEND=vulkan` selects Vulkan
 instead. The DMABuf path then imports each plane of a frame as a single-plane VkImage on Qt's device, bound to the
 dma-buf through `VK_EXT_external_memory_dma_buf` with the frame's modifier (`VK_EXT_image_drm_format_modifier`), in
 the format Qt samples that plane as (R8, RG8, R16, RG16, RGBA8 or BGRA8). That is what Qt's EGL importer does with one

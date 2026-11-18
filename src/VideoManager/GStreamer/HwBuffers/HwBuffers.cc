@@ -8,7 +8,6 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtQuick/QQuickWindow>
-#include <QtQuick/QSGRendererInterface>
 
 #include "QGCLoggingCategory.h"
 
@@ -133,12 +132,6 @@ void configureQtGraphics(bool softwareRendering)
     s_softwareRendering.store(softwareRendering, std::memory_order_release);
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
     (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
-    // GL takes every desktop-Linux zero-copy path (GLMemory and DMABuf/EGLImage both import into a GL RHI), Vulkan
-    // only DMABuf, in the layouts its device imports: pin GL unless the user chose a backend. GL is always present on
-    // Linux, so no QRhi::probe.
-    if (!softwareRendering && !qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-    }
     // GStreamer's zero-copy imports need Qt on EGL, but Qt's xcb integration picks GLX first (the AppImage runs xcb
     // even in Wayland sessions). Qt falls back to GLX when EGL fails to initialize; the user's value wins.
     if (!qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
