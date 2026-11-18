@@ -4,7 +4,6 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
-#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTextStream>
 #include <QtCore/QVersionNumber>
@@ -75,18 +74,18 @@ void QGCVersionCheck::start()
     }
 
     QGCFileDownload* const download = new QGCFileDownload(this);
-    (void) connect(download, &QGCFileDownload::finished, this,
-                   [this, download](bool success, const QString& localFile, const QString& errorMsg) {
+    (void) connect(download, &QGCFileDownload::finishedToMemory, this,
+                   [this, download](bool success, const QByteArray& versionFile, const QString& errorMsg) {
                        download->deleteLater();
-                       _downloadComplete(success, localFile, errorMsg);
+                       _downloadComplete(success, versionFile, errorMsg);
                    });
-    if (!download->start(versionCheckFile)) {
+    if (!download->startToMemory(versionCheckFile)) {
         qCDebug(QGCVersionCheckLog) << "Download QGC stable version failed to start" << download->errorString();
         download->deleteLater();
     }
 }
 
-void QGCVersionCheck::_downloadComplete(bool success, const QString& localFile, const QString& errorMsg)
+void QGCVersionCheck::_downloadComplete(bool success, const QByteArray& versionFile, const QString& errorMsg)
 {
     if (!success) {
         if (!errorMsg.isEmpty()) {
@@ -95,12 +94,7 @@ void QGCVersionCheck::_downloadComplete(bool success, const QString& localFile, 
         return;
     }
 
-    QFile versionFile(localFile);
-    if (!versionFile.open(QIODevice::ReadOnly)) {
-        return;
-    }
-
-    QTextStream textStream(&versionFile);
+    QTextStream textStream(versionFile);
     const QString version = textStream.readLine();
     qCDebug(QGCVersionCheckLog) << version;
 

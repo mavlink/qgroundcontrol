@@ -569,4 +569,4 @@ void QGCNetworkHelperTest::_testSslVersion()
     }
 }
 
-UT_REGISTER_TEST(QGCNetworkHelperTest, TestLabel::Unit, TestLabel::Utilities, TestLabel::Network)
+UT_REGISTER_TEST(QGCNetworkHelperTest, TestLabel::Unit, TestLabel::Utilities)
