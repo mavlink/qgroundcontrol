@@ -33,10 +33,6 @@ inline constexpr char kGraphicsDeviceLostMessage[] = "qgc-graphics-device-lost";
 /// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
 
-/// Pipeline-restart hook; clears exhausted prime-retry latches (GL, Vulkan) so a restart can prime on the next
-/// NEED_CONTEXT. Never drops shared GPU objects: other streams may still be using them.
-void onPipelineRestart();
-
 /// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
 /// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources();

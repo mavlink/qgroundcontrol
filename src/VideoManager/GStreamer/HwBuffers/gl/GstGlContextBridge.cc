@@ -79,14 +79,9 @@ bool GlContextBridge::primeLocked()
 {
     QOpenGLContext* qtCtx = QOpenGLContext::globalShareContext();
     if (!qtCtx) {
-        if (retryWithinBudget()) {
-            qCInfo(GstGlBridgeLog) << "globalShareContext() is null — Qt GL not initialized yet"
-                                   << "(attempt" << failedPrimes() << "/" << kMaxPrimeRetries << ")";
-        } else if (retriesJustExhausted()) {
-            qCWarning(GstGlBridgeLog) << "globalShareContext() still null after" << kMaxPrimeRetries
-                                      << "retries; GL bridge giving up";
-        }
-        return false;
+        // Qt makes it on demand once HwBuffers::configureQtGraphics() has asked for shared contexts.
+        qCDebug(GstGlBridgeLog) << "globalShareContext() is null: Qt's OpenGL contexts aren't shared";
+        return retryLater();
     }
 
     // Try EGL first (Wayland, eglfs, xcb_egl, Android); fall back to GLX (Linux xcb default on Qt 6).

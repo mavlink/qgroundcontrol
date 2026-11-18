@@ -339,14 +339,6 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     HwBuffers::resetCachedGpuResources();
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
-
-    // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
-    QVERIFY(testBridgeA().prime());
-    HwBuffers::onPipelineRestart();
-    QCOMPARE(testBridgeA().clears, 1);
-    QCOMPARE(s_testCacheResets, 1);
-    QVERIFY(testBridgeA().prime());
-    QCOMPARE(testBridgeA().primes, 2);
 #endif
 }
 

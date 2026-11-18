@@ -97,17 +97,6 @@ GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
     return GST_BUS_PASS;
 }
 
-void onPipelineRestart()
-{
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (path->bridge) {
-            path->bridge().rearm();
-        }
-    }
-#endif
-}
-
 void resetCachedGpuResources()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)

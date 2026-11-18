@@ -144,12 +144,8 @@ bool VulkanContextBridge::primeLocked()
 {
     DeviceIdentity qtDevice;
     if (!readQtDevice(qtDevice)) {
-        // Expected on the default GL RHI build; retry in case the Vulkan RHI initializes later.
-        if (!retryWithinBudget() && retriesJustExhausted()) {
-            qCInfo(GstVulkanBridgeLog) << "active RHI is not Vulkan after" << kMaxPrimeRetries
-                                       << "retries; Vulkan bridge inactive";
-        }
-        return false;
+        // As on the default GL renderer. The next request looks again: the scene graph may start after the pipeline.
+        return retryLater();
     }
 
     // Nothing below changes while Qt renders on this device, so a failure latches the bridge off until reset() instead

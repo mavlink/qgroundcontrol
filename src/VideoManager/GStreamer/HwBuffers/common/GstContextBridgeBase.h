@@ -55,13 +55,7 @@ public:
     /// True from noteDeviceRemoved() until the bridge primes again. Thread-safe.
     bool deviceLost() const noexcept { return _deviceLost.load(std::memory_order_acquire); }
 
-    /// Lets a bridge that ran out of prime retries try again (pipeline restart); no-op otherwise.
-    void rearm();
-
 protected:
-    /// Prime retries for a native handle that isn't available yet (Qt's RHI may initialize after the first pipeline).
-    static constexpr int kMaxPrimeRetries = 16;
-
     constexpr GstContextBridgeBase(const char* api, std::span<const char* const> contextTypes,
                                    const QLoggingCategory& (*logCategory)()) noexcept
         : _apiName(api)
@@ -72,7 +66,7 @@ protected:
     ~GstContextBridgeBase() = default;
 
     /// Builds the shared objects; the mutex is held. A false return latches the bridge off until reset() unless the
-    /// subclass calls retryLater() or retryWithinBudget() first.
+    /// subclass calls retryLater() first.
     virtual bool primeLocked() = 0;
 
     /// Transfer-full ref to the object behind @p contextType, or null; the mutex is held.
@@ -87,19 +81,9 @@ protected:
     /// For primeLocked(): the next request tries again. Returns false so a failure path can `return retryLater();`.
     bool retryLater() noexcept;
 
-    /// For primeLocked() when the native handle is missing: retryLater() for the first kMaxPrimeRetries calls, after
-    /// which the bridge stays off until rearm() or reset(). True while a retry was granted.
-    bool retryWithinBudget() noexcept;
-
     /// For a subclass whose device reported its removal, on any thread: deviceLost() from now on, and the GUI thread
     /// calls HwBuffers::onGraphicsDeviceRemoved(), which resets every bridge and tells the pipelines they served.
     void noteDeviceRemoved();
-
-    /// True on the retryWithinBudget() call that ran out of retries, for a single give-up log line.
-    bool retriesJustExhausted() const noexcept { return _failedPrimes == kMaxPrimeRetries + 1; }
-
-    /// Native-handle misses so far, counted by retryWithinBudget().
-    int failedPrimes() const noexcept { return _failedPrimes; }
 
     const QLoggingCategory& category() const { return _category(); }
 
@@ -139,7 +123,6 @@ private:
     const QLoggingCategory& (*_category)();
     bool _primed = false;
     bool _primeAttempted = false;
-    int _failedPrimes = 0;
     /// Top-level bins an element of which asked for a context the bridge couldn't give yet; null while there was
     /// none. Behind a pointer because the bridges are constant-initialized, which a container isn't everywhere.
     std::unique_ptr<WeakRefs> _waiting;
