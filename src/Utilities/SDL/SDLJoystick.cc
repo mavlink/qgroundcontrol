@@ -27,19 +27,7 @@ static void loadGamepadMappings()
         }
 
         qCDebug(SDLJoystickLog) << "Loading gamepad mappings from" << description;
-        int count = 0;
-        QTextStream stream(&file);
-        while (!stream.atEnd()) {
-            const QString line = stream.readLine();
-            if (line.startsWith('#') || line.isEmpty()) {
-                continue;
-            }
-            if (SDL_AddGamepadMapping(qPrintable(line)) == -1) {
-                qCWarning(SDLJoystickLog) << "Couldn't add gamepad mapping:" << SDL_GetError();
-            } else {
-                ++count;
-            }
-        }
+        const int count = addMappingsFromData(file.readAll());
         qCDebug(SDLJoystickLog) << "Loaded" << count << "mappings from" << description;
         return true;
     };
@@ -149,6 +137,9 @@ void pumpEvents()
 {
     SDL_PumpEvents();
     SDL_UpdateJoysticks();
+    // Events are handled by event watches when they are generated. Nothing reads them from SDL's queue, which
+    // would otherwise fill up and stay full.
+    SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST);
 }
 
 void setJoystickEventsEnabled(bool enabled)
@@ -347,6 +338,38 @@ int addMappingsFromFile(const QString &filePath)
     } else {
         qCDebug(SDLJoystickLog) << "Loaded" << count << "mappings from" << filePath;
     }
+    return count;
+}
+
+int addMappingsFromData(const QByteArray& data)
+{
+    if (data.isEmpty()) {
+        return 0;
+    }
+
+    // Unlike SDL_AddGamepadMapping(), this skips the entries for other platforms. SDL copies the data and closes
+    // the stream before it returns.
+    SDL_IOStream* stream = SDL_IOFromConstMem(data.constData(), static_cast<size_t>(data.size()));
+    int count = stream ? SDL_AddGamepadMappingsFromIO(stream, true) : -1;
+    if (count < 0) {
+        qCWarning(SDLJoystickLog) << "Couldn't add gamepad mappings:" << SDL_GetError();
+        return -1;
+    }
+
+    // It also skips the entries without a platform, which apply to every platform.
+    for (const QByteArray& rawLine : data.split('\n')) {
+        const QByteArray line = rawLine.trimmed();
+        if (line.isEmpty() || line.startsWith('#') || line.contains("platform:")) {
+            continue;
+        }
+        const int added = SDL_AddGamepadMapping(line.constData());
+        if (added == -1) {
+            qCWarning(SDLJoystickLog) << "Couldn't add gamepad mapping:" << SDL_GetError();
+        } else {
+            count += added;
+        }
+    }
+
     return count;
 }
 
