@@ -38,8 +38,7 @@ static void loadGamepadMappings()
     }
 
     // Load user custom mappings
-    const QString userMappingsPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
-                                   + QStringLiteral("/gamecontrollerdb.txt");
+    const QString userMappingsPath = userMappingsFilePath();
     if (loadMappingsFromFile(userMappingsPath, "user config")) {
         qCInfo(SDLJoystickLog) << "Loaded user gamepad mappings from" << userMappingsPath;
     }
@@ -192,15 +191,11 @@ void unlockJoysticks()
 
 QString gamepadTypeToString(int type)
 {
-    const char *str = SDL_GetGamepadStringForType(static_cast<SDL_GamepadType>(type));
-    return str ? QString::fromUtf8(str) : QString();
+    return QString::fromUtf8(SDL_GetGamepadStringForType(static_cast<SDL_GamepadType>(type)));
 }
 
 int gamepadTypeFromString(const QString &str)
 {
-    if (str.isEmpty()) {
-        return SDL_GAMEPAD_TYPE_UNKNOWN;
-    }
     return SDL_GetGamepadTypeFromString(qPrintable(str));
 }
 
@@ -234,29 +229,21 @@ QString gamepadTypeDisplayName(int type)
 
 QString gamepadAxisToString(int axis)
 {
-    const char *str = SDL_GetGamepadStringForAxis(static_cast<SDL_GamepadAxis>(axis));
-    return str ? QString::fromUtf8(str) : QString();
+    return QString::fromUtf8(SDL_GetGamepadStringForAxis(static_cast<SDL_GamepadAxis>(axis)));
 }
 
 int gamepadAxisFromString(const QString &str)
 {
-    if (str.isEmpty()) {
-        return SDL_GAMEPAD_AXIS_INVALID;
-    }
     return SDL_GetGamepadAxisFromString(qPrintable(str));
 }
 
 QString gamepadButtonToString(int button)
 {
-    const char *str = SDL_GetGamepadStringForButton(static_cast<SDL_GamepadButton>(button));
-    return str ? QString::fromUtf8(str) : QString();
+    return QString::fromUtf8(SDL_GetGamepadStringForButton(static_cast<SDL_GamepadButton>(button)));
 }
 
 int gamepadButtonFromString(const QString &str)
 {
-    if (str.isEmpty()) {
-        return SDL_GAMEPAD_BUTTON_INVALID;
-    }
     return SDL_GetGamepadButtonFromString(qPrintable(str));
 }
 
@@ -282,28 +269,18 @@ QString connectionStateToString(int state)
 
 QVariantMap getGUIDInfo(const QString &guid)
 {
-    QVariantMap result;
-    result[QStringLiteral("valid")] = false;
-    result[QStringLiteral("vendor")] = 0;
-    result[QStringLiteral("product")] = 0;
-    result[QStringLiteral("version")] = 0;
-    result[QStringLiteral("crc16")] = 0;
-
-    if (guid.isEmpty()) {
-        return result;
+    Uint16 vendor = 0, product = 0, version = 0, crc16 = 0;
+    if (!guid.isEmpty()) {
+        SDL_GetJoystickGUIDInfo(SDL_StringToGUID(qPrintable(guid)), &vendor, &product, &version, &crc16);
     }
 
-    SDL_GUID sdlGuid = SDL_StringToGUID(qPrintable(guid));
-    Uint16 vendor = 0, product = 0, version = 0, crc16 = 0;
-    SDL_GetJoystickGUIDInfo(sdlGuid, &vendor, &product, &version, &crc16);
-
-    result[QStringLiteral("valid")] = true;
-    result[QStringLiteral("vendor")] = static_cast<int>(vendor);
-    result[QStringLiteral("product")] = static_cast<int>(product);
-    result[QStringLiteral("version")] = static_cast<int>(version);
-    result[QStringLiteral("crc16")] = static_cast<int>(crc16);
-
-    return result;
+    return {
+        {QStringLiteral("valid"), !guid.isEmpty()},
+        {QStringLiteral("vendor"), static_cast<int>(vendor)},
+        {QStringLiteral("product"), static_cast<int>(product)},
+        {QStringLiteral("version"), static_cast<int>(version)},
+        {QStringLiteral("crc16"), static_cast<int>(crc16)},
+    };
 }
 
 QString getMappingForGUID(const QString &guid)
@@ -397,10 +374,6 @@ QString userMappingsFilePath()
 
 bool addMappingPersistent(const QString &mapping)
 {
-    if (mapping.isEmpty()) {
-        return false;
-    }
-
     // First add to SDL's runtime mapping database
     if (!addMapping(mapping)) {
         return false;
@@ -424,12 +397,8 @@ bool addMappingPersistent(const QString &mapping)
         QTextStream in(&file);
         while (!in.atEnd()) {
             const QString line = in.readLine();
-            if (line.isEmpty() || line.startsWith('#')) {
-                existingMappings.append(line);
-                continue;
-            }
             // Skip if same GUID (we'll add the new mapping)
-            if (!line.startsWith(guid + ',')) {
+            if (!line.isEmpty() && (line.startsWith('#') || !line.startsWith(guid + ','))) {
                 existingMappings.append(line);
             }
         }
@@ -446,9 +415,7 @@ bool addMappingPersistent(const QString &mapping)
     out << "# QGroundControl User Gamepad Mappings\n";
     out << "# Generated automatically - edit with caution\n\n";
     for (const QString &line : existingMappings) {
-        if (!line.isEmpty()) {
-            out << line << "\n";
-        }
+        out << line << "\n";
     }
     out << mapping << "\n";
     file.close();
@@ -476,24 +443,17 @@ bool reloadMappings()
 
 int getInstanceIdFromPlayerIndex(int playerIndex)
 {
-    SDL_Gamepad *gamepad = SDL_GetGamepadFromPlayerIndex(playerIndex);
-    if (gamepad) {
-        SDL_JoystickID id = SDL_GetGamepadID(gamepad);
-        return static_cast<int>(id);
-    }
-
+    // Finds a gamepad too: SDL looks up the gamepad of a player index through its joystick and has that joystick's id
     SDL_Joystick *joystick = SDL_GetJoystickFromPlayerIndex(playerIndex);
-    if (joystick) {
-        SDL_JoystickID id = SDL_GetJoystickID(joystick);
-        return static_cast<int>(id);
-    }
-
-    return -1;
+    return joystick ? static_cast<int>(SDL_GetJoystickID(joystick)) : -1;
 }
 
 // ============================================================================
 // Pre-Open Device Queries
 // ============================================================================
+
+// The path, vendor, product, version and player index come from SDL's joystick functions, for a gamepad too:
+// SDL_GetGamepad...ForID() only forwards to SDL_GetJoystick...ForID() (SDL 3.4).
 
 QString getNameForInstanceId(int instanceId)
 {
@@ -512,12 +472,7 @@ QString getNameForInstanceId(int instanceId)
 
 QString getPathForInstanceId(int instanceId)
 {
-    const char *path = SDL_GetGamepadPathForID(static_cast<SDL_JoystickID>(instanceId));
-    if (path) {
-        return QString::fromUtf8(path);
-    }
-    path = SDL_GetJoystickPathForID(static_cast<SDL_JoystickID>(instanceId));
-    return path ? QString::fromUtf8(path) : QString();
+    return QString::fromUtf8(SDL_GetJoystickPathForID(static_cast<SDL_JoystickID>(instanceId)));
 }
 
 QString getGUIDForInstanceId(int instanceId)
@@ -530,28 +485,16 @@ QString getGUIDForInstanceId(int instanceId)
 
 int getVendorForInstanceId(int instanceId)
 {
-    Uint16 vendor = SDL_GetGamepadVendorForID(static_cast<SDL_JoystickID>(instanceId));
-    if (vendor != 0) {
-        return vendor;
-    }
     return SDL_GetJoystickVendorForID(static_cast<SDL_JoystickID>(instanceId));
 }
 
 int getProductForInstanceId(int instanceId)
 {
-    Uint16 product = SDL_GetGamepadProductForID(static_cast<SDL_JoystickID>(instanceId));
-    if (product != 0) {
-        return product;
-    }
     return SDL_GetJoystickProductForID(static_cast<SDL_JoystickID>(instanceId));
 }
 
 int getProductVersionForInstanceId(int instanceId)
 {
-    Uint16 version = SDL_GetGamepadProductVersionForID(static_cast<SDL_JoystickID>(instanceId));
-    if (version != 0) {
-        return version;
-    }
     return SDL_GetJoystickProductVersionForID(static_cast<SDL_JoystickID>(instanceId));
 }
 
@@ -569,10 +512,6 @@ QString getRealTypeForInstanceId(int instanceId)
 
 int getPlayerIndexForInstanceId(int instanceId)
 {
-    int index = SDL_GetGamepadPlayerIndexForID(static_cast<SDL_JoystickID>(instanceId));
-    if (index >= 0) {
-        return index;
-    }
     return SDL_GetJoystickPlayerIndexForID(static_cast<SDL_JoystickID>(instanceId));
 }
 
@@ -675,8 +614,7 @@ QVariantMap findBinding(SDL_Gamepad *gamepad,
         SDL_GamepadBinding *binding = bindings[i];
         if (binding && matchFunc(binding)) {
             populateBindingResult(result, binding);
-            SDL_free(bindings);
-            return result;
+            break;
         }
     }
 

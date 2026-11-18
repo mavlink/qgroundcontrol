@@ -13,21 +13,8 @@ void SDLTest::initTestCase()
     QVERIFY(JoystickSDL::init());
 }
 
-void SDLTest::init()
-{
-    UnitTest::init();
-}
-
-void SDLTest::cleanup()
-{
-    UnitTest::cleanup();
-}
-
 //-----------------------------------------------------------------------------
 // SDLPlatform Tests
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-// Version Info Tests
 //-----------------------------------------------------------------------------
 void SDLTest::_versionInfoTest()
 {
@@ -42,69 +29,39 @@ void SDLTest::_versionInfoTest()
     int major = parts[0].toInt(&ok);
     QVERIFY2(ok, "Major version should be numeric");
     QVERIFY2(major >= 3, "Should be SDL3 or higher");
-    int minor = parts[1].toInt(&ok);
+    (void) parts[1].toInt(&ok);
     QVERIFY2(ok, "Minor version should be numeric");
-    Q_UNUSED(minor);
     // Revision may or may not be available - just verify no crash
-    QString revision = SDLPlatform::getRevision();
-    Q_UNUSED(revision);
+    (void) SDLPlatform::getRevision();
 }
 
-//-----------------------------------------------------------------------------
-// Platform Detection Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_platformDetectionTest()
 {
     // Test that platform name is valid
     QString platform = SDLPlatform::getPlatform();
     QVERIFY2(!platform.isEmpty(), "Platform name should not be empty");
-    // Verify platform-specific detection
+    // Verify platform-specific detection: exactly the platform of this build is detected
+    const QList<bool> detected = {SDLPlatform::isAndroid(), SDLPlatform::isWindows(), SDLPlatform::isMacOS(),
+                                  SDLPlatform::isIOS(), SDLPlatform::isLinux()};
 #if defined(Q_OS_ANDROID)
-    QVERIFY(SDLPlatform::isAndroid());
-    QVERIFY(!SDLPlatform::isWindows());
-    QVERIFY(!SDLPlatform::isMacOS());
-    QVERIFY(!SDLPlatform::isLinux());
-    QVERIFY(!SDLPlatform::isIOS());
+    QCOMPARE(detected, QList<bool>({true, false, false, false, false}));
 #elif defined(Q_OS_WIN)
-    QVERIFY(SDLPlatform::isWindows());
-    QVERIFY(!SDLPlatform::isAndroid());
-    QVERIFY(!SDLPlatform::isMacOS());
-    QVERIFY(!SDLPlatform::isLinux());
-    QVERIFY(!SDLPlatform::isIOS());
+    QCOMPARE(detected, QList<bool>({false, true, false, false, false}));
 #elif defined(Q_OS_MACOS)
-    QVERIFY(SDLPlatform::isMacOS());
-    QVERIFY(!SDLPlatform::isAndroid());
-    QVERIFY(!SDLPlatform::isWindows());
-    QVERIFY(!SDLPlatform::isLinux());
-    QVERIFY(!SDLPlatform::isIOS());
+    QCOMPARE(detected, QList<bool>({false, false, true, false, false}));
 #elif defined(Q_OS_IOS)
-    QVERIFY(SDLPlatform::isIOS());
-    QVERIFY(!SDLPlatform::isAndroid());
-    QVERIFY(!SDLPlatform::isWindows());
-    QVERIFY(!SDLPlatform::isMacOS());
-    QVERIFY(!SDLPlatform::isLinux());
+    QCOMPARE(detected, QList<bool>({false, false, false, true, false}));
 #elif defined(Q_OS_LINUX)
-    QVERIFY(SDLPlatform::isLinux());
-    QVERIFY(!SDLPlatform::isAndroid());
-    QVERIFY(!SDLPlatform::isWindows());
-    QVERIFY(!SDLPlatform::isMacOS());
-    QVERIFY(!SDLPlatform::isIOS());
+    QCOMPARE(detected, QList<bool>({false, false, false, false, true}));
 #endif
     // These functions should not crash regardless of platform
     // Return values are platform-dependent
-    bool isTablet = SDLPlatform::isTablet();
-    bool isTV = SDLPlatform::isTV();
-    bool isDeX = SDLPlatform::isDeXMode();
-    bool isChromebook = SDLPlatform::isChromebook();
-    Q_UNUSED(isTablet);
-    Q_UNUSED(isTV);
-    Q_UNUSED(isDeX);
-    Q_UNUSED(isChromebook);
+    (void) SDLPlatform::isTablet();
+    (void) SDLPlatform::isTV();
+    (void) SDLPlatform::isDeXMode();
+    (void) SDLPlatform::isChromebook();
 }
 
-//-----------------------------------------------------------------------------
-// Hint Management Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_hintManagementTest()
 {
     // Use a unique hint name to avoid conflicts
@@ -130,13 +87,9 @@ void SDLTest::_hintManagementTest()
     QVERIFY2(!SDLPlatform::getHintBoolean(nonExistentHint, false), "Default should be returned for missing hint");
     // Test reset hint
     SDLPlatform::resetHint(testHintName);
-    QString afterReset = SDLPlatform::getHint(testHintName);
-    Q_UNUSED(afterReset);  // Value depends on SDL defaults
+    (void) SDLPlatform::getHint(testHintName);  // Value depends on SDL defaults
 }
 
-//-----------------------------------------------------------------------------
-// System Info Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_systemInfoTest()
 {
     // Test CPU cores - should be at least 1
@@ -148,9 +101,6 @@ void SDLTest::_systemInfoTest()
     QVERIFY2(ramMB < 1024 * 1024, "RAM should be less than 1 TB (sanity check)");
 }
 
-//-----------------------------------------------------------------------------
-// Power Info Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_powerInfoTest()
 {
     int seconds = 0;
@@ -169,15 +119,10 @@ void SDLTest::_powerInfoTest()
     // Test with nullptr parameters - should not crash
     QString stateOnly = SDLPlatform::getDevicePowerInfo();
     QVERIFY2(!stateOnly.isEmpty(), "Power state should work with null params");
-    QString stateSecondsOnly = SDLPlatform::getDevicePowerInfo(&seconds, nullptr);
-    Q_UNUSED(stateSecondsOnly);
-    QString statePercentOnly = SDLPlatform::getDevicePowerInfo(nullptr, &percent);
-    Q_UNUSED(statePercentOnly);
+    (void) SDLPlatform::getDevicePowerInfo(&seconds, nullptr);
+    (void) SDLPlatform::getDevicePowerInfo(nullptr, &percent);
 }
 
-//-----------------------------------------------------------------------------
-// Android-Specific Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_androidFunctionsTest()
 {
     // These functions should return sensible defaults on non-Android platforms
@@ -229,9 +174,6 @@ void SDLTest::_androidFunctionsTest()
 //-----------------------------------------------------------------------------
 // SDLJoystick Tests
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-// Initialization Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_initializationTest()
 {
     // Already initialized by test fixture (JoystickSDL::init()), so should be true
@@ -250,9 +192,6 @@ void SDLTest::_initializationTest()
     // create and destroy resources.
 }
 
-//-----------------------------------------------------------------------------
-// Event Control Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_eventControlTest()
 {
     // Test joystick events toggle
@@ -291,9 +230,6 @@ void SDLTest::_pumpEventsEmptiesEventQueueTest()
     QCOMPARE(queuedAfterPump, 0);
 }
 
-//-----------------------------------------------------------------------------
-// Thread Safety Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_threadSafetyTest()
 {
     // Test manual lock/unlock
@@ -322,9 +258,6 @@ void SDLTest::_threadSafetyTest()
     // lock1 released
 }
 
-//-----------------------------------------------------------------------------
-// Pre-Open Device Query Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_preOpenDeviceQueryTest()
 {
     const QString testName = QStringLiteral("Pre-Open Query Test Joystick");
@@ -334,22 +267,15 @@ void SDLTest::_preOpenDeviceQueryTest()
     // Test all pre-open query functions
     QString name = SDLJoystick::getNameForInstanceId(instanceId);
     QCOMPARE(name, testName);
-    QString path = SDLJoystick::getPathForInstanceId(instanceId);
-    Q_UNUSED(path);  // May be empty for virtual
+    (void) SDLJoystick::getPathForInstanceId(instanceId);  // May be empty for virtual
     QString guid = SDLJoystick::getGUIDForInstanceId(instanceId);
     QVERIFY2(!guid.isEmpty(), "GUID should not be empty");
-    int vendor = SDLJoystick::getVendorForInstanceId(instanceId);
-    Q_UNUSED(vendor);   // 0 for virtual
-    int product = SDLJoystick::getProductForInstanceId(instanceId);
-    Q_UNUSED(product);  // 0 for virtual
-    int version = SDLJoystick::getProductVersionForInstanceId(instanceId);
-    Q_UNUSED(version);  // 0 for virtual
-    QString type = SDLJoystick::getTypeForInstanceId(instanceId);
-    Q_UNUSED(type);
-    QString realType = SDLJoystick::getRealTypeForInstanceId(instanceId);
-    Q_UNUSED(realType);
-    int playerIndex = SDLJoystick::getPlayerIndexForInstanceId(instanceId);
-    Q_UNUSED(playerIndex);  // -1 if not set
+    (void) SDLJoystick::getVendorForInstanceId(instanceId);          // 0 for virtual
+    (void) SDLJoystick::getProductForInstanceId(instanceId);         // 0 for virtual
+    (void) SDLJoystick::getProductVersionForInstanceId(instanceId);  // 0 for virtual
+    (void) SDLJoystick::getTypeForInstanceId(instanceId);
+    (void) SDLJoystick::getRealTypeForInstanceId(instanceId);
+    (void) SDLJoystick::getPlayerIndexForInstanceId(instanceId);  // -1 if not set
     QString connectionState = SDLJoystick::getConnectionStateForInstanceId(instanceId);
     QVERIFY2(!connectionState.isEmpty(), "Connection state should have a string");
     // Test with invalid instance ID
@@ -365,20 +291,44 @@ void SDLTest::_preOpenDeviceQueryTest()
     QVERIFY2(destroyed, "Virtual joystick destruction should succeed");
 }
 
-//-----------------------------------------------------------------------------
-// Type/String Conversion Tests
-//-----------------------------------------------------------------------------
+void SDLTest::_playerIndexTest()
+{
+    // An opened device has a player index. The lookups go through SDL's joystick functions for a gamepad too.
+    const int gamepadId = SDLJoystick::createVirtualJoystick(QStringLiteral("Player Index Test Gamepad"), 6, 12, 1);
+    const int joystickId = SDLJoystick::createVirtualJoystick(QStringLiteral("Player Index Test Joystick"), 2, 2, 0);
+    QVERIFY(gamepadId > 0);
+    QVERIFY(joystickId > 0);
+    SDL_Gamepad* const gamepad = SDL_OpenGamepad(static_cast<SDL_JoystickID>(gamepadId));
+    SDL_Joystick* const joystick = SDL_OpenJoystick(static_cast<SDL_JoystickID>(joystickId));
+    const bool indexesSet =
+        gamepad && joystick && SDL_SetGamepadPlayerIndex(gamepad, 5) && SDL_SetJoystickPlayerIndex(joystick, 6);
+
+    const int gamepadIndex = SDLJoystick::getPlayerIndexForInstanceId(gamepadId);
+    const int joystickIndex = SDLJoystick::getPlayerIndexForInstanceId(joystickId);
+    const int idOfGamepadIndex = SDLJoystick::getInstanceIdFromPlayerIndex(5);
+    const int idOfJoystickIndex = SDLJoystick::getInstanceIdFromPlayerIndex(6);
+    const int idOfUnusedIndex = SDLJoystick::getInstanceIdFromPlayerIndex(7);
+
+    SDL_CloseGamepad(gamepad);
+    SDL_CloseJoystick(joystick);
+    QVERIFY(SDLJoystick::destroyVirtualJoystick(gamepadId));
+    QVERIFY(SDLJoystick::destroyVirtualJoystick(joystickId));
+
+    QVERIFY(indexesSet);
+    QCOMPARE(gamepadIndex, 5);
+    QCOMPARE(joystickIndex, 6);
+    QCOMPARE(idOfGamepadIndex, gamepadId);
+    QCOMPARE(idOfJoystickIndex, joystickId);
+    QCOMPARE(idOfUnusedIndex, -1);
+}
+
 void SDLTest::_gamepadTypeConversionTest()
 {
     // Test that all standard gamepad types return non-empty strings
     // SDL_GAMEPAD_TYPE enum values may vary by SDL version
     for (int type = 0; type <= 10; ++type) {
-        QString typeStr = SDLJoystick::gamepadTypeToString(type);
-        // Type 0 is unknown, others should have names
-        if (type > 0) {
-            // Some types may not exist in all SDL versions
-            Q_UNUSED(typeStr);
-        }
+        // Type 0 is unknown, others should have names. Some types may not exist in all SDL versions
+        (void) SDLJoystick::gamepadTypeToString(type);
     }
     // Test display names
     QString unknownDisplay = SDLJoystick::gamepadTypeDisplayName(0);
@@ -445,35 +395,33 @@ void SDLTest::_connectionStateConversionTest()
     // Verify they're different
     QVERIFY2(wired != wireless, "Wired and wireless should be different strings");
     // Test out-of-range value - should not crash
-    QString outOfRange = SDLJoystick::connectionStateToString(99);
-    Q_UNUSED(outOfRange);
+    (void) SDLJoystick::connectionStateToString(99);
 }
 
-//-----------------------------------------------------------------------------
-// GUID Utilities Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_guidInfoTest()
 {
     // Test with a valid GUID format (32 hex characters)
     QString testGuid = QStringLiteral("03000000010000000100000001000000");
-    QVariantMap info = SDLJoystick::getGUIDInfo(testGuid);
-    // The map should have some content (keys may vary by SDL version)
-    // Just verify it returns without crashing
-    Q_UNUSED(info);
-    // Test with empty GUID - should not crash
-    QVariantMap emptyInfo = SDLJoystick::getGUIDInfo(QString());
-    Q_UNUSED(emptyInfo);
+    // The fields of a GUID are 16 bits each, low byte first: bus, crc16, vendor, 0, product, 0, version
+    const QVariantMap expectedInfo = {{QStringLiteral("valid"), true},
+                                      {QStringLiteral("vendor"), 0x045e},
+                                      {QStringLiteral("product"), 0x028e},
+                                      {QStringLiteral("version"), 0x0114},
+                                      {QStringLiteral("crc16"), 0xcdab}};
+    QCOMPARE(SDLJoystick::getGUIDInfo(QStringLiteral("0300abcd5e0400008e02000014010000")), expectedInfo);
+    // Test with empty GUID
+    const QVariantMap expectedEmptyInfo = {{QStringLiteral("valid"), false},
+                                           {QStringLiteral("vendor"), 0},
+                                           {QStringLiteral("product"), 0},
+                                           {QStringLiteral("version"), 0},
+                                           {QStringLiteral("crc16"), 0}};
+    QCOMPARE(SDLJoystick::getGUIDInfo(QString()), expectedEmptyInfo);
     // Test with invalid GUID - should not crash
-    QVariantMap invalidInfo = SDLJoystick::getGUIDInfo(QStringLiteral("invalid"));
-    Q_UNUSED(invalidInfo);
+    (void) SDLJoystick::getGUIDInfo(QStringLiteral("invalid"));
     // Test getMappingForGUID - just verify it doesn't crash
-    QString mapping = SDLJoystick::getMappingForGUID(testGuid);
-    Q_UNUSED(mapping);  // May be empty if no mapping exists
+    (void) SDLJoystick::getMappingForGUID(testGuid);  // May be empty if no mapping exists
 }
 
-//-----------------------------------------------------------------------------
-// Virtual Joystick Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_virtualJoystickTest()
 {
     const QString testName = QStringLiteral("SDL Test Virtual Joystick");
@@ -482,21 +430,6 @@ void SDLTest::_virtualJoystickTest()
     QVERIFY2(instanceId >= 0, "Virtual joystick creation should succeed");
     // Verify it's recognized as virtual
     QVERIFY2(SDLJoystick::isVirtualJoystick(instanceId), "Should be recognized as virtual");
-    // Query device info
-    QString name = SDLJoystick::getNameForInstanceId(instanceId);
-    QCOMPARE(name, testName);
-    // Get path - may be empty for virtual joysticks
-    QString path = SDLJoystick::getPathForInstanceId(instanceId);
-    Q_UNUSED(path);
-    // Get GUID - should return something
-    QString guid = SDLJoystick::getGUIDForInstanceId(instanceId);
-    QVERIFY2(!guid.isEmpty(), "Virtual joystick should have a GUID");
-    // Player index may be -1 if not set
-    int playerIndex = SDLJoystick::getPlayerIndexForInstanceId(instanceId);
-    Q_UNUSED(playerIndex);
-    // Type should be returned
-    QString type = SDLJoystick::getTypeForInstanceId(instanceId);
-    Q_UNUSED(type);
     // Clean up
     bool destroyed = SDLJoystick::destroyVirtualJoystick(instanceId);
     QVERIFY2(destroyed, "Virtual joystick destruction should succeed");
@@ -508,9 +441,6 @@ void SDLTest::_virtualJoystickTest()
     QVERIFY2(!destroyedAgain, "Destroying non-existent joystick should fail");
 }
 
-//-----------------------------------------------------------------------------
-// Mapping Management Tests
-//-----------------------------------------------------------------------------
 void SDLTest::_mappingManagementTest()
 {
     // Test reload mappings (loads from gamecontrollerdb.txt resource)
@@ -532,8 +462,8 @@ void SDLTest::_mappingManagementTest()
     // so we don't verify retrieval here. The important thing is that addMapping succeeded.
     // Test adding an invalid mapping - should fail gracefully
     ignoreLogMessage("qgc.utilities.sdl.joystick", QtWarningMsg, QRegularExpression("Failed to add gamepad mapping"));
-    bool invalidAdded = SDLJoystick::addMapping(QStringLiteral("invalid mapping string"));
-    Q_UNUSED(invalidAdded);  // May or may not fail depending on SDL's parser
+    // May or may not fail depending on SDL's parser
+    (void) SDLJoystick::addMapping(QStringLiteral("invalid mapping string"));
     // Test adding empty mapping
     bool emptyAdded = SDLJoystick::addMapping(QString());
     QVERIFY2(!emptyAdded, "Adding empty mapping should fail");
