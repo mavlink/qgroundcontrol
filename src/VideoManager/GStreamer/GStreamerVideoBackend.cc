@@ -13,14 +13,6 @@
 
 QGC_LOGGING_CATEGORY(GStreamerVideoBackendLog, "Video.GStreamer.VideoBackend")
 
-#ifdef Q_OS_ANDROID
-#include <jni.h>
-
-// GStreamer's Android plugins (e.g. androidmedia) look up the JNI state in libgstreamer_android.so, which keeps what
-// this sets (Platform/gst_android_jni.c).
-extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
-#endif
-
 void GStreamerVideoBackend::configureQtGraphics(bool softwareRendering)
 {
     HwBuffers::configureQtGraphics(softwareRendering);
@@ -108,13 +100,4 @@ void GStreamerVideoBackend::setDebugLevel(int level)
 void GStreamerVideoBackend::onMainWindowReady(QQuickWindow* window)
 {
     GStreamer::onMainWindowReady(window);
-}
-
-void GStreamerVideoBackend::setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
-                                               [[maybe_unused]] void* classLoader)
-{
-#ifdef Q_OS_ANDROID
-    qgc_gst_android_set_jni_state(static_cast<JavaVM*>(javaVm), static_cast<jobject>(appContext),
-                                  static_cast<jobject>(classLoader));
-#endif
 }

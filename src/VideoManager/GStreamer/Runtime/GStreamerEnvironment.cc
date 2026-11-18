@@ -17,9 +17,6 @@
 #include "QGCLoggingCategory.h"
 
 #ifdef Q_OS_ANDROID
-#include <android/asset_manager.h>
-#include <android/asset_manager_jni.h>
-
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #endif
@@ -31,6 +28,12 @@
 #endif
 
 QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
+
+#ifdef Q_OS_ANDROID
+// GStreamer's Android plugins (androidmedia) look the JNI state up in libgstreamer_android.so, which keeps what this
+// sets (Platform/gst_android_jni.c).
+extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
+#endif
 
 namespace {
 
@@ -162,39 +165,33 @@ void _setCaBundleIfUnset(const QString& caBundle)
 #endif
 
 #ifdef Q_OS_ANDROID
-// Extracts an APK asset to destPath, which outlives the APK: an updated app replaces what an earlier version left.
-bool _extractApkAsset(const char* assetPath, const QString& destPath)
+// Hands GStreamer's Android plugins the JavaVM, the application context and its class loader, which they look up as
+// gst_init() registers them.
+void _setAndroidJniState()
 {
-    QJniObject ctx = QNativeInterface::QAndroidApplication::context();
-    if (!ctx.isValid()) {
-        qCWarning(GStreamerEnvLog) << "Cannot resolve Android Context for asset extraction";
-        return false;
+    const QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    const QJniObject context = activity.isValid()
+                                   ? activity.callObjectMethod("getApplicationContext", "()Landroid/content/Context;")
+                                   : QJniObject();
+    const QJniObject classLoader =
+        context.isValid() ? context.callObjectMethod("getClassLoader", "()Ljava/lang/ClassLoader;") : QJniObject();
+    if (!classLoader.isValid()) {
+        qCWarning(GStreamerEnvLog) << "No application class loader: GStreamer's MediaCodec decoders won't register";
     }
+    qgc_gst_android_set_jni_state(QJniEnvironment::javaVM(), context.object(), classLoader.object());
+}
 
-    QJniObject jAssetMgr = ctx.callObjectMethod("getAssets", "()Landroid/content/res/AssetManager;");
-    if (!jAssetMgr.isValid()) {
-        qCWarning(GStreamerEnvLog) << "Context.getAssets() returned null";
-        return false;
-    }
-
-    QJniEnvironment env;
-    AAssetManager* am = AAssetManager_fromJava(env.jniEnv(), jAssetMgr.object());
-    if (!am) {
-        qCWarning(GStreamerEnvLog) << "AAssetManager_fromJava failed";
-        return false;
-    }
-
-    AAsset* asset = AAssetManager_open(am, assetPath, AASSET_MODE_BUFFER);
-    if (!asset) {
+// Extracts an APK asset to destPath, which outlives the APK: an updated app replaces what an earlier version left.
+// Through the assets: file engine of Qt's Android platform plugin, so once the QGuiApplication exists.
+bool _extractApkAsset(const QString& assetPath, const QString& destPath)
+{
+    QFile asset(QStringLiteral("assets:/") + assetPath);
+    if (!asset.open(QIODevice::ReadOnly)) {
         qCDebug(GStreamerEnvLog) << "APK asset not present:" << assetPath;
         return false;
     }
-    const off_t assetLen = AAsset_getLength(asset);
-    const void* const buf = AAsset_getBuffer(asset);
-    const bool ok = buf && (assetLen > 0) &&
-                    GStreamer::Environment::writeIfChanged(
-                        destPath, QByteArrayView(static_cast<const char*>(buf), static_cast<qsizetype>(assetLen)));
-    AAsset_close(asset);
+    const QByteArray content = asset.readAll();
+    const bool ok = !content.isEmpty() && GStreamer::Environment::writeIfChanged(destPath, content);
     if (!ok) {
         qCWarning(GStreamerEnvLog) << "Failed writing asset" << assetPath << "to" << destPath;
     }
@@ -394,13 +391,15 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
     // Static plugins — no GST_PLUGIN_PATH; APK assets are read-only, so the CA bundle is extracted
     // to filesDir, and again when an update changes it (we run gst_init from C++, not Java's GStreamer.init).
     {
+        _setAndroidJniState();
+
         const QString filesDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 
         if (!filesDir.isEmpty()) {
             _setGstEnv("HOME", filesDir);
             const QString caBundle = _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt");
-            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle)) {
+            if (_extractApkAsset(QStringLiteral("ssl/certs/ca-certificates.crt"), caBundle)) {
                 _setCaBundleIfUnset(caBundle);
             }
             _setGstEnv("XDG_DATA_DIRS", filesDir);

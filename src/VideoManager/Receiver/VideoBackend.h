@@ -97,12 +97,6 @@ public:
 
     virtual void onMainWindowReady([[maybe_unused]] QQuickWindow* window) {}
 
-    /// Android: hands the backend the JavaVM, application context and class loader (jobject, or null) its plugins
-    /// look up through JNI.
-    virtual void setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
-                                    [[maybe_unused]] void* classLoader)
-    {}
-
 protected:
     VideoBackend() = default;
 };
