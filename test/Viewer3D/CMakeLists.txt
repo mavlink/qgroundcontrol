@@ -47,7 +47,7 @@ qt_add_resources(
 add_qgc_test(CityMapGeometryTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DCameraControllerTest LABELS Unit Viewer3D)
 add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
-add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D RESOURCE_LOCK TempFiles)
+add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DTerrainTextureTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DTileQueryTest LABELS Unit Viewer3D)

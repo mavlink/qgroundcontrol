@@ -39,5 +39,5 @@ qt_add_resources(
 )
 
 add_qgc_test(QGCArchiveModelTest LABELS Unit Utilities)
-add_qgc_test(QGCCompressionTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCCompressionTest LABELS Unit Utilities)
 add_qgc_test(QGCStreamingDecompressionTest LABELS Unit Utilities)

@@ -37,12 +37,12 @@ target_sources(
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(APMParameterMetaDataTest LABELS Unit RESOURCE_LOCK TempFiles)
+add_qgc_test(APMParameterMetaDataTest LABELS Unit)
 add_qgc_test(FactControlsUnitsTest LABELS Unit)
 add_qgc_test(FactGroupTest LABELS Unit)
 add_qgc_test(FactMetaDataTest LABELS Unit)
 add_qgc_test(FactPanelControllerTest LABELS Integration Vehicle)
-add_qgc_test(PX4ParameterMetaDataTest LABELS Unit RESOURCE_LOCK TempFiles)
+add_qgc_test(PX4ParameterMetaDataTest LABELS Unit)
 add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle)
 add_qgc_test(FactTest LABELS Unit)
 add_qgc_test(HashCheckTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})

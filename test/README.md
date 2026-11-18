@@ -162,8 +162,8 @@ QGCTestTiming)`) belong to `QGCUnitTests`, never to the application target, whos
 recompile whenever a test directory is added. Configure fails when the application has an include
 directory under `test/`.
 
-Every test gets its own `TMPDIR` (and `TMP`/`TEMP` on Windows) under `build/test-tmp/`, so
-`RESOURCE_LOCK TempFiles` is ignored. `ENV_MODIFICATION` and `SKIP_REGEX` set CTest's
+Every test gets its own `TMPDIR` (and `TMP`/`TEMP` on Windows) under `build/test-tmp/`, so tests that
+write temporary files need no `RESOURCE_LOCK`. `ENV_MODIFICATION` and `SKIP_REGEX` set CTest's
 `ENVIRONMENT_MODIFICATION` and `SKIP_REGULAR_EXPRESSION`.
 
 `SHARDS <count>` gives each entry every count-th test function in declaration order

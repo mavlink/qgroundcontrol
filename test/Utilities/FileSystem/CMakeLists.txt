@@ -22,9 +22,9 @@ target_sources(
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(QGCArchiveWatcherTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCArchiveWatcherTest LABELS Unit Utilities)
 add_qgc_test(QGCCachedFileDownloadTest LABELS Integration Network Utilities)
 add_qgc_test(QGCFileDownloadTest LABELS Integration Network Utilities)
-add_qgc_test(QGCFileHelperTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCFileHelperTest LABELS Unit Utilities)
 add_qgc_test(QGCFileWatcherTest LABELS Unit Utilities)
 add_qgc_test(QGCFileWriterTest LABELS Unit Utilities)

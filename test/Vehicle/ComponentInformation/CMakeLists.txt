@@ -32,7 +32,7 @@ qt_add_resources(
         actuators.example.json
 )
 
-add_qgc_test(ComponentInformationCacheTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
+add_qgc_test(ComponentInformationCacheTest LABELS Integration Vehicle)
 add_qgc_test(ComponentInformationTranslationTest LABELS Unit Vehicle)
 add_qgc_test(JsonSchemaValidatorTest LABELS Unit Vehicle)
 add_qgc_test(ComponentInformationManagerTest LABELS Integration Vehicle)
