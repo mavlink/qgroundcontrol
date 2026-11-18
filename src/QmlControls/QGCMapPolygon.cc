@@ -554,10 +554,6 @@ bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
         QGC::showAppMessage(errorString);
         return false;
     }
-    if (polygons.isEmpty()) {
-        QGC::showAppMessage(tr("No polygons found in file"));
-        return false;
-    }
     const QList<QGeoCoordinate>& rgCoords = polygons.first();
 
     beginReset();
