@@ -180,6 +180,7 @@ void GstReceiverWorker::_startSession()
         .redactedUri = _redactedUri(),
         .lowLatency = _requested.config.lowLatency,
         .rtpJitterLatencyMs = _requested.config.rtpJitterLatencyMs,
+        .softwareDecoderThreads = _requested.config.softwareDecoderThreads,
     };
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
     _watchdog.start(_requested.config.timeout, GStreamer::SourceFactory::connectGracePeriod(_requested.config.uri));

@@ -199,7 +199,8 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
         .watchdog = &_watchdog,
         .post = [this](std::function<void()> task) { _post(std::move(task)); },
     };
-    _decoding = std::make_unique<DecodingBranch>(context, _listener, _settings.lowLatency);
+    _decoding =
+        std::make_unique<DecodingBranch>(context, _listener, _settings.lowLatency, _settings.softwareDecoderThreads);
     _recording = std::make_unique<RecordingBranch>(context, _listener);
     if (!_decoding->build() || !_recording->build()) {
         return Failure{.reason = QStringLiteral("branch creation failed"),

@@ -130,6 +130,10 @@
                 {
                     "setting": "videoSettings.forceVideoDecoder",
                     "showWhen": "gstreamer"
+                },
+                {
+                    "setting": "videoSettings.softwareDecoderThreads",
+                    "showWhen": "gstreamer"
                 }
             ]
         },

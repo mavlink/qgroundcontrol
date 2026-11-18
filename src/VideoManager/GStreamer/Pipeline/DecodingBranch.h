@@ -76,7 +76,8 @@ public:
     };
 
     /// @p lowLatency: frames are shown as soon as decoded instead of at their presentation time.
-    DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency);
+    /// @p softwareDecoderThreads: the frames a libav decoder decodes at once (VideoReceiver::Config).
+    DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency, int softwareDecoderThreads);
     ~DecodingBranch();
 
     DecodingBranch(const DecodingBranch&) = delete;
@@ -154,6 +155,7 @@ private:
     const BranchContext _context;
     Listener& _listener;
     const bool _lowLatency;
+    const int _softwareDecoderThreads;
 
     TeeBranchHead _head;
 

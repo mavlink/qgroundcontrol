@@ -68,6 +68,9 @@ public:
         std::chrono::seconds timeout{3};
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;
+        /// Frames a software decoder decodes at once, each on a thread of its own; above 1, each delays the picture
+        /// by a frame at most. For the GStreamer receiver's libav decoders only.
+        int softwareDecoderThreads = 1;
         /// Reconnect with backoff after a failure. Applies at once; changing any other field restarts the stream.
         bool autoReconnect = true;
 

@@ -1,5 +1,6 @@
 #include "DecodingBranch.h"
 
+#include <algorithm>
 #include <chrono>
 #include <gst/gst.h>
 #include <utility>
@@ -24,6 +25,9 @@ constexpr guint kDisplayQueueMaxBuffers = 2;
 // keyframe interval. A stream without keyframes (intra refresh), or one whose sender takes no requests, would
 // otherwise freeze for good, or for a whole GOP, after a dropped frame.
 constexpr qint64 kMaxGateMs = 2000;
+
+// The most frames a software decoder is asked to decode at once: the setting's range. Each delays the picture.
+constexpr int kMaxFrameThreads = 4;
 
 /// decodebin3's "select-stream": only video is decoded, so that no audio decoder is built. decodebin3 asks on the
 /// streaming thread that brings the stream. A SELECT_STREAMS event can't be sent from there: sending it takes the
@@ -103,6 +107,23 @@ void decodeWithoutDelay(GstElement* decoder)
     gst_util_set_object_arg(object, "compliance", "normal");
 }
 
+/// Has @p decoder, where it is a libav one, decode @p threads frames at once, each on a thread of its own. By itself
+/// it decodes a live stream on slice threads only, which leave a stream whose frames have one slice on one core. On
+/// frame threads it holds back a frame less than it has threads, and reports a frame of latency for each thread: a
+/// sink that syncs to the clock shows the picture that much later. Returns the threads it set, 0 for none.
+int decodeOnFrameThreads(GstElement* decoder, int threads)
+{
+    GObjectClass* const decoderClass = G_OBJECT_GET_CLASS(decoder);
+    if ((threads <= 1) || !g_object_class_find_property(decoderClass, "thread-type") ||
+        !g_object_class_find_property(decoderClass, "max-threads")) {
+        return 0;
+    }
+    threads = std::min(threads, kMaxFrameThreads);
+    gst_util_set_object_arg(G_OBJECT(decoder), "thread-type", "frame");
+    g_object_set(decoder, "max-threads", threads, nullptr);
+    return threads;
+}
+
 /// Whether the stream @p caps describe is compressed video that none of the decoders decodebin3 plugs, those ranked
 /// for autoplugging, takes. False for anything else, raw video included, which decodebin3 passes on as it is.
 bool lacksDecoder(const GstCaps* caps)
@@ -152,10 +173,12 @@ SinkFrameCounts sinkFrameCountsSince(const GstStructure* stats, const GstStructu
 
 }  // namespace
 
-DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency)
+DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency,
+                               int softwareDecoderThreads)
     : _context(context)
     , _listener(listener)
     , _lowLatency(lowLatency)
+    , _softwareDecoderThreads(softwareDecoderThreads)
     , _retryBackoff(StreamSupervisor::kDefaultBackoff)
 {
     _retryTimer.setSingleShot(true);
@@ -622,15 +645,19 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
         decodeWithoutDelay(element);
     }
     const bool singleThread = GStreamer::avoidHevcWavefrontDeadlock(element);
+    auto* const self = static_cast<DecodingBranch*>(data);
+    // After decodeWithoutDelay(), whose slice threads the user's frame threads replace. Not for a decoder kept on one
+    // thread.
+    const int frameThreads = singleThread ? 0 : decodeOnFrameThreads(element, self->_softwareDecoderThreads);
 
     qCDebug(GstVideoReceiverLog).noquote()
         << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled"
-        << (live ? "" : "- set to decode without delay, as the source isn't live")
-        << (singleThread ? "- on one thread, as this FFmpeg's HEVC slice threads can deadlock" : "");
+        << ((live || (frameThreads > 0)) ? "" : "- set to decode without delay, as the source isn't live")
+        << (singleThread ? "- on one thread, as this FFmpeg's HEVC slice threads can deadlock" : "")
+        << ((frameThreads > 0) ? QStringLiteral("- on %1 frame threads").arg(frameThreads) : QString());
     const QString name = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
     const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 
-    auto* const self = static_cast<DecodingBranch*>(data);
     self->_context.post([self, name, hardware, decoder = GStreamer::shareObject(GST_ELEMENT(decodebin)),
                          plugged = GStreamer::shareObject(element)]() {
         // A decodebin3 taken out meanwhile has no decoder left to name.

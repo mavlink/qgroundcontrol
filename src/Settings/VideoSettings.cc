@@ -161,6 +161,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, uvcTileCamera)
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, hasPipelineSettings())
 
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(softwareDecoderThreads, hasPipelineSettings())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(lowLatencyMode, hasStreaming())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasPipelineSettings())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspAutoReconnect, hasStreaming())

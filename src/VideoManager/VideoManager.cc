@@ -242,13 +242,13 @@ void VideoManager::_connectSettings()
             source->scheduleApply();
         }
     };
-    for (Fact* const fact :
-         {_videoSettings->videoSource(), _videoSettings->udpUrl(), _videoSettings->tcpUrl(), _videoSettings->rtspUrl(),
-          _videoSettings->rtspTimeout(), _videoSettings->lowLatencyMode(), _videoSettings->rtpJitterLatencyMs(),
-          _videoSettings->rtspAutoReconnect(), _videoSettings->disableWhenDisarmed(),
-          // Which sources there are, and what the camera source plays.
-          _videoSettings->maxVideoTiles(), _videoSettings->uvcTileCamera(),
-          _videoSettings->uvcTileCameraAsMainPicture()}) {
+    for (Fact* const fact : {_videoSettings->videoSource(), _videoSettings->udpUrl(), _videoSettings->tcpUrl(),
+                             _videoSettings->rtspUrl(), _videoSettings->rtspTimeout(), _videoSettings->lowLatencyMode(),
+                             _videoSettings->rtpJitterLatencyMs(), _videoSettings->softwareDecoderThreads(),
+                             _videoSettings->rtspAutoReconnect(), _videoSettings->disableWhenDisarmed(),
+                             // Which sources there are, and what the camera source plays.
+                             _videoSettings->maxVideoTiles(), _videoSettings->uvcTileCamera(),
+                             _videoSettings->uvcTileCameraAsMainPicture()}) {
         (void) connect(fact, &Fact::rawValueChanged, this, reconfigure);
     }
 

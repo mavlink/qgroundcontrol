@@ -121,6 +121,7 @@ VideoStreamResolver::Settings VideoStreamResolver::snapshot(VideoSettings* video
     settings.lowLatency = videoSettings->lowLatencyMode()->rawValue().toBool();
     settings.rtpJitterLatencyMs = static_cast<int>(
         std::min(videoSettings->rtpJitterLatencyMs()->rawValue().toUInt(), static_cast<uint>(INT_MAX)));
+    settings.softwareDecoderThreads = videoSettings->softwareDecoderThreads()->rawValue().toInt();
     settings.autoReconnect = videoSettings->rtspAutoReconnect()->rawValue().toBool();
     settings.conversionElement = videoSettings->videoConversionElement()->rawValue().toString().toUtf8();
     settings.disablePixelAspectRatio = videoSettings->disablePixelAspectRatio()->rawValue().toBool();
@@ -159,6 +160,7 @@ std::optional<VideoReceiver::Config> VideoStreamResolver::resolve(const Settings
     }
     config.lowLatency = settings.lowLatency;
     config.rtpJitterLatencyMs = settings.rtpJitterLatencyMs;
+    config.softwareDecoderThreads = settings.softwareDecoderThreads;
     config.autoReconnect = settings.autoReconnect;
     return config;
 }

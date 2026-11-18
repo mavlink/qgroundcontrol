@@ -18,8 +18,8 @@ private slots:
     void _testRestartRebuildsVideoSink();
     void _testDecoderQosDisabled();
     void _testDecoderDecodesVideoStreamsOnly();
-    void _testDecoderDelayFollowsSourceLiveness_data();
-    void _testDecoderDelayFollowsSourceLiveness();
+    void _testDecoderThreads_data();
+    void _testDecoderThreads();
     void _testDisplaySinkHasLatencyOnceLinked();
     void _testFailingHardwareDecoderGivesWayToTheNext();
     void _testSilentHardwareDecoderGivesWayAfterOneStall();

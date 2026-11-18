@@ -133,6 +133,7 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
     VideoStreamResolver::Settings settings = manualSettings(VideoSettings::videoSourceUDPH264);
     settings.lowLatency = true;
     settings.rtpJitterLatencyMs = 250;
+    settings.softwareDecoderThreads = 3;
     settings.autoReconnect = false;
     const auto streamInfo = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal");
 
@@ -143,6 +144,7 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
         QVERIFY(config.has_value());
         QVERIFY(config->lowLatency);
         QCOMPARE(config->rtpJitterLatencyMs, 250);
+        QCOMPARE(config->softwareDecoderThreads, 3);
         QVERIFY(!config->autoReconnect);
     }
 }
