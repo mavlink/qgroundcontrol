@@ -8,6 +8,9 @@
 ///
 /// Provides common timeout handling infrastructure
 ///
+/// The wait ends when the state is exited, and when its machine stops: Qt exits no state of a machine that stops,
+/// so the timeout and the wait signal would otherwise outlive the run.
+///
 class WaitStateBase : public QGCState
 {
     Q_OBJECT
@@ -40,7 +43,8 @@ protected:
     /// Called when the state is entered - subclasses should call base implementation
     virtual void onWaitEntered() {}
 
-    /// Called when the state is exited - subclasses should call base implementation
+    /// Called when the state is exited, or when its machine stops while the state is active - subclasses should
+    /// call base implementation
     virtual void onWaitExited() {}
 
     /// Called when the timeout expires - default emits timeout(), subclasses can override
@@ -64,7 +68,7 @@ protected:
 
 private slots:
     void _onEntered();
-    void _onExited();
+    void _stopWaiting();
     void _onTimeout();
 
 private:
@@ -73,4 +77,5 @@ private:
     int _timeoutMsecs = 0;
     QTimer _timeoutTimer;
     bool _completed = false;
+    bool _waiting = false;
 };

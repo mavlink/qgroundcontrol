@@ -1,10 +1,16 @@
 #include "QGCStateMachine.h"
+#include "Vehicle.h"
 
 QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QObject* parent)
     : QStateMachine (parent)
     , _vehicle      (vehicle)
 {
     setObjectName(machineName);
+
+    if (_vehicle) {
+        // States check vehicle() for null, so a machine that outlives its vehicle must not keep the pointer
+        connect(_vehicle, &QObject::destroyed, this, [this]() { _vehicle = nullptr; });
+    }
 
     connect(this, &QGCStateMachine::started, this, [this] () {
         qCDebug(QGCStateMachineLog) << "State machine started:" << objectName();
@@ -24,7 +30,8 @@ QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, Q
     connect(this, &QGCStateMachine::finished, this, [this]() {
         _setInProgress(false);
         qCDebug(QGCStateMachineLog) << "State machine finished:" << objectName();
-        if (_progressTotalWeight > 0 && _progressLastEmitted < 1.0f) {
+        // Not when a listener of inProgressChanged has restarted the machine: the progress is that of the new run
+        if (!_inProgress && _progressTotalWeight > 0 && _progressLastEmitted < 1.0f) {
             _progressLastEmitted = 1.0f;
             emit progressUpdate(1.0f);
         }
@@ -57,6 +64,14 @@ void QGCStateMachine::start()
     QStateMachine::start();
     // Emitted after Qt's start so a stop() from a listener is honored
     emit inProgressChanged();
+}
+
+void QGCStateMachine::onEntry(QEvent* event)
+{
+    // Qt calls this for a machine that is a state of another machine. QStateMachine::onEntry() starts the machine
+    // with QStateMachine::start(), which is not virtual, so this does what it does through start()
+    start();
+    QState::onEntry(event);
 }
 
 void QGCStateMachine::_setInProgress(bool inProgress)
@@ -153,18 +168,52 @@ QGCFinalState* QGCStateMachine::addFinalState(const QString& stateName)
 
 void QGCStateMachine::restart()
 {
+    // The progress is reset right before the start, so that a machine that is still stopping cannot raise it again.
+    // resetProgress() emits nothing, so a machine that had progressed says here that it is back at 0.
+    const auto startOver = [this]() {
+        _restartPending = false;
+        const bool hadProgress = progress() > 0.0f;
+        resetProgress();
+        if (hadProgress) {
+            emit progressUpdate(0.0f);
+        }
+        start();
+    };
+
     if (inProgress()) {
-        // stop() is asynchronous, so connect to stopped signal to start again
-        connect(this, &QStateMachine::stopped, this, &QGCStateMachine::start, Qt::SingleShotConnection);
+        // stop() is asynchronous, so connect to stopped signal to start again. One connection serves every
+        // request made until the machine has stopped: a second start() would be refused.
+        if (!_restartPending) {
+            _restartPending = true;
+            connect(
+                this, &QStateMachine::stopped, this,
+                [this, startOver]() {
+                    // Not when a listener of stopped that came first has restarted the machine already
+                    if (_restartPending) {
+                        startOver();
+                    }
+                },
+                Qt::SingleShotConnection);
+        }
         stop();
     } else {
-        start();
+        startOver();
     }
 }
 
 // -----------------------------------------------------------------------------
 // Transition Helpers
 // -----------------------------------------------------------------------------
+
+QSignalTransition* QGCStateMachine::addTransition(QState* from, const char* signal, QAbstractState* to,
+                                                  QAbstractAnimation* animation)
+{
+    auto* transition = from->QState::addTransition(from, signal, to);
+    if (animation) {
+        transition->addAnimation(animation);
+    }
+    return transition;
+}
 
 MachineEventTransition* QGCStateMachine::addEventTransition(QState* from, const QString& eventName, QAbstractState* to,
                                                             QAbstractAnimation* animation)

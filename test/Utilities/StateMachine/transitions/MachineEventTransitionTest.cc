@@ -74,12 +74,16 @@ void MachineEventTransitionTest::_testMachineEventTransitionWithGuard()
     machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("blocked"));
     QCoreApplication::processEvents();
     QVERIFY(!transitioned);
+    QVERIFY(!transition->eventData().isValid());
 
     // This should trigger
     machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("allowed"));
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(guardCalled);
     QVERIFY(transitioned);
+    // The transition keeps the data of the event that it took
+    QCOMPARE(transition->eventName(), QStringLiteral("myEvent"));
+    QCOMPARE(transition->eventData().toString(), QStringLiteral("allowed"));
 }
 
 void MachineEventTransitionTest::_testDelayedEventCancel()
@@ -129,22 +133,23 @@ void MachineEventTransitionTest::_testEventPriority()
 
     waitState->addTransition(normalTransition);
     waitState->addTransition(highTransition);
+    highState->addTransition(new MachineEventTransition(QStringLiteral("normalEvent"), normalState));
     normalState->addTransition(normalState, &QGCState::advance, finalState);
-    highState->addTransition(highState, &QGCState::advance, finalState);
 
     machine.setInitialState(waitState);
 
     QVERIFY(startAndWaitForEntered(&machine, waitState));
 
-    // Post normal event first, then high priority - high should be processed first
+    // Post normal event first, then high priority
     machine.postEvent(QStringLiteral("normalEvent"));
     machine.postEvent(QStringLiteral("highEvent"), QVariant(), QStateMachine::HighPriority);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 
-    // High priority event should have been processed
-    QVERIFY(eventOrder.contains(QStringLiteral("high")) || eventOrder.contains(QStringLiteral("normal")));
+    // The high priority event is handled first and the normal one after it. In the order they were posted, the
+    // normal event would have taken the machine past the High state
+    QCOMPARE(eventOrder, QStringList({QStringLiteral("high"), QStringLiteral("normal")}));
 }
 
 UT_REGISTER_TEST(MachineEventTransitionTest, TestLabel::Unit, TestLabel::Utilities)

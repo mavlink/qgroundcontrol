@@ -67,4 +67,25 @@ void GuardedTransitionTest::_testGuardedTransitionBlocked()
     QVERIFY(alternateReached);
 }
 
+void GuardedTransitionTest::_testGuardedTransitionTargetSetLater()
+{
+    QStateMachine machine;
+    bool guardCalled = false;
+
+    auto* startState = new FunctionState(QStringLiteral("Start"), &machine, []() {});
+    auto* finalState = addFinalState(&machine);
+
+    auto* guardedTransition = new GuardedTransition(startState, &QGCState::advance, [&guardCalled]() {
+        guardCalled = true;
+        return true;
+    });
+    QCOMPARE(guardedTransition->targetState(), nullptr);
+    guardedTransition->setTargetState(finalState);
+    startState->addTransition(guardedTransition);
+    machine.setInitialState(startState);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QVERIFY(guardCalled);
+}
+
 UT_REGISTER_TEST(GuardedTransitionTest, TestLabel::Unit, TestLabel::Utilities)

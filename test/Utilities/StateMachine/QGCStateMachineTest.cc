@@ -41,6 +41,7 @@ public:
 void QGCStateMachineTest::_testQGCStateMachineFactories()
 {
     QGCStateMachine machine(QStringLiteral("FactoryTest"), nullptr);
+    QCOMPARE(machine.machineName(), QStringLiteral("FactoryTest"));
     bool functionCalled = false;
 
     auto* funcState = machine.addFunctionState(QStringLiteral("Func"), [&functionCalled]() {
@@ -66,7 +67,9 @@ void QGCStateMachineTest::_testGlobalErrorState()
     auto* errorState = new FunctionState(QStringLiteral("GlobalError"), &machine, [&errorHandled]() {
         errorHandled = true;
     });
+    QCOMPARE(machine.globalErrorState(), nullptr);
     machine.setGlobalErrorState(errorState);
+    QCOMPARE(machine.globalErrorState(), errorState);
 
     // The async state has no completion connection and no timeout — expected critical
     expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
@@ -139,6 +142,13 @@ void QGCStateMachineTest::_testLocalErrorState()
         QTimer::singleShot(50, state, [state]() { state->fail(); });
     });
     asyncState->setLocalErrorState(localErrorState);  // Override global error for this state
+
+    // A state that has its own error state when it is registered gets no transition to the global one
+    machine.registerState(asyncState);
+    const auto transitions = asyncState->transitions();
+    for (const QAbstractTransition* transition : transitions) {
+        QVERIFY(transition->targetState() != globalErrorState);
+    }
 
     auto* finalState = machine.addFinalState();
 
@@ -286,6 +296,70 @@ void QGCStateMachineTest::_testStartBypassIsCritical()
     QVERIFY(!machine.inProgress());
 }
 
+void QGCStateMachineTest::_testSetInitialStateStartsMachine()
+{
+    QGCStateMachine machine(QStringLiteral("AutoStartTest"), nullptr);
+    auto* state = new QGCState(QStringLiteral("State"), &machine);
+    QSignalSpy enteredSpy(state, &QState::entered);
+
+    machine.setInitialState(state, true);
+
+    QCOMPARE(machine.initialState(), state);
+    QVERIFY(machine.inProgress());
+    QVERIFY(spyTriggered(enteredSpy));
+}
+
+void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine_data()
+{
+    QTest::addColumn<bool>("leftBeforeItFinishes");
+
+    QTest::newRow("the nested machine finishes") << false;
+    QTest::newRow("the outer machine leaves the nested one first") << true;
+}
+
+void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine()
+{
+    QFETCH(bool, leftBeforeItFinishes);
+
+    QGCStateMachine outer(QStringLiteral("OuterMachine"), nullptr);
+    auto* nested = new QGCStateMachine(QStringLiteral("NestedMachine"), nullptr, &outer);
+    auto* nestedWait = new QGCState(QStringLiteral("NestedWait"), nested);
+    nested->addEventTransition(nestedWait, QStringLiteral("finish"), nested->addFinalState());
+    nested->setInitialState(nestedWait);
+
+    auto* finalState = outer.addFinalState();
+    outer.addTransition(nested, &QState::finished, finalState);
+    outer.addEventTransition(nested, QStringLiteral("leave"), finalState);
+    outer.setInitialState(nested);
+
+    QSignalSpy nestedInProgressSpy(nested, &QGCStateMachine::inProgressChanged);
+    QSignalSpy nestedFinishedSpy(nested, &QStateMachine::finished);
+    QSignalSpy nestedStoppedSpy(nested, &QStateMachine::stopped);
+    QSignalSpy outerFinishedSpy(&outer, &QStateMachine::finished);
+
+    // The outer machine starts the nested one when it enters it
+    QVERIFY(startAndWaitForEntered(&outer, nestedWait));
+    QVERIFY(outer.configuration().contains(nested));
+    QVERIFY(nested->inProgress());
+    QCOMPARE(nestedInProgressSpy.count(), 1);
+
+    if (leftBeforeItFinishes) {
+        // ... and stops it when it leaves it
+        outer.postEvent(QStringLiteral("leave"));
+        QVERIFY(spyTriggered(nestedStoppedSpy));
+        QCOMPARE(nestedFinishedSpy.count(), 0);
+    } else {
+        // ... and takes its finished() like that of any other state
+        nested->postEvent(QStringLiteral("finish"));
+        QVERIFY(spyTriggered(nestedFinishedSpy));
+        QCOMPARE(nestedStoppedSpy.count(), 0);
+    }
+
+    QVERIFY(spyTriggered(outerFinishedSpy));
+    QVERIFY(!nested->inProgress());
+    QCOMPARE(nestedInProgressSpy.count(), 2);
+}
+
 void QGCStateMachineTest::_testPropertyAssignment()
 {
     QGCStateMachine machine(QStringLiteral("PropTest"), nullptr);
@@ -348,6 +422,90 @@ void QGCStateMachineTest::_testRetryTransitionBuilder()
     QCOMPARE(retryCount, 2);
 }
 
+void QGCStateMachineTest::_testGuardedTransitionBuilder_data()
+{
+    QTest::addColumn<bool>("guardResult");
+
+    QTest::newRow("guard allows the transition") << true;
+    QTest::newRow("guard blocks the transition") << false;
+}
+
+void QGCStateMachineTest::_testGuardedTransitionBuilder()
+{
+    QFETCH(bool, guardResult);
+
+    QGCStateMachine machine(QStringLiteral("GuardedBuilderTest"), nullptr);
+    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
+    auto* guarded = new QGCState(QStringLiteral("Guarded"), &machine);
+    auto* fallback = new QGCState(QStringLiteral("Fallback"), &machine);
+    auto* finalState = machine.addFinalState();
+
+    auto* transition =
+        machine.addGuardedTransition(state1, &QState::entered, guarded, [guardResult]() { return guardResult; });
+    state1->addTransition(state1, &QState::entered, fallback);
+    guarded->addTransition(guarded, &QState::entered, finalState);
+    fallback->addTransition(fallback, &QState::entered, finalState);
+    machine.setInitialState(state1);
+
+    QCOMPARE(transition->sourceState(), state1);
+    QCOMPARE(transition->targetState(), guarded);
+
+    QSignalSpy guardedEnteredSpy(guarded, &QState::entered);
+    QSignalSpy fallbackEnteredSpy(fallback, &QState::entered);
+    QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(guardedEnteredSpy.count(), guardResult ? 1 : 0);
+    QCOMPARE(fallbackEnteredSpy.count(), guardResult ? 0 : 1);
+}
+
+void QGCStateMachineTest::_testTransitionBuildersTakeSignalOfDerivedState()
+{
+    // advance() is declared by a class derived from QState: the builders take it from a state of that class
+    QGCStateMachine machine(QStringLiteral("DerivedSignalBuilderTest"), nullptr);
+    auto* first = new FunctionState(QStringLiteral("First"), &machine, []() {});
+    auto* second = new FunctionState(QStringLiteral("Second"), &machine, []() {});
+    auto* third = new FunctionState(QStringLiteral("Third"), &machine, []() {});
+    auto* finalState = machine.addFinalState();
+    bool guardCalled = false;
+
+    QSignalTransition* const plain = machine.addTransition(first, &QGCState::advance, second);
+    GuardedTransition* const guarded = machine.addGuardedTransition(second, &QGCState::advance, third, [&]() {
+        guardCalled = true;
+        return true;
+    });
+    // By name, as before
+    QSignalTransition* const named = machine.addTransition(third, SIGNAL(advance()), finalState);
+    machine.setInitialState(first);
+
+    QCOMPARE(plain->sourceState(), first);
+    QCOMPARE(plain->senderObject(), first);
+    QCOMPARE(plain->targetState(), second);
+    QCOMPARE(guarded->sourceState(), second);
+    QCOMPARE(guarded->senderObject(), second);
+    QCOMPARE(guarded->targetState(), third);
+    QCOMPARE(named->sourceState(), third);
+    QCOMPARE(named->senderObject(), third);
+    QCOMPARE(named->targetState(), finalState);
+
+    QSignalSpy secondEnteredSpy(second, &QState::entered);
+    QSignalSpy thirdEnteredSpy(third, &QState::entered);
+    QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(secondEnteredSpy.count(), 1);
+    QCOMPARE(thirdEnteredSpy.count(), 1);
+    QVERIFY(guardCalled);
+
+    // The machine is a state as well: a transition of the machine itself, on a signal that its class declares
+    QSignalTransition* const fromMachine =
+        machine.addTransition(&machine, &QGCStateMachine::inProgressChanged, finalState);
+    QCOMPARE(fromMachine->sourceState(), &machine);
+    QCOMPARE(fromMachine->senderObject(), &machine);
+
+    // So does the retry builder
+    RetryTransition* const retryFromMachine =
+        machine.addRetryTransition(&machine, &QGCStateMachine::inProgressChanged, finalState, []() {});
+    QCOMPARE(retryFromMachine->sourceState(), &machine);
+    QCOMPARE(retryFromMachine->senderObject(), &machine);
+}
+
 void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
 {
     QGCStateMachine machine(QStringLiteral("ProgressTrackingTest"), nullptr);
@@ -372,7 +530,7 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
 
     machine.setSubProgress(0.5f);
-    machine.setSubProgress(0.4f); // lower value should not emit
+    machine.setSubProgress(0.4f);  // lower value should not emit
     machine.setSubProgress(1.0f);
 
     machine.postEvent(QStringLiteral("finish"));
@@ -384,6 +542,138 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     QVERIFY(qAbs(_spyFloatArg(progressSpy, 2) - 0.625f) < 0.001f);
     QVERIFY(qAbs(_spyFloatArg(progressSpy, 3) - 1.0f) < 0.001f);
     QVERIFY(qAbs(machine.progress() - 1.0f) < 0.001f);
+}
+
+void QGCStateMachineTest::_testRepeatedRestartRequests_data()
+{
+    QTest::addColumn<bool>("firstFromStoppedListener");
+
+    QTest::newRow("restart() twice") << false;
+    // The listener is called before the restart that is pending, and finds the machine stopped
+    QTest::newRow("restart(), and again from a listener of stopped") << true;
+}
+
+void QGCStateMachineTest::_testRepeatedRestartRequests()
+{
+    QFETCH(bool, firstFromStoppedListener);
+
+    QGCStateMachine machine(QStringLiteral("RepeatedRestartTest"), nullptr);
+    // A state that waits, so that both requests meet a machine in progress
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    machine.setInitialState(first);
+
+    QSignalSpy firstEnteredSpy(first, &QState::entered);
+    QSignalSpy startedSpy(&machine, &QStateMachine::started);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+
+    QVERIFY(startAndWaitForEntered(&machine, first));
+
+    // Both before the machine has stopped
+    if (firstFromStoppedListener) {
+        (void) connect(
+            &machine, &QStateMachine::stopped, this, [&machine]() { machine.restart(); }, Qt::SingleShotConnection);
+    } else {
+        machine.restart();
+    }
+    machine.restart();
+
+    // The machine restarts once
+    QTRY_COMPARE_WITH_TIMEOUT(firstEnteredSpy.count(), 2, TestTimeout::shortMs());
+    QCOMPARE(stoppedSpy.count(), 1);
+    QCOMPARE(startedSpy.count(), 2);
+    QVERIFY(machine.inProgress());
+
+    // A later request restarts it again
+    machine.restart();
+    QTRY_COMPARE_WITH_TIMEOUT(startedSpy.count(), 3, TestTimeout::shortMs());
+    QCOMPARE(stoppedSpy.count(), 2);
+}
+
+void QGCStateMachineTest::_testRestartResetsProgress_data()
+{
+    QTest::addColumn<bool>("progressFirst");
+    QTest::addColumn<bool>("stopFirst");
+
+    QTest::newRow("restart() in progress") << true << false;
+    QTest::newRow("restart() after the machine has stopped") << true << true;
+    QTest::newRow("restart() before any progress") << false << false;
+}
+
+void QGCStateMachineTest::_testRestartResetsProgress()
+{
+    QFETCH(bool, progressFirst);
+    QFETCH(bool, stopFirst);
+
+    QGCStateMachine machine(QStringLiteral("RestartProgressTest"), nullptr);
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    auto* second = new QGCState(QStringLiteral("Second"), &machine);
+    machine.addEventTransition(first, QStringLiteral("next"), second);
+    machine.setProgressWeights({{first, 1}, {second, 1}});
+    machine.setInitialState(first);
+
+    QSignalSpy firstEnteredSpy(first, &QState::entered);
+    QSignalSpy secondEnteredSpy(second, &QState::entered);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    if (progressFirst) {
+        machine.postEvent(QStringLiteral("next"));
+        QVERIFY(spyTriggered(secondEnteredSpy));
+    }
+    QCOMPARE(machine.progress(), progressFirst ? 0.5f : 0.0f);
+
+    if (stopFirst) {
+        machine.stop();
+        QVERIFY(spyTriggered(stoppedSpy));
+    }
+
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    machine.restart();
+    QTRY_COMPARE_WITH_TIMEOUT(firstEnteredSpy.count(), 2, TestTimeout::shortMs());
+
+    // The machine is in its first state again. It has said so if its progress had to go back for it
+    QCOMPARE(machine.progress(), 0.0f);
+    QCOMPARE(progressSpy.count(), progressFirst ? 1 : 0);
+    if (progressFirst) {
+        QCOMPARE(progressSpy.takeFirst().at(0).toFloat(), 0.0f);
+    }
+
+    // It reports its progress from there
+    machine.setSubProgress(0.5f);
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.25f);
+}
+
+void QGCStateMachineTest::_testRestartWhenFinishedResetsProgress()
+{
+    QGCStateMachine machine(QStringLiteral("RestartWhenFinishedTest"), nullptr);
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    QFinalState* finalState = addFinalState(&machine);
+    machine.addEventTransition(first, QStringLiteral("done"), finalState);
+    machine.setProgressWeights({{first, 1}});
+    machine.setInitialState(first);
+
+    // A machine that finishes says that it is no longer in progress before it reports the progress of the run
+    // that has ended, so this listener restarts it in between
+    bool restarted = false;
+    connect(&machine, &QGCStateMachine::inProgressChanged, &machine, [&machine, &restarted]() {
+        if (!machine.inProgress() && !restarted) {
+            restarted = true;
+            machine.restart();
+        }
+    });
+
+    QSignalSpy firstEnteredSpy(first, &QState::entered);
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    machine.postEvent(QStringLiteral("done"));
+    QTRY_COMPARE_WITH_TIMEOUT(firstEnteredSpy.count(), 2, TestTimeout::shortMs());
+    QVERIFY(restarted);
+
+    QCOMPARE(machine.progress(), 0.0f);
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    machine.setSubProgress(0.5f);
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.5f);
 }
 
 void QGCStateMachineTest::_testStateHistoryLimit()
@@ -405,6 +695,7 @@ void QGCStateMachineTest::_testStateHistoryLimit()
     QSignalSpy state2EnteredSpy(state2, &QState::entered);
     QSignalSpy state3EnteredSpy(state3, &QState::entered);
     QSignalSpy historySpy(&machine, &QGCStateMachine::stateHistoryChanged);
+    QSignalSpy currentStateNameSpy(&machine, &QGCStateMachine::currentStateNameChanged);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     QVERIFY(startAndWaitForEntered(&machine, state1));
@@ -418,6 +709,7 @@ void QGCStateMachineTest::_testStateHistoryLimit()
     QCOMPARE(history.at(0), QStringLiteral("State2"));
     QCOMPARE(history.at(1), QStringLiteral("State3"));
     QVERIFY(historySpy.count() >= 3);
+    QCOMPARE(currentStateNameSpy.count(), 3);
     QCOMPARE(machine.currentStateName(), QStringLiteral("State3"));
 
     machine.postEvent(QStringLiteral("finish"));

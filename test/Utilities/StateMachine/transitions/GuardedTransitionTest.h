@@ -9,4 +9,5 @@ class GuardedTransitionTest : public StateMachineTest
 private slots:
     void _testGuardedTransitionAllowed();
     void _testGuardedTransitionBlocked();
+    void _testGuardedTransitionTargetSetLater();
 };

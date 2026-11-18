@@ -28,7 +28,10 @@ void SendMavlinkCommandState::setup(MAV_CMD command, double param1, double param
 
 void SendMavlinkCommandState::connectWaitSignal()
 {
-    connect(vehicle(), &Vehicle::mavCommandResult, this, &SendMavlinkCommandState::_mavCommandResult);
+    // onWaitEntered reports a missing vehicle
+    if (Vehicle* const targetVehicle = vehicle()) {
+        connect(targetVehicle, &Vehicle::mavCommandResult, this, &SendMavlinkCommandState::_mavCommandResult);
+    }
 }
 
 void SendMavlinkCommandState::disconnectWaitSignal()
@@ -42,6 +45,12 @@ void SendMavlinkCommandState::onWaitEntered()
 {
     if (!_configured) {
         qCCritical(QGCStateMachineLog) << "SendMavlinkCommandState not configured";
+        waitFailed();
+        return;
+    }
+
+    if (!vehicle()) {
+        qCWarning(QGCStateMachineLog) << "No vehicle available to send command" << stateName();
         waitFailed();
         return;
     }

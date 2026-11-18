@@ -2,12 +2,10 @@
 
 #include "StateMachineTest.h"
 
-/// Tests for WaitForMavlinkMessageState
-/// Note: Full integration tests require a MockLink/Vehicle connection
 class WaitForMavlinkMessageStateTest : public StateMachineTest
 {
     Q_OBJECT
 
 private slots:
-    void _testMessageId();
+    UT_PARAMETERIZED_TEST(_testCompletesOnFirstMatchingMessage);
 };

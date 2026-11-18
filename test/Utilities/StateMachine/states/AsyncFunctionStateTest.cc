@@ -104,4 +104,45 @@ void AsyncFunctionStateTest::_testErrorTransition()
     QVERIFY_NO_SIGNAL(stateSpy, "advance");
 }
 
+void AsyncFunctionStateTest::_testConnectToCompletion_data()
+{
+    QTest::addColumn<bool>("withSlot");
+
+    QTest::newRow("the signal completes the state") << false;
+    QTest::newRow("the slot gets the signal and completes the state") << true;
+}
+
+void AsyncFunctionStateTest::_testConnectToCompletion()
+{
+    QFETCH(bool, withSlot);
+
+    QStateMachine machine;
+    QObject signalSource;
+    QString receivedName;
+
+    auto* asyncState = new AsyncFunctionState(
+        QStringLiteral("TestAsync"), &machine, [&signalSource, &receivedName, withSlot](AsyncFunctionState* state) {
+            if (withSlot) {
+                state->connectToCompletion(&signalSource, &QObject::objectNameChanged,
+                                           [state, &receivedName](const QString& name) {
+                                               receivedName = name;
+                                               state->complete();
+                                           });
+            } else {
+                state->connectToCompletion(&signalSource, &QObject::objectNameChanged);
+            }
+        });
+    auto* finalState = addFinalState(&machine);
+    asyncState->addTransition(asyncState, &QGCState::advance, finalState);
+    machine.setInitialState(asyncState);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, asyncState));
+    QCOMPARE(finishedSpy.count(), 0);
+
+    signalSource.setObjectName(QStringLiteral("done"));
+    QVERIFY(spyTriggered(finishedSpy));
+    QCOMPARE(receivedName, withSlot ? QStringLiteral("done") : QString());
+}
+
 UT_REGISTER_TEST(AsyncFunctionStateTest, TestLabel::Unit, TestLabel::Utilities)

@@ -10,4 +10,5 @@ private slots:
     void _testAsyncFunctionState();
     void _testAsyncFunctionStateTimeout();
     void _testErrorTransition();
+    UT_PARAMETERIZED_TEST(_testConnectToCompletion);
 };

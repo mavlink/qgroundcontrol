@@ -64,4 +64,40 @@ void QGCSignalTransitionTest::_testTransitionMachineAccessorAbstract()
     QCOMPARE(capturedMachine, &machine);
 }
 
+void QGCSignalTransitionTest::_testSignalForms_data()
+{
+    QTest::addColumn<bool>("signalByName");
+
+    QTest::newRow("pointer to the signal") << false;
+    QTest::newRow("name of the signal") << true;
+}
+
+void QGCSignalTransitionTest::_testSignalForms()
+{
+    QFETCH(bool, signalByName);
+
+    QGCStateMachine machine(QStringLiteral("SignalFormsTest"), nullptr);
+    QObject signalSource;
+    auto* startState = new QGCState(QStringLiteral("Start"), &machine);
+    auto* finalState = machine.addFinalState();
+
+    // Constructed with a source state, the transition adds itself to that state
+    QGCSignalTransition* transition =
+        signalByName ? new QGCSignalTransition(&signalSource, SIGNAL(objectNameChanged(QString)), startState)
+                     : new QGCSignalTransition(&signalSource, &QObject::objectNameChanged, startState);
+    transition->setTargetState(finalState);
+    machine.setInitialState(startState);
+
+    QCOMPARE(transition->sourceState(), startState);
+    QCOMPARE(transition->senderObject(), &signalSource);
+    QCOMPARE(transition->machine(), &machine);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, startState));
+    QCOMPARE(finishedSpy.count(), 0);
+
+    signalSource.setObjectName(QStringLiteral("signalled"));
+    QVERIFY(spyTriggered(finishedSpy));
+}
+
 UT_REGISTER_TEST(QGCSignalTransitionTest, TestLabel::Unit, TestLabel::Utilities)

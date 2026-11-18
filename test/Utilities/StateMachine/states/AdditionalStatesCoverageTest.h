@@ -8,4 +8,7 @@ class AdditionalStatesCoverageTest : public StateMachineTest
 
 private slots:
     void _testStatesConstructWithoutVehicle();
+    UT_PARAMETERIZED_TEST(_testVehicleStatesFailWithoutVehicle);
+    UT_PARAMETERIZED_TEST(_testDelayStateMachineStopEndsDelay);
+    void _testDelayStateRestartStartsDelayOver();
 };

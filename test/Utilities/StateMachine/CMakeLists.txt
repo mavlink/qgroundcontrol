@@ -16,6 +16,15 @@ target_sources(
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
+# Helper Tests
+# ----------------------------------------------------------------------------
+target_sources(
+    QGCUnitTests
+    PRIVATE
+        Helpers/SignalSenderShapes.cc
+)
+
+# ----------------------------------------------------------------------------
 # State Tests
 # ----------------------------------------------------------------------------
 target_sources(
@@ -42,6 +51,8 @@ target_sources(
         states/QGCAbstractStateTest.h
         states/SendMavlinkCommandStateTest.cc
         states/SendMavlinkCommandStateTest.h
+        states/SendMavlinkMessageStateTest.cc
+        states/SendMavlinkMessageStateTest.h
         states/WaitForMavlinkMessageStateTest.cc
         states/WaitForMavlinkMessageStateTest.h
         states/AdditionalStatesCoverageTest.cc
@@ -78,7 +89,8 @@ add_qgc_test(QGCAbstractStateTest LABELS Unit Utilities)
 add_qgc_test(QGCFinalStateTest LABELS Unit Utilities)
 add_qgc_test(QGCStateTest LABELS Unit Utilities)
 add_qgc_test(RetryableRequestMessageStateTest LABELS Integration Vehicle Utilities)
-add_qgc_test(SendMavlinkCommandStateTest LABELS Unit Utilities)
+add_qgc_test(SendMavlinkCommandStateTest LABELS Integration Vehicle Utilities)
+add_qgc_test(SendMavlinkMessageStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(SkippableAsyncStateTest LABELS Unit Utilities)
 add_qgc_test(WaitForMavlinkMessageStateTest LABELS Unit Utilities)
 add_qgc_test(WaitStateBaseTest LABELS Unit Utilities)

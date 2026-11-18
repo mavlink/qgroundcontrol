@@ -27,7 +27,14 @@ void SendMavlinkMessageState::_sendMessage()
         return;
     }
 
-    SharedLinkInterfacePtr sharedLink = vehicle()->vehicleLinkManager()->primaryLink().lock();
+    Vehicle* const targetVehicle = vehicle();
+    if (!targetVehicle) {
+        qCWarning(QGCStateMachineLog) << "No vehicle available to send MAVLink message" << stateName();
+        emit error();
+        return;
+    }
+
+    SharedLinkInterfacePtr sharedLink = targetVehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCWarning(QGCStateMachineLog) << "No active link available to send MAVLink message" << stateName();
         emit error();
@@ -40,7 +47,7 @@ void SendMavlinkMessageState::_sendMessage()
     const uint8_t channel = sharedLink->mavlinkChannel();
 
     _encoder(systemId, channel, &message);
-    if (!vehicle()->sendMessageOnLinkThreadSafe(sharedLink.get(), message)) {
+    if (!targetVehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message)) {
         qCWarning(QGCStateMachineLog) << "Failed to send MAVLink message" << stateName();
         emit error();
         return;

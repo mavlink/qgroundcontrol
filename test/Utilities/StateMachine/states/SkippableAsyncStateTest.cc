@@ -138,4 +138,46 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
     QVERIFY_NO_SIGNAL(stateSpy, "skipped");
 }
 
+void SkippableAsyncStateTest::_testConnectToCompletion_data()
+{
+    QTest::addColumn<bool>("withSlot");
+
+    QTest::newRow("the signal completes the state") << false;
+    QTest::newRow("the slot gets the signal and completes the state") << true;
+}
+
+void SkippableAsyncStateTest::_testConnectToCompletion()
+{
+    QFETCH(bool, withSlot);
+
+    QStateMachine machine;
+    QObject signalSource;
+    QString receivedName;
+
+    auto* skippableState = new SkippableAsyncState(
+        QStringLiteral("TestSkippableAsync"), &machine, []() { return false; },
+        [&signalSource, &receivedName, withSlot](SkippableAsyncState* state) {
+            if (withSlot) {
+                state->connectToCompletion(&signalSource, &QObject::objectNameChanged,
+                                           [state, &receivedName](const QString& name) {
+                                               receivedName = name;
+                                               state->complete();
+                                           });
+            } else {
+                state->connectToCompletion(&signalSource, &QObject::objectNameChanged);
+            }
+        });
+    auto* finalState = addFinalState(&machine);
+    skippableState->addTransition(skippableState, &QGCState::advance, finalState);
+    machine.setInitialState(skippableState);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, skippableState));
+    QCOMPARE(finishedSpy.count(), 0);
+
+    signalSource.setObjectName(QStringLiteral("done"));
+    QVERIFY(spyTriggered(finishedSpy));
+    QCOMPARE(receivedName, withSlot ? QStringLiteral("done") : QString());
+}
+
 UT_REGISTER_TEST(SkippableAsyncStateTest, TestLabel::Unit, TestLabel::Utilities)

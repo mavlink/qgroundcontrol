@@ -12,7 +12,15 @@ WaitForMavlinkMessageState::WaitForMavlinkMessageState(QState *parent, uint32_t 
 
 void WaitForMavlinkMessageState::connectWaitSignal()
 {
-    connect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForMavlinkMessageState::_messageReceived, Qt::UniqueConnection);
+    Vehicle* const sourceVehicle = vehicle();
+    if (!sourceVehicle) {
+        qCWarning(QGCStateMachineLog) << "No vehicle available to wait for message id" << _messageId << stateName();
+        waitFailed();
+        return;
+    }
+
+    connect(sourceVehicle, &Vehicle::mavlinkMessageReceived, this, &WaitForMavlinkMessageState::_messageReceived,
+            Qt::UniqueConnection);
 }
 
 void WaitForMavlinkMessageState::disconnectWaitSignal()

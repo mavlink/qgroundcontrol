@@ -30,6 +30,11 @@ class Vehicle;
 
 /// \brief QGroundControl specific state machine with enhanced error handling
 ///
+/// A machine can be a state of another machine, as a QStateMachine can: the outer machine starts it when it
+/// enters it and stops it when it leaves it, and its finished() is that of a state. Qt does not leave the states
+/// of a machine that stops, so a nested machine that is active then goes on, and entering it again while it is
+/// still in progress is refused as a second start() is.
+///
 class QGCStateMachine : public QStateMachine
 {
     Q_OBJECT
@@ -50,6 +55,7 @@ class QGCStateMachine : public QStateMachine
 public:
     QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent = nullptr);
 
+    /// @return The vehicle, nullptr if the machine has none or the vehicle has been destroyed
     Vehicle *vehicle() const { return _vehicle; }
     QString machineName() const { return objectName(); }
 
@@ -144,34 +150,54 @@ public:
     // Lifecycle Helpers
     // -------------------------------------------------------------------------
 
-    /// Restart the machine (stop then start)
+    /// Restart the machine (stop then start). Its progress starts over, as after resetProgress(), and a progress
+    /// above 0 is followed by progressUpdate(0) before the machine starts.
+    /// A machine in progress starts again once it has stopped. Until then it restarts once, however often it is
+    /// asked to.
     void restart();
 
     // -------------------------------------------------------------------------
     // Transition Helpers
     // -------------------------------------------------------------------------
 
+    /// The class of a state that is the source of a transition and the sender of the signal @p Func that triggers
+    /// it: the class that declares the signal, or QState for a signal that QState inherits. A factory declares its
+    /// source state with it so that only the signal is deduced and the state converts to the signal's class.
+    template <typename Func>
+    using SignalSourceState =
+        std::conditional_t<std::is_base_of_v<typename QtPrivate::FunctionPointer<Func>::Object, QState>, QState,
+                           typename QtPrivate::FunctionPointer<Func>::Object>;
+
     /// Create a simple signal transition between states
-    template<typename Func>
-    QSignalTransition* addTransition(QState* from, Func signal, QAbstractState* to,
-                                      QAbstractAnimation* animation = nullptr)
+    /// @param from Source state, which emits the signal
+    template <typename Func>
+        requires std::is_base_of_v<QState, SignalSourceState<Func>>
+    QSignalTransition* addTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
+                                     QAbstractAnimation* animation = nullptr)
     {
-        auto* transition = from->addTransition(from, signal, to);
+        // Qualified, because a source state that is a QGCStateMachine has this function in place of QState's
+        auto* transition = from->QState::addTransition(from, signal, to);
         if (animation) {
             transition->addAnimation(animation);
         }
         return transition;
     }
 
+    /// @overload
+    /// @param signal Signal that triggers the transition, by name as SIGNAL() gives it
+    QSignalTransition* addTransition(QState* from, const char* signal, QAbstractState* to,
+                                     QAbstractAnimation* animation = nullptr);
+
     /// Create a guarded transition between states
+    /// @param from Source state, which emits the signal
     /// @param guard Predicate that must return true for transition
-    template<typename Func>
-    GuardedTransition* addGuardedTransition(QState* from, Func signal, QAbstractState* to,
-                                            GuardedTransition::Guard guard,
-                                            QAbstractAnimation* animation = nullptr)
+    template <typename Func>
+        requires std::is_base_of_v<QState, SignalSourceState<Func>>
+    GuardedTransition* addGuardedTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
+                                            GuardedTransition::Guard guard, QAbstractAnimation* animation = nullptr)
     {
         auto* transition = new GuardedTransition(from, signal, to, std::move(guard));
-        from->addTransition(transition);
+        from->QState::addTransition(transition);
         if (animation) {
             transition->addAnimation(animation);
         }
@@ -196,7 +222,8 @@ public:
                                         int maxRetries = 1)
     {
         auto* transition = new RetryTransition(from, signal, to, std::move(retryAction), maxRetries);
-        from->addTransition(transition);
+        // Qualified, because a source state that is a QGCStateMachine has addTransition() in place of QState's
+        from->QState::addTransition(transition);
         return transition;
     }
 
@@ -229,7 +256,8 @@ public:
     /// Get the current overall progress (0.0 to 1.0)
     float progress() const;
 
-    /// Reset progress tracking (call when restarting the machine)
+    /// Reset progress tracking, without a progressUpdate(). restart() does it; call it before a start() that runs
+    /// the machine again.
     void resetProgress();
 
 public slots:
@@ -250,6 +278,9 @@ signals:
     /// Emitted when the state history changes (for QML binding)
     void stateHistoryChanged();
 
+protected:
+    void onEntry(QEvent* event) override;
+
 private:
     void _onStateEntered();
     void _setInProgress(bool inProgress);
@@ -258,6 +289,7 @@ private:
     Vehicle* _vehicle = nullptr;
     QAbstractState* _globalErrorState = nullptr;
     bool _inProgress = false;
+    bool _restartPending = false;
 
     // Progress tracking
     QList<QAbstractState*> _progressStates;

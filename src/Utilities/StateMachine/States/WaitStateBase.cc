@@ -1,5 +1,7 @@
 #include "WaitStateBase.h"
 
+#include <QtStateMachine/QStateMachine>
+
 WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
     : QGCState(stateName, parent)
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
@@ -7,12 +9,17 @@ WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeo
     _timeoutTimer.setSingleShot(true);
     connect(&_timeoutTimer, &QTimer::timeout, this, &WaitStateBase::_onTimeout);
     connect(this, &QState::entered, this, &WaitStateBase::_onEntered);
-    connect(this, &QState::exited, this, &WaitStateBase::_onExited);
+    connect(this, &QState::exited, this, &WaitStateBase::_stopWaiting);
 }
 
 void WaitStateBase::_onEntered()
 {
     _completed = false;
+    _waiting = true;
+    // The machine is not known before the state is entered
+    if (const QStateMachine* const stateMachine = QAbstractState::machine()) {
+        connect(stateMachine, &QStateMachine::stopped, this, &WaitStateBase::_stopWaiting, Qt::UniqueConnection);
+    }
     connectWaitSignal();
     onWaitEntered();
     _startTimeoutTimer();
@@ -25,8 +32,14 @@ void WaitStateBase::_startTimeoutTimer()
     }
 }
 
-void WaitStateBase::_onExited()
+void WaitStateBase::_stopWaiting()
 {
+    // Once for each time the state is entered, whichever of exited() and the stopped() of the machine comes first
+    if (!_waiting) {
+        return;
+    }
+    _waiting = false;
+
     _timeoutTimer.stop();
     disconnectWaitSignal();
     onWaitExited();

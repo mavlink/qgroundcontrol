@@ -6,6 +6,9 @@
 
 /// \brief Delays that state machine for the specified time in milliseconds
 ///
+/// The delay starts when the state is entered. It ends without delayComplete() when the state is exited before
+/// that, and when its machine stops.
+///
 class DelayState : public QGCState
 {
     Q_OBJECT

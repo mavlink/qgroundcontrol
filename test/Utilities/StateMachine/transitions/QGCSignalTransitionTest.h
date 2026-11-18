@@ -9,4 +9,5 @@ class QGCSignalTransitionTest : public StateMachineTest
 private slots:
     void _testTransitionMachineAccessor();
     void _testTransitionMachineAccessorAbstract();
+    UT_PARAMETERIZED_TEST(_testSignalForms);
 };

@@ -10,4 +10,5 @@ private slots:
     void _testSkippableAsyncStateExecute();
     UT_PARAMETERIZED_TEST(_testSkippableAsyncStateSkip);
     void _testSkippableAsyncStateTimeout();
+    UT_PARAMETERIZED_TEST(_testConnectToCompletion);
 };

@@ -16,7 +16,15 @@ WaitForParamResponseState::WaitForParamResponseState(QState *parent, int timeout
 
 void WaitForParamResponseState::connectWaitSignal()
 {
-    connect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForParamResponseState::_messageReceived, Qt::UniqueConnection);
+    Vehicle* const sourceVehicle = vehicle();
+    if (!sourceVehicle) {
+        qCWarning(QGCStateMachineLog) << "No vehicle available to wait for parameter response" << stateName();
+        waitFailed();
+        return;
+    }
+
+    connect(sourceVehicle, &Vehicle::mavlinkMessageReceived, this, &WaitForParamResponseState::_messageReceived,
+            Qt::UniqueConnection);
 }
 
 void WaitForParamResponseState::disconnectWaitSignal()

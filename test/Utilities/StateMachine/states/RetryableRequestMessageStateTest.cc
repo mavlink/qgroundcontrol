@@ -1,5 +1,6 @@
 #include "RetryableRequestMessageStateTest.h"
 
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
@@ -287,6 +288,33 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
     QCOMPARE(errorSpy.count(), 1);
 
     _disconnectMockLink();
+}
+
+void RetryableRequestMessageStateTest::_testVehicleDestroyedWhileMachineAlive()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+
+    QGCStateMachine machine(QStringLiteral("TestMachine"), _vehicle);
+    auto* requestState =
+        new RetryableRequestMessageState(QStringLiteral("RequestDebug"), &machine, MAVLINK_MSG_ID_DEBUG);
+    auto* finalState = new QFinalState(&machine);
+
+    requestState->addTransition(requestState, &QGCState::error, finalState);
+    machine.setInitialState(requestState);
+    QCOMPARE(machine.vehicle(), _vehicle);
+
+    const QPointer<Vehicle> vehicleGuard(_vehicle);
+    _disconnectMockLink();
+    QVERIFY_TRUE_WAIT(!vehicleGuard, TestTimeout::mediumMs());
+    QVERIFY(!machine.vehicle());
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    expectLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                     QRegularExpression("No vehicle available"));
+    machine.start();
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::shortMs());
+    verifyExpectedLogMessage();
 }
 
 UT_REGISTER_TEST(RetryableRequestMessageStateTest, TestLabel::Integration, TestLabel::Vehicle, TestLabel::Utilities)

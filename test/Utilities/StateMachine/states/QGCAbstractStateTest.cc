@@ -1,4 +1,8 @@
 #include "QGCAbstractStateTest.h"
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
+
 #include "StateTestCommon.h"
 
 
@@ -117,23 +121,16 @@ void QGCAbstractStateTest::_testEventHandler()
 
     auto* state = new TestAbstractState(QStringLiteral("TestEventHandler"), &machine);
     state->setEventHandler([&handlerCalled](QEvent* event) {
-        Q_UNUSED(event);
-        handlerCalled = true;
+        if (event->type() == QEvent::User) {
+            handlerCalled = true;
+        }
         return false;  // Don't consume the event
     });
 
-    auto* finalState = new QFinalState(&machine);
-
-    machine.addTransition(state, &QGCAbstractState::advance, finalState);
-
-    machine.setInitialState(state);
-
-    QVERIFY(startAndWaitForEntered(&machine, state));
-
-    // Event handler was called during state machine processing
-    // (the exact timing depends on Qt's event handling)
-
-    state->emitAdvance();
+    // The handler is given the events that the state object receives
+    QEvent event(QEvent::User);
+    QCoreApplication::sendEvent(state, &event);
+    QVERIFY(handlerCalled);
 }
 
 #include "QGCAbstractStateTest.moc"
