@@ -49,12 +49,6 @@
 #endif
 #endif
 
-#ifndef EGL_ANDROID_native_fence_sync
-#define EGL_SYNC_NATIVE_FENCE_ANDROID 0x3144
-#define EGL_SYNC_NATIVE_FENCE_FD_ANDROID 0x3145
-#define EGL_NO_NATIVE_FENCE_FD_ANDROID -1
-#endif
-
 QGC_LOGGING_CATEGORY(GstDmaBufLog, "Video.GStreamer.HwBuffers.GstDmaBuf")
 
 namespace {

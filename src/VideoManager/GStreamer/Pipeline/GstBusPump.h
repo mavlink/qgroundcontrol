@@ -31,8 +31,7 @@ public:
     ~GstBusPump() override;
 
     /// Watches @p pipeline's bus. The sync handler is installed before anything can post, so it sees every message.
-    /// False, logged, when the pipeline has no bus.
-    [[nodiscard]] bool attach(GstElement* pipeline, SyncHandler syncHandler, Handler handler);
+    void attach(GstElement* pipeline, SyncHandler syncHandler, Handler handler);
     /// Idempotent.
     void detach();
 

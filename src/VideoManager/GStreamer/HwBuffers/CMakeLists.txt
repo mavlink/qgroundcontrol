@@ -127,13 +127,6 @@ function(_qgc_add_gpu_path name)
     endif()
 endfunction()
 
-# Every path needs Qt's private multimedia/RHI headers. They ship with the root's REQUIRED Multimedia/Gui finds, so this
-# only trips on a broken Qt install.
-if(NOT TARGET Qt6::MultimediaPrivate OR NOT TARGET Qt6::GuiPrivate)
-    message(STATUS "QGCGStreamer: Qt MultimediaPrivate/GuiPrivate missing — all zero-copy GPU paths disabled")
-    return()
-endif()
-
 if(LINUX OR ANDROID)
     find_package(OpenGL QUIET COMPONENTS EGL)
 endif()

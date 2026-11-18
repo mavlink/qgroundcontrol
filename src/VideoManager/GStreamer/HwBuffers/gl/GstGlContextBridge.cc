@@ -18,7 +18,7 @@
 
 #include <EGL/egl.h>
 // Qt 6 on xcb uses GLX by default — fall back to GLX context wrapping when EGL isn't available.
-#if __has_include(<gst/gl/x11/gstgldisplay_x11.h>) && __has_include(<QtGui/qopenglcontext_platform.h>)
+#if __has_include(<gst/gl/x11/gstgldisplay_x11.h>)
 #include <gst/gl/x11/gstgldisplay_x11.h>
 
 #include <QtGui/qopenglcontext_platform.h>

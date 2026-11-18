@@ -89,17 +89,7 @@ gboolean filterParserCaps([[maybe_unused]] GstElement* bin, [[maybe_unused]] Gst
 bool addGhostPad(GstElement* element, GstPad* pad)
 {
     const GCharPtr name = adoptGChar(gst_pad_get_name(pad));
-    if (!name) {
-        qCWarning(GstSourceFactoryLog) << "gst_pad_get_name() failed";
-        return false;
-    }
-
     GstPadPtr ghostpad = adoptPad(gst_ghost_pad_new(name.get(), pad));
-    if (!ghostpad) {
-        qCWarning(GstSourceFactoryLog) << "gst_ghost_pad_new() failed";
-        return false;
-    }
-
     (void) gst_pad_set_active(ghostpad.get(), TRUE);
 
     // gst_object_get_parent takes a ref (GST_ELEMENT_PARENT does not) — guards against a
@@ -125,11 +115,6 @@ void wrapWithGhostPad(GstElement* element, GstPad* pad, [[maybe_unused]] gpointe
 bool addStaticGhostPad(GstElement* element)
 {
     const GstPadPtr srcPad = adoptPad(gst_element_get_static_pad(element, "src"));
-    if (!srcPad) {
-        qCWarning(GstSourceFactoryLog) << "gst_element_get_static_pad('src') failed";
-        return false;
-    }
-
     return addGhostPad(element, srcPad.get());
 }
 
@@ -416,9 +401,7 @@ GstElement* addTsDemux(GstElement* bin, GstElement* upstream, guint latencyMs)
 
     // tsdemux adds its "latency" to a live stream's: with its default, 700 ms, every frame of MPEG-TS over UDP is
     // shown that much later.
-    if (g_object_class_find_property(G_OBJECT_GET_CLASS(tsdemux.get()), "latency")) {
-        g_object_set(tsdemux.get(), "latency", static_cast<gint>(std::max(latencyMs, kTsDemuxMinLatencyMs)), nullptr);
-    }
+    g_object_set(tsdemux.get(), "latency", static_cast<gint>(std::max(latencyMs, kTsDemuxMinLatencyMs)), nullptr);
 
     GstElement* const demux = addToBin(bin, std::move(tsdemux), "tsdemux");
     if (!demux) {
@@ -597,11 +580,9 @@ int udpReceiveBufferSize()
 
 void reportDroppedPackets(GstElement* jitterBuffer)
 {
-    // GStreamer 1.18. A message for every packet, rather than the default of one every 200 ms that tells of those
-    // dropped since the last: the rest of a burst would only be told with the next one, which may never come.
-    if (g_object_class_find_property(G_OBJECT_GET_CLASS(jitterBuffer), "post-drop-messages")) {
-        g_object_set(jitterBuffer, "post-drop-messages", TRUE, "drop-messages-interval", 0u, nullptr);
-    }
+    // A message for every packet, rather than the default of one every 200 ms that tells of those dropped since the
+    // last: the rest of a burst would only be told with the next one, which may never come.
+    g_object_set(jitterBuffer, "post-drop-messages", TRUE, "drop-messages-interval", 0u, nullptr);
 }
 
 GstElement* create(const QString& uri, const Config& config)
@@ -648,10 +629,6 @@ GstElement* create(const QString& uri, const Config& config)
     }
 
     GstElementPtr bin = adoptElement(gst_bin_new("sourcebin"));
-    if (!bin) {
-        qCWarning(GstSourceFactoryLog) << "gst_bin_new('sourcebin') failed";
-        return nullptr;
-    }
 
     ParserStage parserStage = buildParserStage(rtpCodec, isRtsp);
     if (!parserStage.parser) {

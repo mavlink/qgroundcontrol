@@ -16,7 +16,6 @@
 #include <gst/gl/gstglmemory.h>
 #include <gst/gl/gstglsyncmeta.h>
 #include <gst/video/video.h>
-#include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
 
 #include <QtCore/QLoggingCategory>

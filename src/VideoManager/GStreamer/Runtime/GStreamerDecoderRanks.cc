@@ -90,10 +90,6 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
     }
 
     const gchar* factoryName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-    if (!factoryName) {
-        return false;
-    }
-
     if (const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName)) {
         return entry->isHardware;
     }
@@ -309,14 +305,7 @@ bool DecoderRankApplier::_setRank(GstRegistry* registry, const char* featureName
 
 GstRegistry* DecoderRankApplier::_registry()
 {
-    if (!gst_is_initialized()) {
-        return nullptr;
-    }
-    GstRegistry* const registry = gst_registry_get();
-    if (!registry) {
-        qCCritical(GStreamerDecoderRanksLog) << "Failed to get gstreamer registry.";
-    }
-    return registry;
+    return gst_is_initialized() ? gst_registry_get() : nullptr;
 }
 
 void DecoderRankApplier::_restore(GstRegistry* registry)

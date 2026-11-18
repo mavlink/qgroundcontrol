@@ -4,9 +4,6 @@
 
 // Qt 6.12 private API (exported as Qt_6_PRIVATE_API): DmaBufEglContext, importDmaBufTextures,
 // dmaBufFourccFromPixelFormat and createTexturesFromHandles. Re-check every call here when raising the Qt minimum.
-#if QT_VERSION < QT_VERSION_CHECK(6, 12, 0)
-#error "GstQtDmaBufImport needs the DMABuf importer Qt Multimedia exports from 6.12"
-#endif
 
 #include <algorithm>
 
