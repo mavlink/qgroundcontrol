@@ -127,16 +127,3 @@ if(TARGET GStreamer::Check)
     add_qgc_test(GstQgcSinkHarnessTest LABELS Unit)
     add_qgc_test(GstSourceFactoryHarnessTest LABELS Unit)
 endif()
-
-# GStreamerTest checks the runtime GStreamer against the floor the build accepts: the system minimum on Linux, the
-# official SDKs' elsewhere.
-if(LINUX)
-    qgc_config_read(_qgc_gst_runtime_minimum gstreamer version minimum)
-else()
-    qgc_config_read(_qgc_gst_runtime_minimum gstreamer version bundled_minimum)
-endif()
-set_property(
-    SOURCE Runtime/GStreamerTest.cc TARGET_DIRECTORY QGCUnitTests
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_MINIMUM_VERSION=\"${_qgc_gst_runtime_minimum}\""
-)

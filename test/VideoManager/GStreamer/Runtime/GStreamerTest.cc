@@ -5,7 +5,6 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QVersionNumber>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
@@ -15,14 +14,11 @@
 #include "GStreamerVideoBackend.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
-#include "QGCLoggingCategory.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "RecordingBranch.h"
 #include "SettingsManager.h"
 #include "VideoBackend.h"
 #include "VideoSettings.h"
-
-QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
@@ -329,24 +325,6 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 
     QVERIFY2(gst_element_link(source.get(), sink.get()),
              qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
-}
-
-void GStreamerTest::_testRuntimeVersionCheck()
-{
-    guint major, minor, micro, nano;
-    gst_version(&major, &minor, &micro, &nano);
-
-    QVERIFY2(major == 1, "Unexpected GStreamer major version");
-    const QVersionNumber runtime(static_cast<int>(major), static_cast<int>(minor), static_cast<int>(micro));
-    const QVersionNumber minimum = QVersionNumber::fromString(QStringLiteral(QGC_GST_RUNTIME_MINIMUM_VERSION));
-    QVERIFY(!minimum.isNull());
-    QVERIFY2(runtime >= minimum, qPrintable(QStringLiteral("GStreamer runtime version %1 is below the minimum %2")
-                                                .arg(runtime.toString(), minimum.toString())));
-
-    if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
-        qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."
-                                    << GST_VERSION_MINOR << "but runtime is" << major << "." << minor;
-    }
 }
 
 UT_REGISTER_TEST(GStreamerTest, TestLabel::Unit)

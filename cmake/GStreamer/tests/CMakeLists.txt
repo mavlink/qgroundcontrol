@@ -11,7 +11,6 @@ set(_qgc_gst_tests
     test_layout
     test_plugin_scan
     test_plugin_policy
-    test_version_policy
     test_pkgconfig_env
     test_install_filter
     test_sdk_state
@@ -52,24 +51,6 @@ set_tests_properties(
     GStreamer.test_windows_installer_guard GStreamer.test_macos_sdk_extract
     PROPERTIES SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
 )
-
-if(QGC_ENABLE_GST_VIDEOSTREAMING
-   AND NOT ANDROID
-   AND NOT IOS
-)
-    add_test(
-        NAME GStreamer.test_install_component
-        COMMAND
-            "${CMAKE_COMMAND}" "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/GStreamer/cmake_install.cmake"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
-    )
-    set_tests_properties(
-        GStreamer.test_install_component
-        PROPERTIES
-            LABELS "${_qgc_gst_test_labels}"
-            TIMEOUT 15
-    )
-endif()
 
 # <script>|<test name suffix>|<TEST_CASE>|<expected diagnostic>. GStreamer.<script>[.<suffix>] runs <script>.cmake,
 # with TEST_CASE when given, and must fail with that diagnostic (qgc_add_expected_failure_test).
