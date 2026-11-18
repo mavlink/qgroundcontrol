@@ -19,8 +19,8 @@ When a stream is lost, its last picture stays on screen, dimmed, under **VIDEO L
 returns. A stream you stop or change is cleared instead.
 
 A video view without a picture says why: **WAITING FOR VIDEO** until the stream arrives, **VIDEO DISABLED WHILE
-DISARMED** when [Disable Video Stream When Disarmed](../settings_view/video.md#settings) has stopped it until the vehicle
-arms, and **VIDEO STOPPED** once the video was stopped.
+DISARMED** while [Disable Video Stream When Disarmed](../settings_view/video.md#settings) keeps it off for a disarmed
+vehicle, and **VIDEO STOPPED** once the video was stopped.
 
 If a video decoder or a recording stops responding, _QGroundControl_ tells you after about a minute, and a picture
 that froze is taken off the screen. That video works again only once _QGroundControl_ is restarted.
@@ -58,8 +58,8 @@ time, so only one of those streams gets a picture.
 
 The tiles share the width of the video, and are never smaller than half their full size. Where the video is too narrow
 for all of them at that size, as on a phone held upright, it shows as many as fit, in the same order, and the sources
-left without a tile aren't connected to. Where not even one tile fits, the stream is the main picture, also when the
-USB camera was made the main picture.
+left without a tile aren't connected to. A USB camera that was made the main picture stays the main picture where no
+tile fits.
 
 Tap a tile to make it the main picture:
 
@@ -72,8 +72,11 @@ Tap a tile to make it the main picture:
   it is plugged back in, until you tap the stream's tile or choose another **USB Camera Tile**.
 
 A tile says **WAITING FOR VIDEO** until its video arrives and **VIDEO LOST - RECONNECTING** while its stream is lost, as
-the main picture does. The tiles are not shown in the video switcher window, and their streams aren't decoded while the
-video is there.
+the main picture does. The tiles are not shown in the video switcher window. While the video is there, their streams
+aren't decoded, and once it has been there for 15 seconds they are disconnected, so that tiles nobody sees take none
+of the link's bandwidth. Back in the foreground within that time, the video finds its tiles playing. After it, and
+when _QGroundControl_ starts with the video in the switcher window, the tiles connect once the video is in the
+foreground. A USB camera in a tile is turned off and on the same way.
 
 The vehicle is asked to send each stream that has a tile, and to stop it once it has none, so every tile takes some of
 the link's bandwidth, as well as a video decoder on the ground station.

@@ -72,6 +72,7 @@ private slots:
     void _testTilesOutlastViewOnItsWayToFullSize();
     void _testFlyViewLeavesTapsOnTilesToThem();
     void _testThermalDecodesOnlyWhileShown();
+    void _testThermalPlaysOnlyWhileInUse();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();
 

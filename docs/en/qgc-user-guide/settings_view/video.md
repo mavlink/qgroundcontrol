@@ -69,9 +69,11 @@ Connection settings vary by source type:
   video: 0 to 4 (default: 3). 0 shows none. A video too narrow for that many shows as many as fit. Each tile takes a
   network connection and a video decoder, of which tablets have few, and its stream takes bandwidth on the vehicle's
   link.
-- **Disable Video Stream When Disarmed** — stop the video stream, and any recording, when the vehicle disarms. The stream
-  starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is
-  started again.
+- **Disable Video Stream When Disarmed** — keep the video stream off, and stop any recording, while the active vehicle
+  is disarmed: also for a vehicle that connects disarmed, and when this setting is turned on while it is disarmed. The
+  vehicle's camera is asked to stop sending its video meanwhile, so the stream takes none of the link's bandwidth.
+  The stream starts again when the vehicle arms, when this setting is turned off, or when video is started again with
+  **Restart Video**, which lasts until the vehicle next arms or disarms.
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
 - **RTP jitter latency** — how long RTSP and UDP h.264/h.265 streams hold packets before showing them (default: 80 ms).
   A lower value shortens the video delay; a higher one leaves more time to reorder packets and to recover lost ones by

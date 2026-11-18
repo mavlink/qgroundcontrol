@@ -59,9 +59,9 @@ void VideoRecordingServiceTest::init()
     _camera = new FakeVideoReceiver();
     _primaryStream->setReceiver(_primary);
     _thermalStream->setReceiver(_thermal);
-    auto* const cameraSource =
+    _cameraStream =
         new VideoStreamController(VideoStreamController::Role::Camera, videoSettings, _owner.get(), _camera);
-    _service = new VideoRecordingService({_primaryStream, _thermalStream, cameraSource}, _owner.get());
+    _service = new VideoRecordingService({_primaryStream, _thermalStream, _cameraStream}, _owner.get());
 }
 
 void VideoRecordingServiceTest::cleanup()
@@ -82,7 +82,7 @@ void VideoRecordingServiceTest::_activate(VideoStreamController* stream)
 {
     stream->setEnabled(true);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
-    QVERIFY(stream->active());
+    QVERIFY(stream->receiver()->active());
 }
 
 void VideoRecordingServiceTest::_testUniqueBaseName()
@@ -104,12 +104,16 @@ void VideoRecordingServiceTest::_testRecordsActiveStreams()
     const auto thermalInfo = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal",
                                                               VIDEO_STREAM_ENCODING_H264, true);
     _thermalStream->setStreamInfo(thermalInfo.get());
-    _activate(_thermalStream);
+    // The thermal stream's view is off, so nothing connects to it: it connects to be recorded.
+    _thermalStream->setEnabled(true);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QVERIFY(!_thermal->active());
 
     _service->startRecording(QStringLiteral("flight"));
     QCOMPARE(_primary->recordings.size(), 1);
     QCOMPARE(_primary->recordings.first().file, _videoDir + QStringLiteral("/flight.mkv"));
     QCOMPARE(_primary->recordings.first().format, VideoReceiver::FileFormat::Mkv);
+    QVERIFY(_thermal->active());
     QCOMPARE(_thermal->recordings.size(), 1);
     QCOMPARE(_thermal->recordings.first().file, _videoDir + QStringLiteral("/flight.thermalVideo.mkv"));
 
@@ -137,7 +141,8 @@ void VideoRecordingServiceTest::_testRecordsActiveStreams()
 void VideoRecordingServiceTest::_testCameraRecordsAsTheVideo()
 {
     // Running in place of the primary stream, the camera gets its file name and its subtitles.
-    _camera->setActive(true);
+    _cameraStream->setCamera(QStringLiteral("QGC Test Camera"));
+    _activate(_cameraStream);
     _service->startRecording(QStringLiteral("flight"));
     const QString file = _videoDir + QStringLiteral("/flight.mkv");
     QVERIFY(_primary->recordings.isEmpty());

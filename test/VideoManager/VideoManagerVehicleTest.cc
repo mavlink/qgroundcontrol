@@ -11,21 +11,14 @@
 #include "VideoStreamController.h"
 #include "VideoTestHelpers.h"
 
-void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
+MavlinkCameraControlInterface* VideoManagerVehicleTest::_selectStreamingCamera()
 {
-    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
-    VideoTestHelpers::FactRestorer facts;
-    facts.set(videoSettings->videoSource(), QString(VideoSettings::videoDisabled));
-    facts.set(videoSettings->maxVideoTiles(), 3);
-    facts.set(videoSettings->uvcTileCamera(), QString());
-
-    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionEnableCamera);
-    QVERIFY(_vehicle);
-    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
-    QVERIFY(cameraManager);
-    // The mock vehicle's first camera advertises two streams at one address; its second camera has none.
+    QGCCameraManager* const cameraManager = _vehicle ? _vehicle->cameraManager() : nullptr;
+    if (!cameraManager || !waitForCondition([cameraManager] { return cameraManager->cameras()->count() >= 2; },
+                                            TestTimeout::longMs(), u"two cameras discovered")) {
+        return nullptr;
+    }
     MavlinkCameraControlInterface* camera = nullptr;
-    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
     for (int i = 0; i < cameraManager->cameras()->count(); i++) {
         auto* const candidate = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
         if (candidate && (candidate->compID() == MAV_COMP_ID_CAMERA)) {
@@ -33,8 +26,26 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
             cameraManager->setCurrentCamera(i);
         }
     }
+    const bool streamsKnown = camera && waitForCondition([camera] { return camera->streamLabels().size() == 2; },
+                                                         TestTimeout::longMs(), u"the camera's two streams announced");
+    return streamsKnown ? camera : nullptr;
+}
+
+void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
+{
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    VideoTestHelpers::FactRestorer facts;
+    facts.set(videoSettings->videoSource(), QString(VideoSettings::videoDisabled));
+    facts.set(videoSettings->maxVideoTiles(), 3);
+    facts.set(videoSettings->uvcTileCamera(), QString());
+    facts.set(videoSettings->disableWhenDisarmed(), false);
+
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionEnableCamera);
+    QVERIFY(_vehicle);
+    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
+    QVERIFY(cameraManager);
+    MavlinkCameraControlInterface* const camera = _selectStreamingCamera();
     QVERIFY(camera);
-    QVERIFY_TRUE_WAIT(camera->streamLabels().size() == 2, TestTimeout::longMs());
 
     const auto settle = [] { QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall); };
     const auto started = [this] {
@@ -63,8 +74,8 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     QCOMPARE(videoManager._sources.size(), 3);
     QVERIFY_TRUE_WAIT(started() == 1, TestTimeout::mediumMs());
 
-    // The camera advertises a third stream, at an address of its own: it plays in a tile, named after the camera,
-    // as the vehicle has two, and the stream, and the camera is asked to transmit it.
+    // The camera advertises a third stream, at an address of its own. No row of tiles is on screen, as with the
+    // video in the picture-in-picture: the stream gets no source, and the camera isn't asked to transmit it.
     mavlink_video_stream_information_t zoom{};
     zoom.stream_id = 3;
     zoom.count = 3;
@@ -75,6 +86,13 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     (void) qstrncpy(zoom.uri, "udp://127.0.0.1:5601", sizeof(zoom.uri));
     camera->handleVideoStreamInformation(zoom);
     emit cameraManager->streamChanged();
+    settle();
+    QCOMPARE(videoManager._sources.size(), 3);
+    QCOMPARE(started(), 1);
+
+    // A row of tiles is shown and tells its room: the stream plays in a tile, named after the camera, as the vehicle
+    // has two, and the stream, and the camera is asked to transmit it.
+    videoManager.setTileRoom(3);
     settle();
     QCOMPARE(videoManager._sources.size(), 4);
     VideoStreamController* const zoomSource = videoManager._sources.last();
@@ -111,16 +129,130 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     QCOMPARE(started(), 2);
     QCOMPARE(stopped(), 0);
 
-    // Without tiles, the first stream leaves the display: the camera is asked to stop it.
-    facts.set(videoSettings->maxVideoTiles(), 0);
+    // Video that is stopped is not to be transmitted: the camera is asked to stop the tile's stream and then the
+    // current one, and to start both again with the video.
+    videoManager.stopVideo();
+    QVERIFY_TRUE_WAIT(stopped() == 2, TestTimeout::mediumMs());
+    QVERIFY(!_mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, 1));
+    QCOMPARE(videoManager._sources.size(), 4);
+    videoManager.startVideo();
+    QVERIFY_TRUE_WAIT(started() == 4, TestTimeout::mediumMs());
+    QVERIFY(_mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, 1));
+    QCOMPARE(stopped(), 2);
+
+    // The row has been out of view for longer than its grace period, as with the video back in the
+    // picture-in-picture, and tells that it has no room: the first stream leaves the display, and the camera is asked
+    // to stop it.
+    videoManager.setTileRoom(0);
+    settle();
     QCOMPARE(videoManager._sources.size(), 3);
     QVERIFY_TRUE_WAIT(!_mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, 1), TestTimeout::mediumMs());
-    QCOMPARE(stopped(), 1);
+    QCOMPARE(stopped(), 3);
 
     // The vehicle is no longer the one on display: its current stream is stopped, as ever.
     videoManager._setActiveVehicle(nullptr);
-    QVERIFY_TRUE_WAIT(stopped() == 2, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(stopped() == 4, TestTimeout::mediumMs());
+    QCOMPARE(started(), 4);
+}
+
+void VideoManagerVehicleTest::_testVideoOffStopsCameraStream()
+{
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    VideoTestHelpers::FactRestorer facts;
+    facts.set(videoSettings->videoSource(), QString(VideoSettings::videoDisabled));
+    facts.set(videoSettings->uvcTileCamera(), QString());
+    facts.set(videoSettings->disableWhenDisarmed(), true);
+
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionEnableCamera);
+    QVERIFY(_vehicle);
+    QVERIFY(!_vehicle->armed());
+
+    const auto settle = [] { QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall); };
+    const auto transmitted = [this] { return _mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, 1); };
+    const auto started = [this] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, MAV_COMP_ID_CAMERA);
+    };
+    const auto stopped = [this] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_STOP_STREAMING, MAV_COMP_ID_CAMERA);
+    };
+    const auto setArmed = [this](bool armed) {
+        _vehicle->setArmed(armed, false /* showError */);
+        return waitForCondition([this, armed] { return _vehicle->armed() == armed; }, TestTimeout::longMs(),
+                                u"the vehicle's armed state");
+    };
+
+    // The vehicle is on display before its cameras are found, as one that has just connected.
+    VideoManager videoManager;
+    videoManager._receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
+    videoManager._createVideoReceivers();
+    videoManager._setActiveVehicle(_vehicle);
+    QVERIFY(_selectStreamingCamera());
+    settle();
+    auto* const receiver = qobject_cast<FakeVideoReceiver*>(videoManager.primaryStream()->receiver());
+    QVERIFY(receiver);
+    QCOMPARE(receiver->config().uri, QStringLiteral("udp://127.0.0.1:5600"));
+
+    // It is disarmed: its video is off without it having changed its armed state, and its camera is told to stop the
+    // stream it transmits without being asked.
+    QVERIFY(!videoManager.hasVideo());
+    QCOMPARE(videoManager.noVideoReason(), VideoManager::NoVideoReason::DisabledWhileDisarmed);
+    QVERIFY(!receiver->active());
+    QVERIFY_TRUE_WAIT(!transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(stopped(), 1);
+    QCOMPARE(started(), 0);
+
+    // Armed, it gets its video, and the camera transmits again.
+    QVERIFY(setArmed(true));
+    QVERIFY(videoManager.hasVideo());
+    settle();
+    QVERIFY(receiver->active());
+    QVERIFY_TRUE_WAIT(transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(started(), 1);
+
+    QVERIFY(setArmed(false));
+    QVERIFY(!videoManager.hasVideo());
+    QVERIFY_TRUE_WAIT(!transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(stopped(), 2);
+
+    // The setting turned off and on again takes the vehicle as it is: disarmed.
+    facts.set(videoSettings->disableWhenDisarmed(), false);
+    QVERIFY(videoManager.hasVideo());
+    QVERIFY_TRUE_WAIT(transmitted(), TestTimeout::mediumMs());
+    facts.set(videoSettings->disableWhenDisarmed(), true);
+    QVERIFY(!videoManager.hasVideo());
+    QVERIFY_TRUE_WAIT(!transmitted(), TestTimeout::mediumMs());
     QCOMPARE(started(), 2);
+    QCOMPARE(stopped(), 3);
+
+    // Video started again plays for the disarmed vehicle, until its armed state changes.
+    videoManager.startVideo();
+    QVERIFY(videoManager.hasVideo());
+    settle();
+    QVERIFY(receiver->active());
+    QVERIFY_TRUE_WAIT(transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(started(), 3);
+
+    // Video that is stopped is not transmitted either.
+    videoManager.stopVideo();
+    QVERIFY(!receiver->active());
+    QVERIFY_TRUE_WAIT(!transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(stopped(), 4);
+    videoManager.startVideo();
+    QVERIFY_TRUE_WAIT(transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(started(), 4);
+
+    QVERIFY(setArmed(true));
+    QVERIFY(videoManager.hasVideo());
+    QVERIFY(setArmed(false));
+    QVERIFY(!videoManager.hasVideo());
+    QVERIFY_TRUE_WAIT(!transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(stopped(), 5);
+
+    // The camera was told to stop already when the vehicle leaves the display.
+    videoManager._setActiveVehicle(nullptr);
+    QVERIFY(setArmed(true));
+    QCOMPARE(stopped(), 5);
+    QCOMPARE(started(), 4);
 }
 
 UT_REGISTER_TEST(VideoManagerVehicleTest, TestLabel::Integration, TestLabel::Vehicle)

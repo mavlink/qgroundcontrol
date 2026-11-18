@@ -612,6 +612,31 @@ void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
     QVERIFY_TRUE_WAIT(transmitted(1) && transmitted(2), TestTimeout::mediumMs());
     QCOMPARE(started(), 5);
     QCOMPARE(stopped(), 4);
+
+    // A camera told to stop before its stream is known, as one found while the video is off, is asked to stop the
+    // stream once it is announced, since it transmits its first stream without being asked. The mock vehicle's
+    // second camera has no stream of its own, and denies the command.
+    MavlinkCameraControlInterface* lateCamera = nullptr;
+    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
+        auto* const candidate = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
+        if (candidate && (candidate->compID() == MAV_COMP_ID_CAMERA2)) {
+            lateCamera = candidate;
+        }
+    }
+    QVERIFY(lateCamera);
+    QVERIFY(lateCamera->streamLabels().isEmpty());
+    lateCamera->stopStream();
+    mavlink_video_stream_information_t announced{};
+    announced.stream_id = 1;
+    announced.count = 1;
+    announced.type = VIDEO_STREAM_TYPE_RTPUDP;
+    announced.flags = VIDEO_STREAM_STATUS_FLAGS_RUNNING;
+    qstrncpy(announced.name, "Late", sizeof(announced.name));
+    qstrncpy(announced.uri, "udp://127.0.0.1:5610", sizeof(announced.uri));
+    lateCamera->handleVideoStreamInformation(announced);
+    QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_STOP_STREAMING, MAV_COMP_ID_CAMERA2) == 1,
+                      TestTimeout::mediumMs());
+    QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, MAV_COMP_ID_CAMERA2), 0);
 }
 
 void VehicleCameraControlTest::_testStreamAnnouncedAnewIsUpdated()

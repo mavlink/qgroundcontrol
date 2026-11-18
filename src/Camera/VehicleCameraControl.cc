@@ -1804,6 +1804,8 @@ void VehicleCameraControl::handleVideoStreamInformation(const mavlink_video_stre
             if (_streamLabels.size() == 1) {
                 //-- The camera's first stream is the current one, which it transmits without being asked
                 _transmittedStreams.insert(pStream->streamID());
+                //-- Unless stopStream() came before the stream was known: it is stopped now
+                _syncStreams();
             }
             emit streamsChanged();
             emit streamLabelsChanged();

@@ -33,6 +33,10 @@ streams the active vehicle's cameras advertise, up to `VideoSettings::maxVideoTi
 room for where those are fewer (`VideoManager::tileRoom`), less the tile of the USB camera that
 `VideoSettings::uvcTileCamera` names. A stream at an address (its URI, or the UDP port it is listened for on)
 that a stream on display already has gets no source: a camera sends such streams one at a time.
+There are no tiles, and so none of their sources, until a row of tiles that is shown tells its room: the Fly View
+shows the row only while the video is its main view, not in the picture-in-picture. A row that is no longer shown
+tells that it has no room once it has been out of view for 15 s (`VideoStreamController::kIdleGrace`), so a video
+that changes places with the map and back within that time finds the tiles' streams playing.
 
 - `VideoManager::sources` and `primaryStream` notify. When the vehicle's current stream becomes one that plays in a
   tile, as after `VideoManager::selectSource()`, that tile's source becomes the primary stream and the former primary

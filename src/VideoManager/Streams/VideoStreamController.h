@@ -1,11 +1,13 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "VideoReceiver.h"
@@ -30,6 +32,9 @@ class VideoSettings;
 /// outlives receivers, so an output registered before the video backend is ready is attached once a receiver exists.
 /// An output that registers as another one leaves takes the stream over from it: the receiver, which decodes only
 /// into an output, is never without one in between.
+///
+/// The thermal stream plays only while it is in use: while an output is registered for it, and from startRecording()
+/// until its recording has ended. Out of use for kIdleGrace it disconnects, and it connects again with its next use.
 class VideoStreamController : public QObject
 {
     Q_OBJECT
@@ -53,8 +58,15 @@ class VideoStreamController : public QObject
     Q_PROPERTY(QString transport READ transport NOTIFY uriChanged FINAL)
     Q_MOC_INCLUDE("QGCVideoStreamInfo.h")
 
+    friend class VideoManagerTest;
+
 public:
     using Role = VideoStreamResolver::Role;
+
+    /// How long a stream that nobody sees any more stays connected: the thermal stream out of use, and the streams
+    /// in tiles once their row is no longer shown (VideoManager::tileRoom). A view that is back within that time,
+    /// as when the video changes places with the map and back, finds its streams playing.
+    static constexpr std::chrono::seconds kIdleGrace{15};
 
     /// @p ownReceiver, when given, is the source's receiver for good; the source takes ownership of it.
     VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent = nullptr,
@@ -129,8 +141,9 @@ public:
     /// background: a receiver without an output decodes nothing, and goes on recording.
     void setDisplaySuspended(bool suspended);
 
-    /// True when the receiver is active, accepting startRecording().
-    bool active() const;
+    /// True when the source has video to record: it is enabled and has a stream, or a camera, to play.
+    bool canRecord() const;
+    /// Records the source, which connects for it when it hasn't yet: the thermal stream out of use does.
     void startRecording(const QString& file, VideoReceiver::FileFormat format);
     void stopRecording();
 
@@ -201,6 +214,12 @@ private:
     /// Forgets that the stream was decoded: what follows is a new stream, not a reconnect.
     void _forgetDecoded();
     void _updateReconnecting();
+    /// Shown in an output, or recorded.
+    bool _inUse() const;
+    /// The thermal stream, after what _inUse() tells changed: connects for a new use, and starts kIdleGrace once it has
+    /// none.
+    void _updateInUse();
+    void _onIdleTimeout();
 
     Role _role;
     QString _name;
@@ -217,6 +236,11 @@ private:
     /// The URI the receiver was last configured with.
     QString _uri;
     bool _enabled = false;
+    /// The thermal stream, out of use for kIdleGrace or never used: not connected until it is in use.
+    bool _idle;
+    QTimer _idleTimer;
+    /// From startRecording() until stopRecording() or the end of the recording, which may have yet to begin.
+    bool _recordingRequested = false;
     bool _applyPending = false;
     bool _decoded = false;
     bool _reconnecting = false;

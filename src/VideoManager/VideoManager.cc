@@ -1,6 +1,7 @@
 #include "VideoManager.h"
 
 #include <algorithm>
+#include <chrono>
 #include <optional>
 
 #include <QtConcurrent/QtConcurrentRun>
@@ -474,7 +475,7 @@ void VideoManager::startVideo()
     qCDebug(VideoManagerLog) << "startVideo";
 
     _videoStopped = false;
-    _disabledWhileDisarmed = false;
+    _restartedWhileDisarmed = true;
     _updateState();
     _restartSources();
 }
@@ -582,6 +583,11 @@ void VideoManager::setFullScreen(bool on)
     }
 }
 
+int VideoManager::idleSourceGraceMs() const
+{
+    return static_cast<int>(std::chrono::milliseconds(VideoStreamController::kIdleGrace).count());
+}
+
 void VideoManager::setTileRoom(int room)
 {
     if (room == _tileRoom) {
@@ -641,37 +647,43 @@ void VideoManager::_updateStateNow()
     if (_cleanedUp) {
         return;
     }
-    if (!_videoSettings->disableWhenDisarmed()->rawValue().toBool()) {
-        _disabledWhileDisarmed = false;
+    if (!_vehicleDisarmed || !_videoSettings->disableWhenDisarmed()->rawValue().toBool()) {
+        // Nothing for a restart to undo: the video is off again the next time the vehicle is disarmed with the
+        // setting on.
+        _restartedWhileDisarmed = false;
     }
+    const bool disabledWhileDisarmed = _disabledWhileDisarmed();
 
     const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    const bool streamWanted = !_disabledWhileDisarmed;
+    const bool streamWanted = !disabledWhileDisarmed;
     // The reason that takes the most to lift comes first: arming doesn't bring back video that was stopped.
-    const NoVideoReason noVideoReason = _videoStopped            ? NoVideoReason::Stopped
-                                        : _disabledWhileDisarmed ? NoVideoReason::DisabledWhileDisarmed
-                                                                 : NoVideoReason::Waiting;
+    const NoVideoReason noVideoReason = _videoStopped           ? NoVideoReason::Stopped
+                                        : disabledWhileDisarmed ? NoVideoReason::DisabledWhileDisarmed
+                                                                : NoVideoReason::Waiting;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
     const int tilesAllowed =
         static_cast<int>(std::min(_videoSettings->maxVideoTiles()->rawValue().toUInt(), kMaxVideoTiles));
-    const int maxTiles = (_tileRoom < 0) ? tilesAllowed : std::min(tilesAllowed, _tileRoom);
+    // No room is known of until a row of tiles that is shown tells its own: nothing plays for a tile nobody sees.
+    const int maxTiles = std::min(tilesAllowed, std::max(_tileRoom, 0));
+    const bool cameraAsMainPicture = _videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool();
     // A stream to play takes the place of the camera the video source names: the camera source then plays the camera
     // to show in a tile.
     const QString cameraName =
         !isStreamSource ? videoSource
-                        : ((maxTiles > 0) ? _videoSettings->uvcTileCamera()->rawValue().toString() : QString());
+                        : ((tilesAllowed > 0) ? _videoSettings->uvcTileCamera()->rawValue().toString() : QString());
     const bool cameraWanted = streamWanted && !cameraName.isEmpty();
     if (cameraWanted) {
         // A camera plugged in or unplugged changes whether the camera source has one to play.
         _uvcCamera->watchCameras();
     }
-    const QString camera = (cameraWanted && _cameraAttached(cameraName)) ? cameraName : QString();
-    const bool hasUvcCamera = !camera.isEmpty();
+    const bool hasUvcCamera = cameraWanted && _cameraAttached(cameraName);
+    // The tile's camera plays while there is room for its tile. Made the main picture, it needs none to stay it.
+    const bool cameraPlays = hasUvcCamera && (!isStreamSource || (maxTiles > 0) || cameraAsMainPicture);
+    const QString camera = cameraPlays ? cameraName : QString();
     // A camera selected in its tile is the main picture whenever it plays beside the stream: the setting outlasts a
     // camera that is unplugged, and a restart.
-    const bool cameraOnMain =
-        isStreamSource && !camera.isEmpty() && _videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool();
+    const bool cameraOnMain = isStreamSource && !camera.isEmpty() && cameraAsMainPicture;
     const bool cameraTile = isStreamSource && !camera.isEmpty() && !cameraOnMain;
     const QString uvcVideoSourceID = cameraTile ? QString() : camera;
     const bool hasVideo = streamWanted && (_primaryStream->configured() || !uvcVideoSourceID.isEmpty());
@@ -693,6 +705,8 @@ void VideoManager::_updateStateNow()
     for (VideoStreamController* source : std::as_const(_sources)) {
         source->setEnabled(streamWanted && !_videoStopped && ((source != _thermalStream) || !cameraOnMain));
     }
+    // After the streams in tiles, which _updateTileStreams() named: they leave the display first.
+    _updateCameraStream(streamWanted && !_videoStopped);
 
     if (autoStreamConfigured != _autoStreamConfigured) {
         _autoStreamConfigured = autoStreamConfigured;
@@ -815,11 +829,34 @@ void VideoManager::_nameExtraStreams()
     for (MavlinkCameraControlInterface* const camera : cameras) {
         QList<quint8> streamIds;
         for (const AdvertisedStream& stream : std::as_const(_otherStreams)) {
-            if ((stream.camera == camera) && _tileStream(stream.streamInfo)) {
+            if (!_videoStopped && (stream.camera == camera) && _tileStream(stream.streamInfo)) {
                 streamIds.append(stream.streamInfo->streamID());
             }
         }
         camera->setExtraStreams(streamIds);
+    }
+}
+
+bool VideoManager::_disabledWhileDisarmed() const
+{
+    return _vehicleDisarmed && !_restartedWhileDisarmed && _videoSettings->disableWhenDisarmed()->rawValue().toBool();
+}
+
+void VideoManager::_updateCameraStream(bool playing)
+{
+    QGCCameraManager* const cameraManager = _activeVehicle ? _activeVehicle->cameraManager() : nullptr;
+    // Also the camera that became the current one, or was found, while the video was off.
+    MavlinkCameraControlInterface* const camera =
+        (!playing && cameraManager) ? cameraManager->currentCameraInstance() : nullptr;
+    if (camera == _stoppedCamera) {
+        return;
+    }
+    if (_stoppedCamera) {
+        _stoppedCamera->resumeStream();
+    }
+    _stoppedCamera = camera;
+    if (camera) {
+        camera->stopStream();
     }
 }
 
@@ -839,14 +876,17 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
                 camera->setExtraStreams({});
             }
             MavlinkCameraControlInterface* const camera = cameraManager->currentCameraInstance();
-            if (camera) {
+            // Told already when the video is off.
+            if (camera && (camera != _stoppedCamera)) {
                 camera->stopStream();
             }
         }
     }
+    _stoppedCamera = nullptr;
 
     _activeVehicle = vehicle;
-    _disabledWhileDisarmed = false;
+    _vehicleDisarmed = _activeVehicle && !_activeVehicle->armed();
+    _restartedWhileDisarmed = false;
 
     if (_activeVehicle) {
         (void) connect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this,
@@ -856,7 +896,8 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
         if (cameraManager) {
             (void) connect(cameraManager, &QGCCameraManager::streamChanged, this, &VideoManager::_updateStreamInfo);
             MavlinkCameraControlInterface* const camera = cameraManager->currentCameraInstance();
-            if (camera) {
+            // With the video off, _updateCameraStream() tells it to stop instead.
+            if (camera && !_videoStopped && !_disabledWhileDisarmed()) {
                 camera->resumeStream();
             }
         }
@@ -937,12 +978,10 @@ void VideoManager::_setAdvertisedStreams(const AdvertisedStream& current, QGCVid
 
 void VideoManager::_onArmedChanged(bool armed)
 {
-    const bool disabled = !armed && _videoSettings->disableWhenDisarmed()->rawValue().toBool();
-    if (disabled != _disabledWhileDisarmed) {
-        qCDebug(VideoManagerLog) << "disabled while disarmed:" << disabled;
-        _disabledWhileDisarmed = disabled;
-        _updateState();
-    }
+    qCDebug(VideoManagerLog) << "vehicle armed:" << armed;
+    _vehicleDisarmed = !armed;
+    _restartedWhileDisarmed = false;
+    _updateState();
 }
 
 void VideoManager::_communicationLostChanged(bool communicationLost)

@@ -146,7 +146,7 @@ void VideoRecordingService::startRecording(const QString& baseName)
 
     QList<VideoStreamController*> sources;
     for (VideoStreamController* source : std::as_const(_sources)) {
-        if (source->active() && !source->tile()) {
+        if (source->canRecord() && !source->tile()) {
             sources.append(source);
         }
     }
