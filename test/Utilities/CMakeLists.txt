@@ -1,8 +1,3 @@
-# ============================================================================
-# Utilities Unit Tests
-# Tests for various utility modules
-# ============================================================================
-
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Concurrency)
@@ -21,22 +16,14 @@ add_subdirectory(StateMachine)
 add_subdirectory(Timing)
 add_subdirectory(Standalone)
 
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        DataRateTrackerTest.cc
-        DataRateTrackerTest.h
-        QGCCommandLineParserTest.cc
-        QGCCommandLineParserTest.h
-        QGCMathTest.cc
-        QGCMathTest.h
-        QGCVersionCheckTest.cc
-        QGCVersionCheckTest.h
-        SecureMemoryTest.cc
-        SecureMemoryTest.h
+add_qgc_tests(
+    DataRateTrackerTest
+    QGCCommandLineParserTest
+    QGCMathTest
+    QGCVersionCheckTest
+    SecureMemoryTest
+    LABELS Unit Utilities
 )
-
-target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
 # Test Data Resources
@@ -47,9 +34,3 @@ qt_add_resources(
     FILES
         arducopter.apj
 )
-
-add_qgc_test(DataRateTrackerTest LABELS Unit Utilities)
-add_qgc_test(QGCCommandLineParserTest LABELS Unit Utilities)
-add_qgc_test(QGCMathTest LABELS Unit Utilities)
-add_qgc_test(QGCVersionCheckTest LABELS Unit Utilities)
-add_qgc_test(SecureMemoryTest LABELS Unit Utilities)

@@ -1,20 +1,9 @@
-# ============================================================================
-# Compression Utilities Unit Tests
-# Tests for QGCCompression (format detection, ZIP, GZIP, XZ)
-# ============================================================================
-
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        QGCArchiveModelTest.cc
-        QGCArchiveModelTest.h
-        QGCCompressionTest.cc
-        QGCCompressionTest.h
-        QGCStreamingDecompressionTest.cc
-        QGCStreamingDecompressionTest.h
+add_qgc_tests(
+    QGCArchiveModelTest
+    QGCCompressionTest
+    QGCStreamingDecompressionTest
+    LABELS Unit Utilities
 )
-
-target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
 # Test Data Resources
@@ -37,7 +26,3 @@ qt_add_resources(
     FILES
         ${_compression_test_files}
 )
-
-add_qgc_test(QGCArchiveModelTest LABELS Unit Utilities)
-add_qgc_test(QGCCompressionTest LABELS Unit Utilities)
-add_qgc_test(QGCStreamingDecompressionTest LABELS Unit Utilities)

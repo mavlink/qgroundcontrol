@@ -123,10 +123,9 @@ permutation is identified without re-running the whole method. See
 
 ### Register in CMakeLists.txt
 
-Add test sources and the test directory's include path to the `QGCUnitTests` object library. The
-application executable links it and runs the suite; tests compile with the application's include
-paths and definitions, and their precompiled header adds `<QtTest/QTest>` so application sources do
-not compile QtTest.
+Add test sources to the `QGCUnitTests` object library. The application executable links it and runs
+the suite; tests compile with the application's include paths and definitions, and their precompiled
+header adds `<QtTest/QTest>` so application sources do not compile QtTest.
 
 ```cmake
 target_sources(
@@ -136,6 +135,7 @@ target_sources(
         MyTest.h
 )
 
+# Include path, only when sources of another directory include headers of this one
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Basic unit test
@@ -156,6 +156,29 @@ add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK Joystick)
 # Long test class split across CTest entries MyUITest.1 .. MyUITest.3 that run in parallel
 add_qgc_test(MyUITest LABELS Integration SHARDS 3)
 ```
+
+`add_qgc_tests()` writes a test once instead of three times. For each path it adds `<path>.cc` and
+`<path>.h` to `QGCUnitTests` and calls `add_qgc_test()` with the file name of the path. `LABELS` and
+every argument after it go to `add_qgc_test()` as they are, so they apply to each listed test. Paths
+go before `LABELS`: configure fails when a value after it names a test source of the directory, which
+would otherwise pass for a label and leave that test out.
+
+```cmake
+add_qgc_tests(
+    MyTest
+    Helpers/MyHelperTest
+    LABELS Unit Utilities
+)
+```
+
+The directories under `test/Utilities` register their tests this way. The other test directories keep
+`target_sources()` with `add_qgc_test()`, which is also the form for a test with arguments of its own
+and for support files (helpers, common headers, fixtures).
+
+A test directory needs an include path only when sources of another directory include its headers;
+the sample shows the line for that case. A test finds the headers of its own directory without one.
+Under `test/Utilities` only `StateMachine/states` has an include path, for the common header that
+tests outside that directory include.
 
 Test include directories and test support libraries (`target_link_libraries(QGCUnitTests PRIVATE
 QGCTestTiming)`) belong to `QGCUnitTests`, never to the application target, whose objects would

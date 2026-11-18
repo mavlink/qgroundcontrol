@@ -1,10 +1,13 @@
-# ============================================================================
-# Parsing Utility Tests
-# Tests for EXIF, APMDataFlash (ArduPilot), PX4ULog (PX4) and Wire parsing modules
-# ============================================================================
+# ExifUtilityTest reads the test image DSCN0010.jpg from the resources of test/AnalyzeView.
+add_qgc_tests(
+    APMDataFlash/APMDataFlashUtilityTest
+    Exif/ExifUtilityTest
+    Json/JsonHelperTest
+    Json/JsonParsingTest
+    Json/JsonResourceAuditTest
+    PX4ULog/PX4ULogUtilityTest
+    Wire/WireFieldsTest
+    LABELS Unit Utilities
+)
 
-add_subdirectory(APMDataFlash)
-add_subdirectory(Exif)
-add_subdirectory(Json)
-add_subdirectory(PX4ULog)
-add_subdirectory(Wire)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCWire)

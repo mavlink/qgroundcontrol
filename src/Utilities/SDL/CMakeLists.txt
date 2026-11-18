@@ -25,10 +25,12 @@ else()
 endif()
 
 if(ANDROID)
+    set(_qgc_sdl3_target SDL3-shared)
     set(SDL_SHARED_FLAG "ON")
     set(SDL_STATIC_FLAG "OFF")
     set(SDL_EXTRA_OPTIONS ${SDL_EXTRA_OPTIONS} "SDL_ANDROID_JAR OFF" "SDL_HIDAPI_LIBUSB OFF")
 else()
+    set(_qgc_sdl3_target SDL3-static)
     set(SDL_SHARED_FLAG "OFF")
     set(SDL_STATIC_FLAG "ON")
 endif()
@@ -68,12 +70,6 @@ CPMAddPackage(
 
 qgc_require_cpm_added(SDL3)
 
-if(ANDROID)
-    set(_qgc_sdl3_target SDL3-shared)
-else()
-    set(_qgc_sdl3_target SDL3-static)
-endif()
-
 qgc_disable_dependency_warnings(${_qgc_sdl3_target})
 
 set_target_properties(
@@ -87,13 +83,13 @@ set_target_properties(
 # SDL3's subdir-scoped LibUSB::LibUSB target breaks qt_add_translations' top-level scan.
 set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 
+target_compile_definitions(
+    ${_qgc_sdl3_target}
+    PRIVATE
+        SDL_MAIN_NOIMPL
+        SDL_MAIN_HANDLED
+)
 if(ANDROID)
-    target_compile_definitions(
-        SDL3-shared
-        PRIVATE
-            SDL_MAIN_NOIMPL
-            SDL_MAIN_HANDLED
-    )
     target_link_libraries(
         SDL3-shared
         PRIVATE
@@ -102,15 +98,6 @@ if(ANDROID)
     )
     # SDL3 doesn't link Qt, so it misses Qt's 16 KB page-size link option (NDK r27 defaults to 4 KB).
     target_link_options(SDL3-shared PRIVATE "-Wl,-z,max-page-size=16384")
-    set(QGC_SDL3_TARGET SDL3::SDL3-shared)
-else()
-    target_compile_definitions(
-        SDL3-static
-        PRIVATE
-            SDL_MAIN_NOIMPL
-            SDL_MAIN_HANDLED
-    )
-    set(QGC_SDL3_TARGET SDL3::SDL3-static)
 endif()
 
 # ============================================================================
@@ -129,7 +116,7 @@ target_link_libraries(
     QGCSDL
     PUBLIC
         Qt6::Core
-        ${QGC_SDL3_TARGET}
+        SDL3::${_qgc_sdl3_target}
     PRIVATE QGCLogging
 )
 

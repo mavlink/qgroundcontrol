@@ -1,8 +1,1 @@
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        QGCSensorsTest.cc
-        QGCSensorsTest.h
-)
-
-add_qgc_test(QGCSensorsTest LABELS Unit Utilities)
+add_qgc_tests(QGCSensorsTest LABELS Unit Utilities)

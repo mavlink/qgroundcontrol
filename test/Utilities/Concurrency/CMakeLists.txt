@@ -1,8 +1,1 @@
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        AutoSuspendGuardTest.cc
-        AutoSuspendGuardTest.h
-)
-
-add_qgc_test(AutoSuspendGuardTest LABELS Unit Utilities)
+add_qgc_tests(AutoSuspendGuardTest LABELS Unit Utilities)

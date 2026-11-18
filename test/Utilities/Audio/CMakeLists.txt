@@ -1,27 +1,6 @@
-# ============================================================================
-# Audio Utilities Unit Tests
-# Tests for audio output and speech synthesis
-# ============================================================================
-
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        AudioOutputTest.cc
-        AudioOutputTest.h
-)
-
-target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_qgc_test(AudioOutputTest LABELS Unit Utilities)
+add_qgc_tests(AudioOutputTest LABELS Unit Utilities)
 
 # PiperTtsEngine is only built on Linux
 if(LINUX)
-    target_sources(
-        QGCUnitTests
-        PRIVATE
-            PiperTtsEngineTest.cc
-            PiperTtsEngineTest.h
-    )
-
-    add_qgc_test(PiperTtsEngineTest LABELS Unit Utilities)
+    add_qgc_tests(PiperTtsEngineTest LABELS Unit Utilities)
 endif()
