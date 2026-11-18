@@ -61,6 +61,8 @@ protected:
     void onRestartRequested() override;
     void onReconnectRequested() override;
     void onVideoOutputChanged() override;
+    /// A start while a recording is in progress, or awaits its first frame, is refused: reported as
+    /// recordingFinished() for @p file with the reason, while that recording goes on.
     void onStartRecording(const QString& file, FileFormat format) override;
     void onStopRecording() override;
 

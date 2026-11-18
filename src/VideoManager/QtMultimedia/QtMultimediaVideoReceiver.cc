@@ -198,6 +198,7 @@ void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat
 {
     if (_recorder->active()) {
         qCWarning(QtMultimediaVideoReceiverLog) << "Not recording" << name() << "to" << file << "- recording already";
+        emit recordingFinished(file, tr("A recording is in progress already"));
         return;
     }
     if (!_recordingSession) {

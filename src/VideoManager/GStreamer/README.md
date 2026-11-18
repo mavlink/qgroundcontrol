@@ -54,7 +54,15 @@ that changes places with the map and back within that time finds the tiles' stre
   (`MavlinkCameraControlInterface::setExtraStreams()`). `VehicleCameraControl` asks the camera to transmit them
   (`MAV_CMD_VIDEO_START_STREAMING`) and to stop those that left (`MAV_CMD_VIDEO_STOP_STREAMING`), and neither stops
   nor starts a stream that stays on display when the current stream changes.
-- Recordings and photos are of the main picture and its thermal stream, not of the tiles.
+- While the video is off, stopped (`VideoManager::stopVideo()`) or disabled for a disarmed vehicle
+  (`VideoSettings::disableWhenDisarmed`, which goes by the active vehicle's armed state), the vehicle's current
+  camera is told to stop transmitting its stream (`stopStream()`), and none of its streams is named as an extra one:
+  a stream pushed to a UDP port would otherwise cross the vehicle's link with nobody receiving it. The camera is
+  told to resume (`resumeStream()`) once the video plays again.
+- Recordings and photos are of the main picture and its thermal stream, not of the tiles. A recording connects a
+  thermal stream that is out of use, so its file starts a moment after the main picture's. A recording asked for
+  while one runs is refused by `VideoRecordingService`, with a warning logged, and the Qt Multimedia receiver and
+  the USB camera report one they refuse, their recorder being in use, as `recordingFinished()` with the reason.
 
 The components, in the order of their folders: `Pipeline/`, `Source/`, `Sink/`, `Runtime/`, `SelfTest/`, and
 `GStreamerVideoBackend`.

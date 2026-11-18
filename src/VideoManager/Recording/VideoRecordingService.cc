@@ -130,6 +130,12 @@ QStringList VideoRecordingService::_openFiles() const
 
 void VideoRecordingService::startRecording(const QString& baseName)
 {
+    if (_recording) {
+        // Left to the receivers, one would go on in the new file and another keep to its own.
+        qCWarning(VideoRecordingServiceLog) << "Not starting a recording: one is running";
+        return;
+    }
+
     VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
     const int formatValue = videoSettings->recordingFormat()->rawValue().toInt();
     if (!VideoReceiver::isValidFileFormat(formatValue)) {

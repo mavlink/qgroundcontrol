@@ -154,7 +154,9 @@ protected:
     void onReconnectRequested() override;
     void onVideoOutputChanged() override;
     /// Records the camera's video as QtVideoRecorder::start() does, while it runs. Recreating the camera (another
-    /// device or format, an unplug, a retry) ends the recording; Qt finishes writing the file.
+    /// device or format, an unplug, a retry) ends the recording; Qt finishes writing the file. A start it refuses,
+    /// as the camera isn't running or a recording is in progress, is reported as recordingFinished() for @p file
+    /// with the reason.
     void onStartRecording(const QString& file, FileFormat format) override;
     void onStopRecording() override;
     /// Takes a photo, turned and mirrored as setTransform() says and saved off the GUI thread: a still capture where

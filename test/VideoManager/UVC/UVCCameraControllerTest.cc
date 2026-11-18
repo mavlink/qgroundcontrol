@@ -1,15 +1,19 @@
 #include "UVCCameraControllerTest.h"
 
+#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtGui/QImage>
+#include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameInput>
 #include <QtMultimedia/QVideoSink>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 
+#include "QtVideoRecorder.h"
 #include "UVCCameraController.h"
 #include "UVCStreamMonitor.h"
 #include "VideoTestHelpers.h"
@@ -339,6 +343,42 @@ void UVCCameraControllerTest::_testRecordingNeedsRunningCamera()
     QCOMPARE(recordingSpy.count(), 0);
     QVERIFY(!controller.recording());
     QVERIFY(!controller._recorder->active());
+}
+
+void UVCCameraControllerTest::_testStartWhileRecordingIsRefused()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString second = tempDir.filePath(QStringLiteral("second.mp4"));
+
+    UVCCameraController controller;
+    ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    selectCamera(controller, QString::fromLatin1(kMissingCamera));
+    // The camera's recorder waits for its first frame, as while a camera is recorded. No camera is attached here: a
+    // frame input stands in for its capture session.
+    ignoreLogMessage("qt.multimedia.ffmpeg.encoder", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("^Recording new media")));
+    QMediaCaptureSession session;
+    QVideoFrameInput input;
+    session.setVideoFrameInput(&input);
+    session.setRecorder(controller._recorder->mediaRecorder());
+    controller._recorder->start(tempDir.filePath(QStringLiteral("first.mp4")), QMediaFormat::MPEG4);
+    QVERIFY(controller._recorder->active());
+
+    // Whoever asks for another recording meanwhile is told that its file isn't recorded: the first one goes on.
+    QSignalSpy finishedSpy(&controller, &UVCCameraController::recordingFinished);
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("recording already")));
+    controller.startRecording(second, VideoReceiver::FileFormat::Mp4);
+    verifyExpectedLogMessage();
+    QCOMPARE(finishedSpy.count(), 1);
+    QCOMPARE(finishedSpy.first().at(0).toString(), second);
+    QVERIFY(!finishedSpy.first().at(1).toString().isEmpty());
+    QVERIFY(controller._recorder->active());
+    QVERIFY(!QFile::exists(second));
+
+    controller.stopRecording();
+    QTRY_VERIFY_WITH_TIMEOUT(!controller._recorder->active(), TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(UVCCameraControllerTest, TestLabel::Unit)

@@ -16,4 +16,5 @@ private slots:
     void _testUnpluggedCameraReported();
     void _testCameraErrorRetries();
     void _testRecordingNeedsRunningCamera();
+    void _testStartWhileRecordingIsRefused();
 };

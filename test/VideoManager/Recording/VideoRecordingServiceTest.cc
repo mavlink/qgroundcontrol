@@ -127,6 +127,15 @@ void VideoRecordingServiceTest::_testRecordsActiveStreams()
     _thermal->setRecording(true);
     _primary->setRecording(true);
     QVERIFY(_service->recording());
+
+    // A start while a recording runs is refused: the recording goes on in the files it has.
+    expectLogMessage("Video.VideoRecordingService", QtWarningMsg, QRegularExpression(QStringLiteral("one is running")));
+    _service->startRecording(QStringLiteral("second"));
+    verifyExpectedLogMessage();
+    QCOMPARE(_primary->recordings.size(), 2);
+    QCOMPARE(_thermal->recordings.size(), 2);
+    QCOMPARE(_primary->recordingStops, 0);
+
     _thermal->setRecording(false);
     QVERIFY(_service->recording());
     _primary->setRecording(false);
