@@ -29,15 +29,16 @@ struct SinkCapsPolicy
 };
 
 /// The caps qgcqvideosink accepts under @p policy, most preferred first, all in the Qt-renderable formats of
-/// kVideoFormatTable. The glupload variant takes GLMemory only, as glcolorconvert outputs it. Otherwise, with
-/// gpu-zerocopy, the GPU memory @p policy's render target imports comes first: EGL-importable DMA_DRM and DMABuf on
-/// OpenGL over EGL while the DMABuf import works; GLMemory, unless the direct DMABuf variant, wherever gst-gl shares
+/// kVideoFormatTable. The glupload variant takes GLMemory only, as glcolorconvert outputs it; the DMABuf-or-glupload
+/// variant takes that and, ahead of it, the EGL-importable DMA_DRM and DMABuf of the direct DMABuf variant. Otherwise,
+/// with gpu-zerocopy, the GPU memory @p policy's render target imports comes first: EGL-importable DMA_DRM and DMABuf
+/// on OpenGL over EGL while the DMABuf import works; GLMemory, unless the direct DMABuf variant, wherever gst-gl shares
 /// Qt's OpenGL context (EGL or GLX); AHardwareBuffer on OpenGL over EGL (Android); on Direct3D11 NV12 and P010
 /// D3D12Memory, where Qt's device opens it, then D3D11Memory; the DMA_DRM layouts Qt's device imports on Vulkan; none
 /// elsewhere.
-/// GLMemory always carries texture-target=2D, the only target the GL path samples. System memory always closes the
-/// list. Every entry asks for square pixels when
-/// @p policy does. DMABuf builds query EGL for importable DMA_DRM modifiers.
+/// GLMemory always carries texture-target=2D, the only target the GL path samples. System memory closes the list,
+/// except in the variants whose bin uploads it. Every entry asks for square pixels when @p policy does. DMABuf builds
+/// query EGL for importable DMA_DRM modifiers.
 std::string buildSinkCaps(const SinkCapsPolicy& policy);
 
 #ifdef QGC_UNITTEST_BUILD

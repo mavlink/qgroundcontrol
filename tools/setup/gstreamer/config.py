@@ -54,6 +54,7 @@ PLUGIN_OPTIONS = {
     "openh264": "gst-plugins-bad:openh264",
     "qsv": "gst-plugins-bad:qsv",
     "sdpelem": "gst-plugins-bad:sdp",
+    "switchbin": "gst-plugins-bad:switchbin",
     "va": "gst-plugins-bad:va",
     "videoparsersbad": "gst-plugins-bad:videoparsers",
     "vulkan": "gst-plugins-bad:vulkan",

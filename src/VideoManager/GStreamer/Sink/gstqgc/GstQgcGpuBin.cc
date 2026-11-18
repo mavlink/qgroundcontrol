@@ -30,9 +30,9 @@ GpuBinPreference parseGpuBinPreference(QByteArrayView value)
     }
     if (!choice.isEmpty()) {
         qCWarning(GstQgcGpuBinLog) << "Unknown QGC_GST_GPU_BIN value" << choice
-                                   << "(expected glupload or dmabuf); using the default glupload bin";
+                                   << "(expected glupload or dmabuf); using the default bin";
     }
-    return {.mode = GpuBinMode::GlUpload};
+    return {.mode = GpuBinMode::DmaBufOrGlUpload};
 #else
     Q_UNUSED(value);
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
@@ -71,6 +71,7 @@ GpuBinMode selectGpuBin(GpuBinPreference preference, const RenderTarget& target)
     bool suited = true;
     switch (preference.mode) {
         case GpuBinMode::GlUpload:
+        case GpuBinMode::DmaBufOrGlUpload:
             suited = target.sharesGlContext();
             break;
         case GpuBinMode::DirectDmaBuf:
@@ -92,6 +93,8 @@ const char* gpuBinName(GpuBinMode mode) noexcept
             return "glupload";
         case GpuBinMode::DirectDmaBuf:
             return "direct DMABuf";
+        case GpuBinMode::DmaBufOrGlUpload:
+            return "DMABuf-or-glupload";
         case GpuBinMode::D3D12Convert:
             return "d3d12convert";
         case GpuBinMode::Passthrough:

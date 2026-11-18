@@ -84,6 +84,7 @@
       "linux": [
         "nvcodec",
         "qsv",
+        "switchbin",
         "va",
         "vulkan"
       ]

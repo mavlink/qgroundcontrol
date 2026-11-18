@@ -287,7 +287,8 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
   that compile a path in or out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Windows builds
   leave out the GLMemory path: Qt 6's OpenGL there is WGL, which gst-gl can't share. Linux builds with gst-gl and
-  DMABuf compile both GPU bins; see [GPU bin selection](#gpu-bin-selection).
+  DMABuf compile both GPU bins and the one that picks between them per stream; see
+  [GPU bin selection](#gpu-bin-selection).
 - **Opt-in paths**: the CUDA, AHardwareBuffer and Vulkan paths are compiled only with `QGC_GST_ENABLE_<PATH>=ON`,
   because no stream reaches them: no bin advertises CUDAMemory or VulkanImage caps, and Android's glupload bin offers
   only GLMemory. Configure lists the compiled paths that the sink can't reach at runtime. None of them is a zero-copy
@@ -439,12 +440,22 @@ Unless `QGC_GST_BUNDLE_PLUGINS` is `OFF`, installs and AppImages bundle the syst
 
 #### GPU bin selection
 
-With `gpu-zerocopy`, `qgcvideosinkbin` picks one of four variants when it is built:
+With `gpu-zerocopy`, `qgcvideosinkbin` picks one of five variants when it is built:
 
-- `glupload` (the default on Linux and Android): the converter feeds glupload → glcolorconvert → GLMemory. On EGL,
-  gst-gl imports LINEAR and vendor-tiled DMABuf, at the cost of its own copy/convert; on GLX it uploads system memory.
+- DMABuf-or-glupload (the default on Linux with gst-gl and DMABuf): the converter feeds a `switchbin`, which routes
+  each stream by the memory its decoder negotiates. DMABuf and DMA_DRM go straight to Qt's DMABuf importer, as in
+  `dmabuf`; GLMemory and system memory go through glupload → glcolorconvert, as in `glupload`. So a VA decoder's
+  frames are imported without a copy, a software decoder's are uploaded off Qt's render thread, and a decoder that
+  hands over GL textures (NVDEC) keeps them. The sink offers only the DMABuf layouts its importer takes, so a decoder
+  with another layout negotiates system memory, which glupload uploads. It needs `switchbin` (gst-plugins-bad) of
+  GStreamer 1.24 or later, where it offers upstream what the sink takes; without it the bin is `glupload`.
+- `glupload` (the default on Android): the converter feeds glupload → glcolorconvert → GLMemory. On EGL, gst-gl
+  imports LINEAR and vendor-tiled DMABuf, at the cost of its own copy/convert; on GLX it uploads system memory. It
+  imports a VA decoder's tiled DMABuf as an external texture, which the driver converts to RGB: BT.709 video came out
+  converted with the BT.601 matrix there (Intel, Mesa 25.2, GStreamer 1.24.2), its reds about 9% darker.
 - `dmabuf`: DMABuf and DMA_DRM go straight to Qt's DMABuf importer, skipping gst-gl. It takes LINEAR and the plain
-  tilings Qt's EGL display reports (see [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)).
+  tilings Qt's EGL display reports (see [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)). Qt's render
+  thread uploads system memory, so software-decoded video costs more than through glupload.
 - `d3d12convert`: the converter feeds d3d12upload → d3d12convert → RGBA/BGRA D3D12Memory, for Qt Quick on Direct3D12
   (`QSG_RHI_BACKEND=d3d12`), whatever `QGC_GST_GPU_BIN` says. It falls back to passthrough if the d3d12 plugin lacks
   those elements.
@@ -453,15 +464,17 @@ With `gpu-zerocopy`, `qgcvideosinkbin` picks one of four variants when it is bui
 
 `glupload` hands GLMemory to Qt through the GL share group, so it needs Qt Quick on OpenGL, over EGL or GLX. That
 holds for any OpenGL on Linux and Android, so the bin doesn't wait to learn which: it may be built before the scene
-graph runs, and Android can't tell EGL until then. `dmabuf` hands EGLImages to Qt's EGL display, so it needs OpenGL
-over EGL. Under any other renderer, such as Vulkan, the bin falls back to passthrough, which on Linux means DMA_DRM
+graph runs, and Android can't tell EGL until then. The same goes for DMABuf-or-glupload, whose sink offers DMABuf only
+once Qt's EGL display is known and asks upstream to renegotiate then; under GLX every stream takes its glupload path.
+`dmabuf` hands EGLImages to Qt's EGL display, so it needs OpenGL over EGL. Under any other renderer, such as Vulkan,
+the bin falls back to passthrough, which on Linux means DMA_DRM
 frames under Vulkan (see [DMABuf under Vulkan](#dmabuf-under-vulkan)) and system memory otherwise: gst-gl's GLMemory
 would otherwise be downloaded and uploaded again for every frame.
 
-When both are compiled, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensitive, read once per process) picks
-between them, and an explicit value is used even under a renderer the variant doesn't suit, with a warning. An unknown
-value logs a warning and keeps the default. Builds with only one variant ignore the variable: Android always uses
-glupload, Linux without gst-gl always imports DMABuf directly. The choice is logged once under
+When both are compiled, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensitive, read once per process) forces
+one of them for every stream, and an explicit value is used even under a renderer the variant doesn't suit, with a
+warning. An unknown value logs a warning and keeps the default. Builds with only one variant ignore the variable:
+Android always uses glupload, Linux without gst-gl always imports DMABuf directly. The choice is logged once under
 `Video.GStreamer.GstQgcGpuBin`; the `qgc` GStreamer debug category logs each bin's variant.
 
 Qt's xcb platform, which the AppImage uses even in Wayland sessions, picks GLX before EGL. Linux builds with the GL or

@@ -382,10 +382,11 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
 
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     const int directDmaBuf = int(GstQgc::GpuBinMode::DirectDmaBuf);
-    QTest::newRow("unset") << QByteArray() << glUpload << false << false;
+    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+    QTest::newRow("unset") << QByteArray() << dmaBufOrGlUpload << false << false;
     QTest::newRow("glupload") << QByteArray("glupload") << glUpload << true << false;
     QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << true << false;
-    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << false << true;
+    QTest::newRow("unknown") << QByteArray("vulkan") << dmaBufOrGlUpload << false << true;
 }
 
 void GstHwBuffersTest::_testGpuBinPreferenceParse()
@@ -400,7 +401,7 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse()
 
     if (warns) {
         expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default glupload bin")));
+                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default bin")));
     }
     const GstQgc::GpuBinPreference preference = GstQgc::parseGpuBinPreference(value);
     QCOMPARE(int(preference.mode), expectedMode);
@@ -423,9 +424,15 @@ void GstHwBuffersTest::_testGpuBinSelection_data()
     using GstQgc::RenderBackend;
     const int glUpload = int(GpuBinMode::GlUpload);
     const int directDmaBuf = int(GpuBinMode::DirectDmaBuf);
+    const int dmaBufOrGlUpload = int(GpuBinMode::DmaBufOrGlUpload);
     const int passthrough = int(GpuBinMode::Passthrough);
     const int openGl = int(RenderBackend::OpenGL);
     const int vulkan = int(RenderBackend::Vulkan);
+    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect.
+    QTest::newRow("dmabuf-or-glupload-opengl-egl") << dmaBufOrGlUpload << false << openGl << true << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-opengl-not-egl")
+        << dmaBufOrGlUpload << false << openGl << false << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-vulkan") << dmaBufOrGlUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
     QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-vulkan-explicit") << glUpload << true << vulkan << false << glUpload;

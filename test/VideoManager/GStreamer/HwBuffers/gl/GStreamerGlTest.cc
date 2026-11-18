@@ -15,8 +15,24 @@
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
+void GstHwBuffersPipelineTest::_testGlMemoryDispatch_data()
+{
+    QTest::addColumn<int>("mode");
+
+    // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context, and the direct-DMABuf bin offers none.
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    QTest::newRow("glupload bin") << int(GstQgc::GpuBinMode::GlUpload);
+#else
+    QTest::newRow("passthrough bin") << int(GstQgc::GpuBinMode::Passthrough);
+#endif
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QTest::newRow("DMABuf-or-glupload bin") << int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+#endif
+}
+
 void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 {
+    QFETCH(int, mode);
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support createPlatformOpenGLContext")));
@@ -26,12 +42,9 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("An NSApplication needs to be running")));
 #endif
-    // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context, and the direct-DMABuf bin offers none.
-    GstQgc::SinkEnvironment openGl{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true}};
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    openGl.gpuBin.mode = GstQgc::GpuBinMode::GlUpload;
-#endif
-    const GstQgc::ScopedSinkEnvironmentForTest environment(openGl);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
 
     GSTTEST_SKIP_UNLESS_FACTORIES("glupload");
 
@@ -97,14 +110,24 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 
 void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames_data()
 {
+    QTest::addColumn<int>("mode");
     QTest::addColumn<QString>("format");
     QTest::addColumn<QString>("pixelAspectRatio");
 
+    const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     // In a format the sink takes, and in one only the converter reads.
-    QTest::newRow("BGRA") << QStringLiteral("BGRA") << QStringLiteral("1/1");
-    QTest::newRow("Y444") << QStringLiteral("Y444") << QStringLiteral("1/1");
+    QTest::newRow("BGRA") << glUpload << QStringLiteral("BGRA") << QStringLiteral("1/1");
+    QTest::newRow("Y444") << glUpload << QStringLiteral("Y444") << QStringLiteral("1/1");
     // The converter scales them to square pixels ahead of the upload: the bin has nothing that scales GLMemory.
-    QTest::newRow("non-square pixels") << QStringLiteral("BGRA") << QStringLiteral("12/11");
+    QTest::newRow("non-square pixels") << glUpload << QStringLiteral("BGRA") << QStringLiteral("12/11");
+#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    // Its switchbin sends system memory through the same glupload chain.
+    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+    QTest::newRow("Y444, DMABuf-or-glupload bin")
+        << dmaBufOrGlUpload << QStringLiteral("Y444") << QStringLiteral("1/1");
+    QTest::newRow("non-square pixels, DMABuf-or-glupload bin")
+        << dmaBufOrGlUpload << QStringLiteral("BGRA") << QStringLiteral("12/11");
+#endif
 }
 
 void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
@@ -112,11 +135,12 @@ void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
 #if !defined(QGC_GST_BIN_HAS_GLUPLOAD)
     QSKIP("glupload bin not compiled in this build");
 #else
+    QFETCH(int, mode);
     QFETCH(QString, format);
     QFETCH(QString, pixelAspectRatio);
     const GstQgc::ScopedSinkEnvironmentForTest environment(
         {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
-         .gpuBin = {.mode = GstQgc::GpuBinMode::GlUpload}});
+         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
 
     QVideoSink videoSink;
     const QByteArray capsLine =

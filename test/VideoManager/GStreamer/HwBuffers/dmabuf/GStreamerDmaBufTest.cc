@@ -15,9 +15,11 @@
 #include <vector>
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <gst/allocators/gstdmabuf.h>
+#include <gst/app/gstappsrc.h>
 #include <unistd.h>
 #endif
 
+#include <QtCore/QMutex>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QThread>
@@ -306,6 +308,105 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         qPrintable(QStringLiteral("DMABuf negotiated but the sink delivered no DmaBuf frames. Buffers: %1, caps: %2")
                        .arg(bufferCount)
                        .arg(negotiatedStr)));
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
+{
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QSKIP("The DMABuf-or-glupload bin needs both GPU bins compiled");
+#else
+    if (!GstQgcTest::hasMemorySwitch()) {
+        QSKIP("No switchbin of GStreamer 1.24 or later: the bin is the glupload variant");
+    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "glupload", "glcolorconvert");
+    // A stand-in for Qt's EGLDisplay makes the sink offer DMABuf. Nothing imports with it: no QVideoSink is bound, so
+    // the sink drops each frame once it has arrived.
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+         .gpuBin = {.mode = GstQgc::GpuBinMode::DmaBufOrGlUpload},
+         .dmaBufDisplay = reinterpret_cast<void*>(quintptr(1))});
+
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(
+        pipeline.launch(QStringLiteral("appsrc name=src format=time ! qgcvideosinkbin name=sink gpu-zerocopy=true")),
+        qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
+    QVERIFY(source && sinkBin);
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
+    QVERIFY(qvideosink);
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    QVERIFY(sinkPad);
+
+    // The memory of each buffer that reaches the sink: 'D' a dma-buf, 'G' GLMemory, '?' anything else.
+    struct Arrivals
+    {
+        QMutex mutex;
+        QByteArray memory;
+    } arrivals;
+
+    GStreamer::PadProbe arrivalProbe;
+    QVERIFY(arrivalProbe.add(
+        sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+        +[](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+            auto* const seen = static_cast<Arrivals*>(userData);
+            GstMemory* const memory = gst_buffer_peek_memory(GST_PAD_PROBE_INFO_BUFFER(info), 0);
+            const char* const type = (memory && memory->allocator) ? memory->allocator->mem_type : nullptr;
+            const QMutexLocker lock(&seen->mutex);
+            seen->memory +=
+                gst_is_dmabuf_memory(memory) ? 'D' : ((type && g_str_has_prefix(type, "GLMemory")) ? 'G' : '?');
+            return GST_PAD_PROBE_OK;
+        },
+        &arrivals));
+
+    const auto push = [&source](char memory) {
+        GstTest::SamplePtr sample;
+        GstVideoInfo info;
+        if (memory == 'D') {
+            sample =
+                makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info,
+                                      "video/x-raw(memory:DMABuf), format=NV12, width=64, height=64, framerate=30/1");
+        } else {
+            gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 64, 64);
+            GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+            gst_buffer_memset(buffer, 0, 0x80, GST_VIDEO_INFO_SIZE(&info));
+            const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(
+                gst_caps_from_string("video/x-raw, format=BGRA, width=64, height=64, framerate=30/1"));
+            sample.reset(gst_sample_new(buffer, caps.get(), nullptr, nullptr));
+            gst_buffer_unref(buffer);
+        }
+        return sample && (gst_app_src_push_sample(GST_APP_SRC(source.get()), sample.get()) == GST_FLOW_OK);
+    };
+
+    // Twice: the bin outlives a stream, and the second starts in the memory the first one ended in, then in the other.
+    for (const char* const stream : {"GGDDGG", "GDDG"}) {
+        {
+            const QMutexLocker lock(&arrivals.mutex);
+            arrivals.memory.clear();
+        }
+        QVERIFY(pipeline.play());
+        for (const char* memory = stream; *memory != '\0'; ++memory) {
+            QVERIFY2(push(*memory), "appsrc refused a frame");
+        }
+        QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
+        const GStreamer::GstMessagePtr message = pipeline.waitForEosOrError();
+        QVERIFY2(message, "the pipeline neither ended nor failed");
+        if (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_ERROR) {
+            const QString failure = GstTest::errorText(message.get());
+            // glupload needs a GL context, which a headless runner may not have.
+            if (failure.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
+                failure.contains(QStringLiteral("gl context"), Qt::CaseInsensitive)) {
+                QSKIP(qPrintable(QStringLiteral("glupload needs a GL context (headless env): %1").arg(failure)));
+            }
+            QFAIL(qPrintable(failure));
+        }
+        {
+            const QMutexLocker lock(&arrivals.mutex);
+            QCOMPARE(arrivals.memory, QByteArray(stream));
+        }
+        QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
+    }
 #endif
 }
 
