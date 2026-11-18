@@ -14,6 +14,7 @@
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
+#include "GstHwVideoBuffer.h"
 #include "QGCRhiCapture.h"
 #endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -69,6 +70,7 @@ std::vector<GStreamer::GstElementPtr> resetBridgesAndCaches()
             path->resetCaches();
         }
     }
+    GstHw::rearmOnceLatches();
     return pipelines;
 }
 

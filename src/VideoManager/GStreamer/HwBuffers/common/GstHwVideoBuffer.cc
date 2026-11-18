@@ -4,6 +4,24 @@
 
 #include "GstHwPathTelemetry.h"
 
+namespace {
+
+// What a QGC_HW_ONCE() latch holds once its use has run; never 0, which a latch starts with.
+std::atomic<quint32> s_onceGeneration{1};
+
+}  // namespace
+
+bool GstHw::firstSinceRearm(std::atomic<quint32>& latch) noexcept
+{
+    const quint32 generation = s_onceGeneration.load(std::memory_order_relaxed);
+    return latch.exchange(generation, std::memory_order_relaxed) != generation;
+}
+
+void GstHw::rearmOnceLatches() noexcept
+{
+    s_onceGeneration.fetch_add(1, std::memory_order_relaxed);
+}
+
 QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcept
 {
     record(path, Counter::MapFailures);
@@ -67,25 +85,24 @@ void GstHwVideoBuffer::unmap()
 }
 
 bool GstHwVideoBuffer::checkMapPreconditions(const QRhi& rhi, int expectedBackend, const QLoggingCategory& cat,
-                                             GstHw::MapDiagnostics& diag, GstBuffer*& outBuffer) const
+                                             GstBuffer*& outBuffer) const
 {
     if (!_sample) {
-        QGC_HW_WARN_ONCE(cat, diag.loggedNullSample, "mapTextures: GstSample is null");
+        QGC_HW_WARN_ONCE(cat, "mapTextures: GstSample is null");
         return false;
     }
     if (!rhi.thread()->isCurrentThread()) {
-        QGC_HW_WARN_ONCE(cat, diag.loggedWrongThread, "mapTextures: called outside QRhi render thread");
+        QGC_HW_WARN_ONCE(cat, "mapTextures: called outside QRhi render thread");
         return false;
     }
     if (static_cast<int>(rhi.backend()) != expectedBackend) {
-        QGC_HW_WARN_ONCE(
-            cat, diag.loggedBadBackend,
-            "mapTextures: QRhi backend is" << rhi.backendName() << "(backend id" << expectedBackend << "required)");
+        QGC_HW_WARN_ONCE(cat, "mapTextures: QRhi backend is" << rhi.backendName() << "(backend id" << expectedBackend
+                                                             << "required)");
         return false;
     }
     outBuffer = gst_sample_get_buffer(_sample);
     if (!outBuffer) {
-        QGC_HW_WARN_ONCE(cat, diag.loggedNullBuffer, "mapTextures: GstSample has no buffer");
+        QGC_HW_WARN_ONCE(cat, "mapTextures: GstSample has no buffer");
         return false;
     }
     return true;

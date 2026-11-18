@@ -38,30 +38,6 @@ QGC_LOGGING_CATEGORY(GstAHWBufLog, "Video.GStreamer.HwBuffers.GstAHWBuf")
 
 namespace {
 
-/// Every once-only log latch of the path, so rearmImport() re-arms them as one.
-struct AhbDiagnostics : GstHw::MapDiagnostics
-{
-    std::atomic<bool> loggedNoFenceSync{false};
-    std::atomic<bool> loggedNoGlContext{false};
-    std::atomic<bool> loggedClientBufferFailed{false};
-    std::atomic<bool> loggedCreateImageFailed{false};
-    std::atomic<bool> loggedImageTargetFailed{false};
-
-    void reset() noexcept
-    {
-        GstHw::MapDiagnostics::reset();
-        for (std::atomic<bool>* flag : {&loggedNoFenceSync, &loggedNoGlContext, &loggedClientBufferFailed,
-                                        &loggedCreateImageFailed, &loggedImageTargetFailed}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-static_assert(sizeof(AhbDiagnostics) == sizeof(GstHw::MapDiagnostics) + (5 * sizeof(std::atomic<bool>)),
-              "AhbDiagnostics::reset() must list every flag");
-
-AhbDiagnostics s_diag;
-
 constexpr const char* kNativeBufferExt = "EGL_ANDROID_image_native_buffer";
 
 /// Imports the driver refused in a row that disable the path: a stream it can't import fails every frame.
@@ -91,7 +67,6 @@ void rearmImport()
 {
     s_importDisabled.store(false, std::memory_order_relaxed);
     s_consecutiveImportFailures.store(0, std::memory_order_relaxed);
-    s_diag.reset();
 }
 
 // LRU cache (QRhi, AHardwareBuffer, EGLDisplay) -> (EGLImage, GL texture): MediaCodec recycles the same AHB so the
@@ -200,7 +175,7 @@ void waitProducerComplete(GstBuffer* buffer)
         }
     }
 
-    QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedNoFenceSync,
+    QGC_HW_WARN_ONCE(GstAHWBufLog,
                      "AHardwareBuffer: no GstGLSyncMeta producer fence; frames may tear on recycle (no consumer-side "
                      "barrier can substitute)");
 }
@@ -247,14 +222,13 @@ void GstAHardwareBufferVideoBuffer::resetImageCache()
 QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstAHWBufLog(), s_diag, buffer)) {
+    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstAHWBufLog(), buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
 
     QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
     if (!glContext) {
-        QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedNoGlContext,
-                         "QRhi's GL context can't be made current; frame not shown");
+        QGC_HW_WARN_ONCE(GstAHWBufLog, "QRhi's GL context can't be made current; frame not shown");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
     // Sampling an EGLImage created on a foreign display silently returns black.
@@ -315,8 +289,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
 
         EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID_(ahwb);
         if (!clientBuffer) {
-            QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedClientBufferFailed,
-                             "eglGetNativeClientBufferANDROID returned null; frame not shown");
+            QGC_HW_WARN_ONCE(GstAHWBufLog, "eglGetNativeClientBufferANDROID returned null; frame not shown");
             noteImportRefused();
             return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
         }
@@ -325,7 +298,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
         EGLImageKHR image =
             eglCreateImageKHR_(eglDpy, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, clientBuffer, attribs);
         if (image == EGL_NO_IMAGE_KHR) {
-            QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedCreateImageFailed,
+            QGC_HW_WARN_ONCE(GstAHWBufLog,
                              "eglCreateImageKHR failed, err=" << Qt::hex << eglGetError() << "; frame not shown");
             noteImportRefused();
             return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
@@ -340,9 +313,9 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
         glEGLImageTargetTexture2DOES_(GL_TEXTURE_EXTERNAL_OES, image);
         // A failed bind leaves an empty texture; cached, it would show black whenever the decoder recycles this AHB.
         if (const GLenum glErr = functions.glGetError(); glErr != GL_NO_ERROR) {
-            QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedImageTargetFailed,
-                             "glEGLImageTargetTexture2DOES failed, glError=" << Qt::hex << glErr << "eglError="
-                                                                             << eglGetError() << "; frame not shown");
+            QGC_HW_WARN_ONCE(GstAHWBufLog, "glEGLImageTargetTexture2DOES failed, glError="
+                                               << Qt::hex << glErr << "eglError=" << eglGetError()
+                                               << "; frame not shown");
             functions.glDeleteTextures(1, &name);
             eglDestroyImageKHR_(eglDpy, image);
             noteImportRefused();
@@ -389,8 +362,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
                             .frameSize = _format.frameSize(),
                             .pixelFormat = QVideoFrameFormat::Format_SamplerExternalOES,
                             .textureFlags = QRhiTexture::ExternalOES,
-                            .log = &GstAHWBufLog(),
-                            .diag = &s_diag};
+                            .log = &GstAHWBufLog()};
     // The import cache returns the same texture name when MediaCodec recycles an AHB.
     return GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,

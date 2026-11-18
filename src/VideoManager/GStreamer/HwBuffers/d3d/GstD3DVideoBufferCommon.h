@@ -46,30 +46,6 @@ inline bool canAliasSingleResourceAcrossPlanes(QVideoFrameFormat::PixelFormat pi
     }
 }
 
-/// D3D-specific failure causes added to the shared GstHw::MapDiagnostics; each .cc keeps its own instance so the
-/// per-cause log throttle stays separated per API.
-struct MapDiagnostics : GstHw::MapDiagnostics
-{
-    std::atomic<bool> loggedNonD3DMemory{false};
-    std::atomic<bool> loggedNullResource{false};
-    // Tripped when GstD3DXMemory carries a device that doesn't match the bridge's shared device — a NEED_CONTEXT race
-    // the bridge lost.
-    std::atomic<bool> loggedDeviceMismatch{false};
-
-    /// Re-arm every log-once flag so device-loss recovery surfaces warnings again. A deriving struct's reset() calls
-    /// this and re-arms its own.
-    void reset() noexcept
-    {
-        GstHw::MapDiagnostics::reset();
-        for (std::atomic<bool>* flag : {&loggedNonD3DMemory, &loggedNullResource, &loggedDeviceMismatch}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-static_assert(sizeof(MapDiagnostics) == sizeof(GstHw::MapDiagnostics) + (3 * sizeof(std::atomic<bool>)),
-              "MapDiagnostics::reset() must list every flag");
-
 /// Scope guard for the native handles a resolvePlanes() loop builds up: releases every owned handle on scope
 /// exit unless commit() transfers ownership on the success path.
 template <class HandleT>
@@ -109,7 +85,7 @@ struct PlaneResourceGuard
 /// proposePool() needs static kCapsFeature, newPool(Device*) and setAllocationParams(GstStructure* config, Device*,
 ///   const GstVideoInfo*).
 template <class Api>
-int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResourceGuard<typename Api::Handle>& guard)
+int resolvePlanes(GstBuffer* buffer, Api& api, PlaneResourceGuard<typename Api::Handle>& guard)
 {
     using Memory = typename Api::Memory;
     using Device = typename Api::Device;
@@ -118,9 +94,9 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
     for (int i = 0; i < memCount; ++i) {
         GstMemory* mem = gst_buffer_peek_memory(buffer, guint(i));
         if (!mem || !Api::isMemory(mem)) {
-            QGC_HW_WARN_ONCE(Api::log, diag.loggedNonD3DMemory,
-                             "resolve: plane" << i << "memory is not" << Api::kMemoryName << "(allocator="
-                                              << (mem && mem->allocator ? mem->allocator->mem_type : "null") << ")");
+            QGC_HW_WARN_ONCE(Api::log, "resolve: plane" << i << "memory is not" << Api::kMemoryName << "(allocator="
+                                                        << (mem && mem->allocator ? mem->allocator->mem_type : "null")
+                                                        << ")");
             return 0;
         }
         auto* d3dmem = reinterpret_cast<Memory*>(mem);
@@ -133,10 +109,9 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
                 const gint64 bridgeLuid = GstD3DContextBridge::readAdapterLuid(bridgeDev);
                 const gint64 bufLuid = GstD3DContextBridge::readAdapterLuid(d3dmem->device);
                 gst_object_unref(bridgeDev);
-                QGC_HW_WARN_ONCE(Api::log, diag.loggedDeviceMismatch,
-                                 "resolve:" << Api::kMemoryName << "on foreign device (bridge LUID=" << bridgeLuid
-                                            << "buffer LUID=" << bufLuid
-                                            << "); bridge missed NEED_CONTEXT race — rejecting frame");
+                QGC_HW_WARN_ONCE(Api::log, "resolve:" << Api::kMemoryName << "on foreign device (bridge LUID="
+                                                      << bridgeLuid << "buffer LUID=" << bufLuid
+                                                      << "); bridge missed NEED_CONTEXT race — rejecting frame");
                 return 0;
             }
             if (bridgeDev) {
@@ -148,8 +123,7 @@ int resolvePlanes(GstBuffer* buffer, Api& api, MapDiagnostics& diag, PlaneResour
         }
         auto* resource = Api::resource(d3dmem);
         if (!resource) {
-            QGC_HW_WARN_ONCE(Api::log, diag.loggedNullResource,
-                             "resolve:" << Api::kMemoryName << "has no resource handle for plane" << i);
+            QGC_HW_WARN_ONCE(Api::log, "resolve:" << Api::kMemoryName << "has no resource handle for plane" << i);
             return 0;
         }
         const guint subIdx = Api::subresource(d3dmem, i);
@@ -283,10 +257,9 @@ public:
 
 protected:
     VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
-                HwVideoBufferPath path, MapDiagnostics& diag)
+                HwVideoBufferPath path)
         : GstHwVideoBuffer(sample, videoInfo, format)
         , _path(path)
-        , _diag(diag)
     {}
 
     /// Resolves the sample's planes through @p resolver into _handles; false, holding none, when none resolved.
@@ -297,7 +270,7 @@ protected:
             return false;
         }
         PlaneResourceGuard<Handle> guard;
-        const int count = resolvePlanes(buffer, resolver, _diag, guard);
+        const int count = resolvePlanes(buffer, resolver, guard);
         if (count == 0) {
             return false;
         }
@@ -311,7 +284,7 @@ protected:
     GstBuffer* beginMap(QRhi& rhi, QRhi::Implementation backend)
     {
         GstBuffer* buffer = nullptr;
-        if (!checkMapPreconditions(rhi, static_cast<int>(backend), Resolver::log(), _diag, buffer) || (_count == 0)) {
+        if (!checkMapPreconditions(rhi, static_cast<int>(backend), Resolver::log(), buffer) || (_count == 0)) {
             return nullptr;
         }
         return buffer;
@@ -325,7 +298,6 @@ protected:
                                 .frameSize = _format.frameSize(),
                                 .pixelFormat = _format.pixelFormat(),
                                 .log = &Resolver::log(),
-                                .diag = &_diag,
                                 .successTag = GstHw::toString(_path)};
         return mapResolvedTextures(*this, rhi, old, tail, planes, _count);
     }
@@ -335,7 +307,6 @@ protected:
 
 private:
     const HwVideoBufferPath _path;
-    MapDiagnostics& _diag;
 };
 
 /// HwPathDescriptor::proposePool for @p Api's memory: adds a pool on the bridge's device (Qt's) to an ALLOCATION query

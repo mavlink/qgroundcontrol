@@ -69,8 +69,6 @@ private:
     GstBuffer* _syncBuffer = nullptr;
 };
 
-GstHw::MapDiagnostics s_diag;
-
 // An empty buffer of this path's own with a GL sync meta for @p context, as upstream's Qt sink keeps one
 // (gstqsg6material.cc): the one @p old was mapped with, when that is a bundle of this path on the same context, else a
 // new one. The frame's own buffer may carry a sync meta too, but other elements and other windows showing the frame
@@ -124,12 +122,9 @@ bool admitGlMemory(GstMemory* mem, const HwVideoBufferContext&)
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
     if ((backend >= 0) && (backend != static_cast<int>(QRhi::OpenGLES2))) {
-        static std::atomic<bool> s_warned{false};
-        QGC_HW_WARN_ONCE(GstGlBufLog, s_warned, "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool");
+        QGC_HW_WARN_ONCE(GstGlBufLog, "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool");
     } else if (!GstGlContextBridge::sharesQtContext(GST_GL_BASE_MEMORY_CAST(mem)->context)) {
-        static std::atomic<bool> s_warnedUnshared{false};
-        QGC_HW_WARN_ONCE(GstGlBufLog, s_warnedUnshared,
-                         "GLMemory from a GL context that doesn't share with Qt's — routing to CPU pool");
+        QGC_HW_WARN_ONCE(GstGlBufLog, "GLMemory from a GL context that doesn't share with Qt's — routing to CPU pool");
     } else {
         return true;
     }
@@ -151,7 +146,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::GlMemory);
     // QRhi::OpenGLES2 covers both desktop GL and GLES — Qt collapses both; there is no separate QRhi::OpenGL.
     GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstGlBufLog(), s_diag, buffer)) {
+    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstGlBufLog(), buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
     }
 
@@ -198,8 +193,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
     const GstHwMapTail tail{.path = HwVideoBufferPath::GlMemory,
                             .frameSize = _format.frameSize(),
                             .pixelFormat = _format.pixelFormat(),
-                            .log = &GstGlBufLog(),
-                            .diag = &s_diag};
+                            .log = &GstGlBufLog()};
     // gst-gl rotates texture ids within a fixed pool: a bundle over the same ids samples the new frame unchanged.
     QVideoFrameTexturesUPtr textures = GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,

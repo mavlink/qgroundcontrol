@@ -28,9 +28,8 @@ struct GstHwMapTail
     QSize frameSize{};
     QVideoFrameFormat::PixelFormat pixelFormat = QVideoFrameFormat::Format_Invalid;
     QRhiTexture::Flags textureFlags{};
-    /// Required: where finishMap() logs, and its once-only flags.
+    /// Required: where finishMap() logs.
     const QLoggingCategory* log = nullptr;
-    GstHw::MapDiagnostics* diag = nullptr;
     /// False when the caller already preflighted before its costly native import work.
     bool preflight = true;
     /// Logs the one-shot first-success line under this tag when set.
@@ -113,12 +112,11 @@ public:
         // NV12 chroma can fail while luma succeeds; a partial bundle would render with missing planes.
         if (!textures || !textures->allPlanesValid()) {
             GstHwPathTelemetry::recordFallbackReason(tail.path, GstHwPathTelemetry::HwFallbackReason::MapFailed);
-            QGC_HW_WARN_ONCE(
-                *tail.log, tail.diag->loggedTextureCreateFail,
-                "QRhiTexture::createFrom failed (format=" << int(tail.pixelFormat) << "size=" << tail.frameSize << ")");
+            QGC_HW_WARN_ONCE(*tail.log, "QRhiTexture::createFrom failed (format=" << int(tail.pixelFormat)
+                                                                                  << "size=" << tail.frameSize << ")");
             return GstHwPathTelemetry::fail(tail.path);
         }
-        if (tail.successTag && !tail.diag->loggedFirstSuccess.exchange(true, std::memory_order_relaxed)) {
+        if (tail.successTag && QGC_HW_ONCE()) {
             qCInfo(*tail.log) << "First" << tail.successTag << "zero-copy mapTextures success: size=" << tail.frameSize
                               << "format=" << int(tail.pixelFormat) << "planes=" << textures->_count;
         }
