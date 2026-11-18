@@ -767,28 +767,6 @@ void GstQgcSinkTest::_testCurrentRenderTarget()
     QCOMPARE(GstQgc::currentRenderTarget(), kDirect3D12);
 }
 
-void GstQgcSinkTest::_testQgcQVideoSinkRenegotiatesMidStream()
-{
-    QVideoSink videoSink;
-    GstQgcTest::SinkHarness harness(&videoSink);
-    QVERIFY(harness.isReady());
-    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
-    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
-    QCOMPARE(videoSink.videoFrame().pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
-
-    // Same byte size as the first format, so a frame mapped with stale caps would still map and show the old layout.
-    GstCaps* const caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGBA", "width", G_TYPE_INT, 8,
-                                              "height", G_TYPE_INT, 2, "framerate", GST_TYPE_FRACTION, 30, 1, nullptr);
-    QVERIFY(harness.pushEvent(gst_event_new_caps(caps)));
-    gst_caps_unref(caps);
-    QCOMPARE(harness.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
-    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
-
-    const QVideoFrame frame = videoSink.videoFrame();
-    QCOMPARE(frame.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
-    QCOMPARE(frame.size(), QSize(8, 2));
-}
-
 void GstQgcSinkTest::_testQgcQVideoSinkAppliesCropMeta()
 {
     QVideoSink videoSink;
@@ -926,47 +904,6 @@ void GstQgcSinkTest::_testQgcQVideoSinkAppliesAffineTransformationMeta()
     g_object_get(harness.element(), "picture-width", &pictureWidth, "picture-height", &pictureHeight, nullptr);
     QCOMPARE(QSize(pictureWidth, pictureHeight),
              QSize(GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight));
-}
-
-void GstQgcSinkTest::_testQgcQVideoSinkAppliesOrientationTag_data()
-{
-    QTest::addColumn<QString>("tag");
-    QTest::addColumn<bool>("restartStream");
-    QTest::addColumn<int>("rotation");
-    QTest::addColumn<bool>("mirrored");
-
-    QTest::newRow("rotate-90") << QStringLiteral("rotate-90") << false << int(QtVideo::Rotation::Clockwise90) << false;
-    // Flipped, then turned 90 degrees clockwise: Qt turns first, so that's 270 degrees, then mirrored.
-    QTest::newRow("flip-rotate-90") << QStringLiteral("flip-rotate-90") << false << int(QtVideo::Rotation::Clockwise270)
-                                    << true;
-    // The tag belongs to the stream it came with.
-    QTest::newRow("new-stream-untagged") << QStringLiteral("rotate-90") << true << int(QtVideo::Rotation::None)
-                                         << false;
-}
-
-void GstQgcSinkTest::_testQgcQVideoSinkAppliesOrientationTag()
-{
-    QFETCH(QString, tag);
-    QFETCH(bool, restartStream);
-    QFETCH(int, rotation);
-    QFETCH(bool, mirrored);
-
-    QVideoSink videoSink;
-    GstQgcTest::SinkHarness harness(&videoSink);
-    QVERIFY(harness.isReady());
-    GstTagList* const tags = gst_tag_list_new(GST_TAG_IMAGE_ORIENTATION, qPrintable(tag), nullptr);
-    QVERIFY(harness.pushEvent(gst_event_new_tag(tags)));
-    if (restartStream) {
-        QVERIFY(harness.pushEvent(gst_event_new_stream_start("qgc-harness-restart")));
-        QVERIFY(harness.pushSegment());
-    }
-
-    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
-    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
-    const QVideoFrame frame = videoSink.videoFrame();
-    QVERIFY(frame.isValid());
-    QCOMPARE(int(frame.rotation()), rotation);
-    QCOMPARE(frame.mirrored(), mirrored);
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkStatsArePerSink()

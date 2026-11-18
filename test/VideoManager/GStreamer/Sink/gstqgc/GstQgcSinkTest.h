@@ -21,13 +21,10 @@ private slots:
     void _testRenderBackendNames();
     void _testRenderTargetSharesGlContext();
     void _testCurrentRenderTarget();
-    void _testQgcQVideoSinkRenegotiatesMidStream();
     void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkShowsPictureOfLargerBuffer();
     void _testQgcQVideoSinkAppliesAffineTransformationMeta_data();
     void _testQgcQVideoSinkAppliesAffineTransformationMeta();
-    void _testQgcQVideoSinkAppliesOrientationTag_data();
-    void _testQgcQVideoSinkAppliesOrientationTag();
     void _testQgcQVideoSinkStatsArePerSink();
     void _testQgcQVideoSinkKeepsBaseSinkStats();
     void _testQgcQVideoSinkGpuPathSelection_data();

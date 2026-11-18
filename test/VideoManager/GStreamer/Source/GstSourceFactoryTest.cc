@@ -18,71 +18,6 @@
 
 namespace {
 
-/// What a bare test sink pad received: each buffer's bytes and PTS.
-struct ReceivedBuffers
-{
-    QList<QByteArray> data;
-    QList<GstClockTime> pts;
-};
-
-GstFlowReturn recordBuffer(GstPad* pad, [[maybe_unused]] GstObject* parent, GstBuffer* buffer)
-{
-    auto* const received = static_cast<ReceivedBuffers*>(gst_pad_get_element_private(pad));
-    GstMapInfo map;
-    if (gst_buffer_map(buffer, &map, GST_MAP_READ)) {
-        received->data.append(QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)));
-        gst_buffer_unmap(buffer, &map);
-    }
-    received->pts.append(GST_BUFFER_PTS(buffer));
-    gst_buffer_unref(buffer);
-    return GST_FLOW_OK;
-}
-
-/// A src pad standing in for a depayloader's, linked to a sink pad recording into @p received, with @p caps sent.
-struct GatedPads
-{
-    GatedPads(ReceivedBuffers* received, const char* caps)
-        : src(GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC)))
-        , sink(GStreamer::adoptFloating(gst_pad_new("sink", GST_PAD_SINK)))
-    {
-        gst_pad_set_element_private(sink.get(), received);
-        gst_pad_set_chain_function(sink.get(), recordBuffer);
-        gst_pad_set_event_function(sink.get(), [](GstPad*, GstObject*, GstEvent* event) -> gboolean {
-            gst_event_unref(event);
-            return TRUE;
-        });
-        (void) gst_pad_set_active(src.get(), TRUE);
-        (void) gst_pad_set_active(sink.get(), TRUE);
-        linked = gst_pad_link(src.get(), sink.get()) == GST_PAD_LINK_OK;
-        (void) gst_pad_push_event(src.get(), gst_event_new_stream_start("parameter-set-gate"));
-        const GStreamer::GstCapsPtr streamCaps = GStreamer::adoptCaps(gst_caps_from_string(caps));
-        (void) gst_pad_push_event(src.get(), gst_event_new_caps(streamCaps.get()));
-        GstSegment segment;
-        gst_segment_init(&segment, GST_FORMAT_TIME);
-        (void) gst_pad_push_event(src.get(), gst_event_new_segment(&segment));
-    }
-
-    ~GatedPads()
-    {
-        (void) gst_pad_set_active(src.get(), FALSE);
-        (void) gst_pad_set_active(sink.get(), FALSE);
-    }
-
-    GatedPads(const GatedPads&) = delete;
-    GatedPads& operator=(const GatedPads&) = delete;
-
-    GstFlowReturn push(const QByteArray& bytes, GstClockTime pts) const
-    {
-        GstBuffer* const buffer = gst_buffer_new_memdup(bytes.constData(), static_cast<gsize>(bytes.size()));
-        GST_BUFFER_PTS(buffer) = pts;
-        return gst_pad_push(src.get(), buffer);
-    }
-
-    GStreamer::GstPadPtr src;
-    GStreamer::GstPadPtr sink;
-    bool linked = false;
-};
-
 GstStaticPadTemplate sH264RtpPadTemplate = GST_STATIC_PAD_TEMPLATE(
     "video_rtp", GST_PAD_SRC, GST_PAD_SOMETIMES,
     GST_STATIC_CAPS("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"));
@@ -667,49 +602,6 @@ void GstSourceFactoryTest::_testSourceFactoryUdpListener()
     QCOMPARE(QString::fromUtf8(listenAddress.get()), address);
     QCOMPARE(port, 5600);
     QCOMPARE(bool(reuse), sharesPort);
-}
-
-void GstSourceFactoryTest::_testParameterSetGateHoldsUntilCompleteSet()
-{
-    const QByteArray aud = QByteArray::fromHex("0000000109f0");
-    const QByteArray sps = QByteArray::fromHex("0000000167640014acd9");
-    const QByteArray pps = QByteArray::fromHex("0000000168ebe3cb");
-    const QByteArray idr = QByteArray::fromHex("0000000165888400");
-    const QByteArray delta = QByteArray::fromHex("00000001419a2400");
-
-    ReceivedBuffers received;
-    const GatedPads pads(&received, "video/x-h264, stream-format=(string)byte-stream, alignment=(string)nal");
-    QVERIFY(pads.linked);
-    GStreamer::SourceFactory::gateOnParameterSets(pads.src.get(), false);
-
-    // A late join whose first keyframe lost its PPS (and IDR): nothing may pass on an SPS alone.
-    for (const QByteArray& nal : {aud, sps, delta, delta, aud, sps}) {
-        QCOMPARE(pads.push(nal, GST_SECOND), GST_FLOW_OK);
-    }
-    QVERIFY(received.data.isEmpty());
-
-    QCOMPARE(pads.push(pps, 2 * GST_SECOND), GST_FLOW_OK);
-    QVERIFY(received.data.isEmpty());
-    QCOMPARE(pads.push(idr, 3 * GST_SECOND), GST_FLOW_OK);
-    QCOMPARE(pads.push(delta, 4 * GST_SECOND), GST_FLOW_OK);
-
-    QCOMPARE(received.data.size(), 2);
-    QCOMPARE(received.data.at(0), sps + pps + idr);
-    QCOMPARE(received.pts.at(0), 3 * GST_SECOND);
-    QCOMPARE(received.data.at(1), delta);
-}
-
-void GstSourceFactoryTest::_testParameterSetGatePassesLengthPrefixedOutput()
-{
-    ReceivedBuffers received;
-    const GatedPads pads(&received, "video/x-h264, stream-format=(string)avc, alignment=(string)au");
-    QVERIFY(pads.linked);
-    GStreamer::SourceFactory::gateOnParameterSets(pads.src.get(), false);
-
-    // avc carries its parameter sets in codec_data, so its first slice passes as is.
-    const QByteArray lengthPrefixedSlice = QByteArray::fromHex("000000044188a5f0");
-    QCOMPARE(pads.push(lengthPrefixedSlice, 0), GST_FLOW_OK);
-    QCOMPARE(received.data, QList<QByteArray>{lengthPrefixedSlice});
 }
 
 void GstSourceFactoryTest::_testSourceFactoryUdpMpegTs()

@@ -641,7 +641,7 @@ Each class has a line here; the comment on the class in its header says more.
 | `GstSourceFactoryTest` | Unit | The source bin built for each URI, without a stream. |
 | `GstHwBuffersTest` | Unit | The `HwBuffers` paths without a pipeline or a GPU. |
 | `GstQgcSinkHarnessTest` | Unit | `qgcvideosinkbin` under GstHarness, bound to a `QVideoSink`. |
-| `GstSourceFactoryHarnessTest` | Unit | The parameter-set gate on a real H.264/H.265 depayloader under GstHarness. |
+| `GstSourceFactoryHarnessTest` | Unit | The parameter-set gate under GstHarness: on NAL units pushed by hand, and on a real H.264/H.265 depayloader. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components on their own, without a running pipeline. |
 | `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into `qgcvideosinkbin` bound to a `QVideoSink`. |
 | `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback. |
