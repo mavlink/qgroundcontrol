@@ -1,5 +1,7 @@
 #include "QGCVideoStreamInfo.h"
+
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 
 QGC_LOGGING_CATEGORY(QGCVideoStreamInfoLog, "Camera.QGCVideoStreamInfo")
 
@@ -11,6 +13,16 @@ QGCVideoStreamInfo::QGCVideoStreamInfo(const mavlink_video_stream_information_t 
     (void) memcpy(&_streamInfo, &info, sizeof(mavlink_video_stream_information_t));
 }
 
+QString QGCVideoStreamInfo::uri() const
+{
+    return QGCMAVLink::boundedStringField(_streamInfo.uri);
+}
+
+QString QGCVideoStreamInfo::name() const
+{
+    return QGCMAVLink::boundedStringField(_streamInfo.name);
+}
+
 qreal QGCVideoStreamInfo::aspectRatio() const
 {
     qreal ar = 1.0;
@@ -18,6 +30,16 @@ qreal QGCVideoStreamInfo::aspectRatio() const
         ar = static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
     }
     return ar;
+}
+
+bool QGCVideoStreamInfo::update(const mavlink_video_stream_information_t& info)
+{
+    if (memcmp(&_streamInfo, &info, sizeof(mavlink_video_stream_information_t)) == 0) {
+        return false;
+    }
+    (void) memcpy(&_streamInfo, &info, sizeof(mavlink_video_stream_information_t));
+    emit infoChanged();
+    return true;
 }
 
 bool QGCVideoStreamInfo::update(const mavlink_video_stream_status_t &status)

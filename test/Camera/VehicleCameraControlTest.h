@@ -19,6 +19,7 @@ private slots:
     UT_PARAMETERIZED_TEST(_testCameraCapFlags);
     void _testZoomTriggersCameraSettingsRequest();
     void _testExtraStreamsStartAndStop();
+    void _testStreamAnnouncedAnewIsUpdated();
     void _testNameFieldReadIsBounded();
     void _testCameraNamesCannotSteerCachePath();
     void _testOrdinaryCameraNamesUnchanged();

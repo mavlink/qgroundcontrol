@@ -1758,20 +1758,42 @@ void VehicleCameraControl::handleCameraCaptureStatus(const mavlink_camera_captur
 
 void VehicleCameraControl::handleVideoStreamInformation(const mavlink_video_stream_information_t& videoStreamInformation)
 {
-    qCDebug(VehicleCameraControlLog).noquote() << "Received VIDEO_STREAM_INFORMATION:"
-        << "\n\tStream ID:" << videoStreamInformation.stream_id
-        << "\n\tStream count:" << videoStreamInformation.count
-        << "\n\tType:" << static_cast<int>(videoStreamInformation.type)
-        << "\n\tFlags:" << Qt::hex << Qt::showbase << videoStreamInformation.flags << Qt::dec << Qt::noshowbase
+    qCDebug(VehicleCameraControlLog).noquote()
+        << "Received VIDEO_STREAM_INFORMATION:"
+        << "\n\tStream ID:" << videoStreamInformation.stream_id << "\n\tStream count:" << videoStreamInformation.count
+        << "\n\tType:" << static_cast<int>(videoStreamInformation.type) << "\n\tFlags:" << Qt::hex << Qt::showbase
+        << videoStreamInformation.flags << Qt::dec << Qt::noshowbase
         << "\n\tBitrate (bits/s):" << videoStreamInformation.bitrate
         << "\n\tFramerate (fps):" << videoStreamInformation.framerate
         << "\n\tResolution:" << videoStreamInformation.resolution_h << "x" << videoStreamInformation.resolution_v
-        << "\n\tRotation (deg):" << videoStreamInformation.rotation
-        << "\n\tHFOV (deg):" << videoStreamInformation.hfov
-        << "\n\tURI:" << videoStreamInformation.uri;
+        << "\n\tRotation (deg):" << videoStreamInformation.rotation << "\n\tHFOV (deg):" << videoStreamInformation.hfov
+        << "\n\tURI:" << QGCMAVLink::boundedStringField(videoStreamInformation.uri);
 
     _expectedCount = videoStreamInformation.count;
-    if(!_findStream(videoStreamInformation.stream_id, false)) {
+    QGCVideoStreamInfo* const known = _findStream(videoStreamInformation.stream_id, false);
+    if (known) {
+        // A camera may announce a stream again, with another address, codec or name: whoever plays it follows
+        // infoChanged().
+        const bool wasThermal = known->isThermal();
+        if (known->update(videoStreamInformation)) {
+            qCDebug(VehicleCameraControlLog) << "Stream announced anew, ID:" << videoStreamInformation.stream_id;
+            QStringList labels;
+            for (int i = 0; i < _streams.count(); i++) {
+                const QGCVideoStreamInfo* const stream = qobject_cast<QGCVideoStreamInfo*>(_streams[i]);
+                if (stream && !stream->isThermal()) {
+                    labels.append(stream->name());
+                }
+            }
+            if (labels != _streamLabels) {
+                _streamLabels = labels;
+                emit streamsChanged();
+                emit streamLabelsChanged();
+            }
+            if (wasThermal != known->isThermal()) {
+                emit thermalStreamChanged();
+            }
+        }
+    } else {
         qCDebug(VehicleCameraControlLog) << "Create stream handler for stream ID:" << videoStreamInformation.stream_id;
         QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(videoStreamInformation, this);
         QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);

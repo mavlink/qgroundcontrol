@@ -16,6 +16,7 @@
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "QGCCameraManager.h"
+#include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleCameraControl.h"
@@ -611,6 +612,47 @@ void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
     QVERIFY_TRUE_WAIT(transmitted(1) && transmitted(2), TestTimeout::mediumMs());
     QCOMPARE(started(), 5);
     QCOMPARE(stopped(), 4);
+}
+
+void VehicleCameraControlTest::_testStreamAnnouncedAnewIsUpdated()
+{
+    auto* mockConfig = newMockConfiguration(QStringLiteral("CameraStreamAnnouncedAnewTest"));
+    mockConfig->setEnableCamera(true);
+    mockConfig->setCameraHasVideoStream(true);
+
+    _connectVehicle(mockConfig);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    MavlinkCameraControlInterface* const camera = _firstCamera();
+    QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
+    QVERIFY_TRUE_WAIT(camera->streamLabels().size() == 2, TestTimeout::longMs());
+    QGCVideoStreamInfo* const stream = camera->currentStreamInstance();
+    QVERIFY(stream);
+
+    // As a camera whose stream was set up anew announces it: the same stream, elsewhere and under another name.
+    mavlink_video_stream_information_t moved{};
+    moved.stream_id = stream->streamID();
+    moved.count = 2;
+    moved.type = VIDEO_STREAM_TYPE_RTSP;
+    moved.flags = VIDEO_STREAM_STATUS_FLAGS_RUNNING;
+    moved.encoding = stream->encoding();
+    moved.resolution_h = static_cast<uint16_t>(stream->resolution().width());
+    moved.resolution_v = static_cast<uint16_t>(stream->resolution().height());
+    qstrncpy(moved.name, "Moved", sizeof(moved.name));
+    qstrncpy(moved.uri, "rtsp://127.0.0.1:8554/moved", sizeof(moved.uri));
+
+    QSignalSpy infoSpy(stream, &QGCVideoStreamInfo::infoChanged);
+    QSignalSpy labelsSpy(camera, &MavlinkCameraControlInterface::streamLabelsChanged);
+    camera->handleVideoStreamInformation(moved);
+    QCOMPARE(infoSpy.count(), 1);
+    QCOMPARE(labelsSpy.count(), 1);
+    // The stream whoever plays it holds, which is still the current one under its new name.
+    QCOMPARE(camera->currentStreamInstance(), stream);
+    QCOMPARE(stream->uri(), QStringLiteral("rtsp://127.0.0.1:8554/moved"));
+    QCOMPARE(camera->streamLabels().first(), QStringLiteral("Moved"));
+    QCOMPARE(camera->streamLabels().size(), 2);
 }
 
 UT_REGISTER_TEST(VehicleCameraControlTest, TestLabel::Integration, TestLabel::Vehicle)
