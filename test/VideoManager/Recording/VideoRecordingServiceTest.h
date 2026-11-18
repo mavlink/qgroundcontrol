@@ -30,6 +30,7 @@ private slots:
     void _testRecordingFailureReachesUser();
     void _testPruneStorage();
     void _testPruneStorageLeavesFilesBeingWritten();
+    void _testPruneStorageCountsOnlyRemovedFiles();
     void _testStorageLimitAppliesWhileRecording();
 
 private:

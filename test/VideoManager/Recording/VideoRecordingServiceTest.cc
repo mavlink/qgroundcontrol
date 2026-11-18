@@ -4,6 +4,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QThreadPool>
 #include <QtTest/QSignalSpy>
@@ -263,6 +264,34 @@ void VideoRecordingServiceTest::_testPruneStorageLeavesFilesBeingWritten()
         dir, 100, {dir + QStringLiteral("/flight.mkv"), dir + QStringLiteral("/flight.ass")});
     QCOMPARE(removed, QStringList{dir + QStringLiteral("/earlier.mkv")});
     QCOMPARE(QDir(dir).entryList(QDir::Files).size(), 3);
+}
+
+void VideoRecordingServiceTest::_testPruneStorageCountsOnlyRemovedFiles()
+{
+    const QString dir = _saveDir->path();
+    const QDateTime now = QDateTime::currentDateTime();
+    writeFile(dir + QStringLiteral("/a.mp4"), 400, now.addSecs(-300));
+    writeFile(dir + QStringLiteral("/b.mp4"), 400, now.addSecs(-200));
+    writeFile(dir + QStringLiteral("/c.mp4"), 400, now.addSecs(-100));
+
+    // Nothing can be removed from a directory that can't be written.
+    const QFileDevice::Permissions writable = QFile::permissions(dir);
+    QVERIFY(QFile::setPermissions(dir, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+    const auto restorePermissions = qScopeGuard([&dir, writable]() { (void) QFile::setPermissions(dir, writable); });
+    if (QFile(dir + QStringLiteral("/probe")).open(QIODevice::WriteOnly)) {
+        QSKIP("Directory permissions aren't enforced (running as root, or on a file system without them)");
+    }
+
+    // One file over the limit: a file that stays doesn't count as freed, so the next oldest is tried, to the last.
+    const QRegularExpression failedToRemove(QStringLiteral("Failed to remove old recording"));
+    for (int i = 0; i < 3; i++) {
+        expectLogMessage("Video.VideoRecordingService", QtWarningMsg, failedToRemove);
+    }
+    const QStringList removed = VideoRecordingService::pruneStorage(dir, 900);
+    for (int i = 0; i < 3; i++) {
+        verifyExpectedLogMessage();
+    }
+    QVERIFY(removed.isEmpty());
 }
 
 void VideoRecordingServiceTest::_testStorageLimitAppliesWhileRecording()

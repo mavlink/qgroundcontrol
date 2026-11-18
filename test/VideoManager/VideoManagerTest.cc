@@ -1226,6 +1226,19 @@ void VideoManagerTest::_testScreenshotFailuresReachUser()
     verifyExpectedLogMessage();
 }
 
+void VideoManagerTest::_testAspectRatioWithoutAdvertisedResolution()
+{
+    _facts->set(_videoSettings->aspectRatio(), 2.0);
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    const auto info = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    stream->setStreamInfo(info.get());
+    QCOMPARE(stream->aspectRatio(), 1280.0 / 720.0);
+
+    // A camera that reports no resolution leaves the ratio to the setting.
+    QVERIFY(info->update(mavlink_video_stream_status_t{}));
+    QCOMPARE(stream->aspectRatio(), 2.0);
+}
+
 void VideoManagerTest::_testAdvertisedRotationTurnsVideo_data()
 {
     // What a camera advertises for a stream of 64 × 48 frames whose top-left quadrant is red.

@@ -468,9 +468,10 @@ double VideoStreamController::aspectRatio() const
     if (!size.isEmpty()) {
         return static_cast<double>(size.width()) / size.height();
     }
-    if (_streamInfo) {
+    // A camera that advertises no resolution leaves the ratio to the setting.
+    if (_streamInfo && !_streamInfo->resolution().isEmpty()) {
         const double advertised = _streamInfo->aspectRatio();
-        return (((_rotation % 180) != 0) && (advertised > 0.0)) ? (1.0 / advertised) : advertised;
+        return ((_rotation % 180) != 0) ? (1.0 / advertised) : advertised;
     }
     return (_role == Role::Primary) ? _videoSettings->aspectRatio()->rawValue().toDouble() : 1.0;
 }

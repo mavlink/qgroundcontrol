@@ -47,6 +47,7 @@ private slots:
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testScreenshotFailuresReachUser_data();
     void _testScreenshotFailuresReachUser();
+    void _testAspectRatioWithoutAdvertisedResolution();
     void _testAdvertisedRotationTurnsVideo_data();
     void _testAdvertisedRotationTurnsVideo();
     void _testSourceErrorsReachUser();

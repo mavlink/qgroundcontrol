@@ -220,9 +220,9 @@ QStringList VideoRecordingService::pruneStorage(const QString& directory, quint6
         if (open.contains(file.absoluteFilePath()) || (file.lastModified() > beingWrittenSince)) {
             continue;
         }
-        total -= static_cast<quint64>(file.size());
         const QString path = file.filePath();
         if (QFile::remove(path)) {
+            total -= static_cast<quint64>(file.size());
             qCDebug(VideoRecordingServiceLog) << "Removed old recording" << path;
             removed.append(path);
         } else {
