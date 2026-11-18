@@ -11,10 +11,14 @@ class Vehicle;
 
 /// \brief Requests a MAVLink message with built-in retry logic.
 ///
-/// On failure, retries up to maxRetries times before giving up.
+/// On failure, retries up to maxRetries times before giving up. An attempt that times out counts as
+/// failed, but its request stays outstanding in Vehicle: the next request is sent once that one fails,
+/// and an answer to it is still accepted. No timeout runs while the state waits for that, so it waits
+/// for as long as Vehicle tracks the request; the timeout of the next attempt starts when it is sent.
 ///
 /// Emits advance() on success or after all retries exhausted.
-/// Emits error() only if explicitly requested via failOnMaxRetries.
+/// Emits error() only if explicitly requested via failOnMaxRetries, preceded by timeout() when the
+/// last attempt timed out.
 ///
 /// Example usage:
 /// @code
@@ -107,6 +111,7 @@ private:
     bool _failOnMaxRetries = false;
 
     bool _requestActive = false;
+    bool _retryWhenRequestFails = false;
 
     VehicleTypes::RequestMessageResultHandlerFailureCode_t _lastFailureCode = VehicleTypes::RequestMessageNoFailure;
     MAV_RESULT _lastResult = MAV_RESULT_ACCEPTED;
