@@ -13,7 +13,8 @@ private slots:
     // EXIF data detection
     void _testHasExifData();
     void _testHasExifDataInvalid();
-    void _testHasExifDataNoExif();
+    void _testHasExifDataJpegSegments_data();
+    void _testHasExifDataJpegSegments();
 
     // Loading and saving
     void _testLoadFromBuffer();

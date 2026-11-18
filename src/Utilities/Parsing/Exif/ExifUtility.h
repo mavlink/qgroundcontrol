@@ -36,7 +36,8 @@ bool isJpeg(const QByteArray &buffer);
 /// TIFF files start with "II" (little-endian) or "MM" (big-endian)
 bool isTiff(const QByteArray &buffer);
 
-/// Check if a buffer contains valid JPEG with EXIF data
+/// Check if a buffer holds EXIF data: a TIFF-based image, or a JPEG with an EXIF segment among the well-formed
+/// segments in front of its image data
 bool hasExifData(const QByteArray &buffer);
 
 // ============================================================================

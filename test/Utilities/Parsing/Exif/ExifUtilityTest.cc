@@ -101,11 +101,52 @@ void ExifUtilityTest::_testHasExifDataInvalid()
     QVERIFY(!ExifUtility::hasExifData(small));
 }
 
-void ExifUtilityTest::_testHasExifDataNoExif()
+void ExifUtilityTest::_testHasExifDataJpegSegments_data()
 {
-    // A JPEG without EXIF: an APP0 (JFIF) segment where an APP1 (EXIF) segment would be
-    const QByteArray jpegNoExif = jpegSoi() + jfifSegment() + jpegScan();
-    QVERIFY(!ExifUtility::hasExifData(jpegNoExif));
+    QTest::addColumn<QByteArray>("jpeg");
+    QTest::addColumn<bool>("hasExif");
+
+    ExifData* data = ExifUtility::createNew();
+    const QByteArray exif = exifApp1Segment(data);
+    exif_data_unref(data);
+
+    const QByteArray soi = jpegSoi();
+    const QByteArray jfif = jfifSegment();
+    const QByteArray xmp = xmpSegment();
+    const QByteArray image = quantTableSegment(QByteArray::fromHex("10")) + jpegScan();
+    // A comment whose text reads as the start of an EXIF segment
+    const QByteArray exifLikeComment =
+        jpegSegment('\xFE', QByteArray::fromHex("ffe10010") + QByteArray("Exif\0\0", 6) + QByteArray(8, 'x'));
+
+    QTest::newRow("exif-first") << soi + exif + image << true;
+    QTest::newRow("jfif-then-exif") << soi + jfif + exif + image << true;
+    QTest::newRow("xmp-then-exif") << soi + xmp + exif + image << true;
+    QTest::newRow("exif-then-xmp") << soi + exif + xmp + image << true;
+    QTest::newRow("jfif-without-exif") << soi + jfif + jpegScan() << false;
+    QTest::newRow("xmp-without-exif") << soi + jfif + xmp + image << false;
+    QTest::newRow("exif-segment-cut") << soi + jfif + exif.chopped(1) << false;
+    QTest::newRow("exif-bytes-in-comment") << soi + jfif + exifLikeComment + image << false;
+    QTest::newRow("data-before-exif") << soi + QByteArray::fromHex("0000") + exif + image << false;
+    QTest::newRow("exif-after-image-data") << soi + jfif + image + exif << false;
+}
+
+void ExifUtilityTest::_testHasExifDataJpegSegments()
+{
+    QFETCH(QByteArray, jpeg);
+    QFETCH(bool, hasExif);
+
+    QCOMPARE(ExifUtility::hasExifData(jpeg), hasExif);
+
+    // For the images of these rows libexif agrees: it reads entries where the answer is true and none where it is
+    // false
+    ExifData* loaded = ExifUtility::loadFromBuffer(jpeg);
+    QVERIFY(loaded != nullptr);
+    const auto release = qScopeGuard([loaded] { exif_data_unref(loaded); });
+    unsigned int entryCount = 0;
+    for (const ExifContent* content : loaded->ifd) {
+        entryCount += content->count;
+    }
+    QCOMPARE(entryCount > 0, hasExif);
 }
 
 // ============================================================================

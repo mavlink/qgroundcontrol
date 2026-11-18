@@ -183,19 +183,9 @@ bool hasExifData(const QByteArray &buffer)
         return true;
     }
 
-    // For JPEG, check for APP1 marker with EXIF header
-    if (!isJpeg(buffer)) {
-        return false;
-    }
-
-    QByteArray app1Marker("\xFF\xE1", 2);
-    int app1Pos = buffer.indexOf(app1Marker, 2);
-    if (app1Pos < 0 || app1Pos + 10 > buffer.size()) {
-        return false;
-    }
-
-    QByteArray exifHeader("Exif\0\0", 6);
-    return buffer.mid(app1Pos + 4, 6) == exifHeader;
+    // A JPEG has it in an APP1 segment among the segments in front of the image data
+    ExifSegmentRange exifSegment;
+    return isJpeg(buffer) && findExifSegment(buffer, exifSegment) && (exifSegment.start != exifSegment.end);
 }
 
 // ============================================================================
