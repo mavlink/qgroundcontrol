@@ -18,7 +18,7 @@
 /// Records the requested file from the next keyframe once the source streams, asking upstream for that keyframe, and
 /// finalizes it within kFinalizeTimeout when the request goes away or the pipeline is torn down. The file starts with
 /// the first keyframe the recorder's parser passes on, which is one that comes with its parameter sets; the recording
-/// fails when none does within kStartTimeout of the stream's first keyframe. A request for another file while one
+/// fails when none does within its start timeout of the stream's first keyframe. A request for another file while one
 /// records ends that one before the stream's next keyframe, asked for upstream too, which starts the other: no frame
 /// between them is lost. MP4/MOV are muxed so a crash leaves the file playable up to the last header update. The
 /// branch asks the listener for another file before the header space they reserve runs out, and when the stream's caps
@@ -28,7 +28,8 @@
 /// to the disk before it is reported closed. A recording that is stopped ends behind the frames its queue still
 /// holds, which it has kFinalizeTimeout more to take. A request whose container can't hold the stream's codec (MP4
 /// takes neither MJPEG, VP8 nor MPEG-2) isn't started: the branch asks the listener for a file in the container
-/// that does (containerFor()), and the recording fails, naming the codec, when none does.
+/// that does (containerFor()), and the recording fails, naming the codec, when none does. The start timeout, and how
+/// soon a muxer's estimate of its header space counts, are GstReceiverTimings's.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -70,15 +71,9 @@ public:
     static constexpr std::chrono::seconds kFinalizeTimeout{3};
     /// Backlog the recording queue holds for slow storage before the recording gives up.
     static constexpr guint64 kQueueMaxBytes = 64 * 1024 * 1024;
-    /// How long a recording whose recorder gets the stream's keyframes waits for the first one it can write: one that
-    /// comes with its parameter sets. The recording fails after that.
-    static constexpr std::chrono::seconds kStartTimeout{5};
     /// The recording time an MP4 or MOV file's header must have room for; with less left, the recording asks for
     /// another file. Covers the wait for the keyframe the next file starts with.
     static constexpr std::chrono::seconds kHeaderSpaceMargin{60};
-    /// How long a file records before its muxer's estimate of that room counts: until the muxer's second header
-    /// update the estimate comes from the file's first frame alone.
-    static constexpr std::chrono::seconds kHeaderEstimateDelay{10};
 
     /// The sink bin a recording links to the valve: an optional parser for @p inputCaps, the muxer for @p format and a
     /// filesink writing @p file. Returns an owned, non-floating ref, or null on failure.
@@ -163,7 +158,7 @@ private:
     /// The stream's caps changed after recording @p recording's file started, and the valve's output is held at the
     /// change: the file ends before it, and the one the listener requests begins with it.
     void _onCapsChanged(quint64 recording);
-    /// Fails a recording whose recorder has had the stream's keyframes for kStartTimeout without a frame to write.
+    /// Fails a recording whose recorder has had the stream's keyframes for its start timeout without a frame to write.
     void _checkStarted();
     /// Asks the listener for another file once the current one's muxer has little header space left.
     void _checkHeaderSpace();

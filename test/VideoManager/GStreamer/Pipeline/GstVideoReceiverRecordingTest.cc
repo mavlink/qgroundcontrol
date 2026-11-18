@@ -323,8 +323,8 @@ void GstVideoReceiverRecordingTest::_testCodecMp4CannotHoldIsRecordedAsMatroska(
     GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "avenc_mpeg2video", "mpegtsmux", "tsdemux", "matroskamux",
                                   "matroskademux");
 
-    Receiver stream(loopbackUri(QLatin1StringView("mpegts"), 0));
-    setMaxRecordingPartDuration(stream.receiver.get(), std::chrono::seconds(1));
+    Receiver stream(GstReceiverTimings{.recordingPartDuration = std::chrono::seconds(1)},
+                    loopbackUri(QLatin1StringView("mpegts"), 0));
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForState(State::Connecting));
     // MPEG-2 video, which neither MP4 nor MOV holds, as an MPEG-TS camera of that kind sends it.
@@ -397,12 +397,13 @@ void GstVideoReceiverRecordingTest::_testReconnectResumesRecordingInNextPart()
 
 void GstVideoReceiverRecordingTest::_testLongRecordingContinuesInNextPart()
 {
-    Receiver stream;
+    // Parts of three groups of pictures, which the worker looks for often enough to end them on time.
+    Receiver stream(GstReceiverTimings{.watchdogInterval = std::chrono::milliseconds(100),
+                                       .recordingPartDuration = std::chrono::milliseconds(500)});
     // Without the jitter buffer, which may drop a late packet: every frame sent is to reach a file.
     VideoReceiver::Config config = stream.receiver->config();
     config.lowLatency = true;
     stream.receiver->setConfig(config);
-    setMaxRecordingPartDuration(stream.receiver.get(), std::chrono::seconds(1));
     QVERIFY(stream.startStreaming());
 
     const QString path = _tempDir->filePath(QStringLiteral("long.mp4"));
@@ -517,7 +518,9 @@ void GstVideoReceiverRecordingTest::_testFramesArrivingTogetherStartNoNewPart()
 
 void GstVideoReceiverRecordingTest::_testRecordingLeavesFileBeforeHeaderSpaceRunsOut()
 {
-    Receiver stream;
+    // The muxer's estimate counts sooner than in the app: this file's header is short of room whatever the estimate.
+    constexpr std::chrono::seconds kEstimateDelay{1};
+    Receiver stream(GstReceiverTimings{.recordingHeaderEstimateDelay = kEstimateDelay});
     QVERIFY(stream.startStreaming());
 
     // The stream waits in front of the recorder until its muxer is set up.
@@ -547,8 +550,7 @@ void GstVideoReceiverRecordingTest::_testRecordingLeavesFileBeforeHeaderSpaceRun
     // Once the muxer's estimate counts, the recording goes on in the next part, whose header has the regular room, and
     // the file is closed in good order.
     const QString part2 = _tempDir->filePath(QStringLiteral("header_part2.mp4"));
-    const int estimateDelayMs =
-        static_cast<int>(std::chrono::milliseconds(RecordingBranch::kHeaderEstimateDelay).count());
+    const int estimateDelayMs = static_cast<int>(std::chrono::milliseconds(kEstimateDelay).count());
     QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, estimateDelayMs + TestTimeout::mediumMs());
     QCOMPARE(stream.recordingStartedSpy.at(0).constFirst().toString(), path);
     QCOMPARE(stream.recordingStartedSpy.at(1).constFirst().toString(), part2);
@@ -600,7 +602,9 @@ void GstVideoReceiverRecordingTest::_testRecordingStartsAtKeyframeWithParameterS
 
 void GstVideoReceiverRecordingTest::_testRecordingFailsWithoutKeyframeWithParameterSets()
 {
-    Receiver stream;
+    // Three of the stream's keyframes, rather than the app's 5 s.
+    constexpr std::chrono::milliseconds kStartTimeout{500};
+    Receiver stream(GstReceiverTimings{.recordingStartTimeout = kStartTimeout});
     QVERIFY(stream.startStreaming());
 
     ParameterSetStrip strip;
@@ -614,8 +618,7 @@ void GstVideoReceiverRecordingTest::_testRecordingFailsWithoutKeyframeWithParame
                      QRegularExpression(QStringLiteral("^No keyframe to start the recording with")));
     const QString path = _tempDir->filePath(QStringLiteral("no-start.mp4"));
     stream.receiver->startRecording(path, FileFormat::Mp4);
-    const int startTimeoutMs = static_cast<int>(std::chrono::milliseconds(RecordingBranch::kStartTimeout).count());
-    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, startTimeoutMs + TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, static_cast<int>(kStartTimeout.count()) + TestTimeout::mediumMs());
     verifyExpectedLogMessage();
     QVERIFY(strip.stripped.load() > 0);
     QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());

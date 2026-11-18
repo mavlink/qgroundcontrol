@@ -48,6 +48,7 @@ public:
         bool lowLatency = false;
         int rtpJitterLatencyMs = 0;
         int softwareDecoderThreads = 1;
+        GstReceiverTimings timings{};
     };
 
     struct Failure

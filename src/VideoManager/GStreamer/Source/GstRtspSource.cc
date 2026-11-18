@@ -15,11 +15,6 @@ namespace GStreamer::SourceFactory {
 
 namespace {
 
-// How long rtspsrc waits to connect and for the answer to each request (20 s by default). It doesn't end a stream
-// whose TCP-interleaved data stops: there rtspsrc only sends a keep-alive when the time is up, and it is the
-// receiver's watchdog that notices the stall.
-constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
-
 // How long stopping waits for the TEARDOWN to be sent and answered, where rtspsrc's 100 ms cuts it short on a slow
 // link and leaves the camera streaming until the session times out. A camera that is gone holds each stop up for this
 // long, which has to stay well within the 2 s a receiver being destroyed gives its pipeline to stop.
@@ -154,13 +149,14 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
     constexpr GstRTSPLowerTrans kRtspProtocols =
         static_cast<GstRTSPLowerTrans>(GST_RTSP_LOWER_TRANS_UDP | GST_RTSP_LOWER_TRANS_TCP);
     constexpr guint64 kRtspUdpTimeoutUs = std::chrono::microseconds(kRtspUdpTimeout).count();
+    const guint64 rtspTcpTimeoutUs = std::chrono::microseconds(config.rtspTcpTimeout).count();
 
     // rtspsrc always owns an internal jitterbuffer, so None maps to zero playout latency and no retransmission.
     const guint rtspLatencyMs = (config.jitterBuffer == JitterBuffer::None) ? 0u : latencyMs;
     const gboolean doRetransmission =
         ((config.jitterBuffer != JitterBuffer::None) && config.doRetransmission) ? TRUE : FALSE;
     g_object_set(source.get(), "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
-                 "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
+                 "do-retransmission", doRetransmission, "tcp-timeout", rtspTcpTimeoutUs, "udp-reconnect", TRUE,
                  "drop-on-latency", TRUE, "timeout", kRtspUdpTimeoutUs, "protocols", kRtspProtocols, nullptr);
     // rtspsrc's own 512 KiB is more than a stock Linux lets a socket ask for, which udpsrc warns about, and less than
     // the factory's other UDP sockets get where the kernel allows more.

@@ -2,10 +2,17 @@
 
 #include "GStreamerTestBase.h"
 
+class QtMultimediaVideoReceiver;
+
 /// QtMultimediaVideoReceiver against MockVideoStreamServer's streams, which need GStreamer to serve them.
 class QtMultimediaVideoReceiverTest : public GStreamerTestBase
 {
     Q_OBJECT
+
+public:
+    /// Has @p receiver sample its stream five times a second rather than once: the tests wait for its statistics,
+    /// which take two samples, and for the timeout the samples check.
+    static void sampleOften(QtMultimediaVideoReceiver& receiver);
 
 private:
     /// Qt's FFmpeg player warns that a live stream can't loop, though nothing asked it to, and tells when the machine

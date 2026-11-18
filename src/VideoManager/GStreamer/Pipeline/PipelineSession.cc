@@ -197,6 +197,7 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
         .redactedUri = _settings.redactedUri,
         .dotDumper = &_dotDumper,
         .watchdog = &_watchdog,
+        .timings = _settings.timings,
         .post = [this](std::function<void()> task) { _post(std::move(task)); },
     };
     _decoding =
@@ -216,6 +217,7 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     sourceConfig.latencyMs = _settings.rtpJitterLatencyMs;
     sourceConfig.doRetransmission = (_settings.rtpJitterLatencyMs >= kMinRetransmissionLatencyMs) &&
                                     (sourceConfig.jitterBuffer != GStreamer::SourceFactory::JitterBuffer::None);
+    sourceConfig.rtspTcpTimeout = _settings.timings.rtspTcpTimeout;
     // Floating: the pipeline takes it over.
     _source = GStreamer::SourceFactory::create(_settings.uri, sourceConfig);
     if (!_source || !gst_bin_add(GST_BIN(_pipeline.get()), _source)) {

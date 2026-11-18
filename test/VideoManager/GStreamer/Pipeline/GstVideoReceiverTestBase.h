@@ -20,6 +20,7 @@
 #include "BranchContext.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
+#include "GstReceiverTimings.h"
 #include "GstScoped.h"
 #include "GstVideoReceiver.h"
 #include "RecordingBranch.h"
@@ -42,8 +43,6 @@ public:
     /// it, for at most a few seconds: false when the worker didn't get to it.
     static bool runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
     static GstElement* displaySink(const GstVideoReceiver* receiver);
-    /// Has @p receiver's recordings, those started from now on, continue in a new part every @p duration.
-    static void setMaxRecordingPartDuration(GstVideoReceiver* receiver, std::chrono::milliseconds duration);
     /// Posts @p receiver's worker a task that keeps it busy until @p gate opens.
     static void holdWorker(GstVideoReceiver* receiver, const std::shared_ptr<GstReceiverTest::Gate>& gate);
 #endif
@@ -163,8 +162,15 @@ struct Receiver
     explicit Receiver(const QString& uri = udpListenUri(), bool autoReconnect = false,
                       std::chrono::seconds timeout = kWatchdogTimeout,
                       const QString& stream = QString::fromLatin1(GstTest::kH264Stream))
+        : Receiver(GstReceiverTimings{}, uri, autoReconnect, timeout, stream)
+    {}
+
+    /// With @p timings in place of the app's, for a test that would have to wait one of them out.
+    explicit Receiver(const GstReceiverTimings& timings, const QString& uri = udpListenUri(),
+                      bool autoReconnect = false, std::chrono::seconds timeout = kWatchdogTimeout,
+                      const QString& stream = QString::fromLatin1(GstTest::kH264Stream))
         : output(new QQuickVideoOutput(window.contentItem()))
-        , receiver(new GstVideoReceiver())
+        , receiver(new GstVideoReceiver(nullptr, timings))
         , stateSpy(receiver.get(), &VideoReceiver::stateChanged)
         , streamingSpy(receiver.get(), &VideoReceiver::streamingChanged)
         , decodingSpy(receiver.get(), &VideoReceiver::decodingChanged)

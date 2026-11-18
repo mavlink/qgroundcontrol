@@ -57,6 +57,7 @@ struct ReceiverUnderTest
         , stateSpy(receiver.get(), &VideoReceiver::stateChanged)
         , errorSpy(receiver.get(), &VideoReceiver::errorOccurred)
     {
+        QtMultimediaVideoReceiverTest::sampleOften(*receiver);
         receiver->setName(QStringLiteral("test"));
         receiver->setConfig({.uri = uri, .timeout = timeout, .lowLatency = true, .autoReconnect = autoReconnect});
         receiver->setVideoOutput(output.get());
@@ -68,11 +69,14 @@ struct ReceiverUnderTest
                                           u"receiver state");
     }
 
-    /// Frames reach the output and the stats measure them.
+    /// Frames reach the output and the stats measure them: a sample this short can be one without a frame.
     [[nodiscard]] bool waitForDisplay() const
     {
         return UnitTest::waitForCondition(
-            [this] { return receiver->decoding() && receiver->videoSize().isValid() && receiver->stats().valid; },
+            [this] {
+                const VideoStreamStats stats = receiver->stats();
+                return receiver->decoding() && receiver->videoSize().isValid() && stats.valid && (stats.fps > 0);
+            },
             TestTimeout::longDuration(), u"display");
     }
 
@@ -84,6 +88,11 @@ struct ReceiverUnderTest
 };
 
 }  // namespace
+
+void QtMultimediaVideoReceiverTest::sampleOften(QtMultimediaVideoReceiver& receiver)
+{
+    receiver._sampleTimer.setInterval(std::chrono::milliseconds(200));
+}
 
 void QtMultimediaVideoReceiverTest::_ignorePlayerLogs()
 {

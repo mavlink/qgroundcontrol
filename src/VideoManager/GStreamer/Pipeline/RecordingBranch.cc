@@ -31,7 +31,7 @@ constexpr std::chrono::seconds kRecordingWatchInterval{1};
 // (an Android SD card, a network share) reports a full disk only to a sync: a recording there would lose everything
 // without an error. A sync as often as the MP4's also bounds what a power loss takes.
 constexpr gint64 kRecordingSyncPeriodUs = static_cast<gint64>(kRecordingMoovUpdatePeriodNs / GST_USECOND);
-static_assert(std::chrono::nanoseconds(RecordingBranch::kHeaderEstimateDelay).count() >=
+static_assert(std::chrono::nanoseconds(GstReceiverTimings{}.recordingHeaderEstimateDelay).count() >=
                   static_cast<qint64>(2 * kRecordingMoovUpdatePeriodNs),
               "The muxer's estimate of its header space counts from its second header update");
 static_assert((2 * std::chrono::nanoseconds(RecordingPlan::kMaxPartDuration).count()) <=
@@ -826,12 +826,12 @@ void RecordingBranch::_checkStarted()
         return;
     }
     const gint64 fedAt = _fedAt.load(std::memory_order_relaxed);
-    if ((fedAt == 0) || ((g_get_monotonic_time() - fedAt) < std::chrono::microseconds(kStartTimeout).count())) {
+    const std::chrono::milliseconds timeout = _context.timings.recordingStartTimeout;
+    if ((fedAt == 0) || ((g_get_monotonic_time() - fedAt) < std::chrono::microseconds(timeout).count())) {
         return;
     }
-    qCWarning(GstVideoReceiverLog) << "No keyframe to start the recording with within"
-                                   << std::chrono::seconds(kStartTimeout).count()
-                                   << "s of the stream's first one, as when keyframes come without their parameter"
+    qCWarning(GstVideoReceiverLog) << "No keyframe to start the recording with within" << timeout.count()
+                                   << "ms of the stream's first one, as when keyframes come without their parameter"
                                    << "sets; ending the recording" << _current.file;
     _end(
         QCoreApplication::translate("RecordingBranch", "The video stream has no keyframe a recording can start from."));
@@ -842,7 +842,7 @@ void RecordingBranch::_checkHeaderSpace()
     // A switch under way leaves the file soon enough. Until its second header update the muxer has its estimate from
     // the file's first frame alone: seconds, when that frame and the next arrived together.
     if ((_state != State::Recording) || _switching || !_fileSink || !_openedReported ||
-        !_openedFor.hasExpired(std::chrono::milliseconds(kHeaderEstimateDelay).count())) {
+        !_openedFor.hasExpired(_context.timings.recordingHeaderEstimateDelay.count())) {
         return;
     }
     const GStreamer::GstElementPtr muxer =

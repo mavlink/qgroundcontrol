@@ -365,7 +365,8 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
                          QRegularExpression(QStringLiteral("poll\\(2\\) failed due to: Bad file descriptor")));
     }
 
-    Receiver stream(uri);
+    // The frame rate below is measured over a fifth of a second rather than a whole one.
+    Receiver stream(GstReceiverTimings{.watchdogInterval = std::chrono::milliseconds(200)}, uri);
     stream.receiver->setActive(true);
     if (receiverListens) {
         // Connecting lasts until the server sends. A server that already does can take the receiver on to
@@ -376,7 +377,7 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
     QVERIFY(stream.waitForState(State::Streaming));
     QVERIFY(stream.display());
     // Shown at the stream's 30 frames a second, not merely decoded: a sink that takes every frame for late shows one
-    // a second.
+    // a second, which reads as 5 a second in the measurement that frame falls into.
     QVERIFY(UnitTest::waitForCondition(
         [&stream] {
             const VideoStreamStats stats = stream.receiver->stats();

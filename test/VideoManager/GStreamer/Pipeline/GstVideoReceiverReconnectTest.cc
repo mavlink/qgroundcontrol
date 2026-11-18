@@ -22,9 +22,11 @@ using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
 
-// Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first one-second tick
-// and checked at the next two.
-constexpr int kSilentSourceWindowMs = 3500;
+// How often the worker looks at a stream that is to stay silent, rather than once a second.
+constexpr std::chrono::milliseconds kSilentSourceWatchdogInterval{100};
+// Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first tick and checked
+// at the first one after it.
+constexpr int kSilentSourceWindowMs = 1500;
 
 // How often the receiver checks its worker while a test holds the worker: a stuck one is reported at the seventh
 // check, the sixth in a row at which it has run no task. The two windows are counted in checks, so they follow it.
@@ -94,7 +96,8 @@ void GstVideoReceiverReconnectTest::_testReconnectBacksOffAfterFailedStart()
 void GstVideoReceiverReconnectTest::_testUdpListensUntilStreamStarts()
 {
     // Without auto-reconnect a stream that fails stops, so one that stays Connecting didn't fail.
-    Receiver stream(udpListenUri(), /*autoReconnect=*/false, kShortWatchdogTimeout);
+    Receiver stream(GstReceiverTimings{.watchdogInterval = kSilentSourceWatchdogInterval}, udpListenUri(),
+                    /*autoReconnect=*/false, kShortWatchdogTimeout);
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForState(State::Connecting));
     const quint16 port = stream.udpPort();
@@ -159,11 +162,13 @@ void GstVideoReceiverReconnectTest::_testUnresponsiveRtspServer()
     GstTest::FakeRtspServer server;
     QVERIFY(server.listen());
 
-    // Either rtspsrc gives up on the unanswered OPTIONS after its TCP timeout or the first-frame watchdog fires
-    // first; which one warns depends on the host's timing, and the receiver's reaction is what is checked.
+    // Either rtspsrc gives up on the unanswered OPTIONS after its TCP timeout, a second here rather than the app's
+    // five, or the first-frame watchdog fires first; which one warns depends on the host's timing, and the receiver's
+    // reaction is what is checked.
     ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GStreamer error from |^Video stream stopped:")));
-    Receiver stream(server.uri(), autoReconnect, kShortWatchdogTimeout);
+    Receiver stream(GstReceiverTimings{.rtspTcpTimeout = std::chrono::seconds(1)}, server.uri(), autoReconnect,
+                    kShortWatchdogTimeout);
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForState(State::Connecting));
     QVERIFY_TRUE_WAIT(server.connections() == 1, TestTimeout::mediumMs());

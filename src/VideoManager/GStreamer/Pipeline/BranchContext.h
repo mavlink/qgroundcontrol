@@ -5,6 +5,7 @@
 
 #include <QtCore/QString>
 
+#include "GstReceiverTimings.h"
 #include "GstScoped.h"
 
 class PipelineDotDumper;
@@ -57,6 +58,7 @@ struct BranchContext
     QString redactedUri;
     const PipelineDotDumper* dotDumper = nullptr;
     StreamWatchdog* watchdog = nullptr;
+    GstReceiverTimings timings{};
     /// Runs a task on the worker thread unless the session is gone by then.
     std::function<void(std::function<void()>)> post;
 };
