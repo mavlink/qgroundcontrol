@@ -639,6 +639,81 @@ void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
     QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, MAV_COMP_ID_CAMERA2), 0);
 }
 
+void VehicleCameraControlTest::_testThermalStreamStartsOnceNamed_data()
+{
+    QTest::addColumn<MockConfiguration::CameraThermalStream>("thermalStream");
+    QTest::addColumn<int>("thermalCompId");
+    QTest::addColumn<int>("thermalStreamId");
+
+    QTest::newRow("beside a camera's visible-light stream")
+        << MockConfiguration::CameraThermalStreamSecondStream << static_cast<int>(MAV_COMP_ID_CAMERA) << 2;
+    // As mavlink-camera-manager advertises it, which also sends no stream count.
+    QTest::newRow("a camera's only stream")
+        << MockConfiguration::CameraThermalStreamSecondCamera << static_cast<int>(MAV_COMP_ID_CAMERA2) << 1;
+}
+
+void VehicleCameraControlTest::_testThermalStreamStartsOnceNamed()
+{
+    QFETCH(MockConfiguration::CameraThermalStream, thermalStream);
+    QFETCH(int, thermalCompId);
+    QFETCH(int, thermalStreamId);
+
+    auto* mockConfig = newMockConfiguration(QStringLiteral("CameraThermalStreamTest"));
+    mockConfig->setEnableCamera(true);
+    mockConfig->setCameraHasVideoStream(true);
+    mockConfig->setCameraThermalStream(thermalStream);
+
+    _connectVehicle(mockConfig);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    MavlinkCameraControlInterface* const firstCamera = _firstCamera();
+    QVERIFY2(firstCamera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
+    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
+    MavlinkCameraControlInterface* thermalCamera = nullptr;
+    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
+        auto* const candidate = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
+        if (candidate && (candidate->compID() == thermalCompId)) {
+            thermalCamera = candidate;
+        }
+    }
+    QVERIFY(thermalCamera);
+    QVERIFY_TRUE_WAIT((firstCamera->streamLabels().size() == 1) && thermalCamera->thermalStreamInstance(),
+                      TestTimeout::longMs());
+    const QGCVideoStreamInfo* const thermal = thermalCamera->thermalStreamInstance();
+    QCOMPARE(thermal->streamID(), thermalStreamId);
+
+    const auto transmitted = [this, thermalCompId, thermalStreamId] {
+        return _mockLink->cameraStreamTransmitted(static_cast<uint8_t>(thermalCompId),
+                                                  static_cast<uint8_t>(thermalStreamId));
+    };
+    const auto started = [this, thermalCompId] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, thermalCompId);
+    };
+    const auto stopped = [this, thermalCompId] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_STOP_STREAMING, thermalCompId);
+    };
+
+    // A thermal stream is none of the streams to select from: a camera that has no other has no current stream.
+    QVERIFY(!thermalCamera->streamLabels().contains(thermal->name()));
+    QCOMPARE(thermalCamera->streamLabels().isEmpty(), thermalCamera != firstCamera);
+    QCOMPARE(thermalCamera->currentStreamInstance() == nullptr, thermalCamera != firstCamera);
+
+    // So the camera isn't asked for it until it is named as a stream on display, and is asked to stop it once it
+    // no longer is.
+    QCOMPARE(started(), 0);
+    QVERIFY(!transmitted());
+    thermalCamera->setExtraStreams({static_cast<quint8>(thermalStreamId)});
+    QVERIFY_TRUE_WAIT(transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(started(), 1);
+    QCOMPARE(stopped(), 0);
+    thermalCamera->setExtraStreams({});
+    QVERIFY_TRUE_WAIT(!transmitted(), TestTimeout::mediumMs());
+    QCOMPARE(started(), 1);
+    QCOMPARE(stopped(), 1);
+}
+
 void VehicleCameraControlTest::_testStreamAnnouncedAnewIsUpdated()
 {
     auto* mockConfig = newMockConfiguration(QStringLiteral("CameraStreamAnnouncedAnewTest"));

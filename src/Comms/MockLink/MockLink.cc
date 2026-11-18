@@ -199,7 +199,8 @@ MockLink::MockLink(SharedLinkConfigurationPtr& config, QObject* parent)
                                    _mockConfig->cameraHasModes(), _mockConfig->cameraHasVideoStream(),
                                    _mockConfig->cameraCanCaptureImageInVideoMode(),
                                    _mockConfig->cameraCanCaptureVideoInImageMode(), _mockConfig->cameraHasBasicZoom(),
-                                   _mockConfig->cameraHasTrackingPoint(), _mockConfig->cameraHasTrackingRectangle())
+                                   _mockConfig->cameraHasTrackingPoint(), _mockConfig->cameraHasTrackingRectangle(),
+                                   _mockConfig->cameraThermalStreamEnum())
               : nullptr)
     , _mockLinkGimbal(_enableGimbal
                           ? new MockLinkGimbal(this, _mockConfig->gimbalHasRollAxis(),

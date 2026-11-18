@@ -1,8 +1,9 @@
 #pragma once
 
-#include "MAVLinkLib.h"
-
 #include <QtCore/QMutex>
+
+#include "MAVLinkLib.h"
+#include "MockConfiguration.h"
 
 class MockLink;
 
@@ -15,6 +16,11 @@ class MockLink;
 ///       and image capture while in video mode.
 ///   Camera 2 (MAV_COMP_ID_CAMERA2) – photo-only: image capture only; video,
 ///       mode switching, zoom, focus, and streaming commands are denied.
+///
+/// MockConfiguration::CameraThermalStream makes one of the streams a thermal one:
+/// camera 1's second stream, or the only stream of camera 2, with camera 1 left
+/// one stream as well. Either is advertised at udp://127.0.0.1:5601 (H.264 RTP),
+/// where nothing is sent, and is transmitted only once it is asked for.
 ///
 /// Supported MAVLink commands:
 ///   MAV_CMD_REQUEST_MESSAGE (CAMERA_INFORMATION, CAMERA_SETTINGS,
@@ -63,6 +69,8 @@ public:
         int      intervalRemaining   = 0;                    ///< Images left in interval capture (0 = unlimited)
         qint64   intervalLastCaptureMs = 0;                  ///< Timestamp of last interval capture
         uint32_t transmittedStreams = 1;                     ///< Bit (stream id - 1) per stream; stream 1 at boot
+        uint8_t streamCount = kNumStreams;                   ///< Streams advertised, with the ids 1 to streamCount
+        uint8_t thermalStreamId = 0;                         ///< The stream that is a thermal one (0 = none)
 
         // Tracking state
         uint8_t  trackingMode        = CAMERA_TRACKING_MODE_NONE; ///< CAMERA_TRACKING_MODE enum
@@ -80,16 +88,11 @@ public:
         float    trackAnchorY        = 0.0f;                  ///< Original center Y of tracked target
     };
 
-    explicit MockLinkCamera(MockLink *mockLink,
-                            bool captureVideo = true,
-                            bool captureImage = true,
-                            bool hasModes = true,
-                            bool hasVideoStream = true,
-                            bool canCaptureImageInVideoMode = true,
-                            bool canCaptureVideoInImageMode = false,
-                            bool hasBasicZoom = true,
-                            bool hasTrackingPoint = false,
-                            bool hasTrackingRectangle = false);
+    explicit MockLinkCamera(
+        MockLink* mockLink, bool captureVideo = true, bool captureImage = true, bool hasModes = true,
+        bool hasVideoStream = true, bool canCaptureImageInVideoMode = true, bool canCaptureVideoInImageMode = false,
+        bool hasBasicZoom = true, bool hasTrackingPoint = false, bool hasTrackingRectangle = false,
+        MockConfiguration::CameraThermalStream thermalStream = MockConfiguration::CameraThermalStreamNone);
     ~MockLinkCamera() = default;
 
     /// Send heartbeats for all simulated camera components (call from 10Hz tasks)
@@ -126,10 +129,12 @@ private:
     void _sendCommandAck(uint8_t compId, uint16_t command, uint8_t result, int requestedMsgId = -1);
 
     CameraState *_findCamera(uint8_t compId);
+    /// The VIDEO_STREAM_STATUS_FLAGS of the thermal stream.
+    uint16_t _thermalStreamFlags() const;
     static const char *_imageCaptureStatusToString(uint8_t status);
 
     static constexpr uint8_t  kNumCameras       = 2;
-    static constexpr uint8_t  kNumStreams        = 2;    ///< Streams per camera
+    static constexpr uint8_t kNumStreams = 2;             ///< Streams per camera, unless each camera has one stream
     static constexpr uint32_t kStorageTotalMiB   = 16384; ///< 16 GiB simulated SD card
     static constexpr uint32_t kStorageFreeMiB    = 8192;  ///< 8 GiB free
     static constexpr float    kZoomMinPercent    = 0.0f;  ///< CAMERA_SETTINGS.zoomLevel range
@@ -137,6 +142,7 @@ private:
     static constexpr float    kZoomStepPercent   = 10.0f; ///< Zoom range change per ZOOM_TYPE_STEP
 
     MockLink   *_mockLink = nullptr;
+    const MockConfiguration::CameraThermalStream _thermalStream;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras
     /// Protects _cameras array from race conditions between:
     ///   - Main thread: _handleCameraCommand() modifying camera state on MAVLink commands

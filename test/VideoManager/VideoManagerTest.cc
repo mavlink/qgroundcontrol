@@ -2267,15 +2267,20 @@ void VideoManagerTest::_testThermalPlaysOnlyWhileInUse()
         makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
     thermalStream->setStreamInfo(thermalInfo.get());
     _settle();
+    // What the manager goes by when it asks the stream's camera to transmit it.
+    QSignalSpy idleSpy(thermalStream, &VideoStreamController::idleChanged);
 
     // Advertised with its view off, the stream is there to show, and nothing connects to it.
     QVERIFY(_videoManager->hasThermal());
     QCOMPARE(_thermal->config().uri, QStringLiteral("rtsp://10.0.0.1/thermal"));
     QVERIFY(!_thermal->active());
+    QVERIFY(!thermalStream->wantsStream());
 
     // It connects for its view.
     QQuickItem view;
     thermalStream->registerVideoOutput(&view);
+    QVERIFY(thermalStream->wantsStream());
+    QCOMPARE(idleSpy.count(), 1);
     _settle();
     QVERIFY(_thermal->active());
 
@@ -2288,11 +2293,14 @@ void VideoManagerTest::_testThermalPlaysOnlyWhileInUse()
     _settle();
     QVERIFY(!thermalStream->_idleTimer.isActive());
     QCOMPARE(_thermal->activeChanges, 0);
+    QCOMPARE(idleSpy.count(), 1);
 
     // Out of use for longer, it disconnects.
     thermalStream->_idleTimer.setInterval(1);
     thermalStream->unregisterVideoOutput(&view);
     QTRY_VERIFY_WITH_TIMEOUT(!_thermal->active(), TestTimeout::mediumMs());
+    QVERIFY(!thermalStream->wantsStream());
+    QCOMPARE(idleSpy.count(), 2);
 
     // A recording connects it at once, with its view off, and keeps it from when it is asked for until it has ended.
     const QString file = QStringLiteral("flight.thermalVideo.mkv");

@@ -26,6 +26,8 @@ Rectangle {
     property bool _cameraInVideoMode: !_cameraInPhotoMode
     property bool _videoCaptureIdle: _camera.captureVideoState === MavlinkCameraControlInterface.CaptureVideoStateIdle
     property bool _photoCaptureIdle: _camera.capturePhotosState === MavlinkCameraControlInterface.CapturePhotosStateIdle
+    // The thermal stream on display may belong to another camera of the vehicle than the current one.
+    property bool _thermalShown: QGroundControl.videoManager.hasThermal
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -425,13 +427,13 @@ Rectangle {
 
                         QGCLabel {
                             text: qsTr("Thermal View Mode")
-                            visible: _camera.thermalStreamInstance
+                            visible: _thermalShown
                             onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
                         }
 
                         QGCLabel {
                             text: qsTr("Blend Opacity")
-                            visible: _camera.thermalStreamInstance && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
+                            visible: _thermalShown && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
                             onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
                         }
 
@@ -491,7 +493,7 @@ Rectangle {
                             sizeToContents: true
                             model: [ qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture") ]
                             currentIndex: _camera.thermalMode
-                            visible: _camera.thermalStreamInstance
+                            visible: _thermalShown
                             onActivated: (index) => { _camera.thermalMode = index }
                         }
 
@@ -501,7 +503,7 @@ Rectangle {
                             from: 0
                             value: _camera.thermalOpacity
                             live: true
-                            visible: _camera.thermalStreamInstance && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
+                            visible: _thermalShown && _camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
                             onValueChanged: _camera.thermalOpacity = value
                         }
 

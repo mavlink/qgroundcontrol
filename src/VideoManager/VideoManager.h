@@ -37,6 +37,11 @@ class VideoTelemetryOverlay;
 /// stream becomes one that plays in a tile, that source becomes the primary stream and the former one takes a tile:
 /// neither stream restarts. The camera selected in its tile (selectSource()) is the main picture as well, with the
 /// primary stream in a tile, until a stream is selected: it stays the main picture whatever the room for tiles.
+///
+/// The thermal stream is the active vehicle's: its current camera's or, when that camera has none, that of the first
+/// of its other cameras that has one, as with a sender that makes a camera of each stream. A current camera that
+/// advertises thermal streams only has its thermal stream played by the primary stream, as the main picture, and
+/// there is no thermal stream then.
 class VideoManager : public QObject
 {
     Q_OBJECT
@@ -253,7 +258,8 @@ private:
     void _updateTileStreams(int count);
     /// The tile's source that plays @p streamInfo, if any.
     VideoStreamController* _tileStream(const QGCVideoStreamInfo* streamInfo) const;
-    /// Tells each camera of the active vehicle which of its streams play in tiles: none while the video is stopped.
+    /// Tells each camera of the active vehicle which of its streams play besides its current one: those in tiles, and
+    /// its thermal stream while the source that plays it wants it. None while the video is stopped.
     void _nameExtraStreams();
     /// VideoSettings::disableWhenDisarmed keeps the video off: the active vehicle is disarmed, and the video wasn't
     /// started again since.

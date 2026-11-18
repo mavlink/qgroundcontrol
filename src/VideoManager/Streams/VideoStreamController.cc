@@ -389,6 +389,7 @@ void VideoStreamController::_updateInUse()
         qCDebug(VideoStreamControllerLog) << name() << "in use";
         _idle = false;
         scheduleApply();
+        emit idleChanged();
     }
 }
 
@@ -398,6 +399,7 @@ void VideoStreamController::_onIdleTimeout()
         qCDebug(VideoStreamControllerLog) << name() << "out of use";
         _idle = true;
         _apply();
+        emit idleChanged();
     }
 }
 

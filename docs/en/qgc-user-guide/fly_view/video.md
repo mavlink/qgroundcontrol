@@ -40,6 +40,20 @@ later ask once whether _QGroundControl_ may show notifications; the stream and t
 without it too. Telemetry is not handled while the app is in the background: the vehicle's messages are handled when
 the app returns, and a recording's telemetry subtitles have a gap for that time.
 
+## Thermal Video
+
+A thermal stream that the vehicle's cameras advertise is shown over the video, in the thermal view mode of the
+current camera: blended with the video, in its place, or as a small picture in the top left corner.
+
+The thermal stream is the current camera's own. When that camera has none, it is the thermal stream of the first of
+the vehicle's other cameras that has one: camera software that presents every stream as a camera of its own, such as
+mavlink-camera-manager, sends its thermal stream that way.
+
+When the current camera advertises a thermal stream and no other, that stream is the main picture, in place of the
+video source of the settings, and no thermal stream is shown over it.
+
+The vehicle is asked to send the thermal stream only while it is shown or recorded.
+
 ## Video Tiles
 
 While the video is in the foreground, _QGroundControl_ shows the other video it can play in small tiles along the top
@@ -47,8 +61,8 @@ of the video, each under its name:
 
 1. The USB camera chosen as **USB Camera Tile** in [Application Settings > Video](../settings_view/video.md#video-source),
    while the video source is a stream.
-1. The other video streams of the vehicle's current camera: those that are neither on display already nor its thermal
-   stream, which is shown with the video as before.
+1. The other video streams of the vehicle's current camera: those that are neither on display already nor a thermal
+   stream. A thermal stream gets no tile: it is [shown with the video](#thermal-video).
 1. The video streams of the vehicle's other MAVLink cameras, in the order the camera tools list the cameras.
 
 At most three tiles are shown. [Video Tiles](../settings_view/video.md#settings) sets how many, up to four, and 0 turns
@@ -123,10 +137,12 @@ dropdown shows, about once a second:
 For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
 The indicator's figures are the main picture's. The statistics of each stream in a [tile](#video-tiles) appear below
 those of the main picture, under the stream's name.
-When a camera also sends a thermal stream, its statistics appear below. The thermal stream is decoded only while the
-camera's thermal view is on. With the view off it is still received, and GStreamer still records it with the video (the
-Qt Multimedia backend records only video on display), but it shows no frame rate, and turning the view on shows it from
-its next keyframe.
+When a [thermal stream](#thermal-video) goes with the video, its statistics appear below. The thermal stream is
+connected to only while the thermal view is on or the stream is being recorded: 15 seconds after the view was turned
+off it is disconnected, the vehicle is asked to stop sending it, and its statistics go. Turning the view on connects
+it again, and shows it from its next keyframe.
+GStreamer still records the thermal stream with the video while its view is off (the Qt Multimedia backend records
+only video on display): the stream connects for the recording, so its file can start a moment after the video's.
 
 For a USB camera, the indicator shows the frame rate and the resolution (for example `1080p`), and its dropdown shows
 under **USB Camera**:

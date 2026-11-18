@@ -59,6 +59,7 @@ class VideoStreamController : public QObject
     Q_MOC_INCLUDE("QGCVideoStreamInfo.h")
 
     friend class VideoManagerTest;
+    friend class VideoManagerVehicleTest;
 
 public:
     using Role = VideoStreamResolver::Role;
@@ -117,6 +118,10 @@ public:
     void setEnabled(bool enabled);
 
     bool configured() const { return _resolvedConfig().has_value(); }
+
+    /// True while the source is to play its stream, which its receiver then connects to: it is enabled and
+    /// configured(), and the thermal stream is in use as well.
+    bool wantsStream() const { return _enabled && !_idle && configured(); }
 
     /// Pushes the current config and enabled state to the receiver on the next event loop pass. Calls before then
     /// coalesce into one update.
@@ -198,6 +203,8 @@ signals:
     void statsChanged();
     void streamInfoChanged();
     void uriChanged();
+    /// The thermal stream came into use, or has been out of use for kIdleGrace.
+    void idleChanged();
     void recordingStarted(const QString& file);
     void recordingFinished(const QString& file, const QString& error);
     void errorOccurred(const QString& message);

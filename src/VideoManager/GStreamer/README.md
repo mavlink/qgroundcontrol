@@ -45,13 +45,24 @@ that changes places with the map and back within that time finds the tiles' stre
 - A QML `VideoOutput` registers with the source it shows (`VideoStreamOutput.qml`). One that registers as another one
   leaves takes the source over, so a source moves between the main picture and a tile without its receiver being
   without an output, which would take the decoder out of its pipeline. A tile's source has an output only while the
-  tile is shown: hidden, its stream is received but not decoded, as the thermal stream is with its view off.
+  tile is shown: hidden, its stream is received but not decoded, until its row tells that it has no room.
+- The thermal stream is the active vehicle's: its current camera's (`thermalStreamInstance()`) or, when that camera
+  has none, that of the first of its other cameras that has one. That is how mavlink-camera-manager sends it, which
+  makes a camera component of each stream, with stream id 1, and flags the thermal one `THERMAL` and not `RUNNING`.
+  A thermal stream is none of the streams a camera lists, so a current camera that advertises thermal streams only
+  has no current stream: the primary stream then plays its thermal stream, in place of the video source of the
+  settings, and there is no thermal stream (`VideoManager::_updateStreamInfo()`).
+- The thermal stream plays only while it is in use: while its view is on, which gives it an output, and from
+  `startRecording()` until its recording has ended. Out of use for `kIdleGrace` its receiver is deactivated, and
+  activated again with the next use: its picture then waits for the stream to connect and send a keyframe.
 - On Android and iOS no source has an output while the app is in the background (`Qt::ApplicationHidden` or
   `Qt::ApplicationSuspended`): nothing is decoded there. The streams are still received and recorded, for as long as
   the system lets them arrive: Android 15 cuts a background app's network after about five seconds, with which the
   stream times out and a recording ends, to continue in a new part once the app is back.
-- The vehicle's cameras are told which of their streams play in tiles
-  (`MavlinkCameraControlInterface::setExtraStreams()`). `VehicleCameraControl` asks the camera to transmit them
+- The vehicle's cameras are told which of their streams play besides their current one
+  (`MavlinkCameraControlInterface::setExtraStreams()`): those in tiles, and a camera's thermal stream while the
+  source that plays it wants it (`VideoStreamController::wantsStream()`), which the thermal stream out of use
+  doesn't. `VehicleCameraControl` asks the camera to transmit them
   (`MAV_CMD_VIDEO_START_STREAMING`) and to stop those that left (`MAV_CMD_VIDEO_STOP_STREAMING`), and neither stops
   nor starts a stream that stays on display when the current stream changes.
 - While the video is off, stopped (`VideoManager::stopVideo()`) or disabled for a disarmed vehicle
@@ -99,7 +110,7 @@ The components, in the order of their folders: `Pipeline/`, `Source/`, `Sink/`, 
 | `GStreamerSelfTestMedia` | The self-test's media pipelines: decoding the embedded samples and recording and reading back MP4 and MKV. |
 | `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's process lifecycle, which it keeps as states (unprepared, prepared, initialized, failed): the environment first, initialization once (a failed or repeated one isn't retried, as `gst_init()` can't be undone), the self-test only once initialized. Also GStreamer's tuning (decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. Once GStreamer has failed to initialize, its receivers are `QtMultimediaVideoReceiver`s, and `VideoManager` shows its `initFailureMessage()`. |
 
-MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead.
+MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead. `MockConfiguration::CameraThermalStream` has MockLink's cameras advertise a thermal stream as well, as the second stream of a camera or as the only stream of a camera of its own, the way mavlink-camera-manager does; nothing is sent at its address, `udp://127.0.0.1:5601`.
 
 ### Threading
 

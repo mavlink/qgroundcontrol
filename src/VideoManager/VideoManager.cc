@@ -166,6 +166,8 @@ void VideoManager::_connectSource(VideoStreamController* source)
     });
     (void) connect(source, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(source, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
+    // The thermal stream's camera is asked for it only while it is in use.
+    (void) connect(source, &VideoStreamController::idleChanged, this, &VideoManager::_updateState);
     for (const auto changed : {&VideoStreamController::statsChanged, &VideoStreamController::decodingChanged,
                                &VideoStreamController::streamInfoChanged, &VideoStreamController::tileChanged}) {
         (void) connect(source, changed, this, &VideoManager::_updateSourceSummary);
@@ -705,7 +707,9 @@ void VideoManager::_updateStateNow()
     for (VideoStreamController* source : std::as_const(_sources)) {
         source->setEnabled(streamWanted && !_videoStopped && ((source != _thermalStream) || !cameraOnMain));
     }
-    // After the streams in tiles, which _updateTileStreams() named: they leave the display first.
+    // Once the sources are enabled or not, which tells whether the one that plays a thermal stream wants it.
+    _nameExtraStreams();
+    // After the extra streams: they leave the display first.
     _updateCameraStream(streamWanted && !_videoStopped);
 
     if (autoStreamConfigured != _autoStreamConfigured) {
@@ -816,7 +820,6 @@ void VideoManager::_updateTileStreams(int count)
     if (_thermalStream->receiver()) {
         _createVideoReceivers();
     }
-    _nameExtraStreams();
 }
 
 void VideoManager::_nameExtraStreams()
@@ -832,6 +835,14 @@ void VideoManager::_nameExtraStreams()
             if (!_videoStopped && (stream.camera == camera) && _tileStream(stream.streamInfo)) {
                 streamIds.append(stream.streamInfo->streamID());
             }
+        }
+        // A thermal stream is never its camera's current one, whichever source plays it.
+        const QGCVideoStreamInfo* const thermal = camera->thermalStreamInstance();
+        const auto plays = [thermal](const VideoStreamController* source) {
+            return (source->streamInfo() == thermal) && source->wantsStream();
+        };
+        if (thermal && (plays(_primaryStream) || plays(_thermalStream))) {
+            streamIds.append(thermal->streamID());
         }
         camera->setExtraStreams(streamIds);
     }
@@ -923,27 +934,43 @@ void VideoManager::_updateStreamInfo()
     if (cameras.removeOne(currentCamera)) {
         cameras.prepend(currentCamera);
     }
+    const auto advertised = [&cameras](QGCVideoStreamInfo* streamInfo, MavlinkCameraControlInterface* camera) {
+        const QString name = (cameras.size() > 1)
+                                 ? QStringLiteral("%1: %2").arg(camera->modelName(), streamInfo->name())
+                                 : streamInfo->name();
+        return AdvertisedStream{streamInfo, camera, name};
+    };
     QGCVideoStreamInfo* const currentStreamInfo = cameraManager->currentStreamInstance();
     AdvertisedStream current;
+    // The current camera's thermal stream, else that of the first other camera that has one: a sender that makes a
+    // camera of each of its streams, as mavlink-camera-manager does, has the thermal one on a camera of its own.
+    QGCVideoStreamInfo* thermal = nullptr;
     QList<AdvertisedStream> others;
     for (MavlinkCameraControlInterface* const camera : std::as_const(cameras)) {
+        if (!thermal) {
+            thermal = camera->thermalStreamInstance();
+        }
         QmlObjectListModel* const streams = camera->streams();
         for (int i = 0; streams && (i < streams->count()); ++i) {
             auto* const streamInfo = qobject_cast<QGCVideoStreamInfo*>(streams->get(i));
             if (!streamInfo || streamInfo->isThermal()) {
                 continue;
             }
-            const QString name = (cameras.size() > 1)
-                                     ? QStringLiteral("%1: %2").arg(camera->modelName(), streamInfo->name())
-                                     : streamInfo->name();
             if (streamInfo == currentStreamInfo) {
-                current = {streamInfo, camera, name};
+                current = advertised(streamInfo, camera);
             } else {
-                others.append({streamInfo, camera, name});
+                others.append(advertised(streamInfo, camera));
             }
         }
     }
-    _setAdvertisedStreams(current, cameraManager->thermalStreamInstance(), others);
+    // A current camera that advertises thermal streams only has its thermal stream as the main picture, with none
+    // over it.
+    QGCVideoStreamInfo* const ownThermal = currentCamera ? currentCamera->thermalStreamInstance() : nullptr;
+    if (!currentStreamInfo && ownThermal) {
+        current = advertised(ownThermal, currentCamera);
+        thermal = nullptr;
+    }
+    _setAdvertisedStreams(current, thermal, others);
 }
 
 void VideoManager::_setAdvertisedStreams(const AdvertisedStream& current, QGCVideoStreamInfo* thermal,
