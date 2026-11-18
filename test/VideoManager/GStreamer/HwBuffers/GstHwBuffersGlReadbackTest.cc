@@ -25,6 +25,7 @@
 #include "GstQgcFrameMap.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "gstqgc/GstQgcGpuBin.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <fcntl.h>
