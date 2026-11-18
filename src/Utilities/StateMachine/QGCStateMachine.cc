@@ -38,17 +38,6 @@ QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, Q
     });
 }
 
-QString QGCStateMachine::currentStateName() const
-{
-    const auto activeStates = configuration();
-    if (activeStates.isEmpty()) {
-        return QString();
-    }
-    // Return the name of the first (deepest) active state
-    QAbstractState* active = *activeStates.begin();
-    return active ? active->objectName() : QString();
-}
-
 void QGCStateMachine::start()
 {
     if (_inProgress) {
@@ -205,23 +194,14 @@ void QGCStateMachine::restart()
 // Transition Helpers
 // -----------------------------------------------------------------------------
 
-QSignalTransition* QGCStateMachine::addTransition(QState* from, const char* signal, QAbstractState* to,
-                                                  QAbstractAnimation* animation)
+QSignalTransition* QGCStateMachine::addTransition(QState* from, const char* signal, QAbstractState* to)
 {
-    auto* transition = from->QState::addTransition(from, signal, to);
-    if (animation) {
-        transition->addAnimation(animation);
-    }
-    return transition;
+    return from->QState::addTransition(from, signal, to);
 }
 
-MachineEventTransition* QGCStateMachine::addEventTransition(QState* from, const QString& eventName, QAbstractState* to,
-                                                            QAbstractAnimation* animation)
+MachineEventTransition* QGCStateMachine::addEventTransition(QState* from, const QString& eventName, QAbstractState* to)
 {
     auto* transition = new MachineEventTransition(eventName, to);
-    if (animation) {
-        transition->addAnimation(animation);
-    }
     from->addTransition(transition);
     return transition;
 }
@@ -258,16 +238,6 @@ void QGCStateMachine::_onStateEntered()
 {
     auto* state = qobject_cast<QAbstractState*>(sender());
     if (!state) return;
-
-    QString stateName = state->objectName();
-    if (!stateName.isEmpty()) {
-        _stateHistory.append(stateName);
-        while (_stateHistory.size() > _stateHistoryLimit) {
-            _stateHistory.removeFirst();
-        }
-        emit stateHistoryChanged();
-        emit currentStateNameChanged();
-    }
 
     int index = _progressStates.indexOf(state);
     if (index >= 0 && index != _progressCurrentIndex) {

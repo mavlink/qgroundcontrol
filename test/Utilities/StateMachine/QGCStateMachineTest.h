@@ -19,16 +19,12 @@ private slots:
     void _testSetInitialStateStartsMachine();
     UT_PARAMETERIZED_TEST(_testMachineAsStateOfAnotherMachine);
 
-    // Property assignment
-    void _testPropertyAssignment();
-
     // Transition builders
     void _testTransitionBuildersTakeSignalOfDerivedState();
 
-    // Progress and state history
+    // Progress
     void _testProgressTrackingWithSubProgress();
     UT_PARAMETERIZED_TEST(_testRepeatedRestartRequests);
     UT_PARAMETERIZED_TEST(_testRestartResetsProgress);
     void _testRestartWhenFinishedResetsProgress();
-    void _testStateHistoryLimit();
 };

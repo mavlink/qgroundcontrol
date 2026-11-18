@@ -337,39 +337,6 @@ void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine()
     QCOMPARE(nestedInProgressSpy.count(), 2);
 }
 
-void QGCStateMachineTest::_testPropertyAssignment()
-{
-    QGCStateMachine machine(QStringLiteral("PropTest"), nullptr);
-    machine.setGlobalRestorePolicy(QState::RestoreProperties);
-
-    QObject target;
-    target.setProperty("testProp", 0);
-
-    // Use a state that doesn't transition immediately so we can verify property
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    state1->setProperty(&target, "testProp", 42);
-
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = addFinalState(&machine);
-
-    // Use event-based transitions instead of entered signal
-    machine.addEventTransition(state1, QStringLiteral("next"), state2);
-    state2->addTransition(state2, &QState::entered, finalState);
-
-    machine.setInitialState(state1);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    QVERIFY(startAndWaitForEntered(&machine, state1));
-    QCOMPARE(target.property("testProp").toInt(), 42);
-
-    machine.postEvent(QStringLiteral("next"));
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-    // Property should be restored after leaving state1
-    QCOMPARE(target.property("testProp").toInt(), 0);
-}
-
 // -----------------------------------------------------------------------------
 // Transition Builder Tests
 // -----------------------------------------------------------------------------
@@ -591,46 +558,6 @@ void QGCStateMachineTest::_testRestartWhenFinishedResetsProgress()
     machine.setSubProgress(0.5f);
     QCOMPARE(progressSpy.count(), 1);
     QCOMPARE(machine.progress(), 0.5f);
-}
-
-void QGCStateMachineTest::_testStateHistoryLimit()
-{
-    QGCStateMachine machine(QStringLiteral("StateHistoryLimitTest"), nullptr);
-
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-    auto* finalState = machine.addFinalState();
-
-    machine.addEventTransition(state1, QStringLiteral("toState2"), state2);
-    machine.addEventTransition(state2, QStringLiteral("toState3"), state3);
-    machine.addEventTransition(state3, QStringLiteral("finish"), finalState);
-    machine.setStateHistoryLimit(2);
-    machine.setProgressWeights({{state1, 1}, {state2, 1}, {state3, 1}});
-    machine.setInitialState(state1);
-
-    QSignalSpy state2EnteredSpy(state2, &QState::entered);
-    QSignalSpy state3EnteredSpy(state3, &QState::entered);
-    QSignalSpy historySpy(&machine, &QGCStateMachine::stateHistoryChanged);
-    QSignalSpy currentStateNameSpy(&machine, &QGCStateMachine::currentStateNameChanged);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    QVERIFY(startAndWaitForEntered(&machine, state1));
-    machine.postEvent(QStringLiteral("toState2"));
-    QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
-    machine.postEvent(QStringLiteral("toState3"));
-    QVERIFY(spyTriggered(state3EnteredSpy, TestTimeout::shortMs()));
-
-    const QStringList history = machine.stateHistory();
-    QCOMPARE(history.size(), 2);
-    QCOMPARE(history.at(0), QStringLiteral("State2"));
-    QCOMPARE(history.at(1), QStringLiteral("State3"));
-    QVERIFY(historySpy.count() >= 3);
-    QCOMPARE(currentStateNameSpy.count(), 3);
-    QCOMPARE(machine.currentStateName(), QStringLiteral("State3"));
-
-    machine.postEvent(QStringLiteral("finish"));
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
 }
 
 UT_REGISTER_TEST(QGCStateMachineTest, TestLabel::Unit, TestLabel::Utilities)

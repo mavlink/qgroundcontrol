@@ -4,7 +4,6 @@
 #include <functional>
 #include <type_traits>
 
-#include <QtCore/QAbstractAnimation>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtStateMachine/QStateMachine>
@@ -44,17 +43,11 @@ class QGCStateMachine : public QStateMachine
     Q_OBJECT
     Q_DISABLE_COPY(QGCStateMachine)
 
-    /// Name of the currently active state (for QML binding)
-    Q_PROPERTY(QString currentStateName READ currentStateName NOTIFY currentStateNameChanged)
-
     /// Current progress from 0.0 to 1.0 (for QML binding)
     Q_PROPERTY(float progress READ progress NOTIFY progressUpdate)
 
     /// Whether the machine is in progress (for QML binding)
     Q_PROPERTY(bool inProgress READ inProgress NOTIFY inProgressChanged)
-
-    /// List of recent state names for history display (for QML binding)
-    Q_PROPERTY(QStringList stateHistory READ stateHistory NOTIFY stateHistoryChanged)
 
 public:
     QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent = nullptr);
@@ -72,17 +65,6 @@ public:
 
     /// Use start() and stop() instead: setRunning() calls QStateMachine::start() and bypasses start()
     void setRunning(bool running) = delete;
-
-    /// Get the name of the currently active state
-    /// @return State name or empty string if not running
-    QString currentStateName() const;
-
-    /// Get a list of recent state names (limited history for QML display)
-    /// @return List of state names, most recent last
-    QStringList stateHistory() const { return _stateHistory; }
-
-    /// Set the maximum number of state history entries to keep
-    void setStateHistoryLimit(int limit) { _stateHistoryLimit = limit; }
 
     // -------------------------------------------------------------------------
     // Event Handling
@@ -176,21 +158,15 @@ public:
     /// @param from Source state, which emits the signal
     template <typename Func>
         requires std::derived_from<SignalSourceState<Func>, QState>
-    QSignalTransition* addTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
-                                     QAbstractAnimation* animation = nullptr)
+    QSignalTransition* addTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to)
     {
         // Qualified, because a source state that is a QGCStateMachine has this function in place of QState's
-        auto* transition = from->QState::addTransition(from, signal, to);
-        if (animation) {
-            transition->addAnimation(animation);
-        }
-        return transition;
+        return from->QState::addTransition(from, signal, to);
     }
 
     /// @overload
     /// @param signal Signal that triggers the transition, by name as SIGNAL() gives it
-    QSignalTransition* addTransition(QState* from, const char* signal, QAbstractState* to,
-                                     QAbstractAnimation* animation = nullptr);
+    QSignalTransition* addTransition(QState* from, const char* signal, QAbstractState* to);
 
     /// Create a guarded transition between states
     /// @param from Source state, which emits the signal
@@ -198,20 +174,16 @@ public:
     template <typename Func>
         requires std::derived_from<SignalSourceState<Func>, QState>
     GuardedTransition* addGuardedTransition(SignalSourceState<Func>* from, Func signal, QAbstractState* to,
-                                            GuardedTransition::Guard guard, QAbstractAnimation* animation = nullptr)
+                                            GuardedTransition::Guard guard)
     {
         auto* transition = new GuardedTransition(from, signal, to, std::move(guard));
         from->QState::addTransition(transition);
-        if (animation) {
-            transition->addAnimation(animation);
-        }
         return transition;
     }
 
     /// Create a machine event transition
     /// @param eventName Event name to match
-    MachineEventTransition* addEventTransition(QState* from, const QString& eventName, QAbstractState* to,
-                                               QAbstractAnimation* animation = nullptr);
+    MachineEventTransition* addEventTransition(QState* from, const QString& eventName, QAbstractState* to);
 
     /// Create a retry transition that retries an action before advancing
     /// @param from Source state, which emits the signal
@@ -272,14 +244,8 @@ signals:
     /// @param progress Overall progress from 0.0 to 1.0
     void progressUpdate(float progress);
 
-    /// Emitted when the current state changes (for QML binding)
-    void currentStateNameChanged();
-
     /// Emitted when inProgress() changes (for QML binding)
     void inProgressChanged();
-
-    /// Emitted when the state history changes (for QML binding)
-    void stateHistoryChanged();
 
 protected:
     void onEntry(QEvent* event) override;
@@ -301,10 +267,6 @@ private:
     int _progressCurrentIndex = -1;
     float _progressSubProgress = 0.0f;
     float _progressLastEmitted = 0.0f;
-
-    // QML state history
-    QStringList _stateHistory;
-    int _stateHistoryLimit = 20;
 };
 
 /// @return The QGCStateMachine that @p state belongs to, nullptr if it belongs to another kind of machine or to none

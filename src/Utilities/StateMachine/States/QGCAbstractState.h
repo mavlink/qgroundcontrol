@@ -20,7 +20,6 @@ class Vehicle;
 /// - You need to add outgoing transitions using addTransition()
 /// - You need child states (hierarchical state machine)
 /// - You need local error state handling (setLocalErrorState())
-/// - You need property assignment support
 ///
 /// ## Notes
 /// - Local error-state helpers are not provided; use registerState() for global error handling.

@@ -10,7 +10,6 @@ Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 ///
 /// Extends QGCAbstractState with:
 /// - Local per-state error handling (setLocalErrorState)
-/// - Property assignment support (setProperty, setEnabled, setVisible)
 /// - Convenience transition helper (addThisTransition)
 ///
 /// Use QGCAbstractState when you only need callback-driven entry/exit.
@@ -38,23 +37,6 @@ public:
 
     /// Get the per-state error state (nullptr if using global)
     QAbstractState* localErrorState() const { return _localErrorState; }
-
-    // -------------------------------------------------------------------------
-    // Property Assignment
-    // -------------------------------------------------------------------------
-
-    /// Assign a property value when this state is entered
-    /// If RestoreProperties policy is set on the machine, the value is restored on exit
-    /// @param object The QObject to modify
-    /// @param name The property name
-    /// @param value The value to assign
-    void setProperty(QObject* object, const char* name, const QVariant& value);
-
-    /// Convenience overload for setting enabled state on widgets/controls
-    void setEnabled(QObject* object, bool enabled);
-
-    /// Convenience overload for setting visible state on widgets/controls
-    void setVisible(QObject* object, bool visible);
 
 protected:
     /// @return vehicle(). Without one, a warning that names the state is logged to @a category, for a state that

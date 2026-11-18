@@ -25,18 +25,3 @@ Vehicle* QGCState::vehicleOrWarn(const QLoggingCategory& (*category)()) const
     }
     return stateVehicle;
 }
-
-void QGCState::setProperty(QObject* object, const char* name, const QVariant& value)
-{
-    assignProperty(object, name, value);
-}
-
-void QGCState::setEnabled(QObject* object, bool enabled)
-{
-    assignProperty(object, "enabled", enabled);
-}
-
-void QGCState::setVisible(QObject* object, bool visible)
-{
-    assignProperty(object, "visible", visible);
-}
