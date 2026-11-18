@@ -290,6 +290,8 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "gstreamer1-plugins-bad-free",
         "gstreamer1-plugins-ugly",
         "gstreamer1-libav",
+        # RPM Fusion: Fedora's own libavcodec has no H.264 or H.265 decoder for the libav plugin.
+        "libavcodec-freeworld",
         "blas",
         "openblas",
         "python3-gobject",
