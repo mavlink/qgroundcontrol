@@ -25,7 +25,8 @@
 /// change (a new resolution or profile), where the running file ends and the other begins. A failing recorder (disk
 /// full, storage too slow to keep up) ends the recording, not the stream: its queue holds kQueueMaxBytes of backlog
 /// and then stops taking frames rather than holding up the tee and with it the display. A finalized file is synced
-/// to the disk before it is reported closed.
+/// to the disk before it is reported closed. A recording that is stopped ends behind the frames its queue still
+/// holds, which it has kFinalizeTimeout more to take.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -60,7 +61,7 @@ public:
     };
 
     /// How long a recording may take to finalize, its last sync to the disk included, before it is closed anyway;
-    /// covers slow storage.
+    /// covers slow storage. A stopped recording first has as long to take the frames its queue still holds.
     static constexpr std::chrono::seconds kFinalizeTimeout{3};
     /// Backlog the recording queue holds for slow storage before the recording gives up.
     static constexpr guint64 kQueueMaxBytes = 64 * 1024 * 1024;
@@ -118,6 +119,7 @@ private:
     {
         Idle,
         Recording,
+        Draining,    ///< Stopped: the frames its queue holds go into the file, up to the mark sent in behind them.
         Finalizing,  ///< EOS sent into the recorder, or its start failed; waiting for its EOS or ERROR.
     };
 
@@ -130,6 +132,11 @@ private:
     void _onSwitchKeyframe(quint64 hold);
     /// Lets a held keyframe or change of caps go and stops waiting for a keyframe.
     void _releaseSwitchHold();
+    /// Ends a stopped recording behind the frames its queue holds: marks the end there, and lets the file take what
+    /// is ahead of the mark before _end().
+    void _drain();
+    /// The end mark of recording @p recording came out of the queue: its file has every frame queued before the stop.
+    void _onDrained(quint64 recording);
     /// Finishes the current recording: drains its file through EOS, or drops it without a frame. @p failure ends the
     /// request with that error once the file is closed.
     void _end(const QString& failure = QString());
@@ -154,6 +161,7 @@ private:
     static GstPadProbeReturn _startProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static GstPadProbeReturn _capsProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static GstPadProbeReturn _switchProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
+    static GstPadProbeReturn _drainProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static void _onQueueOverrun(GstElement* queue, gpointer data);
 
     const BranchContext _context;
@@ -179,6 +187,8 @@ private:
     GStreamer::PadProbe _startWatch;
     /// On the valve's input: has the valve's output held at a change of the stream's caps once the file started.
     GStreamer::PadProbe _capsWatch;
+    /// On the valve's input while Draining: closes the valve at the end mark.
+    GStreamer::PadProbe _drainWatch;
     /// The probe that blocks the valve's output at a change of caps, 0 without one; set by the caps probe, and
     /// removed by _releaseSwitchHold() once what follows the file is started, or nothing does.
     std::atomic<gulong> _capsHold = 0;

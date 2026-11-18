@@ -123,6 +123,14 @@ GstPadProbeReturn syncAtEnd(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]]
     return GST_PAD_PROBE_OK;
 }
 
+/// The custom downstream event that marks, in the recording's queue, where a stopped recording ends.
+constexpr char kEndMark[] = "qgc-recording-end";
+
+bool isEndMark(GstEvent* event)
+{
+    return event && (GST_EVENT_TYPE(event) == GST_EVENT_CUSTOM_DOWNSTREAM) && gst_event_has_name(event, kEndMark);
+}
+
 /// The data of a probe that reports to its recording: which one that is.
 struct RecordingWatch
 {
@@ -288,7 +296,7 @@ RecordingBranch::RecordingBranch(const BranchContext& context, Listener& listene
     _finalizeTimer.setSingleShot(true);
     _finalizeTimer.setInterval(kFinalizeTimeout);
     (void) QObject::connect(&_finalizeTimer, &QTimer::timeout, &_finalizeTimer, [this]() {
-        if (_state == State::Finalizing) {
+        if ((_state == State::Finalizing) || (_state == State::Draining)) {
             warnNotFinalized();
             _finish(notFinalizedError());
         }
@@ -331,6 +339,7 @@ void RecordingBranch::reset()
     _keyframeWatch.remove();
     _startWatch.remove();
     _capsWatch.remove();
+    _drainWatch.remove();
     _releaseSwitchHold();
     if (_fileSink) {
         GStreamer::flushAndDisposeChild(_fileSink.get());
@@ -371,10 +380,13 @@ void RecordingBranch::_reconcile()
                 } else {
                     _switchAtKeyframe();
                 }
+            } else if (!_requested && _fileStarted.load(std::memory_order_acquire)) {
+                _drain();
             } else {
                 _end();
             }
             break;
+        case State::Draining:
         case State::Finalizing:
             break;
     }
@@ -498,9 +510,46 @@ void RecordingBranch::_releaseSwitchHold()
     }
 }
 
+void RecordingBranch::_drain()
+{
+    // No file follows: what is held for a switch goes into this one, and nothing more is held or asked of it.
+    _capsWatch.remove();
+    _releaseSwitchHold();
+    _watchTimer.stop();
+    _state = State::Draining;
+
+    const quint64 recording = _recording.load(std::memory_order_relaxed);
+    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "sink"));
+    if (!_drainWatch.add(valveSink.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _drainProbe,
+                         new RecordingWatch{.branch = this, .recording = recording},
+                         [](gpointer watch) { delete static_cast<RecordingWatch*>(watch); })) {
+        qCWarning(GstVideoReceiverLog) << "Unable to mark the recording's end;"
+                                       << "the frames still queued are not recorded";
+        _end();
+        return;
+    }
+    // Closing the valve now would drop the backlog the queue holds for slow storage. The mark is serialized with the
+    // frames, so sending it waits for the tee's streaming thread: not sent from here.
+    const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
+    GStreamer::sendEventAsync(
+        queueSink.get(),
+        gst_event_new_custom(GST_EVENT_CUSTOM_DOWNSTREAM,
+                             gst_structure_new(kEndMark, "recording", G_TYPE_UINT64, recording, nullptr)));
+    // Storage too slow to take the backlog in that time loses it, and the file is reported as not finalized.
+    _finalizeTimer.start();
+}
+
+void RecordingBranch::_onDrained(quint64 recording)
+{
+    if ((_state != State::Draining) || (recording != _recording.load(std::memory_order_relaxed))) {
+        return;
+    }
+    _end();
+}
+
 void RecordingBranch::_end(const QString& failure)
 {
-    if (_state != State::Recording) {
+    if ((_state != State::Recording) && (_state != State::Draining)) {
         return;
     }
     if (!failure.isEmpty()) {
@@ -508,6 +557,7 @@ void RecordingBranch::_end(const QString& failure)
     }
 
     _head.close();
+    _drainWatch.remove();
     _keyframeWatch.remove();
     _watchTimer.stop();
 
@@ -537,6 +587,7 @@ void RecordingBranch::_finish(const QString& error, bool fileClosed)
     _keyframeWatch.remove();
     _startWatch.remove();
     _capsWatch.remove();
+    _drainWatch.remove();
     _head.close();
 
     if (_fileSink) {
@@ -586,7 +637,8 @@ bool RecordingBranch::beginTeardown()
     // nothing more is held: no file follows.
     _capsWatch.remove();
     _releaseSwitchHold();
-    if (_state != State::Recording) {
+    // A recording being drained ends with the EOS as well: the valve lets it through behind the end mark.
+    if ((_state != State::Recording) && (_state != State::Draining)) {
         return finalizing();
     }
 
@@ -660,7 +712,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
     if (!_fromRecorder(GST_MESSAGE_SRC(forwarded.get()))) {
         return;
     }
-    if (_state == State::Recording) {
+    if ((_state == State::Recording) || (_state == State::Draining)) {
         // The stream's own EOS came through the open valve. Nothing more will stream through this pipeline, so the
         // request waits for the next one rather than start over in the file just closed.
         _streaming = false;
@@ -822,6 +874,10 @@ GstPadProbeReturn RecordingBranch::_capsProbe(GstPad* pad, GstPadProbeInfo* info
     const auto* const watch = static_cast<const RecordingWatch*>(data);
     RecordingBranch* const self = watch->branch;
     GstEvent* const event = gst_pad_probe_info_get_event(info);
+    if (isEndMark(event)) {
+        // Of a recording that was closed before its queue let the mark go.
+        return GST_PAD_PROBE_DROP;
+    }
     // Until its file starts the recorder takes the caps as they come, and one change is held at a time.
     if (!event || (GST_EVENT_TYPE(event) != GST_EVENT_CAPS) || !self->_fileStarted.load(std::memory_order_acquire) ||
         (self->_capsHold.load(std::memory_order_acquire) != 0)) {
@@ -867,6 +923,26 @@ GstPadProbeReturn RecordingBranch::_switchProbe([[maybe_unused]] GstPad* pad, Gs
     self->_context.post([self, hold]() { self->_onSwitchKeyframe(hold); });
     // Blocks, with the keyframe, until the probe is removed.
     return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn RecordingBranch::_drainProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    GstEvent* const event = gst_pad_probe_info_get_event(info);
+    if (!isEndMark(event)) {
+        return GST_PAD_PROBE_OK;
+    }
+    const auto* const watch = static_cast<const RecordingWatch*>(data);
+    guint64 recording = 0;
+    if (gst_structure_get_uint64(gst_event_get_structure(event), "recording", &recording) &&
+        (recording == watch->recording)) {
+        // Every frame queued ahead of the mark is in the recorder; what follows isn't the file's.
+        if (const GStreamer::GstElementPtr valve = GStreamer::adoptElement(gst_pad_get_parent_element(pad))) {
+            g_object_set(valve.get(), "drop", TRUE, nullptr);
+        }
+        RecordingBranch* const self = watch->branch;
+        self->_context.post([self, recording]() { self->_onDrained(recording); });
+    }
+    return GST_PAD_PROBE_DROP;
 }
 
 void RecordingBranch::_onQueueOverrun(GstElement* queue, gpointer data)

@@ -569,6 +569,52 @@ void GstVideoReceiverRecordingTest::_testSlowRecordingDoesNotStallDisplay()
     QCOMPARE(stream.receiver->state(), State::Streaming);
 }
 
+void GstVideoReceiverRecordingTest::_testStopRecordsFramesStillQueued()
+{
+    Receiver stream;
+    // Opened before the receiver goes, so a failing test can't leave the recorder held.
+    const auto gate = std::make_shared<Gate>();
+    const auto releaseGate = qScopeGuard([gate] { gate->release(); });
+
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    QVERIFY(stream.record(_tempDir->filePath(QStringLiteral("stopped.mkv")), FileFormat::Mkv));
+
+    // Frames into the recording's queue, and out of its valve into the recorder.
+    std::atomic<int> queued{0};
+    std::atomic<int> recorded{0};
+    GStreamer::PadProbe queuedProbe;
+    GStreamer::PadProbe recordedProbe;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&](GstElement* pipeline) {
+        const GStreamer::GstElementPtr queue = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "queue");
+        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(queue.get(), "sink"));
+        (void) queuedProbe.add(queueSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &queued);
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "valve");
+        const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
+        (void) recordedProbe.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &recorded);
+    }));
+
+    // Storage that takes nothing for a while: the frames wait in the queue.
+    QVERIFY(stream.blockRecorder(gate));
+    QVERIFY(gate->waitUntilReached(TestTimeout::mediumDuration()));
+    QVERIFY_TRUE_WAIT(queued.load(std::memory_order_relaxed) >= (recorded.load(std::memory_order_relaxed) + kFrameRate),
+                      TestTimeout::mediumMs());
+
+    stream.receiver->stopRecording();
+    // The worker got to the request.
+    QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement*) {}));
+    const int queuedAtStop = queued.load(std::memory_order_relaxed);
+    QVERIFY(recorded.load(std::memory_order_relaxed) < queuedAtStop);
+    QVERIFY(stream.recordingFinishedSpy.isEmpty());
+
+    // The file ends behind what was queued when it was stopped, and is finalized.
+    gate->release();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY2(Receiver::lastFinished(stream.recordingFinishedSpy, 1).isEmpty(),
+             qPrintable(Receiver::lastFinished(stream.recordingFinishedSpy, 1)));
+    QVERIFY(recorded.load(std::memory_order_relaxed) >= queuedAtStop);
+}
+
 void GstVideoReceiverRecordingTest::_testDeactivateFinishesRecording()
 {
     Receiver stream;
