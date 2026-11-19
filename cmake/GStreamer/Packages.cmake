@@ -25,7 +25,7 @@ function(qgc_gst_get_package_url platform version output_var)
     set(_url_macos_devel "${_base}/data/pkg/macos/${version}/gstreamer-1.0-devel-${version}-universal.pkg")
 
     if(platform MATCHES "^windows_msvc_(x64|arm64)$")
-        # The MSVC installers are named by architecture (from 1.28 on, gstreamer.version.bundled_minimum).
+        # The MSVC installers are named by architecture.
         if(CMAKE_MATCH_1 STREQUAL "x64")
             set(_arch "x86_64")
         else()
@@ -58,128 +58,36 @@ function(qgc_gst_get_s3_mirror_url platform version output_var)
     )
 endfunction()
 
-# qgc_gst_get_fallback_checksum(<platform> <version> <output_var>)
-# Sets <output_var> to "SHA256=<hex>" pinned at gstreamer.checksums.<version>.<platform> in build-config.json, or ""
-# when the package is not pinned.
-function(qgc_gst_get_fallback_checksum platform version output_var)
+# qgc_gst_get_pinned_checksum(<platform> <version> <output_var>)
+# Sets <output_var> to "SHA256=<hex>", the checksum pinned at gstreamer.checksums.<version>.<platform> in
+# build-config.json and the only one a package is verified against. Fails configure when the package is not pinned.
+function(qgc_gst_get_pinned_checksum platform version output_var)
     qgc_config_read(_hash OPTIONAL gstreamer checksums ${version} ${platform})
-    set(_checksum "")
-    if(_hash)
-        set(_checksum "SHA256=${_hash}")
-    endif()
-    set(${output_var}
-        "${_checksum}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# qgc_gst_fetch_checksum(<platform> <version> <output_var>)
-# Sets <output_var> to the checksum to verify the package against: the pinned one, else the upstream .sha256sum
-# sidecar, else "" (unverified). Without a pin, GStreamer_REQUIRE_CHECKSUM fails configure.
-function(qgc_gst_fetch_checksum platform version output_var)
-    # The in-tree pin is authoritative and the download is verified against it, so the
-    # same-origin .sha256sum sidecar is only fetched for unpinned SDKs.
-    qgc_gst_get_fallback_checksum(${platform} ${version} _pinned_hash)
-    if(_pinned_hash)
-        set(${output_var}
-            "${_pinned_hash}"
-            PARENT_SCOPE
-        )
-        return()
-    endif()
-    # A same-origin sidecar proves nothing against a bad mirror/MITM.
-    if(GStreamer_REQUIRE_CHECKSUM)
+    if(NOT _hash)
         message(
             FATAL_ERROR
-                "GStreamer: no trusted (in-tree pinned) checksum for ${platform} ${version}; "
-                "the upstream same-origin .sha256sum sidecar cannot satisfy "
-                "GStreamer_REQUIRE_CHECKSUM=ON. Pin the hash in .github/build-config.json "
-                "(gstreamer.checksums.${version}.${platform}) or set GStreamer_REQUIRE_CHECKSUM=OFF."
+                "GStreamer: no checksum is pinned for the ${platform} ${version} package. Add "
+                "gstreamer.checksums.${version}.${platform} to .github/build-config.json, or point "
+                "GStreamer_ROOT_DIR at an installed SDK."
         )
     endif()
-
-    qgc_gst_get_package_url(${platform} ${version} _pkg_url)
-
-    set(_checksum_url "${_pkg_url}.sha256sum")
-    string(SHA256 _url_hash "${_checksum_url}")
-    # CMake regex has no {n} quantifier.
-    string(REPEAT "[0-9a-fA-F]" 64 _sha256_hex)
-    # A cached sidecar that does not parse is fetched again once.
-    foreach(_round RANGE 1 2 1)
-        qgc_resilient_download(
-            FILENAME
-            "${_url_hash}.sha256sum"
-            DESTINATION_DIR
-            "${CMAKE_BINARY_DIR}/_deps/checksums"
-            RESULT_VAR
-            _checksum_file
-            URLS
-            "${_checksum_url}"
-            RETRIES
-            3
-            RETRY_BACKOFF
-            0
-            TIMEOUT
-            30
-            INACTIVITY_TIMEOUT
-            10
-            ALLOW_FAILURE
-            LOG_TAG
-            GStreamer
-        )
-        if(NOT _checksum_file)
-            break()
-        endif()
-        file(READ "${_checksum_file}" _content)
-        if(_content MATCHES "(${_sha256_hex})")
-            message(
-                WARNING
-                    "GStreamer: using same-origin .sha256sum sidecar for ${platform} ${version}; "
-                    "this detects corruption only, NOT supply-chain tampering. Pin the hash in "
-                    ".github/build-config.json for authenticity."
-            )
-            set(${output_var}
-                "SHA256=${CMAKE_MATCH_1}"
-                PARENT_SCOPE
-            )
-            return()
-        endif()
-        message(STATUS "GStreamer: Could not parse checksum for ${platform} ${version}")
-        file(REMOVE "${_checksum_file}")
-    endforeach()
-
-    message(
-        WARNING
-            "GStreamer: no usable checksum sidecar for ${platform} ${version}; the SDK will be used WITHOUT "
-            "integrity verification — supply-chain authenticity is NOT guaranteed. Only proceed on a "
-            "trusted network/mirror. (GStreamer_REQUIRE_CHECKSUM=ON makes this a hard error.)"
-    )
     set(${output_var}
-        ""
+        "SHA256=${_hash}"
         PARENT_SCOPE
     )
 endfunction()
 
-# _qgc_gst_download_archive(<platform> <version> <filename> <dir> <hash_out>)
+# _qgc_gst_download_archive(<platform> <version> <filename> <dir>)
 # Downloads the <version> SDK package for <platform> (upstream, else the QGC S3 mirror) to <dir>/<filename>, reusing a
-# cached copy that matches its checksum, and sets <hash_out> to the "SHA256=<hex>" it was verified against, or "" when
-# it is unverified. The mirror's copy is held to the same checksum. A failed download fails configure.
-function(_qgc_gst_download_archive platform version filename dir hash_out)
+# cached copy that matches its pinned checksum. The mirror's copy is held to the same checksum. A failed download fails
+# configure.
+function(_qgc_gst_download_archive platform version filename dir)
     qgc_gst_get_package_url("${platform}" "${version}" _url)
     qgc_gst_get_s3_mirror_url("${platform}" "${version}" _s3_url)
-    qgc_gst_fetch_checksum("${platform}" "${version}" _hash)
-    set(_hash_args "")
-    if(_hash)
-        set(_hash_args EXPECTED_HASH "${_hash}")
-    endif()
+    qgc_gst_get_pinned_checksum("${platform}" "${version}" _hash)
 
     # The SDKs are large (the Android universal tarball is ~1 GB), so the wall-clock cap is generous and the
-    # inactivity timeout catches stalls. QGC_GST_DOWNLOAD_TIMEOUT, not QGC_DOWNLOAD_TIMEOUT, tunes the cap.
-    set(_timeout 1200)
-    if(NOT "${QGC_GST_DOWNLOAD_TIMEOUT}" STREQUAL "")
-        set(_timeout "${QGC_GST_DOWNLOAD_TIMEOUT}")
-    endif()
-
+    # inactivity timeout catches stalls.
     qgc_resilient_download(
         FILENAME
         "${filename}"
@@ -191,15 +99,12 @@ function(_qgc_gst_download_archive platform version filename dir hash_out)
         ${_url}
         ${_s3_url}
         TIMEOUT
-        ${_timeout}
+        1200
         LOG_TAG
         GStreamer
         FAILURE_HINT
         "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR."
-        ${_hash_args}
-    )
-    set(${hash_out}
+        EXPECTED_HASH
         "${_hash}"
-        PARENT_SCOPE
     )
 endfunction()

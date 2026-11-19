@@ -105,7 +105,7 @@ qgc_test_pass("a pinned tree is used without its archive")
 
 # Either way the SDK's notice and SBOM entry name the package it came from.
 qgc_gst_get_package_url(android ${_version} _url)
-qgc_gst_get_fallback_checksum(android ${_version} _pin)
+qgc_gst_get_pinned_checksum(android ${_version} _pin)
 string(REPLACE "SHA256=" "" _pin "${_pin}")
 qgc_test_assert_streq("recorded package" "${_url}|${_pin}" "$CACHE{QGC_GST_RESOLVED_PACKAGES}")
 qgc_test_pass("acquired package recorded")

@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
-from common.build_config import get_build_config_value, get_gstreamer_version
+from common.build_config import get_gstreamer_version
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
 from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
 from common.markdown import code_span, md_table, summary_section
@@ -49,20 +49,10 @@ class Artifact:
         return f"dependencies/gstreamer/{self.s3_dir}/{self.filename}"
 
 
-def _version_tuple(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in version.split(".") if part.isdigit())
-
-
-def artifacts_for(platform: str, version: str, minimum: str | None = None) -> list[Artifact]:
-    """Return the upstream artifact(s) to mirror for *platform* at *version*.
-
-    *minimum* defaults to build-config.json's ``gstreamer.version.bundled_minimum``, the oldest SDK the build accepts.
-    """
+def artifacts_for(platform: str, version: str) -> list[Artifact]:
+    """Return the upstream artifact(s) to mirror for *platform* at *version*."""
     if platform not in PLATFORM_PACKAGES:
         raise ValueError(f"Unknown platform: {platform!r}")
-    minimum = minimum or get_build_config_value("gstreamer.version.bundled_minimum")
-    if minimum and _version_tuple(version) < _version_tuple(minimum):
-        raise ValueError(f"GStreamer SDKs require version >= {minimum} (got {version!r})")
     return [
         Artifact(package, package_url(package, version), package_platform(package))
         for package in PLATFORM_PACKAGES[platform]

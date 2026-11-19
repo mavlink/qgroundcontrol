@@ -49,14 +49,6 @@ def test_windows_has_both_arches() -> None:
     ]
 
 
-@pytest.mark.parametrize("platform", ["windows", "android"])
-def test_rejects_versions_below_the_bundled_minimum(platform: str) -> None:
-    with pytest.raises(ValueError, match=r"require version >= 1\.28\.0"):
-        artifacts_for(platform, "1.26.5")
-    with pytest.raises(ValueError, match=r"require version >= 1\.29\.0"):
-        artifacts_for(platform, "1.28.3", minimum="1.29.0")
-
-
 @pytest.mark.parametrize(
     ("version", "filename"),
     [

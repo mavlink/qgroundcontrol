@@ -84,17 +84,7 @@ set(_gpu_paths
     VULKAN
 )
 list(TRANSFORM _gpu_paths PREPEND QGC_GST_ENABLE_)
-list(
-    APPEND
-    _kept
-    ${_gpu_paths}
-    QGC_GST_VERSION
-    QGC_GST_CUDA_STUB_DIR
-    QGC_GST_DOWNLOAD_TIMEOUT
-    QGC_GST_BUNDLE_PLUGINS
-    QGC_GST_USE_HOMEBREW
-    GStreamer_REQUIRE_CHECKSUM
-)
+list(APPEND _kept ${_gpu_paths} QGC_GST_CUDA_STUB_DIR QGC_GST_BUNDLE_PLUGINS QGC_GST_USE_HOMEBREW)
 # Returns <var>'s cache value, or "<unset>"; get_property handles names that ${} cannot (e.g. "::").
 function(_qgc_test_cache_value var out_var)
     set(_value "<unset>")

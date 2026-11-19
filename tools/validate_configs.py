@@ -37,16 +37,6 @@ def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> lis
     for platform, version in gst["version"].items():
         if Version(version) < Version(gst["version"]["minimum"]):
             errors.append(f"gstreamer.version.{platform} must meet the minimum")
-    # The official SDKs meet bundled_minimum (cmake/GStreamer/Orchestrator.cmake and GStreamerTest check it too);
-    # the Linux system floor stays older.
-    bundled_minimum = Version(gst["version"]["bundled_minimum"])
-    for platform in ("android", "ios", "macos", "windows"):
-        if Version(gst["version"][platform]) < bundled_minimum:
-            errors.append(f"gstreamer.version.{platform} must be at least {bundled_minimum}")
-    if Version(gst["version"]["minimum"]) >= bundled_minimum:
-        errors.append(
-            f"gstreamer.version.minimum must stay below {bundled_minimum} for system GStreamer"
-        )
     for platform, artifacts in {
         "android": ("android",),
         "windows": ("windows_msvc_x64", "windows_msvc_arm64"),

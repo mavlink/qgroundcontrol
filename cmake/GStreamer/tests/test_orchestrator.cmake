@@ -354,19 +354,11 @@ elseif(SCENARIO STREQUAL "reuse-auto-root")
         ${_expect}
         -DEXPECT_AUTO=TRUE
     )
-elseif(SCENARIO STREQUAL "version-override")
-    # QGC_GST_VERSION replaces build-config.json's version (here the fixture's 1.20.0 minimum).
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
+elseif(SCENARIO STREQUAL "sdk-too-old")
+    # The SDK must meet build-config.json's version, here the fixture's 1.20.0 minimum.
+    _qgc_write_fake_sdk("${_sdk_a}" 1.18.0)
     _qgc_configure_fails(
-        "SDK older than QGC_GST_VERSION" "gstreamer-1.0>=1.26.0" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
-        -DQGC_GST_VERSION=1.26.0
-    )
-elseif(SCENARIO STREQUAL "version-format")
-    # A partial version would only fail later, as a missing checksum pin or a 404 on the SDK package.
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
-    _qgc_configure_fails(
-        "QGC_GST_VERSION without a micro version" "QGC_GST_VERSION='1\\.24' is not a GStreamer release" --fresh
-        "-DGStreamer_ROOT_DIR=${_sdk_a}" -DQGC_GST_VERSION=1.24
+        "SDK older than the configured version" "gstreamer-1.0>=1.20.0" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
     )
 elseif(SCENARIO STREQUAL "missing-mandatory")
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0 OMIT gstreamer-rtsp-1.0)

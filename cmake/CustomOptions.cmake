@@ -111,18 +111,6 @@ set(GStreamer_ROOT_DIR
     ""
     CACHE PATH "GStreamer SDK to use; empty selects the system SDK or an auto-downloaded one"
 )
-set(QGC_GST_VERSION
-    ""
-    CACHE STRING
-          "GStreamer version to require (Linux) or download; empty uses gstreamer.version in .github/build-config.json"
-)
-# Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
-# Linux uses system pkg-config and never downloads, so ON is a no-op there.
-option(GStreamer_REQUIRE_CHECKSUM "Fail if an SDK download's checksum cannot be verified (set OFF to bypass)" ON)
-set(QGC_GST_DOWNLOAD_TIMEOUT
-    ""
-    CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)"
-)
 set(QGC_GST_CUDA_STUB_DIR
     ""
     CACHE PATH "Linux: directory with a cuda.h for the CUDA GPU path when no CUDA Toolkit is installed"

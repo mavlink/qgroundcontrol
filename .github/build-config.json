@@ -33,7 +33,6 @@
     "version": {
       "default": "1.28.8",
       "minimum": "1.20.0",
-      "bundled_minimum": "1.28.0",
       "android": "1.28.8",
       "ios": "1.28.8",
       "macos": "1.28.8",
