@@ -7,9 +7,11 @@ entry in .github/build-config.json that pins it.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from .build_config import load_build_config
+from .net import read_url_text
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -79,3 +81,15 @@ def pinned_checksum(version: str, package: str, *, config_file: Path | None = No
         return None
     value = checksums.get(version, {}).get(package)
     return str(value) if value else None
+
+
+def upstream_checksum(package: str, version: str) -> str:
+    """Return the SHA-256 in the ``.sha256sum`` file upstream publishes beside *package* at *version*.
+
+    Raises OSError when upstream has no such file and RuntimeError when it holds no SHA-256.
+    """
+    url = f"{package_url(package, version)}.sha256sum"
+    fields = read_url_text(url).split()
+    if not fields or not re.fullmatch(r"[0-9a-fA-F]{64}", fields[0]):
+        raise RuntimeError(f"{url} does not start with a SHA-256")
+    return fields[0].lower()

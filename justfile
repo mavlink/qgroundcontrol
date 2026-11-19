@@ -161,6 +161,10 @@ check-deps:
 check-gstreamer:
     {{ python }} ./tools/check_deps.py --gstreamer
 
+# Pin a GStreamer SDK release: its version and package checksums in build-config.json
+update-gstreamer VERSION:
+    {{ python }} ./tools/update_gstreamer.py {{ VERSION }}
+
 # Update translation sources (pass --check to only report tr() calls lupdate rejects)
 translations *ARGS:
     {{ python }} ./tools/translations/qgc_lupdate.py {{ ARGS }}

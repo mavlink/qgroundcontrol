@@ -59,6 +59,7 @@ tools/
 ├── moccache_launcher.py     # moccache entry point: the CMake AUTOMOC launcher and the stats/trim CLI
 ├── pre_commit.py            # Pre-commit runner with CI summaries
 ├── terrain_tiles.py         # Terrarium elevation tiles from Copernicus GLO-30 (GeoMap)
+├── update_gstreamer.py      # Pin a GStreamer SDK release (versions and package checksums) in build-config.json
 ├── update_px4_metadata.py   # Refresh the bundled PX4 airframe and parameter metadata
 ├── validate_cmake_presets.py # CMake presets against the locked cmake package's schema (hook)
 ├── validate_configs.py      # Cross-field checks for build-config.json and link exceptions
@@ -152,6 +153,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | `just info`              | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...)                  |
 | `just check-deps`        | Check Qt, GStreamer, Python, and build tool versions (`tools/check_deps.py`)                          |
 | `just check-gstreamer`   | Check the latest GStreamer patch common to all SDK platforms                                          |
+| `just update-gstreamer`  | Pin the GStreamer SDK release given as argument ([update_gstreamer.py](#update_gstreamerpy))          |
 | `just translations`      | Update translation sources (`tools/translations/qgc_lupdate.py`); `--check` only reports bad `tr()`   |
 | `just distclean`         | Clean build, caches, generated files, and `node_modules/`                                             |
 | `just validate-configs`  | Validate build settings and link exceptions ([Centralized Configuration](#centralized-configuration)) |
@@ -376,6 +378,14 @@ python tools/check_deps.py              # Check all dependencies
 python tools/check_deps.py --qt         # Check Qt version
 python tools/check_deps.py --gstreamer  # Find latest patch common to all SDK platforms
 ```
+
+### update_gstreamer.py
+
+Pins a GStreamer SDK release: `just update-gstreamer 1.28.9` sets `gstreamer.version.<platform>` of the four SDK
+platforms in `.github/build-config.json` and replaces `gstreamer.checksums` with the SHA-256 of the release's six
+packages, read from the `.sha256sum` file upstream publishes beside each. It writes nothing unless upstream has
+every package. Review the diff like any other pin: configure then holds each SDK download to these checksums, and
+`mirror-gstreamer.yml` copies the packages to the S3 mirror once the change reaches `master`.
 
 ### API documentation (Doxygen)
 

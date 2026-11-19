@@ -25,9 +25,15 @@ import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
 from common.build_config import get_gstreamer_version
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
-from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
+from common.gstreamer import (
+    PLATFORM_PACKAGES,
+    package_platform,
+    package_url,
+    pinned_checksum,
+    upstream_checksum,
+)
 from common.markdown import code_span, md_table, summary_section
-from common.net import download_file, read_url_text
+from common.net import download_file
 
 S3_BUCKET = "qgroundcontrol"
 PLATFORMS = tuple(PLATFORM_PACKAGES)
@@ -78,10 +84,9 @@ def _download(url: str, dest: Path, expected_sha256: str) -> None:
 
 def _expected_sha(artifact: Artifact, version: str) -> str:
     """Return the pinned checksum, which the build treats as authoritative, else the upstream sidecar's."""
-    pinned = pinned_checksum(version, artifact.package)
-    if pinned:
-        return pinned
-    return read_url_text(f"{artifact.url}.sha256sum", timeout=60).split()[0].strip().lower()
+    return pinned_checksum(version, artifact.package) or upstream_checksum(
+        artifact.package, version
+    )
 
 
 def mirror_artifact(

@@ -146,7 +146,10 @@ def check_gstreamer_version() -> None:
         print(f"  Latest common patch: GStreamer {latest_patch}")
         current, latest = Version(str(current_version)), Version(latest_patch)
         if current < latest:
-            log_warn(f"Newer GStreamer patch available in the same minor line: {latest_patch}")
+            log_warn(
+                f"Newer GStreamer patch available in the same minor line: {latest_patch} "
+                f"(pin it with `just update-gstreamer {latest_patch}`)"
+            )
         elif current == latest:
             log_ok("Using latest GStreamer patch available on every SDK platform")
         else:

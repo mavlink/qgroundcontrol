@@ -85,7 +85,7 @@ def test_pinned_checksum_is_authoritative(monkeypatch) -> None:
     def no_sidecar(url: str, **_kwargs) -> str:
         raise AssertionError(f"fetched {url}")
 
-    monkeypatch.setattr(mirror_gstreamer, "read_url_text", no_sidecar)
+    monkeypatch.setattr("common.gstreamer.read_url_text", no_sidecar)
     version = get_gstreamer_version("android")
     (art,) = artifacts_for("android", version)
     assert _expected_sha(art, version) == pinned_checksum(version, "android")
@@ -94,7 +94,7 @@ def test_pinned_checksum_is_authoritative(monkeypatch) -> None:
 def test_unpinned_version_uses_sidecar(monkeypatch) -> None:
     sidecar = "AB" * 32
     monkeypatch.setattr(
-        mirror_gstreamer, "read_url_text", lambda url, **_kwargs: f"{sidecar}  file.tar.xz\n"
+        "common.gstreamer.read_url_text", lambda url, **_kwargs: f"{sidecar}  file.tar.xz\n"
     )
     (art,) = artifacts_for("android", "1.99.0")
     assert _expected_sha(art, "1.99.0") == sidecar.lower()
