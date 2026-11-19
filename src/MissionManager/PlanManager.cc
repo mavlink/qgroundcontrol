@@ -1,5 +1,8 @@
 #include "PlanManager.h"
 
+#include <cmath>
+#include <limits>
+
 #include "AppMessages.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkLib.h"
@@ -10,6 +13,36 @@
 #include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManager.PlanManager")
+
+namespace {
+
+// MAV_CMD_DO_SET_ACTUATOR sends actuators 5/6 (-1..1) in MISSION_ITEM_INT x/y scaled by 1e7, INT32_MAX to ignore.
+constexpr double ACTUATOR_SET_INT_SCALE = 1e7;
+
+int32_t missionItemIntXYFromParam(MAV_CMD command, MAV_FRAME frame, double param)
+{
+    if (command == MAV_CMD_DO_SET_ACTUATOR) {
+        if (std::isnan(param)) {
+            return std::numeric_limits<int32_t>::max();
+        }
+        return static_cast<int32_t>(std::lround(param * ACTUATOR_SET_INT_SCALE));
+    }
+    return static_cast<int32_t>(frame == MAV_FRAME_MISSION ? param : param * 1e7);
+}
+
+double missionItemIntXYToParam(MAV_CMD command, MAV_FRAME frame, int32_t value)
+{
+    if (command == MAV_CMD_DO_SET_ACTUATOR) {
+        // INT32_MIN is a NaN converted to int by some senders, so treat it as unset too.
+        if (value == std::numeric_limits<int32_t>::max() || value == std::numeric_limits<int32_t>::min()) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return value / ACTUATOR_SET_INT_SCALE;
+    }
+    return frame == MAV_FRAME_MISSION ? static_cast<double>(value) : static_cast<double>(value) * 1e-7;
+}
+
+}  // namespace
 
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     : QObject                   (vehicle)
@@ -414,8 +447,8 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message)
     param2 =        missionItem.param2;
     param3 =        missionItem.param3;
     param4 =        missionItem.param4;
-    param5 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.x : (double)missionItem.x * 1e-7;
-    param6 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.y : (double)missionItem.y * 1e-7;
+    param5 = missionItemIntXYToParam(command, frame, missionItem.x);
+    param6 = missionItemIntXYToParam(command, frame, missionItem.y);
     param7 =        (double)missionItem.z;
     autoContinue =  missionItem.autocontinue;
     isCurrentItem = missionItem.current;
@@ -557,25 +590,12 @@ void PlanManager::_sendMissionItem(int seq)
     if (sharedLink) {
         mavlink_message_t       messageOut;
 
-        mavlink_msg_mission_item_int_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
-                                               MAVLinkProtocol::getComponentId(),
-                                               sharedLink->mavlinkChannel(),
-                                               &messageOut,
-                                               _vehicle->id(),
-                                               MAV_COMP_ID_AUTOPILOT1,
-                                               seq,
-                                               item->frame(),
-                                               item->command(),
-                                               seq == 0,
-                                               item->autoContinue(),
-                                               item->param1(),
-                                               item->param2(),
-                                               item->param3(),
-                                               item->param4(),
-                                               item->frame() == MAV_FRAME_MISSION ? item->param5() : item->param5() * 1e7,
-                                               item->frame() == MAV_FRAME_MISSION ? item->param6() : item->param6() * 1e7,
-                                               item->param7(),
-                                               _planType);
+        mavlink_msg_mission_item_int_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(),
+            &messageOut, _vehicle->id(), MAV_COMP_ID_AUTOPILOT1, seq, item->frame(), item->command(), seq == 0,
+            item->autoContinue(), item->param1(), item->param2(), item->param3(), item->param4(),
+            missionItemIntXYFromParam(item->command(), item->frame(), item->param5()),
+            missionItemIntXYFromParam(item->command(), item->frame(), item->param6()), item->param7(), _planType);
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
     }
     _startAckTimeout(AckMissionRequest);

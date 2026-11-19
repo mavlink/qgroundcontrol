@@ -1,6 +1,8 @@
 #include "MissionManagerTest.h"
 
+#include <cmath>
 #include <iterator>
+#include <limits>
 
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
@@ -326,6 +328,35 @@ void MissionManagerTest::_testErrorAckFailureStrings()
         _writeItems(MockLinkMissionItemHandler::FailWriteRequest1ErrorAck, pCase->ackResult, true /* shouldFail */);
         _mockLink->resetMissionItemHandler();
     }
+}
+
+void MissionManagerTest::_testDoSetActuatorParam5And6()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    QList<MissionItem*> missionItems;
+    // Home position item, not sent to PX4
+    missionItems.append(new MissionItem(0, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL, 0, 0, 0, 0, 47.3769, 8.549444, 0,
+                                        true, false, this));
+    missionItems.append(new MissionItem(1, MAV_CMD_DO_SET_ACTUATOR, MAV_FRAME_MISSION, nan, nan, nan, nan, 0.5, nan, 0,
+                                        true, false, this));
+    _missionManager->writeMissionItems(missionItems);
+    QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "sendComplete", _missionManagerSignalWaitTime);
+    _multiSpyMissionManager->clearAllSignals();
+
+    // MISSION_ITEM_INT carries actuators 5/6 scaled by 1e7, INT32_MAX to leave unchanged
+    const mavlink_mission_item_int_t sent = _mockLink->missionItem(0);
+    QCOMPARE(sent.command, static_cast<uint16_t>(MAV_CMD_DO_SET_ACTUATOR));
+    QCOMPARE(sent.x, 5000000);
+    QCOMPARE(sent.y, std::numeric_limits<int32_t>::max());
+
+    _missionManager->loadFromVehicle();
+    QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "newMissionItemsAvailable", _missionManagerSignalWaitTime);
+    QCOMPARE(_missionManager->missionItems().count(), 1);
+    const MissionItem* received = _missionManager->missionItems()[0];
+    QCOMPARE(received->param5(), 0.5);
+    QVERIFY(std::isnan(received->param6()));
 }
 
 #include "UnitTest.h"
