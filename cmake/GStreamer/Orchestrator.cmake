@@ -54,11 +54,9 @@ if(GStreamer_ROOT_DIR)
 endif()
 
 # The SDK's linkage: the desktop SDKs are shared, Android's are static archives linked into GStreamer::mobile
-# (platform/Android.cmake), and iOS links one merged static archive (platform/IOS.cmake). Discovery sets
-# GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework. CONTRACT: include() this file at directory scope, never
-# inside a function: the compatibility copies of the discovery outputs (qgc_gst_layout_export) are directory-scope
-# normal variables.
-set(GStreamer_USE_FRAMEWORK OFF)
+# (platform/Android.cmake), and iOS links one merged static archive (platform/IOS.cmake). CONTRACT: include() this file
+# at directory scope, never inside a function: the compatibility copies of the discovery outputs
+# (qgc_gst_layout_export) are directory-scope normal variables.
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
 set(PKG_CONFIG_ARGN
@@ -186,10 +184,6 @@ if(LINUX)
     )
 endif()
 
-set(_qgc_gst_path "${_qgc_gst_platform_PATH_LABEL}")
-if(GStreamer_USE_FRAMEWORK)
-    set(_qgc_gst_path "framework")
-endif()
 # The requested plugins this build ships, as the status line counts and the notice lists them.
 set(_qgc_gst_shipped_plugins "")
 foreach(_p IN LISTS GSTREAMER_PLUGINS)
@@ -211,7 +205,7 @@ else()
     set(_qgc_gst_libavcodec "unknown")
 endif()
 message(
-    STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} "
+    STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_platform_PATH_LABEL} root=${GStreamer_ROOT_DIR} "
            "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED} "
            "libavcodec=${_qgc_gst_libavcodec}"
 )

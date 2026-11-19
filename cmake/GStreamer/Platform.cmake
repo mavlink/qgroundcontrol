@@ -4,8 +4,8 @@
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
 # its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (qgc_gst_resolve_layout) and its
-# pkg-config view (qgc_gst_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
-# returns with _qgc_gst_return_discovery() (Layout.cmake), which records those in the GStreamer layout store.
+# pkg-config view (qgc_gst_apply_pkgconfig_env), and returns with _qgc_gst_return_discovery() (Layout.cmake), which
+# records those in the GStreamer layout store.
 
 include_guard(GLOBAL)
 

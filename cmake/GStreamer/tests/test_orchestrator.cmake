@@ -525,8 +525,8 @@ elseif(SCENARIO STREQUAL "macos-discovery")
         -DQGC_TEST_MACOS=ON
     )
 elseif(SCENARIO STREQUAL "install-macos")
-    # The macOS bundle installers run on any host: everything must land under DESTDIR and the --prefix given at
-    # install time, and nothing under the prefix known at configure time. The flat SDK's binaries are this host's own
+    # The macOS bundle installer runs on any host: everything must land under DESTDIR and the --prefix given at
+    # install time, and nothing under the prefix known at configure time. The SDK's binaries are this host's own
     # shared libraries, named like the official SDK's dylibs and .so GIO modules, so the install's dependency closure
     # can read them: libgstreamer needs GLib, the plugin, GIO module and scanner need libgstreamer, the libproxy GIO
     # module needs libproxy, which loads its backend library in lib/libproxy by its Mach-O install name, and the GPL
@@ -572,49 +572,16 @@ elseif(SCENARIO STREQUAL "install-macos")
         execute_process(COMMAND "${_qgc_cc}" ${_args} -o "${_sdk_a}/${_file}" COMMAND_ERROR_IS_FATAL ANY)
     endforeach()
     file(WRITE "${_sdk_a}/etc/ssl/certs/ca-certificates.crt" "")
-    set(_framework "${WORK_DIR}/GStreamer.framework")
-    foreach(
-        _file IN ITEMS GStreamer lib/gstreamer-1.0/libgstcoreelements.dylib lib/libx264.164.dylib Resources/Info.plist
-    )
-        file(WRITE "${_framework}/Versions/1.0/${_file}" "")
-    endforeach()
     set(_configured_prefix "-DCMAKE_INSTALL_PREFIX=${WORK_DIR}/configured-prefix")
     set(_bundle "${WORK_DIR}/stage/opt/qgc/QGCFake.app/Contents")
 
     _qgc_configure_ok(
-        "macOS framework install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
-        "-DQGC_TEST_INSTALL_MACOS_FRAMEWORK=${_framework}"
+        "macOS install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
+        -DQGC_TEST_INSTALL_MACOS=ON
     )
     _qgc_install()
     if(NOT _qgc_result EQUAL 0)
-        message(FATAL_ERROR "ASSERT [framework install]: install failed\n${_qgc_output}")
-    endif()
-    set(_fw "${_bundle}/Frameworks/GStreamer.framework")
-    foreach(_file IN ITEMS Versions/1.0/GStreamer Versions/1.0/lib/gstreamer-1.0/libgstcoreelements.dylib)
-        if(NOT EXISTS "${_fw}/${_file}")
-            message(FATAL_ERROR "ASSERT [framework install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
-        endif()
-    endforeach()
-    # The framework's GPL libraries serve only GPL plugins, which the allowlist leaves out.
-    if(EXISTS "${_fw}/Versions/1.0/lib/libx264.164.dylib")
-        message(FATAL_ERROR "ASSERT [framework install]: the GPL libx264 was installed")
-    endif()
-    foreach(
-        _link IN ITEMS "Versions/Current|1.0" "GStreamer|Versions/Current/GStreamer"
-                       "Resources|Versions/Current/Resources"
-    )
-        qgc_test_split("${_link}" _name _target)
-        file(READ_SYMLINK "${_fw}/${_name}" _actual)
-        qgc_test_assert_streq("framework symlink ${_name}" "${_target}" "${_actual}")
-    endforeach()
-
-    _qgc_configure_ok(
-        "macOS flat install rules" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_configured_prefix}
-        -DQGC_TEST_INSTALL_MACOS_FLAT=ON
-    )
-    _qgc_install()
-    if(NOT _qgc_result EQUAL 0)
-        message(FATAL_ERROR "ASSERT [flat install]: install failed\n${_qgc_output}")
+        message(FATAL_ERROR "ASSERT [macOS install]: install failed\n${_qgc_output}")
     endif()
     foreach(
         _file IN
@@ -631,12 +598,12 @@ elseif(SCENARIO STREQUAL "install-macos")
             Resources/licenses/gstreamer/LGPL-2.1.txt
     )
         if(NOT EXISTS "${_bundle}/${_file}")
-            message(FATAL_ERROR "ASSERT [flat install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
+            message(FATAL_ERROR "ASSERT [macOS install]: ${_file} is not under DESTDIR/prefix\n${_qgc_output}")
         endif()
     endforeach()
     # gioopenssl verifies against the Keychain on macOS, so the SDK's CA bundle would go unused.
     if(EXISTS "${_bundle}/Resources/etc/ssl/certs/ca-certificates.crt")
-        message(FATAL_ERROR "ASSERT [flat install]: the SDK's CA bundle was installed")
+        message(FATAL_ERROR "ASSERT [macOS install]: the SDK's CA bundle was installed")
     endif()
     # Only the libraries the installed plugin, GIO module and scanner load are bundled, and libproxy's backend only
     # under the name libproxy loads.

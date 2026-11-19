@@ -235,8 +235,8 @@ set(_qgc_gpu_row_AHardwareBuffer
     SOURCES android/GstAHardwareBufferVideoBuffer.cc android/GstAHardwareBufferVideoBuffer.h)
 # gst-vulkan's VulkanImage memory. Not a zero-copy path: gst-vulkan can't wrap Qt's VkDevice, so the wrapper imports no
 # frame (vulkan/GstVulkanVideoBuffer.h). The impl TUs also gate on QT_CONFIG(vulkan) but callsites gate on the define
-# alone, so the define must imply Qt Vulkan support (macOS Qt ships none while GStreamer.framework carries
-# libgstvulkan-1.0). The framework also ships the .pc and headers without the library, hence the link-path check.
+# alone, so the define must imply Qt Vulkan support (macOS Qt ships none while the macOS SDK carries
+# libgstvulkan-1.0). That SDK also ships the .pc and headers without the library, hence the link-path check.
 # Not on Android, whose SDK has libgstvulkan only as an archive that would need the Vulkan loader linked beside it.
 set(_qgc_gpu_row_Vulkan
     PLATFORMS LINUX WIN32 MACOS
