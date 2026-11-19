@@ -159,7 +159,7 @@ The GeoFence section allows you to define geofence boundaries:
 
 - **Polygon Fences** — Add inclusion or exclusion polygon fences. Each polygon can be toggled between inclusion/exclusion, edited, or deleted.
 - **Circular Fences** — Add inclusion or exclusion circular fences with a configurable radius.
-- **Breach Return Point** — Optionally set a return point (with altitude) that the vehicle will fly to if it breaches the geofence.
+- **Breach Return Point** — ArduPilot planes only: optionally set a return point that the vehicle will fly to if it breaches the geofence, at the altitude of the `FENCE_RET_ALT` parameter.
 
 ### Rally Points {#rally_points}
 

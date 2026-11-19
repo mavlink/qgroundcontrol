@@ -134,6 +134,18 @@ Item {
         }
     }
 
+    function showBreachReturnPoint() {
+        if (planPanelLoader.item) {
+            planPanelLoader.item.showBreachReturnPoint()
+        }
+    }
+
+    function showFenceInspector() {
+        if (planPanelLoader.item) {
+            planPanelLoader.item.showFenceInspector()
+        }
+    }
+
     function selectLayer(nodeType) {
         // Ensure panel is open
         if (!panelOpenCloseButton._expanded) {
