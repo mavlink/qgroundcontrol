@@ -79,3 +79,24 @@ void APMVehicleConfigUITest::_testArduRover()
         [] { return MockLink::startAPMArduRoverMockLink(); },
         QStringLiteral("ArduRover"));
 }
+
+void APMVehicleConfigUITest::_testArduSubMotorSlidersEnabledWhenArmed()
+{
+    runWithMockLink([] { return MockLink::startAPMArduSubMockLink(); },
+                    [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+                        navigateToConfigureView();
+                        if (QTest::currentTestFailed())
+                            return;
+                        clickSidebarButton(QStringLiteral("vehicleConfig_comp_Motors"));
+                        if (QTest::currentTestFailed())
+                            return;
+
+                        QQuickItem* sliders = findVisibleItem(_rootItem, QStringLiteral("apmSubMotor_sliders"), 3000);
+                        QVERIFY2(sliders, "ArduSub motor sliders not found");
+                        QVERIFY(!sliders->isEnabled());
+
+                        vehicle->setArmed(true, false /* showError */);
+                        QTRY_VERIFY_WITH_TIMEOUT(vehicle->armed(), 10000);
+                        QTRY_VERIFY_WITH_TIMEOUT(sliders->isEnabled(), 5000);
+                    });
+}

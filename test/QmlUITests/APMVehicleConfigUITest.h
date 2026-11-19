@@ -23,6 +23,7 @@ private slots:
     void _testArduPlane();
     void _testArduSub();
     void _testArduRover();
+    void _testArduSubMotorSlidersEnabledWhenArmed();
 
 private:
     /// Shared implementation: connect a MockLink via \a factory, navigate to

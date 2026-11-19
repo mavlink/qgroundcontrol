@@ -16,7 +16,7 @@ SetupPage {
 
     property int neutralValue: 50;
     property int _lastIndex: 0;
-    property bool canRunManualTest: controller.vehicle.flightMode !== controller.vehicle.motorDetectionFlightMode && controller.vehicle.armed && motorPage.visible && setupView.visible
+    property bool canRunManualTest: controller.vehicle.flightMode !== controller.vehicle.motorDetectionFlightMode && controller.vehicle.armed && motorPage.visible
     property var shouldRunManualTest: false // Does the operator intend to run the motor test?
 
     APMSubMotorComponentController {
@@ -38,6 +38,7 @@ SetupPage {
 
             Row {
                 id:         motorSliders
+                objectName: "apmSubMotor_sliders"
                 enabled:    canRunManualTest && shouldRunManualTest
                 spacing:    ScreenTools.defaultFontPixelWidth * 4
 
@@ -171,8 +172,7 @@ SetupPage {
                 // Make sure external changes to Armed are reflected on the switch
                 Connections {
                     target: controller.vehicle
-                    onArmedChanged:
-                    {
+                    function onArmedChanged(armed) {
                         safetySwitch.checked = armed
                             if (!armed) {
                                 shouldRunManualTest = false
