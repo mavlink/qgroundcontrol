@@ -45,6 +45,9 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 {
     qCDebug(ParameterManagerLog) << this;
 
+    _ownScheduler = RuntimeScheduler::orDefault(nullptr, this);
+    _scheduler = _ownScheduler;
+
     if (_vehicle->isOfflineEditingVehicle()) {
         _loadOfflineEditingParams();
         return;
@@ -54,20 +57,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
         qCDebug(ParameterManagerLog) << this << "In log replay mode";
     }
 
-    _hashCheckTimer.setSingleShot(true);
-    _hashCheckTimer.setInterval(QGC::runningUnitTests() ? kTestHashCheckTimeoutMs : kHashCheckTimeoutMs);
-    (void) connect(&_hashCheckTimer, &QTimer::timeout, this, &ParameterManager::_hashCheckTimeout);
-
-    _paramRequestListTimer.setSingleShot(true);
-    _paramRequestListTimer.setInterval(QGC::runningUnitTests() ? kTestInitialRequestIntervalMs : kParamRequestListTimeoutMs);
-    (void) connect(&_paramRequestListTimer, &QTimer::timeout, this, &ParameterManager::_paramRequestListTimeout);
-
-    _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(QGC::runningUnitTests() ? 500 : 3000);
-    if (!_logReplay) {
-        (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
-    }
-
     // Ensure the cache directory exists
     (void) QDir().mkpath(parameterCacheDir().absolutePath());
 }
@@ -75,6 +64,41 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 ParameterManager::~ParameterManager()
 {
     qCDebug(ParameterManagerLog) << this;
+}
+
+void ParameterManager::setScheduler(RuntimeScheduler* scheduler)
+{
+    _scheduler = scheduler ? scheduler : _ownScheduler;
+}
+
+void ParameterManager::_startTimer(std::optional<ScheduledTask>& timer, int intervalMs,
+                                   void (ParameterManager::*timeout)())
+{
+    timer.emplace(_scheduler, this);
+    timer->schedule(std::chrono::milliseconds(intervalMs), [this, timeout]() { (this->*timeout)(); });
+}
+
+void ParameterManager::_startHashCheckTimer()
+{
+    _startTimer(_hashCheckTimer, QGC::runningUnitTests() ? kTestHashCheckTimeoutMs : kHashCheckTimeoutMs,
+                &ParameterManager::_hashCheckTimeout);
+}
+
+void ParameterManager::_startParamRequestListTimer()
+{
+    _startTimer(_paramRequestListTimer,
+                QGC::runningUnitTests() ? kTestInitialRequestIntervalMs : kParamRequestListTimeoutMs,
+                &ParameterManager::_paramRequestListTimeout);
+}
+
+void ParameterManager::_startWaitingParamTimeoutTimer()
+{
+    _startTimer(_waitingParamTimeoutTimer, _waitingParamTimeoutMs(), &ParameterManager::_waitingParamTimeout);
+}
+
+int ParameterManager::_waitingParamTimeoutMs()
+{
+    return QGC::runningUnitTests() ? 500 : 3000;
 }
 
 void ParameterManager::_updateProgressBar()
@@ -151,13 +175,14 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
 
     // ArduPilot has this strange behavior of streaming parameters that we didn't ask for. This even happens before it responds to the
     // PARAM_REQUEST_LIST. We disregard any of this until the initial request is responded to.
-    if ((parameterIndex == 65535) && (parameterName != QStringLiteral("_HASH_CHECK")) && _paramRequestListTimer.isActive()) {
+    if ((parameterIndex == 65535) && (parameterName != QStringLiteral("_HASH_CHECK")) && _paramRequestListTimer &&
+        _paramRequestListTimer->active()) {
         qCDebug(ParameterManagerLog) << "Disregarding unrequested param prior to initial list response" << parameterName;
         return;
     }
 
     if (_vehicle->px4Firmware() && (parameterName == "_HASH_CHECK")) {
-        _hashCheckTimer.stop();
+        _hashCheckTimer.reset();
         if (!_initialLoadComplete && !_logReplay) {
             /* we received a cache hash, potentially load from cache */
             _tryCacheHashLoad(_vehicle->id(), componentId, parameterValue);
@@ -165,7 +190,7 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
         return;
     }
 
-    _paramRequestListTimer.stop();
+    _paramRequestListTimer.reset();
 
     // Used to debug cache crc misses (turn on ParameterManagerDebugCacheFailureLog)
     if (!_initialLoadComplete && !_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
@@ -184,7 +209,7 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
         }
     }
 
-    _waitingParamTimeoutTimer.stop();
+    _waitingParamTimeoutTimer.reset();
 
     _paramValuesReceivedThisCycle[componentId]++;
     _silentCycleCount.remove(componentId);
@@ -231,12 +256,12 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
     const int totalWaitingParamCount = readWaitingParamCount;
     if (totalWaitingParamCount) {
         // More params to wait for, restart timer
-        _waitingParamTimeoutTimer.start();
+        _startWaitingParamTimeoutTimer();
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer: totalWaitingParamCount:" << totalWaitingParamCount;
     } else if (!_mapCompId2FactMap.contains(_vehicle->defaultComponentId())) {
         // Still waiting for parameters from default component
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer (still waiting for default component params)";
-        _waitingParamTimeoutTimer.start();
+        _startWaitingParamTimeoutTimer();
     } else {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
     }
@@ -577,10 +602,10 @@ void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QStri
         if (immediateRetry) {
             _paramRequestListTimeout();
         } else {
-            _paramRequestListTimer.start();
+            _startParamRequestListTimer();
         }
     } else {
-        _paramRequestListTimer.start();
+        _startParamRequestListTimer();
     }
 }
 
@@ -619,13 +644,13 @@ void ParameterManager::_ftpDownloadProgress(float progress)
     qCDebug(ParameterManagerVerbose1Log) << "ParameterManager::_ftpDownloadProgress:" << progress;
     _setLoadProgress(static_cast<double>(progress));
     if (progress > 0.001) {
-        _paramRequestListTimer.stop();
+        _paramRequestListTimer.reset();
     }
 }
 
 void ParameterManager::_resetHashCheck()
 {
-    _hashCheckTimer.stop();
+    _hashCheckTimer.reset();
     _hashCheckDone = false;
 }
 
@@ -655,7 +680,7 @@ void ParameterManager::tryHashCheckCacheLoad()
     }
 
     if (_vehicle->px4Firmware() && !_initialLoadComplete) {
-        _hashCheckTimer.start();
+        _startHashCheckTimer();
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Cache-only hash check: requesting _HASH_CHECK";
         _requestHashCheck(MAV_COMP_ID_AUTOPILOT1);
     } else {
@@ -685,7 +710,7 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
     if (_vehicle->px4Firmware() && !_initialLoadComplete && !_hashCheckDone) {
         // PX4: Try _HASH_CHECK first to see if we can load from cache without a full parameter stream
         _cacheOnlyHashCheck = false;
-        _hashCheckTimer.start();
+        _startHashCheckTimer();
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Requesting _HASH_CHECK before full parameter list";
         const uint8_t hashCheckCompId = (componentId == MAV_COMP_ID_ALL)
             ? static_cast<uint8_t>(MAV_COMP_ID_AUTOPILOT1)
@@ -699,13 +724,13 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
             return;
         }
         if (!_initialLoadComplete) {
-            _paramRequestListTimer.start();
+            _startParamRequestListTimer();
         }
         FTPManager *const ftpManager = _vehicle->ftpManager();
         (void) connect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
         // Other components may still be re-reading over the stream path; only their timer keeps them going
         if (!_anyComponentWaiting()) {
-            _waitingParamTimeoutTimer.stop();
+            _waitingParamTimeoutTimer.reset();
         }
         if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1,
                                  QStringLiteral("@PARAM/param.pck?withdefaults=1"),
@@ -721,7 +746,7 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
         }
     } else {
         if (!_initialLoadComplete) {
-            _paramRequestListTimer.start();
+            _startParamRequestListTimer();
         }
 
         // Reset index wait lists
@@ -833,10 +858,10 @@ void ParameterManager::bulkRefresh(int componentId, const QStringList &names, bo
     qCDebug(ParameterManagerLog) << "bulkRefresh: resolved" << resolved.count() << "params";
     new BulkRefreshJob(
         this, componentId, resolved, notifyFailure,
-        [this, componentId](const QString &name) {
+        [this, componentId](const QString& name) {
             _mavlinkParamRequestRead(componentId, name, -1, false /* notifyFailure */);
         },
-        this);
+        _scheduler, this);
 }
 
 bool ParameterManager::parameterExists(int componentId, const QString &paramName) const
@@ -931,7 +956,8 @@ void ParameterManager::_waitingParamTimeout()
         return;
     }
 
-    qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "_waitingParamTimeout after" << _waitingParamTimeoutTimer.interval() << "ms";
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "_waitingParamTimeout after" << _waitingParamTimeoutMs()
+                                 << "ms";
 
     // Now that we have timed out for possibly the first time we can activate the index batch queue
     _indexBatchQueueActive = true;
@@ -944,7 +970,7 @@ void ParameterManager::_waitingParamTimeout()
         // Initial load is complete but we still don't have any default component params. Wait one more cycle to see if the
         // any show up.
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer - still don't have default component params" << _vehicle->defaultComponentId();
-        _waitingParamTimeoutTimer.start();
+        _startWaitingParamTimeoutTimer();
         _waitingForDefaultComponent = true;
         return;
     }
@@ -956,7 +982,7 @@ void ParameterManager::_waitingParamTimeout()
 
     if (paramsRequested) {
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer - re-request";
-        _waitingParamTimeoutTimer.start();
+        _startWaitingParamTimeoutTimer();
     }
 }
 
@@ -1219,7 +1245,7 @@ void ParameterManager::_tryCacheHashLoad(quint32 vehicleId, int componentId, con
     /* if the two param set hashes match, just load from the disk */
     if (crc32_value == hashValue.toUInt()) {
         _hashCheckDone = true;
-        _paramRequestListTimer.stop();
+        _paramRequestListTimer.reset();
         qCDebug(ParameterManagerLog) << "Parameters loaded from cache" << qPrintable(QFileInfo(cacheFile).absoluteFilePath());
 
         const int count = cacheMap.count();
@@ -1264,9 +1290,7 @@ void ParameterManager::_tryCacheHashLoad(quint32 vehicleId, int componentId, con
 
         // Hide 500ms after animation finishes
         connect(ani, &QVariantAnimation::finished, this, [this] {
-            QTimer::singleShot(500, this, [this] {
-                _setLoadProgress(0);
-            });
+            _scheduler->schedule(this, std::chrono::milliseconds(500), [this]() { _setLoadProgress(0); });
         });
 
         ani->start(QAbstractAnimation::DeleteWhenStopped);
