@@ -44,7 +44,6 @@ void RequestMetaDataTypeStateMachine::_createStates()
         [this](AsyncFunctionState*) { _requestCompInfo(); },
         _timeoutCompInfoRequest
     );
-    registerState(_stateRequestCompInfo);
 
     // State 2: Fallback to deprecated COMPONENT_INFORMATION if needed
     _stateRequestDeprecated = new SkippableAsyncState(
@@ -55,7 +54,6 @@ void RequestMetaDataTypeStateMachine::_createStates()
         nullptr,
         _timeoutCompInfoRequest
     );
-    registerState(_stateRequestDeprecated);
 
     // State 3: Download metadata JSON
     _stateRequestMetaDataJson = new AsyncFunctionState(
@@ -64,7 +62,6 @@ void RequestMetaDataTypeStateMachine::_createStates()
         [this](AsyncFunctionState*) { _requestMetaDataJson(); },
         _timeoutMetaDataDownload
     );
-    registerState(_stateRequestMetaDataJson);
 
     // State 4: Try fallback URI if primary download failed
     _stateRequestMetaDataJsonFallback = new SkippableAsyncState(
@@ -75,7 +72,6 @@ void RequestMetaDataTypeStateMachine::_createStates()
         nullptr,
         _timeoutMetaDataDownload
     );
-    registerState(_stateRequestMetaDataJsonFallback);
 
     // State 5: Download translation JSON
     _stateRequestTranslationJson = new AsyncFunctionState(
@@ -84,7 +80,6 @@ void RequestMetaDataTypeStateMachine::_createStates()
         [this](AsyncFunctionState*) { _requestTranslationJson(); },
         _timeoutMetaDataDownload
     );
-    registerState(_stateRequestTranslationJson);
 
     // State 6: Translate metadata
     _stateRequestTranslate = new SkippableAsyncState(
@@ -95,7 +90,6 @@ void RequestMetaDataTypeStateMachine::_createStates()
         nullptr,
         _timeoutTranslation
     );
-    registerState(_stateRequestTranslate);
 
     // State 7: Complete request
     _stateComplete = addFunctionState("CompleteRequest", [this]() { _completeRequest(); });

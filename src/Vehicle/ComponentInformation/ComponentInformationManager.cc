@@ -48,7 +48,6 @@ void ComponentInformationManager::_createStates()
         this,
         [this](AsyncFunctionState* state) { _requestCompInfoGeneral(state); }
     );
-    registerState(_stateRequestGeneral);
 
     // State 2: Update URIs after general info received
     _stateUpdateUri = addFunctionState(
@@ -66,7 +65,6 @@ void ComponentInformationManager::_createStates()
             qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported";
         }
     );
-    registerState(_stateRequestParam);
 
     // State 4: Request events metadata (skippable)
     _stateRequestEvents = new SkippableAsyncState(
@@ -78,7 +76,6 @@ void ComponentInformationManager::_createStates()
             qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported";
         }
     );
-    registerState(_stateRequestEvents);
 
     // State 5: Request actuators metadata (skippable)
     _stateRequestActuators = new SkippableAsyncState(
@@ -90,7 +87,6 @@ void ComponentInformationManager::_createStates()
             qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported";
         }
     );
-    registerState(_stateRequestActuators);
 
     // State 6: Signal completion
     _stateComplete = addFunctionState(

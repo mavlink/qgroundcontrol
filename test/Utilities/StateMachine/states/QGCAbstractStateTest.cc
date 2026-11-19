@@ -1,8 +1,5 @@
 #include "QGCAbstractStateTest.h"
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QEvent>
-
 #include "StateTestCommon.h"
 
 void QGCAbstractStateTest::_testEntryAndExitHooks_data()
@@ -101,25 +98,6 @@ void QGCAbstractStateTest::_testSignalStopsMachine()
 
     QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
     QCOMPARE(signalSpy.count(), 1);
-}
-
-void QGCAbstractStateTest::_testEventHandler()
-{
-    QStateMachine machine;
-    bool handlerCalled = false;
-
-    auto* state = new TestAbstractState(QStringLiteral("TestEventHandler"), &machine);
-    state->setEventHandler([&handlerCalled](QEvent* event) {
-        if (event->type() == QEvent::User) {
-            handlerCalled = true;
-        }
-        return false;  // Don't consume the event
-    });
-
-    // The handler is given the events that the state object receives
-    QEvent event(QEvent::User);
-    QCoreApplication::sendEvent(state, &event);
-    QVERIFY(handlerCalled);
 }
 
 UT_REGISTER_TEST(QGCAbstractStateTest, TestLabel::Unit, TestLabel::Utilities)

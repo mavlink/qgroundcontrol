@@ -11,5 +11,4 @@ private slots:
     void _testStateName();
     void _testStateNameInQGCStateMachine();
     UT_PARAMETERIZED_TEST(_testSignalStopsMachine);
-    void _testEventHandler();
 };

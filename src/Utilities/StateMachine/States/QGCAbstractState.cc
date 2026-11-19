@@ -45,12 +45,3 @@ void QGCAbstractState::onExit(QEvent* event)
     QState::onExit(event);
     qCDebug(QGCStateMachineLog) << "Exited" << stateName();
 }
-
-bool QGCAbstractState::event(QEvent* event)
-{
-    if (_eventHandler && _eventHandler(event)) {
-        return true;
-    }
-
-    return QState::event(event);
-}

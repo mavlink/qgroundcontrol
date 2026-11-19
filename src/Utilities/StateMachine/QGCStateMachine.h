@@ -42,10 +42,10 @@ class QGCStateMachine : public QStateMachine
     Q_OBJECT
     Q_DISABLE_COPY(QGCStateMachine)
 
-    /// Current progress from 0.0 to 1.0 (for QML binding)
+    /// Current progress from 0.0 to 1.0
     Q_PROPERTY(float progress READ progress NOTIFY progressUpdate)
 
-    /// Whether the machine is in progress (for QML binding)
+    /// Whether the machine is in progress
     Q_PROPERTY(bool inProgress READ inProgress NOTIFY inProgressChanged)
 
 public:
@@ -212,8 +212,8 @@ public:
     /// });
     /// @endcode
     ///
-    /// The progress starts over, as after resetProgress(). An entry without a state or with a weight of 0 or less
-    /// is ignored with a warning.
+    /// The progress starts over, and a progress above 0 is followed by progressUpdate(0). An entry without a state
+    /// or with a weight of 0 or less is ignored with a warning.
     ///
     /// @param stateWeights List of state/weight pairs in order of execution
     void setProgressWeights(const QList<QPair<QAbstractState*, int>>& stateWeights);
@@ -226,9 +226,6 @@ public:
     /// Get the current overall progress (0.0 to 1.0)
     float progress() const;
 
-    /// Reset progress tracking, without a progressUpdate(). start() starts the progress over by itself.
-    void resetProgress();
-
 public slots:
     /// Start the machine. Takes the place of QStateMachine::start(), which is not virtual, so that inProgress()
     /// is true from the call on. The progress starts over: a machine that had progressed reports 0.
@@ -239,7 +236,7 @@ signals:
     /// @param progress Overall progress from 0.0 to 1.0
     void progressUpdate(float progress);
 
-    /// Emitted when inProgress() changes (for QML binding)
+    /// Emitted when inProgress() changes
     void inProgressChanged();
 
 protected:

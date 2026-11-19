@@ -8,21 +8,10 @@
 class QGCStateMachine;
 class Vehicle;
 
-/// \brief Lightweight base class for simple states.
+/// \brief Base class of the states of the module: a QState with a name for the log, the machine and the vehicle
+/// of the state, entry and exit callbacks, and the signals advance() and error().
 ///
-/// ## When to use QGCAbstractState vs QGCState
-///
-/// Use **QGCAbstractState** when:
-/// - You want callback-driven entry/exit behavior
-/// - You want a lighter API surface than QGCState
-///
-/// Use **QGCState** when:
-/// - You need to add outgoing transitions using addTransition()
-/// - You need child states (hierarchical state machine)
-/// - You need local error state handling (setLocalErrorState())
-///
-/// ## Notes
-/// - Local error-state helpers are not provided; use registerState() for global error handling.
+/// QGCState adds a local error state (setLocalErrorState()) and a check for the vehicle.
 ///
 class QGCAbstractState : public QState
 {
@@ -32,7 +21,6 @@ class QGCAbstractState : public QState
 public:
     using EntryCallback = std::function<void()>;
     using ExitCallback = std::function<void()>;
-    using EventHandler = std::function<bool(QEvent*)>;
 
     QGCAbstractState(const QString& stateName, QState* parent);
 
@@ -52,13 +40,6 @@ public:
     /// Set a callback to be invoked when the state is exited
     void setOnExit(ExitCallback callback) { _exitCallback = std::move(callback); }
 
-    // -------------------------------------------------------------------------
-    // Event Handling
-    // -------------------------------------------------------------------------
-
-    /// Set a custom event handler for this state
-    void setEventHandler(EventHandler handler) { _eventHandler = std::move(handler); }
-
 signals:
     void advance();
     void error();
@@ -73,10 +54,8 @@ protected:
     // QState overrides
     void onEntry(QEvent* event) override;
     void onExit(QEvent* event) override;
-    bool event(QEvent* event) override;
 
 private:
     EntryCallback _entryCallback;
     ExitCallback _exitCallback;
-    EventHandler _eventHandler;
 };

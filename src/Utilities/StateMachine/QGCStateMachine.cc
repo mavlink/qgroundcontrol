@@ -295,17 +295,12 @@ float QGCStateMachine::progress() const
     return _progressLastEmitted;
 }
 
-void QGCStateMachine::resetProgress()
-{
-    _progressCurrentIndex = -1;
-    _progressSubProgress = 0.0f;
-    _progressLastEmitted = 0.0f;
-}
-
 void QGCStateMachine::_startProgressOver()
 {
     const bool hadProgress = progress() > 0.0f;
-    resetProgress();
+    _progressCurrentIndex = -1;
+    _progressSubProgress = 0.0f;
+    _progressLastEmitted = 0.0f;
     if (hadProgress) {
         emit progressUpdate(0.0f);
     }
