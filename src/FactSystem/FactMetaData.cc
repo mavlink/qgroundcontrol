@@ -742,7 +742,7 @@ QVariant FactMetaData::_squareMetersToHectares(const QVariant &squareMeters)
 
 QVariant FactMetaData::_hectaresToSquareMeters(const QVariant &hectares)
 {
-    return QVariant(hectares.toDouble() * 1000.0);
+    return QVariant(hectares.toDouble() * 10000.0);
 }
 
 QVariant FactMetaData::_squareMetersToSquareFeet(const QVariant &squareMeters)
