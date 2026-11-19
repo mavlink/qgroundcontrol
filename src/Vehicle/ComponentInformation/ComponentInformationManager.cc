@@ -13,10 +13,13 @@
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformation.ComponentInformationManager")
 
-ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObject *parent)
+ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObject* parent)
     : QGCStateMachine("ComponentInformationManager", vehicle, parent)
-    , _requestTypeStateMachine(this, this)
-    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache"), this))
+    // Without a QObject parent: a machine whose parent is this machine is one of its states to Qt
+    , _requestTypeStateMachine(this)
+    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                                                        QLatin1String("/QGCCompInfoFileDownloadCache"),
+                                                    this))
     , _fileCache(ComponentInformationCache::defaultInstance())
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
