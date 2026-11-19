@@ -214,7 +214,7 @@ Item {
         coordinate: root._center.isValid ? root._center.atDistanceAndAzimuth(root._radius, 90) : QtPositioning.coordinate()
         visible: root.interactive
         labelVisible: root.radiusLabelVisible
-        labelText: QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(root._radius).toFixed(0) + " "
+        labelText: QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(root._radius).toFixed(QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsDecimalPlaces()) + " "
                    + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
         onDragged: (coordinate) => root.mapCircle.radius.rawValue = root._center.distanceTo(coordinate)
     }

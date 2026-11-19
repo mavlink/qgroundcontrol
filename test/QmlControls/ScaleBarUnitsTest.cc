@@ -79,6 +79,11 @@ void ScaleBarUnitsTest::_scaleTextFollowsUnitsChange()
 
     const QString feetText = scaleText->property("text").toString();
     QVERIFY2(feetText.endsWith(QStringLiteral(" ft")), qPrintable(feetText));
+
+    horizontalUnitsFact->setRawValue(UnitsSettings::HorizontalDistanceUnitsNauticalMiles);
+
+    const QString nauticalMilesText = scaleText->property("text").toString();
+    QVERIFY2(nauticalMilesText.endsWith(QStringLiteral(" NM")), qPrintable(nauticalMilesText));
 }
 
 UT_REGISTER_TEST(ScaleBarUnitsTest, TestLabel::Unit)
