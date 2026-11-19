@@ -352,6 +352,30 @@ void QGCStateMachineTest::_testErrorInMachineIsCritical()
     QVERIFY_SIGNAL_COUNT_WAIT(stoppedSpy, 2, TestTimeout::shortMs());
 }
 
+void QGCStateMachineTest::_testTargetOutsideMachineIsExplained()
+{
+    QGCStateMachine machine(QStringLiteral("TargetOutsideTest"), nullptr);
+    auto* state = new FunctionState(QStringLiteral("State"), &machine, []() {});
+    // A state without a parent belongs to no machine, and nothing objects when a transition is given it as target
+    QGCState stateOutside(QStringLiteral("Outside"), nullptr);
+    state->addTransition(state, &QGCState::advance, &stateOutside);
+    machine.setInitialState(state);
+
+    // Qt's text names the child mode of the machine, which is not at fault, so the message adds the cause
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+    expectLogMessage("default", QtWarningMsg,
+                     QRegularExpression("Unrecoverable error detected in running state machine"));
+    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression("\"TargetOutsideTest\" stopped after an error in the machine: \"Child mode of "
+                                        "state machine 'TargetOutsideTest' is not 'ExclusiveStates'\\. Qt reports this "
+                                        "for a transition to a state outside the machine"));
+    machine.start();
+    QVERIFY(spyTriggered(stoppedSpy));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(machine.error(), QStateMachine::StateMachineChildModeSetToParallelError);
+}
+
 void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine_data()
 {
     QTest::addColumn<bool>("leftBeforeItFinishes");
@@ -623,6 +647,30 @@ void QGCStateMachineTest::_testRestartWhenFinishedResetsProgress()
     QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
     machine.setSubProgress(0.5f);
     QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.5f);
+}
+
+void QGCStateMachineTest::_testSecondRunReportsProgress()
+{
+    QGCStateMachine machine(QStringLiteral("SecondRunProgressTest"), nullptr);
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    machine.addEventTransition(first, QStringLiteral("done"), addFinalState(&machine));
+    machine.setProgressWeights({{first, 1}});
+    machine.setInitialState(first);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    machine.postEvent(QStringLiteral("done"));
+    QVERIFY(spyTriggered(finishedSpy));
+    QCOMPARE(machine.progress(), 1.0f);
+
+    // A machine that is started again says that it is back at 0, and reports the progress of the new run
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(_spyFloatArg(progressSpy, 0), 0.0f);
+    machine.setSubProgress(0.5f);
+    QCOMPARE(progressSpy.count(), 2);
     QCOMPARE(machine.progress(), 0.5f);
 }
 

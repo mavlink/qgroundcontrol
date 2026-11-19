@@ -49,7 +49,9 @@ protected:
 
     void disconnectWaitSignal() override;
 
-    bool hasCompletionConnection() const { return !_completionConnections.isEmpty(); }
+    /// Reports a wait that nothing can end, one without a completion connection and without a timeout, as a coding
+    /// error. Called once the setup function has run.
+    void checkWaitCanEnd() const;
 
 private:
     QList<QMetaObject::Connection> _completionConnections;

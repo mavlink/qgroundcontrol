@@ -177,6 +177,54 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionWaitRearmedBeforeRet
     QVERIFY(waitWasRearmedBeforeRetryAction);
 }
 
+void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain_data()
+{
+    QTest::addColumn<bool>("skippable");
+
+    QTest::newRow("AsyncFunctionState") << false;
+    QTest::newRow("SkippableAsyncState") << true;
+}
+
+void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain()
+{
+    QFETCH(bool, skippable);
+
+    ignoreTimeoutWarnings();
+    QGCStateMachine machine(QStringLiteral("RetryAsyncTest"), nullptr);
+    // Its advance() stands for the answer that the state waits for
+    TestAbstractState replier(QStringLiteral("Replier"), nullptr);
+    int setupCalls = 0;
+    bool gaveUp = false;
+
+    const auto setup = [&replier, &setupCalls](CompletionWaitState* state) {
+        setupCalls++;
+        state->connectToCompletion(&replier, &QGCAbstractState::advance);
+    };
+    CompletionWaitState* waitState = nullptr;
+    if (skippable) {
+        waitState =
+            new SkippableAsyncState(QStringLiteral("Wait"), &machine, []() { return false; }, setup, nullptr, 20);
+    } else {
+        waitState = new AsyncFunctionState(QStringLiteral("Wait"), &machine, setup, 20);
+    }
+    auto* gaveUpState = new FunctionState(QStringLiteral("GaveUp"), &machine, [&gaveUp]() { gaveUp = true; });
+    auto* finalState = machine.addFinalState();
+
+    // The answer comes while the retry is made. The timeout has ended the connection of the first attempt, so the
+    // state hears it only if the retry has set it up again.
+    machine.addRetryTransition(
+        waitState, &WaitStateBase::timedOut, gaveUpState, [&replier]() { replier.emitAdvance(); }, 1);
+    waitState->addTransition(waitState, &QGCState::advance, finalState);
+    gaveUpState->addTransition(gaveUpState, &QGCState::advance, finalState);
+    machine.setInitialState(waitState);
+
+    QSignalSpy advanceSpy(waitState, &QGCState::advance);
+    QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(setupCalls, 2);
+    QCOMPARE(advanceSpy.count(), 1);
+    QVERIFY(!gaveUp);
+}
+
 void AdditionalTransitionsCoverageTest::_testRetryTransitionCountStartsAgainOnEntry()
 {
     ignoreTimeoutWarnings();

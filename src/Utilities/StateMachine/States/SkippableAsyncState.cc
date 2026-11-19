@@ -28,4 +28,12 @@ void SkippableAsyncState::onWaitEntered()
     if (_setupFunction) {
         _setupFunction(this);
     }
+    checkWaitCanEnd();
+}
+
+void SkippableAsyncState::onWaitRestarted()
+{
+    if (_setupFunction) {
+        _setupFunction(this);
+    }
 }

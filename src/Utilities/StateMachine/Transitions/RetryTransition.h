@@ -12,8 +12,12 @@
 /// Useful for timeout handling where you want to retry before giving up.
 ///
 /// On each trigger (e.g., timeout signal):
-/// - If retry count < max: increment count, invoke retryAction, block transition
+/// - If retry count < max: increment count, let the source state wait again, invoke retryAction, block transition
 /// - If retry count >= max: reset count, allow transition to target
+///
+/// A source state that is a WaitStateBase waits again through restartWait(). An AsyncFunctionState or a
+/// SkippableAsyncState runs its setup function again there, so the retry action is for what that function does
+/// not do; a state that sends when it is entered, and not in a setup function, needs the action to send again.
 ///
 /// The count starts again each time the source state is entered, so a state that was left through another
 /// transition after some retries has all of them the next time.
@@ -23,7 +27,7 @@
 /// auto* retry = new RetryTransition(
 ///     state, &WaitStateBase::timedOut,
 ///     nextState,
-///     [this]() { _requestAutopilotVersion(_stateAutopilotVersion); },
+///     [this]() { _retriesMade++; },
 ///     1  // max retries
 /// );
 /// state->addTransition(retry);

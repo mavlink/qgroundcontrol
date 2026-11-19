@@ -29,7 +29,13 @@ QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, Q
     connect(this, &QGCStateMachine::stopped, this, [this]() {
         if (error() != QStateMachine::NoError) {
             // Qt stops a machine that it finds wrongly built, and says so only in a warning of its own
-            qCCritical(QGCStateMachineLog) << objectName() << "stopped after an error in the machine:" << errorString();
+            QString reason = errorString();
+            if ((error() == QStateMachine::StateMachineChildModeSetToParallelError) &&
+                (childMode() == QState::ExclusiveStates)) {
+                // Qt's text names the child mode, which is not at fault
+                reason += QStringLiteral(" Qt reports this for a transition to a state outside the machine.");
+            }
+            qCCritical(QGCStateMachineLog) << objectName() << "stopped after an error in the machine:" << reason;
         }
         _setInProgress(false);
         qCDebug(QGCStateMachineLog) << "State machine stopped:" << objectName();
@@ -58,6 +64,8 @@ void QGCStateMachine::start()
     }
     // Qt keeps the error of an earlier run
     clearError();
+    // Above the progress of an earlier run nothing would be reported
+    _startProgressOver();
     _inProgress = true;
     QStateMachine::start();
     // Emitted after Qt's start so a stop() from a listener is honored
@@ -173,15 +181,10 @@ QGCFinalState* QGCStateMachine::addFinalState(const QString& stateName)
 
 void QGCStateMachine::restart()
 {
-    // The progress is reset right before the start, so that a machine that is still stopping cannot raise it again.
-    // resetProgress() emits nothing, so a machine that had progressed says here that it is back at 0.
+    // start() starts the progress over, right before the start, so that a machine that is still stopping cannot
+    // raise it again
     const auto startOver = [this]() {
         _restartPending = false;
-        const bool hadProgress = progress() > 0.0f;
-        resetProgress();
-        if (hadProgress) {
-            emit progressUpdate(0.0f);
-        }
         start();
     };
 
@@ -237,11 +240,7 @@ void QGCStateMachine::setProgressWeights(const QList<QPair<QAbstractState*, int>
     _progressWeights.clear();
     _progressTotalWeight = 0;
     // The index and the progress reported so far are those of the list that is replaced
-    const bool hadProgress = progress() > 0.0f;
-    resetProgress();
-    if (hadProgress) {
-        emit progressUpdate(0.0f);
-    }
+    _startProgressOver();
 
     for (const auto& pair : stateWeights) {
         if (!pair.first || (pair.second <= 0)) {
@@ -301,6 +300,15 @@ void QGCStateMachine::resetProgress()
     _progressCurrentIndex = -1;
     _progressSubProgress = 0.0f;
     _progressLastEmitted = 0.0f;
+}
+
+void QGCStateMachine::_startProgressOver()
+{
+    const bool hadProgress = progress() > 0.0f;
+    resetProgress();
+    if (hadProgress) {
+        emit progressUpdate(0.0f);
+    }
 }
 
 float QGCStateMachine::_calculateProgress() const

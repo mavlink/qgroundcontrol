@@ -16,6 +16,9 @@
 /// A state that only a later call to complete() or fail() ends needs a timeout: without one, and without a
 /// completion connection, nothing ends it if that call never comes, and entering it is reported as a coding error.
 ///
+/// A timeout ends the completion connections. A retry that stays in the state (RetryTransition) therefore calls
+/// the function again, which starts the operation and connects its completion anew.
+///
 class AsyncFunctionState : public CompletionWaitState
 {
     Q_OBJECT
@@ -33,6 +36,7 @@ public:
 
 protected:
     void onWaitEntered() override;
+    void onWaitRestarted() override;
 
 private:
     SetupFunction _setupFunction;

@@ -13,6 +13,9 @@
 /// 2. If true: call skipAction() (if provided), emit skipped()
 /// 3. If false: call setupFunc(this), wait for complete() or timeout
 ///
+/// A retry that stays in the state after a timeout (RetryTransition) calls setupFunc(this) again, without asking
+/// the predicate a second time.
+///
 /// Example usage:
 /// @code
 /// auto* missionState = new SkippableAsyncState(
@@ -61,6 +64,7 @@ signals:
 
 protected:
     void onWaitEntered() override;
+    void onWaitRestarted() override;
 
 private:
     SkipPredicate _skipPredicate;

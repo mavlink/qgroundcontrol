@@ -18,4 +18,6 @@ private slots:
     void _testQGCStateOnEnterOnLeaveVirtuals();
     void _testQGCFinalState();
     UT_PARAMETERIZED_TEST(_testWaitForMavlinkMessageCompletesOnFirstMatch);
+    UT_PARAMETERIZED_TEST(_testWaitForParamResponseEndsOnItsAnswer);
+    void _testWaitForParamResponseForgetsEarlierError();
 };

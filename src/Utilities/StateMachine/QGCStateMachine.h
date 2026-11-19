@@ -128,8 +128,8 @@ public:
     // Lifecycle Helpers
     // -------------------------------------------------------------------------
 
-    /// Restart the machine (stop then start). Its progress starts over, as after resetProgress(), and a progress
-    /// above 0 is followed by progressUpdate(0) before the machine starts.
+    /// Restart the machine (stop then start). Its progress starts over as at every start(): a progress above 0 is
+    /// followed by progressUpdate(0) before the machine starts.
     /// A machine in progress starts again once it has stopped. Until then it restarts once, however often it is
     /// asked to.
     void restart();
@@ -226,13 +226,12 @@ public:
     /// Get the current overall progress (0.0 to 1.0)
     float progress() const;
 
-    /// Reset progress tracking, without a progressUpdate(). restart() does it; call it before a start() that runs
-    /// the machine again.
+    /// Reset progress tracking, without a progressUpdate(). start() starts the progress over by itself.
     void resetProgress();
 
 public slots:
     /// Start the machine. Takes the place of QStateMachine::start(), which is not virtual, so that inProgress()
-    /// is true from the call on.
+    /// is true from the call on. The progress starts over: a machine that had progressed reports 0.
     void start();  // NOLINT(bugprone-derived-method-shadowing-base-method)
 
 signals:
@@ -251,6 +250,7 @@ private:
     void _setInProgress(bool inProgress);
     bool _canPostEvent(const QString& eventName) const;
     float _calculateProgress() const;
+    void _startProgressOver();
 
     Vehicle* _vehicle = nullptr;
     QAbstractState* _globalErrorState = nullptr;

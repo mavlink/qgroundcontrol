@@ -18,6 +18,7 @@ private slots:
     void _testStartWhileInProgressIsCritical();
     void _testStartBypassIsCritical();
     void _testErrorInMachineIsCritical();
+    void _testTargetOutsideMachineIsExplained();
     UT_PARAMETERIZED_TEST(_testMachineAsStateOfAnotherMachine);
 
     // Transition builders
@@ -28,5 +29,6 @@ private slots:
     UT_PARAMETERIZED_TEST(_testRepeatedRestartRequests);
     UT_PARAMETERIZED_TEST(_testRestartResetsProgress);
     void _testRestartWhenFinishedResetsProgress();
+    void _testSecondRunReportsProgress();
     void _testProgressWeightsReplaced();
 };

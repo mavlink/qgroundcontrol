@@ -5,7 +5,8 @@
 
 /// \brief Sends the specified MAVLink command to the vehicle and waits for the result
 ///
-/// Emits advance() when the vehicle accepts the command, error() for any other result.
+/// Emits advance() when the vehicle accepts the command, error() for any other result. A result for another
+/// component, and the refusal of the same command that something else sends meanwhile, are not its own.
 ///
 class SendMavlinkCommandState : public WaitStateBase
 {
@@ -38,4 +39,5 @@ private:
     double      _param6 = 0.0;
     double      _param7 = 0.0;
     bool        _configured = false;
+    bool _sendingCommand = false;
 };

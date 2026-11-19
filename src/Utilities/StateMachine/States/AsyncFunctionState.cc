@@ -12,10 +12,12 @@ void AsyncFunctionState::onWaitEntered()
     if (_setupFunction) {
         _setupFunction(this);
     }
+    checkWaitCanEnd();
+}
 
-    // Not for a setup function that has completed or failed the state already, which removes the connection
-    if (!waitEnded() && !hasCompletionConnection() && timeoutMsecs() == 0) {
-        qCCritical(QGCStateMachineLog) << stateName()
-            << "has no completion connection and no timeout - state may hang indefinitely";
+void AsyncFunctionState::onWaitRestarted()
+{
+    if (_setupFunction) {
+        _setupFunction(this);
     }
 }

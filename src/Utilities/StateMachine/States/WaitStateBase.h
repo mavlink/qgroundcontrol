@@ -22,8 +22,8 @@ public:
     /// @param timeoutMsecs Timeout in milliseconds, 0 for no timeout
     WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs = 0);
 
-    /// Rearm wait signal connections and timeout after a handled timeout event.
-    /// Intended for retry loops that stay in the same state.
+    /// Wait again after a timeout, with the wait signal connected and the full timeout. For retries that stay in
+    /// the state, as RetryTransition makes them.
     void restartWait();
 
 signals:
@@ -41,6 +41,9 @@ protected:
 
     /// Called when the timeout expires - default emits timedOut(), subclasses can override
     virtual void onWaitTimeout();
+
+    /// Called by restartWait() once the wait signal is connected again, for what else the wait needs to begin anew
+    virtual void onWaitRestarted() {}
 
     /// Call this when the wait condition is satisfied
     /// Stops the timer, calls cleanup, and emits advance()

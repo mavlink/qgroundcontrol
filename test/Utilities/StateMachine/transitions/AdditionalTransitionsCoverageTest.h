@@ -11,5 +11,6 @@ private slots:
     void _testGuardedTransitionTargetSetLater();
     UT_PARAMETERIZED_TEST(_testRetryTransitionRetriesThenAdvances);
     void _testRetryTransitionWaitRearmedBeforeRetryAction();
+    UT_PARAMETERIZED_TEST(_testRetrySetsAsyncStateUpAgain);
     void _testRetryTransitionCountStartsAgainOnEntry();
 };

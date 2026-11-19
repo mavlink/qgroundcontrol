@@ -101,5 +101,8 @@ void WaitStateBase::restartWait()
     // state need an explicit rearm of both wait connections and timeout timer.
     disconnectWaitSignal();
     connectWaitSignal();
-    _startTimeoutTimer();
+    onWaitRestarted();
+    if (!_completed) {
+        _startTimeoutTimer();
+    }
 }

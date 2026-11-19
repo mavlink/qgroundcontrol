@@ -64,14 +64,17 @@ void SendMavlinkCommandStateTest::_testCommandResult()
 void SendMavlinkCommandStateTest::_testIgnoresResultThatIsNotItsOwn_data()
 {
     QTest::addColumn<bool>("sameCommand");
+    QTest::addColumn<bool>("sameComponent");
 
-    QTest::newRow("result of another command") << false;
-    QTest::newRow("result of the same command sent to another component") << true;
+    QTest::newRow("result of another command") << false << true;
+    QTest::newRow("result of the same command sent to another component") << true << false;
+    QTest::newRow("refusal of the same command that something else sends to the same component") << true << true;
 }
 
 void SendMavlinkCommandStateTest::_testIgnoresResultThatIsNotItsOwn()
 {
     QFETCH(bool, sameCommand);
+    QFETCH(bool, sameComponent);
 
     _connectMockLinkNoInitialConnectSequence();
     QVERIFY(_vehicle);
@@ -90,7 +93,13 @@ void SendMavlinkCommandStateTest::_testIgnoresResultThatIsNotItsOwn()
     QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE) == 1,
                       TestTimeout::mediumMs());
 
-    if (sameCommand) {
+    if (sameCommand && sameComponent) {
+        // The vehicle refuses the second sender of a command that is pending, before the call returns
+        QSignalSpy resultSpy(_vehicle, &Vehicle::mavCommandResult);
+        _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, false /* showError */);
+        QCOMPARE(resultSpy.count(), 1);
+        QCOMPARE(resultSpy.first().at(4).toInt(), static_cast<int>(Vehicle::MavCmdResultFailureDuplicateCommand));
+    } else if (sameCommand) {
         // As the vehicle reports the result of a command that something else has sent to a camera
         emit _vehicle->mavCommandResult(_vehicle->id(), MAV_COMP_ID_CAMERA, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE,
                                         MAV_RESULT_ACCEPTED, Vehicle::MavCmdResultCommandResultOnly);

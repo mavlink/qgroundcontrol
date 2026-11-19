@@ -37,12 +37,6 @@ InitialConnectStateMachine::~InitialConnectStateMachine()
 {
 }
 
-void InitialConnectStateMachine::start()
-{
-    resetProgress();
-    QGCStateMachine::start();
-}
-
 void InitialConnectStateMachine::_createStates()
 {
     // State 0: Request autopilot version

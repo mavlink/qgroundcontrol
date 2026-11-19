@@ -1,6 +1,8 @@
 #include "SkippableAsyncStateTest.h"
-#include "StateTestCommon.h"
 
+#include <QtCore/QRegularExpression>
+
+#include "StateTestCommon.h"
 
 void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
 {
@@ -34,7 +36,10 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
     MultiSignalSpy stateSpy;
     QVERIFY(stateSpy.init(skippableState));
 
+    // A state that is not skipped and only a later complete() ends has no completion connection and no timeout
+    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
     QVERIFY(skipPredicateCalled);
     QVERIFY(setupCalled);
     QVERIFY(capturedState != nullptr);

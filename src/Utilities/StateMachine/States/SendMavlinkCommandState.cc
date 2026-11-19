@@ -56,9 +56,12 @@ void SendMavlinkCommandState::onWaitEntered()
 
     qCDebug(QGCStateMachineLog) << QStringLiteral("Sending %1 command").arg(MissionCommandTree::instance()->friendlyName(_command));
 
+    // Vehicle refuses a command that is pending already before this call returns
+    _sendingCommand = true;
     vehicle()->sendMavCommand(_targetComponent, _command, false /* showError */, static_cast<float>(_param1),
                               static_cast<float>(_param2), static_cast<float>(_param3), static_cast<float>(_param4),
                               static_cast<float>(_param5), static_cast<float>(_param6), static_cast<float>(_param7));
+    _sendingCommand = false;
 }
 
 void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult,
@@ -84,6 +87,10 @@ void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetCom
         qCDebug(QGCStateMachineLog) << QStringLiteral("%1 Command - No response from vehicle").arg(commandName);
         waitFailed();
     } else if (failureCode == Vehicle::MavCmdResultFailureDuplicateCommand) {
+        if (!_sendingCommand) {
+            // Refused is the same command that something else sent while this one waits for its result
+            return;
+        }
         qCWarning(QGCStateMachineLog) << QStringLiteral("%1 Command - Duplicate command pending").arg(commandName);
         waitFailed();
     } else if (ackResult != MAV_RESULT_ACCEPTED) {

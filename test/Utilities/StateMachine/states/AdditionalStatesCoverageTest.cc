@@ -308,4 +308,105 @@ void AdditionalStatesCoverageTest::_testWaitForMavlinkMessageCompletesOnFirstMat
     QCOMPARE(predicateCallCount, predicateCallsWhenCompleted);
 }
 
+void AdditionalStatesCoverageTest::_testWaitForParamResponseEndsOnItsAnswer_data()
+{
+    QTest::addColumn<bool>("paramError");
+
+    QTest::newRow("PARAM_VALUE completes the state") << false;
+    QTest::newRow("PARAM_ERROR fails the state") << true;
+}
+
+void AdditionalStatesCoverageTest::_testWaitForParamResponseEndsOnItsAnswer()
+{
+    QFETCH(bool, paramError);
+
+    // An offline vehicle, whose message signal the test emits
+    Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
+    QGCStateMachine machine(QStringLiteral("TestMachine"), &vehicle);
+
+    // Both predicates take the messages of one component for the answer
+    constexpr uint8_t answeringComponentId = MAV_COMP_ID_AUTOPILOT1;
+    constexpr uint8_t otherComponentId = MAV_COMP_ID_CAMERA;
+    const auto fromAnsweringComponent = [](const mavlink_message_t& message) {
+        return message.compid == answeringComponentId;
+    };
+    auto* const state = new WaitForParamResponseState(&machine, 0, fromAnsweringComponent, fromAnsweringComponent);
+    QFinalState* const finalState = addFinalState(&machine);
+    state->addTransition(state, &QGCState::advance, finalState);
+    state->addTransition(state, &QGCState::error, finalState);
+    machine.setInitialState(state);
+
+    QSignalSpy advanceSpy(state, &QGCState::advance);
+    QSignalSpy errorSpy(state, &QGCState::error);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, state));
+
+    const auto paramMessage = [](bool error, uint8_t componentId) {
+        // The pack functions copy the whole field, so the name is given as one
+        const char paramId[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN] = "TEST_PARAM";
+        static_assert(sizeof(paramId) == MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN);
+        mavlink_message_t message{};
+        if (error) {
+            (void) mavlink_msg_param_error_pack(1, componentId, &message, 0, 0, paramId, -1, MAV_PARAM_ERROR_READ_ONLY);
+        } else {
+            (void) mavlink_msg_param_value_pack(1, componentId, &message, paramId, 1.0f, MAV_PARAM_TYPE_REAL32, 1, 0);
+        }
+        return message;
+    };
+
+    // Neither another message nor a PARAM_VALUE or PARAM_ERROR that its predicate rejects ends the wait
+    mavlink_message_t otherMessage{};
+    otherMessage.compid = answeringComponentId;
+    otherMessage.msgid = MAVLINK_MSG_ID_DEBUG;
+    emit vehicle.mavlinkMessageReceived(otherMessage);
+    emit vehicle.mavlinkMessageReceived(paramMessage(false, otherComponentId));
+    emit vehicle.mavlinkMessageReceived(paramMessage(true, otherComponentId));
+    QCOMPARE(advanceSpy.count(), 0);
+    QCOMPARE(errorSpy.count(), 0);
+    QCOMPARE(state->lastParamError(), static_cast<uint8_t>(MAV_PARAM_ERROR_NO_ERROR));
+
+    emit vehicle.mavlinkMessageReceived(paramMessage(paramError, answeringComponentId));
+    QCOMPARE(advanceSpy.count(), paramError ? 0 : 1);
+    QCOMPARE(errorSpy.count(), paramError ? 1 : 0);
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::shortMs());
+    if (paramError) {
+        QCOMPARE(state->lastParamError(), static_cast<uint8_t>(MAV_PARAM_ERROR_READ_ONLY));
+        QCOMPARE(state->lastParamErrorString(), QStringLiteral("Parameter is read-only"));
+    } else {
+        QVERIFY(state->lastParamErrorString().isEmpty());
+    }
+}
+
+void AdditionalStatesCoverageTest::_testWaitForParamResponseForgetsEarlierError()
+{
+    Vehicle vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
+    QGCStateMachine machine(QStringLiteral("TestMachine"), &vehicle);
+
+    // After a PARAM_ERROR the state is entered once more, as in a machine that runs again
+    auto* const state = new WaitForParamResponseState(&machine, 0, nullptr, nullptr);
+    uint8_t errorSeenWhenFailed = MAV_PARAM_ERROR_NO_ERROR;
+    auto* const again = new FunctionState(QStringLiteral("Again"), &machine, [state, &errorSeenWhenFailed]() {
+        errorSeenWhenFailed = state->lastParamError();
+    });
+    state->addTransition(state, &QGCState::error, again);
+    again->addTransition(again, &QGCState::advance, state);
+    machine.setInitialState(state);
+
+    QSignalSpy enteredSpy(state, &QState::entered);
+    QVERIFY(startAndWaitForEntered(&machine, state));
+
+    // The pack function copies the whole field, so the name is given as one
+    const char paramId[MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN] = "TEST_PARAM";
+    mavlink_message_t message{};
+    (void) mavlink_msg_param_error_pack(1, MAV_COMP_ID_AUTOPILOT1, &message, 0, 0, paramId, -1,
+                                        MAV_PARAM_ERROR_READ_ONLY);
+    emit vehicle.mavlinkMessageReceived(message);
+    QTRY_COMPARE_WITH_TIMEOUT(enteredSpy.count(), 2, TestTimeout::shortMs());
+    QCOMPARE(errorSeenWhenFailed, static_cast<uint8_t>(MAV_PARAM_ERROR_READ_ONLY));
+
+    // The wait that has begun has no error yet
+    QCOMPARE(state->lastParamError(), static_cast<uint8_t>(MAV_PARAM_ERROR_NO_ERROR));
+    QVERIFY(state->lastParamErrorString().isEmpty());
+}
+
 UT_REGISTER_TEST(AdditionalStatesCoverageTest, TestLabel::Unit, TestLabel::Utilities)
