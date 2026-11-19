@@ -1,14 +1,40 @@
 #include "BluetoothWorkerTest.h"
 
+#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
+#include <QtTest/QSignalSpy>
+
 #include "BluetoothBleWorker.h"
 #include "BluetoothClassicWorker.h"
 #include "BluetoothConfiguration.h"
+#include "BluetoothLink.h"
 #include "BluetoothWorker.h"
 
-#include <QtBluetooth/QBluetoothServiceDiscoveryAgent>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QTimer>
-#include <QtTest/QSignalSpy>
+namespace {
+class BluetoothPermissionTestWorker final : public BluetoothWorker
+{
+public:
+    using BluetoothWorker::BluetoothWorker;
+    int setupCount = 0;
+    int connectCount = 0;
+
+protected:
+    void onSetupConnection() override { ++setupCount; }
+
+    void onConnectLink() override { ++connectCount; }
+
+    void onDisconnectLink() override {}
+
+    void onWriteData(const QByteArray&) override {}
+
+    void onServiceDiscoveryTimeout() override {}
+
+    void onResetAfterConsecutiveFailures() override {}
+};
+}  // namespace
 
 static QTimer *_findServiceDiscoveryTimer(const BluetoothWorker *worker)
 {
@@ -44,10 +70,12 @@ void BluetoothWorkerTest::init()
                      QRegularExpression(QStringLiteral("no valid device found|Default Bluetooth controller is OFF")));
     ignoreLogMessage("Comms.Bluetooth.BluetoothBleWorker", QtWarningMsg,
                      QRegularExpression(QStringLiteral("BLE Controller error")));
+    ignoreLogMessage("Comms.Bluetooth.BluetoothLink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Bluetooth Permission Denied|Communication error")));
     ignoreLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
                      QRegularExpression(QStringLiteral(
                          "Cannot find valid Bluetooth adapter|Socket error|No suitable classic service found|"
-                         "Device is powered off")));
+                         "Service discovery error:")));
 }
 
 void BluetoothWorkerTest::_testFactoryCreatesClassicWorker()
@@ -68,6 +96,21 @@ void BluetoothWorkerTest::_testFactoryCreatesBleWorker()
     std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
     QVERIFY(worker);
     QVERIFY(qobject_cast<BluetoothBleWorker *>(worker.get()));
+}
+
+void BluetoothWorkerTest::_testMacLinkKeepsWorkerOnMainThread()
+{
+#if defined(Q_OS_MACOS)
+    SharedLinkConfigurationPtr config = std::make_shared<BluetoothConfiguration>("TestBT_macMainThread");
+    BluetoothLink link(config);
+
+    BluetoothWorker* worker = link.findChild<BluetoothWorker*>(QString(), Qt::FindDirectChildrenOnly);
+    QVERIFY(worker);
+    QCOMPARE(worker->thread(), QCoreApplication::instance()->thread());
+    QVERIFY(!link.findChild<QThread*>(QString(), Qt::FindDirectChildrenOnly));
+#else
+    QSKIP("IOBluetooth main-thread affinity is specific to macOS");
+#endif
 }
 
 void BluetoothWorkerTest::_testInitialState()
@@ -143,66 +186,229 @@ void BluetoothWorkerTest::_testDisconnectResetsReconnectState()
     QVERIFY(!worker->isConnected());
 }
 
-void BluetoothWorkerTest::_testClassicDiscoveryTimerStopsOnFinished()
+void BluetoothWorkerTest::_testClassicServiceSelection_data()
 {
-    BluetoothConfiguration config("TestBT_classicTimerFinished");
-    config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
-
-    std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
-    auto *classicWorker = qobject_cast<BluetoothClassicWorker *>(worker.get());
-    QVERIFY(classicWorker);
-
-    QTimer *serviceTimer = _findServiceDiscoveryTimer(worker.get());
-    QVERIFY(serviceTimer);
-    serviceTimer->start();
-    QVERIFY(serviceTimer->isActive());
-
-    expectLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg, QRegularExpression("No suitable classic service found"));
-    QVERIFY(QMetaObject::invokeMethod(classicWorker, "_onClassicServiceDiscoveryFinished", Qt::DirectConnection));
-    verifyExpectedLogMessage();
-    QVERIFY(!serviceTimer->isActive());
+    QTest::addColumn<bool>("serialClass");
+    QTest::addColumn<bool>("serialUuid");
+    QTest::addColumn<int>("channel");
+    QTest::addColumn<bool>("accepted");
+    QTest::newRow("SPP-class") << true << false << 1 << true;
+    QTest::newRow("SPP-service-UUID") << false << true << 2 << true;
+    QTest::newRow("other-RFCOMM-profile") << false << false << 3 << false;
+    QTest::newRow("SPP-without-channel") << true << false << 0 << false;
 }
 
-void BluetoothWorkerTest::_testClassicDiscoveryTimerStopsOnCanceled()
+void BluetoothWorkerTest::_testClassicServiceSelection()
 {
-    BluetoothConfiguration config("TestBT_classicTimerCanceled");
-    config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
+    QFETCH(bool, serialClass);
+    QFETCH(bool, serialUuid);
+    QFETCH(int, channel);
+    QFETCH(bool, accepted);
 
-    std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
-    auto *classicWorker = qobject_cast<BluetoothClassicWorker *>(worker.get());
-    QVERIFY(classicWorker);
+    BluetoothConfiguration config("TestBT_serviceSelection");
+    BluetoothClassicWorker worker(&config);
+    const QBluetoothUuid serial(QBluetoothUuid::ServiceClassUuid::SerialPort);
+    const QBluetoothUuid other(QBluetoothUuid::ServiceClassUuid::ObexObjectPush);
+    QBluetoothServiceInfo service;
+    service.setServiceUuid(serialUuid ? serial : other);
+    QBluetoothServiceInfo::Sequence classes;
+    classes << QVariant::fromValue(serialClass ? serial : other);
+    service.setAttribute(QBluetoothServiceInfo::ServiceClassIds, classes);
+    QBluetoothServiceInfo::Sequence rfcomm;
+    rfcomm << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ProtocolUuid::Rfcomm))
+           << QVariant::fromValue(static_cast<quint8>(channel));
+    QBluetoothServiceInfo::Sequence protocols;
+    protocols << QVariant::fromValue(rfcomm);
+    service.setAttribute(QBluetoothServiceInfo::ProtocolDescriptorList, protocols);
 
-    QTimer *serviceTimer = _findServiceDiscoveryTimer(worker.get());
-    QVERIFY(serviceTimer);
-    serviceTimer->start();
-    QVERIFY(serviceTimer->isActive());
-
-    QVERIFY(QMetaObject::invokeMethod(classicWorker, "_onClassicServiceDiscoveryCanceled", Qt::DirectConnection));
-    QVERIFY(!serviceTimer->isActive());
+    worker._onClassicServiceDiscovered(service);
+    QCOMPARE(worker._classicDiscoveredService.isValid(), accepted);
+    if (accepted) {
+        QCOMPARE(worker._classicDiscoveredService.serverChannel(), channel);
+        QBluetoothServiceInfo nonSerial;
+        nonSerial.setServiceUuid(other);
+        classes.clear();
+        classes << QVariant::fromValue(other);
+        nonSerial.setAttribute(QBluetoothServiceInfo::ServiceClassIds, classes);
+        nonSerial.setAttribute(QBluetoothServiceInfo::ProtocolDescriptorList, protocols);
+        worker._onClassicServiceDiscovered(nonSerial);
+        QCOMPARE(worker._classicDiscoveredService.serviceUuid(), serialUuid ? serial : other);
+        QVERIFY(worker._classicDiscoveredService.serviceClassUuids().contains(serial) || serialUuid);
+    }
 }
 
-void BluetoothWorkerTest::_testClassicDiscoveryTimerStopsOnError()
+void BluetoothWorkerTest::_testClassicDiscoveryFailure_data()
 {
-    qRegisterMetaType<QBluetoothServiceDiscoveryAgent::Error>("QBluetoothServiceDiscoveryAgent::Error");
+    QTest::addColumn<QString>("ending");
+    QTest::addColumn<int>("errorCount");
+    QTest::newRow("empty-cache") << QStringLiteral("finished") << 1;
+    QTest::newRow("canceled") << QStringLiteral("canceled") << 0;
+    QTest::newRow("discovery-error") << QStringLiteral("error") << 1;
+    QTest::newRow("timeout") << QStringLiteral("timeout") << 1;
+    QTest::newRow("missing-address") << QStringLiteral("address") << 1;
+}
 
-    BluetoothConfiguration config("TestBT_classicTimerError");
-    config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
+void BluetoothWorkerTest::_testClassicDiscoveryFailure()
+{
+    QFETCH(QString, ending);
+    QFETCH(int, errorCount);
 
-    std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
-    auto *classicWorker = qobject_cast<BluetoothClassicWorker *>(worker.get());
-    QVERIFY(classicWorker);
-
-    QTimer *serviceTimer = _findServiceDiscoveryTimer(worker.get());
+    BluetoothConfiguration config("TestBT_discoveryFailure");
+    BluetoothClassicWorker worker(&config);
+    worker._connectionPending = true;
+    QSignalSpy disconnectedSpy(&worker, &BluetoothWorker::disconnected);
+    QSignalSpy errorSpy(&worker, &BluetoothWorker::errorOccurred);
+    QStringList events;
+    connect(&worker, &BluetoothWorker::errorOccurred, this, [&events]() { events << "error"; });
+    connect(&worker, &BluetoothWorker::disconnected, this, [&events]() { events << "disconnected"; });
+    QTimer* serviceTimer = _findServiceDiscoveryTimer(&worker);
     QVERIFY(serviceTimer);
-    serviceTimer->start();
-    QVERIFY(serviceTimer->isActive());
 
-    expectLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg, QRegularExpression("Service discovery error:"));
-    QVERIFY(QMetaObject::invokeMethod(classicWorker, "_onClassicServiceDiscoveryError", Qt::DirectConnection,
-                                      Q_ARG(QBluetoothServiceDiscoveryAgent::Error,
-                                            QBluetoothServiceDiscoveryAgent::Error::UnknownError)));
-    verifyExpectedLogMessage();
+    if (ending != QStringLiteral("address")) {
+        serviceTimer->start();
+    }
+    if (ending == QStringLiteral("finished")) {
+        expectLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
+                         QRegularExpression("No suitable classic service found"));
+        worker._onClassicServiceDiscoveryFinished();
+        verifyExpectedLogMessage();
+    } else if (ending == QStringLiteral("canceled")) {
+        worker._onClassicServiceDiscoveryCanceled();
+    } else if (ending == QStringLiteral("error")) {
+        expectLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
+                         QRegularExpression("Service discovery error:"));
+        worker._onClassicServiceDiscoveryError(QBluetoothServiceDiscoveryAgent::UnknownError);
+        verifyExpectedLogMessage();
+    } else if (ending == QStringLiteral("timeout")) {
+        expectLogMessage("Comms.Bluetooth.BluetoothWorker", QtWarningMsg,
+                         QRegularExpression("Service discovery timed out"));
+        QVERIFY(QMetaObject::invokeMethod(&worker, "_serviceDiscoveryTimeout", Qt::DirectConnection));
+        verifyExpectedLogMessage();
+    } else {
+        worker._startClassicServiceDiscovery();
+    }
+
+    QCOMPARE(errorSpy.count(), errorCount);
+    QCOMPARE(disconnectedSpy.count(), 1);
     QVERIFY(!serviceTimer->isActive());
+    if (errorCount) {
+        QCOMPARE(events, QStringList({"error", "disconnected"}));
+    }
+    // Qt may finish after reporting an error or cancellation; a retired attempt must stay retired.
+    worker._onClassicServiceDiscoveryFinished();
+    worker._onClassicServiceDiscoveryCanceled();
+    QCOMPARE(disconnectedSpy.count(), 1);
+    QCOMPARE(errorSpy.count(), errorCount);
+}
+
+void BluetoothWorkerTest::_preparePendingPermission(BluetoothLink& link, BluetoothWorker* worker)
+{
+    delete link._worker.data();
+    delete link._workerThread.data();
+    worker->setParent(&link);
+    link._worker = worker;
+    // Model an outstanding native permission request without changing the host's Bluetooth permission.
+    link._permissionRequestPending = true;
+}
+
+void BluetoothWorkerTest::_testPermissionDefersConnectionUntilGranted()
+{
+    auto bluetoothConfig = std::make_shared<BluetoothConfiguration>("TestBT_permissionGranted");
+    SharedLinkConfigurationPtr config = bluetoothConfig;
+    BluetoothLink link(config);
+    auto* worker = new BluetoothPermissionTestWorker(bluetoothConfig.get());
+    _preparePendingPermission(link, worker);
+    QSignalSpy errors(&link, &LinkInterface::communicationError);
+    QVERIFY(link._connect());
+    QVERIFY(link._connect());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(worker->setupCount, 0);
+    QCOMPARE(worker->connectCount, 0);
+    QCOMPARE(errors.count(), 0);
+
+    link._handlePermissionStatus(Qt::PermissionStatus::Granted);
+    link._handlePermissionStatus(Qt::PermissionStatus::Granted);
+    QTRY_COMPARE_WITH_TIMEOUT(worker->connectCount, 1, TestTimeout::shortMs());
+    QCOMPARE(worker->setupCount, 1);
+    QCOMPARE(errors.count(), 0);
+}
+
+void BluetoothWorkerTest::_testPermissionDeniedTerminatesConnection()
+{
+    auto bluetoothConfig = std::make_shared<BluetoothConfiguration>("TestBT_permissionDenied");
+    SharedLinkConfigurationPtr config = bluetoothConfig;
+    BluetoothLink link(config);
+    auto* worker = new BluetoothPermissionTestWorker(bluetoothConfig.get());
+    _preparePendingPermission(link, worker);
+    QSignalSpy errors(&link, &LinkInterface::communicationError);
+    QSignalSpy disconnectedSpy(&link, &LinkInterface::disconnected);
+    QVERIFY(link._connect());
+    link._handlePermissionStatus(Qt::PermissionStatus::Denied);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(errors.count(), 1);
+    QVERIFY(!errors.first().last().toString().isEmpty());
+    QCOMPARE(disconnectedSpy.count(), 1);
+    QCOMPARE(worker->setupCount, 0);
+    QCOMPARE(worker->connectCount, 0);
+}
+
+void BluetoothWorkerTest::_testCanceledPermissionDoesNotConnect_data()
+{
+    QTest::addColumn<bool>("granted");
+    QTest::newRow("late-grant") << true;
+    QTest::newRow("late-denial") << false;
+}
+
+void BluetoothWorkerTest::_testCanceledPermissionDoesNotConnect()
+{
+    QFETCH(bool, granted);
+    auto bluetoothConfig = std::make_shared<BluetoothConfiguration>("TestBT_permissionCanceled");
+    SharedLinkConfigurationPtr config = bluetoothConfig;
+    BluetoothLink link(config);
+    auto* worker = new BluetoothPermissionTestWorker(bluetoothConfig.get());
+    _preparePendingPermission(link, worker);
+    QSignalSpy errors(&link, &LinkInterface::communicationError);
+    QSignalSpy disconnectedSpy(&link, &LinkInterface::disconnected);
+    QVERIFY(link._connect());
+    link.disconnect();
+    link._handlePermissionStatus(granted ? Qt::PermissionStatus::Granted : Qt::PermissionStatus::Denied);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(disconnectedSpy.count(), 1);
+    QCOMPARE(errors.count(), 0);
+    QCOMPARE(worker->setupCount, 0);
+    QCOMPARE(worker->connectCount, 0);
+}
+
+void BluetoothWorkerTest::_testClassicSocketErrorHasDescription()
+{
+    qRegisterMetaType<QBluetoothSocket::SocketError>("QBluetoothSocket::SocketError");
+    BluetoothConfiguration config("TestBT_classicEmptyError");
+    config.setMode(BluetoothConfiguration::BluetoothMode::ModeClassic);
+    std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
+    worker->setupConnection();
+    QSignalSpy errorSpy(worker.get(), &BluetoothWorker::errorOccurred);
+
+    expectLogMessage("Comms.Bluetooth.BluetoothClassicWorker", QtWarningMsg,
+                     QRegularExpression("Socket error:.*UnknownSocketError"));
+    QVERIFY(QMetaObject::invokeMethod(
+        worker.get(), "_onSocketErrorOccurred", Qt::DirectConnection,
+        Q_ARG(QBluetoothSocket::SocketError, QBluetoothSocket::SocketError::UnknownSocketError)));
+    verifyExpectedLogMessage();
+
+    QCOMPARE(errorSpy.count(), 1);
+    QVERIFY(errorSpy.first().first().toString().contains("UnknownSocketError"));
+}
+
+void BluetoothWorkerTest::_testDestroyUninitializedLink()
+{
+    SharedLinkConfigurationPtr config = std::make_shared<BluetoothConfiguration>("TestBT_uninitializedLink");
+    QPointer<BluetoothWorker> worker;
+    {
+        BluetoothLink link(config);
+        worker = link._worker;
+        QVERIFY(worker);
+    }
+    QVERIFY(worker.isNull());
 }
 
 void BluetoothWorkerTest::_testDestroyClassicWorker()
