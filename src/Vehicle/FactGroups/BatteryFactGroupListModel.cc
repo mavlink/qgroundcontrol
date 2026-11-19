@@ -111,6 +111,7 @@ void BatteryFactGroup::_handleBatteryStatus(Vehicle * /*vehicle*/, const mavlink
     }
 
     double totalVoltage = qQNaN();
+    int baseCellCount = 0;
     for (int i = 0; i < 10; i++) {
         const double cellVoltage = ((batteryStatus.voltages[i] == UINT16_MAX)) ? qQNaN() : (static_cast<double>(batteryStatus.voltages[i]) / 1000.0);
         if (qIsNaN(cellVoltage)) {
@@ -121,10 +122,15 @@ void BatteryFactGroup::_handleBatteryStatus(Vehicle * /*vehicle*/, const mavlink
         } else {
             totalVoltage += cellVoltage;
         }
+        baseCellCount++;
     }
 
-    for (int i = 0; i < 4; i++) {
-        const double cellVoltage = ((batteryStatus.voltages_ext[i] == 0)) ? qQNaN() : (static_cast<double>(batteryStatus.voltages_ext[i]) / 1000.0);
+    // Cells 11-14 are only valid when all 10 base cells are populated
+    for (int i = 0; (baseCellCount == 10) && (i < 4); i++) {
+        const double cellVoltage =
+            ((batteryStatus.voltages_ext[i] == 0) || (batteryStatus.voltages_ext[i] == UINT16_MAX))
+                ? qQNaN()
+                : (static_cast<double>(batteryStatus.voltages_ext[i]) / 1000.0);
         if (qIsNaN(cellVoltage)) {
             break;
         }
