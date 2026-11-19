@@ -49,9 +49,6 @@ public:
     /// Note the active vehicle's system id; a switch to a different vehicle clears the session so Reset all
     /// can't target the wrong vehicle. Id 0 (no vehicle: transient disconnect/reboot) is ignored.
     Q_INVOKABLE void notifyActiveVehicle(quint32 vehicleId);
-    /// Vehicle parameters that refine how a (unit, type) failure manifests, e.g. BATTERY+WRONG ->
-    /// SYS_FAIL_BAT_LVL. Returns [{ param, label }]; empty when the combo has no detail parameters.
-    Q_INVOKABLE QVariantList detailParams(int unitEnum, int typeEnum) const;
 
 signals:
     void activityChanged(void);

@@ -185,30 +185,3 @@ void FailureInjection::notifyActiveVehicle(quint32 vehicleId)
     _activity.clear();
     emit activityChanged();
 }
-
-QVariantList FailureInjection::detailParams(int unitEnum, int typeEnum) const
-{
-    // Vehicle parameters that refine how a failure manifests, keyed by (unit, type). The page shows
-    // an editor per entry, but only when the connected vehicle actually exposes the parameter.
-    // Adding a new combo is one more table line.
-    struct DetailParam
-    {
-        int unitEnum;
-        int typeEnum;
-        const char* param;
-        const char* label;
-    };
-
-    static const DetailParam table[] = {
-        {FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_WRONG, "SYS_FAIL_GPS_WRG", QT_TR_NOOP("GPS fix type")},
-        {FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG, "SYS_FAIL_BAT_LVL", QT_TR_NOOP("Battery level")},
-    };
-
-    QVariantList list;
-    for (const DetailParam& entry : table) {
-        if (entry.unitEnum == unitEnum && entry.typeEnum == typeEnum) {
-            list.append(QVariantMap{{"param", QString::fromLatin1(entry.param)}, {"label", tr(entry.label)}});
-        }
-    }
-    return list;
-}
