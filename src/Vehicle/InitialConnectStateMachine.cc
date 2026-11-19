@@ -169,19 +169,10 @@ void InitialConnectStateMachine::_wireTransitions()
     _stateStandardModes->addTransition(_stateStandardModes, &QGCState::advance, _stateCompInfo);
     _stateCompInfo->addTransition(_stateCompInfo, &QGCState::advance, _stateParameters);
 
-    // SkippableAsyncStates: both advance and skipped go to next state
-
     _stateParameters->addTransition(_stateParameters, &QGCState::advance, _stateMission);
-    _stateParameters->addTransition(_stateParameters, &SkippableAsyncState::skipped, _stateMission);
-
     _stateMission->addTransition(_stateMission, &QGCState::advance, _stateGeoFence);
-    _stateMission->addTransition(_stateMission, &SkippableAsyncState::skipped, _stateGeoFence);
-
     _stateGeoFence->addTransition(_stateGeoFence, &QGCState::advance, _stateRallyPoints);
-    _stateGeoFence->addTransition(_stateGeoFence, &SkippableAsyncState::skipped, _stateRallyPoints);
-
     _stateRallyPoints->addTransition(_stateRallyPoints, &QGCState::advance, _stateComplete);
-    _stateRallyPoints->addTransition(_stateRallyPoints, &SkippableAsyncState::skipped, _stateComplete);
 
     // Complete -> Final (FunctionState emits advance() after its function)
     _stateComplete->addTransition(_stateComplete, &QGCState::advance, _stateFinal);

@@ -102,9 +102,8 @@ void RequestMetaDataTypeStateMachine::_wireTransitions()
     // RequestCompMetadata -> RequestDeprecated
     _stateRequestCompInfo->addTransition(_stateRequestCompInfo, &QGCState::advance, _stateRequestDeprecated);
 
-    // RequestDeprecated -> RequestMetaDataJson (either via advance or skipped)
+    // RequestDeprecated -> RequestMetaDataJson
     _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &QGCState::advance, _stateRequestMetaDataJson);
-    _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &SkippableAsyncState::skipped, _stateRequestMetaDataJson);
 
     // RequestMetaDataJson -> RequestMetaDataJsonFallback
     _stateRequestMetaDataJson->addTransition(_stateRequestMetaDataJson, &QGCState::advance,
@@ -113,7 +112,6 @@ void RequestMetaDataTypeStateMachine::_wireTransitions()
     // RequestMetaDataJsonFallback -> RequestTranslationJson
     _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &QGCState::advance,
                                                      _stateRequestTranslationJson);
-    _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &SkippableAsyncState::skipped, _stateRequestTranslationJson);
 
     // RequestTranslationJson -> RequestTranslate
     _stateRequestTranslationJson->addTransition(_stateRequestTranslationJson, &QGCState::advance,
@@ -121,7 +119,6 @@ void RequestMetaDataTypeStateMachine::_wireTransitions()
 
     // RequestTranslate -> CompleteRequest
     _stateRequestTranslate->addTransition(_stateRequestTranslate, &QGCState::advance, _stateComplete);
-    _stateRequestTranslate->addTransition(_stateRequestTranslate, &SkippableAsyncState::skipped, _stateComplete);
 
     // CompleteRequest -> Final (QGCState advance())
     _stateComplete->addTransition(_stateComplete, &QGCState::advance, _stateFinal);

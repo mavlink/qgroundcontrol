@@ -106,17 +106,14 @@ void ComponentInformationManager::_wireTransitions()
     // UpdateUri -> RequestParam
     _stateUpdateUri->addTransition(_stateUpdateUri, &FunctionState::advance, _stateRequestParam);
 
-    // RequestParam -> RequestEvents (via advance or skipped)
+    // RequestParam -> RequestEvents
     _stateRequestParam->addTransition(_stateRequestParam, &SkippableAsyncState::advance, _stateRequestEvents);
-    _stateRequestParam->addTransition(_stateRequestParam, &SkippableAsyncState::skipped, _stateRequestEvents);
 
-    // RequestEvents -> RequestActuators (via advance or skipped)
+    // RequestEvents -> RequestActuators
     _stateRequestEvents->addTransition(_stateRequestEvents, &SkippableAsyncState::advance, _stateRequestActuators);
-    _stateRequestEvents->addTransition(_stateRequestEvents, &SkippableAsyncState::skipped, _stateRequestActuators);
 
-    // RequestActuators -> Complete (via advance or skipped)
+    // RequestActuators -> Complete
     _stateRequestActuators->addTransition(_stateRequestActuators, &SkippableAsyncState::advance, _stateComplete);
-    _stateRequestActuators->addTransition(_stateRequestActuators, &SkippableAsyncState::skipped, _stateComplete);
 
     // Complete -> Final
     _stateComplete->addTransition(_stateComplete, &FunctionState::advance, _stateFinal);

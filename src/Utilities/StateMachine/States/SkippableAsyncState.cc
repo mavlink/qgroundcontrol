@@ -20,7 +20,7 @@ void SkippableAsyncState::onWaitEntered()
 
         // The machine takes the transition once the state is entered: Qt queues a signal that a state emits
         // while it is entered
-        emit skipped();
+        complete();
         return;
     }
 

@@ -10,8 +10,10 @@
 ///
 /// On entry:
 /// 1. Evaluate skipPredicate()
-/// 2. If true: call skipAction() (if provided), emit skipped()
+/// 2. If true: call skipAction() (if provided), emit advance()
 /// 3. If false: call setupFunc(this), wait for complete() or timeout
+///
+/// A skipped step and a completed one leave the state through the same transition.
 ///
 /// A retry that stays in the state after a timeout (RetryTransition) calls setupFunc(this) again, without asking
 /// the predicate a second time.
@@ -29,9 +31,7 @@
 ///     [this]() { qCDebug(Log) << "Skipping mission load"; }
 /// );
 ///
-/// // Both advance and skipped transition to same next state
 /// missionState->addTransition(missionState, &QGCState::advance, nextState);
-/// missionState->addTransition(missionState, &SkippableAsyncState::skipped, nextState);
 /// @endcode
 ///
 class SkippableAsyncState : public CompletionWaitState
@@ -46,7 +46,7 @@ public:
 
     /// @param stateName Name for this state (for logging)
     /// @param parent Parent state
-    /// @param skipPredicate If true, skip the async operation and emit skipped()
+    /// @param skipPredicate If true, skip the async operation and emit advance()
     /// @param setupFunc Function called when state is entered and not skipped.
     ///                  Should start the async operation.
     /// @param skipAction Optional function called when skipping (for cleanup or logging)
@@ -57,10 +57,6 @@ public:
                         SetupFunction setupFunc,
                         SkipAction skipAction = nullptr,
                         int timeoutMsecs = 0);
-
-signals:
-    /// Emitted when skip predicate returns true and the state is skipped
-    void skipped();
 
 protected:
     void onWaitEntered() override;
