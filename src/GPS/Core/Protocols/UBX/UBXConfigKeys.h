@@ -94,6 +94,7 @@ inline constexpr auto RATE_MEAS = cfgKey<uint16_t, 0x30210001>();               
 inline constexpr auto RATE_NAV = cfgKey<uint16_t, 0x30210002>();                  // U2
 inline constexpr auto RATE_TIMEREF = cfgKey<uint8_t, 0x20210003>();               // E1
 inline constexpr auto SEC_JAMDET_SENSITIVITY_HI = cfgKey<uint8_t, 0x10f60051>();  // L
+inline constexpr auto SIGNAL_GPS_L5_ENA = cfgKey<uint8_t, 0x10310004>();          // L
 inline constexpr auto SIGNAL_HEALTH_L5 = cfgKey<uint8_t, 0x10320001>();           // L
 inline constexpr auto TMODE_FIXED_POS_ACC = cfgKey<uint32_t, 0x4003000f>();       // U4
 inline constexpr auto TMODE_HEIGHT = cfgKey<int32_t, 0x4003000b>();               // I4

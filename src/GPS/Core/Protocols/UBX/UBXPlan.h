@@ -39,8 +39,9 @@ struct ReceiverProfile
     bool rtcmOutput = false;
     /// The board alone tells whether it can be a base station.
     bool baseCapabilityKnown = false;
-    /// GPS L5 is broadcast unhealthy while pre-operational; L1/L5 receivers take the L1 health flag instead.
-    bool l5HealthOverride = false;
+    /// The receiver has GPS L5 and is told to use it: a NEO-F9P ships with the signal disabled, and GPS L5 is broadcast
+    /// unhealthy while pre-operational, so the receiver takes the L1 health flag for it instead.
+    bool gpsL5 = false;
     /// Measurement period (CFG-RATE-MEAS) until RTCM output starts. F9P computes 5 Hz with RTK and four constellations
     /// on firmware 1.50 and later; X20 could run at 25 Hz, but drops out at 115200 baud with RTK.
     uint16_t measurementPeriodMs = 100;
@@ -67,7 +68,7 @@ inline constexpr std::array RECEIVER_PROFILES = {
     ReceiverProfile{.board = Board::UBlox9F9PL1L5,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
-                    .l5HealthOverride = true,
+                    .gpsL5 = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
     ReceiverProfile{.board = Board::UBlox10L1L5, .baseCapabilityKnown = true, .protocol27 = true},
@@ -75,7 +76,7 @@ inline constexpr std::array RECEIVER_PROFILES = {
                     .hardwareVersion = "000B0000",
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
-                    .l5HealthOverride = true,
+                    .gpsL5 = true,
                     .protocol27 = true},
 };
 

@@ -125,8 +125,13 @@ ValsetBatch interferenceMonitor()
 std::vector<ValsetBatch> messageOutput(const ReceiverProfile& profile)
 {
     return {
+        // Without the signal the health override below has nothing to act on.
+        {.included = profile.gpsL5,
+         .policy = NakPolicy::Warn,
+         .warning = "GPS L5 signal not supported by this receiver",
+         .items = {{Cfg::SIGNAL_GPS_L5_ENA, 1}}},
         // The key is only in app note UBX-21038688, so it has a batch of its own.
-        {.included = profile.l5HealthOverride,
+        {.included = profile.gpsL5,
          .policy = NakPolicy::Warn,
          .warning = "GPS L5 health override not supported by this receiver",
          .items = {{Cfg::SIGNAL_HEALTH_L5, 1}}},
