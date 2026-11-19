@@ -49,7 +49,8 @@ void QGCStateMachineTest::_testGlobalErrorState()
     QCOMPARE(machine.globalErrorState(), errorState);
 
     // The async state has no completion connection and no timeout — expected critical
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression("has no completion connection"));
 
     auto* asyncState = machine.addAsyncFunctionState(QStringLiteral("Async"), [](AsyncFunctionState* state) {
         QTimer::singleShot(50, state, [state]() { state->fail(); });
@@ -113,7 +114,8 @@ void QGCStateMachineTest::_testLocalErrorState()
     });
 
     // The async state has no completion connection and no timeout — expected critical
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression("has no completion connection"));
 
     auto* asyncState = new AsyncFunctionState(QStringLiteral("Async"), &machine, [](AsyncFunctionState* state) {
         QTimer::singleShot(50, state, [state]() { state->fail(); });
@@ -213,7 +215,7 @@ void QGCStateMachineTest::_testInProgressSpansQueuedStart()
     QSignalSpy inProgressSpy(&machine, &QGCStateMachine::inProgressChanged);
 
     if (!hasInitialState) {
-        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                          QRegularExpression(QStringLiteral("start\\(\\) called without an initial state")));
         machine.start();
         verifyExpectedLogMessage();
@@ -288,7 +290,7 @@ void QGCStateMachineTest::_testStartWhileInProgressIsCritical()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("already in progress")));
     machine.start();
     verifyExpectedLogMessage();
@@ -310,7 +312,7 @@ void QGCStateMachineTest::_testStartBypassIsCritical()
     QSignalSpy startedSpy(&machine, &QStateMachine::started);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("started without QGCStateMachine::start\\(\\)")));
     static_cast<QStateMachine&>(machine).start();
     QVERIFY(!machine.inProgress());
@@ -335,7 +337,7 @@ void QGCStateMachineTest::_testErrorInMachineIsCritical()
     expectLogMessage("default", QtWarningMsg,
                      QRegularExpression("Unrecoverable error detected in running state machine"));
     expectLogMessage(
-        "Utilities.QGCStateMachine", QtCriticalMsg,
+        "Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
         QRegularExpression("\"MachineErrorTest\" stopped after an error in the machine: \"Missing initial state"));
     machine.start();
     QVERIFY(spyTriggered(stoppedSpy));
@@ -365,7 +367,7 @@ void QGCStateMachineTest::_testTargetOutsideMachineIsExplained()
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
     expectLogMessage("default", QtWarningMsg,
                      QRegularExpression("Unrecoverable error detected in running state machine"));
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                      QRegularExpression("\"TargetOutsideTest\" stopped after an error in the machine: \"Child mode of "
                                         "state machine 'TargetOutsideTest' is not 'ExclusiveStates'\\. Qt reports this "
                                         "for a transition to a state outside the machine"));
@@ -693,8 +695,8 @@ void QGCStateMachineTest::_testProgressWeightsReplaced()
     // without a state or without a weight is left out.
     QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
     const QRegularExpression ignored(QStringLiteral("progress weight ignored"));
-    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, ignored);
-    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, ignored);
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, ignored);
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, ignored);
     machine.setProgressWeights({{state1, 2}, {nullptr, 1}, {state2, 0}});
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();

@@ -23,7 +23,7 @@
 // Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
 void ParameterManagerTest::_ignoreParamResponseTimeouts()
 {
-    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    ignoreLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("Timeout \".*WaitForParamResponseState\""));
 }
 

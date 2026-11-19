@@ -46,7 +46,7 @@ void SendMavlinkCommandStateTest::_testCommandResult()
     QSignalSpy errorSpy(state, &QGCState::error);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     if (!accepted) {
-        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Command failed = ack.result: %1").arg(MAV_RESULT_FAILED)));
     }
     _mockLink->clearReceivedMavCommandCounts();
@@ -119,7 +119,7 @@ void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
 {
     QStateMachine machine;
 
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                      QRegularExpression("SendMavlinkCommandState not configured"));
 
     auto* const state = new SendMavlinkCommandState(&machine);

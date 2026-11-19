@@ -37,7 +37,8 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
     QVERIFY(stateSpy.init(skippableState));
 
     // A state that is not skipped and only a later complete() ends has no completion connection and no timeout
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression("has no completion connection"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QVERIFY(skipPredicateCalled);

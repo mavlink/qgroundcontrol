@@ -53,7 +53,7 @@ void AdditionalStatesCoverageTest::_testVehicleStatesFailWithoutVehicle()
     finishOn(machine, state, &QGCState::error);
 
     QSignalSpy errorSpy(state, &QGCState::error);
-    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("No vehicle"));
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, QRegularExpression("No vehicle"));
     QVERIFY(startAndWaitForFinished(&machine));
     verifyExpectedLogMessage();
     QCOMPARE(errorSpy.count(), 1);

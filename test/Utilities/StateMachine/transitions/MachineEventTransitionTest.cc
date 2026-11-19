@@ -154,10 +154,10 @@ void MachineEventTransitionTest::_testEventThatIsNotPostedIsDeleted()
         verifyExpectedLogMessage();
     } else {
         const QRegularExpression notPosted(QStringLiteral("event not posted, the machine is not running: \"go\""));
-        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, notPosted);
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, notPosted);
         machine.postEvent(QStringLiteral("go"), QVariant::fromValue(payload));
         verifyExpectedLogMessage();
-        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, notPosted);
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, notPosted);
         QCOMPARE(machine.postDelayedEvent(QStringLiteral("go"), 0, QVariant::fromValue(payload)), -1);
         verifyExpectedLogMessage();
     }

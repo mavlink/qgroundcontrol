@@ -52,7 +52,7 @@ void RetryableRequestMessageStateTest::_testSuccessFirstAttempt()
 void RetryableRequestMessageStateTest::_testRetryOnFailure()
 {
     // Every attempt ends either with the vehicle reporting the message as not received or with the state's timeout.
-    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    ignoreLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
                      QRegularExpression("Max retries exhausted"));
@@ -147,7 +147,7 @@ void RetryableRequestMessageStateTest::_testRetryAfterTimeout()
     finishOn(machine, requestState, &QGCState::advance);
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     machine.start();
 
@@ -221,7 +221,7 @@ void RetryableRequestMessageStateTest::_testRefusedRequestEndsAtItsTimeout()
     QCOMPARE(finishedSpy.count(), 0);
 
     // The retry is sent at the timeout, when the vehicle takes it
-    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
@@ -240,7 +240,7 @@ void RetryableRequestMessageStateTest::_testMaxRetriesExhausted()
     // The state times out before the command queue gives up on the first request, then both attempts go unanswered.
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
-    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    ignoreLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
                      QRegularExpression("Max retries exhausted"));
@@ -313,7 +313,7 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
     QSignalSpy advanceSpy(requestState, &QGCState::advance);
     QSignalSpy retriesExhaustedSpy(requestState, &RetryableRequestMessageState::retriesExhausted);
     QSignalSpy messageReceivedSpy(requestState, &RetryableRequestMessageState::messageReceived);
-    expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     expectLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
                      QRegularExpression("Max retries exhausted"));

@@ -383,6 +383,8 @@ Skip behavior basis: `skipForLinkType = (highLatency || logReplay)`, and the arm
 Useful log categories for tracing behavior:
 
 - `Vehicle.InitialConnectStateMachine`
+- `Utilities.StateMachine` (every state that is entered and exited, and each machine that starts, stops or finishes; a
+  timeout is a warning and is logged without it)
 - `ComponentInformation.ComponentInformationManager`
 - `Vehicle.StandardModes`
 - `Vehicle` (capability logs)
