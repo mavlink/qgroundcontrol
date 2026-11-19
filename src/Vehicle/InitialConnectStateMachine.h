@@ -26,9 +26,6 @@ public:
     explicit InitialConnectStateMachine(Vehicle* vehicle, QObject* parent = nullptr);
     ~InitialConnectStateMachine() override;
 
-private slots:
-    void _onSubProgressUpdate(double progressValue);
-
 private:
     // State creation and wiring
     void _createStates();

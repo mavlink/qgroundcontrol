@@ -203,11 +203,6 @@ void InitialConnectStateMachine::_wireProgressTracking()
     });
 }
 
-void InitialConnectStateMachine::_onSubProgressUpdate(double progressValue)
-{
-    setSubProgress(static_cast<float>(progressValue));
-}
-
 // ============================================================================
 // Skip Predicates
 // ============================================================================
@@ -348,15 +343,8 @@ void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestCompInfo";
 
-    connect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
-    // Ensure progress tracking is always cleaned up, including timeout/skip paths.
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
-
+    state->connectWhileWaiting(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
+                               [this](float progress) { setSubProgress(progress); });
     state->connectToCompletion(vehicle()->_componentInformationManager, &ComponentInformationManager::requestAllComplete);
     vehicle()->_componentInformationManager->requestAllComponentInformation(nullptr, nullptr);
 }
@@ -366,42 +354,31 @@ void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
 
     const bool cacheOnly = _shouldSkipForArmed();
-    QMetaObject::Connection cacheFailedConn;
     if (cacheOnly) {
         // If cache-only check fails (miss/timeout/non-PX4), complete the state without params
-        cacheFailedConn =
-            connect(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed, state, [state, this]() {
-                qCDebug(InitialConnectStateMachineLog)
-                    << "Parameter cache check failed while armed, advancing without parameters";
-                vehicle()->_parameterManager->setParameterDownloadSkipped(true);
-                state->complete();
-            });
+        state->connectToCompletion(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed,
+                                   [state, this]() {
+                                       qCDebug(InitialConnectStateMachineLog)
+                                           << "Parameter cache check failed while armed, advancing without parameters";
+                                       vehicle()->_parameterManager->setParameterDownloadSkipped(true);
+                                       state->complete();
+                                   });
     }
 
-    connect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
+    state->connectWhileWaiting(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
+                               [this](float progress) { setSubProgress(progress); });
 
     // If the vehicle never answers PARAM_REQUEST_LIST, advance without parameters
-    const QMetaObject::Connection requestFailedConn = connect(vehicle()->_parameterManager, &ParameterManager::initialParametersRequestFailed,
-            state, [state]() {
-                qCDebug(InitialConnectStateMachineLog) << "Initial parameter request failed, advancing without parameters";
-                state->complete();
-            });
+    state->connectToCompletion(
+        vehicle()->_parameterManager, &ParameterManager::initialParametersRequestFailed, [state]() {
+            qCDebug(InitialConnectStateMachineLog) << "Initial parameter request failed, advancing without parameters";
+            state->complete();
+        });
 
     state->connectToCompletion(vehicle()->_parameterManager, &ParameterManager::parametersReadyChanged,
         [this](bool parametersReady) {
             _onParametersReady(parametersReady);
         });
-
-    // Ensure progress tracking is always cleaned up, including failure/skip paths.
-    state->setOnExit([this, cacheFailedConn, requestFailedConn]() {
-        disconnect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-        disconnect(requestFailedConn);
-        if (cacheFailedConn) {
-            disconnect(cacheFailedConn);
-        }
-    });
 
     if (cacheOnly) {
         vehicle()->_parameterManager->tryHashCheckCacheLoad();
@@ -413,10 +390,6 @@ void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
 void InitialConnectStateMachine::_onParametersReady(bool parametersReady)
 {
     qCDebug(InitialConnectStateMachineLog) << "_onParametersReady" << parametersReady;
-
-    // Disconnect progress tracking from parameter manager
-    disconnect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
-               this, &InitialConnectStateMachine::_onSubProgressUpdate);
 
     if (parametersReady) {
         // Send time to vehicle (twice for reliability on noisy links)
@@ -438,16 +411,9 @@ void InitialConnectStateMachine::_requestMission(SkippableAsyncState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
 
-    connect(vehicle()->_missionManager, &MissionManager::progressPctChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
+    state->connectWhileWaiting(vehicle()->_missionManager, &MissionManager::progressPctChanged,
+                               [this](double progress) { setSubProgress(static_cast<float>(progress)); });
     state->connectToCompletion(vehicle()->_missionManager, &MissionManager::newMissionItemsAvailable);
-
-    // Disconnect progress tracking on exit
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_missionManager, &MissionManager::progressPctChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
 
     vehicle()->_missionManager->loadFromVehicle();
 }
@@ -456,16 +422,9 @@ void InitialConnectStateMachine::_requestGeoFence(SkippableAsyncState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence";
 
-    connect(vehicle()->_geoFenceManager, &GeoFenceManager::progressPctChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
+    state->connectWhileWaiting(vehicle()->_geoFenceManager, &GeoFenceManager::progressPctChanged,
+                               [this](double progress) { setSubProgress(static_cast<float>(progress)); });
     state->connectToCompletion(vehicle()->_geoFenceManager, &GeoFenceManager::loadComplete);
-
-    // Disconnect progress tracking on exit
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_geoFenceManager, &GeoFenceManager::progressPctChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
 
     vehicle()->_geoFenceManager->loadFromVehicle();
 }
@@ -474,9 +433,8 @@ void InitialConnectStateMachine::_requestRallyPoints(SkippableAsyncState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints";
 
-    connect(vehicle()->_rallyPointManager, &RallyPointManager::progressPctChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
+    state->connectWhileWaiting(vehicle()->_rallyPointManager, &RallyPointManager::progressPctChanged,
+                               [this](double progress) { setSubProgress(static_cast<float>(progress)); });
     state->connectToCompletion(vehicle()->_rallyPointManager, &RallyPointManager::loadComplete,
         [this]() {
             // Mark initial plan request complete
@@ -487,12 +445,6 @@ void InitialConnectStateMachine::_requestRallyPoints(SkippableAsyncState* state)
                 _stateRallyPoints->complete();
             }
         });
-
-    // Always clean up progress tracking when leaving this state.
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_rallyPointManager, &RallyPointManager::progressPctChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
 
     vehicle()->_rallyPointManager->loadFromVehicle();
 }
