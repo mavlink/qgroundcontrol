@@ -177,36 +177,27 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionWaitRearmedBeforeRet
     QVERIFY(waitWasRearmedBeforeRetryAction);
 }
 
-void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain_data()
-{
-    QTest::addColumn<bool>("skippable");
-
-    QTest::newRow("AsyncFunctionState") << false;
-    QTest::newRow("SkippableAsyncState") << true;
-}
-
 void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain()
 {
-    QFETCH(bool, skippable);
-
     ignoreTimeoutWarnings();
     QGCStateMachine machine(QStringLiteral("RetryAsyncTest"), nullptr);
     // Its advance() stands for the answer that the state waits for
     TestSignalState replier(QStringLiteral("Replier"), nullptr);
     int setupCalls = 0;
+    int predicateCalls = 0;
     bool gaveUp = false;
 
-    const auto setup = [&replier, &setupCalls](CompletionWaitState* state) {
-        setupCalls++;
-        state->connectToCompletion(&replier, &QGCState::advance);
-    };
-    CompletionWaitState* waitState = nullptr;
-    if (skippable) {
-        waitState =
-            new SkippableAsyncState(QStringLiteral("Wait"), &machine, []() { return false; }, setup, nullptr, 20);
-    } else {
-        waitState = new AsyncFunctionState(QStringLiteral("Wait"), &machine, setup, 20);
-    }
+    auto* waitState = new AsyncFunctionState(
+        QStringLiteral("Wait"), &machine,
+        [&replier, &setupCalls](AsyncFunctionState* state) {
+            setupCalls++;
+            state->connectToCompletion(&replier, &QGCState::advance);
+        },
+        20);
+    waitState->setSkipPredicate([&predicateCalls]() {
+        predicateCalls++;
+        return false;
+    });
     auto* gaveUpState = new FunctionState(QStringLiteral("GaveUp"), &machine, [&gaveUp]() { gaveUp = true; });
     auto* finalState = addFinalState(&machine);
 
@@ -221,6 +212,8 @@ void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain()
     QSignalSpy advanceSpy(waitState, &QGCState::advance);
     QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(setupCalls, 2);
+    // A retry does not ask whether the step is to be skipped a second time
+    QCOMPARE(predicateCalls, 1);
     QCOMPARE(advanceSpy.count(), 1);
     QVERIFY(!gaveUp);
 }

@@ -79,8 +79,9 @@ void InitialConnectStateMachine::_createStates()
     // No timeout: download duration varies too much with link speed and param count.
     // ParameterManager handles all timeouts internally and always terminates via
     // parametersReadyChanged or initialParametersRequestFailed.
-    _stateParameters = new SkippableAsyncState(
-        QStringLiteral("RequestParameters"), this,
+    _stateParameters = new AsyncFunctionState(QStringLiteral("RequestParameters"), this,
+                                              [this](AsyncFunctionState* state) { _requestParameters(state); });
+    _stateParameters->setSkipPredicate(
         [this]() {
             if (_shouldSkipForArmed()) {
                 // PX4 can try a lightweight hash-check cache load
@@ -92,7 +93,6 @@ void InitialConnectStateMachine::_createStates()
             }
             return false;
         },
-        [this](SkippableAsyncState* state) { _requestParameters(state); },
         [this]() {
             qCDebug(InitialConnectStateMachineLog) << "Skipping parameter download" << _lastSkipReason;
             vehicle()->_parameterManager->setParameterDownloadSkipped(true);
@@ -100,21 +100,17 @@ void InitialConnectStateMachine::_createStates()
 
     // State 4: Request mission (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
-    _stateMission = new SkippableAsyncState(
-        QStringLiteral("RequestMission"),
-        this,
+    _stateMission = new AsyncFunctionState(QStringLiteral("RequestMission"), this,
+                                           [this](AsyncFunctionState* state) { _requestMission(state); });
+    _stateMission->setSkipPredicate(
         [this]() { return _shouldSkipForPlanLoad(); },
-        [this](SkippableAsyncState* state) { _requestMission(state); },
-        [this]() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping mission load" << _lastSkipReason;
-        }
-    );
+        [this]() { qCDebug(InitialConnectStateMachineLog) << "Skipping mission load" << _lastSkipReason; });
 
     // State 5: Request geofence (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
-    _stateGeoFence = new SkippableAsyncState(
-        QStringLiteral("RequestGeoFence"),
-        this,
+    _stateGeoFence = new AsyncFunctionState(QStringLiteral("RequestGeoFence"), this,
+                                            [this](AsyncFunctionState* state) { _requestGeoFence(state); });
+    _stateGeoFence->setSkipPredicate(
         [this]() {
             if (_shouldSkipForPlanLoad()) {
                 return true;
@@ -125,17 +121,13 @@ void InitialConnectStateMachine::_createStates()
             }
             return false;
         },
-        [this](SkippableAsyncState* state) { _requestGeoFence(state); },
-        [this]() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping geofence load" << _lastSkipReason;
-        }
-    );
+        [this]() { qCDebug(InitialConnectStateMachineLog) << "Skipping geofence load" << _lastSkipReason; });
 
     // State 6: Request rally points (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
-    _stateRallyPoints = new SkippableAsyncState(
-        QStringLiteral("RequestRallyPoints"),
-        this,
+    _stateRallyPoints = new AsyncFunctionState(QStringLiteral("RequestRallyPoints"), this,
+                                               [this](AsyncFunctionState* state) { _requestRallyPoints(state); });
+    _stateRallyPoints->setSkipPredicate(
         [this]() {
             if (_shouldSkipForPlanLoad()) {
                 return true;
@@ -146,14 +138,12 @@ void InitialConnectStateMachine::_createStates()
             }
             return false;
         },
-        [this](SkippableAsyncState* state) { _requestRallyPoints(state); },
         [this]() {
             qCDebug(InitialConnectStateMachineLog) << "Skipping rally points load" << _lastSkipReason;
             // Mark plan request complete when skipping
             vehicle()->_initialPlanRequestComplete = true;
             emit vehicle()->initialPlanRequestCompleteChanged(true);
-        }
-    );
+        });
 
     // State 7: Signal completion
     _stateComplete = new FunctionState(QStringLiteral("SignalComplete"), this, [this]() { _signalComplete(); });
@@ -340,7 +330,7 @@ void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* state)
     vehicle()->_componentInformationManager->requestAllComponentInformation(nullptr, nullptr);
 }
 
-void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestParameters(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
 
@@ -398,7 +388,7 @@ void InitialConnectStateMachine::_onParametersReady(bool parametersReady)
     }
 }
 
-void InitialConnectStateMachine::_requestMission(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestMission(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
 
@@ -409,7 +399,7 @@ void InitialConnectStateMachine::_requestMission(SkippableAsyncState* state)
     vehicle()->_missionManager->loadFromVehicle();
 }
 
-void InitialConnectStateMachine::_requestGeoFence(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestGeoFence(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence";
 
@@ -420,7 +410,7 @@ void InitialConnectStateMachine::_requestGeoFence(SkippableAsyncState* state)
     vehicle()->_geoFenceManager->loadFromVehicle();
 }
 
-void InitialConnectStateMachine::_requestRallyPoints(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestRallyPoints(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints";
 

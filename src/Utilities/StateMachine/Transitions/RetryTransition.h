@@ -21,9 +21,9 @@
 /// stays in a state, and targetState() is null. Another transition for the same signal is therefore not taken
 /// during the retries: not one of a parent state, and one of the state itself only if it was added before this one.
 ///
-/// A source state that is a WaitStateBase waits again through restartWait(). An AsyncFunctionState or a
-/// SkippableAsyncState runs its setup function again there, so the retry action is for what that function does
-/// not do; a state that sends when it is entered, and not in a setup function, needs the action to send again.
+/// A source state that is a WaitStateBase waits again through restartWait(). An AsyncFunctionState runs its setup
+/// function again there, so the retry action is for what that function does not do; a state that sends when it is
+/// entered, and not in a setup function, needs the action to send again.
 ///
 /// The count starts again each time the source state is entered, so a state that was left through another
 /// transition after some retries has all of them the next time.

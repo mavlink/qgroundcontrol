@@ -12,7 +12,6 @@ class CompInfoParam;
 class CompInfoGeneral;
 class QGCCachedFileDownload;
 class AsyncFunctionState;
-class SkippableAsyncState;
 class FunctionState;
 class QGCFinalState;
 
@@ -46,9 +45,9 @@ private:
     // State action functions
     void _requestCompInfoGeneral(AsyncFunctionState* state);
     void _updateAllUri();
-    void _requestCompInfoParam(SkippableAsyncState* state);
-    void _requestCompInfoEvents(SkippableAsyncState* state);
-    void _requestCompInfoActuators(SkippableAsyncState* state);
+    void _requestCompInfoParam(AsyncFunctionState* state);
+    void _requestCompInfoEvents(AsyncFunctionState* state);
+    void _requestCompInfoActuators(AsyncFunctionState* state);
     void _signalComplete();
 
     // Skip predicates
@@ -68,9 +67,9 @@ private:
     // State pointers
     AsyncFunctionState*     _stateRequestGeneral    = nullptr;
     FunctionState*          _stateUpdateUri         = nullptr;
-    SkippableAsyncState*    _stateRequestParam      = nullptr;
-    SkippableAsyncState*    _stateRequestEvents     = nullptr;
-    SkippableAsyncState*    _stateRequestActuators  = nullptr;
+    AsyncFunctionState* _stateRequestParam = nullptr;
+    AsyncFunctionState* _stateRequestEvents = nullptr;
+    AsyncFunctionState* _stateRequestActuators = nullptr;
     FunctionState*          _stateComplete          = nullptr;
     QGCFinalState*          _stateFinal             = nullptr;
 

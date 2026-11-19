@@ -11,7 +11,6 @@ class ComponentInformationManager;
 class CompInfo;
 class AsyncFunctionState;
 class CompletionWaitState;
-class SkippableAsyncState;
 class QGCState;
 
 class RequestMetaDataTypeStateMachine : public QGCStateMachine
@@ -109,11 +108,11 @@ private:
 
     // State pointers
     AsyncFunctionState* _stateRequestCompInfo = nullptr;
-    SkippableAsyncState* _stateRequestDeprecated = nullptr;
+    AsyncFunctionState* _stateRequestDeprecated = nullptr;
     AsyncFunctionState* _stateRequestMetaDataJson = nullptr;
-    SkippableAsyncState* _stateRequestMetaDataJsonFallback = nullptr;
+    AsyncFunctionState* _stateRequestMetaDataJsonFallback = nullptr;
     AsyncFunctionState* _stateRequestTranslationJson = nullptr;
-    SkippableAsyncState* _stateRequestTranslate = nullptr;
+    AsyncFunctionState* _stateRequestTranslate = nullptr;
     QGCState* _stateComplete = nullptr;
     QGCFinalState* _stateFinal = nullptr;
 };

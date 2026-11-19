@@ -19,6 +19,9 @@
 /// A timeout ends the completion connections. A retry that stays in the state (RetryTransition) therefore calls
 /// the function again, which starts the operation and connects its completion anew.
 ///
+/// A step that is not needed every time has a skip predicate (setSkipPredicate()). When it returns true as the
+/// state is entered, the function is not called and the state emits advance() like one whose step is done.
+///
 class AsyncFunctionState : public CompletionWaitState
 {
     Q_OBJECT
@@ -26,6 +29,8 @@ class AsyncFunctionState : public CompletionWaitState
 
 public:
     using SetupFunction = std::function<void(AsyncFunctionState* state)>;
+    using SkipPredicate = std::function<bool()>;
+    using SkipAction = std::function<void()>;
 
     /// @param stateName Name for this state (for logging)
     /// @param parent Parent state
@@ -34,10 +39,16 @@ public:
     /// @param timeoutMsecs Timeout in milliseconds, 0 for no timeout
     AsyncFunctionState(const QString& stateName, QState* parent, SetupFunction setupFunction, int timeoutMsecs = 0);
 
+    /// @param skipPredicate Asked each time the state is entered: true skips the step. A retry does not ask again.
+    /// @param skipAction Called when the step is skipped, for what the skipped step would have left behind
+    void setSkipPredicate(SkipPredicate skipPredicate, SkipAction skipAction = nullptr);
+
 protected:
     void onWaitEntered() override;
     void onWaitRestarted() override;
 
 private:
     SetupFunction _setupFunction;
+    SkipPredicate _skipPredicate;
+    SkipAction _skipAction;
 };

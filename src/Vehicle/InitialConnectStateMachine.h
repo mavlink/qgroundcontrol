@@ -4,7 +4,6 @@
 #include "MAVLinkMessageType.h"
 
 class Vehicle;
-class SkippableAsyncState;
 class AsyncFunctionState;
 class RetryableRequestMessageState;
 class FunctionState;
@@ -37,11 +36,11 @@ private:
     void _handleAutopilotVersionFailure();
     void _requestStandardModes(AsyncFunctionState* state);
     void _requestCompInfo(AsyncFunctionState* state);
-    void _requestParameters(SkippableAsyncState* state);
+    void _requestParameters(AsyncFunctionState* state);
     void _onParametersReady(bool ready);
-    void _requestMission(SkippableAsyncState* state);
-    void _requestGeoFence(SkippableAsyncState* state);
-    void _requestRallyPoints(SkippableAsyncState* state);
+    void _requestMission(AsyncFunctionState* state);
+    void _requestGeoFence(AsyncFunctionState* state);
+    void _requestRallyPoints(AsyncFunctionState* state);
     void _signalComplete();
 
     // Skip predicates
@@ -57,10 +56,10 @@ private:
     RetryableRequestMessageState* _stateAutopilotVersion = nullptr;
     AsyncFunctionState* _stateStandardModes = nullptr;
     AsyncFunctionState* _stateCompInfo = nullptr;
-    SkippableAsyncState* _stateParameters = nullptr;
-    SkippableAsyncState* _stateMission = nullptr;
-    SkippableAsyncState* _stateGeoFence = nullptr;
-    SkippableAsyncState* _stateRallyPoints = nullptr;
+    AsyncFunctionState* _stateParameters = nullptr;
+    AsyncFunctionState* _stateMission = nullptr;
+    AsyncFunctionState* _stateGeoFence = nullptr;
+    AsyncFunctionState* _stateRallyPoints = nullptr;
     FunctionState* _stateComplete = nullptr;
     QGCFinalState* _stateFinal = nullptr;
 

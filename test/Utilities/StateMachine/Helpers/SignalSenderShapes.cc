@@ -14,7 +14,6 @@
 #include "QGCStateMachine.h"
 #include "RetryTransition.h"
 #include "SignalSender.h"
-#include "SkippableAsyncState.h"
 
 // Compile-time checks only: the senders and signals that the templates taking a signal accept, and those they
 // reject.
@@ -110,8 +109,6 @@ template struct Transition<GuardedWithTarget>;
 template struct Transition<Retry>;
 template struct State<ConnectToCompletion<AsyncFunctionState>::OnSignal>;
 template struct State<ConnectToCompletion<AsyncFunctionState>::OnSignalWithSlot>;
-template struct State<ConnectToCompletion<SkippableAsyncState>::OnSignal>;
-template struct State<ConnectToCompletion<SkippableAsyncState>::OnSignalWithSlot>;
 
 // The sender is of the class that declares the signal, whichever class the signal is named through
 static_assert(std::is_same_v<SignalSender<decltype(&QTimer::timeout)>, QTimer>);

@@ -56,9 +56,10 @@ void RequestMetaDataTypeStateMachine::_createStates(const Timeouts& timeouts)
         "RequestCompMetadata", this, [this](AsyncFunctionState*) { _requestCompInfo(); }, timeouts.compInfoRequest);
 
     // State 2: Fallback to deprecated COMPONENT_INFORMATION if needed
-    _stateRequestDeprecated = new SkippableAsyncState(
-        "RequestCompInfoDeprecated", this, [this]() { return _shouldSkipDeprecatedRequest(); },
-        [this](SkippableAsyncState*) { _requestCompInfoDeprecated(); }, nullptr, timeouts.compInfoRequest);
+    _stateRequestDeprecated = new AsyncFunctionState(
+        "RequestCompInfoDeprecated", this, [this](AsyncFunctionState*) { _requestCompInfoDeprecated(); },
+        timeouts.compInfoRequest);
+    _stateRequestDeprecated->setSkipPredicate([this]() { return _shouldSkipDeprecatedRequest(); });
 
     // State 3: Download metadata JSON
     _stateRequestMetaDataJson = new AsyncFunctionState(
@@ -66,9 +67,10 @@ void RequestMetaDataTypeStateMachine::_createStates(const Timeouts& timeouts)
         timeouts.metaDataDownload);
 
     // State 4: Try fallback URI if primary download failed
-    _stateRequestMetaDataJsonFallback = new SkippableAsyncState(
-        "RequestMetaDataJsonFallback", this, [this]() { return _shouldSkipFallback(); },
-        [this](SkippableAsyncState*) { _requestMetaDataJsonFallback(); }, nullptr, timeouts.metaDataDownload);
+    _stateRequestMetaDataJsonFallback = new AsyncFunctionState(
+        "RequestMetaDataJsonFallback", this, [this](AsyncFunctionState*) { _requestMetaDataJsonFallback(); },
+        timeouts.metaDataDownload);
+    _stateRequestMetaDataJsonFallback->setSkipPredicate([this]() { return _shouldSkipFallback(); });
 
     // State 5: Download translation JSON
     _stateRequestTranslationJson = new AsyncFunctionState(
@@ -76,9 +78,9 @@ void RequestMetaDataTypeStateMachine::_createStates(const Timeouts& timeouts)
         timeouts.metaDataDownload);
 
     // State 6: Translate metadata
-    _stateRequestTranslate = new SkippableAsyncState(
-        "RequestTranslate", this, [this]() { return _shouldSkipTranslation(); },
-        [this](SkippableAsyncState*) { _requestTranslate(); }, nullptr, timeouts.translation);
+    _stateRequestTranslate = new AsyncFunctionState(
+        "RequestTranslate", this, [this](AsyncFunctionState*) { _requestTranslate(); }, timeouts.translation);
+    _stateRequestTranslate->setSkipPredicate([this]() { return _shouldSkipTranslation(); });
 
     // A state that times out is left while what it asked for is still under way. Nothing of that may reach a
     // later state, or the next request this machine makes.

@@ -56,37 +56,26 @@ void ComponentInformationManager::_createStates()
     _stateUpdateUri = new FunctionState(QStringLiteral("UpdateUri"), this, [this]() { _updateAllUri(); });
 
     // State 3: Request parameter metadata (skippable)
-    _stateRequestParam = new SkippableAsyncState(
-        QStringLiteral("RequestParam"),
-        this,
+    _stateRequestParam = new AsyncFunctionState(QStringLiteral("RequestParam"), this,
+                                                [this](AsyncFunctionState* state) { _requestCompInfoParam(state); });
+    _stateRequestParam->setSkipPredicate(
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_PARAMETER); },
-        [this](SkippableAsyncState* state) { _requestCompInfoParam(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported";
-        }
-    );
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported"; });
 
     // State 4: Request events metadata (skippable)
-    _stateRequestEvents = new SkippableAsyncState(
-        QStringLiteral("RequestEvents"),
-        this,
+    _stateRequestEvents = new AsyncFunctionState(QStringLiteral("RequestEvents"), this,
+                                                 [this](AsyncFunctionState* state) { _requestCompInfoEvents(state); });
+    _stateRequestEvents->setSkipPredicate(
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_EVENTS); },
-        [this](SkippableAsyncState* state) { _requestCompInfoEvents(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported";
-        }
-    );
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported"; });
 
     // State 5: Request actuators metadata (skippable)
-    _stateRequestActuators = new SkippableAsyncState(
-        QStringLiteral("RequestActuators"),
-        this,
+    _stateRequestActuators =
+        new AsyncFunctionState(QStringLiteral("RequestActuators"), this,
+                               [this](AsyncFunctionState* state) { _requestCompInfoActuators(state); });
+    _stateRequestActuators->setSkipPredicate(
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_ACTUATORS); },
-        [this](SkippableAsyncState* state) { _requestCompInfoActuators(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported";
-        }
-    );
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported"; });
 
     // State 6: Signal completion
     _stateComplete = new FunctionState(QStringLiteral("Complete"), this, [this]() { _signalComplete(); });
@@ -104,13 +93,13 @@ void ComponentInformationManager::_wireTransitions()
     _stateUpdateUri->addTransition(_stateUpdateUri, &FunctionState::advance, _stateRequestParam);
 
     // RequestParam -> RequestEvents
-    _stateRequestParam->addTransition(_stateRequestParam, &SkippableAsyncState::advance, _stateRequestEvents);
+    _stateRequestParam->addTransition(_stateRequestParam, &QGCState::advance, _stateRequestEvents);
 
     // RequestEvents -> RequestActuators
-    _stateRequestEvents->addTransition(_stateRequestEvents, &SkippableAsyncState::advance, _stateRequestActuators);
+    _stateRequestEvents->addTransition(_stateRequestEvents, &QGCState::advance, _stateRequestActuators);
 
     // RequestActuators -> Complete
-    _stateRequestActuators->addTransition(_stateRequestActuators, &SkippableAsyncState::advance, _stateComplete);
+    _stateRequestActuators->addTransition(_stateRequestActuators, &QGCState::advance, _stateComplete);
 
     // Complete -> Final
     _stateComplete->addTransition(_stateComplete, &FunctionState::advance, _stateFinal);
@@ -162,7 +151,7 @@ void ComponentInformationManager::_updateAllUri()
     }
 }
 
-void ComponentInformationManager::_requestCompInfoParam(SkippableAsyncState* state)
+void ComponentInformationManager::_requestCompInfoParam(AsyncFunctionState* state)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 
@@ -170,7 +159,7 @@ void ComponentInformationManager::_requestCompInfoParam(SkippableAsyncState* sta
     _requestTypeStateMachine.request(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]);
 }
 
-void ComponentInformationManager::_requestCompInfoEvents(SkippableAsyncState* state)
+void ComponentInformationManager::_requestCompInfoEvents(AsyncFunctionState* state)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 
@@ -178,7 +167,7 @@ void ComponentInformationManager::_requestCompInfoEvents(SkippableAsyncState* st
     _requestTypeStateMachine.request(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]);
 }
 
-void ComponentInformationManager::_requestCompInfoActuators(SkippableAsyncState* state)
+void ComponentInformationManager::_requestCompInfoActuators(AsyncFunctionState* state)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 

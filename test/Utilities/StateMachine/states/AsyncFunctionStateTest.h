@@ -15,4 +15,6 @@ private slots:
     void _testEveryCompletionConnectionEndsWithWait();
     void _testConnectionWhileWaitingEndsWithWait();
     void _testConnectionWhileWaitingDoesNotEndWait();
+    UT_PARAMETERIZED_TEST(_testSkipPredicate);
+    void _testSkippedBeforeMachineStops();
 };

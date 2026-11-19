@@ -28,8 +28,6 @@ target_sources(
         States/SendMavlinkCommandState.h
         States/SendMavlinkMessageState.cc
         States/SendMavlinkMessageState.h
-        States/SkippableAsyncState.cc
-        States/SkippableAsyncState.h
         States/VehicleMessageWaitState.cc
         States/VehicleMessageWaitState.h
         States/WaitForMavlinkMessageState.cc

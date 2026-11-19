@@ -247,4 +247,61 @@ void AsyncFunctionStateTest::_testConnectionWhileWaitingDoesNotEndWait()
     verifyExpectedLogMessage();
 }
 
+void AsyncFunctionStateTest::_testSkipPredicate_data()
+{
+    QTest::addColumn<bool>("skip");
+    QTest::addColumn<bool>("withSkipAction");
+
+    QTest::newRow("the predicate says no") << false << true;
+    QTest::newRow("skipped, without a skip action") << true << false;
+    QTest::newRow("skipped, with a skip action") << true << true;
+}
+
+void AsyncFunctionStateTest::_testSkipPredicate()
+{
+    QFETCH(bool, skip);
+    QFETCH(bool, withSkipAction);
+
+    QStateMachine machine;
+    bool setupCalled = false;
+    bool skipActionCalled = false;
+
+    auto* asyncState =
+        new AsyncFunctionState(QStringLiteral("TestSkip"), &machine, [&setupCalled](AsyncFunctionState* state) {
+            setupCalled = true;
+            state->complete();
+        });
+    AsyncFunctionState::SkipAction skipAction;
+    if (withSkipAction) {
+        skipAction = [&skipActionCalled]() { skipActionCalled = true; };
+    }
+    asyncState->setSkipPredicate([skip]() { return skip; }, skipAction);
+    // A skipped step leaves the state as a completed one does
+    finishOn(machine, asyncState, &QGCState::advance);
+
+    QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(setupCalled, !skip);
+    QCOMPARE(skipActionCalled, skip && withSkipAction);
+}
+
+void AsyncFunctionStateTest::_testSkippedBeforeMachineStops()
+{
+    QGCStateMachine machine(QStringLiteral("SkippedBeforeStoppedTest"), nullptr);
+    QStringList signalOrder;
+
+    // The skip action stops the machine while the state is entered
+    auto* asyncState = new AsyncFunctionState(QStringLiteral("Skipped"), &machine, [](AsyncFunctionState*) {});
+    asyncState->setSkipPredicate([]() { return true; }, [&machine]() { machine.stop(); });
+    machine.setInitialState(asyncState);
+    connect(asyncState, &QGCState::advance, &machine,
+            [&signalOrder]() { signalOrder.append(QStringLiteral("advance")); });
+    connect(&machine, &QStateMachine::stopped, &machine,
+            [&signalOrder]() { signalOrder.append(QStringLiteral("stopped")); });
+
+    machine.start();
+    QTRY_COMPARE_WITH_TIMEOUT(signalOrder.size(), 2, TestTimeout::shortMs());
+    // The state does not report that it was skipped to a machine that has stopped
+    QCOMPARE(signalOrder, QStringList({QStringLiteral("advance"), QStringLiteral("stopped")}));
+}
+
 UT_REGISTER_TEST(AsyncFunctionStateTest, TestLabel::Unit, TestLabel::Utilities)

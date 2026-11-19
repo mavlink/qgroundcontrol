@@ -22,7 +22,6 @@
 #include "SendMavlinkCommandState.h"
 #include "SendMavlinkMessageState.h"
 #include "SignalSender.h"
-#include "SkippableAsyncState.h"
 #include "VehicleMessageWaitState.h"
 #include "WaitForMavlinkMessageState.h"
 #include "WaitForParamResponseState.h"
