@@ -7,7 +7,7 @@ The same images are used by CI, so a container build is also a quick way to repr
 
 The container files are located in the [`deploy/docker`](https://github.com/mavlink/qgroundcontrol/tree/master/deploy/docker) directory:
 
-- `Dockerfile`: a single multi-stage file with a target for each builder image: `linux` (x86_64 AppImage), `linux-cross` (aarch64 cross-build), `android` (APK) and `devcontainer` (see [VS Code Dev Container](#vs-code-dev-container)).
+- `Dockerfile`: a single multi-stage file with a target for each builder image: `linux` (native x86_64 or arm64 AppImage), `linux-cross` (aarch64 cross-build), `android` (APK) and `devcontainer` (see [VS Code Dev Container](#vs-code-dev-container)).
 - `variants.json`: the build variants, which select a target, base image and build arguments.
   The default `ubuntu` variant is based on **Ubuntu 24.04**; there are also `ubuntu-2204`, `ubuntu-2604`, `debian`, `fedora`, `arch`, `aarch64` and `android` variants.
 - `run_docker.py`: builds a variant's image and runs a QGC build in it.
@@ -20,20 +20,23 @@ Base images are pulled from the [Amazon ECR Public mirror](https://gallery.ecr.a
 To build the image and then build QGC in it, run this command from the QGC root directory:
 
 ```sh
-python3 deploy/docker/run_docker.py build ubuntu
+uv run --frozen --project tools python deploy/docker/run_docker.py build ubuntu
 ```
 
 (`just docker` runs the same command.)
+[uv](https://docs.astral.sh/uv/getting-started/installation/) supplies the Python 3.12 that the script runs on; a `python3` that is 3.12 or newer can also run `deploy/docker/run_docker.py` directly.
 Replace `ubuntu` with any variant from `variants.json`, and optionally append a build type (`Release` by default, or `Debug`, `RelWithDebInfo`, `MinSizeRel`).
 The build output, including the AppImage, is written to `build/` (`build-aarch64/` for the `aarch64` variant).
 
 To rebuild with an image you already built, use `run`:
 
 ```sh
-python3 deploy/docker/run_docker.py run qgc-ubuntu-docker Release --fuse
+uv run --frozen --project tools python deploy/docker/run_docker.py run qgc-ubuntu-docker Release
 ```
 
-The script runs the container as your user and mounts the source and build directories. `--fuse` gives the container access to FUSE, which the AppImage checks need. Environment variables adjust the run:
+The script runs the container as your user, with no extra privileges, and mounts the source and build directories.
+The build packages the AppImage without FUSE and skips the AppImageLint compatibility check, which only runs when you package QGC outside a container.
+Environment variables adjust the run:
 
 | Variable      | Purpose                                                                                        |
 | ------------- | ---------------------------------------------------------------------------------------------- |
@@ -57,19 +60,9 @@ The `-t` flag is essential.
 Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container.
 :::
 
-::: info
-The `linux` image builds x86\_64 binaries. On a computer with an Apple silicon (ARM) chip you must also specify the build option `--platform linux/x86_64` as shown:
-
-```sh
-docker build --platform linux/x86_64 --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
-```
-
-Otherwise you will get a build error like:
-
-```sh
-qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
-```
-
+:::info
+The `linux` image builds natively for the host's architecture (x86_64 or arm64).
+The `linux-cross` and `android` targets and the `arch` variant need an x86_64 image, so on an arm64 host, such as an Apple silicon Mac, build them with `--platform linux/amd64`, which Docker emulates.
 :::
 
 Then create a `build` directory in the source tree to hold the artifacts, and run the image using the tag provided above, from the root directory:
@@ -86,15 +79,24 @@ docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-
 ```
 
 :::info
-These commands run the build as `root` and without FUSE, so the AppImage checks are skipped.
+These commands run the build as `root`; the script runs it as your user instead.
 See [`run_docker.py`](https://github.com/mavlink/qgroundcontrol/blob/master/deploy/docker/run_docker.py) for the exact `docker run` options the script uses.
 :::
 
 ## VS Code Dev Container
 
-[`.devcontainer/devcontainer.json`](https://github.com/mavlink/qgroundcontrol/blob/master/.devcontainer/devcontainer.json) builds the `devcontainer` target: the `linux` image with Qt and all dependencies preinstalled, plus a non-root `vscode` user.
+[`.devcontainer/devcontainer.json`](https://github.com/mavlink/qgroundcontrol/blob/master/.devcontainer/devcontainer.json) builds the `devcontainer` target: the `linux` image with Qt and all dependencies preinstalled, the static-analysis tools that CI uses (LLVM, clang-tidy and Clazy, for `just analyze`), plus a non-root `vscode` user.
+It builds natively on x86_64 and arm64 hosts, such as Apple Silicon Macs, installing the matching Qt.
+It also has the ccache release CI pins, and on x86_64 the Android SDK, NDK, JDK and a Qt kit for each Android ABI: `qgc-android <abi> <command>` runs a command with that ABI's kit selected, for example `qgc-android arm64-v8a cmake --preset Android`.
+Each Android preset uses one build directory for every ABI, so add `--fresh` to the configure command when you switch to another ABI.
+Google publishes the NDK for x86_64 Linux hosts only, so on arm64 run the x86_64 image (`--platform linux/amd64`) for Android builds.
+In VS Code, add `"options": ["--platform=linux/amd64"]` to `build` and `"runArgs": ["--platform=linux/amd64"]` in your local `devcontainer.json`.
 Open the repository in VS Code with the [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) extension installed and choose **Reopen in Container**.
 The container installs the C++, CMake, QML and Python extensions and the QGC workspace settings, tasks and launch configurations, so you can build, test and debug from VS Code.
+CI publishes the image for both architectures as `ghcr.io/mavlink/qgc-dev` (`latest` from `master`, and each release's version tag), and the Dev Container uses it as a build cache.
+Docker reuses the published layers only while your checkout's files match CI's, including their permissions, so a checkout made with a umask other than `022` rebuilds every layer.
+You can also run the image directly, for example `docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" ghcr.io/mavlink/qgc-dev:latest`.
+It runs as the `vscode` user (UID 1000), so that user needs write access to the mounted checkout.
 
 ## Troubleshooting
 
