@@ -26,57 +26,13 @@ function(_qgc_gst_windows_sdk_arch out_var)
     )
 endfunction()
 
-# _qgc_gst_windows_installed_sdk(<arch> <out_var>)
-# Sets <out_var> to the installed <arch> (x86_64 or arm64) SDK named by the GSTREAMER_1_0_ROOT_<ARCH> environment
-# variable, else by GSTREAMER_1_0_ROOT_MSVC_<ARCH> in MSVC builds, else found in a standard install location; "" when
-# none exists. An installation in a path with spaces (the installer's default, C:/Program Files) is skipped with a
-# warning, since pkg-config cannot pass such paths on (_qgc_gst_require_no_spaces).
-function(_qgc_gst_windows_installed_sdk arch out_var)
-    string(TOUPPER "${arch}" _env_arch)
-    set(_candidates "$ENV{GSTREAMER_1_0_ROOT_${_env_arch}}")
-    if(MSVC)
-        list(APPEND _candidates "$ENV{GSTREAMER_1_0_ROOT_MSVC_${_env_arch}}")
-    endif()
-    list(APPEND _candidates "C:/Program Files/gstreamer/1.0/msvc_${arch}" "C:/gstreamer/1.0/msvc_${arch}")
-    set(_root "")
-    foreach(_candidate IN LISTS _candidates)
-        if(NOT _candidate OR NOT EXISTS "${_candidate}")
-            continue()
-        endif()
-        cmake_path(SET _candidate "${_candidate}")
-        if(_candidate MATCHES " ")
-            message(
-                WARNING "GStreamer: skipping the SDK installed at '${_candidate}': pkg-config cannot pass on a "
-                        "path with spaces. Install it to C:/gstreamer/1.0/msvc_${arch} to use it."
-            )
-            continue()
-        endif()
-        set(_root "${_candidate}")
-        break()
-    endforeach()
-    set(${out_var}
-        "${_root}"
-        PARENT_SCOPE
-    )
-endfunction()
-
 # _qgc_gst_discover_windows_sdk()
-# Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
-# complete and recent enough, else downloads the official MSVC SDK for the target architecture. An SDK the user named
-# in GStreamer_ROOT_DIR that is incomplete or too old fails configure; one found elsewhere is replaced by a download.
+# Uses the SDK under GStreamer_ROOT_DIR (the user's, or the one an earlier configure downloaded), else downloads the
+# official MSVC SDK for the target architecture. An SDK the user named that is incomplete or too old fails configure.
 # The SDK brings its own pkg-config.
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_windows_sdk)
-    _qgc_gst_windows_sdk_arch(_gst_win_arch)
-
-    set(_gst_win_user_root FALSE)
     if(GStreamer_ROOT_DIR AND NOT GStreamer_AUTO_DOWNLOADED)
-        set(_gst_win_user_root TRUE)
-    elseif(NOT GStreamer_ROOT_DIR)
-        _qgc_gst_windows_installed_sdk(${_gst_win_arch} GStreamer_ROOT_DIR)
-    endif()
-
-    if(GStreamer_ROOT_DIR)
         _qgc_gst_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
         _qgc_gst_header_version("${GStreamer_ROOT_DIR}/include" _gst_win_sdk_version)
         set(_gst_win_problem "")
@@ -87,15 +43,12 @@ function(_qgc_gst_discover_windows_sdk)
                 "has version '${_gst_win_sdk_version}', but ${QGC_GST_REQUESTED_VERSION} or later is required"
             )
         endif()
-        if(_gst_win_problem AND _gst_win_user_root)
+        if(_gst_win_problem)
             message(
                 FATAL_ERROR
                     "GStreamer: the SDK at ${GStreamer_ROOT_DIR} (GStreamer_ROOT_DIR) ${_gst_win_problem}. Point "
                     "GStreamer_ROOT_DIR at a complete SDK of that version, or unset it to download one."
             )
-        elseif(_gst_win_problem)
-            message(WARNING "GStreamer: the SDK at ${GStreamer_ROOT_DIR} ${_gst_win_problem}; downloading one instead.")
-            unset(GStreamer_ROOT_DIR)
         endif()
     endif()
 
@@ -111,6 +64,7 @@ function(_qgc_gst_discover_windows_sdk)
         endif()
 
         _qgc_gst_space_free_download_cache()
+        _qgc_gst_windows_sdk_arch(_gst_win_arch)
         _qgc_gst_acquire_windows_sdk(${_gst_win_arch} GStreamer_ROOT_DIR)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
