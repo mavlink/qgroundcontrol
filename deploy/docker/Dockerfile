@@ -11,7 +11,7 @@
 # inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
 # Official images come from their ECR Public mirror (same digests as Docker Hub),
 # so anonymous pulls are not held to Docker Hub's anonymous pull limit.
-ARG BASE_REF=public.ecr.aws/docker/library/ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+ARG BASE_REF=public.ecr.aws/docker/library/ubuntu:24.04@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8
 ARG TARGETARCH
 FROM ${BASE_REF} AS base
 
@@ -46,7 +46,7 @@ RUN if [ -n "${CC_PIN}" ]; then \
 # Locked Python environment for generators, Qt installation, and build tools. uv installs the
 # Python named in .python-version, the same on every variant, under /opt: its default directory is
 # in root's home, which the entrypoint's non-root user cannot read.
-COPY --from=ghcr.io/astral-sh/uv:0.12.8 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.8 /uv /usr/local/bin/uv
 ENV UV_PYTHON_INSTALL_DIR=/opt/qgc-python
 COPY tools/.python-version /opt/qgc-tools/
 RUN uv python install --no-bin --project /opt/qgc-tools
