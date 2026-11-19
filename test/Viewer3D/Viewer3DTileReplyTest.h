@@ -16,5 +16,9 @@ class Viewer3DTileReplyTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
+    void _testOutcome_data();
+    void _testOutcome();
     void _testDestructionOrderNoCrash();
 };

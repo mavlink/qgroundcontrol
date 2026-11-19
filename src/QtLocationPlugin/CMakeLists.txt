@@ -1,73 +1,39 @@
 # ============================================================================
-# Qt Location Plugin Module
-# Custom map tile providers and caching engine
+# Qt Location Plugin
+# QtLocation service provider that shows the map tiles in a QtLocation map.
+# The tiles come from the library in MapTiles, which does not use QtLocation.
 # ============================================================================
 
-qt_add_plugin(QGCLocation
+add_subdirectory(MapTiles)
+
+qt_add_plugin(
+    QGCLocation
     STATIC
-    CLASS_NAME QGeoServiceProviderFactoryQGC
-    OUTPUT_TARGETS QGCLocation_targets
-    Providers/BingMapProvider.cpp
-    Providers/BingMapProvider.h
-    Providers/ElevationMapProvider.cpp
-    Providers/ElevationMapProvider.h
-    Providers/EsriMapProvider.cpp
-    Providers/EsriMapProvider.h
-    Providers/GenericMapProvider.cpp
-    Providers/GenericMapProvider.h
-    Providers/GoogleMapProvider.cpp
-    Providers/GoogleMapProvider.h
-    Providers/MapboxMapProvider.cpp
-    Providers/MapboxMapProvider.h
-    Providers/MapProvider.cpp
-    Providers/MapProvider.h
-    Providers/TianDiTuProvider.cpp
-    Providers/TianDiTuProvider.h
-    QGCCachedTileSet.cpp
-    QGCCachedTileSet.h
-    QGCCacheTile.h
-    QGCMapEngine.cpp
-    QGCMapEngine.h
-    QGCMapEngineManager.cc
-    QGCMapEngineManager.h
-    QGCMapTaskBase.h
-    QGCMapTasks.cpp
-    QGCMapTasks.h
-    QGCMapUrlEngine.cpp
-    QGCMapUrlEngine.h
-    QGCTile.h
-    QGCTileCacheDatabase.cpp
-    QGCTileCacheDatabase.h
-    QGCTileCacheTypes.h
-    QGCTileCacheWorker.cpp
-    QGCTileCacheWorker.h
-    QGCTileSet.h
-    QGeoFileTileCacheQGC.cpp
+    CLASS_NAME
+    QGeoServiceProviderFactoryQGC
+    OUTPUT_TARGETS
+    QGCLocation_targets
+    QGeoFileTileCacheQGC.cc
     QGeoFileTileCacheQGC.h
-    QGeoMapReplyQGC.cpp
-    QGeoMapReplyQGC.h
-    QGeoServiceProviderPluginQGC.cpp
+    QGeoMapIdQGC.cc
+    QGeoMapIdQGC.h
+    QGeoServiceProviderPluginQGC.cc
     QGeoServiceProviderPluginQGC.h
-    QGeoTiledMappingManagerEngineQGC.cpp
+    QGeoTiledMappingManagerEngineQGC.cc
     QGeoTiledMappingManagerEngineQGC.h
-    QGeoTiledMapQGC.cpp
+    QGeoTiledMapQGC.cc
     QGeoTiledMapQGC.h
-    QGeoTileFetcherQGC.cpp
+    QGeoTiledMapReplyQGC.cc
+    QGeoTiledMapReplyQGC.h
+    QGeoTileFetcherQGC.cc
     QGeoTileFetcherQGC.h
 )
 
-if(IOS)
-    target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
-endif()
-
-target_link_libraries(QGCLocation
+target_link_libraries(
+    QGCLocation
     PRIVATE
-        Qt6::Positioning
-        QGCCompression
-        QGCDatabase
-        QGCFileSystem
-        QGCFormat
         QGCLogging
+        QGCMapTiles
         QGCNetwork
     PUBLIC
         Qt6::Core
@@ -76,37 +42,13 @@ target_link_libraries(QGCLocation
         Qt6::Network
 )
 
-target_include_directories(QGCLocation
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/Providers
+target_include_directories(
+    QGCLocation
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
-        ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain/Providers
         ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)
-
-target_precompile_headers(QGCLocation PRIVATE
-    <QtCore/QDir>
-    <QtCore/QLoggingCategory>
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QStringList>
-    <QtCore/QVariant>
-    <QtNetwork/QNetworkRequest>
-    <QtPositioning/QGeoCoordinate>
-    <QtQml/QQmlEngine>
-)
-
-qt_add_resources(${CMAKE_PROJECT_NAME} qtlocationplugin_resources
-    PREFIX "/res"
-    BASE "${CMAKE_SOURCE_DIR}/resources"
-    FILES
-        "${CMAKE_SOURCE_DIR}/resources/notile.png"
-)

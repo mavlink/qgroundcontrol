@@ -9,9 +9,14 @@
 
 #include "Viewer3DTerrainTextureTest.h"
 
+#include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
+#include "FlightMapSettings.h"
+#include "SettingsManager.h"
+#include "UrlFactory.h"
 #include "Viewer3DTerrainTexture.h"
 
 void Viewer3DTerrainTextureTest::_testFallbackBoundingBox()
@@ -61,6 +66,58 @@ void Viewer3DTerrainTextureTest::_testFallbackCenterTriggersLoad()
 
     QCOMPARE(centerSpy.count(), 1);
     QVERIFY(texture._terrainTileLoader);
+}
+
+void Viewer3DTerrainTextureTest::_testTextureFollowsChosenMap()
+{
+    Fact* const provider = SettingsManager::instance()->flightMapSettings()->mapProvider();
+    Fact* const type = SettingsManager::instance()->flightMapSettings()->mapType();
+    const auto restore =
+        qScopeGuard([provider, type, savedProvider = provider->rawValue(), savedType = type->rawValue()] {
+            provider->setRawValue(savedProvider);
+            type->setRawValue(savedType);
+        });
+    provider->setRawValue(QStringLiteral("Bing"));
+    type->setRawValue(QStringLiteral("Hybrid"));
+    const int bingHybrid = UrlFactory::getMapIdFromProviderType(QStringLiteral("Bing Hybrid"));
+    const int customUrl = UrlFactory::getMapIdFromProviderType(QStringLiteral("CustomURL Custom"));
+    QVERIFY((bingHybrid >= 0) && (customUrl >= 0) && (bingHybrid != customUrl));
+
+    Viewer3DTerrainTexture texture;
+    QCOMPARE(texture._mapId, bingHybrid);
+
+    // The settings page sets the provider, then the type. The two name no map in between: the map stays
+    provider->setRawValue(QStringLiteral("CustomURL"));
+    QCOMPARE(texture._mapId, bingHybrid);
+    type->setRawValue(QStringLiteral("Custom"));
+    QCOMPARE(texture._mapId, customUrl);
+}
+
+void Viewer3DTerrainTextureTest::_testSourceChangeReloadsTexture()
+{
+    // The texture is made of tiles of the map type the user selected: here the provider whose URL the user sets
+    FlightMapSettings* const flightMapSettings = SettingsManager::instance()->flightMapSettings();
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedProvider = flightMapSettings->mapProvider()->rawValue();
+    const QVariant savedType = flightMapSettings->mapType()->rawValue();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restore = qScopeGuard([=] {
+        flightMapSettings->mapProvider()->setRawValue(savedProvider);
+        flightMapSettings->mapType()->setRawValue(savedType);
+        customUrl->setRawValue(savedUrl);
+    });
+    flightMapSettings->mapProvider()->setRawValue(QStringLiteral("CustomURL"));
+    flightMapSettings->mapType()->setRawValue(QStringLiteral("Custom"));
+    customUrl->setRawValue(QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
+
+    Viewer3DTerrainTexture texture;
+    texture.setFallbackCenter(QGeoCoordinate(47.397742, 8.545594));
+    QTRY_VERIFY_WITH_TIMEOUT(texture.textureLoaded(), TestTimeout::mediumMs());
+
+    // The user sets another URL: the texture is one of the previous source, and is loaded again
+    customUrl->setRawValue(QStringLiteral("https://b.example/{z}/{x}/{y}.png"));
+    QVERIFY(!texture.textureLoaded());
+    QTRY_VERIFY_WITH_TIMEOUT(texture.textureLoaded(), TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(Viewer3DTerrainTextureTest, TestLabel::Unit)

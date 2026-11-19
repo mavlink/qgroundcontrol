@@ -18,9 +18,9 @@
 #include "HeightSource.h"
 
 class HeightField;
+class QGCTileReply;
 class QImage;
 class QNetworkAccessManager;
-class QNetworkReply;
 
 /// Fetcher over the AWS Open Data Terrain Tiles (terrarium encoding): real
 /// elevations at every patch zoom from one slippy PNG tile per patch, cache-first
@@ -43,7 +43,7 @@ class TerrariumTileFetcher : public HeightSource
     Q_OBJECT
 
 public:
-    /// \a networkManager overrides the internally created one (test injection seam)
+    /// \a networkManager fetches the tiles instead of the network manager of the map engine (test injection seam)
     explicit TerrariumTileFetcher(QObject* parent = nullptr, QNetworkAccessManager* networkManager = nullptr);
 
     /// Highest zoom the terrarium dataset serves (deeper patches sample the ancestor)
@@ -61,9 +61,9 @@ public:
     void cancelRequest(int requestId) final;
 
     /// Ensures the attached field holds this tile (clamped to the z15 ancestor
-    /// above kMaxTileZoom), plus the kAnchorZoom ancestors of it and its neighbors. Returns false when no
-    /// field is attached, the key is invalid, or the fetch could not start; true
-    /// when the tile is already held, already in flight, or a fetch was started.
+    /// above kMaxTileZoom), plus the kAnchorZoom ancestors of it and its neighbors. Returns false for a request
+    /// it rejects: no field is attached, or the key is invalid. True when the tile is already held, already in
+    /// flight, or a fetch was started: a fetch that fails is reported by tileFailed.
     bool requestTile(const TileMath::TileKey& key) override;
 
     int pendingCount() const { return _pending.count(); }
@@ -92,8 +92,7 @@ private:
     int _releaseHeld(const TileMath::TileKey& anchor);
     void _failAsync(int requestId);
     bool _fetchInFlight(const TileMath::TileKey& fetchKey) const;
-    bool _startFetch(const TileMath::TileKey& fetchKey);
-    void _fetchFromNetwork(const TileMath::TileKey& fetchKey);
+    void _startFetch(const TileMath::TileKey& fetchKey);
     void _deliverAll(const TileMath::TileKey& fetchKey, const QImage& image);
     void _failAll(const TileMath::TileKey& fetchKey, const QString& reason);
     void _deliver(int requestId, const QImage& image);
@@ -108,7 +107,7 @@ private:
     QHash<TileMath::TileKey, QList<int>> _waiters;            ///< request ids sharing the in-flight fetch of a tile
     QSet<TileMath::TileKey> _fieldRequests;                   ///< tiles awaiting delivery into the field
     QHash<TileMath::TileKey, HeldTile> _held;                 ///< delivered finer tiles waiting on their anchors
-    QHash<TileMath::TileKey, QNetworkReply*> _activeReplies;  ///< in-flight network fetches by tile
+    QHash<TileMath::TileKey, QGCTileReply*> _fetches;         ///< in-flight fetches by tile
     TileMath::TileKey _lastFetchKey;
     QElapsedTimer _failureWarnTimer;                          ///< restarted on each emitted failure warning
 };

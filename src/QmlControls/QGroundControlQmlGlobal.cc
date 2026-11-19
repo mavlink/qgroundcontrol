@@ -15,6 +15,8 @@
 #include "PositionManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCFormat.h"
+#include "QGCMapCatalog.h"
+#include "QGCMapCredits.h"
 #include "QGCMapEngineManager.h"
 #include "QGCVersionCheck.h"
 #include "SettingsManager.h"
@@ -40,9 +42,11 @@ QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsContr
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
+    , _mapCatalog(QGCMapCatalog::instance())
+    , _mapCredits(QGCMapCredits::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())

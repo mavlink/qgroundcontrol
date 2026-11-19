@@ -32,6 +32,7 @@ private slots:
     // SettingsFixture
     void _testSettingsFixtureRestore();
     void _testSettingsFixtureFactValue();
+    void _testSettingsFixtureFactSetTwice();
 
     // LoggingCategoryFixture
     void _testLoggingCategoryFixtureRestore();

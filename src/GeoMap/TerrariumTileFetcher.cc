@@ -14,26 +14,23 @@
 
 #include <QtCore/QVarLengthArray>
 #include <QtGui/QImage>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
 
 #include "BilinearUV.h"
 #include "ElevationMapProvider.h"
 #include "HeightField.h"
 #include "PatchGeometry.h"
-#include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
-#include "QGCMapEngine.h"
-#include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
-#include "QGeoFileTileCacheQGC.h"
-#include "QGeoTileFetcherQGC.h"
+#include "QGCTileReply.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(GeoMapTerrariumTileFetcherLog, "GeoMap.TerrariumTileFetcher")
 QGC_LOGGING_CATEGORY(GeoMapTerrariumTileFetcherVerboseLog, "GeoMap.TerrariumTileFetcher.Verbose")
 
 static_assert(TerrariumTileFetcher::kMaxGridSize == PatchGeometry::kMaxGridSize,
               "fetcher grid cap must match the patch mesh cap");
+static_assert((TerrariumTileFetcher::kMaxTileZoom == TerrariumElevationProvider::kMaxZoom) &&
+                  (TerrariumTileFetcher::kAnchorZoom == TerrariumElevationProvider::kAnchorZoom),
+              "offline map sets must download the zooms the fetcher requests");
 
 namespace {
 
@@ -142,12 +139,10 @@ QVarLengthArray<TileMath::TileKey, 4> anchorKeysFor(const TileMath::TileKey& fet
 }  // namespace
 
 TerrariumTileFetcher::TerrariumTileFetcher(QObject* parent, QNetworkAccessManager* networkManager)
-    : HeightSource(parent),
-      _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this)),
-      _mapId(UrlFactory::getQtMapIdFromProviderType(terrariumProviderType()))
+    : HeightSource(parent)
+    , _networkManager(networkManager)
+    , _mapId(UrlFactory::getMapIdFromProviderType(terrariumProviderType()))
 {
-    // Only a QtLocation map initializes the shared tile cache on its own
-    getQGCMapEngine()->ensureInitialized();
 }
 
 int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int gridSize)
@@ -157,12 +152,6 @@ int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int 
     if ((gridSize <= 0) || (gridSize > kMaxGridSize) || !TileMath::isValidKey(key)) {
         qCWarning(GeoMapTerrariumTileFetcherLog)
             << "requestPatchHeights rejected: key" << key << "gridSize" << gridSize;
-        _pending.insert(requestId, PendingRequest{});
-        _failAsync(requestId);
-        return requestId;
-    }
-    if (_mapId < 0) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestPatchHeights: elevation provider not registered";
         _pending.insert(requestId, PendingRequest{});
         _failAsync(requestId);
         return requestId;
@@ -193,11 +182,7 @@ int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int 
         return requestId;  // a fetch for this tile is already in flight; it serves all waiters
     }
 
-    if (!_startFetch(pending.fetchKey)) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestPatchHeights: could not start fetch for" << pending.fetchKey;
-        _waiters.remove(pending.fetchKey);
-        _failAsync(requestId);
-    }
+    _startFetch(pending.fetchKey);
     return requestId;
 }
 
@@ -208,10 +193,6 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
             << "requestTile rejected: key" << key << "heightFieldSet" << (_heightField != nullptr);
         return false;
     }
-    if (_mapId < 0) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestTile: elevation provider not registered";
-        return false;
-    }
 
     const TileMath::TileKey fetchKey = fetchKeyFor(key);
     if (_heightField->hasTile(fetchKey) || _fieldRequests.contains(fetchKey) || _held.contains(fetchKey)) {
@@ -219,7 +200,6 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
     }
 
     // Anchors first: their fetches queue ahead, and _insertIntoField holds this tile until they land.
-    // An anchor that fails to start stops blocking, as a failed fetch does in _failAll.
     for (const TileMath::TileKey& anchor : anchorKeysFor(fetchKey)) {
         (void) requestTile(anchor);
     }
@@ -233,11 +213,7 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
         return true;  // piggyback on the fetch already serving patch waiters
     }
 
-    if (!_startFetch(fetchKey)) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "requestTile: could not start fetch for" << fetchKey;
-        _fieldRequests.remove(fetchKey);
-        return false;
-    }
+    _startFetch(fetchKey);
     return true;
 }
 
@@ -246,43 +222,28 @@ bool TerrariumTileFetcher::_fetchInFlight(const TileMath::TileKey& fetchKey) con
     return _waiters.contains(fetchKey) || _fieldRequests.contains(fetchKey);
 }
 
-bool TerrariumTileFetcher::_startFetch(const TileMath::TileKey& fetchKey)
+void TerrariumTileFetcher::_startFetch(const TileMath::TileKey& fetchKey)
 {
-    const QString providerType = terrariumProviderType();
-    QGCFetchTileTask* const task =
-        QGeoFileTileCacheQGC::createFetchTileTask(providerType, fetchKey.x, fetchKey.y, fetchKey.zoom);
-    connect(task, &QGCFetchTileTask::tileFetched, this, [this, fetchKey](QGCCacheTile* tile) {
-        const std::unique_ptr<QGCCacheTile> guard(tile);  // caller-owned per task contract
-        if (!_fetchInFlight(fetchKey)) {
-            return;                                       // all interest cancelled while the lookup was in flight
-        }
-        // An unusable cached body (empty or corrupt) is a miss, not a
-        // failure: failing here would re-read the same bytes on every retry,
-        // blocking the network fallback until cache eviction
-        const QImage image = tile ? decodeTile(tile->img) : QImage();
-        if (image.isNull()) {
-            qCDebug(GeoMapTerrariumTileFetcherLog)
-                << "tile" << fetchKey << "cached entry unusable, fetching from network";
-            _fetchFromNetwork(fetchKey);
-            return;
-        }
-        qCDebug(GeoMapTerrariumTileFetcherVerboseLog) << "tile" << fetchKey << "served from cache";
-        _deliverAll(fetchKey, image);
+    QGCTileReply* const reply = new QGCTileReply(_networkManager, _mapId, fetchKey.x, fetchKey.y, fetchKey.zoom, this);
+    // A body that is not a terrarium tile (a corrupt cache entry, an HTTP-200 error page) must be neither delivered
+    // nor cached. The validator keeps the image it decoded for the delivery.
+    const auto image = std::make_shared<QImage>();
+    reply->setValidator([image](const QByteArray& data) {
+        *image = decodeTile(data);
+        return !image->isNull();
     });
-    connect(task, &QGCMapTask::error, this, [this, fetchKey](QGCMapTask::TaskType, const QString&) {
-        if (!_fetchInFlight(fetchKey)) {
+    connect(reply, &QGCTileReply::finished, this, [this, fetchKey, reply, image] {
+        reply->deleteLater();
+        _fetches.remove(fetchKey);
+        if (reply->error() != QGCTileReply::Error::NoError) {
+            _failAll(fetchKey, reply->errorString());
             return;
         }
-        qCDebug(GeoMapTerrariumTileFetcherVerboseLog) << "tile" << fetchKey << "not cached, fetching from network";
-        _fetchFromNetwork(fetchKey);
+        _deliverAll(fetchKey, *image);
     });
 
-    if (!getQGCMapEngine()->addTask(task)) {
-        qCDebug(GeoMapTerrariumTileFetcherLog) << "could not queue cache lookup for" << fetchKey;
-        task->deleteLater();  // never enqueued: the worker will not clean it up
-        return false;
-    }
-    return true;
+    _fetches.insert(fetchKey, reply);
+    reply->start();
 }
 
 void TerrariumTileFetcher::cancelRequest(int requestId)
@@ -306,11 +267,11 @@ void TerrariumTileFetcher::cancelRequest(int requestId)
     if (_fieldRequests.contains(fetchKey)) {
         return;  // the field still wants this tile: keep the fetch alive
     }
-    QNetworkReply* const reply = _activeReplies.take(fetchKey);
+    QGCTileReply* const reply = _fetches.take(fetchKey);
     if (reply) {
-        qCDebug(GeoMapTerrariumTileFetcherVerboseLog) << "cancelRequest: aborting network fetch for" << fetchKey;
-        reply->abort();        // finished handler is a no-op once no waiters remain
-        reply->deleteLater();  // don't rely on abort emitting finished for cleanup
+        qCDebug(GeoMapTerrariumTileFetcherVerboseLog) << "cancelRequest: aborting fetch for" << fetchKey;
+        reply->abort();  // an aborted reply does not finish
+        reply->deleteLater();
     }
 }
 
@@ -325,53 +286,6 @@ void TerrariumTileFetcher::_failAsync(int requestId)
             }
         },
         Qt::QueuedConnection);
-}
-
-void TerrariumTileFetcher::_fetchFromNetwork(const TileMath::TileKey& fetchKey)
-{
-    if (_activeReplies.contains(fetchKey)) {
-        return;  // a reply is already in flight for this tile
-    }
-    const QNetworkRequest request =
-        QGeoTileFetcherQGC::getNetworkRequest(_mapId, fetchKey.x, fetchKey.y, fetchKey.zoom);
-    QNetworkReply* const reply = _networkManager->get(request);
-    _activeReplies.insert(fetchKey, reply);
-
-    connect(reply, &QNetworkReply::finished, this, [this, fetchKey, reply] {
-        reply->deleteLater();
-        if (_activeReplies.value(fetchKey) != reply) {
-            return;  // stale: cancelled (and possibly superseded by a newer fetch)
-        }
-        _activeReplies.remove(fetchKey);
-        if (!_fetchInFlight(fetchKey)) {
-            return;  // all interest cancelled (abort also lands here)
-        }
-        if (reply->error() != QNetworkReply::NoError) {
-            _failAll(fetchKey, QStringLiteral("network error: %1 (http %2)")
-                                   .arg(reply->errorString())
-                                   .arg(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()));
-            return;
-        }
-        const QByteArray data = reply->readAll();
-        if (data.isEmpty()) {
-            _failAll(fetchKey, QStringLiteral("network fetch returned empty body"));
-            return;
-        }
-        // Never cache bodies that delivery would reject (e.g. HTTP-200 error
-        // pages): a cached invalid tile would fail every retry from then on
-        const QImage image = decodeTile(data);
-        if (image.isNull()) {
-            _failAll(fetchKey, QStringLiteral("network body is not a terrarium tile, %1 bytes").arg(data.size()));
-            return;
-        }
-        qCDebug(GeoMapTerrariumTileFetcherVerboseLog)
-            << "tile" << fetchKey << "fetched from network," << data.size() << "bytes, caching";
-        // Store back so the shared cache serves this tile from now on
-        const QString providerType = terrariumProviderType();
-        QGeoFileTileCacheQGC::cacheTile(providerType, fetchKey.x, fetchKey.y, fetchKey.zoom, data,
-                                        UrlFactory::getImageFormat(providerType, data));
-        _deliverAll(fetchKey, image);
-    });
 }
 
 void TerrariumTileFetcher::_deliverAll(const TileMath::TileKey& fetchKey, const QImage& image)

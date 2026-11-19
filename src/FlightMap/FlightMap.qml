@@ -15,7 +15,7 @@ Map {
     opacity:    0.99 // https://bugreports.qt.io/browse/QTBUG-82185
 
     property string mapName:                        'defaultMap'
-    property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+    property bool   isSatelliteMap:                 QGroundControl.mapCatalog.isSatelliteMap(activeMapType.name)
     property var    gcsPosition:                    QGroundControl.positionManager.gcsPosition
     property real   gcsHeading:                     QGroundControl.positionManager.gcsHeading
     property alias  allowGCSLocationCenter:         _positionTracker.allowGCSLocationCenter     ///< true: map will center to gcs location one time
@@ -76,11 +76,10 @@ Map {
     }
 
     function updateActiveMapType() {
-        var settings =  QGroundControl.settingsManager.flightMapSettings
-        var fullMapName = settings.mapProvider.value + " " + settings.mapType.value
+        var chosenMap = QGroundControl.mapCatalog.chosenMap
 
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (fullMapName === _map.supportedMapTypes[i].name) {
+            if (chosenMap === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
                 return
             }
@@ -94,13 +93,8 @@ Map {
     }
 
     Connections {
-        target: QGroundControl.settingsManager.flightMapSettings.mapType
-        function onRawValueChanged() { updateActiveMapType() }
-    }
-
-    Connections {
-        target: QGroundControl.settingsManager.flightMapSettings.mapProvider
-        function onRawValueChanged() { updateActiveMapType() }
+        target: QGroundControl.mapCatalog
+        function onChosenMapChanged() { updateActiveMapType() }
     }
 
     signal mapPanStart

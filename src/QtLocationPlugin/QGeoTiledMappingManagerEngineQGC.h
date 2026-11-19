@@ -10,14 +10,14 @@ class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
     Q_OBJECT
 
 public:
-    QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString, QNetworkAccessManager *networkManager = nullptr, QObject *parent = nullptr);
+    /// \a networkManager fetches the tiles instead of the network manager of the map engine, which the maps share
+    /// (test injection seam): it is not owned and must outlive this object
+    QGeoTiledMappingManagerEngineQGC(QGeoServiceProvider::Error* error, QString* errorString,
+                                     QNetworkAccessManager* networkManager = nullptr, QObject* parent = nullptr);
     ~QGeoTiledMappingManagerEngineQGC();
 
     QGeoMap* createMap() final;
-    QNetworkAccessManager *networkManager() const { return m_networkManager; }
 
 private:
-    QNetworkAccessManager *m_networkManager = nullptr;
-
     static constexpr int kTileVersion = 1;
 };

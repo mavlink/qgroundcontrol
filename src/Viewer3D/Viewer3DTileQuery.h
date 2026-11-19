@@ -26,7 +26,7 @@ public:
 
     explicit Viewer3DTileQuery(QObject *parent = nullptr);
 
-    void adaptiveMapTilesLoader(const QString &mapType, int mapId, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax);
+    void adaptiveMapTilesLoader(int mapId, const QGeoCoordinate& coordinateMin, const QGeoCoordinate& coordinateMax);
     int maxTileCount(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax);
     QByteArray mapData() const { return _mapToBeLoaded.mapData(); }
     QSize mapSize() const { return QSize(_mapToBeLoaded.mapWidth, _mapToBeLoaded.mapHeight); }
@@ -65,11 +65,10 @@ private:
         void clear();
     };
 
-    QNetworkAccessManager *_networkManager = nullptr;
+    QNetworkAccessManager* _networkManager = nullptr;  ///< null: the network manager of the map engine
     MapTileContainer_t _mapToBeLoaded;
     QGeoCoordinate _textureCoordinateMin;
     QGeoCoordinate _textureCoordinateMax;
-    QString _mapType;
 
     int _totalTilesCount = 0;
     int _mapId = 0;

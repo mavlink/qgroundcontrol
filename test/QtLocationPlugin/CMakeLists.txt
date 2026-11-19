@@ -1,36 +1,20 @@
 # ============================================================================
 # QtLocationPlugin Unit Tests
-# Tests for tile cache database operations
+# Tests for the QtLocation plugin. Those of the tile library are in MapTiles.
 # ============================================================================
+
+add_subdirectory(MapTiles)
 
 target_sources(
     QGCUnitTests
     PRIVATE
-        MapProviderTest.cc
-        MapProviderTest.h
-        QGeoMapReplyQGCTest.cc
-        QGeoMapReplyQGCTest.h
-        QGCMapEngineManagerArchiveTest.cc
-        QGCMapEngineManagerArchiveTest.h
-        QGCCachedTileSetTest.cc
-        QGCCachedTileSetTest.h
-        QGCCacheWorkerTest.cc
-        QGCCacheWorkerTest.h
-        QGCTileCacheDatabaseTest.cc
-        QGCTileCacheDatabaseTest.h
-        QGCTileSetTest.cc
-        QGCTileSetTest.h
-        UrlFactoryTest.cc
-        UrlFactoryTest.h
+        QGeoTiledMappingManagerEngineQGCTest.cc
+        QGeoTiledMappingManagerEngineQGCTest.h
+        QGeoTiledMapReplyQGCTest.cc
+        QGeoTiledMapReplyQGCTest.h
 )
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(MapProviderTest LABELS Unit)
-add_qgc_test(QGeoMapReplyQGCTest LABELS Unit)
-add_qgc_test(QGCCacheWorkerTest LABELS Unit)
-add_qgc_test(QGCCachedTileSetTest LABELS Unit)
-add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit RESOURCE_LOCK TempFiles)
-add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
-add_qgc_test(QGCTileSetTest LABELS Unit)
-add_qgc_test(UrlFactoryTest LABELS Unit)
+add_qgc_test(QGeoTiledMappingManagerEngineQGCTest LABELS Unit)
+add_qgc_test(QGeoTiledMapReplyQGCTest LABELS Unit)
