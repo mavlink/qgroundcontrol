@@ -2,49 +2,6 @@
 
 #include "StateTestCommon.h"
 
-void QGCAbstractStateTest::_testEntryAndExitHooks_data()
-{
-    QTest::addColumn<bool>("withEntryCallback");
-    QTest::addColumn<bool>("withExitCallback");
-
-    QTest::newRow("no callback") << false << false;
-    QTest::newRow("setOnEntry") << true << false;
-    QTest::newRow("setOnExit") << false << true;
-    QTest::newRow("setOnEntry and setOnExit") << true << true;
-}
-
-void QGCAbstractStateTest::_testEntryAndExitHooks()
-{
-    QFETCH(bool, withEntryCallback);
-    QFETCH(bool, withExitCallback);
-
-    QStateMachine machine;
-    bool entryCallbackCalled = false;
-    bool exitCallbackCalled = false;
-
-    auto* state = new TestAbstractState(QStringLiteral("TestHooks"), &machine);
-    const auto onEntry = [&entryCallbackCalled]() { entryCallbackCalled = true; };
-    const auto onExit = [&exitCallbackCalled]() { exitCallbackCalled = true; };
-    if (withEntryCallback) {
-        state->setOnEntry(onEntry);
-    }
-    if (withExitCallback) {
-        state->setOnExit(onExit);
-    }
-
-    machine.setInitialState(state);
-
-    QVERIFY(startAndWaitForEntered(&machine, state));
-    QCOMPARE(entryCallbackCalled, withEntryCallback);
-    QVERIFY(state->onEnterCalled);
-    QVERIFY(!exitCallbackCalled);
-    QVERIFY(!state->onLeaveCalled);
-
-    state->invokeExitForTest();
-    QCOMPARE(exitCallbackCalled, withExitCallback);
-    QVERIFY(state->onLeaveCalled);
-}
-
 void QGCAbstractStateTest::_testStateName()
 {
     QStateMachine machine;

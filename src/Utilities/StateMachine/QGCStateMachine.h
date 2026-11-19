@@ -65,25 +65,6 @@ public:
     void setRunning(bool running) = delete;  // NOLINT(bugprone-derived-method-shadowing-base-method)
 
     // -------------------------------------------------------------------------
-    // State Factories
-    // -------------------------------------------------------------------------
-
-    /// Create a FunctionState
-    /// @param function Function to execute
-    FunctionState* addFunctionState(const QString& stateName, std::function<void()> function);
-
-    /// Create an AsyncFunctionState
-    /// @param setupFunction Function to execute on entry
-    /// @param timeoutMsecs Optional timeout
-    AsyncFunctionState* addAsyncFunctionState(const QString& stateName,
-                                               AsyncFunctionState::SetupFunction setupFunction,
-                                               int timeoutMsecs = 0);
-
-    /// Create a DelayState
-    /// @param delayMsecs Delay duration
-    DelayState* addDelayState(int delayMsecs);
-
-    // -------------------------------------------------------------------------
     // Event Handling
     // -------------------------------------------------------------------------
 
@@ -102,14 +83,6 @@ public:
     /// @param data Optional payload data
     /// @return Event ID that QStateMachine::cancelDelayedEvent() takes, -1 if the event was not posted
     int postDelayedEvent(const QString& eventName, int delayMsecs, const QVariant& data = QVariant());
-
-    // -------------------------------------------------------------------------
-    // State Configuration
-    // -------------------------------------------------------------------------
-
-    /// Add a final state that will stop the machine when entered
-    /// @return The created final state
-    QGCFinalState* addFinalState(const QString& stateName = QString());
 
     // -------------------------------------------------------------------------
     // Lifecycle Helpers

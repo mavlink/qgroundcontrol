@@ -26,18 +26,10 @@ void QGCAbstractState::onEntry(QEvent* event)
 {
     QState::onEntry(event);
     qCDebug(QGCStateMachineLog) << "Entered" << stateName();
-
-    if (_entryCallback) {
-        _entryCallback();
-    }
-
-    onEnter();
 }
 
 void QGCAbstractState::onExit(QEvent* event)
 {
-    onLeave();
-
     if (_exitCallback) {
         _exitCallback();
     }

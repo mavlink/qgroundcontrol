@@ -65,7 +65,7 @@ protected:
     void onWaitExited() override { waitExitedCalls++; }
 };
 
-/// A QGCAbstractState whose signals a test emits, and that tells whether onEnter() and onLeave() were called
+/// A QGCAbstractState whose signals a test emits
 class TestAbstractState : public QGCAbstractState
 {
 public:
@@ -76,14 +76,4 @@ public:
     void emitAdvance() { emit advance(); }
 
     void emitError() { emit error(); }
-
-    void invokeExitForTest() { onExit(nullptr); }
-
-    bool onEnterCalled = false;
-    bool onLeaveCalled = false;
-
-protected:
-    void onEnter() override { onEnterCalled = true; }
-
-    void onLeave() override { onLeaveCalled = true; }
 };

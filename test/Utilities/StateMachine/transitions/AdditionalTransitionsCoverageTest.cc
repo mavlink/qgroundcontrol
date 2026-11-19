@@ -208,7 +208,7 @@ void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain()
         waitState = new AsyncFunctionState(QStringLiteral("Wait"), &machine, setup, 20);
     }
     auto* gaveUpState = new FunctionState(QStringLiteral("GaveUp"), &machine, [&gaveUp]() { gaveUp = true; });
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
 
     // The answer comes while the retry is made. The timeout has ended the connection of the first attempt, so the
     // state hears it only if the retry has set it up again.
@@ -235,7 +235,7 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionCountStartsAgainOnEn
     auto* waitState = new AsyncFunctionState(QStringLiteral("Wait"), &machine, [](AsyncFunctionState*) {}, 20);
     auto* detourState = new FunctionState(QStringLiteral("Detour"), &machine, []() {});
     machine.addRetryTransition(
-        waitState, &WaitStateBase::timedOut, machine.addFinalState(),
+        waitState, &WaitStateBase::timedOut, addFinalState(&machine),
         [&machine, &retryActionCalls]() {
             // After its first retry the state is left through another transition, and entered again
             if (++retryActionCalls == 1) {
@@ -279,7 +279,7 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionKeepsSignalWhileRetr
     auto* waitState = new AsyncFunctionState(QStringLiteral("Wait"), parentState, [](AsyncFunctionState*) {}, 20);
     parentState->setInitialState(waitState);
     auto* otherState = new FunctionState(QStringLiteral("Other"), &machine, [&otherReached]() { otherReached = true; });
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
 
     machine.addRetryTransition(waitState, &WaitStateBase::timedOut, finalState, [&retries]() { retries++; }, 2);
     // For the same signal and after the retry transition: Qt asks it only if the retry transition is not taken

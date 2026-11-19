@@ -14,27 +14,6 @@ float _spyFloatArg(const QSignalSpy& spy, int index)
 }
 }
 
-void QGCStateMachineTest::_testQGCStateMachineFactories()
-{
-    QGCStateMachine machine(QStringLiteral("FactoryTest"), nullptr);
-    QCOMPARE(machine.objectName(), QStringLiteral("FactoryTest"));
-    bool functionCalled = false;
-
-    auto* funcState = machine.addFunctionState(QStringLiteral("Func"), [&functionCalled]() {
-        functionCalled = true;
-    });
-    auto* delayState = machine.addDelayState(50);
-    auto* finalState = machine.addFinalState(QStringLiteral("Final"));
-
-    funcState->addTransition(funcState, &QGCState::advance, delayState);
-    delayState->addTransition(delayState, &QGCState::advance, finalState);
-
-    machine.setInitialState(funcState);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(functionCalled);
-}
-
 void QGCStateMachineTest::_testInProgressSpansQueuedStart_data()
 {
     QTest::addColumn<bool>("hasInitialState");
@@ -52,7 +31,7 @@ void QGCStateMachineTest::_testInProgressSpansQueuedStart()
 
     QGCStateMachine machine(QStringLiteral("InProgressSpansQueuedStartTest"), nullptr);
     auto* state = new QGCState(QStringLiteral("State"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     machine.addEventTransition(state, QStringLiteral("finish"), finalState);
     QSignalSpy inProgressSpy(&machine, &QGCStateMachine::inProgressChanged);
 
@@ -125,7 +104,7 @@ void QGCStateMachineTest::_testStartWhileInProgressIsCritical()
 {
     QGCStateMachine machine(QStringLiteral("StartWhileInProgressTest"), nullptr);
     auto* state = new QGCState(QStringLiteral("State"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     machine.addEventTransition(state, QStringLiteral("finish"), finalState);
     machine.setInitialState(state);
     QSignalSpy startedSpy(&machine, &QStateMachine::started);
@@ -148,7 +127,7 @@ void QGCStateMachineTest::_testStartBypassIsCritical()
 {
     QGCStateMachine machine(QStringLiteral("StartBypassTest"), nullptr);
     auto* state = new QGCState(QStringLiteral("State"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     machine.addEventTransition(state, QStringLiteral("finish"), finalState);
     machine.setInitialState(state);
     QSignalSpy startedSpy(&machine, &QStateMachine::started);
@@ -235,10 +214,10 @@ void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine()
     QGCStateMachine outer(QStringLiteral("OuterMachine"), nullptr);
     auto* nested = new QGCStateMachine(QStringLiteral("NestedMachine"), nullptr, &outer);
     auto* nestedWait = new QGCState(QStringLiteral("NestedWait"), nested);
-    nested->addEventTransition(nestedWait, QStringLiteral("finish"), nested->addFinalState());
+    nested->addEventTransition(nestedWait, QStringLiteral("finish"), addFinalState(nested));
     nested->setInitialState(nestedWait);
 
-    auto* finalState = outer.addFinalState();
+    auto* finalState = addFinalState(&outer);
     outer.addTransition(nested, &QState::finished, finalState);
     outer.addEventTransition(nested, QStringLiteral("leave"), finalState);
     outer.setInitialState(nested);
@@ -282,7 +261,7 @@ void QGCStateMachineTest::_testTransitionBuildersTakeSignalOfDerivedState()
     auto* first = new FunctionState(QStringLiteral("First"), &machine, []() {});
     auto* second = new FunctionState(QStringLiteral("Second"), &machine, []() {});
     auto* third = new FunctionState(QStringLiteral("Third"), &machine, []() {});
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     bool guardCalled = false;
 
     QSignalTransition* const plain = machine.addTransition(first, &QGCState::advance, second);
@@ -330,7 +309,7 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
 
     auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
     auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
 
     machine.addEventTransition(state1, QStringLiteral("toState2"), state2);
     machine.addEventTransition(state2, QStringLiteral("finish"), finalState);

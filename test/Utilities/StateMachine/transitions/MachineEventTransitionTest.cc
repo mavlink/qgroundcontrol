@@ -57,7 +57,7 @@ void MachineEventTransitionTest::_testMachineEventTransitionWithGuard()
     auto* waitState = new FunctionState(QStringLiteral("Wait"), &machine, []() {});
     auto* targetState =
         new FunctionState(QStringLiteral("Target"), &machine, [&transitioned]() { transitioned = true; });
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
 
     auto* transition = new MachineEventTransition(QStringLiteral("myEvent"), targetState,
                                                   [&guardCalled](const QGCStateMachineEvent* event) {
@@ -134,7 +134,7 @@ void MachineEventTransitionTest::_testEventThatIsNotPostedIsDeleted()
 
     QGCStateMachine machine(QStringLiteral("EventNotPostedTest"), nullptr);
     auto* waitState = new QGCState(QStringLiteral("Wait"), &machine);
-    machine.addEventTransition(waitState, QStringLiteral("go"), machine.addFinalState());
+    machine.addEventTransition(waitState, QStringLiteral("go"), addFinalState(&machine));
     machine.setInitialState(waitState);
 
     QSignalSpy enteredSpy(waitState, &QState::entered);

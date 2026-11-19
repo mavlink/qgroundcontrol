@@ -88,23 +88,6 @@ void QGCStateMachine::_setInProgress(bool inProgress)
     }
 }
 
-FunctionState* QGCStateMachine::addFunctionState(const QString& stateName, std::function<void()> function)
-{
-    return new FunctionState(stateName, this, std::move(function));
-}
-
-AsyncFunctionState* QGCStateMachine::addAsyncFunctionState(const QString& stateName,
-                                                            AsyncFunctionState::SetupFunction setupFunction,
-                                                            int timeoutMsecs)
-{
-    return new AsyncFunctionState(stateName, this, std::move(setupFunction), timeoutMsecs);
-}
-
-DelayState* QGCStateMachine::addDelayState(int delayMsecs)
-{
-    return new DelayState(this, delayMsecs);
-}
-
 bool QGCStateMachine::_canPostEvent(const QString& eventName) const
 {
     // Qt takes no event for a machine that is not running and does not delete the one it is given, and it drops
@@ -131,7 +114,8 @@ int QGCStateMachine::postDelayedEvent(const QString& eventName, int delayMsecs, 
     if (!_canPostEvent(eventName)) {
         return -1;
     }
-    qCDebug(QGCStateMachineLog) << objectName() << "posting delayed event:" << eventName << "delay:" << delayMsecs << "ms";
+    qCDebug(QGCStateMachineLog) << objectName() << "posting delayed event:" << eventName << "delay:" << delayMsecs
+                                << "ms";
     auto* const event = new QGCStateMachineEvent(eventName, data);
     const int eventId = QStateMachine::postDelayedEvent(event, delayMsecs);
     if (eventId == -1) {
@@ -139,16 +123,6 @@ int QGCStateMachine::postDelayedEvent(const QString& eventName, int delayMsecs, 
         delete event;
     }
     return eventId;
-}
-
-// -----------------------------------------------------------------------------
-// State Configuration
-// -----------------------------------------------------------------------------
-
-QGCFinalState* QGCStateMachine::addFinalState(const QString& stateName)
-{
-    auto* state = new QGCFinalState(stateName.isEmpty() ? QStringLiteral("Final") : stateName, this);
-    return state;
 }
 
 // -----------------------------------------------------------------------------

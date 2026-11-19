@@ -188,49 +188,18 @@ void AdditionalStatesCoverageTest::_testDelayStateRestartStartsDelayOver()
     QVERIFY2(delayTakenMs >= delayMs - delayMs / 10, qPrintable(QString::number(delayTakenMs)));
 }
 
-void AdditionalStatesCoverageTest::_testQGCStateEntryExitCallbacks()
+void AdditionalStatesCoverageTest::_testQGCStateExitCallback()
 {
     QStateMachine machine;
-    bool entryCalled = false;
     bool exitCalled = false;
 
     auto* state = new QGCState(QStringLiteral("TestState"), &machine);
-    state->setOnEntry([&entryCalled]() { entryCalled = true; });
     state->setOnExit([&exitCalled]() { exitCalled = true; });
 
     finishOn(machine, state, &QState::entered);
 
     QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(entryCalled);
     QVERIFY(exitCalled);
-}
-
-void AdditionalStatesCoverageTest::_testQGCStateOnEnterOnLeaveVirtuals()
-{
-    // Test that onEnter/onLeave virtuals are called in the correct order
-    class TestState : public QGCState
-    {
-    public:
-        TestState(QState* parent)
-            : QGCState(QStringLiteral("TestState"), parent)
-        {}
-
-        bool onEnterCalled = false;
-        bool onLeaveCalled = false;
-
-    protected:
-        void onEnter() override { onEnterCalled = true; }
-
-        void onLeave() override { onLeaveCalled = true; }
-    };
-
-    QStateMachine machine;
-    auto* state = new TestState(&machine);
-    finishOn(machine, state, &QState::entered);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(state->onEnterCalled);
-    QVERIFY(state->onLeaveCalled);
 }
 
 void AdditionalStatesCoverageTest::_testQGCFinalState()

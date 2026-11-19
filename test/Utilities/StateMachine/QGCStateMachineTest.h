@@ -7,8 +7,6 @@ class QGCStateMachineTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    // QGCStateMachine helpers
-    void _testQGCStateMachineFactories();
     UT_PARAMETERIZED_TEST(_testInProgressSpansQueuedStart);
     void _testStopFromInProgressListenerIsHonored();
     void _testStartWhileInProgressIsCritical();

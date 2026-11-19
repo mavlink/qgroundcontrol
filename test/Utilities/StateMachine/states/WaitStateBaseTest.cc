@@ -147,7 +147,7 @@ void WaitStateBaseTest::_testRestartKeepsOneCompletionConnection()
 
     // The initial state, so that it is active when the machine restarts and the next run enters it again
     auto* asyncState =
-        machine.addAsyncFunctionState(QStringLiteral("Async"), [&sender, &slotCalls](AsyncFunctionState* state) {
+        new AsyncFunctionState(QStringLiteral("Async"), &machine, [&sender, &slotCalls](AsyncFunctionState* state) {
             state->connectToCompletion(&sender, &QObject::objectNameChanged, [&slotCalls]() { slotCalls++; });
         });
     machine.setInitialState(asyncState);

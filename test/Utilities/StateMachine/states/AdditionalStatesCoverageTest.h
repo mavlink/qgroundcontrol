@@ -14,8 +14,7 @@ private slots:
     void _testDelayState();
     UT_PARAMETERIZED_TEST(_testDelayStateMachineStopEndsDelay);
     void _testDelayStateRestartStartsDelayOver();
-    void _testQGCStateEntryExitCallbacks();
-    void _testQGCStateOnEnterOnLeaveVirtuals();
+    void _testQGCStateExitCallback();
     void _testQGCFinalState();
     UT_PARAMETERIZED_TEST(_testWaitForMavlinkMessageCompletesOnFirstMatch);
     UT_PARAMETERIZED_TEST(_testWaitForParamResponseEndsOnItsAnswer);

@@ -90,9 +90,9 @@ void RequestMetaDataTypeStateMachine::_createStates(const Timeouts& timeouts)
     _stateRequestTranslate->setOnExit([this]() { _cancelTransfer(); });
 
     // State 7: Complete request
-    _stateComplete = addFunctionState("CompleteRequest", [this]() { _completeRequest(); });
+    _stateComplete = new FunctionState("CompleteRequest", this, [this]() { _completeRequest(); });
 
-    _stateFinal = addFinalState("Final");
+    _stateFinal = new QGCFinalState("Final", this);
 
     setInitialState(_stateRequestCompInfo);
 }

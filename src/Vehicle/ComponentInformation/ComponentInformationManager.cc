@@ -53,10 +53,7 @@ void ComponentInformationManager::_createStates()
     );
 
     // State 2: Update URIs after general info received
-    _stateUpdateUri = addFunctionState(
-        QStringLiteral("UpdateUri"),
-        [this]() { _updateAllUri(); }
-    );
+    _stateUpdateUri = new FunctionState(QStringLiteral("UpdateUri"), this, [this]() { _updateAllUri(); });
 
     // State 3: Request parameter metadata (skippable)
     _stateRequestParam = new SkippableAsyncState(
@@ -92,13 +89,10 @@ void ComponentInformationManager::_createStates()
     );
 
     // State 6: Signal completion
-    _stateComplete = addFunctionState(
-        QStringLiteral("Complete"),
-        [this]() { _signalComplete(); }
-    );
+    _stateComplete = new FunctionState(QStringLiteral("Complete"), this, [this]() { _signalComplete(); });
 
     // Final state
-    _stateFinal = addFinalState(QStringLiteral("Final"));
+    _stateFinal = new QGCFinalState(QStringLiteral("Final"), this);
 }
 
 void ComponentInformationManager::_wireTransitions()

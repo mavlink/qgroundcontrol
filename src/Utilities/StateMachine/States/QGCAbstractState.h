@@ -9,7 +9,7 @@ class QGCStateMachine;
 class Vehicle;
 
 /// \brief Base class of the states of the module: a QState with a name for the log, the machine and the vehicle
-/// of the state, entry and exit callbacks, and the signals advance() and error().
+/// of the state, an exit callback, and the signals advance() and error().
 ///
 /// QGCState adds a transition helper (addThisTransition()) and a check for the vehicle.
 ///
@@ -19,7 +19,6 @@ class QGCAbstractState : public QState
     Q_DISABLE_COPY(QGCAbstractState)
 
 public:
-    using EntryCallback = std::function<void()>;
     using ExitCallback = std::function<void()>;
 
     QGCAbstractState(const QString& stateName, QState* parent);
@@ -30,14 +29,7 @@ public:
     Vehicle* vehicle() const;
     QString stateName() const;
 
-    // -------------------------------------------------------------------------
-    // Entry/Exit Callbacks
-    // -------------------------------------------------------------------------
-
-    /// Set a callback to be invoked when the state is entered
-    void setOnEntry(EntryCallback callback) { _entryCallback = std::move(callback); }
-
-    /// Set a callback to be invoked when the state is exited
+    /// Set a callback to be invoked when the state is exited, for what the state has started and is to end with it
     void setOnExit(ExitCallback callback) { _exitCallback = std::move(callback); }
 
 signals:
@@ -45,17 +37,9 @@ signals:
     void error();
 
 protected:
-    /// Override to perform actions on state entry
-    virtual void onEnter() {}
-
-    /// Override to perform actions on state exit
-    virtual void onLeave() {}
-
-    // QState overrides
     void onEntry(QEvent* event) override;
     void onExit(QEvent* event) override;
 
 private:
-    EntryCallback _entryCallback;
     ExitCallback _exitCallback;
 };
