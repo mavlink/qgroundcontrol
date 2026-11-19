@@ -3,93 +3,14 @@
 
 include_guard(GLOBAL)
 
-# _qgc_gst_homebrew_prefix(<root> <out_var>)
-# Sets <out_var> to the Homebrew prefix that <root> is or holds as opt/<formula> or Cellar/<formula>/<version>, or to ""
-# when <root> is not in a Homebrew prefix.
-function(_qgc_gst_homebrew_prefix root out_var)
-    set(_prefix "${root}")
-    if(root MATCHES "^(.+)/(opt/[^/]+|Cellar/[^/]+/[^/]+)/?$")
-        set(_prefix "${CMAKE_MATCH_1}")
-    endif()
-    if(NOT EXISTS "${_prefix}/bin/brew")
-        set(_prefix "")
-    endif()
-    set(${out_var}
-        "${_prefix}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# _qgc_gst_find_homebrew_gstreamer(<out_var>)
-# Sets <out_var> to Homebrew's gstreamer: `brew --prefix gstreamer`, else /opt/homebrew/opt/gstreamer or
-# /usr/local/opt/gstreamer. Fails configure when none is installed.
-function(_qgc_gst_find_homebrew_gstreamer out_var)
-    set(_kegs /opt/homebrew/opt/gstreamer /usr/local/opt/gstreamer)
-    find_program(_brew brew PATHS /opt/homebrew/bin /usr/local/bin NO_CACHE)
-    if(_brew)
-        execute_process(
-            COMMAND "${_brew}" --prefix gstreamer
-            OUTPUT_VARIABLE _brew_keg
-            OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
-        )
-        list(PREPEND _kegs ${_brew_keg})
-    endif()
-    foreach(_keg IN LISTS _kegs)
-        if(EXISTS "${_keg}/lib/pkgconfig/gstreamer-1.0.pc")
-            set(${out_var}
-                "${_keg}"
-                PARENT_SCOPE
-            )
-            return()
-        endif()
-    endforeach()
-    message(
-        FATAL_ERROR "GStreamer: QGC_GST_USE_HOMEBREW is ON but Homebrew's gstreamer is not in any of: ${_kegs}\n"
-                    "Install it with: brew install gstreamer pkgconf"
-    )
-endfunction()
-
-# _qgc_gst_discover_homebrew_sdk(<prefix>)
-# Discovery of the Homebrew GStreamer at GStreamer_ROOT_DIR, in Homebrew <prefix> (the prefix itself means its
-# opt/gstreamer), through the prefix's pkg-config: only that one searches the macOS shims (libffi, zlib) GLib requires;
-# the dirs given to it find an unlinked gstreamer or glib. Sets the HOMEBREW_PREFIX layout property (Install.cmake).
-# cmake-lint: disable=C0103
-function(_qgc_gst_discover_homebrew_sdk prefix)
-    if(GStreamer_ROOT_DIR STREQUAL prefix)
-        set(GStreamer_ROOT_DIR "${prefix}/opt/gstreamer")
-    endif()
-    if(NOT EXISTS "${prefix}/bin/pkg-config")
-        message(
-            FATAL_ERROR "GStreamer: Homebrew's GStreamer needs Homebrew's pkg-config. Install it with: "
-                        "brew install pkgconf"
-        )
-    endif()
-    message(
-        STATUS "GStreamer: Using Homebrew's GStreamer at ${GStreamer_ROOT_DIR} (builds only; installs and "
-               "packages need the official SDK)"
-    )
-    qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}")
-    qgc_gst_apply_pkgconfig_env(
-        MODE SYSTEM_AUGMENT
-        PKG_CONFIG_EXE "${prefix}/bin/pkg-config"
-        LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${prefix}/lib/pkgconfig" "${prefix}/opt/glib/lib/pkgconfig"
-    )
-    qgc_gst_layout_set(HOMEBREW_PREFIX "${prefix}")
-    _qgc_gst_return_discovery()
-endfunction()
-
 # _qgc_gst_discover_macos_sdk()
-# Uses the SDK under GStreamer_ROOT_DIR; else, with QGC_GST_USE_HOMEBREW, Homebrew's gstreamer; else an earlier
-# auto-downloaded SDK, /Library/Frameworks/GStreamer.framework, or a download of the official runtime and devel
-# packages. A root in a Homebrew prefix goes to _qgc_gst_discover_homebrew_sdk. A root inside a .framework bundle is
-# used as that framework (GStreamer_USE_FRAMEWORK, GSTREAMER_FRAMEWORK_PATH) with the pkg-config it brings; another
-# flat SDK uses Homebrew's pkg-config (cached PKG_CONFIG_EXECUTABLE).
-# cmake-lint: disable=C0103,E1121
+# Uses the SDK under GStreamer_ROOT_DIR; else an earlier auto-downloaded SDK, /Library/Frameworks/GStreamer.framework,
+# or a download of the official runtime and devel packages. A root inside a .framework bundle is used as that framework
+# (GStreamer_USE_FRAMEWORK, GSTREAMER_FRAMEWORK_PATH) with the pkg-config it brings; another flat SDK uses Homebrew's
+# pkg-config (cached PKG_CONFIG_EXECUTABLE).
+# cmake-lint: disable=C0103
 function(_qgc_gst_discover_macos_sdk)
-    if(QGC_GST_USE_HOMEBREW AND (NOT GStreamer_ROOT_DIR OR GStreamer_AUTO_DOWNLOADED))
-        _qgc_gst_find_homebrew_gstreamer(GStreamer_ROOT_DIR)
-        set(GStreamer_AUTO_DOWNLOADED FALSE)
-    elseif(NOT GStreamer_ROOT_DIR AND EXISTS "/Library/Frameworks/GStreamer.framework")
+    if(NOT GStreamer_ROOT_DIR AND EXISTS "/Library/Frameworks/GStreamer.framework")
         set(GStreamer_ROOT_DIR "/Library/Frameworks/GStreamer.framework/Versions/1.0")
     endif()
 
@@ -99,11 +20,13 @@ function(_qgc_gst_discover_macos_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    _qgc_gst_homebrew_prefix("${GStreamer_ROOT_DIR}" _brew_prefix)
-    if(_brew_prefix)
-        # It recorded the discovery itself; only its pkg-config view still has to reach the caller.
-        _qgc_gst_discover_homebrew_sdk("${_brew_prefix}")
-        return(PROPAGATE PKG_CONFIG_EXECUTABLE PKG_CONFIG_ARGN PKG_CONFIG_USE_CMAKE_PREFIX_PATH)
+    # Homebrew's libraries and plugins load each other by absolute paths under its prefix, so an app bundle made from
+    # them would not carry its own GStreamer.
+    if(GStreamer_ROOT_DIR MATCHES "/(Cellar|opt)/gstreamer(/|$)" OR EXISTS "${GStreamer_ROOT_DIR}/bin/brew")
+        message(
+            FATAL_ERROR "GStreamer: GStreamer_ROOT_DIR '${GStreamer_ROOT_DIR}' is Homebrew's GStreamer, which cannot "
+                        "be bundled into the app. Unset GStreamer_ROOT_DIR to download the official SDK."
+        )
     endif()
 
     set(GStreamer_USE_FRAMEWORK OFF)

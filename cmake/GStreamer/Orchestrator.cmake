@@ -4,7 +4,7 @@
 # Layout.cmake).
 #
 # Input: QGC_GST_COMPONENTS (components beyond the mandatory ones, Components.cmake) and the cache options
-# GStreamer_ROOT_DIR, QGC_GST_USE_HOMEBREW (macOS) and PKG_CONFIG_ARGN.
+# GStreamer_ROOT_DIR and PKG_CONFIG_ARGN.
 # Sets, in the including directory, the discovery outputs (Platform.cmake), recorded in the layout store (Layout.cmake)
 # and copied into their GStreamer_*/GSTREAMER_* variables (qgc_gst_restore_pkgconfig_env undoes their pkg-config
 # environment) and GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION, GSTREAMER_SELECTED_COMPONENTS, GSTREAMER_PLUGINS,

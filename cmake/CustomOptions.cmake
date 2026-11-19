@@ -119,7 +119,6 @@ option(
     QGC_GST_BUNDLE_PLUGINS
     "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
 )
-option(QGC_GST_USE_HOMEBREW "macOS: build against Homebrew's gstreamer (cannot be installed or packaged)" OFF)
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD

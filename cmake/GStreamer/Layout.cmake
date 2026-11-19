@@ -2,10 +2,10 @@
 # QGC_GST_LAYOUT_<KEY> that every directory, the install rules and script-mode tests read through qgc_gst_layout_get.
 # Discovery records the SDK it resolved (_qgc_gst_return_discovery): ROOT_DIR, AUTO_DOWNLOADED, USE_FRAMEWORK, LIB_PATH,
 # PLUGIN_PATH, INCLUDE_PATH, PLUGIN_SCANNER_PATH, GIO_MODULE_PATH, FRAMEWORK_PATH, XCFRAMEWORK_LIB and IOS_CA_BUNDLE.
-# platform/MacOS.cmake adds FRAMEWORK_BUNDLE (the GStreamer.framework the app links) and HOMEBREW_PREFIX (a Homebrew
-# GStreamer's prefix); Orchestrator.cmake adds NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and
-# BUNDLED_PLUGINS (the requested ones among them, which the build ships). The Orchestrator copies the discovery keys
-# into the GStreamer_*/GSTREAMER_* variables of its directory for compatibility (qgc_gst_layout_export).
+# platform/MacOS.cmake adds FRAMEWORK_BUNDLE (the GStreamer.framework the app links); Orchestrator.cmake adds
+# NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and BUNDLED_PLUGINS (the requested ones among
+# them, which the build ships). The Orchestrator copies the discovery keys into the GStreamer_*/GSTREAMER_* variables of
+# its directory for compatibility (qgc_gst_layout_export).
 
 include_guard(GLOBAL)
 
