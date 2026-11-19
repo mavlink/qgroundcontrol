@@ -28,13 +28,10 @@ def _list_notes(platform: str) -> list[str]:
     if platform in ("fedora", "arch"):
         return [_BUILD_TOOLS_NOTE]
     if platform == "macos":
-        return [
-            "GStreamer (unless --skip-gstreamer): the official framework packages, falling back"
-            " to QGC's S3 mirror"
-        ]
+        return []
     return [
-        "No packages: installs GStreamer (unless --skip-gstreamer), and Visual Studio Build Tools"
-        " (--msvc), NSIS (--nsis) and the Vulkan SDK (--vulkan) on request"
+        "No packages: installs Visual Studio Build Tools (--msvc), NSIS (--nsis) and the Vulkan SDK"
+        " (--vulkan) on request"
     ]
 
 
@@ -111,11 +108,6 @@ Examples:
         help="Print space-separated package list (machine-readable, for CI caching)",
     )
     parser.add_argument("--category", help="Install only specific category (Linux only)")
-    parser.add_argument(
-        "--skip-gstreamer",
-        action="store_true",
-        help="Skip GStreamer installation; CMake then downloads the SDK (Windows and macOS)",
-    )
     parser.add_argument("--vulkan", action="store_true", help="Install Vulkan SDK (Windows only)")
     parser.add_argument(
         "--msvc",
@@ -168,11 +160,10 @@ def main(argv: list[str] | None = None) -> int:
     if platform == "debian":
         success = install_debian(args.dry_run, args.category)
     elif platform == "macos":
-        success = install_macos(args.dry_run, skip_gstreamer=args.skip_gstreamer)
+        success = install_macos(args.dry_run)
     elif platform == "windows":
         success = install_windows(
             dry_run=args.dry_run,
-            skip_gstreamer=args.skip_gstreamer,
             vulkan=args.vulkan,
             msvc=args.msvc or args.msvc_arm64,
             msvc_arm64=args.msvc_arm64,

@@ -108,9 +108,8 @@ function(_qgc_gst_require_no_spaces what path)
     message(
         FATAL_ERROR
             "GStreamer: ${what} '${path}' contains a space, which pkg-config cannot pass on: it prints paths "
-            "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64, where "
-            "tools/setup/install_dependencies installs it) and point GStreamer_ROOT_DIR at it, or unset "
-            "GStreamer_ROOT_DIR to download one."
+            "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64) and point "
+            "GStreamer_ROOT_DIR at it, or unset GStreamer_ROOT_DIR to download one."
     )
 endfunction()
 

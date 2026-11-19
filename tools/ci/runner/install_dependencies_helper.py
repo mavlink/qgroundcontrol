@@ -141,12 +141,9 @@ def install_with_retries(command: list[str], timeout: int) -> int:
 
 
 def install_homebrew() -> int:
-    """Install the Homebrew packages CI doesn't provide elsewhere, without the GStreamer framework.
-
-    CMake then downloads the GStreamer SDK at configure time, as on Windows.
-    """
+    """Install the Homebrew packages CI doesn't provide elsewhere."""
     packages = [package for package in get_packages("macos") if package not in CI_PROVIDED_TOOLS]
-    return 0 if install_macos(packages=packages, skip_gstreamer=True) else 1
+    return 0 if install_macos(packages=packages) else 1
 
 
 def install_windows(*, msvc_arm64: bool) -> int:
@@ -156,7 +153,6 @@ def install_windows(*, msvc_arm64: bool) -> int:
         str(INSTALL_DEPENDENCIES),
         "--platform",
         "windows",
-        "--skip-gstreamer",
         "--msvc",
         "--nsis",
     ]

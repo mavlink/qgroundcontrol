@@ -1,4 +1,4 @@
-"""GStreamer SDK package layout shared by the installers, the S3 mirror and dependency checks.
+"""GStreamer SDK package layout shared by the S3 mirror, the pin command and dependency checks.
 
 Mirrors ``qgc_gst_get_package_url`` / ``qgc_gst_get_s3_mirror_url`` in
 cmake/GStreamer/Packages.cmake. A package key is the ``gstreamer.checksums.<version>.<key>``

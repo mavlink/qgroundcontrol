@@ -455,8 +455,8 @@ install prefix, such as a source build's.
 | `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                                     |
 | `install_dependencies --platform fedora`  | Linux (Fedora/RHEL)   | Install build dependencies via dnf                                                     |
 | `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                                  |
-| `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                          |
-| `install_dependencies --platform windows` | Windows               | Install GStreamer (optional `--vulkan`, `--msvc`, `--msvc-arm64`, `--nsis`)            |
+| `install_dependencies --platform macos`   | macOS                 | Install build dependencies via Homebrew                                                |
+| `install_dependencies --platform windows` | Windows               | Install on request: `--msvc`, `--msvc-arm64`, `--nsis`, `--vulkan`                     |
 | `install_uv.py`                           | Linux, macOS          | Install the uv release named by `required-version` when `uv` is not on `PATH`          |
 | `install_python.py`                       | All                   | Install locked Python tool groups via uv ([Python Environment](#python-environment))   |
 | `install_qt.py`                           | All                   | Install Qt with [QGC's installer or aqtinstall](#qt-installer) (`just qt`: `local`)    |
@@ -479,12 +479,8 @@ Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, 
 `tools/.venv` and print how to activate it; CI build jobs instead use the `build.cmake_version` and
 `build.ninja_version` pins in `build-config.json`, which `build-setup` installs.
 
-On macOS and Windows, the GStreamer packages come from the official server, falling back to
-QGroundControl's public S3 mirror: the official server gets two tries and three minutes, then the
-mirror resumes the partial download. Both sources are verified against the SHA-256 checksums
-pinned in `.github/build-config.json`; installation stops if a package cannot be verified.
-`--skip-gstreamer` installs none on either platform, as CI does: configure then downloads the SDK,
-unless it finds one already installed.
+On macOS and Windows the script installs no GStreamer: CMake downloads the SDK when it configures
+([details](../src/VideoManager/GStreamer/README.md#macos--windows--ios)).
 
 ```bash
 # Linux: Install all dependencies
