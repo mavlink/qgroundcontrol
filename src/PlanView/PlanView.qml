@@ -430,6 +430,7 @@ Item {
                     delegate: MapLineArrow {
                         fromCoord: object ? object.coordinate1 : undefined
                         toCoord: object ? object.coordinate2 : undefined
+                        splinePath: object ? object.splinePath : []
                         arrowPosition: 3
                         mapControl: qtLocationMap
                         z: QGroundControl.zOrderWaypointLines + 1
@@ -466,10 +467,13 @@ Item {
                     }
 
                     function _updateSplitCoord() {
-                        if (_missionController.splitSegment) {
-                            var distance = _missionController.splitSegment.coordinate1.distanceTo(_missionController.splitSegment.coordinate2)
-                            var azimuth = _missionController.splitSegment.coordinate1.azimuthTo(_missionController.splitSegment.coordinate2)
-                            splitSegmentItem.coordinate = _missionController.splitSegment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
+                        const segment = _missionController.splitSegment
+                        if (segment && segment.splinePath.length > 1) {
+                            splitSegmentItem.coordinate = segment.splinePath[Math.floor(segment.splinePath.length / 2)]
+                        } else if (segment) {
+                            var distance = segment.coordinate1.distanceTo(segment.coordinate2)
+                            var azimuth = segment.coordinate1.azimuthTo(segment.coordinate2)
+                            splitSegmentItem.coordinate = segment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
                         } else {
                             coordinate = QtPositioning.coordinate()
                         }
@@ -485,6 +489,7 @@ Item {
                         target: _missionController.splitSegment
                         function onCoordinate1Changed()   { splitSegmentItem._updateSplitCoord() }
                         function onCoordinate2Changed()   { splitSegmentItem._updateSplitCoord() }
+                        function onSplinePathChanged()    { splitSegmentItem._updateSplitCoord() }
                     }
 
                     Connections {

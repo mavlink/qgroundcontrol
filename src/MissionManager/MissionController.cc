@@ -61,8 +61,11 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     // The follow is used to compress multiple recalc calls in a row to into a single call.
     connect(this, &MissionController::_recalcMissionFlightStatusSignal, this, &MissionController::_recalcMissionFlightStatus,   Qt::QueuedConnection);
     connect(this, &MissionController::_recalcFlightPathSegmentsSignal,  this, &MissionController::_recalcFlightPathSegments,    Qt::QueuedConnection);
+    connect(this, &MissionController::_recalcSplinePathsSignal, this, &MissionController::_recalcSplinePaths,
+            Qt::QueuedConnection);
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::_recalcMissionFlightStatusSignal));
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::_recalcFlightPathSegmentsSignal));
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::_recalcSplinePathsSignal));
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::recalcTerrainProfile));
 }
 
@@ -975,6 +978,9 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     connect(pair.second, &VisualMissionItem::exitCoordinateChanged,     this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
 
     connect(segment,    &FlightPathSegment::totalDistanceChanged,       this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
+    // A spline leg's length follows its curve, which changes with the neighbouring items
+    connect(segment, &FlightPathSegment::totalDistanceChanged, this,
+            &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::coord1AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::coord2AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::amslTerrainHeightsChanged,  this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
@@ -997,6 +1003,7 @@ FlightPathSegment* MissionController::_addFlightPathSegment(FlightPathSegmentHas
     }
 
     _simpleFlightPathSegments.append(segment);
+    _flightPathPairs.append(VisualItemPointerPair(pair.first, pair.second));
 
     return segment;
 }
@@ -1022,6 +1029,7 @@ void MissionController::_recalcFlightPathSegments(void)
 
     _missionStartsInVTOLMulticopterMode = false;
     _flightPathSegmentHashTable.clear();
+    _flightPathPairs.clear();
 
     _simpleFlightPathSegments.beginResetModel();
     _directionArrows.beginResetModel();
@@ -1190,6 +1198,8 @@ void MissionController::_recalcFlightPathSegments(void)
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(oldSegmentTable);
 
+    _recalcSplinePaths();
+
     emit _recalcMissionFlightStatusSignal();
 
     emit recalcTerrainProfile();
@@ -1197,6 +1207,105 @@ void MissionController::_recalcFlightPathSegments(void)
         qCDebug(MissionControllerLog) << "splitSegmentSet:" << (_splitSegment != nullptr);
         emit splitSegmentChanged();
     }
+}
+
+// The spline leg arriving at a NAV_SPLINE_WAYPOINT depends on the items on either side of it, so the tangents
+// are derived from the whole ordered route rather than from a single segment's two endpoints.
+void MissionController::_recalcSplinePaths(void)
+{
+    QList<FlightPathSegment::SplinePoint> points;
+    QList<int> pairPointIndices;
+
+    for (int i = 0; i < _flightPathPairs.count(); i++) {
+        VisualMissionItem* originItem = _flightPathPairs[i].first;
+        VisualMissionItem* destinationItem = _flightPathPairs[i].second;
+        if (!originItem || !destinationItem) {
+            // An item was deleted and the segments have not been rebuilt yet
+            return;
+        }
+
+        const bool continuesPreviousLeg = i > 0 && _flightPathPairs[i - 1].second == originItem;
+        if (!continuesPreviousLeg || !originItem->exitCoordinateSameAsEntry()) {
+            QGeoCoordinate exitCoord = originItem->exitCoordinate();
+            // A leg only leaves home when the mission starts from the ground. The vehicle climbs vertically
+            // first, so that leg starts at the takeoff altitude, or level at its destination's altitude when
+            // there is no takeoff item to climb to.
+            const bool leavesHome = originItem == _settingsItem;
+            const double homeExitAlt =
+                _takeoffMissionItem ? _takeoffMissionItem->amslExitAlt() : destinationItem->amslEntryAlt();
+            exitCoord.setAltitude(leavesHome ? homeExitAlt : originItem->amslExitAlt());
+            points.append({.coord = exitCoord,
+                           .spline = false,
+                           .flyThrough = _isFlyThroughWaypointItem(originItem),
+                           .navTarget = originItem != _settingsItem,
+                           .terrainFrame = _isTerrainFrameItem(originItem),
+                           .runStart = !continuesPreviousLeg,
+                           .aglAlt = _terrainFrameAgl(originItem)});
+        }
+        QGeoCoordinate entryCoord = destinationItem->entryCoordinate();
+        entryCoord.setAltitude(destinationItem->amslEntryAlt());
+        points.append({.coord = entryCoord,
+                       .spline = _isSplineWaypointItem(destinationItem),
+                       .flyThrough = _isFlyThroughWaypointItem(destinationItem),
+                       .navTarget = destinationItem != _settingsItem,
+                       .terrainFrame = _isTerrainFrameItem(destinationItem),
+                       .aglAlt = _terrainFrameAgl(destinationItem)});
+        pairPointIndices.append(points.count() - 1);
+    }
+
+    for (int i = 0; i < pairPointIndices.count(); i++) {
+        const VisualItemPair pair(_flightPathPairs[i].first.data(), _flightPathPairs[i].second.data());
+        FlightPathSegment* segment = _flightPathSegmentHashTable.value(pair, nullptr);
+        if (!segment) {
+            continue;
+        }
+        const int index = pairPointIndices[i];
+        segment->setSplinePath(points[index].spline ? FlightPathSegment::splineSegmentPath(points, index)
+                                                    : QVariantList());
+    }
+
+    emit splinePathsChanged();
+}
+
+QVariantList MissionController::splinePathFrom(VisualMissionItem* visualItem) const
+{
+    if (!visualItem || !visualItem->simpleFlightPathSegment()) {
+        return QVariantList();
+    }
+    return visualItem->simpleFlightPathSegment()->splinePath();
+}
+
+bool MissionController::_isSplineWaypointItem(VisualMissionItem* visualItem)
+{
+    const SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+    return simpleItem && simpleItem->mavCommand() == MAV_CMD_NAV_SPLINE_WAYPOINT;
+}
+
+// The leg arriving at the item is flown relative to terrain (ArduPilot AC_WPNav terrain_alt). A complex item
+// reports the frame of the waypoints it generates.
+bool MissionController::_isTerrainFrameItem(VisualMissionItem* visualItem)
+{
+    return visualItem->usesAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameTerrain);
+}
+
+double MissionController::_terrainFrameAgl(VisualMissionItem* visualItem)
+{
+    const SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+    if (!simpleItem || !_isTerrainFrameItem(visualItem)) {
+        return qQNaN();
+    }
+    return simpleItem->missionItem().param7();
+}
+
+// ArduPilot only carries velocity through a waypoint with no hold time (AC_WPNav fast_waypoint)
+bool MissionController::_isFlyThroughWaypointItem(VisualMissionItem* visualItem)
+{
+    const SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+    if (!simpleItem || simpleItem->missionItem().param1() != 0) {
+        return false;
+    }
+    const MAV_CMD command = simpleItem->mavCommand();
+    return command == MAV_CMD_NAV_WAYPOINT || command == MAV_CMD_NAV_SPLINE_WAYPOINT;
 }
 
 void MissionController::_recalcMissionFlightStatus()
@@ -1596,6 +1705,14 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     setDirty(false);
 
     connect(visualItem, &VisualMissionItem::specifiesCoordinateChanged,                 this, &MissionController::_recalcFlightPathSegmentsSignal,  Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::entryCoordinateChanged, this, &MissionController::_recalcSplinePathsSignal,
+            Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::exitCoordinateChanged, this, &MissionController::_recalcSplinePathsSignal,
+            Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::amslEntryAltChanged, this, &MissionController::_recalcSplinePathsSignal,
+            Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::amslExitAltChanged, this, &MissionController::_recalcSplinePathsSignal,
+            Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::specifiedFlightSpeedChanged,                this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::specifiedGimbalYawChanged,                  this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::specifiedGimbalPitchChanged,                this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
@@ -1610,6 +1727,9 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
         if (simpleItem) {
             connect(&simpleItem->missionItem()._commandFact, &Fact::valueChanged, this, &MissionController::_itemCommandChanged);
+            // The hold time (param1) decides whether a spline leg carries velocity through the waypoint
+            connect(&simpleItem->missionItem()._param1Fact, &Fact::valueChanged, this,
+                    &MissionController::_recalcSplinePathsSignal, Qt::QueuedConnection);
             connect(simpleItem, &SimpleMissionItem::loiterDistanceChanged, this,
                     &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
             // The altitude frame drives segmentTypeForPair, and segment type is immutable once created

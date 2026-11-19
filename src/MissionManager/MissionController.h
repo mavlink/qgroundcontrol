@@ -1,20 +1,21 @@
 #pragma once
 
-#include <QtCore/QHash>
 #include <QtCore/QFile>
+#include <QtCore/QHash>
 #include <QtCore/QPersistentModelIndex>
+#include <QtCore/QPointer>
 #include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "PlanElementController.h"
-#include "QmlObjectListModel.h"
-#include "QmlObjectTreeModel.h"
-#include "QGCGeoBoundingCube.h"
-#include "QGroundControlQmlGlobal.h"
-#include "QGCMAVLink.h"
 #include "MissionFlightStatus.h"
 #include "MissionFlightStatusCalculator.h"
+#include "PlanElementController.h"
+#include "QGCGeoBoundingCube.h"
+#include "QGCMAVLink.h"
+#include "QGroundControlQmlGlobal.h"
+#include "QmlObjectListModel.h"
+#include "QmlObjectTreeModel.h"
 
 class FlightPathSegment;
 class VisualMissionItem;
@@ -32,6 +33,7 @@ class Vehicle;
 
 typedef QPair<VisualMissionItem*,VisualMissionItem*> VisualItemPair;
 typedef QHash<VisualItemPair, FlightPathSegment*> FlightPathSegmentHashTable;
+typedef QPair<QPointer<VisualMissionItem>, QPointer<VisualMissionItem>> VisualItemPointerPair;
 
 class MissionController : public PlanElementController
 {
@@ -114,6 +116,9 @@ public:
     ///     @param makeCurrentItem: true: Make this item the current item
     /// @return Newly created item
     Q_INVOKABLE VisualMissionItem* insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
+
+    /// Curved path of the leg leaving visualItem, empty when that leg is straight or does not exist
+    Q_INVOKABLE QVariantList splinePathFrom(VisualMissionItem* visualItem) const;
 
     /// Add a new takeoff item to the list
     ///     @param coordinate: Coordinate for item
@@ -349,6 +354,8 @@ signals:
     void recalcTerrainProfile               (void);
     void _recalcMissionFlightStatusSignal   (void);
     void _recalcFlightPathSegmentsSignal    (void);
+    void _recalcSplinePathsSignal(void);
+    void splinePathsChanged(void);  ///< The splinePath of one or more flight path segments was recomputed
     void globalAltitudeFrameChanged          (void);
     void applyDefaultMissionAltitudeAvailableChanged(void);
 
@@ -358,6 +365,7 @@ private slots:
     void _inProgressChanged                     (bool inProgress);
     void _currentMissionIndexChanged            (int sequenceNumber);
     void _recalcFlightPathSegments              (void);
+    void _recalcSplinePaths(void);
     void _recalcMissionFlightStatus             (void);
     void _progressPctChanged                    (double progressPct);
     void _visualItemsDirtyChanged               (bool dirty);
@@ -410,6 +418,10 @@ private:
     void                    _firstItemAdded                     (void);
     void _setApplyDefaultMissionAltitudeAvailable(bool available);
 
+    static bool _isSplineWaypointItem(VisualMissionItem* visualItem);
+    static bool _isFlyThroughWaypointItem(VisualMissionItem* visualItem);
+    static bool _isTerrainFrameItem(VisualMissionItem* visualItem);
+    static double _terrainFrameAgl(VisualMissionItem* visualItem);
     static double           _normalizeLat                       (double lat);
     static double           _normalizeLon                       (double lon);
     static bool             _convertToMissionItems              (QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
@@ -442,6 +454,7 @@ private:
     QmlObjectListModel          _simpleFlightPathSegments;
     QmlObjectListModel          _directionArrows;
     FlightPathSegmentHashTable  _flightPathSegmentHashTable;
+    QList<VisualItemPointerPair> _flightPathPairs;  ///< Segment pairs in mission order, for spline tangents
     bool                        _firstItemsFromVehicle =        false;
     bool                        _itemsRequested =               false;
     bool                        _inRecalcSequence =             false;

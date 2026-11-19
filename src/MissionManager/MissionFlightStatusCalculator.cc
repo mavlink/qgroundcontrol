@@ -1,17 +1,19 @@
 #include "MissionFlightStatusCalculator.h"
-#include "Vehicle.h"
-#include "FirmwarePlugin.h"
-#include "QmlObjectListModel.h"
-#include "VisualMissionItem.h"
-#include "SimpleMissionItem.h"
-#include "ComplexMissionItem.h"
-#include "MissionSettingsItem.h"
-#include "TakeoffMissionItem.h"
-#include "AppSettings.h"
-#include "PlanViewSettings.h"
-#include "SettingsManager.h"
 
 #include <QtMath>
+
+#include "AppSettings.h"
+#include "ComplexMissionItem.h"
+#include "FirmwarePlugin.h"
+#include "FlightPathSegment.h"
+#include "MissionSettingsItem.h"
+#include "PlanViewSettings.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "SimpleMissionItem.h"
+#include "TakeoffMissionItem.h"
+#include "Vehicle.h"
+#include "VisualMissionItem.h"
 
 void MissionFlightStatusCalculator::reset(
     Vehicle* controllerVehicle, Vehicle* managerVehicle, bool missionStartsInVTOLMulticopterMode)
@@ -171,7 +173,7 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
                         if (qIsNaN(newVehicleYaw)) {
                             // No specific vehicle yaw set. Current vehicle yaw is determined from flight path segment direction.
                             if (simpleItem != lastFlyThroughVI) {
-                                _status.vehicleYaw = lastFlyThroughVI->exitCoordinate().azimuthTo(simpleItem->entryCoordinate());
+                                _status.vehicleYaw = calcArrivalAzimuth(simpleItem, lastFlyThroughVI);
                             }
                         } else {
                             _status.vehicleYaw = newVehicleYaw;
@@ -292,8 +294,9 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
 
     // Add the information for the final segment back to home
     if (foundRTL && lastFlyThroughVI != settingsItem && homePositionValid) {
-        double azimuth, distance, altDifference;
-        calcPrevWaypointValues(lastFlyThroughVI, settingsItem, &azimuth, &distance, &altDifference);
+        // The return leg is always straight: home is never a spline target
+        const double distance = lastFlyThroughVI->exitCoordinate().distanceTo(settingsItem->entryCoordinate());
+        const double altDifference = lastFlyThroughVI->amslEntryAlt() - settingsItem->amslExitAlt();
 
         if (!pastLandCommand) {
             // Calculate time/distance
@@ -342,14 +345,40 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
     }
 }
 
+// The segment leaving prevItem when the leg to currentItem is flown as a spline, otherwise null
+static const FlightPathSegment* splineLegSegment(VisualMissionItem* currentItem, VisualMissionItem* prevItem)
+{
+    const FlightPathSegment* segment = prevItem->simpleFlightPathSegment();
+    if (!segment || segment->splineSampleDistances().count() < 2 ||
+        segment->coordinate2() != currentItem->entryCoordinate()) {
+        return nullptr;
+    }
+    return segment;
+}
+
 void MissionFlightStatusCalculator::calcPrevWaypointValues(VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
 {
     QGeoCoordinate  currentCoord =  currentItem->entryCoordinate();
     QGeoCoordinate  prevCoord =     prevItem->exitCoordinate();
 
     *altDifference = currentItem->amslEntryAlt() - prevItem->amslExitAlt();
-    *distance = prevCoord.distanceTo(currentCoord);
-    *azimuth = prevCoord.azimuthTo(currentCoord);
+    *azimuth = calcArrivalAzimuth(currentItem, prevItem);
+
+    // A spline leg is flown along its curve, which is longer than the chord between the waypoints
+    const FlightPathSegment* splineSegment = splineLegSegment(currentItem, prevItem);
+    *distance = splineSegment ? splineSegment->totalDistance() : prevCoord.distanceTo(currentCoord);
+}
+
+double MissionFlightStatusCalculator::calcArrivalAzimuth(VisualMissionItem* currentItem, VisualMissionItem* prevItem)
+{
+    // A spline leg arrives along the curve's end tangent rather than along the chord
+    const FlightPathSegment* splineSegment = splineLegSegment(currentItem, prevItem);
+    if (splineSegment) {
+        const QVariantList& splinePath = splineSegment->splinePath();
+        return splinePath[splinePath.count() - 2].value<QGeoCoordinate>().azimuthTo(
+            splinePath.last().value<QGeoCoordinate>());
+    }
+    return prevItem->exitCoordinate().azimuthTo(currentItem->entryCoordinate());
 }
 
 double MissionFlightStatusCalculator::calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem)

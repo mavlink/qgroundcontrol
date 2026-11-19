@@ -53,9 +53,12 @@ private slots:
     void _updateProfile             (void);
 
 private:
-    void    _updateSegmentCounts            (FlightPathSegment* segment, int& cFlightProfileSegments, int& cTerrainPoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& minTerrainHeight, double& maxTerrainHeight);
+    void _updateSegmentCounts(FlightPathSegment* segment, int& cFlightProfileSegments, int& cTerrainPoints,
+                              int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& minProfileHeight,
+                              double& maxProfileHeight);
     void    _addTerrainPoints               (FlightPathSegment* segment, double currentDistance, QList<QPointF>& points);
     void    _addFlightPoints                (FlightPathSegment* segment, double currentDistance, QList<QPointF>& points);
+    void _addFlightAltitudePoints(FlightPathSegment* segment, double currentDistance, QList<QPointF>& points);
     void    _addMissingPoints               (FlightPathSegment* segment, double currentDistance, QList<QPointF>& points);
     void    _addCollisionPoints             (FlightPathSegment* segment, double currentDistance, QList<QPointF>& points);
     bool    _shouldAddFlightProfileSegment  (FlightPathSegment* segment);
