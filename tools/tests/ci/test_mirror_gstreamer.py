@@ -214,7 +214,7 @@ def test_main_mirrors_each_platforms_own_version(
 ) -> None:
     config = tmp_path / "build-config.json"
     config.write_text(
-        '{"gstreamer": {"version": {"default": "1.28.9", "android": "1.28.7", "ios": "1.28.8"}}}',
+        '{"gstreamer": {"version": {"android": "1.28.7", "ios": "1.28.8"}}}',
         encoding="utf-8",
     )
     monkeypatch.setenv("CONFIG_FILE", str(config))

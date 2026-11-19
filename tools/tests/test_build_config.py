@@ -24,14 +24,13 @@ def test_lookup_dotted_distinguishes_null_missing_and_values() -> None:
 
 @pytest.mark.parametrize(
     "platform,expected",
-    [("android", "1.28.2"), ("linux", "1.28.1"), ("windows", "1.28.1")],
+    [("android", "1.28.2"), ("windows", "1.28.10"), ("linux", "1.28.10")],
 )
-def test_gstreamer_version_falls_back_to_default(
+def test_gstreamer_version_falls_back_to_the_newest_sdk(
     tmp_path: Path, platform: str, expected: str
 ) -> None:
     config = tmp_path / "build-config.json"
-    config.write_text(
-        json.dumps({"gstreamer": {"version": {"default": "1.28.1", "android": "1.28.2"}}})
-    )
+    versions = {"minimum": "1.20.0", "android": "1.28.2", "windows": "1.28.10"}
+    config.write_text(json.dumps({"gstreamer": {"version": versions}}))
 
     assert get_gstreamer_version(platform, config_file=config) == expected

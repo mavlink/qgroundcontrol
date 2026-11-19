@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import _bootstrap as _bootstrap
-from common.build_config import get_build_config_value
+from common.build_config import get_build_config_value, newest_gstreamer_sdk_version
 from common.file_traversal import find_repo_root
 from common.gstreamer import PLATFORM_PACKAGES, release_index_url
 from common.logging import log_info, log_ok, log_warn
@@ -138,11 +138,7 @@ def fetch_latest_common_gstreamer_patch(configured_version: str) -> str | None:
 def check_gstreamer_version() -> None:
     """Check configured and installed GStreamer versions."""
     log_info("Checking GStreamer version...")
-    current_version = get_build_config_value(
-        "gstreamer.version.default",
-        "unknown",
-        start=Path(__file__).resolve(),
-    )
+    current_version = newest_gstreamer_sdk_version(start=Path(__file__).resolve()) or "unknown"
     print(f"  Configured: GStreamer {current_version}")
 
     latest_patch = fetch_latest_common_gstreamer_patch(str(current_version))

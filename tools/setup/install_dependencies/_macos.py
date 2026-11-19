@@ -57,7 +57,7 @@ def install_macos(
         print("\nSkipping GStreamer installation")
     elif not gst_version:
         print()
-        _c.log_warn("GSTREAMER_MACOS_VERSION not found in build-config.json")
+        _c.log_warn("gstreamer.version.macos not found in build-config.json")
         _c.log_warn("Skipping GStreamer installation")
     elif macos_gst_root.exists():
         print(f"GStreamer already installed at {macos_gst_root}; skipping")

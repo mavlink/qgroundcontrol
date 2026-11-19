@@ -15,7 +15,10 @@ build_tool := "uv run --frozen --project tools --group build"
 ruff := "uv run --frozen --project tools --group lint ruff"
 qt_version := shell(python + " ./tools/setup/read_config.py --get qt.version")
 cmake_min_version := shell(python + " ./tools/setup/read_config.py --get build.cmake_minimum_version")
-gstreamer_version := shell(python + " ./tools/setup/read_config.py --get gstreamer.version.default")
+# Linux builds against the system GStreamer, from gstreamer.version.minimum on; macOS and Windows download an SDK.
+gstreamer_key := if host_os == "macos" { "macos" } else if host_os == "windows" { "windows" } else { "minimum" }
+gstreamer_version := shell(python + " ./tools/setup/read_config.py --get gstreamer.version." + gstreamer_key)
+gstreamer_note := if gstreamer_key == "minimum" { " or later (system)" } else { " (SDK)" }
 qt_dir := env_var_or_default("QT_DIR", "")
 qt_root_arg := if qt_dir == "" { "" } else { "--qt-root \"" + qt_dir + "\"" }
 qt_dir_display := if qt_dir == "" { env_var_or_default("QT_ROOT_DIR", "auto-detected") } else { qt_dir }
@@ -145,7 +148,7 @@ info:
     @echo "Qt version:  {{ qt_version }}"
     @echo "Qt dir:      {{ qt_dir_display }}"
     @echo "CMake min:   {{ cmake_min_version }}"
-    @echo "GStreamer:   {{ gstreamer_version }}"
+    @echo "GStreamer:   {{ gstreamer_version }}{{ gstreamer_note }}"
     @echo "Build type:  {{ build_type }}"
     @echo "Build dir:   {{ build_dir }}"
     @echo "Jobs:        {{ jobs }}"

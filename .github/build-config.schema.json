@@ -202,7 +202,6 @@
         "version": {
           "type": "object",
           "required": [
-            "default",
             "minimum",
             "android",
             "ios",
@@ -211,10 +210,6 @@
           ],
           "additionalProperties": false,
           "properties": {
-            "default": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
             "minimum": {
               "type": "string",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
