@@ -33,12 +33,9 @@ public:
     ComponentInformationCache &fileCache() { return _fileCache; }
     ComponentInformationTranslation *translation() { return _translation; }
 
-    float progress() const;
-
     static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
 
 signals:
-    void progressUpdate(float progress);
     void requestAllComplete();
 
 private:
@@ -56,9 +53,6 @@ private:
 
     // Skip predicates
     bool _isCompTypeSupported(COMP_METADATA_TYPE type) const;
-
-    // Progress tracking
-    void _updateProgress();
 
     static QString _getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation);
 
@@ -79,10 +73,6 @@ private:
     SkippableAsyncState*    _stateRequestActuators  = nullptr;
     FunctionState*          _stateComplete          = nullptr;
     QGCFinalState*          _stateFinal             = nullptr;
-
-    // Progress tracking
-    int _currentStateIndex = 0;
-    static constexpr int _stateCount = 6;
 
     friend class RequestMetaDataTypeStateMachine;
 };

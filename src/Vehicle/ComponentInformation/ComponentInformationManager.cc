@@ -124,48 +124,14 @@ void ComponentInformationManager::_wireTransitions()
 
 void ComponentInformationManager::_wireProgressTracking()
 {
-    _stateRequestGeneral->setOnEntry([this]() {
-        _currentStateIndex = 0;
-        _updateProgress();
+    setProgressWeights({
+        {_stateRequestGeneral, 1},
+        {_stateUpdateUri, 1},
+        {_stateRequestParam, 1},
+        {_stateRequestEvents, 1},
+        {_stateRequestActuators, 1},
+        {_stateComplete, 1},
     });
-
-    _stateUpdateUri->setOnEntry([this]() {
-        _currentStateIndex = 1;
-        _updateProgress();
-    });
-
-    _stateRequestParam->setOnEntry([this]() {
-        _currentStateIndex = 2;
-        _updateProgress();
-    });
-
-    _stateRequestEvents->setOnEntry([this]() {
-        _currentStateIndex = 3;
-        _updateProgress();
-    });
-
-    _stateRequestActuators->setOnEntry([this]() {
-        _currentStateIndex = 4;
-        _updateProgress();
-    });
-
-    _stateComplete->setOnEntry([this]() {
-        _currentStateIndex = 5;
-        _updateProgress();
-    });
-}
-
-void ComponentInformationManager::_updateProgress()
-{
-    emit progressUpdate(progress());
-}
-
-float ComponentInformationManager::progress() const
-{
-    if (!inProgress()) {
-        return 1.0f;
-    }
-    return static_cast<float>(_currentStateIndex) / static_cast<float>(_stateCount);
 }
 
 void ComponentInformationManager::requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData)
@@ -178,10 +144,8 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
     // Guard against double-start: a request while already running just updates the
     // callback pointers; the running machine still emits requestAllComplete at the end.
     if (!inProgress()) {
-        _currentStateIndex = 0;
         start();
     }
-    emit progressUpdate(progress());
 }
 
 void ComponentInformationManager::_requestCompInfoGeneral(AsyncFunctionState* state)
