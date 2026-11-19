@@ -11,7 +11,7 @@ class Vehicle;
 /// \brief Base class of the states of the module: a QState with a name for the log, the machine and the vehicle
 /// of the state, entry and exit callbacks, and the signals advance() and error().
 ///
-/// QGCState adds a local error state (setLocalErrorState()) and a check for the vehicle.
+/// QGCState adds a transition helper (addThisTransition()) and a check for the vehicle.
 ///
 class QGCAbstractState : public QState
 {

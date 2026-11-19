@@ -9,10 +9,6 @@ class QGCStateMachineTest : public StateMachineTest
 private slots:
     // QGCStateMachine helpers
     void _testQGCStateMachineFactories();
-    void _testGlobalErrorState();
-    void _testGlobalErrorStateWithAbstractState();
-    void _testLocalErrorState();
-    UT_PARAMETERIZED_TEST(_testLocalErrorStateSetLast);
     UT_PARAMETERIZED_TEST(_testInProgressSpansQueuedStart);
     void _testStopFromInProgressListenerIsHonored();
     void _testStartWhileInProgressIsCritical();

@@ -88,45 +88,21 @@ void QGCStateMachine::_setInProgress(bool inProgress)
     }
 }
 
-void QGCStateMachine::setGlobalErrorState(QAbstractState* errorState)
-{
-    _globalErrorState = errorState;
-}
-
-void QGCStateMachine::registerState(QGCState* state)
-{
-    state->_setGlobalErrorState(_globalErrorState);
-}
-
-void QGCStateMachine::registerState(QGCAbstractState* state)
-{
-    // QGCAbstractState cannot have local error-state helpers, so wire to global.
-    if (_globalErrorState) {
-        state->addTransition(state, &QGCAbstractState::error, _globalErrorState);
-    }
-}
-
 FunctionState* QGCStateMachine::addFunctionState(const QString& stateName, std::function<void()> function)
 {
-    auto* state = new FunctionState(stateName, this, std::move(function));
-    registerState(state);
-    return state;
+    return new FunctionState(stateName, this, std::move(function));
 }
 
 AsyncFunctionState* QGCStateMachine::addAsyncFunctionState(const QString& stateName,
                                                             AsyncFunctionState::SetupFunction setupFunction,
                                                             int timeoutMsecs)
 {
-    auto* state = new AsyncFunctionState(stateName, this, std::move(setupFunction), timeoutMsecs);
-    registerState(state);
-    return state;
+    return new AsyncFunctionState(stateName, this, std::move(setupFunction), timeoutMsecs);
 }
 
 DelayState* QGCStateMachine::addDelayState(int delayMsecs)
 {
-    auto* state = new DelayState(this, delayMsecs);
-    registerState(state);
-    return state;
+    return new DelayState(this, delayMsecs);
 }
 
 bool QGCStateMachine::_canPostEvent(const QString& eventName) const

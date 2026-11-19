@@ -30,7 +30,7 @@
 
 class Vehicle;
 
-/// \brief QGroundControl specific state machine with enhanced error handling
+/// \brief QStateMachine that knows its vehicle, whether it is in progress, and how far it has progressed
 ///
 /// A machine can be a state of another machine, as a QStateMachine can: the outer machine starts it when it
 /// enters it and stops it when it leaves it, and its finished() is that of a state. Qt does not leave the states
@@ -65,40 +65,27 @@ public:
     void setRunning(bool running) = delete;  // NOLINT(bugprone-derived-method-shadowing-base-method)
 
     // -------------------------------------------------------------------------
-    // Event Handling
+    // State Factories
     // -------------------------------------------------------------------------
 
-    /// Set a global error state that all QGCState errors will transition to. Set it before the states are
-    /// registered: registerState() gives a state the global error state that the machine has at that time.
-    /// @param errorState The state to transition to on error
-    void setGlobalErrorState(QAbstractState* errorState);
-
-    QAbstractState* globalErrorState() const { return _globalErrorState; }
-
-    /// Register a QGCState with the machine and automatically wire up error transitions
-    /// If a global error state is set, the state's error() signal will transition to it, unless the state has a
-    /// local error state or is given one later (QGCState::setLocalErrorState())
-    /// @param state The state to register
-    void registerState(QGCState* state);
-
-    /// Register a QGCAbstractState with the machine and automatically wire up error transitions
-    /// @param state The state to register
-    void registerState(QGCAbstractState* state);
-
-    /// Create and register a FunctionState
+    /// Create a FunctionState
     /// @param function Function to execute
     FunctionState* addFunctionState(const QString& stateName, std::function<void()> function);
 
-    /// Create and register an AsyncFunctionState
+    /// Create an AsyncFunctionState
     /// @param setupFunction Function to execute on entry
     /// @param timeoutMsecs Optional timeout
     AsyncFunctionState* addAsyncFunctionState(const QString& stateName,
                                                AsyncFunctionState::SetupFunction setupFunction,
                                                int timeoutMsecs = 0);
 
-    /// Create and register a DelayState
+    /// Create a DelayState
     /// @param delayMsecs Delay duration
     DelayState* addDelayState(int delayMsecs);
+
+    // -------------------------------------------------------------------------
+    // Event Handling
+    // -------------------------------------------------------------------------
 
     /// Post a named event to be processed immediately
     /// The machine must be running, which it is from the entry of its initial state and not yet when start()
@@ -250,7 +237,6 @@ private:
     void _startProgressOver();
 
     Vehicle* _vehicle = nullptr;
-    QAbstractState* _globalErrorState = nullptr;
     bool _inProgress = false;
     bool _restartPending = false;
 
