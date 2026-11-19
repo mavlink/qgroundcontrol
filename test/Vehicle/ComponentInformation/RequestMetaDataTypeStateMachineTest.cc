@@ -8,12 +8,15 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QUuid>
+#include <QtNetwork/QHostAddress>
+#include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
 #include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
 #include "ComponentInformationCache.h"
 #include "ComponentInformationManager.h"
+#include "FTPManager.h"
 #include "FactMetaData.h"
 #include "LinkManager.h"
 #include "MockConfiguration.h"
@@ -366,6 +369,148 @@ void RequestMetaDataTypeStateMachineTest::_metadataUriFillsItsField()
     if (completeSpy.isEmpty()) {
         QVERIFY(completeSpy.wait(TestTimeout::longMs()));
     }
+}
+
+// A state that times out is left while its download is still running. The download has to end with the state:
+// one that ran on completed whichever state was current when it ended, and kept the vehicle's FTP session.
+void RequestMetaDataTypeStateMachineTest::_downloadEndsWithItsState()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    // Random CRC so the file cache cannot satisfy the request
+    param->setUriMetaData(QStringLiteral("mftp://[;comp=1]parameter.json.xz"), QRandomGenerator::global()->generate());
+
+    // One burst a second: the download is far from done when its state gives up, and the rule for slow downloads,
+    // which needs five seconds of data, has not spoken yet
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(1000);
+    RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
+    timeouts.metaDataDownload = 500;
+
+    const char* category = "ComponentInformation.RequestMetaDataTypeStateMachine";
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("^Timeout \".*RequestMetaDataJson\" after 500 ms"));
+    expectLogMessage(category, QtWarningMsg, QRegularExpression("failed to load metadata"));
+    // The mock's blocking burst delay also starves unrelated commands sent to it during the download
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
+
+    QSignalSpy downloadCompleteSpy(vehicle()->ftpManager(), &FTPManager::downloadComplete);
+    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    requestMachine.request(param);
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    // The download was given up when its state was left, with an error
+    QCOMPARE(downloadCompleteSpy.count(), 1);
+    QVERIFY(!downloadCompleteSpy.first().at(1).toString().isEmpty());
+
+    // So the vehicle's FTP session is free: the same file is downloaded now, where a request that found the
+    // session taken failed with a warning
+    requestMachine.request(param);
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    QCOMPARE(downloadCompleteSpy.count(), 2);
+    QVERIFY(downloadCompleteSpy.last().at(1).toString().isEmpty());
+}
+
+// The same for a download over HTTP, which the machine starts on a downloader that all of its requests share: one
+// that is still running refuses the next.
+void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // Accepts a connection and never answers it
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    QSignalSpy connectionSpy(&server, &QTcpServer::newConnection);
+
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    // Random CRC so the file cache cannot satisfy the request
+    param->setUriMetaData(QStringLiteral("http://127.0.0.1:%1/parameter.json").arg(server.serverPort()),
+                          QRandomGenerator::global()->generate());
+
+    RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
+    timeouts.metaDataDownload = 500;
+    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    // The second request reaches the server only when the first download ended with its state. One that found
+    // the downloader busy was refused with a warning, which fails the test.
+    for (int request = 1; request <= 2; ++request) {
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                         QRegularExpression("^Timeout \".*RequestMetaDataJson\" after 500 ms"));
+        expectLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                         QRegularExpression("failed to load metadata"));
+        requestMachine.request(param);
+        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+        QTRY_COMPARE_WITH_TIMEOUT(connectionSpy.count(), request, TestTimeout::shortMs());
+    }
+}
+
+// A request whose state has timed out stays outstanding in Vehicle. Its answer has to be dropped: it set the URI
+// of whatever the machine was requesting by the time it came.
+void RequestMetaDataTypeStateMachineTest::_answerAfterRequestTimeoutIsNotUsed()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // MockLink answers neither request, so the ack and the message below are the answer
+    mockLink()->clearReceivedRequestMessageCounts();
+    mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_METADATA);
+    mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_INFORMATION);
+
+    // The two request states give up well before Vehicle stops waiting for the message, which it does half a
+    // second after the command is acknowledged
+    RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
+    timeouts.compInfoRequest = 100;
+    ignoreLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("^Timeout \".*RequestComp(Metadata|InfoDeprecated)\" after 100 ms"));
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+
+    bool answerReceived = false;
+    connect(vehicle(), &Vehicle::mavlinkMessageReceived, this, [&answerReceived](const mavlink_message_t& message) {
+        if (message.msgid == MAVLINK_MSG_ID_COMPONENT_METADATA) {
+            answerReceived = true;
+        }
+    });
+
+    CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
+    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+    requestMachine.request(&general);
+    QTRY_VERIFY_WITH_TIMEOUT(
+        mockLink()->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_COMPONENT_METADATA) > 0,
+        TestTimeout::mediumMs());
+    mockLink()->sendUnexpectedCommandAck(MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED);
+
+    // Without a URI there is nothing to download, so the request is over once both states have given up
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    QVERIFY(general.uriMetaData().isEmpty());
+
+    mavlink_message_t message{};
+    const char uri[MAVLINK_MSG_COMPONENT_METADATA_FIELD_URI_LEN] = "mftp://late.json";
+    (void) mavlink_msg_component_metadata_pack_chan(mockLink()->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
+                                                    mockLink()->outgoingMavlinkChannel(), &message, 0, 0, uri);
+    mockLink()->respondWithMavlinkMessage(message);
+    // Vehicle hands a message to its requests before it announces it
+    QTRY_VERIFY_WITH_TIMEOUT(answerReceived, TestTimeout::mediumMs());
+    QVERIFY(general.uriMetaData().isEmpty());
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

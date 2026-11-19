@@ -10,6 +10,7 @@ class Vehicle;
 class ComponentInformationManager;
 class CompInfo;
 class AsyncFunctionState;
+class CompletionWaitState;
 class SkippableAsyncState;
 class QGCState;
 
@@ -18,7 +19,18 @@ class RequestMetaDataTypeStateMachine : public QGCStateMachine
     Q_OBJECT
 
 public:
-    explicit RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent = nullptr);
+    /// How long a state waits, in milliseconds, before the sequence goes on without what it asked for
+    struct Timeouts
+    {
+        int compInfoRequest;
+        int metaDataDownload;
+        int translation;
+    };
+
+    static constexpr Timeouts defaultTimeouts{5000, 30000, 15000};
+
+    explicit RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent = nullptr,
+                                             const Timeouts& timeouts = defaultTimeouts);
     ~RequestMetaDataTypeStateMachine() override;
 
     void request(CompInfo* compInfo);
@@ -30,7 +42,7 @@ signals:
     void requestComplete();
 
 private:
-    void _createStates();
+    void _createStates(const Timeouts& timeouts);
     void _wireTransitions();
     void _wireTimeoutHandling();
 
@@ -50,9 +62,15 @@ private:
     bool _shouldSkipTranslation() const;
 
     // Download helpers
-    void _requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName, bool trackMetadataSource);
-    QString _downloadCompleteJsonWorker(const QString& jsonFileName);
+    void _requestFile(CompletionWaitState* state, const QString& cacheFileTag, bool crcValid, const QString& uri,
+                      QString& outputFileName, bool trackMetadataSource);
+    QString _downloadCompleteJsonWorker(const QString& jsonFileName, const QString& cacheFileTag, bool crcValid);
+    void _ftpDownloadProgress(float progress);
     static bool _uriIsMAVLinkFTP(const QString& uri);
+
+    // What a state that is left gives up, so that nothing of it reaches a later state
+    void _cancelMessageRequest();
+    void _cancelTransfer();
 
     enum class MetadataSource {
         None,
@@ -66,13 +84,14 @@ private:
     void _handleCompMetadataResult(MAV_RESULT result, const mavlink_message_t& message);
     void _handleCompInfoResult(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
-private slots:
-    void _ftpDownloadComplete(const QString& file, const QString& errorMsg);
-    void _ftpDownloadProgress(float progress);
-    void _httpDownloadComplete(bool success, const QString& localFile, const QString& errorMsg, bool fromCache);
-    void _downloadAndTranslationComplete(QString translatedJsonTempFile, QString errorMsg);
+    /// A download of this machine that has started and not ended
+    enum class Transfer
+    {
+        None,
+        Ftp,
+        Http,
+    };
 
-private:
     ComponentInformationManager* _compMgr = nullptr;
     CompInfo* _compInfo = nullptr;
 
@@ -82,10 +101,7 @@ private:
     bool _jsonMetadataCrcValid = false;
     QString _jsonTranslationFileName;
 
-    QString* _currentFileName = nullptr;
-    QString _currentCacheFileTag;
-    bool _currentFileValidCrc = false;
-
+    Transfer _transferInFlight = Transfer::None;
     QElapsedTimer _downloadStartTime;
     MetadataSource _metadataSource = MetadataSource::None;
     QString _metadataUri;
@@ -100,13 +116,4 @@ private:
     SkippableAsyncState* _stateRequestTranslate = nullptr;
     QGCState* _stateComplete = nullptr;
     QGCFinalState* _stateFinal = nullptr;
-
-    // Track active download state for completion
-    AsyncFunctionState* _activeAsyncState = nullptr;
-    SkippableAsyncState* _activeSkippableState = nullptr;
-
-    // Timeout values (ms)
-    static constexpr int _timeoutCompInfoRequest = 5000;
-    static constexpr int _timeoutMetaDataDownload = 30000;
-    static constexpr int _timeoutTranslation = 15000;
 };

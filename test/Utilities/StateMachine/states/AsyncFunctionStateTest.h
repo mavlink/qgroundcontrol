@@ -13,4 +13,6 @@ private slots:
     UT_PARAMETERIZED_TEST(_testSetupFunctionEndsState);
     UT_PARAMETERIZED_TEST(_testConnectToCompletion);
     void _testEveryCompletionConnectionEndsWithWait();
+    void _testConnectionWhileWaitingEndsWithWait();
+    void _testConnectionWhileWaitingDoesNotEndWait();
 };

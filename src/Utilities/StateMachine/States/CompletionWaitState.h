@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
 
@@ -9,8 +11,8 @@
 /// \brief Base class for states that wait until a signal they connected to is emitted, or until complete() or
 /// fail() is called
 ///
-/// The connections made with connectToCompletion() are the wait signals of the state: all of them are removed when
-/// the state completes, fails, times out or is exited.
+/// The connections made with connectToCompletion() and connectWhileWaiting() are the wait signals of the state: all
+/// of them are removed when the state completes, fails, times out or is exited.
 ///
 class CompletionWaitState : public WaitStateBase
 {
@@ -36,9 +38,18 @@ public:
     /// Connect to an external signal that will trigger completion, with a slot
     /// Useful when you need to process the signal data before completing
     template <typename Func, typename Slot>
-    void connectToCompletion(SignalSender<Func>* sender, Func signal, Slot slot)
+    void connectToCompletion(SignalSender<Func>* sender, Func signal, Slot&& slot)
     {
-        _completionConnections.append(connect(sender, signal, this, slot));
+        _completionConnections.append(connect(sender, signal, this, std::forward<Slot>(slot)));
+    }
+
+    /// Connect a slot for as long as the state waits, to a signal that does not end the wait, such as the progress
+    /// of the operation. Nothing ends the wait through this connection, so a state that has no other and no
+    /// timeout is reported like one without a connection.
+    template <typename Func, typename Slot>
+    void connectWhileWaiting(SignalSender<Func>* sender, Func signal, Slot&& slot)
+    {
+        _otherConnections.append(connect(sender, signal, this, std::forward<Slot>(slot)));
     }
 
 protected:
@@ -55,4 +66,5 @@ protected:
 
 private:
     QList<QMetaObject::Connection> _completionConnections;
+    QList<QMetaObject::Connection> _otherConnections;
 };

@@ -20,5 +20,9 @@ void CompletionWaitState::disconnectWaitSignal()
     for (const QMetaObject::Connection& connection : std::as_const(_completionConnections)) {
         disconnect(connection);
     }
+    for (const QMetaObject::Connection& connection : std::as_const(_otherConnections)) {
+        disconnect(connection);
+    }
     _completionConnections.clear();
+    _otherConnections.clear();
 }

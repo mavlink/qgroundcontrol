@@ -16,4 +16,7 @@ private slots:
     void _requestUsesCachedMetadataForParameter();
     void _slowFtpDownloadAbortsEarly();
     UT_PARAMETERIZED_TEST(_metadataUriFillsItsField);
+    void _downloadEndsWithItsState();
+    void _httpDownloadEndsWithItsState();
+    void _answerAfterRequestTimeoutIsNotUsed();
 };

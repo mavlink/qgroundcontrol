@@ -199,4 +199,52 @@ void AsyncFunctionStateTest::_testEveryCompletionConnectionEndsWithWait()
     QCOMPARE(slotCalls, 0);
 }
 
+void AsyncFunctionStateTest::_testConnectionWhileWaitingEndsWithWait()
+{
+    QStateMachine machine;
+    QObject progressSource;
+    QObject doneSource;
+    int progressCalls = 0;
+
+    auto* asyncState =
+        new AsyncFunctionState(QStringLiteral("TestAsync"), &machine,
+                               [&progressSource, &doneSource, &progressCalls](AsyncFunctionState* state) {
+                                   state->connectWhileWaiting(&progressSource, &QObject::objectNameChanged,
+                                                              [&progressCalls](const QString&) { progressCalls++; });
+                                   state->connectToCompletion(&doneSource, &QObject::objectNameChanged);
+                               });
+    finishOn(machine, asyncState, &QGCState::advance);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, asyncState));
+
+    // The slot is called while the state waits, and the state goes on waiting
+    progressSource.setObjectName(QStringLiteral("half way"));
+    QCOMPARE(progressCalls, 1);
+    QCOMPARE(finishedSpy.count(), 0);
+
+    doneSource.setObjectName(QStringLiteral("done"));
+    QVERIFY(spyTriggered(finishedSpy));
+    progressSource.setObjectName(QStringLiteral("late"));
+    QCOMPARE(progressCalls, 1);
+}
+
+void AsyncFunctionStateTest::_testConnectionWhileWaitingDoesNotEndWait()
+{
+    QStateMachine machine;
+    QObject progressSource;
+
+    // Without a timeout, and with a connection that cannot end the wait, nothing ends the state
+    auto* asyncState =
+        new AsyncFunctionState(QStringLiteral("TestAsync"), &machine, [&progressSource](AsyncFunctionState* state) {
+            state->connectWhileWaiting(&progressSource, &QObject::objectNameChanged, [](const QString&) {});
+        });
+    machine.setInitialState(asyncState);
+
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression("has no completion connection"));
+    QVERIFY(startAndWaitForEntered(&machine, asyncState));
+    verifyExpectedLogMessage();
+}
+
 UT_REGISTER_TEST(AsyncFunctionStateTest, TestLabel::Unit, TestLabel::Utilities)
