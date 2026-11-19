@@ -16,6 +16,7 @@
 class QTextStream;
 
 class ParameterEditorController;
+class RuntimeScheduler;
 class Vehicle;
 
 class ParameterManager : public QObject
@@ -75,6 +76,11 @@ public:
     /// @param notifyFailure  When true (default), shows a single user-visible message if any
     ///                       parameters still fail to respond after all retry rounds.
     void bulkRefresh(int componentId, const QStringList &names, bool notifyFailure = true);
+
+    /// Times the parameter writes and the single parameter reads that start after the call with @a scheduler, for
+    /// a test that advances the time itself. It must share the thread of this object and stay alive while it is
+    /// set. Without one, which is the default, each request has a scheduler of its own.
+    void setScheduler(RuntimeScheduler* scheduler) { _scheduler = scheduler; }
 
     void resetAllParametersToDefaults();
     void resetAllToVehicleConfiguration();
@@ -249,7 +255,7 @@ private:
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
     static constexpr int _maxInitialLoadRetrySingleParam = kMaxInitialLoadRetrySingleParam;
     bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)
-    const int _waitForParamValueAckMs;                          ///< 50 ms in unit tests, kWaitForParamValueAckMs otherwise
+    RuntimeScheduler* _scheduler = nullptr;
 
     bool _indexBatchQueueActive = false;    ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
     QList<QPair<int, int>> _indexBatchQueue;    ///< In-flight index re-requests: (component id, parameter index)

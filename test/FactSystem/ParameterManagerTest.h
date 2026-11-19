@@ -1,6 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include "BaseClasses/VehicleTestManualConnect.h"
+#include "ManualScheduler.h"
 #include "MockLink.h"
 
 class ParameterManagerTest : public VehicleTestManualConnect
@@ -55,4 +58,13 @@ private:
     static bool _waitForAppMessage(const QRegularExpression &pattern);
     void _setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess,
                                   const QString &paramName, MAV_AUTOPILOT autopilot);
+    /// Times the parameter writes and single reads of the connected vehicle with a scheduler that only the test
+    /// advances, so that an attempt ends at its ack timeout when the test says so
+    void _timeRequestsByHand();
+    /// Lets the attempt of each outstanding request end at its ack timeout, once the vehicle has received
+    /// @a receivedCount messages with @a requestMessageId and so has left the last of them unanswered
+    void _expireAckTimeout(uint32_t requestMessageId, int receivedCount);
+
+    /// Destroyed in cleanup(), once the vehicle that was given it is gone
+    std::unique_ptr<ManualScheduler> _scheduler;
 };

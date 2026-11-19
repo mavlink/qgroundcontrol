@@ -35,12 +35,12 @@ QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "FactSystem.ParameterManager:v
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "FactSystem.ParameterManager:verbose2")
 QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog, "FactSystem.ParameterManager:debugCacheFailure") // Turn on to debug parameter cache crc misses
 
-ParameterManager::ParameterManager(Vehicle *vehicle)
+ParameterManager::ParameterManager(Vehicle* vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
-    , _logReplay(!vehicle->vehicleLinkManager()->primaryLink().expired() && vehicle->vehicleLinkManager()->primaryLink().lock()->isLogReplay())
+    , _logReplay(!vehicle->vehicleLinkManager()->primaryLink().expired() &&
+                 vehicle->vehicleLinkManager()->primaryLink().lock()->isLogReplay())
     , _disableAllRetries(_logReplay)
-    , _waitForParamValueAckMs(QGC::runningUnitTests() ? 50 : kWaitForParamValueAckMs)
     , _tryftp(vehicle->apmFirmware() || vehicle->px4Firmware())
 {
     qCDebug(ParameterManagerLog) << this;
@@ -386,8 +386,9 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
     //      Refresh parameter from vehicle
 
     // Create states
-    auto stateMachine = new QGCStateMachine(QStringLiteral("ParameterManager PARAM_SET"), vehicle(), this);
-    auto waitAckState = new WaitForParamResponseState(stateMachine, _waitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
+    auto stateMachine = new QGCStateMachine(QStringLiteral("ParameterManager PARAM_SET"), vehicle(), this, _scheduler);
+    auto waitAckState = new WaitForParamResponseState(stateMachine, kWaitForParamValueAckMs, checkForCorrectParamValue,
+                                                      checkForParamError);
     waitAckState->setRequest(paramSetEncoder, kParamSetRetryCount);
     connect(waitAckState, &QState::entered, this, &ParameterManager::_incrementPendingWriteCount);
     waitAckState->setOnExit([this]() { _decrementPendingWriteCount(); });
@@ -1094,8 +1095,9 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
     //      Notify user of failure
 
     // Create states
-    auto stateMachine = new QGCStateMachine(QStringLiteral("PARAM_REQUEST_READ"), vehicle(), this);
-    auto waitAckState = new WaitForParamResponseState(stateMachine, _waitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
+    auto stateMachine = new QGCStateMachine(QStringLiteral("PARAM_REQUEST_READ"), vehicle(), this, _scheduler);
+    auto waitAckState = new WaitForParamResponseState(stateMachine, kWaitForParamValueAckMs, checkForCorrectParamValue,
+                                                      checkForParamError);
     waitAckState->setRequest(paramRequestReadEncoder, kParamRequestReadRetryCount);
     auto userNotifyState = new FunctionState(QStringLiteral("User notify"), stateMachine, [waitAckState, paramName, this, componentId]() {
         const QString errorDetail = waitAckState->lastParamErrorString();

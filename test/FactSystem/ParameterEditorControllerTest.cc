@@ -8,6 +8,8 @@
 #include <QtTest/QTest>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "MAVLinkLib.h"
+#include "MockLink.h"
 #include "ParameterEditorController.h"
 #include "ParameterManager.h"
 #include "QmlObjectListModel.h"
@@ -370,6 +372,8 @@ void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure(
     // MockLink rejects the PARAM_SET with PARAM_ERROR DOES_NOT_EXIST: exactly one
     // write-failed notification, and NO follow-up refresh read of the unknown param
     expectAppMessage(QRegularExpression(QStringLiteral("Parameter write failed: param: NO_SUCH_PARAM")));
+    QVERIFY(_mockLink);
+    _mockLink->clearReceivedMavlinkMessageCounts();
     controller.sendDiff();
 
     // PARAM_ERROR is a definitive rejection - no retries, one ack interval suffices
@@ -378,11 +382,12 @@ void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure(
     QCOMPARE(writeFailureSpy.count(), 1);
     verifyExpectedLogMessage();
 
-    // A (buggy) post-failure refresh read and its retries would finish within this window: the test-mode ack timeout
-    // is 50 ms. Then verify no PARAM_REQUEST_READ was ever issued for the unknown param
-    QVERIFY_NO_SIGNAL_WAIT(readFailureSpy, 250);
+    // A (buggy) post-failure refresh read of the unknown param would have been sent before the read that is requested
+    // now, so the vehicle has received it by the time it answers this one. It has received no other.
+    paramMgr->refreshParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SYS_AUTOSTART"));
+    QVERIFY_SIGNAL_COUNT_WAIT(readSuccessSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_READ), 1);
     QCOMPARE(readFailureSpy.count(), 0);
-    QCOMPARE(readSuccessSpy.count(), 0);
 }
 
 void ParameterEditorControllerTest::_buildDiffWholeNumberFloatForIntParam()
