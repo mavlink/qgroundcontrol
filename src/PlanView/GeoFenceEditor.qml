@@ -19,6 +19,8 @@ Rectangle {
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 15)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
+    // Also shown when unsupported but a loaded plan has home circles, so they can be turned off
+    readonly property bool  _showHomeColumn:    myGeoFenceController.homeCircleSupported || myGeoFenceController.hasHomeCircle
 
     QGCLabel {
         id:                 geoFenceLabel
@@ -221,7 +223,7 @@ Rectangle {
                 GridLayout {
                     anchors.left:       parent.left
                     anchors.right:      parent.right
-                    columns:            4
+                    columns:            5
                     flow:               GridLayout.TopToBottom
                     visible:            polygonSection.checked && myGeoFenceController.circles.count > 0
 
@@ -236,14 +238,35 @@ Rectangle {
 
                         QGCCheckBox {
                             checked:            object.inclusion
+                            enabled:            !object.homeCentered
                             onClicked:          object.inclusion = checked
                             Layout.alignment:   Qt.AlignHCenter
                         }
                     }
 
                     QGCLabel {
-                        text:               qsTr("Edit")
+                        text:               qsTr("Home")
+                        visible:            _showHomeColumn
                         Layout.column:      1
+                        Layout.alignment:   Qt.AlignHCenter
+                    }
+
+                    Repeater {
+                        model: myGeoFenceController.circles
+
+                        QGCCheckBox {
+                            checked:            object.homeCentered
+                            visible:            _showHomeColumn
+                            // Unsupported firmware: existing home circles can only be turned off
+                            enabled:            myGeoFenceController.homeCircleSupported || object.homeCentered
+                            onClicked:          object.homeCentered = checked
+                            Layout.alignment:   Qt.AlignHCenter
+                        }
+                    }
+
+                    QGCLabel {
+                        text:               qsTr("Edit")
+                        Layout.column:      2
                         Layout.alignment:   Qt.AlignHCenter
                     }
 
@@ -267,7 +290,7 @@ Rectangle {
 
                     QGCLabel {
                         text:               qsTr("Radius")
-                        Layout.column:      2
+                        Layout.column:      3
                         Layout.alignment:   Qt.AlignHCenter
                     }
 
@@ -283,7 +306,7 @@ Rectangle {
 
                     QGCLabel {
                         text:               qsTr("Delete")
-                        Layout.column:      3
+                        Layout.column:      4
                         Layout.alignment:   Qt.AlignHCenter
                     }
 
