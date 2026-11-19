@@ -15,4 +15,5 @@ private slots:
     void _requestSkipsCompInfoOnHighLatencyLink();
     void _requestUsesCachedMetadataForParameter();
     void _slowFtpDownloadAbortsEarly();
+    UT_PARAMETERIZED_TEST(_metadataUriFillsItsField);
 };

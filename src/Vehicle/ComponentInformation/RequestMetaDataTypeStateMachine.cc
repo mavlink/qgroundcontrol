@@ -19,6 +19,17 @@
 
 QGC_LOGGING_CATEGORY(RequestMetaDataTypeStateMachineLog, "ComponentInformation.RequestMetaDataTypeStateMachine")
 
+namespace {
+
+/// @return The URI in a MAVLink char field. A URI that fills its field has no terminator.
+template <size_t Length>
+QString metadataUriFromField(const char (&field)[Length])
+{
+    return QString::fromUtf8(field, static_cast<qsizetype>(qstrnlen(field, Length)));
+}
+
+}  // namespace
+
 RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent)
     : QGCStateMachine("RequestMetaDataType", compMgr->vehicle(), parent)
     , _compMgr(compMgr)
@@ -253,7 +264,7 @@ void RequestMetaDataTypeStateMachine::_handleCompMetadataResult(MAV_RESULT resul
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_component_metadata_t componentMetadata;
         mavlink_msg_component_metadata_decode(&message, &componentMetadata);
-        _compInfo->setUriMetaData(componentMetadata.uri, componentMetadata.file_crc);
+        _compInfo->setUriMetaData(metadataUriFromField(componentMetadata.uri), componentMetadata.file_crc);
     }
     // else: try deprecated COMPONENT_INFORMATION in next state
 
@@ -295,7 +306,8 @@ void RequestMetaDataTypeStateMachine::_handleCompInfoResult(MAV_RESULT result, V
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_component_information_t componentInformation;
         mavlink_msg_component_information_decode(&message, &componentInformation);
-        _compInfo->setUriMetaData(componentInformation.general_metadata_uri, componentInformation.general_metadata_file_crc);
+        _compInfo->setUriMetaData(metadataUriFromField(componentInformation.general_metadata_uri),
+                                  componentInformation.general_metadata_file_crc);
     } else {
         switch (failureCode) {
         case Vehicle::RequestMessageFailureCommandError:

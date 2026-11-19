@@ -302,4 +302,70 @@ void RequestMetaDataTypeStateMachineTest::_slowFtpDownloadAbortsEarly()
     QVERIFY(!requestMachine.inProgress());
 }
 
+void RequestMetaDataTypeStateMachineTest::_metadataUriFillsItsField_data()
+{
+    QTest::addColumn<bool>("deprecatedMessage");
+
+    QTest::newRow("COMPONENT_METADATA") << false;
+    QTest::newRow("COMPONENT_INFORMATION") << true;
+}
+
+void RequestMetaDataTypeStateMachineTest::_metadataUriFillsItsField()
+{
+    QFETCH(bool, deprecatedMessage);
+
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // MockLink answers neither request, so the ack and the message below are the answer
+    mockLink()->clearReceivedRequestMessageCounts();
+    mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_METADATA);
+    mockLink()->setRequestMessageNoResponse(MAVLINK_MSG_ID_COMPONENT_INFORMATION);
+    const auto requested = [this](int messageId) {
+        return mockLink()->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, messageId) > 0;
+    };
+
+    // A URI of 100 characters fills the field and so has no NUL. This one names nothing to download.
+    char uri[MAVLINK_MSG_COMPONENT_METADATA_FIELD_URI_LEN];
+    for (char& character : uri) {
+        character = 'u';
+    }
+    ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error"));
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+
+    CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+    requestMachine.request(&general);
+    QTRY_VERIFY_WITH_TIMEOUT(requested(MAVLINK_MSG_ID_COMPONENT_METADATA), TestTimeout::mediumMs());
+
+    mavlink_message_t message{};
+    if (deprecatedMessage) {
+        // A vehicle without COMPONENT_METADATA is asked for the message it replaced. In that one
+        // peripherals_metadata_uri follows general_metadata_uri.
+        mockLink()->sendUnexpectedCommandAck(MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_UNSUPPORTED);
+        QTRY_VERIFY_WITH_TIMEOUT(requested(MAVLINK_MSG_ID_COMPONENT_INFORMATION), TestTimeout::mediumMs());
+        static_assert(sizeof(uri) == MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_GENERAL_METADATA_URI_LEN);
+        const char peripheralsUri[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_PERIPHERALS_METADATA_URI_LEN] =
+            "SHOULD_NOT_APPEAR";
+        (void) mavlink_msg_component_information_pack_chan(mockLink()->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
+                                                           mockLink()->outgoingMavlinkChannel(), &message, 0, 0, uri, 0,
+                                                           peripheralsUri);
+    } else {
+        (void) mavlink_msg_component_metadata_pack_chan(mockLink()->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
+                                                        mockLink()->outgoingMavlinkChannel(), &message, 0, 0, uri);
+    }
+    mockLink()->respondWithMavlinkMessage(message);
+    mockLink()->sendUnexpectedCommandAck(MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_ACCEPTED);
+
+    QTRY_COMPARE_WITH_TIMEOUT(general.uriMetaData(), QString(sizeof(uri), QLatin1Char('u')), TestTimeout::mediumMs());
+
+    if (completeSpy.isEmpty()) {
+        QVERIFY(completeSpy.wait(TestTimeout::longMs()));
+    }
+}
+
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)
