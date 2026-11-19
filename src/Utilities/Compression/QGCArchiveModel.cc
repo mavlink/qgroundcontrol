@@ -1,19 +1,21 @@
 #include "QGCArchiveModel.h"
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-
-#include <QtCore/QCollator>
-#include <QtCore/QFileInfo>
-#include <QtCore/QLocale>
 
 #include <algorithm>
+#include <iterator>
+
+#include <QtConcurrent/QtConcurrentRun>
+
+#include "QGCCompression.h"
+#include "QGCFileHelper.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCArchiveModelLog, "Utilities.QGCArchiveModel")
 
 QGCArchiveModel::QGCArchiveModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+    connect(&_loadWatcher, &QFutureWatcherBase::finished, this, &QGCArchiveModel::_onLoadFinished);
 }
 
 QGCArchiveModel::~QGCArchiveModel() = default;
@@ -133,6 +135,14 @@ void QGCArchiveModel::refresh()
 
 void QGCArchiveModel::clear()
 {
+    // A load that is still running delivers its result to _onLoadFinished(), which drops it
+    _setLoading(false);
+    _resetEntries();
+    _setErrorString(QString());
+}
+
+void QGCArchiveModel::_resetEntries()
+{
     if (_filteredEntries.isEmpty() && _allEntries.isEmpty()) {
         return;
     }
@@ -154,35 +164,18 @@ void QGCArchiveModel::clear()
     if (hadFiles) emit fileCountChanged();
     if (hadDirs) emit directoryCountChanged();
     if (hadSize) emit totalSizeChanged();
-
-    _setErrorString(QString());
 }
 
-QVariantMap QGCArchiveModel::get(int index) const
+QVariantMap QGCArchiveModel::get(int row) const
 {
     QVariantMap result;
 
-    if (index < 0 || index >= _filteredEntries.size()) {
-        return result;
-    }
-
-    const QGCCompression::ArchiveEntry &entry = _filteredEntries.at(index);
-
-    result[QStringLiteral("name")] = entry.name;
-    result[QStringLiteral("size")] = entry.size;
-    result[QStringLiteral("modified")] = entry.modified;
-    result[QStringLiteral("isDirectory")] = entry.isDirectory;
-    result[QStringLiteral("permissions")] = entry.permissions;
-    result[QStringLiteral("formattedSize")] = formatSize(entry.size);
-
-    // Compute fileName and directory
-    const int lastSlash = entry.name.lastIndexOf(QLatin1Char('/'));
-    if (lastSlash >= 0 && lastSlash < entry.name.size() - 1) {
-        result[QStringLiteral("fileName")] = entry.name.mid(lastSlash + 1);
-        result[QStringLiteral("directory")] = entry.name.left(lastSlash);
-    } else {
-        result[QStringLiteral("fileName")] = entry.name;
-        result[QStringLiteral("directory")] = QString();
+    const QModelIndex entry = index(row);
+    if (entry.isValid()) {
+        const QHash<int, QByteArray> roles = roleNames();
+        for (const auto [role, name] : roles.asKeyValueRange()) {
+            result.insert(QString::fromLatin1(name), data(entry, role));
+        }
     }
 
     return result;
@@ -190,106 +183,79 @@ QVariantMap QGCArchiveModel::get(int index) const
 
 bool QGCArchiveModel::contains(const QString &fileName) const
 {
-    if (fileName.isEmpty()) {
-        return false;
-    }
-
-    for (const auto &entry : _allEntries) {
-        if (entry.name == fileName) {
-            return true;
-        }
-    }
-    return false;
+    return !fileName.isEmpty() &&
+           std::ranges::any_of(_allEntries, [&fileName](const auto& entry) { return entry.name == fileName; });
 }
 
 QString QGCArchiveModel::formatSize(qint64 bytes)
 {
-    if (bytes < 0) {
-        return QStringLiteral("--");
-    }
-
-    static const char* units[] = { "B", "KB", "MB", "GB", "TB" };
-    constexpr int numUnits = sizeof(units) / sizeof(units[0]);
-
-    double size = static_cast<double>(bytes);
-    int unitIndex = 0;
-
-    while (size >= 1024.0 && unitIndex < numUnits - 1) {
-        size /= 1024.0;
-        unitIndex++;
-    }
-
-    if (unitIndex == 0) {
-        // Bytes - no decimals
-        return QStringLiteral("%1 %2").arg(bytes).arg(QLatin1String(units[unitIndex]));
-    }
-
-    // Use locale-aware number formatting
-    return QStringLiteral("%1 %2")
-        .arg(QLocale().toString(size, 'f', 1))
-        .arg(QLatin1String(units[unitIndex]));
+    return (bytes < 0) ? QStringLiteral("--") : QGC::bigSizeToString(static_cast<quint64>(bytes));
 }
 
 void QGCArchiveModel::_loadArchive()
 {
-    clear();
+    _resetEntries();
+    _setErrorString(QString());
 
     if (_archivePath.isEmpty()) {
+        _setLoading(false);
         emit loadingComplete(true);
         return;
     }
 
-    _setLoading(true);
-    _setErrorString(QString());
-
     qCDebug(QGCArchiveModelLog) << "Loading archive:" << _archivePath;
 
-    // Load entries using QGCCompression (already sorted with QCollator)
-    QList<QGCCompression::ArchiveEntry> entries = QGCCompression::listArchiveDetailed(_archivePath);
+    _setLoading(true);
+    // Replaces the future of a load that is still running: the watcher then ignores that load
+    _loadWatcher.setFuture(QtConcurrent::run([archivePath = _archivePath]() {
+        Listing listing;
+        // Load entries using QGCCompression (already sorted with QCollator)
+        listing.outcome = QGCCompression::listArchiveDetailed(archivePath, listing.entries);
+        return listing;
+    }));
+}
 
-    if (entries.isEmpty() && !_archivePath.isEmpty()) {
-        // Check if it was an error or just empty archive
-        if (!QGCCompression::validateArchive(_archivePath)) {
-            _setErrorString(QGCCompression::lastErrorString());
-            _setLoading(false);
-            emit loadingComplete(false);
-            return;
-        }
+void QGCArchiveModel::_onLoadFinished()
+{
+    if (!_loading) {
+        return;
+    }
+
+    Listing listing = _loadWatcher.result();
+    if (!listing.outcome) {
+        _setErrorString(listing.outcome.message);
+        _setLoading(false);
+        emit loadingComplete(false);
+        return;
     }
 
     // Calculate statistics
-    int fileCount = 0;
-    int dirCount = 0;
-    qint64 totalSize = 0;
-
-    for (const auto &entry : entries) {
-        if (entry.isDirectory) {
-            dirCount++;
-        } else {
-            fileCount++;
-            totalSize += entry.size;
-        }
+    QGCCompression::ArchiveStats stats;
+    for (const auto& entry : std::as_const(listing.entries)) {
+        QGCCompression::addTo(stats, entry);
     }
 
     // Store all entries
-    _allEntries = std::move(entries);
+    _allEntries = std::move(listing.entries);
 
-    // Update statistics
-    const bool fileCountChanged = _fileCount != fileCount;
-    const bool dirCountChanged = _directoryCount != dirCount;
-    const bool sizeChanged = _totalSize != totalSize;
-
-    _fileCount = fileCount;
-    _directoryCount = dirCount;
-    _totalSize = totalSize;
+    // Update statistics, which the start of the load has set to zero: one that is not zero now has changed
+    _fileCount = stats.fileCount;
+    _directoryCount = stats.directoryCount;
+    _totalSize = stats.totalUncompressedSize;
 
     // Apply current filter (this will emit countChanged via beginResetModel/endResetModel)
     _applyFilter();
 
     // Emit property changes
-    if (fileCountChanged) emit this->fileCountChanged();
-    if (dirCountChanged) emit directoryCountChanged();
-    if (sizeChanged) emit totalSizeChanged();
+    if (_fileCount != 0) {
+        emit fileCountChanged();
+    }
+    if (_directoryCount != 0) {
+        emit directoryCountChanged();
+    }
+    if (_totalSize != 0) {
+        emit totalSizeChanged();
+    }
 
     _setLoading(false);
 
@@ -310,21 +276,11 @@ void QGCArchiveModel::_applyFilter()
         break;
 
     case FilesOnly:
-        _filteredEntries.clear();
-        for (const auto &entry : _allEntries) {
-            if (!entry.isDirectory) {
-                _filteredEntries.append(entry);
-            }
-        }
-        break;
-
     case DirectoriesOnly:
         _filteredEntries.clear();
-        for (const auto &entry : _allEntries) {
-            if (entry.isDirectory) {
-                _filteredEntries.append(entry);
-            }
-        }
+        std::ranges::copy_if(_allEntries, std::back_inserter(_filteredEntries), [this](const auto& entry) {
+            return entry.isDirectory == (_filterMode == DirectoriesOnly);
+        });
         break;
     }
 
