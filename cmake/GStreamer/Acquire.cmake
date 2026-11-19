@@ -178,8 +178,8 @@ function(qgc_gst_acquire_sdk)
 endfunction()
 
 # Expands <pkg> with pkgutil --expand-full into <expanded_dir> and fails configure unless that yields package payloads.
-# Used by the macOS (runtime+devel) and iOS SDK extractors; qgc_gst_acquire_sdk clears their staging directory, which
-# holds <expanded_dir>, before every attempt.
+# Used by the macOS SDK extractor for the runtime and devel packages; qgc_gst_acquire_sdk clears its staging directory,
+# which holds <expanded_dir>, before every attempt.
 function(_qgc_gst_pkgutil_expand_and_validate pkg expanded_dir label)
     message(STATUS "Expanding GStreamer ${label} package...")
     execute_process(COMMAND pkgutil --expand-full "${pkg}" "${expanded_dir}" RESULT_VARIABLE _pkgutil_rc)

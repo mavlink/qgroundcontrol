@@ -49,17 +49,10 @@ def test_windows_has_both_arches() -> None:
     ]
 
 
-@pytest.mark.parametrize(
-    ("version", "filename"),
-    [
-        ("1.28.7", "gstreamer-1.0-devel-1.28.7-ios-universal.pkg"),
-        ("1.28.8", "gstreamer-1.28.8-xcframework.tar.xz"),
-    ],
-)
-def test_ios_package_by_version(version: str, filename: str) -> None:
-    (art,) = artifacts_for("ios", version)
-    assert art.filename == filename
-    assert art.url == f"https://gstreamer.freedesktop.org/data/pkg/ios/{version}/{filename}"
+def test_ios_package() -> None:
+    (art,) = artifacts_for("ios", "1.28.8")
+    assert art.filename == "gstreamer-1.28.8-xcframework.tar.xz"
+    assert art.url == f"https://gstreamer.freedesktop.org/data/pkg/ios/1.28.8/{art.filename}"
 
 
 def test_unknown_platform_raises() -> None:

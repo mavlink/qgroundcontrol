@@ -40,16 +40,8 @@ def test_package_urls() -> None:
     assert release_index_url("ios") == "https://gstreamer.freedesktop.org/data/pkg/ios/"
 
 
-@pytest.mark.parametrize(
-    ("version", "filename"),
-    [
-        ("1.28.7", "gstreamer-1.0-devel-1.28.7-ios-universal.pkg"),
-        ("1.28.8", "gstreamer-1.28.8-xcframework.tar.xz"),
-        ("1.29.1", "gstreamer-1.29.1-xcframework.tar.xz"),
-    ],
-)
-def test_ios_package_format_depends_on_version(version: str, filename: str) -> None:
-    assert package_filename("ios", version) == filename
+def test_ios_package_is_the_xcframework_tarball() -> None:
+    assert package_filename("ios", "1.28.8") == "gstreamer-1.28.8-xcframework.tar.xz"
 
 
 @pytest.mark.parametrize(
@@ -70,9 +62,9 @@ def test_pinned_checksum(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(shutil.which("cmake") is None, reason="cmake is not installed")
-@pytest.mark.parametrize("version", ["1.28.7", "1.28.8"])
-def test_layout_matches_cmake(tmp_path: Path, version: str) -> None:
+def test_layout_matches_cmake(tmp_path: Path) -> None:
     """The configure-time download (cmake/GStreamer/Packages.cmake) must fetch the same files."""
+    version = "1.28.8"
     script = tmp_path / "urls.cmake"
     script.write_text(
         f'include("{REPO_ROOT}/cmake/GStreamer/Packages.cmake")\n'

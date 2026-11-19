@@ -10,16 +10,9 @@ qgc_test_assert_streq(
     "${_u_android}"
 )
 
-qgc_gst_get_package_url(ios 1.28.2 _u_ios)
+qgc_gst_get_package_url(ios 1.28.8 _u_ios)
 qgc_test_assert_streq(
-    "ios url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.2/gstreamer-1.0-devel-1.28.2-ios-universal.pkg"
-    "${_u_ios}"
-)
-
-qgc_gst_get_package_url(ios 1.28.8 _u_ios_xcfw)
-qgc_test_assert_streq(
-    "ios xcframework url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.8/gstreamer-1.28.8-xcframework.tar.xz"
-    "${_u_ios_xcfw}"
+    "ios url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.8/gstreamer-1.28.8-xcframework.tar.xz" "${_u_ios}"
 )
 
 qgc_gst_get_package_url(macos 1.28.2 _u_mac)
