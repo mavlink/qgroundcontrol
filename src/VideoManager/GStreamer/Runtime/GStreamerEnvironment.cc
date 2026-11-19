@@ -93,17 +93,6 @@ bool _setByUser(const char* name)
     return (managed == s_managedEnvValues.constEnd()) || (qEnvironmentVariable(name) != managed.value());
 }
 
-QString _firstExistingPath(const QStringList& paths)
-{
-    for (const QString& path : paths) {
-        if (QFileInfo::exists(path)) {
-            return path;
-        }
-    }
-
-    return {};
-}
-
 // An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
 // such an install after what stays put, the AppImage file or the translocated app's name.
 QString _stableInstallPath(const QString& installPath)
@@ -292,6 +281,17 @@ void _warnIfScannerMissing(const QString& platformLabel, const QString& scannerP
         qCWarning(GStreamerEnvLog) << "GStreamer:" << platformLabel
                                    << "gst-plugin-scanner is not executable:" << scannerPath;
     }
+}
+
+QString _firstExistingPath(const QStringList& paths)
+{
+    for (const QString& path : paths) {
+        if (QFileInfo::exists(path)) {
+            return path;
+        }
+    }
+
+    return {};
 }
 
 // Points GStreamer at the bundled runtime. Returns false, leaving the environment untouched, when no
