@@ -17,6 +17,8 @@ void WaitForParamResponseState::onWaitEntered()
     // A wait that ends without a PARAM_ERROR must not show the error of an earlier one
     _lastParamError = MAV_PARAM_ERROR_NO_ERROR;
     _lastParamErrorString.clear();
+
+    VehicleMessageWaitState::onWaitEntered();
 }
 
 void WaitForParamResponseState::handleMessage(const mavlink_message_t& message)

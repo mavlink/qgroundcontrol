@@ -693,6 +693,8 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
         QCOMPARE(paramSetSuccessSpy.count(), 0);
         QCOMPARE(paramSetFailureSpy.count(), 1);
     }
+    // The write is pending once, from its first attempt to its result, however often PARAM_SET is sent
+    QCOMPARE(pendingSpy.count(), 2);
     // The first signal is the change we made, so we start checking from there
     QVERIFY(QGC::fuzzyCompare(rawValueChangedSpy[0][0].toDouble(), newValueDouble, 0.00001));
     if (!expectSuccess) {

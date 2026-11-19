@@ -26,8 +26,6 @@ target_sources(
         States/FunctionState.h
         States/SendMavlinkCommandState.cc
         States/SendMavlinkCommandState.h
-        States/SendMavlinkMessageState.cc
-        States/SendMavlinkMessageState.h
         States/VehicleMessageWaitState.cc
         States/VehicleMessageWaitState.h
         States/WaitForMavlinkMessageState.cc

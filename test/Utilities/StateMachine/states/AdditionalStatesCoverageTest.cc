@@ -8,7 +8,6 @@
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "SendMavlinkCommandState.h"
-#include "SendMavlinkMessageState.h"
 #include "StateTestCommon.h"
 #include "Vehicle.h"
 #include "WaitForMavlinkMessageState.h"
@@ -23,11 +22,10 @@ void AdditionalStatesCoverageTest::_testStatesConstructWithoutVehicle()
     new SendMavlinkCommandState(&machine, MAV_CMD_COMPONENT_ARM_DISARM, 1.0);
     auto* deferredCommandState = new SendMavlinkCommandState(&machine);
     deferredCommandState->setup(MAV_CMD_DO_SET_MODE, 1.0, 4.0);
-    new SendMavlinkMessageState(&machine, [](quint32, uint8_t, mavlink_message_t*) {}, 3);
     new WaitForMavlinkMessageState(&machine, MAVLINK_MSG_ID_HEARTBEAT, 5000,
                                    [](const mavlink_message_t&) { return true; });
 
-    QCOMPARE(machine.findChildren<QGCState*>().size(), 4);
+    QCOMPARE(machine.findChildren<QGCState*>().size(), 3);
 }
 
 void AdditionalStatesCoverageTest::_testVehicleStatesFailWithoutVehicle_data()
@@ -37,9 +35,6 @@ void AdditionalStatesCoverageTest::_testVehicleStatesFailWithoutVehicle_data()
 
     QTest::newRow("SendMavlinkCommandState") << StateFactory(
         [](QState* parent) { return new SendMavlinkCommandState(parent, MAV_CMD_COMPONENT_ARM_DISARM); });
-    QTest::newRow("SendMavlinkMessageState") << StateFactory([](QState* parent) {
-        return new SendMavlinkMessageState(parent, [](quint32, uint8_t, mavlink_message_t*) {}, 0);
-    });
     QTest::newRow("WaitForMavlinkMessageState") << StateFactory(
         [](QState* parent) { return new WaitForMavlinkMessageState(parent, MAVLINK_MSG_ID_HEARTBEAT, 0); });
     QTest::newRow("WaitForParamResponseState")

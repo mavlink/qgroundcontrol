@@ -41,8 +41,8 @@ target_sources(
         states/QGCStateTest.h
         states/SendMavlinkCommandStateTest.cc
         states/SendMavlinkCommandStateTest.h
-        states/SendMavlinkMessageStateTest.cc
-        states/SendMavlinkMessageStateTest.h
+        states/VehicleMessageWaitStateTest.cc
+        states/VehicleMessageWaitStateTest.h
         states/AdditionalStatesCoverageTest.cc
         states/AdditionalStatesCoverageTest.h
 )
@@ -68,7 +68,7 @@ add_qgc_test(AsyncFunctionStateTest LABELS Unit Utilities)
 add_qgc_test(QGCStateTest LABELS Unit Utilities)
 add_qgc_test(RetryableRequestMessageStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(SendMavlinkCommandStateTest LABELS Integration Vehicle Utilities)
-add_qgc_test(SendMavlinkMessageStateTest LABELS Integration Vehicle Utilities)
+add_qgc_test(VehicleMessageWaitStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(WaitStateBaseTest LABELS Unit Utilities)
 add_qgc_test(MachineEventTransitionTest LABELS Unit Utilities)
 add_qgc_test(AdditionalStatesCoverageTest LABELS Unit Utilities)

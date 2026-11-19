@@ -20,7 +20,6 @@
 #include "RetryTransition.h"
 #include "RetryableRequestMessageState.h"
 #include "SendMavlinkCommandState.h"
-#include "SendMavlinkMessageState.h"
 #include "SignalSender.h"
 #include "VehicleMessageWaitState.h"
 #include "WaitForMavlinkMessageState.h"

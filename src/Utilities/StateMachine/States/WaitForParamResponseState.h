@@ -9,7 +9,7 @@
 ///
 /// On PARAM_VALUE matching predicate: calls waitComplete() (emits advance())
 /// On PARAM_ERROR matching predicate: stores error info, calls waitFailed() (emits error())
-/// On timeout: timedOut() fires (for retry path)
+/// On timeout: the request is sent again if the state has one with retries left, timedOut() fires otherwise
 ///
 class WaitForParamResponseState : public VehicleMessageWaitState
 {
