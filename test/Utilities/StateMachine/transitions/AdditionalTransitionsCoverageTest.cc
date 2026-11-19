@@ -257,4 +257,43 @@ void AdditionalTransitionsCoverageTest::_testRetryTransitionCountStartsAgainOnEn
     QCOMPARE(retryActionCalls, 2);
 }
 
+void AdditionalTransitionsCoverageTest::_testRetryTransitionKeepsSignalWhileRetrying_data()
+{
+    QTest::addColumn<bool>("otherOnParentState");
+
+    QTest::newRow("another transition of the state") << false;
+    QTest::newRow("a transition of the parent state") << true;
+}
+
+void AdditionalTransitionsCoverageTest::_testRetryTransitionKeepsSignalWhileRetrying()
+{
+    QFETCH(bool, otherOnParentState);
+
+    ignoreTimeoutWarnings();
+    QGCStateMachine machine(QStringLiteral("RetrySignalTest"), nullptr);
+    int retries = 0;
+    bool otherReached = false;
+
+    auto* parentState = new QState(&machine);
+    // Never completes, so every wait ends in a timeout
+    auto* waitState = new AsyncFunctionState(QStringLiteral("Wait"), parentState, [](AsyncFunctionState*) {}, 20);
+    parentState->setInitialState(waitState);
+    auto* otherState = new FunctionState(QStringLiteral("Other"), &machine, [&otherReached]() { otherReached = true; });
+    auto* finalState = machine.addFinalState();
+
+    machine.addRetryTransition(waitState, &WaitStateBase::timedOut, finalState, [&retries]() { retries++; }, 2);
+    // For the same signal and after the retry transition: Qt asks it only if the retry transition is not taken
+    QState* const otherSource = otherOnParentState ? parentState : waitState;
+    otherSource->addTransition(waitState, &WaitStateBase::timedOut, otherState);
+    otherState->addTransition(otherState, &QGCState::advance, finalState);
+    machine.setInitialState(parentState);
+
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression("timeout after 2 retries, advancing"));
+    QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
+    QCOMPARE(retries, 2);
+    QVERIFY(!otherReached);
+}
+
 UT_REGISTER_TEST(AdditionalTransitionsCoverageTest, TestLabel::Unit, TestLabel::Utilities)
