@@ -57,13 +57,14 @@ qgc_test_assert_streq("s3 macos_devel" "${_s3_base}/macos/gstreamer-1.0-devel-1.
 
 qgc_test_pass("get_s3_mirror_url routing")
 
-# Records each package download's URLS and EXPECTED_HASH instead of downloading.
+# Records each package download's URLS, EXPECTED_HASH and TIMEOUT instead of downloading.
 function(qgc_resilient_download)
     cmake_parse_arguments(
         PARSE_ARGV 0 ARG "" "FILENAME;DESTINATION_DIR;RESULT_VAR;TIMEOUT;EXPECTED_HASH;LOG_TAG;FAILURE_HINT" "URLS"
     )
     set_property(GLOBAL PROPERTY _qgc_test_urls "${ARG_URLS}")
     set_property(GLOBAL PROPERTY _qgc_test_hash "${ARG_EXPECTED_HASH}")
+    set_property(GLOBAL PROPERTY _qgc_test_timeout "${ARG_TIMEOUT}")
     set(${ARG_RESULT_VAR}
         "${ARG_DESTINATION_DIR}/${ARG_FILENAME}"
         PARENT_SCOPE
@@ -90,3 +91,12 @@ get_property(_verified_hash GLOBAL PROPERTY _qgc_test_hash)
 qgc_test_assert_streq("upstream first" "${_upstream};${_mirror}" "${_urls}")
 qgc_test_assert_streq("verified against the pin" "SHA256=${_pin}" "${_verified_hash}")
 qgc_test_pass("package comes from upstream, verified against its pin")
+
+# QGC_DOWNLOAD_TIMEOUT|expected wall-clock cap: a slow link can raise the SDK's cap but nothing lowers it.
+foreach(_case IN ITEMS "|1200" "300|1200" "7200|7200")
+    qgc_test_split("${_case}" QGC_DOWNLOAD_TIMEOUT _expected_timeout)
+    _qgc_gst_download_archive(android 9.1.1 package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}")
+    get_property(_timeout GLOBAL PROPERTY _qgc_test_timeout)
+    qgc_test_assert_streq("cap with QGC_DOWNLOAD_TIMEOUT=${QGC_DOWNLOAD_TIMEOUT}" "${_expected_timeout}" "${_timeout}")
+endforeach()
+qgc_test_pass("QGC_DOWNLOAD_TIMEOUT raises the download's wall-clock cap")

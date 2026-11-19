@@ -75,14 +75,18 @@ endfunction()
 # _qgc_gst_download_archive(<platform> <version> <filename> <dir>)
 # Downloads the <version> SDK package for <platform> (upstream, else the QGC S3 mirror) to <dir>/<filename>, reusing a
 # cached copy that matches its pinned checksum. The mirror's copy is held to the same checksum. A failed download fails
-# configure.
+# configure. Each attempt may take 1200 s, or QGC_DOWNLOAD_TIMEOUT when that is longer.
 function(_qgc_gst_download_archive platform version filename dir)
     qgc_gst_get_package_url("${platform}" "${version}" _url)
     qgc_gst_get_s3_mirror_url("${platform}" "${version}" _s3_url)
     qgc_gst_get_pinned_checksum("${platform}" "${version}" _hash)
 
-    # The SDKs are large (the Android universal tarball is ~1 GB), so the wall-clock cap is generous and the
-    # inactivity timeout catches stalls.
+    # The SDKs are large (the iOS tarball is 1.2 GB) and a failed attempt starts over, so the wall-clock cap is generous
+    # and a slow link can raise it; the inactivity timeout catches stalls.
+    set(_timeout 1200)
+    if(QGC_DOWNLOAD_TIMEOUT GREATER _timeout)
+        set(_timeout "${QGC_DOWNLOAD_TIMEOUT}")
+    endif()
     qgc_resilient_download(
         FILENAME
         "${filename}"
@@ -94,7 +98,7 @@ function(_qgc_gst_download_archive platform version filename dir)
         ${_url}
         ${_s3_url}
         TIMEOUT
-        1200
+        ${_timeout}
         LOG_TAG
         GStreamer
         FAILURE_HINT
