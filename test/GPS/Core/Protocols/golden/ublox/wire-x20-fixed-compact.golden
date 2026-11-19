@@ -23,6 +23,8 @@ configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
   write "UBX-CFG-VALSET" 17 acknowledged optional
     b562068a0900000100005100f61000f1c8
   write "UBX-CFG-VALSET" 17 acknowledged optional
+    b562068a0900000100000400311001e0f9
+  write "UBX-CFG-VALSET" 17 acknowledged optional
     b562068a0900000100000100321001deed
   write "UBX-CFG-VALSET" 82 acknowledged required
     b562068a4a000001000007009120010900912001340091200136009120018e00

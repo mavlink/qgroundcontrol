@@ -1469,6 +1469,36 @@ void receiversWithoutBase(GPSTestClock& clock)
     }
 }
 
+/// A receiver with GPS L5 is told to track the signal, which a NEO-F9P ships with disabled, and to take the L1 health
+/// flag for it. One without GPS L5 is told neither, and one that refuses the signal is configured all the same.
+void gpsL5Signal(GPSTestClock& clock)
+{
+    const struct
+    {
+        const char* module;
+        bool gpsL5;
+        bool signalRefused;
+    } receivers[] = {
+        {"ZED-F9P FWVER=HPGL1L5", true, false},
+        {"ZED-F9P FWVER=HPGL1L5", true, true},
+        {"ZED-F9P", false, false},
+    };
+
+    for (const auto& row : receivers) {
+        Fixture f(clock);
+        auto& model = f.receiver.model;
+        model.module = row.module;
+        if (row.signalRefused) {
+            model.unsupportedKeys = {Cfg::SIGNAL_GPS_L5_ENA.id};
+        }
+        QVERIFY2(f.configure(), row.module);
+        QCOMPARE(model.currentSettings.contains(Cfg::SIGNAL_GPS_L5_ENA.id), row.gpsL5 && !row.signalRefused);
+        QCOMPARE(model.currentSettings.contains(Cfg::SIGNAL_HEALTH_L5.id), row.gpsL5);
+        QCOMPARE(f.log.warnings(),
+                 row.signalRefused ? QStringList{"GPS L5 signal not supported by this receiver"} : QStringList{});
+    }
+}
+
 // Recorded and synthetic fixtures with independently decoded expectations.
 
 /// The u-blox family without a link, decoding navigation output.
@@ -1738,6 +1768,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"reconfigure-forgets-identity", reconfigureForgetsIdentity},
     {"survey-stop-poll-failures", surveyStopPollFailures},
     {"receivers-without-base", receiversWithoutBase},
+    {"gps-l5-signal", gpsL5Signal},
     {"fixture-sequences", independentSequences},
     {"fixture-integrity", independentIntegrity},
     {"fixture-navigation-epochs", navigationEpochs},
