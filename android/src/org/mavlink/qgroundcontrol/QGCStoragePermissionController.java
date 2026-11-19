@@ -234,6 +234,10 @@ final class QGCStoragePermissionController {
     }
 
     private void _launchAllFilesAccessSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+
         // Note: the settings screen opens in the Settings app's own task, so startActivityForResult
         // would deliver an immediate RESULT_CANCELED. The outcome is instead evaluated in onResume().
         try {

@@ -846,6 +846,78 @@ void GPSReceiverTest::_serialPortEntries()
     QVERIFY(!serial.manager.isPortReserved(QStringLiteral("/dev/ttyACM0")));
 }
 
+void GPSReceiverTest::_serialPortEntryValue_data()
+{
+    QTest::addColumn<QString>("stableName");
+    QTest::addColumn<bool>("twin");
+    QTest::addColumn<QString>("saved");
+    QTest::addColumn<QString>("value");
+    const QString location = QStringLiteral("/test/usb/001/004");
+    const QString stableName = QStringLiteral("usb:1546:01a9:R1");
+    QTest::newRow("no-stable-name") << QString() << false << QString() << location;
+    QTest::newRow("stable-name") << stableName << false << QString() << stableName;
+    // Receivers of a kind that have no serial number share a stable name, which then finds neither.
+    QTest::newRow("shared-stable-name") << stableName << true << QString() << location;
+    // An older build saved the system location, as does a choice made before the user let QGC open the device.
+    QTest::newRow("saved-by-system-location") << stableName << false << location << location;
+}
+
+void GPSReceiverTest::_serialPortEntryValue()
+{
+    QFETCH(QString, stableName);
+    QFETCH(bool, twin);
+    QFETCH(QString, saved);
+    QFETCH(QString, value);
+    SerialPortManager::Port port = usbPort(QStringLiteral("/test/usb/001/004"), stableName);
+    port.description = QStringLiteral("u-blox GNSS receiver");
+    QList<SerialPortManager::Port> ports{port};
+    if (twin) {
+        ports.append(usbPort(QStringLiteral("/test/usb/001/005"), stableName));
+    }
+    TestSerialPorts serial(ports);
+    GPSReceiver receiver(nullptr, nullptr, {.serialPorts = &serial.manager});
+    serial.manager.rescan();
+    // The entry follows the saved device without waiting for the next scan.
+    receiver.setConfiguration(serialConfiguration(kPassiveManufacturer, saved, 115200));
+
+    // The picker stores the name that finds the port again, or the saved one for the port that it names, and shows the
+    // device's name and system location whichever it stores.
+    const GPSSerialPortEntry entry = receiver.serialPortEntries().value(0);
+    QCOMPARE(entry.value, value);
+    QCOMPARE(entry.label, QStringLiteral("u-blox GNSS receiver – /test/usb/001/004"));
+}
+
+void GPSReceiverTest::_stableNamedPortsInUse()
+{
+    // The receiver and a radio that a vehicle link has open, each saved by its stable name.
+    const QString receiverName = QStringLiteral("usb:1546:01a9:R1");
+    const QString radioName = QStringLiteral("usb:0403:6015:L1");
+    SerialPortManager::Port receiverPort = usbPort(QStringLiteral("/test/usb/001/004"), receiverName);
+    receiverPort.description = QStringLiteral("u-blox GNSS receiver");
+    SerialPortManager::Port radioPort = usbPort(QStringLiteral("/test/usb/001/005"), radioName);
+    radioPort.description = QStringLiteral("FT231X USB UART");
+    TestSerialPorts serial({receiverPort, radioPort});
+    ScriptedGPSReceiver harness(nullptr, {.serialPorts = &serial.manager});
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = serialConfiguration(kPassiveManufacturer, receiverName, 115200);
+    configuration.autoConnect = false;
+    receiver.setConfiguration(configuration);
+    serial.manager.rescan();
+    auto vehicleLink = serial.manager.reservePort(radioName);
+    QVERIFY(vehicleLink);
+    QVERIFY(receiver.connectReceiver());
+    QVERIFY(serial.manager.isPortReserved(receiverPort.systemLocation));
+    serial.manager.rescan();
+
+    // The link's port is marked and the receiver's own is not, under the names the picker shows them by.
+    QStringList labels;
+    for (const GPSSerialPortEntry& entry : receiver.serialPortEntries()) {
+        labels.append(entry.label);
+    }
+    QCOMPARE(labels, (QStringList{QStringLiteral("u-blox GNSS receiver – /test/usb/001/004"),
+                                  QStringLiteral("FT231X USB UART – /test/usb/001/005 (in use)")}));
+}
+
 void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
 {
     TestSerialPorts serial;

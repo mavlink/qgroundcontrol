@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
@@ -166,6 +167,9 @@ public:
     static QStringList serialBaudRates();
     QStringList serialPortStrings();
     QStringList serialPorts();
+    /// Whether the serial port of this name can be set to hardware flow control. A port that is not listed is
+    /// taken for one that can.
+    Q_INVOKABLE bool serialPortHasFlowControl(const QString& portName) const;
 
 signals:
     void commPortStringsChanged();
@@ -173,6 +177,19 @@ signals:
 
 private:
     void _updateSerialPorts();
+    /// If the configuration's serial port is in use, a message is displayed to the user and true is returned.
+    bool _serialPortInUseMsg(const LinkConfiguration& config);
+    /// Has a saved serial configuration take the persistent name of its port, and returns whether that gave it
+    /// another port name. On Android that name outlasts a replug only once the user has let QGC open the
+    /// device, which may be after the port was chosen for the configuration.
+    bool _usePersistentPortName(LinkConfiguration* config);
+    /// Asks the user for the permission that the configuration's serial port still needs, which is that of its
+    /// USB device on Android and none elsewhere, and returns whether it did. The link is then connected once the
+    /// user has granted it, not now.
+    bool _awaitUsbPermission(const SharedLinkConfigurationPtr& config);
+    void _connectLinkAwaitingUsbPermission();
+    std::weak_ptr<LinkConfiguration> _configAwaitingUsbPermission;
+    QDeadlineTimer _usbPermissionDeadline;
     std::unique_ptr<SerialAutoConnect> _serialAutoConnect;
     QStringList _commPortList;
     QStringList _commPortDisplayList;

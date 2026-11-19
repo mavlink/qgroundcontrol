@@ -51,7 +51,7 @@ struct GPSSerialPortEntry
     Q_PROPERTY(QString label MEMBER label FINAL)
 
 public:
-    /// The system location, which the device setting stores.
+    /// The name the device setting stores for the port.
     QString value;
     /// What the picker shows.
     QString label;
@@ -127,8 +127,10 @@ public:
 
     const Configuration& configuration() const { return _configuration; }
 
-    /// The serial device picker's entries from the last scan: "value" is the system location, "label" the device's
-    /// description and path, marked when another QGroundControl connection, such as a vehicle link, holds the port.
+    /// The serial device picker's entries from the last scan. "value" is the name to save the port by: one that
+    /// survives replugging where the port has one, else its system location. The port that the saved device names
+    /// goes by the saved name instead, so that the picker finds its selection. "label" is the device's description
+    /// and system location, marked when another QGroundControl connection, such as a vehicle link, holds the port.
     QList<GPSSerialPortEntry> serialPortEntries() const { return _serialPortEntries; }
 
     /// The application's serial rates that a receiver accepts as an explicit rate; empty without serial links.
@@ -136,8 +138,9 @@ public:
 
     /// Latest receiver solution that passes the consumer's gates; empty without a fresh fix.
     std::optional<GPSObservation> acceptedPositionObservation(GPSObservation::PositionUse use) const;
-    /// Connects the configured receiver, spending the persistent-change permission on this attempt. Lifecycle
-    /// observers may stop or replace this receiver, and delete it only with deleteLater().
+    /// Connects the configured receiver at the user's request, spending the persistent-change permission on this
+    /// attempt. A serial device that QGroundControl may not open yet is asked for first. Lifecycle observers may
+    /// stop or replace this receiver, and delete it only with deleteLater().
     Q_INVOKABLE bool connectReceiver();
     /// Disconnects and pauses automatic connection until the user connects again.
     Q_INVOKABLE void disconnectReceiver();
@@ -214,6 +217,9 @@ signals:
     void configurationChanged();
     void persistentChangesAllowedChanged();
     void serialPortEntriesChanged();
+    /// The receiver connected on the saved serial device, whose port has @a device as the name to save it by. The
+    /// settings store it, so that the receiver is found again once it has been replugged.
+    void serialDeviceRenamed(const QString& device);
     void summaryLabelChanged();
     void statusTextChanged();
 
@@ -261,11 +267,20 @@ private:
     bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges,
                        GPSSerialClaim claim) override;
     bool serialPortAvailable(const QString& device) const override;
+    QString serialPortLabel(const QString& device) const override;
+    bool serialPortAllowed(const QString& device) const override;
     QStringList rtkReceiverPorts() const override;
     GPSSerialClaim claimSerialPort(const QString& device) override;
-    /// Ends a serial session whose device the scan no longer lists, then updates the picker entries.
+    /// Ends a serial session whose device the scan no longer lists, then updates the picker entries and the name
+    /// that the device is saved by.
     void _onSerialPortsEnumerated(const QStringList& devices);
     void _updateSerialPortEntries();
+    /// The system location of the listed port that @a device names, which a session opens, claims and shows; the
+    /// name itself while no port is listed by it.
+    QString _serialLocation(const QString& device) const;
+    /// Asks the settings to save the port by its persistent name, if the receiver is connected on the saved device
+    /// and that names the port by another.
+    void _usePersistentSerialDevice();
 #endif
 
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
@@ -316,8 +331,8 @@ private:
     QList<GPSSerialPortEntry> _serialPortEntries;
 #ifndef QGC_NO_SERIAL_LINK
     const QPointer<SerialPortManager> _serialPorts;
-    /// The claims this receiver made, which never mark their port as in use, even while a retired session's worker
-    /// still holds one.
+    /// The claims this receiver made, by system location, which never mark their port as in use, even while a
+    /// retired session's worker still holds one.
     QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _serialClaims;
     std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> _serialTransportFactory;
 #endif

@@ -44,6 +44,9 @@
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
+#ifdef Q_OS_ANDROID
+#include "AndroidSerialApp.h"
+#endif
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
@@ -266,6 +269,10 @@ void QGCApplication::init()
         const bool videoInitialized = _initVideo() && VideoBackend::instance().selfTest();
         const bool qmlRootLoaded = _initQmlRootWindow();
         _bootTestPassed = videoInitialized && qmlRootLoaded;
+#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+        // Java and C++ are bound to each other only as the app runs, so the boot test also proves that binding.
+        _bootTestPassed = AndroidSerial::selfTest() && _bootTestPassed;
+#endif
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }

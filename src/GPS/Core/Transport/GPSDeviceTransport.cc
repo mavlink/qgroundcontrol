@@ -8,11 +8,7 @@
 #include <QtCore/QTimer>
 #include <QtNetwork/QAbstractSocket>
 #ifndef QGC_NO_SERIAL_LINK
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
 #include <QtSerialPort/QSerialPort>
-#endif
 #endif
 
 GPSReadResult GPSDeviceTransport::read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout)

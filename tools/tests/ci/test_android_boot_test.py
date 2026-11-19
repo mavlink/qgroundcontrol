@@ -327,6 +327,15 @@ def test_boot_test_report_keeps_the_last_failure_and_self_test_lines() -> None:
     assert mod.boot_test_report("QGroundControl launch\nStarting application event loop") == []
 
 
+def test_boot_test_report_quotes_the_serial_self_test() -> None:
+    finding = (
+        "Critical: Java echoed 3 of 5 bytes - Android.AndroidSerial.SelfTest - (selfTest:1040)"
+    )
+    failed = "Critical: Simple boot test failed - Main - (main:48)"
+    logcat = "\n".join(["QGroundControl launch", finding, failed])
+    assert mod.boot_test_report(logcat) == [finding, failed]
+
+
 def test_failure_annotation_quotes_the_boot_test_report(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

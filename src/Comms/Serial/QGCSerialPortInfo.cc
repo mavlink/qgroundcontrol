@@ -98,10 +98,9 @@ bool QGCSerialPortInfo::_loadJsonData()
     }
 
     static const QList<JsonParsing::KeyValidateInfo> fallbackKeyInfoList = {
-        { "comment", QJsonValue::String, false },   // Developer notes only, never parsed
-        { _jsonRegExpKey, QJsonValue::String, true },
-        { _jsonBoardClassKey, QJsonValue::String, true },
-        { _jsonAndroidOnlyKey, QJsonValue::Bool, false },
+        {"comment", QJsonValue::String, false},  // Developer notes only, never parsed
+        {_jsonRegExpKey, QJsonValue::String, true},     {_jsonBoardClassKey, QJsonValue::String, true},
+        {_jsonAndroidOnlyKey, QJsonValue::Bool, false}, {_jsonNameKey, QJsonValue::String, false},
     };
     const QJsonArray rgBoardDescriptionFallback = json[_jsonBoardDescriptionFallbackKey].toArray();
     for (const QJsonValue &jsonValue : rgBoardDescriptionFallback) {
@@ -124,10 +123,8 @@ bool QGCSerialPortInfo::_loadJsonData()
             return false;
         }
         const BoardRegExpFallback_t boardFallback = {
-            regExp,
-            _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
-            fallbackObject[_jsonAndroidOnlyKey].toBool(false)
-        };
+            regExp, _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
+            fallbackObject[_jsonAndroidOnlyKey].toBool(false), fallbackObject[_jsonNameKey].toString()};
         if (boardFallback.boardType == BoardTypeUnknown) {
             qCWarning(QGCSerialPortInfoLog) << "Bad board class" << fallbackObject[_jsonBoardClassKey].toString();
             return false;
@@ -157,10 +154,8 @@ bool QGCSerialPortInfo::_loadJsonData()
             return false;
         }
         const BoardRegExpFallback_t boardFallback = {
-            regExp,
-            _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
-            fallbackObject[_jsonAndroidOnlyKey].toBool(false)
-        };
+            regExp, _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
+            fallbackObject[_jsonAndroidOnlyKey].toBool(false), fallbackObject[_jsonNameKey].toString()};
         if (boardFallback.boardType == BoardTypeUnknown) {
             qCWarning(QGCSerialPortInfoLog) << "Bad board class" << fallbackObject[_jsonBoardClassKey].toString();
             return false;
@@ -220,7 +215,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
             }
 #endif
             boardType = boardFallback.boardType;
-            name = _boardTypeToString(boardType);
+            name = _fallbackBoardName(boardFallback);
             return true;
         }
     }
@@ -233,12 +228,17 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
             }
 #endif
             boardType = boardFallback.boardType;
-            name = _boardTypeToString(boardType);
+            name = _fallbackBoardName(boardFallback);
             return true;
         }
     }
 
     return false;
+}
+
+QString QGCSerialPortInfo::_fallbackBoardName(const BoardRegExpFallback_t& boardFallback)
+{
+    return boardFallback.name.isEmpty() ? _boardTypeToString(boardFallback.boardType) : boardFallback.name;
 }
 
 QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)

@@ -16,6 +16,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 
+import org.mavlink.qgroundcontrol.serial.QGCUsbSerialManager;
 import org.qtproject.qt.android.bindings.QtActivity;
 
 public class QGCActivity extends QtActivity {
@@ -35,12 +36,41 @@ public class QGCActivity extends QtActivity {
         m_instance = this;
 
         QGCLogger.initialize(getApplicationContext());
+        // The native library, loaded by super.onCreate(), has registered the two native methods by now.
+        QGCLogger.setSink(new QGCLogger.Sink() {
+            @Override
+            public void debug(final String message) {
+                qgcLogDebug(message);
+            }
+
+            @Override
+            public void warning(final String message) {
+                qgcLogWarning(message);
+            }
+        });
         nativeInit();
         setupMulticastLock();
 
-        QGCUsbSerialManager.initialize(this);
+        try {
+            QGCUsbSerialManager.initialize(this);
+        } catch (final RuntimeException e) {
+            // The sync with the attached devices that this begins with can fail in the serial library, which must
+            // not end the app as it starts. The next USB event syncs again.
+            QGCLogger.e(TAG, "Failed to start USB serial support", e);
+        }
         QGCSDLManager.initialize(this);
         m_storagePermissionController = new QGCStoragePermissionController(this);
+    }
+
+    /** Whether QGC's activity exists, and with it the C++ side that the Java code calls into. */
+    static boolean isRunning() {
+        return m_instance != null;
+    }
+
+    @Override
+    public void onWindowFocusChanged(final boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        QGCUsbSerialManager.onWindowFocusChanged(hasFocus);
     }
 
     @Override
@@ -74,13 +104,15 @@ public class QGCActivity extends QtActivity {
             QGCSDLManager.cleanup();
             stopService(new Intent(this, QGCForegroundService.class));
             releaseMulticastLock();
-            QGCUsbSerialManager.cleanup(this);
+            QGCUsbSerialManager.cleanup();
         } catch (final Exception e) {
             QGCLogger.e(TAG, "Exception onDestroy()", e);
         }
 
         if (m_instance == this) {
             m_instance = null;
+            // super.onDestroy() ends the C++ side, which must be asked to log nothing from then on.
+            QGCLogger.setSink(null);
         }
         super.onDestroy();
     }

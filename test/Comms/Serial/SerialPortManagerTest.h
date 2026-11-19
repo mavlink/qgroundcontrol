@@ -9,7 +9,8 @@ class SerialPortManagerTest : public UnitTest
 private slots:
     void _routingExclusionsDoNotOccupyPorts();
     void _exclusiveReservations();
+    void _stableNamesFindPortsAgain();
+    void _claimByAStableNameHoldsOnceTheNameIsShared();
     void _displayMetadataUsesCachedInventory();
-    void _singlePortInventory();
     void _inventoryNotificationsAndBaudRates();
 };

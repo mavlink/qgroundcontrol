@@ -1,5 +1,7 @@
 #include "SerialPortManagerTest.h"
 
+#include <optional>
+
 #include <QtTest/QSignalSpy>
 
 #include "SerialLink.h"
@@ -23,48 +25,130 @@ void SerialPortManagerTest::_exclusiveReservations()
     QCOMPARE(inventory[1].description, mavlink.description);
     QCOMPARE(ports.serialPorts(), QStringList({gps.systemLocation, mavlink.systemLocation}));
     QVERIFY(!ports.reservePort(QString()));
-    auto first = ports.reservePort(QStringLiteral(" /test/gps "));
+    auto first = ports.reservePort(QStringLiteral(" /test/gps "), QStringLiteral("the receiver"));
     QVERIFY(first);
     QCOMPARE(first->systemLocation, QStringLiteral("/test/gps"));
+    QCOMPARE(ports.reservationOwner(QStringLiteral("/test/gps ")), QStringLiteral("the receiver"));
     QVERIFY(!ports.reservePort(QStringLiteral("/test/gps")));
     auto copy = first;
     first.reset();
     QVERIFY(ports.isPortReserved(QStringLiteral("/test/gps")));
     auto other = ports.reservePort(QStringLiteral("/test/mavlink"));
     QVERIFY(other);
+    QVERIFY(ports.reservationOwner(QStringLiteral("/test/mavlink")).isEmpty());
     copy.reset();
     QVERIFY(ports.canReservePort(QStringLiteral("/test/gps")));
+    QVERIFY(ports.reservationOwner(QStringLiteral("/test/gps")).isEmpty());
     other.reset();
-    QVERIFY(!ports.anyPortReserved());
+    QVERIFY(!ports.isPortReserved(QStringLiteral("/test/mavlink")));
 }
 
-void SerialPortManagerTest::_singlePortInventory()
+void SerialPortManagerTest::_stableNamesFindPortsAgain()
 {
-    int scans = 0;
-    QList<SerialPortManager::Port> inventory{
-        {QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeUnknown, QString()}};
-    SerialPortManager ports(nullptr, [&]() {
-        ++scans;
-        return inventory;
-    });
-    ports.setSinglePortOnly(true);
+    SerialPortManager::Port radio{QStringLiteral("/test/usb/001/004"), QStringLiteral("001/004"),
+                                  QGCSerialPortInfo::BoardTypeUnknown, QString()};
+    radio.stableName = QStringLiteral("usb:0403:6015:R1");
+    radio.displayName = QStringLiteral("Radio (001/004)");
+    // Adapters without a serial number share a stable name.
+    SerialPortManager::Port twin{QStringLiteral("/test/usb/001/005"), QStringLiteral("001/005"),
+                                 QGCSerialPortInfo::BoardTypeUnknown, QString()};
+    twin.stableName = QStringLiteral("usb:1a86:7523:");
+    SerialPortManager::Port otherTwin = twin;
+    otherTwin.systemLocation = QStringLiteral("/test/usb/001/006");
+    otherTwin.portName = QStringLiteral("001/006");
+    QList<SerialPortManager::Port> inventory{radio, twin, otherTwin};
+    SerialPortManager ports(nullptr, [&] { return inventory; });
     QSignalSpy enumerated(&ports, &SerialPortManager::portsEnumerated);
-    QCOMPARE(ports.availablePorts().size(), 1);
-    QCOMPARE(enumerated.size(), 1);
-    auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
-    QVERIFY(reservation);
-    QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
-    QVERIFY(!ports.reservePort(QStringLiteral("/test/mavlink")));
-    inventory.clear();
-    QCOMPARE(ports.availablePorts().size(), 1);
-    QCOMPARE(scans, 1);
-    QCOMPARE(enumerated.size(), 1);
-    reservation.reset();
-    QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
-    QCOMPARE(scans, 2);
-    QCOMPARE(enumerated.size(), 2);
-    QVERIFY(enumerated.last().first().toStringList().isEmpty());
-    QVERIFY(ports.canReservePort(QStringLiteral("/test/mavlink")));
+    (void) ports.availablePorts();
+    const QStringList identities = enumerated.first().first().toStringList();
+    QVERIFY(identities.contains(radio.stableName));
+    QVERIFY(identities.contains(twin.stableName));
+    QCOMPARE(ports.displayName(radio.stableName), radio.displayName);
+
+    QCOMPARE(ports.persistentName(radio.systemLocation), radio.stableName);
+    QCOMPARE(ports.persistentName(radio.portName), radio.stableName);
+    QCOMPARE(ports.persistentName(twin.systemLocation), twin.systemLocation);
+    QCOMPARE(ports.persistentName(twin.stableName), twin.stableName);
+    QCOMPARE(ports.persistentName(QStringLiteral("/test/absent")), QStringLiteral("/test/absent"));
+
+    // A port is found by any of its names.
+    const auto locationOf = [&ports](const QString& name) {
+        const std::optional<SerialPortManager::Port> port = ports.port(name);
+        return port ? port->systemLocation : QString();
+    };
+    for (const QString& name : {radio.stableName, radio.portName, QStringLiteral(" /test/usb/001/004 ")}) {
+        QCOMPARE(locationOf(name), radio.systemLocation);
+    }
+    QVERIFY(!ports.port(QStringLiteral("/test/absent")));
+
+    auto claim = ports.reservePort(radio.stableName, QStringLiteral("the radio link"));
+    QVERIFY(claim);
+    QVERIFY(ports.isSamePort(radio.stableName, radio.systemLocation));
+    QVERIFY(!ports.isSamePort(radio.stableName, twin.systemLocation));
+    QVERIFY(ports.isPortReserved(radio.systemLocation));
+    QVERIFY(!ports.reservePort(radio.systemLocation));
+    QVERIFY(!ports.canAutoConnectPort(radio.systemLocation));
+    QCOMPARE(ports.reservationOwner(radio.systemLocation), QStringLiteral("the radio link"));
+    QVERIFY(ports.canReservePort(twin.systemLocation));
+
+    // A stable name that two listed ports share stands for neither, so that it never finds the wrong one.
+    QVERIFY(!ports.isSamePort(twin.stableName, twin.systemLocation));
+    QVERIFY(!ports.isSamePort(twin.stableName, otherTwin.systemLocation));
+    QVERIFY(ports.displayName(twin.stableName).isEmpty());
+    QVERIFY(!ports.port(twin.stableName));
+    QCOMPARE(locationOf(twin.systemLocation), twin.systemLocation);
+    auto twinClaim = ports.reservePort(twin.systemLocation);
+    QVERIFY(twinClaim);
+    QVERIFY(!ports.isPortReserved(twin.stableName));
+    twinClaim.reset();
+
+    // Replugged, the radio has another system location, and the claim by its stable name is on that.
+    const QString replugged = QStringLiteral("/test/usb/001/009");
+    inventory[0].systemLocation = replugged;
+    inventory[0].portName = QStringLiteral("001/009");
+    ports.rescan();
+    QCOMPARE(locationOf(radio.stableName), replugged);
+    QVERIFY(ports.isPortReserved(replugged));
+    QVERIFY(!ports.isPortReserved(radio.systemLocation));
+    claim.reset();
+    QVERIFY(ports.canReservePort(replugged));
+}
+
+void SerialPortManagerTest::_claimByAStableNameHoldsOnceTheNameIsShared()
+{
+    SerialPortManager::Port receiver{QStringLiteral("/test/usb/001/004"), QStringLiteral("001/004"),
+                                     QGCSerialPortInfo::BoardTypeUnknown, QString()};
+    receiver.stableName = QStringLiteral("usb:1546:01a9:");
+    QList<SerialPortManager::Port> inventory{receiver};
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    (void) ports.availablePorts();
+    auto claim = ports.reservePort(receiver.stableName, QStringLiteral("the link"));
+    QVERIFY(claim);
+
+    // The claim follows the device to where it is replugged.
+    const QString replugged = QStringLiteral("/test/usb/001/007");
+    inventory[0].systemLocation = replugged;
+    inventory[0].portName = QStringLiteral("001/007");
+    ports.rescan();
+    QVERIFY(ports.isPortReserved(replugged));
+
+    // A second device of the kind is attached. Their name stands for neither now, and the port that is open
+    // stays claimed, so that nothing else tries to open it.
+    SerialPortManager::Port twin = inventory[0];
+    twin.systemLocation = QStringLiteral("/test/usb/001/008");
+    twin.portName = QStringLiteral("001/008");
+    inventory.append(twin);
+    ports.rescan();
+    QVERIFY(!ports.port(receiver.stableName));
+    QVERIFY(ports.isPortReserved(replugged));
+    QCOMPARE(ports.reservationOwner(replugged), QStringLiteral("the link"));
+    QVERIFY(!ports.canAutoConnectPort(replugged));
+    QVERIFY(!ports.reservePort(replugged));
+    QVERIFY(ports.canReservePort(twin.systemLocation));
+    QVERIFY(!ports.isPortReserved(receiver.systemLocation));
+
+    claim.reset();
+    QVERIFY(ports.canReservePort(replugged));
 }
 
 UT_REGISTER_TEST(SerialPortManagerTest, TestLabel::Unit)
@@ -98,14 +182,13 @@ void SerialPortManagerTest::_inventoryNotificationsAndBaudRates()
 void SerialPortManagerTest::_routingExclusionsDoNotOccupyPorts()
 {
     SerialPortManager ports;
-    ports.setSinglePortOnly(true);
     const QString port = QStringLiteral("/test/nmea");
     auto exclusion = ports.excludeFromAutoConnect(port);
     QVERIFY(exclusion);
     QVERIFY(ports.isAutoConnectExcluded(QStringLiteral(" /test/nmea ")));
     QVERIFY(!ports.canAutoConnectPort(port));
     QVERIFY(ports.canReservePort(port));
-    QVERIFY(!ports.anyPortReserved());
+    QVERIFY(!ports.isPortReserved(port));
     QVERIFY(ports.canAutoConnectPort(QStringLiteral("/test/mavlink")));
     auto secondOwner = ports.excludeFromAutoConnect(port);
     exclusion.reset();
@@ -114,7 +197,7 @@ void SerialPortManagerTest::_routingExclusionsDoNotOccupyPorts()
     QVERIFY(active);
     QVERIFY(ports.isAutoConnectExcluded(port));
     QVERIFY(!ports.isAutoConnectExcluded(QStringLiteral("/test/mavlink")));
-    QVERIFY(!ports.canAutoConnectPort(QStringLiteral("/test/mavlink")));
+    QVERIFY(ports.canAutoConnectPort(QStringLiteral("/test/mavlink")));
     active.reset();
     QVERIFY(!ports.canAutoConnectPort(port));
     secondOwner.reset();

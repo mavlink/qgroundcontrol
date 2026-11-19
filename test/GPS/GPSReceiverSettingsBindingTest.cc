@@ -13,6 +13,7 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
 #include "GPSTransport.h"
+#include "ManualScheduler.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "RTKSettings.h"
@@ -229,6 +230,84 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::ublox));
     QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 }
+
+#ifndef QGC_NO_SERIAL_LINK
+void GPSReceiverSettingsBindingTest::_connectedSerialDeviceTakesPersistentName_data()
+{
+    QTest::addColumn<QString>("saved");
+    QTest::addColumn<QString>("nameWhenConnected");
+    QTest::addColumn<QString>("nameOnceOpen");
+    QTest::addColumn<bool>("twin");
+    QTest::addColumn<QString>("expected");
+    const QString location = QStringLiteral("/test/usb/001/004");
+    const QString stableName = QStringLiteral("usb:1546:01a9:R1");
+    // An older build saved the system location.
+    QTest::newRow("stable-name-listed") << location << stableName << stableName << false << stableName;
+    // Android gives a port its stable name once the user has let QGC open the device, which connecting asks for.
+    QTest::newRow("stable-name-once-open") << location << QString() << stableName << false << stableName;
+    QTest::newRow("no-stable-name") << location << QString() << QString() << false << location;
+    // A stable name that another listed port shares finds neither, so the system location stays.
+    QTest::newRow("shared-stable-name") << location << stableName << stableName << true << location;
+    // A receiver that discovery found is not saved: discovery finds it again wherever it is plugged in.
+    QTest::newRow("discovered") << QString() << stableName << stableName << false << QString();
+}
+
+void GPSReceiverSettingsBindingTest::_connectedSerialDeviceTakesPersistentName()
+{
+    QFETCH(QString, saved);
+    QFETCH(QString, nameWhenConnected);
+    QFETCH(QString, nameOnceOpen);
+    QFETCH(bool, twin);
+    QFETCH(QString, expected);
+    const QString location = QStringLiteral("/test/usb/001/004");
+    const bool discovered = saved.isEmpty();
+    RTKSettings settings;
+    TestFixtures::SettingsFixture fixture;
+    fixture.setFactValue(settings.receiverRole(), RTKSettings::ConfiguredBase);
+    fixture.setFactValue(settings.baseReceiverManufacturers(), gpsReceiverManufacturerForType(GPSType::ublox));
+    fixture.setFactValue(settings.connectionType(), RTKSettings::Serial);
+    fixture.setFactValue(settings.serialDevice(), saved);
+    fixture.setFactValue(settings.autoConnect(), discovered);
+    const auto listed = [&location, twin](const QString& stableName) {
+        SerialPortManager::Port port = rtkPort(location);
+        port.stableName = stableName;
+        QList<SerialPortManager::Port> ports{port};
+        if (twin) {
+            ports.append(usbPort(QStringLiteral("/test/usb/001/005"), stableName));
+        }
+        return ports;
+    };
+    ManualScheduler scheduler;
+    TestSerialPorts serial(listed(nameWhenConnected));
+    ScriptedGPSReceiver harness(&scheduler, {.serialPorts = &serial.manager});
+    GPSReceiver& receiver = harness.receiver;
+    GPSSettingsBindings::bindReceiver(&settings, &receiver);
+
+    if (discovered) {
+        receiver.tick();
+        QVERIFY(scheduler.advanceBy(SerialPortManager::NEW_PORT_SETTLE_DELAY));
+        receiver.tick();
+    } else {
+        QVERIFY(receiver.connectReceiver());
+    }
+    QCOMPARE(harness.workers.count(), 1);
+    // Not before the receiver has answered on the port: the system location may be another device's by now.
+    serial.manager.rescan();
+    QCOMPARE(settings.serialDevice()->rawValue().toString(), saved);
+    harness.workers.current()->ready();
+    if (nameOnceOpen != nameWhenConnected) {
+        serial.plug(listed(nameOnceOpen));
+    }
+
+    // The setting takes the name that finds the port again, and the picker's entry with it, while the connection
+    // goes on as it is.
+    QCOMPARE(settings.serialDevice()->rawValue().toString(), expected);
+    QCOMPARE(receiver.configuration().serialDevice, expected);
+    QCOMPARE(receiver.serialPortEntries().value(0).value, serial.manager.persistentName(location));
+    QVERIFY(receiver.facts()->telemetryAvailable());
+    QCOMPARE(harness.workers.count(), 1);
+}
+#endif
 
 void GPSReceiverSettingsBindingTest::_persistentConsentScope_data()
 {

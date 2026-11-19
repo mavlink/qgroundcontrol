@@ -78,8 +78,15 @@ public:
 #ifndef QGC_NO_SERIAL_LINK
     virtual bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges,
                                GPSSerialClaim claim) = 0;
-    /// The device is plugged in and not in its bootloader.
+    /// The device is plugged in and not in its bootloader. @a device is any name of its port, as the saved device is:
+    /// one that survives replugging, or a system location.
     virtual bool serialPortAvailable(const QString& device) const = 0;
+    /// What a message calls the device: the system location of its port, as the device picker shows it, or the name
+    /// itself while no port is listed by it. Empty for a device that then has no name the user knows it by.
+    virtual QString serialPortLabel(const QString& device) const = 0;
+    /// Whether QGC may open the device. Only a USB device on Android can be one that it may not: the user has not
+    /// allowed it.
+    virtual bool serialPortAllowed(const QString& device) const = 0;
     /// Free devices whose USB identity is a known RTK receiver adapter, one per physical device, which discovery may
     /// connect with the saved manufacturer.
     virtual QStringList rtkReceiverPorts() const = 0;

@@ -98,13 +98,27 @@ void GPSReceiver::setConfiguration(const Configuration& configuration)
     if (_configuration == configuration) {
         return;
     }
-    if (!_configuration.sameConnection(configuration)) {
+    Configuration previous = std::exchange(_configuration, configuration);
+#ifndef QGC_NO_SERIAL_LINK
+    const bool deviceChanged = previous.serialDevice != _configuration.serialDevice;
+    // Another name of the port that the device was saved by is the same connection: the saved device takes the
+    // persistent name of its port while the receiver is connected on it.
+    if (_serialPorts && _serialPorts->isSamePort(previous.serialDevice, _configuration.serialDevice)) {
+        previous.serialDevice = _configuration.serialDevice;
+    }
+#endif
+    if (!previous.sameConnection(_configuration)) {
         _setPersistentChangesAllowed(false);
     }
-    const Configuration previous = std::exchange(_configuration, configuration);
     _connection->configurationChanged(previous);
     ++_configurationRevision;
     _emitChanges();
+#ifndef QGC_NO_SERIAL_LINK
+    // The entry of the port that the saved device names goes by that name.
+    if (deviceChanged && _serialPorts && !_serialPortEntries.isEmpty()) {
+        _updateSerialPortEntries();
+    }
+#endif
 }
 
 void GPSReceiver::setPersistentChangesAllowed(bool allowed)
@@ -254,6 +268,9 @@ void GPSReceiver::_onGPSConnect()
         _session->registerPosition(_positionManager, _positionHealth);
     }
     _emitChanges();
+#ifndef QGC_NO_SERIAL_LINK
+    _usePersistentSerialDevice();
+#endif
 }
 
 void GPSReceiver::_onReceiverDetected()
@@ -312,6 +329,7 @@ void GPSReceiver::_onSerialPortsEnumerated(const QStringList& devices)
         _emitChanges();
     }
     _updateSerialPortEntries();
+    _usePersistentSerialDevice();
 }
 
 bool GPSReceiver::serialPortAvailable(const QString& device) const
@@ -319,9 +337,48 @@ bool GPSReceiver::serialPortAvailable(const QString& device) const
     if (device.isEmpty() || !_serialPorts) {
         return false;
     }
-    const QList<SerialPortManager::Port> ports = _serialPorts->availablePorts();
-    return std::any_of(ports.cbegin(), ports.cend(),
-                       [&device](const auto& port) { return port.systemLocation == device && !port.bootloader; });
+    (void) _serialPorts->availablePorts();
+    const std::optional<SerialPortManager::Port> port = _serialPorts->port(device);
+    return port && !port->bootloader;
+}
+
+QString GPSReceiver::serialPortLabel(const QString& device) const
+{
+    // Only a USB port on Android is without access while it is not listed: its device is detached, or QGC may not
+    // open it. Its address is another one each time the device is attached and its stable name is made of IDs, so
+    // neither tells the user which device is meant.
+    const bool named = !_serialPorts || _serialPorts->port(device) || _serialPorts->hasAccess(device);
+    return named ? _serialLocation(device) : QString();
+}
+
+bool GPSReceiver::serialPortAllowed(const QString& device) const
+{
+    return !_serialPorts || _serialPorts->hasAccess(device);
+}
+
+QString GPSReceiver::_serialLocation(const QString& device) const
+{
+    const std::optional<SerialPortManager::Port> port = _serialPorts ? _serialPorts->port(device) : std::nullopt;
+    return port ? port->systemLocation : device.trimmed();
+}
+
+void GPSReceiver::_usePersistentSerialDevice()
+{
+    // Only once the receiver has answered on the port: the system location that an older build saved may be
+    // another device's by now. On Android the user has then let QGC open the device, if only after it was saved,
+    // and a scan gives the port its stable name.
+    if (!_serialPorts || !_session || !_facts->telemetryAvailable()) {
+        return;
+    }
+    const QString saved = _configuration.serialDevice.trimmed();
+    // Not the port of a discovered receiver, which has no saved device and is not given one.
+    if (!_serialPorts->isSamePort(saved, _session->serialDevice())) {
+        return;
+    }
+    const QString persistent = _serialPorts->persistentName(_session->serialDevice());
+    if (persistent != saved) {
+        emit serialDeviceRenamed(persistent);
+    }
 }
 
 QStringList GPSReceiver::rtkReceiverPorts() const
@@ -347,9 +404,14 @@ QStringList GPSReceiver::rtkReceiverPorts() const
 
 GPSSerialClaim GPSReceiver::claimSerialPort(const QString& device)
 {
-    GPSSerialClaim claim = _serialPorts ? _serialPorts->reservePort(device) : nullptr;
+    //: Ends the sentence "Cannot connect the link: the serial port is in use by ..."
+    const QString owner = tr("the GPS receiver");
+    // By the system location, which the session opens. A claim by a name that survives replugging would be on the
+    // port that the device comes back as, while the worker of the session that lost it may still hold the claim.
+    const QString location = _serialLocation(device);
+    GPSSerialClaim claim = _serialPorts ? _serialPorts->reservePort(location, owner) : nullptr;
     if (claim) {
-        _serialClaims.insert(device, claim);
+        _serialClaims.insert(location, claim);
     }
     return claim;
 }
@@ -369,7 +431,12 @@ void GPSReceiver::_updateSerialPortEntries()
             //: %1 is a serial device that another QGroundControl connection, such as a vehicle link, uses
             label = tr("%1 (in use)").arg(label);
         }
-        entries.append({.value = port.systemLocation, .label = label});
+        // The port that the saved device names by another name than the one to save it by takes the latter only
+        // once the receiver has connected on it. Until then the picker finds its selection by the saved name.
+        const bool savedPort = _serialPorts->isSamePort(_configuration.serialDevice, port.systemLocation);
+        entries.append(
+            {.value = savedPort ? _configuration.serialDevice : _serialPorts->persistentName(port.systemLocation),
+             .label = label});
     }
     if (entries != _serialPortEntries) {
         _serialPortEntries = std::move(entries);
@@ -380,7 +447,7 @@ void GPSReceiver::_updateSerialPortEntries()
 bool GPSReceiver::connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges,
                                 GPSSerialClaim claim)
 {
-    const QString endpoint = device.trimmed();
+    const QString endpoint = _serialLocation(device);
     return _connectReceiver(
         type,
         [endpoint, claim = std::move(claim), factory = _serialTransportFactory](GPSCancelToken cancelToken) {
@@ -489,6 +556,21 @@ bool GPSReceiver::connectReceiver()
         _persistentChangesAllowed &&
         capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer).persistentConfiguration;
     _setPersistentChangesAllowed(false);
+#ifndef QGC_NO_SERIAL_LINK
+    const QString device = _configuration.serialDevice.trimmed();
+    // The user asked for this connection, so they are asked again for a USB device that they have denied QGC:
+    // opening the port asks only once for each time the device is attached. The session keeps trying to open the
+    // port for a while, and so opens it once they allow it.
+    const bool asked = _serialPorts && !hasReceiver() && effectiveConnectionType() == RTKSettings::Serial &&
+                       !device.isEmpty() && _serialPorts->requestAccess(device);
+    if (asked && !serialPortAvailable(device)) {
+        // A device that QGC may not open is listed without the name that survives replugging, so a device saved by
+        // that name is not found until the user allows it. An automatic connection that waits for it goes on waiting.
+        _setError(tr("Allow QGroundControl to open the receiver's USB device, then connect."));
+        _emitChanges();
+        return false;
+    }
+#endif
     const bool connected = _connection->connectConfigured(allowed);
     _emitChanges();
     return connected;

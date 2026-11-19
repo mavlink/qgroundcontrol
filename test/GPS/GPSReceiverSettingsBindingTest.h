@@ -16,6 +16,10 @@ private slots:
     void _configurationDiagnosticRetained_data();
     void _configurationDiagnosticRetained();
     void _receiverSettingsBinding();
+#ifndef QGC_NO_SERIAL_LINK
+    void _connectedSerialDeviceTakesPersistentName_data();
+    void _connectedSerialDeviceTakesPersistentName();
+#endif
     void _persistentConsentScope_data();
     void _persistentConsentScope();
     void _persistentConsentIsSpentOnConnect_data();
