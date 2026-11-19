@@ -1,29 +1,29 @@
-#include "QGCAbstractStateTest.h"
+#include "QGCStateTest.h"
 
 #include "StateTestCommon.h"
 
-void QGCAbstractStateTest::_testStateName()
+void QGCStateTest::_testStateName()
 {
     QStateMachine machine;
 
-    auto* state = new TestAbstractState(QStringLiteral("MyStateName"), &machine);
+    auto* state = new TestSignalState(QStringLiteral("MyStateName"), &machine);
 
     QCOMPARE(state->stateName(), QStringLiteral("MyStateName"));
     QCOMPARE(state->objectName(), QStringLiteral("MyStateName"));
 }
 
-void QGCAbstractStateTest::_testStateNameInQGCStateMachine()
+void QGCStateTest::_testStateNameInQGCStateMachine()
 {
     QGCStateMachine machine(QStringLiteral("Machine"), nullptr);
 
-    auto* state = new TestAbstractState(QStringLiteral("State"), &machine);
+    auto* state = new TestSignalState(QStringLiteral("State"), &machine);
     auto* finalState = new QGCFinalState(QStringLiteral("Final"), &machine);
 
     QCOMPARE(state->stateName(), QStringLiteral("Machine:State"));
     QCOMPARE(finalState->stateName(), QStringLiteral("Machine:Final"));
 }
 
-void QGCAbstractStateTest::_testSignalStopsMachine_data()
+void QGCStateTest::_testSignalStopsMachine_data()
 {
     QTest::addColumn<bool>("emitError");
 
@@ -31,14 +31,14 @@ void QGCAbstractStateTest::_testSignalStopsMachine_data()
     QTest::newRow("error") << true;
 }
 
-void QGCAbstractStateTest::_testSignalStopsMachine()
+void QGCStateTest::_testSignalStopsMachine()
 {
     QFETCH(bool, emitError);
-    const auto signal = emitError ? &QGCAbstractState::error : &QGCAbstractState::advance;
+    const auto signal = emitError ? &QGCState::error : &QGCState::advance;
 
     QStateMachine machine;
 
-    auto* state = new TestAbstractState(QStringLiteral("TestSignal"), &machine);
+    auto* state = new TestSignalState(QStringLiteral("TestSignal"), &machine);
     machine.setInitialState(state);
     QObject::connect(state, signal, &machine, &QStateMachine::stop);
 
@@ -57,4 +57,4 @@ void QGCAbstractStateTest::_testSignalStopsMachine()
     QCOMPARE(signalSpy.count(), 1);
 }
 
-UT_REGISTER_TEST(QGCAbstractStateTest, TestLabel::Unit, TestLabel::Utilities)
+UT_REGISTER_TEST(QGCStateTest, TestLabel::Unit, TestLabel::Utilities)

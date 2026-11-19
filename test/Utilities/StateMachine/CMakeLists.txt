@@ -39,8 +39,8 @@ target_sources(
         states/RetryableRequestMessageStateTest.h
         states/WaitStateBaseTest.cc
         states/WaitStateBaseTest.h
-        states/QGCAbstractStateTest.cc
-        states/QGCAbstractStateTest.h
+        states/QGCStateTest.cc
+        states/QGCStateTest.h
         states/SendMavlinkCommandStateTest.cc
         states/SendMavlinkCommandStateTest.h
         states/SendMavlinkMessageStateTest.cc
@@ -67,7 +67,7 @@ target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tran
 
 add_qgc_test(QGCStateMachineTest LABELS Unit Utilities)
 add_qgc_test(AsyncFunctionStateTest LABELS Unit Utilities)
-add_qgc_test(QGCAbstractStateTest LABELS Unit Utilities)
+add_qgc_test(QGCStateTest LABELS Unit Utilities)
 add_qgc_test(RetryableRequestMessageStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(SendMavlinkCommandStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(SendMavlinkMessageStateTest LABELS Integration Vehicle Utilities)

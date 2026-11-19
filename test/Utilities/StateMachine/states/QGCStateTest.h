@@ -2,7 +2,7 @@
 
 #include "StateMachineTest.h"
 
-class QGCAbstractStateTest : public StateMachineTest
+class QGCStateTest : public StateMachineTest
 {
     Q_OBJECT
 

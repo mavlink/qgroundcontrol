@@ -65,12 +65,12 @@ protected:
     void onWaitExited() override { waitExitedCalls++; }
 };
 
-/// A QGCAbstractState whose signals a test emits
-class TestAbstractState : public QGCAbstractState
+/// A QGCState whose signals a test emits
+class TestSignalState : public QGCState
 {
 public:
-    TestAbstractState(const QString& name, QState* parent)
-        : QGCAbstractState(name, parent)
+    TestSignalState(const QString& name, QState* parent)
+        : QGCState(name, parent)
     {}
 
     void emitAdvance() { emit advance(); }

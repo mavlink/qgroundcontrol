@@ -12,8 +12,6 @@ target_sources(
         QGCStateMachineEvent.h
         Helpers/SignalSender.h
         # States
-        States/QGCAbstractState.cc
-        States/QGCAbstractState.h
         States/QGCFinalState.cc
         States/QGCFinalState.h
         States/QGCState.cc

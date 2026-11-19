@@ -192,13 +192,13 @@ void AdditionalTransitionsCoverageTest::_testRetrySetsAsyncStateUpAgain()
     ignoreTimeoutWarnings();
     QGCStateMachine machine(QStringLiteral("RetryAsyncTest"), nullptr);
     // Its advance() stands for the answer that the state waits for
-    TestAbstractState replier(QStringLiteral("Replier"), nullptr);
+    TestSignalState replier(QStringLiteral("Replier"), nullptr);
     int setupCalls = 0;
     bool gaveUp = false;
 
     const auto setup = [&replier, &setupCalls](CompletionWaitState* state) {
         setupCalls++;
-        state->connectToCompletion(&replier, &QGCAbstractState::advance);
+        state->connectToCompletion(&replier, &QGCState::advance);
     };
     CompletionWaitState* waitState = nullptr;
     if (skippable) {
