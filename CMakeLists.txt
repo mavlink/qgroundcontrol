@@ -272,6 +272,8 @@ find_package(
         Location
         LocationPrivate
         Multimedia
+        MultimediaPrivate
+        MultimediaQuickPrivate
         Network
         Positioning
         Qml
@@ -287,11 +289,20 @@ find_package(
         Xml
         Quick3D
         StateMachine
-    OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate OpenGL QuickTest SerialPort Test
+    OPTIONAL_COMPONENTS Bluetooth OpenGL QuickTest SerialPort Test
 )
 
 if(LINUX AND NOT ANDROID)
     find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} COMPONENTS WaylandClient)
+endif()
+
+# On Android QGC has its own serial port (src/Android/Serial), under the class and header names of Qt Serial Port,
+# which Qt installs there as well and whose classes differ in size. Every target of an Android build therefore finds
+# QGC's <QtSerialPort/...> headers ahead of Qt's, whether or not it links QGCAndroidSerialPort: nothing would report
+# a target that compiled against Qt's classes. Directory scope is intentional for that, set before the first
+# directory is added.
+if(ANDROID)
+    include_directories(BEFORE "${CMAKE_SOURCE_DIR}/src/Android/Serial/include")
 endif()
 
 if(QGC_USE_MOCCACHE)

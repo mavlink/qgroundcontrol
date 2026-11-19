@@ -60,6 +60,9 @@ void GstReceiverWorker::apply(const Request& request)
         if ((request.videoSink != previous.videoSink) && _session) {
             _session->setVideoSink(_requested.videoSink.get());
         }
+        if (request.reconnects != previous.reconnects) {
+            _supervisor->reconnectNow();
+        }
     }
 
     const quint64 recordingId = request.recording ? request.recording->id : 0;
@@ -122,7 +125,7 @@ void GstReceiverWorker::_startRecording(const RecordingRequest& request)
         return;
     }
 
-    _recording.emplace(request.file, request.format);
+    _recording.emplace(request.file, request.format, _maxRecordingPartDuration);
     _updateStatus(&Status::recording, true);
     if (_session) {
         _session->setRecording(_recordingRequest());
@@ -138,15 +141,6 @@ void GstReceiverWorker::_stopRecording()
     if (_session) {
         _session->setRecording(std::nullopt);
     }
-}
-
-void GstReceiverWorker::dumpPipelineGraph(const QString& tag) const
-{
-    if (!_session) {
-        qCDebug(GstVideoReceiverLog) << "No running pipeline to dump";
-        return;
-    }
-    _session->snapshot(tag);
 }
 
 void GstReceiverWorker::shutdown()
@@ -188,10 +182,9 @@ void GstReceiverWorker::_startSession()
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
     _watchdog.start(_requested.config.timeout, GStreamer::SourceFactory::connectGracePeriod(_requested.config.uri));
 
-    if (!_session->start()) {
-        const PipelineSession::Failure failure = _session->failure();
+    if (const std::optional<PipelineSession::Failure> failure = _session->start()) {
         _stopSession();
-        _recover(failure);
+        _recover(*failure);
         return;
     }
 
@@ -217,14 +210,16 @@ void GstReceiverWorker::_stopSession()
     session->deleteLater();
 
     if (_recording) {
-        _recording->onSessionEnded();
+        _recording->nextPart();
     }
 }
 
 void GstReceiverWorker::_recover(const PipelineSession::Failure& failure)
 {
-    const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(failure.message, failure.permanent, _requested.config.autoReconnect);
+    const StreamSupervisor::FailureOutcome outcome = _supervisor->sessionFailed(
+        failure.message,
+        failure.permanent ? StreamSupervisor::Failure::Permanent : StreamSupervisor::Failure::Transient,
+        _requested.config.autoReconnect);
     if (outcome.halted) {
         _onHalted(failure.message);
         return;
@@ -270,6 +265,12 @@ void GstReceiverWorker::_onWatchdogTick()
         }
     }
     _sampleStats();
+
+    if (_recording && _recording->partDue()) {
+        _recording->nextPart();
+        qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
+        _session->setRecording(_recordingRequest());
+    }
 
     const StreamWatchdog::Result result = _watchdog.check(StreamWatchdog::now(), _session->displaying());
     switch (result.stall) {
@@ -318,6 +319,11 @@ void GstReceiverWorker::onSessionStreaming()
     _supervisor->sessionStreaming();
 }
 
+void GstReceiverWorker::onSessionGraphicsDeviceLost()
+{
+    emit graphicsDeviceLost();
+}
+
 void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)
 {
     qCDebug(GstVideoReceiverLog) << "Stream failed:" << failure.reason << _redactedUri();
@@ -352,6 +358,9 @@ void GstReceiverWorker::onRecordingFileOpened(const QString& file)
 
 void GstReceiverWorker::onRecordingFileClosed(const QString& file, const QString& error)
 {
+    if (_recording) {
+        _recording->onFileClosed(file);
+    }
     emit recordingFinished(file, error);
 }
 
@@ -366,4 +375,14 @@ void GstReceiverWorker::onRecordingFailed(const QString& file, const QString& er
             QCoreApplication::translate("GstVideoReceiver", "Video recording failed: %1").arg(error);
         emit errorOccurred(message);
     }
+}
+
+void GstReceiverWorker::onRecordingNeedsNewFile(const QString& file)
+{
+    if (!_session || !_recording || (file != _recording->currentFile())) {
+        return;
+    }
+    _recording->nextPart();
+    qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
+    _session->setRecording(_recordingRequest());
 }

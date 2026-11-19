@@ -1,13 +1,12 @@
 #include "GstVideoReceiver.h"
 
 #include <chrono>
-#include <memory>
-#include <mutex>
 #include <utility>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDeadlineTimer>
-#include <QtCore/QSemaphore>
 #include <QtCore/QThread>
+#include <QtCore/QTimer>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
@@ -22,8 +21,13 @@ namespace {
 
 // The destructor's wait for the worker: a recording's finalization plus time for the pipeline to stop.
 constexpr std::chrono::seconds kWorkerShutdownTimeout = RecordingBranch::kFinalizeTimeout + std::chrono::seconds{2};
-// _runOnPipeline()'s wait for the worker to run a task.
-constexpr std::chrono::seconds kRunOnPipelineTimeout{10};
+static_assert(GstVideoReceiver::kHeartbeatInterval > kWorkerShutdownTimeout);
+
+// Checks in a row, 60 s, that find the worker has run none of its tasks since the check before, until it counts as
+// stuck: a name lookup for a tcp:// or udp:// host, which runs on the worker, can take half a minute to fail. Each
+// check comes a full interval after the one before, so one that is late (a suspended machine, a stopped process, a
+// stalled GUI thread) can't count twice against a worker that got no time to run a task.
+constexpr int kStuckWorkerChecks = 6;
 
 }  // namespace
 
@@ -31,14 +35,22 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
     : VideoReceiver(parent)
     , _workerThread(new QThread(this))
     , _worker(new GstReceiverWorker())
+    , _heartbeatTimer(new QTimer(this))
 {
     qCDebug(GstVideoReceiverLog) << this;
 
+    _heartbeatTimer->setSingleShot(true);
+    _heartbeatTimer->setInterval(kHeartbeatInterval);
+    (void) connect(_heartbeatTimer, &QTimer::timeout, this, &GstVideoReceiver::_checkWorker);
+
     // Queued, with this receiver as the context: once it is destroyed, the worker's reports go nowhere.
-    (void) connect(_worker, &GstReceiverWorker::statusChanged, this, &GstVideoReceiver::_applyStatus);
+    (void) connect(_worker, &GstReceiverWorker::statusChanged, this, &GstVideoReceiver::_onWorkerStatus);
+    (void) connect(_worker, &GstReceiverWorker::taskDone, this, &GstVideoReceiver::_onWorkerTaskDone);
     (void) connect(_worker, &GstReceiverWorker::recordingStarted, this, &GstVideoReceiver::recordingStarted);
     (void) connect(_worker, &GstReceiverWorker::recordingFinished, this, &GstVideoReceiver::recordingFinished);
     (void) connect(_worker, &GstReceiverWorker::errorOccurred, this, &GstVideoReceiver::errorOccurred);
+    // The video sink goes with the pipeline: it too holds the device.
+    (void) connect(_worker, &GstReceiverWorker::graphicsDeviceLost, this, &GstVideoReceiver::restart);
 
     _workerThread->setObjectName(QStringLiteral("GstVideoReceiver"));
     _worker->moveToThread(_workerThread);
@@ -54,8 +66,9 @@ GstVideoReceiver::~GstVideoReceiver()
         return;
     }
 
-    // Only a recorder stuck in the kernel (a hung network mount) holds the worker this long. It reaches this receiver
-    // only through its signals, so it can finish on its own and clean up after itself.
+    // Only a streaming thread that doesn't return (a recorder stuck in the kernel on a hung network mount, a decoder
+    // deadlocked in its library) holds the worker this long. It reaches this receiver only through its signals, so it
+    // can finish on its own and clean up after itself.
     qCWarning(GstVideoReceiverLog) << "Worker still busy after"
                                    << std::chrono::milliseconds(kWorkerShutdownTimeout).count()
                                    << "ms; leaving it to finish on its own";
@@ -66,9 +79,9 @@ GstVideoReceiver::~GstVideoReceiver()
     }
 }
 
-void GstVideoReceiver::dumpPipelineGraph(const QString& tag)
+void GstVideoReceiver::setHeartbeatInterval(std::chrono::milliseconds interval)
 {
-    _postToWorker([tag](GstReceiverWorker& worker) { worker.dumpPipelineGraph(tag); });
+    _heartbeatTimer->setInterval(interval);
 }
 
 void GstVideoReceiver::onConfigChanged()
@@ -89,6 +102,12 @@ void GstVideoReceiver::onRestartRequested()
         _bindVideoSink(sink);
     }
     ++_request.restarts;
+    _postRequest();
+}
+
+void GstVideoReceiver::onReconnectRequested()
+{
+    ++_request.reconnects;
     _postRequest();
 }
 
@@ -136,6 +155,71 @@ void GstVideoReceiver::_postRequest()
     _postToWorker([request = _request](GstReceiverWorker& worker) { worker.apply(request); });
 }
 
+void GstVideoReceiver::_checkWorker()
+{
+    const bool frameShown = std::exchange(_frameShown, false);
+    const bool ranTask = _tasksDone != std::exchange(_tasksDoneAtCheck, _tasksDone);
+    if (_tasksDone == _tasksPosted) {
+        _stalledChecks = 0;
+        if (!active()) {
+            // Through with all it was posted, and no stream is wanted of it: it has nothing to get stuck in.
+            return;
+        }
+        // The heartbeat of a worker that is posted nothing else: what it does of its own, as replacing a decoder that
+        // stalled, can hold it too.
+        _postToWorker([](GstReceiverWorker& /*worker*/) {});
+    } else if (ranTask) {
+        // Slow, or behind with a row of requests, but not stuck.
+        _stalledChecks = 0;
+    } else if (_workerStuck) {
+        _applyStuckStatus(frameShown);
+    } else if (++_stalledChecks >= kStuckWorkerChecks) {
+        qCWarning(GstVideoReceiverLog) << "The worker of" << name() << "has run none of its tasks for"
+                                       << (kStuckWorkerChecks * _heartbeatTimer->intervalAsDuration()).count()
+                                       << "ms: a streaming thread it waits for doesn't return";
+        _workerStuck = true;
+        _applyStuckStatus(frameShown);
+        emit errorOccurred(
+            tr("The video decoder or recorder stopped responding. Restart %1 to get video working again.")
+                .arg(QCoreApplication::applicationName()));
+    }
+    // A full interval from now, not from when this check was due: one that comes late puts the next ones off.
+    _heartbeatTimer->start();
+}
+
+void GstVideoReceiver::_onWorkerTaskDone()
+{
+    ++_tasksDone;
+    if (_workerStuck) {
+        qCDebug(GstVideoReceiverLog) << "The worker of" << name() << "runs its tasks again";
+        _workerStuck = false;
+        _applyStatus(_workerStatus);
+    }
+}
+
+void GstVideoReceiver::_applyStuckStatus(bool frameShown)
+{
+    // The pipeline runs on without its worker, which a recorder that doesn't return holds as well as a decoder: only
+    // the frames tell which. While they reach the output the stream is as the worker reported it last, though nothing
+    // measures it. Without them it is as one that gave up, so that no frozen picture passes for the live one.
+    GstReceiverStatus status = _workerStatus;
+    status.stats = {};
+    if (!frameShown) {
+        status.state = State::Stopped;
+        status.decoding = false;
+        status.decoderName.clear();
+    }
+    _applyStatus(status);
+}
+
+void GstVideoReceiver::_onWorkerStatus(const GstReceiverStatus& status)
+{
+    _workerStatus = status;
+    if (!_workerStuck) {
+        _applyStatus(status);
+    }
+}
+
 void GstVideoReceiver::_applyStatus(const GstReceiverStatus& status)
 {
     setState(status.state);
@@ -144,7 +228,7 @@ void GstVideoReceiver::_applyStatus(const GstReceiverStatus& status)
     if (wasDecoding && !status.decoding && _sinkController) {
         _sinkController->releaseFrame();
     }
-    _setDecoderName(status.decoderName);
+    _decoderName = status.decoderName;
     setRecording(status.recording);
     setStats(status.stats);
 }
@@ -153,7 +237,17 @@ void GstVideoReceiver::_postToWorker(std::function<void(GstReceiverWorker&)> tas
 {
     GstReceiverWorker* const worker = _worker;
     (void) QMetaObject::invokeMethod(
-        worker, [worker, task = std::move(task)]() { task(*worker); }, Qt::QueuedConnection);
+        worker,
+        [worker, task = std::move(task)]() {
+            task(*worker);
+            emit worker->taskDone();
+        },
+        Qt::QueuedConnection);
+
+    ++_tasksPosted;
+    if (!_heartbeatTimer->isActive()) {
+        _heartbeatTimer->start();
+    }
 }
 
 void GstVideoReceiver::_releaseDisplaySink()
@@ -170,12 +264,8 @@ void GstVideoReceiver::_releaseDisplaySink()
 bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
 {
     const DisplayConfig& display = displayConfig();
-    const GStreamer::VideoSinkConfig sinkConfig{
-        .conversionElement = display.conversionElement,
-        .disablePixelAspectRatio = display.disablePixelAspectRatio,
-        .gpuZeroCopy = display.gpuZeroCopy,
-    };
-    GStreamer::GstElementPtr sink = GStreamer::adoptElement(GStreamer::createVideoSink(sinkConfig));
+    GStreamer::GstElementPtr sink = GStreamer::adoptElement(
+        GStreamer::createVideoSink(display.conversionElement, display.disablePixelAspectRatio, display.gpuZeroCopy));
     QGCQVideoSinkController* const controller =
         sink ? GStreamer::setupQVideoSinkElement(sink.get(), videoSink, this) : nullptr;
     if (!controller) {
@@ -199,52 +289,17 @@ void GstVideoReceiver::_bindVideoSink(QVideoSink* videoSink)
     _sinkController->followWindowVisibility(videoOutput());
     // Per frame, not on QVideoSink::videoSizeChanged: that follows the frame size, which for a decoder's buffer cropped
     // by crop meta is larger than the picture, and misses a viewport that changes on its own. Frames reach the sink on
-    // this thread.
-    _videoSizeConnection = connect(videoSink, &QVideoSink::videoFrameChanged, this,
-                                   [this](const QVideoFrame& frame) { setVideoSize(presentedSize(frame)); });
-    if (const QSize size = presentedSize(videoSink->videoFrame()); size.isValid()) {
+    // this thread. The picture's size is the display sink's: a viewport that leaves out the padding of a squeezed
+    // texture is smaller.
+    const auto sizeOf = [this](const QVideoFrame& frame) {
+        return presentedSize(frame, _sinkController ? _sinkController->pictureSize() : QSize());
+    };
+    _videoSizeConnection =
+        connect(videoSink, &QVideoSink::videoFrameChanged, this, [this, sizeOf](const QVideoFrame& frame) {
+            _frameShown = _frameShown || frame.isValid();
+            setVideoSize(sizeOf(frame));
+        });
+    if (const QSize size = sizeOf(videoSink->videoFrame()); size.isValid()) {
         setVideoSize(size);
     }
-}
-
-void GstVideoReceiver::_setDecoderName(const QString& name)
-{
-    if (name != _decoderName) {
-        _decoderName = name;
-        emit decoderNameChanged();
-    }
-}
-
-bool GstVideoReceiver::_runOnPipeline(const std::function<void(GstElement*)>& task)
-{
-    // Not a BlockingQueuedConnection, which would wait for good on a worker that never gets to the task. The task
-    // runs under the mutex, so once the wait is given up it is either done or never runs.
-    struct Call
-    {
-        std::mutex mutex;
-        bool abandoned = false;
-        QSemaphore done;
-    };
-
-    const auto call = std::make_shared<Call>();
-    GstReceiverWorker* const worker = _worker;
-    const bool posted = QMetaObject::invokeMethod(
-        worker,
-        [worker, call, &task]() {
-            const std::lock_guard lock(call->mutex);
-            if (!call->abandoned) {
-                task(worker->pipeline());
-                call->done.release();
-            }
-        },
-        Qt::QueuedConnection);
-    if (!posted) {
-        return false;
-    }
-    if (call->done.tryAcquire(1, QDeadlineTimer(kRunOnPipelineTimeout))) {
-        return true;
-    }
-    const std::lock_guard lock(call->mutex);
-    call->abandoned = true;
-    return call->done.tryAcquire();
 }

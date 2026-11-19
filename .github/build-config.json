@@ -43,6 +43,7 @@
       "common": [
         "app",
         "coreelements",
+        "coretracers",
         "isomp4",
         "jpeg",
         "jpegformat",

@@ -31,6 +31,7 @@ public:
         RtpUdpH264,  ///< RTP/H.264 over UDP   -> udp://
         RtpUdpH265,  ///< RTP/H.265 over UDP   -> udp265://
         RtspH264,    ///< RTSP (H.264)         -> rtsp://
+        RtspH265,    ///< RTSP (H.265)         -> rtsp://
         MpegTsUdp,   ///< MPEG-TS over UDP     -> mpegts://
         MpegTsTcp,   ///< MPEG-TS over TCP     -> tcp://
     };
@@ -49,20 +50,18 @@ public:
     /// Stop the stream and release all resources. Safe to call when not running.
     void stop();
 
-    bool isRunning() const { return _running; }
-
     QString servedUri() const { return _servedUri; }
 
     /// True when the encoder/muxer elements required for @p type are present in the
-    /// local GStreamer install (e.g. false for RtpUdpH265 when x265enc is missing,
-    /// or RtspH264 when gst-rtsp-server was not built in).
+    /// local GStreamer install (e.g. false for RtpUdpH265 and RtspH265 when x265enc is missing,
+    /// or the RTSP types when gst-rtsp-server was not built in).
     static bool isStreamTypeAvailable(StreamType type);
 
 private:
     bool _startPipeline(const QString& launch);
 #ifdef QGC_GST_RTSP_SERVER
     /// Returns the port the server listens on, or 0 on failure.
-    int _startRtsp(const QString& host, quint16 port);
+    int _startRtsp(StreamType type, const QString& host, quint16 port);
     void _stopRtsp();
 
     GstRTSPServer* _rtspServer = nullptr;
@@ -72,6 +71,5 @@ private:
 #endif
 
     GstElement* _pipeline = nullptr;
-    bool _running = false;
     QString _servedUri;
 };

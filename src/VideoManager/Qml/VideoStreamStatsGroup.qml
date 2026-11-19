@@ -12,7 +12,7 @@ QGCGroupBox {
 
     required property VideoStreamController stream
 
-    readonly property var    _stats:        stream.stats
+    readonly property videoStreamStats _stats: stream.stats
     readonly property size   _videoSize:    stream.videoSize
     readonly property var    _info:         stream.streamInfo
     readonly property real   _cameraFps:    _info ? _info.framerate : 0
@@ -53,10 +53,12 @@ QGCGroupBox {
         visible:    labelText !== ""
     }
 
+    // Frames shown: none for a stream that isn't decoded, as the thermal stream while its view is off.
     LabelledLabel {
         label:      qsTr("Frame rate")
         labelText:  root._withCamera(qsTr("%1 fps").arg(root._stats.fps.toFixed(1)),
                                      root._cameraFps > 0 ? qsTr("%1 fps").arg(root._cameraFps.toFixed(0)) : "")
+        visible:    root.stream.decoding
     }
 
     LabelledLabel {
@@ -123,13 +125,14 @@ QGCGroupBox {
     LabelledLabel {
         label:      qsTr("Jitter")
         labelText:  qsTr("%1 ms").arg(root._stats.jitterMs.toFixed(1))
-        visible:    root._stats.hasRtpStats
+        visible:    root._stats.jitterMs >= 0
     }
 
+    // Only a jitter buffer tells them.
     LabelledLabel {
         label:      qsTr("Late / duplicate packets")
         labelText:  qsTr("%1 / %2").arg(root._stats.packetsLate).arg(root._stats.packetsDuplicate)
-        visible:    root._stats.hasRtpStats
+        visible:    root._stats.packetsLate >= 0
     }
 
     LabelledLabel {

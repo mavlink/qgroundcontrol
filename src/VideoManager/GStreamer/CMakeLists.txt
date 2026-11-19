@@ -9,7 +9,16 @@ endif()
 # Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the
 # rtsp-server lib out of release builds. It is also optional: a define is emitted below only
 # when the SDK actually ships it.
-set(_qgc_gst_components Base Gl GlPrototypes Video App Rtsp)
+# Pbutils (gstreamer-pbutils-1.0) names the plugin a stream is missing (PipelineSession).
+set(_qgc_gst_components
+    Base
+    Gl
+    GlPrototypes
+    Video
+    App
+    Rtsp
+    Pbutils
+)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND _qgc_gst_components RtspServer)
 endif()
@@ -69,6 +78,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND GStreamer_RtspServer_FOUND)
     endif()
 endif()
 
+if(ANDROID OR IOS)
+    # The app links only GStreamer::mobile, so keep the pbutils functions PipelineSession calls in it.
+    qgc_gst_mobile_keep_symbols(gst_is_missing_plugin_message gst_missing_plugin_message_get_description)
+endif()
+
 if(LINUX AND GStreamer_VERSION VERSION_LESS "1.28.0")
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER=1)
 endif()
@@ -78,9 +92,11 @@ target_include_directories(
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Runtime
+        ${CMAKE_CURRENT_SOURCE_DIR}/Source
         ${CMAKE_CURRENT_SOURCE_DIR}/Pipeline
         ${CMAKE_CURRENT_SOURCE_DIR}/Sink
         ${CMAKE_CURRENT_SOURCE_DIR}/Sink/gstqgc
+        ${CMAKE_CURRENT_SOURCE_DIR}/SelfTest
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/common
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
@@ -105,7 +121,10 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
-        # Runtime: initialization, environment, logging, helpers, the boot self-test and the VideoBackend.
+        # The VideoBackend: the app's way into everything below.
+        GStreamerVideoBackend.cc
+        GStreamerVideoBackend.h
+        # Runtime: initialization, environment, logging, decoder ranks, workarounds and helpers.
         Runtime/GStreamer.cc
         Runtime/GStreamer.h
         Runtime/GStreamerDecoderRankPlan.cc
@@ -116,48 +135,42 @@ target_sources(
         Runtime/GStreamerEnvironment.h
         Runtime/GStreamerHelpers.cc
         Runtime/GStreamerHelpers.h
+        Runtime/GStreamerLibavWorkaround.cc
+        Runtime/GStreamerLibavWorkaround.h
         Runtime/GStreamerLogging.cc
         Runtime/GStreamerLogging.h
-        Runtime/GStreamerRuntime.cc
-        Runtime/GStreamerRuntime.h
-        Runtime/GStreamerSelfTest.cc
-        Runtime/GStreamerSelfTest.h
-        Runtime/GStreamerSelfTestMedia.cc
-        Runtime/GStreamerSelfTestMedia.h
         Runtime/GStreamerUdpSrcWorkaround.cc
         Runtime/GStreamerUdpSrcWorkaround.h
-        Runtime/GStreamerVideoBackend.cc
-        Runtime/GStreamerVideoBackend.h
         Runtime/GstScoped.h
-        Runtime/PipelineDotDumper.cc
-        Runtime/PipelineDotDumper.h
-        # Pipeline: the receiver, its worker, sessions and branches, and the source bins.
+        # Source: the source bins, from a stream's URI to its parsed stream.
+        Source/GstH26xParameterSetGate.cc
+        Source/GstRtpPacketProbe.cc
+        Source/GstRtpPacketProbe.h
+        Source/GstRtspSource.cc
+        Source/GstRtspSource.h
+        Source/GstSourceFactory.cc
+        Source/GstSourceFactory.h
+        Source/RtpPacketCounter.cc
+        Source/RtpPacketCounter.h
+        # Pipeline: the receiver, its worker, sessions and branches.
         Pipeline/BranchContext.h
         Pipeline/DecodingBranch.cc
         Pipeline/DecodingBranch.h
         Pipeline/GstBusPump.cc
         Pipeline/GstBusPump.h
-        Pipeline/GstH26xParameterSetGate.cc
-        Pipeline/GstH26xParameterSetGate.h
         Pipeline/GstReceiverRequest.h
         Pipeline/GstReceiverWorker.cc
         Pipeline/GstReceiverWorker.h
-        Pipeline/GstRtspSource.cc
-        Pipeline/GstRtspSource.h
-        Pipeline/GstSourceFactory.cc
-        Pipeline/GstSourceFactory.h
-        Pipeline/GstSourceUri.cc
-        Pipeline/GstSourceUri.h
         Pipeline/GstVideoReceiver.cc
         Pipeline/GstVideoReceiver.h
+        Pipeline/PipelineDotDumper.cc
+        Pipeline/PipelineDotDumper.h
         Pipeline/PipelineSession.cc
         Pipeline/PipelineSession.h
         Pipeline/PipelineStatsProbe.cc
         Pipeline/PipelineStatsProbe.h
         Pipeline/RecordingBranch.cc
         Pipeline/RecordingBranch.h
-        Pipeline/RecordingFinalizer.cc
-        Pipeline/RecordingFinalizer.h
         Pipeline/StreamWatchdog.cc
         Pipeline/StreamWatchdog.h
         Pipeline/TeeBranchHead.cc
@@ -165,11 +178,16 @@ target_sources(
         # Sink: the Qt side of qgcqvideosink (the gstqgc plugin is in QGCGStreamer).
         Sink/QGCQVideoSinkController.cc
         Sink/QGCQVideoSinkController.h
+        # SelfTest: the boot self-test and its media pipelines.
+        SelfTest/GStreamerSelfTest.cc
+        SelfTest/GStreamerSelfTest.h
+        SelfTest/GStreamerSelfTestMedia.cc
+        SelfTest/GStreamerSelfTestMedia.h
 )
 
-# The samples GStreamer::selfTest() decodes and records, the 160x120 H.264 and 320x240 H.265 streams of Runtime/Media
+# The samples the boot self-test decodes and records, the 160x120 H.264 and 320x240 H.265 streams of SelfTest/Media
 # (generate.sh there), which the GStreamer tests send too.
-set(_qgc_gst_selftest_media "${CMAKE_CURRENT_SOURCE_DIR}/Runtime/Media")
+set(_qgc_gst_selftest_media "${CMAKE_CURRENT_SOURCE_DIR}/SelfTest/Media")
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} "GStreamerSelfTestMedia_res"
     PREFIX "/gstreamer/selftest"
@@ -181,12 +199,23 @@ qt_add_resources(
 
 # Its file-scope `using namespace GStreamer;` would leak into later sources of a unity unit.
 set_source_files_properties(
-    Pipeline/GstSourceFactory.cc
+    Source/GstSourceFactory.cc
     TARGET_DIRECTORY
     ${CMAKE_PROJECT_NAME}
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
 )
+
+# avdec_h265 of one FFmpeg release can deadlock: the workaround is told which libavcodec the libav plugin has.
+if(GStreamer_LIBAVCODEC_VERSION)
+    set_source_files_properties(
+        Runtime/GStreamerLibavWorkaround.cc
+        TARGET_DIRECTORY
+        ${CMAKE_PROJECT_NAME}
+        PROPERTIES
+            COMPILE_DEFINITIONS QGC_GST_LIBAVCODEC_VERSION="${GStreamer_LIBAVCODEC_VERSION}"
+    )
+endif()
 
 # The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.

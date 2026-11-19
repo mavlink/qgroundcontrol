@@ -83,6 +83,8 @@ public:
     QGCVideoStreamInfo *thermalStreamInstance() override { return nullptr; }
     int currentStream() const override { return 0; }
     void setCurrentStream(int /*stream*/) override {}
+
+    void setExtraStreams(const QList<quint8>& /*streamIds*/) override {}
     bool autoStream() const override { return false; }
     quint32 recordTime() const override;
     QString recordTimeStr() const override;

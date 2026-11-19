@@ -115,7 +115,6 @@ AnalyzePage {
             QGCListView {
                 id: recordingListView
 
-                objectName:             "videoRecordingsList"
                 model:                  recordingList.recordings
                 spacing:                root._margin / 2
                 Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 32
@@ -280,7 +279,6 @@ AnalyzePage {
                     Layout.fillWidth:   true
 
                     QGCButton {
-                        objectName: "videoRecordingsPlayButton"
                         text:       player.playbackState === MediaPlayer.PlayingState ? qsTr("Pause") : qsTr("Play")
                         onClicked:  page._togglePlayback()
                     }
@@ -310,7 +308,6 @@ AnalyzePage {
                     QGCComboBox {
                         id: speedComboBox
 
-                        objectName:     "videoRecordingsSpeedComboBox"
                         textRole:       "text"
                         valueRole:      "value"
                         currentIndex:   1

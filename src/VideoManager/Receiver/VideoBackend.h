@@ -9,19 +9,20 @@
 
 #include "VideoDecoderOptions.h"
 
-class Fact;
 class QObject;
 class QQuickWindow;
 class VideoReceiver;
 
 /// The network video backend this build has, behind which callers (VideoManager, VideoSettings, QGCCorePlugin, the
 /// platform startup code) never name a concrete one: GStreamer, or, without it, Qt Multimedia's player
-/// (QtMultimediaVideoReceiver), which a GStreamer build also offers through VideoSettings::videoBackend.
+/// (QtMultimediaVideoReceiver), which a GStreamer build also offers through VideoSettings::videoBackend and falls back
+/// to when GStreamer fails to initialize.
 class VideoBackend
 {
 public:
-    /// Outcome of prepareEnvironment(), threaded into initialize() so backend setup validity is passed as a value
-    /// rather than stashed in process-global state.
+    /// Outcome of prepareEnvironment(): whether the backend's runtime paths validated, with an error to log when they
+    /// didn't. Threaded into initialize() so backend setup validity is passed as a value rather than stashed in
+    /// process-global state.
     struct EnvPrepResult
     {
         bool ok = true;
@@ -30,6 +31,9 @@ public:
 
     virtual ~VideoBackend() = default;
 
+    VideoBackend(const VideoBackend&) = delete;
+    VideoBackend& operator=(const VideoBackend&) = delete;
+
     static VideoBackend& instance();
 
     /// True when the backend is skipped under unit tests (opt back in with QGC_TEST_ENABLE_GSTREAMER).
@@ -37,9 +41,6 @@ public:
 
     /// The persisted gstDebugLevel setting, read before the settings system exists; nullopt when it was never set.
     static std::optional<int> persistedDebugLevel();
-
-    /// Routes changes of @p fact (AppSettings::gstDebugLevel) to setDebugLevel() while @p context lives.
-    static void bindDebugLevelFact(Fact* fact, QObject* context);
 
     /// What the backend offers.
     struct Capabilities
@@ -67,6 +68,7 @@ public:
 
     virtual Capabilities capabilities() const = 0;
 
+    /// A receiver that can play: once initialize() has failed, one that needs no initialization.
     virtual VideoReceiver* createReceiver(QObject* parent) = 0;
 
     // The rest is setup and tuning a backend that needs none leaves alone.
@@ -80,13 +82,16 @@ public:
 
     virtual bool initialize([[maybe_unused]] const InitParams& params) { return true; }
 
+    /// What to tell the user once initialize() has failed: what failed, and what plays the streams instead.
+    virtual QString initFailureMessage() const;
+
     /// The boot test's check that the initialized backend decodes and records.
     virtual bool selfTest() { return true; }
 
-    virtual void applyDecoderPriorities([[maybe_unused]] int rawOption) {}
+    virtual void applyDecoderPriorities([[maybe_unused]] VideoDecoderOption option) {}
 
     /// The hardware decoder families present, as forceVideoDecoder values (never Default or Software).
-    virtual QList<VideoDecoder::Options> availableDecoderFamilies() { return {}; }
+    virtual QList<VideoDecoderOption> availableDecoderFamilies() { return {}; }
 
     virtual void setDebugLevel([[maybe_unused]] int level) {}
 
@@ -97,4 +102,7 @@ public:
     virtual void setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
                                     [[maybe_unused]] void* classLoader)
     {}
+
+protected:
+    VideoBackend() = default;
 };

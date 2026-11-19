@@ -1,0 +1,120 @@
+#include "GStreamerVideoBackend.h"
+
+#include <QtCore/QCoreApplication>
+
+#include "GStreamer.h"
+#include "GStreamerDecoderRanks.h"
+#include "GStreamerEnvironment.h"
+#include "GStreamerSelfTest.h"
+#include "GstVideoReceiver.h"
+#include "HwBuffers/HwBuffers.h"
+#include "QGCLoggingCategory.h"
+#include "QtMultimediaVideoReceiver.h"
+
+QGC_LOGGING_CATEGORY(GStreamerVideoBackendLog, "Video.GStreamer.VideoBackend")
+
+#ifdef Q_OS_ANDROID
+#include <jni.h>
+
+// GStreamer's Android plugins (e.g. androidmedia) look up the JNI state in libgstreamer_android.so, which keeps what
+// this sets (Platform/gst_android_jni.c).
+extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
+#endif
+
+void GStreamerVideoBackend::configureQtGraphics(bool softwareRendering)
+{
+    HwBuffers::configureQtGraphics(softwareRendering);
+}
+
+VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
+{
+#ifdef QGC_HAS_ANY_GPU_PATH
+    constexpr bool gpuVideoPath = true;
+#else
+    constexpr bool gpuVideoPath = false;
+#endif
+    return {.streaming = true, .pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
+}
+
+VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
+{
+    // GStreamer's setup isn't retried, so nothing plays through it in this process any more.
+    if (state() == State::Failed) {
+        return new QtMultimediaVideoReceiver(parent);
+    }
+    return new GstVideoReceiver(parent);
+}
+
+VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
+{
+    if (state() != State::Unprepared) {
+        qCWarning(GStreamerVideoBackendLog) << "Environment prepared again after GStreamer setup started";
+    }
+    EnvPrepResult result = GStreamer::Environment::prepareEnvironment();
+    State expected = State::Unprepared;
+    (void) _state.compare_exchange_strong(expected, State::Prepared, std::memory_order_acq_rel);
+    return result;
+}
+
+bool GStreamerVideoBackend::initialize(const InitParams& params)
+{
+    switch (state()) {
+        case State::Initialized:
+            return true;
+        case State::Failed:
+            return false;
+        case State::Unprepared:
+            qCWarning(GStreamerVideoBackendLog) << "Initializing GStreamer without preparing its environment";
+            break;
+        case State::Prepared:
+            break;
+    }
+    const bool initialized = GStreamer::initialize(params);
+    _state.store(initialized ? State::Initialized : State::Failed, std::memory_order_release);
+    return initialized;
+}
+
+QString GStreamerVideoBackend::initFailureMessage() const
+{
+    return QCoreApplication::translate("GStreamerVideoBackend",
+                                       "GStreamer failed to initialize, so video streams are played by Qt Multimedia "
+                                       "instead. The application log has the details.");
+}
+
+bool GStreamerVideoBackend::selfTest()
+{
+    if (state() != State::Initialized) {
+        qCWarning(GStreamerVideoBackendLog) << "GStreamer self-test skipped: GStreamer isn't initialized";
+        return false;
+    }
+    return GStreamer::SelfTest::run(GStreamer::Environment::bundledRuntime());
+}
+
+void GStreamerVideoBackend::applyDecoderPriorities(VideoDecoderOption option)
+{
+    GStreamer::setCodecPriorities(option);
+}
+
+QList<VideoDecoderOption> GStreamerVideoBackend::availableDecoderFamilies()
+{
+    return GStreamer::availableDecoderFamilies();
+}
+
+void GStreamerVideoBackend::setDebugLevel(int level)
+{
+    GStreamer::setDebugLevel(level);
+}
+
+void GStreamerVideoBackend::onMainWindowReady(QQuickWindow* window)
+{
+    GStreamer::onMainWindowReady(window);
+}
+
+void GStreamerVideoBackend::setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
+                                               [[maybe_unused]] void* classLoader)
+{
+#ifdef Q_OS_ANDROID
+    qgc_gst_android_set_jni_state(static_cast<JavaVM*>(javaVm), static_cast<jobject>(appContext),
+                                  static_cast<jobject>(classLoader));
+#endif
+}

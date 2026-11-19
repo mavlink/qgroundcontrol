@@ -22,7 +22,8 @@ if ($Phase -eq 'Install') {
     $settingsMarker = Join-Path $settingsDir "installer-upgrade-test.txt"
     New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
     Set-Content -Path $settingsMarker -Value "preserve during upgrade"
-    Write-Host "Upgrading in place: $oldInstallDir"
+    $installedFiles = (Get-ChildItem -Path $oldInstallDir -Recurse -File | Measure-Object).Count
+    Write-Host "Upgrading in place: $oldInstallDir ($installedFiles files)"
     $upgrade = Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$oldInstallDir" -Wait -NoNewWindow -PassThru
     if ($upgrade.ExitCode -ne 0) {
       Write-Error "Upgrade failed with exit code $($upgrade.ExitCode)"
@@ -30,6 +31,13 @@ if ($Phase -eq 'Install') {
     }
     if (-not (Test-Path $oldBinary)) {
       Write-Error "QGroundControl.exe not found at $oldBinary after upgrade"
+      exit 1
+    }
+    # Every file, not only the executable: a previous version's uninstaller that runs after the new files are
+    # extracted deletes the ones it knows by name.
+    $upgradedFiles = (Get-ChildItem -Path $oldInstallDir -Recurse -File | Measure-Object).Count
+    if ($upgradedFiles -ne $installedFiles) {
+      Write-Error "In-place upgrade left $upgradedFiles of $installedFiles files in $oldInstallDir"
       exit 1
     }
     Write-Host "Upgrading into a different directory: $installDir"

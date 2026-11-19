@@ -20,7 +20,7 @@ namespace GstHw {
 /// Matches GST_VIDEO_MAX_PLANES (gst-video pins it at 4); single source of truth for every per-platform buffer.
 constexpr int kMaxPlanes = 4;
 
-/// One-shot warning flags per failure cause; paths with extra causes (D3D, IOSurface) derive and add members.
+/// One-shot warning flags per failure cause; paths with extra causes (DMABuf, D3D, IOSurface) derive and add members.
 struct MapDiagnostics
 {
     std::atomic<bool> loggedFirstSuccess{false};
@@ -29,7 +29,20 @@ struct MapDiagnostics
     std::atomic<bool> loggedBadBackend{false};
     std::atomic<bool> loggedNullBuffer{false};
     std::atomic<bool> loggedTextureCreateFail{false};
+
+    /// Re-arms every flag, so a recreated device or scene graph reports its failures again. A deriving struct's
+    /// reset() calls this and re-arms its own.
+    void reset() noexcept
+    {
+        for (std::atomic<bool>* flag : {&loggedFirstSuccess, &loggedNullSample, &loggedWrongThread, &loggedBadBackend,
+                                        &loggedNullBuffer, &loggedTextureCreateFail}) {
+            flag->store(false, std::memory_order_relaxed);
+        }
+    }
 };
+
+// A flag added without its line in reset() would stay latched for the process.
+static_assert(sizeof(MapDiagnostics) == 6 * sizeof(std::atomic<bool>), "MapDiagnostics::reset() must list every flag");
 
 /// True when a native texture of @p textureSize holds @p picture in its top-left corner with padding around it:
 /// decoders pad their surfaces to their alignment without crop meta. @p evenSizes: the texture format (4:2:0) only has
@@ -57,8 +70,7 @@ QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
 class GstHwVideoBuffer : public QHwVideoBuffer
 {
 public:
-    GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
-                     QVideoFrameFormat format);
+    GstHwVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, QVideoFrameFormat format);
     ~GstHwVideoBuffer() override;
 
     QVideoFrameFormat format() const override { return _format; }

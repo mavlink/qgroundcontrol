@@ -13,6 +13,7 @@ qt_add_qml_module(
     QML_FILES
         CameraPinchZoom.qml
         NoVideoPlaceholder.qml
+        TelemetryOverlayText.qml
         ThermalVideoOverlay.qml
         UVCCameraFormatComboBox.qml
         UVCControlSlider.qml
@@ -22,11 +23,14 @@ qt_add_qml_module(
         VideoDecodingSettingsGroup.qml
         VideoDisplaySettingsGroup.qml
         VideoGridLines.qml
+        VideoSourceStats.qml
         VideoStatusLabel.qml
         VideoStreamFormat.js
         VideoStreamOutput.qml
         VideoStreamSettingsGroup.qml
         VideoStreamStatsGroup.qml
+        VideoTile.qml
+        VideoTiles.qml
         VideoView.qml
     NO_PLUGIN
 )

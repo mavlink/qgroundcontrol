@@ -22,6 +22,17 @@ on:
       - 'tools/**'
       - 'deploy/**'
       - 'android/build.gradle'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialManager.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialPortInfo.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialPortName.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialReader.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResourceError.java'
+      - 'android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResult.java'
+      - 'android/src/test/java/org/mavlink/qgroundcontrol/serial/QGCUsbSerialLibraryContractTest.java'
+      - 'src/Android/Serial/AndroidSerialJni.cc'
+      - 'src/Android/Serial/AndroidSerialJni.h'
+      - 'src/Android/Serial/AndroidSerialPort.h'
+      - 'src/Android/Serial/AndroidSerialPortInfo.cc'
       - 'src/Settings/**'
       - 'src/AppSettings/pages/**'
       - 'src/**/*.VehicleConfig.json'
@@ -79,6 +90,10 @@ jobs:
             justfile
             pyrightconfig.json
             ruff.toml
+            src/Android/Serial/AndroidSerialJni.cc
+            src/Android/Serial/AndroidSerialJni.h
+            src/Android/Serial/AndroidSerialPort.h
+            src/Android/Serial/AndroidSerialPortInfo.cc
             src/AppSettings/pages
             src/Settings
             src/**/*.VehicleConfig.json
@@ -90,6 +105,13 @@ jobs:
             tools
             deploy
             android/build.gradle
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialManager.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialPortInfo.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialPortName.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialReader.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResourceError.java
+            android/src/org/mavlink/qgroundcontrol/serial/QGCUsbSerialResult.java
+            android/src/test/java/org/mavlink/qgroundcontrol/serial/QGCUsbSerialLibraryContractTest.java
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

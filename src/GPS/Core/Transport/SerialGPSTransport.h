@@ -41,9 +41,9 @@ protected:
 
 private:
     /// Write waits run in slices this long to observe a stop: waitForBytesWritten() blocks on the port alone, and an
-    /// event wait cannot replace it, as QSerialPort hands a block to the device without a signal (its bytesWritten()
-    /// reports it only once the next block starts) and Android's backend sends queued writes under its own timeout.
-    /// Read and open waits dispatch the port's events and wake at once.
+    /// event wait cannot replace it, as desktop QSerialPort hands a block to the device without a signal (its
+    /// bytesWritten() reports it only once the next block starts). Read and open waits dispatch the port's events
+    /// and wake at once.
     static constexpr std::chrono::milliseconds CANCELLATION_POLL{50};
     static constexpr std::chrono::milliseconds OPEN_RETRY{500};
 

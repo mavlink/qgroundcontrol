@@ -17,6 +17,7 @@
 
 class GstContextBridgeBase;
 class GstHwVideoBuffer;
+class QRhi;
 
 /// Everything the factory and the HwBuffers facade know about one compiled GPU path. Each backend defines its
 /// descriptor in its own translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
@@ -25,11 +26,13 @@ struct HwPathDescriptor
     /// Path the imported buffers report. CUDA reports DmaBuf: it imports through the DMABuf importer.
     HwVideoBufferPath path = HwVideoBufferPath::None;
 
-    /// True when this path imports @p mem's memory; plane 0's memory is the dispatch key. Streaming thread.
-    bool (*matches)(GstMemory* mem, const HwVideoBufferContext& context) = nullptr;
+    /// True when this path imports @p mem's kind of memory; plane 0's memory is the dispatch key. Decided by the memory
+    /// alone, so a miss holds for every frame of that allocator. Streaming thread.
+    bool (*matches)(GstMemory* mem) = nullptr;
 
-    /// Optional. False sends a matched frame to the CPU without trying later paths; records why.
-    bool (*admits)() = nullptr;
+    /// Optional. False when the path can't import @p mem now (no display yet, a latched failure, a foreign context):
+    /// the matched frame goes to the CPU without trying later paths, and a later frame is asked again. Records why.
+    bool (*admits)(GstMemory* mem, const HwVideoBufferContext& context) = nullptr;
 
     /// Wraps @p sample for import; nullptr when it can't be imported.
     std::unique_ptr<GstHwVideoBuffer> (*construct)(GstSample* sample, const GstVideoInfo& info,
@@ -39,6 +42,10 @@ struct HwPathDescriptor
     /// Optional. Runs for each GPU-enabled HwVideoBufferContext a sink builds at start: fills this path's fields, or
     /// only logs once whether the path can import (DMABuf, whose display the sink sets per frame).
     void (*prepareContext)(HwVideoBufferContext& context) = nullptr;
+
+    /// Optional. Runs on the render thread when the scene graph's QRhi is published, before the streaming threads
+    /// see its backend: learns what its device imports.
+    void (*probeDevice)(QRhi& rhi) = nullptr;
 
     /// Optional. Drops cached native imports (scene-graph teardown, window swap, device loss).
     void (*resetCaches)() = nullptr;

@@ -22,7 +22,7 @@ enum class HwFallbackReason
     MapFailed,
     VulkanNoSync,
     ImportUnsupported,
-    _Count,
+    Count,
 };
 
 /// Per-path event counts.
@@ -37,11 +37,10 @@ enum class Counter
     /// DMABuf wait on the producer's write fences (poll() on the dma-buf fds) timed out or failed; the frame was
     /// imported without a producer barrier.
     ProducerFenceTimeouts,
-    _Count,
+    Count,
 };
 
 void record(HwVideoBufferPath path, Counter counter) noexcept;
-quint64 peek(HwVideoBufferPath path, Counter counter) noexcept;
 
 /// Per-path mapTextures() wall-time, fed into an EWMA; peek returns the smoothed value in microseconds.
 void recordMapDuration(HwVideoBufferPath path, qint64 nsecs) noexcept;
@@ -69,13 +68,12 @@ private:
 
 /// Per-(path,reason) fallback accounting; lets a bug report show *why* a path demoted to CPU.
 void recordFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
-quint64 peekFallbackReason(HwVideoBufferPath attemptedPath, HwFallbackReason reason) noexcept;
 
 /// Every counter and fallback reason at one instant; a reader's baseline for counts since then.
 struct Snapshot
 {
-    std::array<std::array<quint64, std::size_t(Counter::_Count)>, GstHw::kPathCount> counters{};
-    std::array<std::array<quint64, std::size_t(HwFallbackReason::_Count)>, GstHw::kPathCount> fallbackReasons{};
+    std::array<std::array<quint64, std::size_t(Counter::Count)>, GstHw::kPathCount> counters{};
+    std::array<std::array<quint64, std::size_t(HwFallbackReason::Count)>, GstHw::kPathCount> fallbackReasons{};
 
     quint64 count(HwVideoBufferPath path, Counter counter) const noexcept
     {

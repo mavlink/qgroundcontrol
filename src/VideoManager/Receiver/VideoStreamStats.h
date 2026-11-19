@@ -9,41 +9,49 @@
 /// second while it streams.
 ///
 /// A field that doesn't apply to the stream is -1, which tells it apart from a measured zero: the RTP fields for a
-/// stream without an RTP jitter buffer (MPEG-TS, or UDP RTP in low-latency mode), latencyMs while the pipeline
-/// can't tell its latency, keyframeIntervalMs until two keyframes arrived and the recording fields while not recording.
-/// Strings are empty until known.
+/// stream whose RTP packets nothing counts (MPEG-TS, Qt Multimedia), those only an RTP jitter buffer measures (late,
+/// duplicate and retransmitted packets) for a stream without one (UDP RTP in low-latency mode), latencyMs while the
+/// pipeline can't tell its latency, keyframeIntervalMs until two keyframes arrived and the recording fields while not
+/// recording. Strings are empty until known.
 struct VideoStreamStats
 {
     Q_GADGET
     QML_VALUE_TYPE(videoStreamStats)
-    Q_PROPERTY(bool valid MEMBER valid)
-    Q_PROPERTY(double fps MEMBER fps)
-    Q_PROPERTY(double bitrateKbps MEMBER bitrateKbps)
-    Q_PROPERTY(qint64 framesDropped MEMBER framesDropped)
-    Q_PROPERTY(bool hasRtpStats READ hasRtpStats)
-    Q_PROPERTY(qint64 packetsLost MEMBER packetsLost)
-    Q_PROPERTY(double lossPercent MEMBER lossPercent)
-    Q_PROPERTY(double jitterMs MEMBER jitterMs)
-    Q_PROPERTY(double latencyMs MEMBER latencyMs)
-    Q_PROPERTY(QString decoder MEMBER decoder)
-    Q_PROPERTY(bool hardwareDecoder MEMBER hardwareDecoder)
-    Q_PROPERTY(QString gpuPath MEMBER gpuPath)
-    Q_PROPERTY(QString codec MEMBER codec)
-    Q_PROPERTY(double droppedFps MEMBER droppedFps)
-    Q_PROPERTY(qint64 gpuFallbacks MEMBER gpuFallbacks)
-    Q_PROPERTY(qint64 decoderRestarts MEMBER decoderRestarts)
-    Q_PROPERTY(double keyframeIntervalMs MEMBER keyframeIntervalMs)
-    Q_PROPERTY(qint64 packetsLate MEMBER packetsLate)
-    Q_PROPERTY(qint64 packetsDuplicate MEMBER packetsDuplicate)
-    Q_PROPERTY(qint64 rtxRequested MEMBER rtxRequested)
-    Q_PROPERTY(qint64 rtxRecovered MEMBER rtxRecovered)
-    Q_PROPERTY(qint64 uptimeMs MEMBER uptimeMs)
-    Q_PROPERTY(int reconnects MEMBER reconnects)
-    Q_PROPERTY(qint64 recordingMs MEMBER recordingMs)
-    Q_PROPERTY(qint64 recordingBytes MEMBER recordingBytes)
+    Q_PROPERTY(bool valid MEMBER valid FINAL)
+    Q_PROPERTY(double fps MEMBER fps FINAL)
+    Q_PROPERTY(double bitrateKbps MEMBER bitrateKbps FINAL)
+    Q_PROPERTY(qint64 framesDropped MEMBER framesDropped FINAL)
+    Q_PROPERTY(bool hasRtpStats READ hasRtpStats FINAL)
+    Q_PROPERTY(qint64 packetsLost MEMBER packetsLost FINAL)
+    Q_PROPERTY(double lossPercent MEMBER lossPercent FINAL)
+    Q_PROPERTY(double jitterMs MEMBER jitterMs FINAL)
+    Q_PROPERTY(double latencyMs MEMBER latencyMs FINAL)
+    Q_PROPERTY(QString decoder MEMBER decoder FINAL)
+    Q_PROPERTY(bool hardwareDecoder MEMBER hardwareDecoder FINAL)
+    Q_PROPERTY(QString gpuPath MEMBER gpuPath FINAL)
+    Q_PROPERTY(QString codec MEMBER codec FINAL)
+    Q_PROPERTY(double droppedFps MEMBER droppedFps FINAL)
+    Q_PROPERTY(qint64 gpuFallbacks MEMBER gpuFallbacks FINAL)
+    Q_PROPERTY(qint64 decoderRestarts MEMBER decoderRestarts FINAL)
+    Q_PROPERTY(double keyframeIntervalMs MEMBER keyframeIntervalMs FINAL)
+    Q_PROPERTY(qint64 packetsLate MEMBER packetsLate FINAL)
+    Q_PROPERTY(qint64 packetsDuplicate MEMBER packetsDuplicate FINAL)
+    Q_PROPERTY(qint64 rtxRequested MEMBER rtxRequested FINAL)
+    Q_PROPERTY(qint64 rtxRecovered MEMBER rtxRecovered FINAL)
+    Q_PROPERTY(qint64 uptimeMs MEMBER uptimeMs FINAL)
+    Q_PROPERTY(int reconnects MEMBER reconnects FINAL)
+    Q_PROPERTY(qint64 recordingMs MEMBER recordingMs FINAL)
+    Q_PROPERTY(qint64 recordingBytes MEMBER recordingBytes FINAL)
 
 public:
     bool hasRtpStats() const { return packetsLost >= 0; }
+
+    /// The stream is measured and falls short: it loses packets or drops frames now, or shows under three quarters of
+    /// @p cameraFps, the frame rate its camera is set up for; 0 when that isn't known.
+    bool degraded(double cameraFps) const
+    {
+        return valid && ((lossPercent > 0) || (droppedFps > 0) || ((cameraFps > 0) && (fps < (cameraFps * 0.75))));
+    }
 
     bool operator==(const VideoStreamStats&) const = default;
 
@@ -61,7 +69,7 @@ public:
     qint64 packetsLost = -1;
     /// Share of the RTP packets due in the last interval that were lost.
     double lossPercent = -1.0;
-    /// RTP interarrival jitter, averaged by the jitter buffer.
+    /// RTP interarrival jitter (RFC 3550), averaged over the last packets.
     double jitterMs = -1.0;
     /// The pipeline's minimum latency, the playout delay it adds on top of the network's.
     double latencyMs = -1.0;

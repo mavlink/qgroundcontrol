@@ -14,6 +14,19 @@ _qgc_gst_header_version("${_sandbox}/missing" _version)
 qgc_test_assert_streq("no header" "" "${_version}")
 qgc_test_pass("SDK version")
 
+# As FFmpeg 5.1 and later write them: the major version in a header of its own.
+file(WRITE "${_sandbox}/include/libavcodec/version_major.h" "#define LIBAVCODEC_VERSION_MAJOR  61\n")
+file(WRITE "${_sandbox}/include/libavcodec/version.h"
+     "#include \"version_major.h\"\n#define LIBAVCODEC_VERSION_MINOR  19\n#define LIBAVCODEC_VERSION_MICRO 100\n"
+     "#define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \\\n"
+)
+_qgc_gst_libavcodec_header_version("${_sandbox}/include" _version)
+qgc_test_assert_streq("libavcodec header version" "61.19.100" "${_version}")
+file(REMOVE "${_sandbox}/include/libavcodec/version_major.h")
+_qgc_gst_libavcodec_header_version("${_sandbox}/include" _version)
+qgc_test_assert_streq("libavcodec without its major version" "" "${_version}")
+qgc_test_pass("libavcodec version")
+
 # cmake-lint: disable=C0103
 set(QGC_GST_RESOLVED_PACKAGES
     "https://example.invalid/sdk.tar.xz|0123"
@@ -53,7 +66,7 @@ set(_stale
     PC_GStreamer_Core_INCLUDE_DIRS
     pkgcfg_lib_PC_GStreamer_Core_gstreamer-1.0
     pkgcfg_lib_PC_GStreamer_plugin_coreelements_gstcoreelements
-    "QGC_GST_HAS_VIDEO_ORIENTATION_META"
+    QGC_GST_HAS_DMABUF
     QGC_GST_HAS_D3D11
 )
 set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT

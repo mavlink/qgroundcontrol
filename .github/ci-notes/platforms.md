@@ -98,7 +98,10 @@ How CI runs, retries, and reports the application tests is described in
 - **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
   GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
   elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
-  ([details](../../src/VideoManager/GStreamer/README.md#boot-self-test)).
+  ([details](../../src/VideoManager/GStreamer/README.md#boot-self-test)). On Android it also runs the USB
+  serial self-test (`AndroidSerial::selfTest()`): Java has every method and field that C++ binds, passes
+  arguments that C++ gave it to each of its native callbacks, and answers calls about a port that does
+  not exist.
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
@@ -115,10 +118,10 @@ How CI runs, retries, and reports the application tests is described in
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
   (`run-unit-tests`' `tests-regex`
-  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan)`, Unit and
-  Integration), with the Qt Multimedia receiver, its recorder, the USB camera classes and the reconnect and
-  recording-part policies both receivers share, so the script tests' Windows-only branches (8.3 short paths, SDK
-  architecture) run on Windows. The build tree finds the
+  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan|SharedVideoFrame)`,
+  Unit and Integration), with the Qt Multimedia receiver, its recorder and shared frame, the USB camera classes and
+  the reconnect and recording-part policies both receivers share, so the script tests' Windows-only branches (8.3
+  short paths, SDK architecture) run on Windows. The build tree finds the
   SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
   and stages the shipped plugins plus the sources and encoders the tests send streams with
   (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
@@ -161,7 +164,8 @@ How CI runs, retries, and reports the application tests is described in
 - **iOS**: `ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle, installing
   Qt's separate `ios_device` and `ios_simulator_x86_64` SDKs. The simulator stays on x86_64 because
   Qt's bundled FFmpeg has no arm64 simulator slice. Simulator builds run `ios_boot_test.py`, which
-  launches with `--simple-boot-test` and requires QGC's success marker. Cold boots have a
+  launches with `--simple-boot-test`, logging QGC's startup and its GStreamer self-test, and requires QGC's
+  success marker. Cold boots have a
   600-second deadline and at most two fresh-device attempts (`--boot-timeout` 1–900 s,
   `--boot-attempts` 1–2). Boot and installation failures, and a launch that times out before QGC
   prints anything, are retried on a fresh device; QGC failures are not. Install and launch each
@@ -221,7 +225,8 @@ How CI runs, retries, and reports the application tests is described in
   launching it (QGC otherwise opens the system settings over its window and the boot test never
   completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
   or a running app without the marker fails, and the failure annotation quotes the
-  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. After the marker, main()
+  `Simple boot test failed`, `Video.GStreamer.SelfTest` and `Android.AndroidSerial.SelfTest` logcat
+  lines. After the marker, main()
   returns, Android destroys the activity and Qt calls `exit()`; the script watches logcat until the
   app's process (the marker line's pid) exits, for up to 30 s (`--exit-timeout`; a process still
   running then only warns). A crash of that process (its `Fatal signal`, `FORTIFY` or
@@ -234,6 +239,8 @@ How CI runs, retries, and reports the application tests is described in
   the rewritten `AndroidManifest.xml`, keeps the file but not the line), or Gradle's errors when
   lint wrote no report; an Android Lint job-summary section follows the Build section, and a
   failure uploads the HTML and XML reports and the Gradle log for seven days, linked below it.
+  The same leg then runs the Java unit tests in `android/src/test` (`gradlew testDebugUnitTest`; AGP adds
+  unit tests only to the debug build type).
   Master pushes also build a signed multi-ABI App Bundle on the primary leg through `cmake-build`
   (`target: aab`, logged to `qgc-aab-build.log` with its own "Build (aab)" section and failure
   annotations; it saves no build caches), uploaded as its own attested GitHub artifact

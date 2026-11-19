@@ -14,6 +14,12 @@ inline uint64_t nowUs()
             .count());
 }
 
+inline int64_t nowMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+
 /// Age of @a timestamp at @a now, both in the same unit; empty for a missing or future timestamp.
 template <typename Rep, typename Period>
 constexpr std::optional<std::chrono::duration<Rep, Period>> age(std::chrono::duration<Rep, Period> timestamp,

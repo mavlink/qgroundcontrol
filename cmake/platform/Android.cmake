@@ -14,8 +14,9 @@ endif()
 if(DEFINED QGC_CONFIG_NDK_FULL_VERSION)
     string(REGEX MATCH "^([0-9]+\\.[0-9]+)" _ndk_major_minor "${QGC_CONFIG_NDK_FULL_VERSION}")
     if(_ndk_major_minor AND NOT CMAKE_ANDROID_NDK_VERSION VERSION_GREATER_EQUAL "${_ndk_major_minor}")
-        message(FATAL_ERROR "QGC: NDK ${CMAKE_ANDROID_NDK_VERSION} is too old. Qt ${Qt6_VERSION} requires NDK "
-                            "${_ndk_major_minor}+ (${QGC_CONFIG_NDK_VERSION})"
+        message(
+            FATAL_ERROR "QGC: NDK ${CMAKE_ANDROID_NDK_VERSION} is too old. Qt ${Qt6_VERSION} requires NDK "
+                        "${_ndk_major_minor}+ (${QGC_CONFIG_NDK_VERSION})"
         )
     endif()
     unset(_ndk_major_minor)
@@ -70,8 +71,9 @@ if(NOT ANDROID_DEV_VERSION MATCHES "^[0-9]+$")
     set(ANDROID_DEV_VERSION 0)
 endif()
 if(ANDROID_DEV_VERSION GREATER 999)
-    message(WARNING "QGC: Android dev version ${ANDROID_DEV_VERSION} exceeds 999; clamping. "
-                    "Cut a release tag to reset the counter."
+    message(
+        WARNING "QGC: Android dev version ${ANDROID_DEV_VERSION} exceeds 999; clamping. "
+                "Cut a release tag to reset the counter."
     )
     set(ANDROID_DEV_VERSION 999)
 endif()
@@ -83,9 +85,9 @@ elseif(_qgc_dev_len EQUAL 2)
 endif()
 
 # Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev)
-string(CONCAT ANDROID_VERSION_CODE
-              "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}"
-              "${ANDROID_PATCH_VERSION}${ANDROID_DEV_VERSION}"
+string(
+    CONCAT ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}"
+           "${ANDROID_PATCH_VERSION}${ANDROID_DEV_VERSION}"
 )
 message(STATUS "QGC: Android version code: ${ANDROID_VERSION_CODE}")
 
@@ -103,21 +105,22 @@ set(QGC_ANDROID_EXTRA_ASSETS_DIR "${CMAKE_BINARY_DIR}/extra_assets")
 
 set_target_properties(
     ${CMAKE_PROJECT_NAME}
-    PROPERTIES # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
-               # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
-               QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
-               QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
-               QT_ANDROID_COMPILE_SDK_VERSION ${QGC_QT_ANDROID_COMPILE_SDK_VERSION}
-               QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
-               QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
-               QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
-               QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
-               QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
-               QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
-               QT_ANDROID_LEGACY_PACKAGING $<BOOL:${QGC_ENABLE_ASAN}>
-               QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
-               # QT_QML_IMPORT_PATH
-               # QT_ANDROID_SYSTEM_LIBS_PREFIX
+    PROPERTIES
+        # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
+        # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
+        QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
+        QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
+        QT_ANDROID_COMPILE_SDK_VERSION ${QGC_QT_ANDROID_COMPILE_SDK_VERSION}
+        QT_ANDROID_PACKAGE_NAME "${QGC_ANDROID_PACKAGE_NAME}"
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${QGC_ANDROID_PACKAGE_SOURCE_DIR}"
+        QT_ANDROID_VERSION_NAME "${CMAKE_PROJECT_VERSION}"
+        QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
+        QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
+        QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
+        QT_ANDROID_LEGACY_PACKAGING $<BOOL:${QGC_ENABLE_ASAN}>
+        QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
+        # QT_QML_IMPORT_PATH
+        # QT_ANDROID_SYSTEM_LIBS_PREFIX
 )
 
 # set(QT_ANDROID_POST_BUILD_GRADLE_CLEANUP ON)
@@ -164,11 +167,11 @@ qt_add_android_permission(
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.CHANGE_WIFI_MULTICAST_STATE)
 
 # Needed for read/write to SD Card Path in AppSettings
-qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.WRITE_EXTERNAL_STORAGE ATTRIBUTES maxSdkVersion
-                          32
+qt_add_android_permission(
+    ${CMAKE_PROJECT_NAME} NAME android.permission.WRITE_EXTERNAL_STORAGE ATTRIBUTES maxSdkVersion 32
 )
-qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.READ_EXTERNAL_STORAGE ATTRIBUTES maxSdkVersion
-                          33
+qt_add_android_permission(
+    ${CMAKE_PROJECT_NAME} NAME android.permission.READ_EXTERNAL_STORAGE ATTRIBUTES maxSdkVersion 33
 )
 
 # All files access on Android 11+ so the save path can live at the SD card root.
@@ -181,6 +184,12 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.VIBRATE)
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.INTERNET)
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.WAKE_LOCK)
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_NETWORK_STATE)
+
+# QGCForegroundService keeps the app's network open in the background. Its type takes CHANGE_WIFI_MULTICAST_STATE,
+# above, as the proof that the app talks to a device; Android 13+ asks the user before it shows the notification.
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.FOREGROUND_SERVICE)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE)
+qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.POST_NOTIFICATIONS)
 
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_FINE_LOCATION)
 qt_add_android_permission(${CMAKE_PROJECT_NAME} NAME android.permission.ACCESS_COARSE_LOCATION)

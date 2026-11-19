@@ -137,6 +137,12 @@ include(CreateCPackNSIS)
         config = (build_dir / "CPackConfig.cmake").read_text()
         assert 'set(CPACK_GENERATOR "NSIS")' in config
         assert f'set(CPACK_PACKAGE_FILE_NAME "QGroundControl-installer-{package_arch}")' in config
+        # Staging the Runtime component by name keeps CPack out of its component mode, whose sections
+        # extract the files before the pre-install commands remove the previous version.
+        assert (
+            f'set(CPACK_INSTALL_CMAKE_PROJECTS "{build_dir.as_posix()};QGroundControl;Runtime;/")'
+            in config
+        )
         assert "-LEAVE_DATA=1" in config
         assert "DisableX64FSRedirection" in config
         assert "EnableX64FSRedirection" in config

@@ -12,6 +12,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "GstD3D11ContextBridge.h"
+#include "GstD3D11PictureCopy.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
@@ -23,14 +24,9 @@ namespace {
 
 using GstD3DVideoBufferCommon::MapDiagnostics;
 using GstHw::kMaxPlanes;
-using D3D11FrameTextures = GstD3DVideoBufferCommon::FrameTextures<ID3D11Texture2D>;
 
 MapDiagnostics s_diag;
 std::atomic<bool> s_loggedForeignDevice{false};
-
-// Tags the copy targets this path creates: only those may be overwritten by a later frame. A previous bundle can also
-// wrap a texture GStreamer still owns.
-constexpr GUID kCopyTargetTag = {0x6d3c1f52, 0x8a4e, 0x4b7f, {0x9c, 0x21, 0x5e, 0x0b, 0x7a, 0x93, 0xd4, 0x18}};
 
 /// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool(). A texture-array slice is only recorded
 /// here: D3D11VideoBuffer copies it on the render thread.
@@ -84,15 +80,13 @@ public:
         return true;
     }
 
-    Handle* copySlice(Handle* tex, guint subIdx, int plane, Memory* /*mem*/)
+    Handle* copySlice(Handle* tex, guint subIdx, int plane)
     {
         tex->AddRef();
         _slices[std::size_t(plane)] = subIdx;
         _copied[std::size_t(plane)] = true;
         return tex;
     }
-
-    static bool finish() { return true; }
 
     const std::array<guint, kMaxPlanes>& slices() const noexcept { return _slices; }
 
@@ -114,46 +108,6 @@ private:
     std::array<guint, kMaxPlanes> _slices{};
     std::array<bool, kMaxPlanes> _copied{};
 };
-
-/// D3D11 creates 4:2:0 textures with even sizes only.
-bool hasEvenSizes(DXGI_FORMAT format)
-{
-    switch (format) {
-        case DXGI_FORMAT_NV12:
-        case DXGI_FORMAT_P010:
-        case DXGI_FORMAT_P016:
-            return true;
-        default:
-            return false;
-    }
-}
-
-/// Copy extent of @p extent pixels into a @p format texture.
-UINT copyExtent(int extent, DXGI_FORMAT format)
-{
-    return static_cast<UINT>(hasEvenSizes(format) ? ((extent + 1) & ~1) : extent);
-}
-
-constexpr quint8 kCopyTargetMark = 1;
-
-bool isCopyTarget(ID3D11Texture2D* texture)
-{
-    quint8 mark = 0;
-    UINT size = static_cast<UINT>(sizeof(mark));
-    return SUCCEEDED(texture->GetPrivateData(kCopyTargetTag, &size, &mark)) && (mark == kCopyTargetMark);
-}
-
-/// True when @p texture lives on @p device, the comparison Qt's D3D11 texture bridge makes.
-bool onDevice(ID3D11Texture2D* texture, ID3D11Device* device)
-{
-    ID3D11Device* owner = nullptr;
-    texture->GetDevice(&owner);
-    const bool same = (owner != nullptr) && (owner == device);
-    if (owner) {
-        owner->Release();
-    }
-    return same;
-}
 
 /// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. mapTextures() runs on the render
 /// thread, where QRhi drives the same immediate context: a texture-array slice or a padded texture is copied there,
@@ -177,7 +131,7 @@ public:
         D3D11_TEXTURE2D_DESC desc = {};
         _handles[0]->GetDesc(&desc);
         if (GstHw::texturePadsPicture(QSize(int(desc.Width), int(desc.Height)), _format.frameSize(),
-                                      hasEvenSizes(desc.Format))) {
+                                      GstD3D11PictureCopy::hasEvenSizes(desc.Format))) {
             std::fill_n(_copied.begin(), _count, true);
         }
     }
@@ -193,7 +147,7 @@ public:
         const auto* native = static_cast<const QRhiD3D11NativeHandles*>(rhi.nativeHandles());
         auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
-        if (!device || !context || !onDevice(_handles[0], device)) {
+        if (!device || !context || !GstD3D11PictureCopy::onDevice(_handles[0], device)) {
             QGC_HW_WARN_ONCE(GstD3D11Log, s_loggedForeignDevice,
                              "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
@@ -224,67 +178,28 @@ public:
 
 private:
     /// Copies the picture of plane @p plane's array slice or padded texture into a texture of exactly its size (the
-    /// decoder's surfaces carry alignment padding, cf. Qt's TextureBridge::copyToSharedTex): @p old's copy target when
-    /// it has that layout, whose last read QRhi already queued on this context, else a new one. AddRef'd; null on
-    /// failure.
+    /// decoder's surfaces carry alignment padding, cf. Qt's TextureBridge::copyToSharedTex). AddRef'd; null on failure.
     ID3D11Texture2D* copyPicture(QRhi& rhi, ID3D11Device* device, ID3D11DeviceContext* context, GstBuffer* buffer,
                                  int plane, QVideoFrameTexturesUPtr& old)
     {
-        ID3D11Texture2D* source = _handles[std::size_t(plane)];
-        D3D11_TEXTURE2D_DESC sourceDesc = {};
-        source->GetDesc(&sourceDesc);
         // One texture holds every plane (NV12, P010), else this plane's texture holds only its own share of the frame.
         const auto* textureDescription = QVideoTextureHelper::textureDescription(_format.pixelFormat());
         const QSize picture = ((_count > 1) && textureDescription)
                                   ? textureDescription->rhiPlaneSize(_format.frameSize(), plane, &rhi)
                                   : _format.frameSize();
-        const UINT width = (std::min) (copyExtent(picture.width(), sourceDesc.Format), sourceDesc.Width);
-        const UINT height = (std::min) (copyExtent(picture.height(), sourceDesc.Format), sourceDesc.Height);
-
-        D3D11_TEXTURE2D_DESC targetDesc = {};
-        targetDesc.Width = width;
-        targetDesc.Height = height;
-        targetDesc.MipLevels = 1;
-        targetDesc.ArraySize = 1;
-        targetDesc.Format = sourceDesc.Format;
-        targetDesc.SampleDesc.Count = 1;
-        targetDesc.Usage = D3D11_USAGE_DEFAULT;
-        targetDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-        ID3D11Texture2D* target = reusableTarget(old, plane, targetDesc);
-        if (!target) {
-            if (FAILED(device->CreateTexture2D(&targetDesc, nullptr, &target)) || !target) {
-                QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedTextureCreateFail,
-                                 "mapTextures: CreateTexture2D for the slice copy failed (plane=" << plane << ")");
-                return nullptr;
-            }
-            (void) target->SetPrivateData(kCopyTargetTag, static_cast<UINT>(sizeof(kCopyTargetMark)), &kCopyTargetMark);
-        }
 
         // Serializes with GStreamer's own use of this immediate context (the decoder, on the streaming thread).
         auto* memory = reinterpret_cast<GstD3D11Memory*>(gst_buffer_peek_memory(buffer, guint(plane)));
-        const D3D11_BOX pictureBox = {0, 0, 0, width, height, 1};
         gst_d3d11_device_lock(memory->device);
-        context->CopySubresourceRegion(target, 0, 0, 0, 0, source, _slices[std::size_t(plane)], &pictureBox);
+        ID3D11Texture2D* const target =
+            GstD3D11PictureCopy::copy(device, context, _handles[std::size_t(plane)], _slices[std::size_t(plane)],
+                                      QRect(QPoint(0, 0), picture), old, plane);
         gst_d3d11_device_unlock(memory->device);
+        if (!target) {
+            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedTextureCreateFail,
+                             "mapTextures: CreateTexture2D for the slice copy failed (plane=" << plane << ")");
+        }
         return target;
-    }
-
-    /// @p old's plane @p plane texture, AddRef'd, when it is a copy target this path made with @p desc's layout.
-    static ID3D11Texture2D* reusableTarget(QVideoFrameTexturesUPtr& old, int plane, const D3D11_TEXTURE2D_DESC& desc)
-    {
-        auto* previous = dynamic_cast<D3D11FrameTextures*>(old.get());
-        ID3D11Texture2D* texture = previous ? previous->handle(plane) : nullptr;
-        if (!texture || !isCopyTarget(texture)) {
-            return nullptr;
-        }
-        D3D11_TEXTURE2D_DESC have = {};
-        texture->GetDesc(&have);
-        if ((have.Width != desc.Width) || (have.Height != desc.Height) || (have.Format != desc.Format)) {
-            return nullptr;
-        }
-        texture->AddRef();
-        return texture;
     }
 
     std::array<guint, kMaxPlanes> _slices{};
@@ -301,7 +216,7 @@ void resetCachedState() noexcept
 
 constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .path = HwVideoBufferPath::D3D11,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d11_memory(mem); },
+    .matches = [](GstMemory* mem) -> bool { return gst_is_d3d11_memory(mem); },
     .construct = &GstHwPaths::construct<D3D11VideoBuffer>,
     .resetCaches = &resetCachedState,
     .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D11PlaneResolver>,

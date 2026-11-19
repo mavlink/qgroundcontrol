@@ -1,5 +1,6 @@
 package org.mavlink.qgroundcontrol;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -12,6 +13,8 @@ import org.libsdl.app.HIDDeviceManager;
 public class QGCSDLManager {
     private static final String TAG = QGCSDLManager.class.getSimpleName();
 
+    // Released in cleanup(), which QGCActivity.onDestroy() calls.
+    @SuppressLint("StaticFieldLeak")
     private static HIDDeviceManager m_hidDeviceManager;
 
     public static void initialize(Activity activity) {

@@ -4,25 +4,40 @@
 #include <glib.h>
 #include <gst/gst.h>
 
+#include <QtCore/QByteArray>
+
 #include "GstScoped.h"
+
+class QString;
 
 namespace GStreamer {
 
-/// Takes @p element out of its parent bin, then sets it to NULL. Removed first, so the bin can't bring it back up and
-/// nothing it posts while stopping reaches the bin's bus. No-op when @p element has no parent. The caller's refs on
-/// @p element, if any, stay valid.
+/// Takes @p element out of its parent bin, then sets it to NULL. Removed first, so nothing it posts while stopping
+/// reaches the bin's bus, and with the bin's state lock held, so a state change of the bin can't bring it back up.
+/// No-op when @p element has no parent. The caller's refs on @p element, if any, stay valid.
 void disposeChild(GstElement* element);
 
 /// As disposeChild(), but sends a FLUSH_START into @p element's sink pads before setting it to NULL. The flush wakes
 /// streaming threads parked inside @p element, which going NULL would otherwise wait on.
 void flushAndDisposeChild(GstElement* element);
 
+/// disposeChild() from GStreamer's thread pool, for a streaming thread: a state change of the bin holds the state
+/// lock that disposeChild() takes while it waits for the streaming threads to stop. @p element is kept alive until
+/// then.
+void disposeChildAsync(GstElement* element);
+
 /// Adds @p element, which must not be floating (see makeElement()), to @p bin, which takes its own ref; ours is
 /// dropped. Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
 
-/// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets (on RTSP, rtpbin turns this into an
-/// RTCP PLI/FIR). Doesn't block: the event is not serialized.
+/// @p file as GLib's file functions name it, for the "location" of a file source or sink: UTF-8 on Windows, where
+/// QFile::encodeName() gives the bytes of the ANSI code page instead, and the file system's encoding elsewhere.
+QByteArray glibFileName(const QString& file);
+
+/// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets. On RTSP, rtpbin turns this into an
+/// RTCP PLI when the stream's SDP advertises that feedback, which GstRtspSource has it do for video. A plain UDP
+/// stream has no way back to its sender, so nothing comes of the request there. Doesn't block: the event is not
+/// serialized.
 void requestKeyframe(GstPad* sinkPad);
 
 /// Sends @p event into @p pad from GStreamer's thread pool, so a serialized event waiting for a busy streaming thread
@@ -31,6 +46,9 @@ void sendEventAsync(GstPad* pad, GstEvent* event);
 
 /// @p element's first src pad, or null when it has none (yet).
 GstPadPtr firstSrcPad(GstElement* element);
+
+/// The name of the factory that made @p object ("rtph264depay"); null when it is no element or has no factory.
+const char* factoryNameOf(GstObject* object);
 
 /// For a pad a streaming thread just added: blocks its data, since a push on an unlinked pad would fail the stream,
 /// and returns the task for the thread that changes the pipeline, which calls @p link with the pad and unblocks it.

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 
 #include <QtCore/QObject>
@@ -18,8 +19,8 @@
 class QTimer;
 
 /// GstVideoReceiver's worker, on a thread of its own: steers a PipelineSession towards the receiver's latest
-/// GstReceiverRequest (active, config, video sink, restarts, recording), reconnecting after a failure as its
-/// StreamSupervisor decides.
+/// GstReceiverRequest (active, config, video sink, restarts, reconnects, recording), reconnecting after a failure as
+/// its StreamSupervisor decides.
 ///
 /// Reports back through its signals only, so it can outlive a receiver that stopped waiting for it.
 class GstReceiverWorker : public QObject, private PipelineSession::Listener
@@ -36,9 +37,12 @@ public:
 
     /// Steers the stream towards @p request, acting on what differs from the previous one.
     void apply(const Request& request);
-    void dumpPipelineGraph(const QString& tag) const;
     /// Stops everything and quits the thread.
     void shutdown();
+
+    /// How long a part of the recordings started from now on records, instead of RecordingPlan::kMaxPartDuration. For
+    /// tests, which can't wait that long.
+    void setMaxRecordingPartDuration(std::chrono::milliseconds duration) { _maxRecordingPartDuration = duration; }
 
     GstElement* pipeline() const { return _session ? _session->pipeline() : nullptr; }
 
@@ -47,6 +51,12 @@ signals:
     void recordingStarted(const QString& file);
     void recordingFinished(const QString& file, const QString& error);
     void errorOccurred(const QString& message);
+    /// The graphics device the stream's pipeline was given is gone: the receiver restarts the stream with a new
+    /// video sink, which lets go of what they hold of it.
+    void graphicsDeviceLost();
+    /// A task the receiver posted has run, a request or its heartbeat: the worker still gets to them. Emitted by the
+    /// receiver's posting, on the worker's thread.
+    void taskDone();
 
 private:
     void _onActiveChanged();
@@ -80,12 +90,14 @@ private:
 
     void onSessionStreaming() override;
     void onSessionFailed(const PipelineSession::Failure& failure) override;
+    void onSessionGraphicsDeviceLost() override;
     void onDecodingChanged(bool decoding) override;
     void onDecoderNameChanged(const QString& name) override;
     void onDecoderFailing() override;
     void onRecordingFileOpened(const QString& file) override;
     void onRecordingFileClosed(const QString& file, const QString& error) override;
     void onRecordingFailed(const QString& file, const QString& error, bool fileOpened) override;
+    void onRecordingNeedsNewFile(const QString& file) override;
 
     QTimer* const _watchdogTimer;
     StreamSupervisor* const _supervisor;
@@ -94,8 +106,10 @@ private:
 
     Request _requested;
     Status _status;
-    /// The recording asked for, until it stops or fails; after a reconnect it continues in the next part.
+    /// The recording asked for, until it stops or fails; after a reconnect, and once a part has recorded for long
+    /// enough, it continues in the next part.
     std::optional<RecordingPlan> _recording;
+    std::chrono::milliseconds _maxRecordingPartDuration = RecordingPlan::kMaxPartDuration;
 
     PipelineSession* _session = nullptr;
     int _statsTicks = 0;

@@ -187,6 +187,11 @@ if(QGC_ENABLE_TSAN)
     set(TSAN_FLAGS -fsanitize=thread -fno-omit-frame-pointer)
 
     list(APPEND _qgc_sanitizer_compile_options ${TSAN_FLAGS})
+    # GCC warns that it does not instrument std::atomic_thread_fence, which Qt 6.12's Q_GLOBAL_STATIC inlines into
+    # every user: a warning about Qt's header must not fail a build that makes warnings errors.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        list(APPEND _qgc_sanitizer_compile_options -Wno-error=tsan)
+    endif()
     list(APPEND _qgc_sanitizer_link_options -fsanitize=thread)
 
     set(TSAN_DEFAULT_OPTIONS "second_deadlock_stack=1:halt_on_error=0")

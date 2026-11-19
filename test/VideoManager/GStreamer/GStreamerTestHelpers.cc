@@ -15,6 +15,8 @@
 #include <QtNetwork/QTcpSocket>
 
 #include "GStreamer.h"
+#include "GStreamerDecoderRanks.h"
+#include "GStreamerEnvironment.h"
 #include "GstSourceFactory.h"
 
 namespace GstTest {
@@ -27,7 +29,7 @@ QString initGStreamer()
     if (gst_is_initialized()) {
         return {};
     }
-    (void) GStreamer::prepareEnvironment();
+    (void) GStreamer::Environment::prepareEnvironment();
 
     GError* error = nullptr;
     if (!gst_init_check(nullptr, nullptr, &error)) {
@@ -51,11 +53,7 @@ QString firstMissingFactory(std::initializer_list<const char*> names)
 
 QString errorText(GstMessage* message, bool withDetails)
 {
-    GError* rawError = nullptr;
-    gchar* rawDebug = nullptr;
-    gst_message_parse_error(message, &rawError, &rawDebug);
-    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
-    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
+    const auto [error, debug] = GStreamer::parseMessageError(message);
     const QString text = error ? QString::fromUtf8(error->message) : QStringLiteral("unknown error");
     return withDetails ? QStringLiteral("%1 (%2)").arg(text, debug ? QString::fromUtf8(debug.get()) : QString()) : text;
 }
@@ -153,7 +151,7 @@ void watchRelease(GstMiniObject* object, bool* released)
 GStreamer::GstElementPtr createSource(const QString& uri, const GStreamer::SourceFactory::Config& config)
 {
     GstElement* const bin = GStreamer::SourceFactory::create(uri, config);
-    return GStreamer::adoptElement(bin ? GST_ELEMENT(gst_object_ref_sink(bin)) : nullptr);
+    return GStreamer::adoptFloating(bin);
 }
 
 std::unique_ptr<QRhi> makeNullRhi()
@@ -190,18 +188,33 @@ QList<int> nalTypes(const QByteArray& data, bool h265)
     return types;
 }
 
-int countPlayableFrames(const QString& path, QString& failure)
+int countPlayableFrames(const QString& path, QString& failure, const char* chain, GstClockTime* firstPts)
 {
-    std::atomic<int> frames{0};
+    struct Played
+    {
+        std::atomic<int> frames{0};
+        std::atomic<GstClockTime> firstPts{GST_CLOCK_TIME_NONE};
+    } played;
+
     TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("filesrc name=src ! qtdemux ! fakesink name=sink sync=false"))) {
+    if (!pipeline.launch(
+            QStringLiteral("filesrc name=src ! %1 ! fakesink name=sink sync=false").arg(QLatin1StringView(chain)))) {
         failure = pipeline.error();
         return -1;
     }
     g_object_set(pipeline.element("src").get(), "location", QFile::encodeName(path).constData(), nullptr);
     const GStreamer::GstPadPtr sinkPad =
         GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("sink").get(), "sink"));
-    (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffers, &frames, nullptr);
+    (void) gst_pad_add_probe(
+        sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+        [](GstPad*, GstPadProbeInfo* info, gpointer data) {
+            auto* const seen = static_cast<Played*>(data);
+            if (seen->frames.fetch_add(1, std::memory_order_relaxed) == 0) {
+                seen->firstPts.store(GST_BUFFER_PTS(GST_PAD_PROBE_INFO_BUFFER(info)), std::memory_order_relaxed);
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &played, nullptr);
 
     if (!pipeline.play()) {
         failure = QStringLiteral("%1: demux pipeline failed to start").arg(path);
@@ -212,7 +225,10 @@ int countPlayableFrames(const QString& path, QString& failure)
         failure = QStringLiteral("%1: %2").arg(path, error);
         return -1;
     }
-    return frames.load(std::memory_order_relaxed);
+    if (firstPts) {
+        *firstPts = played.firstPts.load(std::memory_order_relaxed);
+    }
+    return played.frames.load(std::memory_order_relaxed);
 }
 
 TestPipeline::TestPipeline(GstElement* pipeline)
@@ -239,7 +255,7 @@ bool TestPipeline::launch(const QString& description)
         }
         return false;
     }
-    _pipeline = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(pipeline)));
+    _pipeline = GStreamer::adoptFloating(pipeline);
     return true;
 }
 
@@ -270,6 +286,21 @@ QString TestPipeline::runToEos(std::chrono::milliseconds timeout) const
         return QStringLiteral("timed out waiting for EOS");
     }
     return (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_EOS) ? QString() : errorText(message.get());
+}
+
+SamplePtr TestPipeline::lastSample(const char* sinkName) const
+{
+    GstSample* sample = nullptr;
+    if (const GStreamer::GstElementPtr sink = element(sinkName)) {
+        g_object_get(sink.get(), "last-sample", &sample, nullptr);
+    }
+    return SamplePtr(sample);
+}
+
+SamplePtr TestPipeline::pullSample(const char* appsinkName, std::chrono::milliseconds timeout) const
+{
+    const GStreamer::GstElementPtr appsink = element(appsinkName);
+    return SamplePtr(appsink ? gst_app_sink_try_pull_sample(GST_APP_SINK(appsink.get()), clockTime(timeout)) : nullptr);
 }
 
 QList<AccessUnit> loadAccessUnits(const QString& resource, QString* error)
@@ -357,6 +388,15 @@ bool FixtureRtpSender::start(quint16 port)
     if (!sourcePad || !gst_pad_add_probe(sourcePad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffers, &_frames, nullptr)) {
         return false;
     }
+    const GStreamer::GstElementPtr udpSink = findByFactory(_pipeline->get(), "udpsink");
+    const GStreamer::GstPadPtr rtpPad =
+        GStreamer::adoptPad(udpSink ? gst_element_get_static_pad(udpSink.get(), "sink") : nullptr);
+    if (!rtpPad ||
+        !gst_pad_add_probe(rtpPad.get(),
+                           static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
+                           _dropProbe, this, nullptr)) {
+        return false;
+    }
     (void) g_signal_connect(source.get(), "need-data", G_CALLBACK(_needData), this);
     return _pipeline->play();
 }
@@ -388,6 +428,14 @@ void FixtureRtpSender::holdKeyframes(bool hold)
     _keyframesHeld = hold;
 }
 
+GstPadProbeReturn FixtureRtpSender::_dropProbe([[maybe_unused]] GstPad* pad, [[maybe_unused]] GstPadProbeInfo* info,
+                                               gpointer self)
+{
+    auto* const sender = static_cast<FixtureRtpSender*>(self);
+    const int oneIn = sender->_dropOneIn.load(std::memory_order_relaxed);
+    return ((oneIn > 0) && ((++sender->_rtpPushes % oneIn) == 0)) ? GST_PAD_PROBE_DROP : GST_PAD_PROBE_OK;
+}
+
 void FixtureRtpSender::_needData(GstElement* appsrc, [[maybe_unused]] guint length, gpointer self)
 {
     auto* const sender = static_cast<FixtureRtpSender*>(self);
@@ -415,15 +463,11 @@ void FixtureRtpSender::_needData(GstElement* appsrc, [[maybe_unused]] guint leng
 
 DecoderRankSnapshot::DecoderRankSnapshot()
 {
-    GList* const factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-    for (GList* node = factories; node; node = node->next) {
-        auto* const feature = GST_PLUGIN_FEATURE(node->data);
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [this](GstElementFactory* factory) {
+        auto* const feature = GST_PLUGIN_FEATURE(factory);
         _ranks.emplace_back(GStreamer::adoptFeature(GST_PLUGIN_FEATURE(gst_object_ref(feature))),
                             gst_plugin_feature_get_rank(feature));
-    }
-    gst_plugin_feature_list_free(factories);
+    });
 }
 
 DecoderRankSnapshot::~DecoderRankSnapshot()
@@ -433,13 +477,25 @@ DecoderRankSnapshot::~DecoderRankSnapshot()
     }
 }
 
+QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware)
+{
+    QHash<QByteArray, guint> ranks;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&](GstElementFactory* factory) {
+        if (!hardware || (*hardware == GStreamer::isHardwareDecoderFactory(factory))) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            ranks.insert(QByteArray(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
+        }
+    });
+    return ranks;
+}
+
 FakeRtspServer::FakeRtspServer(const QByteArray& sdp)
     : _sdp(sdp)
 {
     QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
         while (QTcpSocket* const socket = _server.nextPendingConnection()) {
             ++_connections;
-            if (!_sdp.isEmpty()) {
+            if (!_sdp.isEmpty() || !_refusal.isEmpty()) {
                 QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] { _serve(socket); });
             }
         }
@@ -461,6 +517,12 @@ void FakeRtspServer::_serve(QTcpSocket* socket)
             if (line.toLower().startsWith("cseq:")) {
                 cseq = line.mid(5).trimmed();
             }
+        }
+
+        if (!_refusal.isEmpty()) {
+            (void) socket->write("RTSP/1.0 " + _refusal + "\r\nCSeq: " + cseq +
+                                 "\r\nWWW-Authenticate: Basic realm=\"QGC test\"\r\n\r\n");
+            continue;
         }
 
         if (method == "SETUP") {

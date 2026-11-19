@@ -7,7 +7,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
-#include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -20,7 +19,8 @@ class QVideoFrame;
 class QVideoSink;
 
 /// Measures the USB camera on display, from the frames its capture session hands the video sink, about once a second
-/// while frames arrive. UVCCameraController attaches its camera and the sink of the registered VideoOutput.
+/// while frames arrive. UVCCameraController attaches its camera and the sink of its VideoOutput, and publishes the
+/// stats as its own.
 ///
 /// stats fills valid, fps, codec (the camera's capture format, e.g. "MJPEG" or "YUYV"), gpuPath ("CPU" for frames in
 /// memory, "GPU" for textures) and uptimeMs; the network stream fields keep their defaults.
@@ -30,12 +30,12 @@ class UVCStreamMonitor : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
 
-    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
-    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY statsChanged)
-    Q_PROPERTY(double cameraFrameRate READ cameraFrameRate NOTIFY statsChanged)
-    Q_PROPERTY(QString cameraName READ cameraName NOTIFY cameraNameChanged)
+    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged FINAL)
+    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY statsChanged FINAL)
+    Q_PROPERTY(double cameraFrameRate READ cameraFrameRate NOTIFY statsChanged FINAL)
 
     friend class UVCStreamMonitorTest;
+    friend class VideoManagerTest;
 
 public:
     /// @p clock defaults to the steady clock.
@@ -53,12 +53,8 @@ public:
     /// The frame rate the camera was set up for; 0 while unknown.
     double cameraFrameRate() const { return _cameraFrameRate; }
 
-    /// The camera's description; empty while no camera is attached.
-    QString cameraName() const { return _cameraName; }
-
 signals:
     void statsChanged();
-    void cameraNameChanged();
 
 private:
     /// The frames received since the last restart, as the latest one described them.
@@ -76,13 +72,11 @@ private:
     /// A new stream starts: the measurements so far are cleared.
     void _restart();
     void _disconnect();
-    void _updateCameraName();
     void _publish(const VideoStreamStats& stats, QSize videoSize, double cameraFrameRate);
 
     VideoStreamStatsMeter::Clock _clock;
     VideoStreamStatsMeter _meter;
     QTimer _sampleTimer;
-    QPointer<QCamera> _camera;
     QPointer<QVideoSink> _videoSink;
     QList<QMetaObject::Connection> _connections;
 
@@ -92,5 +86,4 @@ private:
     VideoStreamStats _stats;
     QSize _videoSize;
     double _cameraFrameRate = 0.0;
-    QString _cameraName;
 };

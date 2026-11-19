@@ -15,6 +15,7 @@
 #include "QtVideoRecorder.h"
 #include "SharedVideoFrame.h"
 #include "VideoStreamStats.h"
+#include "VideoStreamUri.h"
 
 QGC_LOGGING_CATEGORY(QtMultimediaVideoReceiverLog, "Video.QtMultimediaVideoReceiver")
 
@@ -24,26 +25,44 @@ constexpr int kSampleIntervalMs = 1000;
 /// Before a session's first frame, on top of the timeout: FFmpeg probes a stream for up to 5 s (its default
 /// analyzeduration) before it decodes, and then waits for a keyframe.
 constexpr qint64 kFirstFrameGraceMs = 5000;
-/// How long the destructor waits for a recording's file to be finished.
-constexpr int kRecordingFinishTimeoutMs = 5000;
 /// The encoder's time base for a recording without a fixed frame rate is as coarse as a millisecond.
 constexpr qint64 kMinFrameStepUs = 1000;
 /// A larger step in the stream's times is a jump, as after a reconnect.
 constexpr qint64 kMaxStreamStepUs = 1000000;
 
+/// The most FFmpeg reads of a stream whose SDP names its streams, before it plays it. By default it reads until a
+/// keyframe has told it the picture size, and with the low-latency intent it drops what it read, so that the first
+/// picture is the keyframe after that one. A short read costs nothing here: the decoder takes the size from the
+/// keyframe it starts on. FFmpeg needs 2048 bytes to tell a format.
+/// Not for MPEG-TS, whose streams FFmpeg finds by reading it: a read too short to meet the video plays none.
+constexpr int kDescribedStreamProbeBytes = 8192;
+/// Android keeps FFmpeg's default, untried: its MediaCodec decoders are given the picture size as they are created,
+/// which is before a short read has met it.
+#ifdef Q_OS_ANDROID
+constexpr bool kShortProbe = false;
+#else
+constexpr bool kShortProbe = true;
+#endif
+
 constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
 
-/// Qt's FFmpeg player takes the RTSP transport from the environment alone, as it loads a source. A stream opening at
-/// the same time may get the other's, which costs it no more than FFmpeg's own fallback from UDP to TCP.
+/// Qt's FFmpeg player takes the RTSP transport from the environment alone, as it loads a source (seen in Qt 6.12.0:
+/// loadMedia(), qtmultimedia/src/plugins/multimedia/ffmpeg/playbackengine/qffmpegmediadataholder.cpp); QPlaybackOptions
+/// has no transport. A stream opening at the same time may get the other's, which costs it no more than FFmpeg's own
+/// fallback from UDP to TCP. Once QPlaybackOptions carries the transport (Qt's QTBUG-117074 asks for a way to choose
+/// it), set it there and remove this function and kRtspTransportEnv.
 void setRtspTransport(bool overTcp)
 {
     static const QByteArray userTransport = qgetenv(kRtspTransportEnv);
-    if (overTcp) {
-        (void) qputenv(kRtspTransportEnv, QByteArrayLiteral("tcp"));
-    } else if (userTransport.isNull()) {
+    const QByteArray transport = overTcp ? QByteArrayLiteral("tcp") : userTransport;
+    // Written only to change it: a write races with any thread that reads the environment.
+    if (qgetenv(kRtspTransportEnv) == transport) {
+        return;
+    }
+    if (transport.isNull()) {
         (void) qunsetenv(kRtspTransportEnv);
     } else {
-        (void) qputenv(kRtspTransportEnv, userTransport);
+        (void) qputenv(kRtspTransportEnv, transport);
     }
 }
 
@@ -86,7 +105,7 @@ QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
     _closing = true;
     _sampleTimer.stop();
     // Qt writes the file on a thread of its own, which the application's exit would cut short.
-    _recorder->stopAndWait(kRecordingFinishTimeoutMs);
+    _recorder->stopAndWait();
     // As _stopSession(): unloaded first, so that its destruction doesn't wait out a network read.
     if (_player) {
         _player->setSource(QUrl());
@@ -99,25 +118,29 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
     if (uri.isEmpty() || !url.isValid() || url.scheme().isEmpty()) {
         return std::nullopt;
     }
-    const QString scheme = url.scheme().toLower();
-    if ((scheme == QStringLiteral("udp")) || (scheme == QStringLiteral("udp265"))) {
+
+    using VideoStreamUri::Transport;
+    const std::optional<Transport> transport = VideoStreamUri::transportFor(url);
+    if ((transport == Transport::RtpUdpH264) || (transport == Transport::RtpUdpH265)) {
         if (url.port() <= 0) {
             return std::nullopt;
         }
-        const QByteArrayView encoding = (scheme == QStringLiteral("udp265")) ? "H265" : "H264";
-        return Source{QUrl(QStringLiteral("stream.sdp")), rtpSdp(url.host(), url.port(), encoding)};
+        const QByteArrayView encoding = (transport == Transport::RtpUdpH265) ? "H265" : "H264";
+        return Source{.url = QUrl(QStringLiteral("stream.sdp")),
+                      .sdp = rtpSdp(url.host(), url.port(), encoding),
+                      .streamsDescribed = true};
     }
-    if (scheme == QStringLiteral("mpegts")) {
+    if (transport == Transport::MpegTsUdp) {
         QUrl udp(url);
         udp.setScheme(QStringLiteral("udp"));
         return Source{udp, {}};
     }
-    if (scheme == QStringLiteral("rtspt")) {
+    if ((transport == Transport::Rtsp) && (url.scheme().compare(QStringLiteral("rtspt"), Qt::CaseInsensitive) == 0)) {
         QUrl rtsp(url);
         rtsp.setScheme(QStringLiteral("rtsp"));
-        return Source{rtsp, {}, true};
+        return Source{.url = rtsp, .sdp = {}, .rtspOverTcp = true, .streamsDescribed = true};
     }
-    return Source{url, {}};
+    return Source{.url = url, .sdp = {}, .streamsDescribed = (transport == Transport::Rtsp)};
 }
 
 void QtMultimediaVideoReceiver::onConfigChanged()
@@ -147,6 +170,11 @@ void QtMultimediaVideoReceiver::onRestartRequested()
     _startOver();
 }
 
+void QtMultimediaVideoReceiver::onReconnectRequested()
+{
+    _supervisor->reconnectNow();
+}
+
 void QtMultimediaVideoReceiver::_startOver()
 {
     _supervisor->startOver();
@@ -162,7 +190,7 @@ void QtMultimediaVideoReceiver::onVideoOutputChanged()
     }
     _bindVideoSink();
     // The watchdog counts from now: no frame reached an output while there was none.
-    _sinceFrame.restart();
+    _sinceFrame.start();
 }
 
 void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format)
@@ -178,7 +206,7 @@ void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat
         _recordingSession->setRecorder(_recorder->mediaRecorder());
     }
     qCDebug(QtMultimediaVideoReceiverLog) << name() << "recording to" << file;
-    _recorder->start(file, QtVideoRecorder::container(format));
+    _recorder->start(file, QtVideoRecorder::container(format), recordingEncoding().codec, recordingEncoding().quality);
 }
 
 void QtMultimediaVideoReceiver::onStopRecording()
@@ -218,11 +246,16 @@ void QtMultimediaVideoReceiver::_open()
     }
 
     _sessionConfig = config();
+    // Before the player opens its sockets, so its own timeout can't run out sooner than this one.
+    _sinceOpened.start();
     _player = new QMediaPlayer(this);
     QPlaybackOptions options;
     options.setNetworkTimeout(config().timeout);
     if (config().lowLatency) {
         options.setPlaybackIntent(QPlaybackOptions::PlaybackIntent::LowLatencyStreaming);
+    }
+    if (kShortProbe && source->streamsDescribed) {
+        options.setProbeSize(kDescribedStreamProbeBytes);
     }
     _player->setPlaybackOptions(options);
     (void) connect(_player, &QMediaPlayer::mediaStatusChanged, this, &QtMultimediaVideoReceiver::_onMediaStatusChanged);
@@ -270,14 +303,29 @@ void QtMultimediaVideoReceiver::_stopSession()
     setStats(_statsSampler.stats());
 }
 
+bool QtMultimediaVideoReceiver::_awaitingSender() const
+{
+    const std::optional<VideoStreamUri::Transport> transport = VideoStreamUri::transportFor(QUrl(_sessionConfig.uri));
+    // A session that ends sooner than its timeout didn't run out of patience: its port is taken, or it can't play.
+    return transport && VideoStreamUri::listens(*transport) &&
+           (_supervisor->phase() == StreamSupervisor::Phase::Connecting) &&
+           (_sinceOpened.durationElapsed() >= _sessionConfig.timeout);
+}
+
 void QtMultimediaVideoReceiver::_fail(const QString& reason)
 {
     if (!_player) {
         return;
     }
+    if (_awaitingSender()) {
+        // FFmpeg gives up on a silent port; a backoff would leave it unbound when the stream starts.
+        qCDebug(QtMultimediaVideoReceiverLog) << name() << "no stream yet, listening on:" << reason;
+        _start();
+        return;
+    }
     _stopSession();
     const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(reason, /*permanent=*/false, config().autoReconnect);
+        _supervisor->sessionFailed(reason, StreamSupervisor::Failure::Transient, config().autoReconnect);
     if (outcome.halted) {
         qCDebug(QtMultimediaVideoReceiverLog) << name() << "failed:" << reason;
         emit errorOccurred(tr("Video stream failed: %1").arg(reason));
@@ -290,13 +338,10 @@ void QtMultimediaVideoReceiver::_fail(const QString& reason)
 void QtMultimediaVideoReceiver::_bindVideoSink()
 {
     QVideoSink* const sink = videoSink();
-    if (sink != _videoSink) {
-        (void) disconnect(_frameConnection);
-        _videoSink = sink;
-        if (sink) {
-            _frameConnection =
-                connect(sink, &QVideoSink::videoFrameChanged, this, &QtMultimediaVideoReceiver::_onVideoFrame);
-        }
+    (void) disconnect(_frameConnection);
+    if (sink) {
+        _frameConnection =
+            connect(sink, &QVideoSink::videoFrameChanged, this, &QtMultimediaVideoReceiver::_onVideoFrame);
     }
     if (_player) {
         _player->setVideoSink(sink);
@@ -379,7 +424,7 @@ void QtMultimediaVideoReceiver::_sample()
     }
     const qint64 timeoutMs = std::chrono::duration_cast<std::chrono::milliseconds>(config().timeout).count() +
                              ((_frames == 0) ? kFirstFrameGraceMs : 0);
-    if (_videoSink && (_sinceFrame.elapsed() > timeoutMs)) {
+    if (videoSink() && (_sinceFrame.elapsed() > timeoutMs)) {
         _fail(tr("no video for %1 s").arg(timeoutMs / 1000));
         return;
     }

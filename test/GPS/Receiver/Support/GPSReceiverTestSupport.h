@@ -120,6 +120,15 @@ inline SerialPortManager::Port serialPort(const QString& location)
     return {.systemLocation = location, .portName = location.section(u'/', -1), .boardName = {}};
 }
 
+/// A USB serial port as Android lists it once the user has let QGC open its device: its system location is another
+/// one each time the device is attached, and its stable name stays.
+inline SerialPortManager::Port usbPort(const QString& location, const QString& stableName)
+{
+    SerialPortManager::Port port = serialPort(location);
+    port.stableName = stableName;
+    return port;
+}
+
 /// A device whose USB identity is a known RTK receiver, which discovery may connect.
 inline SerialPortManager::Port rtkPort(const QString& location = QStringLiteral("/test/rtk"))
 {

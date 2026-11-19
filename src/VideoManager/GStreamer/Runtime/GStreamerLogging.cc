@@ -67,6 +67,15 @@ void glib_log_handler(const gchar* log_domain, GLogLevelFlags log_level, const g
     }
 }
 
+/// gst_debug_set_default_threshold() may be called before gst_init().
+void applyDebugLevel(int level)
+{
+    const int maxLevel = GStreamer::nativeDebugLogRequested() ? static_cast<int>(GST_LEVEL_MEMDUMP) : kMaxBridgedLevel;
+    const int clamped = std::clamp(level, 0, maxLevel);
+    gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
+    qCDebug(GStreamerLoggingLog) << "GStreamer debug threshold set to" << clamped;
+}
+
 }  // anonymous namespace
 
 namespace GStreamer {
@@ -120,11 +129,20 @@ void qtGstLog(GstDebugCategory* category, GstDebugLevel level, const gchar* file
         return;
     }
 
-    const GStreamer::GCharPtr objectInfo =
-        object ? GStreamer::adoptGChar(gst_info_strdup_printf("%" GST_PTR_FORMAT " ", object)) : nullptr;
-    const char* const prefix = objectInfo ? objectInfo.get() : "";
+    QString source;
+    if (object) {
+        const GStreamer::GCharPtr objectInfo =
+            GStreamer::adoptGChar(gst_info_strdup_printf("%" GST_PTR_FORMAT " ", object));
+        source = QString::fromUtf8(objectInfo.get());
+    }
+#if GST_CHECK_VERSION(1, 22, 0)
+    // A line logged with GST_*_ID names its source by an id instead of an object.
+    else if (const gchar* const id = gst_debug_message_get_id(message); id && (id[0] != '\0')) {
+        source = QLatin1Char('<') + QString::fromUtf8(id) + QLatin1String("> ");
+    }
+#endif
     qt_message_output(type, QMessageLogContext(file, line, function, GStreamerAPILog().categoryName()),
-                      QString::fromUtf8(prefix) + QString::fromUtf8(gst_debug_message_get(message)));
+                      source + QString::fromUtf8(gst_debug_message_get(message)));
 }
 
 void configureDebugLogging(std::optional<int> level)
@@ -144,7 +162,7 @@ void configureDebugLogging(std::optional<int> level)
 
     // A GStreamer development build (nano > 0, as the official 1.28.8 Windows SDK is) defaults to GST_LEVEL_ERROR
     // rather than GST_LEVEL_NONE, so the setting's default is applied explicitly.
-    setDebugLevel(level.value_or(GST_LEVEL_NONE));
+    applyDebugLevel(level.value_or(GST_LEVEL_NONE));
 }
 
 void setDebugLevel(int level)
@@ -152,10 +170,7 @@ void setDebugLevel(int level)
     if (!gst_is_initialized()) {
         return;
     }
-    const int maxLevel = nativeDebugLogRequested() ? static_cast<int>(GST_LEVEL_MEMDUMP) : kMaxBridgedLevel;
-    const int clamped = std::clamp(level, 0, maxLevel);
-    gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
-    qCDebug(GStreamerLoggingLog) << "GStreamer debug threshold set to" << clamped;
+    applyDebugLevel(level);
 }
 
 }  // namespace GStreamer

@@ -6,7 +6,8 @@
 /// Scoped owners for transfer-full GStreamer returns so refs can't leak on early return.
 /// Use the adopt* helpers at the transfer-full call boundary; .get() yields a non-owning view.
 /// Floating refs (e.g. gst_element_factory_make) are consumed by gst_bin_add/gst_element_add_pad even
-/// when the call fails, so release() the owner into the call, or sink them at creation with makeElement().
+/// when the call fails, so release() the owner into the call, or sink them at creation with makeElement() or
+/// adoptFloating().
 namespace GStreamer {
 
 struct GstObjectDeleter
@@ -140,6 +141,24 @@ inline GErrorPtr adoptError(GError* error) noexcept
     return GErrorPtr(error);
 }
 
+/// What an ERROR or WARNING message carries, owned. The debug detail may be null.
+struct MessageError
+{
+    GErrorPtr error;
+    GCharPtr debug;
+};
+
+/// gst_message_parse_error(), or gst_message_parse_warning() for a WARNING message.
+inline MessageError parseMessageError(GstMessage* message)
+{
+    GError* error = nullptr;
+    gchar* debug = nullptr;
+    const auto parse =
+        (GST_MESSAGE_TYPE(message) == GST_MESSAGE_WARNING) ? gst_message_parse_warning : gst_message_parse_error;
+    parse(message, &error, &debug);
+    return {adoptError(error), adoptGChar(debug)};
+}
+
 /// A copyable owner of a new ref on @p object, for tasks that must be copyable (std::function).
 template <typename T>
 std::shared_ptr<T> shareObject(T* object)
@@ -147,12 +166,18 @@ std::shared_ptr<T> shareObject(T* object)
     return object ? std::shared_ptr<T>(static_cast<T*>(gst_object_ref(object)), GstObjectDeleter{}) : nullptr;
 }
 
+/// Sinks the floating ref of a new @p object (pipeline, bin, pad, element) and owns it. Null for null.
+template <typename T>
+std::unique_ptr<T, GstObjectDeleter> adoptFloating(T* object) noexcept
+{
+    return std::unique_ptr<T, GstObjectDeleter>(object ? static_cast<T*>(gst_object_ref_sink(object)) : nullptr);
+}
+
 /// gst_element_factory_make() with the floating ref sunk, so the caller owns a plain ref that adding the element to a
 /// bin never consumes. Null when the factory is missing.
 inline GstElementPtr makeElement(const char* factory, const char* name = nullptr)
 {
-    GstElement* const element = gst_element_factory_make(factory, name);
-    return adoptElement(element ? GST_ELEMENT(gst_object_ref_sink(element)) : nullptr);
+    return adoptFloating(gst_element_factory_make(factory, name));
 }
 
 inline bool hasElementFactory(const char* name)

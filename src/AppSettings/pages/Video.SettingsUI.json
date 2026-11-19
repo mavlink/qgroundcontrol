@@ -7,43 +7,51 @@
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource && !autoStreamConfig",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
+        "tilesShown": "QGroundControl.settingsManager.videoSettings.maxVideoTiles.rawValue > 0",
+        "usbCamera": "QGroundControl.videoManager.hasUvcCamera",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
-        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0"
+        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0",
+        "recordingEncoded": "QGroundControl.videoManager.isUvc || (isStreamSource && QGroundControl.videoManager.primaryStream.encodesRecordings)"
     },
     "groups": [
         {
             "heading": "Video Source",
-            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format", "white balance", "zoom", "exposure", "focus"],
-            "enableWhen": "!autoStreamConfig",
+            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format", "white balance", "zoom", "exposure", "focus", "tile"],
             "headingDescription": "autoStreamConfig ? qsTr(\"MAVLink camera stream is automatically configured\") : \"\"",
             "controls": [
                 {
                     "setting": "videoSettings.videoSource",
-                    "control": "combobox"
+                    "control": "combobox",
+                    "enableWhen": "!autoStreamConfig"
+                },
+                {
+                    "setting": "videoSettings.uvcTileCamera",
+                    "control": "combobox",
+                    "showWhen": "isStreamSource && tilesShown"
                 },
                 {
                     "control": "component",
                     "component": "UVCCameraFormatComboBox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "usbCamera"
                 },
                 {
                     "setting": "videoSettings.uvcCameraRotation",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "usbCamera"
                 },
                 {
                     "setting": "videoSettings.uvcCameraMirror",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "usbCamera"
                 },
                 {
                     "setting": "videoSettings.uvcWhiteBalance",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.whiteBalanceAdjustable"
+                    "showWhen": "usbCamera && QGroundControl.videoManager.uvcCamera.whiteBalanceAdjustable"
                 },
                 {
                     "control": "component",
                     "component": "UVCControlSlider",
-                    "showWhen": "QGroundControl.videoManager.isUvc && (QGroundControl.videoManager.uvcCamera.maximumZoom > QGroundControl.videoManager.uvcCamera.minimumZoom)",
+                    "showWhen": "usbCamera && (QGroundControl.videoManager.uvcCamera.maximumZoom > QGroundControl.videoManager.uvcCamera.minimumZoom)",
                     "properties": {
                         "setting": "QGroundControl.settingsManager.videoSettings.uvcZoom",
                         "from": "QGroundControl.videoManager.uvcCamera.minimumZoom",
@@ -54,7 +62,7 @@
                 {
                     "control": "component",
                     "component": "UVCControlSlider",
-                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.exposureAdjustable",
+                    "showWhen": "usbCamera && QGroundControl.videoManager.uvcCamera.exposureAdjustable",
                     "properties": {
                         "setting": "QGroundControl.settingsManager.videoSettings.uvcExposureCompensation",
                         "stepSize": 0.5
@@ -63,7 +71,7 @@
                 {
                     "setting": "videoSettings.uvcFocusMode",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.focusAdjustable"
+                    "showWhen": "usbCamera && QGroundControl.videoManager.uvcCamera.focusAdjustable"
                 }
             ]
         },
@@ -88,33 +96,32 @@
         },
         {
             "heading": "Settings",
-            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy", "backend", "gstreamer", "qt multimedia", "ffmpeg"],
+            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy", "backend", "gstreamer", "qt multimedia", "ffmpeg", "tiles"],
             "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
                 {
                     "setting": "videoSettings.videoBackend",
-                    "control": "combobox",
-                    "showWhen": "isStreamSource"
+                    "control": "combobox"
                 },
                 {
                     "setting": "videoSettings.aspectRatio",
-                    "showWhen": "!autoStreamConfig && isStreamSource"
+                    "showWhen": "!autoStreamConfig"
                 },
                 {
-                    "setting": "videoSettings.disableWhenDisarmed",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.maxVideoTiles"
                 },
                 {
-                    "setting": "videoSettings.lowLatencyMode",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.disableWhenDisarmed"
+                },
+                {
+                    "setting": "videoSettings.lowLatencyMode"
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "isStreamSource && rtpLatencyVisible && gstreamer"
+                    "showWhen": "rtpLatencyVisible && gstreamer"
                 },
                 {
-                    "setting": "videoSettings.rtspAutoReconnect",
-                    "showWhen": "isStreamSource"
+                    "setting": "videoSettings.rtspAutoReconnect"
                 },
                 {
                     "setting": "videoSettings.forceCpuVideoPath",
@@ -128,7 +135,7 @@
         },
         {
             "heading": "Local Video Storage",
-            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec"],
+            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec", "encoder", "quality"],
             "showWhen": "!sourceDisabled",
             "controls": [
                 {
@@ -137,7 +144,12 @@
                 {
                     "control": "component",
                     "component": "UVCRecordingCodecComboBox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "recordingEncoded"
+                },
+                {
+                    "setting": "videoSettings.uvcRecordingQuality",
+                    "control": "combobox",
+                    "showWhen": "recordingEncoded"
                 },
                 {
                     "setting": "videoSettings.enableStorageLimit"

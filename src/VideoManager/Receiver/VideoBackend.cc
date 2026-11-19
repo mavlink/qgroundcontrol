@@ -1,10 +1,10 @@
 #include "VideoBackend.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
-#include "Fact.h"
 #include "QGCApplication.h"
 #include "QtMultimediaVideoReceiver.h"
 
@@ -40,6 +40,11 @@ bool VideoBackend::disabledForUnitTests()
     return qgcApp() && QGC::runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
 }
 
+QString VideoBackend::initFailureMessage() const
+{
+    return QCoreApplication::translate("VideoBackend", "Video streaming failed to initialize.");
+}
+
 std::optional<int> VideoBackend::persistedDebugLevel()
 {
     QSettings settings;
@@ -48,13 +53,4 @@ std::optional<int> VideoBackend::persistedDebugLevel()
         return settings.value(AppSettings::gstDebugLevelName).toInt();
     }
     return std::nullopt;
-}
-
-void VideoBackend::bindDebugLevelFact(Fact* fact, QObject* context)
-{
-    if (!fact || !context) {
-        return;
-    }
-    (void) QObject::connect(fact, &Fact::rawValueChanged, context,
-                            [](const QVariant& value) { VideoBackend::instance().setDebugLevel(value.toInt()); });
 }

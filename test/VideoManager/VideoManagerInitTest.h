@@ -11,7 +11,9 @@ private slots:
 
     void _testReceiversNeedBackendAndWindow_data();
     void _testReceiversNeedBackendAndWindow();
+    void _testBackendInitFailure_data();
     void _testBackendInitFailure();
+    void _testNothingStartsAfterCleanup();
     void _testWaitForBackendReady();
     void _testBackendSettingReplacesReceivers();
 };

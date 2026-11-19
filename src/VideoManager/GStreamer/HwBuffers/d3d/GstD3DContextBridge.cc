@@ -10,6 +10,14 @@
 
 #include "QGCRhiCapture.h"
 
+// GStreamer's D3D11 device notifies from its monitor thread, which it joins when disposed, and its D3D12 device from
+// whichever thread saw the loss, with GStreamer's device list locked: neither may drop the device or wait for a
+// bridge's mutex, which noteDeviceRemoved() leaves to the GUI thread.
+void GstD3DContextBridge::onDeviceRemoved(GObject* /*device*/, GParamSpec* /*property*/, gpointer bridge)
+{
+    static_cast<GstD3DContextBridge*>(bridge)->noteDeviceRemoved();
+}
+
 gint64 GstD3DContextBridge::readAdapterLuid(gpointer device)
 {
     if (!device || !G_IS_OBJECT(device)) {
@@ -29,7 +37,7 @@ bool GstD3DContextBridge::snapshotBackendMatches()
         qCDebug(category()) << "QRhi snapshot not yet populated; will retry on next NEED_CONTEXT";
         return false;
     }
-    if (backend != _qrhiBackend) {
+    if ((backend != _qrhiBackend) && (backend != _secondQrhiBackend)) {
         if (!_warnedWrongBackend) {
             qCInfo(category()) << "QRhi backend tag is" << backend << "(not" << apiName() << "); bridge inactive";
             _warnedWrongBackend = true;
@@ -49,6 +57,10 @@ bool GstD3DContextBridge::primeLocked()
         return retryLater();
     }
     _device = device;
+    // Looked up by name, so this builds against releases older than 1.26 too.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(device), "device-removed-reason")) {
+        _removalHandler = g_signal_connect(device, "notify::device-removed-reason", G_CALLBACK(&onDeviceRemoved), this);
+    }
     qCInfo(category()) << apiName() << "bridge primed: shared device =" << device;
     return true;
 }
@@ -69,6 +81,10 @@ GstContext* GstD3DContextBridge::buildContext(const char* /*contextType*/, GstOb
 
 void GstD3DContextBridge::clearLocked()
 {
+    if (_removalHandler != 0) {
+        g_signal_handler_disconnect(_device, _removalHandler);
+        _removalHandler = 0;
+    }
     gst_clear_object(&_device);
     _warnedWrongBackend = false;
 }

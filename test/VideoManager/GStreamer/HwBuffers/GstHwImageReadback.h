@@ -1,6 +1,9 @@
 #pragma once
 
+#include <gst/video/video.h>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include <QtCore/QString>
 #include <QtGui/QColor>
@@ -9,10 +12,19 @@
 #include <QtMultimedia/private/qhwvideobuffer_p.h>
 #include <QtMultimedia/private/qvideoframeconverter_p.h>
 
+#include "GStreamerTestHelpers.h"
+#include "GstScoped.h"
+
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include <cerrno>
+#include <gst/allocators/gstdmabuf.h>
+#include <poll.h>
+#endif
+
 class QRhi;
 
 /// Pixel checks of GPU frames through QVideoFrame::toImage(), which converts them on a QRhi of their API: D3D11/D3D12,
-/// Metal, and GL for glupload's GLMemory.
+/// Metal, and GL for glupload's GLMemory. And the VA frames the DMABuf readback cases import.
 namespace GstTest {
 
 /// Wraps a GPU path's buffer so QVideoFrame::toImage() converts it with @p rhi, the QRhi the test created, as it uses
@@ -98,5 +110,91 @@ inline QString firstImageMismatch(const QImage& actual, const QImage& expected, 
     }
     return {};
 }
+
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+
+/// True once the driver has finished writing @p buffer's dma-bufs, whose write fences poll() waits for.
+inline bool waitForDmaBufWrites(GstBuffer* buffer, int timeoutMs)
+{
+    for (guint i = 0; i < gst_buffer_n_memory(buffer); ++i) {
+        GstMemory* const memory = gst_buffer_peek_memory(buffer, i);
+        if (!gst_is_dmabuf_memory(memory)) {
+            continue;
+        }
+        pollfd pfd = {gst_dmabuf_memory_get_fd(memory), POLLIN, 0};
+        int ret = 0;
+        do {
+            ret = ::poll(&pfd, 1, timeoutMs);
+        } while ((ret < 0) && (errno == EINTR));
+        if ((ret <= 0) || !(pfd.revents & POLLIN)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// A frame a VA element left in DMABuf memory and the same frame downloaded to system memory, with the pipeline that
+/// made them.
+struct VaFramePair
+{
+    TestPipeline pipeline;
+    SamplePtr gpu;
+    SamplePtr cpu;
+};
+
+/// One SMPTE frame of @p source through the VA element @p producer twice: into the layout the driver picks among
+/// those of @p drmCaps, the DMA_DRM caps an importer offers (usually a tiled one), and downloaded to system memory as
+/// @p cpuFormat, the reference. A frame sampled with the wrong pitch, plane offset, plane format or tiling shows in
+/// the bars. Skips the test where this host's VA driver can't; @p frames then holds no sample.
+inline void pullVaFramePair(VaFramePair& frames, const QString& source, const QString& producer, std::string drmCaps,
+                            GstVideoFormat cpuFormat)
+{
+    drmCaps.resize(drmCaps.find_last_not_of("; ") + 1);
+    TestPipeline& pipeline = frames.pipeline;
+    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! tee name=t "
+                                        "t. ! queue ! %2 ! capsfilter name=gpucaps ! fakesink name=gpu "
+                                        "t. ! queue ! %2 ! video/x-raw,format=%3 ! fakesink name=cpu")
+                             .arg(source, producer, QLatin1String(gst_video_format_to_string(cpuFormat))))) {
+        QSKIP(qPrintable(QStringLiteral("VA pipeline parse skipped: %1").arg(pipeline.error())));
+    }
+    const GStreamer::GstCapsPtr gpuCaps = GStreamer::adoptCaps(gst_caps_from_string(drmCaps.c_str()));
+    QVERIFY(gpuCaps);
+    g_object_set(pipeline.element("gpucaps").get(), "caps", gpuCaps.get(), nullptr);
+    // VA hands out DMA_DRM memory only to a peer that takes GstVideoMeta, as qgcqvideosink does.
+    const GStreamer::GstPadPtr gpuPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("gpu").get(), "sink"));
+    QVERIFY(gpuPad);
+    GStreamer::PadProbe allocationProbe;
+    QVERIFY(allocationProbe.add(
+        gpuPad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM | GST_PAD_PROBE_TYPE_PUSH),
+        +[](GstPad*, GstPadProbeInfo* info, gpointer) -> GstPadProbeReturn {
+            GstQuery* query = GST_PAD_PROBE_INFO_QUERY(info);
+            if (GST_QUERY_TYPE(query) != GST_QUERY_ALLOCATION) {
+                return GST_PAD_PROBE_OK;
+            }
+            gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr);
+            return GST_PAD_PROBE_HANDLED;
+        },
+        nullptr));
+    if (!pipeline.play()) {
+        QSKIP("VA pipeline failed to PLAY (no VA driver / DRI device?)");
+    }
+    const QString failure = pipeline.runToEos();
+    if (!failure.isEmpty()) {
+        QSKIP(qPrintable(QStringLiteral("VA driver can't produce the offered layouts (%1): %2")
+                             .arg(QString::fromStdString(drmCaps), failure)));
+    }
+    SamplePtr gpu = pipeline.lastSample("gpu");
+    SamplePtr cpu = pipeline.lastSample("cpu");
+    QVERIFY(gpu && cpu);
+    // The importer waits 100 ms for the driver to finish a frame, then shows it some other way. A busy GPU takes
+    // longer over a postprocessor's frame, and these tests are about the frame's layout, not about that wait.
+    QVERIFY2(waitForDmaBufWrites(gst_sample_get_buffer(gpu.get()), TestTimeout::mediumMs()),
+             "the VA driver did not finish writing the frame");
+    frames.gpu = std::move(gpu);
+    frames.cpu = std::move(cpu);
+}
+
+#endif  // QGC_HAS_GST_DMABUF_GPU_PATH
 
 }  // namespace GstTest

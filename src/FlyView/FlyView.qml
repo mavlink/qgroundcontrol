@@ -110,6 +110,7 @@ Item {
             id:         videoControl
             pipView:    _pipView
             topInset:   toolbar.height
+            rightInset: mapHolder.width - (widgetLayer.x + _layerOccluders.topRight.x)
         }
 
         PipView {

@@ -184,6 +184,13 @@ bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t &msg)
     return _handleCameraCommand(request, targetCompId);
 }
 
+bool MockLinkCamera::streamTransmitted(uint8_t compId, uint8_t streamId)
+{
+    QMutexLocker locker(&_camerasMutex);
+    const CameraState* cam = _findCamera(compId);
+    return cam && (streamId >= 1) && (streamId <= kNumStreams) && (cam->transmittedStreams & (1u << (streamId - 1)));
+}
+
 bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId)
 {
     // Thread-safe access: Main thread modifying camera state that worker thread reads every 100ms.
@@ -248,6 +255,26 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
         return true;
+
+    case MAV_CMD_VIDEO_START_STREAMING:
+    case MAV_CMD_VIDEO_STOP_STREAMING: {
+        const int streamId = static_cast<int>(request.param1);
+        if (!(cam->capFlags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) || (streamId < 0) || (streamId > kNumStreams)) {
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+            return true;
+        }
+        // Stream 0 names every stream
+        const uint32_t streams = (streamId == 0) ? ((1u << kNumStreams) - 1) : (1u << (streamId - 1));
+        if (request.command == MAV_CMD_VIDEO_START_STREAMING) {
+            cam->transmittedStreams |= streams;
+        } else {
+            cam->transmittedStreams &= ~streams;
+        }
+        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "transmits streams" << Qt::bin
+                                   << cam->transmittedStreams;
+        _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+        return true;
+    }
 
     case MAV_CMD_SET_CAMERA_MODE:
         if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_MODES) {

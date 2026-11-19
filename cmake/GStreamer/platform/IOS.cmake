@@ -270,7 +270,8 @@ endfunction()
 # Creates GStreamer::mobile (qgc_gst_add_mobile_library) as the framework the app embeds and the only binary that links
 # GStreamer_static. Its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES, which is
 # what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (Mobile.cmake) that no plugin pulls
-# in are kept. The app resolves every GStreamer symbol from this framework.
+# in are kept. The app resolves every GStreamer symbol from this framework, which exports GStreamer's and GLib's API
+# only.
 function(_qgc_gst_ios_mobile_framework)
     # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);
     # loading it registers the default GIO TLS backend.
@@ -280,6 +281,34 @@ function(_qgc_gst_ios_mobile_framework)
         PRIVATE
             GStreamer_static
             GStreamer::GStreamer
+    )
+    # The archive's copies of FFmpeg, libpng, libjpeg and zlib would be exported too, and the app's Qt code bound to
+    # them instead of Qt's own: Qt's image formats were, and Qt Multimedia's FFmpeg plugin would be if this framework
+    # came before Qt's FFmpeg frameworks on the app's link line. The one merged archive has no switch per library, as
+    # Android's --exclude-libs is, so the exports are chosen by their C names.
+    set(_exported gst_* _gst_* GST_* g_* glib_*)
+    set(_exports "${CMAKE_CURRENT_BINARY_DIR}/gstreamer_mobile.exports")
+    if(APPLE)
+        # Mach-O names have a leading underscore.
+        list(TRANSFORM _exported PREPEND "_")
+        list(JOIN _exported "\n" _content)
+        set(_option -exported_symbols_list)
+    else()
+        # The link test builds these targets on a Linux host (tests/fixtures/IosLink).
+        list(JOIN _exported "; " _content)
+        set(_content "{ global: ${_content}; local: *; };")
+        set(_option --version-script)
+    endif()
+    file(
+        GENERATE
+        OUTPUT "${_exports}"
+        CONTENT "${_content}\n"
+    )
+    target_link_options(GStreamerMobile PRIVATE "LINKER:${_option},${_exports}")
+    set_property(
+        TARGET GStreamerMobile
+        APPEND
+        PROPERTY LINK_DEPENDS "${_exports}"
     )
     set_target_properties(
         GStreamerMobile
@@ -293,8 +322,8 @@ endfunction()
 
 # _qgc_gst_create_ios_targets()
 # Creates the GStreamer:: targets and GStreamer::mobile from the merged archive GSTREAMER_XCFRAMEWORK_LIB, without
-# pkg-config, and sets GStreamer_VERSION and GSTREAMER_STATIC_PLUGINS in the caller's scope. Every target comes from
-# that one archive, so the steps share its state in one function.
+# pkg-config, and sets GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION and GSTREAMER_STATIC_PLUGINS in the caller's
+# scope. Every target comes from that one archive, so the steps share its state in one function.
 # cmake-lint: disable=R0912,R0915
 function(_qgc_gst_create_ios_targets)
     qgc_gst_layout_get(INCLUDE_PATH _gst_include_path)
@@ -302,6 +331,11 @@ function(_qgc_gst_create_ios_targets)
     _qgc_gst_ios_sdk_version("${_gst_include_path}" GStreamer_VERSION)
     set(GStreamer_VERSION
         "${GStreamer_VERSION}"
+        PARENT_SCOPE
+    )
+    _qgc_gst_libavcodec_header_version("${_gst_include_path}" GStreamer_LIBAVCODEC_VERSION)
+    set(GStreamer_LIBAVCODEC_VERSION
+        "${GStreamer_LIBAVCODEC_VERSION}"
         PARENT_SCOPE
     )
 

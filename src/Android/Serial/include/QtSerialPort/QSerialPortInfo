@@ -1,0 +1,4 @@
+#pragma once
+
+// See QtSerialPort/QSerialPort in this directory.
+#include "../../AndroidSerialPortInfo.h"

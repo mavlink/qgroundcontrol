@@ -23,7 +23,7 @@ qgc_test_pass("component modules")
 
 # The mandatory components come first and every selection keeps GSTREAMER_COMPONENTS order.
 qgc_gst_select_components(_selected)
-qgc_test_assert_streq("mandatory only" "Base;Rtsp;Video" "${_selected}")
+qgc_test_assert_streq("mandatory only" "Base;Pbutils;Rtsp;Video" "${_selected}")
 qgc_gst_select_components(_selected Allocators App GlPrototypes Gl App)
-qgc_test_assert_streq("registry order" "Base;Gl;GlPrototypes;Rtsp;Video;App;Allocators" "${_selected}")
+qgc_test_assert_streq("registry order" "Base;Gl;GlPrototypes;Pbutils;Rtsp;Video;App;Allocators" "${_selected}")
 qgc_test_pass("select_components")

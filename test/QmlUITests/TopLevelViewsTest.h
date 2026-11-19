@@ -24,6 +24,8 @@ private slots:
     void _testSettingsDividerVisibility();
     void _testVehicleConfigDividersNoVehicle();
     void _testDiscoveredCameraReceiverSettingsVisible();
+    void _testRecordingEncodingSettingsVisible();
+    void _testUsbCameraSettingsShowForTileCamera();
 
 private:
     QQuickItem* _clickSettingsButton(const QString& pageName);

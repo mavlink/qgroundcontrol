@@ -8,6 +8,7 @@
 #include <QtCore/QString>
 
 #include "GstScoped.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_WIN
 #include "gstqgc/GstQgcRenderTarget.h"
@@ -33,29 +34,30 @@ namespace {
 struct DecoderFamilyPrefix
 {
     const char* prefix;
-    VideoDecoderOptions family;  // ForceVideoDecoderDefault: not a user-selectable family
+    VideoDecoderOption family;  // VideoDecoderOption::Default: not a user-selectable family
     bool isHardware;
 };
 
-// Single name-based decoder classification for the hardware/software split, the ForceVideoDecoder*
+// Single name-based decoder classification for the hardware/software split, the forceVideoDecoder
 // rank overrides and availableDecoderFamilies(). Prefix (not substring) matching, so e.g. avdec_wnv1
 // isn't taken for an NVIDIA decoder. The first match wins: specific prefixes precede general ones.
 constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
     // Android MediaCodec: Google/Codec2 software wrappers; every other amcviddec is a hardware codec.
-    {"amcviddec-omxgoogle", ForceVideoDecoderDefault, false},
-    {"amcviddec-c2android", ForceVideoDecoderDefault, false},
-    {"amcviddec-", ForceVideoDecoderDefault, true},
-    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by ForceVideoDecoderVAAPI (modern va* only).
-    {"vaapi", ForceVideoDecoderDefault, true},
-    {"va", ForceVideoDecoderVAAPI, true},
-    {"nv", ForceVideoDecoderNVIDIA, true},
-    {"d3d11", ForceVideoDecoderDirectX3D, true},
-    {"d3d12", ForceVideoDecoderDirectX3D, true},
-    {"dxva", ForceVideoDecoderDirectX3D, true},
-    {"vtdec", ForceVideoDecoderVideoToolbox, true},
-    {"qsv", ForceVideoDecoderIntel, true},
-    {"msdk", ForceVideoDecoderIntel, true},
-    {"vulkan", ForceVideoDecoderVulkan, true},
+    {"amcviddec-omxgoogle", VideoDecoderOption::Default, false},
+    {"amcviddec-c2android", VideoDecoderOption::Default, false},
+    {"amcviddec-", VideoDecoderOption::Default, true},
+    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by VideoDecoderOption::VAAPI (modern va* only).
+    {"vaapi", VideoDecoderOption::Default, true},
+    {"va", VideoDecoderOption::VAAPI, true},
+    {"nv", VideoDecoderOption::NVIDIA, true},
+    {"d3d11", VideoDecoderOption::DirectX3D, true},
+    {"d3d12", VideoDecoderOption::DirectX3D, true},
+    {"dxva", VideoDecoderOption::DirectX3D, true},
+    // vtdec and vtdec_hw, and from GStreamer 1.30 one decoder per codec (vth264dec, vth264dec_hw, ...).
+    {"vt", VideoDecoderOption::VideoToolbox, true},
+    {"qsv", VideoDecoderOption::Intel, true},
+    {"msdk", VideoDecoderOption::Intel, true},
+    {"vulkan", VideoDecoderOption::Vulkan, true},
 };
 
 const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
@@ -71,14 +73,14 @@ const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
 
 }  // namespace
 
-VideoDecoderOptions decoderFamilyForFactory(const char* factoryName)
+VideoDecoderOption decoderFamilyForFactory(const char* factoryName)
 {
     if (!factoryName) {
-        return ForceVideoDecoderDefault;
+        return VideoDecoderOption::Default;
     }
 
     const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName);
-    return entry ? entry->family : ForceVideoDecoderDefault;
+    return entry ? entry->family : VideoDecoderOption::Default;
 }
 
 bool isHardwareDecoderFactory(GstElementFactory* factory)
@@ -131,22 +133,49 @@ bool rankedByUser(const gchar* featureName)
     });
 }
 
+#ifdef Q_OS_WIN
+/// The adapter the Direct3D decoder @p factory decodes on, 0 when it doesn't tell. GStreamer registers one decoder
+/// per adapter and codec and keeps the adapter in the element's class, which only an element reads ("adapter-luid"):
+/// one is made for it, once per factory. It opens no device before it leaves the NULL state.
+qint64 decoderAdapterLuid(GstElementFactory* factory)
+{
+    static QHash<QByteArray, qint64> s_luids;
+    const QByteArray name(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+    if (const auto known = s_luids.constFind(name); known != s_luids.constEnd()) {
+        return known.value();
+    }
+    gint64 luid = 0;
+    if (const GstElementPtr decoder = makeElement(name.constData());
+        decoder && g_object_class_find_property(G_OBJECT_GET_CLASS(decoder.get()), "adapter-luid")) {
+        g_object_get(decoder.get(), "adapter-luid", &luid, nullptr);
+    }
+    s_luids.insert(name, luid);
+    return luid;
+}
+#endif
+
+/// With the applier's mutex held.
 QList<DecoderInfo> installedDecoders()
 {
     QList<DecoderInfo> decoders;
     forEachVideoDecoderFactory(GST_RANK_NONE, [&decoders](GstElementFactory* factory) {
         GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
         const gchar* const name = gst_plugin_feature_get_name(feature);
-        decoders.append({.name = QByteArray(name),
-                         .rank = gst_plugin_feature_get_rank(feature),
-                         .hardware = isHardwareDecoderFactory(factory),
-                         .family = decoderFamilyForFactory(name)});
+        DecoderInfo decoder{.name = QByteArray(name),
+                            .rank = gst_plugin_feature_get_rank(feature),
+                            .hardware = isHardwareDecoderFactory(factory),
+                            .family = decoderFamilyForFactory(name)};
+#ifdef Q_OS_WIN
+        if (decoder.family == VideoDecoderOption::DirectX3D) {
+            decoder.adapterLuid = decoderAdapterLuid(factory);
+        }
+#endif
+        decoders.append(decoder);
     });
     return decoders;
 }
 
-}  // namespace
-
+/// The RankTraits of the running platform: the zero-copy preferences on Linux, the RHI's D3D API on Windows.
 RankTraits currentRankTraits()
 {
     RankTraits traits;
@@ -163,13 +192,24 @@ RankTraits currentRankTraits()
         case GstQgc::RenderBackend::Unknown:
             d3d12 = qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0;
             break;
-        default:
+        case GstQgc::RenderBackend::Direct3D11:
+        // No D3D API is sampled zero-copy under these: the D3D11 decoders stay the ones preferred.
+        case GstQgc::RenderBackend::Null:
+        case GstQgc::RenderBackend::OpenGL:
+        case GstQgc::RenderBackend::Metal:
+        case GstQgc::RenderBackend::Vulkan:
             break;
     }
     traits.rhiD3DApi = d3d12 ? D3DApi::D3D12 : D3DApi::D3D11;
+    // Both known once the scene graph has published Qt's device, which has the ranks applied again (reapply()).
+    traits.d3d11OpensD3D12 = !d3d12 && HwBuffers::d3d11OpensD3D12();
+    traits.rhiAdapterLuid = HwBuffers::graphicsAdapterLuid();
 #endif
+    traits.softwareRendering = HwBuffers::softwareRenderingRequested();
     return traits;
 }
+
+}  // namespace
 
 DecoderRankApplier& DecoderRankApplier::instance()
 {
@@ -177,12 +217,13 @@ DecoderRankApplier& DecoderRankApplier::instance()
     return applier;
 }
 
-void DecoderRankApplier::apply(VideoDecoderOptions option)
+void DecoderRankApplier::apply(VideoDecoderOption option)
 {
     GstRegistry* const registry = _registry();
     if (!registry) {
         return;
     }
+    const QMutexLocker locker(&_mutex);
     _restore(registry);
 
     const RankTraits traits = currentRankTraits();
@@ -193,19 +234,57 @@ void DecoderRankApplier::apply(VideoDecoderOptions option)
         qCWarning(GStreamerDecoderRanksLog).noquote() << warning;
     }
     for (const RankChange& change : plan.changes) {
-        (void) setRank(registry, change.feature.constData(), change.rank);
+        (void) _setRank(registry, change.feature.constData(), change.rank);
     }
     _applied = option;
+    _appliedTraits = traits;
+}
+
+void DecoderRankApplier::reapply()
+{
+    if (_applied && (currentRankTraits() != _appliedTraits)) {
+        apply(*_applied);
+    }
 }
 
 void DecoderRankApplier::restore()
 {
     if (GstRegistry* const registry = _registry()) {
+        const QMutexLocker locker(&_mutex);
         _restore(registry);
     }
 }
 
 bool DecoderRankApplier::setRank(GstRegistry* registry, const char* featureName, uint16_t rank)
+{
+    const QMutexLocker locker(&_mutex);
+    return _setRank(registry, featureName, rank);
+}
+
+bool DecoderRankApplier::demoteFailedDecoder(const char* featureName, const GstCaps* caps)
+{
+    GstRegistry* const registry = _registry();
+    if (!registry || !featureName || !caps || rankedByUser(featureName)) {
+        return false;
+    }
+    // decodebin3's candidates for the stream: the autoplugged decoders whose sink template covers its caps.
+    GList* const decoders = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECODER, GST_RANK_MARGINAL);
+    GList* const candidates = gst_element_factory_list_filter(decoders, caps, GST_PAD_SINK, TRUE);
+    gst_plugin_feature_list_free(decoders);
+    bool otherDecoder = false;
+    for (GList* node = candidates; node != nullptr; node = node->next) {
+        otherDecoder =
+            otherDecoder || (g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(node->data)), featureName) != 0);
+    }
+    gst_plugin_feature_list_free(candidates);
+    if (!otherDecoder) {
+        return false;
+    }
+    const QMutexLocker locker(&_mutex);
+    return _setRank(registry, featureName, GST_RANK_NONE);
+}
+
+bool DecoderRankApplier::_setRank(GstRegistry* registry, const char* featureName, uint16_t rank)
 {
     if (!registry || !featureName) {
         return false;
@@ -251,7 +330,7 @@ void DecoderRankApplier::_restore(GstRegistry* registry)
     _applied.reset();
 }
 
-ScopedDecoderOption::ScopedDecoderOption(VideoDecoderOptions option)
+ScopedDecoderOption::ScopedDecoderOption(VideoDecoderOption option)
     : _previous(DecoderRankApplier::instance().applied())
 {
     DecoderRankApplier::instance().apply(option);
@@ -271,34 +350,29 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
     return DecoderRankApplier::instance().setRank(registry, featureName, rank);
 }
 
-void setCodecPriorities(int rawOption)
-{
-    // Validate the raw setting here so the planner's enum switch stays default-free (-Wswitch).
-    if ((rawOption < ForceVideoDecoderDefault) || (rawOption > ForceVideoDecoderHardware)) {
-        qCWarning(GStreamerDecoderRanksLog) << "Ignoring invalid decode option:" << rawOption;
-        return;
-    }
-    setCodecPriorities(static_cast<VideoDecoderOptions>(rawOption));
-}
-
-void setCodecPriorities(VideoDecoderOptions option)
+void setCodecPriorities(VideoDecoderOption option)
 {
     DecoderRankApplier::instance().apply(option);
 }
 
-QList<VideoDecoderOptions> availableDecoderFamilies()
+bool demoteFailedDecoder(const char* factoryName, const GstCaps* caps)
 {
-    QList<VideoDecoderOptions> families;
+    return DecoderRankApplier::instance().demoteFailedDecoder(factoryName, caps);
+}
+
+QList<VideoDecoderOption> availableDecoderFamilies()
+{
+    QList<VideoDecoderOption> families;
     forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
-        const VideoDecoderOptions family =
+        const VideoDecoderOption family =
             decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
 #ifndef QGC_HAS_GST_VULKAN_GPU_PATH
-        // Without the opt-in Vulkan GPU path, forcing Vulkan decoders only adds a CPU copy of every frame.
-        if (family == ForceVideoDecoderVulkan) {
+        // Only a build with the opt-in Vulkan GPU path has a use for them: no sink takes their VulkanImage memory.
+        if (family == VideoDecoderOption::Vulkan) {
             return;
         }
 #endif
-        if ((family != ForceVideoDecoderDefault) && !families.contains(family)) {
+        if ((family != VideoDecoderOption::Default) && !families.contains(family)) {
             families.append(family);
         }
     });
@@ -307,6 +381,10 @@ QList<VideoDecoderOptions> availableDecoderFamilies()
 
 void logDecoderRanks()
 {
+    if (!GStreamerDecoderRanksLog().isDebugEnabled()) {
+        return;
+    }
+
     struct Decoder
     {
         guint rank;

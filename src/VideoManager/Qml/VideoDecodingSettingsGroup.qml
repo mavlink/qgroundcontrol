@@ -20,7 +20,6 @@ QGCGroupBox {
                     || root._videoSettings.forceCpuVideoPath.userVisible)
 
     LabelledFactComboBox {
-        objectName:         "videoBackend"
         label:              qsTr("Video Backend")
         fact:               root._videoSettings.videoBackend
         indexModel:         false

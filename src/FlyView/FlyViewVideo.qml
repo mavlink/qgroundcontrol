@@ -5,21 +5,25 @@ import QGroundControl.Controls
 import QGroundControl.VideoManager
 
 Item {
-    id: _root
+    id: root
 
     property Item pipView
     /// Height the Fly View toolbar covers at the top of the full-size video.
     property real topInset: 0
+    /// Width the Fly View's widgets cover at the top right of the full-size video.
+    property real rightInset: 0
     property Item pipState: videoPipState
+    /// The manager whose video the view shows.
+    property VideoManager videoManager: QGroundControl.videoManager
 
     PipState {
         id:         videoPipState
-        pipView:    _root.pipView
+        pipView:    root.pipView
         isDark:     true
 
         onStateChanged: {
-            if (pipState.state !== pipState.fullState) {
-                QGroundControl.videoManager.fullScreen = false
+            if (videoPipState.state !== videoPipState.fullState) {
+                root.videoManager.fullScreen = false
             }
         }
     }
@@ -28,15 +32,18 @@ Item {
     VideoView {
         id:                 videoStreaming
         anchors.fill:       parent
-        useSmallFont:       _root.pipState.state !== _root.pipState.fullState
-        thermalPipTopInset: _root.pipState.state === _root.pipState.fullState ? _root.topInset : 0
-        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
+        useSmallFont:       root.pipState.state !== root.pipState.fullState
+        thermalPipTopInset: root.pipState.state === root.pipState.fullState ? root.topInset : 0
+        showTiles:          root.pipState.state === root.pipState.fullState
+        tilesRightInset:    root.rightInset
+        videoManager:       root.videoManager
+        visible:        root.videoManager.isStreamSource || root.videoManager.isUvc
     }
 
     QGCLabel {
         text: qsTr("Double-click to exit full screen")
         font.pointSize: ScreenTools.largeFontPointSize
-        visible: QGroundControl.videoManager.fullScreen
+        visible: root.videoManager.fullScreen
         anchors.centerIn: parent
 
         onVisibleChanged: {
@@ -70,8 +77,6 @@ Item {
 
     MouseArea {
         id:                         flyViewVideoMouseArea
-        anchors.fill:               parent
-        enabled:                    pipState.state === pipState.fullState
 
         property real _pressX:      0
         property real _pressY:      0
@@ -79,15 +84,19 @@ Item {
         property bool _doubleClicked: false
         readonly property real _dragThreshold: 10
 
+        anchors.fill:               parent
+        enabled:                    root.pipState.state === root.pipState.fullState
+
         // Defer single-click handling so a double-click (fullscreen toggle) doesn't also
         // fire an unintended gimbal click-to-point/tracking command on its first click.
         Timer {
             id:         singleClickTimer
-            interval:   Qt.styleHints.mouseDoubleClickInterval
-            repeat:     false
 
             property real clickX: 0
             property real clickY: 0
+
+            interval:   Qt.styleHints.mouseDoubleClickInterval
+            repeat:     false
 
             onTriggered: {
                 onScreenGimbalController.mouseClicked(clickX, clickY)
@@ -95,15 +104,24 @@ Item {
             }
         }
 
-        onDoubleClicked: {
+        onDoubleClicked: (mouse) => {
+            if (videoStreaming.tileAt(mouse.x, mouse.y)) {
+                mouse.accepted = false
+                return
+            }
             // Fires on the second press of a double-click. The second release still emits
             // onReleased, so flag it to prevent re-arming the single-click timer.
             _doubleClicked = true
             singleClickTimer.stop()
-            QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+            root.videoManager.fullScreen = !root.videoManager.fullScreen
         }
 
         onPressed: (mouse) => {
+            // A press on a video tile is the tile's, which is below this area.
+            if (videoStreaming.tileAt(mouse.x, mouse.y)) {
+                mouse.accepted = false
+                return
+            }
             _pressX = mouse.x
             _pressY = mouse.y
             _dragging = false
@@ -147,6 +165,6 @@ Item {
 
     ObstacleDistanceOverlayVideo {
         id: obstacleDistance
-        showText: pipState.state === pipState.fullState
+        showText: root.pipState.state === root.pipState.fullState
     }
 }

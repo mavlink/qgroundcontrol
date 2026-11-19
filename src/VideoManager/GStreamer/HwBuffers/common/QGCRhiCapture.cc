@@ -1,13 +1,13 @@
 #include "QGCRhiCapture.h"
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "HwBuffers.h"
-#endif
-
 #include <rhi/qrhi.h>
 
 #include <QtCore/QRunnable>
 #include <QtQuick/QQuickWindow>
+
+#include "GstContextBridgeBase.h"
+#include "GstHwPathRegistry.h"
+#include "HwBuffers.h"
 #if QT_CONFIG(opengl) && QT_CONFIG(egl)
 #include <QtCore/QThread>
 #include <QtGui/QGuiApplication>
@@ -20,6 +20,10 @@
     (defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
 #include <rhi/qrhi_platform.h>
 #endif
+#if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
+#include <QtGui/QVulkanFunctions>
+#include <QtGui/QVulkanInstance>
+#endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 #include <d3d11.h>
 #include <d3d11_4.h>  // ID3D11Multithread
@@ -29,6 +33,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstring>
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 QGC_LOGGING_CATEGORY(QGCRhiCaptureLog, "Video.GStreamer.HwBuffers.RhiCapture")
@@ -37,16 +42,16 @@ QGC_LOGGING_CATEGORY(QGCRhiCaptureLog, "Video.GStreamer.HwBuffers.RhiCapture")
 namespace QGCRhiCapture {
 
 namespace {
-std::atomic<QRhi*> s_cachedRhi{nullptr};
 // The connected window (or null after it is destroyed); read only by connectWindow's idempotency
 // guard. Atomic because the destroyed lambda nulls it on the window's thread.
 std::atomic<QQuickWindow*> s_connectedWindow{nullptr};
 DeviceSnapshot s_snapshot;
 // Per-connection so a window swap (e.g. popout video) can disconnect the prior window's lambdas before they clobber the
-// new window's cached RHI.
+// new window's snapshot.
 std::array<QMetaObject::Connection, 3> s_connections;
 // Qt's EGLDisplay once found; Qt keeps it for the application's lifetime.
 std::atomic<void*> s_qtEglDisplay{nullptr};
+std::atomic<void (*)()> s_publishedHandler{nullptr};
 
 #if defined(QGC_RHI_CAPTURE_PROBES_EGL)
 void* eglDisplayOf(const QOpenGLContext* context)
@@ -60,12 +65,13 @@ void clearSnapshot()
 {
     s_snapshot.backend.store(-1, std::memory_order_release);
     s_snapshot.d3d11Device.store(nullptr, std::memory_order_release);
-    s_snapshot.d3d12Device.store(nullptr, std::memory_order_release);
     s_snapshot.adapterLuid.store(0, std::memory_order_release);
-    s_snapshot.vkPhysicalDevice.store(nullptr, std::memory_order_release);
-    s_snapshot.vkQueueFamilyIdx.store(0, std::memory_order_release);
-    s_snapshot.vkQueueIdx.store(0, std::memory_order_release);
-    s_snapshot.framesInFlight.store(0, std::memory_order_release);
+    s_snapshot.d3d11OpensD3D12.store(false, std::memory_order_release);
+    s_snapshot.vkVendorId.store(0, std::memory_order_release);
+    s_snapshot.vkDeviceId.store(0, std::memory_order_release);
+    for (std::atomic<quint64>& half : s_snapshot.vkPipelineCacheUuid) {
+        half.store(0, std::memory_order_release);
+    }
 }
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -96,11 +102,10 @@ void populateSnapshot(QRhi* rhi)
     }
     const int backend = static_cast<int>(rhi->backend());
     void* d3d11 = nullptr;
-    void* d3d12 = nullptr;
     qint64 luid = 0;
-    void* vkPhysDev = nullptr;
-    quint32 vkQueueFamilyIdx = 0;
-    quint32 vkQueueIdx = 0;
+    quint32 vkVendorId = 0;
+    quint32 vkDeviceId = 0;
+    std::array<quint64, 2> vkPipelineCacheUuid{};
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (rhi->backend() == QRhi::D3D11) {
@@ -120,7 +125,6 @@ void populateSnapshot(QRhi* rhi)
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     if (rhi->backend() == QRhi::D3D12) {
         if (auto* h = static_cast<const QRhiD3D12NativeHandles*>(rhi->nativeHandles())) {
-            d3d12 = h->dev;
             luid = (static_cast<qint64>(h->adapterLuidHigh) << 32) |
                    (static_cast<qint64>(h->adapterLuidLow) & 0xFFFFFFFFLL);
         }
@@ -137,38 +141,74 @@ void populateSnapshot(QRhi* rhi)
 #endif
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
     if (rhi->backend() == QRhi::Vulkan) {
-        if (auto* h = static_cast<const QRhiVulkanNativeHandles*>(rhi->nativeHandles())) {
-            vkPhysDev = static_cast<void*>(h->physDev);
-            vkQueueFamilyIdx = h->gfxQueueFamilyIdx;
-            vkQueueIdx = h->gfxQueueIdx;
+        const auto* h = static_cast<const QRhiVulkanNativeHandles*>(rhi->nativeHandles());
+        if (h && h->inst && (h->physDev != VK_NULL_HANDLE)) {
+            VkPhysicalDeviceProperties properties{};
+            h->inst->functions()->vkGetPhysicalDeviceProperties(h->physDev, &properties);
+            vkVendorId = properties.vendorID;
+            vkDeviceId = properties.deviceID;
+            static_assert(sizeof(vkPipelineCacheUuid) == sizeof(properties.pipelineCacheUUID));
+            std::memcpy(vkPipelineCacheUuid.data(), properties.pipelineCacheUUID, sizeof(vkPipelineCacheUuid));
         }
     }
 #endif
 
-    // Publish device pointers before the backend tag so a consumer's acquire-load on backend != -1 is guaranteed to see
-    // populated handles.
-    s_snapshot.d3d11Device.store(d3d11, std::memory_order_release);
-    s_snapshot.d3d12Device.store(d3d12, std::memory_order_release);
-    s_snapshot.adapterLuid.store(luid, std::memory_order_release);
-    s_snapshot.vkPhysicalDevice.store(vkPhysDev, std::memory_order_release);
-    s_snapshot.vkQueueFamilyIdx.store(vkQueueFamilyIdx, std::memory_order_release);
-    s_snapshot.vkQueueIdx.store(vkQueueIdx, std::memory_order_release);
-    s_snapshot.framesInFlight.store(rhi->resourceLimit(QRhi::FramesInFlight), std::memory_order_release);
-    s_snapshot.backend.store(backend, std::memory_order_release);
-}
-}  // namespace
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->probeDevice) {
+            path->probeDevice(*rhi);
+        }
+    }
 
-QRhi* cachedRhi() noexcept
-{
-    return s_cachedRhi.load(std::memory_order_acquire);
+    // Publish device pointers, and what the paths learned of the device, before the backend tag so a consumer's
+    // acquire-load on backend != -1 is guaranteed to see them.
+    s_snapshot.d3d11Device.store(d3d11, std::memory_order_release);
+    s_snapshot.adapterLuid.store(luid, std::memory_order_release);
+    s_snapshot.vkVendorId.store(vkVendorId, std::memory_order_release);
+    s_snapshot.vkDeviceId.store(vkDeviceId, std::memory_order_release);
+    for (std::size_t i = 0; i < vkPipelineCacheUuid.size(); ++i) {
+        s_snapshot.vkPipelineCacheUuid[i].store(vkPipelineCacheUuid[i], std::memory_order_release);
+    }
+    s_snapshot.backend.store(backend, std::memory_order_release);
+
+    // A pipeline that asked a bridge for this device before it was published has it from now on.
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->bridge) {
+            path->bridge().serveWaitingPipelines();
+        }
+    }
+    if (void (*const handler)() = s_publishedHandler.load(std::memory_order_acquire)) {
+        handler();
+    }
 }
+
+/// Publishes the native device handles of @p window's QRhi. Render thread, where rhi() is valid.
+void publishRhi(QQuickWindow* window)
+{
+    populateSnapshot(window->rhi());
+}
+
+/// Withdraws the published QRhi's handles, and drops the native GPU handles that wrap its device or context.
+void unpublishRhi()
+{
+    clearSnapshot();
+    HwBuffers::resetCachedGpuResources();
+}
+
+}  // namespace
 
 DeviceSnapshot& deviceSnapshot() noexcept
 {
     return s_snapshot;
 }
 
-void* qtEglDisplay() noexcept
+#ifdef QGC_UNITTEST_BUILD
+void publishDeviceSnapshotForTest(QRhi* rhi)
+{
+    populateSnapshot(rhi);
+}
+#endif
+
+void* qtEglDisplay()
 {
     void* display = s_qtEglDisplay.load(std::memory_order_acquire);
 #if defined(QGC_RHI_CAPTURE_PROBES_EGL)
@@ -191,6 +231,11 @@ void* qtEglDisplay() noexcept
     return display;
 }
 
+void setPublishedHandler(void (*handler)()) noexcept
+{
+    s_publishedHandler.store(handler, std::memory_order_release);
+}
+
 void connectWindow(QQuickWindow* window)
 {
     if (!window)
@@ -198,17 +243,13 @@ void connectWindow(QQuickWindow* window)
     if (s_connectedWindow.load(std::memory_order_acquire) == window)
         return;  // idempotent — avoid duplicate connections
 
-    // Window swap: the old window's QRhi can be torn down before the new window's SG initializes; drop the cached
-    // QRhi/snapshot and native GPU handles now so bus-sync threads never dereference a dead device across the gap.
+    // Window swap: the old window's QRhi can be torn down before the new window's SG initializes; withdraw it now so
+    // bus-sync threads never dereference a dead device across the gap.
     if (s_connectedWindow.load(std::memory_order_acquire) != nullptr) {
-        s_cachedRhi.store(nullptr, std::memory_order_release);
-        clearSnapshot();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-        HwBuffers::resetCachedGpuResources();
-#endif
+        unpublishRhi();
     }
 
-    // Detach the prior window's signals first, else its destroyed/invalidated lambdas later wipe cachedRhi() and reset
+    // Detach the prior window's signals first, else its destroyed/invalidated lambdas later wipe the snapshot and reset
     // bridges the new window is using.
     for (std::size_t i = 0; i < s_connections.size(); ++i) {
         auto& conn = s_connections[i];
@@ -220,44 +261,21 @@ void connectWindow(QQuickWindow* window)
     // sceneGraphInitialized fires on the render thread where rhi() is valid — snapshot native device pointers here so
     // bus-sync callbacks never deref QRhi* cross-thread.
     s_connections[0] = QObject::connect(
-        window, &QQuickWindow::sceneGraphInitialized, window,
-        [window]() {
-            QRhi* rhi = window->rhi();
-            s_cachedRhi.store(rhi, std::memory_order_release);
-            populateSnapshot(rhi);
-        },
-        Qt::DirectConnection);
-    s_connections[1] = QObject::connect(
-        window, &QQuickWindow::sceneGraphInvalidated, window,
-        []() {
-            s_cachedRhi.store(nullptr, std::memory_order_release);
-            clearSnapshot();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-            // Drop native GPU handles that wrap the now-defunct QRhi-owned device/context.
-            HwBuffers::resetCachedGpuResources();
-#endif
-        },
-        Qt::DirectConnection);
-    // Clear cache when window is destroyed so a stale QRhi* is never returned.
+        window, &QQuickWindow::sceneGraphInitialized, window, [window]() { publishRhi(window); }, Qt::DirectConnection);
+    s_connections[1] =
+        QObject::connect(window, &QQuickWindow::sceneGraphInvalidated, window, &unpublishRhi, Qt::DirectConnection);
+    // Withdraw the snapshot when window is destroyed so a stale device is never handed out.
     s_connections[2] = QObject::connect(
         window, &QQuickWindow::destroyed, window,
         [](QObject*) {
             s_connectedWindow.store(nullptr, std::memory_order_release);
-            s_cachedRhi.store(nullptr, std::memory_order_release);
-            clearSnapshot();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-            HwBuffers::resetCachedGpuResources();
-#endif
+            unpublishRhi();
         },
         Qt::DirectConnection);
 
-    // SG already initialized (video init runs after first render) — publish on the render thread, where rhi() is valid.
+    // SG already initialized (video init runs after first render) — publish on the render thread.
     if (window->isSceneGraphInitialized()) {
-        window->scheduleRenderJob(QRunnable::create([window]() {
-                                      QRhi* rhi = window->rhi();
-                                      s_cachedRhi.store(rhi, std::memory_order_release);
-                                      populateSnapshot(rhi);
-                                  }),
+        window->scheduleRenderJob(QRunnable::create([window]() { publishRhi(window); }),
                                   QQuickWindow::BeforeSynchronizingStage);
         window->update();
     }

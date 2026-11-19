@@ -34,6 +34,8 @@ LOG_SHOW_TIMEOUT = 60
 CLEANUP_TIMEOUT = 60
 LOG_WINDOW = "10m"
 SUMMARY_TAIL_LINES = 40
+# QGC's startup and its GStreamer self-test, which names the decoders it found, as the other platforms' boot tests log.
+BOOT_LOGGING_CATEGORIES = "Main,API.QGCApplication,Video.VideoManager,Video.GStreamer"
 CRASH_REPORT_DIR = Path("~/Library/Logs/DiagnosticReports")
 SIMULATOR_LOG_PREDICATE = (
     'process BEGINSWITH "QGroundControl" OR process == "SpringBoard" OR process == "installd"'
@@ -277,7 +279,7 @@ def boot_test(
                 bundle,
                 "--simple-boot-test",
                 "--logging",
-                "Main",
+                BOOT_LOGGING_CATEGORIES,
                 "--log-output",
                 timeout=within_budget(timeout),
             )
