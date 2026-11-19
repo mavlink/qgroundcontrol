@@ -2,10 +2,8 @@
 
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
-#include <QtTest/QTest>
 
 #include "QGCSqlHelper.h"
-#include "UnitTestList.h"
 #include <QtCore/QTemporaryDir>
 
 void QGCSqlHelperTest::_escapeLikePattern()
@@ -27,6 +25,16 @@ void QGCSqlHelperTest::_escapeLikePattern()
 
     // Empty string
     QCOMPARE(QGCSqlHelper::escapeLikePattern(QString()), QString());
+}
+
+void QGCSqlHelperTest::_placeholders()
+{
+    QCOMPARE(QGCSqlHelper::placeholders(1), QStringLiteral("?"));
+    QCOMPARE(QGCSqlHelper::placeholders(3), QStringLiteral("?,?,?"));
+
+    // No placeholder for a count that is not positive
+    QCOMPARE(QGCSqlHelper::placeholders(0), QString());
+    QCOMPARE(QGCSqlHelper::placeholders(-1), QString());
 }
 
 void QGCSqlHelperTest::_scopedConnectionOpen()

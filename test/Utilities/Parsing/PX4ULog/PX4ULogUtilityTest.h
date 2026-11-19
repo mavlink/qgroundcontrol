@@ -13,19 +13,19 @@ private slots:
     // Header validation tests
     void _testIsValidHeader();
     void _testIsValidHeaderInvalid();
-    void _testIsValidHeaderQByteArray();
 
     // Version detection tests
     void _testGetVersion();
     void _testGetVersionInvalid();
 
     // Timestamp tests
-    void _testGetHeaderTimestamp_data();
-    void _testGetHeaderTimestamp();
+    UT_PARAMETERIZED_TEST(_testGetHeaderTimestamp);
 
     // Message iteration tests
-    void _testIterateMessages();
     void _testIterateMessagesMultiple();
+    void _testIterateMessagesStops();
+    void _testIterateMessagesAcrossChunks();
     void _testIterateMessagesUnknownMessage();
     void _testIterateMessagesFatalError();
+    UT_PARAMETERIZED_TEST(_testIterateMessagesTruncated);
 };

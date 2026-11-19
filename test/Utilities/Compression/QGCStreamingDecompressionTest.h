@@ -9,28 +9,24 @@ class QGCStreamingDecompressionTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    // Both devices
+    UT_PARAMETERIZED_TEST(_testReadsContent);
+
     // QGCDecompressDevice tests
-    void _testDecompressDeviceFromFile();
-    void _testDecompressDeviceFromQBuffer();
     void _testDecompressDeviceWithQTextStream();
     void _testDecompressDeviceWithQJsonDocument();
-    void _testDecompressDeviceFormats();  // gz, xz, zst, bz2, lz4
-    void _testDecompressDeviceFromQtResource();
     void _testDecompressDeviceErrors();
     void _testDecompressDeviceFormatInfo();
 
     // QGCArchiveFile tests
-    void _testArchiveFileFromZip();
-    void _testArchiveFileFrom7z();
-    void _testArchiveFileFromQBuffer();
     void _testArchiveFileWithQTextStream();
     void _testArchiveFileWithQJsonDocument();
     void _testArchiveFileNotFound();
-    void _testArchiveFileFromQtResource();
     void _testArchiveFileErrors();
     void _testArchiveFileMetadata();
 
     // Edge cases
     void _testPartialReads();
     void _testMultipleOpens();
+    UT_PARAMETERIZED_TEST(_testErrorString);
 };

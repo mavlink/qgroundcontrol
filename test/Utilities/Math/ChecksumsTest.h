@@ -7,7 +7,6 @@ class ChecksumsTest : public PortableTest
     Q_OBJECT
 
 private slots:
-    void _knownAnswers_data();
-    void _knownAnswers();
+    UT_PARAMETERIZED_TEST(_knownAnswers);
     void _splitInputMatchesContiguous();
 };

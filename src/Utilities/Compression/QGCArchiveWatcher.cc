@@ -1,9 +1,13 @@
 #include "QGCArchiveWatcher.h"
-#include "QGCCompressionJob.h"
-#include "QGCLoggingCategory.h"
+
+#include <algorithm>
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QTimer>
+
+#include "QGCCompressionJob.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCArchiveWatcherLog, "Utilities.QGCArchiveWatcher")
 
@@ -19,14 +23,12 @@ QGCArchiveWatcher::QGCArchiveWatcher(QObject *parent)
 
     connect(_fileWatcher, &QGCFileWatcher::directoryChanged,
             this, &QGCArchiveWatcher::_onDirectoryChanged);
+    connect(_fileWatcher, &QGCFileWatcher::fileChanged, this, &QGCArchiveWatcher::_onFileChanged);
 }
 
 QGCArchiveWatcher::~QGCArchiveWatcher()
 {
-    if (_extractionJob != nullptr && _extractionJob->isRunning()) {
-        _cancelPending = true;
-        _extractionJob->cancel();
-    }
+    _cancelJob();
 }
 
 // ============================================================================
@@ -87,30 +89,35 @@ bool QGCArchiveWatcher::watchDirectory(const QString &directoryPath)
         return false;
     }
 
-    // Initialize known files for this directory
-    if (!_knownFiles.contains(canonicalPath)) {
-        QDir dir(canonicalPath);
-        const QStringList entries = dir.entryList(QDir::Files);
-        QSet<QString> fileSet;
-        for (const QString &entry : entries) {
-            fileSet.insert(dir.absoluteFilePath(entry));
-        }
+    // What is known of a directory is that of its watch. A directory that is not being watched starts from the
+    // files that are in it now, whatever is left of a watch that has ended and has not been heard of yet.
+    if (!_fileWatcher->isWatchingDirectory(canonicalPath)) {
+        _forgetDirectory(canonicalPath);
+        const QSet<QString> fileSet = _filesIn(canonicalPath);
         _knownFiles[canonicalPath] = fileSet;
         qCDebug(QGCArchiveWatcherLog) << "Initialized" << fileSet.size() << "known files in" << canonicalPath;
     }
 
-    if (_fileWatcher->watchDirectory(canonicalPath, nullptr)) {
-        qCDebug(QGCArchiveWatcherLog) << "Watching directory for archives:" << canonicalPath;
-        return true;
+    if (!_fileWatcher->watchDirectory(canonicalPath, nullptr)) {
+        _forgetDirectory(canonicalPath);
+        return false;
+    }
+    qCDebug(QGCArchiveWatcherLog) << "Watching directory for archives:" << canonicalPath;
+
+    // The watch does not tell of a file that landed after the known files were listed and before it was in
+    // place. If one did, the directory is looked at when a change that happened now would be reported.
+    if (!(_filesIn(canonicalPath) - _knownFiles.value(canonicalPath)).isEmpty()) {
+        QTimer::singleShot(_fileWatcher->debounceDelay(), this,
+                           [this, canonicalPath]() { _onDirectoryChanged(canonicalPath); });
     }
 
-    return false;
+    return true;
 }
 
 bool QGCArchiveWatcher::unwatchDirectory(const QString &directoryPath)
 {
     const QString canonicalPath = QFileInfo(directoryPath).absoluteFilePath();
-    _knownFiles.remove(canonicalPath);
+    _forgetDirectory(canonicalPath);
     return _fileWatcher->unwatchDirectory(canonicalPath);
 }
 
@@ -123,17 +130,13 @@ void QGCArchiveWatcher::clear()
 {
     _fileWatcher->clear();
     _knownFiles.clear();
+    _filesWithoutContent.clear();
     _pendingExtractions.clear();
     _currentArchive.clear();
     _setExtracting(false);
     _setProgress(0.0);
 
-    if (_extractionJob) {
-        if (_extractionJob->isRunning()) {
-            _cancelPending = true;
-            _extractionJob->cancel();
-        }
-    }
+    _cancelJob();
 }
 
 // ============================================================================
@@ -152,7 +155,7 @@ QStringList QGCArchiveWatcher::scanDirectory(const QString &directoryPath) const
     const QStringList entries = dir.entryList(QDir::Files);
     for (const QString &entry : entries) {
         const QString fullPath = dir.absoluteFilePath(entry);
-        if (_isWatchedFormat(fullPath)) {
+        if (_isWatchedFormat(QGCCompression::detectFormat(fullPath))) {
             archives.append(fullPath);
         }
     }
@@ -162,11 +165,7 @@ QStringList QGCArchiveWatcher::scanDirectory(const QString &directoryPath) const
 
 void QGCArchiveWatcher::cancelExtraction()
 {
-    if (_extractionJob != nullptr && _extractionJob->isRunning()) {
-        qCDebug(QGCArchiveWatcherLog) << "Cancelling extraction";
-        _cancelPending = true;
-        _extractionJob->cancel();
-    }
+    _cancelJob(true);
     _pendingExtractions.clear();
     _currentArchive.clear();
     _setExtracting(false);
@@ -181,17 +180,17 @@ void QGCArchiveWatcher::_onDirectoryChanged(const QString &path)
 {
     qCDebug(QGCArchiveWatcherLog) << "Directory changed:" << path;
 
-    QDir dir(path);
-    if (!dir.exists()) {
+    if (!_fileWatcher->isWatchingDirectory(path)) {
+        // The watch ended with the directory, and what was known of the directory goes with the watch
+        _forgetDirectory(path);
         return;
     }
 
-    // Get current file list
-    const QStringList currentEntries = dir.entryList(QDir::Files);
-    QSet<QString> currentFiles;
-    for (const QString &entry : currentEntries) {
-        currentFiles.insert(dir.absoluteFilePath(entry));
+    if (!QDir(path).exists()) {
+        return;
     }
+
+    const QSet<QString> currentFiles = _filesIn(path);
 
     // Find new files
     QSet<QString> &knownFiles = _knownFiles[path];
@@ -202,48 +201,57 @@ void QGCArchiveWatcher::_onDirectoryChanged(const QString &path)
 
     // Process new files
     for (const QString &filePath : newFiles) {
-        _processNewFile(filePath);
+        _processNewFile(path, filePath);
     }
 }
 
-void QGCArchiveWatcher::_onExtractionProgress(qreal progress)
+void QGCArchiveWatcher::_onFileChanged(const QString& path)
 {
-    _setProgress(progress);
+    const auto waiting = std::ranges::find_if(_filesWithoutContent,
+                                              [&path](const QSet<QString>& files) { return files.contains(path); });
+    if (waiting == _filesWithoutContent.end()) {
+        return;
+    }
+    const QString directoryPath = waiting.key();
+    waiting->remove(path);
+    (void) _fileWatcher->unwatchFile(path);
+
+    // Judged as when it appeared, which watches it again if it is still without content
+    if (QFileInfo::exists(path)) {
+        _processNewFile(directoryPath, path);
+    }
 }
 
 void QGCArchiveWatcher::_onExtractionFinished(bool success)
 {
-    if (_cancelPending) {
-        _cancelPending = false;
-        _currentArchive.clear();
-        _setExtracting(false);
-        _setProgress(0.0);
-        return;
-    }
+    // The result of an extraction that was cancelled is not reported, and nothing is started after it
+    const bool cancelled = _cancelPending;
+    _cancelPending = false;
 
-    qCDebug(QGCArchiveWatcherLog) << "Extraction finished:" << _currentArchive
-                                   << "success:" << success;
+    if (!cancelled) {
+        qCDebug(QGCArchiveWatcherLog) << "Extraction finished:" << _currentArchive << "success:" << success;
 
-    QString outputPath = _extractionJob->outputPath();
-    QString errorString = success ? QString() : _extractionJob->errorString();
+        QString outputPath = _extractionJob->outputPath();
+        QString errorString = success ? QString() : _extractionJob->errorString();
 
-    // Remove source archive if configured and extraction succeeded
-    if (success && _removeAfterExtraction) {
-        if (QFile::remove(_currentArchive)) {
-            qCDebug(QGCArchiveWatcherLog) << "Removed source archive:" << _currentArchive;
-        } else {
-            qCWarning(QGCArchiveWatcherLog) << "Failed to remove source archive:" << _currentArchive;
+        // Remove source archive if configured and extraction succeeded
+        if (success && _removeAfterExtraction) {
+            if (QFile::remove(_currentArchive)) {
+                qCDebug(QGCArchiveWatcherLog) << "Removed source archive:" << _currentArchive;
+            } else {
+                qCWarning(QGCArchiveWatcherLog) << "Failed to remove source archive:" << _currentArchive;
+            }
         }
-    }
 
-    emit extractionComplete(_currentArchive, outputPath, success, errorString);
+        emit extractionComplete(_currentArchive, outputPath, success, errorString);
+    }
 
     _currentArchive.clear();
     _setExtracting(false);
     _setProgress(0.0);
 
     // Process next pending extraction
-    if (!_pendingExtractions.isEmpty()) {
+    if (!cancelled && !_pendingExtractions.isEmpty()) {
         const QString next = _pendingExtractions.takeFirst();
         _startExtraction(next);
     }
@@ -253,10 +261,28 @@ void QGCArchiveWatcher::_onExtractionFinished(bool success)
 // Private Methods
 // ============================================================================
 
-bool QGCArchiveWatcher::_isWatchedFormat(const QString &filePath) const
+QSet<QString> QGCArchiveWatcher::_filesIn(const QString& directoryPath)
 {
-    const QGCCompression::Format format = QGCCompression::detectFormat(filePath);
+    const QDir dir(directoryPath);
+    const QStringList entries = dir.entryList(QDir::Files);
+    QSet<QString> files;
+    for (const QString& entry : entries) {
+        files.insert(dir.absoluteFilePath(entry));
+    }
+    return files;
+}
 
+void QGCArchiveWatcher::_forgetDirectory(const QString& directoryPath)
+{
+    _knownFiles.remove(directoryPath);
+    const QSet<QString> waitingFiles = _filesWithoutContent.take(directoryPath);
+    for (const QString& filePath : waitingFiles) {
+        (void) _fileWatcher->unwatchFile(filePath);
+    }
+}
+
+bool QGCArchiveWatcher::_isWatchedFormat(QGCCompression::Format format) const
+{
     switch (_filterMode) {
     case FilterMode::Archives:
         return QGCCompression::isArchiveFormat(format);
@@ -270,13 +296,19 @@ bool QGCArchiveWatcher::_isWatchedFormat(const QString &filePath) const
     return false;
 }
 
-void QGCArchiveWatcher::_processNewFile(const QString &filePath)
+void QGCArchiveWatcher::_processNewFile(const QString& directoryPath, const QString& filePath)
 {
-    if (!_isWatchedFormat(filePath)) {
+    const QGCCompression::Format format = QGCCompression::detectFormat(filePath);
+    if (!_isWatchedFormat(format)) {
+        // The content tells the format of a file whose name does not, and a file that was just created can be
+        // without any. The directory does not change when the file is written, so the file is watched.
+        const QFileInfo fileInfo(filePath);
+        if ((format == QGCCompression::Format::Auto) && fileInfo.exists() && (fileInfo.size() == 0) &&
+            _fileWatcher->watchFile(filePath, nullptr)) {
+            _filesWithoutContent[directoryPath].insert(filePath);
+        }
         return;
     }
-
-    const QGCCompression::Format format = QGCCompression::detectFormat(filePath);
 
     qCDebug(QGCArchiveWatcherLog) << "Detected archive:" << filePath
                                    << "format:" << QGCCompression::formatName(format);
@@ -326,8 +358,7 @@ void QGCArchiveWatcher::_startExtraction(const QString &archivePath)
     // Create extraction job if needed
     if (_extractionJob == nullptr) {
         _extractionJob = new QGCCompressionJob(this);
-        connect(_extractionJob, &QGCCompressionJob::progressChanged,
-                this, &QGCArchiveWatcher::_onExtractionProgress);
+        connect(_extractionJob, &QGCCompressionJob::progressChanged, this, &QGCArchiveWatcher::_setProgress);
         connect(_extractionJob, &QGCCompressionJob::finished,
                 this, &QGCArchiveWatcher::_onExtractionFinished);
     }
@@ -340,6 +371,18 @@ void QGCArchiveWatcher::_startExtraction(const QString &archivePath)
         const QString decompressedPath = outputPath + "/" + strippedName;
         _extractionJob->decompressFile(archivePath, decompressedPath);
     }
+}
+
+void QGCArchiveWatcher::_cancelJob(bool announce)
+{
+    if (_extractionJob == nullptr || !_extractionJob->isRunning()) {
+        return;
+    }
+    if (announce) {
+        qCDebug(QGCArchiveWatcherLog) << "Cancelling extraction";
+    }
+    _cancelPending = true;
+    _extractionJob->cancel();
 }
 
 void QGCArchiveWatcher::_setExtracting(bool extracting)

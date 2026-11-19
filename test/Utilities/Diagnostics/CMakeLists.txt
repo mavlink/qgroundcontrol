@@ -1,0 +1,1 @@
+add_qgc_tests(EdgeTriggeredCounterTest LABELS Unit Utilities)

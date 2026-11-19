@@ -81,68 +81,38 @@ QVariant parseValue(const char* data, qint64 size, char formatChar)
     case 'B':
     case 'M':
         return *LittleEndian::read<uint8_t>(bytes);
-    case 'h': {
-        const auto val = *LittleEndian::read<int16_t>(bytes);
-        return val;
-    }
-    case 'H': {
-        const auto val = *LittleEndian::read<uint16_t>(bytes);
-        return val;
-    }
-    case 'c': {
-        const auto val = *LittleEndian::read<int16_t>(bytes);
-        return val / 100.0;
-    }
-    case 'C': {
-        const auto val = *LittleEndian::read<uint16_t>(bytes);
-        return val / 100.0;
-    }
-    case 'i': {
-        const auto val = *LittleEndian::read<int32_t>(bytes);
-        return val;
-    }
-    case 'I': {
-        const auto val = *LittleEndian::read<uint32_t>(bytes);
-        return val;
-    }
-    case 'e': {
-        const auto val = *LittleEndian::read<int32_t>(bytes);
-        return val / 100.0;
-    }
-    case 'E': {
-        const auto val = *LittleEndian::read<uint32_t>(bytes);
-        return val / 100.0;
-    }
-    case 'L': {
-        const auto val = *LittleEndian::read<int32_t>(bytes);
-        return val / 1.0e7;  // Latitude/longitude in degrees
-    }
-    case 'f': {
-        const auto val = *LittleEndian::read<float>(bytes);
-        return static_cast<double>(val);
-    }
-    case 'd': {
-        const auto val = *LittleEndian::read<double>(bytes);
-        return val;
-    }
-    case 'q': {
-        const auto val = *LittleEndian::read<int64_t>(bytes);
-        return static_cast<qlonglong>(val);
-    }
-    case 'Q': {
-        const auto val = *LittleEndian::read<uint64_t>(bytes);
-        return static_cast<qulonglong>(val);
-    }
-    case 'g': {
-        const auto bits = *LittleEndian::read<uint16_t>(bytes);
-        return static_cast<double>(halfToFloat(bits));
-    }
+    case 'h':
+        return *LittleEndian::read<int16_t>(bytes);
+    case 'H':
+        return *LittleEndian::read<uint16_t>(bytes);
+    case 'c':
+        return *LittleEndian::read<int16_t>(bytes) / 100.0;
+    case 'C':
+        return *LittleEndian::read<uint16_t>(bytes) / 100.0;
+    case 'i':
+        return *LittleEndian::read<int32_t>(bytes);
+    case 'I':
+        return *LittleEndian::read<uint32_t>(bytes);
+    case 'e':
+        return *LittleEndian::read<int32_t>(bytes) / 100.0;
+    case 'E':
+        return *LittleEndian::read<uint32_t>(bytes) / 100.0;
+    case 'L':
+        return *LittleEndian::read<int32_t>(bytes) / 1.0e7;  // Latitude/longitude in degrees
+    case 'f':
+        return static_cast<double>(*LittleEndian::read<float>(bytes));
+    case 'd':
+        return *LittleEndian::read<double>(bytes);
+    case 'q':
+        return static_cast<qlonglong>(*LittleEndian::read<int64_t>(bytes));
+    case 'Q':
+        return static_cast<qulonglong>(*LittleEndian::read<uint64_t>(bytes));
+    case 'g':
+        return static_cast<double>(halfToFloat(*LittleEndian::read<uint16_t>(bytes)));
     case 'n':
-        return QString::fromLatin1(data, qstrnlen(data, 4));
     case 'N':
-        return QString::fromLatin1(data, qstrnlen(data, 16));
     case 'Z':
-        return QString::fromLatin1(data, qstrnlen(data, 64));
+        return QString::fromLatin1(data, qstrnlen(data, requiredSize));
     case 'a':
         // 64-byte array (32 int16 values) - return as raw bytes
         return QByteArray(data, 64);
@@ -193,6 +163,10 @@ bool isValidHeader(const char *data, qint64 size)
 
 qint64 findNextHeader(const char *data, qint64 size, qint64 offset)
 {
+    if (offset < 0) {
+        return -1;
+    }
+
     while (offset + 2 < size) {
         if (static_cast<uint8_t>(data[offset]) == kHeaderByte1 &&
             static_cast<uint8_t>(data[offset + 1]) == kHeaderByte2) {
@@ -230,14 +204,7 @@ bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat
     QHash<uint8_t, QString> unitsByType;
     qint64 pos = 0;
 
-    while (pos + 3 <= size) {
-        // Find next message header
-        if (static_cast<uint8_t>(data[pos]) != kHeaderByte1 ||
-            static_cast<uint8_t>(data[pos + 1]) != kHeaderByte2) {
-            ++pos;
-            continue;
-        }
-
+    while ((pos = findNextHeader(data, size, pos)) >= 0) {
         const uint8_t msgType = static_cast<uint8_t>(data[pos + 2]);
         pos += 3;
 
@@ -301,14 +268,7 @@ int iterateMessages(const char *data, qint64 size,
     int count = 0;
     qint64 pos = 0;
 
-    while (pos + 3 <= size) {
-        // Find next message header
-        if (static_cast<uint8_t>(data[pos]) != kHeaderByte1 ||
-            static_cast<uint8_t>(data[pos + 1]) != kHeaderByte2) {
-            ++pos;
-            continue;
-        }
-
+    while ((pos = findNextHeader(data, size, pos)) >= 0) {
         const uint8_t msgType = static_cast<uint8_t>(data[pos + 2]);
         pos += 3;
 
@@ -317,6 +277,10 @@ int iterateMessages(const char *data, qint64 size,
         }
 
         const MessageFormat &fmt = formats[msgType];
+        // parseFmtMessages() drops a length that does not cover the header; such a format has no messages
+        if (fmt.length < 3) {
+            continue;
+        }
         const int payloadSize = fmt.length - 3;
 
         if (pos + payloadSize > size) {

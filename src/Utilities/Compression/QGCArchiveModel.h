@@ -1,27 +1,32 @@
 #pragma once
 
-#include "QGCCompressionTypes.h"
-
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QFutureWatcher>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "QGCCompressionTypes.h"
+
 /// \brief List model for archive contents, suitable for QML ListView binding.
 ///
-/// Provides natural sorting, filtering by type, and lazy loading support.
+/// Provides natural sorting and filtering by type. The archive is read on a worker thread: after the path is
+/// set, loading is true and the model is empty until loadingComplete.
 ///
 /// Usage in QML:
 /// @code
-/// import QGroundControl.Utilities
+/// import QGroundControl.Compression
 ///
 /// ListView {
 ///     model: QGCArchiveModel {
 ///         archivePath: "/path/to/archive.zip"
 ///     }
 ///     delegate: ItemDelegate {
-///         text: model.name
-///         icon.name: model.isDirectory ? "folder" : "file"
+///         required property string name
+///         required property bool isDirectory
+///
+///         text: name
+///         icon.name: isDirectory ? "folder" : "file"
 ///     }
 /// }
 /// @endcode
@@ -50,7 +55,7 @@ class QGCArchiveModel : public QAbstractListModel
     /// Total uncompressed size of all files in bytes
     Q_PROPERTY(qint64 totalSize READ totalSize NOTIFY totalSizeChanged)
 
-    /// Whether the model is currently loading archive contents
+    /// Whether the archive is being read. The model is empty until that has ended
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
 
     /// Error message if loading failed (empty on success)
@@ -109,16 +114,18 @@ public:
     /// Reload archive contents (useful after external changes)
     Q_INVOKABLE void refresh();
 
-    /// Clear the model and reset all properties
+    /// Clear the model and reset all properties except the archive path. Abandons a load in progress, which
+    /// then ends without loadingComplete
     Q_INVOKABLE void clear();
 
-    /// Get entry at index (for C++ usage)
-    Q_INVOKABLE QVariantMap get(int index) const;
+    /// Get the entry of a row: what data() gives for each role, under the name of the role
+    /// @return Empty for a row the model does not have
+    Q_INVOKABLE QVariantMap get(int row) const;
 
     /// Check if a file exists in the archive
     Q_INVOKABLE bool contains(const QString &fileName) const;
 
-    /// Format bytes as human-readable string (e.g., "1.5 MB")
+    /// Format bytes as QGC::bigSizeToString() does (e.g., "1.5MB"), and a negative size as "--"
     Q_INVOKABLE static QString formatSize(qint64 bytes);
 
 signals:
@@ -131,11 +138,23 @@ signals:
     void errorStringChanged();
     void filterModeChanged();
 
-    /// Emitted when archive loading completes (success or failure)
+    /// Emitted when archive loading completes (success or failure). A load that clear() or another load
+    /// replaced does not complete.
     void loadingComplete(bool success);
 
+private slots:
+    void _onLoadFinished();
+
 private:
+    /// What a load reads on its worker thread
+    struct Listing
+    {
+        QList<QGCCompression::ArchiveEntry> entries;
+        QGCCompression::Outcome outcome;
+    };
+
     void _loadArchive();
+    void _resetEntries();
     void _applyFilter();
     void _setLoading(bool loading);
     void _setErrorString(const QString &error);
@@ -149,4 +168,5 @@ private:
     bool _loading = false;
     QString _errorString;
     FilterMode _filterMode = AllEntries;
+    QFutureWatcher<Listing> _loadWatcher;
 };

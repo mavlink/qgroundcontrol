@@ -37,9 +37,9 @@ qt_add_resources(
         DSCN0010.jpg
 )
 
-add_qgc_test(DataFlashParserTest LABELS Integration AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(ExifParserTest LABELS Integration AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(GeoTagControllerTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
+add_qgc_test(DataFlashParserTest LABELS Integration AnalyzeView)
+add_qgc_test(ExifParserTest LABELS Integration AnalyzeView)
+add_qgc_test(GeoTagControllerTest LABELS Unit AnalyzeView)
 add_qgc_test(GeoTagDataTest LABELS Unit AnalyzeView)
 add_qgc_test(GeoTagImageModelTest LABELS Unit AnalyzeView)
-add_qgc_test(ULogParserTest LABELS Integration AnalyzeView RESOURCE_LOCK TempFiles)
+add_qgc_test(ULogParserTest LABELS Integration AnalyzeView)

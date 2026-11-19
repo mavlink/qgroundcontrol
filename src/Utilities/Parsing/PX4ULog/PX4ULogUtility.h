@@ -19,9 +19,10 @@ namespace PX4ULogUtility
 // Constants
 // ============================================================================
 
-/// ULog file magic bytes: "ULog" followed by 0x01 (version 1) followed by 0x12 (file compat)
+/// Start of the 7 ULog file magic bytes ("ULog" 0x01 0x12 0x35), which the version byte follows
 constexpr char kMagicBytes[] = {'U', 'L', 'o', 'g'};
 constexpr int kMagicSize = 4;
+constexpr int kVersionOffset = 7;
 constexpr int kHeaderSize = 16;  // Full header size
 
 // ============================================================================
@@ -29,20 +30,16 @@ constexpr int kHeaderSize = 16;  // Full header size
 // ============================================================================
 
 /// Check if data starts with a valid ULog header magic
-/// @param data Pointer to data
-/// @param size Size of available data
 /// @return true if data starts with "ULog" magic bytes
 bool isValidHeader(const char *data, qint64 size);
 
 /// Get the ULog format version from header
-/// @param data Pointer to data (must be at least 5 bytes)
-/// @param size Size of available data
+/// @param data Pointer to data (must be at least 8 bytes)
 /// @return Version number (typically 1), or -1 if invalid
 int getVersion(const char *data, qint64 size);
 
 /// Get the ULog header timestamp (microseconds since epoch)
 /// @param data Pointer to data (must be at least kHeaderSize bytes)
-/// @param size Size of available data
 /// @return Timestamp in microseconds, or 0 if invalid
 uint64_t getHeaderTimestamp(const char *data, qint64 size);
 
@@ -51,19 +48,14 @@ uint64_t getHeaderTimestamp(const char *data, qint64 size);
 // ============================================================================
 
 /// Callback for processing ULog messages
-/// @param sample The typed data view for the message
 /// @return true to continue processing, false to stop
 using MessageCallback = std::function<bool(const ulog_cpp::TypedDataView &sample)>;
 
 /// \brief Generic streaming handler for ULog messages by name
-///
 /// Filters messages by name and calls a callback for each matching message
-///
 class MessageHandler : public ulog_cpp::DataHandlerInterface {
 public:
     /// Create a handler that filters for a specific message type
-    /// @param messageName Name of the message to filter for (e.g., "camera_capture")
-    /// @param callback Function called for each matching message
     /// @param errorMsg Reference to store error messages
     explicit MessageHandler(const std::string &messageName,
                            const MessageCallback &callback,
@@ -77,16 +69,15 @@ public:
     void headerComplete() override;
     void data(const ulog_cpp::Data &data) override;
 
-    /// Check if a fatal error occurred during parsing
     bool hadFatalError() const { return _hadFatalError; }
 
-    /// Check if the ULog header was successfully parsed
     bool isHeaderComplete() const { return _headerComplete; }
 
-    /// Get the number of messages processed
     int messageCount() const { return _messageCount; }
 
-    /// Check if the target message format was found
+    /// Check if the callback asked to stop; no further messages are passed to it
+    bool stopRequested() const { return _stopRequested; }
+
     bool hasMessageFormat() const { return _messageFormat != nullptr; }
 
 private:
@@ -97,16 +88,13 @@ private:
     std::set<uint16_t> _messageIds;
     bool _hadFatalError = false;
     bool _headerComplete = false;
+    bool _stopRequested = false;
     int _messageCount = 0;
 };
 
 /// Parse a ULog file and call callback for each matching message
-/// @param data Pointer to the ULog data
-/// @param size Size of the data in bytes
-/// @param messageName Name of the message to filter for
-/// @param callback Function called for each matching message
 /// @param errorMessage Output error message if parsing fails
-/// @return true on success (even if no messages found), false on parse error
+/// @return true on success (even if no messages found or the callback stopped early), false on parse error
 bool iterateMessages(const char *data, qint64 size,
                      const std::string &messageName,
                      const MessageCallback &callback,

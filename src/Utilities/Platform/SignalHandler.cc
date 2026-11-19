@@ -1,11 +1,6 @@
 #include "SignalHandler.h"
 
 #include <QtCore/QCoreApplication>
-#ifdef Q_OS_WIN
-#include <QtCore/QWinEventNotifier>
-#else
-#include <QtCore/QSocketNotifier>
-#endif
 
 #include "QGCLoggingCategory.h"
 
@@ -44,6 +39,11 @@ int SignalHandler::consoleCtrlHandler(unsigned long evt)
             return 0;
         }
         (void) SetEvent(static_cast<HANDLE>(self->_signalEvent)); // non-blocking
+        if ((evt != CTRL_C_EVENT) && (evt != CTRL_BREAK_EVENT)) {
+            // Windows terminates the process when this handler returns, and after about 5 s in any case.
+            // Stay here so that the requested quit can run: a normal exit ends this thread earlier.
+            Sleep(5000);
+        }
         return 1;
     }
     default:
@@ -84,7 +84,7 @@ int SignalHandler::setupSignalHandlers()
             QCoreApplication::quit();
         } else {
             qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
-            _exit(0);
+            _exit(1);
         }
     });
 
@@ -106,6 +106,10 @@ int SignalHandler::setupSignalHandlers()
 
 #include <QtCore/QSocketNotifier>
 
+// The signal handlers may only use lock-free atomics
+static_assert(std::atomic<int>::is_always_lock_free);
+static_assert(std::atomic<SignalHandler*>::is_always_lock_free);
+
 SignalHandler::~SignalHandler()
 {
     struct sigaction sa{};
@@ -120,21 +124,11 @@ SignalHandler::~SignalHandler()
         _notifierTerm->setEnabled(false);
     }
 
-    if (_sigIntFd[0] >= 0) {
-        (void) ::close(_sigIntFd[0]);
-        _sigIntFd[0] = -1;
-    }
-    if (_sigIntFd[1] >= 0) {
-        (void) ::close(_sigIntFd[1]);
-        _sigIntFd[1] = -1;
-    }
-    if (_sigTermFd[0] >= 0) {
-        (void) ::close(_sigTermFd[0]);
-        _sigTermFd[0] = -1;
-    }
-    if (_sigTermFd[1] >= 0) {
-        (void) ::close(_sigTermFd[1]);
-        _sigTermFd[1] = -1;
+    for (int* fd : {&_sigIntFd[0], &_sigIntFd[1], &_sigTermFd[0], &_sigTermFd[1]}) {
+        if (*fd >= 0) {
+            (void) ::close(*fd);
+            *fd = -1;
+        }
     }
 
     s_current.store(nullptr, std::memory_order_release);
@@ -153,34 +147,26 @@ int SignalHandler::setupSignalHandlers()
         return 2;
     }
 
-    // Close-on-exec to prevent fd leaks into children
-    (void) fcntl(_sigIntFd[0],  F_SETFD, fcntl(_sigIntFd[0],  F_GETFD, 0) | FD_CLOEXEC);
-    (void) fcntl(_sigIntFd[1],  F_SETFD, fcntl(_sigIntFd[1],  F_GETFD, 0) | FD_CLOEXEC);
-    (void) fcntl(_sigTermFd[0], F_SETFD, fcntl(_sigTermFd[0], F_GETFD, 0) | FD_CLOEXEC);
-    (void) fcntl(_sigTermFd[1], F_SETFD, fcntl(_sigTermFd[1], F_GETFD, 0) | FD_CLOEXEC);
-
-    // Non-blocking read ends
-    (void) fcntl(_sigIntFd[0],  F_SETFL, fcntl(_sigIntFd[0],  F_GETFL, 0) | O_NONBLOCK);
-    (void) fcntl(_sigTermFd[0], F_SETFL, fcntl(_sigTermFd[0], F_GETFL, 0) | O_NONBLOCK);
+    for (const int fd : {_sigIntFd[0], _sigIntFd[1], _sigTermFd[0], _sigTermFd[1]}) {
+        // Close-on-exec to prevent fd leaks into children
+        (void) fcntl(fd, F_SETFD, fcntl(fd, F_GETFD, 0) | FD_CLOEXEC);
+        // Non-blocking on both ends: a signal handler must not block when its socket is full
+        (void) fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+    }
 
     _notifierInt  = new QSocketNotifier(_sigIntFd[0],  QSocketNotifier::Read, this);
     _notifierTerm = new QSocketNotifier(_sigTermFd[0], QSocketNotifier::Read, this);
     (void) connect(_notifierInt,  &QSocketNotifier::activated, this, &SignalHandler::_onSigInt);
     (void) connect(_notifierTerm, &QSocketNotifier::activated, this, &SignalHandler::_onSigTerm);
 
-    struct sigaction sa_int{};
-    sigemptyset(&sa_int.sa_mask);
-    sa_int.sa_flags = 0;
-    sa_int.sa_handler = SignalHandler::_intSignalHandler;
-    if (sigaction(SIGINT, &sa_int, nullptr)) {
+    struct sigaction sa{};
+    sigemptyset(&sa.sa_mask);
+    sa.sa_handler = SignalHandler::_intSignalHandler;
+    if (sigaction(SIGINT, &sa, nullptr)) {
         return 3;
     }
-
-    struct sigaction sa_term{};
-    sigemptyset(&sa_term.sa_mask);
-    sa_term.sa_flags = 0;
-    sa_term.sa_handler = SignalHandler::_termSignalHandler;
-    if (sigaction(SIGTERM, &sa_term, nullptr)) {
+    sa.sa_handler = SignalHandler::_termSignalHandler;
+    if (sigaction(SIGTERM, &sa, nullptr)) {
         return 4;
     }
 
@@ -192,13 +178,9 @@ void SignalHandler::_onSigInt()
     char b;
     [[maybe_unused]] const ssize_t n = ::read(_sigIntFd[0], &b, 1); // single-byte drain
 
-    if (!std::exchange(_sigIntTriggered, true)) {
-        qCInfo(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
-        QCoreApplication::quit();
-    } else {
-        qCDebug(SignalHandlerLog) << "Caught second SIGINT—exiting immediately";
-        _exit(0);
-    }
+    // A second SIGINT never gets here: _intSignalHandler() exits the process
+    qCInfo(SignalHandlerLog) << "Caught SIGINT—press Ctrl+C again to exit immediately";
+    QCoreApplication::quit();
 }
 
 void SignalHandler::_onSigTerm()
@@ -210,30 +192,37 @@ void SignalHandler::_onSigTerm()
     QCoreApplication::quit();
 }
 
+// The functions below run in signal context: async-signal-safe calls only (see signal-safety(7)), no logging.
+
 void SignalHandler::_intSignalHandler(int signum)
 {
-    if (signum != SIGINT) {
-        return;
-    }
-    const SignalHandler* self = current();
+    SignalHandler* self = current();
     if (!self) {
         return;
     }
-    const char b = 1;
-    [[maybe_unused]] const ssize_t n = ::write(self->_sigIntFd[1], &b, sizeof(b)); // no logging from signal handler
+    // Decided here and not in _onSigInt(), which never runs when the event loop is blocked
+    if (self->_sigIntCount.fetch_add(1, std::memory_order_relaxed) > 0) {
+        ::_exit(128 + signum);
+    }
+    _wakeEventLoop(self->_sigIntFd[1]);
 }
 
-void SignalHandler::_termSignalHandler(int signum)
+void SignalHandler::_termSignalHandler([[maybe_unused]] int signum)
 {
-    if (signum != SIGTERM) {
-        return;
-    }
     const SignalHandler* self = current();
     if (!self) {
         return;
     }
+    _wakeEventLoop(self->_sigTermFd[1]);
+}
+
+void SignalHandler::_wakeEventLoop(int fd)
+{
+    const int savedErrno = errno;
     const char b = 1;
-    [[maybe_unused]] const ssize_t n = ::write(self->_sigTermFd[1], &b, sizeof(b)); // no logging from signal handler
+    // Fails when the socket is full, in which case a wake-up is already pending
+    [[maybe_unused]] const ssize_t n = ::write(fd, &b, sizeof(b));
+    errno = savedErrno;
 }
 
 #endif // POSIX

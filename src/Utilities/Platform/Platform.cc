@@ -3,7 +3,6 @@
 #include <cstdio>
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QProcessEnvironment>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
@@ -36,9 +35,6 @@
         #include <crtdbg.h>
         #include <stdlib.h>
     #endif
-#endif
-
-#if defined(Q_OS_WIN)
 // dbghelp.h needs the Windows types from qt_windows.h above.
 #include <cstdarg>
 #include <cwchar>
@@ -120,8 +116,6 @@ void WindowsInvalidParameterHandler([[maybe_unused]] const wchar_t* expression,
 
 }
 #endif // _MSC_VER
-
-LPTOP_LEVEL_EXCEPTION_FILTER g_prevUef = nullptr;
 
 using MiniDumpWriteDumpFn = BOOL(WINAPI*)(HANDLE, DWORD, HANDLE, MINIDUMP_TYPE, PMINIDUMP_EXCEPTION_INFORMATION,
                                           PMINIDUMP_USER_STREAM_INFORMATION, PMINIDUMP_CALLBACK_INFORMATION);
@@ -310,7 +304,7 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 {
     (void) SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
     setupCrashDumps();
-    g_prevUef = SetUnhandledExceptionFilter(WindowsUnhandledExceptionFilter);
+    (void) SetUnhandledExceptionFilter(WindowsUnhandledExceptionFilter);
 
 #if defined(_MSC_VER)
     (void) _set_invalid_parameter_handler(WindowsInvalidParameterHandler);
@@ -461,8 +455,10 @@ int Platform::showMultipleInstanceError([[maybe_unused]] int argc, [[maybe_unuse
     // MessageBoxW is GUI-only; also write to stderr so a CLI/headless launch sees the reason.
     fprintf(stderr, "Error: %s\n", message.toLocal8Bit().constData());
     MessageBoxW(nullptr, message.toStdWString().c_str(), L"Error", MB_OK | MB_ICONERROR);
-#else
+#elif defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)
     showLinuxErrorDialog(message.toLocal8Bit());
+#else
+    fprintf(stderr, "Error: %s\n", message.toLocal8Bit().constData());
 #endif
     return -1;
 }

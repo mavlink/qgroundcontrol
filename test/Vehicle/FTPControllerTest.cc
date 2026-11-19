@@ -86,10 +86,12 @@ void FTPControllerTest::_browseArchiveRejectsInvalidInput()
 void FTPControllerTest::_browseArchiveHappyPath()
 {
     FTPController controller(this);
+    QSignalSpy loadedSpy(controller.archiveModel(), &QGCArchiveModel::loadingComplete);
 
     QVERIFY(controller.browseArchive(QStringLiteral(":/unittest/manifest.json.zip")));
     QVERIFY(controller.errorString().isEmpty());
     QCOMPARE(controller.archiveModel()->archivePath(), QStringLiteral(":/unittest/manifest.json.zip"));
+    QVERIFY_SIGNAL_COUNT_WAIT(loadedSpy, 1, TestTimeout::mediumMs());
     QVERIFY(controller.archiveModel()->count() > 0);
     QVERIFY(controller.archiveModel()->contains(QStringLiteral("manifest.json")));
 }

@@ -1,9 +1,53 @@
 #include "QGCCommandLineParserTest.h"
 
+#include <functional>
+#include <limits>
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
+
 #include "QGCCommandLineParser.h"
 
 using QGCCommandLineParser::AppMode;
 using QGCCommandLineParser::CommandLineParseResult;
+
+namespace {
+
+using ParseResultChange = std::function<void(CommandLineParseResult&)>;
+
+QStringList commandLineWith(const QStringList& arguments)
+{
+    return QStringList{QStringLiteral("QGroundControl")} + arguments;
+}
+
+void compareParsedOptions(const CommandLineParseResult& actual, const CommandLineParseResult& expected)
+{
+    QCOMPARE(actual.systemId, expected.systemId);
+    QCOMPARE(actual.clearSettingsOptions, expected.clearSettingsOptions);
+    QCOMPARE(actual.clearCache, expected.clearCache);
+    QCOMPARE(actual.loggingOptions, expected.loggingOptions);
+    QCOMPARE(actual.logOutput, expected.logOutput);
+    QCOMPARE(actual.simpleBootTest, expected.simpleBootTest);
+
+    QCOMPARE(actual.runningUnitTests, expected.runningUnitTests);
+    QCOMPARE(actual.unitTests, expected.unitTests);
+    QCOMPARE(actual.stressUnitTests, expected.stressUnitTests);
+    QCOMPARE(actual.stressUnitTestsCount, expected.stressUnitTestsCount);
+    QCOMPARE(actual.unitTestOutput, expected.unitTestOutput);
+    QCOMPARE(actual.unitTestShardIndex, expected.unitTestShardIndex);
+    QCOMPARE(actual.unitTestShardCount, expected.unitTestShardCount);
+    QCOMPARE(actual.labelFilter, expected.labelFilter);
+    QCOMPARE(actual.listTests, expected.listTests);
+    QCOMPARE(actual.onscreen, expected.onscreen);
+
+    QCOMPARE(actual.fakeMobile, expected.fakeMobile);
+    QCOMPARE(actual.allowMultiple, expected.allowMultiple);
+
+    QCOMPARE(actual.useSwRast, expected.useSwRast);
+    QCOMPARE(actual.quietWindowsAsserts, expected.quietWindowsAsserts);
+}
+
+}  // namespace
 
 void QGCCommandLineParserTest::_testDefaultResult()
 {
@@ -42,107 +86,310 @@ void QGCCommandLineParserTest::_testDefaultResult()
     QCOMPARE(result.quietWindowsAsserts,  false);
 }
 
-void QGCCommandLineParserTest::_testDetermineAppMode_Gui()
+void QGCCommandLineParserTest::_testParseArgumentsOptions_data()
 {
-    // All flags default → GUI mode.
-    CommandLineParseResult result;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::Gui);
-}
+    QTest::addColumn<QStringList>("arguments");
+    QTest::addColumn<ParseResultChange>("expectedChange");
 
-void QGCCommandLineParserTest::_testDetermineAppMode_BootTest()
-{
-    CommandLineParseResult result;
-    result.simpleBootTest = true;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::BootTest);
-}
+    const auto addRow = [](const char* name, const QStringList& arguments, const ParseResultChange& expectedChange) {
+        QTest::newRow(name) << arguments << expectedChange;
+    };
 
-void QGCCommandLineParserTest::_testDetermineAppMode_Test()
-{
-#ifdef QGC_UNITTEST_BUILD
-    // In the unit-test build both Test and ListTests short-circuit ahead of
-    // simpleBootTest, so set simpleBootTest too to prove precedence.
-    CommandLineParseResult result;
-    result.runningUnitTests = true;
-    result.simpleBootTest   = true;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::Test);
-#else
-    QSKIP("Test mode only exists in QGC_UNITTEST_BUILD");
+    addRow("no options", {}, [](CommandLineParseResult&) {});
+
+    addRow("system-id", {QStringLiteral("--system-id:42")}, [](CommandLineParseResult& r) { r.systemId = 42; });
+    addRow("system-id as next argument", {QStringLiteral("--system-id"), QStringLiteral("4294967295")},
+           [](CommandLineParseResult& r) { r.systemId = std::numeric_limits<quint32>::max(); });
+    addRow("clear-settings", {QStringLiteral("--clear-settings")},
+           [](CommandLineParseResult& r) { r.clearSettingsOptions = true; });
+    addRow("clear-cache", {QStringLiteral("--clear-cache")}, [](CommandLineParseResult& r) { r.clearCache = true; });
+    addRow("logging", {QStringLiteral("--logging:Comms.LinkManager,FactSystem.ParameterManager")},
+           [](CommandLineParseResult& r) {
+               r.loggingOptions = QStringLiteral("Comms.LinkManager,FactSystem.ParameterManager");
+           });
+    addRow("log-output", {QStringLiteral("--log-output")}, [](CommandLineParseResult& r) { r.logOutput = true; });
+    addRow("simple-boot-test", {QStringLiteral("--simple-boot-test")},
+           [](CommandLineParseResult& r) { r.simpleBootTest = true; });
+    addRow("fake-mobile", {QStringLiteral("--fake-mobile")}, [](CommandLineParseResult& r) { r.fakeMobile = true; });
+    addRow("allow-multiple", {QStringLiteral("--allow-multiple")},
+           [](CommandLineParseResult& r) { r.allowMultiple = true; });
+    addRow("single dash", {QStringLiteral("-clear-cache")}, [](CommandLineParseResult& r) { r.clearCache = true; });
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    addRow("swrast", {QStringLiteral("--swrast")}, [](CommandLineParseResult& r) { r.useSwRast = true; });
 #endif
+#ifdef Q_OS_WIN
+    addRow("no-windows-assert-ui", {QStringLiteral("--no-windows-assert-ui")},
+           [](CommandLineParseResult& r) { r.quietWindowsAsserts = true; });
+#endif
+
+    addRow("unittest for all tests", {QStringLiteral("--unittest")},
+           [](CommandLineParseResult& r) { r.runningUnitTests = true; });
+    addRow("unittest for named tests", {QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest:BarTest")},
+           [](CommandLineParseResult& r) {
+               r.runningUnitTests = true;
+               r.unitTests = QStringList{QStringLiteral("FooTest"), QStringLiteral("BarTest")};
+           });
+    // Stress testing runs the tests without --unittest
+    addRow("unittest-stress", {QStringLiteral("--unittest-stress:5")}, [](CommandLineParseResult& r) {
+        r.runningUnitTests = true;
+        r.stressUnitTests = true;
+        r.stressUnitTestsCount = 5;
+    });
+    addRow("unittest-stress with empty count", {QStringLiteral("--unittest-stress=")}, [](CommandLineParseResult& r) {
+        r.runningUnitTests = true;
+        r.stressUnitTests = true;
+        r.stressUnitTestsCount = 20;
+    });
+    addRow("unittest-output", {QStringLiteral("--unittest-output:results.xml")},
+           [](CommandLineParseResult& r) { r.unitTestOutput = QStringLiteral("results.xml"); });
+    addRow("unittest-shard", {QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest-shard:2/3")},
+           [](CommandLineParseResult& r) {
+               r.runningUnitTests = true;
+               r.unitTests = QStringList{QStringLiteral("FooTest")};
+               r.unitTestShardIndex = 2;
+               r.unitTestShardCount = 3;
+           });
+    addRow("label", {QStringLiteral("--label:Unit,Vehicle")},
+           [](CommandLineParseResult& r) { r.labelFilter = QStringLiteral("Unit,Vehicle"); });
+    addRow("list-tests", {QStringLiteral("--list-tests")}, [](CommandLineParseResult& r) { r.listTests = true; });
+    addRow("onscreen", {QStringLiteral("--onscreen")}, [](CommandLineParseResult& r) { r.onscreen = true; });
 }
 
-void QGCCommandLineParserTest::_testDetermineAppMode_ListTests()
+void QGCCommandLineParserTest::_testParseArgumentsOptions()
 {
-#ifdef QGC_UNITTEST_BUILD
+    QFETCH(QStringList, arguments);
+    QFETCH(ParseResultChange, expectedChange);
+
+    const CommandLineParseResult result = QGCCommandLineParser::parseArguments(commandLineWith(arguments));
+
+    QCOMPARE(result.statusCode, CommandLineParseResult::Status::Ok);
+    QVERIFY(!result.errorString.has_value());
+
+    // An option changes its own field and no other
+    CommandLineParseResult expected;
+    expectedChange(expected);
+    compareParsedOptions(result, expected);
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsRejectedValues_data()
+{
+    QTest::addColumn<QStringList>("arguments");
+    QTest::addColumn<QString>("expectedError");
+    QTest::addColumn<QStringList>("expectedUnknownOptions");
+
+    const auto addRow = [](const char* name, const QStringList& arguments, const QString& expectedError,
+                           const QStringList& expectedUnknownOptions = {}) {
+        QTest::newRow(name) << arguments << expectedError << expectedUnknownOptions;
+    };
+
+    addRow("system-id zero", {QStringLiteral("--system-id:0")},
+           QStringLiteral("Invalid System ID (must be 1-4294967295): 0"));
+    addRow("system-id not a number", {QStringLiteral("--system-id:abc")},
+           QStringLiteral("Invalid System ID (must be 1-4294967295): abc"));
+    addRow("unittest-stress zero", {QStringLiteral("--unittest-stress:0")},
+           QStringLiteral("Invalid stress test count (must be > 0): 0"));
+    addRow("unittest-stress not a number", {QStringLiteral("--unittest-stress:many")},
+           QStringLiteral("Invalid stress test count (must be > 0): many"));
+    addRow("unittest-shard past its count",
+           {QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest-shard:4/3")},
+           QStringLiteral("Invalid unit test shard (expected <index>/<count> with 1 <= index <= count): 4/3"));
+    addRow("unittest-shard without a test", {QStringLiteral("--unittest-shard:1/3")},
+           QStringLiteral("--unittest-shard requires exactly one --unittest:<name>."));
+    addRow("unittest-shard with two tests",
+           {QStringLiteral("--unittest:FooTest"), QStringLiteral("--unittest:BarTest"),
+            QStringLiteral("--unittest-shard:1/3")},
+           QStringLiteral("--unittest-shard requires exactly one --unittest:<name>."));
+    addRow("positional argument", {QStringLiteral("--clear-cache"), QStringLiteral("mission.plan")},
+           QStringLiteral("Unexpected positional arguments: mission.plan"));
+
+    addRow("unknown option", {QStringLiteral("--no-such-option")}, QStringLiteral("Unknown options: no-such-option"),
+           {QStringLiteral("no-such-option")});
+    addRow("unknown options",
+           {QStringLiteral("--no-such-option"), QStringLiteral("--clear-cache"), QStringLiteral("-nor-this")},
+           QStringLiteral("Unknown options: no-such-option, nor-this"),
+           {QStringLiteral("no-such-option"), QStringLiteral("nor-this")});
+    // An option of another platform is unknown here, and the error says where it exists
+#ifndef Q_OS_WIN
+    addRow("no-windows-assert-ui off Windows", {QStringLiteral("--no-windows-assert-ui")},
+           QStringLiteral("--no-windows-assert-ui is only supported on Windows."),
+           {QStringLiteral("no-windows-assert-ui")});
+#endif
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
+    addRow("swrast off Windows and macOS", {QStringLiteral("--swrast")},
+           QStringLiteral("--swrast is only supported on Windows and macOS."), {QStringLiteral("swrast")});
+#endif
+
+    // The parser's own errors, in its words
+    addRow("option without its value", {QStringLiteral("--system-id")},
+           QStringLiteral("Missing value after '--system-id'."));
+    addRow("value for an option that takes none", {QStringLiteral("--clear-cache=1")},
+           QStringLiteral("Unexpected value after '--clear-cache'."));
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsRejectedValues()
+{
+    QFETCH(QStringList, arguments);
+    QFETCH(QString, expectedError);
+    QFETCH(QStringList, expectedUnknownOptions);
+
+    expectLogMessage("Utilities.QGCCommandLineParser", QtWarningMsg,
+                     QRegularExpression(QRegularExpression::escape(expectedError)));
+    const CommandLineParseResult result = QGCCommandLineParser::parseArguments(commandLineWith(arguments));
+    verifyExpectedLogMessage();
+
+    QCOMPARE(result.statusCode, CommandLineParseResult::Status::Error);
+    QCOMPARE(result.errorString, std::optional<QString>(expectedError));
+    QCOMPARE(result.unknownOptions, expectedUnknownOptions);
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsEmptyList()
+{
+    // Not even the program name. There is no text for this error, and the one warning says what is wrong.
+    expectLogMessage("Utilities.QGCCommandLineParser", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("The argument list is empty")));
+    const CommandLineParseResult result = QGCCommandLineParser::parseArguments(QStringList());
+    verifyExpectedLogMessage();
+
+    QCOMPARE(result.statusCode, CommandLineParseResult::Status::Error);
+    QVERIFY(!result.errorString.has_value());
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsHelpAndVersion_data()
+{
+    QTest::addColumn<QStringList>("arguments");
+    QTest::addColumn<CommandLineParseResult::Status>("expectedStatus");
+
+    const auto addRow = [](const char* name, const QStringList& arguments,
+                           CommandLineParseResult::Status expectedStatus) {
+        QTest::newRow(name) << arguments << expectedStatus;
+    };
+    using Status = CommandLineParseResult::Status;
+
+    addRow("help", {QStringLiteral("--help")}, Status::HelpRequested);
+    addRow("help as short option", {QStringLiteral("-h")}, Status::HelpRequested);
+    addRow("help-all", {QStringLiteral("--help-all")}, Status::HelpRequested);
+    addRow("version", {QStringLiteral("--version")}, Status::VersionRequested);
+    addRow("version as short option", {QStringLiteral("-v")}, Status::VersionRequested);
+
+    // The order in which QCommandLineParser::process() answers
+    addRow("version before help", {QStringLiteral("--help"), QStringLiteral("--version")}, Status::VersionRequested);
+    addRow("help before a rejected value", {QStringLiteral("--system-id:0"), QStringLiteral("--help")},
+           Status::HelpRequested);
+    addRow("help before a positional argument", {QStringLiteral("--help"), QStringLiteral("mission.plan")},
+           Status::HelpRequested);
+}
+
+void QGCCommandLineParserTest::_testParseArgumentsHelpAndVersion()
+{
+    QFETCH(QStringList, arguments);
+    QFETCH(CommandLineParseResult::Status, expectedStatus);
+
+    const CommandLineParseResult result = QGCCommandLineParser::parseArguments(commandLineWith(arguments));
+
+    QCOMPARE(result.statusCode, expectedStatus);
+    QVERIFY(!result.errorString.has_value());
+    if (expectedStatus == CommandLineParseResult::Status::HelpRequested) {
+        QVERIFY2(result.helpText.contains(QStringLiteral("--system-id")), qPrintable(result.helpText));
+        QVERIFY(result.versionText.isEmpty());
+    } else {
+        QCOMPARE(result.versionText, QCoreApplication::applicationVersion());
+        QVERIFY(result.helpText.isEmpty());
+    }
+}
+
+void QGCCommandLineParserTest::_testDetermineAppMode_data()
+{
+    QTest::addColumn<bool>("simpleBootTest");
+    QTest::addColumn<bool>("runningUnitTests");
+    QTest::addColumn<bool>("listTests");
+    QTest::addColumn<AppMode>("expectedMode");
+
+    QTest::newRow("no flags") << false << false << false << AppMode::Gui;
+    QTest::newRow("boot test") << true << false << false << AppMode::BootTest;
+    // Both Test and ListTests short-circuit ahead of simpleBootTest, so it is set too to prove precedence.
+    QTest::newRow("unit tests before boot test") << true << true << false << AppMode::Test;
     // listTests must win over both runningUnitTests and simpleBootTest.
-    CommandLineParseResult result;
-    result.listTests        = true;
-    result.runningUnitTests = true;
-    result.simpleBootTest   = true;
-    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::ListTests);
-#else
-    QSKIP("ListTests mode only exists in QGC_UNITTEST_BUILD");
-#endif
+    QTest::newRow("list tests before unit tests and boot test") << true << true << true << AppMode::ListTests;
 }
 
-void QGCCommandLineParserTest::_testHandleParseResult_OkReturnsNullopt()
+void QGCCommandLineParserTest::_testDetermineAppMode()
 {
+    QFETCH(bool, simpleBootTest);
+    QFETCH(bool, runningUnitTests);
+    QFETCH(bool, listTests);
+    QFETCH(AppMode, expectedMode);
+
     CommandLineParseResult result;
+    result.simpleBootTest = simpleBootTest;
+    result.runningUnitTests = runningUnitTests;
+    result.listTests = listTests;
+
+    QCOMPARE(QGCCommandLineParser::determineAppMode(result), expectedMode);
+}
+
+void QGCCommandLineParserTest::_testHandleParseResult()
+{
+    // These results have no parser: with one, a help or version request is shown and ends the process.
+    CommandLineParseResult result;
+
     result.statusCode = CommandLineParseResult::Status::Ok;
+    QCOMPARE(QGCCommandLineParser::handleParseResult(result), std::optional<int>());
 
-    const std::optional<int> exitCode = QGCCommandLineParser::handleParseResult(result);
-    QVERIFY(!exitCode.has_value());
-}
-
-void QGCCommandLineParserTest::_testHandleParseResult_HelpReturnsZero()
-{
-    CommandLineParseResult result;
     result.statusCode = CommandLineParseResult::Status::HelpRequested;
+    QCOMPARE(QGCCommandLineParser::handleParseResult(result), std::optional<int>(0));
 
-    const std::optional<int> exitCode = QGCCommandLineParser::handleParseResult(result);
-    QVERIFY(exitCode.has_value());
-    QCOMPARE(exitCode.value(), 0);
-}
-
-void QGCCommandLineParserTest::_testHandleParseResult_VersionReturnsZero()
-{
-    CommandLineParseResult result;
     result.statusCode = CommandLineParseResult::Status::VersionRequested;
-
-    const std::optional<int> exitCode = QGCCommandLineParser::handleParseResult(result);
-    QVERIFY(exitCode.has_value());
-    QCOMPARE(exitCode.value(), 0);
+    QCOMPARE(QGCCommandLineParser::handleParseResult(result), std::optional<int>(0));
 }
 
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestSpaceSeparatedValue()
+void QGCCommandLineParserTest::_testNormalizeArgs_data()
 {
-    const QStringList out = QGCCommandLineParser::normalizeArgs(
-        {QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")});
-    QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")}));
+    QTest::addColumn<QStringList>("args");
+    QTest::addColumn<QStringList>("expected");
+
+    const QString windowsPath = QStringLiteral("C:\\results.xml");
+
+    QTest::newRow("unittest-space-separated-value")
+        << QStringList{QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")}
+        << QStringList{QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")};
+    QTest::newRow("unittest-colon-value") << QStringList{QStringLiteral("--unittest:FooTest")}
+                                          << QStringList{QStringLiteral("--unittest"), QStringLiteral("FooTest")};
+    QTest::newRow("unittest-bare") << QStringList{QStringLiteral("--unittest")}
+                                   << QStringList{QStringLiteral("--unittest"), QString()};
+    QTest::newRow("unittest-bare-followed-by-option")
+        << QStringList{QStringLiteral("--unittest"), QStringLiteral("--allow-multiple")}
+        << QStringList{QStringLiteral("--unittest"), QString(), QStringLiteral("--allow-multiple")};
+    QTest::newRow("unittest-colon-without-value")
+        << QStringList{QStringLiteral("--unittest:")} << QStringList{QStringLiteral("--unittest"), QString()};
+    QTest::newRow("colon-value") << QStringList{QStringLiteral("--logging:Vehicle.FTPManager")}
+                                 << QStringList{QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")};
+
+    // In the --option:value form the first colon ends the option name; later colons and '=' belong to the value.
+    QTest::newRow("colon-value-with-colon") << QStringList{QStringLiteral("--unittest-output:") + windowsPath}
+                                            << QStringList{QStringLiteral("--unittest-output"), windowsPath};
+    QTest::newRow("colon-value-with-equals") << QStringList{QStringLiteral("--logging:a=b")}
+                                             << QStringList{QStringLiteral("--logging"), QStringLiteral("a=b")};
+
+    // --option=value is passed on unchanged whatever the value contains.
+    QTest::newRow("equals-value") << QStringList{QStringLiteral("--system-id=7")}
+                                  << QStringList{QStringLiteral("--system-id=7")};
+    QTest::newRow("equals-windows-path") << QStringList{QStringLiteral("--unittest-output=") + windowsPath}
+                                         << QStringList{QStringLiteral("--unittest-output=") + windowsPath};
+    QTest::newRow("equals-value-with-colon")
+        << QStringList{QStringLiteral("--logging=a:b")} << QStringList{QStringLiteral("--logging=a:b")};
+    QTest::newRow("equals-url-value") << QStringList{QStringLiteral("--opt=udp://host:14550")}
+                                      << QStringList{QStringLiteral("--opt=udp://host:14550")};
+
+    QTest::newRow("separate-value-with-colon") << QStringList{QStringLiteral("--unittest-output"), windowsPath}
+                                               << QStringList{QStringLiteral("--unittest-output"), windowsPath};
 }
 
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestColonValue()
+void QGCCommandLineParserTest::_testNormalizeArgs()
 {
-    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--unittest:FooTest")});
-    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QStringLiteral("FooTest")}));
-}
+    QFETCH(QStringList, args);
+    QFETCH(QStringList, expected);
 
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestBare()
-{
-    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--unittest")});
-    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QString()}));
-}
-
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestBareFollowedByOption()
-{
-    const QStringList out = QGCCommandLineParser::normalizeArgs(
-        {QStringLiteral("--unittest"), QStringLiteral("--allow-multiple")});
-    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QString(), QStringLiteral("--allow-multiple")}));
-}
-
-void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
-{
-    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--logging:Vehicle.FTPManager")});
-    QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
+    QCOMPARE(QGCCommandLineParser::normalizeArgs(args), expected);
 }
 
 void QGCCommandLineParserTest::_testParseSystemId_data()

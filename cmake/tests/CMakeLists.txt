@@ -38,6 +38,7 @@ qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid
 qgc_add_cmake_contract_test(QmlCodegenConfigureListOutputs qml-codegen-configure-list-outputs)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 qgc_add_cmake_contract_test(QGCTestShards qgc-test-shards)
+qgc_add_cmake_contract_test(QGCTestList qgc-test-list)
 
 qgc_add_expected_failure_test(
     NAME CMake.CustomDirEscape
@@ -84,6 +85,8 @@ set(_qgc_expected_failure_cases
     "QGCTestMissingTimeout|qgc-test-missing-timeout|missing values for"
     "QGCTestUnsafeName|qgc-test-unsafe-name|test name contains unsafe characters"
     "QGCTestInvalidShards|qgc-test-invalid-shards|SHARDS must be an integer greater than 1"
+    "QGCTestListMissingLabels|qgc-test-list-missing-labels|expected <path>... LABELS <label>..."
+    "QGCTestListPathAfterLabels|qgc-test-list-path-after-labels|test path Late follows LABELS, paths go before LABELS"
     "QGCTestInvalidParallelLevel|qgc-test-invalid-parallel-level|QGC_TEST_PARALLEL_LEVEL must be a positive integer"
     "CoverageInvalidThreshold|coverage-invalid-threshold|must be an integer from 0 through 100"
     "CoverageReleaseRequest|coverage-release-request|Code coverage requires a Debug build"

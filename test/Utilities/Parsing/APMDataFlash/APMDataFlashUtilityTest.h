@@ -16,21 +16,17 @@ private slots:
     void _testCalculatePayloadSize();
 
     // Value parsing tests
-    void _testParseValue_data();
-    void _testParseValue();
-    void _testParseValueInvalid_data();
-    void _testParseValueInvalid();
-    void _testParseValueStrings();
+    UT_PARAMETERIZED_TEST(_testParseValue);
+    UT_PARAMETERIZED_TEST(_testParseValueInvalid);
 
     // Half-precision float tests
-    void _testHalfToFloat_data();
-    void _testHalfToFloat();
+    UT_PARAMETERIZED_TEST(_testHalfToFloat);
     void _testHalfToFloatSpecial();
 
     // Header validation tests
     void _testIsValidHeader();
     void _testIsValidHeaderInvalid();
-    void _testFindNextHeader();
+    UT_PARAMETERIZED_TEST(_testFindNextHeader);
 
     // FMT message parsing tests
     void _testParseFmtPayload();
@@ -40,12 +36,13 @@ private slots:
 
     // Message parsing tests
     void _testParseMessage();
-    void _testParseMessageTruncated_data();
-    void _testParseMessageTruncated();
-    void _testParseMessageUnsupportedFormat_data();
-    void _testParseMessageUnsupportedFormat();
+    UT_PARAMETERIZED_TEST(_testParseMessageTruncated);
+    void _testParseMessageWithoutPayload();
+    UT_PARAMETERIZED_TEST(_testParseMessageUnsupportedFormat);
 
     // Message iteration tests
     void _testIterateMessages();
     void _testIterateMessagesProgress();
+    UT_PARAMETERIZED_TEST(_testIterateMessagesFormatShorterThanHeader);
+    UT_PARAMETERIZED_TEST(_testTruncatedLog);
 };

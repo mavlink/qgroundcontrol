@@ -8,17 +8,8 @@ class JsonHelperTest : public PortableTest
 
 private slots:
     void _saveAndValidateExternalHeader_test();
-    void _validateInternalQGCJsonFile_test();
-    void _validateInternalVersionTooOld_test();
-    void _validateInternalVersionTooNew_test();
-    void _validateInternalWrongFileType_test();
-    void _validateInternalMissingKeys_test();
-    void _validateKeysRequired_test();
-    void _validateKeysOptional_test();
-    void _validateKeysWrongType_test();
-    void _validateKeysStrictValid_test();
-    void _validateKeysStrictUnknownKey_test();
-    void _validateKeysStrictMissingRequired_test();
+    UT_PARAMETERIZED_TEST(_validateInternalQGCJsonFile_test);
+    UT_PARAMETERIZED_TEST(_validateKeys_test);
     void _loadSaveGeoCoordinate_test();
     void _loadSaveGeoCoordinateWithAltitude_test();
     void _loadGeoCoordinateInvalidArray_test();

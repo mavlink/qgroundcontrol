@@ -10,10 +10,11 @@ class SignalHandlerTest : public UnitTest
 private slots:
     // Basic lifecycle tests
     void _testConstruction();
-    void _testCurrentReturnsInstance();
     void _testSetupReturnsSuccess();
-    void _testDestructorClearsCurrent();
 
     // Multiple handlers
     void _testCurrentUpdatesWithNewHandler();
+
+    // Signal delivery (POSIX)
+    UT_PARAMETERIZED_TEST(_testSignalInChild);
 };

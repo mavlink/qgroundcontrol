@@ -7,6 +7,7 @@
 #   include(QGCTest)
 #   add_qgc_test(MyTest LABELS Unit)
 #   add_qgc_test(MyIntegrationTest LABELS Integration RESOURCE_LOCK MockLink)
+#   add_qgc_tests(MyTest MyOtherTest LABELS Unit)
 
 include_guard(GLOBAL)
 
@@ -70,50 +71,25 @@ endforeach()
 # Convenience Targets
 # ----------------------------------------------------------------------------
 
-add_custom_target(
-    check
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --no-tests=error --output-on-failure --parallel
-            ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running all tests"
-    VERBATIM
-)
+# Adds the target <name>, which builds the application and then runs CTest with <parallel_level> jobs and the
+# selection in ARGN.
+function(_qgc_add_check_target name parallel_level comment)
+    add_custom_target(
+        ${name}
+        COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" ${ARGN} --no-tests=error --output-on-failure
+                --parallel ${parallel_level}
+        USES_TERMINAL
+        COMMENT "${comment}"
+        VERBATIM
+    )
+    add_dependencies(${name} ${CMAKE_PROJECT_NAME})
+endfunction()
 
-add_custom_target(
-    check-unit
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Unit --no-tests=error --output-on-failure --parallel
-            ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running unit tests"
-    VERBATIM
-)
-
-add_custom_target(
-    check-integration
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L Integration --no-tests=error --output-on-failure
-            --parallel 1
-    USES_TERMINAL
-    COMMENT "Running integration tests"
-    VERBATIM
-)
-
-add_custom_target(
-    check-fast
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE Slow --no-tests=error --output-on-failure --parallel
-            ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running fast tests (excluding Slow)"
-    VERBATIM
-)
-
-add_custom_target(
-    check-ci
-    COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Flaky|Network" --no-tests=error --output-on-failure
-            --parallel ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running CI-safe tests"
-    VERBATIM
-)
+_qgc_add_check_target(check ${QGC_TEST_PARALLEL_LEVEL} "Running all tests")
+_qgc_add_check_target(check-unit ${QGC_TEST_PARALLEL_LEVEL} "Running unit tests" -L Unit)
+_qgc_add_check_target(check-integration 1 "Running integration tests" -L Integration)
+_qgc_add_check_target(check-fast ${QGC_TEST_PARALLEL_LEVEL} "Running fast tests (excluding Slow)" -LE Slow)
+_qgc_add_check_target(check-ci ${QGC_TEST_PARALLEL_LEVEL} "Running CI-safe tests" -LE "Flaky|Network")
 
 set(QGC_TEST_FLAKY_REPEAT
     3
@@ -122,40 +98,17 @@ set(QGC_TEST_FLAKY_REPEAT
 if(NOT QGC_TEST_FLAKY_REPEAT MATCHES "^[1-9][0-9]*$")
     message(FATAL_ERROR "QGC_TEST_FLAKY_REPEAT must be a positive integer")
 endif()
-add_custom_target(
-    check-flaky
-    COMMAND
-        "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
-        --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
-    USES_TERMINAL
-    COMMENT "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
-    VERBATIM
+_qgc_add_check_target(
+    check-flaky ${QGC_TEST_PARALLEL_LEVEL}
+    "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
+    -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
 )
 
-# Category-specific targets
-set(_qgc_test_categories MissionManager Vehicle Utilities MAVLink Comms)
-foreach(_category IN LISTS _qgc_test_categories)
+foreach(_category IN ITEMS MissionManager Vehicle Utilities MAVLink Comms)
     string(TOLOWER ${_category} _target_suffix)
-    add_custom_target(
-        check-${_target_suffix}
-        COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" -L ${_category} --no-tests=error --output-on-failure
-                --parallel ${QGC_TEST_PARALLEL_LEVEL}
-        USES_TERMINAL
-        COMMENT "Running ${_category} tests"
-        VERBATIM
+    _qgc_add_check_target(
+        check-${_target_suffix} ${QGC_TEST_PARALLEL_LEVEL} "Running ${_category} tests" -L ${_category}
     )
-endforeach()
-
-# Collect all check targets for build dependency injection
-set(_qgc_check_targets check check-unit check-integration check-fast check-ci check-flaky)
-foreach(_category IN LISTS _qgc_test_categories)
-    string(TOLOWER ${_category} _target_suffix)
-    list(APPEND _qgc_check_targets check-${_target_suffix})
-endforeach()
-
-# Ensure all check targets build the main executable first
-foreach(_target IN LISTS _qgc_check_targets)
-    add_dependencies(${_target} ${CMAKE_PROJECT_NAME})
 endforeach()
 
 # ----------------------------------------------------------------------------
@@ -261,8 +214,8 @@ function(add_qgc_test test_name)
 
         # Per-test isolated temp dir so tests writing under QDir::tempPath() /
         # QStandardPaths::TempLocation (both honor TMPDIR on Unix, TMP/TEMP on
-        # Windows) never collide. This replaces the shared TempFiles RESOURCE_LOCK
-        # and needs no C++ change — QTemporaryDir/QStandardPaths pick it up.
+        # Windows) never collide and need no RESOURCE_LOCK for their temporary files.
+        # It needs no C++ change — QTemporaryDir/QStandardPaths pick it up.
         set(_test_env ${_base_test_env})
         set(_test_tmpdir "${CMAKE_BINARY_DIR}/test-tmp/${_ctest_name}")
         file(MAKE_DIRECTORY "${_test_tmpdir}")
@@ -304,17 +257,44 @@ function(add_qgc_test test_name)
                 set_tests_properties(${_ctest_name} PROPERTIES PROCESSORS 2)
             endif()
         elseif(ARG_RESOURCE_LOCK)
-            # TempFiles is now handled by per-test isolated TMPDIR above; strip it so
-            # those tests parallelize. Genuinely serial locks (MockLink, Joystick,
-            # Settings, fixed ports, PlanViewSettings) are preserved.
-            set(_resource_lock ${ARG_RESOURCE_LOCK})
-            list(REMOVE_ITEM _resource_lock TempFiles)
-            if(_resource_lock)
-                set_tests_properties(${_ctest_name} PROPERTIES RESOURCE_LOCK "${_resource_lock}")
-            endif()
+            set_tests_properties(${_ctest_name} PROPERTIES RESOURCE_LOCK "${ARG_RESOURCE_LOCK}")
         endif()
     endforeach()
 
+endfunction()
+
+# ----------------------------------------------------------------------------
+# add_qgc_tests()
+# ----------------------------------------------------------------------------
+# Lists each test of a directory once. For every path, relative to the calling directory, it adds
+# <path>.cc and <path>.h to QGCUnitTests and registers the test named by the file name of the path.
+# LABELS and every add_qgc_test() argument after it apply to each of the tests. Paths go before LABELS:
+# a value after it that names a test source of the directory is refused, because it would pass for a
+# label and its test would be neither built nor registered.
+#
+# Example:
+#   add_qgc_tests(QGCStateMachineTest states/DelayStateTest LABELS Unit Utilities)
+function(add_qgc_tests)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "LABELS")
+    if(NOT ARG_UNPARSED_ARGUMENTS OR NOT ARG_LABELS)
+        message(FATAL_ERROR "add_qgc_tests: expected <path>... LABELS <label>...")
+    endif()
+    foreach(_label IN LISTS ARG_LABELS)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_label}.cc")
+            message(FATAL_ERROR "add_qgc_tests: test path ${_label} follows LABELS, paths go before LABELS")
+        endif()
+    endforeach()
+
+    foreach(_test_path IN LISTS ARG_UNPARSED_ARGUMENTS)
+        target_sources(
+            QGCUnitTests
+            PRIVATE
+                ${_test_path}.cc
+                ${_test_path}.h
+        )
+        cmake_path(GET _test_path FILENAME _test_name)
+        add_qgc_test(${_test_name} LABELS ${ARG_LABELS})
+    endforeach()
 endfunction()
 
 # ----------------------------------------------------------------------------

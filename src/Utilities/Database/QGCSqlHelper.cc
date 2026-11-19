@@ -1,6 +1,7 @@
 #include "QGCSqlHelper.h"
 
 #include <QtCore/QLatin1Char>
+#include <QtCore/QStringList>
 #include <QtCore/QStringLiteral>
 #include <QtSql/QSqlQuery>
 
@@ -17,17 +18,7 @@ QString escapeLikePattern(const QString& text)
 
 QString placeholders(int n)
 {
-    if (n <= 0) {
-        return {};
-    }
-    QString out;
-    out.reserve((n * 2) - 1);
-    out += QLatin1Char('?');
-    for (int i = 1; i < n; ++i) {
-        out += QLatin1Char(',');
-        out += QLatin1Char('?');
-    }
-    return out;
+    return (n > 0) ? QStringList(n, QStringLiteral("?")).join(QLatin1Char(',')) : QString();
 }
 
 void applySqlitePragmas(QSqlDatabase& db)

@@ -9,23 +9,12 @@ class QGCNetworkHelperTest : public UnitTest
 
 private slots:
     // HTTP status code helpers tests
-    void _testClassifyHttpStatusInformational();
-    void _testClassifyHttpStatusSuccess();
-    void _testClassifyHttpStatusRedirection();
-    void _testClassifyHttpStatusClientError();
-    void _testClassifyHttpStatusServerError();
-    void _testClassifyHttpStatusUnknown();
-    void _testIsHttpSuccess();
-    void _testIsHttpRedirect();
-    void _testIsHttpClientError();
-    void _testIsHttpServerError();
-    void _testHttpStatusText();
-    void _testHttpStatusTextFromEnum();
-    void _testHttpStatusCodeEnumRoundTrip();
+    UT_PARAMETERIZED_TEST(_testHttpStatusClass);
+    UT_PARAMETERIZED_TEST(_testHttpStatusText);
+    void _testHttpStatusTextUnknown();
 
     // HTTP methods tests
-    void _testHttpMethodName();
-    void _testParseHttpMethod();
+    UT_PARAMETERIZED_TEST(_testHttpMethodNames);
     void _testParseHttpMethodCaseInsensitive();
     void _testParseHttpMethodUnknown();
 
@@ -63,6 +52,5 @@ private slots:
     void _testConnectionTypeName();
 
     // SSL tests
-    void _testIsSslAvailable();
     void _testSslVersion();
 };

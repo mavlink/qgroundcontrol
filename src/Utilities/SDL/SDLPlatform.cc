@@ -25,8 +25,7 @@ QString getVersion()
 
 QString getRevision()
 {
-    const char *rev = SDL_GetRevision();
-    return rev ? QString::fromUtf8(rev) : QString();
+    return QString::fromUtf8(SDL_GetRevision());
 }
 
 // ============================================================================
@@ -40,8 +39,7 @@ bool setHint(const QString &name, const QString &value)
 
 QString getHint(const QString &name)
 {
-    const char *value = SDL_GetHint(qPrintable(name));
-    return value ? QString::fromUtf8(value) : QString();
+    return QString::fromUtf8(SDL_GetHint(qPrintable(name)));
 }
 
 bool getHintBoolean(const QString &name, bool defaultValue)
@@ -113,40 +111,34 @@ bool isLinux()
 #endif
 }
 
-bool isTablet()
+/// The answer of a static boolean method of SDL's Android activity; false on the other platforms
+static bool sdlActivityFlag([[maybe_unused]] const char* method)
 {
 #ifdef Q_OS_ANDROID
-    return QJniObject::callStaticMethod<jboolean>("org/libsdl/app/SDLActivity", "isTablet", "()Z");
+    return QJniObject::callStaticMethod<jboolean>("org/libsdl/app/SDLActivity", method, "()Z");
 #else
     return false;
 #endif
+}
+
+bool isTablet()
+{
+    return sdlActivityFlag("isTablet");
 }
 
 bool isTV()
 {
-#ifdef Q_OS_ANDROID
-    return QJniObject::callStaticMethod<jboolean>("org/libsdl/app/SDLActivity", "isAndroidTV", "()Z");
-#else
-    return false;
-#endif
+    return sdlActivityFlag("isAndroidTV");
 }
 
 bool isDeXMode()
 {
-#ifdef Q_OS_ANDROID
-    return QJniObject::callStaticMethod<jboolean>("org/libsdl/app/SDLActivity", "isDeXMode", "()Z");
-#else
-    return false;
-#endif
+    return sdlActivityFlag("isDeXMode");
 }
 
 bool isChromebook()
 {
-#ifdef Q_OS_ANDROID
-    return QJniObject::callStaticMethod<jboolean>("org/libsdl/app/SDLActivity", "isChromebook", "()Z");
-#else
-    return false;
-#endif
+    return sdlActivityFlag("isChromebook");
 }
 
 // ============================================================================
@@ -179,8 +171,7 @@ int getAndroidSDKVersion()
 QString getAndroidInternalStoragePath()
 {
 #ifdef Q_OS_ANDROID
-    const char *path = SDL_GetAndroidInternalStoragePath();
-    return path ? QString::fromUtf8(path) : QString();
+    return QString::fromUtf8(SDL_GetAndroidInternalStoragePath());
 #else
     return QString();
 #endif
@@ -189,8 +180,7 @@ QString getAndroidInternalStoragePath()
 QString getAndroidExternalStoragePath()
 {
 #ifdef Q_OS_ANDROID
-    const char *path = SDL_GetAndroidExternalStoragePath();
-    return path ? QString::fromUtf8(path) : QString();
+    return QString::fromUtf8(SDL_GetAndroidExternalStoragePath());
 #else
     return QString();
 #endif

@@ -46,7 +46,6 @@ public:
 private:
     KMLSchemaValidator();
     void loadSchema();
-    void parseSchemaDocument(const QDomDocument &schemaDoc);
     void extractEnumTypes(const QDomElement &root);
     void extractElements(const QDomElement &root);
 
@@ -55,5 +54,4 @@ private:
 
     QHash<QString, QStringList> _enumTypes;  // enumTypeName -> valid values
     QSet<QString> _validElements;            // set of valid element names
-    bool _loaded = false;
 };

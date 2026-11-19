@@ -39,50 +39,49 @@ qt_add_qml_module(
 # so QGC_USE_SYSTEM_LIBS resolves them via find_package (CPM checks ${NAME}_FOUND).
 # <name>_ADDED = CPM built the static lib; otherwise a system copy provides the imported target.
 
+# Publishes a static library that CPM built: the cache entries its find module would set, which the
+# find_package() calls of libarchive then take, and the imported target name QGCCompression links.
+function(qgc_compression_publish prefix target include_dir alias)
+    qgc_disable_dependency_warnings(${target})
+    set(${prefix}_INCLUDE_DIR
+        "${include_dir}"
+        CACHE PATH "" FORCE
+    )
+    set(${prefix}_LIBRARY
+        "${target}"
+        CACHE STRING "" FORCE
+    )
+    set(${prefix}_LIBRARIES
+        "${target}"
+        CACHE STRING "" FORCE
+    )
+    set(${prefix}_FOUND
+        TRUE
+        CACHE BOOL "" FORCE
+    )
+    if(NOT TARGET ${alias})
+        add_library(${alias} ALIAS ${target})
+    endif()
+endfunction()
+
 # ============================================================================
 # zlib Integration
 # ============================================================================
 
-set(ZLIB_EXTRA_OPTIONS)
-if(WIN32)
-    set(ZLIB_EXTRA_OPTIONS "ZLIB_INSTALL_COMPAT_DLL OFF")
-endif()
-
 CPMAddPackage(
     NAME ZLIB
     GITHUB_REPOSITORY madler/zlib
-    VERSION 1.3.2
-    GIT_TAG v1.3.2
+    VERSION 1.4
+    GIT_TAG v1.4
     OPTIONS
         "ZLIB_BUILD_TESTING OFF"
         "ZLIB_BUILD_SHARED OFF"
         "ZLIB_BUILD_STATIC ON"
         "ZLIB_INSTALL OFF"
-        "ZLIB_PREFIX OFF"
-        "${ZLIB_EXTRA_OPTIONS}"
 )
 
 if(ZLIB_ADDED)
-    qgc_disable_dependency_warnings(zlibstatic)
-    set(ZLIB_INCLUDE_DIR
-        "${ZLIB_SOURCE_DIR};${ZLIB_BINARY_DIR}"
-        CACHE PATH "" FORCE
-    )
-    set(ZLIB_LIBRARY
-        "zlibstatic"
-        CACHE STRING "" FORCE
-    )
-    set(ZLIB_LIBRARIES
-        "zlibstatic"
-        CACHE STRING "" FORCE
-    )
-    set(ZLIB_FOUND
-        TRUE
-        CACHE BOOL "" FORCE
-    )
-    if(NOT TARGET ZLIB::ZLIB)
-        add_library(ZLIB::ZLIB ALIAS zlibstatic)
-    endif()
+    qgc_compression_publish(ZLIB zlibstatic "${ZLIB_SOURCE_DIR};${ZLIB_BINARY_DIR}" ZLIB::ZLIB)
 elseif(NOT ZLIB_FOUND)
     message(FATAL_ERROR "QGC: ZLIB (required dependency) was not resolved")
 endif()
@@ -93,9 +92,9 @@ endif()
 
 CPMAddPackage(
     NAME LibLZMA
-    VERSION 5.8.3
+    VERSION 5.8.4
     GITHUB_REPOSITORY tukaani-project/xz
-    GIT_TAG v5.8.3
+    GIT_TAG v5.8.4
     OPTIONS
         "BUILD_TESTING OFF"
         "BUILD_SHARED_LIBS OFF"
@@ -119,26 +118,10 @@ if(LibLZMA_ADDED)
     if(NOT TARGET liblzma)
         message(FATAL_ERROR "liblzma target not found")
     endif()
-    qgc_disable_dependency_warnings(liblzma)
-    set(LIBLZMA_INCLUDE_DIR
-        "${LibLZMA_SOURCE_DIR}/src/liblzma/api"
-        CACHE PATH "" FORCE
-    )
+    qgc_compression_publish(LIBLZMA liblzma "${LibLZMA_SOURCE_DIR}/src/liblzma/api" LibLZMA::LibLZMA)
     set(LIBLZMA_INCLUDE_DIRS
         "${LibLZMA_SOURCE_DIR}/src/liblzma/api"
         CACHE PATH "" FORCE
-    )
-    set(LIBLZMA_LIBRARY
-        "liblzma"
-        CACHE STRING "" FORCE
-    )
-    set(LIBLZMA_FOUND
-        TRUE
-        CACHE BOOL "" FORCE
-    )
-    set(LIBLZMA_LIBRARIES
-        "liblzma"
-        CACHE STRING "" FORCE
     )
     set(LIBLZMA_HAS_AUTO_DECODER
         TRUE
@@ -162,9 +145,6 @@ if(LibLZMA_ADDED)
         1
         CACHE INTERNAL "liblzma is static"
     )
-    if(NOT TARGET LibLZMA::LibLZMA)
-        add_library(LibLZMA::LibLZMA ALIAS liblzma)
-    endif()
 elseif(NOT LibLZMA_FOUND)
     message(FATAL_ERROR "QGC: LibLZMA (required dependency) was not resolved")
 endif()
@@ -202,30 +182,11 @@ if(zstd_ADDED)
     if(NOT TARGET libzstd_static)
         message(FATAL_ERROR "libzstd_static target not found")
     endif()
-    qgc_disable_dependency_warnings(libzstd_static)
-    set(ZSTD_INCLUDE_DIR
-        "${zstd_SOURCE_DIR}/lib"
-        CACHE PATH "" FORCE
-    )
-    set(ZSTD_LIBRARY
-        "libzstd_static"
-        CACHE STRING "" FORCE
-    )
-    set(ZSTD_LIBRARIES
-        "libzstd_static"
-        CACHE STRING "" FORCE
-    )
-    set(ZSTD_FOUND
-        TRUE
-        CACHE BOOL "" FORCE
-    )
+    qgc_compression_publish(ZSTD libzstd_static "${zstd_SOURCE_DIR}/lib" Zstd::Zstd)
     set(Zstd_FOUND
         TRUE
         CACHE BOOL "" FORCE
     )
-    if(NOT TARGET Zstd::Zstd)
-        add_library(Zstd::Zstd ALIAS libzstd_static)
-    endif()
     if(NOT TARGET zstd::libzstd_static)
         add_library(zstd::libzstd_static ALIAS libzstd_static)
     endif()
@@ -262,9 +223,9 @@ message(STATUS "Zstandard support enabled")
 if(QGC_ENABLE_LZ4)
     CPMAddPackage(
         NAME lz4
-        VERSION 1.10.0
+        VERSION 1.11.1
         GITHUB_REPOSITORY lz4/lz4
-        GIT_TAG v1.10.0
+        GIT_TAG v1.11.1
         SOURCE_SUBDIR build/cmake
         OPTIONS
             "LZ4_BUILD_CLI OFF"
@@ -275,26 +236,7 @@ if(QGC_ENABLE_LZ4)
 
     # find_package(lz4) (config mode) may export LZ4::lz4.
     if(lz4_ADDED)
-        qgc_disable_dependency_warnings(lz4_static)
-        set(LZ4_INCLUDE_DIR
-            "${lz4_SOURCE_DIR}/lib"
-            CACHE PATH "" FORCE
-        )
-        set(LZ4_LIBRARY
-            "lz4_static"
-            CACHE STRING "" FORCE
-        )
-        set(LZ4_LIBRARIES
-            "lz4_static"
-            CACHE STRING "" FORCE
-        )
-        set(LZ4_FOUND
-            TRUE
-            CACHE BOOL "" FORCE
-        )
-        if(NOT TARGET LZ4::LZ4)
-            add_library(LZ4::LZ4 ALIAS lz4_static)
-        endif()
+        qgc_compression_publish(LZ4 lz4_static "${lz4_SOURCE_DIR}/lib" LZ4::LZ4)
     elseif(lz4_FOUND)
         if(NOT TARGET LZ4::LZ4 AND TARGET LZ4::lz4)
             add_library(LZ4::LZ4 ALIAS LZ4::lz4)
@@ -329,26 +271,7 @@ if(QGC_ENABLE_BZIP2)
         if(NOT TARGET bz2_static)
             message(FATAL_ERROR "bz2_static target not found")
         endif()
-        qgc_disable_dependency_warnings(bz2_static)
-        set(BZIP2_INCLUDE_DIR
-            "${BZip2_SOURCE_DIR}"
-            CACHE PATH "" FORCE
-        )
-        set(BZIP2_LIBRARY
-            "bz2_static"
-            CACHE STRING "" FORCE
-        )
-        set(BZIP2_FOUND
-            TRUE
-            CACHE BOOL "" FORCE
-        )
-        set(BZIP2_LIBRARIES
-            "bz2_static"
-            CACHE STRING "" FORCE
-        )
-        if(NOT TARGET BZip2::BZip2)
-            add_library(BZip2::BZip2 ALIAS bz2_static)
-        endif()
+        qgc_compression_publish(BZIP2 bz2_static "${BZip2_SOURCE_DIR}" BZip2::BZip2)
     elseif(NOT BZip2_FOUND)
         message(FATAL_ERROR "QGC: BZip2 (required dependency) was not resolved")
     endif()
@@ -359,23 +282,11 @@ endif()
 # libarchive Integration (Full-featured C library)
 # ============================================================================
 
-if(QGC_ENABLE_BZIP2)
-    set(_LIBARCHIVE_BZIP2 "ON")
-else()
-    set(_LIBARCHIVE_BZIP2 "OFF")
-endif()
-
-if(QGC_ENABLE_LZ4)
-    set(_LIBARCHIVE_LZ4 "ON")
-else()
-    set(_LIBARCHIVE_LZ4 "OFF")
-endif()
-
 CPMAddPackage(
     NAME LibArchive
-    VERSION 3.8.8
+    VERSION 3.8.11
     GITHUB_REPOSITORY libarchive/libarchive
-    GIT_TAG v3.8.8
+    GIT_TAG v3.8.11
     OPTIONS
         "ENABLE_WERROR OFF"
         "ENABLE_TEST OFF"
@@ -391,10 +302,11 @@ CPMAddPackage(
         "ENABLE_MBEDTLS OFF"
         "ENABLE_NETTLE OFF"
         "ENABLE_CNG OFF"
-        "ENABLE_LIBMD OFF"
+        "ENABLE_MD OFF"
         "ENABLE_LIBB2 OFF"
         "ENABLE_LIBXML2 OFF"
         "ENABLE_EXPAT OFF"
+        "ENABLE_BSDXML OFF"
         "ENABLE_PCREPOSIX OFF"
         "ENABLE_PCRE2POSIX OFF"
         "POSIX_REGEX_LIB LIBC"
@@ -403,8 +315,8 @@ CPMAddPackage(
         "ENABLE_ZLIB ON"
         "ENABLE_LZMA ON"
         "ENABLE_ZSTD ON"
-        "ENABLE_BZip2 ${_LIBARCHIVE_BZIP2}"
-        "ENABLE_LZ4 ${_LIBARCHIVE_LZ4}"
+        "ENABLE_BZip2 ${QGC_ENABLE_BZIP2}"
+        "ENABLE_LZ4 ${QGC_ENABLE_LZ4}"
 )
 
 if(LibArchive_ADDED)
@@ -433,6 +345,7 @@ target_link_libraries(
         ZLIB::ZLIB
         LibLZMA::LibLZMA
         Zstd::Zstd
+        QGCFormat
         QGCLogging
 )
 

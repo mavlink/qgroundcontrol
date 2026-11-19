@@ -86,7 +86,7 @@ add_qgc_test(APMCalibrationStatusTextTest LABELS Integration Vehicle)
 add_qgc_test(APMParamValueTest LABELS Integration Vehicle)
 add_qgc_test(APMStartMissionTest LABELS Integration Vehicle)
 add_qgc_test(FirmwarePluginTest LABELS Unit Vehicle)
-add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
+add_qgc_test(FTPControllerTest LABELS Integration Vehicle)
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle)
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(

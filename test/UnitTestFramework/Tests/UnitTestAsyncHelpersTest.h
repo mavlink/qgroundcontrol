@@ -15,4 +15,5 @@ private slots:
     void _testWaitForConditionSuccess();
     void _testWaitForConditionTimeout();
     void _testWaitMacros();
+    UT_PARAMETERIZED_TEST(_testFailedWaitLogsContext);
 };

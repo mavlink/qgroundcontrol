@@ -182,9 +182,19 @@ parse:
         SKIP_REGEX: +
         ENV_MODIFICATION: +
 
+    # Each test path goes on its own line once there are several; LABELS and what follows it stay on one.
+    add_qgc_tests:
+      pargs: {nargs: '+', max_pargs_hwrap: 1}
+      kwargs:
+        LABELS: +
+
     # Keywords mirror each function's cmake_parse_arguments() call, so calls are not split one token per line.
     _gst_resolve_and_link_libraries:
       pargs: {nargs: '4+', flags: [HIDE, WARN_MISSING]}
+
+    # The target, its parallel level and its comment share a line; the CTest selection follows.
+    _qgc_add_check_target:
+      pargs: [[3], ['*']]
 
     _qgc_add_gpu_path:
       pargs: {nargs: '1+', flags: [UNSTABLE_API]}

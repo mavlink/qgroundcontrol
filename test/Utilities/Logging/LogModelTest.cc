@@ -1,9 +1,10 @@
 #include "LogModelTest.h"
-#include "LogModel.h"
-#include "UnitTest.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtTest/QSignalSpy>
+
+#include "LogModel.h"
+#include "LogTestHelpers.h"
 
 void LogModelTest::_appendAndRowCount()
 {
@@ -12,13 +13,7 @@ void LogModelTest::_appendAndRowCount()
     QCOMPARE(model.rowCount(), 0);
     QCOMPARE(model.totalCount(), 0);
 
-    LogEntry entry;
-    entry.level = LogEntry::Info;
-    entry.category = QStringLiteral("test.cat");
-    entry.message = QStringLiteral("hello");
-    entry.buildFormatted();
-
-    model.enqueue(entry);
+    model.enqueue(LogTestHelpers::makeEntry(QStringLiteral("hello"), LogEntry::Info, QStringLiteral("test.cat")));
 
     QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 1, TestTimeout::shortMs());
     QCOMPARE(model.rowCount(), 1);
@@ -35,11 +30,7 @@ void LogModelTest::_batchFlush()
     QSignalSpy insertSpy(&model, &QAbstractItemModel::rowsInserted);
 
     for (int i = 0; i < 10; ++i) {
-        LogEntry entry;
-        entry.level = LogEntry::Debug;
-        entry.message = QString::number(i);
-        entry.buildFormatted();
-        model.enqueue(entry);
+        model.enqueue(LogTestHelpers::makeEntry(QString::number(i), LogEntry::Debug));
     }
 
     QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 10, TestTimeout::shortMs());
@@ -54,11 +45,7 @@ void LogModelTest::_trimExcessOnOverflow()
     // Only need to exceed maxEntries to trigger the trim path; 1005 validates
     // the boundary without allocating ~100 extra LogEntry objects per run.
     for (int i = 0; i < 1005; ++i) {
-        LogEntry entry;
-        entry.level = LogEntry::Debug;
-        entry.message = QString::number(i);
-        entry.buildFormatted();
-        model.enqueue(entry);
+        model.enqueue(LogTestHelpers::makeEntry(QString::number(i), LogEntry::Debug));
     }
 
     QTRY_VERIFY_WITH_TIMEOUT(model.totalCount() <= 1000, TestTimeout::shortMs());
@@ -67,28 +54,15 @@ void LogModelTest::_trimExcessOnOverflow()
 void LogModelTest::_categories()
 {
     LogModel model;
+    QVERIFY(model.categoriesList().isEmpty());
 
-    LogEntry e1;
-    e1.category = QStringLiteral("cat.a");
-    e1.buildFormatted();
-    model.enqueue(e1);
-
-    LogEntry e2;
-    e2.category = QStringLiteral("cat.b");
-    e2.buildFormatted();
-    model.enqueue(e2);
-
-    LogEntry e3;
-    e3.category = QStringLiteral("cat.a");
-    e3.buildFormatted();
-    model.enqueue(e3);
-
+    for (const QString& category : {QStringLiteral("cat.b"), QStringLiteral("cat.a"), QStringLiteral("cat.b")}) {
+        model.enqueue(LogTestHelpers::makeEntry(QStringLiteral("msg"), LogEntry::Info, category));
+    }
     QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 3, TestTimeout::shortMs());
 
-    const QStringList cats = model.categoriesList();
-    QCOMPARE(cats.size(), 2);
-    QVERIFY(cats.contains(QStringLiteral("cat.a")));
-    QVERIFY(cats.contains(QStringLiteral("cat.b")));
+    // Each category once, sorted
+    QCOMPARE(model.categoriesList(), (QStringList{QStringLiteral("cat.a"), QStringLiteral("cat.b")}));
 }
 
 void LogModelTest::_clear()
@@ -96,10 +70,7 @@ void LogModelTest::_clear()
     LogModel model;
 
     for (int i = 0; i < 5; ++i) {
-        LogEntry entry;
-        entry.message = QString::number(i);
-        entry.buildFormatted();
-        model.enqueue(entry);
+        model.enqueue(LogTestHelpers::makeEntry(QString::number(i)));
     }
     QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 5, TestTimeout::shortMs());
 
@@ -128,12 +99,7 @@ static void populateWithMixedEntries(LogModel &model)
         {LogEntry::Info,     QStringLiteral("cat.b"), QStringLiteral("another info")},
     };
     for (const auto &d : data) {
-        LogEntry entry;
-        entry.level = d.level;
-        entry.category = d.category;
-        entry.message = d.message;
-        entry.buildFormatted();
-        model.enqueue(entry);
+        model.enqueue(LogTestHelpers::makeEntry(d.message, d.level, d.category));
     }
     QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 5, TestTimeout::shortMs());
 }
@@ -217,53 +183,12 @@ void LogModelTest::_filteredEntries()
     QCOMPARE(entries[1].category, QStringLiteral("cat.a"));
 }
 
-void LogModelTest::_categoriesComboList()
-{
-    LogModel model;
-
-    QStringList cats = model.categoriesList();
-    QCOMPARE(cats.size(), 0);
-
-    LogEntry e1;
-    e1.level = LogEntry::Info;
-    e1.category = QStringLiteral("cat.b");
-    e1.message = QStringLiteral("msg1");
-    e1.buildFormatted();
-    model.enqueue(e1);
-
-    LogEntry e2;
-    e2.level = LogEntry::Info;
-    e2.category = QStringLiteral("cat.a");
-    e2.message = QStringLiteral("msg2");
-    e2.buildFormatted();
-    model.enqueue(e2);
-
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 2, TestTimeout::shortMs());
-
-    cats = model.categoriesList();
-    QCOMPARE(cats.size(), 2);
-    // Should be sorted
-    QCOMPARE(cats[0], QStringLiteral("cat.a"));
-    QCOMPARE(cats[1], QStringLiteral("cat.b"));
-}
-
 void LogModelTest::_setFilterTextDeferred()
 {
     LogModel model;
 
-    LogEntry e1;
-    e1.level = LogEntry::Info;
-    e1.category = QStringLiteral("test");
-    e1.message = QStringLiteral("hello world");
-    e1.buildFormatted();
-    model.enqueue(e1);
-
-    LogEntry e2;
-    e2.level = LogEntry::Info;
-    e2.category = QStringLiteral("test");
-    e2.message = QStringLiteral("goodbye");
-    e2.buildFormatted();
-    model.enqueue(e2);
+    model.enqueue(LogTestHelpers::makeEntry(QStringLiteral("hello world"), LogEntry::Info, QStringLiteral("test")));
+    model.enqueue(LogTestHelpers::makeEntry(QStringLiteral("goodbye"), LogEntry::Info, QStringLiteral("test")));
 
     QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 2, TestTimeout::shortMs());
 
@@ -334,13 +259,8 @@ void LogModelTest::_multiData()
 {
     LogModel model;
 
-    LogEntry entry;
-    entry.level = LogEntry::Warning;
-    entry.category = QStringLiteral("multi.test");
-    entry.message = QStringLiteral("multi data");
-    entry.timestamp = QDateTime::currentDateTime();
-    entry.buildFormatted();
-    model.enqueue(entry);
+    model.enqueue(
+        LogTestHelpers::makeEntry(QStringLiteral("multi data"), LogEntry::Warning, QStringLiteral("multi.test")));
 
     QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 1, TestTimeout::shortMs());
 

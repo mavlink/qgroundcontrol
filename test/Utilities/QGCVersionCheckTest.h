@@ -7,8 +7,7 @@ class QGCVersionCheckTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _newerVersionDetected_data();
-    void _newerVersionDetected();
-    void _notifyOncePerVersion_data();
-    void _notifyOncePerVersion();
+    UT_PARAMETERIZED_TEST(_newerVersionDetected);
+    UT_PARAMETERIZED_TEST(_notifyOncePerVersion);
+    UT_PARAMETERIZED_TEST(_downloadedVersionFile);
 };

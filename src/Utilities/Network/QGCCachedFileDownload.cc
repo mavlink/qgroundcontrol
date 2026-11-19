@@ -7,7 +7,6 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtNetwork/QNetworkDiskCache>
-#include <QtNetwork/QNetworkRequest>
 
 QGC_LOGGING_CATEGORY(QGCCachedFileDownloadLog, "Utilities.QGCCachedFileDownload")
 
@@ -26,21 +25,13 @@ QGCCachedFileDownload::QGCCachedFileDownload(const QString &cacheDirectory, QObj
 
     connect(_fileDownload, &QGCFileDownload::finished,
             this, &QGCCachedFileDownload::_onDownloadFinished);
-    connect(_fileDownload, &QGCFileDownload::downloadProgress,
-            this, &QGCCachedFileDownload::_onDownloadProgress);
+    connect(_fileDownload, &QGCFileDownload::progressChanged, this, &QGCCachedFileDownload::_setProgress);
+    connect(_fileDownload, &QGCFileDownload::downloadProgress, this, &QGCCachedFileDownload::downloadProgress);
 }
 
-QGCCachedFileDownload::QGCCachedFileDownload(QObject *parent)
-    : QObject(parent)
-    , _fileDownload(new QGCFileDownload(this))
-    , _diskCache(new QNetworkDiskCache(this))
+QGCCachedFileDownload::QGCCachedFileDownload(QObject* parent)
+    : QGCCachedFileDownload(QString(), parent)
 {
-    qCDebug(QGCCachedFileDownloadLog) << "Created without cache dir";
-
-    connect(_fileDownload, &QGCFileDownload::finished,
-            this, &QGCCachedFileDownload::_onDownloadFinished);
-    connect(_fileDownload, &QGCFileDownload::downloadProgress,
-            this, &QGCCachedFileDownload::_onDownloadProgress);
 }
 
 QGCCachedFileDownload::~QGCCachedFileDownload()
@@ -114,7 +105,6 @@ QString QGCCachedFileDownload::cachedPath(const QString &url) const
     }
 
     const QByteArray data = device->readAll();
-    device->close();
     delete device;
 
     const QString tempPath = QGCFileHelper::uniqueTempPath(QStringLiteral("qgc_cache_XXXXXX"));
@@ -146,115 +136,35 @@ int QGCCachedFileDownload::cacheAge(const QString &url) const
 
 bool QGCCachedFileDownload::download(const QString &url, int maxCacheAgeSec)
 {
-    if (_running) {
-        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
+    if (!_beginDownload(url, true)) {
         return false;
     }
 
-    if (url.isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
-        _setErrorString(tr("Empty URL"));
-        return false;
+    if (isCached(url, maxCacheAgeSec)) {
+        qCDebug(QGCCachedFileDownloadLog) << "Using cached version for:" << url;
+        return _startDownload(url, QNetworkRequest::PreferCache);
     }
 
-    if (cacheDirectory().isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Cache directory not set";
-        _setErrorString(tr("Cache directory not configured"));
-        return false;
-    }
-
-    _pendingUrl = url;
-    _maxCacheAgeSec = maxCacheAgeSec;
-    _networkAttemptFailed = false;
-    _forceNetwork = false;
-    _cancelRequested = false;
-
-    _url = QUrl::fromUserInput(url);
-    emit urlChanged(_url);
-
-    // Check if we have a valid cached version
-    const QNetworkCacheMetaData metadata = _diskCache->metaData(_url);
-    if (metadata.isValid()) {
-        const QDateTime cacheTime = _getCacheTimestamp(url);
-        bool expired = false;
-        if (maxCacheAgeSec > 0) {
-            if (!cacheTime.isValid()) {
-                expired = true;
-            } else {
-                expired = cacheTime.addSecs(maxCacheAgeSec) < QDateTime::currentDateTime();
-            }
-        }
-
-        if (!expired) {
-            qCDebug(QGCCachedFileDownloadLog) << "Using cached version for:" << url;
-            return _startDownload(url, false, true);  // Prefer cache
-        }
-
+    if (_diskCache->metaData(_url).isValid()) {
         // Cache expired - try network first, will fallback to cache on failure
         qCDebug(QGCCachedFileDownloadLog) << "Cache expired, trying network:" << url;
         _forceNetwork = true;
-        return _startDownload(url, true, false);
+        return _startDownload(url, QNetworkRequest::AlwaysNetwork);
     }
 
-    // No cached version - download from network
     qCDebug(QGCCachedFileDownloadLog) << "No cache, downloading:" << url;
-    return _startDownload(url, false, false);
+    return _startDownload(url, QNetworkRequest::PreferCache);
 }
 
 bool QGCCachedFileDownload::downloadPreferCache(const QString &url)
 {
-    if (_running) {
-        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
-        return false;
-    }
-
-    if (url.isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
-        _setErrorString(tr("Empty URL"));
-        return false;
-    }
-
-    if (cacheDirectory().isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Cache directory not set";
-        _setErrorString(tr("Cache directory not configured"));
-        return false;
-    }
-
-    _pendingUrl = url;
-    _maxCacheAgeSec = 0;
-    _networkAttemptFailed = false;
-    _forceNetwork = false;
-    _cancelRequested = false;
-
-    _url = QUrl::fromUserInput(url);
-    emit urlChanged(_url);
-
-    return _startDownload(url, false, true);
+    return _beginDownload(url, true) && _startDownload(url, QNetworkRequest::PreferCache);
 }
 
 bool QGCCachedFileDownload::downloadNoCache(const QString &url)
 {
-    if (_running) {
-        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
-        return false;
-    }
-
-    if (url.isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
-        _setErrorString(tr("Empty URL"));
-        return false;
-    }
-
-    _pendingUrl = url;
-    _maxCacheAgeSec = 0;
-    _networkAttemptFailed = false;
-    _forceNetwork = true;
-    _cancelRequested = false;
-
-    _url = QUrl::fromUserInput(url);
-    emit urlChanged(_url);
-
-    return _startDownload(url, true, false);
+    // _forceNetwork stays false: true would allow the cache fallback
+    return _beginDownload(url, false) && _startDownload(url, QNetworkRequest::AlwaysNetwork);
 }
 
 void QGCCachedFileDownload::cancel()
@@ -265,15 +175,13 @@ void QGCCachedFileDownload::cancel()
 
     _cancelRequested = true;
 
-    if (_fileDownload != nullptr) {
-        _fileDownload->cancel();
-    }
+    _fileDownload->cancel();
 
     _setErrorString(tr("Download cancelled"));
     _setProgress(0.0);
     _setRunning(false);
     _pendingUrl.clear();
-    _emitFinished(false, {}, _errorString);
+    emit finished(false, {}, _errorString, _fromCache);
 }
 
 // ============================================================================
@@ -314,50 +222,68 @@ void QGCCachedFileDownload::_onDownloadFinished(bool success,
                                        << "error:" << errorMessage;
 
     if (success) {
-        // Update cache timestamp
-        _updateCacheTimestamp(_pendingUrl);
+        // A cache hit must not renew the entry, or one read more often than its maximum age would never expire
+        if (!_fileDownload->lastResultFromCache()) {
+            _updateCacheTimestamp(_pendingUrl);
+        }
 
         _localPath = localPath;
         emit localPathChanged(_localPath);
         _setFromCache(_fileDownload->lastResultFromCache());
-        _setErrorString({});
-        _setRunning(false);
-        _pendingUrl.clear();
-        _emitFinished(true, localPath, {});
+        _finish(true, localPath, {});
+        return;
+    }
 
-    } else if (_forceNetwork && !_networkAttemptFailed) {
-        // Network attempt failed, try cache fallback
+    if (_forceNetwork && !_networkAttemptFailed) {
         _networkAttemptFailed = true;
+        _networkErrorMessage = errorMessage;
         qCDebug(QGCCachedFileDownloadLog) << "Network failed, trying cache fallback";
 
-        if (!_startDownload(_pendingUrl, false, true)) {
-            // Cache fallback also failed
-            _setErrorString(errorMessage);
-            _setRunning(false);
-            _pendingUrl.clear();
-            _emitFinished(false, {}, errorMessage);
+        // Only the cache may answer once the network has failed: PreferCache goes back to the network for an
+        // entry that HTTP considers stale
+        if (!_startDownload(_pendingUrl, QNetworkRequest::AlwaysCache)) {
+            _finish(false, {}, errorMessage);
         }
         return;
-
-    } else {
-        _setErrorString(errorMessage);
-        _setRunning(false);
-        _pendingUrl.clear();
-        _emitFinished(false, {}, errorMessage);
     }
-}
 
-void QGCCachedFileDownload::_onDownloadProgress(qint64 bytesReceived, qint64 totalBytes)
-{
-    if (totalBytes > 0) {
-        _setProgress(static_cast<qreal>(bytesReceived) / static_cast<qreal>(totalBytes));
-    }
-    emit downloadProgress(bytesReceived, totalBytes);
+    // When the cache cannot answer either, the network error is the one that explains the failure
+    _finish(false, {}, _networkAttemptFailed ? _networkErrorMessage : errorMessage);
 }
 
 // ============================================================================
 // Private Methods
 // ============================================================================
+
+bool QGCCachedFileDownload::_beginDownload(const QString& url, bool needsCacheDirectory)
+{
+    if (_running) {
+        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
+        return false;
+    }
+
+    if (url.isEmpty()) {
+        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
+        _setErrorString(tr("Empty URL"));
+        return false;
+    }
+
+    if (needsCacheDirectory && cacheDirectory().isEmpty()) {
+        qCWarning(QGCCachedFileDownloadLog) << "Cache directory not set";
+        _setErrorString(tr("Cache directory not configured"));
+        return false;
+    }
+
+    _pendingUrl = url;
+    _networkAttemptFailed = false;
+    _forceNetwork = false;
+    _cancelRequested = false;
+
+    _url = QUrl::fromUserInput(url);
+    emit urlChanged(_url);
+
+    return true;
+}
 
 void QGCCachedFileDownload::_initializeCache(const QString &directory)
 {
@@ -414,39 +340,19 @@ void QGCCachedFileDownload::_updateCacheTimestamp(const QString &url)
 
 QDateTime QGCCachedFileDownload::_getCacheTimestamp(const QString &url) const
 {
+    // An entry that is not in the cache has no attributes, and an attribute that is not set gives no date
     const QNetworkCacheMetaData metadata = _diskCache->metaData(QUrl::fromUserInput(url));
-    if (!metadata.isValid()) {
-        return {};
-    }
-
-    const auto &attributes = metadata.attributes();
-    const auto it = attributes.find(QNetworkRequest::Attribute::User);
-    if (it != attributes.end()) {
-        return it->toDateTime();
-    }
-
-    return {};
+    return metadata.attributes().value(QNetworkRequest::Attribute::User).toDateTime();
 }
 
-bool QGCCachedFileDownload::_startDownload(const QString &url, bool forceNetwork, bool preferCache)
+bool QGCCachedFileDownload::_startDownload(const QString& url, QNetworkRequest::CacheLoadControl loadControl)
 {
     _setRunning(true);
     _setProgress(0.0);
     _setFromCache(false);
 
     QGCNetworkHelper::RequestConfig config;
-
-    if (forceNetwork) {
-        config.requestAttributes.append({
-            QNetworkRequest::CacheLoadControlAttribute,
-            QVariant{QNetworkRequest::AlwaysNetwork},
-        });
-    } else if (preferCache) {
-        config.requestAttributes.append({
-            QNetworkRequest::CacheLoadControlAttribute,
-            QVariant{QNetworkRequest::PreferCache},
-        });
-    }
+    config.requestAttributes.append({QNetworkRequest::CacheLoadControlAttribute, QVariant{loadControl}});
 
     if (!_fileDownload->start(url, config)) {
         _setRunning(false);
@@ -457,9 +363,12 @@ bool QGCCachedFileDownload::_startDownload(const QString &url, bool forceNetwork
     return true;
 }
 
-void QGCCachedFileDownload::_emitFinished(bool success,
-                                           const QString &path,
-                                           const QString &error)
+// The error is a copy: it can be the downloader's own error string, which changes when a receiver of finished()
+// starts the next download, and every receiver is to get the same text
+void QGCCachedFileDownload::_finish(bool success, const QString& path, QString error)
 {
+    _setErrorString(error);
+    _setRunning(false);
+    _pendingUrl.clear();
     emit finished(success, path, error, _fromCache);
 }

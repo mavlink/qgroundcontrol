@@ -16,8 +16,7 @@ public:
     JsonResourceAuditTest() = default;
 
 private slots:
-    void _allResourceJsonParsesClean_test_data();
-    void _allResourceJsonParsesClean_test();
+    UT_PARAMETERIZED_TEST(_allResourceJsonParsesClean_test);
 
 private:
     void _collectWarnings(const QString& jsonPath, const QString& category, QStringList& failures);

@@ -22,29 +22,22 @@ namespace SDLJoystick {
 
 /// Initialize SDL joystick/gamepad subsystems with QGC-specific hints
 bool init();
-
-/// Shutdown SDL joystick/gamepad subsystems
 void shutdown();
-
-/// Check if SDL joystick subsystem is initialized
 bool isInitialized();
 
 // ============================================================================
 // Event Control
 // ============================================================================
 
-/// Pump SDL events (call periodically)
+/// Pump SDL events, then discard the queued ones: event watches have already handled them (call periodically)
 void pumpEvents();
 
-/// Enable/disable joystick event processing
 void setJoystickEventsEnabled(bool enabled);
 bool joystickEventsEnabled();
 
-/// Enable/disable gamepad event processing
 void setGamepadEventsEnabled(bool enabled);
 bool gamepadEventsEnabled();
 
-/// Update joystick/gamepad state
 void updateJoysticks();
 void updateGamepads();
 
@@ -52,38 +45,30 @@ void updateGamepads();
 // Thread Safety
 // ============================================================================
 
-/// Lock joystick access for thread-safe operations
 void lockJoysticks();
 void unlockJoysticks();
 
-/// \brief RAII lock guard for joysticks
-///
 class JoystickLock {
 public:
     JoystickLock() { lockJoysticks(); }
     ~JoystickLock() { unlockJoysticks(); }
-    JoystickLock(const JoystickLock&) = delete;
-    JoystickLock& operator=(const JoystickLock&) = delete;
+    Q_DISABLE_COPY(JoystickLock)
 };
 
 // ============================================================================
 // Type/String Conversions
 // ============================================================================
 
-/// Gamepad type conversions
 QString gamepadTypeToString(int type);
 int gamepadTypeFromString(const QString &str);
 QString gamepadTypeDisplayName(int type);
 
-/// Gamepad axis conversions
 QString gamepadAxisToString(int axis);
 int gamepadAxisFromString(const QString &str);
 
-/// Gamepad button conversions
 QString gamepadButtonToString(int button);
 int gamepadButtonFromString(const QString &str);
 
-/// Connection state to string
 QString connectionStateToString(int state);
 
 // ============================================================================
@@ -93,64 +78,45 @@ QString connectionStateToString(int state);
 /// Parse GUID info (vendor, product, version, crc16)
 QVariantMap getGUIDInfo(const QString &guid);
 
-/// Get mapping string for a GUID
 QString getMappingForGUID(const QString &guid);
 
 // ============================================================================
 // Mapping Management
 // ============================================================================
 
-/// Add gamepad mappings from a file
 int addMappingsFromFile(const QString &filePath);
 
-/// Add a single mapping string
+/// Add gamepad mappings from the contents of a mapping database, skipping the entries for other platforms.
+/// @return Number of mappings added, or -1 on error.
+int addMappingsFromData(const QByteArray& data);
+
 bool addMapping(const QString &mapping);
 
 /// Add a mapping and persist it to user's config file
 bool addMappingPersistent(const QString &mapping);
 
-/// Reload all gamepad mappings
 bool reloadMappings();
 
-/// Get path to user's custom mappings file
 QString userMappingsFilePath();
 
 // ============================================================================
 // Player Index
 // ============================================================================
 
-/// Get instance ID from player index
 int getInstanceIdFromPlayerIndex(int playerIndex);
 
 // ============================================================================
 // Pre-Open Device Queries (query device info without opening)
 // ============================================================================
 
-/// Get device name for instance ID
 QString getNameForInstanceId(int instanceId);
-
-/// Get device path for instance ID
 QString getPathForInstanceId(int instanceId);
-
-/// Get GUID string for instance ID
 QString getGUIDForInstanceId(int instanceId);
-
-/// Get vendor ID for instance ID
 int getVendorForInstanceId(int instanceId);
-
-/// Get product ID for instance ID
 int getProductForInstanceId(int instanceId);
-
-/// Get product version for instance ID
 int getProductVersionForInstanceId(int instanceId);
-
-/// Get gamepad type string for instance ID
 QString getTypeForInstanceId(int instanceId);
-
-/// Get real (underlying) gamepad type string for instance ID
 QString getRealTypeForInstanceId(int instanceId);
-
-/// Get player index for instance ID
 int getPlayerIndexForInstanceId(int instanceId);
 
 /// Get connection state for instance ID (Wired/Wireless/Unknown)
@@ -161,20 +127,14 @@ QString getConnectionStateForInstanceId(int instanceId);
 // Virtual Joystick
 // ============================================================================
 
-/// Create a virtual joystick
 int createVirtualJoystick(const QString &name, int axisCount, int buttonCount, int hatCount);
-
-/// Destroy a virtual joystick
 bool destroyVirtualJoystick(int instanceId);
-
-/// Check if a joystick is virtual
 bool isVirtualJoystick(int instanceId);
 
 // ============================================================================
 // Gamepad Binding Utilities
 // ============================================================================
 
-/// Populate a QVariantMap with binding information from SDL_GamepadBinding
 void populateBindingResult(QVariantMap &result, const SDL_GamepadBinding *binding);
 
 /// Find a gamepad binding matching the given predicate.

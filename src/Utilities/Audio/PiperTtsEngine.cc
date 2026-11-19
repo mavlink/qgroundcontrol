@@ -10,6 +10,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QProcess>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtMultimedia/QSoundEffect>
 
@@ -19,7 +20,7 @@ QGC_LOGGING_CATEGORY(PiperTtsEngineLog, "Utilities.PiperTtsEngine")
 
 PiperTtsEngine::PiperTtsEngine(QObject* parent)
     : QTextToSpeechEngine(parent)
-    , _executable(_findExecutable())
+    , _candidates(_findCandidates())
     , _voices(_findVoices())
     , _player(new QSoundEffect(this))
 {
@@ -41,7 +42,7 @@ PiperTtsEngine::PiperTtsEngine(QObject* parent)
         }
     });
 
-    if (_executable.isEmpty() || _voices.isEmpty()) {
+    if (_candidates.isEmpty() || _voices.isEmpty()) {
         _setError(QTextToSpeech::ErrorReason::Initialization, tr("Piper or a Piper voice is not installed"));
         return;
     }
@@ -52,27 +53,26 @@ PiperTtsEngine::PiperTtsEngine(QObject* parent)
 
     const auto systemVoice = std::ranges::find(_voices, QLocale::system(), &QVoice::locale);
     _voice = (systemVoice != _voices.cend()) ? *systemVoice : _voices.constFirst();
-    _startProcess();
+    _verifyNextCandidate();
 }
 
 PiperTtsEngine::~PiperTtsEngine()
 {
+    if (_probe) {
+        (void) _probe->disconnect(this);
+        _probe->kill();
+        (void) _probe->waitForFinished(1000);
+    }
     _stopProcess();
 }
 
 bool PiperTtsEngine::isAvailable()
 {
-    return !_findExecutable().isEmpty() && !_findVoices().isEmpty();
+    // Called while the application starts, so no candidate is run here: the engine verifies them once it is created.
+    return !_findCandidates().isEmpty() && !_findVoices().isEmpty();
 }
 
-QString PiperTtsEngine::_findExecutable()
-{
-    // Cached because verifying a candidate runs it.
-    static const QString executable = _searchExecutable();
-    return executable;
-}
-
-QString PiperTtsEngine::_searchExecutable()
+QStringList PiperTtsEngine::_findCandidates()
 {
     // Desktop launchers often don't have ~/.local/bin in PATH, which is where pip/uv/pipx install Piper.
     const QStringList fallbackPaths = {QDir::homePath() + QStringLiteral("/.local/bin")};
@@ -84,30 +84,61 @@ QString PiperTtsEngine::_searchExecutable()
     }
     (void) candidates.removeAll(QString());
     (void) candidates.removeDuplicates();
-
-    for (const QString& path : candidates) {
-        if (_isPiperTts(path)) {
-            return path;
-        }
-        qCDebug(PiperTtsEngineLog) << "Skipping" << path << "which is not Piper text-to-speech";
-    }
-    return QString();
+    return candidates;
 }
 
-bool PiperTtsEngine::_isPiperTts(const QString& path)
+void PiperTtsEngine::_verifyNextCandidate()
 {
-    QProcess process;
-    process.setProcessChannelMode(QProcess::MergedChannels);
-    process.start(path, {QStringLiteral("--help")});
-    if (!process.waitForFinished(5000)) {
-        process.kill();
-        (void) process.waitForFinished(1000);
-        return false;
+    if (_candidates.isEmpty()) {
+        _setError(QTextToSpeech::ErrorReason::Initialization, tr("Piper or a Piper voice is not installed"));
+        return;
     }
-    return process.readAll().contains("--model");
+
+    const QString path = _candidates.takeFirst();
+    _probe = new QProcess(this);
+    _probe->setProcessChannelMode(QProcess::MergedChannels);
+    (void) connect(_probe, &QProcess::finished, this, [this, path](int, QProcess::ExitStatus exitStatus) {
+        _candidateVerified(path, (exitStatus == QProcess::NormalExit) && _probe->readAll().contains("--model"));
+    });
+    (void) connect(_probe, &QProcess::errorOccurred, this, [this, path](QProcess::ProcessError error) {
+        // The only error that ends the process without finished().
+        if (error == QProcess::FailedToStart) {
+            _candidateVerified(path, false);
+        }
+    });
+    QTimer::singleShot(kVerifyTimeout, _probe, &QProcess::kill);
+    _probe->start(path, {QStringLiteral("--help")});
+}
+
+void PiperTtsEngine::_candidateVerified(const QString& path, bool isPiperTts)
+{
+    (void) _probe->disconnect(this);
+    _probe->deleteLater();
+    _probe = nullptr;
+
+    if (!isPiperTts) {
+        qCDebug(PiperTtsEngineLog) << "Skipping" << path << "which is not Piper text-to-speech";
+        _verifyNextCandidate();
+        return;
+    }
+
+    _executable = path;
+    _startProcess();
+    if (!_unsentInput.isEmpty() && (_process->state() != QProcess::NotRunning)) {
+        _pendingCount = static_cast<int>(_unsentInput.count('\n'));
+        (void) _process->write(_unsentInput);
+    }
+    _unsentInput.clear();
 }
 
 QList<QVoice> PiperTtsEngine::_findVoices()
+{
+    // Cached because the voices are needed both to choose this engine and to create it.
+    static const QList<QVoice> voices = _searchVoices();
+    return voices;
+}
+
+QList<QVoice> PiperTtsEngine::_searchVoices()
 {
     QList<QVoice> voices;
     QStringList names;
@@ -148,6 +179,10 @@ QList<QVoice> PiperTtsEngine::_findVoices()
 void PiperTtsEngine::_startProcess()
 {
     _stopProcess();
+    if (_executable.isEmpty()) {
+        // Still verifying the candidates. Piper is started with the current voice once one is verified.
+        return;
+    }
 
     _process = new QProcess(this);
     // Python Piper logs written files to stderr, the older C++ Piper prints them to stdout.
@@ -273,7 +308,7 @@ QList<QVoice> PiperTtsEngine::availableVoices() const
 
 void PiperTtsEngine::say(const QString& text)
 {
-    if (!_process || (_process->state() == QProcess::NotRunning)) {
+    if (!_probe && (!_process || (_process->state() == QProcess::NotRunning))) {
         return;
     }
 
@@ -281,7 +316,16 @@ void PiperTtsEngine::say(const QString& text)
     const QString line = text.simplified();
     _setState(QTextToSpeech::State::Speaking);
     if (line.isEmpty()) {
-        _setState(QTextToSpeech::State::Ready);
+        // Nothing to say, but an earlier utterance may still be waiting for Piper or playing
+        if ((_pendingCount == 0) && _unsentInput.isEmpty() && _playingFile.isEmpty()) {
+            _setState(QTextToSpeech::State::Ready);
+        }
+        return;
+    }
+
+    if (_probe) {
+        // Written to Piper once a candidate is verified.
+        _unsentInput.append(line.toUtf8() + '\n');
         return;
     }
 
@@ -298,6 +342,7 @@ void PiperTtsEngine::synthesize(const QString& text)
 void PiperTtsEngine::stop(QTextToSpeech::BoundaryHint boundaryHint)
 {
     Q_UNUSED(boundaryHint);
+    _unsentInput.clear();
     _discardCount += _pendingCount;
     _pendingCount = 0;
     _player->stop();

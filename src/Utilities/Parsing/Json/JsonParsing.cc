@@ -18,6 +18,8 @@ namespace JsonParsing {
 
 bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
 {
+    errorString.clear();
+
     QJsonParseError parseError;
     jsonDoc = QGCCompression::parseCompressedJson(bytes, &parseError);
 
@@ -40,6 +42,8 @@ bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorS
 
 bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString)
 {
+    // readFile() sets the error only when it fails
+    errorString.clear();
     const QByteArray jsonBytes = QGCCompression::readFile(fileName, &errorString);
     if (jsonBytes.isEmpty() && !errorString.isEmpty()) {
         jsonDoc = {};
