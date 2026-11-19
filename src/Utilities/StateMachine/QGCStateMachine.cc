@@ -2,11 +2,14 @@
 
 #include <utility>
 
+#include "RuntimeScheduler.h"
 #include "Vehicle.h"
 
-QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, QObject* parent)
-    : QStateMachine (parent)
-    , _vehicle      (vehicle)
+QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent,
+                                 RuntimeScheduler* scheduler)
+    : QStateMachine(parent)
+    , _vehicle(vehicle)
+    , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
 {
     setObjectName(machineName);
 

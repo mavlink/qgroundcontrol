@@ -8,6 +8,7 @@
 #include <QtStateMachine/QState>
 
 class QGCStateMachine;
+class RuntimeScheduler;
 class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
@@ -50,9 +51,14 @@ protected:
     ///         fails because it has none.
     Vehicle* vehicleOrWarn(const QLoggingCategory& (*category)() = QGCStateMachineLog) const;
 
+    /// @return The scheduler for the waits and delays of the state: that of its QGCStateMachine, one of the state's
+    ///         own in a plain QStateMachine
+    RuntimeScheduler* scheduler();
+
     void onEntry(QEvent* event) override;
     void onExit(QEvent* event) override;
 
 private:
     ExitCallback _exitCallback;
+    RuntimeScheduler* _ownScheduler = nullptr;
 };

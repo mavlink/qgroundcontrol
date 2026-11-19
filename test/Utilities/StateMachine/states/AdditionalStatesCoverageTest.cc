@@ -1,9 +1,12 @@
 #include "AdditionalStatesCoverageTest.h"
 
+#include <chrono>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 
 #include "MAVLinkLib.h"
+#include "ManualScheduler.h"
 #include "SendMavlinkCommandState.h"
 #include "SendMavlinkMessageState.h"
 #include "StateTestCommon.h"
@@ -123,7 +126,8 @@ void AdditionalStatesCoverageTest::_testDelayStateMachineStopEndsDelay()
 {
     QFETCH(bool, restart);
 
-    QGCStateMachine machine(QStringLiteral("StopEndsDelayTest"), nullptr);
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("StopEndsDelayTest"), nullptr, nullptr, &scheduler);
     const int delayMs = 200;
 
     // Not the initial state, so that the run after a restart does not enter it again
@@ -152,40 +156,35 @@ void AdditionalStatesCoverageTest::_testDelayStateMachineStopEndsDelay()
 
     // Qt has not exited the state, and still the delay that was running does not end
     QCOMPARE(delayExitedSpy.count(), 0);
-    QVERIFY_NO_SIGNAL_WAIT(advanceSpy, delayMs * 2);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(delayMs)));
+    QCOMPARE(advanceSpy.count(), 0);
 }
 
 void AdditionalStatesCoverageTest::_testDelayStateRestartStartsDelayOver()
 {
-    QGCStateMachine machine(QStringLiteral("RestartDelayTest"), nullptr);
-    const int delayMs = 200;
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("RestartDelayTest"), nullptr, nullptr, &scheduler);
+    const std::chrono::milliseconds delay(200);
+    const std::chrono::milliseconds partOfDelay(60);
 
     // The initial state, so that it is active when the machine restarts and the next run enters it again
-    auto* delayState = new DelayState(&machine, delayMs);
-    delayState->addTransition(delayState, &QGCState::advance, addFinalState(&machine));
+    auto* delayState = new DelayState(&machine, static_cast<int>(delay.count()));
     machine.setInitialState(delayState);
-
-    // The time since the state was last entered, taken when the delay ends
-    QElapsedTimer sinceEntered;
-    qint64 delayTakenMs = -1;
-    connect(delayState, &QState::entered, delayState, [&sinceEntered]() { sinceEntered.start(); });
-    connect(delayState, &QGCState::advance, delayState,
-            [&sinceEntered, &delayTakenMs]() { delayTakenMs = sinceEntered.elapsed(); });
 
     QSignalSpy enteredSpy(delayState, &QState::entered);
     QSignalSpy advanceSpy(delayState, &QGCState::advance);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     // Restart when a part of the delay has passed
     QVERIFY(startAndWaitForEntered(&machine, delayState));
-    QVERIFY_NO_SIGNAL_WAIT(advanceSpy, delayMs * 3 / 10);
+    QVERIFY(scheduler.advanceBy(partOfDelay));
     machine.restart();
+    QTRY_COMPARE_WITH_TIMEOUT(enteredSpy.count(), 2, TestTimeout::shortMs());
 
-    // One delay ends, and it is a whole one counted from the entry of the second run
-    QVERIFY(spyTriggered(finishedSpy));
-    QCOMPARE(enteredSpy.count(), 2);
+    // The delay of the first run does not end, and that of the second is a whole one counted from its entry
+    QVERIFY(scheduler.advanceBy(delay - partOfDelay));
+    QCOMPARE(advanceSpy.count(), 0);
+    QVERIFY(scheduler.advanceBy(partOfDelay));
     QCOMPARE(advanceSpy.count(), 1);
-    QVERIFY2(delayTakenMs >= delayMs - delayMs / 10, qPrintable(QString::number(delayTakenMs)));
 }
 
 void AdditionalStatesCoverageTest::_testQGCStateExitCallback()

@@ -1,12 +1,13 @@
 #pragma once
 
-#include "QGCState.h"
+#include <optional>
 
-#include <QtCore/QTimer>
+#include "QGCState.h"
+#include "ScheduledTask.h"
 
 /// \brief Base class for states that wait for something with optional timeout
 ///
-/// Provides common timeout handling infrastructure
+/// Provides common timeout handling infrastructure. The timeout runs on the scheduler of the state's machine.
 ///
 /// The wait ends when the state is exited, and when its machine stops: Qt exits no state of a machine that stops,
 /// so the timeout and the wait signal would otherwise outlive the run.
@@ -67,13 +68,14 @@ protected:
 private slots:
     void _onEntered();
     void _stopWaiting();
-    void _onTimeout();
 
 private:
-    void _startTimeoutTimer();
+    void _startTimeout();
+    void _onTimeout();
 
     int _timeoutMsecs = 0;
-    QTimer _timeoutTimer;
+    /// Set for the scheduler of the machine that has entered the state, which is not known before
+    std::optional<ScheduledTask> _timeoutTask;
     bool _completed = false;
     bool _waiting = false;
 };

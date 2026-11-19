@@ -1,13 +1,13 @@
 #include "WaitStateBase.h"
 
+#include <chrono>
+
 #include <QtStateMachine/QStateMachine>
 
 WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
     : QGCState(stateName, parent)
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
 {
-    _timeoutTimer.setSingleShot(true);
-    connect(&_timeoutTimer, &QTimer::timeout, this, &WaitStateBase::_onTimeout);
     connect(this, &QState::entered, this, &WaitStateBase::_onEntered);
     connect(this, &QState::exited, this, &WaitStateBase::_stopWaiting);
 }
@@ -24,15 +24,18 @@ void WaitStateBase::_onEntered()
     connectWaitSignal();
     onWaitEntered();
     if (!_completed) {
-        _startTimeoutTimer();
+        _startTimeout();
     }
 }
 
-void WaitStateBase::_startTimeoutTimer()
+void WaitStateBase::_startTimeout()
 {
-    if (_timeoutMsecs > 0) {
-        _timeoutTimer.start(_timeoutMsecs);
+    if (_timeoutMsecs <= 0) {
+        return;
     }
+
+    _timeoutTask.emplace(scheduler(), this);
+    _timeoutTask->schedule(std::chrono::milliseconds(_timeoutMsecs), [this]() { _onTimeout(); });
 }
 
 void WaitStateBase::_stopWaiting()
@@ -43,7 +46,7 @@ void WaitStateBase::_stopWaiting()
     }
     _waiting = false;
 
-    _timeoutTimer.stop();
+    _timeoutTask.reset();
     disconnectWaitSignal();
     onWaitExited();
 }
@@ -54,7 +57,7 @@ void WaitStateBase::_onTimeout()
         return;
     }
 
-    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutTimer.interval() << "ms";
+    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutMsecs << "ms";
 
     disconnectWaitSignal();
     onWaitTimeout();
@@ -72,7 +75,7 @@ void WaitStateBase::waitComplete()
     }
     _completed = true;
 
-    _timeoutTimer.stop();
+    _timeoutTask.reset();
     disconnectWaitSignal();
 
     emit advance();
@@ -85,7 +88,7 @@ void WaitStateBase::waitFailed()
     }
     _completed = true;
 
-    _timeoutTimer.stop();
+    _timeoutTask.reset();
     disconnectWaitSignal();
 
     emit error();
@@ -103,6 +106,6 @@ void WaitStateBase::restartWait()
     connectWaitSignal();
     onWaitRestarted();
     if (!_completed) {
-        _startTimeoutTimer();
+        _startTimeout();
     }
 }

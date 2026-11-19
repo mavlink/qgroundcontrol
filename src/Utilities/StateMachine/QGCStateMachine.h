@@ -27,6 +27,7 @@
 #include "WaitForParamResponseState.h"
 #include "WaitStateBase.h"
 
+class RuntimeScheduler;
 class Vehicle;
 
 /// \brief QStateMachine that knows its vehicle, whether it is in progress, and how far it has progressed
@@ -48,10 +49,15 @@ class QGCStateMachine : public QStateMachine
     Q_PROPERTY(bool inProgress READ inProgress NOTIFY inProgressChanged)
 
 public:
-    QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent = nullptr);
+    /// @param scheduler Times the waits and delays of the machine's states. The machine creates its own when none
+    ///        is given; one that is given must share the machine's thread and outlive it.
+    QGCStateMachine(const QString& machineName, Vehicle* vehicle, QObject* parent = nullptr,
+                    RuntimeScheduler* scheduler = nullptr);
 
     /// @return The vehicle, nullptr if the machine has none or the vehicle has been destroyed
     Vehicle *vehicle() const { return _vehicle; }
+
+    RuntimeScheduler* scheduler() const { return _scheduler; }
 
     /// @return true from start() until the machine emits stopped or finished
     /// Unlike QStateMachine::isRunning(), this is already true before Qt processes the queued start.
@@ -209,6 +215,7 @@ private:
     void _startProgressOver();
 
     Vehicle* _vehicle = nullptr;
+    RuntimeScheduler* const _scheduler;
     bool _inProgress = false;
     bool _restartPending = false;
 

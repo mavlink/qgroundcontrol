@@ -8,6 +8,7 @@ class WaitStateBaseTest : public StateMachineTest
 
 private slots:
     void _testTimeoutEmission();
+    void _testTimeoutRunsOnMachineScheduler();
     UT_PARAMETERIZED_TEST(_testCompleteAndFail);
     UT_PARAMETERIZED_TEST(_testMachineStopEndsWait);
     void _testMachineStopAfterExitEndsNothing();

@@ -1,5 +1,6 @@
-#include "QGCStateMachine.h"
 #include "QGCLoggingCategory.h"
+#include "QGCStateMachine.h"
+#include "RuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(QGCStateMachineLog, "Utilities.StateMachine.QGCStateMachine")
 
@@ -31,6 +32,16 @@ Vehicle* QGCState::vehicleOrWarn(const QLoggingCategory& (*category)()) const
         qCWarning(category) << "No vehicle available" << stateName();
     }
     return stateVehicle;
+}
+
+RuntimeScheduler* QGCState::scheduler()
+{
+    if (const QGCStateMachine* const stateMachine = machine()) {
+        return stateMachine->scheduler();
+    }
+
+    _ownScheduler = RuntimeScheduler::orDefault(_ownScheduler, this);
+    return _ownScheduler;
 }
 
 void QGCState::onEntry(QEvent* event)

@@ -1,7 +1,11 @@
 #include "WaitStateBaseTest.h"
-#include "StateTestCommon.h"
+
+#include <chrono>
 
 #include <QtCore/QCoreApplication>
+
+#include "ManualScheduler.h"
+#include "StateTestCommon.h"
 
 void WaitStateBaseTest::_testTimeoutEmission()
 {
@@ -14,6 +18,25 @@ void WaitStateBaseTest::_testTimeoutEmission()
 
     QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
     QVERIFY(startAndWaitForFinished(&machine));
+    QCOMPARE(timedOutSpy.count(), 1);
+}
+
+void WaitStateBaseTest::_testTimeoutRunsOnMachineScheduler()
+{
+    ignoreTimeoutWarnings();
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("MachineSchedulerTest"), nullptr, nullptr, &scheduler);
+    const int timeoutMs = 200;
+
+    auto* waitState = new TestWaitState(QStringLiteral("Wait"), &machine, timeoutMs);
+    machine.setInitialState(waitState);
+
+    QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs - 1)));
+    QCOMPARE(timedOutSpy.count(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
     QCOMPARE(timedOutSpy.count(), 1);
 }
 
@@ -78,7 +101,8 @@ void WaitStateBaseTest::_testMachineStopEndsWait()
 {
     QFETCH(bool, restart);
 
-    QGCStateMachine machine(QStringLiteral("StopEndsWaitTest"), nullptr);
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("StopEndsWaitTest"), nullptr, nullptr, &scheduler);
     const int timeoutMs = 200;
 
     // Not the initial state, so that the run after a restart does not enter it again
@@ -91,7 +115,6 @@ void WaitStateBaseTest::_testMachineStopEndsWait()
     QSignalSpy waitEnteredSpy(waitState, &QState::entered);
     QSignalSpy waitExitedSpy(waitState, &QState::exited);
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timedOut);
     QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
 
     QVERIFY(startAndWaitForEntered(&machine, firstState));
@@ -110,7 +133,7 @@ void WaitStateBaseTest::_testMachineStopEndsWait()
     // Qt has not exited the state, and still its wait is over: the timeout that was running does not come, which
     // would also log a warning that fails the test
     QCOMPARE(waitExitedSpy.count(), 0);
-    QVERIFY_NO_SIGNAL_WAIT(timeoutSpy, timeoutMs * 2);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs)));
     QCOMPARE(timedOutSpy.count(), 0);
     QVERIFY(waitState->disconnectCalled);
     QCOMPARE(waitState->waitExitedCalls, 1);
@@ -185,26 +208,25 @@ void WaitStateBaseTest::_testNoTimeoutWhenZero()
 
 void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
 {
-    QStateMachine machine;
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("CancelTimeoutTest"), nullptr, nullptr, &scheduler);
     const int timeoutMs = 200;
 
     auto* waitState = new TestWaitState(QStringLiteral("TestCancelTimeout"), &machine, timeoutMs);
-    finishOn(machine, waitState, &QGCState::advance);
+    machine.setInitialState(waitState);
 
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timedOut);
+    QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
     QSignalSpy advanceSpy(waitState, &QGCState::advance);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     QVERIFY(startAndWaitForEntered(&machine, waitState));
 
-    // Complete before timeout
-    QTimer::singleShot(50, waitState, [waitState]() {
-        waitState->triggerComplete();
-    });
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
+    // Complete before the timeout
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs / 2)));
+    waitState->triggerComplete();
     QCOMPARE(advanceSpy.count(), 1);
-    QCOMPARE(timeoutSpy.count(), 0);  // Timeout should have been cancelled
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs)));
+    QCOMPARE(timedOutSpy.count(), 0);
 }
 
 UT_REGISTER_TEST(WaitStateBaseTest, TestLabel::Unit, TestLabel::Utilities)
