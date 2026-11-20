@@ -33,9 +33,13 @@ QGC_LOGGING_CATEGORY(UnicoreProtocolLog, "GPS.Protocols.Unicore")
 // Sections 3, 7.3.1, 7.3.27, 7.3.44; Appendices 1/2 and position/solution status tables.
 // Captured command-reply framing (XOR includes '$'):
 // https://s-taka.org/control-command-for-gnss-receiver-um982/
+namespace Unicore {
+
 namespace {
 
-namespace Plan = Unicore::Plan;
+/// A command reply is "$command,<text>,response: <status>*hh", echoing the command's text.
+constexpr std::string_view REPLY_PREFIX = "$command,";
+constexpr std::string_view REPLY_STATUS_PREFIX = ",response: ";
 
 std::string_view unquote(std::string_view field)
 {
@@ -67,8 +71,37 @@ bool validXorChecksum(std::string_view line)
            NMEA::hexNumber(line.substr(star + 1)) == NMEA::checksum(line.substr(0, star));
 }
 
-/// Whether the MODE log's @a mode is the role @a reply reads back.
-bool modeMatches(std::string_view mode, Plan::Reply reply)
+bool samePosition(const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right)
+{
+    // ECEF command/readback values have four decimal places; this is not survey accuracy.
+    return GPSProtocolMath::distance(left, right) < 0.02;
+}
+
+/// The coordinates of a MODE log's "MODE BASE <x> <y> <z>".
+std::optional<GPSProtocolMath::Ecef> fixedModePosition(std::string_view mode)
+{
+    constexpr std::string_view PREFIX = "MODE BASE ";
+    if (!mode.starts_with(PREFIX)) {
+        return std::nullopt;
+    }
+    mode.remove_prefix(PREFIX.size());
+    std::array<double, 3> coordinates{};
+    for (size_t index = 0; index < coordinates.size(); ++index) {
+        const bool last = index + 1 == coordinates.size();
+        const auto space = mode.find(' ');
+        const auto coordinate = NMEA::number<double>(mode.substr(0, space));
+        if (!coordinate || last != (space == std::string_view::npos)) {
+            return std::nullopt;
+        }
+        coordinates[index] = *coordinate;
+        mode.remove_prefix(last ? mode.size() : space + 1);
+    }
+    return GPSProtocolMath::Ecef{coordinates[0], coordinates[1], coordinates[2]};
+}
+
+/// Whether the MODE log's @a mode is the role @a reply reads back. A fixed base reports its role alone or, as a UM980
+/// does, followed by the coordinates it was given, which must then be @a fixed.
+bool modeMatches(std::string_view mode, Plan::Reply reply, const GPSProtocolMath::Ecef& fixed)
 {
     const auto starts = [mode](std::string_view name) {
         return mode == name || (mode.starts_with(name) && mode.size() > name.size() && mode[name.size()] == ' ');
@@ -78,15 +111,19 @@ bool modeMatches(std::string_view mode, Plan::Reply reply)
             return starts("MODE ROVER");
         case Plan::Reply::AveragingMode:
             return starts("MODE BASE TIME");
-        default:
-            return mode == "MODE BASE";
+        case Plan::Reply::FixedMode: {
+            if (mode == "MODE BASE") {
+                return true;
+            }
+            const auto position = fixedModePosition(mode);
+            return position && samePosition(*position, fixed);
+        }
+        case Plan::Reply::Acknowledgement:
+        case Plan::Reply::Version:
+        case Plan::Reply::FixedPosition:
+            return false;
     }
-}
-
-bool samePosition(const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right)
-{
-    // ECEF command/readback values have four decimal places; this is not survey accuracy.
-    return GPSProtocolMath::distance(left, right) < 0.02;
+    return false;
 }
 
 /// Configures a UM980/UM982 as an RTK base: finds it at one of Plan::BAUD_RATES, or at the rate configure() gets when
@@ -127,9 +164,12 @@ public:
     /// firmware is not supported.
     bool probe(GPSCommandChannel& channel) override { return _identify(channel).succeeded() || !_model.isEmpty(); }
 
+protected:
+    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
+    /// Ends readiness when base status expired or a failure is recorded.
+    void _expire(GPSDecodeContext& context) override;
+
 private:
-    /// Starts a configuration attempt: forgets the receiver and its stream, stops corrections and revokes the base.
-    void _startAttempt(GPSStreamDemux& stream, GPSDecodeContext& context);
     /// The base the receiver must run: its mode readback and, for a fixed base, its coordinates.
     void _setBase(const GPSBaseStationConfig::Mode& mode);
     /// Sends Plan::identify(). Clears _rejection.
@@ -139,18 +179,15 @@ private:
     GPSCommandOutcome _match(const Plan::Command& command, std::string_view line);
     /// Reports base status from BESTNAVXYZA from now on; an averaging base is active until it reports FIXEDPOS.
     void _monitorBaseStatus(GPSDecodeContext& context);
-    /// The configuration failed: revokes a monitored base and stops corrections.
+    /// The configuration failed: revokes a monitored base.
     bool _failAttempt(GPSCommandChannel& channel);
-    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
     /// Each handler returns whether its log was valid.
     bool _handleVersion(std::string_view body, GPSDecodeContext& context);
     bool _handleMode(std::string_view body, GPSDecodeContext& context);
     bool _handlePosition(std::string_view body, GPSDecodeContext& context);
-    void _publishBase(GPSDecodeContext& context, bool active, bool valid);
+    void _publishBase(GPSDecodeContext& context, GPSBaseState state);
     /// Ends readiness; @a reason becomes the error detail unless a failure is already recorded.
     void _invalidateBase(GPSDecodeContext& context, const QString& reason);
-    /// Ends readiness when base status expired or a failure is recorded.
-    void _expire(GPSDecodeContext& context) override;
 
     /// The role MODE must report once ready.
     Plan::Reply _expectedMode = Plan::Reply::AveragingMode;
@@ -176,13 +213,13 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    _startAttempt(channel.stream(), channel.context());
-    (void) channel.flush();
     const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode);
     const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.base.mode);
     if (!fixed && !averaging) {
         channel.failControl(
-            QStringLiteral("Unicore requires receiver-managed averaging with a duration between 1 and 3600 seconds"));
+            QStringLiteral("Unicore requires receiver-managed averaging with a duration between %1 and %2 seconds")
+                .arg(GPSBaseStationConfig::ReceiverAveraging::MIN_DURATION.count())
+                .arg(GPSBaseStationConfig::ReceiverAveraging::MAX_DURATION.count()));
         return _failAttempt(channel);
     }
     _setBase(config.base.mode);
@@ -217,24 +254,8 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     if (!channel.runRequired(_sequence(plan.output))) {
         return _failAttempt(channel);
     }
-    // Corrections flow while the base is valid.
     _ready = true;
-    _nmea.setRTCMEnabled(_baseValid);
     return true;
-}
-
-void Protocol::_startAttempt(GPSStreamDemux& stream, GPSDecodeContext& context)
-{
-    _ready = false;
-    _monitorBase = false;
-    _baseValid = false;
-    _lastBaseEpoch.reset();
-    _nmea.setRTCMEnabled(false);
-    _nmea.reset(stream);
-    _model.clear();
-    _firmware.clear();
-    _rejection.clear();
-    _publishBase(context, false, false);
 }
 
 void Protocol::_setBase(const GPSBaseStationConfig::Mode& mode)
@@ -266,14 +287,16 @@ GPSCommandSequence Protocol::_sequence(const QList<Plan::Command>& commands)
 
 GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_view line)
 {
-    if (line.starts_with("$command,")) {
-        const auto response = line.find(",response: ", 9);
+    if (line.starts_with(REPLY_PREFIX)) {
+        const auto echo = REPLY_PREFIX.size();
+        const auto response = line.find(REPLY_STATUS_PREFIX, echo);
         if (response == std::string_view::npos ||
-            QByteArrayView(line.substr(9, response - 9)).compare(command.text, Qt::CaseInsensitive) != 0) {
+            QByteArrayView(line.substr(echo, response - echo)).compare(command.text, Qt::CaseInsensitive) != 0) {
             return GPSCommandOutcome::Pending;
         }
         _acknowledgementMatched = true;
-        if (line.substr(response + 11, line.rfind('*') - response - 11) != "OK") {
+        const auto status = response + REPLY_STATUS_PREFIX.size();
+        if (line.substr(status, line.rfind('*') - status) != "OK") {
             return GPSCommandOutcome::Rejected;
         }
         return command.reply == Plan::Reply::Acknowledgement ? GPSCommandOutcome::Acknowledged
@@ -300,8 +323,9 @@ GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_vie
             if (!line.starts_with("#MODE,")) {
                 return GPSCommandOutcome::Pending;
             }
-            return modeMatches(_reportedMode.toStdString(), command.reply) ? GPSCommandOutcome::ReadbackVerified
-                                                                           : GPSCommandOutcome::Rejected;
+            return modeMatches(_reportedMode.toStdString(), command.reply, _fixedECEF)
+                       ? GPSCommandOutcome::ReadbackVerified
+                       : GPSCommandOutcome::Rejected;
         case Plan::Reply::FixedPosition:
             if (!line.starts_with("#BESTNAVXYZA,") || !_reportedFixed) {
                 return GPSCommandOutcome::Pending;
@@ -315,25 +339,24 @@ GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_vie
 void Protocol::_monitorBaseStatus(GPSDecodeContext& context)
 {
     _monitorBase = true;
-    _publishBase(context, _averaging, false);
+    _publishBase(context, _averaging ? GPSBaseState::Active : GPSBaseState::Inactive);
 }
 
 bool Protocol::_failAttempt(GPSCommandChannel& channel)
 {
     if (_monitorBase) {
-        _publishBase(channel.context(), false, false);
+        _publishBase(channel.context(), GPSBaseState::Inactive);
     }
     _ready = false;
     _monitorBase = false;
     _baseValid = false;
-    _nmea.setRTCMEnabled(false);
     (void) channel.flush();
     return false;
 }
 
 GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext& context)
 {
-    if (line.starts_with("$command,")) {
+    if (line.starts_with(REPLY_PREFIX)) {
         if (!context.replyPending() || !validXorChecksum(line)) {
             return {};
         }
@@ -421,7 +444,7 @@ bool Protocol::_handleMode(std::string_view body, GPSDecodeContext& context)
 {
     const auto mode = body.substr(0, body.find(','));
     _reportedMode = QByteArrayView(mode).toByteArray();
-    if (_ready && !modeMatches(mode, _expectedMode)) {
+    if (_ready && !modeMatches(mode, _expectedMode, _fixedECEF)) {
         _invalidateBase(context, QStringLiteral("Unicore receiver left the configured base mode"));
     }
     return true;
@@ -454,15 +477,17 @@ bool Protocol::_handlePosition(std::string_view body, GPSDecodeContext& context)
     if (_baseValid) {
         _baseECEF = coordinates;
     }
-    _nmea.setRTCMEnabled(_ready && _baseValid);
-    _publishBase(context, _averaging && !_baseValid, _baseValid);
+    _publishBase(context, _baseValid   ? GPSBaseState::Valid
+                          : _averaging ? GPSBaseState::Active
+                                       : GPSBaseState::Inactive);
     return true;
 }
 
-void Protocol::_publishBase(GPSDecodeContext& context, bool active, bool valid)
+void Protocol::_publishBase(GPSDecodeContext& context, GPSBaseState state)
 {
     // BESTNAV's instantaneous sigmas and BASEPOS monitoring are not averaging accuracy or elapsed time.
-    context.publishSurvey(active, valid, {}, valid ? GPSProtocolMath::fromEcef(_baseECEF) : GPSEllipsoidPosition{});
+    context.publishBaseStatus(
+        state, {}, state == GPSBaseState::Valid ? GPSProtocolMath::fromEcef(_baseECEF) : GPSEllipsoidPosition{});
 }
 
 void Protocol::_invalidateBase(GPSDecodeContext& context, const QString& reason)
@@ -470,9 +495,7 @@ void Protocol::_invalidateBase(GPSDecodeContext& context, const QString& reason)
     _baseValid = false;
     _monitorBase = false;
     _ready = false;
-    _nmea.setRTCMEnabled(false);
-    _publishBase(context, false, false);
-    context.failControl(reason);
+    context.loseBase(reason);
 }
 
 void Protocol::_expire(GPSDecodeContext& context)
@@ -490,7 +513,8 @@ QLatin1StringView signature(const GPSFrame& frame)
     if (frame.kind != GPSFrameKind::ASCIILine) {
         return {};
     }
-    if (text.starts_with("$command,") && text.find(",response: ") != std::string_view::npos && validXorChecksum(text)) {
+    if (text.starts_with(REPLY_PREFIX) && text.find(REPLY_STATUS_PREFIX) != std::string_view::npos &&
+        validXorChecksum(text)) {
         return QLatin1StringView("Unicore command replies");
     }
     const auto log = gpsASCIILog(text);
@@ -500,10 +524,8 @@ QLatin1StringView signature(const GPSFrame& frame)
 
 }  // namespace
 
-namespace Unicore {
-
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::unicore,
+    .type = GPSType::Unicore,
     .logCategory = &UnicoreProtocolLog,
     .stream = GPSNMEAStream::STREAM,
     .baudCandidates = Plan::BAUD_RATES,

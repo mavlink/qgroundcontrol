@@ -18,6 +18,7 @@
 #include "NMEASentence.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
+#include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ReceiverBench.h"
 
 using namespace std::chrono_literals;
@@ -42,8 +43,8 @@ struct Base
                                 .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                           : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{
                                 .accuracyMeters = 1, .duration = std::chrono::seconds{100}}}};
-        unsigned baudrate = 115200;
-        if (!driver.configure(config, baudrate) || !driver.receiverReady()) {
+        unsigned baudRate = 115200;
+        if (!driver.configure(config, baudRate) || !driver.receiverReady()) {
             return false;
         }
         (void) driver.consume({});
@@ -58,9 +59,9 @@ struct Base
         return driver.error() == GPSProtocolError::None;
     }
 
-    std::vector<GPSSurveyReport> surveys() const { return peer.log.reports<GPSSurveyReport>(); }
+    std::vector<GPSBaseStatus> surveys() const { return peer.log.reports<GPSBaseStatus>(); }
 
-    void clearSurveys() { peer.log.clear<GPSSurveyReport>(); }
+    void clearSurveys() { peer.log.clear<GPSBaseStatus>(); }
 
     ModelReceiver<AshtechReceiverModel> peer;
     GPSProtocolRuntime driver;
@@ -192,6 +193,81 @@ void ashtechSurveyReceipts(GPSTestClock& clock)
     QCOMPARE(receiver.peer.commands().size(), count);
 }
 
+/// A failed averaging receipt ends the survey and fails the session, whether it arrives with the station commands'
+/// replies or once the survey runs.
+void ashtechFailedSurvey(GPSTestClock& clock)
+{
+    for (const bool duringStationCommands : {true, false}) {
+        clock.reset(GPSTestClock::START_US);
+        Base receiver(clock);
+        QVERIFY(receiver.configure());
+        if (duringStationCommands) {
+            receiver.peer.faults.rules = {
+                reply(startsWith("$PASHS,ANP"), ashtechPacket(ASHTECH_SURVEY_FAILED) + ashtechPacket("PASHR,ACK"))};
+            QVERIFY(!receiver.startSurvey());
+        } else {
+            QVERIFY(receiver.startSurvey());
+            (void) receiver.driver.consume(nmeaPacket(ASHTECH_SURVEY_FAILED));
+        }
+        QCOMPARE(receiver.driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(receiver.driver.errorDetail(),
+                 QStringLiteral("Trimble receiver reported that position averaging failed"));
+        QVERIFY(!receiver.driver.receiverReady());
+        QVERIFY(!receiver.surveys().empty() && surveyFlags(receiver.surveys().back()) == 0);
+
+        // Nothing times the survey any more, and RTCM output is never requested.
+        receiver.clearSurveys();
+        clock.advanceBy(2000000);
+        (void) receiver.driver.consume(nmeaPacket("GPHDT,121.2,T"));
+        (void) receiver.driver.receive(1ms);
+        QVERIFY(receiver.surveys().empty());
+        QVERIFY(!receiver.peer.sent("$PASHS,RT3"));
+    }
+}
+
+/// A fixed base is valid once the receiver accepts its position, before its RTCM output is enabled: the receiver
+/// sends corrections while the output commands still run, and GPSDriver forwards only those of a valid base.
+void ashtechFixedBaseValidBeforeCorrections(GPSTestClock& clock)
+{
+    clock.reset(GPSTestClock::START_US);
+    Base receiver(clock);
+    receiver.peer.faults.rules = {
+        reply(startsWith("$PASHS,RT3,1074"), ashtechPacket("PASHR,ACK") + GPSTest::rtcmMessage(1074))};
+    QVERIFY(receiver.configure(true));
+    // The first position sets the fixed position and enables the RTCM output.
+    QVERIFY(receiver.startSurvey());
+    QVERIFY(receiver.peer.sent("$PASHS,RT3,1005"));
+    QCOMPARE(receiver.peer.log.correctionsWhileValid, 1);
+}
+
+/// The base setup waits for the first position, so a ready receiver that sends no $PASHR,POS at all fails the
+/// session; one that sends them without a fix keeps waiting.
+void ashtechNoPositionOutput(GPSTestClock& clock)
+{
+    for (const bool positionOutput : {false, true}) {
+        clock.reset(GPSTestClock::START_US);
+        Base receiver(clock);
+        QVERIFY(receiver.configure());
+        for (int second = 0; second < 6; ++second) {
+            clock.advanceBy(1000000);
+            (void) receiver.driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
+            if (positionOutput) {
+                (void) receiver.driver.consume(
+                    nmeaPacket("PASHR,POS,2,12,172814.0,,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
+            }
+        }
+        QCOMPARE(receiver.driver.receiverReady(), positionOutput);
+        if (positionOutput) {
+            QCOMPARE(receiver.driver.error(), GPSProtocolError::None);
+            continue;
+        }
+        QCOMPARE(receiver.driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(receiver.driver.errorDetail(),
+                 QStringLiteral("Trimble receiver sent no $PASHR,POS position output, which the base setup needs"));
+        QVERIFY(!receiver.surveys().empty() && surveyFlags(receiver.surveys().back()) == 0);
+    }
+}
+
 void ashtechMetadata(GPSTestClock& clock)
 {
     LoggedRuntime driver(Ashtech::FAMILY, makeDecoderOnlyIO(clock));
@@ -218,6 +294,17 @@ void ashtechMetadata(GPSTestClock& clock)
         hasPosition(driver->consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"))));
     QCOMPARE_EQ(driver.position.navigation.altitudeEllipsoidMeters, 18.9);
     QVERIFY(std::isnan(driver.position.navigation.altitudeMslMeters));
+    QVERIFY(driver.position.velocityValid);
+    QCOMPARE(driver.position.navigation.speedMetersPerSecond, 5.144444f);
+    QCOMPARE(driver.position.navigation.courseRadians, 1.570796f);
+    // A fix whose track or speed is missing or out of range has no velocity.
+    for (const std::string_view velocity : {",10", "90,", "360.5,10", "-1,10", "90,-0.1"}) {
+        const std::string body =
+            "PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0," + std::string(velocity) + ",0,1,1,1,1,";
+        QVERIFY(hasPosition(driver->consume(nmeaPacket(body))));
+        QCOMPARE_EQ(driver.position.navigation.altitudeEllipsoidMeters, 18.9);
+        QVERIFY(!driver.position.velocityValid);
+    }
     for (const std::string_view missingCoordinate : {
              "PASHR,POS,2,12,172814.0,,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,",
              "PASHR,POS,2,12,172814.0,3723.4,N,,W,18.9,0,90,10,0,1,1,1,1,",
@@ -225,6 +312,7 @@ void ashtechMetadata(GPSTestClock& clock)
          }) {
         QVERIFY(hasPosition(driver->consume(nmeaPacket(missingCoordinate))));
         QCOMPARE(driver.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
+        QVERIFY(!driver.position.velocityValid);
     }
     QVERIFY(!hasSatellites(driver->consume(nmeaPacket("GPGSV,1,1,01,01,,,"))));
     clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT);
@@ -242,6 +330,11 @@ void ashtechMetadata(GPSTestClock& clock)
     (void) driver->consume(positionPacket);
     QCOMPARE_EQ(driver.position.navigation.horizontalAccuracyMeters, 0.5f);
     QCOMPARE(driver.position.navigation.utcTimeUs % 60000000, 10000000);
+    // A date past the plausibility ceiling leaves the positions undated, as it does from the other families.
+    (void) driver->consume(nmeaPacket("GPZDA,172809.456,12,07,2500,00,00"));
+    (void) driver->consume(positionPacket);
+    QCOMPARE(driver.position.navigation.utcTimeUs, 0);
+    (void) driver->consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
     clock.advanceBy(6000000);
     (void) driver->consume(positionPacket);
     QVERIFY(std::isnan(driver.position.navigation.horizontalAccuracyMeters) &&
@@ -294,7 +387,7 @@ void ashtechFixedPositionText(GPSTestClock&)
 void ashtechAcknowledgementReturnsImmediately(GPSTestClock& clock)
 {
     clock.reset(GPSTestClock::START_US);
-    std::string reply = NMEAUtils::repairChecksum("$PASHR,PRT,A,115200").toStdString();
+    std::string reply = GPSTest::repairChecksum("$PASHR,PRT,A,115200").toStdString();
     std::vector<std::string> writes;
     std::vector<GPSConfigurationEvidence> completions;
     int reads = 0;
@@ -345,13 +438,30 @@ void ashtechOtherBoardIsNotABase(GPSTestClock& clock)
     QCOMPARE(receiver.peer.commands().back(), "$PASHQ,RID\r\n");
 }
 
+/// A port reply whose port field is not one upper-case letter leaves the port query unanswered.
+void ashtechPortReplyNeedsOneLetter(GPSTestClock& clock)
+{
+    for (const std::string_view portReply : {"PASHR,PRT,,9", "PASHR,PRT,AB,9"}) {
+        Base receiver(clock);
+        receiver.peer.faults.rules = {reply(startsWith("$PASHQ,PRT"), ashtechPacket(portReply))};
+        QVERIFY(!receiver.configure());
+        QCOMPARE(receiver.driver.errorDetail(), QStringLiteral("No Trimble receiver answered at 115200 baud"));
+        // No command was built from the malformed port.
+        QCOMPARE(receiver.peer.commands().back(), "$PASHQ,PRT\r\n");
+    }
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"fixed-position-text", ashtechFixedPositionText},
     {"acknowledgement-returns-immediately", ashtechAcknowledgementReturnsImmediately},
     {"metadata", ashtechMetadata},
     {"framing", ashtechFraming},
     {"survey-receipts", ashtechSurveyReceipts},
+    {"failed-survey", ashtechFailedSurvey},
+    {"fixed-base-valid-before-corrections", ashtechFixedBaseValidBeforeCorrections},
+    {"no-position-output", ashtechNoPositionOutput},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
+    {"port-reply-needs-one-letter", ashtechPortReplyNeedsOneLetter},
 };
 }  // namespace
 

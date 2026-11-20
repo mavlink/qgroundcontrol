@@ -35,7 +35,13 @@ qint64 UdpForwarder::forward(const QByteArray& data)
     // surfaces saturation if it ever becomes a real problem.
     const qint64 sent = _socket.writeDatagram(data, _address, _port);
     if (sent < 0) {
-        qCWarning(UdpForwarderLog) << "UDP forward failed:" << _socket.errorString();
+        // A lasting failure would otherwise warn for every datagram.
+        if (_errorString.isEmpty()) {
+            qCWarning(UdpForwarderLog) << "UDP forward failed:" << _socket.errorString();
+        }
+        _errorString = _socket.errorString();
+    } else {
+        _errorString.clear();
     }
     return (std::max) (qint64{0}, sent);
 }
@@ -45,4 +51,5 @@ void UdpForwarder::stop()
     _socket.close();
     _port = 0;
     _address.clear();
+    _errorString.clear();
 }

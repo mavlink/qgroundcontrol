@@ -14,6 +14,7 @@
 #include "GPSSettingsBindings.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
+#include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "RTKSettings.h"
@@ -30,7 +31,7 @@ void GPSReceiverSettingsBindingTest::_capabilitiesFor_data()
     QTest::addColumn<bool>("rtkBase");
     QTest::addColumn<bool>("receiverAveraging");
     QTest::addColumn<bool>("surveyIn");
-    // Saved baseReceiverManufacturers values.
+    // Saved baseReceiverManufacturer values.
     QTest::newRow("automatic") << 0 << true << true << true;
     QTest::newRow("trimble") << 1 << true << false << true;
     QTest::newRow("septentrio") << 2 << true << false << true;
@@ -71,6 +72,8 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping_data()
     for (const int mode : {0, 1, 2}) {
         QTest::addRow("automatic-mode-%d", mode) << 0 << mode << true;
     }
+    // A stored mode that names none.
+    QTest::newRow("invalid-mode-is-survey-in") << 0 << 9 << true;
 }
 
 void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
@@ -81,12 +84,12 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
     RTKSettings settings;
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(settings.receiverRole(), RTKSettings::ConfiguredBase);
-    saved.setFactValue(settings.baseReceiverManufacturers(), manufacturer);
+    saved.setFactValue(settings.baseReceiverManufacturer(), manufacturer);
     saved.setFactValue(settings.connectionType(), RTKSettings::Tcp);
     saved.setFactValue(settings.tcpHost(), QStringLiteral("rtk.test"));
     saved.setFactValue(settings.tcpPort(), 2101);
     saved.setFactValue(settings.autoConnect(), false);
-    saved.setFactValue(settings.useFixedBasePosition(), baseMode);
+    saved.setFactValue(settings.baseMode(), baseMode);
     saved.setFactValue(settings.fixedBasePositionLatitude(), 47.5);
     saved.setFactValue(settings.fixedBasePositionLongitude(), 8.25);
     saved.setFactValue(settings.fixedBasePositionAltitude(), 512.0);
@@ -99,7 +102,15 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
     QVERIFY(type);
     ScriptedGPSReceiver harness;
     auto& receiver = harness.receiver;
+    const bool validMode = baseMode >= 0 && baseMode <= 2;
+    if (!validMode) {
+        expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Invalid base mode; using survey-in")));
+    }
     GPSSettingsBindings::bindReceiver(&settings, &receiver);
+    if (!validMode) {
+        verifyExpectedLogMessage();
+    }
     QCOMPARE(receiver.connectReceiver(), accepted);
     QCOMPARE(receiver.hasReceiver(), accepted);
     QCOMPARE(receiver.errorMessage().isEmpty(), accepted);
@@ -109,7 +120,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
         return;
     }
     const auto& config = harness.workers.current()->capturedConfig();
-    QCOMPARE(config.baudRate, uint32_t(GPSTransport::BRIDGE_BAUDRATE));
+    QCOMPARE(config.baudRate, uint32_t(GPSTransport::BRIDGE_BAUD_RATE));
     QVERIFY(!config.allowPersistentChanges);
     const GPSBaseStationConfig::Mode expected =
         baseMode == 1 ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
@@ -168,7 +179,7 @@ void GPSReceiverSettingsBindingTest::_configurationDiagnosticRetained()
     const bool reconnecting = session == QStringLiteral("reconnecting");
     ScriptedGPSReceiver harness;
     auto& receiver = harness.receiver;
-    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::quectel));
+    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::Quectel));
     useTcp(configuration);
     receiver.setConfiguration(configuration);
     receiver.setPersistentChangesAllowed(true);
@@ -202,7 +213,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     settings.tcpPort()->setRawValue(2101);
     settings.serialDevice()->setRawValue(QStringLiteral("/test/receiver"));
     settings.serialBaudRate()->setRawValue(230400);
-    settings.useFixedBasePosition()->setRawValue(1);
+    settings.baseMode()->setRawValue(1);
     settings.fixedBasePositionLatitude()->setRawValue(47.5);
     settings.autoConnect()->setRawValue(true);
 
@@ -222,13 +233,13 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     QVERIFY(settings.autoConnect()->rawValue().toBool());
 
     // Nothing writes the saved manufacturer, even when another family is detected.
-    settings.baseReceiverManufacturers()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
+    settings.baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     ScriptedReceiverWorkerFactory workers;
     receiver.setWorkerFactory(workers.workerFactory());
     QVERIFY(receiver.connectReceiver());
-    workers.current()->detected(GPSType::ublox);
-    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::ublox));
-    QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
+    workers.current()->detected(GPSType::UBlox);
+    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
+    QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 }
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -264,7 +275,7 @@ void GPSReceiverSettingsBindingTest::_connectedSerialDeviceTakesPersistentName()
     RTKSettings settings;
     TestFixtures::SettingsFixture fixture;
     fixture.setFactValue(settings.receiverRole(), RTKSettings::ConfiguredBase);
-    fixture.setFactValue(settings.baseReceiverManufacturers(), gpsReceiverManufacturerForType(GPSType::ublox));
+    fixture.setFactValue(settings.baseReceiverManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
     fixture.setFactValue(settings.connectionType(), RTKSettings::Serial);
     fixture.setFactValue(settings.serialDevice(), saved);
     fixture.setFactValue(settings.autoConnect(), discovered);
@@ -328,7 +339,7 @@ void GPSReceiverSettingsBindingTest::_persistentConsentScope()
     QFETCH(bool, keepsConsent);
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
-    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::quectel));
+    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::Quectel));
     receiver.setConfiguration(configuration);
     QSignalSpy changed(&receiver, &GPSReceiver::persistentChangesAllowedChanged);
     receiver.setPersistentChangesAllowed(true);
@@ -342,7 +353,7 @@ void GPSReceiverSettingsBindingTest::_persistentConsentScope()
     } else if (setting == QStringLiteral("base-mode")) {
         configuration.base.mode = GPSBaseStationConfig::Fixed{};
     } else if (setting == QStringLiteral("manufacturer")) {
-        configuration.baseReceiverManufacturer = gpsReceiverManufacturerForType(GPSType::ublox);
+        configuration.baseReceiverManufacturer = gpsReceiverManufacturerForType(GPSType::UBlox);
     } else if (setting == QStringLiteral("role")) {
         configuration.receiverRole = RTKSettings::Passive;
     } else if (setting == QStringLiteral("connection-type")) {
@@ -368,8 +379,8 @@ void GPSReceiverSettingsBindingTest::_persistentConsentIsSpentOnConnect_data()
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<bool>("granted");
     QTest::addColumn<bool>("expected");
-    const int quectel = gpsReceiverManufacturerForType(GPSType::quectel);
-    const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
+    const int quectel = gpsReceiverManufacturerForType(GPSType::Quectel);
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
     QTest::newRow("quectel-granted") << quectel << true << true;
     QTest::newRow("quectel-withheld") << quectel << false << false;
     // Families that cannot save settings never receive the permission.
@@ -463,7 +474,6 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
                        .useTls = true,
                        .allowSelfSignedCerts = true,
                        .pinnedCertificate = QStringLiteral("caster.example.com:443|00ff")},
-        .filter = {.whitelist = QStringLiteral("1005,1077")},
         .gga = {.source = NTRIPGgaReporter::PositionSource::GCSPosition, .interval = std::chrono::seconds(7)}};
     saved.setFactValue(settings->ntripServerHostAddress(), expected.connection.host);
     saved.setFactValue(settings->ntripServerPort(), expected.connection.port);
@@ -473,7 +483,6 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
     saved.setFactValue(settings->ntripUseTls(), expected.connection.useTls);
     saved.setFactValue(settings->ntripAllowSelfSignedCerts(), expected.connection.allowSelfSignedCerts);
     saved.setFactValue(settings->ntripPinnedCertificate(), expected.connection.pinnedCertificate);
-    saved.setFactValue(settings->ntripWhitelist(), expected.filter.whitelist);
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(expected.gga.source));
     saved.setFactValue(settings->ntripGgaIntervalSec(), 7);
 
@@ -484,6 +493,70 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
     QCOMPARE(configuration, expected);
     settings->ntripServerConnectEnabled()->setRawValue(true);
     QVERIFY(manager.configuration().enabled);
+
+    // A stored source that names none would report no position at all.
+    expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid GGA position source")));
+    settings->ntripGgaPositionSource()->setRawValue(9);
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.configuration().gga.source, NTRIPGgaReporter::PositionSource::Auto);
+}
+
+void GPSReceiverSettingsBindingTest::_ntripActionsFollowConnectionSetting()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    Fact* const enabled = settings->ntripServerConnectEnabled();
+    saved.setFactValue(enabled, false);
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripServerPort(), 2101);
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripUseTls(), false);
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    GPSSettingsBindings::bindNtrip(settings, &manager);
+    MockNTRIPTransport* transport = injectMockTransport(manager, true);
+    manager.init();
+    QCOMPARE(manager.connectionStatus(), Status::Disconnected);
+    // The binding stores a request once the manager's operation has returned, and the manager applies the stored
+    // setting after its debounce.
+    const auto settle = [&scheduler] {
+        deliverQueuedCalls();
+        return scheduler.advanceBy(1s);
+    };
+
+    // Connect and Disconnect change the setting, and the manager follows the setting as for any other change of it.
+    manager.connectCaster();
+    QVERIFY(settle());
+    QVERIFY(enabled->rawValue().toBool());
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    manager.disconnectCaster();
+    QVERIFY(settle());
+    QVERIFY(!enabled->rawValue().toBool());
+    QCOMPARE(manager.connectionStatus(), Status::Disconnected);
+    transport = injectMockTransport(manager);
+    enabled->setRawValue(true);
+    QVERIFY(settle());
+    QCOMPARE(manager.connectionStatus(), Status::Connecting);
+    QCOMPARE(transport->startCount, 1);
+
+    // After an error the setting is still on, so Connect cannot act by changing it: it starts the new attempt itself.
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:")));
+    transport->simulateError(NTRIPError::AuthFailed, QStringLiteral("rejected"));
+    deliverQueuedCalls();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), Status::Error);
+    QVERIFY(enabled->rawValue().toBool());
+    transport = injectMockTransport(manager);
+    manager.connectCaster();
+    QCOMPARE(transport->startCount, 1);
+    QVERIFY(settle());
+    QVERIFY(enabled->rawValue().toBool());
+    QCOMPARE(manager.connectionStatus(), Status::Connecting);
+    enabled->setRawValue(false);
+    QVERIFY(settle());
+    QCOMPARE(manager.connectionStatus(), Status::Disconnected);
 }
 
 void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets_data()
@@ -503,8 +576,7 @@ void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets_data()
     QTest::newRow("base-longitude") << rtk->fixedBasePositionLongitude() << QVariant(98.7654321) << QVariant(98.1234)
                                     << true;
     QTest::newRow("base-altitude") << rtk->fixedBasePositionAltitude() << QVariant(543.21) << QVariant(432.1) << true;
-    QTest::newRow("base-mode") << rtk->useFixedBasePosition()
-                               << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseFixed))
+    QTest::newRow("base-mode") << rtk->baseMode() << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseFixed))
                                << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn)) << false;
 }
 
@@ -545,21 +617,25 @@ void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact_data()
 {
     QTest::addColumn<SettingsGroup*>("group");
     QTest::addColumn<QList<Fact*>>("bound");
+    QTest::addColumn<QList<Fact*>>("unbound");
 
-    // A new setting must be bound.
+    // A new setting must be bound, unless no service reads it: RTKSettings itself keeps the saved base sites.
     SettingsManager* const settings = SettingsManager::instance();
     QTest::newRow("RTK") << static_cast<SettingsGroup*>(settings->rtkSettings())
-                         << GPSSettingsBindings::_boundFacts(settings->rtkSettings());
+                         << GPSSettingsBindings::_boundFacts(settings->rtkSettings())
+                         << QList<Fact*>{settings->rtkSettings()->savedBaseSites()};
     QTest::newRow("NTRIP") << static_cast<SettingsGroup*>(settings->ntripSettings())
-                           << GPSSettingsBindings::_boundFacts(settings->ntripSettings());
+                           << GPSSettingsBindings::_boundFacts(settings->ntripSettings()) << QList<Fact*>{};
     QTest::newRow("GPSCorrection") << static_cast<SettingsGroup*>(settings->gpsCorrectionSettings())
-                                   << GPSSettingsBindings::_boundFacts(settings->gpsCorrectionSettings());
+                                   << GPSSettingsBindings::_boundFacts(settings->gpsCorrectionSettings())
+                                   << QList<Fact*>{};
 }
 
 void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact()
 {
     QFETCH(SettingsGroup*, group);
     QFETCH(QList<Fact*>, bound);
+    QFETCH(QList<Fact*>, unbound);
 
     const QMetaObject* const metaObject = group->metaObject();
     for (int i = SettingsGroup::staticMetaObject.propertyCount(); i < metaObject->propertyCount(); ++i) {
@@ -567,7 +643,8 @@ void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact()
         if (property.metaType() != QMetaType::fromType<Fact*>()) {
             continue;
         }
-        QVERIFY2(bound.count(property.read(group).value<Fact*>()) == 1,
+        Fact* const fact = property.read(group).value<Fact*>();
+        QVERIFY2(bound.count(fact) == (unbound.contains(fact) ? 0 : 1),
                  qPrintable(QStringLiteral("%1 must be bound once").arg(QString::fromLatin1(property.name()))));
     }
 }

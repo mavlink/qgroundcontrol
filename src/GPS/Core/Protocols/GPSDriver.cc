@@ -36,6 +36,15 @@ QString mismatchHint(const GPSReceiverSignatures& signatures, GPSType configured
         .arg(evidence, gpsReceiverName(match->family->type));
 }
 
+/// Whether @a family's RTCM3 is forwarded whatever base status it publishes. Passive input comes from a receiver that
+/// was not configured here, so it reports no base. A Septentrio receiver starts its corrections with its configuration
+/// and reports its base in PVTGeodetic blocks half a second apart, and no recording of a base confirms how those read,
+/// so its corrections do not wait for them.
+bool forwardsCorrectionsWithoutBase(GPSType family)
+{
+    return family == GPSType::Passive || family == GPSType::Septentrio;
+}
+
 }  // namespace
 
 struct GPSDriver::State
@@ -50,6 +59,8 @@ struct GPSDriver::State
     QString configurationError;
     bool consentRequired = false;
     bool configuring = false;
+    /// The base status published last is Valid.
+    bool baseValid = false;
 
     struct ReceiveCycle
     {
@@ -101,7 +112,7 @@ bool GPSDriver::configure()
         qCWarning(GPSDriverLog) << error;
         return false;
     }
-    if (_type != GPSType::passive) {
+    if (_type != GPSType::Passive) {
         const auto& mode = _config.base.mode;
         if (std::holds_alternative<GPSBaseStationConfig::Fixed>(mode)) {
             qCDebug(GPSDriverLog) << "Fixed base configured";
@@ -117,7 +128,7 @@ bool GPSDriver::configure()
     GPSRuntimeIO io;
     io.clock = _clock;
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-        const auto result = _transport.read(bytes, deadline.remaining(_clock.nowUs()));
+        auto result = _transport.read(bytes, deadline.remaining(_clock.nowUs()));
         const bool data = result.status == GPSReadStatus::Data && result.bytesRead > 0 &&
                           static_cast<size_t>(result.bytesRead) <= bytes.size();
         _state->cycle.activity |= data;
@@ -138,8 +149,8 @@ bool GPSDriver::configure()
                                                      : QDeadlineTimer(remaining, Qt::PreciseTimer);
         return _transport.write(bytes, transportDeadline);
     };
-    io.setBaudrate = [this](unsigned baud) {
-        if (_transport.setBaudrate(baud)) {
+    io.setBaudRate = [this](unsigned baud) {
+        if (_transport.setBaudRate(baud)) {
             return GPSBaudStatus::Configured;
         }
         return _transport.fatalError() ? GPSBaudStatus::Error : GPSBaudStatus::Unsupported;
@@ -153,14 +164,14 @@ bool GPSDriver::configure()
     };
     observer.decoded = [this](const GPSEventBatch& batch) { _publish(batch); };
 
-    unsigned baudrate = _config.baudRate ? _config.baudRate : _transport.fixedBaudrate();
-    if (_config.baudRate && _transport.fixedBaudrate() && _config.baudRate != _transport.fixedBaudrate()) {
+    unsigned baudRate = _config.baudRate ? _config.baudRate : _transport.fixedBaudRate();
+    if (_config.baudRate && _transport.fixedBaudRate() && _config.baudRate != _transport.fixedBaudRate()) {
         _state->configurationError = QStringLiteral("Selected baud rate differs from the transport's fixed baud rate");
         qCWarning(GPSDriverLog) << _state->configurationError;
         return false;
     }
-    if (_type == GPSType::automatic) {
-        return _configureDetected(std::move(io), std::move(observer), baudrate);
+    if (_type == GPSType::Automatic) {
+        return _configureDetected(std::move(io), std::move(observer), baudRate);
     }
     const GPSReceiverFamily* family = gpsReceiverFamily(_type);
     if (!family) {
@@ -171,22 +182,22 @@ bool GPSDriver::configure()
         return false;
     }
     // Without a selected rate or a fixed link rate, the family may prefer one to detection.
-    if (family->autoBaudRate && !baudrate) {
-        baudrate = family->autoBaudRate;
+    if (family->autoBaudRate && !baudRate) {
+        baudRate = family->autoBaudRate;
     }
-    if (_type != GPSType::passive) {
+    if (_type != GPSType::Passive) {
         _state->signatures = std::make_unique<GPSReceiverSignatures>(gpsReceiverFamilies());
     }
     return _configureFamily(*family, std::move(io), std::move(observer),
-                            {.base = _config.base, .allowPersistentChanges = _config.allowPersistentChanges}, baudrate,
+                            {.base = _config.base, .allowPersistentChanges = _config.allowPersistentChanges}, baudRate,
                             {});
 }
 
-bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudrate)
+bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudRate)
 {
     _state->configuring = true;
     const GPSReceiverDetection detection =
-        GPSReceiverDetector(gpsReceiverFamilies(), io, observer.commandFinished).detect(baudrate);
+        GPSReceiverDetector(gpsReceiverFamilies(), io, observer.commandFinished).detect(baudRate);
     _state->configuring = false;
     if (!detection.found()) {
         _state->configurationError = !detection.errorDetail.isEmpty() ? detection.errorDetail
@@ -218,15 +229,15 @@ bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer,
     return _configureFamily(
         *detection.family, std::move(io), std::move(observer),
         {.base = config.base, .allowPersistentChanges = config.allowPersistentChanges, .detectedBaud = detection.baud},
-        baudrate, QStringLiteral("Detected %1 receiver at %2 baud").arg(name).arg(detection.baud));
+        baudRate, QStringLiteral("Detected %1 receiver at %2 baud").arg(name).arg(detection.baud));
 }
 
 bool GPSDriver::_configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer,
-                                 const GPSConfig& config, unsigned baudrate, const QString& detected)
+                                 const GPSConfig& config, unsigned baudRate, const QString& detected)
 {
     _state->runtime = std::make_unique<GPSProtocolRuntime>(family, std::move(io), std::move(observer));
     _state->configuring = true;
-    const bool configured = _state->runtime->configure(config, baudrate);
+    const bool configured = _state->runtime->configure(config, baudRate);
     _state->configuring = false;
     const auto signatures = std::exchange(_state->signatures, nullptr);
     if (!configured) {
@@ -324,26 +335,37 @@ void GPSDriver::_handleSatellites(const GPSSatelliteReport& report)
     _publishSatellites(report);
 }
 
-void GPSDriver::_handle(const GPSSurveyReport& report)
+void GPSDriver::_handle(const GPSBaseStatus& report)
 {
     _state->cycle.usefulData = true;
-    if (_sinks.onSurveyIn) {
-        _sinks.onSurveyIn(report);
+    _state->baseValid = report.state == GPSBaseState::Valid;
+    if (_sinks.onBaseStatus) {
+        _sinks.onBaseStatus(report);
     }
 }
 
 void GPSDriver::_handle(const GPSRTCMFrame& report)
 {
+    // Corrections state the base position, so those of a base configured here are forwarded only while it reports
+    // that position valid.
+    if (_state->configuring ||
+        (!_state->baseValid && !forwardsCorrectionsWithoutBase(_state->runtime->family().type))) {
+        return;
+    }
     _state->cycle.usefulData = true;
-    if (!_state->configuring && _sinks.onRTCM) {
+    if (_sinks.onRTCM) {
         _sinks.onRTCM(report.bytes);
     }
 }
 
 void GPSDriver::_handle(const GPSInputProtocol& report)
 {
-    // Satellite counts come from one protocol, as positions do.
+    // Satellite counts come from one protocol, as positions do. The counts of the protocol left behind would otherwise
+    // stay with the consumer, since nothing remains here to expire.
     _state->satellites = {};
+    if (_state->lastSatellites) {
+        _publishSatellites({});
+    }
     if (_sinks.onReceiverDetected) {
         _sinks.onReceiverDetected(report.family);
     }

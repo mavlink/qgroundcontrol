@@ -53,26 +53,26 @@ struct DecoderDef
 const std::vector<DecoderDef>& decoders()
 {
     static const std::vector<DecoderDef> rows{
-        {"ublox", GPSType::ublox, ubxWire(), fixedBase(47, 8, 500, 1, 115200)},
+        {"ublox", GPSType::UBlox, ubxWire(), fixedBase(47, 8, 500, 1, 115200)},
         // Configured with the pre-protocol-27 commands, it decodes as the protocol 27 configuration does.
-        {"ublox-legacy", GPSType::ublox, ubxWire([](UBXBench& b) {
+        {"ublox-legacy", GPSType::UBlox, ubxWire([](UBXBench& b) {
              b.model.legacy = true;
              b.model.module = "NEO-M8P";
          }),
          fixedBase(47, 8, 500, 1, 115200), "ublox"},
-        {"septentrio", GPSType::septentrio, sbf(), fixedBase(47, 8, 500, 1)},
-        {"trimble", GPSType::trimble, ashtech(), surveyIn(1, 100)},
-        {"femto", GPSType::femto, femto(), fixedBase(47, 8, 500, 1)},
+        {"septentrio", GPSType::Septentrio, sbf(), fixedBase(47, 8, 500, 1)},
+        {"trimble", GPSType::Trimble, ashtech(), surveyIn(1, 100)},
+        {"femto", GPSType::Femto, femto(), fixedBase(47, 8, 500, 1)},
         // The Unicore and Quectel seeds carry evidence for the fixed ECEF position (0, 6378237, 0).
-        {"unicore-fixed", GPSType::unicore, unicore(), fixedBase(0, 90, 100, 0)},
-        {"unicore-averaging", GPSType::unicore, unicore(), averaging(60)},
-        {"quectel-survey", GPSType::quectel, quectel([](QuectelBench& b) { b.model.role = 2; }), surveyIn(15, 60)},
-        {"quectel-fixed", GPSType::quectel, quectel([](QuectelBench& b) {
+        {"unicore-fixed", GPSType::Unicore, unicore(), fixedBase(0, 90, 100, 0)},
+        {"unicore-averaging", GPSType::Unicore, unicore(), averaging(60)},
+        {"quectel-survey", GPSType::Quectel, quectel([](QuectelBench& b) { b.model.role = 2; }), surveyIn(15, 60)},
+        {"quectel-fixed", GPSType::Quectel, quectel([](QuectelBench& b) {
              b.model.role = 2;
              b.model.base = "2,0,0,0.0000,6378237.0000,0.0000,0";
          }),
          fixedBase(0, 90, 100, 0)},
-        {"passive", GPSType::passive, passive(), passiveInput(115200)},
+        {"passive", GPSType::Passive, passive(), passiveInput(115200)},
     };
     return rows;
 }
@@ -175,7 +175,7 @@ GPSTest::Golden::Decode navigationEvents(GPSTest::Golden::Decode decode)
     const auto familySpecific = [](const GPSTest::Golden::Event& event) {
         const auto* survey = std::get_if<GPSTest::Golden::Survey>(&event);
         return std::holds_alternative<GPSInputProtocol>(event) ||
-               (survey && !survey->survey.valid && !survey->survey.active);
+               (survey && survey->survey.state == GPSBaseState::Inactive);
     };
     std::erase_if(decode.events, familySpecific);
     std::erase_if(decode.expired, familySpecific);
@@ -298,8 +298,8 @@ void GPSGoldenTranscriptTest::_decodeOnlyArming_data()
     for (qsizetype index = 0; index < std::ssize(rows); ++index) {
         const auto& decoder = rows[static_cast<size_t>(index)];
         // Femto and Trimble time the survey their configuration starts.
-        const bool armable = decoder.type == GPSType::septentrio || decoder.type == GPSType::unicore ||
-                             decoder.type == GPSType::quectel || decoder.type == GPSType::ublox;
+        const bool armable = decoder.type == GPSType::Septentrio || decoder.type == GPSType::Unicore ||
+                             decoder.type == GPSType::Quectel || decoder.type == GPSType::UBlox;
         QTest::newRow(decoder.name) << static_cast<int>(index) << armable;
     }
 }
@@ -328,7 +328,7 @@ void GPSGoldenTranscriptTest::_decodeOnlyArming()
         // A base the configuration verified, which a recording does not carry, is revoked when it expires.
         const auto revocation = [](const GPSTest::Golden::Event& event) {
             const auto* survey = std::get_if<GPSTest::Golden::Survey>(&event);
-            return survey && !survey->survey.valid && !survey->survey.active;
+            return survey && survey->survey.state == GPSBaseState::Inactive;
         };
         GPSTest::Golden::Decode expected = configured;
         GPSTest::Golden::Decode actual = armed;

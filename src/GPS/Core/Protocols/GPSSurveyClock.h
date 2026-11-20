@@ -37,7 +37,7 @@ public:
         if (!_startedUs || nowUs < *_startedUs) {
             return false;
         }
-        const auto seconds = static_cast<uint32_t>((nowUs - *_startedUs) / 1000000);
+        const auto seconds = static_cast<uint32_t>((nowUs - *_startedUs) / MICROSECONDS_PER_SECOND);
         if (seconds == _seconds) {
             return false;
         }
@@ -51,25 +51,27 @@ public:
     void start(GPSDecodeContext& context)
     {
         start(context.nowUs());
-        context.publishSurvey(true, false, duration());
+        context.publishBaseStatus(GPSBaseState::Active, duration());
     }
 
     /// Publishes the active survey when its whole-second duration advanced.
     void publishProgress(GPSDecodeContext& context)
     {
         if (update(context.nowUs())) {
-            context.publishSurvey(true, false, duration());
+            context.publishBaseStatus(GPSBaseState::Active, duration());
         }
     }
 
-    /// Stops timing and publishes the finished survey, valid at @a position or failed.
-    void finish(GPSDecodeContext& context, bool valid, const GPSEllipsoidPosition& position = {})
+    /// Stops timing and publishes the finished survey: Valid at @a position, or Inactive when it failed.
+    void finish(GPSDecodeContext& context, GPSBaseState state, const GPSEllipsoidPosition& position = {})
     {
         stop(context.nowUs());
-        context.publishSurvey(false, valid, duration(), position);
+        context.publishBaseStatus(state, duration(), position);
     }
 
 private:
+    static constexpr uint64_t MICROSECONDS_PER_SECOND = 1000000;
+
     std::optional<uint64_t> _startedUs;
     uint32_t _seconds = 0;
 };

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 
+#include <QtCore/QByteArray>
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
@@ -13,7 +14,8 @@
 
 namespace GPSTest {
 
-/// Plays a raw receiver capture, such as a GPSRecordingTransport received file, back as a receiver link.
+/// Plays a receiver capture back as a receiver link: a GPSRecordingTransport file, of which it delivers the received
+/// bytes, or a file of raw receiver output.
 /// Writes are discarded but reported as written, and every baud rate is accepted, so configuration commands never
 /// fail on I/O; replies come only from the capture. Reads return at most chunkBytes. A zero baud rate delivers the
 /// capture as fast as it is read; otherwise bytes become available at that line rate, ten bits per byte, from open().
@@ -24,7 +26,7 @@ class ReplayGPSTransport final : public GPSTransport
 public:
     static constexpr int DEFAULT_CHUNK_BYTES = 1024;
 
-    ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudrate = 0,
+    ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudRate = 0,
                        int chunkBytes = DEFAULT_CHUNK_BYTES);
     ~ReplayGPSTransport() override;
 
@@ -32,7 +34,7 @@ public:
     /// True before open(), after a file error, and once the whole capture was delivered.
     bool fatalError() const override;
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override;
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
     /// The whole capture was delivered.
     [[nodiscard]] bool finished() const { return _finished; }
@@ -43,6 +45,8 @@ protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override;
 
 private:
+    /// Loads the next received bytes of the capture, or finishes at its end.
+    void _load();
     /// Bytes a read of @a length may take now.
     qint64 _available(qint64 length) const;
     /// When the next byte becomes available at the paced rate.
@@ -51,11 +55,14 @@ private:
     void _sleepUntil(QDeadlineTimer deadline) const;
 
     QFile _file;
-    const unsigned _baudrate;
+    const unsigned _baudRate;
     const int _chunkBytes;
     QElapsedTimer _clock;
-    qint64 _size = 0;
+    /// Received bytes loaded from the capture and not delivered yet.
+    QByteArray _pending;
     qint64 _delivered = 0;
+    /// The capture is a GPSRecordingTransport file rather than raw receiver output.
+    bool _recording = false;
     bool _finished = false;
     bool _failed = false;
 };

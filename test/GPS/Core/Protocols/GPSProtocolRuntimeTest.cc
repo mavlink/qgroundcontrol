@@ -59,18 +59,49 @@ public:
 
     void flush(GPSDecodeContext& context) override
     {
-        GPSSurveyReport buffered{};
+        GPSBaseStatus buffered{};
         buffered.timestampUs = 42;
-        buffered.active = true;
+        buffered.state = GPSBaseState::Active;
         context.publishAsReceived(buffered);
-        GPSSurveyReport stamped{};
-        context.publishSurvey(stamped);
+        GPSBaseStatus stamped{};
+        context.publishBaseStatus(stamped);
     }
 };
 
 constexpr GPSReceiverFamily UBX_STREAM_FAMILY{
-    .type = GPSType::ublox,
+    .type = GPSType::UBlox,
     .stream = {.framers = GPSFrameKind::UBX | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::UBX | GPSFrameKind::RTCM3}};
+
+/// Reports how many times it was configured as its identity, and publishes every frame as RTCM. Configured with
+/// consent to persistent changes, it frames RTCM3, which its family's stream leaves disabled.
+class AttemptCounter final : public GPSFamilyProtocol
+{
+public:
+    bool configure(GPSCommandChannel& channel, GPSConfig config, unsigned&) override
+    {
+        ++_attempts;
+        if (config.allowPersistentChanges) {
+            channel.stream().setEnabled(GPSFrameKind::RTCM3, true);
+        }
+        return true;
+    }
+
+    GPSReceiveUpdates onFrame(const GPSFrame& frame, GPSDecodeContext& context) override
+    {
+        context.publishRTCM(frame.bytes);
+        return {};
+    }
+
+    QString identity() const override { return QString::number(_attempts); }
+
+private:
+    int _attempts = 0;
+};
+
+constexpr GPSReceiverFamily ATTEMPT_FAMILY{
+    .type = GPSType::UBlox,
+    .stream = {.framers = GPSFrameKind::UBX | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::UBX},
+    .create = &gpsCreateProtocol<AttemptCounter>};
 
 }  // namespace
 
@@ -113,6 +144,30 @@ void GPSProtocolRuntimeTest::_readinessSeesSessionFailure()
     QVERIFY(!publisher.receiverReady());
 }
 
+void GPSProtocolRuntimeTest::_configureStartsFromNewProtocol()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    size_t corrections = 0;
+    GPSRuntimeObserver observer;
+    observer.decoded = [&corrections](const GPSEventBatch& batch) { corrections += batch.events.size(); };
+    GPSProtocolRuntime runtime(ATTEMPT_FAMILY, makeGPSRuntimeTestIO(clock), std::move(observer));
+    const auto correction = rtcmPacket(std::vector<uint8_t>(8, 0x5a));
+    unsigned baud = 115200;
+    QVERIFY(runtime.configure({.allowPersistentChanges = true}, baud));
+    QCOMPARE(runtime.identity(), QStringLiteral("1"));
+    (void) runtime.consume(correction);
+    QCOMPARE(corrections, size_t{1});
+    // The start of a frame stays in the stream.
+    (void) runtime.consume(std::span(correction).first(4));
+
+    // Neither the protocol's members nor the stream's framers and partial frame outlive the attempt.
+    QVERIFY(runtime.configure({}, baud));
+    QCOMPARE(runtime.identity(), QStringLiteral("1"));
+    (void) runtime.consume(std::span(correction).subspan(4));
+    (void) runtime.consume(correction);
+    QCOMPARE(corrections, size_t{1});
+}
+
 void GPSProtocolRuntimeTest::_publishAsReceivedKeepsReceipt()
 {
     GPSTestClock clock(99);
@@ -120,9 +175,9 @@ void GPSProtocolRuntimeTest::_publishAsReceivedKeepsReceipt()
     const auto batch = runtime.decode({});
     QCOMPARE(batch.updates, GPSReceiveUpdates{});
     QCOMPARE(batch.events.size(), size_t{2});
-    QCOMPARE(std::get<GPSSurveyReport>(batch.events[0]).timestampUs, uint64_t{42});
-    QVERIFY(std::get<GPSSurveyReport>(batch.events[0]).active);
-    QCOMPARE(std::get<GPSSurveyReport>(batch.events[1]).timestampUs, uint64_t{99});
+    QCOMPARE(std::get<GPSBaseStatus>(batch.events[0]).timestampUs, uint64_t{42});
+    QCOMPARE(std::get<GPSBaseStatus>(batch.events[0]).state, GPSBaseState::Active);
+    QCOMPARE(std::get<GPSBaseStatus>(batch.events[1]).timestampUs, uint64_t{99});
 }
 
 void GPSProtocolRuntimeTest::_deadlineRemaining_data()

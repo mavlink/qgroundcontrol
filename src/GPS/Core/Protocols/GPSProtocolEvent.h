@@ -94,14 +94,14 @@ struct GPSRTCMFrame
 };
 
 /// The protocol a passive input decodes, published when it is identified and when it changes: the family whose native
-/// protocol the stream carries, or GPSType::passive for standard NMEA.
+/// protocol the stream carries, or GPSType::Passive for standard NMEA.
 struct GPSInputProtocol
 {
-    GPSType family = GPSType::passive;
+    GPSType family = GPSType::Passive;
 };
 
 using GPSProtocolEvent = std::variant<GPSDecodedPosition, GPSIntegrityReport, GPSDecodedSatellites,
-                                      GPSDecodedSatelliteUsage, GPSSurveyReport, GPSRTCMFrame, GPSInputProtocol>;
+                                      GPSDecodedSatelliteUsage, GPSBaseStatus, GPSRTCMFrame, GPSInputProtocol>;
 
 /// Events decoded from one span of received bytes, in publication order.
 struct GPSEventBatch

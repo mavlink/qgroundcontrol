@@ -61,6 +61,43 @@ void UdpForwarderTest::testForward()
     QCOMPARE(received, payload);
 }
 
+void UdpForwarderTest::testForwardFailure()
+{
+    QUdpSocket receiver;
+    QVERIFY(receiver.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = receiver.localPort();
+    UdpForwarder fwd;
+    QVERIFY(fwd.configure(QStringLiteral("127.0.0.1"), port));
+    QVERIFY(fwd.errorString().isEmpty());
+
+    // No UDP datagram carries this much, so a socket refuses to send it.
+    const QByteArray oversized(70000, '\0');
+    QUdpSocket reference;
+    QCOMPARE(reference.writeDatagram(oversized, QHostAddress::LocalHost, port), qint64(-1));
+    const QString reason = reference.errorString();
+    QVERIFY(!reason.isEmpty());
+    const QRegularExpression warning(QStringLiteral("UDP forward failed: .*") + QRegularExpression::escape(reason));
+
+    // A lasting failure warns once: strict log checking fails the test on a second warning.
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg, warning);
+    QCOMPARE(fwd.forward(oversized), qint64(0));
+    verifyExpectedLogMessage();
+    QCOMPARE(fwd.errorString(), reason);
+    QCOMPARE(fwd.forward(oversized), qint64(0));
+    QCOMPARE(fwd.errorString(), reason);
+
+    // A datagram that is sent clears the reason, so the next failure warns again.
+    QCOMPARE(fwd.forward(QByteArrayLiteral("sent")), qint64(4));
+    QVERIFY(fwd.errorString().isEmpty());
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg, warning);
+    QCOMPARE(fwd.forward(oversized), qint64(0));
+    verifyExpectedLogMessage();
+
+    // A destination configured anew starts without the previous reason.
+    QVERIFY(fwd.configure(QStringLiteral("127.0.0.1"), port));
+    QVERIFY(fwd.errorString().isEmpty());
+}
+
 void UdpForwarderTest::testStop()
 {
     UdpForwarder fwd;

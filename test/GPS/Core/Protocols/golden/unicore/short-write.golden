@@ -32,6 +32,5 @@ configure configured=0 baud=0->115200 failure=transport ready=0 elapsed=1ms
     text "RTCM1033 10\r\n"
   write "RTCM1074 1" 12 status=completed accepted=11 written=11 transport-error required
     text "RTCM1074 1\r\n"
-  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

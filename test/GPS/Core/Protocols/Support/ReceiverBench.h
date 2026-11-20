@@ -34,7 +34,7 @@ inline GPSRuntimeIO makeGPSRuntimeTestIO(GPSTestClock& clock)
 {
     GPSRuntimeIO io;
     io.clock = clock.source();
-    io.setBaudrate = [](unsigned) { return GPSBaudStatus::Configured; };
+    io.setBaudRate = [](unsigned) { return GPSBaudStatus::Configured; };
     return io;
 }
 
@@ -50,7 +50,7 @@ inline GPSRuntimeIO makeDecoderOnlyIO(GPSTestClock& clock)
         GPSTest::ModelViolations::record("Decoder wrote to the device");
         return GPSWriteResult{GPSWriteStatus::Error};
     };
-    io.setBaudrate = [](unsigned) {
+    io.setBaudRate = [](unsigned) {
         GPSTest::ModelViolations::record("Decoder changed the baud rate");
         return GPSBaudStatus::Error;
     };
@@ -64,15 +64,22 @@ struct EventLog
     std::vector<GPSConfigurationEvidence> commands;
     /// The latest position delivered.
     GPSDecodedPosition position;
+    /// The RTCM3 frames delivered while the base status delivered last was Valid: those GPSDriver forwards for a base
+    /// it configured.
+    int correctionsWhileValid = 0;
 
     /// Records into this log, which must outlive the runtime.
     GPSRuntimeObserver observer()
     {
         GPSRuntimeObserver result;
-        result.decoded = [this](const GPSEventBatch& batch) {
+        result.decoded = [this, baseValid = false](const GPSEventBatch& batch) mutable {
             for (const auto& event : batch.events) {
                 if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
                     position = *report;
+                } else if (const auto* status = std::get_if<GPSBaseStatus>(&event)) {
+                    baseValid = status->state == GPSBaseState::Valid;
+                } else if (baseValid && std::holds_alternative<GPSRTCMFrame>(event)) {
+                    ++correctionsWhileValid;
                 }
             }
             events.insert(events.end(), batch.events.begin(), batch.events.end());
@@ -238,7 +245,7 @@ public:
     {
         detection.emplace(faults, dialect, clock, [this] { return atRate(); });
         setModel(&*detection);
-        setFixedBaudrate(0);
+        setFixedBaudRate(0);
         detection->attach(*this);
         return *detection;
     }
@@ -246,8 +253,8 @@ public:
     ReceiverModel model;
     ScriptedFaults faults;
     std::optional<DetectionReceiver> detection;
-    /// For detect(): defaults to the rate setReceiverBaudrate() gave the receiver.
-    std::function<bool()> atRate = [this] { return hostBaudrate() == receiverBaudrate(); };
+    /// For detect(): defaults to the rate setReceiverBaudRate() gave the receiver.
+    std::function<bool()> atRate = [this] { return hostBaudRate() == receiverBaudRate(); };
 
 private:
     template <typename... Args>

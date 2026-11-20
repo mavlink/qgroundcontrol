@@ -20,7 +20,6 @@
 #include "NTRIPHttpCodec.h"
 #include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
-#include "NTRIPManager.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "RTCMFramer.h"
 #include "Support/GPSTestHelpers.h"
@@ -58,26 +57,8 @@ protected:
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// RTCM framing and filtering
+// RTCM framing
 // ---------------------------------------------------------------------------
-
-void NTRIPHttpTransportTest::_rtcmWhitelist_data()
-{
-    QTest::addColumn<QString>("whitelist");
-    QTest::addColumn<QVector<int>>("messageIds");
-    QTest::newRow("empty") << QString() << QVector<int>{};
-    QTest::newRow("single") << QStringLiteral("1005") << QVector<int>{1005};
-    QTest::newRow("multiple") << QStringLiteral("1005,1077,1087") << QVector<int>{1005, 1077, 1087};
-    QTest::newRow("invalid-entries") << QStringLiteral("1005,abc,,1077") << QVector<int>{1005, 1077};
-    QTest::newRow("non-positive-entries") << QStringLiteral("1005,invalid,0,-1") << QVector<int>{1005};
-}
-
-void NTRIPHttpTransportTest::_rtcmWhitelist()
-{
-    QFETCH(QString, whitelist);
-    QFETCH(QVector<int>, messageIds);
-    QCOMPARE(NTRIPRTCMFilterConfig{whitelist}.messageIds(), messageIds);
-}
 
 void NTRIPHttpTransportTest::_filterRejectsInvalidFrame_data()
 {
@@ -92,7 +73,7 @@ void NTRIPHttpTransportTest::_filterRejectsInvalidFrame()
 {
     QFETCH(QByteArray, bad);
     ManualScheduler scheduler;
-    NTRIPHttpTransport t(connectionConfig(), {}, nullptr, &scheduler);
+    NTRIPHttpTransport t(connectionConfig(), nullptr, &scheduler);
 
     QSignalSpy detailed(&t, &NTRIPTransport::correctionFrameReceived);
 
@@ -109,40 +90,6 @@ void NTRIPHttpTransportTest::_filterRejectsInvalidFrame()
     QCOMPARE(recovered.receivedAtMs, 123);
 }
 
-void NTRIPHttpTransportTest::_filterConfigurationUpdatesWithoutReconnect()
-{
-    ScriptedNTRIPCaster caster;
-    QVERIFY(caster.isListening());
-    auto connection = caster.connectionConfig();
-    NTRIPHttpTransport transport(connection, {1005});
-    QSignalSpy connected(&transport, &NTRIPTransport::connected);
-    QSignalSpy observed(&transport, &NTRIPTransport::correctionFrameReceived);
-    transport.start();
-    auto* casterConnection = caster.waitForConnection();
-    QVERIFY(casterConnection && casterConnection->peer);
-    QVERIFY(casterConnection->waitForRequest().startsWith("GET /TEST HTTP/1.1"));
-    const auto frames = GPSTest::rtcmMessage(1005) + GPSTest::rtcmMessage(1077);
-    const auto response = QByteArrayLiteral("HTTP/1.1 200 OK\r\n\r\n") + frames;
-    QCOMPARE(casterConnection->write(response), response.size());
-    // Only whitelisted messages are emitted.
-    QTRY_COMPARE_WITH_TIMEOUT(observed.size(), 1, TestTimeout::mediumMs());
-    QCOMPARE(frameAt(observed, 0).messageId, 1005);
-
-    // Frames written to the original connection keep arriving, so the whitelist changes did not reconnect.
-    transport.setRtcmWhitelist({1077});
-    QCOMPARE(casterConnection->write(frames), frames.size());
-    QTRY_COMPARE_WITH_TIMEOUT(observed.size(), 2, TestTimeout::mediumMs());
-    QCOMPARE(frameAt(observed, 1).messageId, 1077);
-
-    transport.setRtcmWhitelist({});
-    QCOMPARE(casterConnection->write(frames), frames.size());
-    QTRY_COMPARE_WITH_TIMEOUT(observed.size(), 4, TestTimeout::mediumMs());
-    QCOMPARE(frameAt(observed, 2).messageId, 1005);
-    QCOMPARE(frameAt(observed, 3).messageId, 1077);
-    QCOMPARE(connected.size(), 1);
-    QCOMPARE(casterConnection->peer->state(), QAbstractSocket::ConnectedState);
-}
-
 void NTRIPHttpTransportTest::_receiptTimesAndEvidence_data()
 {
     QTest::addColumn<bool>("chunked");
@@ -153,7 +100,7 @@ void NTRIPHttpTransportTest::_receiptTimesAndEvidence_data()
 void NTRIPHttpTransportTest::_receiptTimesAndEvidence()
 {
     QFETCH(bool, chunked);
-    NTRIPHttpTransport transport(connectionConfig(), {});
+    NTRIPHttpTransport transport(connectionConfig());
     QSignalSpy observed(&transport, &NTRIPTransport::correctionFrameReceived);
     const auto first = GPSTest::rtcmMessage(1005);
     const auto second = GPSTest::rtcmMessage(1077);
@@ -191,7 +138,7 @@ void NTRIPHttpTransportTest::_icyPartialFrame()
     QFETCH(QByteArray, suffix);
     const auto frame = QByteArray::fromHex("d300023ed0a4e000");
     for (const bool bytewise : {false, true}) {
-        NTRIPHttpTransport transport(connectionConfig(), {});
+        NTRIPHttpTransport transport(connectionConfig());
         QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
         QSignalSpy errors(&transport, &NTRIPTransport::error);
         QSignalSpy connected(&transport, &NTRIPTransport::connected);
@@ -228,7 +175,7 @@ void NTRIPHttpTransportTest::_invalidConfigurationIsNotConnected()
     config.host = QStringLiteral("caster\r\nInjected: value");
     config.username = QStringLiteral("user");
     config.password = QStringLiteral("pass");
-    NTRIPHttpTransport transport(config, {});
+    NTRIPHttpTransport transport(config);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
     transport.start();
@@ -255,7 +202,7 @@ void NTRIPHttpTransportTest::_connectionWaitsForHttpResponse()
     QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, TestTimeout::mediumMs());
     const auto result = frameAt(frames);
-    QVERIFY(result.valid && !result.filtered);
+    QVERIFY(result.valid);
     QCOMPARE(result.data, frame);
     // The response cancelled the connection timeout.
     QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::CONNECT_TIMEOUT));
@@ -294,7 +241,7 @@ void NTRIPHttpTransportTest::_legacyCaster()
         expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Sending credentials without TLS")));
     }
-    NTRIPHttpTransport transport(configuration, {});
+    NTRIPHttpTransport transport(configuration);
     MultiSignalSpy spy;
     QVERIFY(spy.init(&transport));
     transport.start();
@@ -337,7 +284,7 @@ void NTRIPHttpTransportTest::_writeAdmissionFailure()
 {
     QFETCH(int, accepted);
     QFETCH(bool, nmea);
-    NTRIPHttpTransport transport(connectionConfig(), {});
+    NTRIPHttpTransport transport(connectionConfig());
     auto* socket = new WriteSocket(&transport);
     socket->admit = [accepted](qint64) { return accepted; };
     NTRIPHttpSession* const session = _attachSession(transport);
@@ -437,7 +384,7 @@ void NTRIPHttpTransportTest::_errorBodyEnds()
 {
     QFETCH(bool, socketFailure);
     ManualScheduler scheduler;
-    NTRIPHttpTransport transport(connectionConfig(), {}, nullptr, &scheduler);
+    NTRIPHttpTransport transport(connectionConfig(), nullptr, &scheduler);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
     _feed(transport, "HTTP/1.1 503 Unavailable\r\nRetry-After: 120\r\nContent-Length: 1000000\r\n\r\nPartial detail",
@@ -461,20 +408,20 @@ void NTRIPHttpTransportTest::_errorBodyEnds()
 
 void NTRIPHttpTransportTest::_validFrameWatchdog_data()
 {
-    QTest::addColumn<bool>("filtered");
+    QTest::addColumn<bool>("validFrames");
     QTest::newRow("garbage-does-not-refresh") << false;
-    QTest::newRow("valid-filtered-frames-refresh") << true;
+    QTest::newRow("valid-frames-refresh") << true;
 }
 
 void NTRIPHttpTransportTest::_validFrameWatchdog()
 {
-    QFETCH(bool, filtered);
+    QFETCH(bool, validFrames);
     ManualScheduler scheduler;
-    NTRIPHttpTransport transport(connectionConfig(), QVector<int>{1077}, nullptr, &scheduler);
+    NTRIPHttpTransport transport(connectionConfig(), nullptr, &scheduler);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     _feed(transport, "HTTP/1.1 200 OK\r\n\r\n", 123);
-    const auto data = filtered ? GPSTest::rtcmMessage(1005) : QByteArray("garbage");
-    if (filtered) {
+    const auto data = validFrames ? GPSTest::rtcmMessage(1005) : QByteArray("garbage");
+    if (validFrames) {
         for (int i = 0; i < 3; ++i) {
             QVERIFY(scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG / 2));
             _feed(transport, data, 123);
@@ -483,27 +430,46 @@ void NTRIPHttpTransportTest::_validFrameWatchdog()
         _feed(transport, "garbage", 123);
         QVERIFY(errors.isEmpty());
     } else {
+        // The first data starts the stall clock, and more of it does not restart it.
+        _feed(transport, data, 123);
         QVERIFY(scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG / 2));
         _feed(transport, data, 123);
+        QVERIFY(errors.isEmpty());
     }
     QVERIFY(scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG / 2));
     QCOMPARE(errors.size(), 1);
     const auto failure = failureAt(errors);
-    QCOMPARE(failure.code, NTRIPError::DataWatchdog);
+    QCOMPARE(failure.code, NTRIPError::InvalidStream);
     QVERIFY(failure.detail.contains(QStringLiteral("valid RTCM")));
     QCOMPARE(scheduler.pendingCount(), 0);
 }
 
+void NTRIPHttpTransportTest::_silentStreamWatchdog_data()
+{
+    QTest::addColumn<bool>("corrections");
+    QTest::newRow("after-corrections") << true;
+    // A network RTK (VRS) mountpoint sends nothing before it is told a position, however long that takes.
+    QTest::newRow("after-position-report") << false;
+}
+
 void NTRIPHttpTransportTest::_silentStreamWatchdog()
 {
+    QFETCH(bool, corrections);
     CasterSession session;
     const QSignalSpy& errors = session.signal("error");
     auto* connection = session.start();
     QVERIFY(connection);
     QVERIFY(connection->waitForRequest().endsWith("\r\n\r\n"));
-    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + GPSTest::rtcmMessage(1005);
+    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + (corrections ? GPSTest::rtcmMessage(1005) : QByteArray());
     QCOMPARE(connection->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
+    if (corrections) {
+        QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
+    } else {
+        QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("connected"), 1, TestTimeout::mediumMs());
+        QVERIFY(session.scheduler.advanceBy(10 * NTRIPHttpTransport::DATA_WATCHDOG));
+        QVERIFY(errors.isEmpty());
+        session.transport.sendNMEA("$GPGGA,120000.00,4700.0000,N,00800.0000,E,1,12,1.0,500.0,M,0.0,M,,*65\r\n");
+    }
     QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG - std::chrono::milliseconds(1)));
     QVERIFY(errors.isEmpty());
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
@@ -540,7 +506,7 @@ void NTRIPHttpTransportTest::_handshakeRetiresAttempt()
     QFETCH(bool, chunked);
     QFETCH(bool, restart);
     ManualScheduler scheduler;
-    NTRIPHttpTransport transport(connectionConfig(), QVector<int>{}, nullptr, &scheduler);
+    NTRIPHttpTransport transport(connectionConfig(), nullptr, &scheduler);
     auto* socket = new QTcpSocket(&transport);
     socket->open(QIODevice::ReadOnly);
     _attachSession(transport)->_attach(socket);
@@ -581,7 +547,7 @@ void NTRIPHttpTransportTest::_failureCanRestart()
     QVERIFY(caster.isListening());
     int failures = 0;
     ManualScheduler scheduler;
-    NTRIPHttpTransport transport(caster.connectionConfig(), QVector<int>{}, nullptr, &scheduler);
+    NTRIPHttpTransport transport(caster.connectionConfig(), nullptr, &scheduler);
     _attachSession(transport)->_attach(new QTcpSocket(&transport));
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     connect(&transport, &NTRIPTransport::error, this, [&]() {
@@ -629,8 +595,7 @@ void NTRIPHttpTransportTest::_pendingErrorRetiresAttempt()
     ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     ManualScheduler scheduler;
-    auto transport =
-        std::make_unique<NTRIPHttpTransport>(caster.connectionConfig(), QVector<int>{}, nullptr, &scheduler);
+    auto transport = std::make_unique<NTRIPHttpTransport>(caster.connectionConfig(), nullptr, &scheduler);
     QSignalSpy errors(transport.get(), &NTRIPTransport::error);
     _feed(*transport, "HTTP/1.1 503 Unavailable\r\nContent-Length: 100\r\n\r\n", 123);
     // The error waits for its body.
@@ -643,8 +608,8 @@ void NTRIPHttpTransportTest::_pendingErrorRetiresAttempt()
         transport->start();
         _feed(*transport, "HTTP/1.1 200 OK\r\n\r\n", 456);
     }
-    // Only a restarted, connected attempt's data watchdog remains.
-    QCOMPARE(scheduler.pendingCount(), action == 2 ? 1 : 0);
+    // Nothing remains scheduled: a restarted, connected attempt's stall clock waits for data.
+    QCOMPARE(scheduler.pendingCount(), 0);
     QVERIFY(scheduler.advanceBy(NTRIPHttpSession::ERROR_BODY_TIMEOUT + std::chrono::milliseconds{50}));
     QVERIFY(errors.isEmpty());
 }
@@ -664,13 +629,13 @@ void NTRIPHttpTransportTest::_bodyPublicationRetiresAttempt()
     QFETCH(bool, chunked);
     QFETCH(bool, restart);
     ManualScheduler scheduler;
-    NTRIPHttpTransport transport(connectionConfig(), QVector<int>{}, nullptr, &scheduler);
+    NTRIPHttpTransport transport(connectionConfig(), nullptr, &scheduler);
     const QByteArray frame = GPSTest::rtcmMessage(1005);
     int frames = 0;
     int errors = 0;
     connect(&transport, &NTRIPTransport::error, this, [&]() { ++errors; });
     connect(&transport, &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMDecodedFrame& result) {
-        QVERIFY(result.valid && !result.filtered);
+        QVERIFY(result.valid);
         QCOMPARE(result.receivedAtMs, 123);
         ++frames;
         if (restart) {

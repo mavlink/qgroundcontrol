@@ -10,20 +10,14 @@
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
-NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, const QVector<int>& rtcmWhitelist,
-                                       QObject* parent, RuntimeScheduler* scheduler)
+NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, QObject* parent,
+                                       RuntimeScheduler* scheduler)
     : NTRIPTransport(parent)
     , _config(config)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _connectTimeoutTask(_scheduler, this)
     , _dataWatchdogTask(_scheduler, this)
-{
-    _rtcmDecoder.setWhitelist(rtcmWhitelist);
-    qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << rtcmWhitelist;
-    if (rtcmWhitelist.empty()) {
-        qCDebug(NTRIPHttpTransportLog) << "Message filter empty; all RTCM message IDs will be forwarded.";
-    }
-}
+{}
 
 NTRIPHttpTransport::~NTRIPHttpTransport()
 {
@@ -58,6 +52,7 @@ void NTRIPHttpTransport::stop()
 NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
 {
     _rtcmDecoder.reset();
+    _dataSinceValidFrame = false;
     _session = session;
     // A retired session is disconnected, and a failed attempt sets _stopped, so these run only for the live attempt.
     connect(session, &NTRIPHttpSession::certificatePinned, this, [this](const QString& pin) {
@@ -68,6 +63,7 @@ NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
     connect(session, &NTRIPHttpSession::responseStarted, this, &NTRIPHttpTransport::_onResponseStarted);
     connect(session, &NTRIPHttpSession::bodyReceived, this, [this](const QByteArray& body, qint64 receivedAtMs) {
         _dataSinceValidFrame = true;
+        _expectData();
         _parseRtcm(body, receivedAtMs);
     });
     connect(session, &NTRIPHttpSession::failed, this, &NTRIPHttpTransport::_fail);
@@ -99,6 +95,15 @@ void NTRIPHttpTransport::_startConnectTimeout()
     });
 }
 
+void NTRIPHttpTransport::_expectData()
+{
+    if (_dataWatchdogTask.active()) {
+        return;
+    }
+    _lastValidFrameMs = _nowMs();
+    _startDataWatchdog(DATA_WATCHDOG);
+}
+
 void NTRIPHttpTransport::_startDataWatchdog(std::chrono::milliseconds delay)
 {
     // Valid frames only record their time; the single timer re-arms for the remainder when it expires early.
@@ -107,7 +112,7 @@ void NTRIPHttpTransport::_startDataWatchdog(std::chrono::milliseconds delay)
         if (idle < DATA_WATCHDOG) {
             _startDataWatchdog(DATA_WATCHDOG - idle);
         } else if (_dataSinceValidFrame) {
-            _fail({NTRIPError::DataWatchdog, tr("No valid RTCM corrections received")});
+            _fail({NTRIPError::InvalidStream, tr("No valid RTCM corrections received")});
         } else {
             const auto secs = std::chrono::duration_cast<std::chrono::seconds>(DATA_WATCHDOG).count();
             qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
@@ -145,16 +150,8 @@ void NTRIPHttpTransport::_fail(const NTRIPFailure& failure)
 
 void NTRIPHttpTransport::_onResponseStarted()
 {
-    // Observers of connected() may stop or restart this transport.
-    const NTRIPHttpSession* const session = _session;
     _connectTimeoutTask.cancel();
     emit connected();
-    if (!_isCurrent(session)) {
-        return;
-    }
-    _lastValidFrameMs = _nowMs();
-    _dataSinceValidFrame = false;
-    _startDataWatchdog(DATA_WATCHDOG);
 }
 
 void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtMs)
@@ -168,13 +165,8 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
             qCWarning(NTRIPHttpTransportLog) << "Invalid RTCM frame, dropping message id" << frame.messageId;
             return true;
         }
-        // Whitelisting is a routing policy, not evidence of a broken caster stream.
         _lastValidFrameMs = _nowMs();
         _dataSinceValidFrame = false;
-        if (frame.filtered) {
-            qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << frame.messageId;
-            return true;
-        }
         qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << frame.messageId << "len" << frame.data.size();
         emit correctionFrameReceived(frame);
         return _isCurrent(session);
@@ -191,5 +183,6 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
         _fail({NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write")});
         return;
     }
+    _expectData();
     qCDebug(NTRIPHttpTransportLog) << "Queued NMEA bytes:" << nmea.size();
 }

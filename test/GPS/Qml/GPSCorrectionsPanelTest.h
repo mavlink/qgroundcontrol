@@ -10,6 +10,11 @@ class GPSCorrectionsPanelTest : public UnitTest
 
 private slots:
     void _correctionsStatusShowsSelectedStream();
+    void _correctionsStatusCountsMessageTypes();
+    void _correctionsStatusShowsMessageRates();
+    void _correctionsStatusShowsBaseStation();
+    void _correctionsStatusShowsMessageFilterError();
+    void _correctionsLogSwitch();
     void _ntripErrorActionRetries();
     void _ntripConnectionActionIsIdempotent_data();
     void _ntripConnectionActionIsIdempotent();

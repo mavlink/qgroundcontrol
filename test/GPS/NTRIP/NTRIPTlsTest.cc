@@ -161,7 +161,7 @@ void NTRIPTlsTest::_certificatePolicy()
     auto configuration = caster.connectionConfig();
     QVERIFY(!configuration.allowSelfSignedCerts);
     configuration.allowSelfSignedCerts = allowSelfSigned;
-    NTRIPHttpTransport transport(configuration, {});
+    NTRIPHttpTransport transport(configuration);
     MultiSignalSpy spy;
     QVERIFY(spy.init(&transport));
     const QSignalSpy& frames = *spy.spy("correctionFrameReceived");
@@ -208,7 +208,7 @@ void NTRIPTlsTest::_certificatePolicy()
         const auto frame = frameAt(frames, index);
         QCOMPARE(frame.data, index == 0 ? first : second);
         QCOMPARE(frame.messageId, index == 0 ? 1005 : 1077);
-        QVERIFY(frame.valid && !frame.filtered);
+        QVERIFY(frame.valid);
         QVERIFY(frame.receivedAtMs > 0);
     }
     QCOMPARE(spy.count("connected"), 1);
@@ -294,7 +294,7 @@ void NTRIPTlsTest::_retireAttempt()
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
-    auto transport = std::make_unique<NTRIPHttpTransport>(configuration, QVector<int>{});
+    auto transport = std::make_unique<NTRIPHttpTransport>(configuration);
     QPointer<NTRIPHttpTransport> alive = transport.get();
     // QSignalSpy keeps its records when a row deletes the transport.
     QSignalSpy connected(transport.get(), &NTRIPTransport::connected);
@@ -357,7 +357,7 @@ void NTRIPTlsTest::_restartRetiresAttempt()
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
-    NTRIPHttpTransport transport(configuration, {});
+    NTRIPHttpTransport transport(configuration);
     MultiSignalSpy spy;
     QVERIFY(spy.init(&transport));
     const auto restart = [&]() {
@@ -406,7 +406,7 @@ void NTRIPTlsTest::_restartRetiresAttempt()
     QTRY_COMPARE_WITH_TIMEOUT(spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
     const auto frame = spy.argument<RTCMDecodedFrame>("correctionFrameReceived");
     QCOMPARE(frame.data, current);
-    QVERIFY(frame.valid && !frame.filtered);
+    QVERIFY(frame.valid);
     QCOMPARE(spy.count("connected"), 1);
     transport.stop();
     QTRY_COMPARE_WITH_TIMEOUT(peer->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
@@ -422,7 +422,7 @@ void NTRIPTlsTest::_reconnectFromTlsFailure()
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
-    NTRIPHttpTransport transport(configuration, {});
+    NTRIPHttpTransport transport(configuration);
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
     QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
@@ -500,7 +500,7 @@ void NTRIPTlsTest::_certificatePinning()
     const QString presentedPin = pinFor(host, rotated ? Certificate::Rotated : Certificate::Loopback);
     const bool pinsNewCertificate = accepted && presentedPin != configuration.pinnedCertificate;
 
-    NTRIPHttpTransport transport(configuration, {});
+    NTRIPHttpTransport transport(configuration);
     QSignalSpy pins(&transport, &NTRIPTransport::certificatePinned);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     _expectSelfSignedWarning();

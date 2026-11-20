@@ -28,7 +28,7 @@ enum class [[nodiscard]] GPSBaudStatus
     Configured,
     Unsupported,
     Cancelled,
-    Error
+    Error,
 };
 
 enum class GPSBaudProbe
@@ -155,7 +155,7 @@ public:
 
     /// An unsupported change fails without a sticky failure; a failed one names the rate in the error detail.
     /// @return true when the link runs at the requested rate.
-    bool setBaudrate(unsigned baudrate);
+    bool setBaudRate(unsigned baudRate);
 
     /// Waits for @a duration, capped by the operation deadline.
     void wait(std::chrono::microseconds duration);
@@ -188,7 +188,8 @@ public:
     }
 
     /// As above, for one command of a sequence: its step, bytes and text reply, or its raw reply matched in the
-    /// received bytes.
+    /// received bytes. A raw reply no received bytes could match (GPSRawAckMatcher::valid()) is an invalid argument:
+    /// the attempt fails without being written, and the failure is sticky.
     GPSConfigurationEvidence transact(const GPSCommandSequence::Command& command);
 
     /// Runs @a sequence in order until a required step fails or I/O fails; failed attempts retry up to their count.
@@ -255,8 +256,8 @@ private:
     /// The attempt @a step would be after a sticky failure: never started, ended by the failure.
     [[nodiscard]] GPSConfigurationEvidence _failedAttempt(GPSConfigurationStep step) const;
 
-    /// setBaudrate() with the link's answer; an unsupported rate leaves no failure.
-    GPSBaudStatus _setBaudrate(unsigned baudrate);
+    /// setBaudRate() with the link's answer; an unsupported rate leaves no failure.
+    GPSBaudStatus _setBaudRate(unsigned baudRate);
 
     /// Reads one bounded chunk and decodes it. @return the chunk's updates.
     GPSReceiveUpdates _readAndDecode(std::chrono::milliseconds timeout);

@@ -12,7 +12,9 @@ using namespace std::chrono_literals;
 
 GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer)
     : GPSProtocolRuntime(family, family.create ? family.create() : nullptr, std::move(io), std::move(observer))
-{}
+{
+    _renewsProtocol = family.create != nullptr;
+}
 
 GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, std::unique_ptr<GPSFamilyProtocol> protocol,
                                        GPSRuntimeIO io, GPSRuntimeObserver observer)
@@ -30,16 +32,18 @@ GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, std::uni
     if (!_io.write) {
         _io.write = [](std::span<const uint8_t>, GPSDeadline) { return GPSWriteResult{}; };
     }
-    if (!_io.setBaudrate) {
-        _io.setBaudrate = [](unsigned) { return GPSBaudStatus::Unsupported; };
+    if (!_io.setBaudRate) {
+        _io.setBaudRate = [](unsigned) { return GPSBaudStatus::Unsupported; };
     }
     if (!_io.clock.wait) {
         _io.clock.wait = [token = _io.cancelToken](std::chrono::microseconds duration) {
+            // The longest sleep between checks for a cancelled wait.
+            constexpr std::chrono::milliseconds CANCEL_POLL = 20ms;
             const auto stopped = [&token] { return token.isCancelled(); };
             const auto until = std::chrono::steady_clock::now() + duration;
             while (!stopped() && std::chrono::steady_clock::now() < until) {
-                std::this_thread::sleep_for(
-                    std::min<std::chrono::steady_clock::duration>(until - std::chrono::steady_clock::now(), 20ms));
+                std::this_thread::sleep_for(std::min<std::chrono::steady_clock::duration>(
+                    until - std::chrono::steady_clock::now(), CANCEL_POLL));
             }
             return !stopped();
         };
@@ -59,6 +63,10 @@ GPSLogCategory GPSProtocolRuntime::logCategory() const
 bool GPSProtocolRuntime::configure(const GPSConfig& config, unsigned& baud)
 {
     _channel._resetError();
+    if (_renewsProtocol) {
+        _protocol = _family.create();
+        _demux = GPSStreamDemux(_family.stream);
+    }
     if (!_protocol) {
         return false;
     }

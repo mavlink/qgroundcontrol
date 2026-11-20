@@ -443,12 +443,19 @@ QGC_GPS_GOLDEN_UPDATE=1 ctest --test-dir build -R GPSGoldenTranscriptTest
 
 `test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with the receiver
 qualification runner and the NTRIP decoder smoke test. With Clang, `-DQGC_GPS_LIBFUZZER=ON` adds the protocol and
-NTRIP libFuzzer harnesses and builds both libraries with ASan and UBSan:
+NTRIP libFuzzer harnesses and builds both libraries with ASan and UBSan. Build them optimized: unoptimized,
+`GPSProtocolFuzzSmoke`'s 10000 runs take about six times as long:
 
 ```bash
-cmake -S test/GPS/Standalone -B build-gps -DCMAKE_CXX_COMPILER=clang++ -DQGC_GPS_LIBFUZZER=ON
+cmake -S test/GPS/Standalone -B build-gps -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang++ \
+    -DQGC_GPS_LIBFUZZER=ON
 cmake --build build-gps && ctest --test-dir build-gps
 ```
+
+The GPS Standalone workflow runs these commands when the GPS sources, the utility libraries they link or `test/GPS`
+change, with `UBSAN_OPTIONS=halt_on_error=1` so that a UBSan report fails the run instead of only printing. It then
+fuzzes each harness for 60 seconds and uploads the input of a crash or hang
+([ci-overview.md](../.github/ci-overview.md#platform-notes)).
 
 ## MultiSignalSpy
 

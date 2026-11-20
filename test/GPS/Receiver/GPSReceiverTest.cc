@@ -7,10 +7,14 @@
 #include <utility>
 #include <variant>
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
 #include <QtCore/QTimer>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 
@@ -20,11 +24,13 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverWorker.h"
+#include "GPSRecordingTransport.h"
 #include "GPSSettingsBindings.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
 #include "NMEASentence.h"
 #include "PositionManager.h"
+#include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "RTKSettings.h"
@@ -118,7 +124,7 @@ void GPSReceiverTest::_outputOverflowWarning_data()
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<bool>("compact");
     QTest::addColumn<QString>("warning");
-    const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
     QTest::newRow("base") << ublox << false
                           << QStringLiteral(
                                  "The receiver produces more output than the connection carries, so corrections are "
@@ -206,18 +212,18 @@ void GPSReceiverTest::_automaticConnection()
     GPSReceiver& receiver = harness.receiver;
     GPSSettingsBindings::bindReceiver(&settings, &receiver);
     settings.receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
-    settings.baseReceiverManufacturers()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
+    settings.baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     settings.connectionType()->setRawValue(RTKSettings::Tcp);
     settings.tcpHost()->setRawValue(QStringLiteral("rtk.example"));
     settings.tcpPort()->setRawValue(2101);
-    settings.useFixedBasePosition()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging));
+    settings.baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging));
 
     // Consent and receiver-managed averaging are checked against the detected family, on the worker.
     receiver.setPersistentChangesAllowed(true);
     QVERIFY(receiver.connectReceiver());
     auto* worker = harness.workers.current();
     QVERIFY(worker);
-    QCOMPARE(worker->type(), GPSType::automatic);
+    QCOMPARE(worker->type(), GPSType::Automatic);
     QVERIFY(worker->capturedConfig().allowPersistentChanges);
     QVERIFY(std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(worker->capturedConfig().base.mode));
     QCOMPARE(receiver._activeManufacturer(), GPS_AUTOMATIC_MANUFACTURER);
@@ -225,29 +231,102 @@ void GPSReceiverTest::_automaticConnection()
     QVERIFY(receiver.detectedReceiver().isEmpty());
 
     QSignalSpy changed(&receiver, &GPSReceiver::receiverChanged);
-    worker->detected(GPSType::unicore);
+    worker->detected(GPSType::Unicore);
     QCOMPARE(changed.size(), 1);
     QCOMPARE(receiver.detectedReceiver(), QStringLiteral("Unicore"));
-    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::unicore));
+    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::Unicore));
     QVERIFY(receiver.activePresentation().receiverAveraging);
     worker->ready(QStringLiteral("UM982 R4.10Build15434"));
     QVERIFY(receiver.facts()->telemetryAvailable());
     QCOMPARE(receiver.detectedReceiver(), QStringLiteral("Unicore"));
     // Automatic stays selected whatever it detects.
-    QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
+    QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 
     receiver.disconnectReceiver();
     QVERIFY(receiver.detectedReceiver().isEmpty());
     // A specific family ignores detections and does not replace the saved manufacturer either.
-    const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
-    settings.baseReceiverManufacturers()->setRawValue(ublox);
-    settings.useFixedBasePosition()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
+    settings.baseReceiverManufacturer()->setRawValue(ublox);
+    settings.baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
     QVERIFY(receiver.connectReceiver());
-    harness.workers.current()->detected(GPSType::septentrio);
+    harness.workers.current()->detected(GPSType::Septentrio);
     QVERIFY(receiver.detectedReceiver().isEmpty());
     QCOMPARE(receiver._activeManufacturer(), ublox);
-    QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), ublox);
+    QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), ublox);
     receiver.disconnectReceiver();
+}
+
+void GPSReceiverTest::_statusTextFollowsState_data()
+{
+    using State = GPSReceiver::State;
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<bool>("forward");
+    // How far the connection gets: "opened", "ready", or "lost" for a ready receiver whose connection fails.
+    QTest::addColumn<QString>("reached");
+    QTest::addColumn<QList<GPSReceiver::State>>("states");
+    QTest::addColumn<QString>("text");
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
+    QTest::newRow("never-connected") << ublox << true << QString() << QList<State>{} << QString();
+    QTest::newRow("connecting") << ublox << true << QStringLiteral("opened") << QList{State::Connecting}
+                                << GPSReceiver::tr("Connecting to receiver...");
+    QTest::newRow("identifying") << GPS_AUTOMATIC_MANUFACTURER << true << QStringLiteral("opened")
+                                 << QList{State::Connecting} << GPSReceiver::tr("Identifying receiver...");
+    // A passive receiver's sentences do not depend on a base station's survey.
+    QTest::newRow("forwarding") << kPassiveManufacturer << true << QStringLiteral("ready")
+                                << QList{State::Connecting, State::Connected}
+                                << GPSReceiver::tr("Passive receiver connected; forwarding its RTCM");
+    QTest::newRow("position-only") << kPassiveManufacturer << false << QStringLiteral("ready")
+                                   << QList{State::Connecting, State::Connected}
+                                   << GPSReceiver::tr("Passive receiver connected; position only");
+    QTest::newRow("lost") << kPassiveManufacturer << true << QStringLiteral("lost")
+                          << QList{State::Connecting, State::Connected, State::Reconnecting}
+                          << GPSReceiver::tr("Connecting automatically...");
+}
+
+void GPSReceiverTest::_statusTextFollowsState()
+{
+    QFETCH(int, manufacturer);
+    QFETCH(bool, forward);
+    QFETCH(QString, reached);
+    QFETCH(QList<GPSReceiver::State>, states);
+    QFETCH(QString, text);
+    const bool lost = reached == QStringLiteral("lost");
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(manufacturer);
+    configuration.forwardReceiverRtcm = forward;
+    useTcp(configuration);
+    // Only a receiver that connects automatically reconnects after its connection was lost.
+    configuration.autoConnect = lost;
+    receiver.setConfiguration(configuration);
+    // The settings and status panels follow the state, so each one has to be notified, as it is reached.
+    QList<GPSReceiver::State> notified;
+    QObject observer;
+    connect(&receiver, &GPSReceiver::receiverChanged, &observer, [&] {
+        if (notified.isEmpty() || notified.constLast() != receiver.state()) {
+            notified.append(receiver.state());
+        }
+    });
+
+    if (!reached.isEmpty()) {
+        QVERIFY(receiver.connectReceiver());
+    }
+    if (reached == QStringLiteral("ready") || lost) {
+        harness.workers.current()->ready();
+    }
+    if (lost) {
+        expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        harness.workers.current()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(notified, states);
+    QCOMPARE(receiver.state(), states.isEmpty() ? GPSReceiver::State::Disconnected : states.constLast());
+    QCOMPARE(receiver.statusText(), text);
+
+    // Without a receiver, and none about to be connected, there is nothing to say.
+    receiver.disconnectReceiver();
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QVERIFY(receiver.statusText().isEmpty());
 }
 
 void GPSReceiverTest::_notificationsFollowCompletedConnection()
@@ -275,7 +354,7 @@ void GPSReceiverTest::_notificationsFollowCompletedConnection()
     const auto observe = [&](const QString& notification) {
         // Each notification arrives once, after the connection is installed.
         QVERIFY(receiver.hasReceiver());
-        QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::ublox));
+        QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
         QVERIFY(receiver.errorMessage().isEmpty());
         notifications.append(notification);
     };
@@ -333,6 +412,11 @@ void GPSReceiverTest::_fixedBasePositionIsGcsPosition()
     auto* worker = harness.workers.current();
     QVERIFY(worker);
     worker->ready();
+    // The configured position is not the ground station's until the receiver reports that it uses it.
+    worker->position(fixReport(GPSFixQuality::NoFix));
+    QVERIFY(!positions.gcsPosition().isValid());
+    worker->baseStatus({.state = GPSBaseState::Valid,
+                        .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 480.0f}});
     // Fixed-mode receivers report only a time fix.
     worker->position(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
@@ -370,24 +454,22 @@ void GPSReceiverTest::_surveyedBasePositionIsGcsPosition()
     deliver(navigating);
     QCOMPARE(positions.gcsPosition().latitude(), 10.0);
 
-    GPSSurveyReport survey;
-    survey.active = false;
-    survey.valid = true;
+    GPSBaseStatus survey;
+    survey.state = GPSBaseState::Valid;
     survey.position = {.latitudeDegrees = 11, .longitudeDegrees = 21, .altitudeMeters = 400};
     survey.meanAccuracyMeters = 1.5;
-    worker->survey(survey);
+    worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.gcsPosition(), QGeoCoordinate(11, 21));
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), 1.5);
 
     survey.meanAccuracyMeters.reset();
-    worker->survey(survey);
+    worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), 2.0);
 
-    survey.valid = false;
-    survey.active = true;
-    worker->survey(survey);
+    survey.state = GPSBaseState::Active;
+    worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
     QVERIFY(!positions.gcsPosition().isValid());
 }
@@ -413,9 +495,8 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     GPSReceiverFactGroup& facts = *receiver.facts();
     QVERIFY(!receiver.facts()->telemetryAvailable());
     emit first->receiverReady();
-    GPSSurveyReport survey{};
-    survey.valid = true;
-    survey.active = true;
+    GPSBaseStatus survey{};
+    survey.state = GPSBaseState::Valid;
     survey.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     survey.duration = std::chrono::seconds(4294967295LL);
     survey.meanAccuracyMeters = 1.5;
@@ -640,7 +721,7 @@ void GPSReceiverTest::_udpPositionOnlyReceiver()
     for (const QByteArray& body : {QByteArray("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"),
                                    QByteArray("$GPGST,092750.000,1,1,1,0,1,1,2"),
                                    QByteArray("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,")}) {
-        stream += NMEAUtils::repairChecksum(body);
+        stream += GPSTest::repairChecksum(body);
     }
     stream += GPSTest::rtcmMessage(1005, 20);
     QUdpSocket sender;
@@ -702,17 +783,17 @@ void GPSReceiverTest::_passiveInputStatus_data()
     QTest::newRow("not-gnss") << GPSInputProblem::NotGNSS << none << true << QString()
                               << QStringLiteral(
                                      "Receiving data that isn't GNSS output. Check the device and baud rate.");
-    QTest::newRow("ubx") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::ublox) << true
+    QTest::newRow("ubx") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::UBlox) << true
                          << QStringLiteral("u-blox (UBX)")
                          << QStringLiteral(
                                 "Receiving u-blox UBX data without position messages. Enable NAV-PVT or "
                                 "NMEA output.");
-    QTest::newRow("sbf") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::septentrio) << true
+    QTest::newRow("sbf") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::Septentrio) << true
                          << QStringLiteral("Septentrio (SBF)")
                          << QStringLiteral(
                                 "Receiving Septentrio SBF data without position messages. Enable "
                                 "PVTGeodetic or NMEA output.");
-    QTest::newRow("nmea") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::passive) << true
+    QTest::newRow("nmea") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::Passive) << true
                           << QStringLiteral("NMEA")
                           << QStringLiteral("Receiving NMEA data without position messages. Enable GGA output.");
     QTest::newRow("corrections-forwarded")
@@ -756,6 +837,19 @@ void GPSReceiverTest::_passiveInputStatus()
     QVERIFY(receiver.facts()->telemetryAvailable());
 }
 
+void GPSReceiverTest::_tcpEndpointNamesHostAsEntered()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    useTcp(configuration);
+    // The zone of a link-local IPv6 address reads like a place marker of QString::arg().
+    configuration.tcpHost = QStringLiteral("fe80::1%2");
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.connectReceiver());
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("fe80::1%2:2101"));
+}
+
 void GPSReceiverTest::_openFailureNamesCause()
 {
     ScriptedGPSReceiver harness;
@@ -776,6 +870,132 @@ void GPSReceiverTest::_openFailureNamesCause()
     QVERIFY(!receiver.hasReceiver());
     QVERIFY(!receiver.facts()->telemetryAvailable());
     QVERIFY(connected.isEmpty());
+}
+
+void GPSReceiverTest::_recordsSessionsStartedWhileOn()
+{
+    TestFixtures::TempDirFixture directory;
+    QTcpServer peer;
+    QVERIFY(peer.listen(QHostAddress::LocalHost));
+    GPSReceiver receiver(nullptr, nullptr, {.recordingDirectory = [&directory] { return directory.path(); }});
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    configuration.autoConnect = false;
+    configuration.connectionType = RTKSettings::Tcp;
+    configuration.tcpHost = QStringLiteral("127.0.0.1");
+    configuration.tcpPort = peer.serverPort();
+    receiver.setConfiguration(configuration);
+    QSignalSpy fileChanges(&receiver, &GPSReceiver::recordingFileChanged);
+    // Connects the receiver and returns the peer's end of its link once the session is ready, which a disconnect
+    // then ends without a configuration failure.
+    const auto connectSession = [&]() -> QTcpSocket* {
+        const auto ready = [&receiver] { return receiver.facts()->telemetryAvailable(); };
+        if (!receiver.connectReceiver() ||
+            (!peer.hasPendingConnections() && !peer.waitForNewConnection(TestTimeout::mediumMs())) ||
+            !UnitTest::waitForCondition(ready, TestTimeout::mediumMs(), QStringLiteral("receiver ready"))) {
+            return nullptr;
+        }
+        return peer.nextPendingConnection();
+    };
+
+    // Off unless turned on, and turning it on leaves the session that already runs alone.
+    QVERIFY(!receiver.recordSessions());
+    QVERIFY(connectSession());
+    QVERIFY(receiver.recordingFile().isEmpty());
+    QSignalSpy recordChanges(&receiver, &GPSReceiver::recordSessionsChanged);
+    receiver.setRecordSessions(true);
+    QCOMPARE(recordChanges.size(), 1);
+    QVERIFY(receiver.recordingFile().isEmpty());
+    receiver.disconnectReceiver();
+    QVERIFY(fileChanges.isEmpty());
+
+    QTcpSocket* const link = connectSession();
+    QVERIFY(link);
+    const QString file = receiver.recordingFile();
+    QCOMPARE(fileChanges.size(), 1);
+    QCOMPARE(QFileInfo(file).absolutePath(), directory.path());
+    QVERIFY2(QRegularExpression(QStringLiteral("^\\d{8}T\\d{6}\\.\\d{3}Z-passive\\.log$"))
+                 .match(QFileInfo(file).fileName())
+                 .hasMatch(),
+             qPrintable(file));
+    QByteArray stream;
+    for (const QByteArray& body : {QByteArray("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"),
+                                   QByteArray("$GPGST,092750.000,1,1,1,0,1,1,2"),
+                                   QByteArray("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,")}) {
+        stream += GPSTest::repairChecksum(body);
+    }
+    QCOMPARE(link->write(stream), stream.size());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation),
+                             TestTimeout::mediumMs());
+
+    // The worker closes the recording as it exits, and the file is the session's only while it runs.
+    receiver.shutdown();
+    QVERIFY(receiver.recordingFile().isEmpty());
+    QCOMPARE(fileChanges.size(), 2);
+    QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{QFileInfo(file).fileName()});
+    QByteArrayList lines = readFile(file).value_or(QByteArray()).split('\n');
+    QCOMPARE(lines.takeFirst(), QByteArray(GPSRecordingTransport::FILE_HEADER));
+    QByteArray received;
+    for (const QByteArray& line : std::as_const(lines)) {
+        const QByteArrayList fields = line.split(' ');
+        if (fields.size() == 3 && fields[1] == GPSRecordingTransport::RECEIVED) {
+            received += QByteArray::fromHex(fields[2]);
+        }
+    }
+    QCOMPARE(received, stream);
+}
+
+void GPSReceiverTest::_recordingFileClearsWhenRecordingFails()
+{
+    TestFixtures::TempDirFixture directory;
+    // A regular file where the recording folder should be.
+    const QString folder = directory.createFile(QStringLiteral("GPSReceiver"), "not a folder");
+    QTcpServer peer;
+    QVERIFY(peer.listen(QHostAddress::LocalHost));
+    GPSReceiver receiver(nullptr, nullptr, {.recordingDirectory = [&folder] { return folder; }});
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    configuration.autoConnect = false;
+    configuration.connectionType = RTKSettings::Tcp;
+    configuration.tcpHost = QStringLiteral("127.0.0.1");
+    configuration.tcpPort = peer.serverPort();
+    receiver.setConfiguration(configuration);
+    receiver.setRecordSessions(true);
+    QSignalSpy fileChanges(&receiver, &GPSReceiver::recordingFileChanged);
+
+    // The link opens although its recording cannot, and the receiver withdraws the file it named.
+    expectLogMessage("GPS.Transport.GPSRecordingTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("file error")));
+    QVERIFY(receiver.connectReceiver());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.facts()->telemetryAvailable(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.recordingFile().isEmpty());
+    QCOMPARE(fileChanges.size() % 2, 0);
+    receiver.shutdown();
+}
+
+void GPSReceiverTest::_sessionWithoutRecordingFolderIsNotRecorded_data()
+{
+    QTest::addColumn<bool>("folderAsked");
+    QTest::newRow("no-folder-source") << false;
+    QTest::newRow("empty-folder") << true;
+}
+
+void GPSReceiverTest::_sessionWithoutRecordingFolderIsNotRecorded()
+{
+    QFETCH(bool, folderAsked);
+    GPSReceiver::Dependencies dependencies;
+    if (folderAsked) {
+        dependencies.recordingDirectory = [] { return QString(); };
+    }
+    ScriptedGPSReceiver harness(nullptr, dependencies);
+    GPSReceiver& receiver = harness.receiver;
+    receiver.setRecordSessions(true);
+
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("No folder to record the receiver session to")));
+    QVERIFY(connectOverTcp(receiver));
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.hasReceiver());
+    QVERIFY(receiver.recordingFile().isEmpty());
 }
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -927,7 +1147,7 @@ void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
     receiver._serialTransportFactory = [factory = gate.factory()](const QString&, GPSCancelToken cancelToken) {
         return factory(std::move(cancelToken));
     };
-    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::passive, 115200, false,
+    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::Passive, 115200, false,
                                    serial.manager.reservePort(QStringLiteral("/test/selected"))));
     QTRY_VERIFY_WITH_TIMEOUT(gate.entered(), TestTimeout::mediumMs());
     QPointer<GPSReceiverWorker> worker = receiver.findChild<GPSReceiverWorker*>();
@@ -962,7 +1182,7 @@ std::unique_ptr<GPSTransport> makePassiveTestTransport(GPSCancelToken cancelToke
                                                        const std::shared_ptr<PassiveTransportState>& state)
 {
     auto transport = std::make_unique<ScriptedReceiver>(std::move(cancelToken));
-    transport->setBaudrateHandler([state](unsigned baud) -> std::optional<bool> {
+    transport->setBaudRateHandler([state](unsigned baud) -> std::optional<bool> {
         state->baud = baud;
         ++state->baudChanges;
         return true;

@@ -32,14 +32,14 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSReceiverFamilies.h"
+#include "GPSRecordingTransport.h"
 #include "MonotonicClock.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "Protocols/Support/UBXReceiverModel.h"
 #include "RTCMFramer.h"
-#include "ReplayGPSTransport.h"
 #include "TCPGPSTransport.h"
-#include "Transport/Support/GPSRecordingTransport.h"
+#include "Transport/Support/ReplayGPSTransport.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -76,7 +76,7 @@ struct Options
     QString recordDirectory;
     QString replayPath;
     unsigned replayBaud = 0;
-    GPSType family = GPSType::ublox;
+    GPSType family = GPSType::UBlox;
     /// The requested role: passive input rather than an RTK base.
     bool passive = false;
     GPSReceiverConfig config;
@@ -210,20 +210,20 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         return "--replay-baud requires --replay";
     }
     if (family == "trimble") {
-        options.family = GPSType::trimble;
+        options.family = GPSType::Trimble;
     } else if (family == "septentrio") {
-        options.family = GPSType::septentrio;
+        options.family = GPSType::Septentrio;
     } else if (family == "femto") {
-        options.family = GPSType::femto;
+        options.family = GPSType::Femto;
     } else if (family == "unicore") {
-        options.family = GPSType::unicore;
+        options.family = GPSType::Unicore;
     } else if (family == "quectel") {
-        options.family = GPSType::quectel;
+        options.family = GPSType::Quectel;
     } else if (family == "passive") {
-        options.family = GPSType::passive;
+        options.family = GPSType::Passive;
     }
     options.passive = role == "passive";
-    if (options.transport == "scripted" && options.family != GPSType::ublox) {
+    if (options.transport == "scripted" && options.family != GPSType::UBlox) {
         return "The scripted peer supports UBX only";
     }
     if (options.fault.startsWith("rtcm-nak") && role != "base") {
@@ -248,7 +248,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.cancelSlackMs = integer("cancel-slack-ms", 1, 60000);
     options.timeoutMs = integer("timeout-ms", 100, 120000);
     options.replayBaud = static_cast<unsigned>(integer("replay-baud", 0, 4000000));
-    if (options.family == GPSType::quectel && !parser.isSet("timeout-ms")) {
+    if (options.family == GPSType::Quectel && !parser.isSet("timeout-ms")) {
         // Role and base changes can require multiple receiver restarts within the driver's 45-second budget.
         options.timeoutMs = 60000;
     }
@@ -303,7 +303,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     // A replay configures nothing; its role and base options only prepare the decoder.
     // The role a family supports is its own: passive input for the passive family, a base for the others.
     if (!valid || (options.transport != "replay" &&
-                   (options.passive != (options.family == GPSType::passive) ||
+                   (options.passive != (options.family == GPSType::Passive) ||
                     gpsValidateReceiverConfig(options.family, options.config) != GPSReceiverConfigError::None))) {
         return "Invalid receiver configuration or numeric option";
     }
@@ -469,7 +469,7 @@ int replayRecording(const Options& options, QJsonObject report)
     QMap<int, int> correctionMessages;
     QMap<int, qint64> correctionBytes;
     int surveys = 0;
-    std::optional<GPSSurveyReport> lastSurvey;
+    std::optional<GPSBaseStatus> lastSurvey;
     GPSIntegrityReport integrity;
     GPSDecodedData::SatelliteCounts satelliteCounts;
     std::chrono::microseconds clockOffset{0};
@@ -492,7 +492,7 @@ int replayRecording(const Options& options, QJsonObject report)
                         const GPSSatelliteReport satellite = satelliteCounts.update(decoded, nowUs());
                         maxInView = std::max(maxInView, satellite.inView.value_or(-1));
                         maxUsed = std::max(maxUsed, satellite.used.value_or(-1));
-                    } else if constexpr (std::is_same_v<Event, GPSSurveyReport>) {
+                    } else if constexpr (std::is_same_v<Event, GPSBaseStatus>) {
                         ++surveys;
                         lastSurvey = decoded;
                     } else if constexpr (std::is_same_v<Event, GPSRTCMFrame>) {
@@ -558,8 +558,8 @@ int replayRecording(const Options& options, QJsonObject report)
     if (surveyDecoded) {
         QJsonObject survey{{"messages", surveys}};
         if (lastSurvey) {
-            survey.insert("active", lastSurvey->active);
-            survey.insert("valid", lastSurvey->valid);
+            survey.insert("active", lastSurvey->state == GPSBaseState::Active);
+            survey.insert("valid", lastSurvey->state == GPSBaseState::Valid);
             survey.insert("duration_s", static_cast<qint64>(lastSurvey->duration.count()));
         }
         report.insert("survey", survey);
@@ -649,16 +649,16 @@ int run(const Options& options)
         watchdog.join();
     });
     QJsonArray recordings;
-    // Each physical session gets its own pair of files; the scripted peer keeps one session across stages.
+    // Each physical session gets its own file; the scripted peer keeps one session across stages.
     const auto recorded = [&](std::unique_ptr<GPSTransport> transport) -> std::unique_ptr<GPSTransport> {
         if (options.recordDirectory.isEmpty() || !transport) {
             return transport;
         }
-        const auto files =
-            GPSRecordingTransport::sessionFiles(options.recordDirectory, options.family, QDateTime::currentDateTime());
-        recordings.append(QJsonObject{{"received", files.received}, {"sent", files.sent}});
+        const QString file = GPSRecordingTransport::sessionFile(options.recordDirectory, options.family,
+                                                                QDateTime::currentDateTimeUtc());
+        recordings.append(file);
         report.insert("recordings", recordings);
-        return std::make_unique<GPSRecordingTransport>(std::move(transport), files);
+        return std::make_unique<GPSRecordingTransport>(std::move(transport), file);
     };
     GPSTestClock scriptedClock;
     std::unique_ptr<UBXReceiverModel> receiver;
@@ -745,21 +745,23 @@ int run(const Options& options)
             ++correctionMessages[messageId];
             correctionBytes[messageId] += static_cast<qint64>(frame.size());
         };
-        sinks.onSurveyIn = [&](const GPSSurveyReport& survey) {
+        sinks.onBaseStatus = [&](const GPSBaseStatus& survey) {
             const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
+            const bool active = survey.state == GPSBaseState::Active;
+            const bool valid = survey.state == GPSBaseState::Valid;
             QString observation = "indeterminate";
             if (prior) {
                 observation = "retained_or_preexisting";
-            } else if (survey.active && !survey.valid) {
+            } else if (active) {
                 observation = "consistent_with_fresh";
-            } else if (survey.valid) {
+            } else if (valid) {
                 observation = "completed_origin_unknown";
             }
             if (surveys.size() < 64) {
                 surveys.append(
                     QJsonObject{{"duration_s", static_cast<qint64>(survey.duration.count())},
-                                {"active", survey.active},
-                                {"valid", survey.valid},
+                                {"active", active},
+                                {"valid", valid},
                                 {"mean_accuracy_m", survey.meanAccuracyMeters ? QJsonValue(*survey.meanAccuracyMeters)
                                                                               : QJsonValue(QJsonValue::Null)},
                                 {"observed_after_ms", elapsed.elapsed()},
@@ -785,7 +787,7 @@ int run(const Options& options)
             stage.insert("correction_messages", messages);
             stage.insert("survey_observations", surveys);
             stage.insert("wire_evidence", evidence.evidence());
-            if (options.family == GPSType::ublox) {
+            if (options.family == GPSType::UBlox) {
                 stage.insert("requested_setting_observations", evidence.requestedSettings(config, options.passive));
             }
             stage.insert("checks", checks);
@@ -954,10 +956,11 @@ int main(int argc, char* argv[])
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
         {"compact-rtcm", "Request compact MSM4 instead of MSM7 RTCM observations from a supporting base"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
-        {"record", "Record each receiver session's raw received and sent bytes into this directory", "directory"},
+        {"record", "Record each receiver session's received and sent bytes and baud changes into this directory",
+         "directory"},
         {"replay",
-         "Decode a recorded receiver stream with --family, as configured for --role and the base options, instead of "
-         "a live transport; nothing is configured or written",
+         "Decode a session recording, or a file of raw receiver output, with --family, as configured for --role and "
+         "the base options, instead of a live transport; nothing is configured or written",
          "file"},
         {"replay-baud", "Replay pacing: 0 reads the recording as fast as possible, otherwise at this line rate", "baud",
          "0"},

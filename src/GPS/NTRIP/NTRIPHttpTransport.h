@@ -22,21 +22,22 @@ public:
     static constexpr std::chrono::milliseconds CONNECT_TIMEOUT{10000};
     static constexpr std::chrono::milliseconds DATA_WATCHDOG{30000};
 
-    NTRIPHttpTransport(const NTRIPConnectionConfig& config, const QVector<int>& rtcmWhitelist,
-                       QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    explicit NTRIPHttpTransport(const NTRIPConnectionConfig& config, QObject* parent = nullptr,
+                                RuntimeScheduler* scheduler = nullptr);
     ~NTRIPHttpTransport() override;
 
     void start() override;
     void stop() override;
     void sendNMEA(const QByteArray& nmea) override;
 
-    void setRtcmWhitelist(const QVector<int>& messageIds) override { _rtcmDecoder.setWhitelist(messageIds); }
-
 private:
     /// Makes @a session the live attempt and follows its response; also the test seam for socketless sessions.
     NTRIPHttpSession* _attachSession(NTRIPHttpSession* session);
     qint64 _nowMs() const;
     void _startConnectTimeout();
+    /// The stream is due to deliver from now on: starts the stall clock unless it runs. A network RTK (VRS) mountpoint
+    /// sends nothing before it is told a position, so the response alone does not start it.
+    void _expectData();
     void _startDataWatchdog(std::chrono::milliseconds delay);
     void _fail(const NTRIPFailure& failure);
     void _retireSession();

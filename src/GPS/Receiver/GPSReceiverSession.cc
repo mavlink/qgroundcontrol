@@ -11,17 +11,17 @@
 
 QGC_LOGGING_CATEGORY(GPSReceiverSessionLog, "GPS.Receiver.GPSReceiverSession")
 
-void GPSBaseStationState::applySurvey(const GPSSurveyReport& report)
+void GPSBaseStationState::applyStatus(const GPSBaseStatus& status)
 {
-    if (!mode || *mode == BaseModeDefinition::Mode::BaseFixed) {
+    if (!mode) {
         return;
     }
     const bool located =
-        std::isfinite(report.position.latitudeDegrees) && std::isfinite(report.position.longitudeDegrees);
-    const double accuracy = report.meanAccuracyMeters.value_or(
-        surveyAccuracyLimitMeters.value_or(std::numeric_limits<double>::quiet_NaN()));
-    if (report.valid && located && std::isfinite(accuracy)) {
-        position = std::pair(report.position, accuracy);
+        std::isfinite(status.position.latitudeDegrees) && std::isfinite(status.position.longitudeDegrees);
+    const double accuracy =
+        status.meanAccuracyMeters.value_or(assumedAccuracyMeters.value_or(std::numeric_limits<double>::quiet_NaN()));
+    if (status.state == GPSBaseState::Valid && located && std::isfinite(accuracy)) {
+        position = std::pair(status.position, accuracy);
     } else {
         position.reset();
     }
@@ -31,7 +31,7 @@ GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType
                                        bool allowPersistentChanges, QString* error)
 {
     GPSReceiverConfig config{.baudRate = baudRate, .allowPersistentChanges = allowPersistentChanges};
-    if (type != GPSType::passive) {
+    if (type != GPSType::Passive) {
         config.base = base;
         // The option is hidden for receivers that cannot send MSM4, so it never blocks their connection.
         config.base.compactObservations = base.compactObservations && gpsReceiverCapabilities(type).compactObservations;
@@ -46,15 +46,15 @@ GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType
 GPSBaseStationState gpsBaseStationStateFor(GPSType type, const GPSReceiverConfig& config)
 {
     GPSBaseStationState state;
-    if (type == GPSType::passive) {
+    if (type == GPSType::Passive) {
         return state;
     }
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode)) {
         state.mode = BaseModeDefinition::Mode::BaseFixed;
-        state.position = std::pair(fixed->position, static_cast<double>(fixed->accuracyMeters));
+        state.assumedAccuracyMeters = fixed->accuracyMeters;
     } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode)) {
         state.mode = BaseModeDefinition::Mode::BaseSurveyIn;
-        state.surveyAccuracyLimitMeters = survey->accuracyMeters;
+        state.assumedAccuracyMeters = survey->accuracyMeters;
     } else {
         state.mode = BaseModeDefinition::Mode::BaseReceiverAveraging;
     }
@@ -167,12 +167,12 @@ GPSObservation GPSReceiverSession::observation(const GPSPositionReport& report, 
     return observation;
 }
 
-void GPSReceiverSession::_onSurvey(const GPSSurveyReport& report)
+void GPSReceiverSession::_onSurvey(const GPSBaseStatus& report)
 {
     if (_connection.role != RTKSettings::ConfiguredBase) {
         return;
     }
-    _base.applySurvey(report);
+    _base.applyStatus(report);
     emit surveyInStatusUpdated(report);
 }
 
@@ -186,7 +186,7 @@ void GPSReceiverSession::_onReady(const QString& identity)
 
 void GPSReceiverSession::_onDetected(GPSType type)
 {
-    if (_connection.type != GPSType::automatic && _connection.type != GPSType::passive) {
+    if (_connection.type != GPSType::Automatic && _connection.type != GPSType::Passive) {
         return;
     }
     _detectedType = type;

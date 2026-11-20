@@ -60,7 +60,7 @@ Event eventOf(const GPSProtocolEvent& decoded)
                 return satellites;
             } else if constexpr (std::is_same_v<Report, GPSDecodedSatelliteUsage>) {
                 return SatelliteUsage{report.timestampUs, report.usedCount};
-            } else if constexpr (std::is_same_v<Report, GPSSurveyReport>) {
+            } else if constexpr (std::is_same_v<Report, GPSBaseStatus>) {
                 return Survey{report.timestampUs, report};
             } else if constexpr (std::is_same_v<Report, GPSRTCMFrame>) {
                 return RTCM{report.bytes};
@@ -146,12 +146,12 @@ public:
             recorded.writtenBytes = result.writtenBytes;
             return result;
         };
-        services.setBaudrate = [this, setBaudrate = transport.setBaudrate](unsigned rate) {
+        services.setBaudRate = [this, setBaudRate = transport.setBaudRate](unsigned rate) {
             if (offline) {
                 ++transportCalls;
                 return GPSBaudStatus::Error;
             }
-            const auto status = setBaudrate(rate);
+            const auto status = setBaudRate(rate);
             _records->push_back({phase, Baud{rate, status}});
             return status;
         };
@@ -227,8 +227,8 @@ std::unique_ptr<GPSProtocolRuntime> configure(const Scenario& scenario, const Li
 {
     run.startedAtUs = link.clock.nowUs();
     run.configuredAtUs = run.startedAtUs;
-    unsigned baud = scenario.config.baudRate ? scenario.config.baudRate : link.receiver.fixedBaudrate();
-    if (scenario.type == GPSType::automatic) {
+    unsigned baud = scenario.config.baudRate ? scenario.config.baudRate : link.receiver.fixedBaudRate();
+    if (scenario.type == GPSType::Automatic) {
         return configureDetected(scenario, baud, link, session, run);
     }
     const GPSReceiverFamily* family = gpsReceiverFamily(scenario.type);

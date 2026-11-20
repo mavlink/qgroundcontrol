@@ -1,5 +1,9 @@
 #include "GPSCorrectionManagerTest.h"
 
+#include <utility>
+
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QNetworkInterface>
@@ -15,7 +19,10 @@
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "RTCMFramer.h"
+#include "RTCMMessageCountModel.h"
 #include "RTCMUdpInput.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
@@ -294,6 +301,350 @@ void GPSCorrectionManagerTest::_settingsOwnRouting()
     QCOMPARE(sent, QList<QByteArray>{ntrip});
 }
 
+void GPSCorrectionManagerTest::_messageFilter_data()
+{
+    QTest::addColumn<QString>("filter");
+    // Of the message IDs 1, 1005, 1077, 1087, 1230 and 4095, each offered once.
+    QTest::addColumn<QList<int>>("taken");
+    QTest::addColumn<QString>("invalidEntry");
+    const QList<int> all{1, 1005, 1077, 1087, 1230, 4095};
+    QTest::newRow("empty") << QString() << all << QString();
+    QTest::newRow("single") << QStringLiteral("1005") << QList<int>{1005} << QString();
+    QTest::newRow("multiple") << QStringLiteral("1087,1005,1077") << QList<int>{1005, 1077, 1087} << QString();
+    QTest::newRow("blank-entries") << QStringLiteral(" 1005,, ,1077,") << QList<int>{1005, 1077} << QString();
+    QTest::newRow("12-bit-bounds") << QStringLiteral("1,4095") << QList<int>{1, 4095} << QString();
+    // Skipping a mistyped entry could leave an empty filter, which takes every message.
+    QTest::newRow("not-a-number") << QStringLiteral("1005,abc,,1077") << QList<int>{} << QStringLiteral("abc");
+    QTest::newRow("semicolon-separator") << QStringLiteral("1005;1077") << QList<int>{} << QStringLiteral("1005;1077");
+    QTest::newRow("space-separator") << QStringLiteral("1005,1077 1087") << QList<int>{} << QStringLiteral("1077 1087");
+    QTest::newRow("zero") << QStringLiteral("1005,0") << QList<int>{} << QStringLiteral("0");
+    QTest::newRow("negative") << QStringLiteral("-1,1005") << QList<int>{} << QStringLiteral("-1");
+    QTest::newRow("above-12-bits") << QStringLiteral("4096") << QList<int>{} << QStringLiteral("4096");
+}
+
+void GPSCorrectionManagerTest::_messageFilter()
+{
+    QFETCH(QString, filter);
+    QFETCH(QList<int>, taken);
+    QFETCH(QString, invalidEntry);
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    if (!invalidEntry.isEmpty()) {
+        expectLogMessage("GPS.Corrections.GPSCorrectionManager", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Invalid RTCM message filter entry")));
+    }
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = filter});
+    const QString error = corrections.messageFilterError();
+    if (invalidEntry.isEmpty()) {
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+    } else {
+        verifyExpectedLogMessage();
+        // The message quotes the entry to correct.
+        QVERIFY2(error.contains(QStringLiteral("\"%1\"").arg(invalidEntry)), qPrintable(error));
+    }
+
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    for (const int messageId : {1, 1005, 1077, 1087, 1230, 4095}) {
+        source->submit(GPSTest::rtcmMessage(static_cast<uint16_t>(messageId)), scheduler.nowMs());
+    }
+    QList<int> routed;
+    for (const QByteArray& frame : std::as_const(sent)) {
+        routed.append(RTCMFramer::frameMessageId(frame));
+    }
+    QCOMPARE(routed, taken);
+}
+
+void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
+{
+    using State = GPSCorrectionManager::State;
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
+    saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::HighestPriority);
+    saved.setFactValue(settings->ntripWhitelist(), QStringLiteral("1005"));
+    QUdpSocket destination;
+    QVERIFY(destination.bind(QHostAddress::LocalHost, 0));
+    configureUdpOutput(saved, settings, QStringLiteral("127.0.0.1"), destination.localPort());
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    GPSSettingsBindings::bindCorrections(settings, &corrections);
+    const QByteArray taken = GPSTest::rtcmMessage(1005, 20);
+    const QByteArray dropped = GPSTest::rtcmMessage(1077, 30);
+    const auto submit = [&scheduler](const auto& source, const QByteArray& frame) {
+        source->submit(frame, scheduler.nowMs());
+        return advanceDiagnostics(scheduler);
+    };
+
+    // Whatever its source, a stream delivers only the messages the filter takes: the others neither reach vehicles
+    // nor make the stream a fresh one.
+    for (const auto category :
+         {GPSCorrectionSettings::LocalReceiver, GPSCorrectionSettings::Ntrip, GPSCorrectionSettings::Udp}) {
+        const auto source = corrections.openSource(category, {});
+        QVERIFY(submit(source, dropped));
+        QCOMPARE(corrections.state(), State::Waiting);
+        QVERIFY(submit(source, taken));
+        QCOMPARE(corrections.state(), State::Fresh);
+        QCOMPARE(corrections.selectedStream().source, static_cast<int>(category));
+        QVERIFY(submit(source, dropped));
+        // The dropped messages are not counted either.
+        const RTCMMessageCountModel* const counts = corrections.messageCounts();
+        QCOMPARE(counts->rowCount(), 1);
+        QCOMPARE(counts->data(counts->index(0), RTCMMessageCountModel::MessageIdRole).toInt(), 1005);
+        QCOMPARE(counts->data(counts->index(0), RTCMMessageCountModel::CountRole).toInt(), 1);
+    }
+    QCOMPARE(sent, (QList<QByteArray>{taken, taken, taken}));
+
+    // An entry that is not a message ID stops routing instead of sending every message, and is reported.
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    QSignalSpy errorChanges(&corrections, &GPSCorrectionManager::messageFilterChanged);
+    expectLogMessage("GPS.Corrections.GPSCorrectionManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid RTCM message filter entry")));
+    settings->ntripWhitelist()->setRawValue(QStringLiteral("1005;1077"));
+    verifyExpectedLogMessage();
+    QVERIFY(corrections.messageFilterError().contains(QStringLiteral("\"1005;1077\"")));
+    QCOMPARE(errorChanges.size(), 1);
+    QVERIFY(submit(ntrip, taken));
+    QCOMPARE(sent.size(), 3);
+    QCOMPARE(corrections.state(), State::Waiting);
+
+    // A corrected or emptied filter applies to the next message.
+    settings->ntripWhitelist()->setRawValue(QStringLiteral("1077"));
+    QVERIFY(corrections.messageFilterError().isEmpty());
+    QCOMPARE(errorChanges.size(), 2);
+    QVERIFY(submit(ntrip, dropped));
+    QVERIFY(submit(ntrip, taken));
+    settings->ntripWhitelist()->setRawValue(QString());
+    QVERIFY(submit(ntrip, taken));
+    QCOMPARE(errorChanges.size(), 2);
+    const QList<QByteArray> routed{taken, taken, taken, dropped, taken};
+    QCOMPARE(sent, routed);
+
+    // UDP forwarding sent what vehicles received: loopback delivers in order.
+    QList<QByteArray> forwarded;
+    while (forwarded.size() < routed.size() && destination.waitForReadyRead(TestTimeout::mediumMs())) {
+        while (destination.hasPendingDatagrams()) {
+            forwarded.append(destination.receiveDatagram().data());
+        }
+    }
+    QCOMPARE(forwarded, routed);
+}
+
+void GPSCorrectionManagerTest::_messageFilterLeavesNoStream()
+{
+    using State = GPSCorrectionManager::State;
+    using Configuration = GPSCorrectionManager::Configuration;
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    const auto submit = [&scheduler](const auto& source, uint16_t messageId) {
+        source->submit(GPSTest::rtcmMessage(messageId, 20), scheduler.nowMs());
+        return advanceDiagnostics(scheduler);
+    };
+    // A filter saved for an NTRIP stream, and a local base station that sends none of its messages.
+    const Configuration automatic{.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005,1077")};
+    corrections.setConfiguration(automatic);
+    const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
+    for (const uint16_t messageId : {1084, 1230, 1074, 1084}) {
+        QVERIFY(submit(local, messageId));
+    }
+    QCOMPARE(corrections.state(), State::Waiting);
+    QVERIFY(sent.isEmpty());
+    // The message names what arrives, so the filter can be completed.
+    QVERIFY2(corrections.messageFilterError().contains(QStringLiteral("(1074, 1084, 1230)")),
+             qPrintable(corrections.messageFilterError()));
+
+    // A stream the filter takes messages of is routed, so nothing is wrong.
+    auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    QVERIFY(submit(ntrip, 1005));
+    QCOMPARE(corrections.state(), State::Fresh);
+    QVERIFY(corrections.messageFilterError().isEmpty());
+    QVERIFY(submit(local, 1074));
+    QVERIFY(corrections.messageFilterError().isEmpty());
+
+    // The messages of a source the routing does not select from are not what keeps corrections from vehicles.
+    Configuration ntripOnly = automatic;
+    ntripOnly.source = GPSCorrectionSettings::Ntrip;
+    corrections.setConfiguration(ntripOnly);
+    ntrip.reset();
+    QVERIFY(advanceDiagnostics(scheduler));
+    QCOMPARE(corrections.state(), State::Waiting);
+    QVERIFY(submit(local, 1074));
+    QVERIFY(corrections.messageFilterError().isEmpty());
+
+    // Once such messages stop arriving, the filter is no longer what stands in the way.
+    corrections.setConfiguration(automatic);
+    QVERIFY(submit(local, 1074));
+    QVERIFY(corrections.messageFilterError().contains(QStringLiteral("(1074)")));
+    // The state is refreshed every second.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + std::chrono::seconds(1)));
+    QVERIFY(corrections.messageFilterError().isEmpty());
+
+    // A long list is cut after the lowest twelve.
+    for (uint16_t messageId = 1113; messageId > 1100; --messageId) {
+        QVERIFY(submit(local, messageId));
+    }
+    QVERIFY2(corrections.messageFilterError().contains(
+                 QStringLiteral("(1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, …)")),
+             qPrintable(corrections.messageFilterError()));
+}
+
+void GPSCorrectionManagerTest::_logsRoutedStream()
+{
+    TestFixtures::TempDirFixture directory;
+    QVERIFY(directory.isValid());
+    QString folder = QDir(directory.path()).filePath(QStringLiteral("first"));
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005,1077")});
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
+    const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    const auto submit = [&scheduler](const auto& source, uint16_t messageId) {
+        source->submit(GPSTest::rtcmMessage(messageId, messageId % 50), scheduler.nowMs());
+    };
+
+    // Off unless turned on.
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    submit(local, 1005);
+    QCOMPARE(sent.size(), 1);
+
+    corrections.setLogToFile(true);
+    QVERIFY(corrections.logToFile());
+    QCOMPARE(changes.size(), 1);
+    const QString file = corrections.logFile();
+    QCOMPARE(QFileInfo(file).absolutePath(), folder);
+    QVERIFY2(QRegularExpression(QStringLiteral("^\\d{8}T\\d{6}\\.\\d{3}Z\\.rtcm3$"))
+                 .match(QFileInfo(file).fileName())
+                 .hasMatch(),
+             qPrintable(file));
+
+    // The log is the stream as vehicles receive it from then on: the frames of the selected source that the message
+    // filter takes, byte for byte.
+    sent.clear();
+    submit(local, 1077);
+    submit(ntrip, 1005);
+    submit(local, 1087);
+    submit(local, 1005);
+    QCOMPARE(sent.size(), 2);
+    // Each tick writes the buffered frames out, so the file can be read while the log goes on.
+    QVERIFY(advanceTick(scheduler));
+    const QByteArray logged = sent.join();
+    QCOMPARE(readFile(file), logged);
+
+    corrections.setLogToFile(false);
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    QCOMPARE(changes.size(), 2);
+    submit(local, 1005);
+    QCOMPARE(readFile(file), logged);
+
+    // The next log is a file of its own, in the folder as it is by then, and shutting down closes it.
+    folder = QDir(directory.path()).filePath(QStringLiteral("second"));
+    corrections.setLogToFile(true);
+    const QString next = corrections.logFile();
+    QCOMPARE(QFileInfo(next).absolutePath(), folder);
+    sent.clear();
+    submit(local, 1077);
+    corrections.shutdown();
+    QCOMPARE(readFile(next), sent.join());
+    QCOMPARE(readFile(file), logged);
+}
+
+void GPSCorrectionManagerTest::_logThatCannotStart_data()
+{
+    QTest::addColumn<bool>("folderKnown");
+    QTest::addColumn<QString>("category");
+    QTest::addColumn<QString>("warning");
+    QTest::newRow("no-folder") << false << QStringLiteral("GPS.Corrections.GPSCorrectionManager")
+                               << QStringLiteral("No folder");
+    // A regular file is where the folder should be.
+    QTest::newRow("folder-unavailable") << true << QStringLiteral("GPS.Corrections.RTCMLogFile")
+                                        << QStringLiteral("file error");
+}
+
+void GPSCorrectionManagerTest::_logThatCannotStart()
+{
+    QFETCH(bool, folderKnown);
+    QFETCH(QString, category);
+    QFETCH(QString, warning);
+    TestFixtures::TempDirFixture directory;
+    const QString folder =
+        folderKnown ? directory.createFile(QStringLiteral("GPSCorrections"), "not a folder") : QString();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
+
+    expectLogMessage(category.toLatin1().constData(), QtWarningMsg, QRegularExpression(warning));
+    corrections.setLogToFile(true);
+    verifyExpectedLogMessage();
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    // Notified although nothing changed, so that a switch bound to the property goes back to off.
+    QCOMPARE(changes.size(), 1);
+
+    // The corrections are routed all the same.
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    const QByteArray frame = GPSTest::rtcmMessage(1005, 20);
+    source->submit(frame, scheduler.nowMs());
+    QCOMPARE(sent, QList<QByteArray>{frame});
+}
+
+void GPSCorrectionManagerTest::_logKeepsExistingFile()
+{
+    // Two logs can be named alike: started within one millisecond, or after the clock was set back.
+    TestFixtures::TempDirFixture directory;
+    const QString earlier = directory.createFile(QStringLiteral("20260102T030405.006Z.rtcm3"), "earlier log");
+    RTCMLogFile log;
+    expectLogMessage("GPS.Corrections.RTCMLogFile", QtWarningMsg, QRegularExpression(QStringLiteral("file error")));
+    QVERIFY(!log.open(earlier));
+    verifyExpectedLogMessage();
+    QVERIFY(log.file().isEmpty());
+    QCOMPARE(readFile(earlier), QByteArray("earlier log"));
+}
+
+void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
+{
+    TestFixtures::TempDirFixture directory;
+    const QByteArray frame = GPSTest::rtcmMessage(1077, 100);
+    ManualScheduler scheduler;
+    // Room for two frames and part of a third.
+    GPSCorrectionManager corrections(
+        nullptr, &scheduler,
+        {.logDirectory = [&directory] { return directory.path(); }, .maxLogFileBytes = 2 * frame.size() + 10});
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    corrections.setLogToFile(true);
+    const QString file = corrections.logFile();
+    QVERIFY(!file.isEmpty());
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+
+    source->submit(frame, scheduler.nowMs());
+    source->submit(frame, scheduler.nowMs());
+    QVERIFY(corrections.logToFile());
+    expectLogMessage("GPS.Corrections.RTCMLogFile", QtWarningMsg, QRegularExpression(QStringLiteral("size limit")));
+    source->submit(frame, scheduler.nowMs());
+    verifyExpectedLogMessage();
+
+    // The log ended and no longer names its file; it holds whole frames, and the routing went on.
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    QCOMPARE(changes.size(), 1);
+    source->submit(frame, scheduler.nowMs());
+    QCOMPARE(sent.size(), 4);
+    QCOMPARE(readFile(file), frame + frame);
+}
+
 void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
 {
     TestFixtures::SettingsFixture saved;
@@ -332,6 +683,40 @@ void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
     settings->rtcmUdpOutputEnabled()->setRawValue(true);
     submitNow(ntrip, marker);
     QCOMPARE(receive(), marker);
+}
+
+void GPSCorrectionManagerTest::_udpOutputReportsSendFailure()
+{
+    QUdpSocket destination;
+    QVERIFY(destination.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = destination.localPort();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    corrections.setConfiguration(
+        {.udpInput = {}, .udpOutput = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = port}});
+    QVERIFY(corrections.udpOutputError().isEmpty());
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::udpOutputChanged);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+
+    // No UDP datagram carries this much, so the socket refuses to send it.
+    const QByteArray oversized(70000, '\0');
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg, QRegularExpression(QStringLiteral("UDP forward failed")));
+    source->submit(oversized, scheduler.nowMs());
+    verifyExpectedLogMessage();
+    // A repeated failure keeps its reason without warning or notifying again.
+    source->submit(oversized, scheduler.nowMs());
+    const QString reason = udpForwarding(corrections)->errorString();
+    QVERIFY(!reason.isEmpty());
+    const QString error = corrections.udpOutputError();
+    QVERIFY2(error.contains(QString::number(port)) && error.endsWith(reason), qPrintable(error));
+    QCOMPARE(changes.size(), 1);
+
+    const QByteArray frame = GPSTest::rtcmMessage(1005, 20);
+    source->submit(frame, scheduler.nowMs());
+    QVERIFY(corrections.udpOutputError().isEmpty());
+    QCOMPARE(changes.size(), 2);
+    QVERIFY(destination.waitForReadyRead(TestTimeout::mediumMs()));
+    QCOMPARE(destination.receiveDatagram().data(), frame);
 }
 
 void GPSCorrectionManagerTest::_udpOutputSkipsOwnInput()
@@ -396,6 +781,8 @@ void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets_data()
     QTest::newRow("unspecified-ipv6") << QStringLiteral("::");
     QTest::newRow("multicast-ipv4") << QStringLiteral("239.255.0.1");
     QTest::newRow("multicast-ipv6") << QStringLiteral("ff02::1");
+    // A numeric zone ID looks like a place marker of the error message.
+    QTest::newRow("zoned-loopback") << QStringLiteral("::1%1");
 }
 
 void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
@@ -416,7 +803,8 @@ void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
     configureUdpOutput(saved, settings, target, port);
     verifyExpectedLogMessage();
     QVERIFY(!udpForwarding(corrections)->isEnabled());
-    QVERIFY(!corrections.udpOutputError().isEmpty());
+    const QString error = corrections.udpOutputError();
+    QVERIFY2(error.contains(target) && error.contains(QString::number(port)), qPrintable(error));
 }
 
 void GPSCorrectionManagerTest::_udpOutputEndpointChanges_data()

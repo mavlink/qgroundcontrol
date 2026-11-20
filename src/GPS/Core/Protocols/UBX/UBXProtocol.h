@@ -31,7 +31,7 @@ namespace UBX {
 /// Receiver identity from MON-VER.
 struct Identity
 {
-    Board board = Board::unknown;
+    Board board = Board::Unknown;
     bool isM8p = false;
     bool protocol27 = false;
     bool timeModeUnsupported = false;
@@ -106,7 +106,8 @@ private:
         uint16_t disableMessage = 0;
     };
 
-    /// How an RTCM activation ended. An unanswered one is resumed by a later streaming service.
+    /// How an RTCM activation ended. An unanswered one is resumed by a later streaming service, until
+    /// Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS in a row settle no output.
     enum class RTCMActivation : uint8_t
     {
         Active,
@@ -128,6 +129,8 @@ private:
         size_t next = 0;
         bool stationPosition = false;
         bool observations = false;
+        /// Activations in a row that settled no output.
+        unsigned stalled = 0;
     };
 
     // Decoding (UBXDecoder.cc)
@@ -155,6 +158,9 @@ private:
     bool _restartLegacySurveyIn(GPSCommandChannel& channel);
     bool _disableTimeMode(GPSCommandChannel& channel);
     bool _waitForSurveyStop(GPSCommandChannel& channel);
+    /// Starts RTCM output for the fixed position the receiver accepted and, once it runs, reports the base valid: no
+    /// receiver message does, as NAV-SVIN describes a survey-in.
+    RTCMActivation _startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed);
     RTCMActivation _activateRTCMOutput(GPSCommandChannel& channel);
     RTCMActivation _activateLegacyRTCMOutput(GPSCommandChannel& channel);
     void _disableUnexpectedMessage(GPSCommandChannel& channel, uint16_t message);

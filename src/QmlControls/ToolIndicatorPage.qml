@@ -15,6 +15,7 @@ RowLayout {
     property bool       fillWindow:         false   // Drawer fills the window below the toolbar
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
     property bool       expandedComponentWaitForParameters: false   // If true, the expanded component won't show until parameters are ready
+    property bool       contentVisible:     true    // False hides the normal view while the expanded view replaces it
     property Component  contentComponent            // Item for the normal view portion of the page
     property Component  expandedComponent           // Item for the expanded portion of the page
     property var        pageProperties              // Allows you to share a QtObject full of properties between pages
@@ -40,6 +41,7 @@ RowLayout {
         id:                 contentItemLoader
         Layout.alignment:   Qt.AlignTop
         Layout.fillWidth:   fillWindow
+        visible:            control.contentVisible
         sourceComponent:    _showMainComponent ? contentComponent : undefined
 
         property var pageProperties: control.pageProperties
@@ -50,7 +52,7 @@ RowLayout {
         Layout.preferredWidth:  visible ? 1 : -1
         Layout.fillHeight:      true
         color:                  QGroundControl.globalPalette.borderSubtle
-        visible:                expanded
+        visible:                expanded && control.contentVisible
     }
 
     QGCLabel {

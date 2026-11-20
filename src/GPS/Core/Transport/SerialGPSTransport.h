@@ -18,6 +18,7 @@ public:
     /// How long open() keeps retrying a device it is not permitted to open yet.
     static constexpr std::chrono::milliseconds OPEN_TIMEOUT{30000};
 
+    /// An @a openTimeout of std::chrono::milliseconds::max() retries until a stop is requested.
     SerialGPSTransport(QString device, GPSCancelToken cancelToken,
                        std::chrono::milliseconds openTimeout = OPEN_TIMEOUT);
     ~SerialGPSTransport() override;
@@ -29,7 +30,7 @@ public:
     /// True once the port hits an error the receive loop should stop retrying past.
     bool fatalError() const override;
 
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
 protected:
     QIODevice* device() const override;

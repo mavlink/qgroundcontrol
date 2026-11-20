@@ -6,13 +6,14 @@
 
 target_sources(
     QGCGPSCore
-    PRIVATE GPSASCIILog.h
-            NMEAFramer.h
-            NMEANavigationEpoch.cc
-            NMEANavigationEpoch.h
-            NMEASatellites.cc
-            NMEASatellites.h
-            NMEASentence.cc
-            NMEASentence.h
+    PRIVATE
+        GPSASCIILog.h
+        NMEAFramer.h
+        NMEANavigationEpoch.cc
+        NMEANavigationEpoch.h
+        NMEASatellites.cc
+        NMEASatellites.h
+        NMEASentence.cc
+        NMEASentence.h
 )
 target_include_directories(QGCGPSCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

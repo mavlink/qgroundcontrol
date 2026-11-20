@@ -2,7 +2,7 @@ about M8P rejects RTCM activation for a fixed base
 request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
 configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=20ms
   identity "NEO-M8P-2 HPG 1.40"
-  error "u-blox receiver rejected 'UBX-CFG-MSG'"
+  error "u-blox receiver did not start RTCM output"
   baud 115200 configured
   write "UBX-MON-VER" 8 acknowledged required
     b5620a0400000e34

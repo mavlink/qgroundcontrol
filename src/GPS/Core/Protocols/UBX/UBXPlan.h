@@ -15,32 +15,33 @@
 namespace UBX {
 enum class Board : uint8_t
 {
-    unknown = 0,
-    u_blox5 = 5,
-    u_blox6 = 6,
-    u_blox7 = 7,
-    u_blox8 = 8,
-    u_blox9 = 9,
-    u_blox9_F9P_L1L2 = 10,
-    u_blox10 = 11,
-    u_blox9_F9P_L1L5 = 12,
-    u_blox10_L1L5 = 13,
-    u_blox_X20 = 14
+    Unknown = 0,
+    UBlox5 = 5,
+    UBlox6 = 6,
+    UBlox7 = 7,
+    UBlox8 = 8,
+    UBlox9 = 9,
+    UBlox9F9PL1L2 = 10,
+    UBlox10 = 11,
+    UBlox9F9PL1L5 = 12,
+    UBlox10L1L5 = 13,
+    UBloxX20 = 14,
 };
 
 /// What configuration may rely on for a board. The MON-VER hardware version selects a generation; the firmware and
 /// module strings then refine u-blox 9 to F9P and u-blox 10 to DAN-F10N.
 struct ReceiverProfile
 {
-    Board board = Board::unknown;
+    Board board = Board::Unknown;
     /// MON-VER hwVersion of a generation; refined boards have none.
     std::string_view hardwareVersion{};
     /// RTCM3 base output (F9P and X20); only these receivers are configured as a base.
     bool rtcmOutput = false;
     /// The board alone tells whether it can be a base station.
     bool baseCapabilityKnown = false;
-    /// GPS L5 is broadcast unhealthy while pre-operational; L1/L5 receivers take the L1 health flag instead.
-    bool l5HealthOverride = false;
+    /// The receiver has GPS L5 and is told to use it: a NEO-F9P ships with the signal disabled, and GPS L5 is broadcast
+    /// unhealthy while pre-operational, so the receiver takes the L1 health flag for it instead.
+    bool gpsL5 = false;
     /// Measurement period (CFG-RATE-MEAS) until RTCM output starts. F9P computes 5 Hz with RTK and four constellations
     /// on firmware 1.50 and later; X20 could run at 25 Hz, but drops out at 115200 baud with RTK.
     uint16_t measurementPeriodMs = 100;
@@ -51,31 +52,31 @@ struct ReceiverProfile
 inline constexpr std::array RECEIVER_PROFILES = {
     ReceiverProfile{},
     // Generations before u-blox 8 cannot output RTCM, so they are never configured as a base.
-    ReceiverProfile{.board = Board::u_blox5, .hardwareVersion = "00040005", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox6, .hardwareVersion = "00040007", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox7, .hardwareVersion = "00070000", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox8, .hardwareVersion = "00080000"},
+    ReceiverProfile{.board = Board::UBlox5, .hardwareVersion = "00040005", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox6, .hardwareVersion = "00040007", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox7, .hardwareVersion = "00070000", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox8, .hardwareVersion = "00080000"},
     ReceiverProfile{
-        .board = Board::u_blox9, .hardwareVersion = "00190000", .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox9_F9P_L1L2,
+        .board = Board::UBlox9, .hardwareVersion = "00190000", .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBlox9F9PL1L2,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
     ReceiverProfile{
-        .board = Board::u_blox10, .hardwareVersion = "000A0000", .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox9_F9P_L1L5,
+        .board = Board::UBlox10, .hardwareVersion = "000A0000", .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBlox9F9PL1L5,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
-                    .l5HealthOverride = true,
+                    .gpsL5 = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox10_L1L5, .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox_X20,
+    ReceiverProfile{.board = Board::UBlox10L1L5, .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBloxX20,
                     .hardwareVersion = "000B0000",
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
-                    .l5HealthOverride = true,
+                    .gpsL5 = true,
                     .protocol27 = true},
 };
 
@@ -97,7 +98,7 @@ inline constexpr std::array RECEIVER_PROFILES = {
             return profile.board;
         }
     }
-    return Board::unknown;
+    return Board::Unknown;
 }
 }  // namespace UBX
 
@@ -145,24 +146,21 @@ inline constexpr uint16_t BASE_MEASUREMENT_PERIOD_MS = 1000;
 struct ValsetItem
 {
     template <typename T>
-    constexpr ValsetItem(CfgKey<T> setting, std::type_identity_t<T> setValue, bool when = true)
+    constexpr ValsetItem(CfgKey<T> setting, std::type_identity_t<T> setValue)
         : key(setting.id)
         , value(static_cast<uint32_t>(static_cast<std::make_unsigned_t<T>>(setValue)))
-        , included(when)
     {}
 
-    constexpr ValsetItem(MsgOutKey output, uint8_t rate, bool when = true)
+    constexpr ValsetItem(MsgOutKey output, uint8_t rate)
         : key(output.i2c.id)
         , value(rate)
         , msgOut(true)
-        , included(when)
     {}
 
     /// The key, or the I2C key of a CFG-MSGOUT family.
     uint32_t key;
     uint32_t value;
     bool msgOut = false;
-    bool included = true;
 };
 
 /// What a batch that is rejected, unanswered or not written means for configuration.
@@ -188,7 +186,7 @@ struct ValsetBatch
 
 /// Protocol 27+ port setup at the detected baud rate: UBX only on UART1, 8N1.
 [[nodiscard]] ValsetBatch uart1Protocols();
-[[nodiscard]] ValsetBatch uart1Baudrate(uint32_t baudrate);
+[[nodiscard]] ValsetBatch uart1BaudRate(uint32_t baudRate);
 /// Protocol 27+ configuration before jamming detection: ports, navigation, odometer and RTK.
 [[nodiscard]] std::vector<ValsetBatch> portsAndNavigation(const ReceiverProfile& profile);
 /// Probes CFG-SEC-JAMDET, which F9 HPG 1.50+, F9 L1L5 and X20 have instead of CFG-ITFM.
@@ -231,13 +229,15 @@ inline constexpr uint16_t LEGACY_PORT_USB = 3;
 
 /// CFG-PRT of UART1 and USB as one message, which older receivers take: UBX in, UBX and RTCM3 out, and NMEA out on USB
 /// as the protocol 27+ configuration keeps it.
-[[nodiscard]] std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudrate);
+[[nodiscard]] std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudRate);
 
 /// 5 Hz, UTC-aligned.
 inline constexpr CfgRate LEGACY_SURVEY_RATE{.measRate = 200, .navRate = 1, .timeRef = 0};
 inline constexpr CfgRate LEGACY_BASE_RATE{.measRate = BASE_MEASUREMENT_PERIOD_MS, .navRate = 1, .timeRef = 0};
 /// Updates only the dynamic model and the fix mode (3D only).
 inline constexpr CfgNav5 LEGACY_NAVIGATION{.mask = 0x0005, .dynModel = STATIONARY_DYNAMIC_MODEL, .fixMode = 2};
+/// NAV-SVINFO once a second of the 5 Hz survey.
+inline constexpr uint8_t LEGACY_SURVEY_SATELLITE_RATE = 5;
 /// NAV-PVT, status, satellite and MON-HW (antenna and jamming) rates during the survey.
 [[nodiscard]] std::array<MessageRate, 5> legacyMessageOutput();
 inline constexpr MessageRate LEGACY_SURVEY_STATUS{Msg::NAV_SVIN, SURVEY_STATUS_RATE};
@@ -245,6 +245,9 @@ inline constexpr MessageRate LEGACY_SURVEY_STATUS{Msg::NAV_SVIN, SURVEY_STATUS_R
 [[nodiscard]] std::array<MessageRate, 10> legacyDisableRTCMOutput();
 /// Survey status and satellite rates for the 1 Hz base; rejections are ignored.
 [[nodiscard]] std::array<MessageRate, 2> legacyBaseStatus();
+/// Streaming services in a row that may resume the RTCM activation without settling another output. A slow receiver
+/// settles some in each; one that stops answering gets about five times the u-blox 8 reply time before it fails.
+inline constexpr unsigned LEGACY_RTCM_ACTIVATION_ATTEMPTS = 5;
 
 /// What a legacy RTCM output gives a rover. A base needs the station position and the observations of at least one
 /// constellation; M8P firmware versions differ in the RTCM messages they support, so the others may be rejected.

@@ -26,14 +26,14 @@ struct RTKSettingsFixture
 
     explicit RTKSettingsFixture(int manufacturer)
     {
-        const bool passive = manufacturer == gpsReceiverManufacturerForType(GPSType::passive);
+        const bool passive = manufacturer == gpsReceiverManufacturerForType(GPSType::Passive);
         saved.setFactValue(autoConnect, false);
         saved.setFactValue(settings->receiverRole(), passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase);
         saved.setFactValue(settings->forwardReceiverRtcm(), true);
-        saved.setFactValue(settings->baseReceiverManufacturers(),
-                           passive ? settings->baseReceiverManufacturers()->rawValue() : QVariant(manufacturer));
+        saved.setFactValue(settings->baseReceiverManufacturer(),
+                           passive ? settings->baseReceiverManufacturer()->rawValue() : QVariant(manufacturer));
         saved.setFactValue(settings->udpPort(), settings->udpPort()->rawValue());
-        saved.setFactValue(settings->useFixedBasePosition(), 0);
+        saved.setFactValue(settings->baseMode(), 0);
         saved.setFactValue(settings->serialDevice(), QStringLiteral("/test/receiver"));
         saved.setFactValue(settings->serialBaudRate(), 115200);
         saved.setFactValue(settings->fixedBasePositionLatitude(), 0);
@@ -89,11 +89,12 @@ public:
 
     void disconnect() { _receiver->disconnectReceiver(); }
 
-    /// Reports a valid survey at kSurveyedPosition; an unknown accuracy is unavailable.
+    /// Reports a survey at kSurveyedPosition, finished unless @a active; an unknown accuracy is unavailable.
     void survey(std::optional<double> accuracy, bool active = false)
     {
-        _workers.current()->survey(
-            {.position = kSurveyedPosition, .meanAccuracyMeters = accuracy, .valid = true, .active = active});
+        _workers.current()->baseStatus({.state = active ? GPSBaseState::Active : GPSBaseState::Valid,
+                                        .position = kSurveyedPosition,
+                                        .meanAccuracyMeters = accuracy});
     }
 
 private:

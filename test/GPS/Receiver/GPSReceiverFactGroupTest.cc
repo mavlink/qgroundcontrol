@@ -64,6 +64,58 @@ void GPSReceiverFactGroupTest::_satelliteCounts()
     QCOMPARE(solution(facts), Solution{});
 }
 
+void GPSReceiverFactGroupTest::_constellationCounts()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(connectOverTcp(receiver));
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    QSignalSpy changes(&receiver, &GPSReceiver::constellationsChanged);
+    GPSSatelliteReport report;
+    report.timestampUs = 1;
+    report.inView = 18;
+    report.addConstellation({GPSConstellation::Unknown, 1, 1});
+    report.addConstellation({GPSConstellation::GPS, 10, 8});
+    report.addConstellation({GPSConstellation::Galileo, 7, std::nullopt});
+    worker->satellites(report);
+    // An unknown used count is -1, as the satellite Facts have it.
+    QCOMPARE(receiver.constellations(), (QList<GPSConstellationSatellites>{{GPSConstellation::Unknown, 1, 1},
+                                                                           {GPSConstellation::GPS, 8, 10},
+                                                                           {GPSConstellation::Galileo, -1, 7}}));
+    QStringList names;
+    for (const GPSConstellationSatellites& constellation : receiver.constellations()) {
+        names.append(constellation.name());
+    }
+    QCOMPARE(names, (QStringList{QStringLiteral("Other"), QStringLiteral("GPS"), QStringLiteral("Galileo")}));
+    QCOMPARE(changes.size(), 1);
+
+    // A later view with the same counts is no change; a changed count is.
+    report.timestampUs = 2;
+    worker->satellites(report);
+    QCOMPARE(changes.size(), 1);
+    report.constellations[2].used = 6;
+    worker->satellites(report);
+    QCOMPARE(changes.size(), 2);
+    QCOMPARE(receiver.constellations().last().used, 6);
+
+    // A receiver that identifies no constellation has none to list: its one entry would repeat the totals.
+    GPSSatelliteReport unidentified;
+    unidentified.timestampUs = 3;
+    unidentified.inView = 9;
+    unidentified.used = 7;
+    unidentified.addConstellation({GPSConstellation::Unknown, 9, 7});
+    worker->satellites(unidentified);
+    QVERIFY(receiver.constellations().isEmpty());
+    QCOMPARE(solution(*receiver.facts()), (Solution{.inView = 9, .used = 7}));
+    QCOMPARE(changes.size(), 3);
+
+    worker->satellites(report);
+    QCOMPARE(receiver.constellations().size(), 3);
+    receiver.disconnectReceiver();
+    QVERIFY(receiver.constellations().isEmpty());
+    QCOMPARE(changes.size(), 5);
+}
+
 void GPSReceiverFactGroupTest::_currentBaseSaveValidity_data()
 {
     QTest::addColumn<QString>("field");
@@ -87,12 +139,12 @@ void GPSReceiverFactGroupTest::_currentBaseSaveValidity()
     QVERIFY(connectOverTcp(harness.receiver));
     ScriptedReceiverWorker* const worker = harness.workers.current();
     GPSReceiverFactGroup& facts = *harness.receiver.facts();
-    GPSSurveyReport survey{.position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                           .meanAccuracyMeters = 1.0};
-    worker->survey(survey);
+    GPSBaseStatus survey{.position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                         .meanAccuracyMeters = 1.0};
+    worker->baseStatus(survey);
     QVERIFY(!facts.canSaveCurrentBasePosition());
-    survey.valid = true;
-    worker->survey(survey);
+    survey.state = GPSBaseState::Valid;
+    worker->baseStatus(survey);
     QVERIFY(facts.canSaveCurrentBasePosition());
     QCOMPARE(facts.currentBasePosition(),
              std::optional(GPSBaseStationConfig::Fixed{.position = survey.position, .accuracyMeters = 1.0f}));
@@ -102,13 +154,13 @@ void GPSReceiverFactGroupTest::_currentBaseSaveValidity()
     } else {
         survey.position.altitudeMeters = static_cast<float>(value);
     }
-    worker->survey(survey);
+    worker->baseStatus(survey);
     // Notified only when the result changes.
     QCOMPARE(changes.size(), expected ? 0 : 1);
     QCOMPARE(facts.canSaveCurrentBasePosition(), expected);
     QCOMPARE(facts.property("canSaveCurrentBasePosition").toBool(), expected);
-    survey.valid = false;
-    worker->survey(survey);
+    survey.state = GPSBaseState::Inactive;
+    worker->baseStatus(survey);
     QVERIFY(!facts.canSaveCurrentBasePosition());
 }
 
@@ -167,7 +219,10 @@ void GPSReceiverFactGroupTest::_silentReceiverClearsSolution()
     GPSSatelliteReport satellites;
     satellites.inView = 12;
     satellites.used = 9;
+    satellites.addConstellation({GPSConstellation::GPS, 12, 9});
     worker->satellites(satellites);
+    QSignalSpy constellations(&harness.receiver, &GPSReceiver::constellationsChanged);
+    QCOMPARE(harness.receiver.constellations().size(), 1);
     auto report = fixReport(GPSFixQuality::Fix3D);
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
     report.integrity.antenna.state = GPSIntegrityReport::AntennaState::Open;
@@ -181,27 +236,33 @@ void GPSReceiverFactGroupTest::_silentReceiverClearsSolution()
     // Passive and position-only links stay connected while silent; their last solution must not linger.
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(6)));
     QCOMPARE(solution(facts), Solution{});
+    QVERIFY(harness.receiver.constellations().isEmpty());
+    QCOMPARE(constellations.size(), 1);
 }
 
 void GPSReceiverFactGroupTest::_summaryLabel()
 {
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
-    GPSReceiverFactGroup& facts = *receiver.facts();
     QSignalSpy changed(&receiver, &GPSReceiver::summaryLabelChanged);
     QVERIFY(receiver.summaryLabel().isEmpty());
-    facts.fixType()->setRawValue(static_cast<int>(GPSFixQuality::RTKFixed));
+    // A passive receiver reports its fix.
+    QVERIFY(connectOverTcp(receiver, receiverConfiguration(kPassiveManufacturer)));
+    harness.workers.current()->position(fixReport(GPSFixQuality::RTKFixed));
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Fixed", "RTK fixed fix"));
-    facts.fixType()->setRawValue(static_cast<int>(GPSFixQuality::NoFix));
+    harness.workers.current()->position(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(receiver.property("summaryLabel").toString(), GPSReceiver::tr("No fix"));
     QCOMPARE(changed.size(), 2);
+    receiver.disconnectReceiver();
+    QVERIFY(receiver.summaryLabel().isEmpty());
 
     // A configured base reports its survey state instead of its fix.
     QVERIFY(connectOverTcp(receiver));
     QCOMPARE(receiver.activeRole(), RTKSettings::ConfiguredBase);
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Base"));
-    facts.active()->setRawValue(true);
+    harness.workers.current()->baseStatus({.state = GPSBaseState::Active});
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Survey", "Base survey-in in progress"));
+    QCOMPARE(changed.size(), 5);
 }
 
 UT_REGISTER_TEST(GPSReceiverFactGroupTest, TestLabel::Unit)

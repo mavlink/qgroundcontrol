@@ -1436,6 +1436,7 @@ class TestRealPageDefinitions:
         }
         for name in (
             "correctionSource",
+            "ntripWhitelist",
             "rtcmUdpInputEnabled",
             "rtcmUdpInputPort",
             "rtcmUdpOutputEnabled",
@@ -1448,17 +1449,23 @@ class TestRealPageDefinitions:
         assert 'heading: qsTr("UDP Forwarding")' in qml
         assert "gpsCorrectionSettings.userVisible" in qml
         # The generated NTRIP groups hide with the NTRIP settings group, as its hand-written panels do.
-        assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 3
+        assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 2
         assert "NTRIPPasswordField" in qml
+        # The log switch is a setting of the routing, not part of the status the toolbar drop-down shows.
+        assert "CorrectionsLogSwitch" in qml
         assert "correctionSourceInstance" not in qml
         assert "injectLocalReceiver" not in qml
 
     def test_gnss_receiver_page(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"
         receiver = load_page_def(pages_dir / "GNSSReceiver.SettingsUI.json")
+        # The receiver form is listed group by group, so the sidebar and the search reach each of them.
         assert [group.component for group in receiver.groups] == [
             "GPSReceiverStatus",
-            "GPSReceiverSettings",
+            "GPSReceiverConnection",
+            "GPSReceiverBaseStation",
+            "GPSReceiverBaseSites",
+            "GPSReceiverConnectControls",
             "GcsPositionStatus",
         ]
         # The status section says so when no receiver is connected instead of showing an empty page.

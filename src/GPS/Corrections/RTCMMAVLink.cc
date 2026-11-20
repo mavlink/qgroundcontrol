@@ -4,6 +4,7 @@
 #include <memory>
 #include <utility>
 
+#include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
@@ -13,7 +14,7 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
-QGC_LOGGING_CATEGORY(RTCMMAVLinkLog, "GPS.Corrections.RTCMMavlink")
+QGC_LOGGING_CATEGORY(RTCMMAVLinkLog, "GPS.Corrections.RTCMMAVLink")
 static_assert(RTCMMAVLinkPacket::kFragmentLen == MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN);
 
 namespace {
@@ -45,10 +46,24 @@ RTCMMAVLink::Output makeOutput(const std::shared_ptr<LinkInterface>& link)
     };
 }
 
+/// The link that carries corrections to @a vehicle: its primary link while that is connected, and neither a log
+/// replay nor a high-latency link such as a satellite modem, which cannot carry the kilobytes per second they are.
+std::shared_ptr<LinkInterface> correctionLink(Vehicle* vehicle)
+{
+    if (!vehicle || !vehicle->vehicleLinkManager()) {
+        return nullptr;
+    }
+    auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!link || !link->isConnected() || link->isLogReplay() || link->linkConfiguration()->isHighLatency()) {
+        return nullptr;
+    }
+    return link;
+}
+
 }  // namespace
 
 RTCMMAVLink::RTCMMAVLink()
-    : _outputProvider(vehicleLinkOutputs())
+    : _outputProvider([this]() { return vehicleLinkOutputs(_vehicles)(); })
 {
     qCDebug(RTCMMAVLinkLog) << this;
 }
@@ -58,23 +73,26 @@ RTCMMAVLink::~RTCMMAVLink()
     qCDebug(RTCMMAVLinkLog) << this;
 }
 
-RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs()
+RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSettings::CorrectionVehicles selection)
 {
-    return []() {
+    return [selection]() {
         QList<std::shared_ptr<LinkInterface>> links;
         QList<Output> outputs;
         auto* manager = MultiVehicleManager::instance();
         if (!manager) {
             return outputs;
         }
+        // Compared, never dereferenced: no vehicle matches while none is active, or while the active one is being
+        // removed and has already left the list.
+        const Vehicle* const activeVehicle = manager->activeVehicle();
         auto* vehicles = manager->vehicles();
         for (int index = 0; index < vehicles->count(); ++index) {
             auto* vehicle = vehicles->value<Vehicle*>(index);
-            if (!vehicle || !vehicle->vehicleLinkManager()) {
+            if (selection == GPSCorrectionSettings::ActiveVehicle && vehicle != activeVehicle) {
                 continue;
             }
-            auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
-            if (!link || !link->isConnected() || link->isLogReplay() || links.contains(link)) {
+            auto link = correctionLink(vehicle);
+            if (!link || links.contains(link)) {
                 continue;
             }
             outputs.append(makeOutput(link));
@@ -82,6 +100,35 @@ RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs()
         }
         return outputs;
     };
+}
+
+bool RTCMMAVLink::activeVehicleLinkShared()
+{
+    auto* manager = MultiVehicleManager::instance();
+    if (!manager) {
+        return false;
+    }
+    // Used only as a member of the list, which a vehicle being removed has already left.
+    const Vehicle* const activeVehicle = manager->activeVehicle();
+    auto* vehicles = manager->vehicles();
+    std::shared_ptr<LinkInterface> link;
+    for (int index = 0; index < vehicles->count(); ++index) {
+        if (auto* vehicle = vehicles->value<Vehicle*>(index); vehicle && vehicle == activeVehicle) {
+            link = correctionLink(vehicle);
+            break;
+        }
+    }
+    if (!link) {
+        return false;
+    }
+    for (int index = 0; index < vehicles->count(); ++index) {
+        auto* vehicle = vehicles->value<Vehicle*>(index);
+        if (vehicle && vehicle != activeVehicle && vehicle->vehicleLinkManager() &&
+            vehicle->vehicleLinkManager()->containsLink(link.get())) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void RTCMMAVLink::setOutputProvider(OutputProvider provider)

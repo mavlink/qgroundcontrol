@@ -40,6 +40,7 @@ on:
       - 'src/**/*.cmake'
       - 'src/Vehicle/FactGroups/VehicleGPSFactGroup.h'
       - 'src/FactSystem/factmetadata.schema.json'
+      - 'test/GPS/**/CMakeLists.txt'
       - 'src/VideoManager/GStreamer/README.md'
       - 'docs/.vitepress/config.mjs'
       - 'docs/en/qgc-user-guide/getting_started/download_and_install.md'
@@ -102,6 +103,7 @@ jobs:
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             src/FactSystem/factmetadata.schema.json
             src/VideoManager/GStreamer/README.md
+            test/GPS/**/CMakeLists.txt
             tools
             deploy
             android/build.gradle

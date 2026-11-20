@@ -55,6 +55,16 @@ std::chrono::milliseconds retryAfter(const QHttpHeaders& headers, const QDateTim
     const qint64 maxMs = NTRIPFailure::MAX_RETRY_AFTER.count();
     return std::chrono::milliseconds{std::clamp(utcNow.msecsTo(*deadline), qint64(0), maxMs)};
 }
+
+/// Caster-supplied text for an error detail: without markup or control characters, on one line, and capped.
+QString errorPreview(QString text)
+{
+    static const QRegularExpression htmlTags(QStringLiteral("<[^>]*(?:>|$)"));
+    static const QRegularExpression controls(QStringLiteral("[\\x00-\\x08\\x0e-\\x1f\\x7f]"));
+    text.remove(htmlTags);
+    text.remove(controls);
+    return text.simplified().left(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS);
+}
 }  // namespace
 
 NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, NTRIPHttpPurpose purpose)
@@ -113,12 +123,7 @@ void NTRIPHttpDecoder::_fail(Result& result, const QString& detail, NTRIPError c
 
 void NTRIPHttpDecoder::_finishError(Result& result)
 {
-    static const QRegularExpression htmlTags(QStringLiteral("<[^>]*(?:>|$)"));
-    static const QRegularExpression controls(QStringLiteral("[\\x00-\\x08\\x0e-\\x1f\\x7f]"));
-    QString preview = QString::fromUtf8(_errorBody);
-    preview.remove(htmlTags);
-    preview.remove(controls);
-    preview = preview.simplified().left(MAX_ERROR_PREVIEW_CHARS);
+    const QString preview = errorPreview(QString::fromUtf8(_errorBody));
     result.failure = std::exchange(_pendingFailure, std::nullopt);
     if (!preview.isEmpty()) {
         result.failure->detail += QStringLiteral(" \u2014 ") + preview;
@@ -129,6 +134,20 @@ void NTRIPHttpDecoder::_finishError(Result& result)
     result.body.clear();
     result.connected = false;
     result.complete = false;
+}
+
+QString NTRIPHttpDecoder::_redirectDetail(int status, const QHttpHeaders& headers)
+{
+    const QString target = errorPreview(QString::fromLatin1(headers.value(QHttpHeaders::WellKnownHeader::Location)));
+    if (target.isEmpty()) {
+        return tr("The caster redirected the request (HTTP %1) without naming a target. Redirects are not followed.")
+            .arg(status);
+    }
+    // One arg() pass: a second would take a "%1" in the target for a place marker.
+    //: %1 is the address the caster names, %2 the HTTP status code
+    return tr("The caster redirected the request to %1 (HTTP %2). Redirects are not followed: change the NTRIP "
+              "settings to connect there.")
+        .arg(target, QString::number(status));
 }
 
 void NTRIPHttpDecoder::_beginIcyBody(Result& result)
@@ -263,16 +282,24 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         }
         if (_status.code >= 300) {
             const int status = _status.code;
-            const auto code = status == 401                    ? NTRIPError::AuthFailed
-                              : status == 400 || status == 403 ? NTRIPError::RequestRejected
-                                                               : NTRIPError::HttpError;
-            const QString detail = status == 401 ? tr("Authentication failed (401): check username and password")
-                                                 : tr("HTTP %1: %2").arg(status).arg(_status.reason);
+            // Redirects are not followed, so the caster would answer a repeated request the same way.
+            const bool redirect = status < 400;
+            // Only the request for corrections names a mountpoint.
+            const bool noMountpoint = _purpose == NTRIPHttpPurpose::Corrections && (status == 404 || status == 410);
+            const auto code = status == 401                                ? NTRIPError::AuthFailed
+                              : noMountpoint                               ? NTRIPError::InvalidMountpoint
+                              : redirect || status == 400 || status == 403 ? NTRIPError::RequestRejected
+                                                                           : NTRIPError::HttpError;
+            const QString detail =
+                status == 401  ? tr("Authentication failed (401): check username and password")
+                : noMountpoint ? tr("Caster has no such mountpoint (HTTP %1); select a valid mountpoint").arg(status)
+                : redirect     ? _redirectDetail(status, _headers)
+                               : tr("HTTP %1: %2").arg(status).arg(errorPreview(_status.reason));
             _pendingFailure = NTRIPFailure{code, detail};
             if (_headers.values(QHttpHeaders::WellKnownHeader::RetryAfter).size() == 1) {
                 _pendingFailure->retryAfter = retryAfter(_headers, utcNow);
             }
-            if (code == NTRIPError::AuthFailed) {
+            if (code == NTRIPError::AuthFailed || redirect) {
                 _finishError(result);
                 return;
             }
@@ -296,7 +323,8 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             return;
         }
         if (_status.code >= 100 && _status.code < 200) {
-            if (_status.code == 101 || _contentLength || _chunked || ++_informationalResponses > 4) {
+            if (_status.code == 101 || _contentLength || _chunked ||
+                ++_informationalResponses > MAX_INFORMATIONAL_RESPONSES) {
                 _fail(result, tr("Unsupported HTTP informational response"));
             } else {
                 _headers.clear();
@@ -346,7 +374,7 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         _fail(result, tr("Invalid HTTP response header"));
         return;
     }
-    if (_headers.size() >= 128) {
+    if (_headers.size() >= MAX_HEADER_COUNT) {
         _fail(result, tr("Too many HTTP response headers"), NTRIPError::HeaderTooLarge);
         return;
     }

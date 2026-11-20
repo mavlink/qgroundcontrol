@@ -8,6 +8,7 @@
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
+#include "PositionManager.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 
@@ -24,11 +25,21 @@ GPSReceiver::Configuration tcpConfiguration(bool autoConnect = true)
     return configuration;
 }
 
+/// A position the position manager accepts.
+GPSPositionReport locatedFix(GPSFixQuality fixType)
+{
+    GPSPositionReport report = fixReport(fixType);
+    report.navigation.latitudeDegrees = 47.25;
+    report.navigation.longitudeDegrees = 8.5;
+    report.navigation.horizontalAccuracyMeters = 1.0f;
+    return report;
+}
+
 #ifndef QGC_NO_SERIAL_LINK
 /// A configured base without a saved device, which Connect automatically discovers on USB.
 GPSReceiver::Configuration discoveryConfiguration()
 {
-    return GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::ublox), {}, 115200);
+    return GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::UBlox), {}, 115200);
 }
 
 GPSReceiver::Configuration savedSerialConfiguration(bool autoConnect = true)
@@ -109,8 +120,8 @@ void GPSReceiverConnectionPolicyTest::_lostConnectionRetriesWithBackoff()
     QVERIFY(receiver.connectReceiver());
     QCOMPARE(harness.attempts(), 1);
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("rtk.test:2101"));
-    QCOMPARE(harness.worker()->type(), GPSType::passive);
-    QCOMPARE(harness.worker()->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUDRATE);
+    QCOMPARE(harness.worker()->type(), GPSType::Passive);
+    QCOMPARE(harness.worker()->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUD_RATE);
     harness.worker()->ready();
     QVERIFY(receiver.facts()->telemetryAvailable());
     QVERIFY(!receiver.reconnecting());
@@ -156,21 +167,35 @@ void GPSReceiverConnectionPolicyTest::_lostConnectionRetriesWithBackoff()
 void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors_data()
 {
     QTest::addColumn<QString>("reason");
-    for (const auto* reason :
-         {"unknown-manufacturer", "already-connected", "tcp-host", "tcp-port", "udp-port", "base-over-udp"}) {
-        QTest::newRow(reason) << QString::fromLatin1(reason);
-    }
+    QTest::addColumn<QString>("message");
+    const auto row = [](const char* reason, const QString& message) {
+        QTest::newRow(reason) << QString::fromLatin1(reason) << message;
+    };
+    const QString tcpAddress = GPSReceiverConnectionPolicy::tr("Enter the receiver's TCP host and port.");
+    row("unknown-manufacturer", GPSReceiverConnectionPolicy::tr("Select a receiver type before connecting."));
+    row("already-connected",
+        GPSReceiverConnectionPolicy::tr("Disconnect the current receiver before connecting another."));
+    row("tcp-host", tcpAddress);
+    row("tcp-port", tcpAddress);
+    row("udp-port", GPSReceiverConnectionPolicy::tr("Enter the UDP port that receives the data."));
+    row("base-over-udp",
+        GPSReceiverConnectionPolicy::tr("A configured base needs a serial or TCP connection. UDP only receives data."));
 #ifndef QGC_NO_SERIAL_LINK
-    for (const auto* reason :
-         {"serial-empty", "serial-missing", "serial-bootloader", "invalid-baud", "passive-auto-baud"}) {
-        QTest::newRow(reason) << QString::fromLatin1(reason);
-    }
+    const QString serialDevice =
+        GPSReceiverConnectionPolicy::tr("Select an available serial device that is not a bootloader.");
+    const QString baudRate = gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate);
+    row("serial-empty", serialDevice);
+    row("serial-missing", serialDevice);
+    row("serial-bootloader", serialDevice);
+    row("invalid-baud", baudRate);
+    row("passive-auto-baud", baudRate);
 #endif
 }
 
 void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
 {
     QFETCH(QString, reason);
+    QFETCH(QString, message);
     auto configuration = receiverConfiguration();
     useTcp(configuration);
     configuration.autoConnect = false;
@@ -193,7 +218,7 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
 #else
     QList<SerialPortManager::Port> inventory{rtkPort()};
     if (reason.startsWith(QStringLiteral("serial-")) || reason == QStringLiteral("invalid-baud")) {
-        configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::ublox),
+        configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::UBlox),
                                                      QStringLiteral("/test/rtk"), 115200);
         configuration.autoConnect = false;
     }
@@ -218,7 +243,7 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
     const qsizetype attempts = harness.attempts();
 
     QVERIFY(!harness.receiver.connectReceiver());
-    QVERIFY(!harness.receiver.errorMessage().isEmpty());
+    QCOMPARE(harness.receiver.errorMessage(), message);
     QCOMPARE(harness.attempts(), attempts);
 }
 
@@ -260,6 +285,361 @@ void GPSReceiverConnectionPolicyTest::_configurationChangeCancelsRetry()
     QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(60)));
     harness.update();
     QCOMPARE(harness.attempts(), 1);
+}
+
+void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried_data()
+{
+    QTest::addColumn<QString>("scenario");
+    QTest::newRow("saved-tcp") << QStringLiteral("saved-tcp");
+    QTest::newRow("saved-base-over-udp") << QStringLiteral("saved-base-over-udp");
+#ifndef QGC_NO_SERIAL_LINK
+    QTest::newRow("saved-serial-unplugged") << QStringLiteral("saved-serial-unplugged");
+    QTest::newRow("discovered") << QStringLiteral("discovered");
+#endif
+}
+
+void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried()
+{
+    QFETCH(QString, scenario);
+    // A u-blox base has no receiver-managed averaging.
+    auto fixed = receiverConfiguration();
+    useTcp(fixed);
+    auto broken = fixed;
+    broken.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
+    QString error = gpsReceiverConfigErrorText(GPSReceiverConfigError::UnsupportedBaseMode);
+    if (scenario == QStringLiteral("saved-base-over-udp")) {
+        fixed = receiverConfiguration(kPassiveManufacturer);
+        fixed.connectionType = RTKSettings::Udp;
+        broken = fixed;
+        broken.receiverRole = RTKSettings::ConfiguredBase;
+        error = GPSReceiverConnectionPolicy::tr(
+            "A configured base needs a serial or TCP connection. UDP only receives data.");
+    }
+#ifdef QGC_NO_SERIAL_LINK
+    PolicyHarness harness(broken);
+#else
+    QList<SerialPortManager::Port> listed;
+    if (scenario == QStringLiteral("saved-serial-unplugged")) {
+        fixed = GPSTest::serialConfiguration(fixed.baseReceiverManufacturer, QStringLiteral("/test/saved"), 115200);
+        broken = fixed;
+        broken.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
+    } else if (scenario == QStringLiteral("discovered")) {
+        fixed = discoveryConfiguration();
+        broken = fixed;
+        broken.baseReceiverManufacturer = 99;
+        error = GPSReceiverConnectionPolicy::tr("Select a receiver type before connecting.");
+        listed = {rtkPort()};
+    }
+    PolicyHarness harness(broken, listed);
+#endif
+    GPSReceiver& receiver = harness.receiver;
+    QSignalSpy changes(&receiver, &GPSReceiver::receiverChanged);
+    QSignalSpy errors(&receiver, &GPSReceiver::errorMessageChanged);
+
+    // The reason is shown once, in place of waiting for the port or a retry, and nothing reconnects.
+    for (int pass = 0; pass < 2; ++pass) {
+        QVERIFY(harness.discover());
+        QCOMPARE(receiver.errorMessage(), error);
+        QVERIFY(!receiver.reconnecting());
+        QVERIFY(receiver.statusText().isEmpty());
+        QVERIFY(!_retryPending(receiver));
+        QCOMPARE(harness.attempts(), 0);
+        QCOMPARE(errors.size(), 1);
+        QVERIFY(changes.isEmpty());
+        QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(60)));
+    }
+
+    // A changed configuration is connected as at startup.
+#ifndef QGC_NO_SERIAL_LINK
+    if (scenario == QStringLiteral("saved-serial-unplugged")) {
+        harness.serial.plug({serialPort(fixed.serialDevice)});
+    }
+#endif
+    receiver.setConfiguration(fixed);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(harness.discover());
+    QCOMPARE(harness.attempts(), 1);
+    QVERIFY(receiver.hasReceiver());
+    harness.worker()->ready();
+
+    // A lost connection is still retried with backoff.
+    expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+    harness.worker()->fail(GPSConnectionError::DeviceError);
+    verifyExpectedLogMessage();
+    harness.releaseRetired();
+    QVERIFY(_retryPending(receiver));
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(999)));
+    harness.update();
+    QCOMPARE(harness.attempts(), 1);
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(1)));
+    harness.update();
+    QCOMPARE(harness.attempts(), 2);
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession_data()
+{
+    QTest::addColumn<bool>("reconnects");
+    QTest::newRow("reconnects") << true;
+    QTest::newRow("disconnects") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession()
+{
+    QFETCH(bool, reconnects);
+    PolicyHarness harness(tcpConfiguration());
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    // The status Facts reset in the middle of the handler, before any of the receiver's signals reports the loss.
+    QObject observer;
+    bool acted = false;
+    connect(receiver.facts(), &FactGroup::telemetryAvailableChanged, &observer, [&] {
+        if (receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        if (reconnects) {
+            (void) receiver.connectReceiver();
+        } else {
+            receiver.disconnectReceiver();
+        }
+    });
+    const auto loseConnection = [&] {
+        expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        harness.worker()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+    };
+
+    loseConnection();
+    QVERIFY(acted);
+    // The observer's request is the last word: neither the lost session's message nor its retry remains.
+    QCOMPARE(receiver.hasReceiver(), reconnects);
+    QCOMPARE(harness.attempts(), reconnects ? 2 : 1);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.reconnecting());
+    QVERIFY(!_retryPending(receiver));
+    if (reconnects) {
+        // The replacement is kept connected like any receiver the user connects.
+        harness.worker()->ready();
+        loseConnection();
+        QVERIFY(receiver.reconnecting());
+    }
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnReport_data()
+{
+    // The fix is the last status Fact a position report writes and the survey state the last a survey report writes,
+    // each notified in the middle of the handler.
+    QTest::addColumn<bool>("survey");
+    QTest::addColumn<bool>("reconnects");
+    QTest::newRow("position-reconnects") << false << true;
+    QTest::newRow("position-disconnects") << false << false;
+    QTest::newRow("survey-reconnects") << true << true;
+    QTest::newRow("survey-disconnects") << true << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
+{
+    QFETCH(bool, survey);
+    QFETCH(bool, reconnects);
+    auto configuration = survey ? receiverConfiguration() : tcpConfiguration();
+    useTcp(configuration);
+    PolicyHarness harness(configuration);
+    GPSReceiver& receiver = harness.receiver;
+    GPSReceiverFactGroup& facts = *receiver.facts();
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    GPSPositionReport position = locatedFix(GPSFixQuality::Fix3D);
+    GPSBaseStatus surveyed{.state = GPSBaseState::Active,
+                           .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                           .meanAccuracyMeters = 1.0};
+    if (survey) {
+        harness.worker()->baseStatus(surveyed);
+    } else {
+        harness.worker()->position(position);
+        QVERIFY(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));
+    }
+    QObject observer;
+    bool acted = false;
+    connect(survey ? facts.active() : facts.fixType(), &Fact::rawValueChanged, &observer, [&] {
+        if (!receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        receiver.disconnectReceiver();
+        if (reconnects) {
+            (void) receiver.connectReceiver();
+        }
+    });
+
+    if (survey) {
+        surveyed.state = GPSBaseState::Valid;
+        harness.worker()->baseStatus(surveyed);
+    } else {
+        position.navigation.fixType = GPSFixQuality::RTKFixed;
+        position.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
+        position.integrity.outputOverflowUs = 100;
+        harness.worker()->position(position);
+    }
+    QVERIFY(acted);
+    // The report was the ended receiver's: none of it is left with what the observer asked for.
+    QCOMPARE(receiver.hasReceiver(), reconnects);
+    QCOMPARE(harness.attempts(), reconnects ? 2 : 1);
+    QCOMPARE(solution(facts), Solution{});
+    QVERIFY(!facts.canSaveCurrentBasePosition());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));
+}
+
+void GPSReceiverConnectionPolicyTest::_observerReplacesReadyReceiver()
+{
+    ManualScheduler scheduler;
+    PositionManager positions;
+    ScriptedGPSReceiver scripted(&scheduler, {.positions = &positions});
+    GPSReceiver& receiver = scripted.receiver;
+    receiver.setConfiguration(tcpConfiguration());
+    QVERIFY(receiver.connectReceiver());
+    // The status Facts report that the receiver is ready in the middle of the handler.
+    QObject observer;
+    bool acted = false;
+    connect(receiver.facts(), &FactGroup::telemetryAvailableChanged, &observer, [&] {
+        if (!receiver.facts()->telemetryAvailable() || std::exchange(acted, true)) {
+            return;
+        }
+        receiver.disconnectReceiver();
+        (void) receiver.connectReceiver();
+    });
+
+    scripted.workers.current()->ready();
+    QVERIFY(acted);
+    QCOMPARE(scripted.workers.count(), 2);
+    QVERIFY(!receiver.facts()->telemetryAvailable());
+    // The replacement is not ready, so it is not the position source yet.
+    scripted.workers.current()->position(locatedFix(GPSFixQuality::Fix3D));
+    QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::None);
+    scripted.workers.current()->ready();
+    scripted.workers.current()->position(locatedFix(GPSFixQuality::Fix3D));
+    QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
+    receiver.shutdown();
+    scripted.workers.finishRetired();
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnPositionRelease_data()
+{
+    QTest::addColumn<bool>("reconnects");
+    QTest::newRow("reconnects") << true;
+    QTest::newRow("disconnects") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnPositionRelease()
+{
+    QFETCH(bool, reconnects);
+    ManualScheduler scheduler;
+    PositionManager positions;
+    ScriptedGPSReceiver scripted(&scheduler, {.positions = &positions});
+    GPSReceiver& receiver = scripted.receiver;
+    receiver.setConfiguration(tcpConfiguration());
+    QVERIFY(receiver.connectReceiver());
+    scripted.workers.current()->ready();
+    scripted.workers.current()->position(locatedFix(GPSFixQuality::Fix3D));
+    QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
+    // A lost receiver stops being the position source before anything else reports it.
+    QObject observer;
+    bool acted = false;
+    connect(&positions, &PositionManager::selectionChanged, &observer, [&] {
+        if (receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        if (reconnects) {
+            (void) receiver.connectReceiver();
+        } else {
+            receiver.disconnectReceiver();
+        }
+    });
+    const auto loseConnection = [&] {
+        expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        scripted.workers.current()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+    };
+
+    loseConnection();
+    QVERIFY(acted);
+    // As for an observer of the receiver's own signals, its request is the last word.
+    QCOMPARE(receiver.hasReceiver(), reconnects);
+    QCOMPARE(scripted.workers.count(), reconnects ? 2 : 1);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.reconnecting());
+    QVERIFY(!_retryPending(receiver));
+    if (reconnects) {
+        scripted.workers.current()->ready();
+        loseConnection();
+        QVERIFY(receiver.reconnecting());
+    }
+    receiver.shutdown();
+    scripted.workers.finishRetired();
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnShutdown_data()
+{
+    QTest::addColumn<bool>("connects");
+    QTest::newRow("connects") << true;
+    QTest::newRow("disconnects") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnShutdown()
+{
+    QFETCH(bool, connects);
+    PolicyHarness harness(tcpConfiguration());
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    // The status text reports that the receiver is gone before shutdown() returns.
+    QObject observer;
+    bool acted = false;
+    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] {
+        if (receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        if (connects) {
+            (void) receiver.connectReceiver();
+        } else {
+            receiver.disconnectReceiver();
+        }
+    });
+
+    receiver.shutdown();
+    QVERIFY(acted);
+    // Shutdown leaves no receiver, whatever an observer asks for meanwhile, and has joined and deleted its worker.
+    QVERIFY(!receiver.hasReceiver());
+    QCOMPARE(harness.attempts(), 1);
+    QVERIFY(!harness.worker());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.reconnecting());
+}
+
+void GPSReceiverConnectionPolicyTest::_labelsFollowLostSessionOnce()
+{
+    PolicyHarness harness(tcpConfiguration());
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    harness.worker()->position(fixReport(GPSFixQuality::Fix3D));
+    QStringList labels;
+    QObject observer;
+    const auto observe = [&](const QString& label) {
+        // The status Facts reset one by one; a label is notified once they all have, with the receiver gone and its
+        // reconnect pending.
+        QVERIFY(!receiver.hasReceiver());
+        QVERIFY(receiver.reconnecting());
+        QVERIFY(!receiver.facts()->telemetryAvailable());
+        labels.append(label);
+    };
+    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] { observe(receiver.statusText()); });
+    connect(&receiver, &GPSReceiver::summaryLabelChanged, &observer, [&] { observe(receiver.summaryLabel()); });
+
+    expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+    harness.worker()->fail(GPSConnectionError::DeviceError);
+    verifyExpectedLogMessage();
+    labels.sort();
+    QCOMPARE(labels, (QStringList{QString(), GPSReceiver::tr("Connecting automatically...")}));
 }
 
 void GPSReceiverConnectionPolicyTest::_sessionEndMessages_data()
@@ -430,7 +810,7 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     QFETCH(QString, device);
     QFETCH(QString, endpoint);
     // Quectel receivers often sit behind generic USB serial adapters; the saved base mode is one it supports.
-    auto configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::quectel), device, 115200);
+    auto configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::Quectel), device, 115200);
     configuration.connectionType = static_cast<RTKSettings::ConnectionType>(connection);
     configuration.tcpHost = QStringLiteral("rtk.test");
     configuration.tcpPort = 2101;
@@ -443,7 +823,7 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     QVERIFY2(harness.receiver.errorMessage().isEmpty(), qPrintable(harness.receiver.errorMessage()));
     QCOMPARE(harness.attempts(), 1);
     QCOMPARE(harness.receiver.activeEndpoint(), endpoint);
-    QCOMPARE(harness.worker()->type(), GPSType::quectel);
+    QCOMPARE(harness.worker()->type(), GPSType::Quectel);
     for (const auto& port : inventory) {
         QCOMPARE(harness.ports.canReservePort(port.systemLocation), port.systemLocation != endpoint);
         QCOMPARE(harness.ports.reservationOwner(port.systemLocation),
@@ -657,7 +1037,7 @@ void GPSReceiverConnectionPolicyTest::_savedSerialWaitsForReturningPort()
     QCOMPARE(receiver.activeEndpoint(), device);
     QVERIFY(harness.ports.isPortReserved(device));
     QVERIFY(!harness.ports.isPortReserved(QStringLiteral("/test/other")));
-    QCOMPARE(harness.worker()->type(), GPSType::passive);
+    QCOMPARE(harness.worker()->type(), GPSType::Passive);
     QCOMPARE(harness.worker()->capturedConfig().baudRate, 4800U);
     QVERIFY(!harness.worker()->capturedConfig().allowPersistentChanges);
     harness.worker()->ready();
@@ -921,16 +1301,16 @@ void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer_data()
     QTest::addColumn<bool>("consentRefused");
     // The USB identity only admits the port; its name never chooses or replaces the saved family.
     QTest::newRow("automatic-generic-name") << GPS_AUTOMATIC_MANUFACTURER << QStringLiteral("CP2102 USB to UART")
-                                            << static_cast<int>(GPSType::automatic) << true;
+                                            << static_cast<int>(GPSType::Automatic) << true;
     QTest::newRow("automatic-named") << GPS_AUTOMATIC_MANUFACTURER << QStringLiteral("u-blox GNSS receiver")
-                                     << static_cast<int>(GPSType::automatic) << true;
+                                     << static_cast<int>(GPSType::Automatic) << true;
     // Quectel saved, a u-blox receiver attached: the identity check fails, and flash consent would not help.
-    QTest::newRow("quectel-on-ublox") << gpsReceiverManufacturerForType(GPSType::quectel)
-                                      << QStringLiteral("u-blox GNSS receiver") << static_cast<int>(GPSType::quectel)
+    QTest::newRow("quectel-on-ublox") << gpsReceiverManufacturerForType(GPSType::Quectel)
+                                      << QStringLiteral("u-blox GNSS receiver") << static_cast<int>(GPSType::Quectel)
                                       << false;
     QTest::newRow("quectel-generic-name")
-        << gpsReceiverManufacturerForType(GPSType::quectel) << QStringLiteral("CP2102 USB to UART")
-        << static_cast<int>(GPSType::quectel) << true;
+        << gpsReceiverManufacturerForType(GPSType::Quectel) << QStringLiteral("CP2102 USB to UART")
+        << static_cast<int>(GPSType::Quectel) << true;
 }
 
 void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer()
@@ -954,7 +1334,7 @@ void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer()
     QVERIFY(!worker->capturedConfig().allowPersistentChanges);
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/rtk"));
     if (manufacturer == GPS_AUTOMATIC_MANUFACTURER) {
-        worker->detected(GPSType::quectel);
+        worker->detected(GPSType::Quectel);
         QCOMPARE(receiver.detectedReceiver(), QStringLiteral("Quectel"));
     }
 
@@ -979,6 +1359,64 @@ void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer()
                  GPSReceiver::tr("Receiver configuration failed: %1. Reconnecting automatically.").arg(detail));
     }
     QVERIFY(_retryPending(receiver));
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnPortScan_data()
+{
+    // Whether the user's Connect or an automatic connection makes the scan, and what the observer does.
+    QTest::addColumn<bool>("byUser");
+    QTest::addColumn<bool>("connects");
+    QTest::newRow("connects-during-automatic-connection") << false << true;
+    QTest::newRow("disconnects-during-automatic-connection") << false << false;
+    QTest::newRow("disconnects-during-connect") << true << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnPortScan()
+{
+    QFETCH(bool, byUser);
+    QFETCH(bool, connects);
+    PolicyHarness harness(savedSerialConfiguration(), {serialPort(QStringLiteral("/test/saved"))});
+    GPSReceiver& receiver = harness.receiver;
+    // The first question about the serial ports scans them, which changes the device picker's entries.
+    QObject observer;
+    bool acted = false;
+    connect(&receiver, &GPSReceiver::serialPortEntriesChanged, &observer, [&] {
+        if (std::exchange(acted, true)) {
+            return;
+        }
+        if (connects) {
+            (void) receiver.connectReceiver();
+        } else {
+            receiver.disconnectReceiver();
+        }
+    });
+
+    if (byUser) {
+        QVERIFY(receiver.connectReceiver());
+    } else {
+        harness.update();
+    }
+    QVERIFY(acted);
+    // The later request stands, the observer's unless the user's Connect follows it, without a failed attempt.
+    const bool connected = connects || byUser;
+    QCOMPARE(receiver.hasReceiver(), connected);
+    QCOMPARE(harness.attempts(), connected ? 1 : 0);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!_retryPending(receiver));
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(60)));
+    harness.update();
+    QCOMPARE(harness.attempts(), connected ? 1 : 0);
+    if (connected) {
+        // A receiver the user connected is reconnected when lost.
+        harness.worker()->ready();
+        expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        harness.worker()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+        harness.releaseRetired();
+        QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(1)));
+        harness.update();
+        QCOMPARE(harness.attempts(), 2);
+    }
 }
 
 #endif

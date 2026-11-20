@@ -47,6 +47,7 @@ on a pull request that does not trigger it.
 | Dev Container | Image inputs, except lock-only changes | — |
 | VM Builds | `deploy/multipass/`, `deploy/vagrant/`, their installers, presets | [platforms.md](ci-notes/platforms.md#vm-builds) |
 | ClusterFuzzLite | `.clusterfuzzlite/`, `test/Fuzz/` | — |
+| GPS Standalone | `src/GPS`, `test/GPS`, the libraries and CMake modules its project adds, `.github/build-config.json` | [platforms.md](ci-notes/platforms.md#platform-notes) |
 | Build Results | After a `pull_request` workflow above completes, except Dependency Review, Check Links, and Docs, whose status the next one refreshes | — |
 | Welcome, Cache Cleanup | A first pull request opened; a pull request closed | — |
 
@@ -75,6 +76,7 @@ Packages = files that `publish.yml` publishes.
 | `analysis.yml` | PR and `master` push (paths), manual | clang-tidy and Clazy; manual IWYU, qmllint, ThreadSanitizer | — |
 | `codeql.yml` | PR, MG, push, manual | CodeQL for Actions, Java/Kotlin, Python | Code scanning |
 | `clusterfuzzlite.yml` | PR (paths) | MAVLink parser fuzzing | — |
+| `gps-standalone.yml` | PR and push (paths), manual | `QGCGPSCore` and `QGCNTRIPHttp` built without the application (`test/GPS/Standalone`), their tests, and libFuzzer runs of the GPS harnesses | — |
 | `dependency-review.yml` | PR | Fail on new dependencies with high or critical advisories | — |
 | `pr-checks.yml` | `pull_request_target` | PR title check; size and path labels | Labels |
 | `check-links.yml` | PR and `master` push (paths), manual | Markdown link check (lychee) | — |

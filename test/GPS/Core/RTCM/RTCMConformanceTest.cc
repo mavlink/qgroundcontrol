@@ -1,15 +1,24 @@
 #include "RTCMConformanceTest.h"
 
+#include <cmath>
+#include <limits>
 #include <optional>
 #include <span>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QEvent>
 #include <QtCore/QList>
+#include <QtCore/QPair>
+#include <QtTest/QAbstractItemModelTester>
+#include <QtTest/QSignalSpy>
 
 #include "Checksums.h"
+#include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "Protocols/fixtures/GPSFixtureExpectations.h"
 #include "RTCMFramer.h"
+#include "RTCMMessageCountModel.h"
+#include "RTCMStationPosition.h"
 
 namespace {
 // Fixed CRCs keep expectations independent of the framing implementation.
@@ -25,6 +34,47 @@ QByteArray maximumFrame()
         frame.append(static_cast<char>(i & 0xff));
     }
     return frame + QByteArray::fromHex("eebabe");
+}
+
+/// An RTCM 1005 frame, or 1006 with @a antennaHeight, whose ECEF coordinates and antenna height count 0.1 mm. Every
+/// other field has all its bits set, so a coordinate read one bit off is wrong.
+QByteArray stationFrame(uint16_t messageId, int64_t x, int64_t y, int64_t z,
+                        std::optional<uint16_t> antennaHeight = std::nullopt)
+{
+    QByteArray payload;
+    int size = 0;
+    const auto put = [&payload, &size](uint64_t value, int width) {
+        for (int bit = width - 1; bit >= 0; --bit, ++size) {
+            if (size % 8 == 0) {
+                payload.append('\0');
+            }
+            payload.back() = static_cast<char>(payload.back() | (((value >> bit) & 1) << (7 - size % 8)));
+        }
+    };
+    put(messageId, 12);
+    put(0xfff, 12);  // station ID
+    put(0x3f, 6);    // ITRF realization year
+    put(0xf, 4);     // GPS, GLONASS, Galileo and reference-station indicators
+    put(static_cast<uint64_t>(x), 38);
+    put(0x3, 2);     // single receiver oscillator indicator and a reserved bit
+    put(static_cast<uint64_t>(y), 38);
+    put(0x3, 2);     // quarter cycle indicator
+    put(static_cast<uint64_t>(z), 38);
+    if (antennaHeight) {
+        put(*antennaHeight, 16);
+    }
+    return GPSTest::rtcmBytes(payload);
+}
+
+/// The 1005 frame of the recording fixtures/mixed.gps, which a u-blox base station sent; empty when unreadable.
+QByteArray recordedStationFrame()
+{
+    const auto recording = GPSTest::fixtureBytes("mixed.gps");
+    const auto& slice = GPSFixture::corrections[0];
+    if (!recording || slice.id != 1005 || recording->size() < slice.offset + slice.size) {
+        return {};
+    }
+    return GPSTest::toByteArray(std::span<const uint8_t>(*recording).subspan(slice.offset, slice.size));
 }
 }  // namespace
 
@@ -188,7 +238,6 @@ void RTCMConformanceTest::_sharedCorpus()
             for (auto decoded = decoder.addByte(byte, 1000 + chunkIndex * chunkIntervalMs); decoded;
                  decoded = decoder.nextFrame()) {
                 QVERIFY(++resultCount <= RTCMFramer::MAX_FRAME_SIZE);
-                QVERIFY(!decoded->filtered);
                 if (decoded->valid) {
                     decodedFrames.append(decoded->data);
                     decodedIds.append(decoded->messageId);
@@ -283,13 +332,12 @@ void RTCMConformanceTest::_frameFields()
     QVERIFY(!framer.valid());
 }
 
-void RTCMConformanceTest::_fragmentReceiptAndFiltering()
+void RTCMConformanceTest::_fragmentReceipt()
 {
     RTCMFrameDecoder decoder;
-    decoder.setWhitelist({1077, 1077});
     QVERIFY(!decoder.addByte(RTCMFramer::PREAMBLE, 500));
     const auto rejected = decoder.addByte(0x04, 500);
-    QVERIFY(rejected && !rejected->valid && !rejected->filtered);
+    QVERIFY(rejected && !rejected->valid);
     QVERIFY(!decoder.nextFrame());
     for (const char byte : SHORT_FRAME.first(4)) {
         QVERIFY(!decoder.addByte(static_cast<uint8_t>(byte), 1000));
@@ -298,27 +346,21 @@ void RTCMConformanceTest::_fragmentReceiptAndFiltering()
     for (const char byte : SHORT_FRAME.sliced(4)) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 8000);
     }
-    QVERIFY(decoded && decoded->valid && decoded->filtered);
+    QVERIFY(decoded && decoded->valid);
     QCOMPARE(decoded->messageId, 1005);
     QCOMPARE(decoded->receivedAtMs, qint64(1000));
     QCOMPARE(decoded->data, SHORT_FRAME);
     for (const char byte : LONG_FRAME) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 8500);
     }
-    QVERIFY(decoded && decoded->valid && !decoded->filtered);
+    QVERIFY(decoded && decoded->valid);
     QCOMPARE(decoded->messageId, 1077);
     decoder.reset();
     for (const char byte : SHORT_FRAME) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 9000);
     }
-    QVERIFY(decoded && decoded->valid && decoded->filtered);
+    QVERIFY(decoded && decoded->valid);
     QCOMPARE(decoded->receivedAtMs, qint64(9000));
-    decoder.setWhitelist({});
-    for (const char byte : SHORT_FRAME) {
-        decoded = decoder.addByte(static_cast<uint8_t>(byte), 10000);
-    }
-    QVERIFY(decoded && decoded->valid && !decoded->filtered);
-    QCOMPARE(decoded->receivedAtMs, qint64(10000));
 }
 
 void RTCMConformanceTest::_repeatedMalformedPreambles()
@@ -331,7 +373,6 @@ void RTCMConformanceTest::_repeatedMalformedPreambles()
         } else {
             QVERIFY(result);
             QVERIFY(!result->valid);
-            QVERIFY(!result->filtered);
             QCOMPARE(result->data, QByteArray::fromHex("d3d3"));
             QCOMPARE(result->receivedAtMs, index + 999);
         }
@@ -353,7 +394,7 @@ void RTCMConformanceTest::_queuedResultDelivery()
     connect(
         this, &RTCMConformanceTest::decoded, &receiver,
         [&received](const RTCMDecodedFrame& result) { received = result; }, Qt::QueuedConnection);
-    emit decoded({SHORT_FRAME, 1005, 1234, true, true});
+    emit decoded({SHORT_FRAME, 1005, 1234, true});
     QVERIFY(!received);
     QCoreApplication::sendPostedEvents(&receiver, QEvent::MetaCall);
     QVERIFY(received);
@@ -361,7 +402,178 @@ void RTCMConformanceTest::_queuedResultDelivery()
     QCOMPARE(received->messageId, 1005);
     QCOMPARE(received->receivedAtMs, qint64(1234));
     QVERIFY(received->valid);
-    QVERIFY(received->filtered);
+}
+
+void RTCMConformanceTest::_messageCountsChangeInPlace()
+{
+    using Rows = QList<QPair<int, quint64>>;
+    RTCMMessageCountModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy inserted(&model, &QAbstractItemModel::rowsInserted);
+    QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+    QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+    const auto rows = [&model]() {
+        Rows result;
+        for (int row = 0; row < model.rowCount(); ++row) {
+            const QModelIndex index = model.index(row);
+            result.append({index.data(RTCMMessageCountModel::MessageIdRole).toInt(),
+                           index.data(RTCMMessageCountModel::CountRole).toULongLong()});
+        }
+        return result;
+    };
+
+    // Each new ID inserts one row at its ascending position; ID 0 counts unidentified frames.
+    QList<int> insertedAt;
+    for (const int messageId : {1077, 1005, 1230, 0}) {
+        model.record(messageId, 0);
+        insertedAt.append(inserted.last().at(1).toInt());
+    }
+    QCOMPARE(insertedAt, QList<int>({0, 0, 2, 0}));
+    QCOMPARE(rows(), Rows({{0, 1}, {1005, 1}, {1077, 1}, {1230, 1}}));
+    QVERIFY(changed.isEmpty());
+
+    // A repeated ID changes only the count and interval of its row.
+    model.record(1077, 1000);
+    model.record(1077, 2000);
+    QCOMPARE(rows(), Rows({{0, 1}, {1005, 1}, {1077, 3}, {1230, 1}}));
+    QCOMPARE(inserted.size(), 4);
+    QCOMPARE(changed.size(), 2);
+    QCOMPARE(changed.last().at(0).toModelIndex(), model.index(2));
+    QCOMPARE(changed.last().at(1).toModelIndex(), model.index(2));
+    QCOMPARE(changed.last().at(2).value<QList<int>>(),
+             QList<int>({RTCMMessageCountModel::CountRole, RTCMMessageCountModel::IntervalRole}));
+    QVERIFY(resets.isEmpty());
+
+    model.clear();
+    QCOMPARE(model.rowCount(), 0);
+    QCOMPARE(resets.size(), 1);
+    model.clear();
+    QCOMPARE(resets.size(), 1);
+}
+
+void RTCMConformanceTest::_messageIntervals()
+{
+    RTCMMessageCountModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+    // Rows ascend by ID: 1005, 1077, 1087, 1097.
+    const auto interval = [&model](int row) {
+        return model.index(row).data(RTCMMessageCountModel::IntervalRole).toDouble();
+    };
+
+    // An interval needs a frame after the first; each ID has its own.
+    model.record(1077, 0);
+    model.record(1005, 0);
+    QCOMPARE(interval(1), 0.);
+    model.record(1077, 1000);
+    model.record(1077, 2000);
+    QCOMPARE(interval(1), 1.);
+    QCOMPARE(interval(0), 0.);
+    model.record(1005, 10000);
+    QCOMPARE(interval(0), 10.);
+
+    // Epochs that one network read delivers together share the time since the epochs before them.
+    for (const qint64 receivedAtMs : {0, 0, 2000, 2000, 4000, 4000}) {
+        model.record(1087, receivedAtMs);
+    }
+    QCOMPARE(interval(2), 1.);
+    // Frames that arrive together and nothing after them tell no interval.
+    model.record(1097, 0);
+    model.record(1097, 0);
+    QCOMPARE(interval(3), 0.);
+
+    // Only the latest frames count, so a changed rate replaces the old one.
+    for (int frame = 1; frame <= RTCMMessageCountModel::INTERVAL_WINDOW; ++frame) {
+        model.record(1077, 2000 + frame * 200);
+    }
+    QCOMPARE(interval(1), 0.2);
+
+    // An ID that stops arriving loses its interval and keeps its count; the others keep theirs.
+    const qint64 lastFastFrame = 2000 + RTCMMessageCountModel::INTERVAL_WINDOW * 200;
+    changed.clear();
+    model.expireIntervals(lastFastFrame + 1500);
+    QVERIFY(changed.isEmpty());
+    model.expireIntervals(lastFastFrame + 1700);
+    QCOMPARE(changed.size(), 1);
+    QCOMPARE(changed.last().at(0).toModelIndex(), model.index(1));
+    QCOMPARE(changed.last().at(2).value<QList<int>>(), QList<int>{RTCMMessageCountModel::IntervalRole});
+    QCOMPARE(interval(1), 0.);
+    QCOMPARE(model.index(1).data(RTCMMessageCountModel::CountRole).toULongLong(), quint64(11));
+    QCOMPARE(interval(0), 10.);
+    // The next frames measure it again.
+    model.record(1077, 9000);
+    QCOMPARE(interval(1), 0.);
+    model.record(1077, 10000);
+    QCOMPARE(interval(1), 1.);
+
+    // A receipt time that goes back starts the interval over, and the count goes on.
+    model.record(1005, 5000);
+    QCOMPARE(interval(0), 0.);
+    QCOMPARE(model.index(0).data(RTCMMessageCountModel::CountRole).toULongLong(), quint64(3));
+    model.record(1005, 6000);
+    QCOMPARE(interval(0), 1.);
+}
+
+void RTCMConformanceTest::_stationPosition_data()
+{
+    QTest::addColumn<QByteArray>("frame");
+    QTest::addColumn<bool>("decoded");
+    QTest::addColumn<double>("latitude");
+    QTest::addColumn<double>("longitude");
+    QTest::addColumn<double>("height");
+    QTest::addColumn<double>("antennaHeight");
+
+    // The geodetic positions and their ECEF coordinates come from the WGS84 closed-form conversion, worked outside
+    // QGC; between them the coordinates cover both signs of each axis.
+    constexpr double NONE = std::numeric_limits<double>::quiet_NaN();
+    const auto valid = [](const char* name, const QByteArray& frame, double latitude, double longitude, double height,
+                          double antennaHeight) {
+        QTest::newRow(name) << frame << true << latitude << longitude << height << antennaHeight;
+    };
+    valid("1005", stationFrame(1005, 42775513130, 6427646826, 46721688253), 47.3977419, 8.5455938, 488.2, NONE);
+    valid("1005-negative-y-z", stationFrame(1005, 17635692337, -50273165025, -34959199469), -33.4488897, -70.6692655,
+          570.0, NONE);
+    valid("1006-negative-x-z", stationFrame(1006, -46460925734, 25532295142, -35344068039, 0x8001), -33.8688197,
+          151.2092955, 58.5, 3.2769);
+    valid("recorded-1005", recordedStationFrame(), 32.0658325449, 34.7738190354, 72.1342, NONE);
+
+    const auto invalid = [](const char* name, const QByteArray& frame) {
+        QTest::newRow(name) << frame << false << 0.0 << 0.0 << 0.0 << 0.0;
+    };
+    invalid("other-message", stationFrame(1007, 42775513130, 6427646826, 46721688253));
+    invalid("1005-of-1006-length", stationFrame(1005, 42775513130, 6427646826, 46721688253, 0));
+    invalid("1006-of-1005-length", stationFrame(1006, 42775513130, 6427646826, 46721688253));
+    QByteArray badCrc = stationFrame(1005, 42775513130, 6427646826, 46721688253);
+    badCrc.back() = static_cast<char>(badCrc.back() ^ 1);
+    invalid("bad-crc", badCrc);
+    invalid("unset-base", stationFrame(1005, 0, 0, 0));
+    invalid("empty", {});
+}
+
+void RTCMConformanceTest::_stationPosition()
+{
+    QFETCH(QByteArray, frame);
+    QFETCH(bool, decoded);
+    QFETCH(double, latitude);
+    QFETCH(double, longitude);
+    QFETCH(double, height);
+    QFETCH(double, antennaHeight);
+    const auto station = RTCMStationPosition::fromFrame(frame);
+    QCOMPARE(station.has_value(), decoded);
+    if (!decoded) {
+        return;
+    }
+    // The coordinates are in 0.1 mm, which is below 1e-8 degrees.
+    QVERIFY2(GPSTest::matches(station->position.latitudeDegrees, latitude, 1e-8),
+             qPrintable(QString::number(station->position.latitudeDegrees, 'f', 10)));
+    QVERIFY2(GPSTest::matches(station->position.longitudeDegrees, longitude, 1e-8),
+             qPrintable(QString::number(station->position.longitudeDegrees, 'f', 10)));
+    QVERIFY2(GPSTest::matches(station->position.altitudeMeters, height, 1e-3),
+             qPrintable(QString::number(station->position.altitudeMeters, 'f', 5)));
+    QCOMPARE(station->antennaHeightMeters.has_value(), !std::isnan(antennaHeight));
+    if (station->antennaHeightMeters) {
+        QCOMPARE(*station->antennaHeightMeters, antennaHeight);
+    }
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(RTCMConformanceTest, TestLabel::Unit)

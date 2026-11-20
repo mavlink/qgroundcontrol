@@ -13,7 +13,8 @@ private slots:
     void _connectionPolling();
     void _vehicleGpsTracking();
     void _vehicleEstimateTracking();
-    void _groundStationGgaNeedsMeanSeaLevel_data();
-    void _groundStationGgaNeedsMeanSeaLevel();
+    void _groundStationGgaReportsAnyAltitudeDatum_data();
+    void _groundStationGgaReportsAnyAltitudeDatum();
+    void _filesGoBelowSavePath();
     void _qmlServicesAvailableBeforeInit();
 };

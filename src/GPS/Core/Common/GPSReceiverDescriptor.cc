@@ -13,7 +13,7 @@ using Duration = GPSReceiverDescriptor::SurveyDuration;
 
 constexpr std::array DESCRIPTORS{
     GPSReceiverDescriptor{
-        .type = GPSType::trimble,
+        .type = GPSType::Trimble,
         .name = "Trimble"_L1,
         .manufacturerId = 1,
         .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true},
@@ -21,7 +21,7 @@ constexpr std::array DESCRIPTORS{
         .configurableSurveyDuration = true,
     },
     GPSReceiverDescriptor{
-        .type = GPSType::septentrio,
+        .type = GPSType::Septentrio,
         .name = "Septentrio"_L1,
         .manufacturerId = 2,
         .protocol = "SBF"_L1,
@@ -29,7 +29,7 @@ constexpr std::array DESCRIPTORS{
         .surveyDuration = Duration::ElapsedTime,
     },
     GPSReceiverDescriptor{
-        .type = GPSType::femto,
+        .type = GPSType::Femto,
         .name = "Femtomes"_L1,
         .manufacturerId = 3,
         .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true},
@@ -38,7 +38,7 @@ constexpr std::array DESCRIPTORS{
         .configurableSurveyDuration = false,
     },
     GPSReceiverDescriptor{
-        .type = GPSType::ublox,
+        .type = GPSType::UBlox,
         .name = "u-blox"_L1,
         .manufacturerId = 4,
         .protocol = "UBX"_L1,
@@ -49,13 +49,13 @@ constexpr std::array DESCRIPTORS{
         .fixedBaseAccuracy = true,
     },
     GPSReceiverDescriptor{
-        .type = GPSType::unicore,
+        .type = GPSType::Unicore,
         .name = "Unicore"_L1,
         .manufacturerId = 5,
         .capabilities = {.recognized = true, .rtkBase = true, .receiverAveraging = true},
     },
     GPSReceiverDescriptor{
-        .type = GPSType::quectel,
+        .type = GPSType::Quectel,
         .name = "Quectel"_L1,
         .manufacturerId = 6,
         .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true, .persistentConfiguration = true},
@@ -66,7 +66,7 @@ constexpr std::array DESCRIPTORS{
         .surveyMaySavePosition = true,
     },
     GPSReceiverDescriptor{
-        .type = GPSType::passive,
+        .type = GPSType::Passive,
         .name = "passive NMEA"_L1,
         .manufacturerId = 7,
         .protocol = "NMEA"_L1,
@@ -77,18 +77,18 @@ constexpr std::array DESCRIPTORS{
 /// Every GPSType before automatic has exactly one descriptor, with a nonzero manufacturer ID of its own.
 consteval bool registryComplete()
 {
-    for (int type = 0; type < static_cast<int>(GPSType::automatic); ++type) {
+    for (int type = 0; type < static_cast<int>(GPSType::Automatic); ++type) {
         if (std::ranges::count(DESCRIPTORS, static_cast<GPSType>(type), &GPSReceiverDescriptor::type) != 1) {
             return false;
         }
     }
     for (const auto& descriptor : DESCRIPTORS) {
-        if (descriptor.type == GPSType::automatic || descriptor.manufacturerId == GPS_AUTOMATIC_MANUFACTURER ||
+        if (descriptor.type == GPSType::Automatic || descriptor.manufacturerId == GPS_AUTOMATIC_MANUFACTURER ||
             std::ranges::count(DESCRIPTORS, descriptor.manufacturerId, &GPSReceiverDescriptor::manufacturerId) != 1) {
             return false;
         }
     }
-    return DESCRIPTORS.size() == static_cast<size_t>(GPSType::automatic);
+    return DESCRIPTORS.size() == static_cast<size_t>(GPSType::Automatic);
 }
 
 static_assert(registryComplete(), "Each GPSType needs one descriptor with a unique, nonzero manufacturer ID");
@@ -118,7 +118,7 @@ QString gpsInputProtocolName(GPSType type)
         return {};
     }
     const QString protocol(descriptor->protocol);
-    return type == GPSType::passive ? protocol : QStringLiteral("%1 (%2)").arg(gpsReceiverName(type), protocol);
+    return type == GPSType::Passive ? protocol : QStringLiteral("%1 (%2)").arg(gpsReceiverName(type), protocol);
 }
 
 const GPSReceiverDescriptor* gpsReceiverDescriptorForManufacturer(int manufacturer)
@@ -130,7 +130,7 @@ const GPSReceiverDescriptor* gpsReceiverDescriptorForManufacturer(int manufactur
 std::optional<GPSType> gpsReceiverTypeForManufacturer(int manufacturer)
 {
     if (manufacturer == GPS_AUTOMATIC_MANUFACTURER) {
-        return GPSType::automatic;
+        return GPSType::Automatic;
     }
     if (const auto* descriptor = gpsReceiverDescriptorForManufacturer(manufacturer)) {
         return descriptor->type;
@@ -146,7 +146,7 @@ int gpsReceiverManufacturerForType(GPSType type)
 
 GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type)
 {
-    if (type == GPSType::automatic) {
+    if (type == GPSType::Automatic) {
         // Detection finds a base family; until then every option some base family supports is accepted.
         GPSReceiverCapabilities combined;
         for (const auto& descriptor : DESCRIPTORS) {

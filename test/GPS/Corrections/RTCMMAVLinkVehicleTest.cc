@@ -7,6 +7,9 @@
 #include <QtCore/QtEndian>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSCorrectionManager.h"
+#include "GPSCorrectionSettings.h"
+#include "GPSSettingsBindings.h"
 #include "LinkManager.h"
 #include "LogReplayLink.h"
 #include "MAVLinkLib.h"
@@ -14,6 +17,8 @@
 #include "MultiVehicleManager.h"
 #include "QmlObjectListModel.h"
 #include "RTCMMAVLink.h"
+#include "SettingsManager.h"
+#include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
@@ -28,7 +33,7 @@ void RTCMMAVLinkVehicleTest::_admissionFollowsLinkLifetime()
 
     const GPSRTCMPacket packet{0, QByteArray(RTCMMAVLinkPacket::kFragmentLen, 'R')};
     QVERIFY(destinations.first()(packet));
-    expectLogMessage("GPS.Corrections.RTCMMavlink", QtWarningMsg,
+    expectLogMessage("GPS.Corrections.RTCMMAVLink", QtWarningMsg,
                      QRegularExpression(QStringLiteral("RTCM packet exceeds MAVLink payload limit")));
     QVERIFY(!destinations.first()({0, packet.data + 'R'}));
     verifyExpectedLogMessage();
@@ -120,6 +125,134 @@ void RTCMMAVLinkVehicleTest::_replayExcludedFromLiveAdmissions()
     QCOMPARE(output().size(), 1);
     sender.submitToOutputs(payload);
     QCOMPARE(sender.totalBytesSubmitted(), quint64(2 * payload.size()));
+}
+
+void RTCMMAVLinkVehicleTest::_highLatencyLinkExcluded()
+{
+    // High-latency links cannot fetch component metadata.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("failed to load metadata")));
+    const auto satellite = createMockLink(QStringLiteral("Satellite"), true);
+    QVERIFY(satellite);
+    auto* satelliteLink = qobject_cast<MockLink*>(satellite.get());
+    QVERIFY(satelliteLink);
+    auto* satelliteVehicle = waitForVehicleConnect();
+    QVERIFY(satelliteVehicle);
+    QTRY_VERIFY_WITH_TIMEOUT(satelliteVehicle->isInitialConnectComplete(), TestTimeout::longMs());
+    QVERIFY(satellite->isConnected());
+    QCOMPARE(satelliteVehicle->vehicleLinkManager()->primaryLink().lock(), satellite);
+
+    const auto output = RTCMMAVLink::vehicleLinkOutputs();
+    RTCMMAVLink sender;
+    sender.setOutputProvider(output);
+    const QByteArray payload(RTCMMAVLinkPacket::kFragmentLen, 'R');
+    QVERIFY(output().isEmpty());
+    QVERIFY(RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSettings::ActiveVehicle)().isEmpty());
+    QCOMPARE(sender.submitToOutputs(payload), 0ULL);
+
+    expectAppMessage(QRegularExpression(QStringLiteral("Connected to Vehicle [0-9]+")));
+    const auto radio = createMockLink(QStringLiteral("Radio"));
+    QVERIFY(radio);
+    auto* radioLink = qobject_cast<MockLink*>(radio.get());
+    QVERIFY(radioLink);
+    auto* vehicles = MultiVehicleManager::instance();
+    QTRY_VERIFY_WITH_TIMEOUT(vehicles->getVehicleById(radioLink->vehicleId()), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    auto* radioVehicle = vehicles->getVehicleById(radioLink->vehicleId());
+    QTRY_VERIFY_WITH_TIMEOUT(radioVehicle->isInitialConnectComplete(), TestTimeout::mediumMs());
+
+    QCOMPARE(output().size(), 1);
+    QCOMPARE(sender.submitToOutputs(payload), quint64(payload.size()));
+    QTRY_COMPARE_WITH_TIMEOUT(radioLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_GPS_RTCM_DATA), 1,
+                              TestTimeout::mediumMs());
+    QCOMPARE(satelliteLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_GPS_RTCM_DATA), 0);
+}
+
+void RTCMMAVLinkVehicleTest::_settingSelectsVehicles()
+{
+    // The first vehicle to connect is the active one.
+    auto* first = createMockLinkAndWaitForVehicle(QStringLiteral("First"));
+    QVERIFY(first);
+    QTRY_VERIFY_WITH_TIMEOUT(first->isInitialConnectComplete(), TestTimeout::mediumMs());
+    auto* firstLink = qobject_cast<MockLink*>(first->vehicleLinkManager()->primaryLink().lock().get());
+    QVERIFY(firstLink);
+    expectAppMessage(QRegularExpression(QStringLiteral("Connected to Vehicle [0-9]+")));
+    const auto secondShared = createMockLink(QStringLiteral("Second"));
+    QVERIFY(secondShared);
+    auto* secondLink = qobject_cast<MockLink*>(secondShared.get());
+    QVERIFY(secondLink);
+    auto* vehicles = MultiVehicleManager::instance();
+    QTRY_VERIFY_WITH_TIMEOUT(vehicles->getVehicleById(secondLink->vehicleId()), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    auto* second = vehicles->getVehicleById(secondLink->vehicleId());
+    QTRY_VERIFY_WITH_TIMEOUT(second->isInitialConnectComplete(), TestTimeout::mediumMs());
+    QCOMPARE(vehicles->activeVehicle(), first);
+
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
+    saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->rtcmUdpOutputEnabled(), false);
+    saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::HighestPriority);
+    saved.setFactValue(settings->correctionVehicles(), GPSCorrectionSettings::AllVehicles);
+    GPSCorrectionManager corrections;
+    GPSSettingsBindings::bindCorrections(settings, &corrections);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+
+    // One frame is one GPS_RTCM_DATA message. The bytes admitted give the number of links it went to, and the
+    // messages each vehicle received tell which.
+    const QByteArray frame(RTCMMAVLinkPacket::kFragmentLen, 'R');
+    quint64 admitted = 0;
+    int toFirst = 0;
+    int toSecond = 0;
+    const auto frameReaches = [&](bool reachesFirst, bool reachesSecond) {
+        source->submit(frame, GPSTest::nowMs());
+        admitted += (int(reachesFirst) + int(reachesSecond)) * frame.size();
+        toFirst += reachesFirst;
+        toSecond += reachesSecond;
+        return corrections.vehicleBytesSubmitted() == admitted &&
+               QTest::qWaitFor(
+                   [&]() {
+                       return firstLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_GPS_RTCM_DATA) == toFirst &&
+                              secondLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_GPS_RTCM_DATA) == toSecond;
+                   },
+                   TestTimeout::mediumMs());
+    };
+    QVERIFY(frameReaches(true, true));
+
+    settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::ActiveVehicle);
+    QVERIFY(frameReaches(true, false));
+
+    // The corrections follow the active vehicle.
+    vehicles->setActiveVehicle(second);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicles->activeVehicle(), second, TestTimeout::mediumMs());
+    QVERIFY(frameReaches(false, true));
+
+    // Connected vehicles receive nothing while none of them is active.
+    vehicles->setActiveVehicle(nullptr);
+    QTRY_VERIFY_WITH_TIMEOUT(!vehicles->activeVehicle(), TestTimeout::mediumMs());
+    QVERIFY(frameReaches(false, false));
+
+    settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::AllVehicles);
+    QVERIFY(frameReaches(true, true));
+
+    // GPS_RTCM_DATA names no target, so a vehicle that is also heard on the active vehicle's link receives the
+    // corrections meant for the active vehicle alone. The manager warns of it within a second.
+    vehicles->setActiveVehicle(first);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicles->activeVehicle(), first, TestTimeout::mediumMs());
+    settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::ActiveVehicle);
+    QVERIFY(corrections.vehiclesWarning().isEmpty());
+    const mavlink_message_t heartbeat{};
+    second->vehicleLinkManager()->mavlinkMessageReceived(firstLink, heartbeat);
+    QTRY_VERIFY_WITH_TIMEOUT(!corrections.vehiclesWarning().isEmpty(), TestTimeout::mediumMs());
+
+    // The first vehicle is not on the second one's link.
+    vehicles->setActiveVehicle(second);
+    QTRY_VERIFY_WITH_TIMEOUT(corrections.vehiclesWarning().isEmpty(), TestTimeout::mediumMs());
+
+    vehicles->setActiveVehicle(first);
+    QTRY_VERIFY_WITH_TIMEOUT(!corrections.vehiclesWarning().isEmpty(), TestTimeout::mediumMs());
+    settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::AllVehicles);
+    QVERIFY(corrections.vehiclesWarning().isEmpty());
 }
 
 UT_REGISTER_TEST(RTCMMAVLinkVehicleTest, TestLabel::Integration, TestLabel::Vehicle)

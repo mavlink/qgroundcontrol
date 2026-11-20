@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -24,9 +25,9 @@
 
 QGC_LOGGING_CATEGORY(AshtechProtocolLog, "GPS.Protocols.Ashtech")
 
-namespace {
+namespace Ashtech {
 
-namespace Plan = Ashtech::Plan;
+namespace {
 
 /// The number in @a field, @a fallback when the field is empty, or nothing when it is malformed.
 template <typename T>
@@ -104,7 +105,8 @@ std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
 ///
 /// Decoding: GPSNMEAStream assembles satellites; positions come from $PASHR,POS, or from GGA until the first
 /// $PASHR,POS, with ZDA time and GST accuracy as metadata. $PASHR,RECEIPT position-averaging receipts start and
-/// complete a survey-in. Every other line is offered as a command reply.
+/// complete a survey-in; a receipt of failed averaging fails the session. Every other line is offered as a command
+/// reply.
 class Protocol final : public GPSNMEAFamilyProtocol
 {
 public:
@@ -123,6 +125,14 @@ public:
     /// The port query configure() probes each rate with.
     bool probe(GPSCommandChannel& channel) override { return _queryPort(channel, Plan::PORT_QUERY_ATTEMPTS); }
 
+protected:
+    /// A rejected sentence does not advance the survey-in duration.
+    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
+
+    /// Expires stale metadata, and fails a ready receiver whose base setup still waits for a position when no
+    /// $PASHR,POS has arrived for STATUS_MAX_AGE.
+    void _expire(GPSDecodeContext& context) override;
+
 private:
     /// The UTC time of day a sentence names and when it arrived.
     struct EpochReceipt
@@ -137,16 +147,8 @@ private:
         }
     };
 
-    /// Starts a configuration attempt: forgets the base setup, metadata and survey, and resets the stream.
-    void _reset(GPSStreamDemux& stream);
     /// Asks for the port the receiver is connected to, up to @a attempts times. @return whether it answered.
     bool _queryPort(GPSCommandChannel& channel, unsigned attempts);
-    /// A rejected sentence does not advance the survey-in duration.
-    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
-
-    /// Expires stale metadata.
-    void _expire(GPSDecodeContext& context) override { _expireMetadata(context.nowUs()); }
-
     void _setUpBase(GPSCommandChannel& channel);
     void _activateRTCMOutput(GPSCommandChannel& channel);
     GPSCommandOutcome _portReply(std::string_view reply);
@@ -181,18 +183,20 @@ private:
     GPSSurveyClock _surveyClock;
     /// After a $PASHR,POS, GGA no longer carries positions.
     bool _receiverPositions = false;
+    /// When the receiver became ready or last sent a $PASHR,POS, with or without a fix.
+    uint64_t _positionOutputAtUs = 0;
     uint64_t _utcReceivedUs = 0;
     uint64_t _utcReference = 0;
     EpochReceipt _positionEpoch;
     EpochReceipt _accuracyReceipt;
     NMEA::GST _accuracy;
+    /// Survey receipts are accepted: from the survey-start command until its finish receipt, valid or failed.
     bool _surveyReceiptRequested = false;
     std::optional<uint64_t> _surveyReceiptStartUtc;
 };
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    _reset(channel.stream());
     _base = config.base;
     const auto detection = channel.detectBaud(Plan::BAUD_RATES, baud, [this, &channel]() -> GPSBaudProbe {
         const bool answered = _queryPort(channel, Plan::PORT_QUERY_ATTEMPTS);
@@ -215,7 +219,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
         _nmea.reset(channel.stream());
         channel.receiveFor(Plan::LINK_SPEED_SETTLE);
         _nmea.reset(channel.stream());
-        (void) channel.setBaudrate(baud);
+        (void) channel.setBaudRate(baud);
         if (!_queryPort(channel, Plan::PORT_QUERY_ATTEMPTS_AT_LINK_BAUD)) {
             channel.failNoAnswer({&baud, 1});
             return false;
@@ -234,8 +238,8 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     }
     (void) channel.runSequence(Plan::sequence(Plan::OUTPUTS, _port));
 
-    _nmea.setRTCMEnabled(true);
-    channel.context().publishSurvey(true, false, {});
+    channel.context().publishBaseStatus(GPSBaseState::Active, {});
+    _positionOutputAtUs = channel.context().nowUs();
     _ready = true;
     return !channel.failed();
 }
@@ -272,11 +276,12 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
         if (!channel.runRequired({{Plan::fixedPositionCommand(fixed->position)}})) {
             return;
         }
+        // Reported before RTCM output starts, as the receiver sends corrections while the output commands still run.
+        context.publishBaseStatus(GPSBaseState::Valid, {}, fixed->position);
         _activateRTCMOutput(channel);
         if (channel.failed()) {
             return;
         }
-        context.publishSurvey(false, true, {}, fixed->position);
     } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode)) {
         // Decoding acknowledges the command from its start receipt; the matcher only sees a NAK.
         const GPSCommandSequence start{
@@ -293,8 +298,8 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
         if (!channel.runRequired(Plan::sequence(Plan::STATION, _port))) {
             return;
         }
-        // A finish receipt may already have arrived with the station commands' replies.
-        if (!_rtcmActivationPending) {
+        // A finish receipt may already have arrived with the station commands' replies and ended the survey.
+        if (_surveyReceiptRequested) {
             _surveyClock.start(context);
         }
     }
@@ -308,10 +313,13 @@ void Protocol::_activateRTCMOutput(GPSCommandChannel& channel)
 
 GPSCommandOutcome Protocol::_portReply(std::string_view reply)
 {
-    if (!reply.starts_with("$PASHR,PRT,") || std::count(reply.begin(), reply.end(), ',') != 3) {
+    // $PASHR,PRT,<port letter>,<speed code>: any other port field leaves the query unanswered.
+    std::array<std::string_view, 4> fields{};
+    if (NMEA::splitFields(reply, fields) != fields.size() || fields[0] != "$PASHR" || fields[1] != "PRT" ||
+        fields[2].size() != 1 || !NMEA::isAsciiUpper(fields[2].front())) {
         return Plan::rejection(reply);
     }
-    _port = reply[11];
+    _port = fields[2].front();
     return GPSCommandOutcome::Acknowledged;
 }
 
@@ -324,27 +332,6 @@ GPSCommandOutcome Protocol::_boardReply(std::string_view reply)
     const std::string_view board = reply.substr(PREFIX.size());
     _board = QString::fromLatin1(board.substr(0, board.find_first_of(",*")));
     return GPSCommandOutcome::Acknowledged;
-}
-
-void Protocol::_reset(GPSStreamDemux& stream)
-{
-    _base = {};
-    _board.clear();
-    _ready = false;
-    _baseSetupDone = false;
-    _baseSetupPending = false;
-    _rtcmActivationPending = false;
-    _awaitingSurveyReceipt = false;
-    _surveyClock = {};
-    _receiverPositions = false;
-    _utcReceivedUs = 0;
-    _utcReference = 0;
-    _positionEpoch = {};
-    _accuracyReceipt = {};
-    _accuracy = {};
-    _requestSurveyReceipts(false);
-    _nmea.setRTCMEnabled(false);
-    _nmea.reset(stream);
 }
 
 GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext& context)
@@ -378,8 +365,12 @@ std::optional<GPSReceiveUpdates> Protocol::_decodeVendor(std::string_view messag
     if (type == "GGA" && commas == 14 && !_receiverPositions) {
         return _handleGGA(*sentence, now);
     }
-    if (message.starts_with("$PASHR,POS,") && commas == 18) {
-        return _handlePosition(*sentence, now);
+    if (message.starts_with("$PASHR,POS,")) {
+        // Any position sentence shows the output is on, including one whose fields are rejected.
+        _positionOutputAtUs = now;
+        if (commas == 18) {
+            return _handlePosition(*sentence, now);
+        }
     }
     if (type == "GST" && commas == 8) {
         return _handleAccuracy(*sentence, now);
@@ -401,7 +392,9 @@ std::optional<GPSReceiveUpdates> Protocol::_handleTime(const NMEA::Sentence& sen
     const std::chrono::year_month_day calendar{std::chrono::year{date.year}, std::chrono::month{date.month},
                                                std::chrono::day{date.day}};
     const uint64_t utc = utcUs(calendar, *zda->utcMilliseconds);
-    _utcReference = utc / 1000000 > static_cast<uint64_t>(GPSProtocolMath::UTC_PLAUSIBILITY_FLOOR_SECS) ? utc : 0;
+    const bool plausible = utc / 1000000 > static_cast<uint64_t>(GPSProtocolMath::UTC_PLAUSIBILITY_FLOOR_SECS) &&
+                           date.year <= GPSProtocolMath::UTC_PLAUSIBILITY_CEILING_YEAR;
+    _utcReference = plausible ? utc : 0;
     _nmea.position().navigation.utcTimeUs = _utcReference;
     _utcReceivedUs = nowUs;
     return GPSReceiveUpdates{};
@@ -458,21 +451,32 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     const auto latitude = numberOr(fields[5], 0.0);
     const auto longitude = numberOr(fields[7], 0.0);
     const auto altitude = numberOr(fields[9], 0.0);
-    const auto trackDegrees = numberOr(fields[11], 0.0);
-    const auto groundSpeedKnots = numberOr(fields[12], 0.0);
     const auto horizontalDop = numberOr(fields[15], 99.9);
     const auto verticalDop = numberOr(fields[16], 99.9);
-    // Time, differential age, vertical velocity, PDOP and TDOP are validated but not reported.
-    for (const size_t unused : {4, 10, 13, 14, 17}) {
-        if (!numberOr(fields[unused], 0.0)) {
+    // Track and speed are range-checked with the velocity below. Time, differential age, vertical velocity, PDOP and
+    // TDOP are validated but not reported.
+    for (const size_t validated : {4, 10, 11, 12, 13, 14, 17}) {
+        if (!numberOr(fields[validated], 0.0)) {
             return std::nullopt;
         }
     }
     const std::string_view northSouth = fields[6];
     const std::string_view eastWest = fields[8];
-    if (!quality || *quality < 0 || *quality > 23 || !satellites || *satellites < 0 || *satellites > 255 || !latitude ||
-        *latitude < 0 || *latitude > 9000 || !longitude || *longitude < 0 || *longitude > 18000 || !altitude ||
-        !trackDegrees || !groundSpeedKnots || !horizontalDop || !verticalDop ||
+    // Position modes (d1) outside the 0 to 5 that follow GPSFixQuality's order.
+    constexpr int SBAS_DIFFERENTIAL = 9;
+    constexpr int BEIDOU_DIFFERENTIAL = 10;
+    constexpr int RTK_FLOAT = 12;
+    constexpr int RTK_FIXED = 13;
+    constexpr int RTK_FLOAT_DITHERED = 22;
+    constexpr int RTK_FIXED_DITHERED = 23;
+    constexpr int MAX_POSITION_MODE = RTK_FIXED_DITHERED;
+    constexpr int MAX_SATELLITES = 255;
+    // 90 and 180 degrees as ddmm.mmmm and dddmm.mmmm.
+    constexpr double MAX_LATITUDE = 9000;
+    constexpr double MAX_LONGITUDE = 18000;
+    if (!quality || *quality < 0 || *quality > MAX_POSITION_MODE || !satellites || *satellites < 0 ||
+        *satellites > MAX_SATELLITES || !latitude || *latitude < 0 || *latitude > MAX_LATITUDE || !longitude ||
+        *longitude < 0 || *longitude > MAX_LONGITUDE || !altitude || !horizontalDop || !verticalDop ||
         (northSouth != "N" && northSouth != "S") || (eastWest != "E" && eastWest != "W")) {
         return std::nullopt;
     }
@@ -490,17 +494,19 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
         navigation.fixType = GPSPositionReport::FixType::NoFix;
 
     } else {
-        if (*quality == 9 || *quality == 10) {  // SBAS differential or BeiDou differential
+        if (*quality == SBAS_DIFFERENTIAL || *quality == BEIDOU_DIFFERENTIAL) {
             navigation.fixType = GPSPositionReport::FixType::Differential;
 
-        } else if (*quality == 12 || *quality == 22) {  // RTK float or RTK float dithered
+        } else if (*quality == RTK_FLOAT || *quality == RTK_FLOAT_DITHERED) {
             navigation.fixType = GPSPositionReport::FixType::RTKFloat;
 
-        } else if (*quality == 13 || *quality == 23) {  // RTK fixed or RTK fixed dithered
+        } else if (*quality == RTK_FIXED || *quality == RTK_FIXED_DITHERED) {
             navigation.fixType = GPSPositionReport::FixType::RTKFixed;
 
         } else {
-            navigation.fixType = gpsFixQualityFromValue(3 + *quality);
+            // Modes 0 to 3 and 5 are standalone, differential, RTK float, RTK fixed and dead reckoning: GPSFixQuality
+            // from Fix3D on.
+            navigation.fixType = gpsFixQualityFromValue(static_cast<int>(GPSPositionReport::FixType::Fix3D) + *quality);
         }
 
         _receiverPositions = true;
@@ -514,10 +520,14 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     _applyMetadata(NMEA::utcMilliseconds(sentence.fields[4]), nowUs);
     navigation.satellitesUsed = gpsSatellitesUsed(static_cast<unsigned>(*satellites));
 
-    navigation.speedMetersPerSecond = static_cast<float>(*groundSpeedKnots) / 1.9438445f;
+    // Velocity needs a fix, and a track and a speed that are both present and in range.
+    const auto courseDegrees = NMEA::courseDegrees(fields[11]);
+    const auto speed = NMEA::speedMetersPerSecond(fields[12], NMEA::KNOTS_TO_METERS_PER_SECOND);
+    const bool velocityValid = coordinatesFound && courseDegrees && speed;
+    navigation.speedMetersPerSecond = velocityValid ? static_cast<float>(*speed) : NAN;
     // Course over ground (the direction of movement, not the heading).
-    navigation.courseRadians = static_cast<float>(*trackDegrees * GPSProtocolMath::DEG_TO_RAD);
-    _nmea.position().velocityValid = true;
+    navigation.courseRadians = velocityValid ? static_cast<float>(*courseDegrees * GPSProtocolMath::DEG_TO_RAD) : NAN;
+    _nmea.position().velocityValid = velocityValid;
     return GPSReceiveUpdate::Position;
 }
 
@@ -569,8 +579,8 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
             return std::nullopt;
         }
         if (!failed) {
-            const auto lat = NMEA::coordinate(fields[8], fields[9], true);
-            const auto lon = NMEA::coordinate(fields[10], fields[11], false);
+            const auto lat = NMEA::coordinate(fields[8], fields[9], NMEA::Coordinate::Latitude);
+            const auto lon = NMEA::coordinate(fields[10], fields[11], NMEA::Coordinate::Longitude);
             const auto alt = NMEA::number<float>(fields[12]);
             const auto duration = NMEA::number<double>(fields[15]);
             if (!lat || !lon || !alt || fields[13] != "OK" || fields[14].empty() || !duration || *duration < 0) {
@@ -610,12 +620,31 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
     if (awaitingReceipt) {
         context.resolveReply(failed ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Acknowledged);
     }
-    if (!started) {
+    if (failed) {
+        // No base position will follow, so the session ends instead of idling without corrections.
+        _surveyClock.reset();
+        _ready = false;
+        context.loseBase(QStringLiteral("Trimble receiver reported that position averaging failed"));
+    } else if (!started) {
         // The survey receipt's height is validated but not reported.
-        _surveyClock.finish(context, !failed, {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
-        _rtcmActivationPending = !failed;
+        _surveyClock.finish(context, GPSBaseState::Valid, {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
+        _rtcmActivationPending = true;
     }
     return GPSReceiveUpdates{};
+}
+
+void Protocol::_expire(GPSDecodeContext& context)
+{
+    const uint64_t now = context.nowUs();
+    _expireMetadata(now);
+    // The position output is optional to enable and its first position starts the base setup, so a receiver that
+    // refused it, as one without the output-rate option may, would otherwise wait as a surveying base for ever.
+    if (_ready && !_baseSetupDone && !context.failed() &&
+        !MonotonicClock::withinAge(_positionOutputAtUs, now, STATUS_MAX_AGE)) {
+        _ready = false;
+        context.loseBase(
+            QStringLiteral("Trimble receiver sent no $PASHR,POS position output, which the base setup needs"));
+    }
 }
 
 void Protocol::_expireMetadata(uint64_t nowUs)
@@ -651,10 +680,8 @@ QLatin1StringView signature(const GPSFrame& frame)
 
 }  // namespace
 
-namespace Ashtech {
-
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::trimble,
+    .type = GPSType::Trimble,
     .logCategory = &AshtechProtocolLog,
     .stream = GPSNMEAStream::STREAM,
     .baudCandidates = Plan::BAUD_RATES,

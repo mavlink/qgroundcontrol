@@ -66,8 +66,8 @@ void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
         (void) driver.receive(10ms);
         // The fixed-quality GGA predates this configuration's survey, so it must not complete it.
         QVERIFY(!peer.sent("LOG RTCM"));
-        QVERIFY(
-            std::ranges::none_of(peer.log.reports<GPSSurveyReport>(), [](const auto& survey) { return survey.valid; }));
+        QVERIFY(std::ranges::none_of(peer.log.reports<GPSBaseStatus>(),
+                                     [](const auto& survey) { return survey.state == GPSBaseState::Valid; }));
     }
 }
 
@@ -139,8 +139,8 @@ void FemtoProtocolTest::_receiverMode()
                             .accuracyMeters = 1.0f}}
                       : GPSBaseStationConfig::Mode{
                             GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .duration = 60s}}};
-    unsigned baudrate = 115200;
-    const bool configured = driver.configure(config, baudrate);
+    unsigned baudRate = 115200;
+    const bool configured = driver.configure(config, baudRate);
     if (!rejectedCommand.isEmpty()) {
         QVERIFY(!configured);
         // A receiver whose base setup was rejected must not take injected corrections.

@@ -10,7 +10,6 @@ import QGroundControl.GPS
 // Drawer of the GPS indicator: vehicle GPS, GNSS receiver, corrections, and GCS position.
 ToolIndicatorPage {
     id: root
-    showExpand: true
 
     readonly property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
@@ -29,7 +28,11 @@ ToolIndicatorPage {
     // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins.
     readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
         Math.min(root._preferredSettingsWidth,
-                 root.availableWidth - (root._compact ? 0 : root._preferredStatusWidth) - root.spacing * 2 - 1))
+                 root.availableWidth - (root._compact ? 0 : root._preferredStatusWidth + root.spacing * 2 + 1)))
+
+    showExpand: true
+    // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
+    contentVisible: !root.expanded || !root._compact
 
     // A vehicle GPS value, labelled with its description, shown while the vehicle reports it.
     component MeasurementLabel: LabelledLabel {
@@ -39,6 +42,7 @@ ToolIndicatorPage {
         visible: !!fact && Number.isFinite(fact.value) && (!nonNegative || fact.value >= 0)
         label: fact ? fact.shortDescription : ""
         labelText: fact ? fact.valueString + (fact.units ? " " + fact.units : "") : ""
+        labelTextFormat: Text.PlainText
     }
 
     // A resilience state, shown while the receiver reports it.
@@ -81,9 +85,7 @@ ToolIndicatorPage {
 
     contentComponent: Component {
         ColumnLayout {
-            // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
-            width: root.expanded && root._compact ? 0 : Math.min(root._preferredStatusWidth, root.availableWidth)
-            visible: !root.expanded || !root._compact
+            width: Math.min(root._preferredStatusWidth, root.availableWidth)
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
             QGCGroupBox {
@@ -165,6 +167,7 @@ ToolIndicatorPage {
                 objectName: "gpsIndicatorCorrections"
                 Layout.minimumWidth: 0
                 showWhenInactive: false
+                showCoordinates: false
             }
 
             NTRIPConnectionStatus {

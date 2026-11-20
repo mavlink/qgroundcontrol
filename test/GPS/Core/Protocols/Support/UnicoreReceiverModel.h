@@ -87,6 +87,11 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
     std::string faultCommand;
     std::string version{UNICORE_VERSION};
     std::string role = "MODE ROVER SURVEY";
+    /// What a base command set after the role; the MODE log repeats it, as SparkFun's UM980 library quotes:
+    /// "MODE BASE TIME 60" and "MODE BASE -1280206.5680 -4716804.4030 4086665.4840".
+    std::string modeArguments;
+    /// What the MODE log reports for a fixed base instead.
+    std::optional<std::string> fixedModeLog;
     std::string positionType = "SINGLE";
     std::array<double, 3> coordinates{-2160489.0276, 4383620.1006, 4084738.1110};
     size_t chunk = 7;
@@ -122,6 +127,14 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
         return unicorePosition(positionType, result, elapsed % 604800000, initialWeek + elapsed / 604800000);
     }
 
+    std::string modeLog() const
+    {
+        if (role == "MODE BASE" && fixedModeLog) {
+            return *fixedModeLog;
+        }
+        return modeArguments.empty() ? role : role + ' ' + modeArguments;
+    }
+
     void navigationTick(unsigned generation)
     {
         if (generation != modeGeneration || !statusEnabled) {
@@ -138,6 +151,7 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
         ++modeGeneration;
         statusEnabled = false;
         role = "MODE ROVER SURVEY";
+        modeArguments.clear();
         positionType = "SINGLE";
         queued += version;
     }
@@ -155,7 +169,7 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
         return static_cast<int>((std::min) ({size_t(requested), size_t(available), chunk}));
     }
 
-    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baud) override
+    std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baud) override
     {
         Q_UNUSED(receiver)
         hostBaud = baud;
@@ -196,17 +210,19 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
             if (!omitModeReadback) {
                 reply += modeMismatch                  ? unicoreNative("MODE", "MODE HEADING2,")
                          : role == "MODE ROVER SURVEY" ? std::string(UNICORE_MODE_ROVER)
-                                                       : unicoreNative("MODE", role + ',');
+                                                       : unicoreNative("MODE", modeLog() + ',');
             }
         } else if (command.starts_with("MODE ")) {
             const auto generation = ++modeGeneration;
             if (command == "MODE ROVER") {
                 role = "MODE ROVER SURVEY";
+                modeArguments.clear();
                 positionType = "SINGLE";
             } else if (command.starts_with("MODE BASE TIME ")) {
                 role = "MODE BASE TIME";
+                modeArguments = command.substr(15);
                 positionType = "SINGLE";
-                const auto duration = std::stoul(command.substr(15));
+                const auto duration = std::stoul(modeArguments);
                 events.schedule(duration * 1000000ULL, [this, generation] {
                     if (generation == modeGeneration && allowAveragingCompletion) {
                         positionType = "FIXEDPOS";
@@ -214,8 +230,9 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
                 });
             } else {
                 role = "MODE BASE";
+                modeArguments = command.substr(10);
                 positionType = "FIXEDPOS";
-                std::istringstream values(command.substr(10));
+                std::istringstream values(modeArguments);
                 values.imbue(std::locale::classic());
                 values >> coordinates[0] >> coordinates[1] >> coordinates[2];
                 if (values.fail()) {

@@ -21,7 +21,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     GPSRuntimeIO io;
     io.read = [](auto, auto) -> GPSReadResult { std::abort(); };
     io.write = [](auto, auto) -> GPSWriteResult { std::abort(); };
-    io.setBaudrate = [](auto) -> GPSBaudStatus { std::abort(); };
+    io.setBaudRate = [](auto) -> GPSBaudStatus { std::abort(); };
     io.clock.nowUs = [&clock] { return clock.nowUs(); };
     bool decoding = false;
     const auto operationalIO = [&decoding](GPSRuntimeIO services) {
@@ -37,7 +37,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             }
             return write(bytes, deadline);
         };
-        services.setBaudrate = [&, baud = services.setBaudrate](auto value) {
+        services.setBaudRate = [&, baud = services.setBaudRate](auto value) {
             if (decoding) {
                 std::abort();
             }
