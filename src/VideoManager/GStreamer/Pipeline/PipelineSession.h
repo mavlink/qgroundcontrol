@@ -52,7 +52,7 @@ public:
     {
         QString reason;          ///< For the log.
         QString message;         ///< For the user.
-        bool permanent = false;  ///< Retrying can't help: unsupported URI, missing plugin.
+        bool permanent = false;  ///< Retrying can't help: unsupported URI, missing plugin, refused credentials.
     };
 
     /// Called on the worker. Only the failure reports (onSessionFailed(), onDecoderFailing()), which come from the
@@ -64,6 +64,9 @@ public:
         virtual void onSessionStreaming() = 0;
         /// The stream failed; the session ignores further failures until it is shut down.
         virtual void onSessionFailed(const Failure& failure) = 0;
+        /// The graphics device the pipeline was given is gone (HwBuffers::kGraphicsDeviceLostMessage). The stream
+        /// didn't fail, but its pipeline and video sink hold what is left of the device and must go.
+        virtual void onSessionGraphicsDeviceLost() = 0;
 
     protected:
         ~Listener() = default;
@@ -73,10 +76,8 @@ public:
                     const PipelineDotDumper& dotDumper, QObject* parent = nullptr);
     ~PipelineSession() override;
 
-    /// Builds the pipeline and sets it PLAYING. False with failure() set when it can't; shut the session down then.
-    bool start();
-
-    const Failure& failure() const { return _failure; }
+    /// Builds the pipeline and sets it PLAYING. Returns why when it can't; shut the session down then.
+    [[nodiscard]] std::optional<Failure> start();
 
     void setVideoSink(GstElement* sink);
     void setRecording(const std::optional<RecordingBranch::Request>& request);
@@ -109,6 +110,8 @@ private:
     void _handleMessage(GstMessage* message);
     void _onBusError(GstMessage* message);
     QString _takeStartError();
+    /// Keeps what a missing-plugin message names, for the MISSING_PLUGIN error its branch posts next.
+    void _noteMissingPlugin(GstMessage* message);
 
     void _linkSourcePad(GstPad* pad);
     void _onFirstFrame();
@@ -150,7 +153,9 @@ private:
     bool _tearingDown() const { return _phase >= Phase::TearingDown; }
 
     Phase _phase = Phase::Running;
-    Failure _failure;
     bool _streaming = false;
+    /// The plugin last reported missing, as GStreamer describes it ("H.265 decoder"), and where.
+    QString _missingPlugin;
+    GStreamer::PipelineBranch _missingPluginBranch = GStreamer::PipelineBranch::None;
     PipelineStatsProbe _statsProbe;
 };

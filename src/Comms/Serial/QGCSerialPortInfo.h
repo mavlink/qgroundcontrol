@@ -1,12 +1,7 @@
 #pragma once
 
 #include <QtCore/QRegularExpression>
-#include <QtCore/QtSystemDetection>
-#ifdef Q_OS_ANDROID
-    #include "qserialportinfo.h"
-#else
-    #include <QtSerialPort/QSerialPortInfo>
-#endif
+#include <QtSerialPort/QSerialPortInfo>
 
 class QGCSerialPortInfoTest;
 
@@ -73,7 +68,11 @@ private:
         QRegularExpression regExp;
         BoardType_t boardType;
         bool androidOnly;
+        /// What to call a board that the rule matches. Empty for the name of its class.
+        QString name;
     };
+
+    static QString _fallbackBoardName(const BoardRegExpFallback_t& boardFallback);
     static QList<BoardRegExpFallback_t> _boardDescriptionFallbackList;
     static QList<BoardRegExpFallback_t> _boardManufacturerFallbackList;
 

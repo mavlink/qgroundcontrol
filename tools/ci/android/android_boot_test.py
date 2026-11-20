@@ -31,10 +31,13 @@ ADB_READY_TIMEOUT_SECONDS = 360
 LOGCAT_TIMEOUT_SECONDS = 60
 BOOT_TEST_COMPLETED = "Simple boot test completed"
 BOOT_TEST_FAILED = "Simple boot test failed"
-# QGC logs what failed its boot test, like the GStreamer self-test's findings, before the marker.
+# QGC logs what failed its boot test, like the findings of its GStreamer and USB serial self-tests,
+# before the marker.
 GSTREAMER_SELF_TEST_CATEGORY = "Video.GStreamer.SelfTest"
+SERIAL_SELF_TEST_CATEGORY = "Android.AndroidSerial.SelfTest"
 _BOOT_TEST_REPORT_PATTERN = re.compile(
     rf"{re.escape(BOOT_TEST_FAILED)}|{re.escape(GSTREAMER_SELF_TEST_CATEGORY)}"
+    rf"|{re.escape(SERIAL_SELF_TEST_CATEGORY)}"
 )
 MAX_BOOT_TEST_REPORT_LINES = 20
 # After main() returns, Android destroys QGC's activity and Qt ends the process (exit-time teardown).
@@ -161,7 +164,7 @@ _GSTREAMER_FAILURE_PATTERN = re.compile(
 
 
 def boot_test_report(content: str) -> list[str]:
-    """Return the last logcat lines of a failed boot test and of the GStreamer self-test."""
+    """Return the last logcat lines of a failed boot test and of QGC's self-tests."""
     lines = [line for line in content.splitlines() if _BOOT_TEST_REPORT_PATTERN.search(line)]
     return lines[-MAX_BOOT_TEST_REPORT_LINES:]
 

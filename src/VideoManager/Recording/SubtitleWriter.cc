@@ -41,6 +41,12 @@ SubtitleWriter::~SubtitleWriter()
     stopCapturingTelemetry();
 }
 
+QString SubtitleWriter::subtitleFile(const QString& videoFile)
+{
+    const QFileInfo info(videoFile);
+    return QStringLiteral("%1/%2.ass").arg(info.path(), info.completeBaseName());
+}
+
 void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize videoSize)
 {
     stopCapturingTelemetry();
@@ -50,8 +56,7 @@ void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize vid
     _rowWidth = (_size.width() + kOffsetFactor) / (kColumnCount + 1);
     _telemetry.readLayout();
 
-    const QFileInfo videoFileInfo(videoFile);
-    _file.setFileName(QStringLiteral("%1/%2.ass").arg(videoFileInfo.path(), videoFileInfo.completeBaseName()));
+    _file.setFileName(subtitleFile(videoFile));
     qCDebug(SubtitleWriterLog) << "Writing overlay to file:" << _file.fileName();
     if (!_file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
         qCWarning(SubtitleWriterLog) << "Unable to write subtitle file" << _file.fileName() << _file.errorString();
@@ -125,7 +130,9 @@ SubtitleWriter::Sample SubtitleWriter::_sample(qint64 startMs) const
         return sample;
     }
 
-    sample.date = QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat));
+    // The clock time lets a recording be matched with the flight's logs.
+    sample.dateTime = QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat) +
+                                                            QStringLiteral(" HH:mm:ss"));
     for (const TelemetryBarValues::Value& value : *values) {
         sample.names << QStringLiteral("%1:").arg(value.name);
         sample.values << value.value;
@@ -135,7 +142,7 @@ SubtitleWriter::Sample SubtitleWriter::_sample(qint64 startMs) const
 
 void SubtitleWriter::_writeSample(const Sample& sample, qint64 endMs)
 {
-    if ((sample.startMs < 0) || sample.date.isEmpty() || (endMs <= sample.startMs) || !_file.isOpen()) {
+    if ((sample.startMs < 0) || sample.dateTime.isEmpty() || (endMs <= sample.startMs) || !_file.isOpen()) {
         return;
     }
 
@@ -155,5 +162,5 @@ void SubtitleWriter::_writeSample(const Sample& sample, qint64 endMs)
                       .arg(start, end, QString::number(x), y,
                            sample.values.mid(column * valuesPerColumn, valuesPerColumn).join(QStringLiteral("\\N")));
     }
-    stream << QStringLiteral("Dialogue: 0,%1,%2,Default,,0,0,0,,{\\pos(10,35)}%3\n").arg(start, end, sample.date);
+    stream << QStringLiteral("Dialogue: 0,%1,%2,Default,,0,0,0,,{\\pos(10,35)}%3\n").arg(start, end, sample.dateTime);
 }

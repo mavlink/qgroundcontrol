@@ -9,7 +9,7 @@
 
 namespace GstQgc {
 
-const char* sinkFramesField(HwVideoBufferPath path) noexcept
+const char* sinkFramesField(HwVideoBufferPath path)
 {
     static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
         std::array<QByteArray, GstHw::kPathCount> fields;
@@ -37,7 +37,7 @@ GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin)
     return GStreamer::adoptStructure(stats);
 }
 
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) noexcept
+PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since)
 {
     PathStats out;
     if (!stats) {

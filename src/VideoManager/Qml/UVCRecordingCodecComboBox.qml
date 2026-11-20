@@ -3,8 +3,9 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-// Picks the codec a USB camera recording tries first, from the ones Qt can encode here. Auto, or a stored codec Qt
-// can't encode here, leaves the choice to the controller: the first of its fallbacks that encodes.
+// Picks the codec a recording Qt encodes tries first, a USB camera's or a stream's with the Qt Multimedia video backend,
+// from the ones Qt can encode here. Auto, or a stored codec Qt can't encode here, leaves the choice to the recorder:
+// the first of its fallbacks that encodes.
 LabelledComboBox {
     id: root
 

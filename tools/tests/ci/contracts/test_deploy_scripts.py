@@ -45,7 +45,8 @@ def test_docker_cli_uses_variants_without_shell_evaluation(tmp_path, variant):
     assert build[build.index("--target") + 1] == config["target"]
     for key, value in config["build_args"].items():
         assert f"{key}={value}" in build
-    assert ("/dev/fuse" in run) == config["fuse"]
+    # The build needs no FUSE device or added capability: packaging runs with APPIMAGE_EXTRACT_AND_RUN.
+    assert not {"--privileged", "--cap-add", "--device", "--security-opt"} & set(run)
     assert run[run.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"
     assert f"{tmp_path / 'output with spaces'}:/project/build" in run
     assert run[-2:] == [config["image"], "Release"]
@@ -272,6 +273,14 @@ def test_vagrant_provisions_as_root_and_builds_as_user(module, tmp_path, monkeyp
     assert any("rsync" in command and command[0] == "runuser" for command in commands) == (not ci)
     assert not any("su" in command or "-c" in command for command in commands)
     assert calls[0][1]["env"]["DEBIAN_FRONTEND"] == "noninteractive"
+    # uv installs the environment's Python outside root's home, where the vagrant user can run it.
+    setup, setup_options = next(
+        call
+        for call in calls
+        if str(tmp_path.resolve() / "tools/setup/install_python.py") in call[0]
+    )
+    assert "--python" not in setup
+    assert setup_options["env"]["UV_PYTHON_INSTALL_DIR"] == "/opt/qgc-python"
 
 
 @pytest.mark.parametrize("target", ["native", "cross", "android"])
@@ -366,6 +375,24 @@ def test_docker_forwards_budgets_but_not_host_paths(module, monkeypatch, tmp_pat
     assert f"{tmp_path}:/project/source" in calls[0]
 
 
+def test_docker_turns_the_launchers_off_in_the_container_for_a_release_tag(
+    module, monkeypatch, tmp_path
+):
+    script = module("deploy/docker/run_docker.py")
+    monkeypatch.setenv("SOURCE_DIR", str(tmp_path))
+    calls = []
+    monkeypatch.setattr(script.subprocess, "run", lambda command, **kwargs: calls.append(command))
+    for name in ("CCACHE_DISABLE", "MOCCACHE_DISABLE"):
+        monkeypatch.delenv(name, raising=False)
+    script.run_image("builder", "Release")
+    # cache_plan.py exports both for a release tag.
+    monkeypatch.setenv("CCACHE_DISABLE", "1")
+    monkeypatch.setenv("MOCCACHE_DISABLE", "1")
+    script.run_image("builder", "Release")
+    assert not any("DISABLE" in arg for arg in calls[0])
+    assert {"CCACHE_DISABLE=1", "MOCCACHE_DISABLE=1"} <= set(calls[1])
+
+
 @pytest.mark.parametrize(
     ("timings", "success", "compiled"),
     [
@@ -426,3 +453,29 @@ def test_deployment_scans_only_application_qml(tmp_path, platform, custom):
     else:
         assert "-no-quick-import" in options
         assert not any(option.startswith("-qmldir=") for option in options)
+
+
+def _qgc_android(tmp_path: Path, machine: str, *args: str) -> subprocess.CompletedProcess[str]:
+    """Run qgc-android with `uname -m` reporting *machine*."""
+    uname = tmp_path / "uname"
+    uname.write_text(f"#!/bin/sh\necho {machine}\n")
+    uname.chmod(0o755)
+    return subprocess.run(
+        ["bash", str(REPO_ROOT / "deploy/docker/qgc-android.sh"), *args],
+        env={**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}"},
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_qgc_android_explains_that_arm64_needs_the_x86_64_image(tmp_path):
+    result = _qgc_android(tmp_path, "aarch64", "arm64-v8a", "true")
+    assert result.returncode == 1
+    assert "--platform linux/amd64" in result.stderr
+
+
+@pytest.mark.parametrize("args", [("arm64-v8a",), ("mips", "true")])
+def test_qgc_android_rejects_missing_commands_and_unknown_abis(tmp_path, args):
+    result = _qgc_android(tmp_path, "x86_64", *args)
+    assert result.returncode == 2
+    assert "arm64-v8a" in result.stderr

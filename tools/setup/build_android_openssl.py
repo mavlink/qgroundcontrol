@@ -11,7 +11,7 @@ the variant KDAB's android_openssl.cmake links for the build type (--variants): 
 asm otherwise.
 
 Usage:
-    build_android_openssl.py --version 3.5.6 --tarball <path> --ndk <dir> --patch <ssl_3.patch>
+    build_android_openssl.py --version 3.5.9 --tarball <path> --ndk <dir> --patch <ssl_3.patch>
                              --output-root <dir> [--build-dir <dir>] [--api 28]
                              [--archs arm64 arm x86_64 x86] [--variants asm no-asm]
 

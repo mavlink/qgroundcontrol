@@ -23,12 +23,14 @@ static_assert(GstQtDmaBufImport::kImplicitModifier == QtMultimediaPrivate::DmaBu
 
 namespace GstQtDmaBufImport {
 
-PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat) noexcept
+PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat)
 {
     PlaneFourccs out;
     switch (pixelFormat) {
-        // Qt's table imports these as ABGR8888, which samples B as red: the bytes are B,G,R,A, i.e. DRM ARGB8888
-        // (what Qt's GStreamer backend uses for BGRA, qgstvideobuffer.cpp).
+        // Qt defect, seen in Qt 6.12.0: dmaBufFourccFromPixelFormat() gives these ABGR8888
+        // (qtmultimedia/src/multimedia/video/qmultimedia_drm_support_p.h), which samples B as red: the bytes are
+        // B,G,R,A, i.e. DRM ARGB8888 (what Qt's GStreamer backend uses for BGRA, qgstvideobuffer.cpp). Once the minimum
+        // Qt has the fix, drop these cases: Qt's table then serves every format.
         case QVideoFrameFormat::Format_BGRA8888:
         case QVideoFrameFormat::Format_BGRA8888_Premultiplied:
         case QVideoFrameFormat::Format_BGRX8888:
@@ -50,7 +52,7 @@ PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat) noexcept
     return out;
 }
 
-EGLDisplay importDisplay(QRhi& rhi) noexcept
+EGLDisplay importDisplay(QRhi& rhi)
 {
     if (rhi.backend() != QRhi::OpenGLES2) {
         return EGL_NO_DISPLAY;

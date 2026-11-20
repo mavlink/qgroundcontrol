@@ -9,17 +9,23 @@
     "apple",
     "build",
     "gstreamer",
-    "gstreamer_plugin_policy"
+    "gstreamer_plugin_policy",
+    "appimage"
   ],
   "definitions": {
     "github_repository": {
       "type": "string",
-      "description": "GitHub owner/name whose v<version> release assets are downloaded; Renovate tracks its releases",
+      "description": "GitHub owner/name whose release assets are downloaded, from the v<version> release or the entry's tag; Renovate tracks its releases",
       "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
     },
     "release_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "release_tag": {
+      "type": "string",
+      "description": "Release tag exactly as the repository names it",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
     },
     "sha256": {
       "type": "string",
@@ -65,7 +71,10 @@
         "ndk_version",
         "ndk_full_version",
         "java_version",
-        "cmdline_tools"
+        "cmdline_tools",
+        "cmdline_tools_sha256",
+        "openssl_version",
+        "openssl_sha256"
       ],
       "additionalProperties": false,
       "properties": {
@@ -89,6 +98,10 @@
           "pattern": "^[0-9]+$",
           "description": "Android command-line tools version"
         },
+        "cmdline_tools_sha256": {
+          "$ref": "#/definitions/sha256",
+          "description": "SHA256 of commandlinetools-linux-<cmdline_tools>_latest.zip; update it together with cmdline_tools"
+        },
         "ndk_version": {
           "type": "string",
           "pattern": "^r[0-9]+[a-z]?$",
@@ -103,6 +116,14 @@
           "type": "string",
           "pattern": "^[0-9]+$",
           "description": "Java version for Android builds"
+        },
+        "openssl_version": {
+          "$ref": "#/definitions/release_version",
+          "description": "OpenSSL release (openssl/openssl tag openssl-<version>) that cmake/modules/AndroidOpenSSL.cmake builds from source for the APK"
+        },
+        "openssl_sha256": {
+          "$ref": "#/definitions/sha256",
+          "description": "SHA256 of openssl-<openssl_version>.tar.gz; update it together with openssl_version"
         }
       }
     },
@@ -370,6 +391,119 @@
         }
       }
     },
+    "appimage": {
+      "type": "object",
+      "description": "AppImage tools that cmake/install/CreateAppImage.cmake downloads and verifies when it packages the Linux build: <repository>'s <tool>-<processor>.AppImage asset of the release tagged <tag>",
+      "required": [
+        "linuxdeploy",
+        "appimagetool",
+        "appimagelint"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "linuxdeploy": {
+          "type": "object",
+          "description": "linuxdeploy release that bundles the application's runtime dependencies into the AppDir",
+          "required": [
+            "repository",
+            "tag",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "tag": {
+              "$ref": "#/definitions/release_tag"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each processor's AppImage; update together with tag",
+              "required": [
+                "x86_64",
+                "aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "appimagetool": {
+          "type": "object",
+          "description": "appimagetool release that builds the AppImage from the AppDir",
+          "required": [
+            "repository",
+            "tag",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "tag": {
+              "$ref": "#/definitions/release_tag"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of each processor's AppImage; update together with tag",
+              "required": [
+                "x86_64",
+                "aarch64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x86_64": {
+                  "$ref": "#/definitions/sha256"
+                },
+                "aarch64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        },
+        "appimagelint": {
+          "type": "object",
+          "description": "appimagelint build that QGC_RUN_APPIMAGELINT runs on the AppImage. Upstream publishes only the rolling 'continuous' release (x86_64), rebuilt in place, so the digest pins one build and packaging skips the lint with a warning once upstream replaces it",
+          "required": [
+            "repository",
+            "tag",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "$ref": "#/definitions/github_repository"
+            },
+            "tag": {
+              "$ref": "#/definitions/release_tag"
+            },
+            "sha256": {
+              "type": "object",
+              "description": "SHA-256 of the reviewed AppImage build; update it after reviewing a rebuilt release",
+              "required": [
+                "x86_64"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x86_64": {
+                  "$ref": "#/definitions/sha256"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "analysis": {
       "type": "object",
       "additionalProperties": false,
@@ -399,9 +533,21 @@
           "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
         },
         "clang_tidy_sha256": {
-          "description": "SHA-256 of the clang-tidy manylinux x86_64 wheel",
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
+          "description": "SHA-256 of the clang-tidy manylinux wheel for each machine architecture; update together with clang_tidy_version",
+          "type": "object",
+          "required": [
+            "x86_64",
+            "aarch64"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "x86_64": {
+              "$ref": "#/definitions/sha256"
+            },
+            "aarch64": {
+              "$ref": "#/definitions/sha256"
+            }
+          }
         }
       }
     },

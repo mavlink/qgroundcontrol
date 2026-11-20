@@ -13,9 +13,9 @@ StreamSupervisor::StreamSupervisor(QObject* parent, ExponentialBackoff backoff)
     (void) connect(&_reconnectTimer, &QTimer::timeout, this, &StreamSupervisor::reconnectDue);
 }
 
-VideoReceiver::State StreamSupervisor::stateFor(Phase phase)
+VideoReceiver::State StreamSupervisor::state() const
 {
-    switch (phase) {
+    switch (_phase) {
         case Phase::Connecting:
             return VideoReceiver::State::Connecting;
         case Phase::Streaming:
@@ -75,9 +75,10 @@ void StreamSupervisor::sessionStreaming()
     _setPhase(Phase::Streaming);
 }
 
-StreamSupervisor::FailureOutcome StreamSupervisor::sessionFailed(const QString& message, bool permanent,
+StreamSupervisor::FailureOutcome StreamSupervisor::sessionFailed(const QString& message, Failure failure,
                                                                  bool autoReconnect)
 {
+    const bool permanent = (failure == Failure::Permanent);
     _lastFailure = message;
     if (_sessionStreamed) {
         _backoff.reset();
@@ -110,6 +111,16 @@ StreamSupervisor::AutoReconnectChange StreamSupervisor::autoReconnectChanged(boo
         return AutoReconnectChange::Resumable;
     }
     return AutoReconnectChange::None;
+}
+
+void StreamSupervisor::reconnectNow()
+{
+    if (!_reconnectTimer.isActive()) {
+        return;
+    }
+    _reconnectTimer.stop();
+    _backoff.reset();
+    emit reconnectDue();
 }
 
 void StreamSupervisor::_setPhase(Phase phase)

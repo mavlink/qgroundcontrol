@@ -39,6 +39,12 @@ public:
     /// Whether @p object is the queue or the valve.
     bool contains(GstObject* object) const;
 
+    /// For @p part, the bin a branch links behind its valve and takes out again, before it is linked: a push into its
+    /// "sink" ghost pad that fails for good posts the failure, once, as an ERROR from @p part and reports success. An
+    /// element inside that fails without an ERROR of its own (a refused renegotiation) is so reported as its branch's,
+    /// which the session recovers from, instead of failing the tee through the open valve, and with it the stream.
+    static void absorbFlowErrors(GstElement* part);
+
 private:
     GstElement* _queue = nullptr;
     GstElement* _valve = nullptr;

@@ -5,4 +5,4 @@
 - Instrument widgets communicate with active Vehicle object
 - Two main inner views are:
   - `FlightDisplayViewMap`
-  - `FlightDisplayViewVideo`
+  - `FlyViewVideo`, around the `VideoView` of the `QGroundControl.VideoManager` QML module (`src/VideoManager/Qml`)

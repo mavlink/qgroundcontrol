@@ -61,7 +61,7 @@ def deploy_branch(
         print("No documentation changes to deploy.")
         return False
 
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d")
     run_git("commit", "-m", f"{commit_message} {today}", cwd=target_dir, check=True)
     _push_with_retry(target_dir, target_branch)
     return True

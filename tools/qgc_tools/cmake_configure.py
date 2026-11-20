@@ -61,7 +61,11 @@ def configure(config: CMakeConfig, *, log_file: Path | None = None) -> int:
     if config.use_qt_cmake:
         qt_cmake = find_qt_cmake(config.qt_root)
         if not qt_cmake:
-            print("Error: qt-cmake not found; pass --no-qt-cmake to use cmake", file=sys.stderr)
+            print(
+                "Error: qt-cmake not found. Run `just qt` to install the configured Qt into ~/Qt, "
+                "or set QT_ROOT_DIR to a Qt kit directory (the one containing bin/qt-cmake).",
+                file=sys.stderr,
+            )
             return 1
         print(f"Using: {qt_cmake}")
     cmake_cmd = str(qt_cmake) if qt_cmake else "cmake"

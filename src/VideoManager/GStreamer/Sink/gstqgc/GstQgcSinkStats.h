@@ -11,7 +11,7 @@ namespace GstQgc {
 
 /// guint64 "frame-stats" field holding the frames @p path delivered: "frames-" plus the lower-cased
 /// GstHw::toString(path).
-const char* sinkFramesField(HwVideoBufferPath path) noexcept;
+const char* sinkFramesField(HwVideoBufferPath path);
 
 /// guint64 "frame-stats" field holding the delivered frames a newer frame replaced before the QVideoSink took them,
 /// which were never shown.
@@ -30,7 +30,7 @@ inline constexpr const char* kTiledDropsField = "tiled-drops";
 /// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the qgcvideosinkbin around one; null for other elements.
 GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
 
-/// The guint64 @p field of a "frame-stats" structure; 0 without the structure or the field.
+/// The guint64 @p field of @p stats, a "frame-stats" or any other structure; 0 without the structure or the field.
 inline quint64 frameStatsField(const GstStructure* stats, const char* field) noexcept
 {
     guint64 value = 0;
@@ -58,6 +58,6 @@ struct PathStats
 /// One qgcqvideosink's frame accounting, from its "frame-stats" structure: the per-path counts it has delivered, plus
 /// its GPU fallbacks and demotions. With @p since (an earlier "frame-stats" value of the same sink), only what changed
 /// since.
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since = nullptr) noexcept;
+PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since = nullptr);
 
 }  // namespace GstQgc

@@ -1,9 +1,12 @@
 """Regression guard: importing `common` or a CI-critical submodule loads no unrelated siblings.
 
 `common/__init__.py` re-exports nothing; scripts import each helper from its defining module.
-CI setup scripts run on the runner's system Python before setup-python and under sparse
-checkouts that contain only a subset of `tools/common/*.py`, so a submodule that drags in a
-sibling (such as `common.logging`) breaks scripts that never used it when that file is absent.
+The submodule check dates from sparse checkouts that held only some of `tools/common/*.py`, where
+a submodule that dragged in a sibling (such as `common.logging`) broke scripts that never used it.
+Sparse checkouts now include the whole directory, and test_bootstrap_sparse_checkout.py fails for
+a module outside a job's checkout, so such an import can no longer break a job unnoticed. These
+tests still keep `import common` free of submodule imports and the CI-critical submodules, which
+setup scripts load on the runner's system Python before setup-python, free of `common.logging`.
 """
 
 from __future__ import annotations
@@ -51,5 +54,5 @@ def test_submodule_import_does_not_pull_logging(sub):
     loaded = _loaded_common_submodules(f"import common.{sub}")
     assert "common.logging" not in loaded, (
         f"importing common.{sub} transitively loaded common.logging; "
-        f"setup scripts under sparse checkouts must not pull unrelated submodules"
+        f"CI-critical submodules must not pull unrelated submodules"
     )

@@ -66,7 +66,7 @@ void VehicleCameraControlTest::_testNameFieldReadIsBounded()
     memset(wire.vendor, 'A', sizeof(wire.vendor));
     memcpy(wire.model, "SHOULD_NOT_APPEAR", 18);
 
-    const QString bounded = VehicleCameraControl::boundedStringField(wire.vendor, sizeof(wire.vendor));
+    const QString bounded = QGCMAVLink::boundedStringField(wire.vendor);
 
     QCOMPARE(bounded.length(), 32);
     QVERIFY(!bounded.contains(QLatin1String("SHOULD_NOT_APPEAR")));
@@ -74,15 +74,13 @@ void VehicleCameraControlTest::_testNameFieldReadIsBounded()
     // A short, properly terminated field must still read normally.
     memset(&wire, 0, sizeof(wire));
     memcpy(wire.vendor, "Sony", 5);
-    QCOMPARE(VehicleCameraControl::boundedStringField(wire.vendor, sizeof(wire.vendor)), QStringLiteral("Sony"));
+    QCOMPARE(QGCMAVLink::boundedStringField(wire.vendor), QStringLiteral("Sony"));
 
     // QGC has always decoded these names as UTF-8, so a non-ASCII name must not turn into Latin-1 mojibake.
     static constexpr char utf8Name[] = "C\xC3\xA1mara";
     memset(&wire, 0, sizeof(wire));
     memcpy(wire.vendor, utf8Name, sizeof(utf8Name));
-    QCOMPARE(VehicleCameraControl::boundedStringField(wire.vendor, sizeof(wire.vendor)), QStringLiteral("C\u00e1mara"));
-
-    QVERIFY(VehicleCameraControl::boundedStringField(nullptr, 32).isEmpty());
+    QCOMPARE(QGCMAVLink::boundedStringField(wire.vendor), QStringLiteral("C\u00e1mara"));
 }
 
 void VehicleCameraControlTest::_testCameraNamesCannotSteerCachePath()
@@ -178,6 +176,23 @@ void VehicleCameraControlTest::_connectVehicle(MockConfiguration* mockConfig)
         QVERIFY2(UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete")),
                  "Timeout waiting for initial connect");
     }
+}
+
+MavlinkCameraControlInterface* VehicleCameraControlTest::_firstCamera()
+{
+    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
+    // MockLinkCamera creates two cameras.
+    if (!cameraManager || !waitForCondition([cameraManager] { return cameraManager->cameras()->count() >= 2; },
+                                            TestTimeout::longMs(), u"two cameras discovered")) {
+        return nullptr;
+    }
+    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
+        auto* const camera = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
+        if (camera && (camera->compID() == MAV_COMP_ID_CAMERA)) {
+            return camera;
+        }
+    }
+    return nullptr;
 }
 
 void VehicleCameraControlTest::_testConstructorBuildsCacheFileFromBoundedNames()
@@ -446,23 +461,8 @@ void VehicleCameraControlTest::_testCameraCapFlags()
         return;
     }
 
-    // Wait for camera manager to discover cameras
-    QGCCameraManager* cameraManager = _vehicle->cameraManager();
-    QVERIFY(cameraManager);
-
-    // MockLinkCamera creates two cameras; wait for both to be discovered
-    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
-
-    // Find Camera 1 (MAV_COMP_ID_CAMERA) which has our configured flags.
-    // Camera 2 (MAV_COMP_ID_CAMERA2) is always photo-only and not what we're testing.
-    MavlinkCameraControlInterface* camera = nullptr;
-    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
-        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
-        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
-            camera = cam;
-            break;
-        }
-    }
+    // Camera 1 has our configured flags. Camera 2 is always photo-only and not what we're testing.
+    MavlinkCameraControlInterface* const camera = _firstCamera();
     QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
 
     // Verify capability properties match expected values
@@ -495,18 +495,7 @@ void VehicleCameraControlTest::_testZoomTriggersCameraSettingsRequest()
         return;
     }
 
-    QGCCameraManager* cameraManager = _vehicle->cameraManager();
-    QVERIFY(cameraManager);
-    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
-
-    MavlinkCameraControlInterface* camera = nullptr;
-    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
-        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
-        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
-            camera = cam;
-            break;
-        }
-    }
+    MavlinkCameraControlInterface* const camera = _firstCamera();
     QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
     QVERIFY(camera->hasZoom());
 
@@ -537,6 +526,91 @@ void VehicleCameraControlTest::_testZoomTriggersCameraSettingsRequest()
     QTRY_VERIFY2_WITH_TIMEOUT(settingsRequestCount() > baselineAfterSetZoom,
                               "QGC did not re-request CAMERA_SETTINGS after startZoom/stopZoom were accepted",
                               TestTimeout::longMs());
+}
+
+void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
+{
+    auto* mockConfig = newMockConfiguration(QStringLiteral("CameraExtraStreamsTest"));
+    mockConfig->setEnableCamera(true);
+    mockConfig->setCameraHasVideoStream(true);
+
+    _connectVehicle(mockConfig);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    MavlinkCameraControlInterface* const camera = _firstCamera();
+    QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
+    QGCCameraManager* const cameraManager = _vehicle->cameraManager();
+    // The mock camera advertises its streams 1 and 2.
+    QVERIFY_TRUE_WAIT(camera->streamLabels().size() == 2, TestTimeout::longMs());
+    QCOMPARE(camera->currentStream(), 0);
+
+    const auto transmitted = [this](uint8_t streamId) {
+        return _mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, streamId);
+    };
+    const auto started = [this] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, MAV_COMP_ID_CAMERA);
+    };
+    const auto stopped = [this] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_STOP_STREAMING, MAV_COMP_ID_CAMERA);
+    };
+    // QGC requests a stream's status with REQUEST_MESSAGE or the deprecated command, in turn.
+    const auto statusRequests = [this] {
+        return _mockLink->receivedRequestMessageCount(MAV_COMP_ID_CAMERA, MAVLINK_MSG_ID_VIDEO_STREAM_STATUS) +
+               _mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_VIDEO_STREAM_STATUS, MAV_COMP_ID_CAMERA);
+    };
+
+    // A camera transmits its first stream, the current one, without being asked.
+    QCOMPARE(started(), 0);
+    QVERIFY(transmitted(1));
+    QVERIFY(!transmitted(2));
+
+    // A stream shown besides the current one is started.
+    camera->setExtraStreams({2});
+    QVERIFY_TRUE_WAIT(transmitted(2), TestTimeout::mediumMs());
+    QCOMPARE(started(), 1);
+    QCOMPARE(stopped(), 0);
+
+    // It becomes the current stream while the former one stays on display, as whoever displays the streams says when
+    // told of the change: the camera is asked to stop or start neither. The request for the new current stream's
+    // status follows any such command.
+    const QMetaObject::Connection display =
+        connect(cameraManager, &QGCCameraManager::streamChanged, camera, [camera] { camera->setExtraStreams({1}); });
+    const int statusRequestsBefore = statusRequests();
+    camera->setCurrentStream(1);
+    QVERIFY_TRUE_WAIT(statusRequests() > statusRequestsBefore, TestTimeout::mediumMs());
+    QVERIFY(disconnect(display));
+    QCOMPARE(started(), 1);
+    QCOMPARE(stopped(), 0);
+    QVERIFY(transmitted(1));
+    QVERIFY(transmitted(2));
+
+    // The former stream leaves the display: it is stopped.
+    camera->setExtraStreams({});
+    QVERIFY_TRUE_WAIT(!transmitted(1), TestTimeout::mediumMs());
+    QVERIFY(transmitted(2));
+    QCOMPARE(started(), 1);
+
+    // With no other stream on display, a change of the current stream stops the old one and starts the new one.
+    camera->setCurrentStream(0);
+    QVERIFY_TRUE_WAIT(transmitted(1) && !transmitted(2), TestTimeout::mediumMs());
+    QCOMPARE(started(), 2);
+    QCOMPARE(stopped(), 2);
+
+    // Leaving the vehicle stops the extra stream and then the current one, and coming back to it starts them again:
+    // each time two commands of one kind. The vehicle refuses a command while the camera has yet to answer the same
+    // one, so the second waits for the first's answer.
+    camera->setExtraStreams({2});
+    QVERIFY_TRUE_WAIT(transmitted(2), TestTimeout::mediumMs());
+    camera->setExtraStreams({});
+    camera->stopStream();
+    QVERIFY_TRUE_WAIT(!transmitted(1) && !transmitted(2), TestTimeout::mediumMs());
+    camera->resumeStream();
+    camera->setExtraStreams({2});
+    QVERIFY_TRUE_WAIT(transmitted(1) && transmitted(2), TestTimeout::mediumMs());
+    QCOMPARE(started(), 5);
+    QCOMPARE(stopped(), 4);
 }
 
 UT_REGISTER_TEST(VehicleCameraControlTest, TestLabel::Integration, TestLabel::Vehicle)

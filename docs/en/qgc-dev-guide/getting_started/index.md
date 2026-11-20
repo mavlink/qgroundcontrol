@@ -44,17 +44,61 @@ The Qt version, the minimum CMake version, and the pinned GStreamer, Android and
 `just info` prints the Qt, CMake and GStreamer versions for your checkout.
 For more information see: [Qt 6 supported platform list](https://doc.qt.io/qt-6/supported-platforms.html).
 
+#### Quick Start
+
+With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, these commands take a fresh clone to a running Debug build.
+The sections that follow explain each step and the alternatives.
+
+**Linux** (Debian/Ubuntu, Fedora or Arch):
+
+```sh
+git clone -j8 https://github.com/mavlink/qgroundcontrol.git && cd qgroundcontrol
+uv run --frozen --project tools python tools/setup/install_python.py dev   # just and the other developer tools
+. tools/.venv/bin/activate
+just setup   # System packages (uses sudo), Qt, configure and build
+just run
+```
+
+**macOS** (with Xcode installed):
+
+```sh
+git clone -j8 https://github.com/mavlink/qgroundcontrol.git && cd qgroundcontrol
+uv run --frozen --project tools python tools/setup/install_python.py dev   # just and the other developer tools
+. tools/.venv/bin/activate
+just setup   # Homebrew packages and GStreamer, Qt, configure and build
+just run
+```
+
+**Windows** (in an _x64 Native Tools Command Prompt for VS 2022_, with the [MSVC compiler](#vs) and [Git for Windows](https://git-scm.com) installed):
+
+```bat
+git clone -j8 https://github.com/mavlink/qgroundcontrol.git && cd qgroundcontrol
+uv run --frozen --project tools python tools/setup/install_python.py dev
+tools\.venv\Scripts\activate.bat
+just qt
+just configure
+just build
+just run
+```
+
+- `just setup` runs `just deps` ([Install Additional Packages](#install-additional-packages)), `just qt` ([Install Qt](#install-qt)), `just configure` and `just build`.
+- `just qt` downloads 0.3 to 0.4 GB and installs about 2.2 GB on Linux, 2.4 GB on macOS and 3.5 GB on Windows (measured for Qt 6.12.0 in November 2026). It does nothing when `just configure` already finds Qt {{ $frontmatter.qt_version }}.
+- On Windows, `just` runs its recipes with `sh`, so the `sh` from Git for Windows (by default in `C:\Program Files\Git\bin`) must be on your `PATH`.
+  `just deps` is left out there because it needs an Administrator prompt and is optional: CMake downloads the GStreamer SDK when you configure.
+
 #### Prerequisites
 
-- **Python 3.10+** and **[uv](https://docs.astral.sh/uv/)**: QGC's code generators and tools run in a locked Python environment in `tools/.venv`, which CMake creates with uv the first time you configure.
-  On Linux and macOS, `python3 tools/setup/install_uv.py` installs uv; on Windows, follow the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+- **[uv](https://docs.astral.sh/uv/)**: QGC's code generators and tools run on Python 3.12 in a locked environment in `tools/.venv`, which CMake creates with uv the first time you configure.
+  uv downloads that Python if your system has none, so an older system Python (as on Ubuntu 22.04 or Debian 12) is not a problem.
+  Install uv by following the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+  The commands below start with `uv run --frozen --project tools python`, which runs a repository script on that Python; a `python3` that is 3.12 or newer can run the same scripts directly.
 - **CMake 3.28 or newer** and **Ninja**: the dependency scripts below install them on Linux and macOS, and the `just` recipes run CMake from the locked tool environment.
   If you run `cmake`/`qt-cmake` yourself, make sure the `cmake` on your `PATH` is new enough. Ubuntu 24.04's package is; on older distributions, such as Ubuntu 22.04 or Debian 12, use the CMake from _Developer and Designer Tools_ in the Qt Online Installer or `pip install cmake`.
 - **[just](https://just.systems)** (recommended): the command runner used for the everyday build, test and lint commands.
   Install it, together with prek (the pre-commit hook runner) and the other developer tools, into `tools/.venv`:
 
   ```sh
-  python3 tools/setup/install_python.py dev
+  uv run --frozen --project tools python tools/setup/install_python.py dev
   . tools/.venv/bin/activate   # Windows PowerShell: tools\.venv\Scripts\Activate.ps1
   ```
 
@@ -64,7 +108,17 @@ For more information see: [Qt 6 supported platform list](https://doc.qt.io/qt-6/
 
 You **must install Qt as described below** instead of using pre-built packages from, say, a Linux distribution.
 
-To install Qt with the Qt Online Installer:
+`just qt` installs exactly the Qt version and modules that CI uses for your machine's desktop kit into `~/Qt`, where `just configure` looks for it:
+
+```sh
+just qt             # Install Qt, or report that it is already installed
+just qt --dry-run   # Only show what would be installed
+```
+
+It installs nothing when `just configure` already finds that Qt version, or when `QT_DIR` or `QT_ROOT_DIR` selects another Qt.
+It does not install Qt Creator or the Android and iOS kits; use the Qt Online Installer for those.
+
+To install Qt with the Qt Online Installer instead:
 
 1. Download and run the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss).
    - **Ubuntu:** Set the downloaded file to executable using `chmod +x`. It may also be necessary to install _libxcb-cursor0_.
@@ -79,22 +133,24 @@ To install Qt with the Qt Online Installer:
    - Select all _Additional Libraries_.
    - Deselect Qt Design Studio.
 
-Alternatively, `tools/setup/install_qt.py` installs exactly the Qt version and modules CI uses (with QGC's own installer on Linux, which needs CMake, and [aqtinstall](https://github.com/miurahr/aqtinstall) elsewhere), for example on Linux:
+`just qt` runs `tools/setup/install_qt.py local`. The script's `install` command installs any other kit of the configured Qt version, for example the Linux desktop kit:
 
 ```sh
-python3 tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64 --outdir ~/Qt
+uv run --frozen --project tools --group build python tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64 --outdir ~/Qt
 ```
 
 Use `--host mac --arch clang_64` on macOS, or `--host windows --arch win64_msvc2022_64` on Windows.
+Keep `--outdir ~/Qt`: without it Qt is installed into `.qt` in the current directory, where `just configure` does not look.
+The script uses QGC's own installer, which extracts the archives with CMake; `--installer aqt` selects [aqtinstall](https://github.com/miurahr/aqtinstall) instead.
 
 #### Install Additional Packages
 
 Run the dependency script from the root of the cloned repository (`cd qgroundcontrol`). It is the same script CI uses:
 
-- **Linux** (Debian/Ubuntu, Fedora or Arch) and **macOS:** `python3 tools/setup/install_dependencies` (or `just deps`).
+- **Linux** (Debian/Ubuntu, Fedora or Arch) and **macOS:** `uv run --frozen --project tools python tools/setup/install_dependencies` (or `just deps`).
   The platform is detected automatically; override it with `--platform debian|fedora|arch|macos`.
   It installs system packages with apt, dnf or pacman (using `sudo`), or with Homebrew plus the GStreamer framework on macOS.
-- **Windows:** `python tools/setup/install_dependencies --platform windows`, from an Administrator prompt.
+- **Windows:** `uv run --frozen --project tools python tools/setup/install_dependencies --platform windows`, from an Administrator prompt.
   By default it installs only GStreamer (x64 only, from the QGC dependency mirror).
   Optional flags: `--nsis` installs NSIS (needed to build the installer), `--msvc` installs the Visual Studio 2022 Build Tools C++ workload, and `--vulkan` installs the Vulkan SDK.
 
@@ -136,8 +192,11 @@ just run         # Launch the application you just built
 just test        # Run the unit tests
 ```
 
+- `just setup` runs the whole first-time sequence: `just deps`, `just qt`, `just configure` and `just build`.
 - `just release` configures and builds Release instead. `BUILD_TYPE` selects other build types, for example `BUILD_TYPE=RelWithDebInfo just configure build`.
-- `tools/configure.py` (which `just configure` runs) uses the `qt-cmake` from the newest Qt it finds under `~/Qt` (or `C:\Qt` on Windows). Set `QT_ROOT_DIR` to a Qt kit directory, such as `~/Qt/{{ $frontmatter.qt_version }}/gcc_64`, to choose a different one.
+- `tools/configure.py` (which `just configure` runs) uses the `qt-cmake` from the newest Qt it finds under `~/Qt`, then `/opt/Qt` on Linux or `/Applications/Qt` on macOS; on Windows it looks in `C:\Qt` before `~/Qt`.
+  Set `QT_ROOT_DIR` to a Qt kit directory, such as `~/Qt/{{ $frontmatter.qt_version }}/gcc_64`, to choose a different one.
+  If no Qt is found, it stops and tells you to run `just qt`.
 - `just check` runs the lint checks, the Python tooling tests and the unit tests; see [Code Submission](../contribute/index.md) and [Unit Tests](../contribute/unit_tests.md).
 
 #### Build using CMake on CLI {#cmake}
@@ -216,7 +275,7 @@ To develop inside a container instead, see [VS Code Dev Container](../getting_st
 #### Android and iOS
 
 - **Android:** Install Qt for Android together with the matching desktop Qt (the _host_ Qt), plus the Android SDK, NDK and JDK versions listed under `android` in `build-config.json`.
-  On Debian/Ubuntu, `python3 tools/setup/install_dependencies --category android` installs the build tools and the matching OpenJDK.
+  On Debian/Ubuntu, `uv run --frozen --project tools python tools/setup/install_dependencies --category android` installs the build tools and the matching OpenJDK.
   The `Android` and `Android-debug` presets read `QT_TARGET_ROOT_DIR` (Qt for Android), `QT_HOST_PATH` (desktop Qt), `ANDROID_NDK` and `ANDROID_MIN_SDK` from the environment.
   The build produces an APK; `cmake --build <build-dir> --target aab` also builds an Android App Bundle.
 - **iOS** (macOS host with Xcode): Install Qt for iOS together with the matching macOS Qt.
@@ -284,9 +343,9 @@ Environment variables (set by the launcher, overridable at build time):
 
 ```sh
 MOCCACHE_STATS=1 just build                             # This build's hit/miss stats print after linking
-MOCCACHE_BASEDIR=$PWD/build python3 ./tools/moccache_launcher.py --show-stats --build-dir build --verbose  # Per-miss reasons for the last build
-python3 ./tools/moccache_launcher.py --zero-stats       # Reset the stats log
-python3 ./tools/moccache_launcher.py --trim --max-size 1G  # Explicitly trim the cache (LRU)
+MOCCACHE_BASEDIR=$PWD/build uv run --frozen --project tools python ./tools/moccache_launcher.py --show-stats --build-dir build --verbose  # Per-miss reasons for the last build
+uv run --frozen --project tools python ./tools/moccache_launcher.py --zero-stats       # Reset the stats log
+uv run --frozen --project tools python ./tools/moccache_launcher.py --trim --max-size 1G  # Explicitly trim the cache (LRU)
 MOCCACHE_DISABLE=1 just build                           # Bypass the cache for one build
 ```
 
@@ -316,8 +375,8 @@ Both VM options provision an Ubuntu guest, install the dependencies and Qt with 
 To reproduce the CI Vagrant job on an Ubuntu host, run `deploy/vagrant/run_vagrant.py`. Its `install` step sets up Vagrant, libvirt/KVM, UEFI firmware and the vagrant-libvirt plugin; the default `build` step runs a headless VM, copies the AppImage to `OUTPUT_DIR` (default: the current directory) and destroys the VM:
 
 ```sh
-python3 deploy/vagrant/run_vagrant.py install
-OUTPUT_DIR=artifacts python3 deploy/vagrant/run_vagrant.py
+uv run --frozen --project tools python deploy/vagrant/run_vagrant.py install
+OUTPUT_DIR=artifacts uv run --frozen --project tools python deploy/vagrant/run_vagrant.py
 ```
 
 `QGC_VM_CPUS`, `QGC_VM_MEM_MB` and `QGC_VM_UP_TIMEOUT` (seconds, default 150 minutes) adjust the VM size and the `vagrant up` time limit.
@@ -328,9 +387,10 @@ The script refuses to run while another Vagrant machine (such as the desktop VM 
 [Multipass](https://canonical.com/multipass) builds in a throwaway Ubuntu VM and copies the AppImage to `OUTPUT_DIR` (default: the current directory):
 
 ```sh
-QGC_SOURCE_DIR=$PWD OUTPUT_DIR=artifacts python3 deploy/multipass/run_multipass.py
+QGC_SOURCE_DIR=$PWD OUTPUT_DIR=artifacts uv run --frozen --project tools python deploy/multipass/run_multipass.py
 ```
 
 Without `QGC_SOURCE_DIR` the VM clones upstream `master` instead of building your checkout.
 `MP_CPUS` (default 4), `MP_MEM` (8G), `MP_DISK` (25G) and `MP_IMAGE` size and select the VM, and `MP_TIMEOUT` (default 900 seconds) bounds `multipass launch`.
+The build script runs on the guest's `python3`, so an `MP_IMAGE` must ship Python 3.12 or newer (Ubuntu 24.04 and later do).
 The instance (`MP_NAME`, default `qgc`) must not already exist, and is deleted when the build finishes.

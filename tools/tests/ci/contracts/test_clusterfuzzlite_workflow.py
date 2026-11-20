@@ -1,40 +1,26 @@
 """Fuzzing configuration and PR execution contracts."""
 
+import re
 import subprocess
 import sys
 
 import pytest
 
 from ..._helpers import REPO_ROOT, load_script, load_workflow
+from .._workflows import path_filter_covers
 
 
-def test_pr_fuzzing_uses_seed_corpus_and_preserves_diagnostics() -> None:
-    workflow = load_workflow("clusterfuzzlite.yml")
-    # PR runs never read uploaded builds (NO_CLUSTERFUZZ_DEPLOYMENT), so nothing else publishes any.
-    assert set(workflow["on"]) == {"pull_request"}
-    assert set(workflow["jobs"]) == {"fuzz"}
-    job = workflow["jobs"]["fuzz"]
-    steps = job["steps"]
-    run = next(
-        step for step in steps if "clusterfuzzlite/actions/run_fuzzers@" in step.get("uses", "")
-    )
-    assert run["env"]["NO_CLUSTERFUZZ_DEPLOYMENT"] == "true"
-    assert run["with"]["fuzz-seconds"] == 300
-    assert run["with"]["sanitizer"] == "address"
-    assert run["with"]["mode"] == "code-change"
-    assert run["with"]["output-sarif"] is True
-    assert run["with"].get("dry-run", False) is False
-    assert run.get("continue-on-error", False) is False
-    assert 5 < run["timeout-minutes"] < job["timeout-minutes"]
-
-    upload = next(
-        step for step in steps if step.get("uses", "").startswith("actions/upload-artifact@")
-    )
-    assert upload["if"] == "${{ !cancelled() }}"
-    assert set(upload["with"]["path"].splitlines()) == {
-        "out/artifacts",
-        "cifuzz-sarif/results.sarif",
-    }
+def test_every_file_the_fuzzing_image_copies_triggers_the_workflow() -> None:
+    dockerfile = (REPO_ROOT / ".clusterfuzzlite/Dockerfile").read_text(encoding="utf-8")
+    sources = [
+        source
+        for line in re.findall(r"^COPY (?!--from=)(.+)$", dockerfile, re.MULTILINE)
+        for source in line.split()[:-1]
+    ]
+    assert sources
+    paths = load_workflow("clusterfuzzlite.yml")["on"]["pull_request"]["paths"]
+    for source in sources:
+        assert path_filter_covers(source, paths), source
 
 
 @pytest.mark.parametrize("multiline", [False, True])

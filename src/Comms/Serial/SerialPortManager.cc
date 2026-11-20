@@ -9,12 +9,24 @@
 
 #include "QGCLoggingCategory.h"
 
+#ifdef Q_OS_ANDROID
+#include "AndroidSerialAccess.h"
+#include "AndroidSerialApp.h"
+#endif
+
 QGC_LOGGING_CATEGORY(SerialPortManagerLog, "Comms.Serial.SerialPortManager")
 Q_APPLICATION_STATIC(SerialPortManager, _serialPortManager)
 
 SerialPortManager::SerialPortManager(QObject* parent, Enumerator enumerator)
     : QObject(parent), _enumerator(enumerator ? std::move(enumerator) : &_enumeratePorts)
-{}
+{
+#ifdef Q_OS_ANDROID
+    // Android tells when a USB device is attached, detached or permitted, so the inventory does not wait for the
+    // next caller to ask for it.
+    (void) connect(AndroidSerial::DeviceWatcher::instance(), &AndroidSerial::DeviceWatcher::devicesChanged, this,
+                   &SerialPortManager::rescan);
+#endif
+}
 
 SerialPortManager* SerialPortManager::instance()
 {
@@ -48,6 +60,8 @@ QList<SerialPortManager::Port> SerialPortManager::_enumeratePorts()
         port.portName = info.portName().trimmed();
         port.displayName = port.portName;
 #ifdef Q_OS_ANDROID
+        port.stableName = info.stableName();
+        port.hardwareFlowControl = info.hasHardwareFlowControl();
         const QString label = port.description.isEmpty() ? info.manufacturer() : port.description;
         if (!label.isEmpty()) {
             port.displayName = QStringLiteral("%1 (%2)").arg(label, port.portName);
@@ -62,13 +76,16 @@ QList<SerialPortManager::Port> SerialPortManager::_enumeratePorts()
 
 QList<SerialPortManager::Port> SerialPortManager::availablePorts()
 {
-    // Java USB enumeration leaks handles while a port is occupied. Preserve the last
-    // snapshot instead of reporting an empty inventory and falsely declaring an unplug.
-    if ((_singlePortOnly && anyPortReserved()) || (_scanTimer.isValid() && _scanTimer.elapsed() < 1000)) {
+    if (_scanTimer.isValid() && _scanTimer.elapsed() < 1000) {
         return _ports;
     }
     _ports = _enumerator();
     _scanTimer.restart();
+    for (auto it = _reservations.begin(); it != _reservations.end(); ++it) {
+        if (const Port* const reserved = _portNamed(it.key())) {
+            it->listedLocation = reserved->systemLocation;
+        }
+    }
     QStringList identities;
     QStringList serialPorts;
     serialPorts.reserve(_ports.size());
@@ -76,6 +93,9 @@ QList<SerialPortManager::Port> SerialPortManager::availablePorts()
         serialPorts.append(port.systemLocation);
         identities.append(port.systemLocation);
         identities.append(port.portName);
+        if (!port.stableName.isEmpty()) {
+            identities.append(port.stableName);
+        }
     }
     if (_serialPorts != serialPorts) {
         _serialPorts = std::move(serialPorts);
@@ -93,49 +113,149 @@ void SerialPortManager::rescan()
 
 QString SerialPortManager::displayName(const QString& systemLocation)
 {
-    const QString name = systemLocation.trimmed();
-    const auto ports = availablePorts();
-    for (const auto& port : ports) {
-        if (port.systemLocation == name || port.portName == name) {
-            return port.displayName.isEmpty() ? port.portName : port.displayName;
-        }
+    (void) availablePorts();
+    const Port* const port = _portNamed(systemLocation.trimmed());
+    if (!port) {
+        return {};
     }
-    return {};
+    return port->displayName.isEmpty() ? port->portName : port->displayName;
 }
 
-SerialPortManager::ReservationPtr SerialPortManager::reservePort(const QString& systemLocation)
+SerialPortManager::ReservationPtr SerialPortManager::reservePort(const QString& systemLocation, const QString& owner)
 {
     const QString port = systemLocation.trimmed();
     if (!canReservePort(port)) {
         return {};
     }
     for (auto it = _reservations.begin(); it != _reservations.end();) {
-        it = it.value().expired() ? _reservations.erase(it) : std::next(it);
+        it = it->reservation.expired() ? _reservations.erase(it) : std::next(it);
     }
-    auto reservation = std::make_shared<const Reservation>(Reservation{port});
-    _reservations.insert(port, reservation);
+    auto reservation = std::make_shared<const Reservation>(Reservation{.systemLocation = port, .owner = owner});
+    _reservations.insert(port, {.reservation = reservation, .listedLocation = _systemLocation(port)});
     return reservation;
+}
+
+const SerialPortManager::Port* SerialPortManager::_portNamed(const QString& name) const
+{
+    const Port* found = nullptr;
+    for (const Port& port : _ports) {
+        if (!port.hasName(name)) {
+            continue;
+        }
+        if (found) {
+            return nullptr;
+        }
+        found = &port;
+    }
+    return found;
+}
+
+QString SerialPortManager::_systemLocation(const QString& name) const
+{
+    const QString trimmed = name.trimmed();
+    const Port* const port = _portNamed(trimmed);
+    return port ? port->systemLocation : trimmed;
+}
+
+SerialPortManager::ReservationPtr SerialPortManager::_reservationOf(const QString& name) const
+{
+    // Compared by what the names stand for now: a stable name stands for another system location once its
+    // device has been replugged. A second device of the same stable name leaves it standing for neither, and
+    // the reserved port is then the one at the location where the name last found it.
+    const QString location = _systemLocation(name);
+    for (auto it = _reservations.cbegin(); it != _reservations.cend(); ++it) {
+        ReservationPtr reservation = it->reservation.lock();
+        if (reservation && (_systemLocation(it.key()) == location || it->listedLocation == location)) {
+            return reservation;
+        }
+    }
+    return {};
 }
 
 bool SerialPortManager::isPortReserved(const QString& systemLocation) const
 {
-    return !_reservations.value(systemLocation.trimmed()).expired();
+    return _reservationOf(systemLocation) != nullptr;
 }
 
-bool SerialPortManager::anyPortReserved() const
+QString SerialPortManager::reservationOwner(const QString& systemLocation) const
 {
-    for (const auto& reservation : _reservations) {
-        if (!reservation.expired()) {
-            return true;
+    const ReservationPtr reservation = _reservationOf(systemLocation);
+    return reservation ? reservation->owner : QString();
+}
+
+bool SerialPortManager::isSamePort(const QString& first, const QString& second) const
+{
+    return _systemLocation(first) == _systemLocation(second);
+}
+
+QString SerialPortManager::persistentName(const QString& name) const
+{
+    QString trimmed = name.trimmed();
+    for (const Port& port : _ports) {
+        if (port.systemLocation != trimmed && port.portName != trimmed) {
+            continue;
         }
+        const auto sharesStableName = [&port](const Port& other) { return other.stableName == port.stableName; };
+        const bool findsOnlyThisPort =
+            !port.stableName.isEmpty() && std::count_if(_ports.cbegin(), _ports.cend(), sharesStableName) == 1;
+        return findsOnlyThisPort ? port.stableName : port.systemLocation;
     }
+    return trimmed;
+}
+
+std::optional<SerialPortManager::Port> SerialPortManager::port(const QString& name) const
+{
+    const Port* const port = _portNamed(name.trimmed());
+    return port ? std::optional<Port>(*port) : std::nullopt;
+}
+
+bool SerialPortManager::_hasPlatformAccess([[maybe_unused]] const QString& name)
+{
+#ifdef Q_OS_ANDROID
+    // Only a USB port takes a permission.
+    return !QSerialPortInfo::isUsbLocation(QSerialPortInfo::portNameToSystemLocation(name)) ||
+           AndroidSerialAccess::hasUsbPermission(name);
+#else
+    return true;
+#endif
+}
+
+bool SerialPortManager::_requestPlatformAccess([[maybe_unused]] const QString& name)
+{
+#ifdef Q_OS_ANDROID
+    return AndroidSerialAccess::requestUsbPermission(name);
+#else
     return false;
+#endif
+}
+
+bool SerialPortManager::_platformAccessDenied([[maybe_unused]] const QString& name)
+{
+#ifdef Q_OS_ANDROID
+    return AndroidSerialAccess::isUsbPermissionDenied(name);
+#else
+    return false;
+#endif
+}
+
+bool SerialPortManager::hasAccess(const QString& name) const
+{
+    return _hasAccess(name);
+}
+
+bool SerialPortManager::requestAccess(const QString& name)
+{
+    return _requestAccess(name);
+}
+
+bool SerialPortManager::accessDenied(const QString& name) const
+{
+    return _accessDenied(name);
 }
 
 bool SerialPortManager::canReservePort(const QString& systemLocation) const
 {
-    return !systemLocation.trimmed().isEmpty() && !isPortReserved(systemLocation) &&
-           !(_singlePortOnly && anyPortReserved());
+    return !systemLocation.trimmed().isEmpty() && !isPortReserved(systemLocation);
 }
 
 SerialPortManager::ReservationPtr SerialPortManager::excludeFromAutoConnect(const QString& systemLocation)

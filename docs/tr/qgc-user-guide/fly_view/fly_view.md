@@ -139,7 +139,7 @@ Kameranın kendisinde kaydedilen video daha kaliteli olacak olsa da, yüksek iht
 
 #### Video Akışını Kaydetme (GCS'de)
 
-Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 Yeni bir video kaydı başlatmak için kırmızı daireye tıklayın (daireye her tıklanıldığında yeni bir video dosyası oluşturulur); kayıt devam ederken çember kırmızı bir kareye dönüşecektir.
 
 Video akışı kaydı [Application Settings > General tab](../settings_view/general.md)'dan düzenlenir:

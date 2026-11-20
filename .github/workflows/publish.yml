@@ -1,0 +1,465 @@
+name: Publish Builds
+
+# Publishes a commit's packages once the Linux, Windows, MacOS and Android workflows have all built
+# it: the rolling `daily` GitHub prerelease for master, S3 builds/<ref>/ for master, Stable*
+# branches and release tags, and S3 latest/ and the tag's draft GitHub Release for release tags.
+# A release tag needs every workflow to pass. A branch is also published when a workflow failed
+# in a job that builds no package: each package must come from a job that passed.
+# The build workflows hold no publishing credentials. Their artifacts are read here as data, by
+# this file and tools/ as they are on the default branch, and published only after their checksums
+# and build provenance attestations verify.
+# Design: .github/ci-notes/platforms.md#publish-builds
+run-name: >-
+  ${{ github.event_name == 'workflow_run' &&
+    format('{0} completed for {1}', github.event.workflow_run.name, github.event.workflow_run.head_branch) ||
+    format('Publish {0}{1}{2}', inputs.ref, inputs.commit && format(' at {0}', inputs.commit) || '',
+      inputs.dry_run && ' (dry run)' || '') }}
+
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers] default-branch code only; build artifacts are data, never executed, and verified by jobs without write access before a publishing job reads them
+    # GitHub requires literal workflow names here: the workflows that mark a package for
+    # publishing. tools/tests/ci/contracts/test_published_builds.py keeps the list in step.
+    workflows:
+      - Linux
+      - Windows
+      - MacOS
+      - Android
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch (master or Stable*) or release tag (vX.Y.Z) whose newest finished build to publish, again if it already is'
+        required: true
+        type: string
+      commit:
+        description: 'Branches only: full 40-character SHA of the commit of the branch to publish instead of the newest finished one. Leave empty otherwise'
+        required: false
+        type: string
+      dry_run:
+        description: 'Decide, download and verify, and report what would be published, without writing anything'
+        required: false
+        default: false
+        type: boolean
+      force_latest:
+        description: 'Release tags only: replace whatever latest/ holds, a NEWER release (a rollback) or one it has no record of (its first publication by this workflow). Leave off otherwise'
+        required: false
+        default: false
+        type: boolean
+      force_release:
+        description: 'Release tags only: replace the files of the tag''s GitHub Release although it is already PUBLISHED. Leave off: a published release does not change under its users'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# No workflow-level concurrency group: the runs that find nothing to publish (most of them) have
+# nothing to wait for. Only the publishing jobs take turns, each in the group of the target it
+# writes. They queue (`queue: max`), because a group otherwise keeps one waiting job only, and a
+# later job for an older commit would replace the waiting publish of the newest one.
+
+jobs:
+  decide:
+    name: Decide
+    # Forks publish nothing unless they opt in to a daily release of their own; a dispatched dry
+    # run works anywhere. A build that cannot publish (a pull request's, a fork's, one that was
+    # cancelled or never ran) ends the run here with every job skipped and no runner used. A
+    # build that failed can: a branch is published when the jobs that build its packages passed.
+    # The script checks the same again, and more.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      ((github.repository == 'mavlink/qgroundcontrol' || vars.QGC_PUBLISH_DAILY_RELEASE == 'true') &&
+      github.event.workflow_run.event == 'push' &&
+      (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      publish: ${{ steps.decide.outputs.publish }}
+      ref: ${{ steps.decide.outputs.ref }}
+      commit: ${{ steps.decide.outputs.commit }}
+      runs: ${{ steps.decide.outputs.runs }}
+      daily: ${{ steps.decide.outputs.daily }}
+      s3: ${{ steps.decide.outputs.s3 }}
+      latest: ${{ steps.decide.outputs.latest }}
+      release: ${{ steps.decide.outputs.release }}
+      dry-run: ${{ steps.decide.outputs.dry-run }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout publishing scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # A run dispatched from another branch runs that branch's copy of this workflow and of the
+      # scripts, so it is always a dry run: only the default branch's publish.
+      - name: Decide what to publish
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLISH_REF: ${{ inputs.ref }}
+          PUBLISH_COMMIT: ${{ inputs.commit }}
+          PUBLISH_DRY_RUN: ${{ inputs.dry_run || github.ref_type != 'branch' || github.ref_name != github.event.repository.default_branch }}
+          PUBLISH_FORCE_LATEST: >-
+            ${{ github.event_name == 'workflow_dispatch' && inputs.force_latest == true &&
+            github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch }}
+          PUBLISH_FORCE_RELEASE: >-
+            ${{ github.event_name == 'workflow_dispatch' && inputs.force_release == true &&
+            github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch }}
+          PUBLISH_DAILY_RELEASE: ${{ github.repository == 'mavlink/qgroundcontrol' || vars.QGC_PUBLISH_DAILY_RELEASE == 'true' }}
+          PUBLISH_RELEASE_ASSETS: ${{ github.repository == 'mavlink/qgroundcontrol' || vars.QGC_PUBLISH_DAILY_RELEASE == 'true' }}
+          PUBLISH_S3: ${{ github.repository_owner == 'mavlink' }}
+        run: python3 tools/ci/publish/publish_decide.py decide
+
+  verify:
+    name: Fetch and verify
+    needs: decide
+    if: needs.decide.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    outputs:
+      publish: ${{ steps.fetch.outputs.publish }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout publishing scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # Runs whose packages carry no publish marker (branches whose own workflows still upload to
+      # S3) end here with publish=false, and so does a failed build that lacks a package.
+      - name: Fetch and verify the packages
+        id: fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLISH_REF: ${{ needs.decide.outputs.ref }}
+          PUBLISH_COMMIT: ${{ needs.decide.outputs.commit }}
+          PUBLISH_RUNS: ${{ needs.decide.outputs.runs }}
+        run: python3 tools/ci/publish/publish_set.py fetch --out "${RUNNER_TEMP}/publish-set"
+
+      # The publishing jobs read only this artifact, never the build runs. It is kept long enough
+      # to re-run a failed publishing job after a weekend.
+      - name: Hand the verified packages to the publishing jobs
+        if: steps.fetch.outputs.publish == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: publish-set
+          path: ${{ runner.temp }}/publish-set
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  daily-release:
+    name: GitHub daily release
+    needs: [decide, verify]
+    if: needs.verify.outputs.publish == 'true' && needs.decide.outputs.daily == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Publishes to one target take turns and are neither cancelled nor, while they wait,
+    # replaced. Each decides again when its turn comes, so the order they waited in does not
+    # matter. A dry run writes nothing, so it gets a group of its own instead of a place in line.
+    concurrency:
+      group: publish-daily-release${{ needs.decide.outputs.dry-run == 'true' && format('-dry-run-{0}', github.run_id) || '' }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: write  # the daily tag and release
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PUBLISH_REF: ${{ needs.decide.outputs.ref }}
+      PUBLISH_COMMIT: ${{ needs.decide.outputs.commit }}
+      PUBLISH_DRY_RUN: ${{ needs.decide.outputs.dry-run }}
+      # A run started by hand publishes again what its target already holds.
+      PUBLISH_REPUBLISH: ${{ github.event_name == 'workflow_dispatch' }}
+      PUBLISH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout publishing scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # Decided again now that this job has its turn: an earlier run may have published since.
+      - name: Confirm the release is behind this commit
+        id: confirm
+        run: python3 tools/ci/publish/publish_decide.py confirm --target daily
+
+      - name: Download the verified packages
+        if: steps.confirm.outputs.proceed == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: publish-set
+          path: ${{ runner.temp }}/publish-set
+
+      - name: Update the daily release
+        if: steps.confirm.outputs.proceed == 'true'
+        run: python3 tools/ci/publish/daily_release.py --set "${RUNNER_TEMP}/publish-set"
+
+  s3-builds:
+    name: S3 builds/
+    needs: [decide, verify]
+    if: needs.verify.outputs.publish == 'true' && needs.decide.outputs.s3 == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: publish-s3-${{ needs.decide.outputs.ref }}${{ needs.decide.outputs.dry-run == 'true' && format('-dry-run-{0}', github.run_id) || '' }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+      id-token: write  # AWS OIDC
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PUBLISH_REF: ${{ needs.decide.outputs.ref }}
+      PUBLISH_COMMIT: ${{ needs.decide.outputs.commit }}
+      PUBLISH_DRY_RUN: ${{ needs.decide.outputs.dry-run }}
+      PUBLISH_REPUBLISH: ${{ github.event_name == 'workflow_dispatch' }}
+      PUBLISH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      # Only whether credentials exist; without any the upload step warns and uploads nothing.
+      HAS_AWS_CREDENTIALS: ${{ secrets.AWS_ROLE_ARN != '' || (secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '') }}
+      # The upload reads published.json from its public URL. To read it with the role instead,
+      # add `PUBLISH_RECORD_READ: credentialed` here and to s3-latest, once the role has
+      # s3:GetObject on the published.json objects and s3:ListBucket on the bucket
+      # (platforms.md#aws-setup).
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout publishing scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/actions
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # From the public record. The upload reads the record again, and stops before it writes
+      # when the directory holds a newer commit or S3 does not say.
+      - name: Confirm builds/ is behind this commit
+        id: confirm
+        run: python3 tools/ci/publish/publish_decide.py confirm --target s3
+
+      - name: Download the verified packages
+        if: steps.confirm.outputs.proceed == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: publish-set
+          path: ${{ runner.temp }}/publish-set
+
+      - name: Configure AWS credentials
+        if: env.PUBLISH_DRY_RUN != 'true'
+        uses: ./.github/actions/aws-credentials
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Upload to builds/
+        if: steps.confirm.outputs.proceed == 'true'
+        run: python3 tools/ci/publish/aws_upload.py publish --set "${RUNNER_TEMP}/publish-set"
+
+      # One wildcard path for the directory, after every upload: the user guide links
+      # builds/master/ through CloudFront. Not conditional on the upload, so that re-running
+      # this job after a failed invalidation, when builds/ already holds the commit, sends the
+      # invalidation alone.
+      - name: Invalidate builds/ in CloudFront
+        env:
+          DISTRIBUTION_ID: ${{ secrets.AWS_DISTRIBUTION_ID }}
+        run: python3 tools/ci/publish/aws_upload.py invalidate --distribution-id "${DISTRIBUTION_ID}"
+
+  # latest/ is what the stable download links serve. Its own job, after builds/<tag>/ is complete,
+  # so that requiring an approval is one `environment:` line here; that changes the job's OIDC
+  # subject, so the AWS role's trust policy must change with it (platforms.md#aws-setup).
+  s3-latest:
+    name: S3 latest/
+    needs: [decide, verify, s3-builds]
+    # s3-builds is skipped when builds/<tag>/ already holds the release, which must not skip this.
+    if: >-
+      ${{ !cancelled() && needs.verify.outputs.publish == 'true' && needs.decide.outputs.latest == 'true' &&
+        (needs.s3-builds.result == 'success' || needs.s3-builds.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: publish-s3-latest${{ needs.decide.outputs.dry-run == 'true' && format('-dry-run-{0}', github.run_id) || '' }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+      id-token: write  # AWS OIDC
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PUBLISH_REF: ${{ needs.decide.outputs.ref }}
+      PUBLISH_COMMIT: ${{ needs.decide.outputs.commit }}
+      PUBLISH_DRY_RUN: ${{ needs.decide.outputs.dry-run }}
+      PUBLISH_REPUBLISH: ${{ github.event_name == 'workflow_dispatch' }}
+      # Only a run started by hand on the default branch can replace a newer release in latest/,
+      # or a release that latest/ has no record of.
+      PUBLISH_FORCE_LATEST: >-
+        ${{ github.event_name == 'workflow_dispatch' && inputs.force_latest == true &&
+        github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch }}
+      PUBLISH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      HAS_AWS_CREDENTIALS: ${{ secrets.AWS_ROLE_ARN != '' || (secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '') }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      # fetch-depth 0 fetches every branch as origin/*, which the release tag check reads.
+      - name: Checkout publishing scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/actions
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm latest/ does not hold this release
+        id: confirm
+        run: python3 tools/ci/publish/publish_decide.py confirm --target latest
+
+      - name: Download the verified packages
+        if: steps.confirm.outputs.proceed == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: publish-set
+          path: ${{ runner.temp }}/publish-set
+
+      - name: Configure AWS credentials
+        if: env.PUBLISH_DRY_RUN != 'true'
+        uses: ./.github/actions/aws-credentials
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Refuses any tag that is not vX.Y.Z on a Stable* branch, as the decision already did. Unless
+      # force_latest is set, it also refuses a release older than the one latest/'s record names,
+      # and any release while latest/ has no record (platforms.md#seeding-the-latest-record).
+      - name: Upload to latest/
+        if: steps.confirm.outputs.proceed == 'true'
+        run: python3 tools/ci/publish/aws_upload.py promote --set "${RUNNER_TEMP}/publish-set"
+
+      # One wildcard path, after the record. As for builds/, not conditional on the upload:
+      # re-running this job after a failed invalidation, when latest/ already holds the release,
+      # sends the invalidation alone.
+      - name: Invalidate latest/ in CloudFront
+        env:
+          DISTRIBUTION_ID: ${{ secrets.AWS_DISTRIBUTION_ID }}
+        run: python3 tools/ci/publish/aws_upload.py invalidate --latest --distribution-id "${DISTRIBUTION_ID}"
+
+  # The tag's GitHub Release, which release.yml drafts when the tag is pushed and a maintainer
+  # publishes. It gets the packages, their checksums and each AppImage's .zsync, which the
+  # AppImage's update information points an updater to. Independent of the S3 jobs: either can
+  # fail, and be run again, without the other.
+  github-release:
+    name: GitHub Release assets
+    needs: [decide, verify]
+    if: needs.verify.outputs.publish == 'true' && needs.decide.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: publish-release-${{ needs.decide.outputs.ref }}${{ needs.decide.outputs.dry-run == 'true' && format('-dry-run-{0}', github.run_id) || '' }}
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: write  # release assets
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PUBLISH_REF: ${{ needs.decide.outputs.ref }}
+      PUBLISH_COMMIT: ${{ needs.decide.outputs.commit }}
+      PUBLISH_DRY_RUN: ${{ needs.decide.outputs.dry-run }}
+      # Only a run started by hand on the default branch can change a release that is published.
+      PUBLISH_FORCE_RELEASE: >-
+        ${{ github.event_name == 'workflow_dispatch' && inputs.force_release == true &&
+        github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout publishing scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # The job waited its turn, and the tag may have been moved since. What the release is, a
+      # draft to attach the packages to or a published release to check, is the last step's to
+      # find out: only a token that may write is shown a draft.
+      - name: Confirm the tag still names this commit
+        id: confirm
+        run: python3 tools/ci/publish/publish_decide.py confirm --target release
+
+      - name: Download the verified packages
+        if: steps.confirm.outputs.proceed == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: publish-set
+          path: ${{ runner.temp }}/publish-set
+
+      # Never creates or publishes the release, and writes nothing but its assets. A published
+      # release is only checked, and the step fails when it lacks a file (force_release replaces).
+      - name: Attach the packages to the release
+        if: steps.confirm.outputs.proceed == 'true'
+        run: python3 tools/ci/publish/release_assets.py --set "${RUNNER_TEMP}/publish-set"

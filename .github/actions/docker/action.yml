@@ -22,10 +22,6 @@ inputs:
     description: Newline-separated KEY=VALUE docker build args (e.g. BASE_REF=...)
     required: false
     default: ''
-  fuse:
-    description: Enable FUSE support for AppImageLint target mounting
-    required: false
-    default: 'false'
   docker-username:
     description: Docker Hub username
     required: false
@@ -48,18 +44,18 @@ runs:
 
     # No QEMU: every target builds natively for the x86_64 runner (aarch64 is a cross-compile).
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
     - name: Login to Docker Hub
       if: inputs.docker-token != '' && inputs.docker-username != ''
-      uses: docker/login-action@v4
+      uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
       with:
         username: ${{ inputs.docker-username }}
         password: ${{ inputs.docker-token }}
 
     - name: Login to GHCR
       if: startsWith(inputs.push-image, 'ghcr.io/')
-      uses: docker/login-action@v4
+      uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -67,7 +63,7 @@ runs:
 
     - name: Docker metadata (tags + OCI labels)
       id: meta
-      uses: docker/metadata-action@v6
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
       with:
         images: ${{ inputs.push-image || 'dronecode/qgroundcontrol' }}
         flavor: latest=false
@@ -77,7 +73,7 @@ runs:
 
     - name: Build Docker image
       id: build
-      uses: docker/build-push-action@v7
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
       with:
         context: .
         file: ./deploy/docker/Dockerfile
@@ -121,7 +117,6 @@ runs:
       id: application-build
       shell: bash
       env:
-        ENABLE_FUSE: ${{ inputs.fuse }}
         IMAGE: ${{ inputs.push-image || 'dronecode/qgroundcontrol' }}:${{ inputs.variant }}
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/compile/docker_helper.py" run --image "$IMAGE" --build-type Release
 

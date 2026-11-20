@@ -105,17 +105,6 @@ static bool read_value(QDomNode& element, const char* tagName, QString& target)
     return true;
 }
 
-QString VehicleCameraControl::boundedStringField(const uint8_t* raw, size_t maxLen)
-{
-    if ((raw == nullptr) || (maxLen == 0)) {
-        return QString();
-    }
-
-    const char* chars = reinterpret_cast<const char*>(raw);
-    const qsizetype length = static_cast<qsizetype>(qstrnlen(chars, maxLen));
-    return QString::fromUtf8(chars, length);
-}
-
 QString VehicleCameraControl::pathSafeNameToken(const QString& name)
 {
     QString token = name;
@@ -184,10 +173,9 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     // from the wire by an unauthenticated peer, with no NUL guarantee. Bound the reads, and
     // keep the display strings as sent; only the file-name tokens are reduced to a safe
     // character set.
-    _vendor = boundedStringField(info->vendor_name, sizeof(info->vendor_name));
-    _modelName = boundedStringField(info->model_name, sizeof(info->model_name));
-    const QString definitionUri = boundedStringField(reinterpret_cast<const uint8_t*>(info->cam_definition_uri),
-                                                     sizeof(info->cam_definition_uri));
+    _vendor = QGCMAVLink::boundedStringField(info->vendor_name);
+    _modelName = QGCMAVLink::boundedStringField(info->model_name);
+    const QString definitionUri = QGCMAVLink::boundedStringField(info->cam_definition_uri);
 
     _cacheFileToken = cacheFileToken(_vendor, _modelName, static_cast<int>(_mavlinkCameraInfo.cam_definition_version));
 
@@ -849,6 +837,12 @@ void VehicleCameraControl::_mavCommandResult(quint32 vehicleId, int component, i
     //-- Is this ours?
     if (_vehicle->id() != vehicleId || compID() != component) {
         return;
+    }
+    if (_streamCommandPending && (result != MAV_RESULT_IN_PROGRESS) &&
+        ((command == MAV_CMD_VIDEO_START_STREAMING) || (command == MAV_CMD_VIDEO_STOP_STREAMING))) {
+        //-- Answered, or given up on: the next stream to stop or start can be
+        _streamCommandPending = false;
+        _syncStreams();
     }
     if (result == MAV_RESULT_IN_PROGRESS) {
         //-- Do Nothing
@@ -1785,6 +1779,10 @@ void VehicleCameraControl::handleVideoStreamInformation(const mavlink_video_stre
         //-- Thermal is handled separately and not listed
         if(!pStream->isThermal()) {
             _streamLabels.append(pStream->name());
+            if (_streamLabels.size() == 1) {
+                //-- The camera's first stream is the current one, which it transmits without being asked
+                _transmittedStreams.insert(pStream->streamID());
+            }
             emit streamsChanged();
             emit streamLabelsChanged();
         } else {
@@ -1891,60 +1889,88 @@ void VehicleCameraControl::handleTrackingImageStatus(const mavlink_camera_tracki
 void VehicleCameraControl::setCurrentStream(int stream)
 {
     if (stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
+        _currentStream = stream;
+        emit currentStreamChanged();
+        //-- Whoever displays the streams names the extra ones here, before the camera is told which to stop and start
+        emit _vehicle->cameraManager()->streamChanged();
+        _syncStreams();
         QGCVideoStreamInfo* pInfo = currentStreamInstance();
         if(pInfo) {
-            qCDebug(VehicleCameraControlLog)
-                << "Stopping stream:" << QGCNetworkHelper::redactedUrlForLogging(pInfo->uri());
-            //-- Stop current stream
-            _vehicle->sendMavCommand(
-                _compID,                                // Target component
-                MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
-                false,                                  // ShowError
-                pInfo->streamID());                     // Stream ID
-        }
-        _currentStream = stream;
-        pInfo = currentStreamInstance();
-        if(pInfo) {
-            //-- Start new stream
-            qCDebug(VehicleCameraControlLog)
-                << "Starting stream:" << QGCNetworkHelper::redactedUrlForLogging(pInfo->uri());
-            _vehicle->sendMavCommand(
-                _compID,                                // Target component
-                MAV_CMD_VIDEO_START_STREAMING,          // Command id
-                false,                                  // ShowError
-                pInfo->streamID());                     // Stream ID
             //-- Update stream status
             _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
         }
-        emit currentStreamChanged();
-        emit _vehicle->cameraManager()->streamChanged();
     }
+}
+
+void VehicleCameraControl::setExtraStreams(const QList<quint8>& streamIds)
+{
+    if (streamIds != _extraStreams) {
+        _extraStreams = streamIds;
+        _syncStreams();
+    }
+}
+
+void VehicleCameraControl::_syncStreams()
+{
+    if (_streamCommandPending) {
+        //-- Its answer brings this back
+        return;
+    }
+    QList<quint8> wanted = _extraStreams;
+    QGCVideoStreamInfo* pInfo = currentStreamInstance();
+    if (pInfo && !_currentStreamStopped && !wanted.contains(pInfo->streamID())) {
+        wanted.append(pInfo->streamID());
+    }
+    //-- Stops first: a camera may not transmit more streams than it is left with
+    QList<quint8> stopped = _transmittedStreams.values();
+    std::sort(stopped.begin(), stopped.end());
+    for (const quint8 streamID : std::as_const(stopped)) {
+        if (!wanted.contains(streamID)) {
+            _transmittedStreams.remove(streamID);
+            _sendStreamCommand(MAV_CMD_VIDEO_STOP_STREAMING, streamID);
+            return;
+        }
+    }
+    for (const quint8 streamID : std::as_const(wanted)) {
+        if (!_transmittedStreams.contains(streamID)) {
+            _transmittedStreams.insert(streamID);
+            _sendStreamCommand(MAV_CMD_VIDEO_START_STREAMING, streamID);
+            return;
+        }
+    }
+}
+
+void VehicleCameraControl::_sendStreamCommand(MAV_CMD command, quint8 streamID)
+{
+    qCDebug(VehicleCameraControlLog) << ((command == MAV_CMD_VIDEO_START_STREAMING) ? "Starting stream:"
+                                                                                    : "Stopping stream:")
+                                     << streamID;
+    //-- Set first: a command that can't be sent is answered from within the call
+    _streamCommandPending = true;
+    _vehicle->sendMavCommand(_compID,    // Target component
+                             command,    // Command id
+                             false,      // ShowError
+                             streamID);  // Stream ID
 }
 
 void VehicleCameraControl::stopStream()
 {
-    QGCVideoStreamInfo* pInfo = currentStreamInstance();
-    if(pInfo) {
-        //-- Stop current stream
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
-            false,                                  // ShowError
-            pInfo->streamID());                     // Stream ID
+    if (QGCVideoStreamInfo* pInfo = currentStreamInstance()) {
+        //-- Stop current stream, whether or not the camera is taken to transmit it
+        _transmittedStreams.insert(pInfo->streamID());
     }
+    _currentStreamStopped = true;
+    _syncStreams();
 }
 
 void VehicleCameraControl::resumeStream()
 {
-    QGCVideoStreamInfo* pInfo = currentStreamInstance();
-    if(pInfo) {
-        //-- Start new stream
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_VIDEO_START_STREAMING,          // Command id
-            false,                                  // ShowError
-            pInfo->streamID());                     // Stream ID
+    if (QGCVideoStreamInfo* pInfo = currentStreamInstance()) {
+        //-- Start current stream, whether or not the camera is taken to transmit it
+        _transmittedStreams.remove(pInfo->streamID());
     }
+    _currentStreamStopped = false;
+    _syncStreams();
 }
 
 bool VehicleCameraControl::autoStream() const

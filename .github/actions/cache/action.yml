@@ -58,7 +58,9 @@ runs:
     # One process resolves the save policy, cache scope, keys and cache environment; the
     # steps below only install tools and restore or save what it selected. It also picks
     # the compiler cache: the job's QGC_COMPILER_CACHE=sccache selects the RunsOn sccache
-    # pilot when runs-on/action exported its S3 bucket (QGC_COMPILER_CACHE_TOOL).
+    # pilot when runs-on/action exported its S3 bucket (QGC_COMPILER_CACHE_TOOL). A release
+    # tag gets no compiler or moc cache: empty keys skip both restores below, and
+    # CCACHE_DISABLE and MOCCACHE_DISABLE make the launchers run the real tools.
     - name: Plan caches
       id: plan
       shell: bash
@@ -94,9 +96,10 @@ runs:
 
     # The dependency cache remains a migration/default-branch fallback. RunsOn
     # redirects these actions to S3 and keeps using its existing storage route.
+    # The sccache pilot and release tags plan no key.
     - name: Restore Build Cache (ccache)
       id: ccache
-      if: steps.artifact-cache.outputs.restored != 'true' && env.QGC_COMPILER_CACHE_TOOL == 'ccache'
+      if: steps.artifact-cache.outputs.restored != 'true' && steps.plan.outputs.ccache_key != ''
       uses: actions/cache/restore@v6
       with:
         path: .cache/ccache
@@ -116,7 +119,7 @@ runs:
     # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
     - name: Restore moc output (moccache)
       id: moccache
-      if: steps.artifact-cache.outputs.restored != 'true'
+      if: steps.artifact-cache.outputs.restored != 'true' && steps.plan.outputs.moccache_key != ''
       uses: actions/cache/restore@v6
       with:
         path: .cache/moccache

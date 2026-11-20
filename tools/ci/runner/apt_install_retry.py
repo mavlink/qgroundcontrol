@@ -174,6 +174,11 @@ def _update(options: list[str]) -> bool:
     return _retry(options, ["update", "-qq"], UPDATE_TIMEOUT, "apt update")
 
 
+def archives_dir() -> Path:
+    """The runner-owned .deb download cache, shared with the apt download cache and artifact."""
+    return Path.home() / ".cache/qgc-apt-archives"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--update", action="store_true")
@@ -186,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.packages and not args.update:
         parser.error("packages are required unless --update is given")
 
-    cache_dir = Path.home() / ".cache/qgc-apt-archives"
+    cache_dir = archives_dir()
     partial_dir = cache_dir / "partial"
     options = [
         "-o",

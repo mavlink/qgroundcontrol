@@ -25,7 +25,6 @@ ParameterMetaData::~ParameterMetaData()
 
 void ParameterMetaData::loadParameterFactMetaDataFile(const QString &metaDataFile)
 {
-    Q_ASSERT(QThread::currentThread() == thread());
     if (Q_UNLIKELY(QThread::currentThread() != thread())) {
         qCCritical(ParameterMetaDataLog) << "loadParameterFactMetaDataFile called from wrong thread";
         return;
@@ -54,7 +53,6 @@ void ParameterMetaData::loadParameterFactMetaDataFile(const QString &metaDataFil
 
 FactMetaData *ParameterMetaData::getMetaDataForFact(const QString &name, FactMetaData::ValueType_t type)
 {
-    Q_ASSERT(QThread::currentThread() == thread());
     if (Q_UNLIKELY(QThread::currentThread() != thread())) {
         qCCritical(ParameterMetaDataLog) << "getMetaDataForFact called from wrong thread";
         return nullptr;

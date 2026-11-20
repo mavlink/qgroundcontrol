@@ -6,10 +6,12 @@
 #include <gst/gst.h>
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QSize>
+#include <QtCore/QStringList>
 #include <QtMultimedia/QVideoSink>
 
 #include "GStreamerTestHelpers.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
@@ -96,10 +98,13 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames_data()
 {
     QTest::addColumn<QString>("format");
+    QTest::addColumn<QString>("pixelAspectRatio");
 
     // In a format the sink takes, and in one only the converter reads.
-    QTest::newRow("BGRA") << QStringLiteral("BGRA");
-    QTest::newRow("Y444") << QStringLiteral("Y444");
+    QTest::newRow("BGRA") << QStringLiteral("BGRA") << QStringLiteral("1/1");
+    QTest::newRow("Y444") << QStringLiteral("Y444") << QStringLiteral("1/1");
+    // The converter scales them to square pixels ahead of the upload: the bin has nothing that scales GLMemory.
+    QTest::newRow("non-square pixels") << QStringLiteral("BGRA") << QStringLiteral("12/11");
 }
 
 void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
@@ -108,13 +113,16 @@ void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
     QSKIP("glupload bin not compiled in this build");
 #else
     QFETCH(QString, format);
+    QFETCH(QString, pixelAspectRatio);
     const GstQgc::ScopedSinkEnvironmentForTest environment(
         {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
          .gpuBin = {.mode = GstQgc::GpuBinMode::GlUpload}});
 
     QVideoSink videoSink;
     const QByteArray capsLine =
-        QStringLiteral("video/x-raw,format=%1,width=320,height=240,framerate=30/1").arg(format).toLatin1();
+        QStringLiteral("video/x-raw,format=%1,width=320,height=240,pixel-aspect-ratio=%2,framerate=30/1")
+            .arg(format, pixelAspectRatio)
+            .toLatin1();
     const GstQgcTest::PipelineRunResult r = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, capsLine.constData(), /*numBuffers*/ 5, /*gpuZerocopy*/ true);
     // The bin's glupload needs an EGL/GL context, which a headless runner may not have.
@@ -128,6 +136,15 @@ void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
     if (format == QStringLiteral("BGRA")) {
         QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
     }
+    // Square pixels at the source's display aspect ratio.
+    const QStringList ratio = pixelAspectRatio.split(QLatin1Char('/'));
+    const double displayAspect = (320.0 * ratio.at(0).toInt()) / (240.0 * ratio.at(1).toInt());
+    const QSize frameSize = r.lastFormat.frameSize();
+    QCOMPARE(frameSize.height(), 240);
+    QVERIFY2(qAbs((double(frameSize.width()) / frameSize.height()) - displayAspect) < 0.01,
+             qPrintable(QStringLiteral("frame %1x%2 doesn't have the source's display aspect ratio")
+                            .arg(frameSize.width())
+                            .arg(frameSize.height())));
 #endif
 }
 

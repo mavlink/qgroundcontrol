@@ -1,17 +1,21 @@
 name: pre-commit
 
 # Every path, including docs and translations: the hooks select their own files, and a changed docs lint
-# configuration also rechecks every English page.
+# configuration also rechecks every English page. With no path filter the check reports on every pull
+# request and merge group, so a ruleset can require it (none does today).
 on:
   push:
     branches:
       - master
       - 'Stable*'
   pull_request:
+  merge_group:
 
+# Only a pull request's superseded runs are cancelled. Every other run has its own group, so a newer
+# push neither cancels it nor replaces it while it waits.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -21,15 +25,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
-      # A pull request's merge commit and its two parents hold the PR diff; pushes diff `before`.
+      # A pull request's merge commit and its two parents hold the PR diff; pushes diff `before` and
+      # merge groups their base commit.
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -40,7 +45,6 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           groups: dev
-          python-version: '3.12'
 
       - name: Check for QML changes
         id: qml

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a CycloneDX SBOM from a CMake build directory's CPM package metadata.
+"""Generate a CycloneDX or SPDX SBOM from a CMake build directory's CPM package metadata.
 
 Parses CMakeCache.txt for CPM_PACKAGES and per-package VERSION/SOURCE_DIR,
 then reads git metadata (remote URL, commit hash) from each source directory.
@@ -7,9 +7,11 @@ Adds the GStreamer the build bundles, from the QGC_GST_RESOLVED_* entries
 cmake/GStreamer records, when video streaming is enabled.
 
 Usage:
-    generate_cpm_sbom.py --build-dir DIR [--output FILE] [--require-components]
+    generate_cpm_sbom.py --build-dir DIR [--format cyclonedx|spdx] [--output FILE]
+                         [--require-components]
 
-Outputs CycloneDX 1.6 JSON to stdout or the specified file.
+Outputs CycloneDX 1.6 JSON, or with --format spdx an SPDX 2.2 dependency snapshot for GitHub's
+dependency graph, to stdout or the specified file.
 """
 
 from __future__ import annotations
@@ -20,7 +22,7 @@ import re
 import subprocess
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -179,7 +181,7 @@ def generate_sbom(build_dir: Path) -> dict:
         "version": 1,
         "serialNumber": f"urn:uuid:{uuid.uuid4()}",
         "metadata": {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "component": {
                 "type": "application",
                 "name": "QGroundControl",
@@ -272,7 +274,7 @@ def generate_spdx(build_dir: Path) -> dict:
             f"https://github.com/mavlink/qgroundcontrol/dependency-sbom/{uuid.uuid4()}"
         ),
         "creationInfo": {
-            "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "created": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "creators": ["Tool: generate_cpm_sbom-1.0.0"],
         },
         "packages": packages,

@@ -19,8 +19,7 @@
 #include "GStreamerLogging.h"
 #include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
-#include "GstVideoReceiver.h"
-#include "HwBuffers/common/HwBuffers.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcRenderTarget.h"
@@ -72,7 +71,7 @@ constexpr PluginFeature kPluginFeatures[] = {
     // its GST_ELEMENT_REGISTER side effect was stripped at link time.
     {"QGC video sink", true, "qgcqvideosink qgcvideosinkbin",
      "the qgc plugin registered without exposing its elements; link-time symbol stripping (iOS LTO / Android R8) "
-     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgcelements.cc to a -force_load / keep rule"},
+     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgc.cc to a -force_load / keep rule"},
     {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
     {"RTP/UDP video", true, "udpsrc rtpjitterbuffer parsebin rtph264depay h264parse rtph265depay h265parse"},
     {"RTSP video", false, "rtspsrc"},
@@ -114,9 +113,9 @@ bool _verifyPluginFeatures()
     // Surface blacklisted plugins so a failure from a corrupt/incompatible plugin file
     // shows up here instead of looking like a missing-plugin problem.
     GStreamer::forEachPlugin(registry, [](GstPlugin* p) {
-        const gchar* desc = gst_plugin_get_description(p);
-        if (!desc || !g_str_has_prefix(desc, "BLACKLIST"))
+        if (!GST_OBJECT_FLAG_IS_SET(p, GST_PLUGIN_FLAG_BLACKLISTED)) {
             return;
+        }
         const gchar* filename = gst_plugin_get_filename(p);
         qCWarning(GStreamerLog) << "Blacklisted plugin:" << gst_plugin_get_name(p)
                                 << "file:" << (filename ? filename : "(null)");
@@ -154,14 +153,9 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
     return missing;
 }
 
-Environment::ValidationResult prepareEnvironment()
-{
-    return Environment::prepareEnvironment();
-}
-
 namespace {
 
-bool _initGstRuntime(const QStringList& args, const Environment::ValidationResult& env)
+bool _initGstRuntime(const QStringList& args, const VideoBackend::EnvPrepResult& env)
 {
     if (!env.ok) {
         qCCritical(GStreamerLog) << "Invalid GStreamer environment configuration:" << env.error;
@@ -235,19 +229,17 @@ bool completeInit(std::optional<int> debugLevel)
     return true;
 }
 
-bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult,
-                std::optional<int> debugLevel)
+bool initialize(const VideoBackend::InitParams& params)
 {
     GStreamer::resetExternalPluginLoaderFailed();
     GStreamer::redirectGLibLogging();
 
-    // Unless the user asked for GStreamer's own output, remove its default stderr handler before gst_init_check(),
-    // which would otherwise keep it; its raw ANSI codes corrupt the terminal on macOS.
-    if (!GStreamer::nativeDebugLogRequested()) {
-        gst_debug_remove_log_function(gst_debug_log_default);
-    }
+    // Before gst_init_check(), so that what GStreamer logs while it initializes (the plugin scan) reaches QGC's log at
+    // the persisted level. It also removes GStreamer's default stderr handler, unless the user asked for GStreamer's
+    // own output, which gst_init_check() would otherwise keep; its raw ANSI codes corrupt the terminal on macOS.
+    GStreamer::configureDebugLogging(params.debugLevel);
 
-    if (!_initGstRuntime(arguments, envResult)) {
+    if (!_initGstRuntime(params.arguments, params.environment)) {
         return false;
     }
 
@@ -256,15 +248,18 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
         qAddPostRoutine(_deinitGStreamer);
     }
 
-    return completeInit(debugLevel);
+    // The threshold in effect: the persisted level, unless a GStreamer option among the arguments (--gst-debug-level)
+    // replaced it during gst_init_check(), which then stays.
+    return completeInit(static_cast<int>(gst_debug_get_default_threshold()));
 }
 
 // Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
 // adopts. While decoding, the pipeline bin takes another on gst_bin_add (dropped by gst_bin_remove).
-GstElement* createVideoSink(const VideoSinkConfig& config)
+GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio,
+                            [[maybe_unused]] bool gpuZeroCopy)
 {
-    const gboolean disablePar = config.disablePixelAspectRatio ? TRUE : FALSE;
-    const char* const conversion = config.conversionElement.isEmpty() ? nullptr : config.conversionElement.constData();
+    const gboolean disablePar = disablePixelAspectRatio ? TRUE : FALSE;
+    const char* const conversion = conversionElement.isEmpty() ? nullptr : conversionElement.constData();
 
     const GstFactoryPtr factory = adoptFactory(gst_element_factory_find("qgcvideosinkbin"));
     if (!factory) {
@@ -275,8 +270,8 @@ GstElement* createVideoSink(const VideoSinkConfig& config)
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
     GstElement* videoSinkBin =
-        gst_element_factory_create_full(factory.get(), "gpu-zerocopy", config.gpuZeroCopy ? TRUE : FALSE,
-                                        "conversion-element", conversion, "disable-par", disablePar, NULL);
+        gst_element_factory_create_full(factory.get(), "gpu-zerocopy", gpuZeroCopy ? TRUE : FALSE, "conversion-element",
+                                        conversion, "disable-par", disablePar, NULL);
 #else
     GstElement* videoSinkBin = gst_element_factory_create_full(factory.get(), "conversion-element", conversion,
                                                                "disable-par", disablePar, NULL);
@@ -287,11 +282,6 @@ GstElement* createVideoSink(const VideoSinkConfig& config)
     }
     // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
     return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
-}
-
-VideoReceiver* createVideoReceiver(QObject* parent)
-{
-    return new GstVideoReceiver(parent);
 }
 
 QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent)
@@ -326,6 +316,14 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
 
 void onMainWindowReady(QQuickWindow* window)
 {
+    // Which decoders rank first depends on the device Qt renders with: its API, its adapter and what it opens. The
+    // render thread publishes it; the ranks are the GUI thread's.
+    HwBuffers::setGraphicsDevicePublishedHandler([] {
+        if (QCoreApplication* const app = QCoreApplication::instance()) {
+            (void) QMetaObject::invokeMethod(
+                app, [] { DecoderRankApplier::instance().reapply(); }, Qt::QueuedConnection);
+        }
+    });
     HwBuffers::connectMainWindow(window);
     const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
     qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)

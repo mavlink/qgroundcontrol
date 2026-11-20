@@ -55,11 +55,6 @@ std::chrono::milliseconds retryAfter(const QHttpHeaders& headers, const QDateTim
     const qint64 maxMs = NTRIPFailure::MAX_RETRY_AFTER.count();
     return std::chrono::milliseconds{std::clamp(utcNow.msecsTo(*deadline), qint64(0), maxMs)};
 }
-
-QString tr(const char* text)
-{
-    return QCoreApplication::translate("NTRIPHttpTransport", text);
-}
 }  // namespace
 
 NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, NTRIPHttpPurpose purpose)

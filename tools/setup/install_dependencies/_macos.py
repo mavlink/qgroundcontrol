@@ -64,35 +64,35 @@ def install_macos(dry_run: bool = False, packages: list[str] | None = None) -> b
             _c.log_error(f"Missing GStreamer {gst_version} macOS checksums")
             return False
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            downloads = {
-                label: (
-                    # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
-                    (_c.package_url(package, gst_version), _c.mirror_url(package, gst_version)),
-                    Path(tmpdir) / _c.package_filename(package, gst_version),
-                )
-                for label, package in GSTREAMER_PACKAGES.items()
+        download_dir = _c.download_dir("gstreamer")
+        downloads = {
+            label: (
+                # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
+                (_c.package_url(package, gst_version), _c.mirror_url(package, gst_version)),
+                download_dir / _c.package_filename(package, gst_version),
+            )
+            for label, package in GSTREAMER_PACKAGES.items()
+        }
+        print("  Downloading GStreamer packages in parallel...")
+        with ThreadPoolExecutor(max_workers=len(downloads)) as executor:
+            futures = {
+                executor.submit(_c.download_first, urls, pkg_path, checksums[label], dry_run): label
+                for label, (urls, pkg_path) in downloads.items()
             }
-            print("  Downloading GStreamer packages in parallel...")
-            with ThreadPoolExecutor(max_workers=len(downloads)) as executor:
-                futures = {
-                    executor.submit(
-                        _c.download_first, urls, pkg_path, checksums[label], dry_run
-                    ): label
-                    for label, (urls, pkg_path) in downloads.items()
-                }
-                for future in as_completed(futures):
-                    if not future.result():
-                        _c.log_error(f"Failed to download GStreamer {futures[future]} package")
-                        return False
-
-            for label, (_, pkg_path) in downloads.items():
-                print(f"  Installing GStreamer {label} package...")
-                if not _c.run_command(
-                    ["installer", "-pkg", str(pkg_path), "-target", "/"], dry_run, sudo=True
-                ):
-                    _c.log_error(f"Failed to install GStreamer {label} package")
+            for future in as_completed(futures):
+                if not future.result():
+                    _c.log_error(f"Failed to download GStreamer {futures[future]} package")
                     return False
+
+        for label, (_, pkg_path) in downloads.items():
+            print(f"  Installing GStreamer {label} package...")
+            if not _c.run_command(
+                ["installer", "-pkg", str(pkg_path), "-target", "/"], dry_run, sudo=True
+            ):
+                _c.log_error(f"Failed to install GStreamer {label} package")
+                return False
+            if not dry_run:
+                pkg_path.unlink(missing_ok=True)
 
     print("\nmacOS dependencies installed successfully!")
     return True

@@ -9,7 +9,9 @@ from .compiler import CompilerAnalyzer
 class ClazyAnalyzer(CompilerAnalyzer):
     name: ClassVar[str] = "clazy"
     executable: ClassVar[str] = "clazy-standalone"
-    install_hint: ClassVar[str] = "Install clazy matching the analysis compiler."
+    install_hint: ClassVar[str] = (
+        "Run tools/setup/install_analysis_tools.py and source its env.sh for CI's Clazy."
+    )
     CHECKS: ClassVar[str] = "level1,connect-non-signal,lambda-in-connect,overridden-signal"
     arguments: ClassVar[tuple[str, ...]] = (f"--checks={CHECKS}",)
 

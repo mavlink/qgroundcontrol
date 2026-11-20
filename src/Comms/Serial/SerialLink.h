@@ -5,11 +5,7 @@
 #include "SerialPortManager.h"
 
 #include <QtCore/QString>
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
 #include <QtSerialPort/QSerialPort>
-#endif
 
 #include <atomic>
 

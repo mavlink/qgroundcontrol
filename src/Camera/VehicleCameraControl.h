@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QSet>
+
 #include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
@@ -45,11 +47,6 @@ class VehicleCameraControl : public MavlinkCameraControlInterface
 public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     ~VehicleCameraControl() override;
-
-    /// Read a fixed-size CAMERA_INFORMATION string field without running off the end of it.
-    /// MAVLink does not guarantee these arrays are NUL terminated, so the length is bounded
-    /// by the array itself rather than by strlen().
-    static QString boundedStringField(const uint8_t* raw, size_t maxLen);
 
     /// Reduce a vehicle-supplied name to something safe to embed in a file name. Everything
     /// that could act as a path separator, a drive or NTFS stream qualifier, or a directory
@@ -127,6 +124,7 @@ public:
     QGCVideoStreamInfo* thermalStreamInstance() override;
     int                 currentStream       () const override { return _currentStream; }
     void                setCurrentStream    (int stream) override;
+    void setExtraStreams(const QList<quint8>& streamIds) override;
     bool                autoStream          () const override;
     quint32             recordTime          () const override { return _recordTime; }
     QString             recordTimeStr       () const override;
@@ -271,6 +269,10 @@ private:
     void    _httpRequest                    (const QString& url);
     void    _handleDefinitionFile           (const QString& url);
     void    _ftpDownloadComplete            (const QString& fileName, const QString& errorMsg);
+    /// Asks the camera to stop the streams it transmits that are neither the current one nor an extra one, then to
+    /// start those of them it doesn't transmit: one command at a time, the next once the camera answered the last.
+    void _syncStreams();
+    void _sendStreamCommand(MAV_CMD command, quint8 streamID);
 
     QStringList     _loadExclusions         (QDomNode option);
     QStringList     _loadUpdates            (QDomNode option);
@@ -324,6 +326,14 @@ protected:
     QTimer                              _storageInfoTimer;
     QmlObjectListModel                  _streams;
     QStringList                         _streamLabels;
+    QList<quint8> _extraStreams;
+    /// The streams the camera is taken to transmit: its first one, which it is never asked to start, and those it was.
+    QSet<quint8> _transmittedStreams;
+    /// Between stopStream() and resumeStream(): the current stream isn't one to transmit.
+    bool _currentStreamStopped = false;
+    /// The camera has yet to answer a stream's start or stop command. The vehicle refuses a command to a component
+    /// that it awaits the answer to the same command from, so the next one waits.
+    bool _streamCommandPending = false;
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
     bool                                _hasTrackingRectCapability = false;

@@ -31,6 +31,8 @@ struct GstReceiverRequest
     std::shared_ptr<GstElement> videoSink;
     /// Counts restart() calls: a new count restarts the stream, with videoSink.
     quint64 restarts = 0;
+    /// Counts reconnectNow() calls: a new count cuts a reconnect's backoff short.
+    quint64 reconnects = 0;
     std::optional<GstRecordingRequest> recording;
 };
 

@@ -98,6 +98,7 @@ static QMap<int, QString> px4_board_name_map {
     {7003, "cuav_x25-super_default"},
     {7004, "cuav_x25-mega_default"},
     {7120, "accton-godwit_ga1_default"},
+    {7122, "accton-godwit_gfh7_default"},
 	{1183, "narinfc_h7_default"}
 };
 

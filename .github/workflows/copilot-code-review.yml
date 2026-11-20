@@ -1,0 +1,32 @@
+name: Copilot Code Review Setup
+
+# Copilot code review uses this file instead of copilot-setup-steps.yml. The review only reads the
+# pull request, yet the cloud agent's Qt, dependency, and configure setup took 4-8 minutes of a
+# credential that expires about 30 minutes after the run starts, failing long reviews with 401s.
+# Its apt cache is usually evicted from the full 10 GB pool, so a slow Ubuntu mirror also failed
+# reviews' Install Dependencies step.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Copilot only picks up a job with exactly this name.
+  copilot-setup-steps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 59
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false

@@ -16,6 +16,8 @@ private slots:
     void _testOnScreenControlBodyFrame_data();
     void _testOnScreenControlBodyFrame();
     void _testCommandPaths();
+    void _testCenterAndTilt90YawLock_data();
+    void _testCenterAndTilt90YawLock();
     void _testJoystickRateSlots();
     void _testRateCommand();
 };

@@ -8,6 +8,10 @@ import QGroundControl.Controls
 ColumnLayout {
     property var linkManager: QGroundControl.linkManager
 
+    // Whether the selected port can be set to hardware flow control. An Android USB adapter whose driver has none
+    // refuses to open with it, so a link to such a port is not left with it.
+    property bool _flowControlAvailable: true
+
     spacing: _rowSpacing
 
     function saveSettings() {
@@ -16,6 +20,16 @@ ColumnLayout {
             if (baud > 0) {
                 subEditConfig.baud = baud
             }
+        }
+    }
+
+    function _refreshFlowControl() {
+        if (!subEditConfig) {
+            return
+        }
+        _flowControlAvailable = linkManager.serialPortHasFlowControl(subEditConfig.portName)
+        if (!_flowControlAvailable && subEditConfig.flowControl !== 0) {
+            subEditConfig.flowControl = 0
         }
     }
 
@@ -141,9 +155,11 @@ ColumnLayout {
 
         QGCCheckBox {
             Layout.columnSpan:  2
+            objectName:         "flowControlCheckBox"
             text:               qsTr("Enable Flow Control")
-            checked:            subEditConfig.flowControl !== 0
-            onCheckedChanged:   subEditConfig.flowControl = checked ? 1 : 0
+            enabled:            _flowControlAvailable
+            checked:            subEditConfig ? subEditConfig.flowControl !== 0 : false
+            onCheckedChanged:   { if (subEditConfig) subEditConfig.flowControl = checked ? 1 : 0 }
         }
 
         QGCCheckBox {
@@ -195,7 +211,7 @@ ColumnLayout {
         QGCComboBox {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [ "5", "6", "7", "8" ]
-            currentIndex:           Math.max(Math.min(subEditConfig.dataBits - 5, 3), 0)
+            currentIndex:           subEditConfig ? Math.max(Math.min(subEditConfig.dataBits - 5, 3), 0) : -1
             onActivated: (index) => { subEditConfig.dataBits = index + 5 }
         }
 
@@ -203,8 +219,19 @@ ColumnLayout {
         QGCComboBox {
             Layout.preferredWidth:  _secondColumnWidth
             model:                  [ "1", "2" ]
-            currentIndex:           Math.max(Math.min(subEditConfig.stopBits - 1, 1), 0)
+            currentIndex:           subEditConfig ? Math.max(Math.min(subEditConfig.stopBits - 1, 1), 0) : -1
             onActivated: (index) => { subEditConfig.stopBits = index + 1 }
         }
     }
+
+    Connections {
+        target: linkManager
+        function onCommPortsChanged() { _refreshFlowControl() }
+    }
+    Connections {
+        target: subEditConfig
+        function onPortNameChanged() { _refreshFlowControl() }
+    }
+
+    Component.onCompleted: _refreshFlowControl()
 }

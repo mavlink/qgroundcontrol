@@ -8,8 +8,8 @@ import hmac
 import json
 import os
 import re
-import sys
 import tempfile
+import tomllib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -18,13 +18,11 @@ if TYPE_CHECKING:
 
 __all__ = [
     "atomic_write",
-    "chdir",
     "ensure_sha256_sidecar",
     "extract_tar_data",
     "extract_zip_safe",
     "read_json",
     "read_toml",
-    "require_tar_data_filter",
     "sha256_file",
     "verify_sha256_sidecar",
     "write_json",
@@ -32,34 +30,6 @@ __all__ = [
 ]
 
 _SHA256_SIDECAR_LINE = re.compile(r"([0-9a-fA-F]{64}) [ *](.+)")
-
-
-@contextlib.contextmanager
-def chdir(path: Path):
-    """Temporarily change the working directory (3.10-safe ``contextlib.chdir``)."""
-    prev = os.getcwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(prev)
-
-
-def require_tar_data_filter() -> None:
-    """Ensure tarfile supports the PEP 706 ``data`` extraction filter.
-
-    The ``filter`` argument landed in 3.12 and was backported to 3.10.12 /
-    3.11.4. Raising here turns the cryptic ``TypeError`` on older 3.10 patch
-    releases into actionable guidance.
-    """
-    import tarfile
-
-    if not hasattr(tarfile, "data_filter"):
-        raise RuntimeError(
-            "Safe tar extraction requires the PEP 706 'data' filter "
-            "(Python 3.10.12+, 3.11.4+, or 3.12+). Update Python "
-            "(Ubuntu 22.04 ships 3.10.12+) to extract this archive."
-        )
 
 
 def extract_tar_data(
@@ -71,7 +41,6 @@ def extract_tar_data(
     """Extract a tar archive using Python's path-safe PEP 706 data filter."""
     import tarfile
 
-    require_tar_data_filter()
     with tarfile.open(archive, mode) as tar:
         tar.extractall(destination, filter="data")
 
@@ -88,15 +57,10 @@ def extract_zip_safe(archive: Path, destination: Path) -> None:
         zf.extractall(dest)
 
 
-def sha256_file(path: Path, *, chunk_size: int = 1024 * 1024) -> str:
+def sha256_file(path: Path) -> str:
     """Return the SHA-256 digest of *path* without loading it all into memory."""
-    if chunk_size <= 0:
-        raise ValueError("chunk_size must be a positive integer")
-    digest = hashlib.sha256()
     with path.open("rb") as file:
-        while chunk := file.read(chunk_size):
-            digest.update(chunk)
-    return digest.hexdigest()
+        return hashlib.file_digest(file, "sha256").hexdigest()
 
 
 def verify_sha256_sidecar(source: Path, checksum: Path | None = None) -> str:
@@ -152,24 +116,7 @@ def write_json(path: Path, data: Any, *, indent: int | None = 2, sort_keys: bool
 
 
 def read_toml(path: Path) -> dict[str, Any]:
-    """Read TOML from *path*, using stdlib ``tomllib`` (3.11+) or ``tomli`` on 3.10.
-
-    Import is deferred so JSON-only callers (build-config composite action runs
-    under runner system python which is 3.10 on some images) don't blow up
-    transitively.
-    """
-    if sys.version_info >= (3, 11):
-        import tomllib
-    else:
-        try:
-            import tomli as tomllib  # type: ignore[import-not-found]
-        except ModuleNotFoundError as exc:
-            raise ModuleNotFoundError(
-                f"Reading {path} needs Python 3.11+ (stdlib tomllib) or the 'tomli' package "
-                "on 3.10. Run 'python tools/setup/install_python.py scripts' and use "
-                "the interpreter in tools/.venv."
-            ) from exc
-
+    """Read TOML from *path*."""
     with path.open("rb") as fh:
         return tomllib.load(fh)
 

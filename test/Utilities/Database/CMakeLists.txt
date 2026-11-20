@@ -6,7 +6,7 @@ target_sources(
 )
 
 target_include_directories(
-    ${CMAKE_PROJECT_NAME}
+    QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities/Database

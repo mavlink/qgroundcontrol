@@ -1,5 +1,6 @@
 #include "CpuVideoFramePool.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cstring>
 #include <gst/video/video.h>
@@ -275,12 +276,26 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
 
     const GstVideoFrame& gstFrame = source.frame();
 
-    QVideoFrame videoFrame = instance().acquireFrame(format, videoInfo);
+    // Qt reads a frame of the format's size: the buffer's whole frame when its GstVideoMeta is larger than the caps.
+    GstVideoInfo frameInfo = videoInfo;
+    if (!GstHw::setFrameSize(frameInfo, format.frameWidth(), format.frameHeight()) ||
+        (GST_VIDEO_INFO_WIDTH(&frameInfo) > GST_VIDEO_FRAME_WIDTH(&gstFrame)) ||
+        (GST_VIDEO_INFO_HEIGHT(&frameInfo) > GST_VIDEO_FRAME_HEIGHT(&gstFrame))) {
+        static std::atomic<bool> s_warnedFrameSize{false};
+        if (!s_warnedFrameSize.exchange(true, std::memory_order_relaxed)) {
+            qCWarning(CpuVideoFramePoolLog)
+                << "copyFromBuffer: no" << format.frameSize() << "frame in a buffer of"
+                << GST_VIDEO_FRAME_WIDTH(&gstFrame) << "x" << GST_VIDEO_FRAME_HEIGHT(&gstFrame) << "— dropping frame";
+        }
+        return {};
+    }
+
+    QVideoFrame videoFrame = instance().acquireFrame(format, frameInfo);
     if (!videoFrame.isValid() || !videoFrame.map(QVideoFrame::WriteOnly)) {
         return {};
     }
 
-    const int srcPlanes = GST_VIDEO_INFO_N_PLANES(&videoInfo);
+    const int srcPlanes = GST_VIDEO_INFO_N_PLANES(&frameInfo);
     if (srcPlanes != videoFrame.planeCount()) {
         static std::atomic<bool> s_warnedPlaneMismatch{false};
         if (!s_warnedPlaneMismatch.exchange(true, std::memory_order_relaxed)) {
@@ -294,14 +309,17 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
     for (int p = 0; p < srcPlanes; ++p) {
         const int dstStride = videoFrame.bytesPerLine(p);
         const int srcStride = GST_VIDEO_FRAME_PLANE_STRIDE(&gstFrame, p);
-        const int rows = GstHw::planeHeight(gstFrame.info, p);
-        const int activeRowBytes = GstHw::planeRowBytes(gstFrame.info, p);
-        // Reject before copy: a dst stride too narrow for a source row would tear the plane.
-        if (activeRowBytes > dstStride) {
+        // The destination's rows, as gst_video_frame_copy_plane() copies: the mapped frame has the size of the buffer's
+        // GstVideoMeta, which a decoder pads beyond the size the destination has (1088 rows for 1080).
+        const int rows = GstHw::planeHeight(frameInfo, p);
+        const int activeRowBytes = GstHw::planeRowBytes(frameInfo, p);
+        // Reject before copy: a stride too narrow for a row would tear the plane, or read past the source.
+        if (activeRowBytes > (std::min) (srcStride, dstStride)) {
             static std::atomic<bool> s_warnedStrideOverflow{false};
             if (!s_warnedStrideOverflow.exchange(true, std::memory_order_relaxed)) {
-                qCWarning(CpuVideoFramePoolLog) << "copyFromBuffer: plane" << p << "activeRowBytes" << activeRowBytes
-                                                << "> dstStride" << dstStride << "— dropping frame";
+                qCWarning(CpuVideoFramePoolLog)
+                    << "copyFromBuffer: plane" << p << "activeRowBytes" << activeRowBytes << "> srcStride" << srcStride
+                    << "or dstStride" << dstStride << "— dropping frame";
             }
             videoFrame.unmap();
             return {};

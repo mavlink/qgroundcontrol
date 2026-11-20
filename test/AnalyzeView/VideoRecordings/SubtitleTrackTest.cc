@@ -11,7 +11,7 @@
 
 namespace {
 
-QUrl writeFile(const QTemporaryDir& dir, const QString& name, const QByteArray& content)
+QUrl writeText(const QTemporaryDir& dir, const QString& name, const QByteArray& content)
 {
     const QString path = dir.filePath(name);
     QFile file(path);
@@ -49,7 +49,7 @@ void SubtitleTrackTest::_testReadsWriterLayout()
 {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
-    const QUrl source = writeFile(dir, QStringLiteral("flight.ass"), kWriterFile.toByteArray());
+    const QUrl source = writeText(dir, QStringLiteral("flight.ass"), kWriterFile.toByteArray());
     QVERIFY(!source.isEmpty());
 
     SubtitleTrack track;
@@ -92,7 +92,7 @@ void SubtitleTrackTest::_testStyleAlignmentWithoutPosition()
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     // The fields in another order, no resolution, and events placed by the style's alignment and margins.
-    const QUrl source = writeFile(dir, QStringLiteral("other.ass"),
+    const QUrl source = writeText(dir, QStringLiteral("other.ass"),
                                   "[Script Info]\n"
                                   "[V4+ Styles]\n"
                                   "Format: Name, Alignment, MarginL, MarginR, MarginV, Fontsize\n"
@@ -128,7 +128,7 @@ void SubtitleTrackTest::_testSourceChanges()
 {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
-    const QUrl source = writeFile(dir, QStringLiteral("flight.ass"), kWriterFile.toByteArray());
+    const QUrl source = writeText(dir, QStringLiteral("flight.ass"), kWriterFile.toByteArray());
 
     SubtitleTrack track;
     track.setPosition(1500);

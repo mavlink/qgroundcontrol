@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import shutil
 import subprocess
@@ -15,7 +16,8 @@ from setup import build_android_openssl as mod
 
 from ._helpers import REPO_ROOT
 
-VERSION = "3.5.6"
+# A stand-in release, so the CMake tests show the version comes from the build-config.json they are given.
+VERSION = "3.99.0"
 
 
 def _args(tmp_path: Path, *extra: str) -> list[str]:
@@ -250,9 +252,11 @@ def _configure_openssl(
     log = tmp_path / "commands.log"
     log.write_text("", encoding="utf-8")
     module = REPO_ROOT / "cmake/modules/AndroidOpenSSL.cmake"
+    pins = {"android": {"openssl_version": VERSION, "openssl_sha256": "0" * 64}}
     subprocess.run(
         [
             "cmake",
+            f"-DQGC_BUILD_CONFIG_CONTENT={json.dumps(pins)}",
             f"-DCMAKE_MODULE_PATH={stubs.as_posix()}",
             f"-DCMAKE_BUILD_TYPE={build_type}",
             f"-DQT_ANDROID_ABIS={abis}",

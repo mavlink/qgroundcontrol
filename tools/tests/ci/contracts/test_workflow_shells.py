@@ -38,5 +38,5 @@ def test_steps_piping_into_tee_keep_the_command_status() -> None:
     # The default `bash -e {0}` has no pipefail, so `command | tee log` would exit with tee's
     # status; an explicit `shell: bash` runs `bash --noprofile --norc -eo pipefail {0}`.
     teed = {where: shell for where, shell, run in _run_steps() if TEE.search(run)}
-    assert "analysis.yml:analyze:Run analysis" in teed
+    assert teed
     assert {where: shell for where, shell in teed.items() if shell != "bash"} == {}

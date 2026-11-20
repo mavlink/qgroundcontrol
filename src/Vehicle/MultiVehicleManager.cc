@@ -138,11 +138,12 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, quint32 veh
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     if (_vehicles->count() == 1) {
         qCDebug(MultiVehicleManagerLog) << "keepScreenOn";
-        #if defined(Q_OS_ANDROID)
-            AndroidInterface::setKeepScreenOn(true);
-        #elif defined(Q_OS_IOS)
-            MobileScreenMgr::setKeepScreenOn(true);
-        #endif
+#if defined(Q_OS_ANDROID)
+        AndroidInterface::setKeepScreenOn(true);
+        AndroidInterface::setBackgroundWork(AndroidInterface::BackgroundWork::VehicleLink, true);
+#elif defined(Q_OS_IOS)
+        MobileScreenMgr::setKeepScreenOn(true);
+#endif
     }
 #endif
 }
@@ -174,11 +175,12 @@ void MultiVehicleManager::_deleteVehiclePhase1(Vehicle *vehicle)
 #if defined(Q_OS_ANDROID) || defined (Q_OS_IOS)
     if (_vehicles->count() == 0) {
         qCDebug(MultiVehicleManagerLog) << "restoreScreenOn";
-        #if defined(Q_OS_ANDROID)
-            AndroidInterface::setKeepScreenOn(false);
-        #elif defined(Q_OS_IOS)
-            MobileScreenMgr::setKeepScreenOn(false);
-        #endif
+#if defined(Q_OS_ANDROID)
+        AndroidInterface::setKeepScreenOn(false);
+        AndroidInterface::setBackgroundWork(AndroidInterface::BackgroundWork::VehicleLink, false);
+#elif defined(Q_OS_IOS)
+        MobileScreenMgr::setKeepScreenOn(false);
+#endif
     }
 #endif
 

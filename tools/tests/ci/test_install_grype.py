@@ -121,7 +121,7 @@ def test_both_scans_reuse_verified_installer_version():
     installer = next(step for step in steps if step.get("id") == "install-grype")
     assert installer["run"] == "python3 tools/ci/security/install_grype.py"
     assert not installer.get("continue-on-error", False)
-    scans = [step for step in steps if step.get("uses") == "anchore/scan-action@v7"]
+    scans = [step for step in steps if step.get("uses", "").startswith("anchore/scan-action@")]
     assert len(scans) == 2
     for scan in scans:
         assert steps.index(installer) < steps.index(scan)

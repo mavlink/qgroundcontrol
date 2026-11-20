@@ -12,10 +12,10 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote, urlsplit, urlunsplit
@@ -26,7 +26,12 @@ if TYPE_CHECKING:
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.analysis_diagnostics import DIAGNOSTICS_SUFFIX, AnalysisWarning, load_unique_warnings
+from common.analysis_diagnostics import (
+    AnalysisWarning,
+    is_bug_class,
+    load_analysis_commit,
+    load_unique_warnings,
+)
 from common.coverage_summary import CoverageSummary, CoverageSummaryError, read_gcovr_summary
 from common.format import clip, format_bytes, format_count, format_duration, format_percent
 from common.gh_actions import parse_github_timestamp, write_step_summary
@@ -35,6 +40,7 @@ from common.junit import JUnitCase, parse_junit
 from common.markdown import code_block, code_span, details, escape_text, md_table, more_items
 from common.xml import XMLParseError
 
+from ci.reporting.junit_report import passed_on_retry
 from ci.reporting.workflow_runs import triggering_run
 
 logger = logging.getLogger(__name__)
@@ -88,12 +94,19 @@ class Limits:
     test_names: int = 10
     artifacts: int = 30
     analysis_warnings: int = 20
+    analysis_checks: int = 10
 
 
 LIMIT_STEPS = (
     Limits(),
     Limits(
-        failed_tests=5, excerpt_lines=4, suites=12, test_names=5, artifacts=12, analysis_warnings=10
+        failed_tests=5,
+        excerpt_lines=4,
+        suites=12,
+        test_names=5,
+        artifacts=12,
+        analysis_warnings=10,
+        analysis_checks=5,
     ),
     Limits(
         failed_jobs=5,
@@ -103,6 +116,7 @@ LIMIT_STEPS = (
         test_names=3,
         artifacts=6,
         analysis_warnings=5,
+        analysis_checks=3,
     ),
 )
 
@@ -113,6 +127,8 @@ class Suite:
     workflow: str
     cases: tuple[JUnitCase, ...]
     wall_seconds: float | None
+    # Tests that failed and then passed on CI's single retry; cases counts them as passed.
+    retried: tuple[str, ...] = ()
 
     def count(self, outcome: str) -> int:
         return sum(case.outcome == outcome for case in self.cases)
@@ -324,10 +340,12 @@ def load_suites(artifacts_dir: Path) -> list[Suite]:
             continue
         name = clip(directory.name.removeprefix("test-results-"))
         cases: list[JUnitCase] = []
+        retried: list[str] = []
         wall: float | None = None
         for junit in sorted(directory.glob("*.xml")):
             try:
                 found, seconds = parse_junit(junit, name)
+                retried += [case.name for case in passed_on_retry(junit)]
             except (OSError, XMLParseError):
                 logger.warning("Failed to parse JUnit results from %s", junit, exc_info=True)
                 continue
@@ -335,7 +353,9 @@ def load_suites(artifacts_dir: Path) -> list[Suite]:
             if seconds is not None:
                 wall = (wall or 0.0) + seconds
         if cases:
-            suites.append(Suite(name, workflows.get(directory.name, ""), tuple(cases), wall))
+            suites.append(
+                Suite(name, workflows.get(directory.name, ""), tuple(cases), wall, tuple(retried))
+            )
     return suites
 
 
@@ -499,21 +519,6 @@ def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
         )
         for name, rows in sorted(merged.items())
     ]
-
-
-def load_analysis_commit(analysis_dir: Path) -> str:
-    """Return the commit that every ``*-diagnostics.json`` naming one analyzed, else ''.
-
-    On a pull request Code Analysis checks out GitHub's merge commit, whose line numbers can
-    differ from the PR head's where the base branch changed the same file.
-    """
-    commits = set()
-    for path in sorted(analysis_dir.glob(f"**/*{DIAGNOSTICS_SUFFIX}")):
-        data = _load_json(path, "analysis diagnostics")
-        commit = data.get("commit") if isinstance(data, dict) else None
-        if isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
-            commits.add(commit)
-    return commits.pop() if len(commits) == 1 else ""
 
 
 def _manifest_entries(env: Mapping[str, str], base_dir: Path, *, expired: bool) -> list[str]:
@@ -701,6 +706,8 @@ def render_table(report: Report) -> str:
             if suites
             else "—"
         )
+        if retried := sum(len(s.retried) for s in suites):
+            tests += f", ⚠️ {format_count(retried)} passed on retry"
         state = _state(entry)
         label = STATE_LABELS.get(state, state)
         if state == "skipped":
@@ -979,6 +986,13 @@ def render_tests(report: Report, limits: Limits) -> str:
         f"Tests: {format_count(passed)} passed, {format_count(failed)} failed, "
         f"{format_count(skipped)} skipped in {_plural(len(report.suites), 'suite')}"
     )
+    retried: dict[str, tuple[str, ...]] = {}
+    for suite in report.suites:
+        for name in suite.retried:
+            retried[name] = (*retried.get(name, ()), suite.name)
+    if retried:
+        summary += f"; {format_count(len(retried))} passed on retry"
+        body += f"\n\n{_test_name_lines('Passed on retry', retried, limits.test_names)}"
     if changes is not None and changes.compared:
         summary += (
             f"; {format_count(len(changes.added))} added, "
@@ -1143,6 +1157,18 @@ def _warning_link(report: Report, warning: AnalysisWarning) -> str:
     )
 
 
+def _check_totals(warnings: list[AnalysisWarning], limit: int) -> str:
+    """Count *warnings* by check, most frequent first, naming at most *limit* checks."""
+    ranked = sorted(
+        Counter(warning.check for warning in warnings).items(),
+        key=lambda item: (-item[1], item[0]),
+    )
+    shown = [f"{code_span(check)} {format_count(count)}" for check, count in ranked[:limit]]
+    if len(ranked) > limit:
+        shown.append(f"{more_items(len(ranked) - limit)} checks")
+    return "By check: " + ", ".join(shown)
+
+
 def render_analysis(report: Report, limits: Limits) -> str:
     run = report.analysis_run
     if not run:
@@ -1153,7 +1179,7 @@ def render_analysis(report: Report, limits: Limits) -> str:
     changed_tools = [tool for tool in tools if tool.changed is not None]
     changed = sorted(
         (warning for tool in changed_tools for warning in tool.changed or ()),
-        key=lambda w: (w.file, w.line, w.column, w.tool),
+        key=lambda w: (not is_bug_class(w), w.file, w.line, w.column, w.tool),
     )
     parts: list[str] = []
     if changed:
@@ -1163,7 +1189,11 @@ def render_analysis(report: Report, limits: Limits) -> str:
         ]
         if len(changed) > limits.analysis_warnings:
             listed.append(f"- {more_items(len(changed) - limits.analysis_warnings)}")
-        parts.append("Warnings on lines this pull request changed:\n\n" + "\n".join(listed))
+        parts.append(
+            "Warnings on lines this pull request changed, `bugprone-*` and `clang-analyzer-*`"
+            " first:\n\n" + "\n".join(listed)
+        )
+        parts.append(_check_totals(changed, limits.analysis_checks))
     elif changed_tools:
         parts.append("No warnings on lines this pull request changed.")
     if tools:
@@ -1247,7 +1277,7 @@ def render(report: Report, limits: Limits) -> str:
 def generate_comment(
     env: Mapping[str, str], base_dir: Path, now_utc: datetime | None = None
 ) -> str:
-    report = collect_report(env, base_dir, now_utc or datetime.now(timezone.utc))
+    report = collect_report(env, base_dir, now_utc or datetime.now(UTC))
     comment = ""
     for limits in LIMIT_STEPS:
         comment = render(report, limits)

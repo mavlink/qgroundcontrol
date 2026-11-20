@@ -54,11 +54,6 @@ def _service(variant: DockerVariant) -> str:
     lines.append("    volumes:")
     lines.append("      - ../..:/project/source")
     lines.append("      - ../../build:/project/build")
-    if variant["fuse"]:
-        # FUSE mount for appimagetool/linuxdeploy (AppImage variants).
-        lines.append("    cap_add: [SYS_ADMIN]")
-        lines.append('    devices: ["/dev/fuse"]')
-        lines.append('    security_opt: ["apparmor:unconfined"]')
     return "\n".join(lines)
 
 

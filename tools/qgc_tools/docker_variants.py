@@ -20,7 +20,6 @@ class DockerVariant(TypedDict):
     selector: str
     target: str
     image: str
-    fuse: bool
     artifact_pattern: str
     package_pattern: str
     build_args: dict[str, str]
@@ -36,7 +35,7 @@ _STRING_FIELDS = (
     "artifact_pattern",
     "package_pattern",
 )
-_REQUIRED_FIELDS = {*_STRING_FIELDS, "fuse", "build_args"}
+_REQUIRED_FIELDS = {*_STRING_FIELDS, "build_args"}
 _SELECTORS = {"linux", "android"}
 
 
@@ -61,8 +60,6 @@ def load_variants(path: Path = VARIANTS_JSON) -> list[DockerVariant]:
                 raise ValueError(f"{context}.{field} must be a string")
             if field != "package_pattern" and not value[field].strip():
                 raise ValueError(f"{context}.{field} must not be empty")
-        if not isinstance(value["fuse"], bool):
-            raise ValueError(f"{context}.fuse must be a boolean")
         build_args = value["build_args"]
         if not isinstance(build_args, dict) or not all(
             isinstance(key, str) and isinstance(item, str) for key, item in build_args.items()

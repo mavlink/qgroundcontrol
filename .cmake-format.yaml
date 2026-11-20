@@ -273,6 +273,15 @@ parse:
         OUT_VAR: '?'
         ARCHITECTURES: '*'
 
+    qgc_git_sparse_checkout:
+      pargs: {nargs: 0}
+      kwargs:
+        NAME: 1
+        GITHUB_REPOSITORY: 1
+        GIT_TAG: 1
+        SOURCE_DIR_VAR: 1
+        PATTERNS: '+'
+
     qgc_gst_acquire_sdk:
       pargs: {nargs: '*'}
       kwargs:
@@ -357,13 +366,6 @@ parse:
 
     qgc_gst_scan_plugin_basenames:
       pargs: {nargs: '2+', flags: [STATIC]}
-
-    qgc_track_git_head:
-      pargs: {nargs: '*', flags: [OFFLINE_OK]}
-      kwargs:
-        REPO_PATH: '?'
-        GIT_REF: '?'
-        INTERVAL: '?'
 
     # -------------------------------------------------------------------------
     # CPM Package Manager (https://github.com/cpm-cmake/CPM.cmake)

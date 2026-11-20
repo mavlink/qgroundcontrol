@@ -1,5 +1,9 @@
 name: Attest and Upload
-description: Attest build provenance and SBOMs, then upload the build artifact (GitHub + optional AWS)
+description: >-
+  Attest build provenance and SBOMs, then upload the build artifact. The Publish Builds workflow
+  publishes the packages marked with `publish`; this action holds no publishing credentials.
+  The provenance attestation covers the package, the build metadata that marks it, and its
+  companion file.
 
 inputs:
   artifact-name:
@@ -12,26 +16,18 @@ inputs:
     description: 'SBOM subject name (defaults to package-name)'
     required: false
     default: ''
-  aws-role-arn:
-    description: 'AWS IAM role ARN for OIDC authentication (preferred)'
+  publish:
+    description: >-
+      'true' marks the package for the Publish Builds workflow, which publishes it as
+      artifact-name once every platform has built the commit; 'false' keeps it a workflow artifact
+    required: true
+  job-id:
+    description: >-
+      The calling job's id, `job.check_run_id`. A step that marks a package passes it: the Publish
+      Builds workflow refuses a marked package it cannot trace to a job that passed. Without a
+      usable id this action warns and the build goes on
     required: false
     default: ''
-  aws-key-id:
-    description: 'AWS access key ID'
-    required: false
-    default: ''
-  aws-secret-access-key:
-    description: 'AWS secret access key'
-    required: false
-    default: ''
-  aws-distribution-id:
-    description: 'AWS CloudFront distribution ID'
-    required: false
-    default: ''
-  upload-aws:
-    description: 'Upload artifact to AWS'
-    required: false
-    default: 'true'
   artifact-source-path:
     description: >-
       Override for the source path of the artifact. Defaults to
@@ -39,8 +35,12 @@ inputs:
       generators (e.g. iOS Ninja Multi-Config writes to build/Release/<bundle>).
     required: false
     default: ''
-  additional-artifact-paths:
-    description: 'Optional newline-separated paths to include in the GitHub artifact'
+  companion-path:
+    description: >-
+      A file that goes beside the package on its GitHub Release and nowhere else: the `.zsync` of
+      an AppImage that embeds update information, `<artifact-name>.zsync` in the package's
+      directory. It is attested and uploaded with the package and listed in the publish marker,
+      so the Publish Builds workflow requires it. Empty when there is none
     required: false
     default: ''
 
@@ -55,20 +55,23 @@ runs:
         OVERRIDE: ${{ inputs.artifact-source-path }}
         PACKAGE_NAME: ${{ inputs.package-name }}
         SUBJECT_NAME: ${{ inputs.subject-name }}
-        UPLOAD_AWS: ${{ inputs.upload-aws }}
-        # Only whether credentials were passed; the secrets stay out of the script.
-        HAS_AWS_CREDENTIALS: ${{ inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != '') }}
+        PUBLISH: ${{ inputs.publish }}
+        JOB_ID: ${{ inputs.job-id }}
+        COMPANION: ${{ inputs.companion-path }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/ci/publish/attest_helper.py" prepare \
           --artifact-name "${ARTIFACT_NAME}" \
           --override "${OVERRIDE}" \
           --package-name "${PACKAGE_NAME}" \
-          --subject-name "${SUBJECT_NAME}"
+          --subject-name "${SUBJECT_NAME}" \
+          --publish "${PUBLISH}" \
+          --job-id "${JOB_ID}" \
+          --companion "${COMPANION}"
 
     # Pull request builds aren't released: they skip the SBOM scan and Sigstore attestations.
     - name: Generate SBOM
       if: github.event_name != 'pull_request'
-      uses: anchore/sbom-action@v0
+      uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
       env:
         # A 64 MiB gen0 budget (hex) avoids a PowerShell jump-list heap corruption that intermittently
         # crashes the pwsh extracting syft on windows-11-arm (dotnet/runtime#131636).
@@ -81,13 +84,15 @@ runs:
         upload-artifact-retention: 30
         artifact-name: sbom-${{ steps.prepare.outputs.subject-name }}
 
+    # The build metadata is a subject too: the publisher trusts its publish marker and job id
+    # only with this attestation. So is the companion file, which the publisher publishes.
     - name: Attest Build Provenance
       if: github.event_name != 'pull_request'
       uses: actions/attest@v4
       env:
         NODE_OPTIONS: --max-http-header-size=32768
       with:
-        subject-path: ${{ steps.prepare.outputs.path }}
+        subject-path: ${{ steps.prepare.outputs.provenance-subjects }}
 
     - name: Attest SBOM
       if: github.event_name != 'pull_request'
@@ -112,29 +117,6 @@ runs:
           ${{ steps.prepare.outputs.checksum }}
           ${{ steps.prepare.outputs.metadata }}
           ${{ steps.prepare.outputs.dependency-sbom }}
-          ${{ inputs.additional-artifact-paths }}
+          ${{ steps.prepare.outputs.companion }}
         retention-days: ${{ github.event_name == 'pull_request' && '7' || '30' }}
         compression-level: 0
-
-    - name: Configure AWS credentials
-      id: aws-credentials
-      if: steps.prepare.outputs.publish-aws == 'true'
-      uses: ./.github/actions/aws-credentials
-      with:
-        aws-role-arn: ${{ inputs.aws-role-arn }}
-        aws-key-id: ${{ inputs.aws-key-id }}
-        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-
-    - name: Upload artifact and checksum to AWS
-      if: steps.aws-credentials.outcome == 'success'
-      shell: bash
-      env:
-        ARTIFACT_NAME: ${{ inputs.artifact-name }}
-        ARTIFACT_PATH: ${{ steps.prepare.outputs.path }}
-        CHECKSUM_PATH: ${{ steps.prepare.outputs.checksum }}
-        DISTRIBUTION_ID: ${{ inputs.aws-distribution-id }}
-      run: |
-        python3 "${GITHUB_WORKSPACE}/tools/ci/publish/aws_upload.py" publish \
-          --artifact "${ARTIFACT_PATH}:${ARTIFACT_NAME}" \
-          --artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256" \
-          --distribution-id "${DISTRIBUTION_ID}"

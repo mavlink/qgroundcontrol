@@ -8,7 +8,6 @@
       "selector": "linux",
       "target": "linux",
       "image": "qgc-ubuntu-docker",
-      "fuse": true,
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {}
@@ -20,7 +19,6 @@
       "selector": "linux",
       "target": "linux",
       "image": "qgc-ubuntu-2204-docker",
-      "fuse": true,
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
@@ -37,7 +35,6 @@
       "selector": "linux",
       "target": "linux",
       "image": "qgc-ubuntu-2604-docker",
-      "fuse": true,
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
@@ -51,7 +48,6 @@
       "selector": "linux",
       "target": "linux",
       "image": "qgc-debian-docker",
-      "fuse": true,
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
@@ -65,7 +61,6 @@
       "selector": "linux",
       "target": "linux",
       "image": "qgc-fedora-docker",
-      "fuse": false,
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.rpm",
       "build_args": {
@@ -81,7 +76,6 @@
       "selector": "linux",
       "target": "linux",
       "image": "qgc-arch-docker",
-      "fuse": false,
       "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.pkg.tar.zst",
       "build_args": {
@@ -97,7 +91,6 @@
       "selector": "linux",
       "target": "linux-cross",
       "image": "qgc-ubuntu-aarch64-docker",
-      "fuse": false,
       "artifact_pattern": "Release/QGroundControl",
       "package_pattern": "",
       "build_args": {}
@@ -109,7 +102,6 @@
       "selector": "android",
       "target": "android",
       "image": "qgc-android-docker",
-      "fuse": false,
       "artifact_pattern": "android-build/QGroundControl.apk",
       "package_pattern": "",
       "build_args": {}

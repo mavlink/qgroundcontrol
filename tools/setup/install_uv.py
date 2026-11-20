@@ -16,7 +16,8 @@ PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
 def required_version(pyproject: Path = PYPROJECT) -> str:
     """Return the version named by the `[tool.uv] required-version` floor in tools/pyproject.toml."""
-    # Regex rather than TOML: this runs before any package, including tomli on Python 3.10, exists.
+    # A regex, not tomllib: this runs on the host's python3, before uv supplies the tools' Python,
+    # and Python 3.10 (Ubuntu 22.04) has no tomllib.
     match = re.search(
         r'^required-version\s*=\s*"(?:>=|==)(\d+\.\d+\.\d+)"$',
         pyproject.read_text(encoding="utf-8"),

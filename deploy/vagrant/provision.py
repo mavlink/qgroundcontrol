@@ -23,6 +23,8 @@ def provision() -> None:
     env = os.environ | {"DEBIAN_FRONTEND": "noninteractive"}
     env["QGC_PYTHON_ENV"] = str(environment)
     env["UV_INSTALL_DIR"] = "/usr/local/bin"
+    # uv's default Python directory is in root's home, which the vagrant user cannot read.
+    env["UV_PYTHON_INSTALL_DIR"] = "/opt/qgc-python"
     env["PATH"] = f"{environment / 'bin'}:/usr/local/bin:{os.environ['PATH']}"
     apt = [
         "apt-get",
@@ -47,12 +49,9 @@ def provision() -> None:
     if not ci:
         packages += ["xubuntu-desktop", "qtcreator"]
     subprocess.run([*apt, "install", *packages], check=True, env=env)
-    # Provisioning runs as root, so a uv-managed interpreter would land under /root where the
-    # vagrant user cannot reach it. Build the venv on the system interpreter instead.
-    python_arguments = ["build,qt", "--environment", str(environment), "--python", sys.executable]
     for script, arguments in (
         ("tools/setup/install_uv.py", []),
-        ("tools/setup/install_python.py", python_arguments),
+        ("tools/setup/install_python.py", ["build,qt", "--environment", str(environment)]),
         ("tools/setup/install_dependencies", ["--platform", "debian"]),
     ):
         subprocess.run([sys.executable, str(repo / script), *arguments], check=True, env=env)

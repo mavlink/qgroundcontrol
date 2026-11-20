@@ -7,19 +7,11 @@ codecov:
 coverage:
   range: "30...90"
 
-  status:
-    project:
-      default:
-        target: 30%
-        threshold: 2%
-        if_ci_failed: success
-        informational: true
-    patch:
-      default:
-        target: 30%
-        threshold: 5%
-        if_ci_failed: success
-        informational: true
+  # No project or patch check on pull requests. Both were informational, and Codecov sometimes
+  # left one of them "in progress" for good, which read as a workflow that was still running.
+  # Its pull request comment and the Build Results comment carry the numbers, and linux.yml
+  # enforces the thresholds (verify_coverage_thresholds.py).
+  status: false
 
 comment:
   layout: "reach,diff,flags,tree,footer"

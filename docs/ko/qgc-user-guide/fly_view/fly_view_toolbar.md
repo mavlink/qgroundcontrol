@@ -107,6 +107,10 @@ When the vehicle reports GPS resilience telemetry (authentication, spoofing, or 
 
 The dropdown also shows the GNSS receiver status, the correction stream sent to vehicles, the NTRIP connection with a **Connect** button once a caster is configured, and the ground station position. Expand it for the [GNSS Receiver](../settings_view/gnss_receiver.md#receiver) settings.
 
+### Video
+
+The Video indicator appears while QGroundControl measures a video stream or a USB camera. It shows the frame rate and the stream's bitrate (a USB camera's resolution), and turns orange while a stream loses packets, drops frames or falls well below the camera's frame rate. The dropdown shows the [video statistics](video.md#video-statistics) of the video stream and of a thermal stream, or of the USB camera. The expanded page changes the video settings that apply to a running stream, restarts the video, and opens the video settings.
+
 ### Battery <img src="../../../assets/fly/toolbar/battery_indicator.png" alt="Battery indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
 The Battery indicator shows you a configurable colored battery icon for remaining charge. It can also be configured to show percent remaining, voltage or both. The expanded page allows you to:

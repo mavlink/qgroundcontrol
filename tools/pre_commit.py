@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import re
 import shutil
@@ -18,7 +19,7 @@ from common.file_traversal import find_repo_root
 from common.gh_actions import gh_error, gh_warning, write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
 from common.git import pr_diff_refs
-from common.io import chdir, write_json
+from common.io import write_json
 from common.logging import log_error, log_info, log_ok
 from common.markdown import code_block, code_span, summary_section
 from common.proc import run_captured, run_tee
@@ -53,6 +54,15 @@ CACHE_SKIPPED_HOOKS = (*CI_SKIPPED_HOOKS, "renovate-config-validator")
 QT_PATHSPECS = ("*.qml",)
 # Runs .pre-commit-config.yaml; the config stays compatible with stock pre-commit.
 RUNNER = "prek"
+# Report-only hooks, by the name the runner prints, and the recipe that applies their fixes.
+FIX_RECIPES = {
+    "ruff check": "just format-fix-python",
+    "ruff format": "just format-fix-python",
+    "ruff check (whole tree)": "just format-fix-python",
+    "ruff format (whole tree)": "just format-fix-python",
+    "clang-format": "just format-fix",
+}
+RERUN_COMMAND = "uv run --frozen --project tools --group precommit python tools/pre_commit.py"
 RESULTS_FILE = "pre-commit-results.json"
 OUTPUT_FILE = "pre-commit-output.txt"
 
@@ -144,6 +154,22 @@ def failed_hooks(output: str) -> list[str]:
         if match := HOOK_NAME_RE.match(line):
             names.append(match.group("name").strip())
     return names
+
+
+def fix_commands(failures: Sequence[str]) -> list[str]:
+    """Return the recipes that apply the fixes of the report-only hooks among *failures*."""
+    return list(dict.fromkeys(FIX_RECIPES[name] for name in failures if name in FIX_RECIPES))
+
+
+def rerun_command(args: argparse.Namespace) -> str:
+    """Return the command that repeats this run's hooks on the same file selection."""
+    options = [
+        *(["--ci"] if args.ci else []),
+        *(["--docs"] if args.docs else []),
+        *(["--changed"] if args.changed else []),
+        *(f"--hook {hook}" for hook in args.hook),
+    ]
+    return " ".join([RERUN_COMMAND, *options])
 
 
 def changed_refs(args: argparse.Namespace) -> tuple[str, str] | None:
@@ -269,13 +295,16 @@ def write_step_summary(
     *,
     title: str = "Pre-commit",
     selection: str = "",
+    rerun: str,
 ) -> None:
     failures = failed_hooks(output)
     body = ""
     if failures:
+        fixes = " and ".join(code_span(command) for command in fix_commands(failures))
         body = (
             f"Failed hooks: {', '.join(code_span(name) for name in failures)}. "
-            f"Reproduce with {code_span(f'{RUNNER} run <hook> --all-files')} or `just lint`."
+            + (f"Apply fixes with {fixes}. " if fixes else "")
+            + f"Reproduce with {code_span(rerun)}."
         )
     diff = run_captured(["git", "diff", "--stat"])
     _write_step_summary(
@@ -333,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     results_dir = args.results_dir.resolve() if args.results_dir else None
 
-    with chdir(repo_root()):
+    with contextlib.chdir(repo_root()):
         try:
             if args.install:
                 return handle_install()
@@ -409,6 +438,7 @@ def main(argv: list[str] | None = None) -> int:
                     title="Docs lint" if args.docs else "Pre-commit",
                     selection=describe_selection(selection)
                     + ("; every English page for the docs hooks" if rescan else ""),
+                    rerun=rerun_command(args),
                 )
                 if returncode != 0:
                     gh_error("Required pre-commit checks failed; see the job summary.")
@@ -416,9 +446,10 @@ def main(argv: list[str] | None = None) -> int:
             if returncode != 0:
                 print()
                 log_info("To fix issues locally:")
-                print(f"  1. Run: {RUNNER} run --all-files")
-                print("  2. Review and stage changes: git add -u")
-                print("  3. Amend your commit: git commit --amend --no-edit")
+                for command in fix_commands(failed_hooks(output)):
+                    print(f"  Apply fixes: {command}")
+                print("  Review files that hooks rewrote: git diff")
+                print(f"  Check again: {rerun_command(args)}")
 
             return returncode
         except subprocess.CalledProcessError as exc:

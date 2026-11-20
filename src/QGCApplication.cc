@@ -44,10 +44,25 @@
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
+#ifdef Q_OS_ANDROID
+#include "AndroidSerialApp.h"
+#endif
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
 QGC_LOGGING_CATEGORY(QGCAppMessageLog, "API.QGCApplication.AppMessage")
+
+namespace {
+
+// A test run has its own application name, which desktop platforms put in the path of the settings and cache
+// locations. Android and iOS do not: there these are the installed application's own directories, as the save path
+// is on iOS, the application's Documents.
+bool isTestRunDirectory(const QDir& dir)
+{
+    return dir.absolutePath().split(QLatin1Char('/')).contains(QCoreApplication::applicationName());
+}
+
+}  // namespace
 
 QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLineParser::CommandLineParseResult& cli)
     : QGuiApplication(argc, argv),
@@ -115,7 +130,8 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
     // The setting will delete all settings on this boot
     fClearSettingsOptions |= settings.value(AppSettings::clearSettingsNextBootKey, false).toBool();
 
-    if (_runningUnitTests || _simpleBootTest) {
+    const bool testRun = _runningUnitTests || _simpleBootTest;
+    if (testRun) {
         // Unit tests run with clean settings
         fClearSettingsOptions = true;
     }
@@ -126,8 +142,10 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
 
         // Clear parameter cache
         QDir paramDir(ParameterManager::parameterCacheDir());
-        paramDir.removeRecursively();
-        paramDir.mkpath(paramDir.absolutePath());
+        if (!testRun || isTestRunDirectory(paramDir)) {
+            paramDir.removeRecursively();
+            paramDir.mkpath(paramDir.absolutePath());
+        }
     } else {
         // Determine if upgrade message for settings version bump is required. Check and clear must happen before
         // toolbox is started since that will write some settings.
@@ -251,6 +269,10 @@ void QGCApplication::init()
         const bool videoInitialized = _initVideo() && VideoBackend::instance().selfTest();
         const bool qmlRootLoaded = _initQmlRootWindow();
         _bootTestPassed = videoInitialized && qmlRootLoaded;
+#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+        // Java and C++ are bound to each other only as the app runs, so the boot test also proves that binding.
+        _bootTestPassed = AndroidSerial::selfTest() && _bootTestPassed;
+#endif
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
@@ -690,7 +712,7 @@ void QGCApplication::shutdown()
 
         for (const auto location : {QStandardPaths::AppConfigLocation, QStandardPaths::CacheLocation}) {
             QDir dir(QStandardPaths::writableLocation(location));
-            if (dir.exists()) {
+            if (dir.exists() && isTestRunDirectory(dir)) {
                 if (dir.removeRecursively()) {
                     qCDebug(QGCApplicationLog) << "Removed test run directory:" << dir.absolutePath();
                 } else {
@@ -700,7 +722,7 @@ void QGCApplication::shutdown()
         }
 
         QDir appDir(SettingsManager::instance()->appSettings()->savePath()->rawValue().toString());
-        if (appDir.exists()) {
+        if (appDir.exists() && isTestRunDirectory(appDir)) {
             if (appDir.removeRecursively()) {
                 qCDebug(QGCApplicationLog) << "Removed test run app data directory:" << appDir.absolutePath();
             } else {

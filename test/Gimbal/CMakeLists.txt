@@ -25,7 +25,7 @@ set_source_files_properties(
         SKIP_UNITY_BUILD_INCLUSION ON
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(GimbalControllerBasicsTest LABELS Integration Vehicle)
 add_qgc_test(GimbalControllerDeltaYawTest LABELS Integration Vehicle)

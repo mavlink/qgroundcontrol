@@ -16,7 +16,7 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # QmlTestFileValidator reads the QML test files straight from the source tree
 # (same directory QGCQmlQuickTests runs them from) so there is no build copy

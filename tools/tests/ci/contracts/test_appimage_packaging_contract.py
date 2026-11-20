@@ -1,63 +1,24 @@
-"""Contracts for AppImage packaging in the containerized Linux builds."""
+"""The AppImage tools CMake downloads are the releases build-config.json pins."""
 
 from __future__ import annotations
 
 import json
+import re
 
-from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow
-
-LINUX_STEPS = get_steps(load_workflow("linux.yml"), "build")
+from ..._helpers import REPO_ROOT
 
 
-def test_appimagelint_reports_with_fuse_only_where_enabled() -> None:
+def test_appimage_tools_are_the_build_config_pins() -> None:
+    """CreateAppImage.cmake downloads exactly the pinned tools and holds no release or digest."""
     create_appimage = (REPO_ROOT / "cmake/install/CreateAppImage.cmake").read_text()
-    variants = json.loads((REPO_ROOT / "deploy/docker/variants.json").read_text())["variants"]
+    pins = json.loads((REPO_ROOT / ".github/build-config.json").read_text())["appimage"]
 
-    assert 'COMMAND "${CMAKE_COMMAND}" -E env --unset=APPIMAGE_EXTRACT_AND_RUN' in create_appimage
-    assert '--json-report "${APPIMAGELINT_REPORT_PATH}"' in create_appimage
-    assert "AppImage passed validation" not in create_appimage
-    assert "AppImageLint completed; review findings" in create_appimage
-    docker_upload = get_step(
-        get_steps(load_workflow("docker.yml"), "build"), "Upload build artifact"
+    downloads = re.findall(
+        r"^\s*download_tool\(\w+ (\w+)( ROLLING)?\)$", create_appimage, re.MULTILINE
     )
-    assert "${{ github.workspace }}/build/appimagelint-report.json" in docker_upload["with"]["path"]
-    linux_upload = get_step(LINUX_STEPS, "Attest and Upload")
-    assert "/build/appimagelint-report.json" in linux_upload["with"]["additional-artifact-paths"]
-    upload_action = load_action("attest-and-upload")
-    assert "additional-artifact-paths" in upload_action["inputs"]
-    saved = get_step(get_steps(upload_action), "Save artifact")["with"]["path"].splitlines()
-    assert "${{ inputs.additional-artifact-paths }}" in saved
-
-    fuse_by_id = {variant["id"]: variant["fuse"] for variant in variants}
-    assert all(
-        fuse_by_id[variant] for variant in {"ubuntu", "ubuntu-2204", "ubuntu-2604", "debian"}
-    )
-    assert not any(fuse_by_id[variant] for variant in {"fedora", "arch"})
-
-
-def test_official_appimages_publish_delta_update_metadata() -> None:
-    install = (REPO_ROOT / "cmake/install/Install.cmake").read_text()
-    create_appimage = (REPO_ROOT / "cmake/install/CreateAppImage.cmake").read_text()
-
-    assert 'CACHE STRING "AppImage update information passed to appimagetool' in install
-    assert (
-        'set(QGC_APPIMAGE_UPDATE_INFORMATION \\"${QGC_APPIMAGE_UPDATE_INFORMATION}\\")' in install
-    )
-    assert '--updateinformation "${QGC_APPIMAGE_UPDATE_INFORMATION}"' in create_appimage
-    assert 'NOT EXISTS "${APPIMAGE_PATH}.zsync"' in create_appimage
-    # Only the upstream repository's AppImages point their updater at its releases.
-    update_information = load_workflow("linux.yml")["jobs"]["build"]["env"][
-        "QGC_APPIMAGE_UPDATE_INFORMATION"
+    assert [tool for tool, _ in downloads] == list(pins)
+    # Only a release that upstream rebuilds in place may be skipped when its digest drifts.
+    assert [tool for tool, rolling in downloads if rolling] == [
+        tool for tool, pin in pins.items() if pin["tag"] == "continuous"
     ]
-    assert update_information.startswith("${{ github.repository == 'mavlink/qgroundcontrol' && ")
-    assert "'gh-releases-zsync|mavlink|qgroundcontrol|latest|{0}.AppImage.zsync'" in (
-        update_information
-    )
-    expected = "${{ env.QGC_APPIMAGE_UPDATE_INFORMATION }}"
-    configure = get_step(LINUX_STEPS, "Configure")
-    assert configure["with"]["extra-args"] == f"-DQGC_APPIMAGE_UPDATE_INFORMATION={expected}"
-    verify = get_step(LINUX_STEPS, "Verify AppImage")
-    assert verify["with"]["expected-appimage-update-information"] == expected
-    assert "expected-appimage-update-information" in load_action("verify-executable")["inputs"]
-    zsync = get_step(LINUX_STEPS, "Attest and Upload")["with"]["additional-artifact-paths"]
-    assert "'{0}/build/{1}.AppImage.zsync'" in zsync
+    assert not re.search(r"[0-9a-f]{64}|releases/download/[\w.-]+/", create_appimage)

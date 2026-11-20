@@ -4,7 +4,6 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtMultimedia/QMediaPlayer>
@@ -16,17 +15,18 @@
 class QMediaCaptureSession;
 class QtVideoRecorder;
 class QVideoFrameInput;
-class QVideoSink;
 
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
 /// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Records by encoding the frames it
-/// displays anew (QtVideoRecorder): only while an output displays the stream, and after a reconnect in the same file.
+/// displays anew (QtVideoRecorder), as recordingEncoding() says: only while an output displays the stream, and after a
+/// reconnect in the same file.
 ///
 /// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
 /// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
 /// has failed: its StreamSupervisor reconnects it after 1 s, doubling up to 30 s, while autoReconnect is on, and it
-/// stops with errorOccurred() otherwise.
+/// stops with errorOccurred() otherwise. A UDP port nobody sends to yet hasn't failed: once FFmpeg gives up on it, the
+/// receiver listens again at once, for as long as it takes.
 class QtMultimediaVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -41,6 +41,8 @@ public:
         QByteArray sdp;
         /// RTSP interleaved over its TCP connection, rather than over UDP with FFmpeg's fallback to TCP.
         bool rtspOverTcp = false;
+        /// An SDP names the streams, this one's or the RTSP server's: FFmpeg needn't read the stream to find them.
+        bool streamsDescribed = false;
     };
 
     explicit QtMultimediaVideoReceiver(QObject* parent = nullptr);
@@ -51,10 +53,13 @@ public:
     /// description. Other URLs play as they are; nullopt for an invalid one.
     static std::optional<Source> playerSource(const QString& uri);
 
+    bool encodesRecordings() const override { return true; }
+
 protected:
     void onConfigChanged() override;
     void onActiveChanged() override;
     void onRestartRequested() override;
+    void onReconnectRequested() override;
     void onVideoOutputChanged() override;
     void onStartRecording(const QString& file, FileFormat format) override;
     void onStopRecording() override;
@@ -69,7 +74,10 @@ private:
     void _open();
     /// Ends the session: no player, frame or stats.
     void _stopSession();
-    /// The session failed for @p reason: reconnects with backoff, or stops and reports it.
+    /// The session listens on a UDP port, for at least its timeout, and no stream has arrived.
+    bool _awaitingSender() const;
+    /// The session failed for @p reason: reconnects with backoff, or stops and reports it. One still awaiting its
+    /// sender starts anew instead.
     void _fail(const QString& reason);
     void _bindVideoSink();
     void _onMediaStatusChanged(QMediaPlayer::MediaStatus status);
@@ -90,10 +98,11 @@ private:
     bool _closing = false;
     /// The config the session started with.
     Config _sessionConfig;
-    QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _frameConnection;
     StreamSupervisor* const _supervisor;
     QTimer _sampleTimer;
+    /// Since the session's player was created.
+    QElapsedTimer _sinceOpened;
     /// Since the session started, or its last frame.
     QElapsedTimer _sinceFrame;
     VideoStreamStatsSampler _statsSampler;

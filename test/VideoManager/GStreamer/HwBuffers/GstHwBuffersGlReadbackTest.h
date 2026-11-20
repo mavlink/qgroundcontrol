@@ -28,8 +28,14 @@ private slots:
     void _testNv12PlanesReadBack_data();
     void _testNv12PlanesReadBack();
     void _testVaDecodedFrameReadBack();
+    void _testDmaBufBufferReturnsAfterGpuReads();
     void _testGlMemoryFrameReadsBack();
+    void _testGlMemoryFrameToImage_data();
     void _testGlMemoryFrameToImage();
+    void _testTenBitPlanarFrameToImage();
+    void _testGlMemoryMapLeavesFrameSyncMeta();
+    void _testUnsharedGlMemoryTakesCpuPath();
+    void _testGlBridgeKeepsGstGlInQtsApi();
 #endif
 
 private:

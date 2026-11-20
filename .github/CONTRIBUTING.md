@@ -37,6 +37,8 @@ Before you begin, please:
   the [CMake development guide](../cmake/README.md) for modules, presets, and focused tests
 - **Platforms**: Windows, macOS, Linux, Android, iOS
 - **IDE**: Qt Creator (recommended), VS Code, or your preferred IDE
+- **First-time setup**: `just setup` installs the system dependencies and the pinned Qt, then configures
+  and builds; `just qt` alone installs the Qt version from `build-config.json` into `~/Qt`
 - **Build/test/lint commands**: see [tools/README.md](../tools/README.md) for the `just configure` /
   `build` / `test` / `lint` / `check` workflow
 
@@ -123,7 +125,9 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 
 Follow [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, C++20 features, QML style, and logging
 conventions. Run `just lint` (`prek run --all-files`) before committing; see
-[tools/README.md](../tools/README.md) for all development commands.
+[tools/README.md](../tools/README.md) for all development commands. The formatting hooks only report:
+apply their fixes with `just format-fix` (clang-format, on the lines you changed) and
+`just format-fix-python` (Ruff).
 
 ### Architecture Patterns
 
@@ -172,7 +176,13 @@ See [test/README.md](../test/README.md) for the complete testing guide, includin
 
 ### PR Requirements
 
-- All CI checks must pass
+- All CI checks are expected to pass before a maintainer merges. GitHub itself blocks a merge only
+  on a check that a ruleset requires, and upstream required none in November 2026. The
+  [CI overview](ci-overview.md) lists what runs on a pull request and
+  [how to read and reproduce a failed check](ci-overview.md#a-check-failed)
+- The pull request title is a Conventional Commits subject of at most 80 characters; the
+  `Validate PR Title` check fails otherwise. A squash merge can commit the title as its subject;
+  merge and rebase merges, which upstream also allows, keep each commit's own message
 - Code follows style guidelines
 - Tests added for new features
 - No unrelated changes

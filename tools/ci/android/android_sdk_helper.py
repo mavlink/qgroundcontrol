@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Android SDK/NDK setup helpers for CI.
+"""Install the Android SDK platform, build tools and NDK, retrying failed sdkmanager downloads.
+Exports the NDK paths to later steps and runs the Gradle wrapper once; `debug-keystore` instead
+creates the throwaway signing key for builds that have no release keystore.
 
 android_sdk_helper.py [--ndk-version V --platform P --build-tools B]  # install SDK packages
 android_sdk_helper.py debug-keystore [--keystore PATH]                  # throwaway signing key

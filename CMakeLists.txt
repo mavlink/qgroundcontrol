@@ -172,7 +172,7 @@ if(NOT CPM_SOURCE_CACHE)
     endif()
 endif()
 include(CPM)
-include(CPMTrackHead)
+include(GitSparseCheckout)
 
 # ----------------------------------------------------------------------------
 # Toolchain Configuration (Compiler, Linker, Build Settings)
@@ -183,7 +183,7 @@ include(Toolchain)
 # Python interpreter for code generators (prefer workspace .venv)
 # ----------------------------------------------------------------------------
 include(PythonVenv)
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 ${QGC_PYTHON_VERSION} REQUIRED COMPONENTS Interpreter)
 include(QGCQmlCodegen)
 
 # ----------------------------------------------------------------------------
@@ -272,6 +272,8 @@ find_package(
         Location
         LocationPrivate
         Multimedia
+        MultimediaPrivate
+        MultimediaQuickPrivate
         Network
         Positioning
         Qml
@@ -287,11 +289,20 @@ find_package(
         Xml
         Quick3D
         StateMachine
-    OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate OpenGL QuickTest SerialPort Test
+    OPTIONAL_COMPONENTS Bluetooth OpenGL QuickTest SerialPort Test
 )
 
 if(LINUX AND NOT ANDROID)
     find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} COMPONENTS WaylandClient)
+endif()
+
+# On Android QGC has its own serial port (src/Android/Serial), under the class and header names of Qt Serial Port,
+# which Qt installs there as well and whose classes differ in size. Every target of an Android build therefore finds
+# QGC's <QtSerialPort/...> headers ahead of Qt's, whether or not it links QGCAndroidSerialPort: nothing would report
+# a target that compiled against Qt's classes. Directory scope is intentional for that, set before the first
+# directory is added.
+if(ANDROID)
+    include_directories(BEFORE "${CMAKE_SOURCE_DIR}/src/Android/Serial/include")
 endif()
 
 if(QGC_USE_MOCCACHE)
@@ -424,6 +435,13 @@ include(Sanitizers)
 
 include(Coverage)
 
+# The autogen step (moc) of every project target waits for the generated protocol headers instead of the libraries
+# the target links (qgc_configure_target). Custom builds may introduce additional generators, so they retain CMake's
+# dependency graph.
+if(NOT QGC_CUSTOM_BUILD)
+    set(QGC_AUTOGEN_TARGET_DEPENDS qgc-analysis-headers)
+endif()
+
 qgc_apply_warning_flags()
 
 # ============================================================================
@@ -498,23 +516,16 @@ add_custom_target(
     COMMENT "Generate protocol headers for compiler analysis"
 )
 
-# moc needs generated protocol headers, not completed linked libraries. Custom
-# builds may introduce additional generators, so retain their dependency graph.
-if(NOT QGC_CUSTOM_BUILD)
-    set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY AUTOGEN_ORIGIN_DEPENDS OFF)
-    set_property(
-        TARGET ${CMAKE_PROJECT_NAME}
-        APPEND
-        PROPERTY AUTOGEN_TARGET_DEPENDS qgc-analysis-headers
+if(QGC_AUTOGEN_TARGET_DEPENDS
+   AND QGC_BUILD_TESTING
+   AND CMAKE_GENERATOR STREQUAL "Ninja"
+)
+    add_test(
+        NAME CMake.AutogenGraph
+        COMMAND "${CMAKE_COMMAND}" "-DNINJA=${CMAKE_MAKE_PROGRAM}" "-DBUILD_DIR=${PROJECT_BINARY_DIR}"
+                "-DAPP_TARGET=${CMAKE_PROJECT_NAME}" -P "${CMAKE_SOURCE_DIR}/cmake/tests/check_autogen_graph.cmake"
     )
-    if(QGC_BUILD_TESTING AND CMAKE_GENERATOR STREQUAL "Ninja")
-        add_test(
-            NAME CMake.ApplicationAutogenGraph
-            COMMAND "${CMAKE_COMMAND}" "-DNINJA=${CMAKE_MAKE_PROGRAM}" "-DBUILD_DIR=${PROJECT_BINARY_DIR}"
-                    "-DAPP_TARGET=${CMAKE_PROJECT_NAME}" -P "${CMAKE_SOURCE_DIR}/cmake/tests/check_autogen_graph.cmake"
-        )
-        set_tests_properties(CMake.ApplicationAutogenGraph PROPERTIES LABELS "CMake;Unit")
-    endif()
+    set_tests_properties(CMake.AutogenGraph PROPERTIES LABELS "CMake;Unit")
 endif()
 
 if(QGC_BUILD_PORTABLE_TESTS)
@@ -528,7 +539,9 @@ if(QGC_CUSTOM_BUILD)
 endif()
 if(QGC_BUILD_TESTING)
     qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/test")
-elseif(QGC_BUILD_PORTABLE_TESTS)
+endif()
+# test/Portable is added from this directory, so configuring test/ does not reach it.
+if(QGC_BUILD_PORTABLE_TESTS)
     qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/test/Portable")
 endif()
 

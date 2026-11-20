@@ -1,6 +1,9 @@
 #include "VideoReceiver.h"
 
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QFileInfo>
+#include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
@@ -39,14 +42,14 @@ bool VideoReceiver::isValidFileFormat(int format)
     return (format >= static_cast<int>(FileFormat::Mkv)) && (format <= static_cast<int>(FileFormat::Mp4));
 }
 
-QSize VideoReceiver::presentedSize(const QVideoFrame& frame)
+QSize VideoReceiver::presentedSize(const QVideoFrame& frame, QSize pictureSize)
 {
     if (!frame.isValid()) {
         return {};
     }
     const QVideoFrameFormat format = frame.surfaceFormat();
     const QRect viewport = format.viewport();
-    const QSize size = viewport.isValid() ? viewport.size() : frame.size();
+    const QSize size = pictureSize.isValid() ? pictureSize : (viewport.isValid() ? viewport.size() : frame.size());
     // As Qt's qRotatedFramePresentationSize(): the frame's and the format's rotation add up; mirroring keeps the size.
     const int degrees = static_cast<int>(frame.rotation()) + static_cast<int>(format.rotation());
     return ((degrees % 180) != 0) ? size.transposed() : size;
@@ -79,6 +82,13 @@ void VideoReceiver::restart()
 {
     if (_active) {
         onRestartRequested();
+    }
+}
+
+void VideoReceiver::reconnectNow()
+{
+    if (_active) {
+        onReconnectRequested();
     }
 }
 
@@ -129,15 +139,40 @@ void VideoReceiver::stopRecording()
     onStopRecording();
 }
 
-bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
+void VideoReceiver::shutDown()
 {
-    QVideoSink* const sink = videoSink();
-    if (!sink) {
+    setActive(false);
+}
+
+bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif)
+{
+    if (!videoSink()) {
         qCWarning(VideoReceiverLog) << "No video output to take a screenshot from" << _name;
         return false;
     }
+    return onTakeScreenshot(file, exif);
+}
 
-    return VideoScreenshot::save(sink->videoFrame(), file, exif);
+bool VideoReceiver::onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif)
+{
+    // VideoOutput takes only multiples of 90 degrees, which are QtVideo::Rotation's values once within a turn.
+    const int orientation = _videoOutput->property("orientation").toInt() % 360;
+    const auto outputRotation = static_cast<QtVideo::Rotation>((orientation < 0) ? (orientation + 360) : orientation);
+    const bool outputMirrored = _videoOutput->property("mirrored").toBool();
+    // Converted on this thread, which a frame in GPU memory requires; encoding and writing would stall the UI.
+    const QImage image = VideoScreenshot::displayedImage(videoSink()->videoFrame(), outputRotation, outputMirrored);
+    if (image.isNull()) {
+        qCWarning(VideoReceiverLog) << "No video frame to take a screenshot from" << _name;
+        return false;
+    }
+    (void) QtConcurrent::run([image, file, exif] {
+        return VideoScreenshot::saveImage(image, file, exif);
+    }).then(this, [this, file](bool saved) {
+        if (!saved) {
+            emit errorOccurred(tr("Unable to save the photo %1.").arg(QFileInfo(file).fileName()));
+        }
+    });
+    return true;
 }
 
 QVideoSink* VideoReceiver::videoSink() const

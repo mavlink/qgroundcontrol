@@ -1,10 +1,13 @@
-# Repo convention is version-tag pinning (@v2, @v6, ...) for all actions, not SHA pins.
-# ref-pin keeps the floating-ref protection (rejects @main / branch refs) while allowing tags.
 rules:
   # Runners cannot load $/ actions from a fork PR's merge commit, so local actions stay checkout-backed ./ paths.
   self-repository:
     disable: true
+  # Third-party actions are pinned to a commit SHA; GitHub's own keep version tags
+  # (actions/README.md#external-action-reference-policy). ref-pin accepts any ref, a branch
+  # included: test_workflow_security_policy.py requires the version tag.
   unpinned-uses:
     config:
       policies:
-        "*": ref-pin
+        actions/*: ref-pin
+        github/*: ref-pin
+        "*": hash-pin

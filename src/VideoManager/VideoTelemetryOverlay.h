@@ -8,12 +8,13 @@
 
 class Fact;
 
-/// The live telemetry overlay: the telemetry bar's values as text, which the video outputs show as their subtitle
-/// (QVideoSink::subtitleText). Empty while the overlay is off or no vehicle is active.
+/// The live telemetry overlay: the telemetry bar's values as text, which VideoView shows over the video
+/// (TelemetryOverlayText.qml). Empty while the overlay is off or no vehicle is active.
 class VideoTelemetryOverlay : public QObject
 {
     Q_OBJECT
 
+    friend class VideoManagerTest;
     friend class VideoTelemetryOverlayTest;
 
 public:

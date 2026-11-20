@@ -38,9 +38,13 @@ public:
 
     /// Handles the messages queued now, as the poll fd does.
     void drain();
-    /// Handles the messages of @p types until @p done() or @p deadline, waiting for them.
+    /// Handles the messages of @p types until @p done() or @p deadline, waiting for them. Messages of any other type,
+    /// queued before or posted meanwhile, are discarded without reaching the handler (gst_bus_timed_pop_filtered()):
+    /// only for a caller that no longer acts on them, as a session that is tearing down.
     void pumpUntil(GstMessageType types, const std::function<bool()>& done, const QDeadlineTimer& deadline);
-    /// Pops the oldest queued message of @p type, unhandled; null when there is none.
+    /// Pops the oldest queued message of @p type, unhandled; null when there is none. Discards the messages of other
+    /// types queued before it, or the whole queue when it holds none of @p type (gst_bus_pop_filtered()): only for a
+    /// caller that gives up on the pipeline.
     GStreamer::GstMessagePtr pop(GstMessageType type);
 
 private:

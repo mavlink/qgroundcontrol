@@ -185,28 +185,29 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
         return False
 
     print(f"\nInstalling GStreamer {version}...")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        installer = Path(tmpdir) / installer_name
-        # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
-        installer_urls = (
-            _c.package_url("windows_msvc_x64", version),
-            _c.mirror_url("windows_msvc_x64", version),
-        )
-        if not _c.download_first(installer_urls, installer, expected_sha256, dry_run):
-            return False
-        if not _c.run_command(
-            [
-                str(installer),
-                "/VERYSILENT",
-                "/SUPPRESSMSGBOXES",
-                "/SP-",
-                "/NORESTART",
-                "/TYPE=devel",
-                f"/DIR={WINDOWS_GSTREAMER_PREFIX}",
-            ],
-            dry_run,
-        ):
-            return False
+    installer = _c.download_dir("gstreamer") / installer_name
+    # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
+    installer_urls = (
+        _c.package_url("windows_msvc_x64", version),
+        _c.mirror_url("windows_msvc_x64", version),
+    )
+    if not _c.download_first(installer_urls, installer, expected_sha256, dry_run):
+        return False
+    if not _c.run_command(
+        [
+            str(installer),
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/SP-",
+            "/NORESTART",
+            "/TYPE=devel",
+            f"/DIR={WINDOWS_GSTREAMER_PREFIX}",
+        ],
+        dry_run,
+    ):
+        return False
+    if not dry_run:
+        installer.unlink(missing_ok=True)
 
     prefix = WINDOWS_GSTREAMER_PREFIX
     _c.set_env_var("GSTREAMER_1_0_ROOT_MSVC_X86_64", prefix)

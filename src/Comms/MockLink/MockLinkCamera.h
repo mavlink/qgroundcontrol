@@ -22,6 +22,7 @@ class MockLink;
 ///       VIDEO_STREAM_INFORMATION, VIDEO_STREAM_STATUS)
 ///   MAV_CMD_REQUEST_CAMERA_INFORMATION / SETTINGS / STORAGE / CAPTURE_STATUS
 ///   MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION / STATUS
+///   MAV_CMD_VIDEO_START_STREAMING / VIDEO_STOP_STREAMING
 ///   MAV_CMD_SET_CAMERA_MODE
 ///   MAV_CMD_IMAGE_START_CAPTURE / IMAGE_STOP_CAPTURE
 ///   MAV_CMD_VIDEO_START_CAPTURE / VIDEO_STOP_CAPTURE
@@ -61,6 +62,7 @@ public:
         qint64   singleShotStartMs   = 0;                    ///< Timestamp when single-shot capture started (0 = not active)
         int      intervalRemaining   = 0;                    ///< Images left in interval capture (0 = unlimited)
         qint64   intervalLastCaptureMs = 0;                  ///< Timestamp of last interval capture
+        uint32_t transmittedStreams = 1;                     ///< Bit (stream id - 1) per stream; stream 1 at boot
 
         // Tracking state
         uint8_t  trackingMode        = CAMERA_TRACKING_MODE_NONE; ///< CAMERA_TRACKING_MODE enum
@@ -99,6 +101,10 @@ public:
     /// Handle all incoming MAVLink messages for camera.
     /// @return true if the message was handled by the camera
     bool handleMavlinkMessage(const mavlink_message_t &msg);
+
+    /// Whether camera @p compId transmits its stream @p streamId: its first stream until
+    /// MAV_CMD_VIDEO_STOP_STREAMING, another one after MAV_CMD_VIDEO_START_STREAMING.
+    bool streamTransmitted(uint8_t compId, uint8_t streamId);
 
 private:
     /// Handle a COMMAND_LONG that targets a camera component.

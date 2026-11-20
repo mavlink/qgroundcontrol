@@ -28,6 +28,16 @@ pseudo-localized `eo` catalogs used for layout testing.
 
 Crowdin picks these up and submits translations back as they become available.
 
+The script fails when `lupdate` rejects a `tr()` call or cannot extract its string: `tr()` in a
+class with neither `Q_OBJECT` nor `Q_DECLARE_TR_FUNCTIONS`, `tr()` outside a class, or `tr()`
+called through an object (`object->tr()`). One such call fails every later weekly update, so
+Linux CI runs the same check on pull requests. It extracts into a scratch catalog and leaves the
+translation files untouched:
+
+```bash
+just translations --check   # tools/translations/qgc_lupdate.py --check
+```
+
 ## Placeholder regression prevention
 
 `check_placeholders.py` compares parsed TS messages against a Git baseline, not added diff lines.
@@ -75,7 +85,10 @@ and prek hands that baseline to the hook as `PRE_COMMIT_FROM_REF`.
 
 ## C++ and QML code strings
 
-Use the standard Qt `tr()` (C++) and `qsTr()` (QML) mechanisms.
+Use the standard Qt `tr()` (C++) and `qsTr()` (QML) mechanisms. A class that is not a `QObject`
+declares `Q_DECLARE_TR_FUNCTIONS(ClassName)` or calls
+`QCoreApplication::translate("ClassName", "...")`. Call another class's `tr()` as
+`ClassName::tr("...")`, not through an object.
 
 ## Translating strings in JSON files
 

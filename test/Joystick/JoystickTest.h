@@ -26,6 +26,7 @@ private slots:
     // Discovery tests
     void _discoverVirtualJoystickTest();
     void _multipleJoysticksTest();
+    void _discoverOffMainThreadTest();
 
     // Identity tests
     void _joystickIdentityTest();

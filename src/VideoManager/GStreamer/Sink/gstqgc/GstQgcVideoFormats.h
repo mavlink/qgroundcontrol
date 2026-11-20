@@ -35,6 +35,9 @@ inline constexpr VideoFormatEntry kVideoFormatTable[] = {
     {GST_VIDEO_FORMAT_YV12, QVideoFrameFormat::Format_YV12, "YV12", kOfferDmaDrm},
     {GST_VIDEO_FORMAT_Y42B, QVideoFrameFormat::Format_YUV422P, "Y42B"},
     {GST_VIDEO_FORMAT_P010_10LE, QVideoFrameFormat::Format_P010, "P010_10LE", kOfferDmaDrm},
+    // What software decoders send for 10-bit 4:2:0 (avdec's Main 10): samples in the low bits, as Qt's shader reads
+    // them. Qt has no CPU conversion for it, so QVideoFrame::toImage() needs a QRhi.
+    {GST_VIDEO_FORMAT_I420_10LE, QVideoFrameFormat::Format_YUV420P10, "I420_10LE"},
     {GST_VIDEO_FORMAT_AYUV, QVideoFrameFormat::Format_AYUV, "AYUV"},
     {GST_VIDEO_FORMAT_YUY2, QVideoFrameFormat::Format_YUYV, "YUY2"},
     {GST_VIDEO_FORMAT_UYVY, QVideoFrameFormat::Format_UYVY, "UYVY"},
@@ -47,7 +50,6 @@ inline constexpr VideoFormatEntry kVideoFormatTable[] = {
     {GST_VIDEO_FORMAT_RGBx, QVideoFrameFormat::Format_RGBX8888, nullptr},
     {GST_VIDEO_FORMAT_ARGB, QVideoFrameFormat::Format_ARGB8888, nullptr},
     {GST_VIDEO_FORMAT_xRGB, QVideoFrameFormat::Format_XRGB8888, nullptr},
-    {GST_VIDEO_FORMAT_I420_10LE, QVideoFrameFormat::Format_YUV420P10, nullptr},
     {GST_VIDEO_FORMAT_P016_LE, QVideoFrameFormat::Format_P016, nullptr},
     // GST_VIDEO_FORMAT_BGR/RGB intentionally absent: Qt6 has no 24-bit packed format, so they resolve to
     // Format_Invalid (the lookup default) rather than corrupting stride arithmetic.

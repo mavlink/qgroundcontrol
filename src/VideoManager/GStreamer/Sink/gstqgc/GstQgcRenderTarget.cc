@@ -67,7 +67,7 @@ RenderBackend fromRhiImplementation(int implementation) noexcept
 
 }  // namespace
 
-RenderTarget currentRenderTarget() noexcept
+RenderTarget currentRenderTarget()
 {
 #ifdef QGC_UNITTEST_BUILD
     if (const std::optional<SinkEnvironment> environment = sinkEnvironmentForTest()) {
@@ -122,35 +122,29 @@ const char* toString(RenderBackend backend) noexcept
 
 const char* zeroCopyPathName(RenderBackend backend) noexcept
 {
+    // A backend has a case only in a build with its zero-copy path.
     switch (backend) {
-        case RenderBackend::OpenGL:
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+        case RenderBackend::OpenGL:
             return "GLMemory/DMABuf";
-#else
-            return "CPU";
 #endif
-        case RenderBackend::Direct3D11:
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+        case RenderBackend::Direct3D11:
             return "D3D11";
-#else
-            return "CPU";
 #endif
-        case RenderBackend::Direct3D12:
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+        case RenderBackend::Direct3D12:
             // A D3D12 device is a per-adapter singleton, so GStreamer's device on Qt's adapter is Qt's device.
             return "D3D12 (d3d12convert to RGBA)";
-#else
-            return "CPU";
 #endif
-        case RenderBackend::Metal:
 #if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
+        case RenderBackend::Metal:
             return "IOSurface/VideoToolbox";
-#else
-            return "CPU";
 #endif
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
         case RenderBackend::Vulkan:
-            // Vulkan import is dormant (foreign-VkDevice guard → CPU copy), so it never delivers zero-copy today.
-            return "CPU (Vulkan import dormant)";
+            return "DMABuf";
+#endif
         default:
             return "CPU";
     }

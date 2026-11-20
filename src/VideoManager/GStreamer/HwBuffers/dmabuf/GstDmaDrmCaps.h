@@ -5,6 +5,7 @@
 #include <span>
 #include <string>
 
+/// Defined only in builds with the DMABuf path (QGC_HAS_GST_DMABUF_GPU_PATH) on GStreamer 1.24 or later.
 namespace GstHw {
 
 /// Best-effort DMA_DRM caps string built from the (format, modifier) pairs EGL @p display (Qt's EGLDisplay, as
@@ -14,6 +15,11 @@ namespace GstHw {
 /// fragment, or "" on ANY failure (null display, no modifier query). Additive only: callers must keep the existing
 /// system catch-all.
 std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, void* display);
+
+/// The same fragment for Qt Quick on Vulkan: the (format, modifier) pairs of @p formats every plane of which Qt's
+/// Vulkan device imports as an image of its own (GstDmaBufVulkan::probeDevice()). "" until that device is known, when
+/// it can't import, and in builds without the DMABuf import under Vulkan.
+std::string buildVulkanDmaDrmCaps(std::span<const GstVideoFormat> formats);
 
 #ifdef QGC_UNITTEST_BUILD
 /// True when @p modifier carries no compression or auxiliary plane, so its planes can be imported one by one.

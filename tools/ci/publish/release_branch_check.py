@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Refuse to draft a release for a commit that is not on a ``Stable*`` branch.
+"""Fail when a release tag's commit is not on a ``Stable*`` branch.
 
-release.yml drafts a GitHub Release for a pushed ``vX.Y.Z`` tag, but the platform workflows build
-only release tags reachable from an ``origin/Stable*`` branch (``qgc_tools.release_tag_check``), so
-a release for a tag anywhere else would have no build artifacts. Requires full history and remote
-branch refs.
+release.yml runs it before drafting a pushed ``vX.Y.Z`` tag's GitHub Release, and devcontainer.yml
+before building that tag's image: the platform workflows build only release tags reachable from an
+``origin/Stable*`` branch (``qgc_tools.release_tag_check``), so a release for a tag anywhere else
+would have no build artifacts. Requires full history and remote branch refs.
 """
 
 from __future__ import annotations

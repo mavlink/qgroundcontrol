@@ -18,7 +18,7 @@ target_sources(
         QGCFileWatcherTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(QGCArchiveWatcherTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
 add_qgc_test(QGCCachedFileDownloadTest LABELS Integration Network Utilities)

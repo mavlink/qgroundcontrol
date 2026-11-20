@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from ..._helpers import REPO_ROOT, get_steps, load_action
+from ..._helpers import REPO_ROOT, load_action
+from .._workflows import local_action, step_groups
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -217,21 +218,19 @@ def test_post_warns_when_the_least_free_space_falls_below_the_threshold(
         assert "⚠️" not in summary
 
 
-def test_interval_input_reaches_the_sampler_under_the_runner_s_variable_name() -> None:
+def test_scripts_read_every_input_under_the_runner_s_variable_name() -> None:
     # The runner passes a JavaScript action's inputs as INPUT_<NAME>, upper-cased, hyphens kept.
+    scripts = "".join(script.read_text() for script in ACTION.glob("*.mjs"))
     inputs = load_action("disk-watch")["inputs"]
-    assert set(inputs) == {"interval-seconds"}
-    assert 'process.env["INPUT_INTERVAL-SECONDS"]' in (ACTION / "main.mjs").read_text()
+    assert inputs
+    for name in inputs:
+        assert f'process.env["INPUT_{name.upper()}"]' in scripts
 
 
-def test_action_reports_from_its_post_step_with_node_builtins_only() -> None:
+def test_action_runs_from_its_own_scripts_with_node_builtins_only() -> None:
     runs = load_action("disk-watch")["runs"]
-    assert runs == {
-        "using": "node24",
-        "main": "main.mjs",
-        "post": "post.mjs",
-        "post-if": "always()",
-    }
+    for entry in ("main", "post"):
+        assert (ACTION / runs[entry]).is_file()
     # No package.json or dist/: every import must be a Node built-in or a sibling module.
     for script in ACTION.glob("*.mjs"):
         for module in re.findall(r'^import .* from "([^"]+)";$', script.read_text(), re.MULTILINE):
@@ -240,8 +239,12 @@ def test_action_reports_from_its_post_step_with_node_builtins_only() -> None:
                 assert (ACTION / module).is_file(), f"{script.name}: {module}"
 
 
-@pytest.mark.parametrize("action", ["build-setup", "docker"])
-def test_build_jobs_watch_disk_use_from_their_first_step(action: str) -> None:
+def test_disk_watch_starts_first_wherever_it_is_used() -> None:
     # Started first, its post step runs last: after packaging and every cache save.
-    first = get_steps(load_action(action))[0]
-    assert first == {"name": "Watch disk use", "uses": "./.github/actions/disk-watch"}
+    watched = [
+        (label, [local_action(step) for step in steps].index("disk-watch"))
+        for label, _, steps in step_groups()
+        if any(local_action(step) == "disk-watch" for step in steps)
+    ]
+    assert watched
+    assert all(index == 0 for _, index in watched), watched

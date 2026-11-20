@@ -222,6 +222,10 @@ void GPSSettingsBindings::bindReceiver(RTKSettings* settings, GPSReceiver* recei
     if (!settings || !receiver) {
         return;
     }
+    // Stored at once: the receiver emits this at the end of its own operation, and takes another name of the port
+    // that it is connected on without changing the connection.
+    QObject::connect(receiver, &GPSReceiver::serialDeviceRenamed, receiver,
+                     [settings](const QString& device) { settings->serialDevice()->setRawValue(device); });
     bind(settings, receiverFromSettings, receiver, &GPSReceiver::setConfiguration);
 }
 

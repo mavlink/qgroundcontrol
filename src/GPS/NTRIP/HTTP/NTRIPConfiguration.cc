@@ -7,8 +7,6 @@
 
 QString NTRIPConnectionConfig::validationError() const
 {
-    const auto tr = [](const char* s) { return QCoreApplication::translate("NTRIPConnectionConfig", s); };
-
     if (host.isEmpty()) {
         return tr("No host address");
     }

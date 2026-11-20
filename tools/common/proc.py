@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
@@ -34,8 +34,6 @@ __all__ = [
     "run_with_retry",
     "wait_until",
 ]
-
-_T = TypeVar("_T")
 
 FAILURE_OUTPUT_LINES = 10
 # GitHub masks registered secrets in logs; these also hide credentials it was never told about.
@@ -65,15 +63,15 @@ def require_tools(*names: str, hint: str = "") -> dict[str, str]:
     return found
 
 
-def wait_until(
-    predicate: Callable[[], _T],
+def wait_until[T](
+    predicate: Callable[[], T],
     *,
     timeout: float,
     interval: float,
     description: str = "condition",
     sleep: Callable[[float], object] | None = None,
     clock: Callable[[], float] | None = None,
-) -> _T:
+) -> T:
     """Poll *predicate* every *interval* seconds and return its first truthy result.
 
     The last poll runs at the deadline; :class:`TimeoutError` follows if that one fails too.

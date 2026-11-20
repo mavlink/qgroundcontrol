@@ -22,7 +22,7 @@ if(NOT ANDROID AND NOT IOS)
     )
 endif()
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT ANDROID AND NOT IOS)
     add_qgc_test(PlatformTest LABELS Unit Utilities)

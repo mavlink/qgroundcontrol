@@ -12,7 +12,7 @@
     "ms-vscode.hexeditor",
     "redhat.vscode-yaml",
     "tamasfe.even-better-toml",
-    "QML.qml-official",
+    "TheQtCompany.qt-qml",
     "vadimcn.vscode-lldb"
   ],
   "unwantedRecommendations": []

@@ -1,0 +1,119 @@
+# Standby configuration, not in use: GitHub only reads .github/dependabot.yml. Renovate
+# (.github/renovate.json) manages dependency updates; this file mirrors it as closely as Dependabot
+# can, for maintainers who would rather use Dependabot. It has never run.
+#
+# It would update what the entries below name: the actions in workflows and composite actions,
+# npm in docs/, Python in tools/ (uv), the pre-commit hooks, the Dev Container features, the base
+# image of .clusterfuzzlite/Dockerfile, and the Android Gradle libraries.
+#
+# To switch to Dependabot:
+#   1. Rename this file to .github/dependabot.yml.
+#   2. Set "enabled": false in .github/renovate.json, or remove the Renovate app from the repository.
+#   3. In the repository's Advanced Security settings, turn on Dependabot security updates and
+#      grouped security updates.
+#
+# Renovate does the following, which Dependabot cannot; update these by hand:
+#   - The pins it tracks with regular expressions: the Docker variant base images in
+#     deploy/docker/variants.json (copied to docker-compose.yml and
+#     tools/tests/ci/test_plan_docker_builds.py), the uv required-version floor in
+#     tools/pyproject.toml, the pins in .github/build-config.json (CMake, Ninja, the tools
+#     releases, the Android OpenSSL release, linuxdeploy and appimagetool), the C++ libraries
+#     that CPMAddPackage fetches from GitHub (CMakeLists.txt and *.cmake files), and the
+#     ArduPilot parameter repository commit in src/FirmwarePlugin/APM/CMakeLists.txt.
+#   - deploy/docker/Dockerfile's base image, the uv image in it and in .clusterfuzzlite/Dockerfile
+#     (Dependabot reads only literal FROM lines), and docs/.nvmrc.
+#   - Weekly lock file maintenance; here transitive dependencies move only for security fixes.
+#   - Holding updates for approval. Major updates and the Qt-coupled Android toolchain are ignored
+#     below instead of waiting on the Dependency Dashboard; remove an `ignore` entry to receive them.
+version: 2
+
+# One weekly pull request for everything except Android, like Renovate's "all dependencies" group.
+multi-ecosystem-groups:
+  all-dependencies:
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "Etc/UTC"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels: ["dependencies"]
+
+updates:
+  # Workflows and composite actions.
+  - package-ecosystem: "github-actions"
+    directories: ["/", "/.github/actions/*"]
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    cooldown:
+      default-days: 7
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "uv"
+    directory: "/tools"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Pinned to the head of miurahr/aqtinstall#1048 for Qt 6.12 until it is released on PyPI.
+      - dependency-name: "aqtinstall"
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "docker"
+    directory: "/.clusterfuzzlite"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Android libraries get their own pull request, like Renovate's "android dependencies" group.
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "Etc/UTC"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels: ["dependencies"]
+    groups:
+      android-dependencies:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # Qt's Android template pins these for each Qt release; move them with Qt upgrades.
+      - dependency-name: "gradle-wrapper"
+      - dependency-name: "com.android.tools.build:gradle"
+      - dependency-name: "org.jetbrains.kotlin:kotlin-gradle-plugin"
+      - dependency-name: "androidx.*"

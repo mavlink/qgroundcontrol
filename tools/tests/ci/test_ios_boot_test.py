@@ -111,7 +111,7 @@ def launch_command(device):
         "org.qgc",
         "--simple-boot-test",
         "--logging",
-        "Main",
+        "Main,API.QGCApplication,Video.VideoManager,Video.GStreamer",
         "--log-output",
     )
 

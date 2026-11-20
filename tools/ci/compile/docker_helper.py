@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Docker build helpers for CI.
+"""Run the containerized QGroundControl build and repository scripts in a builder image.
+Retries the build, outputs the image's compiler fingerprint for cache keys, and writes the job
+summary's Docker build section from the container's timings and cache statistics.
 
 Subcommands:
     run         Run docker build with retry logic
@@ -23,7 +25,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.format import format_duration, format_ratio
 from common.gh_actions import (
-    env_flag,
     gh_error,
     gh_warning,
     write_github_output,
@@ -43,10 +44,7 @@ CONTAINER_PYTHON = "/opt/qgc-venv/bin/python"
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    cmd = [sys.executable, "deploy/docker/run_docker.py", "run"]
-    if args.fuse:
-        cmd.append("--fuse")
-    cmd += [args.image, args.build_type]
+    cmd = [sys.executable, "deploy/docker/run_docker.py", "run", args.image, args.build_type]
     try:
         run_with_retry(
             cmd, max_attempts=BUILD_ATTEMPTS, retry_backoff_seconds=BUILD_RETRY_DELAY_SECONDS
@@ -193,12 +191,6 @@ def main(argv: list[str] | None = None) -> int:
     p_run = sub.add_parser("run")
     p_run.add_argument("--image", required=True)
     p_run.add_argument("--build-type", required=True)
-    p_run.add_argument(
-        "--fuse",
-        action="store_true",
-        default=env_flag("ENABLE_FUSE"),
-        help="(default: $ENABLE_FUSE)",
-    )
 
     p_exec = sub.add_parser("exec", help="Run a repository Python script in a builder image")
     p_exec.add_argument("--image", required=True)

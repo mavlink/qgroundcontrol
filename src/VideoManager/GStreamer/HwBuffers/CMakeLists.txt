@@ -10,8 +10,8 @@ include(GStreamer/Probe)
 target_sources(
     QGCGStreamer
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
@@ -20,8 +20,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
 )
 
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
@@ -176,6 +174,11 @@ if(ANDROID AND QGC_GST_ENABLE_VULKAN)
     set(_qgc_vulkan_loader_libs "${QGC_GST_VULKAN_LOADER_LIB}")
 endif()
 
+# The DMABuf import under Vulkan calls Vulkan through Qt and only needs the headers Qt found for its own Vulkan support.
+if(TARGET WrapVulkanHeaders::WrapVulkanHeaders)
+    set(QGC_VULKAN_HEADERS TRUE)
+endif()
+
 if(MACOS OR IOS)
     # TARGET_DIRECTORY: source-file props are dir-scoped; QGCGStreamer is created in the parent CMakeLists, so name it
     # explicitly here for SKIP_PRECOMPILE_HEADERS to bind to that target.
@@ -188,7 +191,7 @@ if(MACOS OR IOS)
     )
 endif()
 
-# ---- GPU path table (row order matters: CUDA builds on DMABuf) ----
+# ---- GPU path table (row order matters: DMABuf_Vulkan and CUDA build on DMABuf) ----
 # cmake-format: off
 # Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
 # cmake/GStreamer/Orchestrator.cmake.
@@ -197,9 +200,17 @@ set(_qgc_gpu_row_DMABuf
     REQUIRES QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
-    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstQtDmaBufImport.cc
-            dmabuf/GstQtDmaBufImport.h dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
-# NVMM/CUDA: exports CUDA memory as a DMABuf fd and reuses the DMABuf EGLImage path; gst_cuda_memory_export is 1.24+.
+    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstDmaDrmCaps.cc
+            dmabuf/GstDmaDrmCaps.h dmabuf/GstQtDmaBufImport.cc dmabuf/GstQtDmaBufImport.h)
+# The DMABuf path under a Vulkan QRhi (QSG_RHI_BACKEND=vulkan): each plane imported as a VkImage on Qt's device. Needs
+# Qt's Vulkan support, not gst-vulkan.
+set(_qgc_gpu_row_DMABuf_Vulkan
+    PLATFORMS LINUX
+    REQUIRES _qgc_gpu_DMABuf QT_FEATURE_vulkan QGC_VULKAN_HEADERS
+    DEFINE QGC_HAS_GST_DMABUF_VULKAN_IMPORT
+    SOURCES dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
+# gst-cuda's CUDAMemory, handed to the DMABuf path through the fd of gst_cuda_memory_export (1.24+). Never run on
+# NVIDIA hardware, where that fd is not expected to be a dma-buf (cuda/GstCudaVideoBuffer.h).
 set(_qgc_gpu_row_CUDA
     PLATFORMS LINUX
     REQUIRES _qgc_gpu_DMABuf QGC_CUDA_INCLUDE_DIR
@@ -225,7 +236,7 @@ set(_qgc_gpu_row_IOSurface
     DEFINE QGC_HAS_GST_IOSURFACE_GPU_PATH
     SOURCES apple/GstIOSurfaceVideoBuffer.mm apple/GstIOSurfaceVideoBuffer.h)
 # Windows D3D11/D3D12 (gst-plugins-bad d3d{11,12}h264dec / vp9dec).
-set(_qgc_d3d12_extra_sources d3d/GstD3D12StagingPool.cc d3d/GstD3D12StagingPool.h)
+set(_qgc_d3d11_extra_sources d3d/GstD3D11PictureCopy.cc d3d/GstD3D11PictureCopy.h)
 foreach(_ver IN ITEMS 11 12)
     set(_qgc_gpu_row_D3D${_ver}
         PLATFORMS WIN32
@@ -237,16 +248,19 @@ foreach(_ver IN ITEMS 11 12)
         SOURCES d3d/GstD3D${_ver}VideoBuffer.cc d3d/GstD3D${_ver}ContextBridge.cc d3d/GstD3D${_ver}ContextBridge.h
                 d3d/GstD3DVideoBufferCommon.h ${_qgc_d3d${_ver}_extra_sources})
 endforeach()
-# Android AHardwareBuffer (gst-plugins-bad >= 1.28; GLMemory covers older SDKs).
+# Android AHardwareBuffer memory. The probe finds its header in no GStreamer SDK: gst/android/gstandroid.h is in no
+# release, and the AHardwareBuffer memory of GStreamer 1.30 (gst/allocators/gstahardwarebuffer.h) is another API, so
+# the row compiles only against an SDK that adds this one. GLMemory is Android's path.
 set(_qgc_gpu_row_AHardwareBuffer
     PLATFORMS ANDROID
     PROBE HAS_VAR QGC_GST_HAS_AHARDWAREBUFFER HEADER gst/android/gstandroid.h SYMBOL gst_is_ahardware_buffer_memory
     EGL REQUIRED
     DEFINE QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH
     SOURCES android/GstAHardwareBufferVideoBuffer.cc android/GstAHardwareBufferVideoBuffer.h)
-# gst-vulkan. The impl TUs also gate on QT_CONFIG(vulkan) but callsites gate on the define alone, so the define must
-# imply Qt Vulkan support (macOS Qt ships none while GStreamer.framework carries libgstvulkan-1.0). The framework also
-# ships the .pc and headers without the library, hence the link-path check.
+# gst-vulkan's VulkanImage memory. Not a zero-copy path: gst-vulkan can't wrap Qt's VkDevice, so the wrapper imports no
+# frame (vulkan/GstVulkanVideoBuffer.h). The impl TUs also gate on QT_CONFIG(vulkan) but callsites gate on the define
+# alone, so the define must imply Qt Vulkan support (macOS Qt ships none while GStreamer.framework carries
+# libgstvulkan-1.0). The framework also ships the .pc and headers without the library, hence the link-path check.
 set(_qgc_gpu_row_Vulkan
     PLATFORMS LINUX WIN32 MACOS ANDROID
     REQUIRES ${_qgc_vulkan_requires}
@@ -262,6 +276,7 @@ set(_qgc_gpu_row_Vulkan
 set(_qgc_gpu_opt_in_rows CUDA AHardwareBuffer Vulkan)
 set(_qgc_gpu_rows
     DMABuf
+    DMABuf_Vulkan
     CUDA
     GLMemory
     IOSurface

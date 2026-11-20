@@ -34,6 +34,13 @@ public:
         Halted,        ///< Given up after a failure, until startOver() or autoReconnect resumes it.
     };
 
+    /// Whether another session could fare better than the one that failed.
+    enum class Failure : uint8_t
+    {
+        Transient,  ///< It may, so reconnecting is worth it.
+        Permanent,  ///< It can't: an unsupported stream, a missing plugin.
+    };
+
     struct FailureOutcome
     {
         bool halted = false;
@@ -56,9 +63,7 @@ public:
 
     Phase phase() const { return _phase; }
 
-    VideoReceiver::State state() const { return stateFor(_phase); }
-
-    static VideoReceiver::State stateFor(Phase phase);
+    VideoReceiver::State state() const;
 
     bool halted() const { return _phase == Phase::Halted; }
 
@@ -86,14 +91,17 @@ public:
     /// The session delivers. The first call per session counts it as streamed.
     void sessionStreaming();
     /// The session failed, or failed to start, and the receiver ended it. Reconnects after the backoff, unless
-    /// @p permanent or not @p autoReconnect: then halts.
-    FailureOutcome sessionFailed(const QString& message, bool permanent, bool autoReconnect);
+    /// @p failure is permanent or not @p autoReconnect: then halts.
+    FailureOutcome sessionFailed(const QString& message, Failure failure, bool autoReconnect);
     /// The config's autoReconnect became @p autoReconnect.
     AutoReconnectChange autoReconnectChanged(bool autoReconnect);
+    /// The stream's source may be back: a reconnect waiting out its backoff is due now, and the backoff starts over.
+    /// Nothing without one.
+    void reconnectNow();
 
 signals:
     void stateChanged(VideoReceiver::State state);
-    /// A failure's backoff has passed: the receiver starts the next session.
+    /// A failure's backoff has passed, or reconnectNow() cut it short: the receiver starts the next session.
     void reconnectDue();
 
 private:

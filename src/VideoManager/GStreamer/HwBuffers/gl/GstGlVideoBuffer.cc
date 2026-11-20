@@ -20,6 +20,7 @@
 #include <rhi/qrhi.h>
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSize>
 
 #include "QGCLoggingCategory.h"
@@ -28,6 +29,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <utility>
 
 #include <QtGui/qopengl.h>
 
@@ -51,14 +53,49 @@ public:
     {
         wrapPlanes(rhi, size, pixelFormat, names);
     }
+
+    ~FrameTextures() override { gst_clear_buffer(&_syncBuffer); }
+
+    /// The sync buffer the bundle was mapped with (takeSyncBuffer()), kept for the next map of its pool slot.
+    void setSyncBuffer(GstBuffer* buffer) noexcept
+    {
+        gst_clear_buffer(&_syncBuffer);
+        _syncBuffer = buffer;
+    }
+
+    /// The caller's from here on; null when the bundle has none.
+    GstBuffer* releaseSyncBuffer() noexcept { return std::exchange(_syncBuffer, nullptr); }
+
+private:
+    GstBuffer* _syncBuffer = nullptr;
 };
 
 GstHw::MapDiagnostics s_diag;
 
+// An empty buffer of this path's own with a GL sync meta for @p context, as upstream's Qt sink keeps one
+// (gstqsg6material.cc): the one @p old was mapped with, when that is a bundle of this path on the same context, else a
+// new one. The frame's own buffer may carry a sync meta too, but other elements and other windows showing the frame
+// share that buffer, and setting a sync point deletes the fence the meta holds. Null when the meta can't be added.
+GstBuffer* takeSyncBuffer(QVideoFrameTexturesUPtr& old, GstGLContext* context)
+{
+    if (auto* const previous = GstHwFrameTexturesBase::reusableBundle<FrameTextures>(old)) {
+        GstBuffer* buffer = previous->releaseSyncBuffer();
+        const GstGLSyncMeta* const meta = buffer ? gst_buffer_get_gl_sync_meta(buffer) : nullptr;
+        if (meta && (meta->context == context)) {
+            return buffer;
+        }
+        gst_clear_buffer(&buffer);
+    }
+    GstBuffer* buffer = gst_buffer_new();
+    if (!gst_buffer_add_gl_sync_meta(context, buffer)) {
+        gst_clear_buffer(&buffer);
+    }
+    return buffer;
+}
+
 // Orders Qt's context after gst-gl's fence. gst_gl_sync_meta_wait() would wait inside gst-gl's own context and leave
 // Qt's unordered; GL sync objects are shared across the share group, so Qt's context waits on the GLsync server-side.
-// CPU wait when Qt's context has no sync objects or the meta carries no GLsync (a custom meta, or gst-gl without
-// fences).
+// CPU wait when Qt's context has no sync objects or the meta carries no GLsync (gst-gl without fences).
 void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
 {
     QOpenGLContext* qtCtx = QOpenGLContext::currentContext();
@@ -81,16 +118,21 @@ void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
 
 // mapTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
 // non-GL RHI (forced Vulkan): those frames take the CPU path. Streaming thread, so read the published backend rather
-// than the render-thread-owned QRhi. Records each rejected frame.
-bool admitGlMemory()
+// than the render-thread-owned QRhi. So do frames from a GL context outside Qt's share group, which gst-gl creates
+// when no element got the bridge's: their texture names mean nothing in Qt's context, which would sample another
+// texture or black. Records each rejected frame.
+bool admitGlMemory(GstMemory* mem, const HwVideoBufferContext&)
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
-    if ((backend < 0) || (backend == static_cast<int>(QRhi::OpenGLES2))) {
+    if ((backend >= 0) && (backend != static_cast<int>(QRhi::OpenGLES2))) {
+        static std::atomic<bool> s_warned{false};
+        QGC_HW_WARN_ONCE(GstGlBufLog, s_warned, "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool");
+    } else if (!GstGlContextBridge::sharesQtContext(GST_GL_BASE_MEMORY_CAST(mem)->context)) {
+        static std::atomic<bool> s_warnedUnshared{false};
+        QGC_HW_WARN_ONCE(GstGlBufLog, s_warnedUnshared,
+                         "GLMemory from a GL context that doesn't share with Qt's — routing to CPU pool");
+    } else {
         return true;
-    }
-    static std::atomic<bool> s_warned{false};
-    if (!s_warned.exchange(true, std::memory_order_relaxed)) {
-        qCWarning(GstGlBufLog) << "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool";
     }
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
                                              GstHwPathTelemetry::HwFallbackReason::ImportUnsupported);
@@ -98,10 +140,6 @@ bool admitGlMemory()
 }
 
 }  // namespace
-
-GstGlVideoBuffer::GstGlVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-    : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
-{}
 
 bool GstGlVideoBuffer::validatePlaneHandles() const
 {
@@ -135,30 +173,15 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
     }
 
-    // Always set a fresh sync point after the GST_MAP_GL map above: glupload attaches its meta without one and uploads
-    // lazily on that map, so an upstream sync point would predate the upload. Synthesize a meta when upstream omits
-    // one.
+    // A sync point of our own, set after the GST_MAP_GL map above: glupload uploads lazily on that map, so a sync point
+    // its producer set would predate the upload.
     GstGLContext* glCtx = GST_GL_BASE_MEMORY_CAST(mem0)->context;
-    if (glCtx) {
-        GstGLSyncMeta* syncMeta = gst_buffer_get_gl_sync_meta(buffer);
-        GstBuffer* throwaway = nullptr;
-        if (!syncMeta) {
-            throwaway = gst_buffer_new();
-            if (!throwaway) {
-                qCWarning(GstGlBufLog) << "gst_buffer_new() failed while creating GL sync meta holder";
-                GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
-                                                         GstHwPathTelemetry::HwFallbackReason::MapFailed);
-                return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
-            }
-            syncMeta = gst_buffer_add_gl_sync_meta(glCtx, throwaway);
-        }
-        if (syncMeta) {
-            gst_gl_sync_meta_set_sync_point(syncMeta, glCtx);
-            waitInQtContext(syncMeta, glCtx);
-        }
-        if (throwaway) {
-            gst_buffer_unref(throwaway);
-        }
+    GstBuffer* syncBuffer = glCtx ? takeSyncBuffer(old, glCtx) : nullptr;
+    const auto dropSyncBuffer = qScopeGuard([&syncBuffer] { gst_clear_buffer(&syncBuffer); });
+    if (syncBuffer) {
+        GstGLSyncMeta* const syncMeta = gst_buffer_get_gl_sync_meta(syncBuffer);
+        gst_gl_sync_meta_set_sync_point(syncMeta, glCtx);
+        waitInQtContext(syncMeta, glCtx);
     }
 
     const GstVideoFrame& frame = mapping.frame();
@@ -179,17 +202,21 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
                             .log = &GstGlBufLog(),
                             .diag = &s_diag};
     // gst-gl rotates texture ids within a fixed pool: a bundle over the same ids samples the new frame unchanged.
-    return GstHwFrameTexturesBase::finishMap<FrameTextures>(
+    QVideoFrameTexturesUPtr textures = GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,
         [&](const FrameTextures& prev) {
             return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat, planeNames);
         },
         [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, planeNames); });
+    if (auto* const bundle = GstHwFrameTexturesBase::reusableBundle<FrameTextures>(textures)) {
+        bundle->setSyncBuffer(std::exchange(syncBuffer, nullptr));
+    }
+    return textures;
 }
 
 constinit const HwPathDescriptor GstHwPaths::kGlMemory = {
     .path = HwVideoBufferPath::GlMemory,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_gl_memory(mem); },
+    .matches = [](GstMemory* mem) -> bool { return gst_is_gl_memory(mem); },
     .admits = &admitGlMemory,
     .construct = &GstHwPaths::construct<GstGlVideoBuffer>,
     .bridge = &GstGlContextBridge::instance,

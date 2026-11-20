@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,6 +15,7 @@ from unittest.mock import patch
 import pytest
 from ci.compile.cmake_helper import (
     INCLUDE_PATH_VARIABLES,
+    MAX_RETRIED_TESTS,
     PACKAGE_INVENTORIES,
     BuildRun,
     _maybe_wrap_xvfb,
@@ -21,9 +23,13 @@ from ci.compile.cmake_helper import (
     counter_delta,
     detect_jobs,
     main,
+    merge_retry,
+    retry_failed_tests,
     system_header_digest,
     write_build_summary,
 )
+from ci.reporting.junit_report import passed_on_retry
+from common.junit import parse_junit
 
 from .._helpers import REPO_ROOT, get_step, get_steps, load_action, read_github_file
 from ..test_build_errors import (
@@ -32,6 +38,7 @@ from ..test_build_errors import (
     VALIJSON_CLONE_CONFIGURE,
     ZSTD_ASM_CONFIGURE,
 )
+from ..test_junit import ASAN_FAILURE, QT_FAILURE, junit_xml
 
 if TYPE_CHECKING:
     from qgc_tools.cmake_configure import CMakeConfig
@@ -365,13 +372,15 @@ def test_ctest_resolves_auto_jobs_and_forwards_selection(monkeypatch: pytest.Mon
     assert command == [
         "ctest",
         "--output-on-failure",
-        "--no-tests=error",
-        "--output-junit",
-        "junit.xml",
+        "--test-output-truncation",
+        "middle",
         "--parallel",
         "6",
         "-C",
         "Release",
+        "--no-tests=error",
+        "--output-junit",
+        "junit.xml",
         "-L",
         "Unit",
         "-LE",
@@ -405,11 +414,12 @@ def test_ctest_reads_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("ci.compile.cmake_helper.run_tee", fake_run_tee)
     monkeypatch.setattr("ci.compile.cmake_helper._maybe_wrap_xvfb", lambda command: command)
     assert main(["ctest"]) == 0
-    assert invocation[3:] == [
-        "--output-junit",
-        "junit.xml",
+    assert invocation[4:] == [
         "--parallel",
         "2",
+        "--no-tests=error",
+        "--output-junit",
+        "junit.xml",
         "-L",
         "Integration",
         "-LE",
@@ -417,6 +427,216 @@ def test_ctest_reads_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
         "-R",
         "^(Gst|Video)",
     ]
+
+
+Case = tuple[str, str, float, str, str]
+FLAKY: Case = ("MissionControllerTest", "failed", 44.0, "Failed", QT_FAILURE)
+BROKEN: Case = ("FTPManagerTest", "failed", 61.5, "Timeout", "")
+STABLE: Case = ("VehicleTest", "passed", 2.0, "", "")
+# CTest reports a test it could not run (no executable) as skipped, and exits 8 for it.
+NOT_RUN: Case = ("MissingTest", "skipped", 0, "", "")
+UBSAN_FAILURE = "src/a.cc:3:9: runtime error: load of null pointer of type 'int'\n"
+TSAN_FAILURE = "WARNING: ThreadSanitizer: data race (pid=4242)\n"
+
+
+def passed(case: Case) -> Case:
+    return (case[0], "passed", 40.0, "", "PASS   : second attempt\n")
+
+
+def merged_junit(first: list[Case], retry: list[Case]) -> str:
+    """The JUnit report cmake_helper.py leaves after rerunning the failed tests of *first*."""
+    root = ET.fromstring(junit_xml(first, 60))
+    merge_retry(root, ET.fromstring(junit_xml(retry, 60)))
+    return ET.tostring(root, encoding="unicode")
+
+
+def run_ctest_with_retry(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    first: list[Case] | None,
+    retry: list[Case] | None = None,
+    retry_exit: int = 0,
+) -> tuple[int, list[list[str]]]:
+    """Run `cmake_helper.py ctest` in tmp_path against a CTest that writes these JUnit results.
+
+    The first run fails with exit code 8; None writes no report. Returns main()'s exit code and
+    the CTest commands, each behind the `xvfb-run` that stands in for the display wrapper.
+    """
+    commands: list[list[str]] = []
+    runs = iter([(first, 8), (retry, retry_exit)])
+
+    def fake_run_tee(command: list[str], output_file: str | Path) -> int:
+        cases, exit_code = next(runs)
+        commands.append(command)
+        Path(output_file).write_text(f"ctest run {len(commands)}\n", encoding="utf-8")
+        if cases is not None:
+            junit = Path(command[command.index("--output-junit") + 1])
+            junit.write_text(junit_xml(cases, 60), encoding="utf-8")
+        return exit_code
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("ci.compile.cmake_helper.run_tee", fake_run_tee)
+    monkeypatch.setattr(
+        "ci.compile.cmake_helper._maybe_wrap_xvfb", lambda command: ["xvfb-run", *command]
+    )
+    arguments = ["--junit-output", "junit.xml", "--ctest-output", "output.txt", "--jobs", "2"]
+    return main(["ctest", *arguments, "--include-labels", "Integration"]), commands
+
+
+def test_ctest_passes_when_the_failed_tests_pass_on_retry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code, commands = run_ctest_with_retry(
+        monkeypatch, tmp_path, [STABLE, FLAKY], retry=[passed(FLAKY)]
+    )
+
+    assert exit_code == 0
+    # Both runs get a display.
+    assert commands[0][:2] == ["xvfb-run", "ctest"]
+    # The retry reruns what CTest recorded as failed, so it takes no label or name selection.
+    assert commands[1] == [
+        "xvfb-run",
+        "ctest",
+        "--output-on-failure",
+        "--test-output-truncation",
+        "middle",
+        "--parallel",
+        "2",
+        "--rerun-failed",
+        "--output-junit",
+        "junit-retry.xml",
+    ]
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["junit.xml", "output.txt"]
+    assert (tmp_path / "output.txt").read_text(encoding="utf-8") == "ctest run 1\nctest run 2\n"
+    cases, wall = parse_junit(tmp_path / "junit.xml")
+    assert [(case.name, case.outcome, case.seconds) for case in cases] == [
+        ("VehicleTest", "passed", 2.0),
+        ("MissionControllerTest", "passed", 40.0),
+    ]
+    assert wall == 120
+    assert ET.parse(tmp_path / "junit.xml").getroot().get("failures") == "0"
+    (retried,) = passed_on_retry(tmp_path / "junit.xml")
+    assert retried.name == "MissionControllerTest"
+    assert retried.excerpt[0].startswith("FAIL!  : MissionControllerTest::_testGimbalRecalc()")
+    assert _annotations(capsys.readouterr().out) == [
+        "::warning title=Flaky test::MissionControllerTest failed, then passed on retry"
+    ]
+
+
+def test_ctest_still_fails_when_a_test_fails_twice(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    exit_code, _ = run_ctest_with_retry(
+        monkeypatch, tmp_path, [FLAKY, BROKEN], retry=[passed(FLAKY), BROKEN], retry_exit=8
+    )
+
+    assert exit_code == 8
+    cases, _ = parse_junit(tmp_path / "junit.xml")
+    assert [(case.name, case.outcome) for case in cases] == [
+        ("MissionControllerTest", "passed"),
+        ("FTPManagerTest", "failed"),
+    ]
+    assert ET.parse(tmp_path / "junit.xml").getroot().get("failures") == "1"
+    assert [case.name for case in passed_on_retry(tmp_path / "junit.xml")] == [
+        "MissionControllerTest"
+    ]
+
+
+def test_ctest_still_fails_when_the_retry_fails_without_a_failed_test(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # The retry cannot run the missing test either: its report has every failed test passing,
+    # and only its exit code says the run failed.
+    exit_code, commands = run_ctest_with_retry(
+        monkeypatch, tmp_path, [FLAKY, NOT_RUN], retry=[passed(FLAKY), NOT_RUN], retry_exit=8
+    )
+
+    assert exit_code == 8
+    assert len(commands) == 2
+    cases, _ = parse_junit(tmp_path / "junit.xml")
+    assert [(case.name, case.outcome) for case in cases] == [
+        ("MissionControllerTest", "passed"),
+        ("MissingTest", "skipped"),
+    ]
+
+
+def test_ctest_retries_as_many_failed_tests_as_the_limit(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    first: list[Case] = [
+        (f"T{index}", "failed", 1.0, "Failed", "") for index in range(MAX_RETRIED_TESTS)
+    ]
+    exit_code, commands = run_ctest_with_retry(
+        monkeypatch, tmp_path, first, retry=[passed(case) for case in first]
+    )
+
+    assert exit_code == 0
+    assert len(commands) == 2
+
+
+@pytest.mark.parametrize(
+    ("first", "reason"),
+    [
+        (
+            [("LinkTest", "failed", 1.0, "Failed", ASAN_FAILURE), FLAKY],
+            "sanitizer report in LinkTest",
+        ),
+        ([("UBTest", "failed", 1.0, "Failed", UBSAN_FAILURE)], "sanitizer report in UBTest"),
+        ([("RaceTest", "failed", 1.0, "Failed", TSAN_FAILURE)], "sanitizer report in RaceTest"),
+        (
+            [(f"T{index}", "failed", 1.0, "Failed", "") for index in range(MAX_RETRIED_TESTS + 1)],
+            f"{MAX_RETRIED_TESTS + 1} tests failed",
+        ),
+        (None, "cannot read junit.xml"),
+        # CTest failed without a failed test: no tests found, or one it could not run.
+        ([STABLE, NOT_RUN], ""),
+    ],
+    ids=["asan", "ubsan", "tsan", "too-many", "no-report", "no-failed-test"],
+)
+def test_ctest_does_not_retry_findings_or_broken_runs(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    first: list[Case] | None,
+    reason: str,
+) -> None:
+    exit_code, commands = run_ctest_with_retry(monkeypatch, tmp_path, first)
+
+    assert exit_code == 8
+    assert len(commands) == 1
+    output = capsys.readouterr().out
+    assert ("Not retrying" in output) == bool(reason)
+    assert reason in output
+    if first is not None:
+        assert (tmp_path / "junit.xml").read_text(encoding="utf-8") == junit_xml(first, 60)
+
+
+@pytest.mark.parametrize(
+    "retry",
+    [[], None, [("MissionControllerTest", "skipped", 0, "", "")]],
+    ids=["not-rerun", "no-retry-report", "skipped-on-retry"],
+)
+def test_ctest_fails_unless_the_retry_reports_every_failed_test_passed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, retry: list[Case] | None
+) -> None:
+    exit_code, commands = run_ctest_with_retry(monkeypatch, tmp_path, [FLAKY], retry=retry)
+
+    assert exit_code == 8
+    assert len(commands) == 2
+    cases, _ = parse_junit(tmp_path / "junit.xml")
+    assert [case.outcome for case in cases] == ["failed"]
+
+
+def test_a_junit_report_with_a_dtd_is_not_read_for_a_retry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    junit = tmp_path / "junit.xml"
+    dtd = '<!DOCTYPE testsuite [<!ENTITY name "value">]>'
+    junit.write_text(junit_xml([FLAKY], 60).replace("?>", f"?>\n{dtd}", 1), encoding="utf-8")
+    monkeypatch.setattr("ci.compile.cmake_helper.run_tee", lambda *_args: pytest.fail("ctest ran"))
+
+    assert retry_failed_tests(["ctest"], junit, tmp_path / "output.txt", 8) == 8
+    assert f"Not retrying: cannot read {junit}: unexpected DTD" in capsys.readouterr().out
 
 
 def test_ctest_requires_its_output_files(capsys: pytest.CaptureFixture[str]) -> None:

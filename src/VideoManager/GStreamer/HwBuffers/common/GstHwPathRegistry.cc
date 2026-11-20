@@ -1,7 +1,5 @@
 #include "GstHwPathRegistry.h"
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-
 #include <algorithm>
 #include <atomic>
 
@@ -72,5 +70,3 @@ ScopedPathsForTest::~ScopedPathsForTest()
 #endif
 
 }  // namespace GstHwPathRegistry
-
-#endif  // QGC_HAS_ANY_GPU_PATH

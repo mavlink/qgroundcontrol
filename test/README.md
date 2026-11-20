@@ -18,6 +18,7 @@
 - [Running Tests](#running-tests)
   - [Via CTest](#via-ctest)
   - [Via `just`](#via-just)
+  - [CI Retries and the `Flaky` Label](#ci-retries-and-the-flaky-label)
   - [Via the QGroundControl Binary](#via-the-qgroundcontrol-binary-unittest-build)
   - [Convenience Targets](#convenience-targets)
   - [QML Test Split](#qml-test-split)
@@ -122,9 +123,10 @@ permutation is identified without re-running the whole method. See
 
 ### Register in CMakeLists.txt
 
-Add test sources to the `QGCUnitTests` object library. The application executable links it and runs
-the suite; tests compile with the application's include paths and definitions, and their precompiled
-header adds `<QtTest/QTest>` so application sources do not compile QtTest.
+Add test sources and the test directory's include path to the `QGCUnitTests` object library. The
+application executable links it and runs the suite; tests compile with the application's include
+paths and definitions, and their precompiled header adds `<QtTest/QTest>` so application sources do
+not compile QtTest.
 
 ```cmake
 target_sources(
@@ -133,6 +135,8 @@ target_sources(
         MyTest.cc
         MyTest.h
 )
+
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Basic unit test
 add_qgc_test(MyTest LABELS Unit)
@@ -152,6 +156,11 @@ add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK Joystick)
 # Long test class split across CTest entries MyUITest.1 .. MyUITest.3 that run in parallel
 add_qgc_test(MyUITest LABELS Integration SHARDS 3)
 ```
+
+Test include directories and test support libraries (`target_link_libraries(QGCUnitTests PRIVATE
+QGCTestTiming)`) belong to `QGCUnitTests`, never to the application target, whose objects would
+recompile whenever a test directory is added. Configure fails when the application has an include
+directory under `test/`.
 
 Every test gets its own `TMPDIR` (and `TMP`/`TEMP` on Windows) under `build/test-tmp/`, so
 `RESOURCE_LOCK TempFiles` is ignored. `ENV_MODIFICATION` and `SKIP_REGEX` set CTest's
@@ -189,7 +198,7 @@ always wins; `${QGC_TEST_TIMEOUT_EXTENDED}` (180s, 360s with sanitizers) is the 
 | `Comms`          | Communication/link tests                                                                  |
 | `Utilities`      | Utility class tests                                                                       |
 | `Network`        | Needs network; excluded from PR suites, covered by manual Linux coverage runs             |
-| `Flaky`          | Intermittent failures; excluded from PR suites, covered by manual Linux coverage runs     |
+| `Flaky`          | [Fails despite CI's retry](#ci-retries-and-the-flaky-label); excluded like `Network`      |
 | `Serial`         | C++ `TestLabel::Serial` tag, no CTest effect; `add_qgc_test(... SERIAL)` doesn't add it   |
 | `Joystick`       | Joystick/controller tests                                                                 |
 | `AnalyzeView`    | Log analysis and geo-tagging tests                                                        |
@@ -308,13 +317,39 @@ JOBS=4 just test                             # Override parallelism (default: al
 test preset tests `build/` only; for a preset with its own build directory, run `ctest --preset <name>` (for example
 `Linux-sanitizers`).
 
-CI runs the `Unit` and `Integration` labels as separate CTest runs with the same exclusions. Linux CI uses one
+CI runs the `Unit` and `Integration` labels as separate CTest runs with the same exclusions, and
+[reruns failed tests once](#ci-retries-and-the-flaky-label). Linux CI uses one
 process per CPU (four on its runners), except two for coverage integration tests; to match it, run
 `ctest --test-dir build -L Integration -LE 'Flaky|Network' --output-on-failure --parallel 4`. Settings and
 temporary directories are isolated per test, and local network fixtures allocate ephemeral ports. CTest
 `RESOURCE_LOCK` still serializes tests sharing hardware or fixed resources. `SERIAL` tests get `RUN_SERIAL` only in
 sanitizer (`QGC_ENABLE_ASAN`/`UBSAN`/`TSAN`/`MSAN`) and coverage builds; other builds run them alongside other
 tests with `PROCESSORS 2`. Preserve this isolation when adding integration tests.
+
+### CI Retries and the `Flaky` Label
+
+CI reruns the tests that failed in a CTest run once (`tools/ci/compile/cmake_helper.py ctest` runs
+`ctest --rerun-failed`). A test that fails both times fails the job. A test that passes the second
+time does not, and is reported:
+
+- The job summary's test section shows `passed, 1 on retry` and lists the test under **Passed on
+  retry** with the first lines of its failure. The step gets a "Flaky test" warning annotation.
+- The JUnit report in the `test-results-*` artifact keeps the failed attempt (message, time and
+  output) in a `<flakyFailure>` element of the passing test case, and the CTest output file holds
+  both runs.
+- The Build Results comment on the pull request shows `⚠️ 1 passed on retry` for the workflow and
+  names the test under its test results.
+
+Nothing is rerun when a failed test's output contains a sanitizer report, because a finding stays a
+failure even if the next run misses it, or when more than five tests failed, which is a broken build
+rather than flakiness. Local runs (`just test`, `ctest`, the `check*` targets) never retry.
+
+A test that passed on retry still has a bug, usually a timing assumption. Reproduce it under load,
+for example with `ctest --test-dir build -R MyTest --repeat until-fail:20` while
+`ctest --test-dir build --parallel 16` runs in another terminal, and fix the cause. Add the `Flaky`
+label only to a test that fails often enough to fail twice in a row and cannot be fixed yet. The
+label removes it from every pull request and push suite; only manual runs of the Linux workflow
+(its coverage job) still run `Flaky` and `Network` tests, where a failure fails the job.
 
 ### Via the QGroundControl Binary (unittest build)
 

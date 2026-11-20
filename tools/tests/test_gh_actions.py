@@ -15,7 +15,7 @@ import pytest
 from ._helpers import completed
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
 
     from pytest_subprocess import FakeProcess
     from pytest_subprocess.fake_popen import FakePopen
@@ -138,6 +138,64 @@ def test_gh_api_json_parses_retried_read() -> None:
     gh_mock.assert_called_once_with("api", "repos/owner/repo/actions/runs/7", retry_transient=True)
 
 
+NOT_FOUND = completed('{"message":"Not Found","status":"404"}', 1, "gh: Not Found (HTTP 404)\n")
+
+
+def test_gh_api_json_or_none_tells_a_missing_path_from_a_failed_request() -> None:
+    with patch.object(mod, "gh", return_value=completed(stdout='{"id": 7}')):
+        assert mod.gh_api_json_or_none("repos/o/r/releases/tags/daily") == {"id": 7}
+    with patch.object(mod, "gh", return_value=NOT_FOUND) as gh_mock:
+        assert mod.gh_api_json_or_none("repos/o/r/releases/tags/daily") is None
+    gh_mock.assert_called_once_with(
+        "api", "repos/o/r/releases/tags/daily", retry_transient=True, check=False
+    )
+    forbidden = completed(returncode=1, stderr="gh: Resource not accessible (HTTP 403)\n")
+    with (
+        patch.object(mod, "gh", return_value=forbidden),
+        pytest.raises(subprocess.CalledProcessError) as excinfo,
+    ):
+        mod.gh_api_json_or_none("repos/o/r/releases/tags/daily")
+    assert "HTTP 403" in excinfo.value.stderr
+
+
+def _answers(payloads: Mapping[str, object]) -> Callable[..., subprocess.CompletedProcess]:
+    def answer(*args: str, **_: object) -> subprocess.CompletedProcess:
+        payload = payloads.get(args[1])
+        return NOT_FOUND if payload is None else completed(stdout=json.dumps(payload))
+
+    return answer
+
+
+def test_resolve_ref_commit_peels_annotated_tags_and_keeps_ref_kinds_apart() -> None:
+    # Shapes of upstream's v5.1.5 (annotated) and master refs.
+    payloads = {
+        "repos/o/r/git/ref/tags/v5.1.5": {"object": {"type": "tag", "sha": "9428722"}},
+        "repos/o/r/git/tags/9428722": {"object": {"type": "commit", "sha": "3a67d31"}},
+        "repos/o/r/git/ref/heads/master": {"object": {"type": "commit", "sha": "4fd4a54"}},
+    }
+    with patch.object(mod, "gh", side_effect=_answers(payloads)):
+        assert mod.resolve_ref_commit("o/r", "tags/v5.1.5") == "3a67d31"
+        assert mod.resolve_ref_commit("o/r", "heads/master") == "4fd4a54"
+        # A tag is not a branch of the same name, nor the reverse.
+        assert mod.resolve_ref_commit("o/r", "heads/v5.1.5") is None
+        assert mod.resolve_ref_commit("o/r", "tags/master") is None
+
+
+def test_compare_commits_reports_the_relation_or_an_unknown_commit() -> None:
+    with patch.object(mod, "gh", return_value=completed(stdout="ahead\n")) as gh_mock:
+        assert mod.compare_commits("o/r", "36436db", "13faea0") == "ahead"
+    gh_mock.assert_called_once_with(
+        "api",
+        "repos/o/r/compare/36436db...13faea0",
+        "--jq",
+        ".status",
+        retry_transient=True,
+        check=False,
+    )
+    with patch.object(mod, "gh", return_value=NOT_FOUND):
+        assert mod.compare_commits("o/r", "0123456", "13faea0") is None
+
+
 def test_list_workflow_runs_for_sha_uses_jq_get_method() -> None:
     payload = json.dumps({"id": 1, "name": "Linux"})
     with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:
@@ -199,6 +257,20 @@ def test_list_run_jobs_requests_the_latest_attempt() -> None:
     assert "filter=latest" in args
     with pytest.raises(ValueError, match="run_id must be positive"):
         mod.list_run_jobs("owner/repo", 0)
+
+
+def test_list_run_jobs_can_request_one_attempt() -> None:
+    payload = json.dumps({"id": 130639116867, "run_attempt": 2})
+    with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:
+        jobs = mod.list_run_jobs("owner/repo", 42969994287, attempt=2)
+
+    assert jobs == [{"id": 130639116867, "run_attempt": 2}]
+    args = gh_mock.call_args[0]
+    assert "repos/owner/repo/actions/runs/42969994287/attempts/2/jobs" in args
+    assert "--paginate" in args
+    assert not any(arg.startswith("filter=") for arg in args)
+    with pytest.raises(ValueError, match="attempt must be positive"):
+        mod.list_run_jobs("owner/repo", 42969994287, attempt=0)
 
 
 def test_require_repository_prefers_override_and_requires_value(capsys) -> None:
@@ -422,6 +494,9 @@ class TestEnvDefaults:
 
 
 ARTIFACT_ZIP = ["gh", "api", "repos/o/r/actions/artifacts/7/zip"]
+# pytest-subprocess runs a callback in a thread and joins it for the call's timeout; if the join
+# expires first the fake reports success. The callback must always finish within this timeout.
+FAKED_TRANSFER_TIMEOUT = 30
 
 
 def test_download_artifact_zip_writes_the_archive(fp: FakeProcess, tmp_path: Path) -> None:
@@ -445,7 +520,7 @@ def test_download_artifact_zip_retries_transient_failures(
 def _time_out_after_partial_write(destination: Path) -> Callable[[FakePopen], None]:
     def time_out(_process: FakePopen) -> None:
         destination.write_bytes(b"partial")
-        raise subprocess.TimeoutExpired(ARTIFACT_ZIP, 0.01)
+        raise subprocess.TimeoutExpired(ARTIFACT_ZIP, FAKED_TRANSFER_TIMEOUT)
 
     return time_out
 
@@ -457,7 +532,7 @@ def test_download_artifact_zip_retries_a_timed_out_transfer(
     destination = tmp_path / "a.zip"
     fp.register(ARTIFACT_ZIP, callback=_time_out_after_partial_write(destination))
     fp.register(ARTIFACT_ZIP, stdout=b"zip")
-    mod.download_artifact_zip("o/r", 7, destination, timeout=0.01)
+    mod.download_artifact_zip("o/r", 7, destination, timeout=FAKED_TRANSFER_TIMEOUT)
     assert fp.call_count(ARTIFACT_ZIP) == 2
     assert destination.read_bytes() == b"zip"
 
@@ -468,8 +543,8 @@ def test_download_artifact_zip_timeouts_end_in_the_cleanup_error(
     monkeypatch.setattr("common.gh_actions.time.sleep", lambda _seconds: None)
     destination = tmp_path / "a.zip"
     fp.register(ARTIFACT_ZIP, callback=_time_out_after_partial_write(destination), occurrences=2)
-    with pytest.raises(RuntimeError, match=r"timed out after 0\.01s"):
-        mod.download_artifact_zip("o/r", 7, destination, attempts=2, timeout=0.01)
+    with pytest.raises(RuntimeError, match=rf"timed out after {FAKED_TRANSFER_TIMEOUT}s"):
+        mod.download_artifact_zip("o/r", 7, destination, attempts=2, timeout=FAKED_TRANSFER_TIMEOUT)
     assert fp.call_count(ARTIFACT_ZIP) == 2
     assert not destination.exists()
 

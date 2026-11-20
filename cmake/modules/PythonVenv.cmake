@@ -2,6 +2,9 @@ include_guard(GLOBAL)
 
 option(QGC_AUTO_PYTHON_VENV "Auto-create <repo>/tools/.venv with generator deps if missing" ON)
 
+# The Python that uv builds the environment on, and the minimum for any other interpreter.
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/../../tools/.python-version" QGC_PYTHON_VERSION LIMIT_COUNT 1)
+
 if(DEFINED ENV{QGC_PYTHON_ENV} AND NOT "$ENV{QGC_PYTHON_ENV}" STREQUAL "")
     get_filename_component(_qgc_venv_dir "$ENV{QGC_PYTHON_ENV}" ABSOLUTE)
 else()
@@ -14,7 +17,40 @@ else()
     set(_qgc_venv_python "${_qgc_venv_dir}/bin/python")
 endif()
 
-# Restore generator dependencies if another tooling profile removed them.
+# Create or repair the environment. uv runs the installer on the Python named in tools/.python-version,
+# downloading it when the host has none, so the host's own python3 is never needed.
+function(_qgc_sync_venv)
+    find_program(_qgc_uv NAMES uv NO_CACHE)
+    if(NOT _qgc_uv)
+        message(
+            FATAL_ERROR
+                "QGC: uv was not found. It creates the Python ${QGC_PYTHON_VERSION} environment that "
+                "the code generators run in (${_qgc_venv_dir}). Install it from "
+                "https://docs.astral.sh/uv/getting-started/installation/ and reconfigure."
+        )
+    endif()
+    # The installer looks for uv on PATH, which need not include the directory CMake found it in.
+    get_filename_component(_qgc_uv_dir "${_qgc_uv}" DIRECTORY)
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" -E env --modify "PATH=path_list_prepend:${_qgc_uv_dir}" "${_qgc_uv}" run --no-project
+                --project tools python tools/setup/install_python.py scripts
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE _sync_result
+        OUTPUT_VARIABLE _sync_output
+        ERROR_VARIABLE _sync_output
+    )
+    if(NOT _sync_result EQUAL 0)
+        message(
+            FATAL_ERROR
+                "QGC: failed to set up ${_qgc_venv_dir} (exit ${_sync_result}):\n${_sync_output}\n"
+                "Run from the repository root: "
+                "uv run --no-project --project tools python tools/setup/install_python.py scripts"
+        )
+    endif()
+endfunction()
+
+# Restore generator dependencies if another tooling profile removed them, and rebuild an environment
+# whose Python predates tools/pyproject.toml's requires-python.
 function(_qgc_sync_venv_if_stale _py)
     if(NOT QGC_AUTO_PYTHON_VENV)
         return()
@@ -28,19 +64,8 @@ function(_qgc_sync_venv_if_stale _py)
     if(_deps_result EQUAL 0)
         return()
     endif()
-    message(STATUS "QGC: .venv missing generator deps — re-syncing via tools/setup/install_python.py scripts")
-    execute_process(
-        COMMAND "${_py}" "${CMAKE_SOURCE_DIR}/tools/setup/install_python.py" scripts
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE _sync_result
-        OUTPUT_VARIABLE _sync_output
-        ERROR_VARIABLE _sync_output
-    )
-    if(NOT _sync_result EQUAL 0)
-        message(FATAL_ERROR "QGC: failed to re-sync .venv generator deps (exit ${_sync_result}):\n${_sync_output}\n"
-                            "Run manually: python tools/setup/install_python.py scripts"
-        )
-    endif()
+    message(STATUS "QGC: .venv is out of date — re-syncing via tools/setup/install_python.py scripts")
+    _qgc_sync_venv()
 endfunction()
 
 # Pin Python3_EXECUTABLE and Python_EXECUTABLE to the venv: upstream deps (mavlink) call
@@ -73,40 +98,15 @@ if(DEFINED CACHE{Python3_EXECUTABLE})
 endif()
 
 if(EXISTS "${_qgc_venv_dir}" AND NOT EXISTS "${_qgc_venv_python}")
-    message(FATAL_ERROR "QGC: ${_qgc_venv_dir} exists but has no interpreter at "
-                        "${_qgc_venv_python}. Remove it and reconfigure, or run: "
-                        "python tools/setup/install_python.py scripts --environment ${_qgc_venv_dir}"
+    message(
+        FATAL_ERROR "QGC: ${_qgc_venv_dir} exists but has no interpreter at "
+                    "${_qgc_venv_python}. Remove it and reconfigure."
     )
 endif()
 
 if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
-    find_program(_qgc_boot_python NAMES python3 python)
-    if(NOT _qgc_boot_python)
-        message(FATAL_ERROR "QGC: no python3 found to bootstrap .venv. "
-                            "Install Python 3.10+ or run tools/setup/install_python.py manually."
-        )
-    endif()
-    execute_process(COMMAND "${_qgc_boot_python}" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
-                    RESULT_VARIABLE _qgc_boot_ok
-    )
-    if(NOT _qgc_boot_ok EQUAL 0)
-        message(FATAL_ERROR "QGC: bootstrap interpreter ${_qgc_boot_python} is older than Python 3.10 "
-                            "(required by tools/pyproject.toml). Install Python 3.10+ and reconfigure."
-        )
-    endif()
     message(STATUS "QGC: .venv missing — creating it via tools/setup/install_python.py scripts")
-    execute_process(
-        COMMAND "${_qgc_boot_python}" "${CMAKE_SOURCE_DIR}/tools/setup/install_python.py" scripts
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        RESULT_VARIABLE _qgc_venv_result
-        OUTPUT_VARIABLE _qgc_venv_output
-        ERROR_VARIABLE _qgc_venv_output
-    )
-    if(NOT _qgc_venv_result EQUAL 0)
-        message(FATAL_ERROR "QGC: failed to create .venv (exit ${_qgc_venv_result}):\n${_qgc_venv_output}\n"
-                            "Run manually: python tools/setup/install_python.py scripts"
-        )
-    endif()
+    _qgc_sync_venv()
 endif()
 
 if(EXISTS "${_qgc_venv_python}")
@@ -114,7 +114,10 @@ if(EXISTS "${_qgc_venv_python}")
     _qgc_pin_python("${_qgc_venv_python}")
     message(STATUS "QGC: using Python venv interpreter ${Python3_EXECUTABLE}")
 else()
-    message(WARNING "QGC: no .venv found and QGC_AUTO_PYTHON_VENV=OFF; generators will use system "
-                    "python (may lack defusedxml/jinja2). Run: python tools/setup/install_python.py scripts"
+    message(
+        WARNING
+            "QGC: no .venv found and QGC_AUTO_PYTHON_VENV=OFF; generators will use a system "
+            "Python ${QGC_PYTHON_VERSION} or newer (may lack defusedxml/jinja2). Run from the repository "
+            "root: uv run --no-project --project tools python tools/setup/install_python.py scripts"
     )
 endif()

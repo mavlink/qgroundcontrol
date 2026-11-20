@@ -51,6 +51,8 @@ To see if your hardware is being recognized at the OS level do this:
 
 If you don't see a new serial port should up in the console output when you plug it in then something is likely wrong with your hardware at the OS level.
 
+On Android, USB serial devices have additional logs: see [Android USB Serial Logging](../troubleshooting/console_logging.md#android-usb-serial-logging).
+
 ## Error: Vehicle is not responding
 
 This indicates that although QGC was able to connect to the hardware link to your vehicle there is no telemetry going back and forth on the link.

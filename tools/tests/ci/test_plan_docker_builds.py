@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fnmatch
 import json
 import re
 import subprocess
@@ -26,7 +27,6 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize(
     "change",
     [
-        {"fuse": "false"},
         {"build_args": {"BASE_REF": 1}},
         {"selector": "unknown"},
         {"target": None},
@@ -52,7 +52,8 @@ def test_variant_loader_rejects_duplicate_identity(tmp_path: Path, field: str) -
 
 
 # Build-arg strings pinned independently of variants.json so a bad edit to the
-# JSON is caught here, not silently propagated into the CI matrix.
+# JSON is caught here, not silently propagated into the CI matrix. Renovate
+# bumps these digests together with variants.json (.github/renovate.json).
 _LINUX_2204_BUILD_ARGS = "\n".join(
     [
         "BASE_REF=public.ecr.aws/docker/library/ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
@@ -88,7 +89,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux",
             "build_args": "",
-            "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
             "push_target": "",
@@ -98,7 +98,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-2204",
             "build_args": _LINUX_2204_BUILD_ARGS,
-            "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
             "push_target": "",
@@ -108,7 +107,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-2604",
             "build_args": _LINUX_2604_BUILD_ARGS,
-            "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
             "push_target": "",
@@ -118,7 +116,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-debian",
             "build_args": _LINUX_DEBIAN_BUILD_ARGS,
-            "fuse": True,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
             "push_target": "",
@@ -128,7 +125,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-fedora",
             "build_args": _LINUX_FEDORA_BUILD_ARGS,
-            "fuse": False,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.rpm",
             "push_target": "",
@@ -138,7 +134,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-arch",
             "build_args": _LINUX_ARCH_BUILD_ARGS,
-            "fuse": False,
             "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.pkg.tar.zst",
             "push_target": "",
@@ -148,7 +143,6 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux-cross",
             "variant": "linux-aarch64",
             "build_args": "",
-            "fuse": False,
             "artifact_pattern": "Release/QGroundControl",
             "package_pattern": "",
             "push_target": "",
@@ -243,7 +237,6 @@ def test_every_variant_has_required_fields():
         "selector",
         "target",
         "image",
-        "fuse",
         "artifact_pattern",
         "package_pattern",
         "build_args",
@@ -274,6 +267,34 @@ def test_base_images_come_from_ecr_public_pinned_by_digest():
         ), ref
 
 
+def test_renovate_bumps_every_pinned_base_image_together():
+    # A bump that misses docker-compose.yml or this file's pinned build args fails CI.
+    renovate = json.loads((REPO_ROOT / ".github/renovate.json").read_text(encoding="utf-8"))
+    (manager,) = [
+        manager
+        for manager in renovate["customManagers"]
+        if "/^deploy/docker/variants\\.json$/" in manager["managerFilePatterns"]
+    ]
+    (match_string,) = manager["matchStrings"]
+    base_ref = re.compile(match_string.replace("(?<", "(?P<"))
+    pinned = sorted(
+        v["build_args"]["BASE_REF"] for v in load_variants() if "BASE_REF" in v["build_args"]
+    )
+    for path in (
+        "deploy/docker/variants.json",
+        "deploy/docker/docker-compose.yml",
+        "tools/tests/ci/test_plan_docker_builds.py",
+    ):
+        assert any(re.search(p.strip("/"), path) for p in manager["managerFilePatterns"]), path
+        # config:recommended skips **/tests/** unless renovate.json sets ignorePaths itself.
+        assert not any(fnmatch.fnmatch(path, ignored) for ignored in renovate["ignorePaths"]), path
+        tracked = sorted(
+            f"{m['depName']}:{m['currentValue']}@{m['currentDigest']}"
+            for m in base_ref.finditer((REPO_ROOT / path).read_text(encoding="utf-8"))
+        )
+        assert tracked == pinned, path
+
+
 def test_build_args_str_preserves_order():
     assert build_args_str({"A": "1", "B": "2"}) == "A=1\nB=2"
 
@@ -298,6 +319,7 @@ def test_application_pr_uses_representative_docker_variants():
         ["src/Vehicle/CMakeLists.txt"],
         [".github/actions/docker/action.yml"],
         ["tools/uv.lock"],
+        ["tools/.python-version"],
     ],
 )
 def test_toolchain_and_unknown_diffs_use_full_matrix(files):
@@ -313,6 +335,7 @@ def test_toolchain_and_unknown_diffs_use_full_matrix(files):
         "tools/analyze.py",
         "tools/tests/test_install_qt.py",
         "deploy/multipass/build.sh",
+        "deploy/docker/README.md",
     ],
 )
 def test_unrelated_changes_do_not_require_full_matrix(path):

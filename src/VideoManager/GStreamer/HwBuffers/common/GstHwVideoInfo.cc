@@ -1,6 +1,7 @@
 #include "GstHwVideoInfo.h"
 
 #include <algorithm>
+#include <iterator>
 
 #if GST_CHECK_VERSION(1, 24, 0)
 #include <gst/video/video-info-dma.h>
@@ -48,15 +49,6 @@ bool hasCpuLayout([[maybe_unused]] GstCaps* caps)
     return true;
 }
 
-int planeWidth(const GstVideoInfo& info, int plane)
-{
-    const int component = firstComponentOf(info, plane);
-    if (component < 0) {
-        return 0;
-    }
-    return GST_VIDEO_INFO_COMP_WIDTH(&info, component);
-}
-
 int planeHeight(const GstVideoInfo& info, int plane)
 {
     const int component = firstComponentOf(info, plane);
@@ -64,14 +56,6 @@ int planeHeight(const GstVideoInfo& info, int plane)
         return 0;
     }
     return GST_VIDEO_INFO_COMP_HEIGHT(&info, component);
-}
-
-PlaneLayout planeLayout(const GstVideoInfo& info, const GstVideoMeta* vmeta, int plane) noexcept
-{
-    if (vmeta) {
-        return {vmeta->offset[plane], vmeta->stride[plane]};
-    }
-    return {GST_VIDEO_INFO_PLANE_OFFSET(&info, plane), GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)};
 }
 
 int planeRowBytes(const GstVideoInfo& info, int plane)
@@ -98,6 +82,25 @@ int planeRowBytes(const GstVideoInfo& info, int plane)
         rowBytes = std::max(rowBytes, end);
     }
     return rowBytes;
+}
+
+bool setFrameSize(GstVideoInfo& info, int width, int height)
+{
+    if ((GST_VIDEO_INFO_WIDTH(&info) == width) && (GST_VIDEO_INFO_HEIGHT(&info) == height)) {
+        return true;
+    }
+    GstVideoInfo sized;
+    if ((width <= 0) || (height <= 0) ||
+        !gst_video_info_set_format(&sized, GST_VIDEO_INFO_FORMAT(&info), static_cast<guint>(width),
+                                   static_cast<guint>(height))) {
+        return false;
+    }
+    info.width = width;
+    info.height = height;
+    info.size = sized.size;
+    std::copy(std::begin(sized.stride), std::end(sized.stride), std::begin(info.stride));
+    std::copy(std::begin(sized.offset), std::end(sized.offset), std::begin(info.offset));
+    return true;
 }
 
 }  // namespace GstHw

@@ -3,8 +3,8 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QStringList>
 
-#include "QGCCommandLineParser.h"
 #include "UnitTest.h"
+#include "UnitTestEntryPoint.h"
 
 Q_DECLARE_LOGGING_CATEGORY(UnitTestListLog)
 
@@ -51,9 +51,6 @@ bool isTestRegistered(const QString& testName);
 /// @return List of invalid test names (empty if all valid)
 QStringList validateTestNames(const QStringList& testNames);
 
-/// Handle all test-related command line options (--list-tests, --unittest, etc.)
-/// @param args Parsed command line arguments
-/// @return 0 on success, negative number indicating failure count
-int handleTestOptions(const QGCCommandLineParser::CommandLineParseResult& args);
+// handleTestOptions(), which main.cc calls, is declared in UnitTestEntryPoint.h
 
 }  // namespace QGCUnitTest

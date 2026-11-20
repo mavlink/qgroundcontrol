@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
         status = {
             "repo": args.repo,
             "head_sha": args.head_sha,
-            "collected_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "collected_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "platforms": [
                 describe_workflow(args.repo, name, latest.get(name)) for name in platforms
             ],

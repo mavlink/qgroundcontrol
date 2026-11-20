@@ -7,6 +7,7 @@ on:
       - '.github/workflows/clusterfuzzlite.yml'
       - 'cmake/CustomOptions.cmake'
       - 'test/Fuzz/**'
+      - 'tools/.python-version'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,12 +25,12 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Build fuzzers
-        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
+        uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: c++
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -37,7 +38,7 @@ jobs:
           sanitizer: address
 
       - name: Run fuzzers
-        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         timeout-minutes: 10
         env:
           # Use the bundled seed corpus; scanning all repository artifacts can exhaust the job timeout.

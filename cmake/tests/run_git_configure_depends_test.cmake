@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
 
 # Git.cmake must not reconfigure on .git/index (rewritten by every `git status`) but must
-# still track HEAD moves, including when the branch ref only lives in packed-refs.
+# still track HEAD moves, including when the branch ref only lives in packed-refs. It must also
+# take the version from version tags only, whatever other tags the commits carry.
+
+include("${CMAKE_CURRENT_LIST_DIR}/../GStreamer/tests/_assert.cmake")
 
 foreach(_required IN ITEMS QGC_MODULE_DIR FIXTURE_SOURCE_DIR WORK_DIR)
     if(NOT DEFINED ${_required} OR "${${_required}}" STREQUAL "")
@@ -19,6 +22,9 @@ set(_repo "${WORK_DIR}/repo")
 set(_build "${WORK_DIR}/build")
 file(REMOVE_RECURSE "${WORK_DIR}")
 file(COPY "${FIXTURE_SOURCE_DIR}/" DESTINATION "${_repo}")
+
+# Covers the tags below, which a developer's tag.gpgSign would sign, and the git calls of each Git.cmake configure.
+qgc_test_isolate_git("${WORK_DIR}/home")
 
 # Runs git in the fixture repo with a fixed identity and no commit signing.
 function(_qgc_git)
@@ -97,3 +103,42 @@ file(TIMESTAMP "${_build}/qgc_version.h" _reconfigured_mtime "%Y-%m-%dT%H:%M:%S.
 if(NOT _reconfigured_mtime STREQUAL _version_header_mtime)
     message(FATAL_ERROR "Reconfigure without a HEAD move rewrote qgc_version.h")
 endif()
+
+# Reconfigures and requires the versions Git.cmake computes to be *expected*:
+# "<describe string> <project version> <commits since the version tag>", the hash as HASH.
+function(_qgc_expect_versions expected)
+    _qgc_configure(_unused)
+    file(READ "${_build}/versions.txt" _versions)
+    string(REGEX REPLACE "-g[0-9a-f]+ " "-gHASH " _versions "${_versions}")
+    if(NOT _versions STREQUAL expected)
+        message(FATAL_ERROR "Expected versions '${expected}' ${ARGN}, got '${_versions}'")
+    endif()
+endfunction()
+
+# Commits a new file, <name>.txt, to the fixture repo.
+function(_qgc_commit name)
+    file(WRITE "${_repo}/${name}.txt" "${name}")
+    _qgc_git(add -A)
+    _qgc_git(commit -q --no-verify -m "${name}")
+endfunction()
+
+# master carries an annotated vX.Y.Z-dev marker; daily builds count the commits since it.
+_qgc_git(tag -a v9.8.7-dev -m "daily version base")
+_qgc_commit(second)
+_qgc_expect_versions("v9.8.7-dev-1-gHASH 9.8.7 1" "one commit after the version marker")
+
+# CI's rolling release moves a lightweight `daily` tag along master, so it is on HEAD or on a
+# nearer ancestor than the marker. Neither may change a version.
+_qgc_git(tag daily)
+_qgc_expect_versions("v9.8.7-dev-1-gHASH 9.8.7 1" "with the daily tag on HEAD")
+_qgc_commit(third)
+_qgc_expect_versions("v9.8.7-dev-2-gHASH 9.8.7 2" "with the daily tag on the parent commit")
+_qgc_git(tag -a latest -m "another tag that is not a version")
+_qgc_expect_versions("v9.8.7-dev-2-gHASH 9.8.7 2" "with an annotated non-version tag on HEAD")
+
+# A release tag on HEAD still names the version, with or without the v prefix.
+_qgc_git(tag -a v9.8.7 -m release)
+_qgc_expect_versions("v9.8.7 9.8.7 0" "on a release tag")
+_qgc_commit(fourth)
+_qgc_git(tag -a 9.9.0 -m "release without the v prefix")
+_qgc_expect_versions("9.9.0 9.9.0 0" "on a version tag without the v prefix")

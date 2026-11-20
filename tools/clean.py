@@ -4,13 +4,14 @@
 Examples:
     ./tools/clean.py              # Clean build directory
     ./tools/clean.py --all        # Clean everything (build, caches, generated files, node_modules)
-    ./tools/clean.py --cache      # Clean only repo-local caches (.cache, legacy .ccache)
+    ./tools/clean.py --cache      # Clean only repo-local caches (.cache, tools/.cache, legacy .ccache)
     ./tools/clean.py --dry-run    # Show what would be removed
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import shutil
 import subprocess
@@ -20,7 +21,6 @@ from typing import TYPE_CHECKING
 
 import _bootstrap as _bootstrap
 from common.file_traversal import find_repo_root
-from common.io import chdir
 from common.logging import log_info, log_ok, log_warn
 
 if TYPE_CHECKING:
@@ -31,6 +31,7 @@ BUILD_TARGETS: tuple[tuple[str, str], ...] = (("build", "build directory"),)
 # .clangd is the tracked clangd configuration; clangd keeps its index under .cache/clangd.
 CACHE_TARGETS: tuple[tuple[str, str], ...] = (
     (".cache", "local cache directory"),
+    ("tools/.cache", "pytest cache directory"),
     (".ccache", "legacy ccache directory"),
 )
 
@@ -141,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     root = repo_root()
 
-    with chdir(root):
+    with contextlib.chdir(root):
         if args.dry_run:
             log_warn("Dry run mode - no files will be removed")
 

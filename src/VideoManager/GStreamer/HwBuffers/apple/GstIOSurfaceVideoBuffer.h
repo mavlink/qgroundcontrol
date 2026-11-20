@@ -12,7 +12,7 @@ class QRhi;
 class GstIOSurfaceVideoBuffer final : public GstHwVideoBuffer
 {
 public:
-    GstIOSurfaceVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format);
+    using GstHwVideoBuffer::GstHwVideoBuffer;
 
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;

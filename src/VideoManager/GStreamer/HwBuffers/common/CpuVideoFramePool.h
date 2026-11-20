@@ -81,7 +81,9 @@ public:
         bool _mapped = false;
     };
 
-    /// Copy @p buffer's planes into a pool-allocated QVideoFrame; invalid on stride overflow or unsupported format.
+    /// Copy @p buffer's planes into a pool-allocated QVideoFrame of @p format's frame size, laid out as gst-video lays
+    /// out @p videoInfo's format: the top-left part of a buffer whose GstVideoMeta is larger. Invalid on stride
+    /// overflow, an unsupported format or a buffer smaller than the frame.
     static QVideoFrame copyFromBuffer(GstBuffer* buffer, const GstVideoInfo& videoInfo,
                                       const QVideoFrameFormat& format);
 
