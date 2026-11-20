@@ -26,17 +26,16 @@ from common.aws import s3_object_exists, upload_public_file
 from common.build_config import get_gstreamer_version
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
 from common.gstreamer import (
-    PLATFORM_PACKAGES,
     package_platform,
     package_url,
     pinned_checksum,
+    platform_packages,
     upstream_checksum,
 )
 from common.markdown import code_span, md_table, summary_section
 from common.net import download_file
 
 S3_BUCKET = "qgroundcontrol"
-PLATFORMS = tuple(PLATFORM_PACKAGES)
 
 
 @dataclass(frozen=True)
@@ -57,23 +56,25 @@ class Artifact:
 
 def artifacts_for(platform: str, version: str) -> list[Artifact]:
     """Return the upstream artifact(s) to mirror for *platform* at *version*."""
-    if platform not in PLATFORM_PACKAGES:
+    packages = platform_packages()
+    if platform not in packages:
         raise ValueError(f"Unknown platform: {platform!r}")
     return [
         Artifact(package, package_url(package, version), package_platform(package))
-        for package in PLATFORM_PACKAGES[platform]
+        for package in packages[platform]
     ]
 
 
 def resolve_platforms(value: str) -> list[str]:
     """Expand 'all' or a comma list into validated platform names."""
+    platforms = list(platform_packages())
     if not value or value == "all":
-        return list(PLATFORMS)
+        return platforms
     requested = [p.strip() for p in value.split(",") if p.strip()]
-    unknown = [p for p in requested if p not in PLATFORMS]
+    unknown = [p for p in requested if p not in platforms]
     if unknown:
         raise ValueError(
-            f"Unknown platform(s): {', '.join(unknown)}; valid: {', '.join(PLATFORMS)}"
+            f"Unknown platform(s): {', '.join(unknown)}; valid: {', '.join(platforms)}"
         )
     return requested
 

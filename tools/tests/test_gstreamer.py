@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 from common.gstreamer import (
-    PLATFORM_PACKAGES,
     mirror_url,
     package_filename,
     package_url,
     pinned_checksum,
+    platform_packages,
     release_index_url,
 )
 
@@ -22,7 +22,7 @@ from ._helpers import REPO_ROOT
 if TYPE_CHECKING:
     from pathlib import Path
 
-PACKAGES = [package for packages in PLATFORM_PACKAGES.values() for package in packages]
+PACKAGES = [package for packages in platform_packages().values() for package in packages]
 
 
 def test_package_urls() -> None:
@@ -63,10 +63,11 @@ def test_pinned_checksum(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(shutil.which("cmake") is None, reason="cmake is not installed")
 def test_layout_matches_cmake(tmp_path: Path) -> None:
-    """The configure-time download (cmake/GStreamer/Packages.cmake) must fetch the same files."""
+    """The configure-time download (cmake/GStreamer/Packages.cmake) reads the table the same way."""
     version = "1.28.8"
     script = tmp_path / "urls.cmake"
     script.write_text(
+        f'file(READ "{REPO_ROOT}/.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)\n'
         f'include("{REPO_ROOT}/cmake/GStreamer/Packages.cmake")\n'
         f"foreach(_package IN ITEMS {' '.join(PACKAGES)})\n"
         f"    qgc_gst_get_package_url(${{_package}} {version} _url)\n"

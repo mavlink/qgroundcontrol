@@ -58,10 +58,9 @@ foreach(_case IN ITEMS "gstreamer.pkg|macos" "gstreamer-devel.pkg|macos_devel")
         WORKING_DIRECTORY "${_sandbox}/src/${_package}" COMMAND_ERROR_IS_FATAL ANY
     )
     file(SHA256 "${_cache_dir}/${_package}" _hash)
-    list(APPEND _checksums "\"${_platform}\":\"${_hash}\"")
+    list(APPEND _checksums ${_platform} ${_hash})
 endforeach()
-list(JOIN _checksums "," _checksums)
-set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\":{\"checksums\":{\"${QGC_GST_REQUESTED_VERSION}\":{${_checksums}}}}}")
+qgc_test_build_config(${QGC_GST_REQUESTED_VERSION} ${_checksums})
 
 _qgc_gst_acquire_macos_sdk(_root)
 qgc_test_assert_streq("SDK root" "${_cache_dir}/sdk/root" "${_root}")

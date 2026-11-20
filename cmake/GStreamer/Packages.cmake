@@ -7,48 +7,41 @@ include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/Download.cmake") # qgc_resilient_download / qgc_parse_expected_hash
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
 
-# qgc_gst_get_package_url(<platform> <version> <output_var>)
-# Sets <output_var> to the gstreamer.freedesktop.org URL of the <version> SDK package for <platform> (android, ios,
-# macos, macos_devel, windows_msvc_x64 or windows_msvc_arm64).
-function(qgc_gst_get_package_url platform version output_var)
-    set(_base "https://gstreamer.freedesktop.org")
-
-    # URL templates for simple platforms — version substituted via _base.
-    set(_url_android "${_base}/data/pkg/android/${version}/gstreamer-1.0-android-universal-${version}.tar.xz")
-    set(_url_ios "${_base}/data/pkg/ios/${version}/gstreamer-${version}-xcframework.tar.xz")
-    set(_url_macos "${_base}/data/pkg/macos/${version}/gstreamer-1.0-${version}-universal.pkg")
-    set(_url_macos_devel "${_base}/data/pkg/macos/${version}/gstreamer-1.0-devel-${version}-universal.pkg")
-
-    if(platform MATCHES "^windows_msvc_(x64|arm64)$")
-        # The MSVC installers are named by architecture.
-        if(CMAKE_MATCH_1 STREQUAL "x64")
-            set(_arch "x86_64")
-        else()
-            set(_arch "arm64")
-        endif()
-        set(_url "${_base}/data/pkg/windows/${version}/msvc/gstreamer-1.0-msvc-${_arch}-${version}.exe")
-    elseif(DEFINED _url_${platform})
-        set(_url "${_url_${platform}}")
-    else()
-        message(FATAL_ERROR "qgc_gst_get_package_url: Unknown platform '${platform}'")
+# _qgc_gst_package_path(<package> <version> <output_var>)
+# Sets <output_var> to the path of the <version> SDK package <package> under gstreamer.package_url: its entry in
+# gstreamer.packages of build-config.json (android, ios, macos, macos_devel, windows_msvc_x64 or windows_msvc_arm64).
+function(_qgc_gst_package_path package version output_var)
+    qgc_config_read(_path OPTIONAL gstreamer packages ${package})
+    if(NOT _path)
+        message(FATAL_ERROR "GStreamer: unknown SDK package '${package}' (gstreamer.packages in build-config.json)")
     endif()
-
+    string(REPLACE "{version}" "${version}" _path "${_path}")
     set(${output_var}
-        "${_url}"
+        "${_path}"
         PARENT_SCOPE
     )
 endfunction()
 
-# qgc_gst_get_s3_mirror_url(<platform> <version> <output_var>)
-# Sets <output_var> to the QGC S3 mirror of that package: the same file under the mirror's <platform directory>/.
-function(qgc_gst_get_s3_mirror_url platform version output_var)
-    qgc_gst_get_package_url("${platform}" "${version}" _url)
-    string(
-        REGEX REPLACE "^https://gstreamer\\.freedesktop\\.org/data/pkg/([a-z]+)/.*/([^/]+)$"
-                      "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/\\1/\\2" _url "${_url}"
-    )
+# qgc_gst_get_package_url(<package> <version> <output_var>)
+# Sets <output_var> to the upstream URL of the <version> SDK package <package>.
+function(qgc_gst_get_package_url package version output_var)
+    _qgc_gst_package_path("${package}" "${version}" _path)
+    qgc_config_read(_base gstreamer package_url)
     set(${output_var}
-        "${_url}"
+        "${_base}/${_path}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# qgc_gst_get_s3_mirror_url(<package> <version> <output_var>)
+# Sets <output_var> to the QGC mirror of that package: the same file under gstreamer.package_mirror_url, in the
+# directory of its platform, the first directory of its path.
+function(qgc_gst_get_s3_mirror_url package version output_var)
+    _qgc_gst_package_path("${package}" "${version}" _path)
+    qgc_config_read(_mirror gstreamer package_mirror_url)
+    string(REGEX REPLACE "^([^/]+)/.*/([^/]+)$" "\\1/\\2" _path "${_path}")
+    set(${output_var}
+        "${_mirror}/${_path}"
         PARENT_SCOPE
     )
 endfunction()

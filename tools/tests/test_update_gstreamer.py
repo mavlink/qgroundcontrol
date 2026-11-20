@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 
 import pytest
 import update_gstreamer
-from common.gstreamer import PLATFORM_PACKAGES, package_url
+from common.gstreamer import package_url, platform_packages
 from validate_configs import validate_build_config
 
 from ._helpers import REPO_ROOT
@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 VERSION = "1.30.1"
-PACKAGES = [package for packages in PLATFORM_PACKAGES.values() for package in packages]
+PLATFORMS = platform_packages()
+PACKAGES = [package for packages in PLATFORMS.values() for package in packages]
 
 
 def _sidecar_url(package: str) -> str:
@@ -58,7 +59,7 @@ def _serve(monkeypatch: pytest.MonkeyPatch, overrides: dict[str, str | None]) ->
 
 def test_pins_the_release_for_every_platform(config: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     expected = json.loads(config.read_text(encoding="utf-8"))
-    expected["gstreamer"]["version"].update(dict.fromkeys(PLATFORM_PACKAGES, VERSION))
+    expected["gstreamer"]["version"].update(dict.fromkeys(PLATFORMS, VERSION))
     expected["gstreamer"]["checksums"] = {
         VERSION: {package: _digest(package) for package in PACKAGES}
     }

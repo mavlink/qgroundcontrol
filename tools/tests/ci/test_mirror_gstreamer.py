@@ -2,24 +2,37 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import pytest
 from ci.gstreamer import mirror_gstreamer
 from ci.gstreamer.mirror_gstreamer import (
-    PLATFORMS,
     Artifact,
     _expected_sha,
     artifacts_for,
     resolve_platforms,
 )
 from common.build_config import get_gstreamer_version
-from common.gstreamer import pinned_checksum
+from common.gstreamer import mirror_url, pinned_checksum, platform_packages
 
-from .._helpers import get_step, get_steps, load_workflow
+from .._helpers import REPO_ROOT, get_step, get_steps, load_workflow
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+PLATFORMS = list(platform_packages())
+
+
+def _use_versions(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, versions: dict[str, str]
+) -> None:
+    """Point CONFIG_FILE at the repository's build-config.json with *versions* as gstreamer.version."""
+    config = json.loads((REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8"))
+    config["gstreamer"]["version"] = versions
+    path = tmp_path / "build-config.json"
+    path.write_text(json.dumps(config), encoding="utf-8")
+    monkeypatch.setenv("CONFIG_FILE", str(path))
 
 
 def test_android_single_artifact() -> None:
@@ -61,8 +74,8 @@ def test_unknown_platform_raises() -> None:
 
 
 def test_resolve_platforms_all() -> None:
-    assert resolve_platforms("all") == list(PLATFORMS)
-    assert resolve_platforms("") == list(PLATFORMS)
+    assert resolve_platforms("all") == PLATFORMS
+    assert resolve_platforms("") == PLATFORMS
 
 
 def test_resolve_platforms_subset_preserves_order() -> None:
@@ -72,6 +85,14 @@ def test_resolve_platforms_subset_preserves_order() -> None:
 def test_resolve_platforms_rejects_unknown() -> None:
     with pytest.raises(ValueError, match="Unknown platform"):
         resolve_platforms("android,plugin")
+
+
+def test_artifacts_are_uploaded_where_the_build_reads_the_mirror() -> None:
+    # cmake/GStreamer/Packages.cmake falls back to mirror_url(); test_gstreamer.py holds those two together.
+    bucket_url = f"https://{mirror_gstreamer.S3_BUCKET}.s3.us-west-2.amazonaws.com"
+    for platform in PLATFORMS:
+        for art in artifacts_for(platform, "1.28.8"):
+            assert mirror_url(art.package, "1.28.8") == f"{bucket_url}/{art.s3_key()}"
 
 
 def test_s3_key_uses_url_basename() -> None:
@@ -164,9 +185,7 @@ def test_options_default_to_the_workflow_environment(
 def test_version_is_required_without_a_build_config_version(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    config = tmp_path / "build-config.json"
-    config.write_text('{"gstreamer": {}}', encoding="utf-8")
-    monkeypatch.setenv("CONFIG_FILE", str(config))
+    _use_versions(monkeypatch, tmp_path, {})
     monkeypatch.delenv("MIRROR_VERSION", raising=False)
     assert mirror_gstreamer.main(["--platforms", "android", "--work-dir", str(tmp_path)]) == 1
     assert (
@@ -196,7 +215,7 @@ def test_workflow_mirrors_build_config_changes_on_master() -> None:
         "paths": [".github/build-config.json"],
     }
     # A push has no inputs: every platform's build-config version is mirrored and uploaded.
-    assert resolve_platforms("") == list(PLATFORMS)
+    assert resolve_platforms("") == PLATFORMS
     assert workflow["jobs"]["mirror"]["if"] == (
         "github.event_name == 'workflow_dispatch' || github.repository == 'mavlink/qgroundcontrol'"
     )
@@ -205,12 +224,7 @@ def test_workflow_mirrors_build_config_changes_on_master() -> None:
 def test_main_mirrors_each_platforms_own_version(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_summary: Path
 ) -> None:
-    config = tmp_path / "build-config.json"
-    config.write_text(
-        '{"gstreamer": {"version": {"android": "1.28.7", "ios": "1.28.8"}}}',
-        encoding="utf-8",
-    )
-    monkeypatch.setenv("CONFIG_FILE", str(config))
+    _use_versions(monkeypatch, tmp_path, {"android": "1.28.7", "ios": "1.28.8"})
     monkeypatch.delenv("MIRROR_VERSION", raising=False)
     mirrored: list[tuple[str, str]] = []
 

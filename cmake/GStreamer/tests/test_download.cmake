@@ -3,6 +3,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/.." "${CMAKE_CURRENT_LI
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Packages)
 
+# The package table is the repository's own.
+qgc_test_build_config()
 qgc_gst_get_package_url(android 1.28.2 _u_android)
 qgc_test_assert_streq(
     "android url"
@@ -73,7 +75,6 @@ endfunction()
 
 # A package without a pinned checksum fails configure instead of being downloaded.
 if(TEST_CASE STREQUAL "unpinned")
-    set(QGC_BUILD_CONFIG_CONTENT "{}")
     _qgc_gst_download_archive(android 9.1.2 package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}")
     message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
 elseif(DEFINED TEST_CASE)
@@ -82,7 +83,7 @@ endif()
 
 # Upstream serves every package, the mirror only when upstream fails; both are held to the pinned checksum.
 string(SHA256 _pin "pinned")
-set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\":{\"checksums\":{\"9.1.1\":{\"android\":\"${_pin}\"}}}}")
+qgc_test_build_config(9.1.1 android ${_pin})
 qgc_gst_get_package_url(android 9.1.1 _upstream)
 qgc_gst_get_s3_mirror_url(android 9.1.1 _mirror)
 _qgc_gst_download_archive(android 9.1.1 package.tar.xz "${CMAKE_CURRENT_BINARY_DIR}")

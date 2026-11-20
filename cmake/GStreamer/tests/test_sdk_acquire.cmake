@@ -26,8 +26,9 @@ function(_qgc_test_seed_archive marker)
         WORKING_DIRECTORY "${_sandbox}/src" COMMAND_ERROR_IS_FATAL ANY
     )
     file(SHA256 "${_cache_dir}/sdk.tar.xz" _hash)
+    qgc_test_build_config(${_version} android ${_hash})
     set(QGC_BUILD_CONFIG_CONTENT
-        "{\"gstreamer\":{\"checksums\":{\"${_version}\":{\"android\":\"${_hash}\"}}}}"
+        "${QGC_BUILD_CONFIG_CONTENT}"
         PARENT_SCOPE
     )
 endfunction()

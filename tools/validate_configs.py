@@ -37,16 +37,11 @@ def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> lis
     for platform, version in gst["version"].items():
         if Version(version) < Version(gst["version"]["minimum"]):
             errors.append(f"gstreamer.version.{platform} must meet the minimum")
-    for platform, artifacts in {
-        "android": ("android",),
-        "windows": ("windows_msvc_x64", "windows_msvc_arm64"),
-        "macos": ("macos", "macos_devel"),
-        "ios": ("ios",),
-    }.items():
-        checksums = gst["checksums"].get(gst["version"][platform], {})
-        for artifact in artifacts:
-            if not checksums.get(artifact):
-                errors.append(f"Missing GStreamer checksum for {platform}: {artifact}")
+    # A package's platform is the first directory of its path; that platform's version must pin the package.
+    for package, path in gst["packages"].items():
+        platform = path.split("/", 1)[0]
+        if not gst["checksums"].get(gst["version"][platform], {}).get(package):
+            errors.append(f"Missing GStreamer checksum for {platform}: {package}")
     return errors
 
 

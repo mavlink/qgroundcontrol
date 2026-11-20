@@ -29,7 +29,7 @@ file(
     FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
 )
 file(SHA256 "${_installer}" _hash)
-set(QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\":{\"checksums\":{\"${_version}\":{\"windows_msvc_x64\":\"${_hash}\"}}}}")
+qgc_test_build_config(${_version} windows_msvc_x64 ${_hash})
 
 set(QGC_GST_REQUESTED_VERSION ${_version})
 _qgc_gst_acquire_windows_sdk(x86_64 _install_dir)

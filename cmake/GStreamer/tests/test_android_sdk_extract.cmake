@@ -33,9 +33,7 @@ execute_process(
                                                                                        COMMAND_ERROR_IS_FATAL ANY
 )
 file(SHA256 "${_archive}" _hash)
-set(QGC_BUILD_CONFIG_CONTENT
-    "{\"gstreamer\":{\"checksums\":{\"${QGC_GST_REQUESTED_VERSION}\":{\"android\":\"${_hash}\"}}}}"
-)
+qgc_test_build_config(${QGC_GST_REQUESTED_VERSION} android ${_hash})
 
 foreach(_case IN ITEMS "x86|x86" "x86_64|x86_64" "arm64-v8a|arm64")
     qgc_test_split("${_case}" CMAKE_ANDROID_ARCH_ABI _abi_dir)

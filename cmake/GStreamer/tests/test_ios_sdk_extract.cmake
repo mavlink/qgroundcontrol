@@ -25,9 +25,7 @@ execute_process(
     WORKING_DIRECTORY "${_sandbox}/src" COMMAND_ERROR_IS_FATAL ANY
 )
 file(SHA256 "${_archive}" _hash)
-set(QGC_BUILD_CONFIG_CONTENT
-    "{\"gstreamer\":{\"checksums\":{\"${QGC_GST_REQUESTED_VERSION}\":{\"ios\":\"${_hash}\"}}}}"
-)
+qgc_test_build_config(${QGC_GST_REQUESTED_VERSION} ios ${_hash})
 
 _qgc_gst_acquire_ios_sdk(_acquired)
 set(_expanded "${_cache_dir}/sdk/expanded")

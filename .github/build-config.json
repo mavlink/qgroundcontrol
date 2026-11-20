@@ -37,6 +37,16 @@
       "macos": "1.28.8",
       "windows": "1.28.8"
     },
+    "package_url": "https://gstreamer.freedesktop.org/data/pkg",
+    "package_mirror_url": "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer",
+    "packages": {
+      "android": "android/{version}/gstreamer-1.0-android-universal-{version}.tar.xz",
+      "ios": "ios/{version}/gstreamer-{version}-xcframework.tar.xz",
+      "macos": "macos/{version}/gstreamer-1.0-{version}-universal.pkg",
+      "macos_devel": "macos/{version}/gstreamer-1.0-devel-{version}-universal.pkg",
+      "windows_msvc_x64": "windows/{version}/msvc/gstreamer-1.0-msvc-x86_64-{version}.exe",
+      "windows_msvc_arm64": "windows/{version}/msvc/gstreamer-1.0-msvc-arm64-{version}.exe"
+    },
     "plugins": {
       "common": [
         "app",
