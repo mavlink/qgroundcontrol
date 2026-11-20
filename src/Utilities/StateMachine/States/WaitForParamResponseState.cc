@@ -3,31 +3,25 @@
 #include <utility>
 
 #include "MAVLinkLib.h"
-#include "QGCLoggingCategory.h"
-#include "Vehicle.h"
 
-WaitForParamResponseState::WaitForParamResponseState(QState *parent, int timeoutMsecs,
-                                                     Predicate paramValuePredicate,
+WaitForParamResponseState::WaitForParamResponseState(QState* parent, int timeoutMsecs, Predicate paramValuePredicate,
                                                      Predicate paramErrorPredicate)
-    : WaitStateBase(QStringLiteral("WaitForParamResponseState"), parent, timeoutMsecs)
+    : VehicleMessageWaitState(QStringLiteral("WaitForParamResponseState"), parent, timeoutMsecs)
     , _paramValuePredicate(std::move(paramValuePredicate))
     , _paramErrorPredicate(std::move(paramErrorPredicate))
 {
 }
 
-void WaitForParamResponseState::connectWaitSignal()
+void WaitForParamResponseState::onWaitEntered()
 {
-    connect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForParamResponseState::_messageReceived, Qt::UniqueConnection);
+    // A wait that ends without a PARAM_ERROR must not show the error of an earlier one
+    _lastParamError = MAV_PARAM_ERROR_NO_ERROR;
+    _lastParamErrorString.clear();
+
+    VehicleMessageWaitState::onWaitEntered();
 }
 
-void WaitForParamResponseState::disconnectWaitSignal()
-{
-    if (vehicle()) {
-        disconnect(vehicle(), &Vehicle::mavlinkMessageReceived, this, &WaitForParamResponseState::_messageReceived);
-    }
-}
-
-void WaitForParamResponseState::_messageReceived(const mavlink_message_t &message)
+void WaitForParamResponseState::handleMessage(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_PARAM_VALUE) {
         if (_paramValuePredicate && !_paramValuePredicate(message)) {

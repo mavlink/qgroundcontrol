@@ -3,9 +3,6 @@
 #include <QtStateMachine/QFinalState>
 #include <QtCore/QString>
 
-class QGCStateMachine;
-class Vehicle;
-
 /// \brief Final state for a QGCStateMachine with logging support
 ///
 class QGCFinalState : public QFinalState
@@ -18,6 +15,4 @@ public:
     explicit QGCFinalState(QState* parent = nullptr);
 
     QString stateName() const;
-    QGCStateMachine* machine() const;
-    Vehicle* vehicle() const;
 };

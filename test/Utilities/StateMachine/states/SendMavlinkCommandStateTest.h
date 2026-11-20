@@ -1,15 +1,15 @@
 #pragma once
 
-#include "StateMachineTest.h"
+#include "VehicleTestManualConnect.h"
 
-/// Tests for SendMavlinkCommandState
-/// Note: Full integration tests require a MockLink/Vehicle connection
-class SendMavlinkCommandStateTest : public StateMachineTest
+/// Tests for SendMavlinkCommandState on a MockLink vehicle
+class SendMavlinkCommandStateTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
 private slots:
-    void _testStateCreation();
-    void _testDeferredSetup();
+    UT_PARAMETERIZED_TEST(_testCommandResult);
+    UT_PARAMETERIZED_TEST(_testIgnoresResultThatIsNotItsOwn);
+    UT_PARAMETERIZED_TEST(_testFailsWhenItsCommandGetsNoAck);
     void _testUnconfiguredStateFails();
 };

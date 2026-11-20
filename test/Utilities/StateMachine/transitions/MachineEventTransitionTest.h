@@ -7,8 +7,9 @@ class MachineEventTransitionTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    void _testMachineEventTransition();
-    void _testDelayedEvent();
+    UT_PARAMETERIZED_TEST(_testMachineEventTransition);
+    void _testMachineEventTransitionWithGuard();
     void _testDelayedEventCancel();
+    UT_PARAMETERIZED_TEST(_testEventThatIsNotPostedIsDeleted);
     void _testEventPriority();
 };

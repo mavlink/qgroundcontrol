@@ -1,11 +1,12 @@
 #pragma once
 
+#include "MAVLinkEnums.h"
 #include "WaitStateBase.h"
-#include "QGCMAVLink.h"
-
-class Vehicle;
 
 /// \brief Sends the specified MAVLink command to the vehicle and waits for the result
+///
+/// Emits advance() when the vehicle accepts the command, error() for any other result. A result for another
+/// component, and the refusal of the same command that something else sends meanwhile, are not its own.
 ///
 class SendMavlinkCommandState : public WaitStateBase
 {
@@ -18,9 +19,6 @@ public:
 
     void setup(MAV_CMD command, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
 
-signals:
-    void success();
-
 protected:
     void connectWaitSignal() override;
     void disconnectWaitSignal() override;
@@ -30,6 +28,8 @@ private slots:
     void _mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult, int failureCode);
 
 private:
+    static constexpr int _targetComponent = MAV_COMP_ID_AUTOPILOT1;
+
     MAV_CMD     _command = MAV_CMD(0);
     double      _param1 = 0.0;
     double      _param2 = 0.0;
@@ -39,4 +39,5 @@ private:
     double      _param6 = 0.0;
     double      _param7 = 0.0;
     bool        _configured = false;
+    bool _sendingCommand = false;
 };

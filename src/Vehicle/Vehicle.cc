@@ -2307,6 +2307,12 @@ void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* re
     _reqMsgCoord->requestMessage(resultHandler, resultHandlerData, compId, messageId, param1, param2, param3, param4, param5);
 }
 
+void Vehicle::cancelRequestMessage(void* resultHandlerData)
+{
+    if (_reqMsgCoord) {
+        _reqMsgCoord->cancelRequests(resultHandlerData);
+    }
+}
 
 void Vehicle::setPrearmError(const QString& prearmError)
 {

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "QGCAbstractTransition.h"
-#include "QGCStateMachineEvent.h"
+#include <functional>
 
 #include <QtCore/QString>
-#include <functional>
+#include <QtStateMachine/QAbstractTransition>
+
+#include "QGCStateMachineEvent.h"
 
 /// \brief Transition that fires when a named event is posted to the state machine
 ///
 /// Use this for events posted via QGCStateMachine::postEvent/postDelayedEvent.
-/// For events on watched objects, use NamedEventTransition instead.
 ///
-class MachineEventTransition : public QGCAbstractTransition
+class MachineEventTransition : public QAbstractTransition
 {
     Q_OBJECT
     Q_DISABLE_COPY(MachineEventTransition)
@@ -37,7 +37,8 @@ public:
 
 protected:
     bool eventTest(QEvent* event) override;
-    void onTransition(QEvent* event) override;
+
+    void onTransition(QEvent*) override {}
 
 private:
     QString _eventName;

@@ -1,160 +1,17 @@
 #include "QGCStateMachineTest.h"
 
-#include "MultiSignalSpy.h"
-#include "QGCStateMachine.h"
-#include "WaitStateBase.h"
-
 #include <QtCore/QRegularExpression>
-#include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
+
+#include "QGCStateMachine.h"
+#include "StateTestCommon.h"
 
 namespace {
 float _spyFloatArg(const QSignalSpy& spy, int index)
 {
     return spy.at(index).at(0).toFloat();
 }
-}
-
-/// Minimal concrete implementation of WaitStateBase for testing
-class MinimalTestWaitState : public WaitStateBase
-{
-    Q_OBJECT
-public:
-    MinimalTestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
-protected:
-    void connectWaitSignal() override {}
-    void disconnectWaitSignal() override {}
-};
-
-class ErroringAbstractState : public QGCAbstractState
-{
-public:
-    ErroringAbstractState(const QString& name, QState* parent)
-        : QGCAbstractState(name, parent) {}
-
-    void triggerError() { emit error(); }
-};
-
-
-void QGCStateMachineTest::_testQGCStateMachineFactories()
-{
-    QGCStateMachine machine(QStringLiteral("FactoryTest"), nullptr);
-    bool functionCalled = false;
-
-    auto* funcState = machine.addFunctionState(QStringLiteral("Func"), [&functionCalled]() {
-        functionCalled = true;
-    });
-    auto* delayState = machine.addDelayState(50);
-    auto* finalState = machine.addFinalState(QStringLiteral("Final"));
-
-    funcState->addTransition(funcState, &QGCState::advance, delayState);
-    delayState->addTransition(delayState, &DelayState::delayComplete, finalState);
-
-    machine.setInitialState(funcState);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(functionCalled);
-}
-
-void QGCStateMachineTest::_testGlobalErrorState()
-{
-    QGCStateMachine machine(QStringLiteral("GlobalErrorTest"), nullptr);
-    bool errorHandled = false;
-
-    auto* errorState = new FunctionState(QStringLiteral("GlobalError"), &machine, [&errorHandled]() {
-        errorHandled = true;
-    });
-    machine.setGlobalErrorState(errorState);
-
-    // The async state has no completion connection and no timeout — expected critical
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
-
-    auto* asyncState = machine.addAsyncFunctionState(QStringLiteral("Async"), [](AsyncFunctionState* state) {
-        QTimer::singleShot(50, state, [state]() { state->fail(); });
-    });
-    auto* finalState = machine.addFinalState();
-
-    asyncState->addTransition(asyncState, &QGCState::advance, finalState);
-    errorState->addTransition(errorState, &QGCState::advance, finalState);
-
-    machine.setInitialState(asyncState);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    verifyExpectedLogMessage();
-    QVERIFY(errorHandled);
-}
-
-void QGCStateMachineTest::_testGlobalErrorStateWithAbstractState()
-{
-    QGCStateMachine machine(QStringLiteral("AbstractGlobalErrorTest"), nullptr);
-    auto* errorState = new FunctionState(QStringLiteral("GlobalError"), &machine, []() {});
-    machine.setGlobalErrorState(errorState);
-
-    auto* abstractState = new ErroringAbstractState(QStringLiteral("AbstractError"), &machine);
-    machine.registerState(abstractState);
-
-    const auto transitions = machine.transitionsFrom(abstractState);
-    QVERIFY(!transitions.isEmpty());
-
-    bool foundGlobalErrorTransition = false;
-    for (auto* transition : transitions) {
-        if (transition && transition->targetState() == errorState) {
-            foundGlobalErrorTransition = true;
-            break;
-        }
-    }
-    QVERIFY(foundGlobalErrorTransition);
-
-    machine.setInitialState(abstractState);
-    QObject::connect(abstractState, &QGCAbstractState::error, &machine, &QStateMachine::stop);
-    QSignalSpy enteredSpy(abstractState, &QAbstractState::entered);
-    QSignalSpy errorSpy(abstractState, &QGCAbstractState::error);
-    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-    abstractState->triggerError();
-    QVERIFY((errorSpy.count() > 0) || errorSpy.wait(TestTimeout::shortMs()));
-    QVERIFY((stoppedSpy.count() > 0) || stoppedSpy.wait(TestTimeout::shortMs()));
-}
-
-void QGCStateMachineTest::_testLocalErrorState()
-{
-    QGCStateMachine machine(QStringLiteral("LocalErrorTest"), nullptr);
-    bool globalErrorHandled = false;
-    bool localErrorHandled = false;
-
-    auto* globalErrorState = new FunctionState(QStringLiteral("GlobalError"), &machine, [&globalErrorHandled]() {
-        globalErrorHandled = true;
-    });
-    machine.setGlobalErrorState(globalErrorState);
-
-    auto* localErrorState = new FunctionState(QStringLiteral("LocalError"), &machine, [&localErrorHandled]() {
-        localErrorHandled = true;
-    });
-
-    // The async state has no completion connection and no timeout — expected critical
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
-
-    auto* asyncState = new AsyncFunctionState(QStringLiteral("Async"), &machine, [](AsyncFunctionState* state) {
-        QTimer::singleShot(50, state, [state]() { state->fail(); });
-    });
-    asyncState->setLocalErrorState(localErrorState);  // Override global error for this state
-
-    auto* finalState = machine.addFinalState();
-
-    asyncState->addTransition(asyncState, &QGCState::advance, finalState);
-    globalErrorState->addTransition(globalErrorState, &QGCState::advance, finalState);
-    localErrorState->addTransition(localErrorState, &QGCState::advance, finalState);
-
-    machine.setInitialState(asyncState);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    verifyExpectedLogMessage();
-    QVERIFY(!globalErrorHandled);  // Global error should NOT be called
-    QVERIFY(localErrorHandled);    // Local error should be called
 }
 
 void QGCStateMachineTest::_testInProgressSpansQueuedStart_data()
@@ -174,12 +31,12 @@ void QGCStateMachineTest::_testInProgressSpansQueuedStart()
 
     QGCStateMachine machine(QStringLiteral("InProgressSpansQueuedStartTest"), nullptr);
     auto* state = new QGCState(QStringLiteral("State"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     machine.addEventTransition(state, QStringLiteral("finish"), finalState);
     QSignalSpy inProgressSpy(&machine, &QGCStateMachine::inProgressChanged);
 
     if (!hasInitialState) {
-        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                          QRegularExpression(QStringLiteral("start\\(\\) called without an initial state")));
         machine.start();
         verifyExpectedLogMessage();
@@ -247,14 +104,14 @@ void QGCStateMachineTest::_testStartWhileInProgressIsCritical()
 {
     QGCStateMachine machine(QStringLiteral("StartWhileInProgressTest"), nullptr);
     auto* state = new QGCState(QStringLiteral("State"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     machine.addEventTransition(state, QStringLiteral("finish"), finalState);
     machine.setInitialState(state);
     QSignalSpy startedSpy(&machine, &QStateMachine::started);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("already in progress")));
     machine.start();
     verifyExpectedLogMessage();
@@ -270,13 +127,13 @@ void QGCStateMachineTest::_testStartBypassIsCritical()
 {
     QGCStateMachine machine(QStringLiteral("StartBypassTest"), nullptr);
     auto* state = new QGCState(QStringLiteral("State"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
     machine.addEventTransition(state, QStringLiteral("finish"), finalState);
     machine.setInitialState(state);
     QSignalSpy startedSpy(&machine, &QStateMachine::started);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg,
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("started without QGCStateMachine::start\\(\\)")));
     static_cast<QStateMachine&>(machine).start();
     QVERIFY(!machine.inProgress());
@@ -289,277 +146,161 @@ void QGCStateMachineTest::_testStartBypassIsCritical()
     QVERIFY(!machine.inProgress());
 }
 
-void QGCStateMachineTest::_testPropertyAssignment()
+void QGCStateMachineTest::_testErrorInMachineIsCritical()
 {
-    QGCStateMachine machine(QStringLiteral("PropTest"), nullptr);
-    machine.enablePropertyRestore();
+    QGCStateMachine machine(QStringLiteral("MachineErrorTest"), nullptr);
+    // Qt cannot enter a state that has child states and no initial state, and stops the machine
+    auto* compoundState = new QGCState(QStringLiteral("Compound"), &machine);
+    auto* childState = new QGCState(QStringLiteral("Child"), compoundState);
+    machine.setInitialState(compoundState);
 
-    QObject target;
-    target.setProperty("testProp", 0);
-
-    // Use a state that doesn't transition immediately so we can verify property
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    state1->setProperty(&target, "testProp", 42);
-
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = addFinalState(&machine);
-
-    // Use event-based transitions instead of entered signal
-    machine.addEventTransition(state1, QStringLiteral("next"), state2);
-    state2->addTransition(state2, &QState::entered, finalState);
-
-    machine.setInitialState(state1);
-
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+    expectLogMessage("default", QtWarningMsg,
+                     QRegularExpression("Unrecoverable error detected in running state machine"));
+    expectLogMessage(
+        "Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
+        QRegularExpression("\"MachineErrorTest\" stopped after an error in the machine: \"Missing initial state"));
     machine.start();
+    QVERIFY(spyTriggered(stoppedSpy));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QVERIFY(!machine.inProgress());
+    QCOMPARE(machine.error(), QStateMachine::NoInitialStateError);
 
-    // Wait for state1 to be entered
-    QVERIFY(state1EnteredSpy.wait(TestTimeout::shortMs()));
-    // Property should be set to 42 while in state1
-    QCOMPARE(target.property("testProp").toInt(), 42);
+    // The machine can be corrected and run again, and a run that is stopped then reports no error of this one
+    compoundState->setInitialState(childState);
+    QVERIFY(startAndWaitForEntered(&machine, childState));
+    QCOMPARE(machine.error(), QStateMachine::NoError);
+    machine.stop();
+    QVERIFY_SIGNAL_COUNT_WAIT(stoppedSpy, 2, TestTimeout::shortMs());
+}
 
-    // Trigger transition to state2
-    machine.postEvent(QStringLiteral("next"));
+void QGCStateMachineTest::_testTargetOutsideMachineIsExplained()
+{
+    QGCStateMachine machine(QStringLiteral("TargetOutsideTest"), nullptr);
+    auto* state = new FunctionState(QStringLiteral("State"), &machine, []() {});
+    // A state without a parent belongs to no machine, and nothing objects when a transition is given it as target
+    QGCState stateOutside(QStringLiteral("Outside"), nullptr);
+    state->addTransition(state, &QGCState::advance, &stateOutside);
+    machine.setInitialState(state);
 
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-    // Property should be restored after leaving state1
-    QCOMPARE(target.property("testProp").toInt(), 0);
+    // Qt's text names the child mode of the machine, which is not at fault, so the message adds the cause
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+    expectLogMessage("default", QtWarningMsg,
+                     QRegularExpression("Unrecoverable error detected in running state machine"));
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtCriticalMsg,
+                     QRegularExpression("\"TargetOutsideTest\" stopped after an error in the machine: \"Child mode of "
+                                        "state machine 'TargetOutsideTest' is not 'ExclusiveStates'\\. Qt reports this "
+                                        "for a transition to a state outside the machine"));
+    machine.start();
+    QVERIFY(spyTriggered(stoppedSpy));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(machine.error(), QStateMachine::StateMachineChildModeSetToParallelError);
+}
+
+void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine_data()
+{
+    QTest::addColumn<bool>("leftBeforeItFinishes");
+
+    QTest::newRow("the nested machine finishes") << false;
+    QTest::newRow("the outer machine leaves the nested one first") << true;
+}
+
+void QGCStateMachineTest::_testMachineAsStateOfAnotherMachine()
+{
+    QFETCH(bool, leftBeforeItFinishes);
+
+    QGCStateMachine outer(QStringLiteral("OuterMachine"), nullptr);
+    auto* nested = new QGCStateMachine(QStringLiteral("NestedMachine"), nullptr, &outer);
+    auto* nestedWait = new QGCState(QStringLiteral("NestedWait"), nested);
+    nested->addEventTransition(nestedWait, QStringLiteral("finish"), addFinalState(nested));
+    nested->setInitialState(nestedWait);
+
+    auto* finalState = addFinalState(&outer);
+    outer.addTransition(nested, &QState::finished, finalState);
+    outer.addEventTransition(nested, QStringLiteral("leave"), finalState);
+    outer.setInitialState(nested);
+
+    QSignalSpy nestedInProgressSpy(nested, &QGCStateMachine::inProgressChanged);
+    QSignalSpy nestedFinishedSpy(nested, &QStateMachine::finished);
+    QSignalSpy nestedStoppedSpy(nested, &QStateMachine::stopped);
+    QSignalSpy outerFinishedSpy(&outer, &QStateMachine::finished);
+
+    // The outer machine starts the nested one when it enters it
+    QVERIFY(startAndWaitForEntered(&outer, nestedWait));
+    QVERIFY(outer.configuration().contains(nested));
+    QVERIFY(nested->inProgress());
+    QCOMPARE(nestedInProgressSpy.count(), 1);
+
+    if (leftBeforeItFinishes) {
+        // ... and stops it when it leaves it
+        outer.postEvent(QStringLiteral("leave"));
+        QVERIFY(spyTriggered(nestedStoppedSpy));
+        QCOMPARE(nestedFinishedSpy.count(), 0);
+    } else {
+        // ... and takes its finished() like that of any other state
+        nested->postEvent(QStringLiteral("finish"));
+        QVERIFY(spyTriggered(nestedFinishedSpy));
+        QCOMPARE(nestedStoppedSpy.count(), 0);
+    }
+
+    QVERIFY(spyTriggered(outerFinishedSpy));
+    QVERIFY(!nested->inProgress());
+    QCOMPARE(nestedInProgressSpy.count(), 2);
 }
 
 // -----------------------------------------------------------------------------
 // Transition Builder Tests
 // -----------------------------------------------------------------------------
 
-void QGCStateMachineTest::_testTimeoutTransitionBuilder()
+void QGCStateMachineTest::_testTransitionBuildersTakeSignalOfDerivedState()
 {
-    QGCStateMachine machine(QStringLiteral("TimeoutBuilderTest"), nullptr);
+    // advance() is declared by a class derived from QState: the builders take it from a state of that class
+    QGCStateMachine machine(QStringLiteral("DerivedSignalBuilderTest"), nullptr);
+    auto* first = new FunctionState(QStringLiteral("First"), &machine, []() {});
+    auto* second = new FunctionState(QStringLiteral("Second"), &machine, []() {});
+    auto* third = new FunctionState(QStringLiteral("Third"), &machine, []() {});
+    auto* finalState = addFinalState(&machine);
+    bool guardCalled = false;
 
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = machine.addFinalState();
+    QSignalTransition* const plain = machine.addTransition(first, &QGCState::advance, second);
+    GuardedTransition* const guarded = machine.addGuardedTransition(second, &QGCState::advance, third, [&]() {
+        guardCalled = true;
+        return true;
+    });
+    // By name, as before
+    QSignalTransition* const named = machine.addTransition(third, SIGNAL(advance()), finalState);
+    machine.setInitialState(first);
 
-    // Use the builder to add a timeout transition
-    auto* timeout = machine.addTimeoutTransition(state1, 50, state2);
-    state2->addTransition(state2, &QState::entered, finalState);
+    QCOMPARE(plain->sourceState(), first);
+    QCOMPARE(plain->senderObject(), first);
+    QCOMPARE(plain->targetState(), second);
+    QCOMPARE(guarded->sourceState(), second);
+    QCOMPARE(guarded->senderObject(), second);
+    QCOMPARE(guarded->targetState(), third);
+    QCOMPARE(named->sourceState(), third);
+    QCOMPARE(named->senderObject(), third);
+    QCOMPARE(named->targetState(), finalState);
 
-    machine.setInitialState(state1);
-
-    QVERIFY(timeout != nullptr);
-    QCOMPARE(timeout->timeoutMsecs(), 50);
-
+    QSignalSpy secondEnteredSpy(second, &QState::entered);
+    QSignalSpy thirdEnteredSpy(third, &QState::entered);
     QVERIFY(startAndWaitForFinished(&machine));
-}
+    QCOMPARE(secondEnteredSpy.count(), 1);
+    QCOMPARE(thirdEnteredSpy.count(), 1);
+    QVERIFY(guardCalled);
 
-void QGCStateMachineTest::_testRetryTransitionBuilder()
-{
-    ignoreTimeoutWarnings();
-    QGCStateMachine machine(QStringLiteral("RetryBuilderTest"), nullptr);
-    int retryCount = 0;
+    // The machine is a state as well: a transition of the machine itself, on a signal that its class declares
+    QSignalTransition* const fromMachine =
+        machine.addTransition(&machine, &QGCStateMachine::inProgressChanged, finalState);
+    QCOMPARE(fromMachine->sourceState(), &machine);
+    QCOMPARE(fromMachine->senderObject(), &machine);
 
-    expectLogMessage("Utilities.StateMachine.RetryTransition",
-                     QtWarningMsg,
-                     QRegularExpression("timeout after 2 retries, advancing"));
-
-    auto* state1 = new MinimalTestWaitState(QStringLiteral("State1"), &machine, 50);
-    auto* finalState = machine.addFinalState();
-
-    // Use the builder to add a retry transition
-    auto* retry = machine.addRetryTransition(state1, &WaitStateBase::timeout, finalState,
-                                              [&retryCount]() { retryCount++; }, 2);
-
-    machine.setInitialState(state1);
-
-    QVERIFY(retry != nullptr);
-    QCOMPARE(retry->maxRetries(), 2);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    verifyExpectedLogMessage();
-    // Should have retried twice before advancing
-    QCOMPARE(retryCount, 2);
-}
-
-void QGCStateMachineTest::_testConditionalTransitionBuilder()
-{
-    QGCStateMachine machine(QStringLiteral("ConditionalBuilderTest"), nullptr);
-    bool guardResult = false;
-
-    auto* state1 = new FunctionState(QStringLiteral("State1"), &machine, []() {});
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-    auto* finalState = machine.addFinalState();
-
-    // Add conditional transition with guard
-    machine.addConditionalTransition(state1, &FunctionState::advance, state2,
-                                      [&guardResult]() { return guardResult; });
-    // Add fallback unguarded transition
-    state1->addTransition(state1, &FunctionState::advance, state3);
-    state2->addTransition(state2, &QState::entered, finalState);
-    state3->addTransition(state3, &QState::entered, finalState);
-
-    machine.setInitialState(state1);
-
-    // First run: guard is false, should go to state3
-    QSignalSpy state3EnteredSpy(state3, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-    QCOMPARE(state3EnteredSpy.count(), 1);
-}
-
-void QGCStateMachineTest::_testErrorRecoveryFactory()
-{
-    QGCStateMachine machine(QStringLiteral("ErrorRecoveryFactoryTest"), nullptr);
-    int actionCalls = 0;
-
-    auto* recoveryState = machine.addErrorRecoveryState(
-        QStringLiteral("Recover"),
-        [&actionCalls]() {
-            actionCalls++;
-            return false;
-        },
-        1,
-        1,
-        ErrorRecoveryBuilder::EmitAdvance
-    );
-    auto* finalState = machine.addFinalState();
-
-    recoveryState->addTransition(recoveryState, &QGCState::advance, finalState);
-    recoveryState->addTransition(recoveryState, &QGCState::error, finalState);
-    machine.setInitialState(recoveryState);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(actionCalls, 2);
-}
-
-void QGCStateMachineTest::_testErrorHandlerFactories()
-{
-    {
-        QGCStateMachine machine(QStringLiteral("ErrorHandlerContinueFactoryTest"), nullptr);
-
-        auto* finalState = machine.addFinalState();
-        auto* errorState = machine.addLogAndContinueErrorState(QStringLiteral("ErrorContinue"), finalState);
-        machine.setGlobalErrorState(errorState);
-
-        // Expected: async state critical (no completion connection) + error handler warning
-        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
-        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("error handled in"));
-
-        auto* failingState = machine.addAsyncFunctionState(QStringLiteral("Failing"), [](AsyncFunctionState* state) {
-            QTimer::singleShot(0, state, [state]() { state->fail(); });
-        });
-
-        machine.setInitialState(failingState);
-
-        QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-        machine.start();
-        QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-        verifyExpectedLogMessage();
-        verifyExpectedLogMessage();
-    }
-
-    {
-        QGCStateMachine machine(QStringLiteral("ErrorHandlerStopFactoryTest"), nullptr);
-
-        auto* errorState = machine.addLogAndStopErrorState(QStringLiteral("ErrorStop"));
-        machine.setGlobalErrorState(errorState);
-
-        // Expected: async state critical (no completion connection) + error handler warning
-        expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("has no completion connection"));
-        expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("stopping due to error in"));
-
-        auto* failingState = machine.addAsyncFunctionState(QStringLiteral("Failing"), [](AsyncFunctionState* state) {
-            QTimer::singleShot(0, state, [state]() { state->fail(); });
-        });
-
-        machine.setInitialState(failingState);
-
-        QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
-        machine.start();
-        QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
-        verifyExpectedLogMessage();
-        verifyExpectedLogMessage();
-    }
-}
-
-// -----------------------------------------------------------------------------
-// State Introspection Tests
-// -----------------------------------------------------------------------------
-
-void QGCStateMachineTest::_testTransitionsFrom()
-{
-    QGCStateMachine machine(QStringLiteral("IntrospectTest"), nullptr);
-
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-
-    state1->addTransition(state1, &QGCState::advance, state2);
-    state1->addTransition(state1, &QGCState::error, state3);
-
-    auto transitions = machine.transitionsFrom(state1);
-    QCOMPARE(transitions.count(), 2);
-
-    // State2 has no outgoing transitions
-    QCOMPARE(machine.transitionsFrom(state2).count(), 0);
-}
-
-void QGCStateMachineTest::_testTransitionsTo()
-{
-    QGCStateMachine machine(QStringLiteral("IntrospectTest"), nullptr);
-
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-
-    state1->addTransition(state1, &QGCState::advance, state3);
-    state2->addTransition(state2, &QGCState::advance, state3);
-
-    // State3 is targeted by two transitions
-    auto transitions = machine.transitionsTo(state3);
-    QCOMPARE(transitions.count(), 2);
-
-    // State1 is not targeted by any transition
-    QCOMPARE(machine.transitionsTo(state1).count(), 0);
-}
-
-void QGCStateMachineTest::_testReachableFrom()
-{
-    QGCStateMachine machine(QStringLiteral("IntrospectTest"), nullptr);
-
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-
-    state1->addTransition(state1, &QGCState::advance, state2);
-    state1->addTransition(state1, &QGCState::error, state3);
-
-    auto reachable = machine.reachableFrom(state1);
-    QCOMPARE(reachable.count(), 2);
-    QVERIFY(reachable.contains(state2));
-    QVERIFY(reachable.contains(state3));
-}
-
-void QGCStateMachineTest::_testPredecessorsOf()
-{
-    QGCStateMachine machine(QStringLiteral("IntrospectTest"), nullptr);
-
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-
-    state1->addTransition(state1, &QGCState::advance, state3);
-    state2->addTransition(state2, &QGCState::advance, state3);
-
-    auto predecessors = machine.predecessorsOf(state3);
-    QCOMPARE(predecessors.count(), 2);
-    QVERIFY(predecessors.contains(state1));
-    QVERIFY(predecessors.contains(state2));
+    // So does the retry builder
+    RetryTransition* const retryFromMachine =
+        machine.addRetryTransition(&machine, &QGCStateMachine::inProgressChanged, finalState, []() {});
+    QCOMPARE(retryFromMachine->sourceState(), &machine);
+    QCOMPARE(retryFromMachine->senderObject(), &machine);
 }
 
 void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
@@ -568,7 +309,7 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
 
     auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
     auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = machine.addFinalState();
+    auto* finalState = addFinalState(&machine);
 
     machine.addEventTransition(state1, QStringLiteral("toState2"), state2);
     machine.addEventTransition(state2, QStringLiteral("finish"), finalState);
@@ -576,19 +317,17 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     machine.setInitialState(state1);
 
     QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
     QSignalSpy state2EnteredSpy(state2, &QState::entered);
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
-    machine.start();
-    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, state1));
 
     machine.setSubProgress(0.5f);
     machine.postEvent(QStringLiteral("toState2"));
     QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
 
     machine.setSubProgress(0.5f);
-    machine.setSubProgress(0.4f); // lower value should not emit
+    machine.setSubProgress(0.4f);  // lower value should not emit
     machine.setSubProgress(1.0f);
 
     machine.postEvent(QStringLiteral("finish"));
@@ -602,225 +341,192 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     QVERIFY(qAbs(machine.progress() - 1.0f) < 0.001f);
 }
 
-void QGCStateMachineTest::_testStateHistoryLimit()
+void QGCStateMachineTest::_testRepeatedRestartRequests_data()
 {
-    QGCStateMachine machine(QStringLiteral("StateHistoryLimitTest"), nullptr);
+    QTest::addColumn<bool>("firstFromStoppedListener");
 
-    auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
-    auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* state3 = new QGCState(QStringLiteral("State3"), &machine);
-    auto* finalState = machine.addFinalState();
-
-    machine.addEventTransition(state1, QStringLiteral("toState2"), state2);
-    machine.addEventTransition(state2, QStringLiteral("toState3"), state3);
-    machine.addEventTransition(state3, QStringLiteral("finish"), finalState);
-    machine.setStateHistoryLimit(2);
-    machine.setProgressWeights({{state1, 1}, {state2, 1}, {state3, 1}});
-    machine.setInitialState(state1);
-
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
-    QSignalSpy state2EnteredSpy(state2, &QState::entered);
-    QSignalSpy state3EnteredSpy(state3, &QState::entered);
-    QSignalSpy historySpy(&machine, &QGCStateMachine::stateHistoryChanged);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
-    machine.postEvent(QStringLiteral("toState2"));
-    QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
-    machine.postEvent(QStringLiteral("toState3"));
-    QVERIFY(spyTriggered(state3EnteredSpy, TestTimeout::shortMs()));
-
-    const QStringList history = machine.stateHistory();
-    QCOMPARE(history.size(), 2);
-    QCOMPARE(history.at(0), QStringLiteral("State2"));
-    QCOMPARE(history.at(1), QStringLiteral("State3"));
-    QVERIFY(historySpy.count() >= 3);
-    QCOMPARE(machine.currentStateName(), QStringLiteral("State3"));
-
-    machine.postEvent(QStringLiteral("finish"));
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
+    QTest::newRow("restart() twice") << false;
+    // The listener is called before the restart that is pending, and finds the machine stopped
+    QTest::newRow("restart(), and again from a listener of stopped") << true;
 }
 
-void QGCStateMachineTest::_testRuntimeDiagnosticsHelpers()
+void QGCStateMachineTest::_testRepeatedRestartRequests()
 {
-    QGCStateMachine machine(QStringLiteral("RuntimeDiagnosticsHelpersTest"), nullptr);
+    QFETCH(bool, firstFromStoppedListener);
 
+    QGCStateMachine machine(QStringLiteral("RepeatedRestartTest"), nullptr);
+    // A state that waits, so that both requests meet a machine in progress
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    machine.setInitialState(first);
+
+    QSignalSpy firstEnteredSpy(first, &QState::entered);
+    QSignalSpy startedSpy(&machine, &QStateMachine::started);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+
+    QVERIFY(startAndWaitForEntered(&machine, first));
+
+    // Both before the machine has stopped
+    if (firstFromStoppedListener) {
+        (void) connect(
+            &machine, &QStateMachine::stopped, this, [&machine]() { machine.restart(); }, Qt::SingleShotConnection);
+    } else {
+        machine.restart();
+    }
+    machine.restart();
+
+    // The machine restarts once
+    QTRY_COMPARE_WITH_TIMEOUT(firstEnteredSpy.count(), 2, TestTimeout::shortMs());
+    QCOMPARE(stoppedSpy.count(), 1);
+    QCOMPARE(startedSpy.count(), 2);
+    QVERIFY(machine.inProgress());
+
+    // A later request restarts it again
+    machine.restart();
+    QTRY_COMPARE_WITH_TIMEOUT(startedSpy.count(), 3, TestTimeout::shortMs());
+    QCOMPARE(stoppedSpy.count(), 2);
+}
+
+void QGCStateMachineTest::_testRestartResetsProgress_data()
+{
+    QTest::addColumn<bool>("progressFirst");
+    QTest::addColumn<bool>("stopFirst");
+
+    QTest::newRow("restart() in progress") << true << false;
+    QTest::newRow("restart() after the machine has stopped") << true << true;
+    QTest::newRow("restart() before any progress") << false << false;
+}
+
+void QGCStateMachineTest::_testRestartResetsProgress()
+{
+    QFETCH(bool, progressFirst);
+    QFETCH(bool, stopFirst);
+
+    QGCStateMachine machine(QStringLiteral("RestartProgressTest"), nullptr);
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    auto* second = new QGCState(QStringLiteral("Second"), &machine);
+    machine.addEventTransition(first, QStringLiteral("next"), second);
+    machine.setProgressWeights({{first, 1}, {second, 1}});
+    machine.setInitialState(first);
+
+    QSignalSpy firstEnteredSpy(first, &QState::entered);
+    QSignalSpy secondEnteredSpy(second, &QState::entered);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    if (progressFirst) {
+        machine.postEvent(QStringLiteral("next"));
+        QVERIFY(spyTriggered(secondEnteredSpy));
+    }
+    QCOMPARE(machine.progress(), progressFirst ? 0.5f : 0.0f);
+
+    if (stopFirst) {
+        machine.stop();
+        QVERIFY(spyTriggered(stoppedSpy));
+    }
+
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    machine.restart();
+    QTRY_COMPARE_WITH_TIMEOUT(firstEnteredSpy.count(), 2, TestTimeout::shortMs());
+
+    // The machine is in its first state again. It has said so if its progress had to go back for it
+    QCOMPARE(machine.progress(), 0.0f);
+    QCOMPARE(progressSpy.count(), progressFirst ? 1 : 0);
+    if (progressFirst) {
+        QCOMPARE(progressSpy.takeFirst().at(0).toFloat(), 0.0f);
+    }
+
+    // It reports its progress from there
+    machine.setSubProgress(0.5f);
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.25f);
+}
+
+void QGCStateMachineTest::_testRestartWhenFinishedResetsProgress()
+{
+    QGCStateMachine machine(QStringLiteral("RestartWhenFinishedTest"), nullptr);
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    QFinalState* finalState = addFinalState(&machine);
+    machine.addEventTransition(first, QStringLiteral("done"), finalState);
+    machine.setProgressWeights({{first, 1}});
+    machine.setInitialState(first);
+
+    // A machine that finishes says that it is no longer in progress before it reports the progress of the run
+    // that has ended, so this listener restarts it in between
+    bool restarted = false;
+    connect(&machine, &QGCStateMachine::inProgressChanged, &machine, [&machine, &restarted]() {
+        if (!machine.inProgress() && !restarted) {
+            restarted = true;
+            machine.restart();
+        }
+    });
+
+    QSignalSpy firstEnteredSpy(first, &QState::entered);
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    machine.postEvent(QStringLiteral("done"));
+    QTRY_COMPARE_WITH_TIMEOUT(firstEnteredSpy.count(), 2, TestTimeout::shortMs());
+    QVERIFY(restarted);
+
+    QCOMPARE(machine.progress(), 0.0f);
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    machine.setSubProgress(0.5f);
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.5f);
+}
+
+void QGCStateMachineTest::_testSecondRunReportsProgress()
+{
+    QGCStateMachine machine(QStringLiteral("SecondRunProgressTest"), nullptr);
+    auto* first = new QGCState(QStringLiteral("First"), &machine);
+    machine.addEventTransition(first, QStringLiteral("done"), addFinalState(&machine));
+    machine.setProgressWeights({{first, 1}});
+    machine.setInitialState(first);
+
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    machine.postEvent(QStringLiteral("done"));
+    QVERIFY(spyTriggered(finishedSpy));
+    QCOMPARE(machine.progress(), 1.0f);
+
+    // A machine that is started again says that it is back at 0, and reports the progress of the new run
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    QVERIFY(startAndWaitForEntered(&machine, first));
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(_spyFloatArg(progressSpy, 0), 0.0f);
+    machine.setSubProgress(0.5f);
+    QCOMPARE(progressSpy.count(), 2);
+    QCOMPARE(machine.progress(), 0.5f);
+}
+
+void QGCStateMachineTest::_testProgressWeightsReplaced()
+{
+    QGCStateMachine machine(QStringLiteral("ProgressWeightsReplacedTest"), nullptr);
     auto* state1 = new QGCState(QStringLiteral("State1"), &machine);
     auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = machine.addFinalState();
-
     machine.addEventTransition(state1, QStringLiteral("next"), state2);
-    machine.addEventTransition(state2, QStringLiteral("finish"), finalState);
+    machine.setProgressWeights({{state1, 1}, {state2, 1}});
     machine.setInitialState(state1);
 
-    machine.setHistoryRecordingEnabled(true, 32);
-    machine.setProfilingEnabled(true);
-    machine.setStructuredLoggingEnabled(true);
-
-    QVERIFY(machine.historyRecordingEnabled());
-    QVERIFY(machine.profilingEnabled());
-    QVERIFY(machine.structuredLoggingEnabled());
-
-    QSignalSpy state1EnteredSpy(state1, &QState::entered);
     QSignalSpy state2EnteredSpy(state2, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForEntered(&machine, state1));
     machine.postEvent(QStringLiteral("next"));
-    QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
-    machine.postEvent(QStringLiteral("finish"));
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
+    QVERIFY(spyTriggered(state2EnteredSpy));
+    QCOMPARE(machine.progress(), 0.5f);
 
-    QVERIFY(!machine.dumpRecordedHistory().isEmpty());
-    QVERIFY(machine.recordedHistoryJson().size() >= 2);
-    QVERIFY(!machine.profilingSummary().isEmpty());
-
-    machine.setHistoryRecordingEnabled(false);
-    machine.setProfilingEnabled(false);
-    machine.setStructuredLoggingEnabled(false);
-
-    QVERIFY(!machine.historyRecordingEnabled());
-    QVERIFY(!machine.profilingEnabled());
-    QVERIFY(!machine.structuredLoggingEnabled());
+    // The progress of a new list starts at 0, and stays there until one of its states is entered. An entry
+    // without a state or without a weight is left out.
+    QSignalSpy progressSpy(&machine, &QGCStateMachine::progressUpdate);
+    const QRegularExpression ignored(QStringLiteral("progress weight ignored"));
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, ignored);
+    expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg, ignored);
+    machine.setProgressWeights({{state1, 2}, {nullptr, 1}, {state2, 0}});
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(_spyFloatArg(progressSpy, 0), 0.0f);
+    QCOMPARE(machine.progress(), 0.0f);
+    machine.setSubProgress(1.0f);
+    QCOMPARE(progressSpy.count(), 1);
+    QCOMPARE(machine.progress(), 0.0f);
 }
-
-// -----------------------------------------------------------------------------
-// Composite State Pattern Tests
-// -----------------------------------------------------------------------------
-
-void QGCStateMachineTest::_testTimedActionState()
-{
-    QGCStateMachine machine(QStringLiteral("TimedActionTest"), nullptr);
-
-    // Create a timed state that waits 50ms
-    auto* timedState = machine.createTimedActionState(QStringLiteral("Wait50ms"), 50);
-    auto* finalState = machine.addFinalState();
-
-    // Use QState::finished to transition (composite state pattern)
-    timedState->addTransition(timedState, &QState::finished, finalState);
-
-    machine.setInitialState(timedState);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    // Should finish after ~50ms
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-}
-
-void QGCStateMachineTest::_testTimedActionStateWithCallbacks()
-{
-    QGCStateMachine machine(QStringLiteral("TimedActionCallbackTest"), nullptr);
-    bool entryActionCalled = false;
-    bool exitActionCalled = false;
-
-    // Create a timed state with entry and exit callbacks
-    auto* timedState = machine.createTimedActionState(
-        QStringLiteral("WaitWithCallbacks"),
-        50,
-        [&entryActionCalled]() { entryActionCalled = true; },
-        [&exitActionCalled]() { exitActionCalled = true; }
-    );
-    auto* finalState = machine.addFinalState();
-
-    timedState->addTransition(timedState, &QState::finished, finalState);
-
-    machine.setInitialState(timedState);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(entryActionCalled);
-    QVERIFY(exitActionCalled);
-}
-
-void QGCStateMachineTest::_testSelfLoopTransition()
-{
-    QGCStateMachine machine(QStringLiteral("SelfLoopTest"), nullptr);
-    int actionCount = 0;
-
-    // Create a state that stays active and handles signals
-    auto* loopState = new QGCState(QStringLiteral("LoopState"), &machine);
-    auto* finalState = machine.addFinalState();
-
-    // Create a signal source
-    QObject signalSource;
-
-    // Add self-loop transition that increments counter
-    machine.addSelfLoopTransition(loopState, &signalSource, &QObject::objectNameChanged,
-                                   [&actionCount]() { actionCount++; });
-
-    // Also add exit transition after 3 loops (use machine event)
-    machine.addEventTransition(loopState, QStringLiteral("done"), finalState);
-
-    machine.setInitialState(loopState);
-
-    QSignalSpy enteredSpy(loopState, &QState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Trigger the self-loop 3 times
-    signalSource.setObjectName(QStringLiteral("1"));
-    signalSource.setObjectName(QStringLiteral("2"));
-    signalSource.setObjectName(QStringLiteral("3"));
-
-    // Process events to ensure actions are called
-    QCoreApplication::processEvents();
-
-    QCOMPARE(actionCount, 3);
-
-    // Now exit
-    machine.postEvent(QStringLiteral("done"));
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-}
-
-void QGCStateMachineTest::_testInternalTransition()
-{
-    QGCStateMachine machine(QStringLiteral("InternalTransitionTest"), nullptr);
-    int entryCount = 0;
-    int actionCount = 0;
-
-    // Create a state
-    auto* state = new QGCState(QStringLiteral("State"), &machine);
-    state->setOnEntry([&entryCount]() { entryCount++; });
-
-    auto* finalState = machine.addFinalState();
-
-    // Create a signal source
-    QObject signalSource;
-
-    // Add internal transition (should NOT re-trigger entry)
-    machine.addInternalTransition(state, &signalSource, &QObject::objectNameChanged,
-                                   [&actionCount]() { actionCount++; });
-
-    // Exit transition
-    machine.addEventTransition(state, QStringLiteral("done"), finalState);
-
-    machine.setInitialState(state);
-
-    QSignalSpy enteredSpy(state, &QState::entered);
-    machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-    QCOMPARE(entryCount, 1);  // Entered once
-
-    // Trigger internal transition
-    signalSource.setObjectName(QStringLiteral("test"));
-    QCoreApplication::processEvents();
-
-    QCOMPARE(actionCount, 1);   // Action was called
-    QCOMPARE(entryCount, 1);    // Entry was NOT called again (internal transition)
-
-    // Exit
-    machine.postEvent(QStringLiteral("done"));
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
-}
-
-#include "QGCStateMachineTest.moc"
 
 UT_REGISTER_TEST(QGCStateMachineTest, TestLabel::Unit, TestLabel::Utilities)

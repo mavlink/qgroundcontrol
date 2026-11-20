@@ -1,5 +1,4 @@
 #include "SendMavlinkCommandState.h"
-#include "MultiVehicleManager.h"
 #include "MissionCommandTree.h"
 #include "Vehicle.h"
 
@@ -29,7 +28,10 @@ void SendMavlinkCommandState::setup(MAV_CMD command, double param1, double param
 
 void SendMavlinkCommandState::connectWaitSignal()
 {
-    connect(vehicle(), &Vehicle::mavCommandResult, this, &SendMavlinkCommandState::_mavCommandResult);
+    // onWaitEntered reports a missing vehicle
+    if (Vehicle* const targetVehicle = vehicle()) {
+        connect(targetVehicle, &Vehicle::mavCommandResult, this, &SendMavlinkCommandState::_mavCommandResult);
+    }
 }
 
 void SendMavlinkCommandState::disconnectWaitSignal()
@@ -47,36 +49,36 @@ void SendMavlinkCommandState::onWaitEntered()
         return;
     }
 
+    if (!vehicleOrWarn()) {
+        waitFailed();
+        return;
+    }
+
     qCDebug(QGCStateMachineLog) << QStringLiteral("Sending %1 command").arg(MissionCommandTree::instance()->friendlyName(_command));
 
-    vehicle()->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
-                              _command,
-                              false /* showError */,
-                              static_cast<float>(_param1),
-                              static_cast<float>(_param2),
-                              static_cast<float>(_param3),
-                              static_cast<float>(_param4),
-                              static_cast<float>(_param5),
-                              static_cast<float>(_param6),
-                              static_cast<float>(_param7));
+    // Vehicle refuses a command that is pending already before this call returns
+    _sendingCommand = true;
+    vehicle()->sendMavCommand(_targetComponent, _command, false /* showError */, static_cast<float>(_param1),
+                              static_cast<float>(_param2), static_cast<float>(_param3), static_cast<float>(_param4),
+                              static_cast<float>(_param5), static_cast<float>(_param6), static_cast<float>(_param7));
+    _sendingCommand = false;
 }
 
 void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult,
                                                 int failureCode)
 {
     Q_UNUSED(vehicleId);
-    Q_UNUSED(targetComponent);
 
     Vehicle* senderVehicle = qobject_cast<Vehicle*>(sender());
     if (!senderVehicle) {
-        qWarning() << "Vehicle dynamic cast on sender() failed!";
+        qCWarning(QGCStateMachineLog) << "Vehicle dynamic cast on sender() failed!";
         return;
     }
     if (senderVehicle != vehicle()) {
         return; // Not for us
     }
-    if (command != _command) {
-        return; // Not our command
+    if ((command != _command) || (targetComponent != _targetComponent)) {
+        return;  // Not our command, or the same command sent to another component
     }
 
     QString commandName = MissionCommandTree::instance()->friendlyName(_command);
@@ -85,6 +87,10 @@ void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetCom
         qCDebug(QGCStateMachineLog) << QStringLiteral("%1 Command - No response from vehicle").arg(commandName);
         waitFailed();
     } else if (failureCode == Vehicle::MavCmdResultFailureDuplicateCommand) {
+        if (!_sendingCommand) {
+            // Refused is the same command that something else sent while this one waits for its result
+            return;
+        }
         qCWarning(QGCStateMachineLog) << QStringLiteral("%1 Command - Duplicate command pending").arg(commandName);
         waitFailed();
     } else if (ackResult != MAV_RESULT_ACCEPTED) {
@@ -93,7 +99,6 @@ void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetCom
     } else {
         // MAV_RESULT_ACCEPTED
         qCDebug(QGCStateMachineLog) << QStringLiteral("%1 Command succeeded").arg(commandName);
-        emit success();
         waitComplete();
     }
 }

@@ -13,10 +13,13 @@
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformation.ComponentInformationManager")
 
-ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObject *parent)
+ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObject* parent)
     : QGCStateMachine("ComponentInformationManager", vehicle, parent)
-    , _requestTypeStateMachine(this, this)
-    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoFileDownloadCache"), this))
+    // Without a QObject parent: a machine whose parent is this machine is one of its states to Qt
+    , _requestTypeStateMachine(this)
+    , _cachedFileDownload(new QGCCachedFileDownload(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                                                        QLatin1String("/QGCCompInfoFileDownloadCache"),
+                                                    this))
     , _fileCache(ComponentInformationCache::defaultInstance())
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
@@ -48,58 +51,37 @@ void ComponentInformationManager::_createStates()
         this,
         [this](AsyncFunctionState* state) { _requestCompInfoGeneral(state); }
     );
-    registerState(_stateRequestGeneral);
 
     // State 2: Update URIs after general info received
-    _stateUpdateUri = addFunctionState(
-        QStringLiteral("UpdateUri"),
-        [this]() { _updateAllUri(); }
-    );
+    _stateUpdateUri = new FunctionState(QStringLiteral("UpdateUri"), this, [this]() { _updateAllUri(); });
 
     // State 3: Request parameter metadata (skippable)
-    _stateRequestParam = new SkippableAsyncState(
-        QStringLiteral("RequestParam"),
-        this,
+    _stateRequestParam = new AsyncFunctionState(QStringLiteral("RequestParam"), this,
+                                                [this](AsyncFunctionState* state) { _requestCompInfoParam(state); });
+    _stateRequestParam->setSkipPredicate(
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_PARAMETER); },
-        [this](SkippableAsyncState* state) { _requestCompInfoParam(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported";
-        }
-    );
-    registerState(_stateRequestParam);
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping parameter metadata, not supported"; });
 
     // State 4: Request events metadata (skippable)
-    _stateRequestEvents = new SkippableAsyncState(
-        QStringLiteral("RequestEvents"),
-        this,
+    _stateRequestEvents = new AsyncFunctionState(QStringLiteral("RequestEvents"), this,
+                                                 [this](AsyncFunctionState* state) { _requestCompInfoEvents(state); });
+    _stateRequestEvents->setSkipPredicate(
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_EVENTS); },
-        [this](SkippableAsyncState* state) { _requestCompInfoEvents(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported";
-        }
-    );
-    registerState(_stateRequestEvents);
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping events metadata, not supported"; });
 
     // State 5: Request actuators metadata (skippable)
-    _stateRequestActuators = new SkippableAsyncState(
-        QStringLiteral("RequestActuators"),
-        this,
+    _stateRequestActuators =
+        new AsyncFunctionState(QStringLiteral("RequestActuators"), this,
+                               [this](AsyncFunctionState* state) { _requestCompInfoActuators(state); });
+    _stateRequestActuators->setSkipPredicate(
         [this]() { return !_isCompTypeSupported(COMP_METADATA_TYPE_ACTUATORS); },
-        [this](SkippableAsyncState* state) { _requestCompInfoActuators(state); },
-        []() {
-            qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported";
-        }
-    );
-    registerState(_stateRequestActuators);
+        []() { qCDebug(ComponentInformationManagerLog) << "Skipping actuators metadata, not supported"; });
 
     // State 6: Signal completion
-    _stateComplete = addFunctionState(
-        QStringLiteral("Complete"),
-        [this]() { _signalComplete(); }
-    );
+    _stateComplete = new FunctionState(QStringLiteral("Complete"), this, [this]() { _signalComplete(); });
 
     // Final state
-    _stateFinal = addFinalState(QStringLiteral("Final"));
+    _stateFinal = new QGCFinalState(QStringLiteral("Final"), this);
 }
 
 void ComponentInformationManager::_wireTransitions()
@@ -110,17 +92,14 @@ void ComponentInformationManager::_wireTransitions()
     // UpdateUri -> RequestParam
     _stateUpdateUri->addTransition(_stateUpdateUri, &FunctionState::advance, _stateRequestParam);
 
-    // RequestParam -> RequestEvents (via advance or skipped)
-    _stateRequestParam->addTransition(_stateRequestParam, &SkippableAsyncState::advance, _stateRequestEvents);
-    _stateRequestParam->addTransition(_stateRequestParam, &SkippableAsyncState::skipped, _stateRequestEvents);
+    // RequestParam -> RequestEvents
+    _stateRequestParam->addTransition(_stateRequestParam, &QGCState::advance, _stateRequestEvents);
 
-    // RequestEvents -> RequestActuators (via advance or skipped)
-    _stateRequestEvents->addTransition(_stateRequestEvents, &SkippableAsyncState::advance, _stateRequestActuators);
-    _stateRequestEvents->addTransition(_stateRequestEvents, &SkippableAsyncState::skipped, _stateRequestActuators);
+    // RequestEvents -> RequestActuators
+    _stateRequestEvents->addTransition(_stateRequestEvents, &QGCState::advance, _stateRequestActuators);
 
-    // RequestActuators -> Complete (via advance or skipped)
-    _stateRequestActuators->addTransition(_stateRequestActuators, &SkippableAsyncState::advance, _stateComplete);
-    _stateRequestActuators->addTransition(_stateRequestActuators, &SkippableAsyncState::skipped, _stateComplete);
+    // RequestActuators -> Complete
+    _stateRequestActuators->addTransition(_stateRequestActuators, &QGCState::advance, _stateComplete);
 
     // Complete -> Final
     _stateComplete->addTransition(_stateComplete, &FunctionState::advance, _stateFinal);
@@ -128,48 +107,14 @@ void ComponentInformationManager::_wireTransitions()
 
 void ComponentInformationManager::_wireProgressTracking()
 {
-    _stateRequestGeneral->setOnEntry([this]() {
-        _currentStateIndex = 0;
-        _updateProgress();
+    setProgressWeights({
+        {_stateRequestGeneral, 1},
+        {_stateUpdateUri, 1},
+        {_stateRequestParam, 1},
+        {_stateRequestEvents, 1},
+        {_stateRequestActuators, 1},
+        {_stateComplete, 1},
     });
-
-    _stateUpdateUri->setOnEntry([this]() {
-        _currentStateIndex = 1;
-        _updateProgress();
-    });
-
-    _stateRequestParam->setOnEntry([this]() {
-        _currentStateIndex = 2;
-        _updateProgress();
-    });
-
-    _stateRequestEvents->setOnEntry([this]() {
-        _currentStateIndex = 3;
-        _updateProgress();
-    });
-
-    _stateRequestActuators->setOnEntry([this]() {
-        _currentStateIndex = 4;
-        _updateProgress();
-    });
-
-    _stateComplete->setOnEntry([this]() {
-        _currentStateIndex = 5;
-        _updateProgress();
-    });
-}
-
-void ComponentInformationManager::_updateProgress()
-{
-    emit progressUpdate(progress());
-}
-
-float ComponentInformationManager::progress() const
-{
-    if (!inProgress()) {
-        return 1.0f;
-    }
-    return static_cast<float>(_currentStateIndex) / static_cast<float>(_stateCount);
 }
 
 void ComponentInformationManager::requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData)
@@ -182,10 +127,8 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
     // Guard against double-start: a request while already running just updates the
     // callback pointers; the running machine still emits requestAllComplete at the end.
     if (!inProgress()) {
-        _currentStateIndex = 0;
         start();
     }
-    emit progressUpdate(progress());
 }
 
 void ComponentInformationManager::_requestCompInfoGeneral(AsyncFunctionState* state)
@@ -208,7 +151,7 @@ void ComponentInformationManager::_updateAllUri()
     }
 }
 
-void ComponentInformationManager::_requestCompInfoParam(SkippableAsyncState* state)
+void ComponentInformationManager::_requestCompInfoParam(AsyncFunctionState* state)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 
@@ -216,7 +159,7 @@ void ComponentInformationManager::_requestCompInfoParam(SkippableAsyncState* sta
     _requestTypeStateMachine.request(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]);
 }
 
-void ComponentInformationManager::_requestCompInfoEvents(SkippableAsyncState* state)
+void ComponentInformationManager::_requestCompInfoEvents(AsyncFunctionState* state)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 
@@ -224,7 +167,7 @@ void ComponentInformationManager::_requestCompInfoEvents(SkippableAsyncState* st
     _requestTypeStateMachine.request(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]);
 }
 
-void ComponentInformationManager::_requestCompInfoActuators(SkippableAsyncState* state)
+void ComponentInformationManager::_requestCompInfoActuators(AsyncFunctionState* state)
 {
     qCDebug(ComponentInformationManagerLog) << Q_FUNC_INFO;
 

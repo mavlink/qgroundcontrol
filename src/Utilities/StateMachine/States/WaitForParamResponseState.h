@@ -1,20 +1,17 @@
 #pragma once
 
-#include "WaitStateBase.h"
-#include "QGCMAVLink.h"
-
 #include <cstdint>
 #include <functional>
 
-class Vehicle;
+#include "VehicleMessageWaitState.h"
 
 /// \brief Waits for either PARAM_VALUE (success) or PARAM_ERROR (rejection) from the vehicle.
 ///
 /// On PARAM_VALUE matching predicate: calls waitComplete() (emits advance())
 /// On PARAM_ERROR matching predicate: stores error info, calls waitFailed() (emits error())
-/// On timeout: existing timeout() signal fires (for retry path)
+/// On timeout: the request is sent again if the state has one with retries left, timedOut() fires otherwise
 ///
-class WaitForParamResponseState : public WaitStateBase
+class WaitForParamResponseState : public VehicleMessageWaitState
 {
     Q_OBJECT
     Q_DISABLE_COPY(WaitForParamResponseState)
@@ -30,18 +27,15 @@ public:
                               Predicate paramValuePredicate,
                               Predicate paramErrorPredicate);
 
-    /// @return The last PARAM_ERROR error code received
+    /// @return The error code of the PARAM_ERROR that failed the state since it was last entered, 0 if none did
     uint8_t lastParamError() const { return _lastParamError; }
 
-    /// @return Human-readable string for the last PARAM_ERROR received
+    /// @return Human-readable string for lastParamError(), empty if no PARAM_ERROR failed the state
     QString lastParamErrorString() const { return _lastParamErrorString; }
 
 protected:
-    void connectWaitSignal() override;
-    void disconnectWaitSignal() override;
-
-private slots:
-    void _messageReceived(const mavlink_message_t &message);
+    void onWaitEntered() override;
+    void handleMessage(const mavlink_message_t& message) override;
 
 private:
     static QString _paramErrorToString(uint8_t errorCode);

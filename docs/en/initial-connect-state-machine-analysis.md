@@ -29,11 +29,11 @@ At first online vehicle connection, QGC runs a linear state machine to gather cr
 1. **Request AUTOPILOT_VERSION** (`RetryableRequestMessageState`)
 2. **Request Standard Modes** (`AsyncFunctionState`)
 3. **Request Component Information** (`AsyncFunctionState`)
-4. **Request Parameters** (`AsyncFunctionState`)
-5. **Request Mission** (`SkippableAsyncState`)
-6. **Request Geofence** (`SkippableAsyncState`)
-7. **Request Rally Points** (`SkippableAsyncState`)
-8. **Signal Complete** (`RetryState` with zero retries)
+4. **Request Parameters** (`AsyncFunctionState` with a skip predicate)
+5. **Request Mission** (`AsyncFunctionState` with a skip predicate)
+6. **Request Geofence** (`AsyncFunctionState` with a skip predicate)
+7. **Request Rally Points** (`AsyncFunctionState` with a skip predicate)
+8. **Signal Complete** (`FunctionState`)
 9. **Final** (`QGCFinalState`)
 
 The state machine is started from `Vehicle` construction for normal vehicles.
@@ -67,32 +67,35 @@ Sub-progress is wired from managers during long operations:
 
 ## 3) Retries/timeouts and failure behavior
 
-### Per-state retry policy
+### Which states have a timeout
 
-`_maxRetries = 1` globally for initial connect states.
+Only the AUTOPILOT_VERSION request has a timeout in this machine: 5000 ms for each attempt, with one retry (`_autopilotVersionMaxRetries = 1`).
 
-Timeouts:
+The other states have none, because how long they take varies too much with the link speed and the amount of data. Each of them waits for a manager that handles its own timeouts and retries and always reports when it is done:
 
-- AUTOPILOT_VERSION: 5000 ms
-- StandardModes: 5000 ms
-- ComponentInfo: 30000 ms
-- Parameters: 60000 ms
-- Mission: 30000 ms
-- GeoFence: 15000 ms
-- RallyPoints: 15000 ms
+| State | Completed by |
+| --- | --- |
+| StandardModes | `StandardModes::requestCompleted` |
+| ComponentInfo | `ComponentInformationManager::requestAllComplete` |
+| Parameters | `ParameterManager::parametersReadyChanged(true)`, `initialParametersRequestFailed`, or `cacheCheckOnlyFailed` for the cache check of an armed vehicle |
+| Mission | `MissionManager::newMissionItemsAvailable` |
+| GeoFence | `GeoFenceManager::loadComplete` |
+| RallyPoints | `RallyPointManager::loadComplete` |
 
 ### Important semantic detail
 
-For all async states after AUTOPILOT_VERSION, timeout handling uses `RetryTransition`:
+The machine uses no `RetryTransition`. A manager that gives up still reports that it is done, and the machine goes on to the next state.
 
-- On first timeout: retry in-place (`restartWait()` + retry action), no state transition.
-- After retries exhausted: transition to the next state.
-
-So timeout exhaustion is **graceful degradation** (advance), not hard stop, for this machine.
+A step that fails is therefore **graceful degradation** (advance), not hard stop, for this machine.
 
 ### AUTOPILOT_VERSION state behavior
 
-AUTOPILOT_VERSION uses `RetryableRequestMessageState`, which also retries and then advances by default when retries are exhausted (`failOnMaxRetries` is not enabled here). It invokes a failure handler before advancing.
+AUTOPILOT_VERSION uses `RetryableRequestMessageState`:
+
+- An attempt fails when `Vehicle` reports that the request failed, or when 5000 ms pass without an answer.
+- After a timeout the request is still outstanding in `Vehicle`, which refuses a second request for the same message. The retry is sent once `Vehicle` gives the first request up, and no timeout runs while the state waits for that. If the first request is answered after all, the answer is used.
+- A request that `Vehicle` refuses, because another request for AUTOPILOT_VERSION is outstanding, ends at its timeout. The retry is sent then.
+- When the retry fails too, the state invokes its failure handler, which sets assumed capabilities (see section 5), and advances (`failOnMaxRetries` is not enabled here).
 
 ---
 
@@ -116,29 +119,43 @@ State skip predicate returns true if:
 
 When skipped, the state completes immediately and transitions to StandardModes.
 
-## C) Mission load skipped
+## C) Parameter download skipped
 
-Mission state is skipped if:
+The parameter and plan states look at one setting: **Skip param/plan download if vehicle is armed on connect** (`MavlinkSettings::noInitialDownloadWhenArmed`, off by default). In this document, "armed skip" means that the setting is enabled and the vehicle is armed when the state is entered.
 
-1. Link type should be skipped (`high latency` or `log replay`), **or**
-2. No primary link
+With the armed skip:
 
-## D) Geofence load skipped
+- For firmware other than PX4, the Parameters state is skipped and `ParameterManager::parameterDownloadSkipped` is set.
+- For PX4, the state runs but asks only whether the cached parameters still match (`ParameterManager::tryHashCheckCacheLoad()`). A match loads the parameters from the cache. Otherwise the state advances without parameters, and `parameterDownloadSkipped` is set.
+
+Without the armed skip the state always runs. On a high-latency or log replay link `ParameterManager` cuts the download short itself.
+
+## D) Mission load skipped
+
+Mission state is skipped if any of:
+
+1. Armed skip (see C), **or**
+2. No primary link, **or**
+3. Link type should be skipped (`high latency` or `log replay`)
+
+## E) Geofence load skipped
 
 Geofence state is skipped if any of:
 
-1. Link type should be skipped (`high latency` or `log replay`), **or**
+1. Armed skip (see C), **or**
 2. No primary link, **or**
-3. `GeoFenceManager::supported()` is false
+3. Link type should be skipped (`high latency` or `log replay`), **or**
+4. `GeoFenceManager::supported()` is false
    - `supported()` is capability-driven: requires `MAV_PROTOCOL_CAPABILITY_MISSION_FENCE`
 
-## E) Rally points load skipped
+## F) Rally points load skipped
 
 Rally state is skipped if any of:
 
-1. Link type should be skipped (`high latency` or `log replay`), **or**
+1. Armed skip (see C), **or**
 2. No primary link, **or**
-3. `RallyPointManager::supported()` is false
+3. Link type should be skipped (`high latency` or `log replay`), **or**
+4. `RallyPointManager::supported()` is false
    - `supported()` requires `MAV_PROTOCOL_CAPABILITY_MISSION_RALLY`
 
 When rally is skipped, QGC still marks:
@@ -148,7 +165,7 @@ When rally is skipped, QGC still marks:
 
 so downstream UI logic does not stall waiting for rally load.
 
-## F) Component information sub-states skipped (inside ComponentInformationManager)
+## G) Component information sub-states skipped (inside ComponentInformationManager)
 
 `ComponentInformationManager` itself has internal skippable phases:
 
@@ -274,6 +291,10 @@ It is skipped during unit tests in `FirmwarePlugin::checkIfIsLatestStable`.
 5. **Metadata support flags from CompInfoGeneral**
    - Gate internal component-info sub-requests (param/events/actuators metadata).
 
+6. **Skip param/plan download if vehicle is armed on connect**
+   - `MavlinkSettings::noInitialDownloadWhenArmed`, off by default
+   - For a vehicle that is armed, skips the parameter download (PX4 still tries its parameter cache) and the plan-load states.
+
 ---
 
 ## 8) Practical implications
@@ -290,70 +311,70 @@ It is skipped during unit tests in `FirmwarePlugin::checkIfIsLatestStable`.
 | State | Skip trigger(s) | Outcome |
 | --- | --- | --- |
 | AUTOPILOT_VERSION | no primary link OR high-latency OR log replay | immediate complete/advance |
-| StandardModes | none explicit | retry-on-timeout then advance |
-| ComponentInfo | none explicit | retry-on-timeout then advance |
-| Parameters | none explicit | retry-on-timeout then advance |
-| Mission | high-latency OR log replay OR no primary link | skipped -> GeoFence |
+| StandardModes | none explicit | advances when `StandardModes` reports completion |
+| ComponentInfo | none explicit | advances when `ComponentInformationManager` reports completion |
+| Parameters | armed skip, for firmware other than PX4 | skipped -> Mission; otherwise advances when `ParameterManager` reports the parameters ready, the request failed, or the cache check of an armed PX4 vehicle failed |
+| Mission | armed skip OR high-latency OR log replay OR no primary link | skipped -> GeoFence |
 | GeoFence | mission skip conditions OR !fence capability | skipped -> Rally |
 | Rally | mission skip conditions OR !rally capability | skipped -> Complete (+mark plan complete) |
 | Complete | never skipped | emits `initialConnectComplete` at machine finish |
 
-### Run matrix by (HighLatency, LogReplay, Flying)
+### Run matrix by (HighLatency, LogReplay, Armed)
 
 Assumptions for this matrix:
 
 - Primary link exists
 - Geofence and rally are supported by capability bits
 - State machine is started (not the `runningUnitTests && MAV_TYPE_GENERIC` bypass)
+- `Armed=1` means the armed skip of section 4 C: the vehicle is armed and the setting is enabled
 
 Legend:
 
 - `Run` = state logic executes (it may still complete quickly)
 - `Skip` = state is skipped by state skip predicate
 - `Run*` = state executes but parameter download is short-circuited inside `ParameterManager` for high-latency/log-replay links
+- `Cache` = state is skipped, except for PX4, where it executes and only tries the parameter cache
 
-| State | HL=0 LR=0 Fly=0 | HL=0 LR=0 Fly=1 | HL=1 LR=0 Fly=0 | HL=1 LR=0 Fly=1 | HL=0 LR=1 Fly=0 | HL=0 LR=1 Fly=1 | HL=1 LR=1 Fly=0 | HL=1 LR=1 Fly=1 |
+| State | HL=0 LR=0 Armed=0 | HL=0 LR=0 Armed=1 | HL=1 LR=0 Armed=0 | HL=1 LR=0 Armed=1 | HL=0 LR=1 Armed=0 | HL=0 LR=1 Armed=1 | HL=1 LR=1 Armed=0 | HL=1 LR=1 Armed=1 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | AUTOPILOT_VERSION | Run | Run | Skip | Skip | Skip | Skip | Skip | Skip |
 | StandardModes | Run | Run | Run | Run | Run | Run | Run | Run |
 | ComponentInfo | Run | Run | Run | Run | Run | Run | Run | Run |
-| Parameters | Run | Run | Run* | Run* | Run* | Run* | Run* | Run* |
-| Mission | Run | Run | Skip | Skip | Skip | Skip | Skip | Skip |
-| GeoFence | Run | Run | Skip | Skip | Skip | Skip | Skip | Skip |
-| Rally | Run | Run | Skip | Skip | Skip | Skip | Skip | Skip |
+| Parameters | Run | Cache | Run* | Cache | Run* | Cache | Run* | Cache |
+| Mission | Run | Skip | Skip | Skip | Skip | Skip | Skip | Skip |
+| GeoFence | Run | Skip | Skip | Skip | Skip | Skip | Skip | Skip |
+| Rally | Run | Skip | Skip | Skip | Skip | Skip | Skip | Skip |
 | Complete | Run | Run | Run | Run | Run | Run | Run | Run |
 
-`Flying` does not currently participate in InitialConnectStateMachine skip predicates. It does not change run/skip behavior in this machine.
+Whether the vehicle is flying plays no part in the skip predicates; only whether it is armed does.
 
 ### Unit-test readable matrix (request expectations)
 
-This is the same compact matrix used by `_stateRunMatrix_data` in `InitialConnectTest`.
+This is the same compact matrix used by `_stateRunMatrix_data` in `InitialConnectTest`, which connects a PX4 mock vehicle and leaves log replay off.
 
 ```text
-+----+----+-----+------------+------------+----------------+
-| HL | LR | Fly | AP_VERSION | AVAIL_MODS | PLAN_REQ_LISTS |
-+----+----+-----+------------+------------+----------------+
-| 0  | 0  | 0   | Run        | Run        | Run            |
-| 0  | 0  | 1   | Run        | Run        | Run            |
-| 1  | 0  | 0   | Skip       | Run        | Skip           |
-| 1  | 0  | 1   | Skip       | Run        | Skip           |
-| 0  | 1  | 0   | Skip       | Run        | Skip           |
-| 0  | 1  | 1   | Skip       | Run        | Skip           |
-| 1  | 1  | 0   | Skip       | Run        | Skip           |
-| 1  | 1  | 1   | Skip       | Run        | Skip           |
-+----+----+-----+------------+------------+----------------+
++----+-------+------------+------------+-----------+-----------------+----------------+------------------+
+| HL | Armed | AP_VERSION | AVAIL_MODS | PARAM_REQ | HASH_CHECK_ONLY | PLAN_REQ_LISTS | PARAM_DL_SKIPPED |
++----+-------+------------+------------+-----------+-----------------+----------------+------------------+
+| 0  | 0     | Run        | Run        | Run       | -               | Run            | no               |
+| 1  | 0     | Skip       | Run        | -         | -               | Skip           | no               |
+| 0  | 1     | Run        | Run        | -         | Run             | Skip           | yes              |
+| 1  | 1     | Skip       | Run        | -         | -               | Skip           | yes              |
++----+-------+------------+------------+-----------+-----------------+----------------+------------------+
 ```
 
 Where:
 
 - `HL` = HighLatency
-- `LR` = LogReplay
-- `Fly` = Flying
+- `Armed` = vehicle armed, with the setting enabled
 - `AP_VERSION` = `AUTOPILOT_VERSION` request expected
 - `AVAIL_MODS` = `AVAILABLE_MODES` request expected
+- `PARAM_REQ` = full parameter download expected (it starts with a `_HASH_CHECK` request)
+- `HASH_CHECK_ONLY` = only the `_HASH_CHECK` request of the cache check expected
 - `PLAN_REQ_LISTS` = mission/geofence/rally `MISSION_REQUEST_LIST` traffic expected
+- `PARAM_DL_SKIPPED` = `ParameterManager::parameterDownloadSkipped()` expected to be set
 
-Skip behavior basis: `skipForLinkType = (highLatency || logReplay)`.
+Skip behavior basis: `skipForLinkType = (highLatency || logReplay)`, and the armed skip for the parameter and plan requests.
 
 ---
 
@@ -362,6 +383,8 @@ Skip behavior basis: `skipForLinkType = (highLatency || logReplay)`.
 Useful log categories for tracing behavior:
 
 - `Vehicle.InitialConnectStateMachine`
+- `Utilities.StateMachine` (every state that is entered and exited, and each machine that starts, stops or finishes; a
+  timeout is a warning and is logged without it)
 - `ComponentInformation.ComponentInformationManager`
 - `Vehicle.StandardModes`
 - `Vehicle` (capability logs)

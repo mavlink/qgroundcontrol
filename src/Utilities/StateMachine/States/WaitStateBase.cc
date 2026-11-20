@@ -1,41 +1,52 @@
 #include "WaitStateBase.h"
-#include "QGCStateMachine.h"
-#include "QGCLoggingCategory.h"
+
+#include <chrono>
+
+#include <QtStateMachine/QStateMachine>
 
 WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
     : QGCState(stateName, parent)
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
 {
-    _timeoutTimer.setSingleShot(true);
-    connect(&_timeoutTimer, &QTimer::timeout, this, &WaitStateBase::_onTimeout);
     connect(this, &QState::entered, this, &WaitStateBase::_onEntered);
-    connect(this, &QState::exited, this, &WaitStateBase::_onExited);
+    connect(this, &QState::exited, this, &WaitStateBase::_stopWaiting);
 }
 
 void WaitStateBase::_onEntered()
 {
     _completed = false;
+    _waiting = true;
+    // The machine is not known before the state is entered
+    const QStateMachine* const qtMachine = QAbstractState::machine();  // clazy:exclude=skipped-base-method
+    if (qtMachine) {
+        connect(qtMachine, &QStateMachine::stopped, this, &WaitStateBase::_stopWaiting, Qt::UniqueConnection);
+    }
     connectWaitSignal();
     onWaitEntered();
-
-    // Check for runtime timeout override
-    int effectiveTimeout = _timeoutMsecs;
-    if (machine()) {
-        int override = machine()->timeoutOverride(objectName());
-        if (override >= 0) {
-            effectiveTimeout = override;
-            qCDebug(QGCStateMachineLog) << stateName() << "using timeout override:" << effectiveTimeout << "ms";
-        }
-    }
-
-    if (effectiveTimeout > 0) {
-        _timeoutTimer.start(effectiveTimeout);
+    if (!_completed) {
+        _startTimeout();
     }
 }
 
-void WaitStateBase::_onExited()
+void WaitStateBase::_startTimeout()
 {
-    _timeoutTimer.stop();
+    if (_timeoutMsecs <= 0) {
+        return;
+    }
+
+    _timeoutTask.emplace(scheduler(), this);
+    _timeoutTask->schedule(std::chrono::milliseconds(_timeoutMsecs), [this]() { _onTimeout(); });
+}
+
+void WaitStateBase::_stopWaiting()
+{
+    // Once for each time the state is entered, whichever of exited() and the stopped() of the machine comes first
+    if (!_waiting) {
+        return;
+    }
+    _waiting = false;
+
+    _timeoutTask.reset();
     disconnectWaitSignal();
     onWaitExited();
 }
@@ -46,30 +57,14 @@ void WaitStateBase::_onTimeout()
         return;
     }
 
-    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutTimer.interval() << "ms";
-
-    // Record timeout for statistics
-    if (machine()) {
-        machine()->recordTimeout(objectName());
-    }
+    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutMsecs << "ms";
 
     disconnectWaitSignal();
     onWaitTimeout();
 }
 
-void WaitStateBase::onWaitEntered()
-{
-    // Default implementation does nothing - subclasses can override
-}
-
-void WaitStateBase::onWaitExited()
-{
-    // Default implementation does nothing - subclasses can override
-}
-
 void WaitStateBase::onWaitTimeout()
 {
-    emit timeout();
     emit timedOut();
 }
 
@@ -80,10 +75,9 @@ void WaitStateBase::waitComplete()
     }
     _completed = true;
 
-    _timeoutTimer.stop();
+    _timeoutTask.reset();
     disconnectWaitSignal();
 
-    emit completed();
     emit advance();
 }
 
@@ -94,7 +88,7 @@ void WaitStateBase::waitFailed()
     }
     _completed = true;
 
-    _timeoutTimer.stop();
+    _timeoutTask.reset();
     disconnectWaitSignal();
 
     emit error();
@@ -110,16 +104,8 @@ void WaitStateBase::restartWait()
     // state need an explicit rearm of both wait connections and timeout timer.
     disconnectWaitSignal();
     connectWaitSignal();
-
-    int effectiveTimeout = _timeoutMsecs;
-    if (machine()) {
-        const int override = machine()->timeoutOverride(objectName());
-        if (override >= 0) {
-            effectiveTimeout = override;
-        }
-    }
-
-    if (effectiveTimeout > 0) {
-        _timeoutTimer.start(effectiveTimeout);
+    onWaitRestarted();
+    if (!_completed) {
+        _startTimeout();
     }
 }

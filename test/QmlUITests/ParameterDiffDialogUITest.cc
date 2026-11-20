@@ -1,14 +1,17 @@
 #include "ParameterDiffDialogUITest.h"
 
+#include <algorithm>
+
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtQuick/QQuickItem>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
-#include <algorithm>
 
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "LogManager.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "ParameterManager.h"
 #include "QGCFileDialogController.h"
@@ -212,6 +215,7 @@ void ParameterDiffDialogUITest::_testDiffDialogCases()
                 // follow-up "Parameter read failed" popup (any extra app message would
                 // fail this test's strict log checking).
                 expectAppMessage(QRegularExpression(QStringLiteral("Parameter write failed: param: NO_SUCH_PARAM")));
+                mockLink->clearReceivedMavlinkMessageCounts();
                 QVERIFY2(acceptDialog(), "Failed to accept new-to-vehicle dialog");
 
                 // The write-failed message is the last step of the async failure flow
@@ -238,16 +242,15 @@ void ParameterDiffDialogUITest::_testDiffDialogCases()
                     popupTimeoutMs = 0;
                 }
 
-                // A (buggy) post-failure refresh would report "Parameter read failed" after its retries, a few
-                // 50 ms test-mode ack timeouts. Verify it never appears.
-                const auto readFailedCaptured = []() {
-                    const auto msgs = LogManager::capturedMessages();
-                    return std::any_of(msgs.cbegin(), msgs.cend(), [](const LogEntry& entry) {
-                        return entry.message.contains(QStringLiteral("Parameter read failed: param: NO_SUCH_PARAM"));
-                    });
-                };
-                QVERIFY2(!QTest::qWaitFor(readFailedCaptured, 250),
-                         "Unexpected redundant 'Parameter read failed' after DOES_NOT_EXIST write rejection");
+                // A (buggy) post-failure refresh read of the unknown param would have been sent before the read that
+                // is requested now, so the vehicle has received it by the time it answers this one. It has received
+                // no other.
+                ParameterManager* const paramManager = vehicle->parameterManager();
+                QSignalSpy readSuccessSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+                paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SYS_AUTOSTART"));
+                QVERIFY_SIGNAL_COUNT_WAIT(readSuccessSpy, 1, TestTimeout::mediumMs());
+                QVERIFY2(mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_READ) == 1,
+                         "Unexpected redundant PARAM_REQUEST_READ after DOES_NOT_EXIST write rejection");
             }
 
             // -------------------------------------------------------------------------
