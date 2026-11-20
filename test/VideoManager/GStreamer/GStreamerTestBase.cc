@@ -1,7 +1,5 @@
 #include "GStreamerTestBase.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <QtCore/QRegularExpression>
 
 #include "GStreamer.h"
@@ -35,12 +33,3 @@ void GStreamerTestBase::init()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("gpu-zerocopy.*can't be set after construction")));
 }
-
-#else
-
-void GStreamerTestBase::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif

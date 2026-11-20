@@ -9,12 +9,10 @@ class GstQgcSinkControllerTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testQVideoSinkControllerReleasesElement_data();
     void _testQVideoSinkControllerReleasesElement();
     void _testQVideoSinkControllerNoWindowStartsInactive();
     void _testQVideoSinkControllerRebindRestoresActive_data();
     void _testQVideoSinkControllerRebindRestoresActive();
     void _testQVideoSinkControllerReleaseClearsVideoFrame();
-#endif
 };

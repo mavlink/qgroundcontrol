@@ -32,6 +32,8 @@ Rectangle {
     QGCLabel {
         id:                     label
         anchors.centerIn:       parent
+        // Names and values from the vehicle: never markup.
+        textFormat:             Text.PlainText
         width:                  Math.min(implicitWidth, root._maximumTextWidth)
         color:                  "white"
         font.pointSize:         root.useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.mediumFontPointSize

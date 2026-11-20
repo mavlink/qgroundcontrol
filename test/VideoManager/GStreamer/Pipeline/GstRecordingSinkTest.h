@@ -8,7 +8,6 @@ class GstRecordingSinkTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testRecordingSinkFinalizesMidStreamH265Mp4();
     void _testRecordingSinkTimestampsDtsOnlyFrames();
     void _testRecordingSinkTagsFile_data();
@@ -16,5 +15,4 @@ private slots:
     void _testMkvRecordingIsSynced();
     void _testRecordingIsSyncedAtItsEnd_data();
     void _testRecordingIsSyncedAtItsEnd();
-#endif
 };

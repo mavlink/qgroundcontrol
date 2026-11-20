@@ -16,7 +16,8 @@ Configure video streaming and recording settings.
   the one before it was made the main picture with a tap on its tile.
 - **USB Camera Format** (USB cameras only) — the resolution, frame rate and pixel format the camera runs in, from the
   ones it offers, best first. **Auto** lets Qt choose: the highest resolution at 30 fps or more, often an MJPEG format,
-  which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth.
+  which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth. A format chosen for
+  another camera stays selected, listed as **(not offered)**, and Qt chooses for this camera.
 - **USB Camera Rotation** and **Mirror USB Camera** (USB cameras only) — turn the picture clockwise, for a camera mounted
   on its side or upside down, and mirror it left to right after that. Photos follow; recordings keep the camera's own
   picture.
@@ -69,9 +70,11 @@ Connection settings vary by source type:
   video: 0 to 4 (default: 3). 0 shows none. A video too narrow for that many shows as many as fit. Each tile takes a
   network connection and a video decoder, of which tablets have few, and its stream takes bandwidth on the vehicle's
   link.
-- **Disable Video Stream When Disarmed** — stop the video stream, and any recording, when the vehicle disarms. The stream
-  starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is
-  started again.
+- **Disable Video Stream When Disarmed** — keep the video stream off, and stop any recording, while the active vehicle
+  is disarmed: also for a vehicle that connects disarmed, and when this setting is turned on while it is disarmed. The
+  vehicle's camera is asked to stop sending its video meanwhile, so the stream takes none of the link's bandwidth.
+  The stream starts again when the vehicle arms, when this setting is turned off, or when video is started again with
+  **Restart Video**, which lasts until the vehicle next arms or disarms.
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
 - **RTP jitter latency** — how long RTSP and UDP h.264/h.265 streams hold packets before showing them (default: 80 ms).
   A lower value shortens the video delay; a higher one leaves more time to reorder packets and to recover lost ones by
@@ -91,14 +94,33 @@ Connection settings vary by source type:
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
   restarts the video stream.
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Only the families of the installed decoders are listed, and Vulkan only in builds with the Vulkan GPU path (`QGC_GST_ENABLE_VULKAN`). Changing it restarts the video stream.
+- **Software decoder threads** — how many frames a software decoder decodes at once, each on a CPU core of its own:
+  1 to 4 (default: 1). A software decoder decodes one frame at a time, on one core unless the camera sends its frames
+  in slices. Raise it when the video stutters because the computer is too slow or too busy to decode the stream on one
+  core: two threads decode about 1.7 times as fast, four about three times. Each thread delays the video by a frame:
+  by 67 ms with 2 threads at 30 frames per second, and by one frame less in **Low Latency Mode**. Hardware decoders
+  don't use this setting. Changing it restarts the video stream.
+
+## Video Display
+
+How the video is shown in the Fly View. The [Video indicator](../fly_view/fly_view_toolbar.md#video)'s expanded page
+has the same settings.
+
+- **Video Display Fit** — Fit Width / Fit Height / Fill / No Crop (default: Fit Height)
+- **Video Grid Lines** — draw a grid over the video
+- **Telemetry Overlay** — show the telemetry bar's values along the bottom of the video
+  (see [Live Overlay](../fly_view/video_overlay.md#live-overlay))
 
 ## Local Video Storage
+
+Recordings are saved in the `Video` folder of the [Application Load/Save Path](general.md#load_save_path).
 
 - **Record File Format** — mp4 / mov / mkv
 - **Recording Codec** (USB cameras, and streams with the Qt Multimedia [video backend](#settings)) — the codec a
   recording that QGroundControl encodes tries first, from the ones Qt can encode on this computer. **Auto** records with
   the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes, which also follow a chosen codec the
-  encoder turns down. A codec the recording format's container can't hold goes into another container. GStreamer saves
+  encoder turns down, and a chosen codec Qt can't encode on this computer, listed as **(not available)**. A codec the
+  recording format's container can't hold goes into another container. GStreamer saves
   a stream as it arrives, without encoding it again, so this setting and the next don't apply to its recordings and are
   hidden.
 - **Recording Quality** (the same recordings) — Very Low / Low / Normal / High / Very High (default: High). A lower

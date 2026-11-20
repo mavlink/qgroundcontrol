@@ -501,12 +501,112 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
+  # The gst-vulkan and CUDA rows of the GPU path table are off by default (QGC_GST_ENABLE_VULKAN,
+  # QGC_GST_ENABLE_CUDA), so no other job compiles their code. This one compiles the GStreamer module
+  # with both on and runs nothing: no runner has the hardware. The AHardwareBuffer row stays
+  # uncompiled, as its header is in no GStreamer SDK.
+  gpu-opt-in:
+    name: Opt-in GPU paths (compile)
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}-gpu-opt-in-{1}-{2}/runner=linux-x64-tester',
+          github.run_id, github.run_attempt, strategy.job-index) ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 30
+
+    permissions:
+      actions: read
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
+      - name: Harden Runner
+        if: runner.environment == 'github-hosted'
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf # v3.2.1
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
+      - name: Enable RunsOn magic cache
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
+        with:
+          show_costs: summary
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # gst/cuda/gstcuda.h includes <cuda.h>, which only the CUDA Toolkit installs. GStreamer's stub
+      # headers stand in for it, from the release whose development packages Ubuntu 24.04 has.
+      - name: Checkout GStreamer's CUDA stub headers
+        uses: actions/checkout@v7
+        with:
+          repository: GStreamer/gstreamer
+          ref: 2d8273151571fcab887cc81de48e87aeb61b5c06 # 1.24.2
+          path: gstreamer-cuda-stub
+          sparse-checkout: subprojects/gst-plugins-bad/gst-libs/gst/cuda/stub
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # A variant of its own: the build saves no compiler cache, and must not restore another leg's.
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          cache-variant: gpu-opt-in
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          preset: Linux-debug
+          extra-args: >-
+            -DQGC_GST_ENABLE_VULKAN=ON
+            -DQGC_GST_ENABLE_CUDA=ON
+            -DQGC_GST_CUDA_STUB_DIR=${{ github.workspace }}/gstreamer-cuda-stub/subprojects/gst-plugins-bad/gst-libs/gst/cuda/stub
+
+      # Configure drops a path whose GStreamer pieces it does not find and goes on without it.
+      - name: Require both paths in the build
+        run: |
+          for path in Vulkan CUDA; do
+            grep -x -- "-- QGCGStreamer: ${path} zero-copy GPU path enabled" "${RUNNER_TEMP}/build/cmake-configure.log"
+          done
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          target: QGCGStreamer
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
+
   # The check a ruleset should require (none does today): a skipped matrix job reports an
   # unexpanded name, so this job has the stable one. always(): a skipped gate would count as passing.
   linux-ok:
     name: Linux
     if: always()
-    needs: [changes, build, appimage-distros, debug-validation, custom-plugin]
+    needs: [changes, build, appimage-distros, debug-validation, custom-plugin, gpu-opt-in]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -519,5 +619,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: build, appimage-distros, debug-validation, custom-plugin
+          allowed-skips: build, appimage-distros, debug-validation, custom-plugin, gpu-opt-in
           jobs: ${{ toJSON(needs) }}

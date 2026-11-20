@@ -66,7 +66,8 @@ def parse_args() -> argparse.Namespace:
         "--version",
         "-v",
         default="",
-        help="GStreamer version (default: the platform's in build-config.json)",
+        help="GStreamer version (default: the platform's in build-config.json; on Linux, which has none, "
+        "the newest of them)",
     )
     parser.add_argument(
         "--type",

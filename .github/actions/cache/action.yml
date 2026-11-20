@@ -142,8 +142,8 @@ runs:
 
     # SDK payloads change independently of source declarations and are large.
     # Keep them out of the CPM archive and reuse an immutable SDK cache.
-    # Only Windows, Android and iOS builds download one; desktop Linux and
-    # macOS use the system GStreamer. The key covers what selects, fetches
+    # macOS, Windows, Android and iOS builds download one; desktop Linux
+    # uses the system GStreamer. The key covers what selects, fetches
     # and extracts the SDK (the build-config.json gstreamer section, not the
     # whole file, and cmake/GStreamer/{Packages,Acquire}.cmake), so other
     # GStreamer CMake edits keep it. Only the extracted

@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 
 #include <QtMultimedia/QVideoFrameFormat>
@@ -37,7 +35,5 @@ void GstHwBuffersPipelineTest::_testHwBufferFactoryDispatchSystemMemory()
     QVERIFY(!buf2);
 #endif
 }
-
-#endif
 
 UT_REGISTER_TEST(GstHwBuffersPipelineTest, TestLabel::Integration)

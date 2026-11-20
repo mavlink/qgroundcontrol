@@ -1,7 +1,5 @@
 #include "GstQgcSinkControllerTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <memory>
 #include <utility>
@@ -156,7 +154,5 @@ void GstQgcSinkControllerTest::_testQVideoSinkControllerReleaseClearsVideoFrame(
     controller->prepareForRelease();
     QVERIFY(!videoSink.videoFrame().isValid());
 }
-
-#endif
 
 UT_REGISTER_TEST(GstQgcSinkControllerTest, TestLabel::Unit)

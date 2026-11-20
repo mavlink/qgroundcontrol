@@ -18,14 +18,18 @@
 /// Records the requested file from the next keyframe once the source streams, asking upstream for that keyframe, and
 /// finalizes it within kFinalizeTimeout when the request goes away or the pipeline is torn down. The file starts with
 /// the first keyframe the recorder's parser passes on, which is one that comes with its parameter sets; the recording
-/// fails when none does within kStartTimeout of the stream's first keyframe. A request for another file while one
+/// fails when none does within its start timeout of the stream's first keyframe. A request for another file while one
 /// records ends that one before the stream's next keyframe, asked for upstream too, which starts the other: no frame
 /// between them is lost. MP4/MOV are muxed so a crash leaves the file playable up to the last header update. The
 /// branch asks the listener for another file before the header space they reserve runs out, and when the stream's caps
 /// change (a new resolution or profile), where the running file ends and the other begins. A failing recorder (disk
 /// full, storage too slow to keep up) ends the recording, not the stream: its queue holds kQueueMaxBytes of backlog
 /// and then stops taking frames rather than holding up the tee and with it the display. A finalized file is synced
-/// to the disk before it is reported closed.
+/// to the disk before it is reported closed. A recording that is stopped ends behind the frames its queue still
+/// holds, which it has kFinalizeTimeout more to take. A request whose container can't hold the stream's codec (MP4
+/// takes neither MJPEG, VP8 nor MPEG-2) isn't started: the branch asks the listener for a file in the container
+/// that does (containerFor()), and the recording fails, naming the codec, when none does. The start timeout, and how
+/// soon a muxer's estimate of its header space counts, are GstReceiverTimings's.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -46,6 +50,9 @@ public:
         /// the stream's caps changed, and a file holds one format. The recording goes on, without losing a frame, in
         /// the file the listener requests in answer.
         virtual void onRecordingNeedsNewFile(const QString& file) = 0;
+        /// @p file wasn't started: its container can't hold the stream's codec, and @p format's can. The recording
+        /// goes into the file the listener requests in answer, which is to be in that format, and fails without one.
+        virtual void onRecordingNeedsFormat(const QString& file, VideoReceiver::FileFormat format) = 0;
 
     protected:
         ~Listener() = default;
@@ -60,24 +67,23 @@ public:
     };
 
     /// How long a recording may take to finalize, its last sync to the disk included, before it is closed anyway;
-    /// covers slow storage.
+    /// covers slow storage. A stopped recording first has as long to take the frames its queue still holds.
     static constexpr std::chrono::seconds kFinalizeTimeout{3};
     /// Backlog the recording queue holds for slow storage before the recording gives up.
     static constexpr guint64 kQueueMaxBytes = 64 * 1024 * 1024;
-    /// How long a recording whose recorder gets the stream's keyframes waits for the first one it can write: one that
-    /// comes with its parameter sets. The recording fails after that.
-    static constexpr std::chrono::seconds kStartTimeout{5};
     /// The recording time an MP4 or MOV file's header must have room for; with less left, the recording asks for
     /// another file. Covers the wait for the keyframe the next file starts with.
     static constexpr std::chrono::seconds kHeaderSpaceMargin{60};
-    /// How long a file records before its muxer's estimate of that room counts: until the muxer's second header
-    /// update the estimate comes from the file's first frame alone.
-    static constexpr std::chrono::seconds kHeaderEstimateDelay{10};
 
     /// The sink bin a recording links to the valve: an optional parser for @p inputCaps, the muxer for @p format and a
     /// filesink writing @p file. Returns an owned, non-floating ref, or null on failure.
     static GStreamer::GstElementPtr makeFileSink(const QString& file, VideoReceiver::FileFormat format,
                                                  const GstCaps* inputCaps);
+    /// The container a recording of a stream with @p inputCaps goes into when @p format is asked for: @p format where
+    /// its muxer takes the stream's codec, else Matroska, which holds every codec the receiver plays. nullopt when
+    /// neither muxer takes it. Without caps that tell the codec, @p format.
+    static std::optional<VideoReceiver::FileFormat> containerFor(VideoReceiver::FileFormat format,
+                                                                 const GstCaps* inputCaps);
 
     RecordingBranch(const BranchContext& context, Listener& listener);
     ~RecordingBranch();
@@ -118,11 +124,14 @@ private:
     {
         Idle,
         Recording,
+        Draining,    ///< Stopped: the frames its queue holds go into the file, up to the mark sent in behind them.
         Finalizing,  ///< EOS sent into the recorder, or its start failed; waiting for its EOS or ERROR.
     };
 
     void _reconcile();
-    void _start(const Request& request);
+    /// Starts @p request, or asks the listener for a file in the container that holds the stream. By value: the
+    /// listener's answer replaces the request this one was read from.
+    void _start(Request request);
     /// Asks upstream for a keyframe and holds the stream's next one back until the current file is finished and the
     /// requested one linked, so that it starts the requested one.
     void _switchAtKeyframe();
@@ -130,6 +139,11 @@ private:
     void _onSwitchKeyframe(quint64 hold);
     /// Lets a held keyframe or change of caps go and stops waiting for a keyframe.
     void _releaseSwitchHold();
+    /// Ends a stopped recording behind the frames its queue holds: marks the end there, and lets the file take what
+    /// is ahead of the mark before _end().
+    void _drain();
+    /// The end mark of recording @p recording came out of the queue: its file has every frame queued before the stop.
+    void _onDrained(quint64 recording);
     /// Finishes the current recording: drains its file through EOS, or drops it without a frame. @p failure ends the
     /// request with that error once the file is closed.
     void _end(const QString& failure = QString());
@@ -144,7 +158,7 @@ private:
     /// The stream's caps changed after recording @p recording's file started, and the valve's output is held at the
     /// change: the file ends before it, and the one the listener requests begins with it.
     void _onCapsChanged(quint64 recording);
-    /// Fails a recording whose recorder has had the stream's keyframes for kStartTimeout without a frame to write.
+    /// Fails a recording whose recorder has had the stream's keyframes for its start timeout without a frame to write.
     void _checkStarted();
     /// Asks the listener for another file once the current one's muxer has little header space left.
     void _checkHeaderSpace();
@@ -154,6 +168,7 @@ private:
     static GstPadProbeReturn _startProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static GstPadProbeReturn _capsProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static GstPadProbeReturn _switchProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
+    static GstPadProbeReturn _drainProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static void _onQueueOverrun(GstElement* queue, gpointer data);
 
     const BranchContext _context;
@@ -179,6 +194,8 @@ private:
     GStreamer::PadProbe _startWatch;
     /// On the valve's input: has the valve's output held at a change of the stream's caps once the file started.
     GStreamer::PadProbe _capsWatch;
+    /// On the valve's input while Draining: closes the valve at the end mark.
+    GStreamer::PadProbe _drainWatch;
     /// The probe that blocks the valve's output at a change of caps, 0 without one; set by the caps probe, and
     /// removed by _releaseSwitchHold() once what follows the file is started, or nothing does.
     std::atomic<gulong> _capsHold = 0;

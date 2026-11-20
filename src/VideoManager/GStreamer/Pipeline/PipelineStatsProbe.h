@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <gst/gst.h>
 
+#include <QtCore/QString>
+
 #include "VideoStreamStatsMeter.h"
 
 struct VideoStreamStats;
@@ -34,6 +36,9 @@ public:
 
     /// The latency @p pipeline reports; false when it doesn't answer the latency query.
     static bool queryLatency(GstElement* pipeline, GstClockTime& min, GstClockTime& max);
+
+    /// The codec of the compressed video @p caps describe: "H.264", "H.265", ...; empty without caps.
+    static QString codecName(const GstCaps* caps);
 
 private:
     void _noteKeyframe(GstClockTime time);

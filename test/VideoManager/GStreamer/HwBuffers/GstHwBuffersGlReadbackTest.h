@@ -21,7 +21,6 @@ public:
     ~GstHwBuffersGlReadbackTest() override;
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void init() override;
     void cleanupTestCase() override;
 
@@ -29,6 +28,7 @@ private slots:
     void _testNv12PlanesReadBack();
     void _testVaDecodedFrameReadBack();
     void _testDmaBufBufferReturnsAfterGpuReads();
+    void _testGlMemoryFrameReadsBack_data();
     void _testGlMemoryFrameReadsBack();
     void _testGlMemoryFrameToImage_data();
     void _testGlMemoryFrameToImage();
@@ -36,7 +36,6 @@ private slots:
     void _testGlMemoryMapLeavesFrameSyncMeta();
     void _testUnsharedGlMemoryTakesCpuPath();
     void _testGlBridgeKeepsGstGlInQtsApi();
-#endif
 
 private:
     /// A GL QRhi sharing Qt's EGL context, created once; null with the reason in _rhiUnavailable.

@@ -4,7 +4,6 @@
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 
-#include "GStreamerTestHelpers.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
@@ -12,6 +11,10 @@
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 #include "VideoTestHelpers.h"
+
+#ifdef QGC_GST_STREAMING
+#include "GStreamerTestHelpers.h"
+#endif
 
 namespace {
 
@@ -191,6 +194,7 @@ void VideoManagerInitTest::_testBackendSettingReplacesReceivers()
     const QPointer<VideoReceiver> thermal = videoManager.thermalStream()->receiver();
 
     // A stream shown in a tile, once the others have their receivers, gets one as well.
+    videoManager.setTileRoom(1);
     const auto current = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
     const auto other = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
     videoManager._setAdvertisedStreams({current.get(), nullptr, QString()}, nullptr,

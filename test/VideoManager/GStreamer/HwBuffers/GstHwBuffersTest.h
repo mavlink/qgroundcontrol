@@ -9,7 +9,6 @@ class GstHwBuffersTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testDmaDrmModifierPolicy_data();
     void _testDmaDrmModifierPolicy();
     void _testDmaDrmPlaneFourccsMatchQtImporter();
@@ -29,12 +28,6 @@ private slots:
     void _testHwFrameTexturesFinishMapReusesAcceptedBundle();
     void _testHwFrameTexturesFinishMapRejectsIncompleteBundle();
     void _testHwFrameTexturesKeepResourcesUntilDestroyed();
-    void _testHwImportCacheEvictsLeastRecentlyUsed();
-    void _testHwImportCacheReplaceDestroysPrevious();
-    void _testHwImportCacheEraseIfDestroysMatches();
-    void _testHwImportCachePinnedEntriesOutliveRemoval();
-    void _testHwImportCacheRejectsInsertWhenAllPinned();
-    void _testHwImportCacheDefersDestroyToOwnerThread();
     void _testHwPathRegistrySelection_data();
     void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
@@ -50,6 +43,9 @@ private slots:
     void _testDmaBufVulkanImportNeedsProbedDevice();
     void _testDmaBufVulkanRequestsDeviceExtensions_data();
     void _testDmaBufVulkanRequestsDeviceExtensions();
+    void _testDmaBufVulkanFdDupFailureIsNotARefusal();
+    void _testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data();
+    void _testDmaBufVulkanRetiredBufferNeedsNoLaterFrame();
     void _testCpuLayoutSizesPlanesByComponent();
     void _testCpuCopyOddDimensions_data();
     void _testCpuCopyOddDimensions();
@@ -67,10 +63,10 @@ private slots:
     void _testHwVideoBufferCpuMapFallback();
     void _testHwVideoBufferCpuMapRefusesForeignLayout_data();
     void _testHwVideoBufferCpuMapRefusesForeignLayout();
+    void _testWithPixelFormatKeepsOtherProperties();
     void _testTelemetryMapDurationEwma();
     void _testTelemetryFallbackReasonMatrix();
     void _testTelemetrySyncWaitSplit();
     void _testTelemetryMapFailuresReportedInExtraStats();
     void _testTelemetryDmaBufExtraStats();
-#endif
 };

@@ -177,7 +177,7 @@ function(_qgc_gst_android_hide_archives target)
 endfunction()
 
 # _qgc_gst_android_stage_sdk_files(<ndk_build_dir> <plugin>...)
-# Copies the <plugin>s' Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the SDK's fonts and CA bundle under
+# Copies the <plugin>s' Java sources under QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and the SDK's CA bundle under
 # QGC_ANDROID_EXTRA_ASSETS_DIR at configure time, like src/Android/CMakeLists.txt does for its Java sources;
 # android/build.gradle adds both build-directory trees to the APK (androiddeployqt deletes files written into
 # android-build/ itself). Removes stale copies under QGC_ANDROID_PACKAGE_SOURCE_DIR, which Gradle would package twice.
@@ -205,12 +205,6 @@ function(_qgc_gst_android_stage_sdk_files ndk_build)
             list(APPEND _files "${ndk_build}/${_java_file}|${_java_dirs}|org/freedesktop/gstreamer/${_java_file}")
         endforeach()
     endforeach()
-    set(_fonts "${ndk_build}/fontconfig")
-    if(EXISTS "${_fonts}/fonts/Ubuntu-R.ttf" AND EXISTS "${_fonts}/fonts.conf")
-        list(APPEND _files "${_fonts}/fonts/Ubuntu-R.ttf|${_asset_dirs}|fontconfig/fonts/truetype/Ubuntu-R.ttf"
-             "${_fonts}/fonts.conf|${_asset_dirs}|fontconfig/fonts.conf"
-        )
-    endif()
     set(_ca_bundle "${_gst_root}/etc/ssl/certs/ca-certificates.crt")
     if(EXISTS "${_ca_bundle}")
         list(APPEND _files "${_ca_bundle}|${_asset_dirs}|ssl/certs/ca-certificates.crt")

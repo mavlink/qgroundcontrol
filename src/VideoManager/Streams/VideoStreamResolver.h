@@ -22,8 +22,10 @@ QML_NAMED_ELEMENT(VideoSourceRole)
 /// What a video source, each with a VideoStreamController, is. VideoSourceRole.Primary, ... in QML.
 enum class Role : uint8_t
 {
-    Primary,  ///< The stream to display: a vehicle's current camera's current one, else the one the settings configure.
-    Thermal,  ///< The thermal stream a vehicle's current camera advertises.
+    /// The stream to display: a vehicle's current camera's current one, or its thermal one when it advertises no
+    /// other, else the one the settings configure.
+    Primary,
+    Thermal,  ///< The thermal stream shown over the primary one: a vehicle's current camera's, else another camera's.
     Camera,   ///< The local camera: the one the video source setting names or, beside a stream, the one for a tile.
     Tile,     ///< Another stream a vehicle's cameras advertise, shown in a tile.
 };
@@ -39,6 +41,7 @@ struct Settings
     uint32_t rtspTimeoutSec = 8;
     bool lowLatency = false;
     int rtpJitterLatencyMs = 80;
+    int softwareDecoderThreads = 1;
     bool autoReconnect = true;
     QByteArray conversionElement;
     bool disablePixelAspectRatio = false;

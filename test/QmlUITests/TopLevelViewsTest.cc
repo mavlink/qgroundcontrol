@@ -15,6 +15,7 @@
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
+#include "VideoTestHelpers.h"
 
 UT_REGISTER_TEST(TopLevelViewsTest, TestLabel::Integration)
 
@@ -588,6 +589,114 @@ void TopLevelViewsTest::_testUsbCameraSettingsShowForTileCamera()
 
     videoSettings->uvcTileCamera()->setRawValue(QString());
     QTRY_VERIFY(!rotation->isVisible());
+
+    stopUI();
+}
+
+void TopLevelViewsTest::_testVideoDisplaySettingsShown()
+{
+    // A USB camera, which the display settings apply to as they do to a stream. It isn't attached.
+    const auto restoreVideoSource = setVideoSourceWithRestore("Unplugged USB Camera");
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    if (!_clickSettingsButton(QStringLiteral("Video"))) {
+        return;
+    }
+
+    QQuickItem* const displayGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoDisplay"));
+    QVERIFY(displayGroup);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    for (const Fact* const fact :
+         {videoSettings->videoFit(), videoSettings->gridLines(), videoSettings->showTelemetryOverlay()}) {
+        QVERIFY2(findVisibleFactControl(displayGroup, fact), qPrintable(fact->name()));
+    }
+
+    // Without a source there is no video to display.
+    setVideoSource(VideoSettings::videoDisabled);
+    QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoDisplay"), 0));
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource")));
+
+    stopUI();
+}
+
+void TopLevelViewsTest::_testVideoIndicatorShownWithoutStream()
+{
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoDisabled);
+    VideoManager* const videoManager = VideoManager::instance();
+    VideoStreamController* const stream = videoManager->primaryStream();
+    Fact* const disableWhenDisarmed = SettingsManager::instance()->videoSettings()->disableWhenDisarmed();
+    const auto restoreVideo =
+        qScopeGuard([videoManager, stream, disableWhenDisarmed, disable = disableWhenDisarmed->rawValue()] {
+            disableWhenDisarmed->setRawValue(disable);
+            videoManager->startVideo();
+            stream->setReceiver(nullptr);
+        });
+    auto* const receiver = new FakeVideoReceiver;
+    stream->setReceiver(receiver);
+    // A main window that closed, as an earlier test's, left the video stopped.
+    videoManager->startVideo();
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    // No source, no indicator. The GPS indicator, which always shows, tells that the indicators are up.
+    const QString indicatorName = QStringLiteral("toolbar_videoStreamIndicator");
+    const QString stateName = QStringLiteral("videoStreamState");
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("toolbar_gpsIndicator"), TestTimeout::mediumMs()));
+    QVERIFY(!findVisibleItem(_rootItem, indicatorName, 0));
+
+    // A stream that hasn't arrived is awaited, with nothing to measure.
+    setVideoSource(VideoSettings::videoSourceUDPH264);
+    QQuickItem* indicator = nullptr;
+    QTRY_VERIFY((indicator = findVisibleItem(_rootItem, indicatorName, 0)));
+    QVERIFY(verifyText(stateName, QStringLiteral("Waiting"), QStringLiteral("awaited stream")));
+    QTRY_VERIFY(receiver->active());
+
+    // Its figures take the state's place while it plays.
+    VideoStreamStats stats;
+    stats.valid = true;
+    receiver->setState(VideoReceiver::State::Streaming);
+    receiver->setDecoding(true);
+    receiver->setStats(stats);
+    QTRY_VERIFY(!findVisibleItem(indicator, stateName, 0));
+    QVERIFY(indicator->isVisible());
+
+    receiver->setStats({});
+    receiver->setState(VideoReceiver::State::Reconnecting);
+    receiver->setDecoding(false);
+    QVERIFY(verifyText(stateName, QStringLiteral("Reconnecting"), QStringLiteral("lost stream")));
+
+    // The drawer's "Restart Video" has the stream connect at once.
+    QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+    QVERIFY(clickButton(QStringLiteral("indicatorDrawerExpandButton")));
+    const QString restartName = QStringLiteral("videoStreamRestartButton");
+    QVERIFY(findVisibleItem(_rootItem, restartName, TestTimeout::mediumMs()));
+    const int restartsBefore = receiver->restarts;
+    QVERIFY(clickButton(restartName));
+    QCOMPARE(receiver->restarts, restartsBefore + 1);
+
+    // It lifts what stopped the video, and what disabled it for a disarmed vehicle, which leaves no video to have.
+    videoManager->stopVideo();
+    QVERIFY(verifyText(stateName, QStringLiteral("Stopped"), QStringLiteral("stopped video")));
+    QVERIFY(clickButton(restartName));
+    QVERIFY(verifyText(stateName, QStringLiteral("Waiting"), QStringLiteral("restarted video")));
+    QTRY_VERIFY(receiver->active());
+
+    disableWhenDisarmed->setRawValue(true);
+    videoManager->_onArmedChanged(false);
+    QVERIFY(!videoManager->hasVideo());
+    QVERIFY(verifyText(stateName, QStringLiteral("Disabled while disarmed"), QStringLiteral("disarmed vehicle")));
+    QTRY_VERIFY(!receiver->active());
+    QVERIFY(clickButton(restartName));
+    QVERIFY(verifyText(stateName, QStringLiteral("Waiting"), QStringLiteral("video enabled again")));
+    QTRY_VERIFY(receiver->active());
 
     stopUI();
 }

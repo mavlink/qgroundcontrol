@@ -68,6 +68,9 @@ public:
         std::chrono::seconds timeout{3};
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;
+        /// Frames a software decoder decodes at once, each on a thread of its own; above 1, each delays the picture
+        /// by a frame at most. For the GStreamer receiver's libav decoders only.
+        int softwareDecoderThreads = 1;
         /// Reconnect with backoff after a failure. Applies at once; changing any other field restarts the stream.
         bool autoReconnect = true;
 
@@ -171,7 +174,8 @@ public:
     /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
     /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
     /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as recordingEncoding() says, keeps
-    /// to the same file.
+    /// to the same file. Where @p format's container can't hold the video, the recording goes into another one, in a
+    /// file named for it ("<base>.mkv"): recordingStarted() tells the file recorded.
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
@@ -187,14 +191,16 @@ signals:
     void streamingChanged(bool streaming);
     void decodingChanged(bool decoding);
     void recordingChanged(bool recording);
-    /// A recording file opened: the first one after startRecording(), or the recording's next part.
+    /// A recording file opened: the first one after startRecording(), or the recording's next part. @p file is the
+    /// file recorded, whose extension is that of the container used.
     void recordingStarted(const QString& file);
     /// A recording file closed. @p error is empty when the file was finalized cleanly.
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
     void statsChanged(const VideoStreamStats& stats);
-    /// A failure worth telling the user about (stream error with autoReconnect off, recording error, a screenshot that
-    /// couldn't be saved). Not emitted for failures the receiver recovers from by reconnecting.
+    /// A failure worth telling the user about (stream error with autoReconnect off, a stream that is received but
+    /// can't be decoded, recording error, a screenshot that couldn't be saved). Not emitted for failures the receiver
+    /// recovers from by reconnecting.
     void errorOccurred(const QString& message);
 
 protected:

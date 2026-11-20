@@ -8,13 +8,13 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtQuick/QQuickWindow>
-#include <QtQuick/QSGRendererInterface>
 
 #include "QGCLoggingCategory.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
+#include "GstHwVideoBuffer.h"
 #include "QGCRhiCapture.h"
 #endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -47,6 +47,33 @@ void forEachCompiledPath(Fn&& fn)
     }
 }
 
+/// Resets every context bridge, then the paths' caches. Returns the pipelines the bridges had given their device.
+std::vector<GStreamer::GstElementPtr> resetBridgesAndCaches()
+{
+    std::vector<GStreamer::GstElementPtr> pipelines;
+    const auto paths = GstHwPathRegistry::paths();
+    for (const HwPathDescriptor* path : paths) {
+        if (!path->bridge) {
+            continue;
+        }
+        for (GStreamer::GstElementPtr& pipeline : path->bridge().reset()) {
+            const bool known = std::ranges::any_of(pipelines, [&pipeline](const GStreamer::GstElementPtr& other) {
+                return other.get() == pipeline.get();
+            });
+            if (!known) {
+                pipelines.push_back(std::move(pipeline));
+            }
+        }
+    }
+    for (const HwPathDescriptor* path : paths) {
+        if (path->resetCaches) {
+            path->resetCaches();
+        }
+    }
+    GstHw::rearmOnceLatches();
+    return pipelines;
+}
+
 }  // namespace
 #endif
 
@@ -71,54 +98,18 @@ GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
     return GST_BUS_PASS;
 }
 
-void onPipelineRestart()
-{
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (path->bridge) {
-            path->bridge().rearm();
-        }
-    }
-#endif
-}
-
 void resetCachedGpuResources()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    const auto paths = GstHwPathRegistry::paths();
-    for (const HwPathDescriptor* path : paths) {
-        if (path->bridge) {
-            path->bridge().reset();
-        }
-    }
-    for (const HwPathDescriptor* path : paths) {
-        if (path->resetCaches) {
-            path->resetCaches();
-        }
-    }
+    (void) resetBridgesAndCaches();
 #endif
 }
 
 void onGraphicsDeviceRemoved()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    // Before the reset, which forgets them.
-    std::vector<GStreamer::GstElementPtr> pipelines;
-    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (!path->bridge) {
-            continue;
-        }
-        for (GStreamer::GstElementPtr& pipeline : path->bridge().takeServed()) {
-            const bool known = std::ranges::any_of(pipelines, [&pipeline](const GStreamer::GstElementPtr& other) {
-                return other.get() == pipeline.get();
-            });
-            if (!known) {
-                pipelines.push_back(std::move(pipeline));
-            }
-        }
-    }
-    resetCachedGpuResources();
-    for (const GStreamer::GstElementPtr& pipeline : pipelines) {
+    // Every pipeline a bridge served until it dropped the device, a streaming thread's request meanwhile included.
+    for (const GStreamer::GstElementPtr& pipeline : resetBridgesAndCaches()) {
         (void) gst_element_post_message(
             pipeline.get(),
             gst_message_new_element(GST_OBJECT(pipeline.get()), gst_structure_new_empty(kGraphicsDeviceLostMessage)));
@@ -143,12 +134,6 @@ void configureQtGraphics(bool softwareRendering)
     s_softwareRendering.store(softwareRendering, std::memory_order_release);
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
     (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
-    // GL takes every desktop-Linux zero-copy path (GLMemory and DMABuf/EGLImage both import into a GL RHI), Vulkan
-    // only DMABuf, in the layouts its device imports: pin GL unless the user chose a backend. GL is always present on
-    // Linux, so no QRhi::probe.
-    if (!softwareRendering && !qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-    }
     // GStreamer's zero-copy imports need Qt on EGL, but Qt's xcb integration picks GLX first (the AppImage runs xcb
     // even in Wayland sessions). Qt falls back to GLX when EGL fails to initialize; the user's value wins.
     if (!qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
@@ -314,7 +299,6 @@ QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline)
         {"reuse", Counter::TextureReuse},
         {"wait[gpu/cpu]", Counter::GpuWaits, Counter::CpuWaits},
         {"fence-timeouts", Counter::ProducerFenceTimeouts},
-        {"image-cache[hit/miss]", Counter::ImageCacheHits, Counter::ImageCacheMisses},
     };
     static constexpr std::pair<GstHwPathTelemetry::HwFallbackReason, const char*> kReasons[] = {
         {GstHwPathTelemetry::HwFallbackReason::NoExt, "no-ext"},
@@ -324,6 +308,7 @@ QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline)
         {GstHwPathTelemetry::HwFallbackReason::MapFailed, "map-failed"},
         {GstHwPathTelemetry::HwFallbackReason::VulkanNoSync, "vulkan-no-sync"},
         {GstHwPathTelemetry::HwFallbackReason::ImportUnsupported, "import-unsupported"},
+        {GstHwPathTelemetry::HwFallbackReason::FdDupFailed, "fd-dup-failed"},
     };
     forEachCompiledPath([&out, &delta](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));

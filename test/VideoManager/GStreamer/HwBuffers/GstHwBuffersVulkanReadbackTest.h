@@ -21,7 +21,6 @@ public:
     ~GstHwBuffersVulkanReadbackTest() override;
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void init() override;
     void cleanupTestCase() override;
 
@@ -30,8 +29,10 @@ private slots:
     void _testVaStreamTakesDmaBufPath();
     void _testGstVulkanBridgeSharesQtPhysicalDevice_data();
     void _testGstVulkanBridgeSharesQtPhysicalDevice();
+    void _testGstVulkanInstanceCreatesBridgeDevice();
+    void _testGstVulkanCreateDeviceHandlerFitsSignal_data();
+    void _testGstVulkanCreateDeviceHandlerFitsSignal();
     void _testVulkanImageFrameIsNotImported();
-#endif
 
 private:
     /// A Vulkan QRhi whose device was asked for the import's extensions and probed, created once; null with the reason

@@ -33,8 +33,10 @@ public:
     /// True while any source records.
     bool recording() const { return _recording; }
 
-    /// Records every active source that isn't in a tile into the video save directory as "<baseName>.<ext>", the
-    /// thermal stream as "<baseName>.thermalVideo.<ext>". An empty @p baseName picks an unused timestamped name.
+    /// Records every source that plays and isn't in a tile into the video save directory as "<baseName>.<ext>", the
+    /// thermal stream as "<baseName>.thermalVideo.<ext>": also while its view is off, when it connects for the
+    /// recording. An empty @p baseName picks an unused timestamped name. Refused, with a warning logged, while a
+    /// recording runs: that one goes on as it is.
     void startRecording(const QString& baseName = QString());
     void stopRecording();
 

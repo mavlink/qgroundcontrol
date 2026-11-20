@@ -1,17 +1,23 @@
 #include "UVCCameraControllerTest.h"
 
+#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtGui/QImage>
+#include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
+#include <QtMultimedia/QVideoFrameInput>
 #include <QtMultimedia/QVideoSink>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
+#include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
+#include "QtVideoRecorder.h"
 #include "UVCCameraController.h"
-#include "UVCStreamMonitor.h"
+#include "VideoStreamStatsMeter.h"
 #include "VideoTestHelpers.h"
 
 namespace {
@@ -20,8 +26,17 @@ using VideoTestHelpers::createVideoOutput;
 using VideoTestHelpers::InlineQmlEngine;
 using VideoTestHelpers::redTopLeftQuadrant;
 using VideoTestHelpers::showFrame;
+using VideoTestHelpers::showsText;
 
 constexpr const char* kMissingCamera = "QGC Test Missing Camera";
+
+constexpr const char* kUvcStatsGroupQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+UVCStatsGroup {
+}
+)QML";
 
 constexpr const char* kUvcVideoOutputQml = R"QML(
 import QtQuick
@@ -339,6 +354,162 @@ void UVCCameraControllerTest::_testRecordingNeedsRunningCamera()
     QCOMPARE(recordingSpy.count(), 0);
     QVERIFY(!controller.recording());
     QVERIFY(!controller._recorder->active());
+}
+
+void UVCCameraControllerTest::_testStartWhileRecordingIsRefused()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString second = tempDir.filePath(QStringLiteral("second.mp4"));
+
+    UVCCameraController controller;
+    ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    selectCamera(controller, QString::fromLatin1(kMissingCamera));
+    // The camera's recorder waits for its first frame, as while a camera is recorded. No camera is attached here: a
+    // frame input stands in for its capture session.
+    ignoreLogMessage("qt.multimedia.ffmpeg.encoder", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("^Recording new media")));
+    QMediaCaptureSession session;
+    QVideoFrameInput input;
+    session.setVideoFrameInput(&input);
+    session.setRecorder(controller._recorder->mediaRecorder());
+    controller._recorder->start(tempDir.filePath(QStringLiteral("first.mp4")), QMediaFormat::MPEG4);
+    QVERIFY(controller._recorder->active());
+
+    // Whoever asks for another recording meanwhile is told that its file isn't recorded: the first one goes on.
+    QSignalSpy finishedSpy(&controller, &UVCCameraController::recordingFinished);
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("recording already")));
+    controller.startRecording(second, VideoReceiver::FileFormat::Mp4);
+    verifyExpectedLogMessage();
+    QCOMPARE(finishedSpy.count(), 1);
+    QCOMPARE(finishedSpy.first().at(0).toString(), second);
+    QVERIFY(!finishedSpy.first().at(1).toString().isEmpty());
+    QVERIFY(controller._recorder->active());
+    QVERIFY(!QFile::exists(second));
+
+    controller.stopRecording();
+    QTRY_VERIFY_WITH_TIMEOUT(!controller._recorder->active(), TestTimeout::mediumMs());
+}
+
+void UVCCameraControllerTest::_countCameraFrames(UVCCameraController& controller, int count)
+{
+    QVideoFrameFormat format(QSize(640, 480), QVideoFrameFormat::Format_Jpeg);
+    format.setStreamFrameRate(30.0);
+    for (int i = 0; i < count; ++i) {
+        controller._frameCounters.count(QVideoFrame(format));
+    }
+}
+
+void UVCCameraControllerTest::_measureSecond(UVCCameraController& controller, qint64& nowMs)
+{
+    _countCameraFrames(controller, 1);
+    controller._sample();
+    nowMs += 1000;
+    _countCameraFrames(controller, 30);
+    controller._sample();
+}
+
+void UVCCameraControllerTest::_testFramesBecomeStats()
+{
+    qint64 nowMs = 1000;
+    UVCCameraController controller(nullptr, [&nowMs] { return nowMs; });
+    QSignalSpy statsSpy(&controller, &VideoReceiver::statsChanged);
+
+    // Nothing to measure before the first frame.
+    nowMs += 1000;
+    controller._sample();
+    QVERIFY(!controller.stats().valid);
+
+    // The first sample with frames only sets the baseline.
+    _countCameraFrames(controller, 1);
+    controller._sample();
+    QVERIFY(!controller.stats().valid);
+    QCOMPARE(statsSpy.count(), 0);
+
+    controller._retries = 2;
+    nowMs += 1000;
+    _countCameraFrames(controller, 30);
+    controller._sample();
+    QCOMPARE(statsSpy.count(), 1);
+    // Frames flowing again end a run of retries.
+    QCOMPARE(controller._retries, 0);
+    const VideoStreamStats stats = controller.stats();
+    QVERIFY(stats.valid);
+    QCOMPARE(stats.fps, 30.0);
+    QCOMPARE(stats.codec, QStringLiteral("MJPEG"));
+    QCOMPARE(stats.gpuPath, QStringLiteral("CPU"));
+    QCOMPARE(stats.uptimeMs, qint64(1000));
+    // The camera hands over frames, not the bytes it sent.
+    QCOMPARE(stats.bitrateKbps, -1.0);
+    QVERIFY(!stats.hasRtpStats());
+    QCOMPARE(controller.cameraFrameRate(), 30.0);
+
+    // A camera that stalls reads 0 fps once its frames drop out of the rate window.
+    for (int i = 0; i < VideoStreamStatsMeter::kRateWindowIntervals; ++i) {
+        nowMs += 1000;
+        controller._sample();
+    }
+    QVERIFY(controller.stats().valid);
+    QCOMPARE(controller.stats().fps, 0.0);
+    QCOMPARE(controller.stats().uptimeMs, qint64(4000));
+}
+
+void UVCCameraControllerTest::_testStatsRestartWithoutOutput()
+{
+    qint64 nowMs = 1000;
+    UVCCameraController controller(nullptr, [&nowMs] { return nowMs; });
+    QQmlEngine engine;
+    std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
+    QVERIFY(output);
+    controller.setVideoOutput(output.get());
+    _measureSecond(controller, nowMs);
+    QVERIFY(controller.stats().valid);
+
+    // The output went away, and the stream with it.
+    QSignalSpy statsSpy(&controller, &VideoReceiver::statsChanged);
+    QSignalSpy frameRateSpy(&controller, &UVCCameraController::cameraFrameRateChanged);
+    output.reset();
+    QCOMPARE(statsSpy.count(), 1);
+    QCOMPARE(frameRateSpy.count(), 1);
+    QVERIFY(!controller.stats().valid);
+    QCOMPARE(controller.cameraFrameRate(), 0.0);
+    nowMs += 1000;
+    controller._sample();
+    QVERIFY(!controller.stats().valid);
+
+    // The next output starts a new stream, whose uptime counts from its own first frame.
+    output = createVideoOutput(engine);
+    QVERIFY(output);
+    controller.setVideoOutput(output.get());
+    _measureSecond(controller, nowMs);
+    QVERIFY(controller.stats().valid);
+    QCOMPARE(controller.stats().uptimeMs, qint64(1000));
+}
+
+void UVCCameraControllerTest::_testStatsGroupShowsCamera()
+{
+    qint64 nowMs = 1000;
+    UVCCameraController controller(nullptr, [&nowMs] { return nowMs; });
+
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> group =
+        engine.create<QQuickItem>(kUvcStatsGroupQml, {{QStringLiteral("camera"), QVariant::fromValue(&controller)}});
+    QVERIFY2(group, qPrintable(engine.error()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    group->setParentItem(window.contentItem());
+    QVERIFY(!group->isVisible());
+
+    controller.setVideoSize(QSize(640, 480));
+    _measureSecond(controller, nowMs);
+    QVERIFY(group->isVisible());
+    QVERIFY(showsText(group.get(), QStringLiteral("30.0 fps (camera 30 fps)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("640 × 480 MJPEG")));
+    QVERIFY(showsText(group.get(), QStringLiteral("CPU")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0:01")));
+    // Without a name there is no row for it.
+    QVERIFY(!showsText(group.get(), QStringLiteral("Camera")));
 }
 
 UT_REGISTER_TEST(UVCCameraControllerTest, TestLabel::Unit)

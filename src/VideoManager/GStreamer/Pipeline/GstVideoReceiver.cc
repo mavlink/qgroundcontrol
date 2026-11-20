@@ -31,10 +31,10 @@ constexpr int kStuckWorkerChecks = 6;
 
 }  // namespace
 
-GstVideoReceiver::GstVideoReceiver(QObject* parent)
+GstVideoReceiver::GstVideoReceiver(QObject* parent, const GstReceiverTimings& timings)
     : VideoReceiver(parent)
     , _workerThread(new QThread(this))
-    , _worker(new GstReceiverWorker())
+    , _worker(new GstReceiverWorker(timings))
     , _heartbeatTimer(new QTimer(this))
 {
     qCDebug(GstVideoReceiverLog) << this;

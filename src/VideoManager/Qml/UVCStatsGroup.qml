@@ -5,26 +5,27 @@ import QGroundControl.Controls
 
 import "VideoStreamFormat.js" as VideoStreamFormat
 
-// The health of the USB camera on display, from its monitor; shown only while the camera is measured.
+// The health of the USB camera on display, from its controller's stats; shown only while the camera is measured.
 QGCGroupBox {
     id: root
 
-    required property UVCStreamMonitor monitor
+    required property UVCCameraController camera
     /// The camera's name; no row for an empty one.
     property string cameraName
 
-    readonly property videoStreamStats _stats: monitor.stats
-    readonly property size _videoSize:  monitor.videoSize
-    readonly property real _cameraFps:  monitor.cameraFrameRate
+    readonly property videoStreamStats _stats: camera.stats
+    readonly property size _videoSize:  camera.videoSize
+    readonly property real _cameraFps:  camera.cameraFrameRate
     readonly property string _fpsText:  qsTr("%1 fps").arg(_stats.fps.toFixed(1))
 
     heading: qsTr("USB Camera")
     visible: _stats.valid
 
     LabelledLabel {
-        label:      qsTr("Camera")
-        labelText:  root.cameraName
-        visible:    labelText !== ""
+        label:              qsTr("Camera")
+        labelText:          root.cameraName
+        labelTextFormat:    Text.PlainText
+        visible:            labelText !== ""
     }
 
     LabelledLabel {

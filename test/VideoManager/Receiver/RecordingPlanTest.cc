@@ -61,6 +61,46 @@ void RecordingPlanTest::_testPartsFollowOpenedSessions()
     QCOMPARE(plan.currentFile(), QStringLiteral("/v/clip_part2.mp4"));
 }
 
+void RecordingPlanTest::_testFormatChangeNamesTheFilesThatFollow_data()
+{
+    QTest::addColumn<QString>("file");
+    QTest::addColumn<bool>("opened");
+    QTest::addColumn<QString>("next");
+    QTest::addColumn<QString>("afterNext");
+
+    // The container asked for can't hold the stream: nothing is recorded under the name asked for.
+    QTest::newRow("before the first frame") << QStringLiteral("/v/clip.mp4") << false << QStringLiteral("/v/clip.mkv")
+                                            << QStringLiteral("/v/clip_part2.mkv");
+    // The stream came back with another codec: the part recorded before keeps its file.
+    QTest::newRow("after a part that got frames")
+        << QStringLiteral("/v/clip.mp4") << true << QStringLiteral("/v/clip_part2.mkv")
+        << QStringLiteral("/v/clip_part3.mkv");
+    QTest::newRow("no extension") << QStringLiteral("/v.d/clip") << false << QStringLiteral("/v.d/clip.mkv")
+                                  << QStringLiteral("/v.d/clip_part2.mkv");
+}
+
+void RecordingPlanTest::_testFormatChangeNamesTheFilesThatFollow()
+{
+    QFETCH(QString, file);
+    QFETCH(bool, opened);
+    QFETCH(QString, next);
+    QFETCH(QString, afterNext);
+
+    RecordingPlan plan(file, VideoReceiver::FileFormat::Mp4);
+    if (opened) {
+        QVERIFY(plan.onFileOpened(file));
+    }
+
+    plan.setFormat(VideoReceiver::FileFormat::Mkv);
+    QCOMPARE(plan.format(), VideoReceiver::FileFormat::Mkv);
+    QCOMPARE(plan.currentFile(), next);
+    QVERIFY(!plan.opened());
+
+    QVERIFY(plan.onFileOpened(next));
+    plan.nextPart();
+    QCOMPARE(plan.currentFile(), afterNext);
+}
+
 void RecordingPlanTest::_testPartDueAfterMaxDuration()
 {
     RecordingPlan plan(QStringLiteral("/v/clip.mp4"), VideoReceiver::FileFormat::Mp4, 10s);

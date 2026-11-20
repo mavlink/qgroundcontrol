@@ -9,7 +9,7 @@ class GstHwBuffersPipelineTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
+    void _testGlMemoryDispatch_data();
     void _testGlMemoryDispatch();
     void _testGlUploadBinTakesSoftwareFrames_data();
     void _testGlUploadBinTakesSoftwareFrames();
@@ -24,7 +24,7 @@ private slots:
     void _testD3DBridgeDropsRemovedDevice_data();
     void _testD3DBridgeDropsRemovedDevice();
     void _testDmaBufDispatch();
+    void _testDmaBufOrGlUploadBinRoutesByMemory();
     void _testHwBufferFactoryDispatchSystemMemory();
     void _testIOSurfaceFrameToImage();
-#endif
 };

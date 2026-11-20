@@ -12,7 +12,8 @@
 /// Owns VideoReceiver::startRecording()'s file contract for a receiver that records the stream as it arrives: it starts
 /// in the file asked for and continues in "<base>_part<N>.<ext>", N counting from 2, after each session that got
 /// frames and whenever a part has recorded for kMaxPartDuration. A receiver that encodes the frames anew keeps one
-/// part. Also tells the recording's time and size for VideoStreamStats.
+/// part. Where the container asked for can't hold the stream, the files from then on are named for the one that
+/// does (setFormat()). Also tells the recording's time and size for VideoStreamStats.
 class RecordingPlan
 {
 public:
@@ -31,6 +32,10 @@ public:
     static QString partFile(const QString& file, int part);
 
     VideoReceiver::FileFormat format() const { return _format; }
+
+    /// What is recorded next goes into @p format's container, in files named for it: "<base>.<its extension>", with
+    /// the part's number as before. A part that got frames keeps its file, and the next one begins.
+    void setFormat(VideoReceiver::FileFormat format);
 
     int part() const { return _part; }
 

@@ -117,7 +117,7 @@ When video streaming is enabled, _QGroundControl_ will display the video stream 
 You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 ::: info
-Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
+Video streaming is configured/enabled in [Application Settings > Video](../settings_view/video.md).
 :::
 
 You can further configure video display using controls on the switcher:
@@ -141,16 +141,12 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 
-Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
+Video stream recording is configured in the Application Settings:
 
-- [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
-
-  ::: info
-  Videos are saved in Matroska format (.mkv) by default.
-  This format is relatively robust against corruption in case of errors.
-  :::
-
-- [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.
+- [Video > Local Video Storage](../settings_view/video.md#local-video-storage) - the recording file format (MP4 by
+  default; MOV and Matroska can be chosen instead) and the storage limits.
+- [General > Application Load/Save Path](../settings_view/general.md#load_save_path) - recordings are saved in its
+  `Video` folder.
 
 ::: tip
 The stored video includes just the video stream itself.
@@ -159,5 +155,5 @@ To record video with QGroundControl application elements displayed, you should u
 
 #### Record Video on Camera
 
-Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
+Start/stop video recording _on the camera itself_ using the [camera tools](camera_tools.md).
 First toggle to video mode, then select the red button to start recording.

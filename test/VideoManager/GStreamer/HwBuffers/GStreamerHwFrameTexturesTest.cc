@@ -1,7 +1,5 @@
 #include "GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #if defined(QGC_HAS_ANY_GPU_PATH)
 
 #include <array>
@@ -69,7 +67,10 @@ struct TailFixture
     TailFixture()
         : sample(makeSample(&info))
         , rhi(GstTest::makeNullRhi())
-    {}
+    {
+        // Each test hears of its own failures.
+        GstHw::rearmOnceLatches();
+    }
 
     static GstTest::SamplePtr makeSample(GstVideoInfo* info = nullptr)
     {
@@ -83,8 +84,7 @@ struct TailFixture
         const GstHwMapTail tail{.path = HwVideoBufferPath::GlMemory,
                                 .frameSize = kFrameSize,
                                 .pixelFormat = kPixelFormat,
-                                .log = &HwFrameTexturesTestLog(),
-                                .diag = &diag};
+                                .log = &HwFrameTexturesTestLog()};
         return GstHwFrameTexturesBase::finishMap<TailTestTextures>(
             source, *rhi, old, tail, [reuse](TailTestTextures&) { return reuse; },
             [&] {
@@ -98,7 +98,6 @@ struct TailFixture
     GstVideoInfo info{};
     GstTest::SamplePtr sample;
     std::unique_ptr<QRhi> rhi;
-    GstHw::MapDiagnostics diag;
 };
 
 }  // namespace
@@ -205,6 +204,14 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
                                                   GstHwPathTelemetry::HwFallbackReason::MapFailed),
              mapFailedBefore + 1);
     QVERIFY2(frame.holdsSample(), "A failed map must leave the sample for Qt's CPU fallback");
+
+    // The cause is reported once, and again once the GPU caches were reset: a new device may fail anew.
+    QVERIFY(!fixture.map(frame, none, /*reuse=*/false, /*chromaRejected=*/true));
+    GstHw::rearmOnceLatches();
+    expectLogMessage("Video.GStreamer.Test.HwFrameTextures", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("createFrom failed")));
+    QVERIFY(!fixture.map(frame, none, /*reuse=*/false, /*chromaRejected=*/true));
+    verifyExpectedLogMessage();
 }
 
 void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
@@ -267,7 +274,5 @@ void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 {
     QSKIP("No GPU path compiled in this build");
 }
-
-#endif
 
 #endif

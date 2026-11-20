@@ -27,29 +27,6 @@ QGC_LOGGING_CATEGORY(GstD3D12Log, "Video.GStreamer.HwBuffers.GstD3D12Buf")
 
 namespace {
 
-/// Every once-only log latch of the path, so resetCachedState() re-arms them as one.
-struct D3D12Diagnostics : GstD3DVideoBufferCommon::MapDiagnostics
-{
-    std::atomic<bool> loggedMultiPlane{false};
-    std::atomic<bool> loggedForeignDevice{false};
-    std::atomic<bool> loggedArraySlice{false};
-    std::atomic<bool> loggedNotShared{false};
-
-    void reset() noexcept
-    {
-        GstD3DVideoBufferCommon::MapDiagnostics::reset();
-        for (std::atomic<bool>* flag : {&loggedMultiPlane, &loggedForeignDevice, &loggedArraySlice, &loggedNotShared}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-static_assert(sizeof(D3D12Diagnostics) ==
-                  sizeof(GstD3DVideoBufferCommon::MapDiagnostics) + (4 * sizeof(std::atomic<bool>)),
-              "D3D12Diagnostics::reset() must list every flag");
-
-D3D12Diagnostics s_diag;
-
 /// True once Qt Quick is known to render with Direct3D 12. A stream may start before the render thread says what it
 /// renders with.
 bool qtRendersWithD3D12()
@@ -121,8 +98,7 @@ public:
     static bool prepare(Memory* mem, int plane)
     {
         if (!gst_d3d12_memory_sync(mem)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNullResource,
-                             "resolve: gst_d3d12_memory_sync failed for plane" << plane);
+            QGC_HW_WARN_ONCE(GstD3D12Log, "resolve: gst_d3d12_memory_sync failed for plane" << plane);
             return false;
         }
         return true;
@@ -132,7 +108,7 @@ public:
     // textures, and its decoders copy a frame out of a reference-only array before they hand it on.
     static Handle* copySlice(Handle* /*resource*/, guint subIdx, int plane)
     {
-        QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedArraySlice,
+        QGC_HW_WARN_ONCE(GstD3D12Log,
                          "resolve: plane" << plane << "is slice" << subIdx << "of a texture array — CPU fallback");
         return nullptr;
     }
@@ -296,12 +272,12 @@ class D3D12VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D12
 {
 public:
     D3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D12, s_diag)
+        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D12)
     {
         // The D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path, here for the
         // whole stream rather than frame by frame in mapTextures().
         if (qtRendersWithD3D12() && !d3d12RhiSamples(format.pixelFormat())) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedMultiPlane,
+            QGC_HW_WARN_ONCE(GstD3D12Log,
                              "resolve: multi-plane D3D12Memory" << format.pixelFormat() << "can't be sampled by QRhi");
             return;
         }
@@ -330,17 +306,15 @@ public:
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
         }
         if (!d3d12RhiSamples(_format.pixelFormat())) {
-            QGC_HW_WARN_ONCE(
-                GstD3D12Log, s_diag.loggedMultiPlane,
-                "mapTextures: multi-plane D3D12Memory" << _format.pixelFormat() << "can't be sampled by QRhi");
+            QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: multi-plane D3D12Memory" << _format.pixelFormat()
+                                                                                 << "can't be sampled by QRhi");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
         }
         // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: a resource of another device
         // imports fine but renders corrupt.
         const auto* native = static_cast<const QRhiD3D12NativeHandles*>(rhi.nativeHandles());
         if (!native || !onDevice(_handles[0], native->dev)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedForeignDevice,
-                             "mapTextures: decoder resource is not on QRhi's device — CPU fallback");
+            QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: decoder resource is not on QRhi's device — CPU fallback");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
         }
         return finishMap(rhi, old, _handles);
@@ -365,7 +339,7 @@ private:
         const std::shared_ptr<InteropFence> fence =
             shared ? interopFence(device, gst_d3d12_device_get_device_handle(memory->device)) : nullptr;
         if (!fence) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedNotShared,
+            QGC_HW_WARN_ONCE(GstD3D12Log,
                              "mapTextures: the decoder's resource can't be shared with QRhi's Direct3D 11 device "
                              "— CPU fallback");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
@@ -374,8 +348,7 @@ private:
         ID3D11Texture2D* const picture =
             GstD3D11PictureCopy::copy(device, context, shared, 0, QRect(QPoint(0, 0), _format.frameSize()), old, 0);
         if (!picture) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedTextureCreateFail,
-                             "mapTextures: CreateTexture2D for the picture copy failed");
+            QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: CreateTexture2D for the picture copy failed");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
         }
         _readFence = fence;
@@ -385,7 +358,6 @@ private:
                                 .frameSize = _format.frameSize(),
                                 .pixelFormat = _format.pixelFormat(),
                                 .log = &GstD3D12Log(),
-                                .diag = &s_diag,
                                 .successTag = "D3D12 on D3D11"};
         const std::array<ID3D11Texture2D*, GstHw::kMaxPlanes> planes{picture};
         QVideoFrameTexturesUPtr textures =
@@ -420,7 +392,6 @@ void resetCachedState() noexcept
         s_interopFence.reset();
     }
 #endif
-    s_diag.reset();
 }
 
 }  // namespace

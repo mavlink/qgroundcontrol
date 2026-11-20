@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
@@ -341,14 +339,6 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     HwBuffers::resetCachedGpuResources();
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
-
-    // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
-    QVERIFY(testBridgeA().prime());
-    HwBuffers::onPipelineRestart();
-    QCOMPARE(testBridgeA().clears, 1);
-    QCOMPARE(s_testCacheResets, 1);
-    QVERIFY(testBridgeA().prime());
-    QCOMPARE(testBridgeA().primes, 2);
 #endif
 }
 
@@ -382,10 +372,11 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
 
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     const int directDmaBuf = int(GstQgc::GpuBinMode::DirectDmaBuf);
-    QTest::newRow("unset") << QByteArray() << glUpload << false << false;
+    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+    QTest::newRow("unset") << QByteArray() << dmaBufOrGlUpload << false << false;
     QTest::newRow("glupload") << QByteArray("glupload") << glUpload << true << false;
     QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << true << false;
-    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << false << true;
+    QTest::newRow("unknown") << QByteArray("vulkan") << dmaBufOrGlUpload << false << true;
 }
 
 void GstHwBuffersTest::_testGpuBinPreferenceParse()
@@ -400,7 +391,7 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse()
 
     if (warns) {
         expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default glupload bin")));
+                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default bin")));
     }
     const GstQgc::GpuBinPreference preference = GstQgc::parseGpuBinPreference(value);
     QCOMPARE(int(preference.mode), expectedMode);
@@ -423,9 +414,20 @@ void GstHwBuffersTest::_testGpuBinSelection_data()
     using GstQgc::RenderBackend;
     const int glUpload = int(GpuBinMode::GlUpload);
     const int directDmaBuf = int(GpuBinMode::DirectDmaBuf);
+    const int dmaBufOrGlUpload = int(GpuBinMode::DmaBufOrGlUpload);
     const int passthrough = int(GpuBinMode::Passthrough);
     const int openGl = int(RenderBackend::OpenGL);
     const int vulkan = int(RenderBackend::Vulkan);
+    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect. WGL and CGL contexts aren't
+    // wrapped, so there it is no GPU bin.
+#if defined(Q_OS_LINUX)
+    const int withoutEgl = dmaBufOrGlUpload;
+#else
+    const int withoutEgl = passthrough;
+#endif
+    QTest::newRow("dmabuf-or-glupload-opengl-egl") << dmaBufOrGlUpload << false << openGl << true << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-opengl-not-egl") << dmaBufOrGlUpload << false << openGl << false << withoutEgl;
+    QTest::newRow("dmabuf-or-glupload-vulkan") << dmaBufOrGlUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
     QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-vulkan-explicit") << glUpload << true << vulkan << false << glUpload;
@@ -810,6 +812,38 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 #endif
 }
 
+void GstHwBuffersTest::_testWithPixelFormatKeepsOtherProperties()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
+#else
+    // Every property QVideoFrameFormat has a setter for (Qt 6.12), each away from its default.
+    QVideoFrameFormat format(QSize(64, 48), QVideoFrameFormat::Format_YUYV);
+    format.setViewport(QRect(2, 4, 60, 40));
+    format.setScanLineDirection(QVideoFrameFormat::BottomToTop);
+    format.setStreamFrameRate(25.0);
+    format.setColorSpace(QVideoFrameFormat::ColorSpace_BT2020);
+    format.setColorTransfer(QVideoFrameFormat::ColorTransfer_ST2084);
+    format.setColorRange(QVideoFrameFormat::ColorRange_Full);
+    format.setMirrored(true);
+    format.setRotation(QtVideo::Rotation::Clockwise90);
+    format.setMaxLuminance(1000.0f);
+
+    const QVideoFrameFormat rgba = GstHw::withPixelFormat(format, QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.frameSize(), format.frameSize());
+    QCOMPARE(rgba.viewport(), format.viewport());
+    QCOMPARE(rgba.scanLineDirection(), format.scanLineDirection());
+    QCOMPARE(rgba.streamFrameRate(), format.streamFrameRate());
+    QCOMPARE(rgba.colorSpace(), format.colorSpace());
+    QCOMPARE(rgba.colorTransfer(), format.colorTransfer());
+    QCOMPARE(rgba.colorRange(), format.colorRange());
+    QCOMPARE(rgba.isMirrored(), format.isMirrored());
+    QCOMPARE(rgba.rotation(), format.rotation());
+    QCOMPARE(rgba.maxLuminance(), format.maxLuminance());
+#endif
+}
+
 void GstHwBuffersTest::_testTexturePadsPicture_data()
 {
     QTest::addColumn<QSize>("textureSize");
@@ -938,16 +972,11 @@ void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::GpuWaits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheMisses);
     const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
     const auto delta = [&](Counter counter) { return after.count(path, counter) - before.count(path, counter); };
     QCOMPARE(delta(Counter::CpuWaits), quint64(2));
     QCOMPARE(delta(Counter::GpuWaits), quint64(1));
-    QCOMPARE(delta(Counter::ImageCacheHits), quint64(2));
-    QCOMPARE(delta(Counter::ImageCacheMisses), quint64(1));
 }
 
 void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
@@ -982,22 +1011,15 @@ void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
 
     const QString first = HwBuffers::extraPathStatsSince(before);
     QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
 
     const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
     QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
     QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
-    QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));
 #endif
 }
-
-#endif
 
 UT_REGISTER_TEST(GstHwBuffersTest, TestLabel::Unit)

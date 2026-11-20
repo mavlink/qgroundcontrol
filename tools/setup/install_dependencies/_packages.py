@@ -88,15 +88,10 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "gstreamer1.0-plugins-base",
         "gstreamer1.0-plugins-good",
         "gstreamer1.0-plugins-ugly",
-        "gstreamer1.0-plugins-rtp",
         "gstreamer1.0-gl",
         "gstreamer1.0-libav",
-        "gstreamer1.0-rtsp",
-        "gstreamer1.0-x",
         "libblas3",
         "libopenblas0",
-        "python3-gi",
-        "python3-gst-1.0",
     ],
     "sdl": [
         "libusb-1.0-0-dev",
@@ -220,8 +215,9 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
 # name, and Debian 12/13 have no libgstreamer-plugins-good1.0-dev.
 OPTIONAL_DEBIAN_PACKAGES: frozenset[str] = frozenset({"libgstreamer-plugins-good1.0-dev"})
 
-# Fedora/RHEL (dnf), mirrors DEBIAN_PACKAGES. gstreamer ugly/libav come from RPM
-# Fusion; installer uses --skip-unavailable so a missing optional plugin is OK.
+# Fedora/RHEL (dnf), mirrors DEBIAN_PACKAGES. The gstreamer ugly plugins and the libavcodec
+# with H.264 and H.265 come from RPM Fusion; installer uses --skip-unavailable so a missing
+# optional plugin is OK.
 FEDORA_PACKAGES: dict[str, list[str]] = {
     "core": [
         "dnf-plugins-core",
@@ -290,10 +286,10 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "gstreamer1-plugins-bad-free",
         "gstreamer1-plugins-ugly",
         "gstreamer1-libav",
+        # RPM Fusion: Fedora's own libavcodec has no H.264 or H.265 decoder for the libav plugin.
+        "libavcodec-freeworld",
         "blas",
         "openblas",
-        "python3-gobject",
-        "python3-gstreamer1",
     ],
     "sdl": [
         "libusb1-devel",
@@ -368,8 +364,6 @@ ARCH_PACKAGES: dict[str, list[str]] = {
         "gst-libav",
         "gst-rtsp-server",
         "openblas",
-        "python-gobject",
-        "gst-python",
     ],
     "sdl": [
         "libusb",

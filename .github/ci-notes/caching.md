@@ -175,11 +175,16 @@ step leaves it out.
   parameter definitions (66 MB of a 440 MB tree at the commit pinned in November 2026) into a
   directory named for the commit, so the snapshot holds it and a complete checkout is reused
   without network access.
-- GStreamer SDKs have separate immutable caches, excluded from CPM archives. Only Windows, Android,
-  and iOS jobs use them (desktop Linux and macOS use the system GStreamer), keyed on the `gstreamer`
-  section of `build-config.json` (fingerprinted in `cpm_helper.py`), `cmake/GStreamer/Packages.cmake`,
+- GStreamer SDKs have separate immutable caches, excluded from CPM archives. macOS, Windows, Android,
+  and iOS jobs use them (desktop Linux uses the system GStreamer), keyed on the `gstreamer`
+  section of `build-config.json` without its plugin allowlist, which changes no extracted tree
+  (fingerprinted in `cpm_helper.py`), `cmake/GStreamer/Packages.cmake`,
   `cmake/GStreamer/Acquire.cmake` and `cmake/GStreamer/acquire/`. They hold the extracted SDK trees
   without the downloaded archives; configure uses a tree stamped with the pinned checksums as is.
+  The macOS tree is the SDK root merged from the runtime and devel packages, without their expanded
+  copies and static libraries: 0.8 GB (a 0.23 GB zstd archive) where all of it took 9.7 GB (1.28.8,
+  measured from the packages in November 2026). The Release leg saves it and the Debug leg restores
+  it (`test_cache_contracts.py::test_macos_legs_share_the_gstreamer_sdk_cache_the_release_leg_saves`).
 
 ## Other Caches
 

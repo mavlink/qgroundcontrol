@@ -146,4 +146,90 @@ void SubtitleTrackTest::_testSourceChanges()
     QVERIFY(track.events().isEmpty());
 }
 
+void SubtitleTrackTest::_testSourceReplacesShownEvents()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto oneEvent = [](const char* text) {
+        return QByteArray("[Events]\nFormat: Start, End, Text\nDialogue: 0:00:00.00,0:00:10.00,") + text + "\n";
+    };
+    const QUrl first = writeText(dir, QStringLiteral("first.ass"), oneEvent("first"));
+    const QUrl second = writeText(dir, QStringLiteral("second.ass"), oneEvent("second"));
+
+    SubtitleTrack track;
+    track.setPosition(1000);
+    track.setSource(first);
+    QCOMPARE(track.events().size(), 1);
+
+    // The other file's event has the same index and is shown at the same position.
+    QSignalSpy eventsSpy(&track, &SubtitleTrack::eventsChanged);
+    track.setSource(second);
+    QCOMPARE(eventsSpy.count(), 1);
+    QCOMPARE(track.events().size(), 1);
+    QCOMPARE(track.events().at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("second"));
+}
+
+void SubtitleTrackTest::_testImplausibleValues_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<int>("playResX");
+    QTest::addColumn<int>("playResY");
+    QTest::addColumn<double>("fontSize");
+
+    QTest::newRow("resolution too small to derive the other")
+        << QByteArray("[Script Info]\nPlayResX: 1\n") << 1 << 1 << 20.0;
+    QTest::newRow("resolution out of range")
+        << QByteArray("[Script Info]\nPlayResX: 2000000000\nPlayResY: -5\n") << 384 << 288 << 20.0;
+    QTest::newRow("style ahead of its format")
+        << QByteArray("[V4+ Styles]\nStyle: Default,Monospace,36\nFormat: Name, Fontname, Fontsize\n") << 384 << 288
+        << 20.0;
+    QTest::newRow("font size out of range")
+        << QByteArray("[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Monospace,-3\n") << 384 << 288
+        << 20.0;
+    // Fields that sum to a time after the start, and an hour count that overflows.
+    QTest::newRow("times out of range") << QByteArray(
+                                               "[Events]\nFormat: Start, End, Text\n"
+                                               "Dialogue: 0:00:00.00,1:-30:00.00,negative minutes\n"
+                                               "Dialogue: 0:00:00.00,9999999999999:00:00.00,hours\n")
+                                        << 384 << 288 << 20.0;
+}
+
+void SubtitleTrackTest::_testImplausibleValues()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(int, playResX);
+    QFETCH(int, playResY);
+    QFETCH(double, fontSize);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QUrl source = writeText(dir, QStringLiteral("odd.ass"), content);
+    QVERIFY(!source.isEmpty());
+
+    SubtitleTrack track;
+    track.setPosition(500);
+    track.setSource(source);
+    QCOMPARE(track.playResX(), playResX);
+    QCOMPARE(track.playResY(), playResY);
+    QCOMPARE(track.fontSize(), fontSize);
+    QVERIFY(track.events().isEmpty());
+}
+
+void SubtitleTrackTest::_testOversizedFileIsNotRead()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QUrl source = writeText(dir, QStringLiteral("huge.ass"), kWriterFile.toByteArray());
+    QVERIFY(!source.isEmpty());
+    // Extended without writing the bytes.
+    QVERIFY(QFile::resize(source.toLocalFile(), SubtitleTrack::kMaxFileBytes + 1));
+
+    SubtitleTrack track;
+    track.setPosition(1500);
+    expectLogMessage("AnalyzeView.SubtitleTrack", QtWarningMsg, QRegularExpression(QStringLiteral("Not reading")));
+    track.setSource(source);
+    verifyExpectedLogMessage();
+    QVERIFY(track.events().isEmpty());
+}
+
 UT_REGISTER_TEST(SubtitleTrackTest, TestLabel::Unit, TestLabel::AnalyzeView)

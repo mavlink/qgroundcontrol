@@ -22,11 +22,7 @@ QGC_LOGGING_CATEGORY(GstD3D11Log, "Video.GStreamer.HwBuffers.GstD3D11Buf")
 
 namespace {
 
-using GstD3DVideoBufferCommon::MapDiagnostics;
 using GstHw::kMaxPlanes;
-
-MapDiagnostics s_diag;
-std::atomic<bool> s_loggedForeignDevice{false};
 
 /// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool(). A texture-array slice is only recorded
 /// here: D3D11VideoBuffer copies it on the render thread.
@@ -72,8 +68,7 @@ public:
     {
         GstMapInfo info;
         if (!gst_memory_map(GST_MEMORY_CAST(mem), &info, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_D3D11))) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedNullResource,
-                             "resolve: mapping the GstD3D11Memory for D3D11 failed for plane" << plane);
+            QGC_HW_WARN_ONCE(GstD3D11Log, "resolve: mapping the GstD3D11Memory for D3D11 failed for plane" << plane);
             return false;
         }
         gst_memory_unmap(GST_MEMORY_CAST(mem), &info);
@@ -116,7 +111,7 @@ class D3D11VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D11
 {
 public:
     D3D11VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D11, s_diag)
+        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D11)
     {
         D3D11PlaneResolver resolver;
         if (!resolve(resolver)) {
@@ -148,8 +143,7 @@ public:
         auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
         if (!device || !context || !GstD3D11PictureCopy::onDevice(_handles[0], device)) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_loggedForeignDevice,
-                             "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
+            QGC_HW_WARN_ONCE(GstD3D11Log, "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
         }
 
@@ -196,7 +190,7 @@ private:
                                       QRect(QPoint(0, 0), picture), old, plane);
         gst_d3d11_device_unlock(memory->device);
         if (!target) {
-            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedTextureCreateFail,
+            QGC_HW_WARN_ONCE(GstD3D11Log,
                              "mapTextures: CreateTexture2D for the slice copy failed (plane=" << plane << ")");
         }
         return target;
@@ -206,19 +200,12 @@ private:
     std::array<bool, kMaxPlanes> _copied{};
 };
 
-void resetCachedState() noexcept
-{
-    s_diag.reset();
-    s_loggedForeignDevice.store(false, std::memory_order_relaxed);
-}
-
 }  // namespace
 
 constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .path = HwVideoBufferPath::D3D11,
     .matches = [](GstMemory* mem) -> bool { return gst_is_d3d11_memory(mem); },
     .construct = &GstHwPaths::construct<D3D11VideoBuffer>,
-    .resetCaches = &resetCachedState,
     .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D11PlaneResolver>,
     .bridge = &GstD3D11ContextBridge::instance,
 };

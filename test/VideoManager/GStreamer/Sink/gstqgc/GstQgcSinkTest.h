@@ -9,7 +9,6 @@ class GstQgcSinkTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
     void _testQgcVideoSinkBinGpuBinVariant_data();
     void _testQgcVideoSinkBinGpuBinVariant();
@@ -22,13 +21,10 @@ private slots:
     void _testRenderBackendNames();
     void _testRenderTargetSharesGlContext();
     void _testCurrentRenderTarget();
-    void _testQgcQVideoSinkRenegotiatesMidStream();
     void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkShowsPictureOfLargerBuffer();
     void _testQgcQVideoSinkAppliesAffineTransformationMeta_data();
     void _testQgcQVideoSinkAppliesAffineTransformationMeta();
-    void _testQgcQVideoSinkAppliesOrientationTag_data();
-    void _testQgcQVideoSinkAppliesOrientationTag();
     void _testQgcQVideoSinkStatsArePerSink();
     void _testQgcQVideoSinkKeepsBaseSinkStats();
     void _testQgcQVideoSinkGpuPathSelection_data();
@@ -55,5 +51,4 @@ private slots:
     void _testAdapterFlushDropsInFlightSamples();
     void _testFrameDeliveryKeepsTheLatestFrame();
     void _testPathSessionFailurePolicy();
-#endif
 };

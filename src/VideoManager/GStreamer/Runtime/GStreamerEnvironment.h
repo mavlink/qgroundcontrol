@@ -23,20 +23,18 @@ struct BundleLayout
     QStringList pluginDirs;         ///< Every existing entry is searched.
     QStringList gioModuleDirs;      ///< The first existing entry wins.
     QStringList scannerCandidates;  ///< The first existing entry wins.
-    QStringList ptpCandidates;      ///< The first existing entry wins.
 };
 
 /// The desktop installs prepareEnvironment() knows how to point GStreamer into.
 enum class DesktopInstall
 {
-    MacOSFramework,  ///< An app bundle with GStreamer.framework, whose paths win over the app's own lib.
-    MacOSFlat,       ///< An app bundle with a flat SDK copied next to the app, whose paths win over the framework's.
-    Windows,         ///< bin/ beside lib/gstreamer-1.0 and libexec/gstreamer-1.0.
-    Linux,           ///< An AppImage or other prefix: bin/ beside lib/ and libexec/.
+    MacOS,    ///< An app bundle: Contents/MacOS beside Contents/lib and Contents/libexec.
+    Windows,  ///< bin/ beside lib/gstreamer-1.0 and libexec/gstreamer-1.0.
+    Linux,    ///< An AppImage or other prefix: bin/ beside lib/ and libexec/.
 };
 
-/// The layout of @p install for the app in @p appDir. Only reads the filesystem to find the macOS framework's version
-/// directory, so every platform's layout can be checked on any host.
+/// The layout of @p install for the app in @p appDir. Reads nothing from the filesystem, so every platform's layout can
+/// be checked on any host.
 BundleLayout bundleLayout(DesktopInstall install, const QString& appDir);
 
 /// Apply all GStreamer env vars for this process from bundled-paths discovery + platform validation, for the app in

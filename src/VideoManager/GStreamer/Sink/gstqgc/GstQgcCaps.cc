@@ -47,6 +47,28 @@ constexpr const char* kD3D12ConvertFormats = "(string){ RGBA, BGRA }";
 constexpr const char* kD3D12DecoderFormats = "(string){ NV12, P010_10LE }";
 #endif
 
+/// The DMA_DRM and DMABuf caps of @p formats that QGC's importer takes on Qt's EGL display; "" while it can't import.
+std::string dmaBufImportCaps([[maybe_unused]] const SinkCapsPolicy& policy, [[maybe_unused]] const std::string& formats)
+{
+    std::string caps;
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    // DMABuf reaches Qt as EGLImages on its EGLDisplay.
+    if (policy.target.isOpenGlOnEgl() && policy.dmaBufDisplay) {
+        caps += sinkDmaDrmCaps(policy.dmaBufDisplay);
+        // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only the
+        // importable modifiers above): gst-va iHD would negotiate tiled+CCS, which no per-plane import can read.
+        caps += "video/x-raw(memory:DMABuf), format=" + formats + "; ";
+    }
+#endif
+    return caps;
+}
+
+/// What glcolorconvert hands the sink at the end of a glupload chain.
+std::string glUploadCaps()
+{
+    return std::string(kGlMemory2D) + ", format=" + advertisedFormatList(kOfferGlUpload);
+}
+
 /// "<media type>, format=<formats>; " for each memory the render target of @p policy imports.
 std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& formats)
 {
@@ -61,15 +83,7 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
         case RenderBackend::OpenGL:
             // DMABuf and AHardwareBuffer reach Qt as EGLImages on its EGLDisplay; GLMemory through the GL share group,
             // which gst-gl joins on EGL and GLX.
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-            if (policy.target.egl && policy.dmaBufDisplay) {
-                caps += sinkDmaDrmCaps(policy.dmaBufDisplay);
-                // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only
-                // the importable modifiers above): gst-va iHD would negotiate tiled+CCS, which no per-plane import can
-                // read.
-                offer("video/x-raw(memory:DMABuf)");
-            }
-#endif
+            caps += dmaBufImportCaps(policy, formats);
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
             if (policy.target.sharesGlContext() && (policy.gpuBin != GpuBinMode::DirectDmaBuf)) {
                 offer(kGlMemory2D);
@@ -116,7 +130,11 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
 std::string sinkMemoryCaps(const SinkCapsPolicy& policy)
 {
     if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::GlUpload)) {
-        return std::string(kGlMemory2D) + ", format=" + advertisedFormatList(kOfferGlUpload);
+        return glUploadCaps();
+    }
+    if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::DmaBufOrGlUpload)) {
+        // No system memory: the bin's switchbin sends it through glupload.
+        return dmaBufImportCaps(policy, advertisedFormatList()) + glUploadCaps();
     }
     if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::D3D12Convert)) {
         return std::string(kD3D12Memory) + ", format=" + kD3D12ConvertFormats;

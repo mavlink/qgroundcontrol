@@ -110,12 +110,11 @@ function(_qgc_gst_link_closure out_var)
 endfunction()
 
 # _qgc_gst_create_sdk_targets()
-# Creates the targets listed above from the SDK at GStreamer_ROOT_DIR, then applies the macOS framework overlay or
-# builds GStreamer::mobile. Sets GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION (empty without libavcodec's
-# pkg-config file) and, on Android, GSTREAMER_STATIC_PLUGINS in the caller's scope.
+# Creates the targets listed above from the SDK at GStreamer_ROOT_DIR, then, on Android, builds GStreamer::mobile. Sets
+# GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION (empty without libavcodec's pkg-config file) and, on Android,
+# GSTREAMER_STATIC_PLUGINS in the caller's scope.
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_create_sdk_targets)
-    qgc_gst_layout_get(USE_FRAMEWORK _gst_use_framework)
     # QGC_GST_REQUESTED_VERSION is the per-platform floor chosen by Orchestrator.cmake: Linux honors the distribution
     # minimum (1.20), the bundled-SDK platforms the SDK version they download, so a downgraded SDK fails configure.
     _qgc_gst_pkg_target(Core "gstreamer-1.0>=${QGC_GST_REQUESTED_VERSION}" REQUIRED)
@@ -146,9 +145,7 @@ function(_qgc_gst_create_sdk_targets)
     set(GStreamer_LIBAVCODEC_VERSION "${PC_GStreamer_Libavcodec_VERSION}")
 
     set(_outputs GStreamer_VERSION GStreamer_LIBAVCODEC_VERSION)
-    if(_gst_use_framework)
-        _qgc_gst_apply_macos_framework_overlay()
-    elseif(ANDROID)
+    if(ANDROID)
         _qgc_gst_create_android_mobile_target()
         list(APPEND _outputs GSTREAMER_STATIC_PLUGINS)
     endif()

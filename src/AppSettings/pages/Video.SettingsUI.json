@@ -30,8 +30,8 @@
                     "showWhen": "isStreamSource && tilesShown"
                 },
                 {
-                    "control": "component",
-                    "component": "UVCCameraFormatComboBox",
+                    "setting": "videoSettings.uvcCameraFormat",
+                    "control": "combobox",
                     "showWhen": "usbCamera"
                 },
                 {
@@ -130,6 +130,27 @@
                 {
                     "setting": "videoSettings.forceVideoDecoder",
                     "showWhen": "gstreamer"
+                },
+                {
+                    "setting": "videoSettings.softwareDecoderThreads",
+                    "showWhen": "gstreamer"
+                }
+            ]
+        },
+        {
+            "heading": "Video Display",
+            "keywords": ["grid lines", "telemetry overlay", "osd", "display fit", "fit width", "fit height", "fill", "crop"],
+            "showWhen": "!sourceDisabled",
+            "controls": [
+                {
+                    "setting": "videoSettings.videoFit",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "videoSettings.gridLines"
+                },
+                {
+                    "setting": "videoSettings.showTelemetryOverlay"
                 }
             ]
         },
@@ -142,8 +163,8 @@
                     "setting": "videoSettings.recordingFormat"
                 },
                 {
-                    "control": "component",
-                    "component": "UVCRecordingCodecComboBox",
+                    "setting": "videoSettings.uvcRecordingCodec",
+                    "control": "combobox",
                     "showWhen": "recordingEncoded"
                 },
                 {

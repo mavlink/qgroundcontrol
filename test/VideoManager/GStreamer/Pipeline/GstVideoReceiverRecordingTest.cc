@@ -1,17 +1,19 @@
 #include "GstVideoReceiverRecordingTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <cerrno>
 #include <gst/video/video-event.h>
 #include <memory>
+#include <optional>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+
+#include "DecodingBranch.h"
+#include "GStreamerDecoderRanks.h"
 
 namespace {
 
@@ -23,6 +25,8 @@ using GstReceiverTest::kFrameRate;
 using GstReceiverTest::kMinRecordedFrames;
 using GstReceiverTest::kRecordFrames;
 using GstReceiverTest::kShortWatchdogTimeout;
+using GstReceiverTest::kWatchdogTimeout;
+using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
@@ -55,6 +59,13 @@ GstPadProbeReturn countRecordingKeyframeRequests([[maybe_unused]] GstPad* pad, G
         static_cast<std::atomic<int>*>(data)->fetch_add(1, std::memory_order_relaxed);
     }
     return GST_PAD_PROBE_OK;
+}
+
+/// Keeps the stream from the decoder while the flag passed as data is set, so that the decoder shows no frame.
+GstPadProbeReturn starveDecoder([[maybe_unused]] GstPad* pad, [[maybe_unused]] GstPadProbeInfo* info, gpointer data)
+{
+    return static_cast<std::atomic<bool>*>(data)->load(std::memory_order_relaxed) ? GST_PAD_PROBE_DROP
+                                                                                  : GST_PAD_PROBE_OK;
 }
 
 /// Keeps the stream's keyframes from the recorder while held, as a camera that sends none for a while.
@@ -167,27 +178,93 @@ void GstVideoReceiverRecordingTest::cleanup()
     GstVideoReceiverTestBase::cleanup();
 }
 
+void GstVideoReceiverRecordingTest::_testDecoderFailureKeepsRecording_data()
+{
+    QTest::addColumn<bool>("givenUp");
+
+    // The decoder that replaces the failed one decodes.
+    QTest::newRow("decoder replaced") << false;
+    // Each replacement fails too: the stream goes on without a picture, until a decoder tried later decodes.
+    QTest::newRow("decoder given up") << true;
+}
+
 void GstVideoReceiverRecordingTest::_testDecoderFailureKeepsRecording()
 {
+    QFETCH(bool, givenUp);
+
+    // Before the receiver, which they outlive.
+    std::optional<GstTest::DecoderRankSnapshot> decoderRanks;
+    if (givenUp) {
+        // Failures in a row would take the host's hardware decoders out of autoplug, one after the other.
+        GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+        decoderRanks.emplace();
+        GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+    }
+
     Receiver stream;
     QVERIFY(stream.startStreaming());
     QVERIFY(stream.display());
     const QString path = _tempDir->filePath(QStringLiteral("decoder-failure.mp4"));
     QVERIFY(stream.record(path));
     const int decodingChanges = stream.decodingSpy.count();
+    stream.stateSpy.clear();
 
-    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Decoder error from .*injected decoder failure")));
-    QVERIFY(stream.postError("decodebin3", GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE, "injected decoder failure"));
+    // A replacement that gets no frame shows none, and so counts as failed when it posts an error too.
+    std::atomic<bool> starved{givenUp};
+    GStreamer::PadProbe starveProbe;
+    QVERIFY(stream.probeBranchHead(starveProbe, GStreamer::PipelineBranch::Decoding, "valve", "sink",
+                                   GST_PAD_PROBE_TYPE_BUFFER, starveDecoder, &starved));
+    const auto currentDecoder = [&stream] {
+        GStreamer::GstElementPtr decoder;
+        (void) runOnPipeline(stream.receiver.get(), [&decoder](GstElement* pipeline) {
+            decoder = GstTest::findByFactory(pipeline, "decodebin3");
+        });
+        return decoder;
+    };
 
-    // A new decoder takes over; the recording and the stream go on.
+    const QRegularExpression decoderError(QStringLiteral("^Decoder error from .*injected decoder failure"));
+    const int failures = givenUp ? (DecodingBranch::kMaxDecoderRestarts + 1) : 1;
+    if (givenUp) {
+        expectLogMessage(
+            "Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+            QRegularExpression(QStringLiteral("^Video stream without a picture:.*injected decoder failure")));
+    }
+    // Held, so that the decoder that replaces it can't get its address.
+    GStreamer::GstElementPtr failing = currentDecoder();
+    for (int failure = 0; failure < failures; ++failure) {
+        QVERIFY(failing);
+        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, decoderError);
+        QVERIFY(stream.postError("decodebin3", GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE, "injected decoder failure"));
+        // The worker has acted on the error once the decoder is another one, or gone.
+        GStreamer::GstElementPtr next;
+        QVERIFY_TRUE_WAIT((next = currentDecoder()).get() != failing.get(), TestTimeout::mediumMs());
+        failing = std::move(next);
+    }
+
+    if (givenUp) {
+        // Told once, with what the decoder said.
+        QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+        verifyExpectedLogMessage();
+        const QString message = stream.errorSpy.constFirst().constFirst().toString();
+        QVERIFY2(message.contains(QLatin1String("injected decoder failure")), qPrintable(message));
+        QVERIFY(!stream.receiver->decoding());
+        QVERIFY(stream.framesSent(kRecordFrames));
+        // The decoder tried next gets the stream.
+        starved.store(false);
+    }
+    for (int failure = 0; failure < failures; ++failure) {
+        verifyExpectedLogMessage();
+    }
+
+    // A new decoder takes over; the recording and the stream went on.
     QVERIFY_SIGNAL_COUNT_WAIT(stream.decodingSpy, decodingChanges + 2, TestTimeout::mediumMs());
     QVERIFY(stream.receiver->decoding());
-    verifyExpectedLogMessage();
     QVERIFY(stream.framesSent(kRecordFrames));
+    QVERIFY2(stream.stateSpy.isEmpty(), "A failing decoder restarted the stream");
     QCOMPARE(stream.receiver->state(), State::Streaming);
     QVERIFY(stream.recordingFinishedSpy.isEmpty());
-    QVERIFY_TRUE_WAIT(stream.receiver->stats().decoderRestarts == 1, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().decoderRestarts == (givenUp ? DecodingBranch::kMaxDecoderRestarts : 1),
+                      TestTimeout::mediumMs());
     QVERIFY(stream.receiver->stats().recordingMs >= 0);
     QVERIFY_TRUE_WAIT(stream.receiver->stats().recordingBytes > 0, TestTimeout::mediumMs());
 
@@ -196,7 +273,87 @@ void GstVideoReceiverRecordingTest::_testDecoderFailureKeepsRecording()
     QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
     QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
     QCOMPARE(stream.recordingStartedSpy.count(), 1);
+    QCOMPARE(stream.errorSpy.count(), givenUp ? 1 : 0);
     const QString problem = recordingProblem(path);
+    QVERIFY2(problem.isEmpty(), qPrintable(problem));
+}
+
+void GstVideoReceiverRecordingTest::_testUndecodableStreamIsRecorded()
+{
+    // No decoder takes H.265 from here on, as on a machine that has none. Before the receiver, which it outlives.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    const GStreamer::GstCapsPtr h265 = GStreamer::adoptCaps(gst_caps_new_empty_simple("video/x-h265"));
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_MARGINAL, [&h265](GstElementFactory* factory) {
+        if (gst_element_factory_can_sink_any_caps(factory, h265.get())) {
+            gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE(factory), GST_RANK_NONE);
+        }
+    });
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Video stream without a picture:.*H\\.265")));
+
+    Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0), /*autoReconnect=*/false, kWatchdogTimeout,
+                    QString::fromLatin1(GstTest::kH265Stream));
+    QVERIFY2(stream.sender.error().isEmpty(), qPrintable(stream.sender.error()));
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    QVERIFY(stream.startStreaming());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    const QString message = stream.errorSpy.constFirst().constFirst().toString();
+    QVERIFY2(message.contains(QLatin1String("H.265")), qPrintable(message));
+
+    // Received all the same, and so recorded.
+    const QString path = _tempDir->filePath(QStringLiteral("undecodable.mp4"));
+    QVERIFY(stream.record(path));
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+    QVERIFY(!stream.receiver->decoding());
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    QCOMPARE(stream.errorSpy.count(), 1);
+    const QString problem = recordingProblem(path);
+    QVERIFY2(problem.isEmpty(), qPrintable(problem));
+}
+
+void GstVideoReceiverRecordingTest::_testCodecMp4CannotHoldIsRecordedAsMatroska()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "avenc_mpeg2video", "mpegtsmux", "tsdemux", "matroskamux",
+                                  "matroskademux");
+
+    Receiver stream(GstReceiverTimings{.recordingPartDuration = std::chrono::seconds(1)},
+                    loopbackUri(QLatin1StringView("mpegts"), 0));
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(State::Connecting));
+    // MPEG-2 video, which neither MP4 nor MOV holds, as an MPEG-TS camera of that kind sends it.
+    GstTest::TestPipeline camera;
+    QVERIFY2(camera.launch(QStringLiteral("videotestsrc is-live=true ! video/x-raw,width=320,height=240,framerate=30/1 "
+                                          "! avenc_mpeg2video gop-size=5 ! mpegtsmux ! "
+                                          "udpsink host=127.0.0.1 port=%1")
+                               .arg(stream.udpPort())),
+             qPrintable(camera.error()));
+    QVERIFY(camera.play());
+    QVERIFY(stream.waitForState(State::Streaming));
+
+    // The recording goes into the container that holds the stream, in files named for it: the first one, and the
+    // parts that follow.
+    const QStringList parts{_tempDir->filePath(QStringLiteral("mpeg2.mkv")),
+                            _tempDir->filePath(QStringLiteral("mpeg2_part2.mkv"))};
+    const QString asked = _tempDir->filePath(QStringLiteral("mpeg2.mp4"));
+    stream.receiver->startRecording(asked, FileFormat::Mp4);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, parts.size(), TestTimeout::mediumMs());
+    stream.receiver->stopRecording();
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, stream.recordingStartedSpy.count(), TestTimeout::mediumMs());
+    QVERIFY(stream.errorSpy.isEmpty());
+
+    for (qsizetype part = 0; part < parts.size(); ++part) {
+        QCOMPARE(stream.recordingStartedSpy.at(part).constFirst().toString(), parts.at(part));
+        QCOMPARE(stream.recordingFinishedSpy.at(part).at(0).toString(), parts.at(part));
+        QCOMPARE(stream.recordingFinishedSpy.at(part).at(1).toString(), QString());
+    }
+    QVERIFY(!QFile::exists(asked));
+    const QString problem = recordingProblem(parts.constFirst());
     QVERIFY2(problem.isEmpty(), qPrintable(problem));
 }
 
@@ -238,12 +395,13 @@ void GstVideoReceiverRecordingTest::_testReconnectResumesRecordingInNextPart()
 
 void GstVideoReceiverRecordingTest::_testLongRecordingContinuesInNextPart()
 {
-    Receiver stream;
+    // Parts of three groups of pictures, which the worker looks for often enough to end them on time.
+    Receiver stream(GstReceiverTimings{.watchdogInterval = std::chrono::milliseconds(100),
+                                       .recordingPartDuration = std::chrono::milliseconds(500)});
     // Without the jitter buffer, which may drop a late packet: every frame sent is to reach a file.
     VideoReceiver::Config config = stream.receiver->config();
     config.lowLatency = true;
     stream.receiver->setConfig(config);
-    setMaxRecordingPartDuration(stream.receiver.get(), std::chrono::seconds(1));
     QVERIFY(stream.startStreaming());
 
     const QString path = _tempDir->filePath(QStringLiteral("long.mp4"));
@@ -358,7 +516,9 @@ void GstVideoReceiverRecordingTest::_testFramesArrivingTogetherStartNoNewPart()
 
 void GstVideoReceiverRecordingTest::_testRecordingLeavesFileBeforeHeaderSpaceRunsOut()
 {
-    Receiver stream;
+    // The muxer's estimate counts sooner than in the app: this file's header is short of room whatever the estimate.
+    constexpr std::chrono::seconds kEstimateDelay{1};
+    Receiver stream(GstReceiverTimings{.recordingHeaderEstimateDelay = kEstimateDelay});
     QVERIFY(stream.startStreaming());
 
     // The stream waits in front of the recorder until its muxer is set up.
@@ -388,8 +548,7 @@ void GstVideoReceiverRecordingTest::_testRecordingLeavesFileBeforeHeaderSpaceRun
     // Once the muxer's estimate counts, the recording goes on in the next part, whose header has the regular room, and
     // the file is closed in good order.
     const QString part2 = _tempDir->filePath(QStringLiteral("header_part2.mp4"));
-    const int estimateDelayMs =
-        static_cast<int>(std::chrono::milliseconds(RecordingBranch::kHeaderEstimateDelay).count());
+    const int estimateDelayMs = static_cast<int>(std::chrono::milliseconds(kEstimateDelay).count());
     QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, estimateDelayMs + TestTimeout::mediumMs());
     QCOMPARE(stream.recordingStartedSpy.at(0).constFirst().toString(), path);
     QCOMPARE(stream.recordingStartedSpy.at(1).constFirst().toString(), part2);
@@ -441,7 +600,9 @@ void GstVideoReceiverRecordingTest::_testRecordingStartsAtKeyframeWithParameterS
 
 void GstVideoReceiverRecordingTest::_testRecordingFailsWithoutKeyframeWithParameterSets()
 {
-    Receiver stream;
+    // Three of the stream's keyframes, rather than the app's 5 s.
+    constexpr std::chrono::milliseconds kStartTimeout{500};
+    Receiver stream(GstReceiverTimings{.recordingStartTimeout = kStartTimeout});
     QVERIFY(stream.startStreaming());
 
     ParameterSetStrip strip;
@@ -455,8 +616,7 @@ void GstVideoReceiverRecordingTest::_testRecordingFailsWithoutKeyframeWithParame
                      QRegularExpression(QStringLiteral("^No keyframe to start the recording with")));
     const QString path = _tempDir->filePath(QStringLiteral("no-start.mp4"));
     stream.receiver->startRecording(path, FileFormat::Mp4);
-    const int startTimeoutMs = static_cast<int>(std::chrono::milliseconds(RecordingBranch::kStartTimeout).count());
-    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, startTimeoutMs + TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, static_cast<int>(kStartTimeout.count()) + TestTimeout::mediumMs());
     verifyExpectedLogMessage();
     QVERIFY(strip.stripped.load() > 0);
     QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());
@@ -567,6 +727,52 @@ void GstVideoReceiverRecordingTest::_testSlowRecordingDoesNotStallDisplay()
     QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());
     QVERIFY(stream.errorSpy.isEmpty());
     QCOMPARE(stream.receiver->state(), State::Streaming);
+}
+
+void GstVideoReceiverRecordingTest::_testStopRecordsFramesStillQueued()
+{
+    Receiver stream;
+    // Opened before the receiver goes, so a failing test can't leave the recorder held.
+    const auto gate = std::make_shared<Gate>();
+    const auto releaseGate = qScopeGuard([gate] { gate->release(); });
+
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    QVERIFY(stream.record(_tempDir->filePath(QStringLiteral("stopped.mkv")), FileFormat::Mkv));
+
+    // Frames into the recording's queue, and out of its valve into the recorder.
+    std::atomic<int> queued{0};
+    std::atomic<int> recorded{0};
+    GStreamer::PadProbe queuedProbe;
+    GStreamer::PadProbe recordedProbe;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&](GstElement* pipeline) {
+        const GStreamer::GstElementPtr queue = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "queue");
+        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(queue.get(), "sink"));
+        (void) queuedProbe.add(queueSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &queued);
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "valve");
+        const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
+        (void) recordedProbe.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &recorded);
+    }));
+
+    // Storage that takes nothing for a while: the frames wait in the queue.
+    QVERIFY(stream.blockRecorder(gate));
+    QVERIFY(gate->waitUntilReached(TestTimeout::mediumDuration()));
+    QVERIFY_TRUE_WAIT(queued.load(std::memory_order_relaxed) >= (recorded.load(std::memory_order_relaxed) + kFrameRate),
+                      TestTimeout::mediumMs());
+
+    stream.receiver->stopRecording();
+    // The worker got to the request.
+    QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement*) {}));
+    const int queuedAtStop = queued.load(std::memory_order_relaxed);
+    QVERIFY(recorded.load(std::memory_order_relaxed) < queuedAtStop);
+    QVERIFY(stream.recordingFinishedSpy.isEmpty());
+
+    // The file ends behind what was queued when it was stopped, and is finalized.
+    gate->release();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY2(Receiver::lastFinished(stream.recordingFinishedSpy, 1).isEmpty(),
+             qPrintable(Receiver::lastFinished(stream.recordingFinishedSpy, 1)));
+    QVERIFY(recorded.load(std::memory_order_relaxed) >= queuedAtStop);
 }
 
 void GstVideoReceiverRecordingTest::_testDeactivateFinishesRecording()
@@ -955,7 +1161,5 @@ void GstVideoReceiverRecordingTest::_testDestroyWithHungRecorderIsBounded()
         },
         TestTimeout::mediumDuration(), u"abandoned pipeline released"));
 }
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverRecordingTest, TestLabel::Integration)

@@ -49,42 +49,11 @@
 #endif
 #endif
 
-#ifndef EGL_ANDROID_native_fence_sync
-#define EGL_SYNC_NATIVE_FENCE_ANDROID 0x3144
-#define EGL_SYNC_NATIVE_FENCE_FD_ANDROID 0x3145
-#define EGL_NO_NATIVE_FENCE_FD_ANDROID -1
-#endif
-
 QGC_LOGGING_CATEGORY(GstDmaBufLog, "Video.GStreamer.HwBuffers.GstDmaBuf")
 
 namespace {
 
 using GstHw::kMaxPlanes;
-
-/// Every once-only log latch of the path, so resetCachedState() re-arms them as one.
-struct DmaBufDiagnostics : GstHw::MapDiagnostics
-{
-    std::atomic<bool> loggedNoEglContext{false};
-    std::atomic<bool> loggedLayoutRejected{false};
-    std::atomic<bool> loggedTiledCpuMap{false};
-    std::atomic<bool> loggedProducerWaitTimeout{false};
-    std::atomic<bool> loggedExplicitFence{false};
-    std::atomic<bool> loggedVulkanSyncRefused{false};
-
-    void reset() noexcept
-    {
-        GstHw::MapDiagnostics::reset();
-        for (std::atomic<bool>* flag : {&loggedNoEglContext, &loggedLayoutRejected, &loggedTiledCpuMap,
-                                        &loggedProducerWaitTimeout, &loggedExplicitFence, &loggedVulkanSyncRefused}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-static_assert(sizeof(DmaBufDiagnostics) == sizeof(GstHw::MapDiagnostics) + (6 * sizeof(std::atomic<bool>)),
-              "DmaBufDiagnostics::reset() must list every flag");
-
-DmaBufDiagnostics s_diag;
 
 // Set when an import fails in a way no later frame avoids: EGL_BAD_MATCH from a broken EGL/VA-API combination
 // (QTBUG-112312), or a driver rejecting the stream's layout frame after frame. Qt's importer warns on every failed
@@ -167,7 +136,7 @@ void disableImport(GstHwPathTelemetry::HwFallbackReason reason, const char* caus
 }
 
 /// Feeds @p outcome of importing a frame of @p layout into the disable latch: a refusal by the driver counts in the
-/// layout's run of failures, as does any failure of a @p tiled frame.
+/// layout's run of failures, as does a @p tiled frame that could not be imported, whatever kept it from being.
 void noteLayoutImportOutcome(const ImportLayout& layout, bool tiled, GstDmaBufVideoBuffer::ImportOutcome outcome)
 {
     using ImportOutcome = GstDmaBufVideoBuffer::ImportOutcome;
@@ -183,6 +152,15 @@ void noteLayoutImportOutcome(const ImportLayout& layout, bool tiled, GstDmaBufVi
             GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                      GstHwPathTelemetry::HwFallbackReason::MapFailed);
             break;
+        case ImportOutcome::FdDupFailed:
+            // The process is out of file descriptors, which no driver refused: counted under a reason of its own. As
+            // below, only a tiled frame has no other way to the screen.
+            GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
+                                                     GstHwPathTelemetry::HwFallbackReason::FdDupFailed);
+            if (!tiled) {
+                return;
+            }
+            break;
         case ImportOutcome::NotImportable:
             // Qt shows a LINEAR frame through map() instead, and another QRhi may import it. A tiled one is not shown
             // at all, so only renegotiating without DMABuf brings its stream back.
@@ -191,7 +169,13 @@ void noteLayoutImportOutcome(const ImportLayout& layout, bool tiled, GstDmaBufVi
             }
             break;
     }
-    if (s_importFailures.noteFailure(layout) >= GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures) {
+    if (s_importFailures.noteFailure(layout) < GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures) {
+        return;
+    }
+    if (outcome == ImportOutcome::FdDupFailed) {
+        disableImport(GstHwPathTelemetry::HwFallbackReason::FdDupFailed,
+                      "The dma-buf fds of a stream's recent frames could not be duplicated");
+    } else {
         disableImport(GstHwPathTelemetry::HwFallbackReason::MapFailed, "Every recent DMABuf import of a stream failed");
     }
 }
@@ -212,17 +196,6 @@ quint32 eglfsPackedYuvFourcc(QVideoFrameFormat::PixelFormat format)
         return DRM_FORMAT_UYVY;
     }
     return 0;
-}
-
-QVideoFrameFormat withPixelFormat(const QVideoFrameFormat& format, QVideoFrameFormat::PixelFormat pixelFormat)
-{
-    QVideoFrameFormat out(format.frameSize(), pixelFormat);
-    out.setStreamFrameRate(format.streamFrameRate());
-    out.setColorRange(format.colorRange());
-    out.setColorSpace(format.colorSpace());
-    out.setColorTransfer(format.colorTransfer());
-    out.setViewport(format.viewport());
-    return out;
 }
 
 // Best-effort GPU-side wait on the producer's fences: export a sync_file from each dma-buf, import it as an
@@ -268,7 +241,7 @@ bool tryExplicitFenceWait(EGLDisplay eglDpy, GstBuffer* buffer)
             return false;
         }
     }
-    if (!s_diag.loggedExplicitFence.exchange(true, std::memory_order_relaxed)) {
+    if (QGC_HW_ONCE()) {
         qCDebug(GstDmaBufLog) << "waiting on the producer's dma-buf fences GPU-side (CPU barrier skipped)";
     }
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
@@ -306,10 +279,10 @@ bool waitForProducerWrites(GstBuffer* buffer)
         if (!writesDone) {
             const int pollError = (ret < 0) ? errno : 0;
             GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
-            QGC_HW_WARN_ONCE(GstDmaBufLog, s_diag.loggedProducerWaitTimeout,
-                             "dma-buf producer fence wait" << (ret == 0 ? "timed out" : "failed") << "errno="
-                                                           << pollError << "revents=" << Qt::hex << pfd.revents
-                                                           << Qt::dec << "— no producer barrier for this frame");
+            QGC_HW_WARN_ONCE(GstDmaBufLog, "dma-buf producer fence wait"
+                                               << (ret == 0 ? "timed out" : "failed") << "errno=" << pollError
+                                               << "revents=" << Qt::hex << pfd.revents << Qt::dec
+                                               << "— no producer barrier for this frame");
             return false;
         }
     }
@@ -448,10 +421,9 @@ bool locateImportPlanes(GstBuffer* buffer, const GstVideoInfo& info, const GstQt
         locatePlanes(buffer, info, fourccs, modifier, planes)) {
         return true;
     }
-    QGC_HW_WARN_ONCE(GstDmaBufLog, s_diag.loggedLayoutRejected,
-                     "DMABuf layout not importable (format" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&info))
-                                                            << "memories" << gst_buffer_n_memory(buffer)
-                                                            << ") — CPU fallback");
+    QGC_HW_WARN_ONCE(GstDmaBufLog, "DMABuf layout not importable (format"
+                                       << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&info)) << "memories"
+                                       << gst_buffer_n_memory(buffer) << ") — CPU fallback");
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                              GstHwPathTelemetry::HwFallbackReason::ImportUnsupported);
     return false;
@@ -469,7 +441,7 @@ GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo
     // Advertised for the GPU import only; the base class keeps the memory's format, so map() refuses the CPU upload Qt
     // would otherwise read as RGBA.
     if (_packedYuvFourcc != 0) {
-        _format = withPixelFormat(_format, QVideoFrameFormat::Format_RGBA8888);
+        _format = GstHw::withPixelFormat(_format, QVideoFrameFormat::Format_RGBA8888);
     }
 #if GST_CHECK_VERSION(1, 24, 0)
     if (GstCaps* caps = gst_sample_get_caps(sample); caps && gst_video_is_dma_drm_caps(caps)) {
@@ -518,7 +490,7 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 {
     s_importDisabled.store(false, std::memory_order_relaxed);
     s_importFailures.clear();
-    s_diag.reset();
+    GstHw::rearmOnceLatches();
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     GstDmaBufVulkan::resetCachedState();
 #endif
@@ -624,9 +596,8 @@ bool GstDmaBufVideoBuffer::validatePlaneHandles() const
 QAbstractVideoBuffer::MapData GstDmaBufVideoBuffer::map(QVideoFrame::MapMode mode)
 {
     if (isTiled()) {
-        QGC_HW_WARN_ONCE(
-            GstDmaBufLog, s_diag.loggedTiledCpuMap,
-            "tiled DMABuf frame has no CPU layout (modifier" << Qt::hex << _drmModifier << ") — frame not shown");
+        QGC_HW_WARN_ONCE(GstDmaBufLog, "tiled DMABuf frame has no CPU layout (modifier" << Qt::hex << _drmModifier
+                                                                                        << ") — frame not shown");
         return {};
     }
     return GstHwVideoBuffer::map(mode);
@@ -654,7 +625,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importFrame(QRhi& rhi, QVideoFrame
     Q_UNUSED(old);
 #endif
     GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(vulkan ? QRhi::Vulkan : QRhi::OpenGLES2), GstDmaBufLog(), s_diag,
+    if (!checkMapPreconditions(rhi, static_cast<int>(vulkan ? QRhi::Vulkan : QRhi::OpenGLES2), GstDmaBufLog(),
                                buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
@@ -686,17 +657,23 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, GstBuffer*
     if (!waitForProducerWrites(buffer)) {
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                  GstHwPathTelemetry::HwFallbackReason::VulkanNoSync);
-        QGC_HW_WARN_ONCE(GstDmaBufLog, s_diag.loggedVulkanSyncRefused,
-                         "Vulkan import refused: producer writes not known complete — CPU fallback");
+        QGC_HW_WARN_ONCE(GstDmaBufLog, "Vulkan import refused: producer writes not known complete — CPU fallback");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    bool rejected = false;
+    GstDmaBufVulkan::ImportFailure vulkanFailure = GstDmaBufVulkan::ImportFailure::NotImportable;
     QVideoFrameTexturesUPtr textures =
         GstDmaBufVulkan::importTextures(*this, rhi, old, std::span(planes.data(), std::size_t(fourccs.count)),
-                                        pixelFormat, _format.frameSize(), buffer, rejected);
-    if (rejected) {
-        failure = ImportOutcome::Rejected;
+                                        pixelFormat, _format.frameSize(), buffer, vulkanFailure);
+    switch (vulkanFailure) {
+        case GstDmaBufVulkan::ImportFailure::NotImportable:
+            break;
+        case GstDmaBufVulkan::ImportFailure::Rejected:
+            failure = ImportOutcome::Rejected;
+            break;
+        case GstDmaBufVulkan::ImportFailure::FdDupFailed:
+            failure = ImportOutcome::FdDupFailed;
+            break;
     }
     return textures;
 }
@@ -706,7 +683,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
 {
     const EGLDisplay eglDpy = GstQtDmaBufImport::importDisplay(rhi);
     if (eglDpy == EGL_NO_DISPLAY) {
-        QGC_HW_WARN_ONCE(GstDmaBufLog, s_diag.loggedNoEglContext,
+        QGC_HW_WARN_ONCE(GstDmaBufLog,
                          "Qt's GL context is not EGL or can't bind EGLImages — DMABuf frames take the CPU path");
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                  GstHwPathTelemetry::HwFallbackReason::NoExt);
@@ -744,7 +721,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
         failure = imported.unrecoverable ? ImportOutcome::Unrecoverable : ImportOutcome::Rejected;
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
-    if (!s_diag.loggedFirstSuccess.exchange(true, std::memory_order_relaxed)) {
+    if (QGC_HW_ONCE()) {
         qCDebug(GstDmaBufLog) << "First DMABuf import: size=" << _format.frameSize() << "format=" << pixelFormat
                               << "modifier=" << Qt::hex << modifier;
     }

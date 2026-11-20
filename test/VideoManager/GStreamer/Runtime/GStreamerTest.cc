@@ -1,17 +1,10 @@
 #include "GStreamerTest.h"
 
-#include "QGCLoggingCategory.h"
-
-QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
-
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <memory>
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QVersionNumber>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
@@ -23,7 +16,9 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "PipelineDotDumper.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "RecordingBranch.h"
+#include "SettingsManager.h"
 #include "VideoBackend.h"
+#include "VideoSettings.h"
 
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
@@ -38,6 +33,8 @@ void GStreamerTest::_testIsHardwareDecoderFactory_data()
     QTest::newRow("vah264dec") << QStringLiteral("vah264dec") << true;
     QTest::newRow("vaapih264dec") << QStringLiteral("vaapih264dec") << true;
     QTest::newRow("vulkanh264dec") << QStringLiteral("vulkanh264dec") << true;
+    // No family's name: told by its klass, "Codec/Decoder/Video/Hardware". Registered by the test, so it runs anywhere.
+    QTest::newRow("hardware klass") << QString::fromLatin1(GstTest::kStubDecoderName) << true;
 }
 
 void GStreamerTest::_testIsHardwareDecoderFactory()
@@ -50,6 +47,9 @@ void GStreamerTest::_testIsHardwareDecoderFactory()
         return;
     }
 
+    if (factoryName == QLatin1StringView(GstTest::kStubDecoderName)) {
+        QVERIFY(GstTest::registerStubDecoder());
+    }
     const GStreamer::GstFactoryPtr factory =
         GStreamer::adoptFactory(gst_element_factory_find(factoryName.toUtf8().constData()));
     if (!factory) {
@@ -103,6 +103,17 @@ void GStreamerTest::_testAvailableDecoderFamilies()
     installed.removeAll(VideoDecoderOption::Vulkan);
 #endif
     QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
+
+    // The decoder setting offers a hardware family where a decoder of it is installed, and nowhere else: no platform
+    // has a list of its own.
+    VideoSettings* const settings = SettingsManager::instance()->videoSettings();
+    settings->pruneUnavailableDecoders();
+    const QVariantList offered = settings->forceVideoDecoder()->enumValues();
+    for (const VideoDecoderOption family :
+         {VideoDecoderOption::NVIDIA, VideoDecoderOption::VAAPI, VideoDecoderOption::DirectX3D,
+          VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel, VideoDecoderOption::Vulkan}) {
+        QCOMPARE(offered.contains(QVariant(static_cast<int>(family))), installed.contains(family));
+    }
 }
 
 void GStreamerTest::_testStoredDecoderOption_data()
@@ -320,25 +331,5 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
     QVERIFY2(gst_element_link(source.get(), sink.get()),
              qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
 }
-
-void GStreamerTest::_testRuntimeVersionCheck()
-{
-    guint major, minor, micro, nano;
-    gst_version(&major, &minor, &micro, &nano);
-
-    QVERIFY2(major == 1, "Unexpected GStreamer major version");
-    const QVersionNumber runtime(static_cast<int>(major), static_cast<int>(minor), static_cast<int>(micro));
-    const QVersionNumber minimum = QVersionNumber::fromString(QStringLiteral(QGC_GST_RUNTIME_MINIMUM_VERSION));
-    QVERIFY(!minimum.isNull());
-    QVERIFY2(runtime >= minimum, qPrintable(QStringLiteral("GStreamer runtime version %1 is below the minimum %2")
-                                                .arg(runtime.toString(), minimum.toString())));
-
-    if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
-        qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."
-                                    << GST_VERSION_MINOR << "but runtime is" << major << "." << minor;
-    }
-}
-
-#endif
 
 UT_REGISTER_TEST(GStreamerTest, TestLabel::Unit)

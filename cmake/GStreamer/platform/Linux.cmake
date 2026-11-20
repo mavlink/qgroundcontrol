@@ -76,7 +76,7 @@ function(_qgc_gst_discover_linux_sdk)
     _qgc_gst_return_discovery()
 endfunction()
 
-# Linux: plugins, the GIO modules for TLS and proxies, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
+# Linux: plugins, the GIO modules for TLS and proxies, gst-plugin-scanner and the notice.
 # The libraries come from the AppImage's dependency deployment (cmake/install/CreateAppImage.cmake).
 function(qgc_gst_install_linux_sdk app_name plugin_dest_out)
     qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
@@ -92,14 +92,11 @@ function(qgc_gst_install_linux_sdk app_name plugin_dest_out)
     qgc_gst_install_gio_modules("${_gst_gio_module_path}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings)
     # gstreamer-1.0.pc's pluginscannerdir (Debian lib/<multiarch>/gstreamer1.0/gstreamer-1.0, Fedora
     # libexec/gstreamer-1.0, Arch lib/gstreamer-1.0).
-    foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        set(_path "${_gst_scanner_path}/${_helper}")
-        if(EXISTS "${_path}")
-            install(PROGRAMS "${_path}" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-        elseif(_helper STREQUAL "gst-plugin-scanner")
-            message(WARNING "gst-plugin-scanner not found in ${_gst_scanner_path}; AppImage video may not " "work")
-        endif()
-    endforeach()
+    if(EXISTS "${_gst_scanner_path}/gst-plugin-scanner")
+        install(PROGRAMS "${_gst_scanner_path}/gst-plugin-scanner" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
+    else()
+        message(WARNING "gst-plugin-scanner not found in ${_gst_scanner_path}; AppImage video may not " "work")
+    endif()
     _qgc_gst_install_notice(share/licenses/gstreamer)
     set(${plugin_dest_out}
         "${_plugin_dest}"

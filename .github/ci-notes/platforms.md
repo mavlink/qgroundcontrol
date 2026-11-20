@@ -132,7 +132,11 @@ How CI runs, retries, and reports the application tests is described in
 ## Platform Notes
 
 - **macOS**: the Debug leg builds for arm64 only and runs the Unit and Integration suites; only the
-  universal (x86_64h + arm64) Release leg packages and uploads the DMG. The job's `MACOS_SIGN`
+  universal (x86_64h + arm64) Release leg packages and uploads the DMG. Both build, test and package
+  with the official GStreamer SDK that configure downloads into the CPM cache, as Windows does. The
+  DMG bundles that SDK's allowlisted plugins, GIO modules and helpers with only the libraries they
+  and QGC load ([details](../../src/VideoManager/GStreamer/README.md#macos--windows--ios)). The job's
+  `MACOS_SIGN`
   gates signing and notarization (CMake option, certificate import, and secrets) to non-PR Release
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
@@ -252,6 +256,15 @@ How CI runs, retries, and reports the application tests is described in
   Linux legs run the integration suites and cover Release compiles. Outside pull requests it also
   installs the build stripped (`cmake --install --strip`; the Debug binary carries ~800 MB of debug
   info, measured for pull request 15375, October 2026) into an AppImage and boots that. `custom-example/` changes trigger the Linux workflow.
+- **Opt-in GPU video paths** (`linux.yml`'s `gpu-opt-in` job, behind the Linux gate): the gst-vulkan
+  and CUDA paths are off by default (`QGC_GST_ENABLE_VULKAN`, `QGC_GST_ENABLE_CUDA`), so no other
+  job compiles them. This one configures `Linux-debug` with both on, fails unless configure reports
+  both paths enabled (it drops a path whose GStreamer pieces are missing and goes on), and builds
+  the `QGCGStreamer` target, about sixty files. `cuda.h` comes from GStreamer's stub headers,
+  checked out from its GitHub mirror at the release Ubuntu 24.04 packages (1.24.2): bump the
+  commit with the runner image. Nothing is run, as no runner has the hardware; the paths' tests
+  are compiled by no job, and neither is the AHardwareBuffer path, whose header is in no GStreamer
+  SDK. The job has a compiler-cache variant of its own and saves none.
 - **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
   (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF

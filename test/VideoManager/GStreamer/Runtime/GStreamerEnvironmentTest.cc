@@ -1,7 +1,5 @@
 #include "GStreamerEnvironmentTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <vector>
 
@@ -39,8 +37,6 @@ public:
             "GST_PLUGIN_SCANNER_1_0",
             "GST_PLUGIN_SYSTEM_PATH",
             "GST_PLUGIN_SYSTEM_PATH_1_0",
-            "GST_PTP_HELPER",
-            "GST_PTP_HELPER_1_0",
             "GST_REGISTRY",
             "GST_REGISTRY_1_0",
             "GST_REGISTRY_FORK",
@@ -237,23 +233,10 @@ void GStreamerEnvironmentTest::_testBundleLayouts_data()
     QTest::addColumn<QStringList>("gioModuleDirs");
     QTest::addColumn<QStringList>("scanners");
 
-    // No such directories exist, so the macOS framework's version directory falls back to Versions/1.0.
-    const QString framework = QStringLiteral("/QGC.app/Contents/Frameworks/GStreamer.framework/Versions/1.0");
-    const QString appLib = QStringLiteral("/QGC.app/Contents/lib");
-    const QStringList macScanners{QStringLiteral("/QGC.app/Contents/libexec/gstreamer-1.0/gst-plugin-scanner"),
-                                  framework + QStringLiteral("/libexec/gstreamer-1.0/gst-plugin-scanner")};
-    QTest::newRow("macOS framework") << int(DesktopInstall::MacOSFramework) << QStringLiteral("/QGC.app/Contents/MacOS")
-                                     << QStringList{framework + QStringLiteral("/lib/gstreamer-1.0"),
-                                                    appLib + QStringLiteral("/gstreamer-1.0")}
-                                     << QStringList{framework + QStringLiteral("/lib/gio/modules"),
-                                                    appLib + QStringLiteral("/gio/modules")}
-                                     << macScanners;
-    QTest::newRow("macOS flat SDK") << int(DesktopInstall::MacOSFlat) << QStringLiteral("/QGC.app/Contents/MacOS")
-                                    << QStringList{appLib + QStringLiteral("/gstreamer-1.0"),
-                                                   framework + QStringLiteral("/lib/gstreamer-1.0")}
-                                    << QStringList{appLib + QStringLiteral("/gio/modules"),
-                                                   framework + QStringLiteral("/lib/gio/modules")}
-                                    << macScanners;
+    QTest::newRow("macOS") << int(DesktopInstall::MacOS) << QStringLiteral("/QGC.app/Contents/MacOS")
+                           << QStringList{QStringLiteral("/QGC.app/Contents/lib/gstreamer-1.0")}
+                           << QStringList{QStringLiteral("/QGC.app/Contents/lib/gio/modules")}
+                           << QStringList{QStringLiteral("/QGC.app/Contents/libexec/gstreamer-1.0/gst-plugin-scanner")};
     QTest::newRow("Windows") << int(DesktopInstall::Windows) << QStringLiteral("/QGC/bin")
                              << QStringList{QStringLiteral("/QGC/lib/gstreamer-1.0")}
                              << QStringList{QStringLiteral("/QGC/lib/gio/modules")}
@@ -279,25 +262,6 @@ void GStreamerEnvironmentTest::_testBundleLayouts()
     QCOMPARE(layout.pluginDirs, pluginDirs);
     QCOMPARE(layout.gioModuleDirs, gioModuleDirs);
     QCOMPARE(layout.scannerCandidates, scanners);
-    // The PTP helper lives next to the scanner.
-    QStringList ptpHelpers;
-    for (const QString& scanner : std::as_const(scanners)) {
-        ptpHelpers.append(
-            QString(scanner).replace(QStringLiteral("gst-plugin-scanner"), QStringLiteral("gst-ptp-helper")));
-    }
-    QCOMPARE(layout.ptpCandidates, ptpHelpers);
-}
-
-void GStreamerEnvironmentTest::_testMacOSFrameworkVersionDir()
-{
-    // A framework without Versions/1.0 is read through Versions/Current.
-    QTemporaryDir bundle;
-    QVERIFY(bundle.isValid());
-    const QString current = bundle.filePath(QStringLiteral("Contents/Frameworks/GStreamer.framework/Versions/Current"));
-    QVERIFY(QDir().mkpath(current));
-    const GStreamer::Environment::BundleLayout layout = GStreamer::Environment::bundleLayout(
-        GStreamer::Environment::DesktopInstall::MacOSFramework, bundle.filePath(QStringLiteral("Contents/MacOS")));
-    QCOMPARE(layout.pluginDirs.constFirst(), current + QStringLiteral("/lib/gstreamer-1.0"));
 }
 
 void GStreamerEnvironmentTest::_testBundledRuntime_data()
@@ -420,14 +384,5 @@ void GStreamerEnvironmentTest::_testWriteIfChanged()
     QVERIFY(GStreamer::Environment::writeIfChanged(path, "other bundle"));
     QCOMPARE(content(), QByteArrayLiteral("other bundle"));
 }
-
-#else
-
-void GStreamerEnvironmentTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif
 
 UT_REGISTER_TEST(GStreamerEnvironmentTest, TestLabel::Unit)

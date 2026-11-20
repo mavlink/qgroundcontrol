@@ -67,8 +67,9 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
     return totals;
 }
 
-/// The codec of the compressed video @p caps describe: "H.264", "H.265", ...; empty without caps.
-QString codecName(const GstCaps* caps)
+}  // namespace
+
+QString PipelineStatsProbe::codecName(const GstCaps* caps)
 {
     if (!caps || gst_caps_is_empty(caps) || gst_caps_is_any(caps)) {
         return {};
@@ -90,8 +91,6 @@ QString codecName(const GstCaps* caps)
     }
     return QString::fromUtf8(gst_structure_get_name(structure));
 }
-
-}  // namespace
 
 void PipelineStatsProbe::noteBuffer(GstBuffer* buffer)
 {

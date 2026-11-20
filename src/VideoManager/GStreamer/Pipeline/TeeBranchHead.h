@@ -25,7 +25,8 @@ public:
     /// it leaks or blocks.
     void onOverrun(GCallback callback, gpointer data);
 
-    /// Lets frames through and asks upstream for a keyframe to start from.
+    /// Lets frames through and asks upstream for a keyframe to start from. Waits for a push that began before
+    /// close() to return, so what the valve led to then must have been stopped, or flushed, by now.
     void open();
     /// Drops frames again; nothing before build().
     void close();

@@ -8,7 +8,6 @@ class GstVideoReceiverComponentsTest : public UnitTest
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testStallDetection_data();
     void _testStallDetection();
     void _testFirstFrameGrace_data();
@@ -29,7 +28,7 @@ private slots:
     void _testRtpPacketCounterJitter_data();
     void _testRtpPacketCounterJitter();
     void _testStatsProbeCountsRtpPackets();
-#else
-    void _testGStreamerDisabled();
-#endif
+    void _testRecordingContainerHoldsCodec_data();
+    void _testRecordingContainerHoldsCodec();
+    void _testRecordingNamesCodecNoContainerHolds();
 };

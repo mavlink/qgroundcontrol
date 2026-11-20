@@ -37,7 +37,7 @@ VideoBackend& VideoBackend::instance()
 
 bool VideoBackend::disabledForUnitTests()
 {
-    return qgcApp() && QGC::runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
+    return qgcApp() && QGC::runningUnitTests();
 }
 
 QString VideoBackend::initFailureMessage() const

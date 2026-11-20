@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #if defined(Q_OS_MACOS) && defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -80,5 +78,3 @@ void GstHwBuffersPipelineTest::_testIOSurfaceFrameToImage()
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 #endif
 }
-
-#endif

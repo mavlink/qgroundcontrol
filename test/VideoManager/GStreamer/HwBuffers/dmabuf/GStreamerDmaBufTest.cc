@@ -1,21 +1,23 @@
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
-#include "HwBuffers/GstHwBuffersTest.h"
-
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
+#include <cerrno>
 #include <gst/gst.h>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <rhi/qrhi.h>
 #include <span>
+#include <thread>
 #include <vector>
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <gst/allocators/gstdmabuf.h>
+#include <gst/app/gstappsrc.h>
 #include <unistd.h>
 #endif
 
+#include <QtCore/QMutex>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
@@ -25,6 +27,8 @@
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/GstHwBuffersTest.h"
 #include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
@@ -76,6 +80,76 @@ enum class ImportedBetween
     OtherStream,
     SameStream,
 };
+
+}  // namespace
+#endif
+
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+namespace {
+
+/// What stands in for a Vulkan device where the import's bookkeeping is tested without one: it creates images unless
+/// told to refuse them, its fences signal once the test lets the GPU be done, and it counts what is destroyed.
+struct StandInVulkanDevice
+{
+    std::atomic<bool> refusesImages{false};
+    std::atomic<bool> gpuDone{false};
+    std::atomic<int> imagesDestroyed{0};
+    std::atomic<int> memoriesFreed{0};
+    std::atomic<int> fencesDestroyed{0};
+    std::atomic<Qt::HANDLE> imageDestroyedOn{nullptr};
+
+    void restart()
+    {
+        refusesImages = false;
+        gpuDone = false;
+        imagesDestroyed = 0;
+        memoriesFreed = 0;
+        fencesDestroyed = 0;
+        imageDestroyedOn = nullptr;
+    }
+
+    void finishGpuWork()
+    {
+        gpuDone = true;
+        gpuDone.notify_all();
+    }
+};
+
+// Process-wide: the entry points below are plain functions, and a waiter thread may outlive a failed test.
+StandInVulkanDevice s_standInVulkanDevice;
+
+/// The entry points of s_standInVulkanDevice that importing a plane up to its fd and releasing a frame call.
+GstDmaBufVulkan::DeviceFns standInVulkanDeviceFns()
+{
+    GstDmaBufVulkan::DeviceFns fns;
+    fns.createImage = [](VkDevice, const VkImageCreateInfo*, const VkAllocationCallbacks*, VkImage* image) {
+        if (s_standInVulkanDevice.refusesImages) {
+            return VK_ERROR_FORMAT_NOT_SUPPORTED;
+        }
+        *image = VkImage(quintptr(1));
+        return VK_SUCCESS;
+    };
+    fns.destroyImage = [](VkDevice, VkImage, const VkAllocationCallbacks*) {
+        ++s_standInVulkanDevice.imagesDestroyed;
+        s_standInVulkanDevice.imageDestroyedOn = QThread::currentThreadId();
+    };
+    fns.freeMemory = [](VkDevice, VkDeviceMemory, const VkAllocationCallbacks*) {
+        ++s_standInVulkanDevice.memoriesFreed;
+    };
+    fns.createFence = [](VkDevice, const VkFenceCreateInfo*, const VkAllocationCallbacks*, VkFence* fence) {
+        *fence = VkFence(quintptr(1));
+        return VK_SUCCESS;
+    };
+    fns.destroyFence = [](VkDevice, VkFence, const VkAllocationCallbacks*) { ++s_standInVulkanDevice.fencesDestroyed; };
+    fns.getFenceStatus = [](VkDevice, VkFence) { return s_standInVulkanDevice.gpuDone ? VK_SUCCESS : VK_NOT_READY; };
+    fns.waitForFences = [](VkDevice, uint32_t, const VkFence*, VkBool32, uint64_t) {
+        s_standInVulkanDevice.gpuDone.wait(false);
+        return VK_SUCCESS;
+    };
+    fns.queueSubmit = [](VkQueue, uint32_t, const VkSubmitInfo*, VkFence) { return VK_SUCCESS; };
+    fns.queueWaitIdle = [](VkQueue) { return VK_SUCCESS; };
+    return fns;
+}
 
 }  // namespace
 #endif
@@ -231,6 +305,105 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         qPrintable(QStringLiteral("DMABuf negotiated but the sink delivered no DmaBuf frames. Buffers: %1, caps: %2")
                        .arg(bufferCount)
                        .arg(negotiatedStr)));
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
+{
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    QSKIP("The DMABuf-or-glupload bin needs both GPU bins compiled");
+#else
+    if (!GstQgcTest::hasMemorySwitch()) {
+        QSKIP("No switchbin of GStreamer 1.24 or later: the bin is the glupload variant");
+    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "glupload", "glcolorconvert");
+    // A stand-in for Qt's EGLDisplay makes the sink offer DMABuf. Nothing imports with it: no QVideoSink is bound, so
+    // the sink drops each frame once it has arrived.
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+         .gpuBin = {.mode = GstQgc::GpuBinMode::DmaBufOrGlUpload},
+         .dmaBufDisplay = reinterpret_cast<void*>(quintptr(1))});
+
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(
+        pipeline.launch(QStringLiteral("appsrc name=src format=time ! qgcvideosinkbin name=sink gpu-zerocopy=true")),
+        qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
+    QVERIFY(source && sinkBin);
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
+    QVERIFY(qvideosink);
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    QVERIFY(sinkPad);
+
+    // The memory of each buffer that reaches the sink: 'D' a dma-buf, 'G' GLMemory, '?' anything else.
+    struct Arrivals
+    {
+        QMutex mutex;
+        QByteArray memory;
+    } arrivals;
+
+    GStreamer::PadProbe arrivalProbe;
+    QVERIFY(arrivalProbe.add(
+        sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+        +[](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+            auto* const seen = static_cast<Arrivals*>(userData);
+            GstMemory* const memory = gst_buffer_peek_memory(GST_PAD_PROBE_INFO_BUFFER(info), 0);
+            const char* const type = (memory && memory->allocator) ? memory->allocator->mem_type : nullptr;
+            const QMutexLocker lock(&seen->mutex);
+            seen->memory +=
+                gst_is_dmabuf_memory(memory) ? 'D' : ((type && g_str_has_prefix(type, "GLMemory")) ? 'G' : '?');
+            return GST_PAD_PROBE_OK;
+        },
+        &arrivals));
+
+    const auto push = [&source](char memory) {
+        GstTest::SamplePtr sample;
+        GstVideoInfo info;
+        if (memory == 'D') {
+            sample =
+                makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info,
+                                      "video/x-raw(memory:DMABuf), format=NV12, width=64, height=64, framerate=30/1");
+        } else {
+            gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 64, 64);
+            GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
+            gst_buffer_memset(buffer, 0, 0x80, GST_VIDEO_INFO_SIZE(&info));
+            const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(
+                gst_caps_from_string("video/x-raw, format=BGRA, width=64, height=64, framerate=30/1"));
+            sample.reset(gst_sample_new(buffer, caps.get(), nullptr, nullptr));
+            gst_buffer_unref(buffer);
+        }
+        return sample && (gst_app_src_push_sample(GST_APP_SRC(source.get()), sample.get()) == GST_FLOW_OK);
+    };
+
+    // Twice: the bin outlives a stream, and the second starts in the memory the first one ended in, then in the other.
+    for (const char* const stream : {"GGDDGG", "GDDG"}) {
+        {
+            const QMutexLocker lock(&arrivals.mutex);
+            arrivals.memory.clear();
+        }
+        QVERIFY(pipeline.play());
+        for (const char* memory = stream; *memory != '\0'; ++memory) {
+            QVERIFY2(push(*memory), "appsrc refused a frame");
+        }
+        QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
+        const GStreamer::GstMessagePtr message = pipeline.waitForEosOrError();
+        QVERIFY2(message, "the pipeline neither ended nor failed");
+        if (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_ERROR) {
+            const QString failure = GstTest::errorText(message.get());
+            // glupload needs a GL context, which a headless runner may not have.
+            if (failure.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
+                failure.contains(QStringLiteral("gl context"), Qt::CaseInsensitive)) {
+                QSKIP(qPrintable(QStringLiteral("glupload needs a GL context (headless env): %1").arg(failure)));
+            }
+            QFAIL(qPrintable(failure));
+        }
+        {
+            const QMutexLocker lock(&arrivals.mutex);
+            QCOMPARE(arrivals.memory, QByteArray(stream));
+        }
+        QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
+    }
 #endif
 }
 
@@ -523,9 +696,15 @@ void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
         << int(Outcome::Rejected) << false << int(ImportedBetween::SameStream) << never << QString();
     QTest::newRow("a LINEAR frame the QRhi can't import is left to the CPU map")
         << int(Outcome::NotImportable) << false << int(ImportedBetween::Nothing) << never << QString();
+    // The process is out of file descriptors, which is not the driver's refusal.
+    QTest::newRow("a LINEAR frame whose fd can't be duplicated is left to the CPU map")
+        << int(Outcome::FdDupFailed) << false << int(ImportedBetween::Nothing) << never << QString();
 #if GST_CHECK_VERSION(1, 24, 0)
     QTest::newRow("a tiled frame the QRhi can't import has no other way out")
         << int(Outcome::NotImportable) << true << int(ImportedBetween::Nothing) << limit << failed;
+    QTest::newRow("a tiled frame whose fd can't be duplicated has no other way out either")
+        << int(Outcome::FdDupFailed) << true << int(ImportedBetween::Nothing) << limit
+        << QStringLiteral("could not be duplicated");
 #endif
 #endif
 }
@@ -724,6 +903,101 @@ void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions()
 #endif
 }
 
+void GstHwBuffersTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
+{
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf import under Vulkan not compiled in this build");
+#else
+    using GstDmaBufVulkan::ImportFailure;
+    const auto resetGuard = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
+    const GstDmaBufVulkan::DeviceFns fns = standInVulkanDeviceFns();
+    // No open descriptor has this number: fcntl() fails on it with EBADF, as it fails on any with EMFILE once the
+    // process has none left.
+    const GstQtDmaBufImport::Plane plane{.fd = (std::numeric_limits<int>::max)(), .pitch = 64};
+
+    // For comparison, an image the driver refuses.
+    GstDmaBufVideoBuffer::resetCachedState();
+    s_standInVulkanDevice.restart();
+    s_standInVulkanDevice.refusesImages = true;
+    expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBufVulkan", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("vkCreateImage failed")));
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::Rejected);
+    verifyExpectedLogMessage();
+
+    // Warned about once, with the errno, until the scene graph is recreated.
+    GstDmaBufVideoBuffer::resetCachedState();
+    s_standInVulkanDevice.restart();
+    expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBufVulkan", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("dma-buf fd failed: errno %1 ").arg(EBADF)));
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::FdDupFailed);
+    verifyExpectedLogMessage();
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::FdDupFailed);
+
+    // And counted apart from the imports a driver refused.
+    GstVideoInfo info;
+    GstTest::SamplePtr sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    const GstDmaBufVideoBuffer frame(sample.get(), info,
+                                     QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12), EGL_NO_DISPLAY);
+    sample.reset();
+    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
+    frame.noteImportOutcomeForTest(GstDmaBufVideoBuffer::ImportOutcome::FdDupFailed);
+    const QString stats = HwBuffers::extraPathStatsSince(before);
+    QVERIFY2(stats.contains(QStringLiteral("DMABuf-fallback[fd-dup-failed=1]")), qPrintable(stats));
+#endif
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data()
+{
+    QTest::addColumn<bool>("rhiDestroyedFirst");
+
+    QTest::newRow("the GPU finishes while the QRhi lives") << false;
+    QTest::newRow("the QRhi is destroyed before the GPU finishes") << true;
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame()
+{
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf import under Vulkan not compiled in this build");
+#else
+    QFETCH(bool, rhiDestroyedFirst);
+
+    std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
+    StandInVulkanDevice& device = s_standInVulkanDevice;
+    device.restart();
+    // Lets the buffer's waiter go when the test fails before the GPU is done.
+    const auto gpuGuard = qScopeGuard([&device] { device.finishGpuWork(); });
+    GstBuffer* const buffer = gst_buffer_new();
+    const auto bufferGuard = qScopeGuard([buffer] { gst_buffer_unref(buffer); });
+    const auto bufferRefs = [buffer] { return GST_MINI_OBJECT_REFCOUNT_VALUE(buffer); };
+
+    // Qt destroys a frame's bundle while the GPU still samples its images: the decoder must not get the buffer yet.
+    GstDmaBufVulkan::deferredReleaseForTest(*rhi, standInVulkanDeviceFns(), buffer)();
+    QCOMPARE(bufferRefs(), 2);
+
+    if (rhiDestroyedFirst) {
+        // The teardown waits for the GPU, which finishes meanwhile.
+        std::thread gpu;
+        rhi->addCleanupCallback([&gpu, &device](QRhi*) { gpu = std::thread([&device] { device.finishGpuWork(); }); });
+        rhi.reset();
+        gpu.join();
+        QCOMPARE(bufferRefs(), 1);
+    } else {
+        // The GPU finishes. The stream has ended: no other frame is imported or released, and the QRhi lives on.
+        device.finishGpuWork();
+        QTRY_COMPARE_WITH_TIMEOUT(bufferRefs(), 1, TestTimeout::mediumMs());
+        QCOMPARE(device.imagesDestroyed.load(), 0);
+        rhi.reset();
+    }
+    // The images, their memory and the fence are the QRhi's thread's to destroy, at its teardown at the latest.
+    QCOMPARE(device.imagesDestroyed.load(), 1);
+    QCOMPARE(device.memoriesFreed.load(), 1);
+    QCOMPARE(device.fencesDestroyed.load(), 1);
+    QCOMPARE(device.imageDestroyedOn.load(), QThread::currentThreadId());
+#endif
+}
+
 void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 {
 #if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
@@ -752,5 +1026,3 @@ void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
     QCOMPARE(releases, 1);
 #endif
 }
-
-#endif

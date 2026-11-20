@@ -18,7 +18,6 @@
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
-#include "UVCStreamMonitor.h"
 #include "VideoBackend.h"
 #include "VideoDecoderOptions.h"
 #include "VideoManager.h"
@@ -288,6 +287,8 @@ void VideoManagerTest::init()
     _videoManager = std::make_unique<VideoManager>();
     _videoManager->_receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
     _videoManager->_createVideoReceivers();
+    // A row of tiles with room for them all is shown, as when the video is the Fly View's main view.
+    _videoManager->setTileRoom(4);
     _primary = qobject_cast<FakeVideoReceiver*>(_videoManager->primaryStream()->receiver());
     _thermal = qobject_cast<FakeVideoReceiver*>(_videoManager->thermalStream()->receiver());
     QVERIFY(_primary);
@@ -339,6 +340,8 @@ void VideoManagerTest::_testSettingReachesReceiver_data()
     QTest::newRow("lowLatencyMode") << "lowLatencyMode" << QVariant(true) << "lowLatency" << QVariant(true);
     QTest::newRow("rtpJitterLatencyMs") << "rtpJitterLatencyMs" << QVariant(300) << "rtpJitterLatencyMs"
                                         << QVariant(300);
+    QTest::newRow("softwareDecoderThreads")
+        << "softwareDecoderThreads" << QVariant(2) << "softwareDecoderThreads" << QVariant(2);
     QTest::newRow("rtspAutoReconnect") << "rtspAutoReconnect" << QVariant(false) << "autoReconnect" << QVariant(false);
     QTest::newRow("udpUrl") << "udpUrl" << QVariant(QStringLiteral("0.0.0.0:5700")) << "uri"
                             << QVariant(QStringLiteral("udp://0.0.0.0:5700"));
@@ -361,8 +364,10 @@ void VideoManagerTest::_testSettingReachesReceiver()
     const VideoReceiver::Config& config = _primary->config();
     const QVariant actual = (field == QLatin1String("lowLatency"))           ? QVariant(config.lowLatency)
                             : (field == QLatin1String("rtpJitterLatencyMs")) ? QVariant(config.rtpJitterLatencyMs)
-                            : (field == QLatin1String("autoReconnect"))      ? QVariant(config.autoReconnect)
-                                                                             : QVariant(config.uri);
+                            : (field == QLatin1String("softwareDecoderThreads"))
+                                ? QVariant(config.softwareDecoderThreads)
+                            : (field == QLatin1String("autoReconnect")) ? QVariant(config.autoReconnect)
+                                                                        : QVariant(config.uri);
     QCOMPARE(actual, expected);
 }
 
@@ -506,6 +511,9 @@ void VideoManagerTest::_testAutoStreamLeavesSettingsAlone()
     const auto primaryInfo = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
     const auto thermalInfo =
         makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    // The thermal view is on: its stream plays only while it is in use.
+    QQuickItem thermalView;
+    _videoManager->thermalStream()->registerVideoOutput(&thermalView);
     _videoManager->primaryStream()->setStreamInfo(primaryInfo.get());
     _videoManager->thermalStream()->setStreamInfo(thermalInfo.get());
     _settle();
@@ -553,19 +561,21 @@ void VideoManagerTest::_testThermalOnlyChangeReconfiguresThermal()
 void VideoManagerTest::_testOtherStreamsPlayInTiles_data()
 {
     QTest::addColumn<int>("maxTiles");
-    QTest::addColumn<int>("tileRoom");  ///< What the row of tiles tells; -1 when none does
+    QTest::addColumn<int>("tileRoom");  ///< What the row of tiles tells; -1 when none has
     QTest::addColumn<QStringList>("tileUris");
 
     const QString second = QStringLiteral("udp://0.0.0.0:5602");
     const QString wide = QStringLiteral("rtsp://10.0.0.2/wide");
     const QString fourth = QStringLiteral("udp://0.0.0.0:5604");
-    QTest::newRow("no tiles") << 0 << -1 << QStringList();
-    QTest::newRow("one tile") << 1 << -1 << QStringList({second});
-    QTest::newRow("three tiles") << 3 << -1 << QStringList({second, wide, fourth});
-    QTest::newRow("as many tiles as streams") << 4 << -1 << QStringList({second, wide, fourth});
+    QTest::newRow("no tiles") << 0 << 4 << QStringList();
+    QTest::newRow("one tile") << 1 << 4 << QStringList({second});
+    QTest::newRow("three tiles") << 3 << 4 << QStringList({second, wide, fourth});
+    QTest::newRow("as many tiles as streams") << 4 << 4 << QStringList({second, wide, fourth});
     QTest::newRow("room for two of three tiles") << 3 << 2 << QStringList({second, wide});
     QTest::newRow("room for more tiles than allowed") << 1 << 4 << QStringList({second});
     QTest::newRow("no room for a tile") << 3 << 0 << QStringList();
+    // No tile is on screen, as with the video in the picture-in-picture: nothing connects to the other streams.
+    QTest::newRow("no row has told its room") << 3 << -1 << QStringList();
 }
 
 void VideoManagerTest::_testOtherStreamsPlayInTiles()
@@ -761,22 +771,30 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera_data()
     QTest::addColumn<QString>("videoSource");
     QTest::addColumn<QString>("tileCamera");
     QTest::addColumn<int>("maxTiles");
+    QTest::addColumn<int>("tileRoom");    ///< What the row of tiles tells; -1 when none has
     QTest::addColumn<QString>("camera");  ///< The camera that plays; empty for none
     QTest::addColumn<bool>("tile");
+    QTest::addColumn<bool>("hasCamera");  ///< A camera is there to play, with room for its tile or without
 
     const QString udp = VideoSettings::videoSourceUDPH264;
     const QString attached = QStringLiteral("QGC Test Camera");
     const QString other = QStringLiteral("QGC Other Test Camera");
     const QString missing = QStringLiteral("QGC Test Missing Camera");
-    QTest::newRow("the video source") << attached << QString() << 3 << attached << false;
-    QTest::newRow("the video source, not the tile's camera") << attached << other << 3 << attached << false;
-    QTest::newRow("the video source without tiles") << attached << QString() << 0 << attached << false;
-    QTest::newRow("in a tile beside a stream") << udp << attached << 3 << attached << true;
-    QTest::newRow("no tile's camera") << udp << QString() << 3 << QString() << false;
-    QTest::newRow("no tiles") << udp << attached << 0 << QString() << false;
+    QTest::newRow("the video source") << attached << QString() << 3 << 4 << attached << false << true;
+    QTest::newRow("the video source, not the tile's camera")
+        << attached << other << 3 << 4 << attached << false << true;
+    QTest::newRow("the video source without tiles") << attached << QString() << 0 << 4 << attached << false << true;
+    QTest::newRow("the video source without a row of tiles")
+        << attached << QString() << 3 << -1 << attached << false << true;
+    QTest::newRow("in a tile beside a stream") << udp << attached << 3 << 4 << attached << true << true;
+    QTest::newRow("no tile's camera") << udp << QString() << 3 << 4 << QString() << false << false;
+    QTest::newRow("no tiles") << udp << attached << 0 << 4 << QString() << false << false;
+    // The camera's settings stay in view while its tile has no room, where it doesn't play.
+    QTest::newRow("no room for its tile") << udp << attached << 3 << 0 << QString() << false << true;
+    QTest::newRow("no row has told its room") << udp << attached << 3 << -1 << QString() << false << true;
     QTest::newRow("no stream to play beside")
-        << QString(VideoSettings::videoDisabled) << attached << 3 << QString() << false;
-    QTest::newRow("the tile's camera isn't attached") << udp << missing << 3 << QString() << false;
+        << QString(VideoSettings::videoDisabled) << attached << 3 << 4 << QString() << false << false;
+    QTest::newRow("the tile's camera isn't attached") << udp << missing << 3 << 4 << QString() << false << false;
 }
 
 void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
@@ -784,12 +802,15 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
     QFETCH(QString, videoSource);
     QFETCH(QString, tileCamera);
     QFETCH(int, maxTiles);
+    QFETCH(int, tileRoom);
     QFETCH(QString, camera);
     QFETCH(bool, tile);
+    QFETCH(bool, hasCamera);
 
     _videoManager->_cameraAttached = [](const QString& name) {
         return name.startsWith(QLatin1String("QGC ")) && !name.contains(QLatin1String("Missing"));
     };
+    _videoManager->setTileRoom(tileRoom);
     _facts->set(_videoSettings->maxVideoTiles(), maxTiles);
     _facts->set(_videoSettings->uvcTileCamera(), tileCamera);
     _facts->set(_videoSettings->videoSource(), videoSource);
@@ -810,7 +831,7 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
         QCOMPARE(_videoManager->_cameraSource->displayName(), camera);
     }
     QCOMPARE(_videoManager->_cameraSource->tile(), tile);
-    QCOMPARE(_videoManager->hasUvcCamera(), !camera.isEmpty());
+    QCOMPARE(_videoManager->hasUvcCamera(), hasCamera);
     // isUvc says that the camera is the main picture, which it isn't from a tile.
     const bool mainPicture = !camera.isEmpty() && !tile;
     QCOMPARE(_videoManager->isUvc(), mainPicture);
@@ -829,6 +850,9 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     const auto third = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5603");
     _facts->set(_videoSettings->maxVideoTiles(), 2);
     _facts->set(_videoSettings->uvcTileCamera(), camera);
+    // The thermal view is on: its stream plays only while it is in use.
+    QQuickItem thermalView;
+    _videoManager->thermalStream()->registerVideoOutput(&thermalView);
     _videoManager->_setAdvertisedStreams(
         {current.get(), nullptr, QStringLiteral("Main")}, thermalInfo.get(),
         {{second.get(), nullptr, QStringLiteral("Second")}, {third.get(), nullptr, QStringLiteral("Third")}});
@@ -867,6 +891,20 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     QVERIFY(!_videoManager->hasThermal());
     QVERIFY(!_thermal->active());
     QVERIFY(_videoManager->uvcCamera()->active());
+
+    // The camera stays the main picture without a row of tiles on screen, as in the picture-in-picture, where the
+    // other tiles' sources go: the stream it took the main picture from plays on, for its return.
+    _videoManager->setTileRoom(0);
+    _settle();
+    QVERIFY(_videoManager->isUvc());
+    QVERIFY(_videoManager->uvcCamera()->active());
+    QVERIFY(primaryStream->tile());
+    QVERIFY(_primary->active());
+    QCOMPARE(_videoManager->_sources.size(), 3);
+    _videoManager->setTileRoom(4);
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    QCOMPARE(_primary->activeChanges, 0);
 
     // The stream is selected in its turn: it is the main picture again, and the camera is back in its tile.
     _videoManager->selectSource(primaryStream);
@@ -930,8 +968,18 @@ void VideoManagerTest::_testDisableWhenDisarmed()
     _settle();
     QVERIFY(_primary->active());
 
+    // The setting goes by the vehicle's state, not by its next change: turned on for a disarmed vehicle, it turns the
+    // video off.
     _facts->set(_videoSettings->disableWhenDisarmed(), true);
+    QVERIFY(!_videoManager->hasVideo());
+    QCOMPARE(_videoManager->noVideoReason(), VideoManager::NoVideoReason::DisabledWhileDisarmed);
+    _settle();
+    QVERIFY(!_primary->active());
     _videoManager->_onArmedChanged(true);
+    QVERIFY(_videoManager->hasVideo());
+    _settle();
+    QVERIFY(_primary->active());
+
     // Full screen needs a connected vehicle, which this test has none of.
     _videoManager->_fullScreen = true;
     _videoManager->_onArmedChanged(false);
@@ -953,8 +1001,20 @@ void VideoManagerTest::_testDisableWhenDisarmed()
             break;
     }
     QVERIFY(_videoManager->hasVideo());
+    QCOMPARE(_videoManager->noVideoReason(), VideoManager::NoVideoReason::Waiting);
     _settle();
     QVERIFY(_primary->active());
+
+    if (lift == 2) {
+        // The restart holds until the vehicle's armed state changes: other changes leave the video on, and the
+        // vehicle's next disarming turns it off again.
+        _facts->set(_videoSettings->lowLatencyMode(), true);
+        QVERIFY(_videoManager->hasVideo());
+        _videoManager->_onArmedChanged(true);
+        QVERIFY(_videoManager->hasVideo());
+        _videoManager->_onArmedChanged(false);
+        QVERIFY(!_videoManager->hasVideo());
+    }
 }
 
 void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo_data()
@@ -1226,6 +1286,19 @@ void VideoManagerTest::_testScreenshotFailuresReachUser()
     verifyExpectedLogMessage();
 }
 
+void VideoManagerTest::_testAspectRatioWithoutAdvertisedResolution()
+{
+    _facts->set(_videoSettings->aspectRatio(), 2.0);
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    const auto info = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    stream->setStreamInfo(info.get());
+    QCOMPARE(stream->aspectRatio(), 1280.0 / 720.0);
+
+    // A camera that reports no resolution leaves the ratio to the setting.
+    QVERIFY(info->update(mavlink_video_stream_status_t{}));
+    QCOMPARE(stream->aspectRatio(), 2.0);
+}
+
 void VideoManagerTest::_testAdvertisedRotationTurnsVideo_data()
 {
     // What a camera advertises for a stream of 64 × 48 frames whose top-left quadrant is red.
@@ -1410,6 +1483,12 @@ void VideoManagerTest::_testUvcCameraFormatReachesCamera()
     QCOMPARE(camera->format(), QStringLiteral("640x480 30 fps YUYV"));
     _facts->set(_videoSettings->uvcCameraFormat(), QString());
     QVERIFY(camera->format().isEmpty());
+
+    // The formats the camera offers are the setting's choices, after Auto.
+    camera->_formats = {QStringLiteral("640x480 30 fps YUYV")};
+    emit camera->formatsChanged();
+    QCOMPARE(_videoSettings->uvcCameraFormat()->enumValues(),
+             QVariantList({QString(), QStringLiteral("640x480 30 fps YUYV")}));
 }
 
 void VideoManagerTest::_testUvcControlsReachCamera()
@@ -1581,7 +1660,6 @@ void VideoManagerTest::_testIndicatorReportsMeasuredSource()
     toolbar->setParentItem(window.contentItem());
     const QQuickItem* const indicator = toolbar->findChild<QQuickItem*>(QStringLiteral("toolbar_videoStreamIndicator"));
     QVERIFY(indicator);
-    QVERIFY(!indicator->property("showIndicator").toBool());
 
     // Only the thermal stream is measured: the figures are its own.
     VideoStreamStats thermalStats;
@@ -1605,7 +1683,9 @@ void VideoManagerTest::_testIndicatorReportsMeasuredSource()
     // The USB camera, which runs in the primary stream's place, has no bitrate to show: its resolution instead.
     _primary->setStats({});
     _thermal->setStats({});
-    QVERIFY(!indicator->property("showIndicator").toBool());
+    // No source is measured, and the video is awaited: the indicator says so in place of the figures.
+    QVERIFY(indicator->property("showIndicator").toBool());
+    QVERIFY(showsText(indicator, QStringLiteral("Waiting")));
     UVCCameraController* const camera = _videoManager->uvcCamera();
     VideoStreamStats cameraStats;
     cameraStats.valid = true;
@@ -1685,11 +1765,12 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
     info.framerate = static_cast<float>(cameraFps);
     (void) qstrncpy(info.uri, "5601", sizeof(info.uri));
     QGCVideoStreamInfo cameraStream(info);
-    UVCStreamMonitor* const cameraMonitor = _videoManager->uvcCamera()->monitor();
+    UVCCameraController* const camera = _videoManager->uvcCamera();
     QSignalSpy degradedSpy(_videoManager.get(), &VideoManager::degradedChanged);
 
     if (usbCamera) {
-        cameraMonitor->_publish(stats, QSize(1280, 720), cameraFps);
+        camera->_setCameraFrameRate(cameraFps);
+        camera->setStats(stats);
     } else {
         if (cameraFps > 0) {
             _videoManager->primaryStream()->setStreamInfo(&cameraStream);
@@ -1701,7 +1782,8 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
     QCOMPARE(degradedSpy.count(), degraded ? 1 : 0);
 
     // A source that is no longer measured doesn't fall short.
-    cameraMonitor->_publish({}, QSize(), 0.0);
+    camera->setStats({});
+    camera->_setCameraFrameRate(0.0);
     _primary->setStats({});
     QVERIFY(!_videoManager->degraded());
     _videoManager->primaryStream()->setStreamInfo(nullptr);
@@ -1733,7 +1815,7 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
     QCOMPARE(group(1)->property("stream").value<VideoStreamController*>(), _videoManager->thermalStream());
     QCOMPARE(group(1)->property("heading").toString(), QStringLiteral("Thermal"));
     UVCCameraController* const camera = _videoManager->uvcCamera();
-    QCOMPARE(group(2)->property("monitor").value<UVCStreamMonitor*>(), camera->monitor());
+    QCOMPARE(group(2)->property("camera").value<UVCCameraController*>(), camera);
 
     // A group shows while its source is measured.
     const std::array<std::function<void(const VideoStreamStats&)>, 3> setStats{
@@ -1991,8 +2073,8 @@ void VideoManagerTest::_testVideoViewShowsOtherSourcesInTiles()
     QVERIFY(tiles->width() < roomyWidth);
     QVERIFY(tiles->width() >= minimumTileWidth);
 
-    // A view without room for tiles, as the picture-in-picture, shows none: their streams aren't decoded. It leaves
-    // the manager with the room there was, and so the tiles' sources as they are.
+    // A view without room for tiles, as the picture-in-picture, shows none: their streams aren't decoded. For the
+    // grace period it leaves the manager with the room there was, and so the tiles' sources as they are.
     (void) view->setProperty("showTiles", false);
     QVERIFY(!tiles->isVisible());
     (void) view->setProperty("tilesRightInset", 0);
@@ -2010,6 +2092,22 @@ void VideoManagerTest::_testVideoViewShowsOtherSourcesInTiles()
     QVERIFY(!tiles->isVisible());
     _settle();
     QVERIFY(secondReceiver->videoOutput());
+
+    // A view that stays without its tiles for longer than the grace period has no room for them any more: their
+    // sources go, and with them the receivers of their streams. They are back, connecting anew, with the tiles.
+    const QPointer<VideoReceiver> hiddenReceiver = secondReceiver;
+    QVERIFY(tiles->setProperty("hiddenGrace", 1));
+    (void) view->setProperty("showTiles", false);
+    QTRY_COMPARE_WITH_TIMEOUT(_videoManager->tileRoom(), 0, TestTimeout::mediumMs());
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 3);
+    QVERIFY(hiddenReceiver.isNull());
+    (void) view->setProperty("showTiles", true);
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 5);
+    // The new sources' updates were queued by the manager's.
+    _settle();
+    QVERIFY(_receiverOf(_videoManager->_sources.at(3))->active());
 }
 
 void VideoManagerTest::_testTappedTileBecomesMainPicture()
@@ -2171,6 +2269,74 @@ void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
     QVERIFY(!_videoManager->hasThermal());
     _settle();
     QCOMPARE(_thermal->videoOutput(), nullptr);
+}
+
+void VideoManagerTest::_testThermalPlaysOnlyWhileInUse()
+{
+    VideoStreamController* const thermalStream = _videoManager->thermalStream();
+    const auto thermalInfo =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    thermalStream->setStreamInfo(thermalInfo.get());
+    _settle();
+    // What the manager goes by when it asks the stream's camera to transmit it.
+    QSignalSpy idleSpy(thermalStream, &VideoStreamController::idleChanged);
+
+    // Advertised with its view off, the stream is there to show, and nothing connects to it.
+    QVERIFY(_videoManager->hasThermal());
+    QCOMPARE(_thermal->config().uri, QStringLiteral("rtsp://10.0.0.1/thermal"));
+    QVERIFY(!_thermal->active());
+    QVERIFY(!thermalStream->wantsStream());
+
+    // It connects for its view.
+    QQuickItem view;
+    thermalStream->registerVideoOutput(&view);
+    QVERIFY(thermalStream->wantsStream());
+    QCOMPARE(idleSpy.count(), 1);
+    _settle();
+    QVERIFY(_thermal->active());
+
+    // The view goes: the stream plays on for the grace period, so a view that is back by then finds it playing.
+    _resetCounters();
+    thermalStream->unregisterVideoOutput(&view);
+    _settle();
+    QVERIFY(thermalStream->_idleTimer.isActive());
+    thermalStream->registerVideoOutput(&view);
+    _settle();
+    QVERIFY(!thermalStream->_idleTimer.isActive());
+    QCOMPARE(_thermal->activeChanges, 0);
+    QCOMPARE(idleSpy.count(), 1);
+
+    // Out of use for longer, it disconnects.
+    thermalStream->_idleTimer.setInterval(1);
+    thermalStream->unregisterVideoOutput(&view);
+    QTRY_VERIFY_WITH_TIMEOUT(!_thermal->active(), TestTimeout::mediumMs());
+    QVERIFY(!thermalStream->wantsStream());
+    QCOMPARE(idleSpy.count(), 2);
+
+    // A recording connects it at once, with its view off, and keeps it from when it is asked for until it has ended.
+    const QString file = QStringLiteral("flight.thermalVideo.mkv");
+    QVERIFY(thermalStream->canRecord());
+    thermalStream->startRecording(file, VideoReceiver::FileFormat::Mkv);
+    QVERIFY(_thermal->active());
+    QCOMPARE(_thermal->recordings.size(), 1);
+    QCOMPARE(_thermal->recordings.first().file, file);
+    QVERIFY(!thermalStream->_idleTimer.isActive());
+    _thermal->setRecording(true);
+    thermalStream->stopRecording();
+    QCOMPARE(_thermal->recordingStops, 1);
+    QVERIFY(!thermalStream->_idleTimer.isActive());
+    _thermal->setRecording(false);
+    QTRY_VERIFY_WITH_TIMEOUT(!_thermal->active(), TestTimeout::mediumMs());
+
+    // So does a recording that fails before it began.
+    thermalStream->startRecording(file, VideoReceiver::FileFormat::Mkv);
+    QVERIFY(_thermal->active());
+    expectLogMessage("Video.VideoRecordingService", QtWarningMsg, QRegularExpression(QStringLiteral("no encoder")));
+    expectAppMessage(QRegularExpression(QStringLiteral("no encoder")));
+    emit _thermal->recordingFinished(file, QStringLiteral("no encoder"));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QTRY_VERIFY_WITH_TIMEOUT(!_thermal->active(), TestTimeout::mediumMs());
 }
 
 void VideoManagerTest::_testStreamUriAndTransport_data()

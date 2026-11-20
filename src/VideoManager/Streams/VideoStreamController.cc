@@ -52,10 +52,14 @@ VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSett
     , _role(role)
     , _name(nameForRole(role))
     , _videoSettings(videoSettings)
+    , _idle(role == Role::Thermal)
 {
     // The setting stands in for the primary stream's ratio, which a stream in a tile may become.
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this,
                    &VideoStreamController::aspectRatioChanged);
+    _idleTimer.setSingleShot(true);
+    _idleTimer.setInterval(kIdleGrace);
+    (void) connect(&_idleTimer, &QTimer::timeout, this, &VideoStreamController::_onIdleTimeout);
     if (ownReceiver) {
         setReceiver(ownReceiver);
         _hasOwnReceiver = true;
@@ -126,6 +130,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     // No receiver is set while it goes: one that finishes a recording runs the event loop in its destructor, from
     // where this function may be called again.
     _decoded = false;
+    _recordingRequested = false;
     if (VideoReceiver* const oldReceiver = std::exchange(_receiver, nullptr)) {
         (void) disconnect(oldReceiver, nullptr, this, nullptr);
         delete oldReceiver;
@@ -150,7 +155,13 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
             emit decodingChanged();
         });
         (void) connect(_receiver, &VideoReceiver::stateChanged, this, &VideoStreamController::_onReceiverStateChanged);
-        (void) connect(_receiver, &VideoReceiver::recordingChanged, this, &VideoStreamController::recordingChanged);
+        (void) connect(_receiver, &VideoReceiver::recordingChanged, this, [this](bool recording) {
+            if (!recording) {
+                _recordingRequested = false;
+            }
+            _updateInUse();
+            emit recordingChanged(recording);
+        });
         (void) connect(_receiver, &VideoReceiver::videoSizeChanged, this, [this](QSize size) {
             qCDebug(VideoStreamControllerLog) << name() << "video size" << size;
             emit videoSizeChanged();
@@ -158,7 +169,15 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         });
         (void) connect(_receiver, &VideoReceiver::statsChanged, this, &VideoStreamController::statsChanged);
         (void) connect(_receiver, &VideoReceiver::recordingStarted, this, &VideoStreamController::recordingStarted);
-        (void) connect(_receiver, &VideoReceiver::recordingFinished, this, &VideoStreamController::recordingFinished);
+        (void) connect(_receiver, &VideoReceiver::recordingFinished, this,
+                       [this](const QString& file, const QString& error) {
+                           // A recording that failed before it began tells of its end this way alone.
+                           if (!error.isEmpty() && !recording()) {
+                               _recordingRequested = false;
+                               _updateInUse();
+                           }
+                           emit recordingFinished(file, error);
+                       });
         (void) connect(_receiver, &VideoReceiver::errorOccurred, this, &VideoStreamController::errorOccurred);
         _receiver->setDisplayConfig(_resolvedDisplayConfig());
         _receiver->setRecordingEncoding(_recordingEncoding);
@@ -183,6 +202,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         emit statsChanged();
     }
     _updateReconnecting();
+    _updateInUse();
 }
 
 QGCVideoStreamInfo* VideoStreamController::streamInfo() const
@@ -277,7 +297,13 @@ void VideoStreamController::_apply()
         return;
     }
 
-    const bool active = _enabled && config.has_value();
+    const bool wanted = _enabled && config.has_value();
+    if (!wanted && _recordingRequested) {
+        // The receiver ends its recording, one it has yet to begin too, as it stops.
+        _recordingRequested = false;
+        _updateInUse();
+    }
+    const bool active = wanted && !_idle;
     if (!active) {
         _forgetDecoded();
     }
@@ -342,6 +368,41 @@ void VideoStreamController::_updateReconnecting()
     }
 }
 
+bool VideoStreamController::_inUse() const
+{
+    return _videoOutput || _recordingRequested || recording();
+}
+
+void VideoStreamController::_updateInUse()
+{
+    if (_role != Role::Thermal) {
+        return;
+    }
+    if (!_inUse()) {
+        if (!_idle && !_idleTimer.isActive()) {
+            _idleTimer.start();
+        }
+        return;
+    }
+    _idleTimer.stop();
+    if (_idle) {
+        qCDebug(VideoStreamControllerLog) << name() << "in use";
+        _idle = false;
+        scheduleApply();
+        emit idleChanged();
+    }
+}
+
+void VideoStreamController::_onIdleTimeout()
+{
+    if (!_inUse()) {
+        qCDebug(VideoStreamControllerLog) << name() << "out of use";
+        _idle = true;
+        _apply();
+        emit idleChanged();
+    }
+}
+
 QQuickItem* VideoStreamController::videoOutput() const
 {
     return _videoOutput;
@@ -357,10 +418,13 @@ void VideoStreamController::registerVideoOutput(QQuickItem* videoOutput)
                                       << ((videoOutput == _videoOutput) ? "re-attaching video output" : "video output")
                                       << videoOutput;
     _videoOutput = videoOutput;
+    // An output that goes away without a word leaves the stream out of use as well.
+    (void) connect(videoOutput, &QObject::destroyed, this, &VideoStreamController::_updateInUse, Qt::UniqueConnection);
     // Also for the current output: the receiver binds it anew.
     if (_receiver && !_displaySuspended) {
         _receiver->setVideoOutput(videoOutput);
     }
+    _updateInUse();
 }
 
 void VideoStreamController::unregisterVideoOutput(QQuickItem* videoOutput)
@@ -373,6 +437,7 @@ void VideoStreamController::unregisterVideoOutput(QQuickItem* videoOutput)
     _videoOutput = nullptr;
     // Queued: the output that takes this one's place, in the main picture or in a tile, registers in the same pass.
     (void) QMetaObject::invokeMethod(this, &VideoStreamController::_detachVideoOutput, Qt::QueuedConnection);
+    _updateInUse();
 }
 
 void VideoStreamController::_detachVideoOutput()
@@ -404,23 +469,31 @@ void VideoStreamController::setDisplaySuspended(bool suspended)
     }
 }
 
-bool VideoStreamController::active() const
+bool VideoStreamController::canRecord() const
 {
-    return _receiver && _receiver->active();
+    return _receiver && _enabled && configured();
 }
 
 void VideoStreamController::startRecording(const QString& file, VideoReceiver::FileFormat format)
 {
-    if (_receiver) {
-        _receiver->startRecording(file, format);
+    if (!_receiver) {
+        return;
     }
+    _recordingRequested = true;
+    _updateInUse();
+    // Now, not on the next pass: a receiver takes a recording only while it is active, which the thermal stream out
+    // of use isn't.
+    _apply();
+    _receiver->startRecording(file, format);
 }
 
 void VideoStreamController::stopRecording()
 {
+    _recordingRequested = false;
     if (_receiver) {
         _receiver->stopRecording();
     }
+    _updateInUse();
 }
 
 bool VideoStreamController::encodesRecordings() const
@@ -468,9 +541,10 @@ double VideoStreamController::aspectRatio() const
     if (!size.isEmpty()) {
         return static_cast<double>(size.width()) / size.height();
     }
-    if (_streamInfo) {
+    // A camera that advertises no resolution leaves the ratio to the setting.
+    if (_streamInfo && !_streamInfo->resolution().isEmpty()) {
         const double advertised = _streamInfo->aspectRatio();
-        return (((_rotation % 180) != 0) && (advertised > 0.0)) ? (1.0 / advertised) : advertised;
+        return ((_rotation % 180) != 0) ? (1.0 / advertised) : advertised;
     }
     return (_role == Role::Primary) ? _videoSettings->aspectRatio()->rawValue().toDouble() : 1.0;
 }

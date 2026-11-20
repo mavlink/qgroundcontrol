@@ -28,6 +28,21 @@ Item {
         }
     }
 
+    // Under the video view, whose tiles take their touches first. With one finger down as the mouse area's press, a
+    // second one reaches it: the two pinch.
+    CameraPinchZoom {
+        anchors.fill:   parent
+        camera:         videoStreaming.camera
+        heldFinger:     Qt.point(flyViewVideoMouseArea.mouseX, flyViewVideoMouseArea.mouseY)
+        heldFingerDown: flyViewVideoMouseArea.pressed
+
+        onPinchingChanged: {
+            if (pinching) {
+                flyViewVideoMouseArea.pinchBegan()
+            }
+        }
+    }
+
     //-- Video Streaming
     VideoView {
         id:                 videoStreaming
@@ -41,19 +56,16 @@ Item {
     }
 
     QGCLabel {
+        id: fullScreenHint
+
         text: qsTr("Double-click to exit full screen")
         font.pointSize: ScreenTools.largeFontPointSize
         visible: root.videoManager.fullScreen
         anchors.centerIn: parent
 
-        onVisibleChanged: {
-            if (visible) {
-                labelAnimation.start()
-            }
-        }
-
+        // Starts over each time the hint is shown. Left to itself it runs once, from when the view was created.
         PropertyAnimation on opacity {
-            id: labelAnimation
+            running: fullScreenHint.visible
             duration: 10000
             from: 1.0
             to: 0.0
@@ -82,8 +94,21 @@ Item {
         property real _pressY:      0
         property bool _dragging:    false
         property bool _doubleClicked: false
+        // A second finger made the press a pinch, which is neither a click nor a drag.
+        property bool _pinched: false
         readonly property real _dragThreshold: 10
 
+        function pinchBegan() {
+            _pinched = true
+            if (_dragging) {
+                // The drag ends without tracking what it spanned, which a rectangle without a size doesn't.
+                onScreenGimbalController.mouseDragEnd()
+                cameraTrackingController.mouseDragEnd(_pressX, _pressY)
+                _dragging = false
+            }
+        }
+
+        objectName:                 "flyViewVideoMouseArea"
         anchors.fill:               parent
         enabled:                    root.pipState.state === root.pipState.fullState
 
@@ -91,6 +116,7 @@ Item {
         // fire an unintended gimbal click-to-point/tracking command on its first click.
         Timer {
             id:         singleClickTimer
+            objectName: "flyViewVideoClickTimer"
 
             property real clickX: 0
             property real clickY: 0
@@ -125,12 +151,16 @@ Item {
             _pressX = mouse.x
             _pressY = mouse.y
             _dragging = false
+            _pinched = false
             // Clear any stale flag (e.g. double-click followed by drag releases through the
             // drag branch without consuming it). Safe: pressed is emitted before doubleClicked.
             _doubleClicked = false
         }
 
         onPositionChanged: (mouse) => {
+            if (_pinched) {
+                return
+            }
             if (!_dragging && (Math.abs(mouse.x - _pressX) >= _dragThreshold || Math.abs(mouse.y - _pressY) >= _dragThreshold)) {
                 _dragging = true
                 onScreenGimbalController.mouseDragStart(_pressX, _pressY)
@@ -143,6 +173,9 @@ Item {
         }
 
         onReleased: (mouse) => {
+            if (_pinched) {
+                return
+            }
             if (_dragging) {
                 onScreenGimbalController.mouseDragEnd()
                 cameraTrackingController.mouseDragEnd(mouse.x, mouse.y)

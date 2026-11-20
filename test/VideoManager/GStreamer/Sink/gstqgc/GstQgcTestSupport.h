@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <gst/allocators/gstfdmemory.h>
@@ -40,6 +38,18 @@ struct PipelineRunResult
 PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers = 5,
                                                bool gpuZerocopy = false, const char* sourceProperties = "",
                                                bool captureCenterPixel = false);
+
+/// Whether qgcvideosinkbin builds its DMABuf-or-glupload variant here: without switchbin of GStreamer 1.24 or later it
+/// builds the glupload variant instead.
+inline bool hasMemorySwitch()
+{
+    guint major = 0;
+    guint minor = 0;
+    guint micro = 0;
+    guint nano = 0;
+    gst_version(&major, &minor, &micro, &nano);
+    return ((major > 1) || (minor >= 24)) && GstTest::firstMissingFactory({"switchbin"}).isEmpty();
+}
 
 /// The qgcqvideosink inside the qgcvideosinkbin @p sinkBin.
 inline GStreamer::GstElementPtr qvideosink(GstElement* sinkBin)
@@ -197,5 +207,3 @@ inline SinkBin makeSinkBin()
 }
 
 }  // namespace GstQgcTest
-
-#endif

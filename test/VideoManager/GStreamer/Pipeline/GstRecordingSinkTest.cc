@@ -1,7 +1,5 @@
 #include "GstRecordingSinkTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
@@ -373,7 +371,5 @@ void GstRecordingSinkTest::_testRecordingIsSyncedAtItsEnd()
     QVERIFY(!finished.isEmpty());
     QVERIFY2(ending.written == finished, "The file changed after its last sync");
 }
-
-#endif
 
 UT_REGISTER_TEST(GstRecordingSinkTest, TestLabel::Integration)

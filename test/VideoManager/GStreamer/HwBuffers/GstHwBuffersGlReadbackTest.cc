@@ -1,20 +1,16 @@
 #include "GstHwBuffersGlReadbackTest.h"
 
-#include <rhi/qrhi.h>
-
-#include <QtGui/QOffscreenSurface>
-
-#ifdef QGC_GST_STREAMING
-
 #include <array>
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <memory>
+#include <rhi/qrhi.h>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QOffscreenSurface>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -25,6 +21,7 @@
 #include "GstQgcFrameMap.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "gstqgc/GstQgcGpuBin.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <fcntl.h>
@@ -62,8 +59,6 @@
 #include <QtGui/qopenglcontext_platform.h>
 #endif
 
-#endif  // QGC_GST_STREAMING
-
 GstHwBuffersGlReadbackTest::GstHwBuffersGlReadbackTest() = default;
 GstHwBuffersGlReadbackTest::~GstHwBuffersGlReadbackTest() = default;
 
@@ -93,8 +88,6 @@ QRhi* GstHwBuffersGlReadbackTest::_glRhi()
     return nullptr;
 #endif
 }
-
-#ifdef QGC_GST_STREAMING
 
 void GstHwBuffersGlReadbackTest::init()
 {
@@ -495,32 +488,55 @@ void GstHwBuffersGlReadbackTest::_testDmaBufBufferReturnsAfterGpuReads()
 #endif
 }
 
+void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<QString>("format");
+
+    // The direct-DMABuf bin doesn't offer GLMemory.
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
+#else
+    const int glUpload = int(GstQgc::GpuBinMode::Passthrough);
+#endif
+    QTest::newRow("RGBA, glupload bin") << glUpload << QStringLiteral("RGBA");
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    // Its switchbin has no path yet when the element upstream asks downstream for a GL context.
+    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+    QTest::newRow("RGBA, DMABuf-or-glupload bin") << dmaBufOrGlUpload << QStringLiteral("RGBA");
+    // Two textures a frame, as NVDEC hands them on.
+    QTest::newRow("NV12, DMABuf-or-glupload bin") << dmaBufOrGlUpload << QStringLiteral("NV12");
+#endif
+}
+
 void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
 {
 #if !defined(QGC_TEST_GLMEMORY_READBACK)
     QSKIP("GLMemory GPU path on EGL not compiled in this build");
 #else
+    QFETCH(int, mode);
+    QFETCH(QString, format);
     QRhi* rhi = _glRhi();
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
     }
-    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "glcolorconvert");
-    GstQgc::SinkEnvironment openGl{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true}};
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    // The direct-DMABuf bin doesn't offer GLMemory.
-    openGl.gpuBin.mode = GstQgc::GpuBinMode::GlUpload;
-#endif
-    const GstQgc::ScopedSinkEnvironmentForTest environment(openGl);
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "glcolorconvert", "videoconvert");
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
 
     constexpr int kFrameWidth = 64;
     constexpr int kFrameHeight = 48;
-    const QString rawCaps =
-        QStringLiteral("video/x-raw,format=RGBA,width=%1,height=%2,framerate=30/1").arg(kFrameWidth).arg(kFrameHeight);
+    const QString rawCaps = QStringLiteral("video/x-raw,format=%1,width=%2,height=%3,framerate=30/1")
+                                .arg(format)
+                                .arg(kFrameWidth)
+                                .arg(kFrameHeight);
 
-    // The same videotestsrc frame in system memory is the reference.
+    // The same videotestsrc frame in system memory, as RGBA, is the reference.
     GstTest::TestPipeline reference;
-    QVERIFY2(reference.launch(
-                 QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! fakesink name=cpu").arg(rawCaps)),
+    QVERIFY2(reference.launch(QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! videoconvert ! "
+                                             "video/x-raw,format=RGBA ! fakesink name=cpu")
+                                  .arg(rawCaps)),
              qPrintable(reference.error()));
     QVERIFY(reference.play());
     const QString referenceFailure = reference.runToEos();
@@ -544,9 +560,9 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
     });
     GstTest::TestPipeline pipeline;
     QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! glupload ! "
-                                            "video/x-raw(memory:GLMemory),format=RGBA ! "
+                                            "video/x-raw(memory:GLMemory),format=%2 ! "
                                             "qgcvideosinkbin name=sink gpu-zerocopy=true")
-                                 .arg(rawCaps)),
+                                 .arg(rawCaps, format)),
              qPrintable(pipeline.error()));
     QVERIFY(GStreamer::setupQVideoSinkElement(pipeline.element("sink").get(), &videoSink, &owner));
     QVERIFY(pipeline.play());
@@ -560,12 +576,24 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
     const QVideoFrameTexturesUPtr textures = buffer->mapTextures(*rhi, none);
     QVERIFY2(textures, "GstGlVideoBuffer did not map into the GL QRhi");
 
+    const QByteArray texture = readBack(*rhi, textures->texture(0));
     const auto* const pixels = static_cast<const quint8*>(GST_VIDEO_FRAME_PLANE_DATA(&cpuFrame, 0));
     const int stride = GST_VIDEO_FRAME_PLANE_STRIDE(&cpuFrame, 0);
-    const QString mismatch =
-        firstMismatch(readBack(*rhi, textures->texture(0)), kFrameWidth, kFrameHeight, 4,
-                      [pixels, stride](int x, int y, int c) { return pixels[(y * stride) + (x * 4) + c]; });
-    QVERIFY2(mismatch.isEmpty(), qPrintable(QStringLiteral("RGBA texture %1").arg(mismatch)));
+    if (format == QStringLiteral("RGBA")) {
+        const QString mismatch =
+            firstMismatch(texture, kFrameWidth, kFrameHeight, 4,
+                          [pixels, stride](int x, int y, int c) { return pixels[(y * stride) + (x * 4) + c]; });
+        QVERIFY2(mismatch.isEmpty(), qPrintable(QStringLiteral("RGBA texture %1").arg(mismatch)));
+        return;
+    }
+    // glcolorconvert made the texture of the YUV planes. videoconvert's fixed-point matrix lands a few levels below its
+    // shader on saturated colours, and the shader filters the subsampled chroma across a bar's edge.
+    QCOMPARE(texture.size(), qsizetype(kFrameWidth) * kFrameHeight * 4);
+    const QImage actual(reinterpret_cast<const uchar*>(texture.constData()), kFrameWidth, kFrameHeight, kFrameWidth * 4,
+                        QImage::Format_RGBA8888);
+    const QImage expected(pixels, kFrameWidth, kFrameHeight, stride, QImage::Format_RGBA8888);
+    const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/6, /*edgeRadius=*/2);
+    QVERIFY2(mismatch.isEmpty(), qPrintable(QStringLiteral("texture converted from %1: %2").arg(format, mismatch)));
 #endif
 }
 
@@ -841,7 +869,5 @@ void GstHwBuffersGlReadbackTest::_testGlBridgeKeepsGstGlInQtsApi()
     QVERIFY(GstGlContextBridge::sharesQtContext(created));
 #endif
 }
-
-#endif  // QGC_GST_STREAMING
 
 UT_REGISTER_TEST(GstHwBuffersGlReadbackTest, TestLabel::Integration)

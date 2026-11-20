@@ -27,31 +27,6 @@
 
 QGC_LOGGING_CATEGORY(GstVulkanBufLog, "Video.GStreamer.HwBuffers.GstVulkanBuf")
 
-namespace {
-
-/// Every once-only log latch of the path, so the descriptor's resetCaches re-arms them as one.
-struct VulkanDiagnostics : GstHw::MapDiagnostics
-{
-    std::atomic<bool> loggedDeviceMismatch{false};
-    std::atomic<bool> loggedMultiMemory{false};
-    std::atomic<bool> loggedNoSync{false};
-
-    void reset() noexcept
-    {
-        GstHw::MapDiagnostics::reset();
-        for (std::atomic<bool>* flag : {&loggedDeviceMismatch, &loggedMultiMemory, &loggedNoSync}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-static_assert(sizeof(VulkanDiagnostics) == sizeof(GstHw::MapDiagnostics) + (3 * sizeof(std::atomic<bool>)),
-              "VulkanDiagnostics::reset() must list every flag");
-
-VulkanDiagnostics s_diag;
-
-}  // namespace
-
 bool GstVulkanVideoBuffer::validatePlaneHandles() const
 {
     return validatePlanes([](GstMemory* mem) { return mem && gst_is_vulkan_image_memory(mem); });
@@ -61,14 +36,13 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
 {
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::Vulkan);
     GstBuffer* buffer = nullptr;
-    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::Vulkan), GstVulkanBufLog(), s_diag, buffer)) {
+    if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::Vulkan), GstVulkanBufLog(), buffer)) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 
     // Vulkan video decode yields one multiplanar VkImage (NV12/P010); disjoint multi-memory layouts are out of scope.
     if (gst_buffer_n_memory(buffer) != 1) {
-        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedMultiMemory,
-                         "Vulkan import: multi-memory buffer not supported; frame not imported");
+        QGC_HW_WARN_ONCE(GstVulkanBufLog, "Vulkan import: multi-memory buffer not supported; frame not imported");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 
@@ -88,7 +62,7 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
     if (!vkMem->device || vkMem->device->device != nh->dev) {
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::Vulkan,
                                                  GstHwPathTelemetry::HwFallbackReason::NoExt);
-        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedDeviceMismatch,
+        QGC_HW_WARN_ONCE(GstVulkanBufLog,
                          "Vulkan import: GstVulkanImageMemory VkDevice != QRhi VkDevice; frame not imported");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
@@ -98,7 +72,7 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
     // per-frame vkDeviceWaitIdle would stall the whole UI, and an unsynchronized VkImage would tear.
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::Vulkan,
                                              GstHwPathTelemetry::HwFallbackReason::VulkanNoSync);
-    QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedNoSync,
+    QGC_HW_WARN_ONCE(GstVulkanBufLog,
                      "Vulkan import: no decoder-to-QRhi sync (timeline semaphore); frame not imported");
     return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
 }
@@ -107,7 +81,6 @@ constinit const HwPathDescriptor GstHwPaths::kVulkan = {
     .path = HwVideoBufferPath::Vulkan,
     .matches = [](GstMemory* mem) -> bool { return gst_is_vulkan_image_memory(mem); },
     .construct = &GstHwPaths::construct<GstVulkanVideoBuffer>,
-    .resetCaches = [] { s_diag.reset(); },
     .bridge = &GstVulkanContextBridge::instance,
 };
 

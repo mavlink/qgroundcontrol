@@ -20,34 +20,20 @@ namespace GstHw {
 /// Matches GST_VIDEO_MAX_PLANES (gst-video pins it at 4); single source of truth for every per-platform buffer.
 constexpr int kMaxPlanes = 4;
 
-/// One-shot warning flags per failure cause; paths with extra causes (DMABuf, D3D, IOSurface) derive and add members.
-struct MapDiagnostics
-{
-    std::atomic<bool> loggedFirstSuccess{false};
-    std::atomic<bool> loggedNullSample{false};
-    std::atomic<bool> loggedWrongThread{false};
-    std::atomic<bool> loggedBadBackend{false};
-    std::atomic<bool> loggedNullBuffer{false};
-    std::atomic<bool> loggedTextureCreateFail{false};
+/// True the first time it is called with @p latch, and the first time after each rearmOnceLatches(). For QGC_HW_ONCE().
+bool firstSinceRearm(std::atomic<quint32>& latch) noexcept;
 
-    /// Re-arms every flag, so a recreated device or scene graph reports its failures again. A deriving struct's
-    /// reset() calls this and re-arms its own.
-    void reset() noexcept
-    {
-        for (std::atomic<bool>* flag : {&loggedFirstSuccess, &loggedNullSample, &loggedWrongThread, &loggedBadBackend,
-                                        &loggedNullBuffer, &loggedTextureCreateFail}) {
-            flag->store(false, std::memory_order_relaxed);
-        }
-    }
-};
-
-// A flag added without its line in reset() would stay latched for the process.
-static_assert(sizeof(MapDiagnostics) == 6 * sizeof(std::atomic<bool>), "MapDiagnostics::reset() must list every flag");
+/// Re-arms every QGC_HW_ONCE(), so a recreated device or scene graph reports its failures again. Thread-safe.
+void rearmOnceLatches() noexcept;
 
 /// True when a native texture of @p textureSize holds @p picture in its top-left corner with padding around it:
 /// decoders pad their surfaces to their alignment without crop meta. @p evenSizes: the texture format (4:2:0) only has
 /// even sizes, so an odd picture dimension rounded up is no padding.
 bool texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes);
+
+/// @p format with @p pixelFormat in place of its own and every other property kept. QVideoFrameFormat has no
+/// pixel-format setter, so a path that advertises another format than its memory's builds a new one around it.
+QVideoFrameFormat withPixelFormat(const QVideoFrameFormat& format, QVideoFrameFormat::PixelFormat pixelFormat);
 
 }  // namespace GstHw
 
@@ -58,12 +44,20 @@ QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
 
 }  // namespace GstHwPathTelemetry
 
-/// Logs once via qCWarning(LOGCAT) the first time @p FLAG flips true; subsequent trips are silent.
-#define QGC_HW_WARN_ONCE(LOGCAT, FLAG, ...)                      \
-    do {                                                         \
-        if (!(FLAG).exchange(true, std::memory_order_relaxed)) { \
-            qCWarning(LOGCAT) << __VA_ARGS__;                    \
-        }                                                        \
+/// True the first time control reaches it, and the first time after each GstHw::rearmOnceLatches(). Each use has a
+/// latch of its own; in a template, one for each instantiation.
+#define QGC_HW_ONCE()                         \
+    ([]() noexcept {                          \
+        static std::atomic<quint32> latch{0}; \
+        return GstHw::firstSinceRearm(latch); \
+    }())
+
+/// Logs via qCWarning(LOGCAT) where QGC_HW_ONCE() is true: once for a failure cause, until the GPU caches are reset.
+#define QGC_HW_WARN_ONCE(LOGCAT, ...)         \
+    do {                                      \
+        if (QGC_HW_ONCE()) {                  \
+            qCWarning(LOGCAT) << __VA_ARGS__; \
+        }                                     \
     } while (0)
 
 /// \brief Common base for GStreamer-backed QHwVideoBuffer subclasses.
@@ -111,9 +105,9 @@ protected:
         return true;
     }
 
-    /// Shared mapTextures preamble; warns once per cause via @p diag flags, returns false on first failure.
+    /// Shared mapTextures preamble; warns once per cause, returns false on first failure.
     bool checkMapPreconditions(const QRhi& rhi, int expectedBackend, const QLoggingCategory& cat,
-                               GstHw::MapDiagnostics& diag, GstBuffer*& outBuffer) const;
+                               GstBuffer*& outBuffer) const;
 
     GstSample* _sample = nullptr;
     GstVideoInfo _videoInfo = {};

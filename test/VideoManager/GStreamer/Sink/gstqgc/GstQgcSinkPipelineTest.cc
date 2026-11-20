@@ -1,7 +1,6 @@
 #include "GstQgcSinkPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
 #include <QtCore/QCoreApplication>
@@ -217,6 +216,46 @@ void GstQgcSinkPipelineTest::_testInactiveQgcQVideoSinkDropsAndCounts()
     QCOMPARE(delivered, guint64(0));
 }
 
-#endif
+void GstQgcSinkPipelineTest::_testLateFramesAreShown()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc");
+    // A live source and a sink that syncs to the clock, as the receiver sets it for a live stream.
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src is-live=true format=time "
+                                            "caps=video/x-raw,format=BGRA,width=4,height=4,framerate=30/1 ! "
+                                            "qgcvideosinkbin name=sink sync=true")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
+    QVERIFY(source && sinkBin);
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
+    QVERIFY(qvideosink);
+
+    // The pipeline's time starts at ten seconds, so frames stamped from zero are that late: a decoder that fell
+    // behind. A GstVideoSink drops a frame that ends more than 5 ms before the time it arrives at.
+    GstClock* const clock = gst_system_clock_obtain();
+    gst_pipeline_use_clock(GST_PIPELINE(pipeline.get()), clock);
+    gst_element_set_start_time(pipeline.get(), GST_CLOCK_TIME_NONE);
+    gst_element_set_base_time(pipeline.get(), gst_clock_get_time(clock) - (10 * GST_SECOND));
+    gst_object_unref(clock);
+    QVERIFY(pipeline.play());
+
+    constexpr int kFrames = 5;
+    constexpr GstClockTime kFrameDuration = GST_SECOND / 30;
+    for (int i = 0; i < kFrames; ++i) {
+        GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, 4 * 4 * 4, nullptr);
+        gst_buffer_memset(buffer, 0, 0x80, 4 * 4 * 4);
+        GST_BUFFER_PTS(buffer) = GstClockTime(i) * kFrameDuration;
+        GST_BUFFER_DURATION(buffer) = kFrameDuration;
+        QCOMPARE(gst_app_src_push_buffer(GST_APP_SRC(source.get()), buffer), GST_FLOW_OK);
+    }
+    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+
+    guint64 input = 0;
+    g_object_get(qvideosink.get(), "frames-input", &input, nullptr);
+    QCOMPARE(input, guint64(kFrames));
+}
 
 UT_REGISTER_TEST(GstQgcSinkPipelineTest, TestLabel::Integration)

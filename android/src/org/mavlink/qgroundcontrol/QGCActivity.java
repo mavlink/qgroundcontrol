@@ -48,7 +48,6 @@ public class QGCActivity extends QtActivity {
                 qgcLogWarning(message);
             }
         });
-        nativeInit();
         setupMulticastLock();
 
         try {
@@ -386,7 +385,6 @@ public class QGCActivity extends QtActivity {
     }
 
     // Native C++ functions
-    public native boolean nativeInit();
     public native void qgcLogDebug(final String message);
     public native void qgcLogWarning(final String message);
     public native void nativeStoragePermissionsResult(boolean granted);
