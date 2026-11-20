@@ -152,6 +152,18 @@ void GPSCorrectionManager::_applyMessageFilter(const QString& filter)
     _messageFilterInvalid = error;
 }
 
+void GPSCorrectionManager::_refreshVehiclesWarning()
+{
+    const bool shared = _configuration && _configuration->vehicles == GPSCorrectionSettings::ActiveVehicle &&
+                        RTCMMAVLink::activeVehicleLinkShared();
+    //: Shown while corrections are set to go to the active vehicle only
+    const QString warning =
+        shared ? tr("The other vehicles on the active vehicle's link receive the corrections as well.") : QString();
+    if (std::exchange(_vehiclesWarning, warning) != warning) {
+        emit vehiclesWarningChanged();
+    }
+}
+
 void GPSCorrectionManager::_refreshMessageFilterError(bool streamSelected, qint64 now)
 {
     const auto age = MonotonicClock::age(std::chrono::milliseconds(_leftOutAtMs), std::chrono::milliseconds(now));
@@ -391,6 +403,7 @@ void GPSCorrectionManager::_refresh()
         emit selectedBytesPerSecondChanged();
     }
     _refreshMessageFilterError(selected.has_value(), now);
+    _refreshVehiclesWarning();
 }
 
 void GPSCorrectionManager::_scheduleRefresh()

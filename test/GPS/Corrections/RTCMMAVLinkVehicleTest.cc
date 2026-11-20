@@ -234,6 +234,25 @@ void RTCMMAVLinkVehicleTest::_settingSelectsVehicles()
 
     settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::AllVehicles);
     QVERIFY(frameReaches(true, true));
+
+    // GPS_RTCM_DATA names no target, so a vehicle that is also heard on the active vehicle's link receives the
+    // corrections meant for the active vehicle alone. The manager warns of it within a second.
+    vehicles->setActiveVehicle(first);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicles->activeVehicle(), first, TestTimeout::mediumMs());
+    settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::ActiveVehicle);
+    QVERIFY(corrections.vehiclesWarning().isEmpty());
+    const mavlink_message_t heartbeat{};
+    second->vehicleLinkManager()->mavlinkMessageReceived(firstLink, heartbeat);
+    QTRY_VERIFY_WITH_TIMEOUT(!corrections.vehiclesWarning().isEmpty(), TestTimeout::mediumMs());
+
+    // The first vehicle is not on the second one's link.
+    vehicles->setActiveVehicle(second);
+    QTRY_VERIFY_WITH_TIMEOUT(corrections.vehiclesWarning().isEmpty(), TestTimeout::mediumMs());
+
+    vehicles->setActiveVehicle(first);
+    QTRY_VERIFY_WITH_TIMEOUT(!corrections.vehiclesWarning().isEmpty(), TestTimeout::mediumMs());
+    settings->correctionVehicles()->setRawValue(GPSCorrectionSettings::AllVehicles);
+    QVERIFY(corrections.vehiclesWarning().isEmpty());
 }
 
 UT_REGISTER_TEST(RTCMMAVLinkVehicleTest, TestLabel::Integration, TestLabel::Vehicle)
