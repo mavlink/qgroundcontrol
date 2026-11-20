@@ -24,6 +24,9 @@ public:
     /// of the active vehicle alone, which is none while no vehicle is active. Outputs hold their link weakly.
     [[nodiscard]] static OutputProvider vehicleLinkOutputs(
         GPSCorrectionSettings::CorrectionVehicles selection = GPSCorrectionSettings::AllVehicles);
+    /// Whether another vehicle is on the active vehicle's primary link. GPS_RTCM_DATA names no target, so that
+    /// vehicle receives the corrections sent to the active vehicle alone.
+    [[nodiscard]] static bool activeVehicleLinkShared();
 
     quint64 totalBytesSubmitted() const { return _submittedBytes; }
 

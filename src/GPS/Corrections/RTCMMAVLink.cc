@@ -46,6 +46,20 @@ RTCMMAVLink::Output makeOutput(const std::shared_ptr<LinkInterface>& link)
     };
 }
 
+/// The link that carries corrections to @a vehicle: its primary link while that is connected, and neither a log
+/// replay nor a high-latency link such as a satellite modem, which cannot carry the kilobytes per second they are.
+std::shared_ptr<LinkInterface> correctionLink(Vehicle* vehicle)
+{
+    if (!vehicle || !vehicle->vehicleLinkManager()) {
+        return nullptr;
+    }
+    auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!link || !link->isConnected() || link->isLogReplay() || link->linkConfiguration()->isHighLatency()) {
+        return nullptr;
+    }
+    return link;
+}
+
 }  // namespace
 
 RTCMMAVLink::RTCMMAVLink()
@@ -74,16 +88,11 @@ RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSetting
         auto* vehicles = manager->vehicles();
         for (int index = 0; index < vehicles->count(); ++index) {
             auto* vehicle = vehicles->value<Vehicle*>(index);
-            if (!vehicle || !vehicle->vehicleLinkManager()) {
-                continue;
-            }
             if (selection == GPSCorrectionSettings::ActiveVehicle && vehicle != activeVehicle) {
                 continue;
             }
-            auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
-            // Corrections are kilobytes per second, which a high-latency link such as a satellite modem cannot carry.
-            if (!link || !link->isConnected() || link->isLogReplay() || link->linkConfiguration()->isHighLatency() ||
-                links.contains(link)) {
+            auto link = correctionLink(vehicle);
+            if (!link || links.contains(link)) {
                 continue;
             }
             outputs.append(makeOutput(link));
@@ -91,6 +100,35 @@ RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSetting
         }
         return outputs;
     };
+}
+
+bool RTCMMAVLink::activeVehicleLinkShared()
+{
+    auto* manager = MultiVehicleManager::instance();
+    if (!manager) {
+        return false;
+    }
+    // Used only as a member of the list, which a vehicle being removed has already left.
+    const Vehicle* const activeVehicle = manager->activeVehicle();
+    auto* vehicles = manager->vehicles();
+    std::shared_ptr<LinkInterface> link;
+    for (int index = 0; index < vehicles->count(); ++index) {
+        if (auto* vehicle = vehicles->value<Vehicle*>(index); vehicle && vehicle == activeVehicle) {
+            link = correctionLink(vehicle);
+            break;
+        }
+    }
+    if (!link) {
+        return false;
+    }
+    for (int index = 0; index < vehicles->count(); ++index) {
+        auto* vehicle = vehicles->value<Vehicle*>(index);
+        if (vehicle && vehicle != activeVehicle && vehicle->vehicleLinkManager() &&
+            vehicle->vehicleLinkManager()->containsLink(link.get())) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void RTCMMAVLink::setOutputProvider(OutputProvider provider)

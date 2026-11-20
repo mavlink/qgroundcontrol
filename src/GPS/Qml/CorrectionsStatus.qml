@@ -109,6 +109,14 @@ QGCGroupBox {
         warning: true
     }
 
+    // "Active vehicle only" cannot keep the corrections from the other vehicles on the active vehicle's link.
+    GPSNoteLabel {
+        objectName: "correctionsVehiclesWarning"
+        visible: text !== ""
+        text: root.corrections.vehiclesWarning
+        warning: true
+    }
+
     // Why the UDP RTCM input cannot listen, such as a port another program uses; the input keeps retrying.
     GPSNoteLabel {
         objectName: "correctionsUdpInputError"

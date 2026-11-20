@@ -70,6 +70,7 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QString udpInputError READ udpInputError NOTIFY udpInputChanged FINAL)
     Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
     Q_PROPERTY(QString messageFilterError READ messageFilterError NOTIFY messageFilterChanged FINAL)
+    Q_PROPERTY(QString vehiclesWarning READ vehiclesWarning NOTIFY vehiclesWarningChanged FINAL)
     /// Logs the frames routed from now on to a new file. Off at startup and never saved, and off again once the log
     /// ended after a file error or at its size limit.
     Q_PROPERTY(bool logToFile READ logToFile WRITE setLogToFile NOTIFY logChanged FINAL)
@@ -171,6 +172,11 @@ public:
     /// messages that arrive while the filter takes none of them and no stream is selected. Empty otherwise.
     QString messageFilterError() const { return _messageFilterError; }
 
+    /// That corrections for the active vehicle alone also reach the other vehicles on its link; empty while the
+    /// selection is every vehicle or the active vehicle has its link to itself. It follows the vehicles within a
+    /// second.
+    QString vehiclesWarning() const { return _vehiclesWarning; }
+
     bool logToFile() const { return _log.isOpen(); }
 
     /// Starts or ends the log: an RTCMLogFile in the Dependencies' log folder, named with the UTC time it starts at,
@@ -196,6 +202,7 @@ signals:
     void udpInputChanged();
     void udpOutputChanged();
     void messageFilterChanged();
+    void vehiclesWarningChanged();
     void logChanged();
     void basePositionChanged();
 
@@ -222,6 +229,7 @@ private:
     void _applyMessageFilter(const QString& filter);
     /// Publishes why the filter lets no corrections through, given whether a stream is selected at @a now.
     void _refreshMessageFilterError(bool streamSelected, qint64 now);
+    void _refreshVehiclesWarning();
     bool _udpInputEnabled() const;
     void _startUdpInput();
     void _retryUdpInput();
@@ -259,6 +267,7 @@ private:
     QSet<int> _leftOutMessages;
     qint64 _leftOutAtMs = 0;
     QString _messageFilterError;
+    QString _vehiclesWarning;
     RTCMMessageCountModel _messageCounts{this};
     QGeoCoordinate _basePosition;
     /// The stream _messageCounts and _basePosition describe. _selected follows it only at the next refresh.
