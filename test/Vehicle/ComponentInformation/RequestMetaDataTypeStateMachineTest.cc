@@ -3,10 +3,15 @@
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QLocale>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUuid>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QTcpServer>
@@ -27,6 +32,21 @@
 #include "RequestMetaDataTypeStateMachine.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
+
+namespace {
+
+bool writeRequestMetaDataTestFile(const QString& fileName, const QByteArray& contents)
+{
+    QFile file(fileName);
+    return file.open(QIODevice::WriteOnly | QIODevice::Truncate) && (file.write(contents) == contents.size());
+}
+
+bool systemLocaleIsEnglish()
+{
+    return QLocale::system().name().startsWith(QLatin1String("en"));
+}
+
+}  // namespace
 
 void RequestMetaDataTypeStateMachineTest::_typeToStringReflectsRequestedType()
 {
@@ -458,6 +478,208 @@ void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
         verifyExpectedLogMessage();
         QTRY_COMPARE_WITH_TIMEOUT(connectionSpy.count(), request, TestTimeout::shortMs());
     }
+}
+
+// A state whose download cannot be started ends at once. What it leaves behind is not its own: the vehicle's FTP
+// session is busy with a download of something else, which the state cancelled when it took it for its own.
+void RequestMetaDataTypeStateMachineTest::_downloadThatCannotStartLeavesTheOneInProgress()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    const QString uri = QStringLiteral("mftp://[;comp=1]parameter.json.xz");
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    // Random CRC so the file cache cannot satisfy the request
+    param->setUriMetaData(uri, QRandomGenerator::global()->generate());
+
+    // One burst a second: the other download is far from done while the request runs
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(1000);
+    // The mock's blocking burst delay also starves unrelated commands sent to it during the download
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    FTPManager* const ftpManager = vehicle()->ftpManager();
+    QSignalSpy downloadCompleteSpy(ftpManager, &FTPManager::downloadComplete);
+    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, uri, directory.path()));
+
+    const char* category = "ComponentInformation.RequestMetaDataTypeStateMachine";
+    expectLogMessage(category, QtWarningMsg, QRegularExpression("FTPManager::download returned failure"));
+    expectLogMessage(category, QtWarningMsg, QRegularExpression("failed to load metadata"));
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    // Well before the state would have timed out
+    requestMachine.request(param);
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::mediumMs(), QStringLiteral("requestComplete")));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(downloadCompleteSpy.count(), 0);
+
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+    QVERIFY_SIGNAL_COUNT_WAIT(downloadCompleteSpy, 1, TestTimeout::longMs());
+    QVERIFY(downloadCompleteSpy.first().at(1).toString().isEmpty());
+}
+
+void RequestMetaDataTypeStateMachineTest::_setUpTranslatedParameterMetadata(const QString& directory,
+                                                                            const QString& translationUrl)
+{
+    const QDir dir(directory);
+    const QString metadataFile = dir.filePath(QStringLiteral("parameter.json"));
+    const QString summaryFile = dir.filePath(QStringLiteral("summary.json"));
+    const QString generalFile = dir.filePath(QStringLiteral("general.json"));
+
+    QVERIFY(writeRequestMetaDataTestFile(
+        metadataFile,
+        R"({"version":1,"translation":{"items":{"parameters":{"list":{"key":"name","translate":["shortDesc"]}}}},)"
+        R"("parameters":[{"name":"TRANSLATED_PARAM","type":"Float","shortDesc":"In English"}]})"));
+
+    const QJsonObject summary{{QLocale::system().name(), QJsonObject{{QStringLiteral("url"), translationUrl}}}};
+    QVERIFY(writeRequestMetaDataTestFile(summaryFile, QJsonDocument(summary).toJson()));
+
+    // Random CRC so the file cache cannot satisfy the request
+    const QJsonObject parameterType{
+        {QStringLiteral("type"), COMP_METADATA_TYPE_PARAMETER},
+        {QStringLiteral("uri"), metadataFile},
+        {QStringLiteral("fileCrc"), static_cast<qint64>(QRandomGenerator::global()->generate())},
+        {QStringLiteral("translationUri"), summaryFile},
+    };
+    const QJsonObject generalMetadata{
+        {QStringLiteral("version"), 1},
+        {QStringLiteral("metadataTypes"), QJsonArray{parameterType}},
+    };
+    QVERIFY(writeRequestMetaDataTestFile(generalFile, QJsonDocument(generalMetadata).toJson()));
+
+    // A type has the URI of its translation from the general metadata only
+    CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
+    general.setJson(generalFile);
+    auto* const param = vehicle()->compInfoManager()->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    general.setUris(*param);
+    QCOMPARE(param->uriTranslation(), summaryFile);
+}
+
+void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale_data()
+{
+    QTest::addColumn<bool>("translationNamed");
+    QTest::addColumn<bool>("translationReachable");
+
+    QTest::newRow("the summary names a translation") << true << true;
+    QTest::newRow("the summary names none") << false << false;
+    QTest::newRow("the translation cannot be downloaded") << true << false;
+}
+
+// Metadata is translated unless the system locale is English, with the file that the translation summary names for
+// the locale. The metadata, the summary and that file come from the downloader that takes every URI which is not
+// MAVLink FTP. Without a translation the metadata is used as it was downloaded.
+void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
+{
+    QFETCH(bool, translationNamed);
+    QFETCH(bool, translationReachable);
+
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // What a missing translation logs depends on the locale: for an English one the summary is not read
+    if (!translationNamed) {
+        ignoreLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
+                         QRegularExpression("has no url in translation json"));
+    } else if (!translationReachable) {
+        ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error"));
+        ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                         QRegularExpression("Metadata translation failed"));
+    }
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString translationFile = directory.filePath(QStringLiteral("translation.ts"));
+    QVERIFY(writeRequestMetaDataTestFile(
+        translationFile, R"(<?xml version="1.0" encoding="utf-8"?><!DOCTYPE TS><TS version="2.1"><context>)"
+                         R"(<name>/parameters/TRANSLATED_PARAM/shortDesc</name>)"
+                         R"(<message><source>In English</source><translation>Translated</translation></message>)"
+                         R"(</context></TS>)"));
+    QString translationUrl;
+    if (translationNamed && translationReachable) {
+        translationUrl = translationFile;
+    } else if (translationNamed) {
+        // A port that nothing listens on
+        QTcpServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost));
+        translationUrl = QStringLiteral("http://127.0.0.1:%1/translation.ts").arg(server.serverPort());
+    }
+    _setUpTranslatedParameterMetadata(directory.path(), translationUrl);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    // Well before the translation state would have timed out
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    requestMachine.request(param);
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::mediumMs(), QStringLiteral("requestComplete")));
+    QVERIFY(!requestMachine.inProgress());
+
+    const bool translated = translationNamed && translationReachable && !systemLocaleIsEnglish();
+    FactMetaData* metadata =
+        param->factMetaDataForName(QStringLiteral("TRANSLATED_PARAM"), FactMetaData::valueTypeFloat);
+    QVERIFY(metadata);
+    QCOMPARE(metadata->shortDescription(), translated ? QStringLiteral("Translated") : QStringLiteral("In English"));
+}
+
+// The download of the translation ends with its state as well. It runs on the downloader that the metadata files
+// use, so one that ran on refused the summary of the next request.
+void RequestMetaDataTypeStateMachineTest::_translationDownloadEndsWithItsState()
+{
+    if (systemLocaleIsEnglish()) {
+        QSKIP("No translation is downloaded for an English locale");
+    }
+
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // Accepts a connection and never answers it
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    QSignalSpy connectionSpy(&server, &QTcpServer::newConnection);
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    _setUpTranslatedParameterMetadata(directory.path(),
+                                      QStringLiteral("http://127.0.0.1:%1/translation.ts").arg(server.serverPort()));
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
+    timeouts.translation = 500;
+    RequestMetaDataTypeStateMachine requestMachine(manager, this, timeouts);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    // The second translation reaches the server only when the first download ended with its state. A summary that
+    // found the downloader busy was refused with a warning, which fails the test.
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    for (int request = 1; request <= 2; ++request) {
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                         QRegularExpression("^Timeout \".*RequestTranslate\" after 500 ms"));
+        requestMachine.request(param);
+        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        verifyExpectedLogMessage();
+        QTRY_COMPARE_WITH_TIMEOUT(connectionSpy.count(), request, TestTimeout::shortMs());
+    }
+
+    // Without its translation the metadata is used as it was downloaded
+    FactMetaData* metadata =
+        param->factMetaDataForName(QStringLiteral("TRANSLATED_PARAM"), FactMetaData::valueTypeFloat);
+    QVERIFY(metadata);
+    QCOMPARE(metadata->shortDescription(), QStringLiteral("In English"));
 }
 
 // A request whose state has timed out stays outstanding in Vehicle. Its answer has to be dropped: it set the URI

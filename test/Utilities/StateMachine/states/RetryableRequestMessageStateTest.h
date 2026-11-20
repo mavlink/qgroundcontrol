@@ -16,6 +16,7 @@ private slots:
     void _testRefusedRequestEndsAtItsTimeout();
     void _testMaxRetriesExhausted();
     void _testFailOnMaxRetries();
+    void _testFailOnMaxRetriesWhenVehicleReportsFailure();
     void _testStateDestroyedWhileRequestOutstanding();
     UT_PARAMETERIZED_TEST(_testVehicleDestroyedWhileMachineAlive);
 

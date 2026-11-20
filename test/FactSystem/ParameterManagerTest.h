@@ -15,6 +15,7 @@ private slots:
 
     void _noFailure();
     void _requestListNoResponse();
+    void _unrequestedParamBeforeListResponseIsDisregarded();
     void _requestListMissingParamSuccess();
     void _requestListMissingParamFail();
     void _requestListMissingParamNonDefaultComponentFail();
@@ -28,6 +29,7 @@ private slots:
     void _paramWriteNoAckPermanent();
     void _paramWriteUInt8();
     void _paramWriteUInt16();
+    void _paramReadFirstAttemptNoResponseRetry_data();
     void _paramReadFirstAttemptNoResponseRetry();
     void _paramReadNoResponse();
     void _requestStateMachineDeletedWhenFinished_data();

@@ -335,6 +335,40 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
     _disconnectMockLink();
 }
 
+void RetryableRequestMessageStateTest::_testFailOnMaxRetriesWhenVehicleReportsFailure()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+    QVERIFY(_waitForNoAutopilotRequests());
+
+    // The vehicle accepts the command and does not send the message, which Vehicle reports well before the
+    // state's own timeout
+    _mockLink->setRequestMessageFailureMode(MockLink::FailRequestMessageCommandAcceptedMsgNotSent);
+
+    QGCStateMachine machine(QStringLiteral("TestMachine"), _vehicle);
+    auto* requestState = new RetryableRequestMessageState(QStringLiteral("RequestDebug"), &machine,
+                                                          MAVLINK_MSG_ID_DEBUG, nullptr, 0 /* maxRetries */);
+    requestState->setFailOnMaxRetries(true);
+    finishOn(machine, requestState, &QGCState::error);
+
+    QSignalSpy errorSpy(requestState, &QGCState::error);
+    QSignalSpy advanceSpy(requestState, &QGCState::advance);
+    QSignalSpy timedOutSpy(requestState, &WaitStateBase::timedOut);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    expectLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                     QRegularExpression("Max retries exhausted"));
+    machine.start();
+
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(requestState->lastFailureCode(), Vehicle::RequestMessageFailureMessageNotReceived);
+    QCOMPARE(timedOutSpy.count(), 0);
+    QCOMPARE(errorSpy.count(), 1);
+    QCOMPARE(advanceSpy.count(), 0);
+
+    _disconnectMockLink();
+}
+
 void RetryableRequestMessageStateTest::_testStateDestroyedWhileRequestOutstanding()
 {
     _connectMockLinkNoInitialConnectSequence();

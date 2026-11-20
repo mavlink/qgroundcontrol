@@ -115,6 +115,48 @@ void SendMavlinkCommandStateTest::_testIgnoresResultThatIsNotItsOwn()
     QCOMPARE(errorSpy.count(), 0);
 }
 
+void SendMavlinkCommandStateTest::_testFailsWhenItsCommandGetsNoAck_data()
+{
+    QTest::addColumn<bool>("pendingAlready");
+
+    QTest::newRow("the vehicle does not answer") << false;
+    QTest::newRow("the vehicle refuses a command that something else has pending") << true;
+}
+
+void SendMavlinkCommandStateTest::_testFailsWhenItsCommandGetsNoAck()
+{
+    QFETCH(bool, pendingAlready);
+
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+
+    // An unanswered command is given up on at once, or not while the test runs
+    TestFixtures::MavCommandAckTimeoutFixture ackTimeout(
+        pendingAlready ? TestTimeout::longMs() : TestFixtures::MavCommandAckTimeoutFixture::kDefaultTimeoutMs);
+    const MAV_CMD command = MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
+    if (pendingAlready) {
+        _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, command, false /* showError */);
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                         QRegularExpression("Duplicate command pending"));
+    } else {
+        expectLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                         QRegularExpression("Giving up sending command after max retries"));
+    }
+
+    QGCStateMachine machine(QStringLiteral("TestMachine"), _vehicle);
+    auto* const state = new SendMavlinkCommandState(&machine, command);
+    finishOn(machine, state, &QGCState::error);
+
+    QSignalSpy advanceSpy(state, &QGCState::advance);
+    QSignalSpy errorSpy(state, &QGCState::error);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    machine.start();
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(errorSpy.count(), 1);
+    QCOMPARE(advanceSpy.count(), 0);
+}
+
 void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
 {
     QStateMachine machine;
