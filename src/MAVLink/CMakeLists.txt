@@ -21,6 +21,8 @@ target_sources(
         QGCMAVLinkTypes.h
         StatusTextHandler.cc
         StatusTextHandler.h
+        StatusTextTranslator.cc
+        StatusTextTranslator.h
         SysStatusSensorInfo.cc
         SysStatusSensorInfo.h
 )
@@ -158,6 +160,12 @@ qt_add_resources(
     BASE "${MAVLINK_COMPONENT_METADATA_DIR}"
     FILES
         ${MAVLINK_SCHEMA_FILES}
+)
+
+# Firmware STATUSTEXT translation corpus (read by StatusTextTranslator)
+qt_add_resources(${CMAKE_PROJECT_NAME} statustext_translations
+    PREFIX "/Mavlink"
+    FILES statustext_zhHans.json
 )
 
 # ----------------------------------------------------------------------------

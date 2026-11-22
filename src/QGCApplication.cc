@@ -37,6 +37,7 @@
 #include "QGCNetworkHelper.h"
 #include "QGCVersionCheck.h"
 #include "SettingsManager.h"
+#include "StatusTextTranslator.h"
 #include "Vehicle.h"
 #include "VideoBackend.h"
 #include "VideoManager.h"
@@ -237,6 +238,11 @@ void QGCApplication::setLanguage()
     if (_qmlAppEngine) {
         _qmlAppEngine->retranslate();
     }
+
+    // Keep the STATUSTEXT translator's language gate in sync with the ui locale:
+    // relying on the default QLocale alone is wrong when the selected language is
+    // en_US (QLocale::setDefault() is skipped above) on a chinese system locale.
+    StatusTextTranslator::setLocale(_locale);
 
     emit languageChanged(_locale);
 }
