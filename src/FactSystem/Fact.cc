@@ -359,7 +359,7 @@ QStringList Fact::selectedBitmaskStrings() const
         }
 
         if (selected.isEmpty()) {
-            selected += "Not value selected";
+            selected += tr("Not value selected");
         }
 
         return selected;

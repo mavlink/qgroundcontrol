@@ -1,9 +1,12 @@
 #include "DataFlashParser.h"
+
+#include <cmath>
+
+#include <QCoreApplication>
+
 #include "APMDataFlashUtility.h"
 #include "GeoTagData.h"
 #include "QGCLoggingCategory.h"
-
-#include <cmath>
 
 QGC_LOGGING_CATEGORY(DataFlashParserLog, "AnalyzeView.DataFlashParser")
 
@@ -82,14 +85,14 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
     cameraFeedback.clear();
 
     if (!APMDataFlashUtility::isValidHeader(data, size)) {
-        errorMessage = QStringLiteral("Invalid DataFlash log format");
+        errorMessage = QCoreApplication::translate("DataFlashParser", "Invalid DataFlash log format");
         return false;
     }
 
     // First pass: Parse FMT messages to learn message formats
     QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
     if (!APMDataFlashUtility::parseFmtMessages(data, size, formats)) {
-        errorMessage = QStringLiteral("No message formats found in log");
+        errorMessage = QCoreApplication::translate("DataFlashParser", "No message formats found in log");
         return false;
     }
 
@@ -105,7 +108,7 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
     }
 
     if (camMessageType == 0) {
-        errorMessage = QStringLiteral("No CAM (camera) messages found in log");
+        errorMessage = QCoreApplication::translate("DataFlashParser", "No CAM (camera) messages found in log");
         return false;
     }
 
@@ -128,7 +131,7 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
         });
 
     if (cameraFeedback.isEmpty()) {
-        errorMessage = QStringLiteral("No valid camera capture events found in log");
+        errorMessage = QCoreApplication::translate("DataFlashParser", "No valid camera capture events found in log");
         return false;
     }
 

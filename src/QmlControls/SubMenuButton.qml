@@ -9,7 +9,7 @@ import QGroundControl.Controls
 
 Button {
     id:             control
-    text:           "Button"
+    text:           qsTr("Button")
     focusPolicy:    Qt.ClickFocus
     hoverEnabled:   !ScreenTools.isMobile
     implicitHeight: ScreenTools.defaultFontPixelHeight * 2.5

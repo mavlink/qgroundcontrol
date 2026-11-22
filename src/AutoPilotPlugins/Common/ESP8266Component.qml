@@ -133,7 +133,7 @@ Item {
                                 QGCComboBox {
                                     id:                     modeField
                                     width:                  _editFieldWidth
-                                    model:                  ["Access Point Mode", "Station Mode"]
+                                    model:                  [qsTr("Access Point Mode"), qsTr("Station Mode")]
                                     currentIndex:           wifiMode ? wifiMode.value : 0
                                     onActivated: (index) => {
                                         wifiMode.value = index

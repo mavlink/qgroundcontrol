@@ -296,8 +296,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 wrapMode:               Text.WordWrap
                 font.pointSize:         ScreenTools.mediumFontPointSize
-                text:                   qsTr("%1 does not currently support configuration of your vehicle. ").arg(QGroundControl.appName) +
-                                        "If your vehicle is already configured you can still Fly."
+                text:                   qsTr("%1 does not currently support configuration of your vehicle. If your vehicle is already configured you can still Fly.").arg(QGroundControl.appName)
             }
         }
     }

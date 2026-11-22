@@ -40,7 +40,7 @@ Item {
                                 (sensorParams.rgCompassCalibrated[index] ?
                                      getPriority(index) +
                                      (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                          (sensorParams.rgCompassExternal[index] ? ", External" : ", Internal" ) :
+                                          (sensorParams.rgCompassExternal[index] ? qsTr(", External") : qsTr(", Internal") ) :
                                           "") :
                                      qsTr("Setup required")) :
                                 qsTr("Not installed")

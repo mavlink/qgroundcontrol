@@ -3,6 +3,8 @@
 #include <limits>
 #include <type_traits>
 
+#include <QCoreApplication>
+
 #include "AppMessages.h"
 #include "AppSettings.h"
 #include "ParameterManager.h"
@@ -464,13 +466,14 @@ bool convertParamFileInteger(const FactMetaData& metaData, const QString& fileVa
         value = integerStr.toULongLong(&ok);
     }
     if (!ok) {
-        errorString = QStringLiteral("Not a whole number within the parameter's range");
+        errorString =
+            QCoreApplication::translate("ParameterEditorController", "Not a whole number within the parameter's range");
         return false;
     }
 
     if ((value < static_cast<Wide>(std::numeric_limits<T>::min())) ||
         (value > static_cast<Wide>(std::numeric_limits<T>::max()))) {
-        errorString = QStringLiteral("Out of range for the parameter's type");
+        errorString = QCoreApplication::translate("ParameterEditorController", "Out of range for the parameter's type");
         return false;
     }
 
