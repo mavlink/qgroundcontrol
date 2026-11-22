@@ -163,9 +163,11 @@ qt_add_resources(
 )
 
 # Firmware STATUSTEXT translation corpus (read by StatusTextTranslator)
-qt_add_resources(${CMAKE_PROJECT_NAME} statustext_translations
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} statustext_translations
     PREFIX "/Mavlink"
-    FILES statustext_zhHans.json
+    FILES
+        statustext_zhHans.json
 )
 
 # ----------------------------------------------------------------------------
