@@ -36,10 +36,10 @@ Item {
             labelText: qsTr("Battery failsafe:")
             valueText: {
                 if (_firmware34) {
-                    return "Firmware not supported"
+                    return qsTr("Firmware not supported")
                 }
                 if (!_failsafeBatteryEnable) {
-                    return "Disabled"
+                    return qsTr("Disabled")
                 }
                 return _failsafeBatteryEnable.enumOrValueString
             }

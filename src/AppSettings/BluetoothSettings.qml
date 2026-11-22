@@ -468,7 +468,7 @@ ColumnLayout {
                 property var  dev: modelData
                 property bool isConnected: dev.isConnected === true
 
-                text: (dev.name || dev.address || qsTr("Unknown")) + (isConnected ? " [Connected]" : "")
+                text: isConnected ? qsTr("%1 [Connected]").arg(dev.name || dev.address || qsTr("Unknown")) : (dev.name || dev.address || qsTr("Unknown"))
                 checkable:  true
                 checked:    dev.address === root.currentAddress
                 onClicked:  { if (root.subEditConfig && dev.address) root.subEditConfig.setDeviceByAddress(dev.address) }

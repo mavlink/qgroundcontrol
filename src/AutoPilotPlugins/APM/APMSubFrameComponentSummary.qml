@@ -18,19 +18,19 @@ Item {
     function frameName() {
         switch(frameFact.value) {
         case 0:
-            return "BlueROV1"
+            return qsTr("BlueROV1")
         case 1:
-            return "Vectored/BlueROV2"
+            return qsTr("Vectored/BlueROV2")
         case 2:
-            return "Vectored 6DOF"
+            return qsTr("Vectored 6DOF")
         case 3:
-            return "Vectored 6DOF 90Degree"
+            return qsTr("Vectored 6DOF 90Degree")
         case 4:
-            return "SimpleROV-3"
+            return qsTr("SimpleROV-3")
         case 5:
-            return "SimpleROV-4"
+            return qsTr("SimpleROV-4")
         case 6:
-            return "SimpleROV-5"
+            return qsTr("SimpleROV-5")
         case 7:
             return qsTr("Custom")
         default:

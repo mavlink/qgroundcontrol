@@ -51,7 +51,7 @@ Item {
             required property rect modelData
 
             occluderRect:   modelData
-            label:          "custom"
+            label:          qsTr("custom")
         }
     }
 }

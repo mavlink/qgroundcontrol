@@ -49,7 +49,7 @@ Button {
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
             color:  qgcPal.textPrimary
-            text:   mapButton.size + (tiles > 0 ? " (" + tiles + " tiles)" : "")
+            text:   tiles > 0 ? qsTr("%1 (%2 tiles)").arg(mapButton.size).arg(tiles) : mapButton.size
         }
         Item {
             width:  ScreenTools.defaultFontPixelWidth * 2

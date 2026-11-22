@@ -18,10 +18,10 @@ ColumnLayout {
         property var data: QtObject {
             property string name: qsTr("Altitude & Airspeed")
             property var plot: [
-                { name: "Airspeed", value: globals.activeVehicle.airSpeed.value },
-                { name: "Airspeed Setpoint", value: globals.activeVehicle.airSpeedSetpoint.value },
-                { name: "Altitude (Rel)", value: globals.activeVehicle.altitudeTuning.value },
-                { name: "Altitude Setpoint", value: globals.activeVehicle.altitudeTuningSetpoint.value }
+                { name: qsTr("Airspeed"), value: globals.activeVehicle.airSpeed.value },
+                { name: qsTr("Airspeed Setpoint"), value: globals.activeVehicle.airSpeedSetpoint.value },
+                { name: qsTr("Altitude (Rel)"), value: globals.activeVehicle.altitudeTuning.value },
+                { name: qsTr("Altitude Setpoint"), value: globals.activeVehicle.altitudeTuningSetpoint.value }
             ]
             property var params: ListModel {
                 ListElement {

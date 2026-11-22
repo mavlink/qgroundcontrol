@@ -95,8 +95,8 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface* link, const QByteArray& 
     QByteArray timeData = QByteArray::fromRawData(reinterpret_cast<const char*>(bytes_time), sizeof(bytes_time));
     (void)logData.prepend(timeData);
     if (_tempLogFile->write(logData) != logData.length()) {
-        const QString message = QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.")
-                                    .arg(_tempLogFile->fileName());
+        const QString message =
+            tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile->fileName());
         QGC::showAppMessage(message, getName());
         _stopLogging();
         _logSuspendError = true;
@@ -246,7 +246,7 @@ void MAVLinkProtocol::_logData(LinkInterface* link, const mavlink_message_t& mes
             std::memcpy(log_data.data() + sizeof(timestamp), msgBytes.constData(), msgBytes.size());
             if (_tempLogFile->write(log_data) != log_data.size()) {
                 const QString logErrorMessage =
-                    QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.")
+                    tr("MAVLink Logging failed. Could not write to file %1, logging disabled.")
                         .arg(_tempLogFile->fileName());
                 QGC::showAppMessage(logErrorMessage, getName());
                 _stopLogging();
@@ -368,9 +368,8 @@ void MAVLinkProtocol::_startLogging()
 
     _tempLogFile->setFileName(logPath);
     if (!_tempLogFile->open(QIODevice::WriteOnly)) {
-        const QString message = QStringLiteral(
-                                    "Opening Flight Data file for writing failed. "
-                                    "Unable to write to %1. Please choose a different file location.")
+        const QString message = tr("Opening Flight Data file for writing failed. "
+                                   "Unable to write to %1. Please choose a different file location.")
                                     .arg(_tempLogFile->fileName());
         QGC::showAppMessage(message, getName());
         _closeLogFile();

@@ -23,7 +23,7 @@ RowLayout {
 
     QGCLabel {
         id:     sizeLabel
-        text:   tileSet.downloadStatus + (_tileCount > 0 ? " (" + _tileCount + " tiles)" : "")
+        text:   _tileCount > 0 ? qsTr("%1 (%2 tiles)").arg(tileSet.downloadStatus).arg(_tileCount) : tileSet.downloadStatus
     }
 
     Rectangle {

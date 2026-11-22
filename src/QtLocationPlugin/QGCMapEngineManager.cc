@@ -270,33 +270,33 @@ void QGCMapEngineManager::taskError(QGCMapTask::TaskType type, const QString &er
     QString task;
     switch (type) {
     case QGCMapTask::TaskType::taskFetchTileSets:
-        task = QStringLiteral("Fetch Tile Set");
+        task = tr("Fetch Tile Set");
         break;
     case QGCMapTask::TaskType::taskCreateTileSet:
-        task = QStringLiteral("Create Tile Set");
+        task = tr("Create Tile Set");
         break;
     case QGCMapTask::TaskType::taskGetTileDownloadList:
-        task = QStringLiteral("Get Tile Download List");
+        task = tr("Get Tile Download List");
         break;
     case QGCMapTask::TaskType::taskUpdateTileDownloadState:
-        task = QStringLiteral("Update Tile Download Status");
+        task = tr("Update Tile Download Status");
         break;
     case QGCMapTask::TaskType::taskDeleteTileSet:
-        task = QStringLiteral("Delete Tile Set");
+        task = tr("Delete Tile Set");
         break;
     case QGCMapTask::TaskType::taskReset:
-        task = QStringLiteral("Reset Tile Sets");
+        task = tr("Reset Tile Sets");
         break;
     case QGCMapTask::TaskType::taskExport:
-        task = QStringLiteral("Export Tile Sets");
+        task = tr("Export Tile Sets");
         break;
     default:
-        task = QStringLiteral("Database Error");
+        task = tr("Database Error");
         break;
     }
 
-    QString serror = QStringLiteral("Error in task: ") + task;
-    serror += QStringLiteral("\nError description:\n");
+    QString serror = tr("Error in task: %1").arg(task);
+    serror += tr("\nError description:\n");
     serror += error;
 
     setErrorMessage(serror);

@@ -114,7 +114,7 @@ AnalyzePage {
                     text: qsTr("Open .bin")
                     visible: QGroundControl.apmFirmwareSupported
                     onClicked: {
-                        openDialog.nameFilters = ["DataFlash Logs (*.bin *.BIN *.log *.LOG)"]
+                        openDialog.nameFilters = [qsTr("DataFlash Logs (*.bin *.BIN *.log *.LOG)")]
                         openDialog.openForLoad()
                     }
                 }
@@ -122,7 +122,7 @@ AnalyzePage {
                 QGCButton {
                     text: qsTr("Open .ulg")
                     onClicked: {
-                        openDialog.nameFilters = ["PX4 ULog Files (*.ulg *.ULG)"]
+                        openDialog.nameFilters = [qsTr("PX4 ULog Files (*.ulg *.ULG)")]
                         openDialog.openForLoad()
                     }
                 }
@@ -135,7 +135,7 @@ AnalyzePage {
                             QGroundControl.showMessageDialog(logViewerPage, qsTr("Log Viewer"), qsTr("Close active vehicle connections before starting telemetry replay."))
                             return
                         }
-                        openDialog.nameFilters = ["Telemetry Logs (*.tlog *.TLOG)"]
+                        openDialog.nameFilters = [qsTr("Telemetry Logs (*.tlog *.TLOG)")]
                         openDialog.openForLoad()
                     }
                 }
