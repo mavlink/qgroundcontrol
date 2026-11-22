@@ -2,6 +2,19 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>ADSBVehicleManager</name>
+    <message>
+        <location filename="../src/ADSB/ADSBVehicleManager.cc" line="228"/>
+        <source>ADSB Server Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/ADSB/ADSBVehicleManager.cc" line="232"/>
+        <source>ADSB has been disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>APMAdvancedTuningCopterComponent</name>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMAdvancedTuningCopterComponent.qml" line="27"/>
@@ -74,6 +87,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/AutoPilotPlugins/APM/APMAdvancedTuningCopterComponent.qml" line="144"/>
+        <source>Rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/AutoPilotPlugins/APM/APMAdvancedTuningCopterComponent.h" line="15"/>
         <source>Advanced rate controller PID tuning with live telemetry charts.</source>
         <translation type="unfinished"></translation>
@@ -113,12 +131,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="153"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="154"/>
         <source>Frame Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="196"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="197"/>
         <source>Invalid setting for FRAME_TYPE. Click to Reset.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -159,22 +177,22 @@
 <context>
     <name>APMAirframeComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="25"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="26"/>
         <source>Frame Class</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="31"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="32"/>
         <source>Frame Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="37"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="38"/>
         <source>Firmware Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="38"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="39"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
@@ -182,152 +200,152 @@
 <context>
     <name>APMAirspeedComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="71"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="73"/>
         <source>Basic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="75"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="224"/>
         <source>Advanced</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="95"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="88"/>
         <source>Sensor type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="107"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="100"/>
         <source>Use airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="116"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="109"/>
         <source>Airspeed ratio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="125"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="118"/>
         <source>Auto calibrate ratio in flight</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="136"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="129"/>
         <source>Primary Airspeed Sensor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="149"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="142"/>
         <source>Second Airspeed Sensor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="162"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="155"/>
         <source>Multi-Sensor Options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="169"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="162"/>
         <source>Primary sensor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="182"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="175"/>
         <source>Airspeed Limits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="189"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="182"/>
         <source>Cruise airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="198"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="191"/>
         <source>Minimum airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="207"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="200"/>
         <source>Maximum airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="216"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="209"/>
         <source>Stall airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="248"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="244"/>
         <source>Airspeed offset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="257"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="253"/>
         <source>Skip calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="266"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="262"/>
         <source>Pitot tube order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="275"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="271"/>
         <source>Analog pin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="284"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="280"/>
         <source>I2C bus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="293"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="289"/>
         <source>PSI range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="306"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="302"/>
         <source>Sensor Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="317"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="313"/>
         <source>Primary Sensor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="325"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="321"/>
         <source>Second Sensor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="333"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="329"/>
         <source>Health Monitoring</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="340"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="336"/>
         <source>Max airspeed/groundspeed difference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="349"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="345"/>
         <source>Warning threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="358"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="354"/>
         <source>Re-enable gate size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="367"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="363"/>
         <source>Offset calibration error warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="380"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAirspeedComponent.qml" line="376"/>
         <source>Airspeed Options</source>
         <translation type="unfinished"></translation>
     </message>
@@ -376,7 +394,7 @@
 <context>
     <name>APMAutoPilotPlugin</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc" line="268"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMAutoPilotPlugin.cc" line="272"/>
         <source>WARNING: The flight board you are using has a critical service bulletin against it which advises against flying. For details see: https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1294,12 +1312,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/APMDataFlashLogParser.cc" line="485"/>
+        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/APMDataFlashLogParser.cc" line="492"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/APMDataFlashLogParser.cc" line="487"/>
+        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/APMDataFlashLogParser.cc" line="495"/>
         <source>Mode: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1312,112 +1330,112 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="59"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="60"/>
         <source>Configuration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="66"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="67"/>
         <source>Output type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="78"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="79"/>
         <source>Output PWM min</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="85"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="86"/>
         <source>Output PWM max</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="92"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="93"/>
         <source>Spin when armed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="99"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="100"/>
         <source>Spin minimum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="106"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="107"/>
         <source>Spin maximum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="114"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="115"/>
         <source>DShot ESC type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="122"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="123"/>
         <source>DShot output rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="132"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="134"/>
         <source>Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="139"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="141"/>
         <source>WARNING: Remove props prior to calibration!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="147"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="149"/>
         <source>Calibrate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="154"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="156"/>
         <source>Now perform these steps:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="154"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="156"/>
         <source>Click Calibrate to start, then:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="155"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="157"/>
         <source>- Disconnect USB and battery so flight controller powers down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="156"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="158"/>
         <source>- Connect the battery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="157"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="159"/>
         <source>- The arming tone will be played (if the vehicle has a buzzer attached)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="158"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="160"/>
         <source>- If using a flight controller with a safety button press it until it displays solid red</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="159"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="161"/>
         <source>- You will hear a musical tone then two beeps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="160"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="162"/>
         <source>- A few seconds later you should hear a number of beeps (one for each battery cell you&apos;re using)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="161"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="163"/>
         <source>- And finally a single long beep indicating the end points have been set and the ESC is calibrated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="162"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="164"/>
         <source>- Disconnect the battery and power up again normally</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1559,93 +1577,109 @@
 <context>
     <name>APMFirmwarePlugin</name>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="679"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="688"/>
         <source>Error during Solo video link setup: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="849"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="787"/>
+        <source>Unable to go to location, vehicle position not known.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="858"/>
         <source>Unable to change altitude, vehicle altitude not known.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="854"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="863"/>
         <source>Unable to pause vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="940"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="946"/>
         <source>Vehicle does not support guided rotate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1011"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1021"/>
         <source>Vehicle does not support guided takeoff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1017"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1027"/>
         <source>Unable to takeoff, vehicle position not known.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1027"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1037"/>
         <source>Unable to takeoff: Vehicle failed to change to Guided mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1032"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1042"/>
         <source>Unable to takeoff: Vehicle failed to arm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1050"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1060"/>
         <source>Unable to start takeoff: Vehicle is already in the air.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1056"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1066"/>
         <source>Unable to start takeoff: Vehicle failed to change to Takeoff mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1061"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1071"/>
         <source>Unable to start takeoff: Vehicle failed to arm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1072"/>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1083"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1086"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1097"/>
         <source>Unable to start mission: Vehicle failed to change to Auto mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1088"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1109"/>
         <source>Unable to start mission: Vehicle failed to change to Guided mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1094"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1182"/>
+        <source>Follow failed: Home position not set.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1192"/>
+        <source>Follow failed: Ground station cannot provide required position information.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1102"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1114"/>
         <source>Unable to start mission: Vehicle failed to arm.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="88"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="89"/>
         <source>Guided</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="89"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="90"/>
         <source>RTL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="90"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="91"/>
         <source>Smart RTL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="91"/>
+        <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="92"/>
         <source>Auto</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1802,32 +1836,32 @@
 <context>
     <name>APMFlightModesComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="31"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="32"/>
         <source>Flight Mode 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="36"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="37"/>
         <source>Flight Mode 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="41"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="42"/>
         <source>Flight Mode 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="46"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="47"/>
         <source>Flight Mode 4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="51"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="52"/>
         <source>Flight Mode 5</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="56"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="57"/>
         <source>Flight Mode 6</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1851,94 +1885,94 @@
 <context>
     <name>APMFlightSafetyComponentSub</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="54"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="55"/>
         <source>Failsafe Actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="61"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="62"/>
         <source>GCS Heartbeat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="69"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="70"/>
         <source>Leak</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="79"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="80"/>
         <source>Detector Pin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="91"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="92"/>
         <source>Logic when Dry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="103"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="104"/>
         <source>Battery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="118"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="119"/>
         <source>Power module not set up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="124"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="125"/>
         <source>Voltage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="134"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="135"/>
         <source>Remaining Capacity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="144"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="145"/>
         <source>EKF</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="157"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="199"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="218"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="158"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="200"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="219"/>
         <source>Threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="167"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="168"/>
         <source>Pilot Input</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="180"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="181"/>
         <source>Timeout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="189"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="190"/>
         <source>Internal Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="208"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="209"/>
         <source>Internal Pressure</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="230"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="232"/>
         <source>Arming Checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="230"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="232"/>
         <source>Skip Arming Checks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="245"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml" line="247"/>
         <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2039,92 +2073,92 @@
 <context>
     <name>APMFollowComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="182"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="190"/>
         <source>Enable Follow Me</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="201"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="209"/>
         <source>Waiting for Vehicle to update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="213"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="221"/>
         <source>The vehicle parameters required for follow me are currently set in a way which is not supported. Using follow with this setup may lead to unpredictable/hazardous results.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="218"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="226"/>
         <source>Reset To Supported Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="229"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="238"/>
         <source>Follow Me Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="236"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="245"/>
         <source>Vehicle Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="241"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="250"/>
         <source>Maintain Current Offsets</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="241"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="250"/>
         <source>Specify Offsets</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="254"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="263"/>
         <source>Point Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="265"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="274"/>
         <source>Maintain current vehicle orientation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="265"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="274"/>
         <source>Point at ground station location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="265"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="274"/>
         <source>Same direction as ground station movement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="272"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="281"/>
         <source>Vehicle Offsets</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="277"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="286"/>
         <source>Angle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="288"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="297"/>
         <source>Distance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="299"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="308"/>
         <source>Height</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="341"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="350"/>
         <source>Click in the graphic to change angle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="502"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.qml" line="511"/>
         <source>L</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2190,17 +2224,17 @@
 <context>
     <name>APMGimbalComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMGimbalComponent.qml" line="37"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMGimbalComponent.qml" line="32"/>
         <source>Gimbal 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMGimbalComponent.qml" line="41"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMGimbalComponent.qml" line="42"/>
         <source>Gimbal 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMGimbalComponent.qml" line="74"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMGimbalComponent.qml" line="67"/>
         <source>Gimbal settings are not available for this firmware version.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2596,29 +2630,6 @@
     </message>
 </context>
 <context>
-    <name>APMMainStatusIndicator</name>
-    <message>
-        <location filename="../src/FirmwarePlugin/APM/APMMainStatusIndicator.qml" line="15"/>
-        <source>Ground Control Comm Loss Failsafe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FirmwarePlugin/APM/APMMainStatusIndicator.qml" line="19"/>
-        <source>Vehicle Action</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FirmwarePlugin/APM/APMMainStatusIndicator.qml" line="27"/>
-        <source>Loss Timeout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FirmwarePlugin/APM/APMMainStatusIndicator.qml" line="34"/>
-        <source>Failsafe Options</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>APMMotorComponent</name>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMMotorComponent.h" line="16"/>
@@ -2650,12 +2661,12 @@
 <context>
     <name>APMPowerComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="42"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="44"/>
         <source>Batt%1 monitor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="47"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="49"/>
         <source>Batt%1 capacity</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2676,38 +2687,38 @@
 <context>
     <name>APMRadioComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="26"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="27"/>
         <source>Roll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="27"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="32"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="37"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="42"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="28"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="33"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="38"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="43"/>
         <source>Setup required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="27"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="32"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="37"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="42"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="28"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="33"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="38"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="43"/>
         <source>Channel %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="31"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="32"/>
         <source>Pitch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="37"/>
         <source>Yaw</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="41"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="42"/>
         <source>Throttle</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2811,7 +2822,7 @@
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="83"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="709"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="704"/>
         <source>Calibrate Compass</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2822,23 +2833,23 @@
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="95"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="766"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="761"/>
         <source>Sensor Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="196"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="198"/>
         <source>Calibration Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="286"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="325"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="288"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="326"/>
         <source>Calibration complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="197"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="199"/>
         <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2853,12 +2864,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="374"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="368"/>
         <source>Use Compass</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="302"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="305"/>
         <source>Shown in the indicator bars is the quality of the calibration for each compass.
 
 </source>
@@ -2885,285 +2896,290 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="175"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="177"/>
         <source>Complete or cancel the current calibration first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="303"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="306"/>
         <source>- Green indicates a well functioning compass.
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="304"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="307"/>
         <source>- Yellow indicates a questionable compass or calibration.
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="305"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="308"/>
         <source>- Red indicates a compass which should not be used.
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="306"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="335"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="309"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="337"/>
         <source>YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="310"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="339"/>
-        <source>Reboot Vehicle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="374"/>
         <source>Priority 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="374"/>
         <source>Priority 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="374"/>
         <source>Priority 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="374"/>
         <source>Not Set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="412"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="406"/>
         <source>Orientation:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="478"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="472"/>
         <source>Autopilot Rotation:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="495"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="489"/>
         <source>Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="513"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="493"/>
+        <source>Simple Accelerometer Calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="507"/>
         <source>Magnetic Declination</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="525"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="519"/>
         <source>Manual Magnetic Declination</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="547"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="541"/>
         <source>Fast compass calibration given vehicle position and yaw. This </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="548"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="542"/>
         <source>results in zero diagonal and off-diagonal elements, so is only </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="549"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="543"/>
         <source>suitable for vehicles where the field is close to spherical. It is </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="550"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="544"/>
         <source>useful for large vehicles where moving the vehicle to calibrate it </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="551"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="545"/>
         <source>is difficult. Point the vehicle North before using it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="564"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="558"/>
         <source>Fast Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="572"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="566"/>
         <source>Vehicle has no Valid positon, please provide it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="578"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="572"/>
         <source>Use GCS position instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="578"/>
         <source>Use current map position instead</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="624"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="586"/>
+        <source>Lat: %1 Lon: %2</source>
+        <extracomment>%1 is latitude, %2 is longitude</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="619"/>
         <source>Compass Motor Interference Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="637"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="632"/>
         <source>This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="638"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="633"/>
         <source>CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="639"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="634"/>
         <source>It is technically possible to set-up CompassMot using throttle but this is not recommended.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="646"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="641"/>
         <source>Disconnect your props, flip them over and rotate them one position around the frame. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="647"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="642"/>
         <source>In this configuration they should push the copter down into the ground when the throttle is raised.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="654"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="649"/>
         <source>Secure the copter (perhaps with tape) so that it does not move.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="661"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="656"/>
         <source>Turn on your transmitter and keep throttle at zero.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="668"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="663"/>
         <source>Click Ok to start CompassMot calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="727"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="722"/>
         <source>To level the horizon you need to place the vehicle in its level flight position and press Ok.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="752"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="747"/>
         <source>depth</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="752"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="747"/>
         <source>altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="748"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="743"/>
         <source>Pressure calibration will set the %1 to zero at the current pressure reading. %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="753"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="748"/>
         <source>To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="734"/>
         <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.
 
 Click Ok to start calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="692"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="687"/>
         <source>Accelerometer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="704"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="699"/>
         <source>Compass</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="709"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="704"/>
         <source>Accelerometer must be calibrated prior to Compass.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="720"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="715"/>
         <source>Level Horizon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="724"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="719"/>
         <source>Accelerometer must be calibrated prior to Level Horizon.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="736"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="731"/>
         <source>Gyro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="738"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="733"/>
         <source>Calibrate Gyro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="749"/>
         <source>Baro/Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="749"/>
         <source>Pressure</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="759"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
         <source>CompassMot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="782"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="777"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="791"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="786"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="862"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="871"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="880"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="889"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="898"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="907"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="857"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="866"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="875"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="884"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="893"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="902"/>
         <source>Rotate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="862"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="871"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="880"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="889"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="898"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="907"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="857"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="866"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="875"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="884"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="893"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="902"/>
         <source>Hold Still</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3181,109 +3197,109 @@ Click Ok to start calibration.</source>
 <context>
     <name>APMSensorsComponentController</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="139"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="156"/>
         <source>Calibration complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="153"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="170"/>
         <source>Calibration failed. Calibration log will be displayed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="316"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="356"/>
         <source>Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="317"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="357"/>
         <source>Quickly bring the throttle back down to zero</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="318"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="358"/>
         <source>Press the Next button to complete the calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="327"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="367"/>
         <source>Hold the vehicle in its level flight position.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="336"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="376"/>
         <source>Requesting pressure calibration...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="345"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="385"/>
         <source>Requesting gyro calibration...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="179"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="467"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="207"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="510"/>
         <source>Successfully completed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="173"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="201"/>
         <source>Failed to start compass calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="182"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="471"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="210"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="514"/>
         <source>Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="237"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="266"/>
         <source>Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="271"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="311"/>
         <source>Hold still in the current orientation and press Next when ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="464"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="507"/>
         <source>In progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="526"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="569"/>
         <source>Compass %1 calibration complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="528"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="571"/>
         <source>Compass %1 calibration below quality threshold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="547"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="590"/>
         <source>All compasses calibrated successfully</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="548"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="591"/>
         <source>YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="551"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="594"/>
         <source>Compass calibration failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="552"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="595"/>
         <source>YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="556"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="600"/>
         <source>Continue rotating...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3291,38 +3307,38 @@ Click Ok to start calibration.</source>
 <context>
     <name>APMSensorsComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="30"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="27"/>
         <source>Compasses:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="48"/>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="76"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="45"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="73"/>
         <source>Setup required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="49"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="46"/>
         <source>Not installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="75"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="72"/>
         <source>Accelerometer(s):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="88"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="85"/>
         <source>Barometer(s):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="89"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="86"/>
         <source>Not Supported(Over APM 4.1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="76"/>
+        <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="73"/>
         <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3432,9 +3448,15 @@ Click Ok to start calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="37"/>
         <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="53"/>
         <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="58"/>
         <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="35"/>
+        <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3476,6 +3498,11 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
         <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="213"/>
         <source>This will attempt to automatically detect the direction (normal/reversed) of your thrusters.
 Please place your vehicle in water, click the button, and wait. Note that the thrusters still need to be connected to the correct outputs (thrusters 2 and 3 can&apos;t be swapped, for example).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="227"/>
+        <source>Auto-Detect Directions</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3545,6 +3572,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <name>ActuatorComponent</name>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="37"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="76"/>
         <source>Geometry</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3579,33 +3607,63 @@ Please place your vehicle in water, click the button, and wait. Note that the th
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="371"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="368"/>
         <source>Identify &amp; Assign Motors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="387"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="384"/>
         <source>Motor Order Identification and Assignment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="402"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="399"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="407"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="404"/>
         <source>Spin Motor Again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="414"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.qml" line="411"/>
         <source>Abort</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="14"/>
         <source>Actuators</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="79"/>
+        <source>Required Outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="79"/>
+        <source>Setup required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="90"/>
+        <source>Motors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="92"/>
+        <source>Servos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="99"/>
+        <source>Other Outputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ActuatorComponent.cc" line="105"/>
+        <source>Function %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3648,61 +3706,185 @@ Please place your vehicle in water, click the button, and wait. Note that the th
 <context>
     <name>AirframeComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="31"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="17"/>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="17"/>
+        <source>Copter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="17"/>
+        <source>Plane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="17"/>
+        <source>VTOL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="17"/>
+        <source>Rover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="17"/>
+        <source>Other</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="91"/>
         <source>Your vehicle is using a custom airframe configuration. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="32"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="92"/>
         <source>This configuration can only be modified through the Parameter Editor.
 
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="33"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="93"/>
         <source>If you want to reset your airframe configuration and select a standard configuration, click &apos;Reset&apos; below.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="36"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="96"/>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="98"/>
-        <source> To change this configuration, select the desired airframe below then click &apos;Apply and Restart&apos;.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="149"/>
+        <source>Connected airframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="109"/>
-        <source>Clicking &apos;Apply&apos; will save the changes you have made to your airframe configuration.&lt;br&gt;&lt;br&gt;                                                                        All vehicle parameters other than Radio Calibration will be reset.&lt;br&gt;&lt;br&gt;                                                                        Your vehicle will also be restarted in order to complete the process.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="161"/>
+        <source>Airframe is not set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="96"/>
-        <source>You&apos;ve connected a %1.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="170"/>
+        <source>SYS_AUTOSTART %1 - %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="97"/>
-        <source>Airframe is not set.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="171"/>
+        <source>Select a frame type below, then choose your airframe.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="107"/>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="108"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="182"/>
+        <source>Showing %1 of %2 frame types.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="201"/>
+        <source>No frame types match.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="262"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="374"/>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="279"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="315"/>
+        <source>%n airframe(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="306"/>
+        <source>Airframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="316"/>
+        <source>Select a frame type to choose an airframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="397"/>
+        <source>Selected: %1 (%2). Click &apos;Apply and Restart&apos; to change the airframe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="400"/>
+        <source>Choose an airframe, then click &apos;Apply and Restart&apos;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="413"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="424"/>
+        <source>Clicking &apos;Apply&apos; will save the changes you have made to your airframe configuration.&lt;br&gt;&lt;br&gt;                                                                                All vehicle parameters other than Radio Calibration will be reset.&lt;br&gt;&lt;br&gt;                                                                                Your vehicle will also be restarted in order to complete the process.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="420"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="423"/>
         <source>Apply and Restart</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="7"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="10"/>
         <source>Airframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="19"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="22"/>
         <source>Configure the airframe type and apply default tuning parameters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="69"/>
+        <source>System ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="77"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="80"/>
+        <source>Airframe type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="77"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="78"/>
+        <source>Setup required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="78"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="81"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="83"/>
+        <source>Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="87"/>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="89"/>
+        <source>Firmware Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="87"/>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="99"/>
+        <source>Custom Fw. Ver.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3711,45 +3893,6 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentController.cc" line="76"/>
         <source>You cannot change airframe configuration while connected to multiple vehicles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>AirframeComponentSummary</name>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="26"/>
-        <source>System ID</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="30"/>
-        <source>Airframe type</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="31"/>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="35"/>
-        <source>Setup required</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="34"/>
-        <source>Vehicle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="39"/>
-        <source>Firmware Version</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="40"/>
-        <source>Unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="44"/>
-        <source>Custom Fw. Ver.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3802,8 +3945,26 @@ Please place your vehicle in water, click the button, and wait. Note that the th
 <context>
     <name>AnalyzeView</name>
     <message>
-        <location filename="../src/AnalyzeView/AnalyzeView.qml" line="169"/>
+        <location filename="../src/AnalyzeView/AnalyzeView.qml" line="171"/>
         <source>Requires a connected vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidInterface</name>
+    <message>
+        <location filename="../src/Android/AndroidInterface.cc" line="253"/>
+        <source>Background activity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/AndroidInterface.cc" line="255"/>
+        <source>%1 is running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/AndroidInterface.cc" line="256"/>
+        <source>Active in the background while a vehicle is connected or video is recording.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3815,82 +3976,82 @@ Please place your vehicle in water, click the button, and wait. Note that the th
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="247"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="261"/>
         <source>All Levels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="247"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="261"/>
         <source>Debug</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="247"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="261"/>
         <source>Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="247"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="261"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="247"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="261"/>
         <source>Critical</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="247"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="261"/>
         <source>Fatal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="259"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="273"/>
         <source>All Categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="272"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="286"/>
         <source>Search…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="278"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="292"/>
         <source>Regex search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="282"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="296"/>
         <source>.*</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="290"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="304"/>
         <source>⚠ Disk Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="307"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="315"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="313"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="321"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="325"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="334"/>
         <source>Show Latest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="351"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="360"/>
         <source>Save app log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/AppLogging.qml" line="301"/>
+        <location filename="../src/AppSettings/AppLogging.qml" line="253"/>
         <source>Categories</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3898,72 +4059,72 @@ Please place your vehicle in water, click the button, and wait. Note that the th
 <context>
     <name>AppSettings</name>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="110"/>
+        <location filename="../src/Settings/AppSettings.h" line="112"/>
         <source>Parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="111"/>
+        <location filename="../src/Settings/AppSettings.h" line="113"/>
         <source>Telemetry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="112"/>
+        <location filename="../src/Settings/AppSettings.h" line="114"/>
         <source>Missions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="113"/>
+        <location filename="../src/Settings/AppSettings.h" line="115"/>
         <source>Logs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="114"/>
+        <location filename="../src/Settings/AppSettings.h" line="116"/>
         <source>Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="115"/>
+        <location filename="../src/Settings/AppSettings.h" line="117"/>
         <source>Photo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="116"/>
+        <location filename="../src/Settings/AppSettings.h" line="118"/>
         <source>CrashLogs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="117"/>
+        <location filename="../src/Settings/AppSettings.h" line="119"/>
         <source>MavlinkActions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.h" line="118"/>
+        <location filename="../src/Settings/AppSettings.h" line="120"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.cc" line="89"/>
+        <location filename="../src/Settings/AppSettings.cc" line="123"/>
         <source>Save to SD card specified for application data. But SD card is write protected. Using internal storage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.cc" line="196"/>
+        <location filename="../src/Settings/AppSettings.cc" line="251"/>
         <source> (Partial)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.cc" line="204"/>
+        <location filename="../src/Settings/AppSettings.cc" line="259"/>
         <source> (Test Only)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/AppSettings.cc" line="211"/>
+        <location filename="../src/Settings/AppSettings.cc" line="266"/>
         <source>Pseudo Localization (Test Only)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/AppSettings.qml" line="165"/>
+        <location filename="../src/QmlControls/AppSettings.qml" line="220"/>
         <source>Search settings...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4311,97 +4472,79 @@ Please place your vehicle in water, click the button, and wait. Note that the th
         <source>Initializing</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc" line="75"/>
+        <source>Change altitude not supported.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ArduSubFirmwarePlugin</name>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="111"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="114"/>
         <source>Manual</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="112"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="115"/>
         <source>Stabilize</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="113"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="116"/>
         <source>Acro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="114"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="117"/>
         <source>Depth Hold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="115"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="118"/>
         <source>Auto</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="116"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="119"/>
         <source>Guided</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="117"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="120"/>
         <source>Circle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="118"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="121"/>
         <source>Surface</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="119"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="122"/>
         <source>Position Hold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="120"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="123"/>
         <source>Motor Detection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="121"/>
+        <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="124"/>
         <source>Surftrak</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>ArmedIndicator</name>
-    <message>
-        <location filename="../src/Toolbar/ArmedIndicator.qml" line="12"/>
-        <source>Armed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/ArmedIndicator.qml" line="12"/>
-        <source>Disarmed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/ArmedIndicator.qml" line="13"/>
-        <source>Arm</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/ArmedIndicator.qml" line="13"/>
-        <source>Disarm</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>AudioOutput</name>
     <message>
-        <location filename="../src/Utilities/Audio/AudioOutput.cc" line="219"/>
+        <location filename="../src/Utilities/Audio/AudioOutput.cc" line="286"/>
         <source>%1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Audio/AudioOutput.cc" line="257"/>
+        <location filename="../src/Utilities/Audio/AudioOutput.cc" line="324"/>
         <source>Audio test. Volume is %1 percent</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4409,8 +4552,8 @@ Please place your vehicle in water, click the button, and wait. Note that the th
 <context>
     <name>AutoPilotPlugin</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/AutoPilotPlugin.cc" line="66"/>
-        <source>One or more vehicle components require setup prior to flight.</source>
+        <location filename="../src/AutoPilotPlugins/AutoPilotPlugin.cc" line="60"/>
+        <source>Configuration tasks remain before this vehicle is ready to fly. See Vehicle Configuration for details.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4611,6 +4754,14 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/Toolbar/BatteryIndicator.qml" line="564"/>
         <source>Configure</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BatteryThresholdBar</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/BatteryThresholdBar.qml" line="44"/>
+        <source>Emergency %1%, critical %2%, low %3%</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4929,37 +5080,37 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>BluetoothLink</name>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="110"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="104"/>
         <source>Bluetooth Link Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="115"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="109"/>
         <source>Bluetooth Low Energy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="115"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="109"/>
         <source>Bluetooth</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="117"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="111"/>
         <source>%1 Link Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="118"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="112"/>
         <source>Link %1: (Device: %2) %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="166"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="160"/>
         <source>Bluetooth Permission Denied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="177"/>
+        <location filename="../src/Comms/Bluetooth/BluetoothLink.cc" line="171"/>
         <source>Failed to start Bluetooth worker thread</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5243,47 +5394,53 @@ Click Ok to start the auto-tuning process.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="372"/>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="542"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="358"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="523"/>
+        <source>Firmware image size (%1 bytes) is not a multiple of 4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="376"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="545"/>
         <source>Firmware file read failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="388"/>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="471"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="390"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="473"/>
         <source>Flash failed: %1 at address 0x%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="422"/>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="594"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="424"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="593"/>
         <source>Unable to retrieve block from ihx: index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="442"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="444"/>
         <source>Unable to set flash start address: 0x%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="560"/>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="645"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="561"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="644"/>
         <source>Read failed: %1 at address: 0x%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="566"/>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="653"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="567"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="652"/>
         <source>Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="614"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="613"/>
         <source>Unable to set read start address: 0x%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="693"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="692"/>
         <source>CRC mismatch: board(0x%1) file(0x%2)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5333,7 +5490,7 @@ Click Ok to start the auto-tuning process.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="751"/>
+        <location filename="../src/Vehicle/VehicleSetup/Bootloader.cc" line="750"/>
         <source>Get Board Id: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -5424,6 +5581,16 @@ Click Ok to start the auto-tuning process.
 </context>
 <context>
     <name>CameraCalcCamera</name>
+    <message>
+        <location filename="../src/PlanView/CameraCalcCamera.qml" line="78"/>
+        <source>Landscape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/CameraCalcCamera.qml" line="85"/>
+        <source>Portrait</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <location filename="../src/PlanView/CameraCalcCamera.qml" line="105"/>
         <source>Width</source>
@@ -5605,7 +5772,7 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>CompInfoParam</name>
     <message>
-        <location filename="../src/Vehicle/ComponentInformation/CompInfoParam.cc" line="103"/>
+        <location filename="../src/Vehicle/ComponentInformation/CompInfoParam.cc" line="114"/>
         <source>Component %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5627,32 +5794,90 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>ComponentInformationTranslation</name>
     <message>
-        <location filename="../src/Vehicle/ComponentInformation/ComponentInformationTranslation.cc" line="203"/>
+        <location filename="../src/Vehicle/ComponentInformation/ComponentInformationTranslation.cc" line="210"/>
         <source>File open failed: file:error %1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ConfigParamCell</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ConfigParamCell.qml" line="123"/>
+        <source>Reboot required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/ConfigParamCell.qml" line="123"/>
+        <source>Applies after reboot</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CorrectionsStatus</name>
+    <message>
+        <location filename="../src/GPS/Qml/CorrectionsStatus.qml" line="23"/>
+        <source>Corrections Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/CorrectionsStatus.qml" line="28"/>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/CorrectionsStatus.qml" line="31"/>
+        <source>Waiting</source>
+        <extracomment>No fresh correction stream is available yet</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/CorrectionsStatus.qml" line="31"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/CorrectionsStatus.qml" line="45"/>
+        <source>Data rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/CorrectionsStatus.qml" line="47"/>
+        <source>%1/s</source>
+        <extracomment>%1 is a data size, such as 2.1KB; the label is a data rate per second</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>CorridorScanComplexItem</name>
     <message>
-        <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="105"/>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="88"/>
+        <source>Internal Error: Preset load failed. Name: %1 Error: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="113"/>
         <source>%1 does not support loading this complex mission item type: %2:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="112"/>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="120"/>
         <source>%1 complex item version %2 not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="48"/>
-        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="49"/>
-        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="55"/>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="464"/>
+        <source>Corridor Scan: Unable to calculate transects for the corridor path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="52"/>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="53"/>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="59"/>
         <source>Corridor Scan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="50"/>
+        <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="54"/>
         <source>C</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5912,7 +6137,7 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/FlyView/DefaultChecklist.qml" line="71"/>
-        <source>OK for your platform? Lauching into the wind?</source>
+        <source>OK for your platform? Launching into the wind?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5934,50 +6159,50 @@ Click Ok to start the auto-tuning process.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="21"/>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="27"/>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="33"/>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="49"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="22"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="28"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="34"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="50"/>
         <source>ESC Calibration failed. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="22"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="23"/>
         <source>%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="28"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="29"/>
         <source>%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="34"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="35"/>
         <source>You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="39"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="40"/>
         <source>WARNING: Props must be removed from vehicle prior to performing ESC calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="40"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="41"/>
         <source> Connect the battery now and calibration will begin.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="44"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="45"/>
         <source>Performing calibration. This will take a few seconds..</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="54"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="55"/>
         <source>Calibration complete. You can disconnect your battery now if you like.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="64"/>
+        <location filename="../src/AutoPilotPlugins/PX4/ESCCalibrationDialog.qml" line="65"/>
         <source>Starting ESC calibration...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6130,6 +6355,7 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="37"/>
+        <location filename="../src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml" line="37"/>
         <source>AP Mode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6163,106 +6389,120 @@ Click Ok to start the auto-tuning process.
     <name>EditPositionDialog</name>
     <message>
         <location filename="../src/QmlControls/EditPositionDialog.qml" line="12"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="205"/>
         <source>Edit Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="44"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="45"/>
         <source>Coordinate System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="46"/>
         <location filename="../src/QmlControls/EditPositionDialog.qml" line="47"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="48"/>
         <source>Geographic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="46"/>
         <location filename="../src/QmlControls/EditPositionDialog.qml" line="47"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="48"/>
         <source>Universal Transverse Mercator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="46"/>
         <location filename="../src/QmlControls/EditPositionDialog.qml" line="47"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="48"/>
         <source>Military Grid Reference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="46"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="47"/>
         <source>Vehicle Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="51"/>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="107"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="47"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="48"/>
+        <source>Degrees Minutes Seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="54"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="70"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="126"/>
         <source>Latitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="59"/>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="114"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="62"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="78"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="133"/>
         <source>Longitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="121"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="140"/>
         <source>Alt (AMSL)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="128"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="147"/>
         <source>Alt (Rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="135"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="154"/>
         <source>Alt (AGL)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="143"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="162"/>
         <source>Set position from vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="150"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="169"/>
         <source>Set altitude from vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="156"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="175"/>
         <source>Set position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="157"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="176"/>
         <source>Move</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="67"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="205"/>
+        <source>Invalid coordinate. Check the entered values and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="86"/>
         <source>Zone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="75"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="94"/>
         <source>Hemisphere</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="83"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="102"/>
         <source>Easting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="91"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="110"/>
         <source>Northing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/EditPositionDialog.qml" line="99"/>
+        <location filename="../src/QmlControls/EditPositionDialog.qml" line="118"/>
         <source>MGRS</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6421,82 +6661,85 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FTPManager</name>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="724"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="700"/>
         <source>Invalid Nak format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="726"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="705"/>
         <source>errno %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1004"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1013"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1072"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1081"/>
         <source>List directory failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="304"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="748"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="770"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="783"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="787"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="896"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="905"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1051"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1086"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1132"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1140"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="727"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="749"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="756"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="777"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="781"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="915"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="955"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="970"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1119"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1154"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1203"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1211"/>
         <source>Download failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="239"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="263"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="273"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="233"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="246"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="270"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="280"/>
         <source>Aborted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="391"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="399"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="363"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="371"/>
         <source>Delete failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="455"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="560"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="608"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="427"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="532"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="580"/>
         <source>Upload failed for: %1 - error: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="462"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="568"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="616"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="434"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="540"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="588"/>
         <source>Upload failed for: %1 - no response from vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="473"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="445"/>
         <source>Upload failed for: %1 - file not open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="503"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="510"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="475"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="482"/>
         <source>Upload failed for: %1 - error reading file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="625"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="597"/>
         <source>Aborted for: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/FTPManager.cc" line="858"/>
-        <location filename="../src/Vehicle/FTPManager.cc" line="1099"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="849"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="875"/>
+        <location filename="../src/Vehicle/FTPManager.cc" line="1167"/>
         <source>Download failed: Error saving file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6637,27 +6880,22 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>Fact</name>
     <message>
-        <location filename="../src/FactSystem/Fact.cc" line="272"/>
+        <location filename="../src/FactSystem/Fact.cc" line="284"/>
         <source>Unknown: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/Fact.cc" line="396"/>
+        <location filename="../src/FactSystem/Fact.cc" line="408"/>
         <source>true</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/Fact.cc" line="396"/>
+        <location filename="../src/FactSystem/Fact.cc" line="408"/>
         <source>false</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/Fact.cc" line="911"/>
-        <source>Reboot vehicle for changes to take effect.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FactSystem/Fact.cc" line="913"/>
+        <location filename="../src/FactSystem/Fact.cc" line="945"/>
         <source>Restart application for changes to take effect.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6665,92 +6903,378 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FactMetaData</name>
     <message>
-        <location filename="../src/FactSystem/FactMetaData.h" line="235"/>
+        <location filename="../src/FactSystem/FactMetaData.h" line="241"/>
         <source>Other</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/FactMetaData.h" line="236"/>
+        <location filename="../src/FactSystem/FactMetaData.h" line="242"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="351"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="359"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="369"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="377"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="385"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="394"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="439"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="447"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="457"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="465"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="473"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="482"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="374"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="382"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="392"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="400"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="408"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="417"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="462"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="470"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="480"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="488"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="496"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="505"/>
         <source>Value must be within %1 and %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="413"/>
-        <location filename="../src/FactSystem/FactMetaData.cc" line="501"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="436"/>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="527"/>
         <source>Invalid number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FactSystem/FactMetaData.cc" line="513"/>
+        <source>Value must be %1 characters or less</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>FactTextField</name>
     <message>
-        <location filename="../src/FactSystem/FactControls/FactTextField.qml" line="45"/>
+        <location filename="../src/FactSystem/FactControls/FactTextField.qml" line="51"/>
         <source>Value Details</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FactTextFieldSlider2</name>
-    <message>
-        <location filename="../src/FactSystem/FactControls/FactTextFieldSlider2.qml" line="62"/>
-        <source>Value: </source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>FactValueGrid</name>
     <message>
-        <location filename="../src/QmlControls/FactValueGrid.cc" line="21"/>
+        <location filename="../src/QmlControls/FactValueGrid.cc" line="27"/>
         <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/FactValueGrid.cc" line="22"/>
+        <location filename="../src/QmlControls/FactValueGrid.cc" line="28"/>
         <source>Small</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/FactValueGrid.cc" line="23"/>
+        <location filename="../src/QmlControls/FactValueGrid.cc" line="29"/>
         <source>Medium</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/FactValueGrid.cc" line="24"/>
+        <location filename="../src/QmlControls/FactValueGrid.cc" line="30"/>
         <source>Large</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/FactValueGrid.cc" line="323"/>
+        <location filename="../src/QmlControls/FactValueGrid.cc" line="361"/>
         <source>Settings version %1 for %2 is not supported. Setup will be reset to defaults.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/FactValueGrid.cc" line="323"/>
+        <location filename="../src/QmlControls/FactValueGrid.cc" line="361"/>
         <source>Load Settings</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>FactValueSlider</name>
+    <name>FailureInjection</name>
     <message>
-        <location filename="../src/FactSystem/FactControls/FactValueSlider.qml" line="104"/>
-        <source>Value Details</source>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="57"/>
+        <source>No response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="59"/>
+        <source>Duplicate command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="121"/>
+        <source>Temporarily rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="124"/>
+        <source>Denied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="127"/>
+        <source>Unsupported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="130"/>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="133"/>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="167"/>
+        <source>Interrupted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="203"/>
+        <source>GPS fix type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjection.cc" line="204"/>
+        <source>Battery level</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FailureInjectionComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="201"/>
+        <source>Injects simulated failures into flight components (sensors, GPS, motors, and more) to test failsafe behavior. Use with care — an injected failure affects the vehicle immediately.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="208"/>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.cc" line="7"/>
+        <source>Failure Injection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="217"/>
+        <source>SYS_FAILURE_EN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="227"/>
+        <source>Failure injection enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="234"/>
+        <source>Inject Failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="243"/>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="382"/>
+        <source>Component</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="256"/>
+        <source>Failure type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="296"/>
+        <source>Inject failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="304"/>
+        <source>Instances — select one or more, or All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="311"/>
+        <source>i = %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="324"/>
+        <source>All (i = 0)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="339"/>
+        <source>MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  (no instance selected)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="346"/>
+        <source>MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  param3=%3  param4=%4  (i=%5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="354"/>
+        <source>Activity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="359"/>
+        <source>Newest first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="362"/>
+        <source>Reset all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="376"/>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="388"/>
+        <source>Failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="394"/>
+        <source>Instances</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="399"/>
+        <source>Result</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="453"/>
+        <source>…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.qml" line="454"/>
+        <source>✓ Accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FailureInjectionComponent.cc" line="17"/>
+        <source>Failure Injection is used to simulate sensor and system failures (MAV_CMD_INJECT_FAILURE) to validate failsafes. Requires SYS_FAILURE_EN = 1 and a vehicle reboot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FenceInspector</name>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="41"/>
+        <source>Polygon %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="43"/>
+        <source>Circle %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="45"/>
+        <source>Breach return point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="76"/>
+        <source>Include</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="76"/>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="95"/>
+        <source>Drag the vertices on the map to reshape the fence.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="96"/>
+        <source>Drag the center on the map to move the fence.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="105"/>
+        <source>Radius</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="117"/>
+        <source>Optional point the vehicle flies to after a fence breach.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="123"/>
+        <source>Altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="132"/>
+        <source>Remove breach return point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceInspector.qml" line="132"/>
+        <source>Set at map center</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FenceItemList</name>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="51"/>
+        <source>Polygon %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="53"/>
+        <source>Circle %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="55"/>
+        <source>Breach return point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="65"/>
+        <source>Set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="65"/>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="70"/>
+        <source>Include</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="70"/>
+        <source>Exclude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceItemList.qml" line="72"/>
+        <source>%1 %2, %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FenceTabPage</name>
+    <message>
+        <location filename="../src/PlanView/FenceTabPage.qml" line="310"/>
+        <source>This vehicle does not support GeoFence.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceTabPage.qml" line="325"/>
+        <source>+ Polygon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/FenceTabPage.qml" line="333"/>
+        <source>+ Circle</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6871,14 +7395,19 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/Vehicle/VehicleSetup/FirmwareImage.cc" line="424"/>
-        <source>Unabled to open firmware file %1, %2</source>
+        <source>Unable to open firmware file %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareImage.cc" line="435"/>
+        <source>Firmware image size (%1 bytes) is not a multiple of 4</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>FirmwarePlugin</name>
     <message>
-        <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="362"/>
+        <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="415"/>
         <source>Vehicle is not running latest stable firmware! Running %1, latest stable is %2.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7148,87 +7677,97 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FirmwareUpgradeController</name>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="166"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="172"/>
         <source>Connect not allowed during Firmware Upgrade.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="308"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="314"/>
         <source>Connected to bootloader:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="309"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="315"/>
         <source>  Version: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="310"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="316"/>
         <source>  Board ID: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="311"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="317"/>
         <source>  Flash size: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="366"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="333"/>
+        <source>Unable to sync with bootloader.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="372"/>
         <source>Custom firmware selected but no filename given.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="371"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="377"/>
         <source>Unable to find specified firmware for board type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="377"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="383"/>
         <source>No firmware file selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="392"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="398"/>
         <source>Downloading firmware from %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="394"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="400"/>
         <source>Using firmware file %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="432"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="438"/>
         <source>Download complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="441"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="447"/>
         <source>Image load failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="447"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="453"/>
         <source>Bootloader not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="452"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="458"/>
         <source>Image size of %1 is too large for board flash size %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="484"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="490"/>
         <source>Upgrade complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="539"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="500"/>
+        <source>Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="545"/>
         <source>Upgrade cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="611"/>
+        <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="620"/>
         <source>Choose board type</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7307,7 +7846,7 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
         <location filename="../src/FlyView/FixedWingChecklist.qml" line="71"/>
-        <source>OK for your platform? Lauching into the wind?</source>
+        <source>OK for your platform? Launching into the wind?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7324,7 +7863,7 @@ Click Ok to start the auto-tuning process.
 <context>
     <name>FixedWingLandingComplexItem</name>
     <message>
-        <location filename="../src/MissionManager/FixedWingLandingComplexItem.h" line="35"/>
+        <location filename="../src/MissionManager/FixedWingLandingComplexItem.h" line="36"/>
         <source>Fixed Wing Landing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7340,22 +7879,9 @@ Click Ok to start the auto-tuning process.
     </message>
 </context>
 <context>
-    <name>FlightDisplayViewVideo</name>
-    <message>
-        <location filename="../src/FlyView/FlightDisplayViewVideo.qml" line="63"/>
-        <source>WAITING FOR VIDEO</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlightDisplayViewVideo.qml" line="63"/>
-        <source>VIDEO DISABLED</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>FlightMap</name>
     <message>
-        <location filename="../src/FlightMap/FlightMap.qml" line="64"/>
+        <location filename="../src/FlightMap/FlightMap.qml" line="72"/>
         <source>Specify Position</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7452,37 +7978,45 @@ VTOL</source>
 <context>
     <name>FlightModesComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="12"/>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="43"/>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="17"/>
         <source>Flight Modes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="23"/>
-        <source>Configure transmitter switch assignments and flight mode selection.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="28"/>
+        <source>Choose how the pilot selects flight modes, and what each transmitter switch does.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="43"/>
-        <source>Switch Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FlightModesComponentSummary</name>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="24"/>
-        <source>Mode switch</source>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="87"/>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="94"/>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="100"/>
+        <source>Mode selection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="25"/>
-        <source>Setup required</source>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="92"/>
+        <source>Ch %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="30"/>
-        <source>Flight Mode %1 </source>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="94"/>
+        <source>Buttons on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="100"/>
+        <source>Not assigned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="108"/>
+        <source>Flight Mode %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponent.cc" line="114"/>
+        <source>Mode on boot</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7491,6 +8025,75 @@ VTOL</source>
     <message>
         <location filename="../src/FlyView/FlyViewAdditionalActionsButton.qml" line="11"/>
         <source>Actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FlyViewGeoMap</name>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="137"/>
+        <source>L</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="381"/>
+        <source>Go here</source>
+        <comment>Go to location waypoint</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="499"/>
+        <source>ROI here</source>
+        <comment>Make this a Region Of Interest</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="559"/>
+        <source>Orbit</source>
+        <comment>Orbit waypoint</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="575"/>
+        <source>Edit ROI Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="620"/>
+        <source>Cancel ROI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMap.qml" line="629"/>
+        <source>Edit Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FlyViewGeoMapChrome</name>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMapChrome.qml" line="55"/>
+        <source>patches: %1  pending: %2  max zoom: %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMapChrome.qml" line="75"/>
+        <source>Analyze</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMapChrome.qml" line="82"/>
+        <source>Stats</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMapChrome.qml" line="90"/>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewGeoMapChrome.qml" line="90"/>
+        <source>Record</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7523,82 +8126,85 @@ VTOL</source>
 <context>
     <name>FlyViewMap</name>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="344"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="273"/>
         <source>R</source>
         <comment>rally point map item label</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="441"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="372"/>
         <source>Go here</source>
         <comment>Go to location waypoint</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="581"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="512"/>
         <source>ROI here</source>
         <comment>Make this a Region Of Interest</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="608"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="539"/>
         <source>Orbit</source>
         <comment>Orbit waypoint</comment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="677"/>
-        <source>Go to location</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="697"/>
-        <source>Orbit at location</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="708"/>
-        <source>ROI at location</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="718"/>
-        <source>Set home here</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="728"/>
-        <source>Set Estimator Origin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="738"/>
-        <source>Set Heading</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="748"/>
-        <source>Lat: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="749"/>
-        <source>Lon: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="622"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="553"/>
         <source>Edit ROI Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="643"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="590"/>
         <source>Cancel ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/FlyViewMap.qml" line="652"/>
+        <location filename="../src/FlyView/FlyViewMap.qml" line="599"/>
         <source>Edit Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FlyViewMapClickDropPanel</name>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="47"/>
+        <source>Go to location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="75"/>
+        <source>Orbit at location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="87"/>
+        <source>ROI at location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="97"/>
+        <source>Set home here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="107"/>
+        <source>Set Estimator Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="117"/>
+        <source>Set Heading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="127"/>
+        <source>Lat: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/FlyViewMapClickDropPanel.qml" line="128"/>
+        <source>Lon: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7637,14 +8243,6 @@ VTOL</source>
     <message>
         <location filename="../src/FlyView/FlyViewMissionCompleteDialog.qml" line="130"/>
         <source>If you are changing batteries for Resume Mission do not disconnect from the vehicle.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>FlyViewPreFlightChecklistPopup</name>
-    <message>
-        <location filename="../src/FlyView/FlyViewPreFlightChecklistPopup.qml" line="11"/>
-        <source>Pre-Flight Checklist</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7702,7 +8300,7 @@ VTOL</source>
 <context>
     <name>FlyViewVideo</name>
     <message>
-        <location filename="../src/FlyView/FlyViewVideo.qml" line="51"/>
+        <location filename="../src/FlyView/FlyViewVideo.qml" line="44"/>
         <source>Double-click to exit full screen</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7822,276 +8420,787 @@ VTOL</source>
     </message>
 </context>
 <context>
+    <name>GPSCorrectionManager</name>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="127"/>
+        <source>Not forwarding to %1 port %2: this computer&apos;s UDP input receives on that port.</source>
+        <extracomment>%1 is an IP address, %2 a UDP port</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="131"/>
+        <source>Enter an IP address and a port for UDP output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="154"/>
+        <source>Cannot listen on UDP port %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="211"/>
+        <source>Local base station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="213"/>
+        <source>NTRIP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="215"/>
+        <source>UDP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Corrections/GPSCorrectionManager.cc" line="219"/>
+        <source>Unclassified</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GPSIndicator</name>
     <message>
-        <location filename="../src/Toolbar/GPSIndicator.qml" line="34"/>
+        <location filename="../src/Toolbar/GPSIndicator.qml" line="81"/>
         <source>RTK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicator.qml" line="81"/>
+        <source>GNSS</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>GPSIndicatorPage</name>
     <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="14"/>
-        <source>N/A</source>
-        <comment>No data to display</comment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="15"/>
-        <source>–.––</source>
-        <comment>No data to display</comment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="59"/>
-        <source>Disconnected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="64"/>
-        <source>Incoming correction</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="66"/>
-        <source>Configuration</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="68"/>
-        <source>Software</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="70"/>
-        <source>Antenna</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="72"/>
-        <source>Event congestion</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="74"/>
-        <source>CPU overload</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="76"/>
-        <source>Output congestion</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="78"/>
-        <source>Multiple errors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="87"/>
-        <source>Vehicle GPS Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="91"/>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="131"/>
-        <source>Satellites</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="96"/>
-        <source>GPS Lock</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="101"/>
-        <source>HDOP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="106"/>
-        <source>VDOP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="111"/>
-        <source>Course Over Ground</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="116"/>
-        <source>GPS Error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="123"/>
-        <source>RTK GPS Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="127"/>
-        <source>Survey-in Active</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="127"/>
-        <source>RTK Streaming</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="136"/>
-        <source>Duration</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="141"/>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="194"/>
-        <source>Accuracy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="141"/>
-        <source>Current Accuracy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="151"/>
-        <source>RTK GPS Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="157"/>
-        <source>AutoConnect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="166"/>
-        <source>Settings displayed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="177"/>
-        <source>Survey-In</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="184"/>
-        <source>Specify position</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="207"/>
-        <source>Min Duration</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="254"/>
-        <source>Current Base Position</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="255"/>
-        <source>Save</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="255"/>
-        <source>Not Yet Valid</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>GPSResilienceIndicator</name>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="103"/>
-        <source>GPS Resilience Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="107"/>
-        <source>GPS Jamming</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="108"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="114"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="120"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="137"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="142"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="147"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="164"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="169"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="174"/>
-        <source>n/a</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="113"/>
-        <source>GPS Spoofing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="119"/>
-        <source>GPS Authentication</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="127"/>
-        <source>GPS 1 Details</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="136"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="163"/>
         <source>Jamming</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="141"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="168"/>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="71"/>
         <source>Spoofing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="146"/>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="173"/>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="76"/>
         <source>Authentication</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GPSResilienceIndicator.qml" line="154"/>
-        <source>GPS 2 Details</source>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="91"/>
+        <source>Vehicle GPS Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="95"/>
+        <source>Satellites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="147"/>
+        <source>GPS 1 Resilience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="147"/>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="154"/>
+        <source>GPS Resilience Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="154"/>
+        <source>GPS 2 Resilience</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="161"/>
+        <source>No GNSS receiver connected. Expand for settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="173"/>
+        <source>NTRIP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GPSIndicatorPage.qml" line="137"/>
+        <source>GPS Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSReceiver</name>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="408"/>
+        <source>the GPS receiver</source>
+        <extracomment>Ends the sentence &quot;Cannot connect the link: the serial port is in use by ...&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="429"/>
+        <source>%1 – %2</source>
+        <extracomment>%1 is a serial device&apos;s name, such as u-blox GNSS receiver; %2 its path, such as /dev/ttyACM0 or COM3</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="432"/>
+        <source>%1 (in use)</source>
+        <extracomment>%1 is a serial device that another QGroundControl connection, such as a vehicle link, uses</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="474"/>
+        <source>UDP port %1</source>
+        <extracomment>%1 is the local UDP port the receiver&apos;s data arrives on</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="569"/>
+        <source>Allow QGroundControl to open the receiver&apos;s USB device, then connect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="659"/>
+        <source>Failed to create the receiver session.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="758"/>
+        <source>Survey</source>
+        <comment>Base survey-in in progress</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiver.cc" line="758"/>
+        <source>Base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="14"/>
+        <source>Failed to open the receiver. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="15"/>
+        <source>Failed to open the receiver: %1. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="19"/>
+        <source>Receiver configuration failed. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="20"/>
+        <source>Receiver configuration failed: %1. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="23"/>
+        <source>Receiver protocol error. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="24"/>
+        <source>Receiver protocol error: %1. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="29"/>
+        <source>Receiver connection lost. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="30"/>
+        <source>Receiver connection lost: %1. Reconnecting automatically.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="42"/>
+        <source>Receiver unplugged.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="47"/>
+        <source>Receiver unplugged. Reconnecting when it is plugged back in.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="52"/>
+        <source>Receiver unplugged. Select a device and reconnect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="56"/>
+        <source>Failed to open the receiver. Check the device or network address, permissions, and other connections.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="59"/>
+        <source>Failed to open the receiver: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="63"/>
+        <source>Receiver configuration failed. Check the receiver type, baud rate, and base mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="65"/>
+        <source>Receiver configuration failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="69"/>
+        <source>Receiver protocol error. Check the receiver type and reconnect.</source>
+        <extracomment>%1 explains the protocol error</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="70"/>
+        <source>Receiver protocol error: %1. Check the receiver type and reconnect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="75"/>
+        <source>Receiver connection lost. Check the device and reconnect.</source>
+        <extracomment>%1 explains why the connection was lost</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="76"/>
+        <source>Receiver connection lost: %1. Check the device and reconnect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="86"/>
+        <source>Receiver configuration failed: %1. Automatic connections never save settings to the receiver&apos;s flash. To let QGroundControl save the %2 receiver&apos;s settings, connect manually and allow flash save and restart.</source>
+        <extracomment>%1 explains the failure; %2 is a receiver manufacturer, such as Quectel</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="101"/>
+        <source>No data from the receiver on %1. Check the device and that no other program is using it.</source>
+        <extracomment>%1 is the receiver&apos;s serial device or network address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="105"/>
+        <source>Receiving data that isn&apos;t GNSS output. Check the device and baud rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="109"/>
+        <source>Receiving u-blox UBX data without position messages. Enable NAV-PVT or NMEA output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="112"/>
+        <source>Receiving Septentrio SBF data without position messages. Enable PVTGeodetic or NMEA output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="116"/>
+        <source>Receiving NMEA data without position messages. Enable GGA output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="121"/>
+        <source>Receiving RTCM corrections without position messages. Turn on Forward receiver RTCM to send them to vehicles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="131"/>
+        <source>The receiver produces more output than the connection carries, so data is being lost. Use a higher baud rate or reduce the receiver&apos;s output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="136"/>
+        <source>The receiver produces more output than the connection carries, so corrections are being lost. Use a higher baud rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="141"/>
+        <source>The receiver produces more output than the connection carries, so corrections are being lost. Use a higher baud rate or turn on Compact RTCM corrections (MSM4).</source>
+        <extracomment>&quot;Compact RTCM corrections (MSM4)&quot; is the label of the base receiver setting</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="150"/>
+        <source>No fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="152"/>
+        <source>2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="154"/>
+        <source>3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="156"/>
+        <source>DGPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="158"/>
+        <source>Float</source>
+        <comment>RTK float fix</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="160"/>
+        <source>Fixed</source>
+        <comment>RTK fixed fix</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="162"/>
+        <source>DR</source>
+        <comment>Dead reckoning (extrapolated) fix</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="174"/>
+        <source>Identifying receiver...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="175"/>
+        <source>Connecting to receiver...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="177"/>
+        <source>Connecting automatically...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="180"/>
+        <source>Passive receiver connected; forwarding its RTCM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="181"/>
+        <source>Passive receiver connected; position only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="184"/>
+        <source>Receiver-managed averaging — no accuracy guarantee</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="187"/>
+        <source>Fixed position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="189"/>
+        <source>Survey-In active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverMessages.cc" line="189"/>
+        <source>Receiver connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSReceiverConfig</name>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="90"/>
+        <source>Unsupported GPS receiver type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="92"/>
+        <source>Enter a valid fixed base position and accuracy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="94"/>
+        <source>Enter a valid survey-in accuracy and duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="96"/>
+        <source>This receiver does not support the selected base mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="99"/>
+        <source>Enter a receiver averaging duration between 1 and 3600 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="102"/>
+        <source>Select a valid serial baud rate; passive input requires an explicit rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="105"/>
+        <source>This driver does not support persistent receiver configuration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="108"/>
+        <source>This receiver cannot send compact (MSM4) RTCM corrections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="111"/>
+        <source>Invalid GPS receiver configuration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="140"/>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="143"/>
+        <source>receiver-managed averaging</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="145"/>
+        <source>survey-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="146"/>
+        <source>a fixed base position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="148"/>
+        <source>Detected %1 receiver does not support %2</source>
+        <extracomment>%1 is a receiver manufacturer, such as Septentrio; %2 is a base mode, such as survey-in</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Common/GPSReceiverConfig.cc" line="152"/>
+        <source>Detected %1 receiver: %2</source>
+        <extracomment>%1 is a receiver manufacturer; %2 explains the unsupported request</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSReceiverConnectionPolicy</name>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="70"/>
+        <source>Disconnect the current receiver before connecting another.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="181"/>
+        <source>Waiting for the receiver on USB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="184"/>
+        <source>Waiting for the receiver on %1.</source>
+        <extracomment>%1 is a serial device, such as /dev/ttyACM0 or COM3</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="233"/>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="332"/>
+        <source>Select a receiver type before connecting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="241"/>
+        <source>Enter the receiver&apos;s TCP host and port.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="250"/>
+        <source>A configured base needs a serial or TCP connection. UDP only receives data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="254"/>
+        <source>Enter the UDP port that receives the data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="262"/>
+        <source>Select an available serial device that is not a bootloader.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Receiver/GPSReceiverConnectionPolicy.cc" line="273"/>
+        <source>The selected serial device is already in use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSReceiverSerialPort</name>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="32"/>
+        <source>%1 (unavailable)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="34"/>
+        <source>&lt;none available&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="49"/>
+        <source>Serial device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="70"/>
+        <source>Baud rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="77"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="77"/>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSerialPort.qml" line="88"/>
+        <source>Custom baud rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSReceiverSettings</name>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="38"/>
+        <source>Applies only if a Quectel receiver is identified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="40"/>
+        <source>GNSS Receiver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="95"/>
+        <source>QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="96"/>
+        <source>QGroundControl never configures this receiver. Its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position. Configure the receiver&apos;s output externally and select its existing baud rate. No survey-in status is inferred.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="128"/>
+        <source>Serial receivers are not supported on this platform, so the receiver connects over TCP.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="144"/>
+        <source>Connect to a receiver&apos;s TCP port or a serial-to-TCP bridge. A bridge must already run the receiver link at 115200 baud; QGroundControl cannot change a bridge&apos;s rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="157"/>
+        <source>A configured base needs a serial or TCP connection. UDP only receives data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="168"/>
+        <source>Any RTK receiver on USB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="176"/>
+        <source>If the identified receiver does not support the selected base mode, connecting fails and names the receiver. Auto baud tries every rate the supported receivers use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="178"/>
+        <source>Select a receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="179"/>
+        <source>Connect only the selected receiver; automatic connections configure it too. A USB adapter&apos;s identity only decides which USB ports are tried, not the GNSS manufacturer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="185"/>
+        <source>Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-In counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="191"/>
+        <source>The Quectel receiver may automatically store the completed survey position in its own memory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="222"/>
+        <source>The selected base mode is not supported by this receiver. Choose a supported mode explicitly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="242"/>
+        <source>Observation accuracy limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="252"/>
+        <source>Accepted observation time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="294"/>
+        <source>Allow flash save and restart if a Quectel receiver is identified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="295"/>
+        <source>Allow flash save and restart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="305"/>
+        <source>For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by automatic connections. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="321"/>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverSettings.qml" line="321"/>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSReceiverStatus</name>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="20"/>
+        <source>No GNSS receiver connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="30"/>
+        <source>GNSS Receiver Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="63"/>
+        <source>Detected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="71"/>
+        <source>Receiver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="78"/>
+        <source>Connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="121"/>
+        <source>Accepted observation time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="121"/>
+        <source>Duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="128"/>
+        <source>Accuracy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="128"/>
+        <source>Current Accuracy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="137"/>
+        <source>Survey position saved. Select Fixed position to start from it next time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="138"/>
+        <source>Survey complete. Save this position to start the base from it next time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GPSReceiverStatus.qml" line="147"/>
+        <source>Save Survey Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GPSTransport</name>
+    <message>
+        <location filename="../src/GPS/Core/Transport/TCPGPSTransport.cc" line="20"/>
+        <source>Receiver connection timed out</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GStreamerVideoBackend</name>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/GStreamerVideoBackend.cc" line="79"/>
+        <source>GStreamer failed to initialize, so video streams are played by Qt Multimedia instead. The application log has the details.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>GcsPositionStatus</name>
     <message>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="8"/>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="12"/>
         <source>GCS Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="16"/>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="27"/>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="33"/>
+        <source>Using</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="39"/>
+        <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="45"/>
         <source>Latitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="17"/>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="23"/>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="29"/>
-        <source>N/A</source>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="59"/>
+        <source>Horizontal accuracy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="22"/>
+        <location filename="../src/GPS/Qml/GcsPositionStatus.qml" line="51"/>
         <source>Longitude</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/GcsPositionStatus.qml" line="28"/>
-        <source>HDOP</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -8314,6 +9423,71 @@ VTOL</source>
     <message>
         <location filename="../src/Utilities/Geo/Formats/GeoJsonHelper.cc" line="299"/>
         <source>value for coordinate array is not array</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeoMapControls</name>
+    <message>
+        <location filename="../src/GeoMap/GeoMapControls.qml" line="36"/>
+        <source>3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GeoMap/GeoMapControls.qml" line="36"/>
+        <source>2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeoMapFWLandingPatternVisual</name>
+    <message>
+        <location filename="../src/GeoMap/GeoMapFWLandingPatternVisual.qml" line="147"/>
+        <source>Landing Area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GeoMap/GeoMapFWLandingPatternVisual.qml" line="165"/>
+        <source>Glide Slope</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeoMapGeoFenceVisuals</name>
+    <message>
+        <location filename="../src/GeoMap/GeoMapGeoFenceVisuals.qml" line="84"/>
+        <source>B</source>
+        <comment>Breach Return Point item indicator</comment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeoMapLandingPatternVisuals</name>
+    <message>
+        <location filename="../src/GeoMap/GeoMapLandingPatternVisuals.qml" line="103"/>
+        <source>Loiter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GeoMap/GeoMapLandingPatternVisuals.qml" line="103"/>
+        <source>Approach</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeoMapRallyPoint</name>
+    <message>
+        <location filename="../src/GeoMap/GeoMapRallyPoint.qml" line="41"/>
+        <source>R</source>
+        <comment>rally point map item label</comment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GeoMapVTOLLandingPatternVisual</name>
+    <message>
+        <location filename="../src/GeoMap/GeoMapVTOLLandingPatternVisual.qml" line="15"/>
+        <source>Land</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -8671,155 +9845,216 @@ VTOL</source>
     </message>
 </context>
 <context>
+    <name>GimbalController</name>
+    <message>
+        <location filename="../src/Gimbal/GimbalController.cc" line="515"/>
+        <source>Gimbal control unavailable. The gimbal can only identify a ground station with a system ID from 1 to 255, but this one uses ID %1. Change MAVLink System ID in Application Settings &gt; Telemetry to 255 or lower to control the gimbal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>GimbalIndicator</name>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="177"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="192"/>
         <source>Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="186"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="201"/>
         <source>Tilt 90</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="204"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="219"/>
         <source>Retract</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="250"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="265"/>
         <source>Horizontal FOV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="256"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="271"/>
         <source>Vertical FOV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="286"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="301"/>
         <source>Joystick buttons speed:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="293"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="308"/>
         <source>Show gimbal Azimuth indicator in map</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="299"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="314"/>
         <source>Use Azimuth instead of local yaw on top toolbar indicator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="305"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="320"/>
         <source>Show Acquire/Release control button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="82"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="88"/>
         <source>Retracted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="83"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="89"/>
         <source>Yaw locked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="83"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="89"/>
         <source>Yaw follow</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="91"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="97"/>
         <source>P: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="99"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="105"/>
         <source>Az: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="100"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="106"/>
         <source>Y: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="130"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="136"/>
         <source>Active Gimbal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="144"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="151"/>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="152"/>
         <source>Gimbal %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="162"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="177"/>
         <source>Commands</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="167"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="182"/>
         <source>Yaw Follow</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="167"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="182"/>
         <source>Yaw Lock</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="195"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="210"/>
         <source>Point Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="214"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="229"/>
         <source>Release Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="214"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="229"/>
         <source>Acquire Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="232"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="247"/>
         <source>On-Screen Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="238"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="253"/>
         <source>Enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="244"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="259"/>
         <source>Click and drag</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="262"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="277"/>
         <source>Max speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="269"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="284"/>
         <source>Zoom speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="273"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="288"/>
         <source>Max speed (min zoom)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/GimbalIndicator.qml" line="278"/>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="293"/>
         <source>Min speed (max zoom)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="326"/>
+        <source>Preserve yaw lock status on tilt 90 and center commands, don&apos;t force yaw follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="342"/>
+        <source>Request Gimbal Control?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/GimbalIndicator.qml" line="343"/>
+        <source>Command not sent. Another user has control of the gimbal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GstVideoReceiver</name>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/GstReceiverWorker.cc" line="123"/>
+        <source>Unable to record video: the video stream has stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/GstReceiverWorker.cc" line="291"/>
+        <source>No video received for %1 s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/GstReceiverWorker.cc" line="347"/>
+        <source>The video decoder keeps failing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/GstReceiverWorker.cc" line="375"/>
+        <source>Video recording failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/GstVideoReceiver.cc" line="183"/>
+        <source>The video decoder or recorder stopped responding. Restart %1 to get video working again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/GstVideoReceiver.cc" line="273"/>
+        <source>Unable to display video: the video sink could not be created.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9021,11 +10256,6 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="198"/>
-        <source>_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _visualItemsCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/FlyView/GuidedActionsController.qml" line="27"/>
         <source>Force Arm</source>
         <translation type="unfinished"></translation>
@@ -9111,32 +10341,38 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="209"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="202"/>
+        <source>_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleUnderway(%4) _vehicleWasUnderway(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _visualItemsCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="213"/>
         <source>Height (rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="217"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="221"/>
         <source>Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="224"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="228"/>
         <source>Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="234"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="238"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="246"/>
         <source>Alt (rel)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="465"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="493"/>
         <source>Smart RTL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlyView/GuidedActionsController.qml" line="683"/>
+        <location filename="../src/FlyView/GuidedActionsController.qml" line="716"/>
         <source>Internal error: unknown actionCode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9220,47 +10456,47 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="56"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="57"/>
         <source>Vehicle Preferences</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="57"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="58"/>
         <source>Select the firmware and vehicle type you typically use.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="61"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="62"/>
         <source>Preferred Firmware</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="69"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="70"/>
         <source>Preferred Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="79"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="81"/>
         <source>Measurement Units</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="80"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="82"/>
         <source>Choose the measurement units you want to use. You can also change it later in General Settings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="88"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="90"/>
         <source>System of units</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="93"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="95"/>
         <source>Metric System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="93"/>
+        <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="95"/>
         <source>Imperial System</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9396,188 +10632,193 @@ VTOL</source>
 <context>
     <name>Joystick</name>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="484"/>
+        <location filename="../src/Joystick/Joystick.h" line="492"/>
         <source>No Action</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="485"/>
+        <location filename="../src/Joystick/Joystick.h" line="493"/>
         <source>Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="486"/>
+        <location filename="../src/Joystick/Joystick.h" line="494"/>
         <source>Disarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="487"/>
+        <location filename="../src/Joystick/Joystick.h" line="495"/>
         <source>Toggle Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="488"/>
+        <location filename="../src/Joystick/Joystick.h" line="496"/>
         <source>VTOL: Fixed Wing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="489"/>
+        <location filename="../src/Joystick/Joystick.h" line="497"/>
         <source>VTOL: Multi-Rotor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="490"/>
+        <location filename="../src/Joystick/Joystick.h" line="498"/>
         <source>Continuous Zoom In</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="491"/>
+        <location filename="../src/Joystick/Joystick.h" line="499"/>
         <source>Continuous Zoom Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="492"/>
+        <location filename="../src/Joystick/Joystick.h" line="500"/>
         <source>Step Zoom In</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="493"/>
+        <location filename="../src/Joystick/Joystick.h" line="501"/>
         <source>Step Zoom Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="494"/>
+        <location filename="../src/Joystick/Joystick.h" line="502"/>
         <source>Continuous Focus In</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="495"/>
+        <location filename="../src/Joystick/Joystick.h" line="503"/>
         <source>Continuous Focus Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="496"/>
+        <location filename="../src/Joystick/Joystick.h" line="504"/>
         <source>Step Focus In</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="497"/>
+        <location filename="../src/Joystick/Joystick.h" line="505"/>
         <source>Step Focus Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="502"/>
+        <location filename="../src/Joystick/Joystick.h" line="510"/>
         <source>Trigger Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="503"/>
+        <location filename="../src/Joystick/Joystick.h" line="511"/>
         <source>Start Recording Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="504"/>
+        <location filename="../src/Joystick/Joystick.h" line="512"/>
         <source>Stop Recording Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="505"/>
+        <location filename="../src/Joystick/Joystick.h" line="513"/>
         <source>Toggle Recording Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="506"/>
+        <location filename="../src/Joystick/Joystick.h" line="514"/>
         <source>Gimbal Down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="507"/>
+        <location filename="../src/Joystick/Joystick.h" line="515"/>
         <source>Gimbal Up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="508"/>
+        <location filename="../src/Joystick/Joystick.h" line="516"/>
         <source>Gimbal Left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="509"/>
+        <location filename="../src/Joystick/Joystick.h" line="517"/>
         <source>Gimbal Right</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="510"/>
+        <location filename="../src/Joystick/Joystick.h" line="518"/>
         <source>Gimbal Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="511"/>
+        <location filename="../src/Joystick/Joystick.h" line="519"/>
         <source>Gimbal Yaw Lock</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="512"/>
+        <location filename="../src/Joystick/Joystick.h" line="520"/>
         <source>Gimbal Yaw Follow</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="513"/>
+        <location filename="../src/Joystick/Joystick.h" line="521"/>
         <source>Emergency Stop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="514"/>
+        <location filename="../src/Joystick/Joystick.h" line="522"/>
         <source>Gripper Grab</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="515"/>
+        <location filename="../src/Joystick/Joystick.h" line="523"/>
         <source>Gripper Release</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="516"/>
+        <location filename="../src/Joystick/Joystick.h" line="524"/>
         <source>Gripper Hold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="517"/>
+        <location filename="../src/Joystick/Joystick.h" line="525"/>
         <source>Landing gear deploy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="518"/>
+        <location filename="../src/Joystick/Joystick.h" line="526"/>
         <source>Landing gear retract</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="519"/>
+        <location filename="../src/Joystick/Joystick.h" line="527"/>
         <source>Motor Interlock enable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="520"/>
+        <location filename="../src/Joystick/Joystick.h" line="528"/>
         <source>Motor Interlock disable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="498"/>
+        <location filename="../src/Joystick/Joystick.h" line="506"/>
         <source>Next Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="499"/>
+        <location filename="../src/Joystick/Joystick.h" line="507"/>
         <source>Previous Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="500"/>
+        <location filename="../src/Joystick/Joystick.h" line="508"/>
         <source>Next Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/Joystick.h" line="501"/>
+        <location filename="../src/Joystick/Joystick.h" line="509"/>
         <source>Previous Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Joystick/Joystick.cc" line="1670"/>
+        <source>Arming is not available until vehicle sync completes.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9615,17 +10856,17 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="148"/>
+        <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="145"/>
         <source>Buttons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="153"/>
+        <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="156"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="191"/>
+        <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="183"/>
         <source>No joysticks or gamepads detected.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9835,137 +11076,137 @@ VTOL</source>
 <context>
     <name>JoystickComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="21"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="22"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="23"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="24"/>
         <source>No joystick detected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="24"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="25"/>
         <source>Buttons only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="25"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="26"/>
         <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="26"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="27"/>
         <source>Calibrated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="26"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="27"/>
         <source>Needs calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="32"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="33"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="36"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="37"/>
         <source>Gamepad</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="38"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="39"/>
         <source>Joystick</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="44"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="45"/>
         <source>Connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="50"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="51"/>
         <source>Inputs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="54"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="55"/>
         <source>%1 axes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="55"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="56"/>
         <source>%1 buttons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="56"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="57"/>
         <source>%1 balls</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="57"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="58"/>
         <source>%1 touchpads</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="64"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="65"/>
         <source>Battery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="67"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="68"/>
         <source>%1%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="76"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="77"/>
         <source>Features</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="80"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="81"/>
         <source>Rumble</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="81"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="82"/>
         <source>Triggers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="82"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="83"/>
         <source>LED</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="83"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="84"/>
         <source>Gyro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="84"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="85"/>
         <source>Accel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="91"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="92"/>
         <source>Device ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="97"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="98"/>
         <source>Player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="103"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="104"/>
         <source>Virtual</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="104"/>
+        <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="105"/>
         <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10175,14 +11416,14 @@ VTOL</source>
 <context>
     <name>JoystickSDL</name>
     <message>
-        <location filename="../src/Joystick/JoystickSDL.cc" line="760"/>
-        <location filename="../src/Joystick/JoystickSDL.cc" line="775"/>
-        <location filename="../src/Joystick/JoystickSDL.cc" line="778"/>
+        <location filename="../src/Joystick/JoystickSDL.cc" line="781"/>
+        <location filename="../src/Joystick/JoystickSDL.cc" line="796"/>
+        <location filename="../src/Joystick/JoystickSDL.cc" line="799"/>
         <source>Axis %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Joystick/JoystickSDL.cc" line="789"/>
+        <location filename="../src/Joystick/JoystickSDL.cc" line="810"/>
         <source>Button %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10269,12 +11510,12 @@ VTOL</source>
 <context>
     <name>LabelledFactBrowse</name>
     <message>
-        <location filename="../src/FactSystem/FactControls/LabelledFactBrowse.qml" line="25"/>
+        <location filename="../src/FactSystem/FactControls/LabelledFactBrowse.qml" line="27"/>
         <source>&lt;not set&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/FactControls/LabelledFactBrowse.qml" line="48"/>
+        <location filename="../src/FactSystem/FactControls/LabelledFactBrowse.qml" line="50"/>
         <source>Browse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10282,12 +11523,12 @@ VTOL</source>
 <context>
     <name>LandingComplexItem</name>
     <message>
-        <location filename="../src/MissionManager/LandingComplexItem.cc" line="762"/>
+        <location filename="../src/MissionManager/LandingComplexItem.cc" line="768"/>
         <source>%1 does not support loading this complex mission item type: %2:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/LandingComplexItem.cc" line="782"/>
+        <location filename="../src/MissionManager/LandingComplexItem.cc" line="788"/>
         <source>Fixed Wing Landing Pattern: Setting the loiter and landing altitudes with different settings for altitude relative is no longer supported. Both have been set to relative altitude. Be sure to adjust/check your plan prior to flight.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10364,7 +11605,7 @@ VTOL</source>
 <context>
     <name>LinkInterface</name>
     <message>
-        <location filename="../src/Comms/LinkInterface.cc" line="141"/>
+        <location filename="../src/Comms/LinkInterface.cc" line="210"/>
         <source>MAVLink v1 traffic detected on link &apos;%1&apos;. %2 only supports MAVLink v2. Please ensure your vehicle is configured to use MAVLink v2.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10372,50 +11613,69 @@ VTOL</source>
 <context>
     <name>LinkManager</name>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="321"/>
+        <location filename="../src/Comms/LinkManager.cc" line="479"/>
         <source>Connect not allowed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="882"/>
-        <location filename="../src/Comms/LinkManager.cc" line="886"/>
-        <location filename="../src/Comms/LinkManager.cc" line="889"/>
+        <location filename="../src/Comms/Serial/SerialAutoConnect.cc" line="70"/>
         <source>%1 on %2 (AutoConnect)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="538"/>
+        <location filename="../src/Comms/LinkManager.cc" line="165"/>
+        <source>Cannot connect &apos;%1&apos;: its serial port is already open as the link &apos;%2&apos;. Disconnect that link first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Comms/LinkManager.cc" line="173"/>
+        <source>Cannot connect &apos;%1&apos;: the serial port is in use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Comms/LinkManager.cc" line="176"/>
+        <source>Cannot connect &apos;%1&apos;: the serial port is in use by %2.</source>
+        <extracomment>%2 is what has the port open, such as &quot;the GPS receiver&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Comms/LinkManager.cc" line="218"/>
+        <source>Cannot connect &apos;%1&apos;: USB permission was denied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Comms/LinkManager.cc" line="707"/>
         <source>Shutdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="556"/>
+        <location filename="../src/Comms/LinkManager.cc" line="725"/>
         <source>Serial</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="558"/>
+        <location filename="../src/Comms/LinkManager.cc" line="727"/>
         <source>UDP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="559"/>
+        <location filename="../src/Comms/LinkManager.cc" line="728"/>
         <source>TCP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="560"/>
+        <location filename="../src/Comms/LinkManager.cc" line="729"/>
         <source>Bluetooth</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="562"/>
+        <location filename="../src/Comms/LinkManager.cc" line="731"/>
         <source>Mock Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LinkManager.cc" line="564"/>
-        <location filename="../src/Comms/LinkManager.cc" line="731"/>
+        <location filename="../src/Comms/LinkManager.cc" line="733"/>
+        <location filename="../src/Comms/LinkManager.cc" line="939"/>
         <source>Log Replay</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10972,12 +12232,12 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/LogViewerDataFlashParser.cc" line="380"/>
+        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/LogViewerDataFlashParser.cc" line="391"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/LogViewerDataFlashParser.cc" line="383"/>
+        <location filename="../src/AnalyzeView/LogViewer/APMDataFlash/LogViewerDataFlashParser.cc" line="394"/>
         <source>Mode: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11018,12 +12278,12 @@ VTOL</source>
 <context>
     <name>LogReplayLink</name>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="477"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="503"/>
         <source>Log Replay Link Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="477"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="503"/>
         <source>Link: %1, %2.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11107,33 +12367,33 @@ VTOL</source>
 <context>
     <name>LogReplayWorker</name>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="108"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="112"/>
         <source>You must close all connections prior to replaying a log.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="151"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="155"/>
         <source>Connect not allowed during Flight Data replay.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="196"/>
-        <location filename="../src/Comms/LogReplayLink.cc" line="208"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="200"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="212"/>
         <source>Unable to seek to new position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="271"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="275"/>
         <source>Attempt to load new log while log being played</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="278"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="282"/>
         <source>Unable to open log file: &apos;%1&apos;, error: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/LogReplayLink.cc" line="290"/>
+        <location filename="../src/Comms/LogReplayLink.cc" line="294"/>
         <source>The log file &apos;%1&apos; is corrupt or empty.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11141,22 +12401,22 @@ VTOL</source>
 <context>
     <name>LogViewerAltChart</name>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="151"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="148"/>
         <source>Alt (m)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="165"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="162"/>
         <source>Current</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="170"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="167"/>
         <source>Min</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="175"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerAltChart.qml" line="172"/>
         <source>Max</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11164,12 +12424,12 @@ VTOL</source>
 <context>
     <name>LogViewerBaseChart</name>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerBaseChart.qml" line="213"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerBaseChart.qml" line="217"/>
         <source>Time (local)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerBaseChart.qml" line="213"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerBaseChart.qml" line="217"/>
         <source>Elapsed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11197,62 +12457,62 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="344"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="340"/>
         <source>Modes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="374"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="370"/>
         <source>Dropouts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="404"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="400"/>
         <source>Events</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="438"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="434"/>
         <source>Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="451"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="447"/>
         <source>Mode:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="482"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="478"/>
         <source>Current</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="487"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="483"/>
         <source>Min</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="492"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="488"/>
         <source>Max</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="529"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="525"/>
         <source>Modes:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="554"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="550"/>
         <source>Events:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="588"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="584"/>
         <source>Click to place cursor. Shift+drag to move cursor. Drag to zoom X-axis. Double-click to reset zoom.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="592"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerChart.qml" line="588"/>
         <source>Reset Zoom</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11260,7 +12520,7 @@ VTOL</source>
 <context>
     <name>LogViewerController</name>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerController.cc" line="148"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerController.cc" line="192"/>
         <source>Other</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11287,37 +12547,37 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="184"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="182"/>
         <source>Fields: %1  Parameters: %2  Events: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="197"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="195"/>
         <source>X axis:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="202"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="200"/>
         <source>Elapsed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="209"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="207"/>
         <source>Local time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="221"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="219"/>
         <source>Fields</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="230"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="227"/>
         <source>Search fields</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="250"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerFieldsPanel.qml" line="247"/>
         <source>Clear Selected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11330,109 +12590,119 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="80"/>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="132"/>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="488"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="83"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="135"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="553"/>
         <source>Log Viewer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="111"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="114"/>
         <source>Open .bin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="120"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="123"/>
         <source>Open .ulg</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="128"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="131"/>
         <source>Open .tlog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="132"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="135"/>
         <source>Close active vehicle connections before starting telemetry replay.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="141"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="144"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="151"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="154"/>
         <source>No log selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="156"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="159"/>
         <source>Start time:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="166"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="169"/>
         <source>N/A</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="171"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="174"/>
         <source>Vehicle:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="186"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="189"/>
         <source>Loading...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="204"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="207"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="204"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="207"/>
         <source>Play</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="258"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="264"/>
         <source>Charting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="259"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="326"/>
         <source>Map</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="260"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="461"/>
+        <source>Expand altitude chart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="461"/>
+        <source>Collapse altitude chart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="513"/>
         <source>Parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="261"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="525"/>
         <source>Messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="418"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="442"/>
         <source>No GPS data found in this log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="425"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="449"/>
         <source>Load a log file to view the flight path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="474"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="539"/>
         <source>Select log file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="489"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerPage.qml" line="554"/>
         <source>Failed to start telemetry replay for the selected .tlog file.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11440,22 +12710,22 @@ VTOL</source>
 <context>
     <name>LogViewerParametersTab</name>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="68"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="67"/>
         <source>Search parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="88"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="87"/>
         <source>Changed only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="119"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="118"/>
         <source>N/A</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="159"/>
+        <location filename="../src/AnalyzeView/LogViewer/LogViewerParametersTab.qml" line="158"/>
         <source> (default: %1)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11498,12 +12768,12 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/LogManager/LoggingCategoriesDialog.qml" line="167"/>
+        <location filename="../src/LogManager/LoggingCategoriesDialog.qml" line="164"/>
         <source>Search Results</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/LogManager/LoggingCategoriesDialog.qml" line="203"/>
+        <location filename="../src/LogManager/LoggingCategoriesDialog.qml" line="201"/>
         <source>No matching categories</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11695,12 +12965,12 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml" line="235"/>
+        <location filename="../src/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml" line="237"/>
         <source>Enter Commands here...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml" line="248"/>
+        <location filename="../src/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml" line="250"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11934,37 +13204,37 @@ VTOL</source>
 <context>
     <name>MAVLinkProtocol</name>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="437"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="459"/>
         <source>Unable to save telemetry log. Error opening source &apos;%1&apos;: &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="447"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="469"/>
         <source>Unable to save telemetry log. Error opening destination &apos;%1&apos;: &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="464"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="486"/>
         <source>Unable to save telemetry log. Error reading source &apos;%1&apos;: &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="472"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="494"/>
         <source>Unable to save telemetry log. Error writing destination &apos;%1&apos;: &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="483"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="510"/>
         <source>Unable to finalize telemetry log &apos;%1&apos;: &apos;%2&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="501"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="524"/>
         <source>Unable to save telemetry log. Application save directory is not set.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/MAVLinkProtocol.cc" line="509"/>
+        <location filename="../src/Comms/MAVLinkProtocol.cc" line="532"/>
         <source>Unable to save telemetry log. Telemetry save directory &quot;%1&quot; does not exist.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12120,268 +13390,342 @@ VTOL</source>
 <context>
     <name>MainStatusIndicator</name>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="39"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="129"/>
         <source>Not Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="41"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="131"/>
         <source>Armed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="42"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="132"/>
         <source>Flying</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="43"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="133"/>
         <source>Landing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="145"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="201"/>
+        <source>Reboot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="210"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="223"/>
+        <source>Pre-Flight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="223"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="233"/>
+        <source>Vehicle Sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="249"/>
         <source>FW(vtol)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="145"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="249"/>
         <source>MR(vtol)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="265"/>
-        <source>Sensor Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="199"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="320"/>
         <source>Disarm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="37"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="127"/>
         <source>Comms Lost</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="38"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="128"/>
         <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="40"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="130"/>
         <source>Disconnected - Click to manually connect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="199"/>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="396"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="344"/>
         <source>Force Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="199"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="320"/>
         <source>Arm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="219"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="309"/>
+        <source>Commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="331"/>
+        <source>Emergency Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="356"/>
         <source>Primary Link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="250"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="387"/>
+        <source>Reboot required for changes to take effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="399"/>
+        <source>Reboot required. Disarm vehicle first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="410"/>
+        <source>Reboot Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="428"/>
+        <source>Firmware update available: %1.%2.%3 → %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="438"/>
+        <source>Acknowledge and Hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="459"/>
+        <source>Pre-Flight Checklist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="464"/>
+        <source>Passed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="464"/>
+        <source>In Progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="479"/>
         <source>Vehicle Messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="258"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="502"/>
+        <source>Mark as Read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="510"/>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="525"/>
         <source>No new vehicle messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="288"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="532"/>
         <source>Overall Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="369"/>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="570"/>
+        <source>Acknowledge All Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="583"/>
+        <source>No status issues</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="583"/>
+        <source>Waiting for parameters...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="619"/>
+        <source>Acknowledged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="677"/>
         <source>Edit Parameter</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="397"/>
-        <source>Force arming bypasses pre-arm checks. Use with caution.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="402"/>
-        <source>Allow Force Arm</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="418"/>
-        <source>Vehicle Parameters</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="420"/>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="429"/>
-        <source>Configure</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicator.qml" line="427"/>
-        <source>Vehicle Configuration</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MainStatusIndicatorOfflinePage</name>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="30"/>
-        <source>Select Link to Connect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="33"/>
-        <source>No Links Configured</source>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="37"/>
+        <source>Pre-Flight Checklist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="42"/>
+        <source>Passed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="42"/>
+        <source>In Progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="52"/>
+        <source>Select Link to Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="55"/>
+        <source>No Links Configured</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="64"/>
         <source>Connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="62"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="85"/>
         <source>Communication Links</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="63"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="86"/>
         <source>Configure</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="66"/>
-        <source>Comm Links</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="73"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="97"/>
         <source>AutoConnect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="87"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="110"/>
         <source>Pixhawk</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="87"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="110"/>
         <source>SiK Radio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="87"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="110"/>
         <source>LibrePilot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="87"/>
+        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="110"/>
         <source>UDP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Toolbar/MainStatusIndicatorOfflinePage.qml" line="87"/>
-        <source>RTK</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="149"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="155"/>
         <source>Analyze Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="153"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="159"/>
         <source>Vehicle Configuration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="170"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="176"/>
         <source>Application Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="119"/>
-        <location filename="../src/MainWindow/MainWindow.qml" line="364"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="125"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="407"/>
         <source>Please correct the invalid value before continuing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="242"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="275"/>
         <source>Unsaved Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="243"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="276"/>
         <source>You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="259"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="291"/>
         <source>Pending Parameter Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="260"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="292"/>
         <source>You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="275"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="306"/>
         <source>Active Vehicle Connections</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="276"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="307"/>
         <source>There are still active connections to vehicles. Are you sure you want to exit?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="322"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="365"/>
         <source>Debug Touch Areas</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="323"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="366"/>
         <source>Touch Area display toggled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="329"/>
-        <location filename="../src/MainWindow/MainWindow.qml" line="341"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="372"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="384"/>
         <source>Advanced Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="342"/>
+        <location filename="../src/MainWindow/MainWindow.qml" line="385"/>
         <source>Turn off Advanced Mode?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="502"/>
-        <source>Vehicle Error</source>
+        <location filename="../src/MainWindow/MainWindow.qml" line="590"/>
+        <source>Vehicle Alert - Click to see more</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MainWindow/MainWindow.qml" line="526"/>
-        <source>Additional errors received</source>
+        <location filename="../src/MainWindow/MainWindow.qml" line="591"/>
+        <source>Vehicle Alert</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12434,47 +13778,47 @@ VTOL</source>
 <context>
     <name>MavCommandQueue</name>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="271"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="331"/>
         <source>Unable to send command: %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="271"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="331"/>
         <source>Internal error - MAV_COMP_ID_ALL not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="271"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="331"/>
         <source>Waiting on previous response to same command.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="291"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="351"/>
         <source>Unable to send command: Vehicle is not connected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="351"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="411"/>
         <source>Vehicle did not respond to command: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="441"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="507"/>
         <source>%1 command temporarily rejected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="444"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="510"/>
         <source>%1 command denied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="447"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="513"/>
         <source>%1 command not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MavCommandQueue.cc" line="450"/>
+        <location filename="../src/Vehicle/MavCommandQueue.cc" line="516"/>
         <source>%1 command failed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12608,7 +13952,7 @@ VTOL</source>
 <context>
     <name>MissionCommandTree</name>
     <message>
-        <location filename="../src/MissionManager/MissionCommandTree.h" line="85"/>
+        <location filename="../src/MissionManager/MissionCommandTree.h" line="87"/>
         <source>All commands</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12616,68 +13960,68 @@ VTOL</source>
 <context>
     <name>MissionController</name>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="657"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="681"/>
         <source>Mission item %1 is not an object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="700"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="724"/>
         <source>Unsupported complex item type: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="711"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="735"/>
         <source>Unknown item type: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="734"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="758"/>
         <source>Could not find doJumpId: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="784"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="808"/>
         <source>The mission file is corrupted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="789"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="813"/>
         <source>The mission file is not compatible with this version of %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="824"/>
-        <location filename="../src/MissionManager/MissionController.cc" line="839"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="848"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="863"/>
         <source>Mission: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="1245"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="1289"/>
         <source>Plan Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="1253"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="1297"/>
         <source>Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="1261"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="1305"/>
         <source>Mission Items</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="1265"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="1309"/>
         <source>GeoFence</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="1274"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="1318"/>
         <source>Rally Points</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionController.cc" line="1283"/>
+        <location filename="../src/MissionManager/MissionController.cc" line="1327"/>
         <source>Transform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12691,57 +14035,67 @@ VTOL</source>
     </message>
     <message>
         <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="88"/>
-        <source>Waypoints Altitude</source>
+        <source>Altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="94"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="101"/>
+        <source>Apply new altitude to all mission items?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="106"/>
+        <source>Apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="113"/>
         <source>Flight Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="111"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="130"/>
         <source>Expected Vehicle Speeds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="124"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="143"/>
         <source>The following speed values are used to calculate total mission time. They do not affect the flight speed for the mission.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="129"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="148"/>
         <source>FW - Flight speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="129"/>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="137"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="148"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="156"/>
         <source>Flight speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="137"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="156"/>
         <source>MR - Flight speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="145"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="164"/>
         <source>MR - Ascent speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="145"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="164"/>
         <source>Ascent speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="152"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="171"/>
         <source>MR - Descent speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="152"/>
+        <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="171"/>
         <source>Descent speed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12767,44 +14121,103 @@ VTOL</source>
 <context>
     <name>MissionItemEditor</name>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="126"/>
+        <location filename="../src/PlanView/MissionItemEditor.qml" line="91"/>
         <source>?</source>
         <extracomment>Indicator in Plan view to show mission item is not ready for save/send</extracomment>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>MissionItemInspector</name>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="227"/>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="88"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="97"/>
+        <source>#%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="103"/>
+        <source>Previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="113"/>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="124"/>
+        <source>Menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="136"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="161"/>
+        <source>Change...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="175"/>
+        <source>Incomplete: Waiting on terrain data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionItemInspector.qml" line="176"/>
+        <source>Incomplete: Item not fully specified.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MissionItemMenu</name>
+    <message>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="60"/>
         <source>Move to vehicle position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="240"/>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="74"/>
         <source>Move to previous item position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="250"/>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="86"/>
         <source>Edit position...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="272"/>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="109"/>
         <source>Show all values</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="282"/>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="119"/>
         <source>Mission Edit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="282"/>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="119"/>
         <source>You have made changes to the mission item which cannot be shown in Simple Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionItemEditor.qml" line="295"/>
+        <location filename="../src/PlanView/MissionItemMenu.qml" line="132"/>
         <source>Item #%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MissionItemRow</name>
+    <message>
+        <location filename="../src/PlanView/MissionItemRow.qml" line="71"/>
+        <source>Incomplete</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -12819,7 +14232,7 @@ VTOL</source>
 <context>
     <name>MissionManager</name>
     <message>
-        <location filename="../src/MissionManager/MissionManager.cc" line="83"/>
+        <location filename="../src/MissionManager/MissionManager.cc" line="85"/>
         <source>Unable to generate resume mission due to MAV_CMD_DO_JUMP command.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12835,12 +14248,12 @@ VTOL</source>
 <context>
     <name>MissionSettingsItem</name>
     <message>
-        <location filename="../src/MissionManager/MissionSettingsItem.cc" line="237"/>
+        <location filename="../src/MissionManager/MissionSettingsItem.cc" line="242"/>
         <source>H</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/MissionSettingsItem.cc" line="237"/>
+        <location filename="../src/MissionManager/MissionSettingsItem.cc" line="242"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12865,100 +14278,113 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="98"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="106"/>
         <source>Selected Waypoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="103"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="111"/>
         <source>Alt diff:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="112"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="120"/>
         <source>Azimuth:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="121"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="129"/>
         <source>Dist prev WP:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="128"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="136"/>
         <source>Gradient:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="137"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="145"/>
         <source>Heading:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="151"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="159"/>
         <source>Total Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="156"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="164"/>
         <source>Distance:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="165"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="173"/>
         <source>Max telem dist:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="172"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="180"/>
         <source>Time:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="187"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="195"/>
         <source>Battery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/MissionStats.qml" line="192"/>
+        <location filename="../src/PlanView/MissionStats.qml" line="200"/>
         <source>Batteries required:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MissionTabPage</name>
+    <message>
+        <location filename="../src/PlanView/MissionTabPage.qml" line="40"/>
+        <source>%1 incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/MissionTabPage.qml" line="69"/>
+        <source>Alt %1 %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>Mixer::ChannelConfigInstanceVirtualAxis</name>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="105"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="108"/>
         <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="105"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="108"/>
         <source>Upwards</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="105"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="108"/>
         <source>Downwards</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="105"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="108"/>
         <source>Forwards</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="105"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="108"/>
         <source>Backwards</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="106"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="109"/>
         <source>Leftwards</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="106"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="109"/>
         <source>Rightwards</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12966,7 +14392,7 @@ VTOL</source>
 <context>
     <name>Mixer::Mixers</name>
     <message>
-        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="483"/>
+        <location filename="../src/Vehicle/Actuators/Mixer.cc" line="486"/>
         <source>Axis</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12974,7 +14400,7 @@ VTOL</source>
 <context>
     <name>MockConfiguration</name>
     <message>
-        <location filename="../src/Comms/MockLink/MockConfiguration.h" line="43"/>
+        <location filename="../src/Comms/MockLink/MockConfiguration.h" line="89"/>
         <source>Mock Link Settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12997,37 +14423,117 @@ VTOL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLink.qml" line="42"/>
-        <source>PX4 Vehicle</source>
+        <location filename="../src/AppSettings/MockLink.qml" line="43"/>
+        <source>Enable proximity sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AppSettings/MockLink.qml" line="47"/>
+        <source>Enable ADS-B vehicles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="51"/>
+        <source>Start with fresh firmware parameters (setup required)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="62"/>
+        <source>Vehicle Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="69"/>
+        <source>PX4 Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="72"/>
         <source>APM ArduCopter Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLink.qml" line="53"/>
+        <location filename="../src/AppSettings/MockLink.qml" line="73"/>
         <source>APM ArduPlane Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLink.qml" line="59"/>
+        <location filename="../src/AppSettings/MockLink.qml" line="74"/>
         <source>APM ArduSub Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLink.qml" line="65"/>
+        <location filename="../src/AppSettings/MockLink.qml" line="75"/>
         <source>APM ArduRover Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLink.qml" line="71"/>
+        <location filename="../src/AppSettings/MockLink.qml" line="77"/>
         <source>Generic Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLink.qml" line="76"/>
+        <location filename="../src/AppSettings/MockLink.qml" line="87"/>
+        <source>Home Location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="90"/>
+        <source>PX4 SITL Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="91"/>
+        <source>ArduPilot SITL Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="92"/>
+        <source>Terrain Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="97"/>
+        <source>Served Video Stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="101"/>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="102"/>
+        <source>RTP/UDP H.264</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="103"/>
+        <source>RTP/UDP H.265</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="104"/>
+        <source>RTSP (H.264)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="105"/>
+        <source>MPEG-TS (UDP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="106"/>
+        <source>MPEG-TS (TCP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="110"/>
+        <source>Start MockLink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLink.qml" line="130"/>
         <source>Stop One MockLink</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13035,67 +14541,137 @@ VTOL</source>
 <context>
     <name>MockLinkSettings</name>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="78"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="68"/>
         <source>Send Status Text and Voice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="85"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="75"/>
         <source>Enable Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="92"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="82"/>
         <source>Enable Gimbal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="99"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="89"/>
+        <source>Enable Proximity Sensors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="96"/>
+        <source>Enable ADS-B Vehicles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="103"/>
         <source>Increment Vehicle Id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="106"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="110"/>
         <source>Firmware Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="107"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="116"/>
         <source>PX4 Pro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="107"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="119"/>
         <source>ArduPilot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="107"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="121"/>
         <source>Generic MAVLink</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="115"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="132"/>
         <source>Vehicle Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="116"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="133"/>
         <source>ArduCopter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="116"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="133"/>
         <source>ArduPlane</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="122"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="140"/>
+        <source>Home Location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="142"/>
+        <source>PX4 SITL Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="143"/>
+        <source>ArduPilot SITL Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="144"/>
+        <source>Terrain Test</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="151"/>
+        <source>Start With Fresh Firmware Parameters (Setup Required)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="166"/>
         <source>Camera Capabilities</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/MockLinkSettings.qml" line="200"/>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="180"/>
+        <source>Served Video Stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="183"/>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="184"/>
+        <source>RTP/UDP H.264</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="185"/>
+        <source>RTP/UDP H.265</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="186"/>
+        <source>RTSP (H.264)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="187"/>
+        <source>MPEG-TS (UDP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="188"/>
+        <source>MPEG-TS (TCP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AppSettings/MockLinkSettings.qml" line="259"/>
         <source>Gimbal Capabilities</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13288,12 +14864,12 @@ Do you wish to proceed?</source>
 <context>
     <name>MultiVehicleManager</name>
     <message>
-        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="115"/>
+        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="116"/>
         <source>Warning: A vehicle is using the same system id as %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="132"/>
+        <location filename="../src/Vehicle/MultiVehicleManager.cc" line="133"/>
         <source>Connected to Vehicle %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13318,235 +14894,482 @@ Do you wish to proceed?</source>
     </message>
 </context>
 <context>
-    <name>NTRIPHttpTransport</name>
+    <name>NTRIPConnectionConfig</name>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="42"/>
-        <source>No data received for %1 seconds</source>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="11"/>
+        <source>No host address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="84"/>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="14"/>
+        <source>Invalid port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="19"/>
+        <source>Invalid host (contains control characters)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="22"/>
+        <source>Invalid host (contains spaces)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="25"/>
         <source>Invalid mountpoint name (contains control characters)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="262"/>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="28"/>
+        <source>Invalid mountpoint name (contains spaces)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="32"/>
+        <source>Invalid username (must not contain &apos;:&apos;)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="44"/>
+        <source>Select a mountpoint before connecting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPConfiguration.cc" line="66"/>
+        <source>Credentials are being sent without TLS encryption.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NTRIPConnectionStatus</name>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="30"/>
+        <source>NTRIP Connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="51"/>
+        <source>Connecting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="52"/>
+        <source>Cancel reconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="53"/>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="77"/>
+        <source>Disconnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="54"/>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="55"/>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="83"/>
+        <source>Connected but no data received recently</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="89"/>
+        <source>Mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="97"/>
+        <source>Last correction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="99"/>
+        <source>%1 s ago</source>
+        <extracomment>%1 is the time in seconds since the last correction was received</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="104"/>
+        <source>Messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="115"/>
+        <source>Message Types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="129"/>
+        <source>Data Received</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="131"/>
+        <source>%1 (%2/s)</source>
+        <extracomment>%1 is the total data size, %2 the data size received per second</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="137"/>
+        <source>Warning: Data usage: %1 — consider connection costs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="143"/>
+        <source>Queued to vehicle links (any source)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="149"/>
+        <source>GGA Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/NTRIPConnectionStatus.qml" line="157"/>
+        <source>No position is available to send to the caster. Network (VRS) mountpoints send corrections only after receiving a position; check the GGA position source.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NTRIPGgaReporter</name>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPGgaReporter.cc" line="66"/>
+        <source>Vehicle GPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPGgaReporter.cc" line="68"/>
+        <source>Vehicle EKF</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPGgaReporter.cc" line="70"/>
+        <source>RTK Receiver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPGgaReporter.cc" line="72"/>
+        <source>GCS Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NTRIPHttpSession</name>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpSession.cc" line="103"/>
+        <source>Self-signed certificate rejected. Enable &apos;Accept self-signed certificates&apos; in NTRIP settings to allow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpSession.cc" line="113"/>
+        <source>The caster&apos;s certificate changed since it was first trusted. If the change is expected, turn &apos;Accept self-signed certificates&apos; off and on again to trust the new certificate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpSession.cc" line="143"/>
+        <source>Socket did not accept the complete NTRIP write</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NTRIPHttpTransport</name>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="75"/>
+        <source>NTRIP correction stream ended</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="98"/>
+        <source>Connection timeout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="110"/>
+        <source>No valid RTCM corrections received</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="114"/>
+        <source>No data received for %1 seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="191"/>
+        <source>Socket did not accept the complete NTRIP write</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="70"/>
+        <source>Invalid NTRIP endpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="145"/>
+        <source>Unexpected data after HTTP response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="183"/>
+        <source>Invalid HTTP chunk terminator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="196"/>
+        <source>Invalid HTTP line ending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="201"/>
         <source>HTTP response header too large</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="302"/>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="218"/>
+        <source>Invalid HTTP status line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="224"/>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="320"/>
+        <source>Caster returned a source table; select a valid mountpoint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="247"/>
+        <source>Invalid or oversized HTTP chunk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="269"/>
         <source>Authentication failed (401): check username and password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="309"/>
-        <source>HTTP %1</source>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="285"/>
+        <source>Invalid or conflicting HTTP content length</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="310"/>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="295"/>
+        <source>Unsupported or conflicting HTTP transfer encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="300"/>
+        <source>Unsupported HTTP informational response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="310"/>
+        <source>Unsupported HTTP content encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="327"/>
+        <source>Unexpected framing for an empty HTTP response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="346"/>
+        <source>Invalid HTTP response header</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="350"/>
+        <source>Too many HTTP response headers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="361"/>
+        <source>Forbidden HTTP trailer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="393"/>
+        <source>Caster closed the connection mid-transfer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="395"/>
+        <source>Caster disconnected before completing the HTTP response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/HTTP/NTRIPHttpCodec.cc" line="270"/>
         <source>HTTP %1: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/GPS/NTRIP/NTRIPHttpTransport.cc" line="327"/>
-        <source>Invalid HTTP response from caster</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>NTRIPManager</name>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="200"/>
-        <source>No host address</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="207"/>
-        <source>Invalid port</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="215"/>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="457"/>
         <source>Connecting to %1:%2...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="240"/>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="366"/>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="113"/>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="324"/>
         <source>Connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="281"/>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="549"/>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="109"/>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="320"/>
         <source>Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="336"/>
-        <source>Reconnecting in %1s...</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="111"/>
+        <source>Connecting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="590"/>
-        <source>Host address is empty</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>NTRIPSourceTableFetcher</name>
-    <message>
-        <location filename="../src/GPS/NTRIP/NTRIPSourceTable.cc" line="177"/>
-        <source>No reply received</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="115"/>
+        <source>Reconnecting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/GPS/NTRIP/NTRIPSourceTable.cc" line="195"/>
-        <source>Response does not contain a valid source table</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>NmeaGpsSettings</name>
-    <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="9"/>
-        <source>NMEA GPS</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="119"/>
+        <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="14"/>
-        <source>Device</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="322"/>
+        <source>Connecting...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="27"/>
-        <source>Disabled</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="326"/>
+        <source>Reconnecting...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="28"/>
-        <source>UDP Port</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="388"/>
+        <source>Gave up after %1 reconnect attempts: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="31"/>
-        <source>Serial &lt;none available&gt;</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="430"/>
+        <source>Waiting for network</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="47"/>
-        <source>Baudrate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="49"/>
-        <source>Custom</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="79"/>
-        <source>Custom Baud Rate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NmeaGpsSettings.qml" line="98"/>
-        <source>NMEA stream UDP port</source>
+        <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="529"/>
+        <source>Reconnecting in %1s: %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>NtripConnectionStatus</name>
+    <name>NTRIPMountpoint</name>
     <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="11"/>
-        <source>Connection</source>
+        <location filename="../src/GPS/NTRIP/NTRIPSourceTable.cc" line="71"/>
+        <source>%1 bps</source>
+        <extracomment>Mountpoint bitrate in bits per second</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="48"/>
-        <source>Disconnected</source>
+        <location filename="../src/GPS/NTRIP/NTRIPSourceTable.cc" line="75"/>
+        <source>%1 km</source>
+        <extracomment>Distance to the mountpoint in kilometers</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="54"/>
-        <source>Connecting…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="55"/>
-        <source>Reconnecting…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="56"/>
-        <source>Disconnect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="57"/>
-        <source>Connect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="68"/>
-        <source>%1 messages</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NtripConnectionStatus.qml" line="73"/>
-        <source>GGA: %1</source>
+        <location filename="../src/GPS/NTRIP/NTRIPSourceTable.cc" line="78"/>
+        <source> · </source>
+        <extracomment>Separator between mountpoint details</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>NtripMountpointBrowser</name>
+    <name>NTRIPMountpointBrowser</name>
     <message>
-        <location filename="../src/AppSettings/NtripMountpointBrowser.qml" line="11"/>
-        <source>Mountpoint</source>
+        <location filename="../src/GPS/Qml/NTRIPMountpointBrowser.qml" line="23"/>
+        <source>NTRIP Mountpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripMountpointBrowser.qml" line="35"/>
+        <location filename="../src/GPS/Qml/NTRIPMountpointBrowser.qml" line="40"/>
         <source>Browse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripMountpointBrowser.qml" line="45"/>
+        <location filename="../src/GPS/Qml/NTRIPMountpointBrowser.qml" line="49"/>
         <source>Fetching mountpoints…</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>NTRIPMountpointList</name>
     <message>
-        <location filename="../src/AppSettings/NtripMountpointBrowser.qml" line="99"/>
+        <location filename="../src/GPS/Qml/NTRIPMountpointList.qml" line="64"/>
         <source>(selected)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripMountpointBrowser.qml" line="123"/>
+        <location filename="../src/GPS/Qml/NTRIPMountpointList.qml" line="82"/>
         <source>Selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripMountpointBrowser.qml" line="123"/>
+        <location filename="../src/GPS/Qml/NTRIPMountpointList.qml" line="82"/>
         <source>Select</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>NtripServerSettings</name>
+    <name>NTRIPPasswordField</name>
     <message>
-        <location filename="../src/AppSettings/NtripServerSettings.qml" line="11"/>
-        <source>Server</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/NtripServerSettings.qml" line="62"/>
+        <location filename="../src/GPS/Qml/NTRIPPasswordField.qml" line="29"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/NtripServerSettings.qml" line="62"/>
+        <location filename="../src/GPS/Qml/NTRIPPasswordField.qml" line="29"/>
         <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NTRIPSourceTableController</name>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPSourceTableController.cc" line="107"/>
+        <source>Response does not contain a valid source table</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPSourceTableController.cc" line="120"/>
+        <source>Source table request timed out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/NTRIP/NTRIPSourceTableController.cc" line="129"/>
+        <source>Source table too large (exceeds %1 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>NoVideoPlaceholder</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/NoVideoPlaceholder.qml" line="18"/>
+        <source>VIDEO DISABLED WHILE DISARMED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/NoVideoPlaceholder.qml" line="20"/>
+        <source>VIDEO STOPPED</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/NoVideoPlaceholder.qml" line="22"/>
+        <source>WAITING FOR VIDEO</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -13813,244 +15636,171 @@ Is this really what you want?</source>
 <context>
     <name>OnboardLogController</name>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="65"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="97"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="1234"/>
         <source>Waiting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="112"/>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="290"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="144"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="359"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="518"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="844"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="1286"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="1318"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="180"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="249"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="1158"/>
         <source>Available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="271"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="340"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="445"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="1315"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="565"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="596"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="608"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="701"/>
         <source>Canceled</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>OnboardLogFtpController</name>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="230"/>
-        <source>Available</source>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="838"/>
+        <source>Erasing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="286"/>
-        <source>Waiting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="316"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogController.cc" line="1263"/>
         <source>Downloading</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="344"/>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="365"/>
-        <source>Error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="362"/>
-        <source>Downloaded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="418"/>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="439"/>
-        <source>Canceled</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>OnboardLogFtpPage</name>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="12"/>
-        <source>Onboard Logs (FTP) lists log files on the vehicle&apos;s SD card via MAVLink FTP. Click Refresh to query the vehicle.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="52"/>
-        <source>Id</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="60"/>
-        <source>Date</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="72"/>
-        <source>Date Unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="80"/>
-        <source>Size</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="88"/>
-        <source>Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="106"/>
-        <source>Refresh</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="110"/>
-        <source>Log Refresh</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="110"/>
-        <source>You must be connected to a vehicle in order to download logs.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="121"/>
-        <source>Download</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="133"/>
-        <source>Log Download</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="133"/>
-        <source>You must select at least one log file to download.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="142"/>
-        <source>Select save directory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml" line="159"/>
-        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>OnboardLogPage</name>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="12"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="11"/>
         <source>Onboard Logs allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="51"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="21"/>
+        <source>Wait for the log download to complete or cancel it first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="78"/>
         <source>Id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="59"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="86"/>
         <source>Date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="71"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="102"/>
         <source>Date Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="79"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="110"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="87"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="118"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="105"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="142"/>
+        <source>Disabled while the vehicle is armed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="151"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="109"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="155"/>
         <source>Onboard Log Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="109"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="155"/>
         <source>You must be connected to a vehicle in order to download onboard logs.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="120"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="167"/>
         <source>Deselect All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="120"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="167"/>
         <source>Select All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="127"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="175"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="139"/>
-        <source>Onboard Log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="139"/>
-        <source>You must select at least one onboard log file to download.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="148"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="183"/>
         <source>Select save directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="166"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="202"/>
         <source>Sort Descending</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="166"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="202"/>
         <source>Sort Ascending</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="173"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="211"/>
+        <source>Erase Selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="214"/>
+        <source>Delete Selected Onboard Log Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="215"/>
+        <source>The selected onboard log files will be erased permanently. Is this really what you want?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="225"/>
         <source>Erase All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="176"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="228"/>
         <source>Delete All Onboard Log Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="177"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="229"/>
         <source>All onboard log files will be erased permanently. Is this really what you want?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="185"/>
+        <location filename="../src/AnalyzeView/OnboardLogs/OnboardLogPage.qml" line="238"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14134,8 +15884,204 @@ Is this really what you want?</source>
 <context>
     <name>PX4AutoPilotPlugin</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc" line="167"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc" line="204"/>
         <source>Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4BatteryComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="84"/>
+        <source>DroneCAN data filtered through the battery estimate below. Its live values are listed under Other Reported Batteries once the vehicle reports it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="85"/>
+        <source>DroneCAN data filtered through the battery estimate below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="88"/>
+        <source>Reported by MAVLink, DroneCAN or a driver, which estimates the charge itself. Its live values are listed under Other Reported Batteries once the vehicle reports it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="91"/>
+        <source>Voltage and current from ESC telemetry.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="94"/>
+        <source>Analog power module or I2C power monitor. The analog settings only apply to the board&apos;s ADC inputs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="96"/>
+        <source>Not monitored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="170"/>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="170"/>
+        <source>In Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="176"/>
+        <source>Showing %1 of 1 battery or power monitor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="177"/>
+        <source>Showing %1 of %2 batteries and power monitors.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="180"/>
+        <source>Showing the only battery or power monitor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="181"/>
+        <source>Showing all %1 batteries and power monitors.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="191"/>
+        <source>Loading settings from the vehicle...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="253"/>
+        <source>Calculate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="275"/>
+        <source>Other Reported Batteries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="281"/>
+        <source>Reported batteries the page cannot match to a battery above. A battery set to External can report under any ID, so it appears here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="290"/>
+        <source>ID %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="299"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="25"/>
+        <source>Voltage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="300"/>
+        <source>Charge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.qml" line="301"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="25"/>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="9"/>
+        <source>Battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="14"/>
+        <source>Configure each battery&apos;s source and estimate, the shared charge levels and the power monitors.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="25"/>
+        <source>Power module</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="25"/>
+        <source>Cells</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="25"/>
+        <source>LiPo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="26"/>
+        <source>Capacity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="26"/>
+        <source>Low battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="26"/>
+        <source>Critical battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="26"/>
+        <source>Emergency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="122"/>
+        <source>Battery %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="130"/>
+        <source>N/A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="141"/>
+        <source>Battery Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="141"/>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="143"/>
+        <source>Battery Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="143"/>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="144"/>
+        <source>Battery Empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="144"/>
+        <source>Empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="145"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryComponent.cc" line="145"/>
+        <source>Number of Cells</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -14168,154 +16114,1681 @@ Is this really what you want?</source>
     </message>
 </context>
 <context>
-    <name>PX4FirmwarePlugin</name>
+    <name>PX4BatteryRows</name>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="27"/>
-        <source>Manual</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="22"/>
+        <source>Batteries</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="28"/>
-        <source>Acro</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="22"/>
+        <source>Battery %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="29"/>
-        <source>Stabilized</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="30"/>
+        <source>Source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="30"/>
-        <source>Rattitude</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="31"/>
+        <source>Cells in series</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="31"/>
-        <source>Altitude</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="32"/>
+        <source>Empty voltage per cell</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="32"/>
-        <source>Position</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="33"/>
+        <source>Keep above the steep drop-off, about 3.5 V for LiPo.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="33"/>
-        <source>Offboard</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="34"/>
+        <source>Full voltage per cell</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="34"/>
-        <source>Ready</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="35"/>
+        <source>Slightly below the true full voltage gives a better estimate.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="35"/>
-        <source>Takeoff</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="36"/>
+        <source>Capacity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="36"/>
-        <source>Hold</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="37"/>
+        <source>-1 disables. Needed for charge counting and remaining flight time.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="37"/>
-        <source>Mission</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="38"/>
+        <source>Internal resistance per cell</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="38"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="39"/>
+        <source>Negative estimates it in flight.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="40"/>
+        <source>Current while disarmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="41"/>
+        <source>Replaces an inaccurate no-load reading. 0 disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="42"/>
+        <source>Voltage divider</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="43"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="45"/>
+        <source>-1 uses the board default. Calculate needs a set value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="44"/>
+        <source>Amps per volt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="46"/>
+        <source>Voltage ADC channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="47"/>
+        <source>-1 uses the board default. -2 turns off analog voltage.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="48"/>
+        <source>Current ADC channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="49"/>
+        <source>-1 uses the board default.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="50"/>
+        <source>Voltage filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="50"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="51"/>
+        <source>0 disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="51"/>
+        <source>Current filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="58"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="120"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="132"/>
+        <source>Power Monitors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="59"/>
+        <source>I2C power monitor. Reports as a Power Module battery source.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="68"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="124"/>
+        <source>Driver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="69"/>
+        <source>Max current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="70"/>
+        <source>Shunt resistance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="83"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="87"/>
+        <source>DroneCAN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="83"/>
+        <source>DroneCAN battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="84"/>
+        <source>Smart batteries and power monitors on the CAN bus. Use the External battery source.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="88"/>
+        <source>Battery data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="92"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="102"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="109"/>
+        <source>All Batteries</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="92"/>
+        <source>Charge levels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="93"/>
+        <source>Remaining charge at which each battery is reported low, critical and emergency. The action is set on the Failsafes page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="95"/>
+        <source>Levels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="96"/>
+        <source>Low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="97"/>
+        <source>Critical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="98"/>
+        <source>Emergency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="102"/>
+        <source>Flight time estimate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="103"/>
+        <source>Starting point for the remaining flight time until the average current is measured in flight. Needs the battery capacity.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="105"/>
+        <source>Expected current in flight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="109"/>
+        <source>Analog current offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="110"/>
+        <source>Analog power modules only. Subtracted from the current sensor voltage before scaling.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="112"/>
+        <source>Current sensor offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="121"/>
+        <source>I2C power monitor for a battery and a regulator. Reports as a Power Module battery source.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="125"/>
+        <source>Battery max current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="126"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="135"/>
+        <source>Battery shunt resistance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="127"/>
+        <source>Regulator max current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="128"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="136"/>
+        <source>Regulator shunt resistance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="132"/>
+        <source>VOXL Power Module</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="133"/>
+        <source>ModalAI power module. Reports as a Power Module battery source.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4BatteryRows.js" line="228"/>
+        <source>PX4 only reads ESC telemetry into battery 1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4CollisionComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.qml" line="96"/>
+        <source>Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.qml" line="101"/>
+        <source>Obstacle overlay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.qml" line="105"/>
+        <source>Draws the distances measured around the vehicle on the fly view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.qml" line="109"/>
+        <source>Show obstacle distance overlay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="7"/>
+        <source>Collision</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="12"/>
+        <source>Configure collision prevention, which keeps the vehicle away from obstacles seen by distance sensors.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="23"/>
+        <source>Collision prevention</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="23"/>
+        <source>Avoidance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="23"/>
+        <source>Obstacle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="23"/>
+        <source>Proximity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="23"/>
+        <source>Distance sensor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="41"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="44"/>
+        <source>Collision Prevention</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionComponent.cc" line="44"/>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4CollisionRows</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="8"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="18"/>
+        <source>Collision Prevention</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="8"/>
+        <source>Prevention</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="9"/>
+        <source>Keeps the vehicle away from obstacles seen by distance sensors or a companion computer. Position mode only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="12"/>
+        <source>Minimum distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="12"/>
+        <source>0 or negative disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="13"/>
+        <source>Move without sensor data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="14"/>
+        <source>Allows moving where no sensor is looking.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="18"/>
+        <source>Tuning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="19"/>
+        <source>The defaults suit most vehicles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="22"/>
+        <source>Sensor and control delay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="23"/>
+        <source>Guidance angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4CollisionRows.js" line="24"/>
+        <source>How far the vehicle may steer left or right of the commanded direction.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4EscComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.qml" line="90"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="30"/>
+        <source>Calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.qml" line="95"/>
+        <source>PWM calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.qml" line="99"/>
+        <source>Teaches ESCs which take a PWM signal the full throttle range. DShot and DroneCAN ESCs do not need it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.qml" line="104"/>
+        <source>Remove the propellers first. Use a USB connection, with the battery disconnected until calibration asks for it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.qml" line="110"/>
+        <source>Calibrate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="14"/>
+        <source>ESC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="19"/>
+        <source>Calibrate PWM ESCs and configure DShot and DroneCAN ESC settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="30"/>
+        <source>Electronic speed controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="30"/>
+        <source>Motor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="30"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="75"/>
+        <source>PWM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="30"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="73"/>
+        <source>DShot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="30"/>
+        <source>DroneCAN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="71"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="73"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="75"/>
+        <source>Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="71"/>
+        <source>DShot and PWM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="81"/>
+        <source>Bidirectional DShot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscComponent.cc" line="87"/>
+        <source>Motor Poles</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4EscRows</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="50"/>
+        <source>Motor %1 poles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="55"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="69"/>
+        <source>DShot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="55"/>
+        <source>Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="56"/>
+        <source>Applies to every output group set to DShot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="58"/>
+        <source>Minimum output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="59"/>
+        <source>Set high enough that the motors keep spinning while armed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="60"/>
+        <source>3D mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="61"/>
+        <source>The ESC must be set to 3D mode and the minimum output to 0.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="62"/>
+        <source>3D deadband low</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="64"/>
+        <source>3D deadband high</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="69"/>
+        <source>Telemetry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="70"/>
+        <source>Data the ESCs return over the DShot signal wire. Telemetry over a separate serial wire is set on the Ports page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="72"/>
+        <source>Bidirectional DShot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="73"/>
+        <source>Needs ESCs which support it, such as BLHeli32.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="74"/>
+        <source>Extended DShot telemetry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="75"/>
+        <source>Reports ESC temperature, voltage and current over DShot. Needs ESCs that support it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="76"/>
+        <source>ESC firmware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="77"/>
+        <source>Lets the flight controller read ESC settings over the telemetry wire.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="78"/>
+        <source>Motor poles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="79"/>
+        <source>Needed to turn the ESC&apos;s electrical RPM into motor RPM. Typical 5 inch motors have 14.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="84"/>
+        <source>DroneCAN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="84"/>
+        <source>ESC messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="85"/>
+        <source>ESC messages are sent often at high priority, so use only the CAN interfaces which have ESCs on them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4EscRows.js" line="87"/>
+        <source>CAN interfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4FailsafeRows</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="14"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="30"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="41"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="50"/>
+        <source>Power</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="14"/>
+        <source>Battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="15"/>
+        <source>Three levels. The action applies at critical and emergency.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="17"/>
+        <source>Thresholds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="18"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="34"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="46"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="55"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="66"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="78"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="90"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="100"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="109"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="121"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="133"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="142"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="153"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="171"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="195"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="226"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="243"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="245"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="256"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="275"/>
+        <source>Action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="20"/>
+        <source>Low level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="21"/>
+        <source>Critical level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="22"/>
+        <source>Emergency level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="23"/>
+        <source>Min. battery to arm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="24"/>
+        <source>Negative uses the critical level.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="25"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="55"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="100"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="245"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="25"/>
+        <source>Low level action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="26"/>
+        <source>Always a warning.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="30"/>
+        <source>Remaining flight time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="31"/>
+        <source>Remaining battery time is less than the time needed to return.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="36"/>
+        <source>Estimate safety factor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="37"/>
+        <source>Estimate margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="41"/>
+        <source>Maximum flight time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="42"/>
+        <source>Time since takeoff exceeds the limit. A warning is sent from 90% of the limit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="45"/>
+        <source>Limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="45"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="141"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="151"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="152"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="216"/>
+        <source>0 or negative disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="46"/>
         <source>Return</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="39"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="50"/>
+        <source>Battery unhealthy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="51"/>
+        <source>Battery reports a fault. Disarms if it happens during spool-up after arming.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="54"/>
+        <source>Spool-up time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="56"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="256"/>
+        <source>Disarm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="56"/>
+        <source>During spool-up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="61"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="73"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="86"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="96"/>
+        <source>Link Loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="61"/>
+        <source>Manual control loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="62"/>
+        <source>RC receiver or MAVLink joystick stops sending sticks.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="65"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="77"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="89"/>
+        <source>Timeout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="68"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="80"/>
+        <source>Ignore loss in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="69"/>
+        <source>Manual control source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="73"/>
+        <source>Data link (GCS) loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="74"/>
+        <source>No MAVLink heartbeat from a ground station.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="81"/>
+        <source>High-latency link timeout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="82"/>
+        <source>High-latency link regain time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="86"/>
+        <source>Offboard control loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="87"/>
+        <source>Companion computer stops sending offboard setpoints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="96"/>
+        <source>Onboard computer loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="97"/>
+        <source>Companion computer connection is lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="99"/>
+        <source>Warn after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="105"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="117"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="127"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="137"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="146"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="157"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="167"/>
+        <source>Navigation &amp; Environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="105"/>
+        <source>Geofence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="106"/>
+        <source>Breach of the max distance limits or of the fences defined in Plan view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="110"/>
+        <source>Max horizontal distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="110"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="111"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="123"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="162"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="197"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="198"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="199"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="200"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="201"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="202"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="211"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="213"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="242"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="273"/>
+        <source>0 disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="111"/>
+        <source>Max vertical distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="112"/>
+        <source>Position source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="113"/>
+        <source>Pre-emptive trigger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="113"/>
+        <source>Experimental.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="117"/>
+        <source>GNSS loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="118"/>
+        <source>Active GNSS receivers drop below the required count.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="123"/>
+        <source>Required receivers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="127"/>
+        <source>Position estimate loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="128"/>
+        <source>Position or velocity error too large. Falls back to Altitude, then Stabilized mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="130"/>
+        <source>Horizontal position error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="130"/>
+        <source>Negative disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="132"/>
+        <source>Horizontal velocity error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="133"/>
+        <source>Altitude, then Stabilized fallback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="137"/>
+        <source>Low position accuracy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="138"/>
+        <source>Estimated accuracy worse than the threshold. Only acts in Mission and Hold, a warning otherwise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="141"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="242"/>
+        <source>Threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="146"/>
+        <source>High wind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="147"/>
+        <source>Estimated wind speed. Above the max, mission resume and non-Return auto modes are blocked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="151"/>
+        <source>Warn above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="152"/>
+        <source>Failsafe above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="157"/>
+        <source>GPS failure loiter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="158"/>
+        <source>Open-loop loiter while waiting for GPS to recover, then descend. VTOLs only with NAV_FORCE_VT set to 0.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="162"/>
+        <source>Loiter time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="163"/>
+        <source>Roll angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="167"/>
+        <source>Traffic avoidance (ADS-B)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="168"/>
+        <source>Transponder traffic predicted to come too close.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="173"/>
+        <source>Horizontal distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="174"/>
+        <source>Vertical distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="175"/>
+        <source>Time to collision</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="180"/>
+        <source>Failsafe Behavior</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="180"/>
+        <source>Reaction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="181"/>
+        <source>How long the vehicle holds before acting, and how the pilot can take back control.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="183"/>
+        <source>Hold before action</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="184"/>
+        <source>0 disables. The pilot can switch modes but not take over with the sticks during this time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="185"/>
+        <source>Stick override</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="186"/>
+        <source>Override threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="191"/>
+        <source>VTOL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="191"/>
+        <source>Quadchute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="192"/>
+        <source>VTOL falls back to multicopter flight when fixed-wing flight is unsafe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="197"/>
+        <source>Min. altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="198"/>
+        <source>Max height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="199"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="213"/>
+        <source>Max pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="200"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="211"/>
+        <source>Max roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="201"/>
+        <source>Uncommanded descent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="202"/>
+        <source>Transition altitude loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="207"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="220"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="237"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="249"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="260"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="268"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="279"/>
+        <source>Vehicle Health</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="207"/>
+        <source>Attitude failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="208"/>
+        <source>Roll or pitch beyond the limits. Disarms shortly after takeoff, otherwise warns unless flight termination is enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="212"/>
+        <source>Roll trigger time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="214"/>
+        <source>Pitch trigger time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="215"/>
+        <source>Lockdown window after takeoff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="220"/>
+        <source>Motor / actuator failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="221"/>
+        <source>Motor current does not match its throttle (stuck or lost rotor).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="225"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="254"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="255"/>
+        <source>Detection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="228"/>
+        <source>Throttle above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="228"/>
+        <source>100% disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="229"/>
+        <source>Current / throttle below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="230"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="233"/>
+        <source>For longer than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="231"/>
+        <source>Expected current per throttle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="232"/>
+        <source>Allowed current deviation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="237"/>
+        <source>Imbalanced propeller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="238"/>
+        <source>Vibration pattern consistent with a damaged propeller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="249"/>
+        <source>ESC arming failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="250"/>
+        <source>An ESC does not report armed after arming. Disarms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="260"/>
+        <source>Parachute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="261"/>
+        <source>Deployed on flight termination.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="264"/>
+        <source>Require healthy MAVLink parachute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="268"/>
+        <source>Altitude loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="269"/>
+        <source>Altitude falls below the setpoint by more than the limit. Terminates and deploys the parachute.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="273"/>
+        <source>Max loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="274"/>
+        <source>Trigger time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="275"/>
+        <source>Terminate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="279"/>
+        <source>External trigger (ATS)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="280"/>
+        <source>PWM input from an external automatic trigger system (ASTM F3322-18). Terminates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="283"/>
+        <source>Input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafeRows.js" line="284"/>
+        <source>Trigger above</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4FailsafesComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="102"/>
+        <source>All Failsafes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="102"/>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="105"/>
+        <source>Showing %1 of %2 failsafes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="106"/>
+        <source>Showing all %1 failsafes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="115"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="116"/>
+        <source>Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="117"/>
+        <source>Mode fallback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="118"/>
+        <source>Return</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="119"/>
         <source>Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="120"/>
+        <source>Terminate / Disarm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="144"/>
+        <source>Return actions use the settings on the Return &amp; Land page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.qml" line="167"/>
+        <source>Warning only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="10"/>
+        <source>Failsafes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="15"/>
+        <source>Configure what the vehicle does when it loses a link, runs low on power or detects a fault.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="26"/>
+        <source>RC loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="26"/>
+        <source>Joystick loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="26"/>
+        <source>Radio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="26"/>
+        <source>Signal loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="27"/>
+        <source>Data link loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="27"/>
+        <source>Telemetry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="27"/>
+        <source>Ground station</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="27"/>
+        <source>GCS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="28"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="67"/>
+        <source>Geofence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="28"/>
+        <source>Fence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="28"/>
+        <source>Breach</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="28"/>
+        <source>Low battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="29"/>
+        <source>Critical battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="29"/>
+        <source>GPS loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="29"/>
+        <source>Wind</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="29"/>
+        <source>Flight time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="30"/>
+        <source>Traffic avoidance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="59"/>
+        <source>Low Battery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="64"/>
+        <source>Manual Control Loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="66"/>
+        <source>Data Link Loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FailsafesComponent.cc" line="69"/>
+        <source>Quadchute</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4FirmwarePlugin</name>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="31"/>
+        <source>Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="32"/>
+        <source>Acro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="33"/>
+        <source>Stabilized</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="34"/>
+        <source>Rattitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="35"/>
+        <source>Altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="36"/>
+        <source>Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="37"/>
+        <source>Offboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="38"/>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="39"/>
+        <source>Takeoff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="40"/>
-        <source>Precision Land</source>
+        <source>Hold</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="41"/>
-        <source>Return to Groundstation</source>
+        <source>Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="42"/>
-        <source>Follow Me</source>
+        <source>Return</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="43"/>
-        <source>Simple</source>
+        <source>Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="44"/>
+        <source>Precision Land</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="45"/>
+        <source>Follow Me</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="46"/>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="47"/>
         <source>Orbit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="124"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="48"/>
+        <source>Position Slow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="49"/>
+        <source>Altitude Cruise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="50"/>
+        <source>Termination</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="51"/>
+        <source>VTOL Takeoff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="52"/>
+        <source>Guided Course</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="142"/>
         <source>Unknown %1:%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="308"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="351"/>
+        <source>Vehicle did not respond to takeoff command.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="354"/>
+        <source>Takeoff not sent: a previous takeoff command is still waiting for a vehicle response.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="366"/>
         <source>Unable to takeoff, vehicle position not known.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="376"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="447"/>
         <source>Unable to go to location, vehicle position not known.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="449"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="512"/>
         <source>Unable to pause vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="458"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="521"/>
         <source>Unable to change altitude, home position unknown.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="462"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="525"/>
         <source>Unable to change altitude, home position altitude unknown.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="523"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="579"/>
         <source>Vehicle does not support guided rotate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="545"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="594"/>
+        <source>Unable to set ROI, home position altitude unknown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="606"/>
         <source>Unable to start takeoff: Vehicle rejected arming.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="549"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="610"/>
         <source>Unable to start takeoff: Vehicle not changing to %1 flight mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="557"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="618"/>
         <source>Unable to start mission: Vehicle rejected arming.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="561"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="622"/>
         <source>Unable to start mission: Vehicle not changing to %1 flight mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="677"/>
+        <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="743"/>
         <source>QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14425,6 +17898,14 @@ Is this really what you want?</source>
     </message>
 </context>
 <context>
+    <name>PX4FlightModeConfig</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeConfig.cc" line="82"/>
+        <source>%1 (not running)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PX4FlightModeIndicator</name>
     <message>
         <location filename="../src/FirmwarePlugin/PX4/PX4FlightModeIndicator.qml" line="31"/>
@@ -14453,31 +17934,623 @@ Is this really what you want?</source>
     </message>
 </context>
 <context>
-    <name>PX4FlightModes</name>
+    <name>PX4FlightModeRows</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="60"/>
-        <source>Flight Modes</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="19"/>
+        <source>Channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="64"/>
-        <source>Flight Mode Settings</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="21"/>
+        <source>Threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="22"/>
+        <source>0 to 1 across the channel range. On above it, or below it when negative.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="25"/>
+        <source>Switches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="36"/>
+        <source>Slot %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="41"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="49"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="54"/>
+        <source>Mode Selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="41"/>
+        <source>Selection method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="42"/>
+        <source>A switch channel picks one of six slots by its position. Momentary buttons pick a slot each, lowest channel first. Only one method can be used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="44"/>
+        <source>Mode channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="45"/>
+        <source>Mode buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="49"/>
+        <source>Mode slots</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="50"/>
+        <source>The flight mode each slot selects.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="54"/>
+        <source>Mode on boot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="55"/>
+        <source>Mode set at power-up, before any RC input or mode command arrives.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="57"/>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="61"/>
+        <source>Return</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="61"/>
+        <source>Switches to Return while on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="62"/>
+        <source>Hold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="62"/>
+        <source>Switches to Hold while on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="63"/>
+        <source>Offboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="63"/>
+        <source>Switches to Offboard while on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="64"/>
+        <source>Arm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="65"/>
+        <source>Arms and disarms from a switch, or from a momentary button held down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="67"/>
+        <source>Momentary button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="68"/>
+        <source>Button hold time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="69"/>
+        <source>Also the arm gesture&apos;s hold time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="70"/>
+        <source>Kill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="71"/>
+        <source>Stops the motors at once. Turning the switch off restores them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="73"/>
+        <source>Disarm after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="74"/>
+        <source>Disarms if the switch stays on this long.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="75"/>
+        <source>Flight termination</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="76"/>
+        <source>Turns off all outputs and triggers MAVLink parachutes. Unlike Kill, it cannot be undone until the vehicle reboots.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="78"/>
+        <source>VTOL transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="78"/>
+        <source>On flies fixed-wing, off flies multicopter.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="80"/>
+        <source>Landing gear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="80"/>
+        <source>Retracts the landing gear while on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="81"/>
+        <source>Payload power</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="81"/>
+        <source>Three positions: off, mid and on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="83"/>
+        <source>Mid threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="85"/>
+        <source>Flaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="85"/>
+        <source>Sets the flaps from the channel position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="89"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="100"/>
+        <source>Stick Gestures</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="89"/>
+        <source>Arm / disarm gesture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="90"/>
+        <source>Throttle low with yaw right arms, throttle low with yaw left disarms. Roll and pitch must stay centered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="93"/>
+        <source>Gesture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="94"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="104"/>
+        <source>Hold time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="95"/>
+        <source>Also how long a momentary arm button is held.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="96"/>
+        <source>Disarm in manual flight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="100"/>
+        <source>Kill gesture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="101"/>
+        <source>Throttle low, yaw left, pitch back and roll right, all held together, stop the motors. It cannot be undone in flight.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="104"/>
+        <source>Negative disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="109"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="119"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="137"/>
+        <source>Position Slow Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="109"/>
+        <source>Speed limits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="110"/>
+        <source>Limits in Position Slow mode when no knob or MAVLink limit sets them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="113"/>
+        <source>Horizontal speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="114"/>
+        <source>Vertical speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="115"/>
+        <source>Yaw rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="119"/>
+        <source>AUX inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="120"/>
+        <source>RC channel each AUX input reads, for the speed knobs below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="128"/>
+        <source>AUX1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="129"/>
+        <source>AUX2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="130"/>
+        <source>AUX3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="131"/>
+        <source>AUX4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="132"/>
+        <source>AUX5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="133"/>
+        <source>AUX6</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="137"/>
+        <source>Speed knobs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="138"/>
+        <source>AUX inputs that scale a speed in flight, from its minimum up to the normal manual limit. Speed limits only apply when no knob is assigned.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="147"/>
+        <source>Horizontal speed from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="148"/>
+        <source>Min horizontal speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="149"/>
+        <source>Vertical speed from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="150"/>
+        <source>Min vertical speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="151"/>
+        <source>Yaw rate from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="152"/>
+        <source>Min yaw rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="153"/>
+        <source>Gimbal pitch rate from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="158"/>
+        <source>Pilot Takeover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="158"/>
+        <source>Stick override</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="159"/>
+        <source>Moving the sticks in an automatic mode switches to Position, or Altitude without a position estimate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="163"/>
+        <source>Override in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="164"/>
+        <source>Stick threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="165"/>
+        <source>Stick speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModeRows.js" line="166"/>
+        <source>Negative disables. At 1, moving a stick half its range in about half a second takes over.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4FlightModes</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="80"/>
+        <source>Roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="81"/>
+        <source>Pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="82"/>
+        <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="83"/>
+        <source>Throttle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="86"/>
-        <source>Mode Channel</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="340"/>
+        <source>Mode channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="94"/>
-        <source>Flight Mode %1</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="89"/>
+        <source>Mode button %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="123"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="126"/>
-        <source>Switch Settings</source>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="187"/>
+        <source>up to %1 µs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="190"/>
+        <source>%1 µs and up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="192"/>
+        <source>%1 – %2 µs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="216"/>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="216"/>
+        <source>Assigned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="219"/>
+        <source>Showing %1 of %2 settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="220"/>
+        <source>Showing all %1 settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="233"/>
+        <source>Manual control source: %1. RC input is not used, so the mode channel and switches have no effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="234"/>
+        <source>Manual control source: %1. The mode channel, mode buttons and switches act on RC input.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="261"/>
+        <source>Channel %1: %2 can be on at the same time. Use separate channels, or thresholds that do not overlap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="289"/>
+        <source>Cannot be undone until reboot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="320"/>
+        <source>Method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="325"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="326"/>
+        <source>Switch channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="325"/>
+        <source>Buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="325"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="326"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="356"/>
+        <source>Mode button channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="368"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="390"/>
+        <source>Ch %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="379"/>
+        <source>The lowest channel selects slot 1, the next slot 2, and so on. PX4 uses up to six.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="389"/>
+        <source>PX4 ignores %1, as only the lowest six channels select a slot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="403"/>
+        <source>Channel %1 live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="404"/>
+        <source>Channel %1, no RC input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="448"/>
+        <source>Unassigned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="482"/>
+        <source>Slot %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="504"/>
+        <source>Ch %1 button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="504"/>
+        <source>No button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="536"/>
+        <source>Last pressed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="536"/>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="552"/>
+        <source>Live</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="560"/>
+        <source>No RC input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="562"/>
+        <source>On</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="562"/>
+        <source>Mid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="562"/>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="564"/>
+        <source>%1 · %2 µs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4FlightModes.qml" line="564"/>
+        <source>%1 µs</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -14707,86 +18780,947 @@ Is this really what you want?</source>
     </message>
 </context>
 <context>
-    <name>PX4MainStatusIndicator</name>
-    <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml" line="15"/>
-        <source>Ground Control Comm Loss Failsafe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml" line="24"/>
-        <source>Vehicle Action</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml" line="36"/>
-        <source>Loss Timeout</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>PX4RadioComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="7"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="9"/>
         <source>Radio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="18"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="20"/>
         <source>Configure and calibrate your transmitter and assign control channels.</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>PX4RadioComponentSummary</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="29"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="91"/>
         <source>Roll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="30"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="35"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="40"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="45"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="91"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="92"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="93"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="94"/>
         <source>Setup required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="34"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="92"/>
         <source>Pitch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="39"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="93"/>
         <source>Yaw</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="44"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="94"/>
         <source>Throttle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="49"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="96"/>
         <source>Flaps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="50"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="56"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="61"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="96"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="98"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="99"/>
         <source>Disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="55"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="98"/>
         <source>Aux1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="60"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponent.cc" line="99"/>
         <source>Aux2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4ReturnLandComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="7"/>
+        <source>Return &amp; Land</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="12"/>
+        <source>Configure where and how high the vehicle returns, what it does on arrival, and how it lands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="23"/>
+        <source>RTL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="23"/>
+        <source>Return to launch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="23"/>
+        <source>Return home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="23"/>
+        <source>Loiter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="23"/>
+        <source>Landing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="24"/>
+        <source>Descent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="24"/>
+        <source>Disarm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="24"/>
+        <source>Touchdown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="24"/>
+        <source>Altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="43"/>
+        <source>RTL Climb To</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="46"/>
+        <source>Land immediately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="47"/>
+        <source>Loiter and do not land</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="48"/>
+        <source>Loiter and land after specified time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="49"/>
+        <source>RTL, Then</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="52"/>
+        <source>Loiter Alt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandComponent.cc" line="55"/>
+        <source>Land Delay</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4ReturnLandRows</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="14"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="25"/>
+        <source>Return</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="14"/>
+        <source>Route</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="15"/>
+        <source>Where the vehicle goes and how high it flies. Used by every Return action, including the failsafes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="17"/>
+        <source>Destination</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="18"/>
+        <source>Climb to altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="19"/>
+        <source>Cone: special rules within</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="20"/>
+        <source>Altitude cone half-angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="21"/>
+        <source>Require approach</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="25"/>
+        <source>Arrival</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="26"/>
+        <source>What the vehicle does once it reaches the destination.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="28"/>
+        <source>Loiter altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="29"/>
+        <source>Loiter time before landing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="30"/>
+        <source>-1 loiters and does not land.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="31"/>
+        <source>Loiter radius</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="36"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="49"/>
+        <source>Landing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="36"/>
+        <source>Descent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="37"/>
+        <source>How fast the vehicle descends as it gets close to the ground.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="40"/>
+        <source>Slow descent below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="41"/>
+        <source>Must be higher than the landing speed altitude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="42"/>
+        <source>Landing speed below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="43"/>
+        <source>Must be lower than the slow descent altitude.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="44"/>
+        <source>Landing descent rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="45"/>
+        <source>Not editable while the overall vertical velocity limit on the Flight Behavior page is on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="49"/>
+        <source>Touchdown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="50"/>
+        <source>What happens when the vehicle lands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="52"/>
+        <source>Precision landing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="53"/>
+        <source>Disarm after landing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4ReturnLandRows.js" line="53"/>
+        <source>0 or negative disables.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4SensorDevice</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorDevice.cc" line="82"/>
+        <source>Simulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4SensorsOrientation</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsOrientation.js" line="58"/>
+        <source>Level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsOrientation.js" line="60"/>
+        <source>Nose down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsOrientation.js" line="62"/>
+        <source>Left side</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsOrientation.js" line="64"/>
+        <source>Tail down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsOrientation.js" line="66"/>
+        <source>Right side</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsOrientation.js" line="68"/>
+        <source>Upside down</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4SensorsRows</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="51"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="338"/>
+        <source>Compass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="52"/>
+        <source>Rotate the vehicle through the orientations the vehicle asks for.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="56"/>
+        <source>Large vehicle calibration…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="57"/>
+        <source>For vehicles too large or heavy to rotate. Needs the heading and a GPS position.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="61"/>
+        <source>Auto-detect external compass rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="62"/>
+        <source>Sets the rotation of an external compass when you calibrate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="67"/>
+        <source>Gyroscope</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="69"/>
+        <source>Measures the gyroscope offset while the vehicle is still.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="70"/>
+        <source>Keep the vehicle still on a flat surface.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="74"/>
+        <source>Accelerometer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="75"/>
+        <source>Hold the vehicle on each of its six sides.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="80"/>
+        <source>Level horizon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="82"/>
+        <source>Place the vehicle in its level flight position and keep it still.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="84"/>
+        <source>Sets the attitude the autopilot treats as level. Needs the gyroscope and accelerometer done first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="88"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="339"/>
+        <source>Barometer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="90"/>
+        <source>Matches the barometer to the GPS altitude. The vehicle also does this itself after boot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="95"/>
+        <source>Airspeed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="97"/>
+        <source>Cover the pitot tube, then blow across it when asked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="147"/>
+        <source>Calibrated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="150"/>
+        <source>Needs calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="152"/>
+        <source>Not calibrated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="152"/>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="182"/>
+        <source>1 satellite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="182"/>
+        <source>%1 satellites</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="189"/>
+        <source>2D fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="189"/>
+        <source>No fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="190"/>
+        <source>A 2D fix has no reliable height. Wait for a 3D fix.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="191"/>
+        <source>Needs a GPS fix. Wait for the vehicle to get one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="195"/>
+        <source>±%1 m vertical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="198"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="203"/>
+        <source>3D fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="199"/>
+        <source>GPS height is only accurate to ±%1 m. Wait for a better fix if you can.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="204"/>
+        <source>Keep the vehicle still. It takes about 3 seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="212"/>
+        <source>No GPS data arrived. Check the GPS has a fix and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="215"/>
+        <source>The vehicle moved. Keep it still and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="218"/>
+        <source>The vehicle is too far from level. Place it level and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="221"/>
+        <source>The attitude estimator is not running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="224"/>
+        <source>The vehicle reports no gyroscope.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="227"/>
+        <source>The calibration could not be saved. Try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="229"/>
+        <source>The calibration did not finish. Try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="254"/>
+        <source>Compasses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="254"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="296"/>
+        <source>Compass %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="258"/>
+        <source>Priority</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="259"/>
+        <source>The highest priority compass is the primary one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="260"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="317"/>
+        <source>Rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="261"/>
+        <source>Custom roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="262"/>
+        <source>Custom pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="263"/>
+        <source>Custom yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="294"/>
+        <source>Gyroscope %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="295"/>
+        <source>Accelerometer %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="297"/>
+        <source>Barometer %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="314"/>
+        <source>Orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="314"/>
+        <source>Autopilot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="315"/>
+        <source>How the autopilot is mounted compared to the vehicle. Tilt the vehicle and check the live view follows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="318"/>
+        <source>Roll trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="319"/>
+        <source>Pitch trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="320"/>
+        <source>Yaw trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="324"/>
+        <source>Sensors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="324"/>
+        <source>Required sensors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="325"/>
+        <source>Preflight checks fail when a required sensor is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="327"/>
+        <source>Compasses required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="327"/>
+        <source>Zero skips the compass check.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="328"/>
+        <source>Barometer required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="329"/>
+        <source>Internal barometers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="329"/>
+        <source>Turn off to use an external barometer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="330"/>
+        <source>Airspeed sensor required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="334"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="343"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="348"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="352"/>
+        <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="334"/>
+        <source>Automatic calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="335"/>
+        <source>Lets the vehicle calibrate sensors itself. It sets an initial gyroscope, accelerometer and compass calibration from the estimator&apos;s bias estimates when the sensor is not calibrated, and calibrates the barometer against the GNSS height.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="337"/>
+        <source>Gyroscope and accelerometer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="343"/>
+        <source>Compass compensation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="344"/>
+        <source>Removes the magnetic interference of the motors from the compass.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="345"/>
+        <source>Compensation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="348"/>
+        <source>Clipping notice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="349"/>
+        <source>Notify when the IMU clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="352"/>
+        <source>Airspeed tubing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="354"/>
+        <source>Compensation for an SDP3x sensor. Reverse the readings when the static and dynamic ports are swapped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="356"/>
+        <source>Compensation model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="357"/>
+        <source>Tube length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="359"/>
+        <source>Tube diameter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SensorsRows.js" line="360"/>
+        <source>Reverse readings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4SerialPortsComponent</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="33"/>
+        <source>Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="34"/>
+        <source>Send rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="35"/>
+        <source>Forwarding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="36"/>
+        <source>Flow control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="37"/>
+        <source>UDP port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="38"/>
+        <source>Remote port</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="39"/>
+        <source>Broadcast</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="40"/>
+        <source>Protocol</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="45"/>
+        <source>%1 (instance %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="51"/>
+        <source>0 uses 100000 bytes/s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="51"/>
+        <source>0 uses half the link bandwidth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="96"/>
+        <source>1 port changed. Changes take effect after the vehicle reboots.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="97"/>
+        <source>%1 ports changed. Changes take effect after the vehicle reboots.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="101"/>
+        <source>Revert Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="107"/>
+        <source>Reboot Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="135"/>
+        <source>All Ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="135"/>
+        <source>In Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="145"/>
+        <source>Showing %1 of %2 ports.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="146"/>
+        <source>Showing all %1 ports.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="224"/>
+        <source>No function assigned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="235"/>
+        <source>Shared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="240"/>
+        <source>Reboot required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="258"/>
+        <source>Functions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="258"/>
+        <source>Function</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="309"/>
+        <source>%1 always runs on this port unless it is assigned to another port.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="326"/>
+        <source>Baud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="341"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="419"/>
+        <source>Loading...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="341"/>
+        <source>N/A</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="421"/>
+        <source>Options are hidden while more than one function is assigned.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.qml" line="422"/>
+        <source>No options for this port.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.cc" line="10"/>
+        <source>Ports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsComponent.cc" line="32"/>
+        <source>Assign functions such as MAVLink telemetry, GPS and RC input to the vehicle&apos;s serial ports.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PX4SerialPortsController</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsController.cc" line="154"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsController.cc" line="243"/>
+        <source>%1 = %2 (default port)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsController.cc" line="262"/>
+        <source>%1 always uses this port unless it is assigned to another port, so %2 will not work here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsController.cc" line="268"/>
+        <source>%1 and %2 are both assigned to this port. Only one of them will start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4SerialPortsController.cc" line="270"/>
+        <source>%1 are all assigned to this port. Only one of them will start.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -14869,6 +19803,11 @@ Is this really what you want?</source>
         <source>Increase for more responsiveness, reduce if the attitude overshoots (there is only a setpoint when yaw is fixed, i.e. when centering the stick).</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterAttitude.qml" line="69"/>
+        <source>Attitude</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PX4TuningComponentCopterPosition</name>
@@ -14906,6 +19845,11 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="59"/>
         <source>Proportional gain (MPC_Z_P)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterPosition.qml" line="68"/>
+        <source>Position</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15081,13 +20025,22 @@ Is this really what you want?</source>
         <source>Differential gain (MPC_Z_VEL_D_ACC)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopterVelocity.qml" line="100"/>
+        <source>Velocity</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PX4TuningComponentPlaneAll</name>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneAll.qml" line="11"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneAll.qml" line="15"/>
         <source>Rate Controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneAll.qml" line="15"/>
+        <source>Attitude Controller</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15123,6 +20076,11 @@ Is this really what you want?</source>
         <source>The latency between a pitch step input and the achieved setpoint (inverse to a P gain)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneAttitude.qml" line="52"/>
+        <source>Attitude</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PX4TuningComponentPlaneRate</name>
@@ -15133,12 +20091,12 @@ Is this really what you want?</source>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="26"/>
-        <source>Porportional gain (FW_RR_P)</source>
+        <source>Proportional gain (FW_RR_P)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="27"/>
-        <source>Porportional gain.</source>
+        <source>Proportional gain.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15149,6 +20107,7 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="35"/>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="76"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="117"/>
         <source>Damping: increase to reduce overshoots and oscillations, but not higher than really needed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15160,7 +20119,6 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="43"/>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="84"/>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="117"/>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="125"/>
         <source>Generally does not need much adjustment, reduce this when seeing slow oscillations.</source>
         <translation type="unfinished"></translation>
@@ -15174,23 +20132,38 @@ Is this really what you want?</source>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="51"/>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="92"/>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="133"/>
-        <source>Feedforward gused to compensate for aerodynamic damping.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="60"/>
-        <source>Pitch</source>
+        <source>Feedforward used to compensate for aerodynamic damping.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="67"/>
-        <source>Porportional Gain (FW_PR_P)</source>
+        <source>Proportional Gain (FW_PR_P)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="68"/>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="109"/>
-        <source>Porportional Gain.</source>
+        <source>Proportional Gain.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="108"/>
+        <source>Proportional Gain (FW_YR_P)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="116"/>
+        <source>Differential Gain (FW_YR_D)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="149"/>
+        <source>Rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="60"/>
+        <source>Pitch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15211,16 +20184,6 @@ Is this really what you want?</source>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="101"/>
         <source>Yaw</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="108"/>
-        <source>Porportional Gain (FW_YR_P)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlaneRate.qml" line="116"/>
-        <source>Integral Gain (FW_YR_D)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15328,11 +20291,17 @@ Is this really what you want?</source>
         <source>Increase for more responsiveness, reduce if the attitude overshoots (there is only a setpoint when yaw is fixed, i.e. when centering the stick).</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftAttitude.qml" line="69"/>
+        <source>Attitude</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PX4TuningComponentSpacecraftPosition</name>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftPosition.qml" line="19"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftPosition.qml" line="60"/>
         <source>Position</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15486,6 +20455,7 @@ Is this really what you want?</source>
     <name>PX4TuningComponentSpacecraftVelocity</name>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftVelocity.qml" line="19"/>
+        <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentSpacecraftVelocity.qml" line="60"/>
         <source>Velocity</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15551,187 +20521,249 @@ Is this really what you want?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="27"/>
-        <source>The following parameters from the loaded file differ from what is currently set on the Vehicle. Click &apos;Ok&apos; to update them on the Vehicle.</source>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="35"/>
+        <source>%1 will be changed (including %2 not currently on the Vehicle)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="28"/>
-        <source>There are no differences between the file loaded and the current settings on the Vehicle.</source>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="37"/>
+        <source>%1 will be changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="41"/>
+        <source>1 already matches the Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="43"/>
+        <source>%1 already match the Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="46"/>
+        <source>1 read-only parameter will not be sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="48"/>
+        <source>%1 read-only parameters will not be sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="51"/>
+        <source>%1 not found on the Vehicle and cannot be sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="54"/>
+        <source>1 has an invalid value and will not be sent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="56"/>
-        <source>Comp ID</source>
+        <source>%1 have invalid values and will not be sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="59"/>
+        <source>Loaded 1 parameter from file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="60"/>
+        <source>Loaded 1 parameter from file: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="62"/>
+        <source>Loaded %1 parameters from file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="63"/>
+        <source>Loaded %1 parameters from file: %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="72"/>
+        <source>Click &apos;Ok&apos; to update the parameters below on the Vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="109"/>
+        <source>Comp ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="116"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="69"/>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="122"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="75"/>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="125"/>
+        <source>%1 — invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="128"/>
         <source>Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="78"/>
-        <source>N/A</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>ParameterDownloadProgress</name>
-    <message>
-        <location filename="../src/Toolbar/ParameterDownloadProgress.qml" line="51"/>
-        <source>Downloading</source>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="132"/>
+        <source>N/A — new to Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/ParameterDownloadProgress.qml" line="59"/>
-        <source>Click anywhere to hide</source>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="133"/>
+        <source>N/A — not on Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="144"/>
+        <source>Parameters marked &apos;new to Vehicle&apos; have not been reported by the Vehicle. They may only become visible after they are sent and the Vehicle is rebooted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="152"/>
+        <source>Parameters marked &apos;not on Vehicle&apos; cannot be sent since the file does not include type information. They may only exist after another parameter is changed and the Vehicle is rebooted, after which you can load this file again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterDiffDialog.qml" line="160"/>
+        <source>Parameters marked &apos;invalid&apos; have a value in the file that cannot be converted to the parameter&apos;s type on the Vehicle. They will not be sent.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>ParameterEditor</name>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="169"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="162"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="187"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="181"/>
         <source>Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="51"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="43"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="32"/>
-        <source>Missing Parameters</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="33"/>
-        <source>The following parameters from the file were not found on the vehicle and were skipped: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="55"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="47"/>
         <source>Reset all to firmware&apos;s defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="48"/>
         <location filename="../src/QmlControls/ParameterEditor.qml" line="56"/>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="64"/>
         <source>Reset All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="62"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="54"/>
         <source>Reset to vehicle&apos;s configuration defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="73"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="66"/>
         <source>Load Parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="78"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="71"/>
         <source>Save to file...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="80"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="73"/>
         <source>Save Parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="86"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="79"/>
         <source>Clear all favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="91"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="84"/>
         <source>Clear all RC to Param</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="102"/>
         <source>All Files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="102"/>
         <source>Mission Planner Files (*.param)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="164"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="157"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="179"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="172"/>
         <source>Hide read-only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="199"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="200"/>
         <source>Full List</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="200"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="201"/>
         <source>Modified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="201"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="202"/>
         <source>Favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="57"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="49"/>
         <source>Select Reset to reset all parameters to their defaults.
 
 Note that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="71"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="64"/>
         <source>Load from file for review...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="97"/>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="98"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="90"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="91"/>
         <source>Reboot Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="109"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="102"/>
         <source>Parameter Files (*.%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="65"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="57"/>
         <source>Select Reset to reset all parameters to the vehicle&apos;s configuration defaults.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditor.qml" line="99"/>
+        <location filename="../src/QmlControls/ParameterEditor.qml" line="92"/>
         <source>Select Ok to reboot vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15739,17 +20771,17 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
 <context>
     <name>ParameterEditorController</name>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="351"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="356"/>
         <source>Unable to create file: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="393"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="514"/>
         <source>Unable to open file: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="500"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="719"/>
         <source>No valid parameters found in file. Check that the file is in QGC or Mission Planner format.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15757,22 +20789,22 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
 <context>
     <name>ParameterEditorDialog</name>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="139"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="135"/>
         <source>Reset To Default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="194"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="190"/>
         <source>Min: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="199"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="195"/>
         <source>Max: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="204"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="200"/>
         <source>Default: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -15782,52 +20814,62 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="85"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="79"/>
+        <source>Warning: This parameter is read-only. Force edit is enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="80"/>
         <source>This parameter is read-only and cannot be modified.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="151"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="147"/>
         <source>Value: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="211"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="207"/>
         <source>Vehicle reboot required after change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="216"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="212"/>
         <source>Application restart required after change</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="222"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="218"/>
         <source>Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="223"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="219"/>
         <source>Make sure you know what you are doing and double-check your values before Save!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="230"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="226"/>
         <source>Force save (dangerous!)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="235"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="231"/>
         <source>Advanced settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="243"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="240"/>
+        <source>Force edit read-only param</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="263"/>
         <source>Manual Entry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="251"/>
+        <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="271"/>
         <source>Set RC to Param</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15835,40 +20877,65 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
 <context>
     <name>ParameterManager</name>
     <message>
-        <location filename="../src/FactSystem/ParameterManager.cc" line="1187"/>
+        <location filename="../src/FactSystem/ParameterManager.cc" line="545"/>
+        <source>Vehicle reboot required for changes to take effect. Use the main status indicator in the toolbar to reboot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FactSystem/ParameterManager.cc" line="1303"/>
         <source>Parameter cache CRC match failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/ParameterManager.cc" line="1344"/>
+        <location filename="../src/FactSystem/ParameterManager.cc" line="1453"/>
         <source>%1 was unable to retrieve the full set of parameters from vehicle %2. This will cause %1 to be unable to display its full user interface. If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FactSystem/ParameterManager.cc" line="1392"/>
+        <location filename="../src/FactSystem/ParameterManager.cc" line="1510"/>
+        <source>Vehicle %1: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FactSystem/ParameterManager.cc" line="1512"/>
+        <source>%1 was unable to retrieve the full set of parameters from component(s) %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FactSystem/ParameterManager.cc" line="1551"/>
         <source>Vehicle %1 did not respond to request for parameters. This will cause %2 to be unable to display its full user interface.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FactSystem/BulkRefreshJob.cc" line="88"/>
+        <source>Parameter refresh failed for: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/FactSystem/BulkRefreshJob.cc" line="89"/>
+        <source>Parameter Bulk Refresh</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>ParameterTableModel</name>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="63"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="67"/>
         <source>Fav</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="64"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="68"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="65"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="69"/>
         <source>Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ParameterEditorController.cc" line="66"/>
+        <location filename="../src/QmlControls/ParameterEditorController.cc" line="70"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15876,148 +20943,214 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
 <context>
     <name>PhotoVideoControl</name>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="356"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="360"/>
         <source>Camera Tracking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="47"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="48"/>
         <source>Zoom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="188"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="191"/>
         <source>Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="271"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="275"/>
         <source>Photo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="305"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="309"/>
         <source>Free: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="313"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="317"/>
         <source>Battery: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="388"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="392"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="408"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="411"/>
         <source>Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="414"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="417"/>
         <source>Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="420"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="423"/>
         <source>Thermal View Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="426"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="429"/>
         <source>Blend Opacity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="441"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="444"/>
         <source>Photo Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="447"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="450"/>
         <source>Photo Interval (seconds)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="453"/>
-        <source>Video Grid Lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="459"/>
-        <source>Video Screen Fit</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="465"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="456"/>
         <source>Reset Camera Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="470"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="461"/>
         <source>Storage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="488"/>
         <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="488"/>
         <source>Blend</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="488"/>
         <source>Full</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="488"/>
         <source>Picture In Picture</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="576"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="567"/>
         <source>Single</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="576"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="567"/>
         <source>Time Lapse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="610"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="587"/>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="614"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="591"/>
         <source>Reset Camera to Factory Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="615"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="592"/>
         <source>Confirm resetting all settings?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="634"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="611"/>
         <source>Format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="639"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="616"/>
         <source>Format Camera Storage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="640"/>
+        <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="617"/>
         <source>Confirm erasing all files?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PipelineSession</name>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="179"/>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="190"/>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="206"/>
+        <source>Unable to create the video pipeline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="223"/>
+        <source>The video stream %1 is not supported, or a GStreamer plugin it needs is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="239"/>
+        <source>Unable to start the video stream: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="458"/>
+        <source>Unable to decode the video: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="471"/>
+        <source>The video stream refused the connection: its user name or password is missing or wrong.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="472"/>
+        <source>Video stream error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="484"/>
+        <source>unknown error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/PipelineSession.cc" line="594"/>
+        <source>The video stream ended.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PiperTtsEngine</name>
+    <message>
+        <location filename="../src/Utilities/Audio/PiperTtsEngine.cc" line="45"/>
+        <source>Piper or a Piper voice is not installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/Audio/PiperTtsEngine.cc" line="160"/>
+        <source>Piper exited with code %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlanEditLayers</name>
+    <message>
+        <location filename="../src/PlanView/PlanEditLayers.qml" line="15"/>
+        <source>Mission</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanEditLayers.qml" line="16"/>
+        <source>GeoFence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanEditLayers.qml" line="17"/>
+        <source>Rally Points</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -16029,221 +21162,254 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="50"/>
-        <source>Untitled</source>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="53"/>
+        <source>&lt;Untitled&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="72"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="61"/>
         <source>Vehicle Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="114"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="103"/>
         <source>Expected Home Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="136"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="125"/>
         <source>Click in map to set position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="144"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="133"/>
         <source>Drag to move home position. Click to set new position.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="157"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="146"/>
         <source>Altitude (AMSL)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="178"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="167"/>
         <source>Actual position/alt set by vehicle at flight time.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanInfoEditor.qml" line="188"/>
+        <location filename="../src/PlanView/PlanInfoEditor.qml" line="177"/>
         <source>Plan Templates</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlanInspectorHeader</name>
+    <message>
+        <location filename="../src/PlanView/PlanInspectorHeader.qml" line="34"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanInspectorHeader.qml" line="49"/>
+        <source>Previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanInspectorHeader.qml" line="59"/>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanInspectorHeader.qml" line="69"/>
+        <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PlanManager</name>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="175"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="177"/>
         <source>Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="180"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="182"/>
         <source>Mission request list failed, maximum retries exceeded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="184"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="186"/>
         <source>Retrying %1 REQUEST_LIST retry Count</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="191"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="193"/>
         <source>Mission read failed, maximum retries exceeded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="195"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="197"/>
         <source>Retrying %1 MISSION_REQUEST retry Count</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="203"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="207"/>
         <source>Mission write failed, vehicle failed to send final ack.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="208"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="210"/>
+        <source>Mission write failed, maximum retries exceeded waiting for final ack.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/PlanManager.cc" line="223"/>
         <source>Mission write mission count failed, maximum retries exceeded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="217"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="232"/>
         <source>Vehicle did not request all items from ground station: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="225"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="240"/>
         <source>Mission remove all, maximum retries exceeded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="229"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="244"/>
         <source>Retrying %1 MISSION_CLEAR_ALL retry Count</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="236"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="251"/>
         <source>Vehicle did not respond to mission item communication: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="353"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="368"/>
         <source>Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="511"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="528"/>
         <source>Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="625"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="648"/>
+        <source>Mission write could not be confirmed, the vehicle never acknowledged the final item. The mission may have been uploaded, load it from the vehicle to verify.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/PlanManager.cc" line="658"/>
         <source>Vehicle remove all failed. Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="700"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="733"/>
         <source>Item #%1 Command: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="704"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="737"/>
         <source>Frame: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="710"/>
-        <location filename="../src/MissionManager/PlanManager.cc" line="713"/>
-        <location filename="../src/MissionManager/PlanManager.cc" line="716"/>
-        <location filename="../src/MissionManager/PlanManager.cc" line="719"/>
-        <location filename="../src/MissionManager/PlanManager.cc" line="722"/>
-        <location filename="../src/MissionManager/PlanManager.cc" line="725"/>
-        <location filename="../src/MissionManager/PlanManager.cc" line="728"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="743"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="746"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="749"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="752"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="755"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="758"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="761"/>
         <source>Value: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="747"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="780"/>
         <source>Mission accepted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="750"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="783"/>
         <source>Unspecified error.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="753"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="786"/>
         <source>Coordinate frame is not supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="756"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="789"/>
         <source>Command is not supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="759"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="792"/>
         <source>Mission item exceeds storage space.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="762"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="795"/>
         <source>One of the parameters has an invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="765"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="798"/>
         <source>Param 1 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="768"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="801"/>
         <source>Param 2 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="771"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="804"/>
         <source>Param 3 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="774"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="807"/>
         <source>Param 4 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="777"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="810"/>
         <source>Param 5 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="780"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="813"/>
         <source>Param 6 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="783"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="816"/>
         <source>Param 7 invalid value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="786"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="819"/>
         <source>Received mission item out of sequence.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="789"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="822"/>
         <source>Not accepting any mission commands.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="793"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="826"/>
         <source>Unknown error: %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanManager.cc" line="636"/>
+        <location filename="../src/MissionManager/PlanManager.cc" line="669"/>
         <source>Vehicle returned error: %1. %2Vehicle did not accept guided item.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16251,75 +21417,151 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
 <context>
     <name>PlanMasterController</name>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="207"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="210"/>
         <source>Download not supported on high latency links.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="311"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="326"/>
         <source>Upload not supported on high latency links.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="333"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="348"/>
         <source>Error loading Plan file (%1). %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="483"/>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="489"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="465"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="471"/>
         <source>Plan save error %1 : %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="529"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="498"/>
         <source>KML save error %1 : %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="681"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="588"/>
         <source>Supported types (*.%1 *.%2 *.%3)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="858"/>
-        <source>Archive file not found: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="863"/>
-        <source>Not a supported archive format: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="869"/>
-        <source>Could not create temporary directory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="887"/>
-        <source>Extraction failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="888"/>
-        <source>Failed to extract plan archive: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="902"/>
-        <source>No plan file found in archive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="682"/>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="589"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="598"/>
         <source>All Files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
+        <location filename="../src/MissionManager/PlanMasterController.cc" line="598"/>
         <source>Plan Files (*.%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlanPanelTabBar</name>
+    <message>
+        <location filename="../src/PlanView/PlanPanelTabBar.qml" line="26"/>
+        <source>Plan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanPanelTabBar.qml" line="27"/>
+        <source>Mission</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanPanelTabBar.qml" line="28"/>
+        <source>Fence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanPanelTabBar.qml" line="29"/>
+        <source>Rally</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlanTabPage</name>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="47"/>
+        <source>Transform Mission</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="66"/>
+        <source>Plan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="75"/>
+        <source>File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="82"/>
+        <source>&lt;Untitled&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="95"/>
+        <source>Firmware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="122"/>
+        <source>Vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="148"/>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="166"/>
+        <source>Not set. Click in the map to set it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="170"/>
+        <source>Set, altitude (AMSL)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="172"/>
+        <source>Set, %1 %2 AMSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="174"/>
+        <source>Set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="190"/>
+        <source>Start from a template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="191"/>
+        <source>optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="229"/>
+        <source>Defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="252"/>
+        <source>Tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanTabPage.qml" line="258"/>
+        <source>Transform mission...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -16327,7 +21569,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <name>PlanToolBarIndicators</name>
     <message>
         <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="39"/>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="195"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="206"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16337,65 +21579,64 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="50"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="61"/>
         <source>Open Plan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="51"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="55"/>
         <source>You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="75"/>
-        <source>&apos;%1&apos; already exists. Overwrite?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="76"/>
-        <source>Save as &apos;%1&apos;?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="77"/>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="128"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="123"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="86"/>
         <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="93"/>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="100"/>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="148"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="143"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="94"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="57"/>
+        <source>You have unsaved changes. Loading a new Plan will lose these changes. Are you sure?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="59"/>
+        <source>You have unsent changes. Loading a new Plan will lose these changes. Are you sure?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="87"/>
         <source>Are you sure you want to remove all the items from the plan editor?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="101"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="94"/>
         <source>Are you sure you want to remove the plan from the vehicle and the plan editor?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="120"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="115"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="138"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="133"/>
         <source>Upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="167"/>
-        <source>Click in map to add rally points</source>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="184"/>
+        <source>Save as...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="184"/>
+        <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="195"/>
         <source>Save as KML</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16403,270 +21644,310 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
 <context>
     <name>PlanTreeView</name>
     <message>
-        <location filename="../src/PlanView/PlanTreeView.qml" line="157"/>
+        <location filename="../src/PlanView/PlanTreeView.qml" line="177"/>
         <source>&lt;Untitled&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanTreeView.qml" line="158"/>
-        <source> items</source>
+        <location filename="../src/PlanView/PlanTreeView.qml" line="178"/>
+        <source>%1 items</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanTreeView.qml" line="159"/>
-        <source> points</source>
+        <location filename="../src/PlanView/PlanTreeView.qml" line="179"/>
+        <source>%1 points</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PlanView</name>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="95"/>
+        <location filename="../src/PlanView/PlanView.qml" line="166"/>
         <source>Plan is waiting on terrain data from server for correct altitude values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="118"/>
+        <location filename="../src/PlanView/PlanView.qml" line="189"/>
         <source>Plan Upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="130"/>
+        <location filename="../src/PlanView/PlanView.qml" line="201"/>
         <source>Select Plan File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="140"/>
+        <location filename="../src/PlanView/PlanView.qml" line="211"/>
         <source>Save Plan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="154"/>
+        <location filename="../src/PlanView/PlanView.qml" line="225"/>
         <source>Save KML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="464"/>
+        <location filename="../src/PlanView/PlanView.qml" line="587"/>
         <source>Waypoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="474"/>
+        <location filename="../src/PlanView/PlanView.qml" line="605"/>
         <source>ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="450"/>
+        <location filename="../src/PlanView/PlanView.qml" line="573"/>
         <source>Pattern</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="474"/>
+        <location filename="../src/PlanView/PlanView.qml" line="319"/>
+        <source>Click in map to move Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanView.qml" line="319"/>
+        <source>Click in map to set Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanView.qml" line="322"/>
+        <source>Click in map to add rally points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanView.qml" line="605"/>
         <source>Cancel ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="496"/>
+        <location filename="../src/PlanView/PlanView.qml" line="629"/>
         <source>Stats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="787"/>
+        <location filename="../src/PlanView/PlanView.qml" line="930"/>
+        <source>Choose takeoff mode:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanView.qml" line="934"/>
+        <source>VTOL takeoff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanView.qml" line="946"/>
+        <source>Multicopter takeoff</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/PlanView.qml" line="966"/>
         <source>Plan View - Vehicle Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="787"/>
+        <location filename="../src/PlanView/PlanView.qml" line="966"/>
         <source>Plan View - Vehicle Changed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="795"/>
+        <location filename="../src/PlanView/PlanView.qml" line="974"/>
         <source>The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="795"/>
+        <location filename="../src/PlanView/PlanView.qml" line="974"/>
         <source>The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="802"/>
+        <location filename="../src/PlanView/PlanView.qml" line="981"/>
         <source>Discard Unsaved Changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="802"/>
+        <location filename="../src/PlanView/PlanView.qml" line="981"/>
         <source>Discard Unsaved Changes, Load New Plan From Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="802"/>
+        <location filename="../src/PlanView/PlanView.qml" line="981"/>
         <source>Load New Plan From Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="813"/>
+        <location filename="../src/PlanView/PlanView.qml" line="992"/>
         <source>Keep Current Plan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="813"/>
+        <location filename="../src/PlanView/PlanView.qml" line="992"/>
         <source>Keep Current Plan, Don&apos;t Update From Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="838"/>
+        <location filename="../src/PlanView/PlanView.qml" line="1017"/>
         <source>Insert ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="848"/>
+        <location filename="../src/PlanView/PlanView.qml" line="1027"/>
         <source>Insert Cancel ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="119"/>
+        <location filename="../src/PlanView/PlanView.qml" line="190"/>
         <source>This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. This can lead to errors or incorrect behavior. It is recommended to recreate the Plan for the correct firmware/vehicle type.
 
 Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="116"/>
+        <location filename="../src/PlanView/PlanView.qml" line="187"/>
         <source>Send To Vehicle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="116"/>
+        <location filename="../src/PlanView/PlanView.qml" line="187"/>
         <source>Current mission must be paused prior to uploading a new Plan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="440"/>
+        <location filename="../src/PlanView/PlanView.qml" line="560"/>
         <source>Takeoff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="484"/>
+        <location filename="../src/PlanView/PlanView.qml" line="281"/>
         <source>Return</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="486"/>
+        <location filename="../src/PlanView/PlanView.qml" line="284"/>
         <source>Alt Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="487"/>
+        <location filename="../src/PlanView/PlanView.qml" line="286"/>
         <source>Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="760"/>
+        <location filename="../src/PlanView/PlanView.qml" line="906"/>
         <source>Create complex pattern:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="89"/>
-        <location filename="../src/PlanView/PlanView.qml" line="94"/>
+        <location filename="../src/PlanView/PlanView.qml" line="160"/>
+        <location filename="../src/PlanView/PlanView.qml" line="165"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="90"/>
-        <location filename="../src/PlanView/PlanView.qml" line="95"/>
+        <location filename="../src/PlanView/PlanView.qml" line="161"/>
+        <location filename="../src/PlanView/PlanView.qml" line="166"/>
         <source>Unable to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="90"/>
+        <location filename="../src/PlanView/PlanView.qml" line="161"/>
         <source>Plan has incomplete items. Complete all items and %1 again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/PlanView.qml" line="89"/>
-        <location filename="../src/PlanView/PlanView.qml" line="94"/>
+        <location filename="../src/PlanView/PlanView.qml" line="160"/>
+        <location filename="../src/PlanView/PlanView.qml" line="165"/>
         <source>Upload</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PlanViewGeoMap</name>
+    <message>
+        <location filename="../src/PlanView/PlanViewGeoMap.qml" line="50"/>
+        <source>H</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PlanViewToolBar</name>
     <message>
-        <location filename="../src/Toolbar/PlanViewToolBar.qml" line="109"/>
+        <location filename="../src/Toolbar/PlanViewToolBar.qml" line="106"/>
         <source>Syncing Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/PlanViewToolBar.qml" line="116"/>
+        <location filename="../src/Toolbar/PlanViewToolBar.qml" line="113"/>
         <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/PlanViewToolBar.qml" line="125"/>
+        <location filename="../src/Toolbar/PlanViewToolBar.qml" line="124"/>
         <source>Click anywhere to hide</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PowerComponent</name>
+    <name>PositionManager</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.cc" line="7"/>
-        <source>Power</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="463"/>
+        <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.cc" line="18"/>
-        <source>Configure battery parameters, ESC calibration, and UAVCAN bus settings.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>PowerComponentSummary</name>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="14"/>
-        <source>N/A</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="465"/>
+        <source>GNSS receiver</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="58"/>
-        <source>Battery %1 Source</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="467"/>
+        <source>Plugin positioning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="58"/>
-        <source>Battery Source</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="467"/>
+        <source>Internal positioning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="63"/>
-        <source>Battery Full</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="476"/>
+        <source>Selected position source is not connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="63"/>
-        <source>Battery %1 Full</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="478"/>
+        <source>Waiting for location permission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="68"/>
-        <source>Battery Empty</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="480"/>
+        <source>Location permission denied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="68"/>
-        <source>Battery %1 Empty</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="482"/>
+        <source>No internal positioning backend is available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="73"/>
-        <source>Number of Cells</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="484"/>
+        <source>Waiting for a position fix</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="73"/>
-        <source>Battery %1 Number of Cells</source>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="486"/>
+        <source>Position is usable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="488"/>
+        <source>Position data is stale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Positioning/PositionManager.cc" line="490"/>
+        <source>Position fix does not meet accuracy requirements</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -16704,29 +21985,21 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>PreFlightCheckGroup</name>
     <message>
-        <location filename="../src/QmlControls/PreFlightCheckGroup.qml" line="41"/>
+        <location filename="../src/QmlControls/PreFlightCheckGroup.qml" line="59"/>
         <source> (passed)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QmlControls/PreFlightCheckGroup.qml" line="59"/>
+        <source> (locked)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PreFlightCheckList</name>
     <message>
-        <location filename="../src/FlyView/PreFlightCheckList.qml" line="123"/>
-        <source>(Passed)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/FlyView/PreFlightCheckList.qml" line="123"/>
-        <source>In Progress</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>PreFlightCheckListShowAction</name>
-    <message>
-        <location filename="../src/FlyView/PreFlightCheckListShowAction.qml" line="5"/>
-        <source>Checklist</source>
+        <location filename="../src/FlyView/PreFlightCheckList.qml" line="112"/>
+        <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -16833,6 +22106,14 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
+    <name>PreVehicleCheckList</name>
+    <message>
+        <location filename="../src/FlyView/PreVehicleCheckList.qml" line="56"/>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ProximityRadarValues</name>
     <message>
         <location filename="../src/FlyView/ProximityRadarValues.qml" line="34"/>
@@ -16843,45 +22124,35 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCApplication</name>
     <message>
-        <location filename="../src/QGCApplication.cc" line="322"/>
+        <location filename="../src/QGCApplication.cc" line="350"/>
         <source>The current user does not have the correct permissions to access serial devices. You should also remove modemmanager since it also interferes.&lt;br/&gt;&lt;br/&gt;If you are using Ubuntu, execute the following commands to fix these issues:&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QGCApplication.cc" line="348"/>
+        <location filename="../src/QGCApplication.cc" line="376"/>
         <source>The format for %1 saved settings has been modified. Your saved settings have been reset to defaults.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QGCApplication.cc" line="384"/>
+        <location filename="../src/QGCApplication.cc" line="416"/>
         <source>Parameters are missing from firmware. You may be running a version of firmware which is not fully supported or your firmware has a bug in it. Missing params: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/QGCApplication.cc" line="527"/>
-        <source>There is a newer version of %1 available. You can download it from %2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/QGCApplication.cc" line="527"/>
-        <source>New Version Available</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>QGCCacheWorker</name>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCTileCacheWorker.cpp" line="44"/>
+        <location filename="../src/QtLocationPlugin/QGCTileCacheWorker.cpp" line="57"/>
         <source>Database Not Initialized</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCTileCacheWorker.cpp" line="73"/>
+        <location filename="../src/QtLocationPlugin/QGCTileCacheWorker.cpp" line="87"/>
         <source>Database Init Failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCTileCacheWorker.cpp" line="119"/>
+        <location filename="../src/QtLocationPlugin/QGCTileCacheWorker.cpp" line="133"/>
         <source>Worker shutting down</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16918,7 +22189,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCCorePlugin</name>
     <message>
-        <location filename="../src/API/QGCCorePlugin.cc" line="113"/>
+        <location filename="../src/API/QGCCorePlugin.cc" line="115"/>
         <source>Vibration</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16934,12 +22205,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
     <message>
         <location filename="../src/API/QGCCorePlugin.cc" line="94"/>
-        <source>Onboard Logs (FTP)</source>
+        <source>GeoTag Images</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/API/QGCCorePlugin.cc" line="99"/>
-        <source>GeoTag Images</source>
+        <location filename="../src/API/QGCCorePlugin.cc" line="98"/>
+        <source>Video Recordings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16948,12 +22219,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/API/QGCCorePlugin.cc" line="108"/>
+        <location filename="../src/API/QGCCorePlugin.cc" line="109"/>
         <source>MAVLink Inspector</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/API/QGCCorePlugin.cc" line="166"/>
+        <location filename="../src/API/QGCCorePlugin.cc" line="182"/>
         <source>WARNING: You are about to enter Advanced Mode. If used incorrectly, this may cause your vehicle to malfunction thus voiding your warranty. You should do so only if instructed by customer support. Are you sure you want to enable Advanced Mode?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16961,7 +22232,9 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCDelayButton</name>
     <message>
-        <location filename="../src/QmlControls/QGCDelayButton.qml" line="91"/>
+        <location filename="../src/QmlControls/QGCDelayButton.qml" line="46"/>
+        <location filename="../src/QmlControls/QGCDelayButton.qml" line="117"/>
+        <location filename="../src/QmlControls/QGCDelayButton.qml" line="129"/>
         <source>Hold to Confirm</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16985,39 +22258,39 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCFileDialog</name>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="121"/>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="227"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="120"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="226"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="178"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="177"/>
         <source>Path: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="209"/>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="332"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="208"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="331"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="220"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="219"/>
         <source>No files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="278"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="277"/>
         <source>New file name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="292"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="291"/>
         <source>The file %1 exists. Click Save again to replace it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialog.qml" line="300"/>
+        <location filename="../src/QmlControls/QGCFileDialog.qml" line="299"/>
         <source>Save to existing file:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17025,17 +22298,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCFileDialogController</name>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialogController.cc" line="172"/>
+        <location filename="../src/QmlControls/QGCFileDialogController.cc" line="178"/>
         <source>Missions directory is not configured</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialogController.cc" line="179"/>
+        <location filename="../src/QmlControls/QGCFileDialogController.cc" line="185"/>
         <source>Missions save path does not exist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCFileDialogController.cc" line="203"/>
+        <location filename="../src/QmlControls/QGCFileDialogController.cc" line="209"/>
         <source>Failed to import file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17068,68 +22341,68 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="152"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="154"/>
         <source>Failed to start download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="182"/>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="323"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="184"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="325"/>
         <source>Download cancelled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="279"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="281"/>
         <source>HTTP error %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="326"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="328"/>
         <source>File not found (404)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="329"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="331"/>
         <source>Connection timed out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="332"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="334"/>
         <source>Host not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="335"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="337"/>
         <source>Connection refused</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="338"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="340"/>
         <source>SSL handshake failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="344"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="346"/>
         <source>Network error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="375"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="378"/>
         <source>Decompression failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="461"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="464"/>
         <source>Failed to write downloaded file (%1): %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="516"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="519"/>
         <source>Failed to compute file hash</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="521"/>
+        <location filename="../src/Utilities/Network/QGCFileDownload.cc" line="524"/>
         <source>Hash verification failed. Expected: %1, Got: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17150,42 +22423,42 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCMapEngineManager</name>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="487"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="498"/>
         <source>No archive path specified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="492"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="503"/>
         <source>Archive file not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="497"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="508"/>
         <source>Not a supported archive format: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="502"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="513"/>
         <source>Import already in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="508"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="519"/>
         <source>Could not create temporary directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="537"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="548"/>
         <source>Extraction failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="553"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="564"/>
         <source>No tile database found in archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="574"/>
+        <location filename="../src/QtLocationPlugin/QGCMapEngineManager.cc" line="585"/>
         <source>Failed to start import task</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17193,7 +22466,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCMapPolygon</name>
     <message>
-        <location filename="../src/QmlControls/QGCMapPolygon.cc" line="580"/>
+        <location filename="../src/QmlControls/QGCMapPolygon.cc" line="558"/>
         <source>No polygons found in file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17280,7 +22553,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCMapPolyline</name>
     <message>
-        <location filename="../src/QmlControls/QGCMapPolyline.cc" line="385"/>
+        <location filename="../src/QmlControls/QGCMapPolyline.cc" line="347"/>
         <source>No polylines found in file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17336,7 +22609,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCOptionsComboBox</name>
     <message>
-        <location filename="../src/QmlControls/QGCOptionsComboBox.qml" line="12"/>
+        <location filename="../src/QmlControls/QGCOptionsComboBox.qml" line="14"/>
         <source>Options</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17344,83 +22617,82 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCPopupDialog</name>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="137"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="139"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="140"/>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="149"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="142"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="143"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="145"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="146"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="148"/>
         <source>Apply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="152"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="151"/>
         <source>Save All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="155"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="154"/>
         <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="158"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="157"/>
         <source>Yes to All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="161"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="160"/>
         <source>Retry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="164"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="163"/>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="167"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="166"/>
         <source>Restore to Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="170"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="169"/>
         <source>Ignore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="176"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="175"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="179"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="178"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="182"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="181"/>
         <source>No</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="185"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="184"/>
         <source>No to All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="188"/>
+        <location filename="../src/QmlControls/QGCPopupDialog.qml" line="187"/>
         <source>Abort</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17428,15 +22700,28 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGCTextField</name>
     <message>
-        <location filename="../src/QmlControls/QGCTextField.qml" line="121"/>
+        <location filename="../src/QmlControls/QGCTextField.qml" line="122"/>
         <source>?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QGCVersionCheck</name>
+    <message>
+        <location filename="../src/Utilities/QGCVersionCheck.cc" line="119"/>
+        <source>There is a newer version of %1 available. You can download it from &lt;a href=&quot;%2&quot;&gt;%2&lt;/a&gt;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCVersionCheck.cc" line="121"/>
+        <source>New Version Available</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>QGeoFileTileCacheQGC</name>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoFileTileCacheQGC.cpp" line="208"/>
+        <location filename="../src/QtLocationPlugin/QGeoFileTileCacheQGC.cpp" line="213"/>
         <source>The Offline Map Cache database has been upgraded. Your old map cache sets have been reset.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17444,111 +22729,126 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QGeoTiledMapReplyQGC</name>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="93"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="99"/>
         <source>Unexpected Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="103"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="112"/>
         <source>Empty Reply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="115"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="124"/>
         <source>Image is Empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="121"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="130"/>
         <source>Invalid Map Provider</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="126"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="135"/>
         <source>Bing Tile Above Zoom Level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="134"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="143"/>
         <source>Failed to Serialize Terrain Tile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="142"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="151"/>
         <source>Unknown Format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="157"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="166"/>
         <source>Invalid Reply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="190"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="199"/>
         <source>Invalid Cache Tile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="201"/>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="208"/>
+        <source>Unexpected Cache Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="213"/>
+        <source>Network Manager Not Available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="218"/>
         <source>Network Not Available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/QtLocationPlugin/QGeoMapReplyQGC.cpp" line="226"/>
+        <source>Failed to Create Network Reply</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>QGroundControlQmlGlobal</name>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="259"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="223"/>
         <source>32 bit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="263"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="227"/>
         <source>64 bit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="274"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="248"/>
         <source>Rel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="278"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="252"/>
         <source>AGLC</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="280"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="254"/>
         <source>AGL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="282"/>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="303"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="256"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="277"/>
         <source>Mixed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="295"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="269"/>
         <source>Relative (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="297"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="271"/>
         <source>Absolute (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="299"/>
-        <source>Above Terrain Calced (%1)</source>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="273"/>
+        <source>Above Terrain Calculated (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="301"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="275"/>
         <source>Above Terrain (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="276"/>
+        <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="250"/>
         <source>AMSL</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17556,58 +22856,63 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="29"/>
-        <location filename="../src/Vehicle/Vehicle.cc" line="98"/>
+        <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="33"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="100"/>
         <source>Guided mode not supported by Vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="61"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonValidation.cc" line="41"/>
         <source>The following required keys are missing: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="86"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonValidation.cc" line="57"/>
         <source>Incorrect value type - key:type:expected %1:%2:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="72"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonValidation.cc" line="138"/>
         <source>Mismatched key and type list sizes: keys=%1 types=%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="298"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonValidation.cc" line="166"/>
+        <source>Unknown key: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="181"/>
         <source>Incorrect file type key expected:%1 actual:%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="304"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="187"/>
         <source>File version %1 is no longer supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="309"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="192"/>
         <source>File version %1 is newer than current supported version %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="348"/>
-        <source>Unable to parse json file: %1 error: %2 offset: %3</source>
+        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="225"/>
+        <source>Unable to parse json file: %1 error: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="355"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="230"/>
         <source>Root of json file is not object: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="363"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="238"/>
         <source>Json file: &apos;%1&apos;. %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="40"/>
+        <location filename="../src/Utilities/Parsing/Json/JsonValidation.cc" line="32"/>
         <source>Unknown type: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17640,148 +22945,233 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
 <context>
     <name>QSerialPort</name>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="23"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="42"/>
         <source>No error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="26"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="44"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="88"/>
         <source>Device is already open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="29"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="46"/>
         <source>Device is not open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="32"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="48"/>
         <source>Operation timed out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="35"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="50"/>
         <source>Error reading from device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="38"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="52"/>
         <source>Error writing to device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="41"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="54"/>
         <source>Device disappeared from the system</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport.cpp" line="448"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="108"/>
         <source>Unsupported open mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="75"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="297"/>
+        <source>Failed to set stop bits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="693"/>
+        <source>Timeout while writing data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="29"/>
+        <source>Reading from the device failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="31"/>
+        <source>Writing to the device failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="35"/>
+        <source>Device stopped transferring data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="64"/>
+        <source>No such device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="69"/>
+        <source>USB permission was denied. Replug the device or connect to it by hand to be asked again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="73"/>
+        <source>USB permission has not been granted. You have been asked to allow it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="76"/>
+        <source>USB permission has not been granted. The request has not been answered yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="79"/>
+        <source>USB permission has not been granted. The device was just attached, and Android asks first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="84"/>
+        <source>USB permission has not been granted. %1 asks once its window has the focus</source>
+        <extracomment>%1 is the name of the app, such as QGroundControl</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="93"/>
+        <source>More than one attached USB device has this name. Unplug the others, or choose the port again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="104"/>
+        <source>Failed to open the USB device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="243"/>
         <source>Closing device failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="97"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="271"/>
         <source>Failed to start async read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="117"/>
-        <source>Failed to stop async read</source>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="340"/>
+        <source>Failed to set flow control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="297"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="664"/>
         <source>Timeout while waiting for ready read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="308"/>
-        <source>Timeout while waiting for bytes written</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="329"/>
-        <source>Failed to write data one shot</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="351"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="369"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="307"/>
         <source>Failed to write to port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="361"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="706"/>
         <source>Invalid data or size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="373"/>
-        <source>Failed to flush</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="387"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="351"/>
         <source>Failed to purge buffers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="403"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="191"/>
+        <source>Not a tty device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="284"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="351"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="367"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="27"/>
+        <source>Device disconnected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="440"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="552"/>
+        <source>Unsupported baud rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="467"/>
+        <source>Unsupported data bits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="490"/>
+        <source>Unsupported parity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="503"/>
+        <source>Unsupported stop bits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="522"/>
+        <source>Unsupported flow control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="635"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="361"/>
         <source>Failed to set DTR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="414"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="640"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="366"/>
         <source>Failed to set RTS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="428"/>
+        <location filename="../src/Android/Serial/PosixSerialBackend.cc" line="647"/>
+        <location filename="../src/Android/Serial/UsbSerialBackend.cc" line="345"/>
+        <source>Failed to set break</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="133"/>
         <source>Failed to set parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="444"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="246"/>
         <source>Invalid baud rate value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="451"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="238"/>
         <source>Custom baud rate direction is unsupported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="460"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="249"/>
         <source>Failed to set baud rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="488"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="269"/>
         <source>Failed to set data bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="518"/>
+        <location filename="../src/Android/Serial/AndroidSerialPort.cc" line="283"/>
         <source>Failed to set parity</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="544"/>
-        <source>Failed to set StopBits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="570"/>
-        <source>Failed to set Flow Control</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Android/qtandroidserialport/qserialport_android.cpp" line="580"/>
-        <source>Failed to set Break Enabled</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -17899,6 +23289,37 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
+    <name>QtMultimediaVideoReceiver</name>
+    <message>
+        <location filename="../src/VideoManager/QtMultimedia/QtMultimediaVideoReceiver.cc" line="227"/>
+        <source>Unable to play the video stream %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/QtMultimedia/QtMultimediaVideoReceiver.cc" line="331"/>
+        <source>Video stream failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/QtMultimedia/QtMultimediaVideoReceiver.cc" line="361"/>
+        <source>the stream ended</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/QtMultimedia/QtMultimediaVideoReceiver.cc" line="428"/>
+        <source>no video for %1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QtVideoRecorder</name>
+    <message>
+        <location filename="../src/VideoManager/QtMultimedia/QtVideoRecorder.cc" line="180"/>
+        <source>No video encoder is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RCChannelMonitor</name>
     <message>
         <location filename="../src/QmlControls/RCChannelMonitor.qml" line="69"/>
@@ -17978,6 +23399,20 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
+    <name>RTCMMessageChips</name>
+    <message>
+        <location filename="../src/GPS/Qml/RTCMMessageChips.qml" line="39"/>
+        <source>%1 × %2</source>
+        <extracomment>%1 is an RTCM message ID, %2 is the number of messages received with that ID</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Qml/RTCMMessageChips.qml" line="39"/>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RadioComponent</name>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="29"/>
@@ -18044,15 +23479,58 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
+    <name>RallyPointAltitudeEditor</name>
+    <message>
+        <location filename="../src/PlanView/RallyPointAltitudeEditor.qml" line="30"/>
+        <source>Ground altitude at this point. Return and descent altitudes are measured from it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyPointAltitudeEditor.qml" line="32"/>
+        <source>Flight altitude at this point. Plane flies to this altitude and loiters there. Copter returns at the higher of this altitude and RTL_ALT, then lands. Set it high enough to clear terrain and obstacles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyPointAltitudeEditor.qml" line="34"/>
+        <source>Altitude of this point. How it is used depends on the vehicle firmware.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyPointAltitudeEditor.qml" line="48"/>
+        <source>Altitude</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyPointAltitudeEditor.qml" line="85"/>
+        <source>Terrain elevation is unavailable. Enter the AMSL altitude manually.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyPointAltitudeEditor.qml" line="86"/>
+        <source>Terrain elevation is unavailable. Select AMSL to enter the altitude manually.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RallyPointController</name>
     <message>
-        <location filename="../src/MissionManager/RallyPointController.cc" line="89"/>
+        <location filename="../src/MissionManager/RallyPointController.cc" line="90"/>
         <source>Rally: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/RallyPointController.cc" line="92"/>
-        <source>Rally Points supports version %1</source>
+        <location filename="../src/MissionManager/RallyPointController.cc" line="95"/>
+        <source>Rally Points supports versions %1 to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/RallyPointController.cc" line="108"/>
+        <source>Each point must be an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/RallyPointController.cc" line="125"/>
+        <source>Unsupported frame %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -18070,6 +23548,14 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
+    <name>RallyPointInspector</name>
+    <message>
+        <location filename="../src/PlanView/RallyPointInspector.qml" line="25"/>
+        <source>Rally Point %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RallyPointItemEditor</name>
     <message>
         <location filename="../src/PlanView/RallyPointItemEditor.qml" line="38"/>
@@ -18078,11 +23564,80 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
+    <name>RallyPointList</name>
+    <message>
+        <location filename="../src/PlanView/RallyPointList.qml" line="58"/>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyPointList.qml" line="64"/>
+        <source>%1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RallyPointMapVisuals</name>
     <message>
-        <location filename="../src/PlanView/RallyPointMapVisuals.qml" line="61"/>
+        <location filename="../src/PlanView/RallyPointMapVisuals.qml" line="70"/>
         <source>R</source>
         <comment>rally point map item label</comment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RallyTabPage</name>
+    <message>
+        <location filename="../src/PlanView/RallyTabPage.qml" line="77"/>
+        <source>Rally Points provide alternate landing points when performing a Return to Launch (RTL). Click in the map to add a point.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/RallyTabPage.qml" line="78"/>
+        <source>This vehicle does not support Rally Points.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RecordingBranch</name>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="167"/>
+        <source>The recording was not finalized in time and may be incomplete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="404"/>
+        <source>Unable to create the recording sink.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="414"/>
+        <source>Unable to add the recording sink.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="422"/>
+        <source>Unable to start recording to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="445"/>
+        <source>Unable to start recording.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="640"/>
+        <source>The storage is full.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="687"/>
+        <source>The storage is too slow to keep up with the video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/GStreamer/Pipeline/RecordingBranch.cc" line="728"/>
+        <source>The video stream has no keyframe a recording can start from.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -18181,60 +23736,60 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="251"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="256"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="256"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="261"/>
         <source>One-Sided</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="264"/>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="267"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="269"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="272"/>
         <source>Calibrate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="272"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="277"/>
         <source>Joystick Not Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="273"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="278"/>
         <source>%1 axes or more are needed to fly. Joystick is reporting %2 axes.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="275"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="280"/>
         <source>Not Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="276"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="281"/>
         <source>Please turn on RC transmitter.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="276"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="281"/>
         <source>%1 channels or more are needed to fly.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="281"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="286"/>
         <source>Zero Trims</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="282"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="287"/>
         <source>Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.
 
 %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="283"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibration.qml" line="288"/>
         <source>Please ensure all motor power is disconnected AND all props are removed from the vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18323,110 +23878,115 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="366"/>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1404"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="367"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1405"/>
         <source>Pitch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="367"/>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1402"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="368"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1403"/>
         <source>Roll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="368"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="369"/>
         <source>Aux 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="369"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="370"/>
         <source>Aux 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="370"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="371"/>
         <source>Aux 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="371"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="372"/>
         <source>Aux 4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="372"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="373"/>
         <source>Aux 5</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="373"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="374"/>
         <source>Aux 6</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="375"/>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1426"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="376"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1427"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="846"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="478"/>
+        <source>Detected %1 channels. To operate vehicle, you need at least %2 channels.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="847"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="878"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="879"/>
         <source>Calibrate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1406"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1407"/>
         <source>Yaw</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1408"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1409"/>
         <source>Throttle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1410"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1411"/>
         <source>Additional Axis 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1412"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1413"/>
         <source>Additional Axis 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1414"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1415"/>
         <source>Additional Axis 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1416"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1417"/>
         <source>Additional Axis 4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1418"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1419"/>
         <source>Additional Axis 5</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1420"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1421"/>
         <source>Additional Axis 6</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1422"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1423"/>
         <source>Pitch Extension</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1424"/>
+        <location filename="../src/Vehicle/VehicleSetup/RemoteControlCalibrationController.cc" line="1425"/>
         <source>Roll Extension</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18444,40 +24004,6 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
         <location filename="../src/Vehicle/VehicleSetup/RemoteControlChannelValueDisplay.qml" line="77"/>
         <source>Not Mapped</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>RemoteIDGpsLocation</name>
-    <message>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="9"/>
-        <source>NMEA External GPS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="23"/>
-        <source>Device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="34"/>
-        <source>Disabled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="35"/>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="67"/>
-        <source>UDP Port</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="43"/>
-        <source>Serial &lt;none available&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/RemoteIDGpsLocation.qml" line="50"/>
-        <source>Baudrate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -18539,38 +24065,46 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="323"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="310"/>
         <source>Arm Status Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="330"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="317"/>
         <source>Self ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="348"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="335"/>
         <source>If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="339"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="326"/>
         <source>Broadcast</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="358"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="345"/>
         <source>Broadcast Message</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="411"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="398"/>
         <source>Remote ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="413"/>
+        <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="400"/>
         <source>Configure</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RemoteIDSettings</name>
+    <message>
+        <location filename="../src/Settings/RemoteIDSettings.cc" line="74"/>
+        <source>Invalid Operator ID. Enter the full 19 or 20 character ID including the 3 secret characters.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -18729,77 +24263,6 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     </message>
 </context>
 <context>
-    <name>SafetyComponent</name>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.cc" line="5"/>
-        <source>Safety</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.cc" line="16"/>
-        <source>Configure failsafe actions, geofence, return to launch, and land mode settings.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>SafetyComponentSummary</name>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="31"/>
-        <source>Low Battery Failsafe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="36"/>
-        <source>RC/Joystick Loss Failsafe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="41"/>
-        <source>RC/Joystick Loss Timeout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="46"/>
-        <source>Data Link Loss Failsafe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="51"/>
-        <source>RTL Climb To</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="56"/>
-        <source>RTL, Then</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="58"/>
-        <source>Land immediately</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="60"/>
-        <source>Loiter and do not land</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="61"/>
-        <source>Loiter and land after specified time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="66"/>
-        <source>Loiter Alt</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="72"/>
-        <source>Land Delay</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>ScriptingComponent</name>
     <message>
         <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="22"/>
@@ -18842,67 +24305,67 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="200"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="202"/>
         <source>Are you sure you want to delete the script &quot;%1&quot;? This action cannot be undone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="201"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="203"/>
         <source>Delete Lua Script</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="204"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="206"/>
         <source>Delete failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="205"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="207"/>
         <source>Lua Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="220"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="222"/>
         <source>Cancel Operation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="228"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="230"/>
         <source>Transferring... %1%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="235"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="237"/>
         <source>Select Lua script to upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="253"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="255"/>
         <source>Upload failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="254"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="256"/>
         <source>Lua Upload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="262"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="264"/>
         <source>Save Lua Script</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="274"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="276"/>
         <source>Download failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="275"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="277"/>
         <source>Lua Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="289"/>
+        <location filename="../src/AutoPilotPlugins/Common/ScriptingComponent.qml" line="291"/>
         <source>Scripting is not supported by this version of firmware.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18950,430 +24413,729 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/SelectViewDropdown.qml" line="121"/>
+        <location filename="../src/Toolbar/SelectViewDropdown.qml" line="122"/>
+        <source>Update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/SelectViewDropdown.qml" line="135"/>
         <source>%1 Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SensorsCalibrationPanel</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="51"/>
+        <source>Accelerometer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="51"/>
+        <source>Compass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="105"/>
+        <source>The calibration did not finish. Keep the sensor out of the wind, blow across it when asked, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="110"/>
+        <source>The readings were not consistent. Move away from metal and magnets, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="111"/>
+        <source>The readings could not be used. Keep the vehicle still on each side, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="119"/>
+        <source>Starting…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="119"/>
+        <source>Waiting for the vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="122"/>
+        <source>Could not start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="125"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="127"/>
+        <source>Ready to calibrate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="128"/>
+        <source>Put the vehicle on each of its sides, in any order, and hold it still on each.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="129"/>
+        <source>Move away from metal and magnets. On each side, turn the vehicle slowly until the side is marked done.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="131"/>
+        <source>Waiting for the vehicle to cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="131"/>
+        <source>This can take a few seconds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="133"/>
+        <source>%1 calibrated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="134"/>
+        <source>Reboot the vehicle before flight so it takes effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="134"/>
+        <source>The result is saved on the vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="136"/>
+        <source>Calibration failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="140"/>
+        <source>Calibrating %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="140"/>
+        <source>Follow the instructions in the log.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="143"/>
+        <source>Rotate the vehicle slowly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="143"/>
+        <source>Keep turning until the side is marked done.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="144"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="403"/>
+        <source>Hold still</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="144"/>
+        <source>Do not move it until the side is marked done.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="147"/>
+        <source>That side is already done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="147"/>
+        <source>Use a side that is not done yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="150"/>
+        <source>%1 done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="151"/>
+        <source>Now place it on another side.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="153"/>
+        <source>Next: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="233"/>
+        <source>Calibrated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="235"/>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="237"/>
+        <source>%1 sides</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="239"/>
+        <source>%1 of %2 sides done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="247"/>
+        <source>Cancelling…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="247"/>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="247"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="349"/>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="358"/>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="366"/>
+        <source>Reboot vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="374"/>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="403"/>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="409"/>
+        <source>Start here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="414"/>
+        <source>Detected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="414"/>
+        <source>Suggested</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="418"/>
+        <source>All sides done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="421"/>
+        <source>Calibration incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="456"/>
+        <source>Autopilot orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="465"/>
+        <source>Set this before calibrating.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="491"/>
+        <source>Hide log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationPanel.qml" line="491"/>
+        <source>Show log</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SensorsCalibrationRow</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="53"/>
+        <source>Keep the vehicle still.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="81"/>
+        <source>Calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="92"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="104"/>
+        <source>Calibrating…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="93"/>
+        <source>Calibration failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="94"/>
+        <source>Calibrated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="110"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="110"/>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="110"/>
+        <source>Calibrate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationRow.qml" line="152"/>
+        <source>GPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SensorsCalibrationStage</name>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsCalibrationStage.qml" line="98"/>
+        <source>%1 - %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SensorsComponent</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="7"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="9"/>
         <source>Sensors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="28"/>
-        <source>Configure and calibrate gyroscope, accelerometer, magnetometer, and airspeed sensors.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="21"/>
+        <source>Calibrate the compass, gyroscope, accelerometer, barometer and airspeed sensors, and set how they are mounted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="102"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="158"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="29"/>
         <source>Compass</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="105"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="166"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="29"/>
         <source>Gyroscope</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="106"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="169"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="29"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="114"/>
         <source>Accelerometer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="107"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="172"/>
-        <source>Level Horizon</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="29"/>
+        <source>Magnetometer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="30"/>
+        <source>Barometer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="30"/>
+        <source>Level horizon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="30"/>
+        <source>Orientation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="31"/>
+        <source>Calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="31"/>
+        <source>Priority</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="31"/>
+        <source>Board rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="104"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="118"/>
+        <source>Setup required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="106"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="120"/>
+        <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="110"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="177"/>
-        <source>Airspeed</source>
+        <source>Compass 0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="111"/>
+        <source>Compass 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="112"/>
+        <source>Compass 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="113"/>
-        <source>Orientations</source>
+        <source>Gyro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="30"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="118"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponent.cc" line="120"/>
+        <source>Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SensorsComponentController</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="123"/>
-        <source>Calibration complete</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="140"/>
-        <source>Calibration failed. Calibration log will be displayed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="234"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="433"/>
         <source>Unsupported calibration firmware version, using log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="254"/>
-        <source>Place your vehicle into one of the Incomplete orientations shown below and hold it still</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="24"/>
+        <source>Vehicle did not respond to the calibration cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="320"/>
-        <source>Rotate the vehicle continuously as shown in the diagram until marked as Completed</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="296"/>
+        <source>The vehicle did not respond.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="322"/>
-        <source>Hold still in the current orientation</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="298"/>
+        <source>A calibration request is already waiting for the vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="347"/>
-        <source>Place you vehicle into one of the orientations shown below and hold it still</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="303"/>
+        <source>The vehicle did not accept the calibration. It may be armed or busy, or its firmware may not support it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="354"/>
-        <source>Orientation already completed, place you vehicle into one of the incomplete orientations shown below and hold it still</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="351"/>
+        <source>No result from the vehicle. Check the compass offsets, or try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="408"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="625"/>
         <source>Reset successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="415"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentController.cc" line="632"/>
         <source>Reset failed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>SensorsComponentSummary</name>
+    <name>SensorsLargeVehicleForm</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="31"/>
-        <source>Compass 0</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="37"/>
+        <source>Too big to rotate?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="32"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="49"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="54"/>
-        <source>Setup required</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="43"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="71"/>
+        <source>Large vehicle calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="32"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="38"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="44"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="49"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="54"/>
-        <source>Ready</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="76"/>
+        <source>Offsets only</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="36"/>
-        <source>Compass 1</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="82"/>
+        <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="42"/>
-        <source>Compass 2</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="95"/>
+        <source>Point the vehicle at a known heading and hold it still. This uses the heading and the GPS position, and is less accurate than calibrating all six sides.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="48"/>
-        <source>Gyro</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="106"/>
+        <source>Heading (0 is true north)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="53"/>
-        <source>Accelerometer</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="117"/>
+        <source>deg</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="130"/>
+        <source>Calibrate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="142"/>
+        <source>Calibrating…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLargeVehicleForm.qml" line="150"/>
+        <source>Reboot vehicle</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>SensorsComponentSummaryFixedWing</name>
+    <name>SensorsLiveCard</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="25"/>
-        <source>Compass:</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLiveCard.qml" line="37"/>
+        <source>Live orientation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="26"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="31"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="36"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="42"/>
-        <source>Setup required</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLiveCard.qml" line="87"/>
+        <source>Roll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="26"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="31"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="36"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="42"/>
-        <source>Ready</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLiveCard.qml" line="88"/>
+        <source>Pitch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="30"/>
-        <source>Gyro:</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLiveCard.qml" line="89"/>
+        <source>Heading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="35"/>
-        <source>Accelerometer:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="40"/>
-        <source>Airspeed:</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsLiveCard.qml" line="145"/>
+        <source>Tilt and turn the vehicle: the model should follow. If it moves the wrong way, change the autopilot rotation.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SensorsSetup</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="28"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="29"/>
-        <source>If the orientation is in the direction of flight, select ROTATION_NONE.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="35"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="89"/>
         <source>For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="37"/>
-        <source>Start the individual calibration steps by clicking one of the buttons to the left.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="178"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="280"/>
+        <source>The vehicle did not start the calibration. It may be busy or armed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="127"/>
-        <source>Compass Calibration Complete</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="187"/>
+        <source>Reset sensor calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="157"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="188"/>
+        <source>This clears the gyroscope, accelerometer and compass calibration and reboots the autopilot. Are you sure?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="202"/>
+        <source>Offsets set. They are saved when the vehicle disarms or reboots.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="310"/>
         <source>Calibration Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="158"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="311"/>
         <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="380"/>
+        <source>%n sensor(s) need calibration before flight</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="217"/>
-        <source>Set autopilot orientation before calibrating.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="381"/>
+        <source>Sensors are ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="269"/>
-        <source>Reboot Vehicle</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="400"/>
+        <source>Reboot the vehicle before flight</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="31"/>
-        <source>For Compass calibration you will need to rotate your vehicle through a number of positions.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="463"/>
+        <source>Calibration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="32"/>
-        <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="511"/>
+        <source>Compasses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="33"/>
-        <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="547"/>
+        <source>Device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="34"/>
-        <source>To level the horizon you need to place the vehicle in its level flight position and leave still.</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="558"/>
+        <source>External</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="138"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="558"/>
+        <source>Internal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="603"/>
+        <source>Reset calibration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="607"/>
+        <source>Clears the gyroscope, accelerometer and compass calibration and reboots the autopilot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="62"/>
         <source>Complete or cancel the current calibration first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="222"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="283"/>
-        <source>Autopilot Orientation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="231"/>
-        <source>ROTATION_NONE indicates component points in direction of flight.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="237"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="357"/>
         <source>Click Ok to start calibration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="264"/>
-        <source>Reboot the vehicle prior to flight.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="275"/>
-        <source>Adjust orientations as needed.
-
-ROTATION_NONE indicates component points in direction of flight.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="303"/>
-        <source>Mag %1 Orientation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="324"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="345"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="348"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="370"/>
-        <source>Compass</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="369"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="371"/>
-        <source>Calibrate Compass</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="325"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="345"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="351"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="377"/>
-        <source>Gyroscope</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="378"/>
-        <source>Calibrate Gyro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="326"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="345"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="348"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="385"/>
-        <source>Accelerometer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="384"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="386"/>
-        <source>Calibrate Accelerometer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="327"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="354"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="391"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="393"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="394"/>
-        <source>Level Horizon</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="328"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="354"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="400"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="143"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="237"/>
         <source>Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="399"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="401"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="88"/>
         <source>Calibrate Airspeed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="443"/>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="423"/>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="329"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="407"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="417"/>
-        <source>Orientations</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="376"/>
-        <source>Calibrate Gyroscope</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="406"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="410"/>
-        <source>Set Orientations</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="416"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="613"/>
         <source>Factory Reset</source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>SensorsSideRow</name>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="497"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="506"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="515"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="524"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="533"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="542"/>
-        <source>Rotate</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSideRow.qml" line="52"/>
+        <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="497"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="506"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="515"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="524"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="533"/>
-        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="542"/>
-        <source>Hold Still</source>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSideRow.qml" line="53"/>
+        <source>Detected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSideRow.qml" line="54"/>
+        <source>Suggested</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSideRow.qml" line="54"/>
+        <source>Waiting</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SerialConfiguration</name>
     <message>
-        <location filename="../src/Comms/SerialLink.h" line="43"/>
+        <location filename="../src/Comms/Serial/SerialLink.h" line="53"/>
         <source>Serial Link Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SerialGPSTransport</name>
+    <message>
+        <location filename="../src/GPS/Core/Transport/SerialGPSTransport.cc" line="23"/>
+        <source>%1 was not found</source>
+        <extracomment>%1 is a serial device, such as /dev/ttyACM0 or COM3</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Transport/SerialGPSTransport.cc" line="33"/>
+        <source>permission denied for %1</source>
+        <extracomment>%1 is a serial device, such as /dev/ttyACM0</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/GPS/Core/Transport/SerialGPSTransport.cc" line="37"/>
+        <source>%1 is in use by another program</source>
+        <extracomment>%1 is a serial device, such as /dev/ttyACM0 or COM3</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SerialLink</name>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="472"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="444"/>
         <source>Serial Link Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="472"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="444"/>
         <source>Link %1: (Port: %2) %3</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19381,72 +25143,72 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>SerialSettings</name>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="131"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="159"/>
         <source>Enable Flow Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="25"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="41"/>
         <source>Serial Port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="59"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="68"/>
         <source>None Available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="67"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="94"/>
         <source>Baud Rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="72"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="99"/>
         <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="98"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="125"/>
         <source>Custom Baud Rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="119"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="146"/>
         <source>Advanced Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="138"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="167"/>
         <source>Force DTR Low</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="143"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="172"/>
         <source>Parity</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="146"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="175"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="146"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="175"/>
         <source>Even</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="146"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="175"/>
         <source>Odd</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="181"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="210"/>
         <source>Data Bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/AppSettings/SerialSettings.qml" line="189"/>
+        <location filename="../src/AppSettings/SerialSettings.qml" line="218"/>
         <source>Stop Bits</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19454,37 +25216,42 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>SerialWorker</name>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="233"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="184"/>
         <source>Not connecting to a bootloader</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="246"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="203"/>
         <source>Could not open port: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="273"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="214"/>
+        <source>Could not configure port: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="235"/>
         <source>Data to Send is Empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="278"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="240"/>
         <source>Port is not Connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="283"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="245"/>
         <source>Port is not Writable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="291"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="253"/>
         <source>Could Not Send Data - Write Failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/SerialLink.cc" line="294"/>
+        <location filename="../src/Comms/Serial/SerialLink.cc" line="256"/>
         <source>Could Not Send Data - Write Returned 0 Bytes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19492,23 +25259,42 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>SetupPage</name>
     <message>
-        <location filename="../src/QmlControls/SetupPage.qml" line="43"/>
+        <location filename="../src/QmlControls/SetupPage.qml" line="45"/>
         <source>armed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/SetupPage.qml" line="43"/>
+        <location filename="../src/QmlControls/SetupPage.qml" line="45"/>
         <source>flying</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/SetupPage.qml" line="88"/>
+        <location filename="../src/QmlControls/SetupPage.qml" line="92"/>
         <source>Disabled while the vehicle is %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/SetupPage.qml" line="70"/>
+        <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="591"/>
+        <location filename="../src/QmlControls/SetupPage.qml" line="74"/>
         <source>Advanced</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SeverityPill</name>
+    <message>
+        <location filename="../src/Toolbar/SeverityPill.qml" line="13"/>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/SeverityPill.qml" line="30"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/SeverityPill.qml" line="32"/>
+        <source>Info</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -19520,17 +25306,17 @@ ROTATION_NONE indicates component points in direction of flight.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Geo/Formats/ShapeFileHelper.cc" line="24"/>
+        <location filename="../src/Utilities/Geo/Formats/ShapeFileHelper.cc" line="25"/>
         <source>Unsupported file type. Only %1 and %2 are supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Geo/Formats/ShapeFileHelper.cc" line="110"/>
+        <location filename="../src/Utilities/Geo/Formats/ShapeFileHelper.cc" line="111"/>
         <source>KML Files (*%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Geo/Formats/ShapeFileHelper.cc" line="116"/>
+        <location filename="../src/Utilities/Geo/Formats/ShapeFileHelper.cc" line="117"/>
         <source>KML/SHP Files (*%1 *%2)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19538,78 +25324,78 @@ ROTATION_NONE indicates component points in direction of flight.</source>
 <context>
     <name>SigningController</name>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="110"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="111"/>
         <source>Configuring…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="113"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="114"/>
         <source>Disabling…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="116"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="117"/>
         <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="120"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="121"/>
         <source>On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="154"/>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="192"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="155"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="193"/>
         <source>Signing operation already pending</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="165"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="166"/>
         <source>Failed to install signing for pending verification</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="198"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="199"/>
         <source>Channel not signing — cannot disable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="236"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="237"/>
         <source>MAVLink signing: %1 consecutive bad signatures while enabling — the chosen key likely does not match the vehicle&apos;s stored key. Verify the key on the vehicle, then retry.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="239"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="240"/>
         <source>MAVLink signing: %1 consecutive bad signatures on this link — wrong key or vehicle clock drift</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="294"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="295"/>
         <source>Vehicle rejected signing change: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="328"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="329"/>
         <source>Signing confirmation received but local activation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="370"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="371"/>
         <source>Signing disable not confirmed — vehicle is unreachable or still requires signed messages. Local signing remains enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="391"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="392"/>
         <source>Signing operation cancelled — primary link changed before vehicle confirmation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="404"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="405"/>
         <source>Signing setup not confirmed by vehicle (timeout)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/Signing/SigningController.cc" line="405"/>
+        <location filename="../src/MAVLink/Signing/SigningController.cc" line="406"/>
         <source>Signing disable not confirmed by vehicle (timeout)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19795,6 +25581,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     </message>
     <message>
         <location filename="../src/PlanView/SimpleItemEditor.qml" line="50"/>
+        <location filename="../src/PlanView/SimpleItemEditor.qml" line="50"/>
         <source>T</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19844,27 +25631,27 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/SimpleItemEditor.qml" line="159"/>
+        <location filename="../src/PlanView/SimpleItemEditor.qml" line="108"/>
         <source>Alt Frame</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/SimpleItemEditor.qml" line="172"/>
+        <location filename="../src/PlanView/SimpleItemEditor.qml" line="121"/>
         <source>Altitude%1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/SimpleItemEditor.qml" line="176"/>
+        <location filename="../src/PlanView/SimpleItemEditor.qml" line="125"/>
         <source> (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/SimpleItemEditor.qml" line="182"/>
+        <location filename="../src/PlanView/SimpleItemEditor.qml" line="131"/>
         <source>Actual AMSL alt sent: %1 %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/SimpleItemEditor.qml" line="243"/>
+        <location filename="../src/PlanView/SimpleItemEditor.qml" line="192"/>
         <source>Flight Speed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19872,42 +25659,42 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>SimpleMissionItem</name>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="369"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="380"/>
         <source>Unknown: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="376"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="387"/>
         <source>L</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="380"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="391"/>
         <source>Takeoff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="382"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="393"/>
         <source>Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="384"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="395"/>
         <source>Transition Direction</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="386"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="397"/>
         <source>VTOL Land</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="389"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="400"/>
         <source>ROI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="394"/>
+        <location filename="../src/MissionManager/SimpleMissionItem.cc" line="405"/>
         <source>Loiter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19923,47 +25710,47 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>StatusTextHandler</name>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="186"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="216"/>
         <source>EMERGENCY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="190"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="220"/>
         <source>ALERT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="194"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="224"/>
         <source>Critical</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="198"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="228"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="202"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="232"/>
         <source>Warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="206"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="236"/>
         <source>Notice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="210"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="240"/>
         <source>Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="214"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="244"/>
         <source>Debug</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MAVLink/StatusTextHandler.cc" line="324"/>
+        <location filename="../src/MAVLink/StatusTextHandler.cc" line="364"/>
         <source> ... </source>
         <comment>Indicates missing chunk from chunked STATUS_TEXT</comment>
         <translation type="unfinished"></translation>
@@ -19972,19 +25759,24 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>StructureScanComplexItem</name>
     <message>
-        <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="215"/>
+        <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="270"/>
         <source>%1 does not support loading this complex mission item type: %2:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="221"/>
+        <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="276"/>
         <source>%1 version %2 not supported</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/StructureScanComplexItem.cc" line="614"/>
+        <source>Structure Scan: Unable to calculate a flight path at the specified distance from the structure.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/MissionManager/StructureScanComplexItem.h" line="65"/>
         <location filename="../src/MissionManager/StructureScanComplexItem.h" line="66"/>
-        <location filename="../src/MissionManager/StructureScanComplexItem.h" line="91"/>
+        <location filename="../src/MissionManager/StructureScanComplexItem.h" line="92"/>
         <source>Structure Scan</source>
         <translation type="unfinished"></translation>
     </message>
@@ -19992,120 +25784,133 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>StructureScanEditor</name>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="58"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="66"/>
         <source>Use the Polygon Tools to create the polygon which outlines the structure.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="73"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="77"/>
         <source>Grid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="74"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="207"/>
         <source>Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="84"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="81"/>
         <source>Note: Polygon respresents structure surface not vehicle flight path.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="91"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="88"/>
         <source>WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="101"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="98"/>
         <source>Scan Distance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="102"/>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="189"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="99"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="186"/>
         <source>Layer Height</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="103"/>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="204"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="100"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="201"/>
         <source>Trigger Distance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="109"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="106"/>
         <source>Scan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="126"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="123"/>
         <source>Start Scan From Bottom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="126"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="123"/>
         <source>Start Scan From Top</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="132"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="129"/>
         <source>Structure Height</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="139"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="136"/>
         <source>Scan Bottom Alt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="146"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="143"/>
         <source>Entrance/Exit Alt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="154"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="151"/>
         <source>Gimbal Pitch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="170"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="167"/>
         <source>Rotate entry point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="178"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="175"/>
         <source>Statistics</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="186"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="183"/>
         <source>Layers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="192"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="189"/>
         <source>Top Layer Alt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="195"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="192"/>
         <source>Bottom Layer Alt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="198"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="195"/>
         <source>Photo Count</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="201"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="198"/>
         <source>Photo Interval</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/StructureScanEditor.qml" line="202"/>
+        <location filename="../src/PlanView/StructureScanEditor.qml" line="199"/>
         <source>secs</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>StructureScanMapVisual</name>
+    <message>
+        <location filename="../src/PlanView/StructureScanMapVisual.qml" line="67"/>
+        <source>Entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/StructureScanMapVisual.qml" line="87"/>
+        <source>Exit</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -20180,30 +25985,35 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>SurveyComplexItem</name>
     <message>
-        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="121"/>
+        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="177"/>
+        <source>Internal Error: Preset load failed. Name: %1 Error: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="200"/>
         <source>Survey items do not support version %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="178"/>
-        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="234"/>
+        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="257"/>
+        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="312"/>
         <source>%1 does not support loading this complex mission item type: %2:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="282"/>
+        <location filename="../src/MissionManager/SurveyComplexItem.cc" line="361"/>
         <source>%1 but %2 object is missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/MissionManager/SurveyComplexItem.h" line="46"/>
         <location filename="../src/MissionManager/SurveyComplexItem.h" line="47"/>
-        <location filename="../src/MissionManager/SurveyComplexItem.h" line="48"/>
-        <location filename="../src/MissionManager/SurveyComplexItem.h" line="63"/>
+        <location filename="../src/MissionManager/SurveyComplexItem.h" line="62"/>
         <source>Survey</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/SurveyComplexItem.h" line="49"/>
+        <location filename="../src/MissionManager/SurveyComplexItem.h" line="48"/>
         <source>S</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20251,7 +26061,17 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/SurveyItemEditor.qml" line="97"/>
+        <location filename="../src/PlanView/SurveyItemEditor.qml" line="91"/>
+        <source>Split concave polygons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/SurveyItemEditor.qml" line="104"/>
+        <source>Images are also taken across concave gaps when images in turnarounds is enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/SurveyItemEditor.qml" line="112"/>
         <source>Select Polygon File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20284,6 +26104,11 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
         <location filename="../src/AutoPilotPlugins/Common/SyslinkComponent.qml" line="48"/>
         <source>Channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AutoPilotPlugins/Common/SyslinkComponent.qml" line="68"/>
+        <source>Channel can be between 0 and 125</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -20328,12 +26153,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>TCPLink</name>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="320"/>
+        <location filename="../src/Comms/TCPLink.cc" line="326"/>
         <source>TCP Link Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="320"/>
+        <location filename="../src/Comms/TCPLink.cc" line="326"/>
         <source>Link %1: (Host: %2 Port: %3) %4</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20341,32 +26166,32 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>TCPWorker</name>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="143"/>
+        <location filename="../src/Comms/TCPLink.cc" line="147"/>
         <source>Connection Failed: Host address is empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="156"/>
+        <location filename="../src/Comms/TCPLink.cc" line="160"/>
         <source>Connection Failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="184"/>
+        <location filename="../src/Comms/TCPLink.cc" line="188"/>
         <source>Data to Send is Empty</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="189"/>
+        <location filename="../src/Comms/TCPLink.cc" line="193"/>
         <source>Socket is not connected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="197"/>
+        <location filename="../src/Comms/TCPLink.cc" line="201"/>
         <source>Could Not Send Data - Write Failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/TCPLink.cc" line="200"/>
+        <location filename="../src/Comms/TCPLink.cc" line="204"/>
         <source>Could Not Send Data - Write Returned 0 Bytes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20374,8 +26199,21 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>TakeoffItemMapVisual</name>
     <message>
-        <location filename="../src/PlanView/TakeoffItemMapVisual.qml" line="121"/>
+        <location filename="../src/PlanView/TakeoffItemMapVisual.qml" line="123"/>
         <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TakeoffMissionItem</name>
+    <message>
+        <location filename="../src/MissionManager/TakeoffMissionItem.cc" line="124"/>
+        <source>Take off vertically and continue the mission in multicopter mode.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/MissionManager/TakeoffMissionItem.cc" line="131"/>
+        <source>Multicopter takeoff</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -20472,7 +26310,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>TerrainQueryCoordinator</name>
     <message>
-        <location filename="../src/Vehicle/TerrainQueryCoordinator.cc" line="80"/>
+        <location filename="../src/Vehicle/TerrainQueryCoordinator.cc" line="81"/>
         <source>Set Home failed, terrain data not available for selected coordinate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20488,14 +26326,14 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>ToolIndicatorPage</name>
     <message>
-        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="31"/>
-        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="55"/>
+        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="32"/>
+        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="57"/>
         <source>Waiting for parameters...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="31"/>
-        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="55"/>
+        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="32"/>
+        <location filename="../src/QmlControls/ToolIndicatorPage.qml" line="57"/>
         <source>Parameters not available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20508,13 +26346,13 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/TransectStyleComplexItem.h" line="89"/>
-        <location filename="../src/MissionManager/TransectStyleComplexItem.h" line="90"/>
+        <location filename="../src/MissionManager/TransectStyleComplexItem.h" line="98"/>
+        <location filename="../src/MissionManager/TransectStyleComplexItem.h" line="99"/>
         <source>Transect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/MissionManager/TransectStyleComplexItem.h" line="91"/>
+        <location filename="../src/MissionManager/TransectStyleComplexItem.h" line="100"/>
         <source>T</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20522,94 +26360,99 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>TransectStyleComplexItemEditor</name>
     <message>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="27"/>
+        <source>Internal Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="34"/>
         <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="90"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="85"/>
         <source>WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="100"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="95"/>
         <source>Altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="101"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="96"/>
         <source>Trigger Dist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="102"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="97"/>
         <source>Spacing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="121"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="116"/>
         <source>Rotate Entry Point</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="129"/>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="236"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="124"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="232"/>
         <source>Statistics</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="161"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="157"/>
         <source>Presets</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="176"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="172"/>
         <source>Apply Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="183"/>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="197"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="179"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="193"/>
         <source>Delete Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="198"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="194"/>
         <source>Are you sure you want to delete &apos;%1&apos; preset?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="214"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="210"/>
         <source>Save Settings As New Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="257"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="253"/>
         <source>Save Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="274"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="270"/>
         <source>Save the current settings as a named preset.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="279"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="275"/>
         <source>Preset Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="285"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="281"/>
         <source>Enter preset name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="292"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="288"/>
         <source>Preset name cannot be blank.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="295"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemEditor.qml" line="291"/>
         <source>Preset name cannot include the &quot;/&quot; character.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20645,17 +26488,17 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>TransectStyleComplexItemTerrainFollow</name>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="60"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="59"/>
         <source>Tolerance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="66"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="65"/>
         <source>Max Climb Rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="72"/>
+        <location filename="../src/PlanView/TransectStyleComplexItemTerrainFollow.qml" line="71"/>
         <source>Max Descent Rate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20684,13 +26527,13 @@ If a vehicle still has this key configured, you will no longer be able to commun
     </message>
     <message>
         <location filename="../src/PlanView/TransformEditor.qml" line="88"/>
-        <location filename="../src/PlanView/TransformEditor.qml" line="305"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="343"/>
         <source>Also move takeoff items</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/PlanView/TransformEditor.qml" line="93"/>
-        <location filename="../src/PlanView/TransformEditor.qml" line="310"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="348"/>
         <source>Also move landing items</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20715,102 +26558,121 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="155"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="156"/>
         <source>Coordinate System</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="162"/>
         <location filename="../src/PlanView/TransformEditor.qml" line="163"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="164"/>
         <source>Geographic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="162"/>
         <location filename="../src/PlanView/TransformEditor.qml" line="163"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="164"/>
         <source>Universal Transverse Mercator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="162"/>
         <location filename="../src/PlanView/TransformEditor.qml" line="163"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="164"/>
         <source>Military Grid Reference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="162"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="163"/>
         <source>Vehicle Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="169"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="163"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="164"/>
+        <source>Degrees Minutes Seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/TransformEditor.qml" line="172"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="201"/>
         <source>Latitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="178"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="181"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="210"/>
         <source>Longitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="187"/>
-        <location filename="../src/PlanView/TransformEditor.qml" line="233"/>
-        <location filename="../src/PlanView/TransformEditor.qml" line="253"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="190"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="219"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="226"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="267"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="274"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="289"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="296"/>
         <source>Move to Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="198"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="226"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="274"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="296"/>
+        <source>Invalid coordinate. Check the entered values and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/PlanView/TransformEditor.qml" line="232"/>
         <source>Zone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="206"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="240"/>
         <source>Hemisphere</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="215"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="249"/>
         <source>Easting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="224"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="258"/>
         <source>Northing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="244"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="280"/>
         <source>MGRS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="264"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="302"/>
         <source>Move to Vehicle Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="278"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="316"/>
         <source>Rotate Mission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="291"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="329"/>
         <source>Home position must be set to rotate the mission.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="297"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="335"/>
         <source>Clockwise</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="318"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="356"/>
         <source>Note: Complex items are rotated by moving their reference coordinate: their geometry and orientation are not changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/PlanView/TransformEditor.qml" line="323"/>
+        <location filename="../src/PlanView/TransformEditor.qml" line="361"/>
         <source>Apply Rotation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20818,7 +26680,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>UDPConfiguration</name>
     <message>
-        <location filename="../src/Comms/UDPLink.h" line="82"/>
+        <location filename="../src/Comms/UDPLink.h" line="81"/>
         <source>UDP Link Settings</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20826,12 +26688,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>UDPLink</name>
     <message>
-        <location filename="../src/Comms/UDPLink.cc" line="581"/>
+        <location filename="../src/Comms/UDPLink.cc" line="575"/>
         <source>UDP Link Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/UDPLink.cc" line="581"/>
+        <location filename="../src/Comms/UDPLink.cc" line="575"/>
         <source>Link %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20839,23 +26701,133 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>UDPWorker</name>
     <message>
-        <location filename="../src/Comms/UDPLink.cc" line="355"/>
+        <location filename="../src/Comms/UDPLink.cc" line="336"/>
+        <source>Could not resolve host: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Comms/UDPLink.cc" line="352"/>
         <source>Failed to bind UDP socket to port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/UDPLink.cc" line="393"/>
+        <location filename="../src/Comms/UDPLink.cc" line="386"/>
         <source>Could Not Send Data - Link is Disconnected!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/UDPLink.cc" line="442"/>
+        <location filename="../src/Comms/UDPLink.cc" line="435"/>
         <source>Could Not Read Data - Link is Disconnected!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Comms/UDPLink.cc" line="448"/>
+        <location filename="../src/Comms/UDPLink.cc" line="441"/>
         <source>Could Not Read Data - No Data Available!</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UVCCameraController</name>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCCameraController.cc" line="184"/>
+        <source>The USB camera isn&apos;t running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCCameraController.cc" line="299"/>
+        <source>Unable to take a photo: no video is on display.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCCameraController.cc" line="310"/>
+        <source>Unable to save the photo %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCCameraController.cc" line="440"/>
+        <source>USB camera %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCCameraController.cc" line="443"/>
+        <source>USB camera %1: %2. Retrying.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCCameraController.cc" line="457"/>
+        <source>USB camera %1 was disconnected</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UVCCameraFormatComboBox</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCCameraFormatComboBox.qml" line="15"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UVCDevices</name>
+    <message>
+        <location filename="../src/VideoManager/UVC/UVCDevices.cc" line="97"/>
+        <source>Failed to get camera permission</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UVCRecordingCodecComboBox</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCRecordingCodecComboBox.qml" line="17"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UVCStatsGroup</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="19"/>
+        <source>%1 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="21"/>
+        <source>USB Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="25"/>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="31"/>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="32"/>
+        <source>%1 (camera %2 fps)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="37"/>
+        <source>Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="38"/>
+        <source>%1 × %2 %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="43"/>
+        <source>Display path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/UVCStatsGroup.qml" line="48"/>
+        <source>Uptime</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -20863,7 +26835,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <name>UdpSettings</name>
     <message>
         <location filename="../src/AppSettings/UdpSettings.qml" line="20"/>
-        <source>Note: For best perfomance, please disable AutoConnect to UDP devices on the General page.</source>
+        <source>Note: For best performance, please disable AutoConnect to UDP devices on the General page.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -20896,13 +26868,13 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <name>UnitsSettings</name>
     <message>
         <location filename="../src/Settings/UnitsSettings.cc" line="13"/>
-        <location filename="../src/Settings/UnitsSettings.cc" line="45"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="44"/>
         <source>Feet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/Settings/UnitsSettings.cc" line="13"/>
-        <location filename="../src/Settings/UnitsSettings.cc" line="45"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="44"/>
         <source>Meters</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20917,114 +26889,144 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="50"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="49"/>
         <source>Vertical Distance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="51"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="50"/>
         <source>Display unit for altitudes and vertical heights.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="74"/>
         <source>SquareFeet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="74"/>
         <source>SquareMeters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="74"/>
         <source>SquareKilometers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="74"/>
         <source>Hectares</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="74"/>
         <source>Acres</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="74"/>
         <source>SquareMiles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="86"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="84"/>
         <source>Area</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="87"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="85"/>
         <source>Display unit for area measurements.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="113"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="110"/>
         <source>Knots</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="122"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="119"/>
         <source>Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="123"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="120"/>
         <source>Display unit for speed and velocity values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="149"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="145"/>
         <source>Celsius</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="149"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="145"/>
         <source>Fahrenheit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="153"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="149"/>
         <source>Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="154"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="150"/>
         <source>Display unit for temperature readings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="175"/>
         <source>Grams</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="175"/>
         <source>Kilograms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="175"/>
         <source>Ounces</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="175"/>
         <source>Pounds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/UnitsSettings.cc" line="188"/>
-        <location filename="../src/Settings/UnitsSettings.cc" line="189"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="183"/>
+        <location filename="../src/Settings/UnitsSettings.cc" line="184"/>
         <source>Weight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/UnitsSettings.cc" line="208"/>
+        <source>Decimal Degrees</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/UnitsSettings.cc" line="208"/>
+        <source>Degrees Minutes Seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/UnitsSettings.cc" line="208"/>
+        <source>UTM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/UnitsSettings.cc" line="208"/>
+        <source>MGRS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/UnitsSettings.cc" line="216"/>
+        <source>Coordinates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/UnitsSettings.cc" line="217"/>
+        <source>Default format for entering and displaying coordinates.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -21096,8 +27098,13 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../src/FlyView/VTOLChecklist.qml" line="70"/>
+        <source>Wind &amp; weather</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../src/FlyView/VTOLChecklist.qml" line="71"/>
-        <source>OK for your platform? Lauching into the wind?</source>
+        <source>OK for your platform? Launching into the wind?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21114,7 +27121,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>VTOLLandingComplexItem</name>
     <message>
-        <location filename="../src/MissionManager/VTOLLandingComplexItem.h" line="28"/>
+        <location filename="../src/MissionManager/VTOLLandingComplexItem.h" line="29"/>
         <source>VTOL Landing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21249,117 +27256,133 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>Vehicle</name>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1597"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1645"/>
         <source>Mission transfer failed. Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1603"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1651"/>
         <source>GeoFence transfer failed. Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1609"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1657"/>
         <source>Rally Point transfer failed. Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1147"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1187"/>
         <source>battery %1 level low</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1153"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1193"/>
         <source>battery %1 level is critical</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1159"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1199"/>
         <source>battery %1 level emergency</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1165"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1205"/>
         <source>battery %1 failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1171"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1211"/>
         <source>battery %1 unhealthy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1183"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1223"/>
         <source>warning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="3459"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2001"/>
+        <source>Orbit mode not supported by Vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2036"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2061"/>
+        <source>ROI mode not supported by Vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2105"/>
+        <source>Pause not supported by vehicle.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/Vehicle.cc" line="3566"/>
         <source>Vehicle %1: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2894"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2987"/>
         <source>minimum altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2897"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2990"/>
         <source>maximum altitude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2900"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2993"/>
         <source>boundary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2906"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2999"/>
         <source>fence breached</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="3229"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="3297"/>
         <source>Waiting for previous operator control request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="3232"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="3300"/>
         <source>No response to operator control request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1779"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1827"/>
         <source>Vehicle %1 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2307"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2363"/>
         <source>Vehicle reboot failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1789"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1837"/>
         <source>%1 %2 flight mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1796"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1844"/>
         <source>armed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="1796"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="1844"/>
         <source>disarmed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2037"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2095"/>
         <source>Change Heading not supported by Vehicle.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/Vehicle.cc" line="2236"/>
+        <location filename="../src/Vehicle/Vehicle.cc" line="2293"/>
         <source>Bootloader flash succeeded</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21415,7 +27438,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>VehicleCameraControl</name>
     <message>
-        <location filename="../src/Camera/VehicleCameraControl.cc" line="468"/>
+        <location filename="../src/Camera/VehicleCameraControl.cc" line="554"/>
         <source>Timelapse photo capture is not supported on cameras without still capture capability</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21433,117 +27456,160 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="176"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="216"/>
         <source>%1 setup must be completed prior to %2 setup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="250"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="299"/>
         <source>%1 does not currently support configuration of your vehicle. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="271"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="320"/>
         <source>Vehicle configuration pages will display after you connect your vehicle and parameters have been downloaded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="273"/>
-        <source>Parameter download was skipped because the vehicle is flying. Configuration pages will be available after parameters are downloaded.</source>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="322"/>
+        <source>Parameter download was skipped because the vehicle is armed. Configuration pages will be available after parameters are downloaded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="274"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="423"/>
+        <source>Overview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="323"/>
         <source>Waiting for vehicle parameters to download…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="278"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="327"/>
         <source>Download Parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="300"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="349"/>
         <source>Vehicle did not return the full parameter list. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="301"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="350"/>
         <source>As a result, the configuration pages are not available.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="337"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="396"/>
         <source>Search configuration...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="364"/>
-        <source>Summary</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="513"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="573"/>
         <source>Optical Flow</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="531"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="592"/>
         <source>Parameters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="543"/>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="605"/>
         <source>Firmware</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VehicleGPSFactGroup</name>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="257"/>
+        <source>Incoming correction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="258"/>
+        <source>Configuration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="259"/>
+        <source>Software</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="260"/>
+        <source>Antenna</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="261"/>
+        <source>Event congestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="262"/>
+        <source>CPU overload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="263"/>
+        <source>Output congestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/FactGroups/VehicleGPSFactGroup.cc" line="275"/>
+        <source>Other (0x%1)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>VehicleLinkManager</name>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="67"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="69"/>
         <source>%1Communication regained on %2 link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="67"/>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="126"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="69"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="118"/>
         <source>primary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="67"/>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="126"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="69"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="118"/>
         <source>secondary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="69"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="71"/>
         <source>%1Communication regained</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="75"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="77"/>
         <source>%1Switching communication to new primary link</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="126"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="118"/>
         <source>%1Communication lost on %2 link.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="137"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="129"/>
         <source>%1Switching communication to secondary link.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="161"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="153"/>
         <source>%1Communication lost</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="420"/>
+        <location filename="../src/Vehicle/VehicleLinkManager.cc" line="412"/>
         <source>Comm Lost</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21551,7 +27617,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>VehicleMapItem</name>
     <message>
-        <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="136"/>
+        <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="112"/>
         <source>Vehicle %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21564,7 +27630,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Toolbar/VehicleMessageList.qml" line="69"/>
+        <location filename="../src/Toolbar/VehicleMessageList.qml" line="67"/>
         <source>Edit Parameter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21603,13 +27669,76 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>VehicleSummary</name>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="74"/>
-        <source>Your vehicle configuration summary appears below. Select components on the left to review or fine-tune settings.</source>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="81"/>
+        <source>Vehicle setup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="75"/>
-        <source>WARNING: Configuration tasks remain before this vehicle is ready to fly. Open the red-marked components on the left to finish setup.</source>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="126"/>
+        <source>%1/%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="133"/>
+        <source>required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="143"/>
+        <source>%n component(s) need setup</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="144"/>
+        <source>Required setup complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="152"/>
+        <source>Continue setup: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="174"/>
+        <source>Required setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="205"/>
+        <source>Select a component to open its setup page. The other components are listed below.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummary.qml" line="225"/>
+        <source>Current settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VehicleSummaryCard</name>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummaryCard.qml" line="88"/>
+        <source>Setup required</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VehicleSummaryTile</name>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummaryTile.qml" line="52"/>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummaryTile.qml" line="52"/>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleSummaryTile.qml" line="52"/>
+        <source>To do</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -21675,106 +27804,555 @@ If a vehicle still has this key configured, you will no longer be able to commun
     </message>
 </context>
 <context>
+    <name>VideoBackend</name>
+    <message>
+        <location filename="../src/VideoManager/Receiver/VideoBackend.cc" line="45"/>
+        <source>Video streaming failed to initialize.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoDecodingSettingsGroup</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDecodingSettingsGroup.qml" line="17"/>
+        <source>Decoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDecodingSettingsGroup.qml" line="23"/>
+        <source>Video Backend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDecodingSettingsGroup.qml" line="32"/>
+        <source>Decoder Priority</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDecodingSettingsGroup.qml" line="41"/>
+        <source>Force CPU Video Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoDisplaySettingsGroup</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDisplaySettingsGroup.qml" line="14"/>
+        <source>Video Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDisplaySettingsGroup.qml" line="17"/>
+        <source>Grid Lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDisplaySettingsGroup.qml" line="24"/>
+        <source>Telemetry Overlay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoDisplaySettingsGroup.qml" line="31"/>
+        <source>Display Fit</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoManager</name>
     <message>
-        <location filename="../src/VideoManager/VideoManager.cc" line="347"/>
+        <location filename="../src/VideoManager/VideoManager.cc" line="511"/>
+        <source>Unable to save the photo. The save path must be specified in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/VideoManager.cc" line="533"/>
+        <source>Unable to take a photo: no video is on display.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoReceiver</name>
+    <message>
+        <location filename="../src/VideoManager/Receiver/VideoReceiver.cc" line="126"/>
+        <source>Unable to record video: the video stream is not active.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Receiver/VideoReceiver.cc" line="131"/>
+        <source>Unable to record video: no file name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Receiver/VideoReceiver.cc" line="172"/>
+        <source>Unable to save the photo %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordingService</name>
+    <message>
+        <location filename="../src/VideoManager/Recording/VideoRecordingService.cc" line="92"/>
+        <source>Video recording %1 failed: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Recording/VideoRecordingService.cc" line="136"/>
         <source>Invalid video format defined.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/VideoManager/VideoManager.cc" line="355"/>
-        <source>Unabled to record video. Video save path must be specified in Settings.</source>
+        <location filename="../src/VideoManager/Recording/VideoRecordingService.cc" line="143"/>
+        <source>Unable to record video. Video save path must be specified in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Recording/VideoRecordingService.cc" line="154"/>
+        <source>Unable to record video: no video stream is active.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordingsPage</name>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="17"/>
+        <source>Play the videos QGroundControl recorded, with the telemetry recorded alongside them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="33"/>
+        <source>%1 GB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="34"/>
+        <source>%1 MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="88"/>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="334"/>
+        <source>Delete Recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="89"/>
+        <source>The recording could not be deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="174"/>
+        <source>No recordings in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="257"/>
+        <source>Select a recording to play it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="282"/>
+        <source>Pause</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="282"/>
+        <source>Play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="325"/>
+        <source>Telemetry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="331"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml" line="335"/>
+        <source>%1 and its telemetry will be deleted permanently. Is this really what you want?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>VideoSettings</name>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="53"/>
-        <source>No Video Available</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Settings/VideoSettings.h" line="54"/>
+        <location filename="../src/Settings/VideoSettings.h" line="102"/>
         <source>Video Stream Disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="55"/>
+        <location filename="../src/Settings/VideoSettings.h" line="103"/>
         <source>RTSP Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="56"/>
+        <location filename="../src/Settings/VideoSettings.h" line="104"/>
         <source>UDP h.264 Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="57"/>
+        <location filename="../src/Settings/VideoSettings.h" line="105"/>
         <source>UDP h.265 Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="58"/>
+        <location filename="../src/Settings/VideoSettings.h" line="106"/>
         <source>TCP-MPEG2 Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="59"/>
+        <location filename="../src/Settings/VideoSettings.h" line="107"/>
         <source>MPEG-TS Video Stream</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="60"/>
+        <location filename="../src/Settings/VideoSettings.h" line="110"/>
         <source>3DR Solo (requires restart)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="61"/>
+        <location filename="../src/Settings/VideoSettings.h" line="111"/>
         <source>Parrot Discovery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="62"/>
+        <location filename="../src/Settings/VideoSettings.h" line="112"/>
         <source>Yuneec Mantis G</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="63"/>
+        <location filename="../src/Settings/VideoSettings.h" line="113"/>
         <source>Herelink AirUnit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Settings/VideoSettings.h" line="64"/>
+        <location filename="../src/Settings/VideoSettings.h" line="114"/>
         <source>Herelink Hotspot</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>Viewer3DModel</name>
     <message>
-        <location filename="../src/Viewer3D/Viewer3DQml/Models3D/Viewer3DModel.qml" line="103"/>
-        <source>Downloading Imageries: </source>
+        <location filename="../src/Settings/VideoSettings.cc" line="71"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Settings/VideoSettings.cc" line="85"/>
+        <source>%1 (not connected)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>Viewer3DProgressBar</name>
+    <name>VideoSourceStats</name>
     <message>
-        <location filename="../src/Viewer3D/Viewer3DQml/Viewer3DProgressBar.qml" line="7"/>
-        <source>Progress</source>
+        <location filename="../src/VideoManager/Qml/VideoSourceStats.qml" line="38"/>
+        <source>Thermal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoSourceStats.qml" line="39"/>
+        <source>Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoSourceStats.qml" line="56"/>
+        <source>No video stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoStreamFormat</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamFormat.js" line="6"/>
+        <source>%1 Mbit/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamFormat.js" line="6"/>
+        <source>%1 kbit/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamFormat.js" line="14"/>
+        <source>%1:%2:%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamFormat.js" line="15"/>
+        <source>%1:%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoStreamIndicator</name>
+    <message>
+        <location filename="../src/Toolbar/VideoStreamIndicator.qml" line="52"/>
+        <source>%1 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/VideoStreamIndicator.qml" line="57"/>
+        <source>%1p</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/VideoStreamIndicator.qml" line="93"/>
+        <source>Restart Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/VideoStreamIndicator.qml" line="99"/>
+        <source>All Video Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoStreamSettingsGroup</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamSettingsGroup.qml" line="15"/>
+        <source>Video Stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamSettingsGroup.qml" line="20"/>
+        <source>Low Latency Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamSettingsGroup.qml" line="28"/>
+        <source>RTP jitter latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoStreamStatsGroup</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="24"/>
+        <source>%1 × %2 %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="27"/>
+        <source>%1 (hardware)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="28"/>
+        <source>%1 (software)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="31"/>
+        <source>%1 (camera %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="37"/>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="43"/>
+        <source>URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="51"/>
+        <source>Camera stream</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="58"/>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="59"/>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="60"/>
+        <source>%1 fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="65"/>
+        <source>Dropped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="66"/>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="109"/>
+        <source>%n frame(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="70"/>
+        <source>Bitrate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="77"/>
+        <source>Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="79"/>
+        <source>%1 × %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="84"/>
+        <source>Keyframe interval</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="85"/>
+        <source>%1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="90"/>
+        <source>Decoder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="96"/>
+        <source>Decoder restarts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="102"/>
+        <source>Display path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="108"/>
+        <source>GPU fallbacks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="114"/>
+        <source>Latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="115"/>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="127"/>
+        <source>%1 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="120"/>
+        <source>Packet loss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="121"/>
+        <source>%1% (%n packet(s))</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="126"/>
+        <source>Jitter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="133"/>
+        <source>Late / duplicate packets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="134"/>
+        <source>%1 / %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="139"/>
+        <source>Retransmissions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="140"/>
+        <source>%1 requested, %2 recovered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="145"/>
+        <source>Uptime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="150"/>
+        <source>Reconnects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="156"/>
+        <source>Recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoStreamStatsGroup.qml" line="157"/>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoTile</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoTile.qml" line="75"/>
+        <source>VIDEO LOST - RECONNECTING</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoView</name>
+    <message>
+        <location filename="../src/VideoManager/Qml/VideoView.qml" line="176"/>
+        <source>VIDEO LOST - RECONNECTING</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Viewer3DScaleBar</name>
+    <message>
+        <location filename="../src/Viewer3D/Viewer3DQml/Models3D/Viewer3DScaleBar.qml" line="32"/>
+        <source> km</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Viewer3D/Viewer3DQml/Models3D/Viewer3DScaleBar.qml" line="34"/>
+        <source> m</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Viewer3D/Viewer3DQml/Models3D/Viewer3DScaleBar.qml" line="44"/>
+        <source> mile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Viewer3D/Viewer3DQml/Models3D/Viewer3DScaleBar.qml" line="46"/>
+        <source> miles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Viewer3D/Viewer3DQml/Models3D/Viewer3DScaleBar.qml" line="49"/>
+        <source> ft</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>Viewer3DShowAction</name>
     <message>
-        <location filename="../src/Viewer3D/Viewer3DQml/Viewer3DShowAction.qml" line="11"/>
+        <location filename="../src/Viewer3D/Viewer3DQml/Viewer3DShowAction.qml" line="13"/>
         <source>Fly</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Viewer3D/Viewer3DQml/Viewer3DShowAction.qml" line="11"/>
+        <location filename="../src/Viewer3D/Viewer3DQml/Viewer3DShowAction.qml" line="13"/>
         <source>3D View</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21812,479 +28390,183 @@ If a vehicle still has this key configured, you will no longer be able to commun
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/Utilities/Platform/Platform.cc" line="245"/>
+        <location filename="../src/Utilities/Platform/Platform.cc" line="436"/>
         <source>You are running %1 as root. You should not do this since it will cause other issues with %1. %1 will now exit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/Platform/Platform.cc" line="257"/>
+        <location filename="../src/Utilities/Platform/Platform.cc" line="448"/>
         <source>A second instance of %1 is already running. Please close the other instance and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="133"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="135"/>
         <source>MAVLink GCS system id.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="134"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="136"/>
         <source>id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="139"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="141"/>
         <source>Clear stored application settings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="144"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="146"/>
         <source>Clear parameter and airframe caches.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="149"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="151"/>
         <source>Enable logging with optional rules string.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="150"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="152"/>
         <source>rules</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="155"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="157"/>
         <source>Log to console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="160"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="162"/>
         <source>Initialize subsystems and exit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="167"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="169"/>
         <source>Run unit tests (optional filter value).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="168"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="170"/>
         <source>filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="173"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="175"/>
         <source>Stress unit tests.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="174"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="176"/>
         <source>count</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="179"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="181"/>
         <source>Output test results to file (JUnit XML format).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="180"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="182"/>
         <source>file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="185"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="187"/>
+        <source>Run one shard of a single test&apos;s functions (1-based index/count).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="188"/>
+        <source>index/count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="193"/>
         <source>Filter tests by label (unit, integration, vehicle, missionmanager, etc.).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="186"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="194"/>
         <source>labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="191"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="199"/>
         <source>List available unit tests and exit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="196"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="204"/>
         <source>Show test windows on screen instead of running offscreen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="204"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="212"/>
         <source>Run with mobile-style UI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="209"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="217"/>
         <source>Bypass single-instance guard.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="217"/>
-        <source>Force software OpenGL.</source>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="224"/>
+        <source>Force software rendering.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="225"/>
-        <source>Force Desktop OpenGL.</source>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="254"/>
+        <source>--unittest/--unittest-stress/--unittest-output/--unittest-shard/--list-tests options are only available in unittest builds.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="230"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="278"/>
+        <source>--no-windows-assert-ui is only supported on Windows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="334"/>
+        <source>Invalid System ID (must be 1-4294967295): %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="397"/>
+        <source>Invalid unit test shard (expected &lt;index&gt;/&lt;count&gt; with 1 &lt;= index &lt;= count): %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="406"/>
+        <source>--unittest-shard requires exactly one --unittest:&lt;name&gt;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="232"/>
         <source>Disable Windows assert dialog boxes.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="250"/>
-        <source>--unittest/--unittest-stress/--unittest-output/--list-tests options are only available in unittest builds.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="262"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="267"/>
         <source>--fake-mobile/--allow-multiple are not supported on mobile platforms.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="274"/>
-        <source>--desktop/--no-windows-assert-ui are only supported on Windows.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="285"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="289"/>
         <source>--swrast is only supported on Windows and macOS.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="294"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="298"/>
         <source>Unknown options: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="304"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="308"/>
         <source>Unexpected positional arguments: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="330"/>
-        <source>Invalid System ID (must be 1-255): %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="373"/>
+        <location filename="../src/Utilities/QGCCommandLineParser.cc" line="376"/>
         <source>Invalid stress test count (must be &gt; 0): %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>CorrectionDiagnostics</name>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="15"/>
-        <source>NTRIP UDP output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="17"/>
-        <source>Vehicles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="19"/>
-        <source>Vehicle link %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="20"/>
-        <source>Unselected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="28"/>
-        <source>Inactive source</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="30"/>
-        <source>Previous source session</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="32"/>
-        <source>Invalid receipt time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="34"/>
-        <source>Expired</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="36"/>
-        <source>Filtered message</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="38"/>
-        <source>Source not selected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="40"/>
-        <source>Destination unavailable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="42"/>
-        <source>Queue full</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="44"/>
-        <source>Invalid frame</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="46"/>
-        <source>Connection cancelled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="48"/>
-        <source>Source changed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="50"/>
-        <source>Write failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="52"/>
-        <source>Incomplete write</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="54"/>
-        <source>Unmatched delivery report</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="56"/>
-        <source>Connection ended before the write result was available</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="58"/>
-        <source>Delivery tracking full</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="60"/>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="94"/>
-        <source>Unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="67"/>
-        <source>Local base station</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="69"/>
-        <source>NTRIP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="71"/>
-        <source>UDP</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="73"/>
-        <source>Unclassified</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="80"/>
-        <source>Received</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="82"/>
-        <source>Validated</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="84"/>
-        <source>Selected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="86"/>
-        <source>Queued</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="88"/>
-        <source>Written</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="90"/>
-        <source>Unconfirmed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="92"/>
-        <source>Dropped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="98"/>
-        <source>Correction Diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="104"/>
-        <source>Queued bytes have been submitted to an output. Written bytes reached an output transport; they do not confirm that a receiver applied the corrections or obtained a fix. Vehicle writes are unconfirmed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="148"/>
-        <source>Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="116"/>
-        <source>%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
-        <source>%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
-        <source>%1 B</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
-        <source>unconfirmed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="139"/>
-        <source>Show recent correction events</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="167"/>
-        <source>%1. %2 — %3, %4 B%5
-Source: %6 (session %7); destination: %8 (session %9)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="167"/>
-        <source> — %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="107"/>
-        <source>Current correction streams:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="108"/>
-        <source>No fresh stream is selected for vehicles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="124"/>
-        <source>Selected for vehicles; fresh</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="126"/>
-        <source>Fresh; not selected for vehicles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="128"/>
-        <source>Active; waiting for fresh corrections</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
-        <source>Unavailable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="131"/>
-        <source>%1 — %2: %3</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="132"/>
-        <source>Default stream</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>CorrectionRoutingSettings</name>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="30"/>
-        <source>Correction Routing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="49"/>
-        <source>Uses one fresh stream, preferring the local base station, then NTRIP, then UDP.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="56"/>
-        <source>Stream</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="21"/>
-        <source>Automatic within source</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="26"/>
-        <source>No fresh corrections: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="33"/>
-        <source>Unavailable: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="46"/>
-        <source>Selects streams for vehicle links only. NTRIP UDP forwarding uses the NTRIP stream independently.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="71"/>
-        <source>Forwards all fresh streams to vehicles. Corrections from different base stations may be mixed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="72"/>
-        <source>Uses only the chosen source category, without fallback to other categories. Automatic within source chooses a fresh stream in that category; a pinned stream waits if unavailable.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>NTRIPConnectionStatus</name>
-    <message>
-        <location filename="../src/GPS/NTRIP/NTRIPConnectionStatus.qml" line="124"/>
-        <source>Queued to vehicle links (all sources)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
