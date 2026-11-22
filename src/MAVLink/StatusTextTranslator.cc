@@ -125,7 +125,7 @@ QString replacePlaceholders(const QString& templateText, const QRegularExpressio
     QString result;
     qsizetype lastEnd = 0;
 
-    const QRegularExpressionMatchIterator it = kPlaceholderRegex.globalMatch(templateText);
+    QRegularExpressionMatchIterator it = kPlaceholderRegex.globalMatch(templateText);
     while (it.hasNext()) {
         const QRegularExpressionMatch placeholder = it.next();
         result += templateText.mid(lastEnd, placeholder.capturedStart() - lastEnd);
