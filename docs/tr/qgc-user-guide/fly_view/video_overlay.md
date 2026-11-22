@@ -1,6 +1,6 @@
 # Video Overlay
 
-When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Whichever telemetry values are selected for display in the telemetry [values widget](hud.md#instrument_panel) will also be exported to the overlay. Overlay değerleri 1Hz hızla güncellenecektir.
+When QGroundControl is recording a video stream to a file, it will also export a subtitle file with telemetry data that can be used to overlay the telemetry on the video during playback. Whichever telemetry values are selected for display in the telemetry [values widget](hud.md#instrument_panel) will also be exported to the overlay. The overlay values are updated at 1Hz, and each update carries the date and time it was taken, shown at the top left of the video.
 
 Seçilen değerler ekran kullanımını optimize etmek için 3 sütun halinde düzenlenmiştir.
 
@@ -8,8 +8,9 @@ Seçilen değerler ekran kullanımını optimize etmek için 3 sütun halinde d�
 
 **Telemetry Overlay** (under **Video Display** in the [video stream instrument page](camera_tools.md#video_instrument_page)
 and in the video indicator's expanded page) shows the same values along the bottom of the video while you fly,
-updated twice a second, and follows changes to the telemetry bar. It is off by default, and appears over the main
-video stream or a USB camera. It isn't part of recordings, whose telemetry goes to the subtitle file.
+updated twice a second, and follows changes to the telemetry bar. It keeps showing the current values while the video
+is frozen or lost. It is off by default, and appears over the main video stream or a USB camera. It isn't part of
+recordings, whose telemetry goes to the subtitle file.
 
 ## Oynatma
 

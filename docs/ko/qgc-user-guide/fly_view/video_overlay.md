@@ -1,6 +1,6 @@
 # 비디오 오버레이
 
-QGroundControl이 비디오 스트림을 파일에 기록할 때 재생하는 동안 비디오에 원격 측정을 오버레이하는 데 사용할 수 있는 원격 측정 데이터가 포함된 자막 파일도 내보냅니다. Whichever telemetry values are selected for display in the telemetry [values widget](hud.md#instrument_panel) will also be exported to the overlay. 오버레이 값은 1Hz에서 업데이트됩니다.
+QGroundControl이 비디오 스트림을 파일에 기록할 때 재생하는 동안 비디오에 원격 측정을 오버레이하는 데 사용할 수 있는 원격 측정 데이터가 포함된 자막 파일도 내보냅니다. Whichever telemetry values are selected for display in the telemetry [values widget](hud.md#instrument_panel) will also be exported to the overlay. The overlay values are updated at 1Hz, and each update carries the date and time it was taken, shown at the top left of the video.
 
 선택한 값은 화면 활용을 최적화하기 위해 3개의 열에 배치됩니다.![작동 중 오버레이](../../../assets/fly/overlay_capture.png)
 
@@ -8,8 +8,9 @@ QGroundControl이 비디오 스트림을 파일에 기록할 때 재생하는 �
 
 **Telemetry Overlay** (under **Video Display** in the [video stream instrument page](camera_tools.md#video_instrument_page)
 and in the video indicator's expanded page) shows the same values along the bottom of the video while you fly,
-updated twice a second, and follows changes to the telemetry bar. It is off by default, and appears over the main
-video stream or a USB camera. It isn't part of recordings, whose telemetry goes to the subtitle file.
+updated twice a second, and follows changes to the telemetry bar. It keeps showing the current values while the video
+is frozen or lost. It is off by default, and appears over the main video stream or a USB camera. It isn't part of
+recordings, whose telemetry goes to the subtitle file.
 
 ## 재생 중
 

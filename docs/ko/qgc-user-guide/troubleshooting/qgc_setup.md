@@ -12,7 +12,8 @@ Windows에서 UI 렌더링 문제 또는 비디오 드라이버 충돌이 발생
 
 - **QGroundControl:** QGroundControl은 OpenGL 그래픽 드라이버를 직접 사용합니다.
 - **GPU 호환성 모드:** QGC는 DirectX 위에 OpenGL을 구현하는 ANGLE 드라이버를 사용합니다.
-- **GPU 안전 모드:** QGroundControl은 UI에 소프트웨어 래스터라이저를 사용합니다(매우 느림).
+- **GPU Safe Mode:** QGC uses a software rasterizer for the UI (this is very slow).
+  Video is decoded in software too, unless a hardware decoder is selected in the video settings.
 
 ## Windows: WiFi 기체 연결 불량 {#waiting_for_connection}
 

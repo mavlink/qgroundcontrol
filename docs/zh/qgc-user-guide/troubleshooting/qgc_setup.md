@@ -13,6 +13,7 @@ If you experience UI rendering issues or video driver crashes on Windows, this m
 - **QGroundControl:** QGC uses OpenGL graphics drivers directly.
 - **GPU Compatibility Mode:** QGC uses ANGLE drivers, which implement OpenGL on top of DirectX.
 - **GPU Safe Mode:** QGC uses a software rasterizer for the UI (this is very slow).
+  Video is decoded in software too, unless a hardware decoder is selected in the video settings.
 
 ## Windows: Doesn't connect to Vehicle over WiFi {#waiting_for_connection}
 

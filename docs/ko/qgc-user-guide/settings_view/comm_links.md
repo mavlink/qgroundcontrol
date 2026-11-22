@@ -26,3 +26,13 @@ Manually create and manage communication links when auto-connect is insufficient
 - **High Latency** — mark the link as high-latency (reduces message rate)
 
 Existing links can be edited, deleted, connected, or disconnected from the link list.
+
+## Android Serial
+
+On Android, **Use built-in serial ports** adds the serial ports of the device itself (`/dev/tty*`) to the serial port list, alongside USB serial devices.
+Use it on a ground controller whose radio or serial connector is wired to one of these ports.
+It needs a device that lets apps open them.
+
+The list holds every such port that the device lets QGroundControl open.
+Some of them can belong to the device's own hardware, such as its Bluetooth radio, and connecting to one of those can disturb it.
+Use the port that the maker of the device names for the vehicle link.

@@ -33,20 +33,20 @@ Run with `--help` to list the options available in your build.
 
 选项/命令行参数列在下表中。
 
-| 选项                                                        | 描述                                                                                                                                                                |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--help`, `--version`                                     | Prints the available options or the version, then exits.                                                                                          |
-| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                   |
-| `--clear-cache`                                           | Clears the cached parameter and airframe data.                                                                                                    |
-| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/troubleshooting/console_logging.md#logging-from-the-command-line). |
-| `--logging:Comms.LinkManager,FactSystem.ParameterManager` | Turns on the specified comma separated logging categories. A category prefix such as `Comms` also turns on its sub-categories.    |
-| `--log-output`                                            | Writes log messages to stderr (the terminal on macOS/Linux).                                                                   |
-| `--system-id:id`                                          | Sets the MAVLink system ID used by _QGroundControl_.                                                                                              |
-| `--simple-boot-test`                                      | Initializes the application subsystems and exits (a quick startup check).                                                      |
-| `--fake-mobile`                                           | (Desktop only) Simulates running on a mobile device.                                                                           |
-| `--allow-multiple`                                        | (Desktop only) Allows more than one instance of _QGroundControl_ to run at a time.                                             |
-| `--swrast`                                                | (Windows and macOS only) Forces software rendering.                                                                            |
-| `--no-windows-assert-ui`                                  | (Windows only) Disables the assert dialog boxes.                                                                               |
+| 选项                                                        | 描述                                                                                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--help`, `--version`                                     | Prints the available options or the version, then exits.                                                                                                        |
+| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                                 |
+| `--clear-cache`                                           | Clears the cached parameter and airframe data.                                                                                                                  |
+| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/troubleshooting/console_logging.md#logging-from-the-command-line).               |
+| `--logging:Comms.LinkManager,FactSystem.ParameterManager` | Turns on the specified comma separated logging categories. A category prefix such as `Comms` also turns on its sub-categories.                  |
+| `--log-output`                                            | Writes log messages to stderr (the terminal on macOS/Linux).                                                                                 |
+| `--system-id:id`                                          | Sets the MAVLink system ID used by _QGroundControl_.                                                                                                            |
+| `--simple-boot-test`                                      | Initializes the application subsystems and exits (a quick startup check).                                                                    |
+| `--fake-mobile`                                           | (Desktop only) Simulates running on a mobile device.                                                                                         |
+| `--allow-multiple`                                        | (Desktop only) Allows more than one instance of _QGroundControl_ to run at a time.                                                           |
+| `--swrast`                                                | (Windows and macOS only) Forces software rendering. Video decodes in software too, unless a decoder is selected in settings. |
+| `--no-windows-assert-ui`                                  | (Windows only) Disables the assert dialog boxes.                                                                                             |
 
 ### Unit Test Options
 
