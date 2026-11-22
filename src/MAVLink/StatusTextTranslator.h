@@ -15,11 +15,11 @@ public:
     /// Checking this locale explicitly (instead of a default-constructed QLocale)
     /// is required because setLanguage() skips QLocale::setDefault() for en_US,
     /// which would otherwise leave the gate on the system language.
-    static void setLocale(const QLocale &locale);
+    static void setLocale(const QLocale& locale);
 
     /// Translates a firmware status text for display. Returns the raw text on
     /// any mismatch, corpus load failure or error.
-    static QString translate(const QString &raw);
+    static QString translate(const QString& raw);
 
 private:
     StatusTextTranslator() = delete;

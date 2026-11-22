@@ -1,6 +1,6 @@
 #include "StatusTextTranslator.h"
-#include <QGCLoggingCategory.h>
 
+#include <QGCLoggingCategory.h>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
 #include <QtCore/QJsonArray>
@@ -33,7 +33,8 @@ const QRegularExpression kPlaceholderRegex(QStringLiteral("\\{(\\d+)\\}"));
 typedef QPair<QRegularExpression, QString> RegexEntry_t;
 
 // Corpus is loaded lazily once; the tables are read-only afterwards
-struct TranslationTables {
+struct TranslationTables
+{
     QMutex mutex;
     bool loaded = false;
     bool valid = false;
@@ -41,20 +42,20 @@ struct TranslationTables {
     QList<RegexEntry_t> regexes;  // corpus order
 };
 
-TranslationTables *translationTables()
+TranslationTables* translationTables()
 {
     static TranslationTables tables;
     return &tables;
 }
 
 // Application ui locale, installed by QGCApplication::setLanguage().
-QLocale &appLocale()
+QLocale& appLocale()
 {
     static QLocale locale;  // default-constructed: follows the system locale until setLanguage() runs
     return locale;
 }
 
-void loadTables(TranslationTables &tables)
+void loadTables(TranslationTables& tables)
 {
     QFile file(QStringLiteral(":/Mavlink/statustext_zhHans.json"));
     if (!file.open(QIODevice::ReadOnly)) {
@@ -71,7 +72,7 @@ void loadTables(TranslationTables &tables)
     bool valid = true;
 
     const QJsonArray entries = doc.array();
-    for (const QJsonValue &entryValue : entries) {
+    for (const QJsonValue& entryValue : entries) {
         const QJsonObject entry = entryValue.toObject();
         const QJsonObject match = entry.value(QStringLiteral("match")).toObject();
         const QString type = match.value(QStringLiteral("type")).toString();
@@ -86,8 +87,8 @@ void loadTables(TranslationTables &tables)
         } else if (type == QStringLiteral("regex")) {
             const QRegularExpression regex(matchValue);
             if (!regex.isValid()) {
-                qCWarning(StatusTextTranslatorLog) << "Invalid regex in STATUSTEXT corpus, translation disabled:"
-                                                   << matchValue << regex.errorString();
+                qCWarning(StatusTextTranslatorLog)
+                    << "Invalid regex in STATUSTEXT corpus, translation disabled:" << matchValue << regex.errorString();
                 valid = false;
                 break;
             }
@@ -107,9 +108,9 @@ void loadTables(TranslationTables &tables)
                                      << tables.regexes.count() << "regex";
 }
 
-const TranslationTables *ensureLoaded()
+const TranslationTables* ensureLoaded()
 {
-    TranslationTables *const t = translationTables();
+    TranslationTables* const t = translationTables();
     const QMutexLocker locker(&t->mutex);
     if (!t->loaded) {
         loadTables(*t);
@@ -119,7 +120,7 @@ const TranslationTables *ensureLoaded()
 }
 
 // the corpus template references capture groups as {0} for group 1, {1} for group 2...
-QString replacePlaceholders(const QString &templateText, const QRegularExpressionMatch &match)
+QString replacePlaceholders(const QString& templateText, const QRegularExpressionMatch& match)
 {
     QString result;
     qsizetype lastEnd = 0;
@@ -146,14 +147,14 @@ QString replacePlaceholders(const QString &templateText, const QRegularExpressio
 }
 
 // the corpus regexes are all anchored (^...$), so a match() search is a full match here
-QString lookup(const TranslationTables &tables, const QString &text)
+QString lookup(const TranslationTables& tables, const QString& text)
 {
     const auto it = tables.exact.constFind(text);
     if (it != tables.exact.cend()) {
         return it.value();
     }
 
-    for (const RegexEntry_t &entry : tables.regexes) {
+    for (const RegexEntry_t& entry : tables.regexes) {
         const QRegularExpressionMatch match = entry.first.match(text);
         if (match.hasMatch()) {
             return replacePlaceholders(entry.second, match);
@@ -165,12 +166,12 @@ QString lookup(const TranslationTables &tables, const QString &text)
 
 }  // namespace
 
-void StatusTextTranslator::setLocale(const QLocale &locale)
+void StatusTextTranslator::setLocale(const QLocale& locale)
 {
     appLocale() = locale;
 }
 
-QString StatusTextTranslator::translate(const QString &raw)
+QString StatusTextTranslator::translate(const QString& raw)
 {
     if (raw.isEmpty()) {
         return raw;
@@ -184,7 +185,7 @@ QString StatusTextTranslator::translate(const QString &raw)
         return raw;
     }
 
-    const TranslationTables *const t = ensureLoaded();
+    const TranslationTables* const t = ensureLoaded();
     if (!t->valid) {
         return raw;
     }
@@ -196,13 +197,13 @@ QString StatusTextTranslator::translate(const QString &raw)
 
     // The same arming check failure is sent with different prefix tokens:
     // retry the other prefixes and put the raw prefix back into the display form.
-    for (const QString &prefix : kArmingPrefixes) {
+    for (const QString& prefix : kArmingPrefixes) {
         if (!raw.startsWith(prefix)) {
             continue;
         }
 
         const QString body = raw.mid(prefix.length());
-        for (const QString &other : kArmingPrefixes) {
+        for (const QString& other : kArmingPrefixes) {
             if (other == prefix) {
                 continue;
             }
@@ -212,7 +213,7 @@ QString StatusTextTranslator::translate(const QString &raw)
                 continue;
             }
 
-            for (const QString &token : kArmingPrefixes) {
+            for (const QString& token : kArmingPrefixes) {
                 if (swappedHit.startsWith(token)) {
                     return prefix + swappedHit.mid(token.length());
                 }
