@@ -56,14 +56,14 @@ def test_variant_loader_rejects_duplicate_identity(tmp_path: Path, field: str) -
 # bumps these digests together with variants.json (.github/renovate.json).
 _LINUX_2204_BUILD_ARGS = "\n".join(
     [
-        "BASE_REF=public.ecr.aws/docker/library/ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
+        "BASE_REF=public.ecr.aws/docker/library/ubuntu:22.04@sha256:f64b2ffc2f10ab8f8505aa56b2664bd846cbb9df87c7e2532e30f7667021c0e6",
         "APT_EXTRA=gcc-12 g++-12",
         "CC_PIN=gcc-12",
         "CXX_PIN=g++-12",
     ]
 )
-_LINUX_2604_BUILD_ARGS = "BASE_REF=public.ecr.aws/docker/library/ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
-_LINUX_DEBIAN_BUILD_ARGS = "BASE_REF=public.ecr.aws/docker/library/debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+_LINUX_2604_BUILD_ARGS = "BASE_REF=public.ecr.aws/docker/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db"
+_LINUX_DEBIAN_BUILD_ARGS = "BASE_REF=public.ecr.aws/docker/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc"
 _LINUX_FEDORA_BUILD_ARGS = "\n".join(
     [
         "BASE_REF=public.ecr.aws/docker/library/fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
@@ -73,7 +73,7 @@ _LINUX_FEDORA_BUILD_ARGS = "\n".join(
 )
 _LINUX_ARCH_BUILD_ARGS = "\n".join(
     [
-        "BASE_REF=public.ecr.aws/docker/library/archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671",
+        "BASE_REF=public.ecr.aws/docker/library/archlinux:base@sha256:d4594bb2300cba11f41c2f27923eb56f63d9988909c402f9c95517d1e362c899",
         "SETUP_BASE=setup-base-pacman.sh",
         "DEP_PLATFORM=arch",
     ]
