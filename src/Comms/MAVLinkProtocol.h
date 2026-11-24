@@ -75,7 +75,8 @@ private:
                        const mavlink_message_t& message);
 
     void _saveTelemetryLog(const QString& tempLogfile);
-    bool _checkTelemetrySavePath();
+    /// @return What is wrong with saveDirPath as the telemetry log save path, empty if it is usable
+    static QString _telemetrySavePathError(const QString& saveDirPath);
 
     QFile* _tempLogFile = nullptr;
 
@@ -92,7 +93,8 @@ private:
 
     bool _initialized = false;
 
-    static constexpr const char* _tempLogFileTemplate = "FlightDataXXXXXX";
+    /// Temp logs are named "<recording start time>.mavlink" so the saved .tlog can be named for that time.
+    static constexpr const char* _logStartTimeFormat = "yyyy-MM-dd hh-mm-ss";
     static constexpr const char* _logFileExtension = "mavlink";
 
     static constexpr uint8_t kMaxCompId = MAV_COMPONENT_ENUM_END - 1;

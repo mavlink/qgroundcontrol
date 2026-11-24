@@ -28,6 +28,14 @@ The red count of critical messages on the **Flight Status** indicator is replace
 It combines unread vehicle messages, health and arming checks, and an incomplete pre-flight checklist, so it stays shown until those issues are resolved, not just until messages are marked read.
 See [Flight Status Badges](../fly_view/fly_view_toolbar.md#flight-status-badges) for details.
 
+## Telemetry Logs
+
+### Log Files Named for Flight Start
+
+Telemetry logs (`.tlog`) are now named for the time recording started, instead of the time the log was saved at disconnect.
+A log recovered after a crash is also named for the start of its flight, not for the launch that recovered it, so it sorts in the right place among other logs.
+See [Telemetry Logs from Vehicle](../settings_view/general.md#telemetry_logs) for details.
+
 ## Custom Builds
 
 ### Custom Settings Pages
