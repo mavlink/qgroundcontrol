@@ -38,6 +38,7 @@ private slots:
     void _testSplitConcaveCameraShots();
     void _testSplitConcaveSaveLoad();
     void _testSplitConcaveLegacyLoad();
+    void _testConditionGateFirmwareSupport();
 
 private:
     double _clampGridAngle180(double gridAngle);

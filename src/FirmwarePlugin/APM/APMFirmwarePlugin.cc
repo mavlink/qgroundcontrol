@@ -19,7 +19,6 @@
 #include "MavlinkSettings.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
-#include "PlanViewSettings.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
@@ -577,9 +576,7 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         supportedCommands += flightCommands;
     }
 
-    if (SettingsManager::instance()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
-        supportedCommands.append(MAV_CMD_CONDITION_GATE);
-    }
+    // MAV_CMD_CONDITION_GATE is not offered: ArduPilot rejects it at mission upload
 
     return supportedCommands;
 }

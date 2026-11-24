@@ -34,10 +34,10 @@
         },
         {
             "name": "useConditionGate",
-            "shortDesc": "Use MAV_CMD_CONDITION_GATE for mission pattern transitions instead of standard waypoints.",
+            "shortDesc": "Use MAV_CMD_CONDITION_GATE for mission pattern transitions instead of standard waypoints. PX4 only: ArduPilot does not support MAV_CMD_CONDITION_GATE.",
             "type": "bool",
             "default": false,
-            "label": "Use MAV_CMD_CONDITION_GATE for pattern generation",
+            "label": "Use MAV_CMD_CONDITION_GATE for pattern generation (PX4 only)",
             "keywords": "condition gate"
         },
         {
