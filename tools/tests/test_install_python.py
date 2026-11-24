@@ -11,6 +11,8 @@ import pytest
 from qgc_tools import python_env
 from setup.install_python import add_python3_alias, main
 
+from ._helpers import TOOLS_DIR
+
 pytestmark = pytest.mark.windows
 
 
@@ -34,7 +36,10 @@ def test_unknown_group_rejected() -> None:
         python_env.requirements_for("nope")
 
 
-def test_nested_profile_contains_generator_and_test_dependencies() -> None:
+def test_nested_profile_contains_generator_and_test_dependencies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("QGC_TOOLS_PROJECT", str(TOOLS_DIR))
     packages = python_env.requirements_for("dev")
     assert "pytest" in packages
     assert "packaging>=24" in packages
@@ -42,8 +47,9 @@ def test_nested_profile_contains_generator_and_test_dependencies() -> None:
     assert len(packages) == len(set(packages))
 
 
-def test_first_setup_profile_needs_no_gdal() -> None:
+def test_first_setup_profile_needs_no_gdal(monkeypatch: pytest.MonkeyPatch) -> None:
     """rasterio has wheels only for macOS 15+, glibc 2.28+ and Windows, and builds against GDAL elsewhere."""
+    monkeypatch.setenv("QGC_TOOLS_PROJECT", str(TOOLS_DIR))
     assert not any(package.startswith("rasterio") for package in python_env.requirements_for("dev"))
 
 
@@ -88,7 +94,7 @@ def test_fresh_environment_and_repeated_setup_preserve_tools(tmp_path: Path) -> 
     environment = tmp_path / "venv"
     python_env.sync_groups("scripts,test", environment=environment, python=sys.executable)
     interpreter = python_env.executable("python", environment)
-    setup_script = python_env.project_path() / "setup/install_python.py"
+    setup_script = TOOLS_DIR / "setup/install_python.py"
     result = subprocess.run(
         [str(interpreter), str(setup_script), "scripts", "--check"], capture_output=True, text=True
     )
@@ -178,7 +184,8 @@ def test_python3_alias_starts_the_environment_from_git_bash(tmp_path: Path) -> N
         assert os.path.samefile(result.stdout.strip(), environment)
 
 
-def test_check_does_not_mutate_environment() -> None:
+def test_check_does_not_mutate_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("QGC_TOOLS_PROJECT", str(TOOLS_DIR))
     with patch("setup.install_python.sync_groups") as sync:
         assert main(["scripts", "--check"]) == 0
     sync.assert_not_called()
@@ -195,7 +202,7 @@ def test_system_setup_queries_do_not_install_site_packages(tmp_path: Path, flag:
     }
     command = [
         sys.executable,
-        str(python_env.project_path() / "setup/install_dependencies"),
+        str(TOOLS_DIR / "setup/install_dependencies"),
         flag,
         "--platform",
         "debian",
