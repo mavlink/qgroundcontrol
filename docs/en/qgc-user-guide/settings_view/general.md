@@ -58,6 +58,10 @@ The settings are:
 The settings are:
 
 - <a id="autosave_log"></a>**Save log after each flight**: Telemetry logs (`.tlog`) automatically saved to the _Application Load/Save Path_ ([above](#load_save_path)) after flight.
+  Each log is named for the time its recording started.
+  Unless **Disable all data persistence** is on, recording starts when a vehicle connects, whether or not this setting is on.
+  Turning this setting on during a flight therefore still saves a log of the whole flight, provided the vehicle was armed or the next setting is on.
+  A log left behind by a crash is saved at the next launch if this setting is on, and deleted otherwise.
 - **Save logs even if vehicle was not armed**: Logs when a vehicle connects to _QGroundControl_.
   Stops logging when the last vehicle disconnects.
 - [**CSV Logging**](csv.md): Log subset of telemetry data to a CSV file.

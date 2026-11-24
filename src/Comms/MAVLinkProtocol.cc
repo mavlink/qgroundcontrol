@@ -6,7 +6,6 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaType>
 #include <QtCore/QSettings>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QTimer>
 #include <cstring>
 
@@ -343,12 +342,6 @@ void MAVLinkProtocol::_startLogging()
         return;
     }
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-    if (!SettingsManager::instance()->mavlinkSettings()->telemetrySave()->rawValue().toBool()) {
-        return;
-    }
-#endif
-
     if (_tempLogFile->isOpen()) {
         return;
     }
@@ -357,17 +350,11 @@ void MAVLinkProtocol::_startLogging()
         return;
     }
 
-    // Generate unique temp file path for this logging session
-    const QString logPath =
-        QGCFileHelper::uniqueTempPath(QStringLiteral("%1.%2").arg(_tempLogFileTemplate, _logFileExtension));
-    if (logPath.isEmpty()) {
-        qCWarning(MAVLinkProtocolLog) << "Failed to generate temp log path";
-        _logSuspendError = true;
-        return;
-    }
-
-    _tempLogFile->setFileName(logPath);
-    if (!_tempLogFile->open(QIODevice::WriteOnly)) {
+    const QString startTimeString = QDateTime::currentDateTime().toString(QLatin1String(_logStartTimeFormat));
+    const QDir tempDir(QGCFileHelper::tempDirectory());
+    _tempLogFile->setFileName(
+        tempDir.filePath(QStringLiteral("%1.%2").arg(startTimeString, QLatin1String(_logFileExtension))));
+    if (!_tempLogFile->open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
         const QString message = QStringLiteral(
                                     "Opening Flight Data file for writing failed. "
                                     "Unable to write to %1. Please choose a different file location.")
@@ -379,7 +366,10 @@ void MAVLinkProtocol::_startLogging()
     }
 
     qCDebug(MAVLinkProtocolLog) << "Temp log" << _tempLogFile->fileName();
-    (void)_checkTelemetrySavePath();
+    const QString savePathError = _telemetrySavePathError(appSettings->telemetrySavePath());
+    if (!savePathError.isEmpty()) {
+        QGC::showAppMessage(tr("Telemetry log save path is not valid. %1").arg(savePathError));
+    }
 
     _logSuspendError = false;
 }
@@ -403,16 +393,20 @@ void MAVLinkProtocol::_stopLogging()
 
 void MAVLinkProtocol::checkForLostLogFiles()
 {
-    static const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    static const QDir tempDir(QGCFileHelper::tempDirectory());
     static const QString filter(QStringLiteral("*.%1").arg(_logFileExtension));
     static const QStringList filterList(filter);
+
+    // The armed state of an orphan is unknown, so after a crash it is kept whenever saving is on.
+    const bool saveOrphans = SettingsManager::instance()->mavlinkSettings()->telemetrySave()->rawValue().toBool() &&
+                             !SettingsManager::instance()->appSettings()->disableAllPersistence()->rawValue().toBool();
 
     const QFileInfoList fileInfoList = tempDir.entryInfoList(filterList, QDir::Files);
     qCDebug(MAVLinkProtocolLog) << "Orphaned log file count" << fileInfoList.count();
 
     for (const QFileInfo& fileInfo : fileInfoList) {
         qCDebug(MAVLinkProtocolLog) << "Orphaned log file" << fileInfo.filePath();
-        if (fileInfo.size() == 0) {
+        if ((fileInfo.size() == 0) || !saveOrphans) {
             (void)QFile::remove(fileInfo.filePath());
             continue;
         }
@@ -422,7 +416,7 @@ void MAVLinkProtocol::checkForLostLogFiles()
 
 void MAVLinkProtocol::deleteTempLogFiles()
 {
-    static const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    static const QDir tempDir(QGCFileHelper::tempDirectory());
     static const QString filter(QStringLiteral("*.%1").arg(_logFileExtension));
 
     const QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
@@ -436,19 +430,26 @@ void MAVLinkProtocol::deleteTempLogFiles()
 
 void MAVLinkProtocol::_saveTelemetryLog(const QString& tempLogfile)
 {
-    if (_checkTelemetrySavePath()) {
-        const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
+    const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
+    const QString savePathError = _telemetrySavePathError(saveDirPath);
+    if (savePathError.isEmpty()) {
         const QDir saveDir(saveDirPath);
 
         const QString nameFormat("%1%2.%3");
-        const QString dtFormat("yyyy-MM-dd hh-mm-ss");
+        const QLatin1String startTimeFormat(_logStartTimeFormat);
+        const QFileInfo tempLogInfo(tempLogfile);
+        QDateTime startTime = QDateTime::fromString(tempLogInfo.completeBaseName(), startTimeFormat);
+        if (!startTime.isValid()) {
+            // Not named by _startLogging(), such as an orphan left by an older version
+            startTime = tempLogInfo.lastModified();
+        }
+        const QString startTimeString = startTime.toString(startTimeFormat);
 
         int tryIndex = 1;
-        QString saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat), QString(),
-                                              AppSettings::telemetryFileExtension);
+        QString saveFileName = nameFormat.arg(startTimeString, QString(), AppSettings::telemetryFileExtension);
         while (saveDir.exists(saveFileName)) {
-            saveFileName = nameFormat.arg(QDateTime::currentDateTime().toString(dtFormat),
-                                          QStringLiteral(".%1").arg(tryIndex++), AppSettings::telemetryFileExtension);
+            saveFileName = nameFormat.arg(startTimeString, QStringLiteral(".%1").arg(tryIndex++),
+                                          AppSettings::telemetryFileExtension);
         }
 
         const QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
@@ -512,29 +513,24 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString& tempLogfile)
             (void)QFile::remove(tempLogfile);
             return;
         }
+    } else {
+        QGC::showAppMessage(tr("Unable to save telemetry log. %1").arg(savePathError));
     }
 
     (void)QFile::remove(tempLogfile);
 }
 
-bool MAVLinkProtocol::_checkTelemetrySavePath()
+QString MAVLinkProtocol::_telemetrySavePathError(const QString& saveDirPath)
 {
-    const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
-        const QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-        QGC::showAppMessage(error);
-        return false;
+        return tr("Application save directory is not set or does not exist.");
     }
 
-    const QDir saveDir(saveDirPath);
-    if (!saveDir.exists()) {
-        const QString error =
-            tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
-        QGC::showAppMessage(error);
-        return false;
+    if (!QDir(saveDirPath).exists()) {
+        return tr("Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
     }
 
-    return true;
+    return QString();
 }
 
 void MAVLinkProtocol::_vehicleCountChanged()
