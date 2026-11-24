@@ -51,9 +51,13 @@ Rectangle {
 
     property bool _commingFromRIDSettings:  false
 
+    ButtonGroup {
+        id: settingsButtonGroup
+    }
+
     function showSettingsPage(settingsPage) {
-        for (var i=0; i<buttonRepeater.count; i++) {
-            var button = buttonRepeater.itemAt(i)
+        for (var i = 0; i < settingsButtonGroup.buttons.length; i++) {
+            var button = settingsButtonGroup.buttons[i]
             if (button.text === settingsPage) {
                 button.clicked()
                 break
@@ -195,11 +199,10 @@ Rectangle {
         }
     }
 
-    QGCFlickable {
+    Flickable {
         id:                 buttonList
         width:              _sidebarW - 24
         anchors.topMargin:  _verticalMargin
-        // anchors.top:        backRow.bottom
         anchors.top:        showBackButton ? backRow.bottom : frame.top
         anchors.bottom:     frame.bottom
         anchors.bottomMargin: _frameMargin
@@ -208,10 +211,32 @@ Rectangle {
         contentHeight:      buttonColumn.height + _verticalMargin
         flickableDirection: Flickable.VerticalFlick
         clip:               true
+        boundsBehavior:     Flickable.StopAtBounds
+
+        // Subtle slim scrollbar matching modern sidebar design
+        ScrollBar.vertical: ScrollBar {
+            id:             vScrollBar
+            parent:         buttonList.parent
+            anchors.top:    buttonList.top
+            anchors.bottom: buttonList.bottom
+            anchors.right:  sidebarLine.left
+            anchors.rightMargin: 1
+            width:          4
+            policy:         ScrollBar.AsNeeded
+            visible:        buttonList.contentHeight > buttonList.height
+
+            contentItem: Rectangle {
+                implicitWidth:  4
+                radius:         2
+                color:          settingsView._light ? "#C0C4CC" : "#4B5563"
+                opacity:        vScrollBar.active || vScrollBar.hovered ? 0.8 : 0.2
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+            }
+        }
 
         ColumnLayout {
             id:         buttonColumn
-            spacing:    12
+            spacing:    6
             width:      buttonList.width
 
             property real _maxButtonWidth: 0
@@ -220,68 +245,103 @@ Rectangle {
                 id:     buttonRepeater
                 model:  settingsPagesModel
 
-                SettingsButton {
-                    Layout.fillWidth:   true
-                    text:               name
-                    icon.source:        iconUrl
-                    visible:            pageVisible()
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    visible: pageVisible()
 
-                    onClicked: {
-                        if (mainWindow.allowViewSwitch()) {
-                            if (rightPanel.source !== url) {
-                                rightPanel.source = url
-                            }
-                            checked = true
+                    // Section header (e.g. Flight, Connections, Developer)
+                    Item {
+                        Layout.fillWidth:       true
+                        Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                        visible:                model.category !== undefined && model.category !== "" && 
+                                                (index === 0 || settingsPagesModel.get(index - 1).category !== model.category)
+
+                        QGCLabel {
+                            anchors.left:           parent.left
+                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 0.5
+                            anchors.bottom:         parent.bottom
+                            anchors.bottomMargin:   2
+                            text:                   model.category !== undefined ? model.category : ""
+                            font.pointSize:         ScreenTools.defaultFontPointSize * 0.85
+                            font.bold:              true
+                            color:                  settingsView._light ? "#6B7280" : "#9CA3AF"
                         }
                     }
 
-                    Component.onCompleted: {
-                        if (globals.commingFromRIDIndicator) {
-                            _commingFromRIDSettings = true
-                        }
-                        if(_first) {
-                            _first = false
-                            checked = true
-                        }
-                        if (_commingFromRIDSettings) {
-                            checked = false
-                            _commingFromRIDSettings = false
-                            if (modelData.url == "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml") {
+                    SettingsButton {
+                        id:                 sideBtn
+                        ButtonGroup.group:  settingsButtonGroup
+                        Layout.fillWidth:   true
+                        text:               name
+                        icon.source:        iconUrl
+                        padding:            ScreenTools.defaultFontPixelWidth * 0.75
+                        textColor:          settingsView._cItemText
+
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                if (rightPanel.source !== url) {
+                                    rightPanel.source = url
+                                }
                                 checked = true
                             }
                         }
-                    }
 
-
-                    id:         sideBtn
-                    padding:    ScreenTools.defaultFontPixelWidth * 1.1
-                    textColor:  settingsView._cItemText
-
-                    background: Rectangle {
-                        radius: 10
-                        color:  sideBtn.checked || sideBtn.pressed ? settingsView._cItemSelected
-                                : sideBtn.hovered ? settingsView._cItemHover
-                                : "transparent"
-                    }
-
-                    contentItem: RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCColoredImage {
-                            source: sideBtn.icon.source
-                            color:  sideBtn.icon.color
-                            width:  ScreenTools.defaultFontPixelHeight * 0.85
-                            height: ScreenTools.defaultFontPixelHeight * 0.85
+                        Component.onCompleted: {
+                            if (globals.commingFromRIDIndicator) {
+                                _commingFromRIDSettings = true
+                            }
+                            if(_first) {
+                                _first = false
+                                checked = true
+                            }
+                            if (_commingFromRIDSettings) {
+                                checked = false
+                                _commingFromRIDSettings = false
+                                if (url == "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml") {
+                                    checked = true
+                                }
+                            }
                         }
 
-                        QGCLabel {
-                            Layout.fillWidth:   true
-                            text:               sideBtn.text
-                            color:              sideBtn.textColor
-                            horizontalAlignment: QGCLabel.AlignLeft
+                        background: Rectangle {
+                            radius: 10
+                            color:  sideBtn.checked || sideBtn.pressed ? (settingsView._light ? "#007AFF" : settingsView._cItemSelected)
+                                    : sideBtn.hovered ? settingsView._cItemHover
+                                    : "transparent"
+                        }
+
+                        contentItem: RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            // Rounded icon badge with custom background color
+                            Rectangle {
+                                Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 1.35
+                                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.35
+                                Layout.alignment:       Qt.AlignVCenter
+                                radius:                 7
+                                color:                  model.badgeColor ? model.badgeColor : "#6B7280"
+
+                                QGCColoredImage {
+                                    anchors.centerIn:   parent
+                                    source:             sideBtn.icon.source
+                                    color:              "#FFFFFF"
+                                    width:              parent.width * 0.62
+                                    height:             parent.height * 0.62
+                                    fillMode:           Image.PreserveAspectFit
+                                }
+                            }
+
+                            QGCLabel {
+                                Layout.fillWidth:    true
+                                Layout.alignment:    Qt.AlignVCenter
+                                text:                sideBtn.text
+                                color:               (sideBtn.checked && settingsView._light) ? "#FFFFFF" : sideBtn.textColor
+                                font.pointSize:      ScreenTools.defaultFontPointSize * 0.95
+                                horizontalAlignment: QGCLabel.AlignLeft
+                            }
                         }
                     }
-
                 }
             }
         }
