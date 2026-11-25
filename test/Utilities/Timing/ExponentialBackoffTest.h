@@ -9,6 +9,5 @@ class ExponentialBackoffTest : public PortableTest
 private slots:
     void _growsToCapAndResets();
     void _fractionalFactor();
-    void _retryAfter_data();
-    void _retryAfter();
+    UT_PARAMETERIZED_TEST(_retryAfter);
 };

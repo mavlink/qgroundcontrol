@@ -119,14 +119,14 @@ table-driven pattern (`_data()` + `QTest::addColumn`/`QFETCH`) rather than copy-
 near-identical method bodies. Each row gets its own failure tag, so a single bad
 permutation is identified without re-running the whole method. See
 `Utilities/Compression/QGCCompressionTest.cc` (`_testFormatDetection`,
-`_testDetectFormatFromMagicBytes`) for the canonical shape.
+`_testDetectFormatFromMagicBytes`) for the canonical shape. `UT_PARAMETERIZED_TEST(_myCase);` in the
+class declares the test slot and its `_data()` companion.
 
 ### Register in CMakeLists.txt
 
-Add test sources and the test directory's include path to the `QGCUnitTests` object library. The
-application executable links it and runs the suite; tests compile with the application's include
-paths and definitions, and their precompiled header adds `<QtTest/QTest>` so application sources do
-not compile QtTest.
+Add test sources to the `QGCUnitTests` object library. The application executable links it and runs
+the suite; tests compile with the application's include paths and definitions, and their precompiled
+header adds `<QtTest/QTest>` so application sources do not compile QtTest.
 
 ```cmake
 target_sources(
@@ -136,6 +136,7 @@ target_sources(
         MyTest.h
 )
 
+# Include path, only when sources of another directory include headers of this one
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Basic unit test
@@ -157,13 +158,36 @@ add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK Joystick)
 add_qgc_test(MyUITest LABELS Integration SHARDS 3)
 ```
 
+`add_qgc_tests()` writes a test once instead of three times. For each path it adds `<path>.cc` and
+`<path>.h` to `QGCUnitTests` and calls `add_qgc_test()` with the file name of the path. `LABELS` and
+every argument after it go to `add_qgc_test()` as they are, so they apply to each listed test. Paths
+go before `LABELS`: configure fails when a value after it names a test source of the directory, which
+would otherwise pass for a label and leave that test out.
+
+```cmake
+add_qgc_tests(
+    MyTest
+    Helpers/MyHelperTest
+    LABELS Unit Utilities
+)
+```
+
+The directories under `test/Utilities` register their tests this way. The other test directories keep
+`target_sources()` with `add_qgc_test()`, which is also the form for a test with arguments of its own
+and for support files (helpers, common headers, fixtures).
+
+A test directory needs an include path only when sources of another directory include its headers;
+the sample shows the line for that case. A test finds the headers of its own directory without one.
+Under `test/Utilities` only `StateMachine/states` has an include path, for the common header that
+tests outside that directory include.
+
 Test include directories and test support libraries (`target_link_libraries(QGCUnitTests PRIVATE
 QGCTestTiming)`) belong to `QGCUnitTests`, never to the application target, whose objects would
 recompile whenever a test directory is added. Configure fails when the application has an include
 directory under `test/`.
 
-Every test gets its own `TMPDIR` (and `TMP`/`TEMP` on Windows) under `build/test-tmp/`, so
-`RESOURCE_LOCK TempFiles` is ignored. `ENV_MODIFICATION` and `SKIP_REGEX` set CTest's
+Every test gets its own `TMPDIR` (and `TMP`/`TEMP` on Windows) under `build/test-tmp/`, so tests that
+write temporary files need no `RESOURCE_LOCK`. `ENV_MODIFICATION` and `SKIP_REGEX` set CTest's
 `ENVIRONMENT_MODIFICATION` and `SKIP_REGULAR_EXPRESSION`.
 
 `SHARDS <count>` gives each entry every count-th test function in declaration order
@@ -406,7 +430,7 @@ ctest --test-dir build -R QmlTestFileValidator --output-on-failure
 
 Windows x64 and the macOS Release CI leg enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal
 application build (the macOS Debug leg runs the Unit and Integration suites instead, same as
-Linux). The ten `Portable.*` CTest entries use small Qt Test executables, with the same test
+Linux). The eleven `Portable.*` CTest entries use small Qt Test executables, with the same test
 bodies and production utility libraries as the Linux application tests. They require no
 QGCApplication, vehicles, or QML engine. The portable command-line parser target enables
 its own test hooks; the packaged application keeps its normal build configuration.
@@ -419,7 +443,9 @@ ctest --test-dir build --build-config Debug --output-on-failure -L Portable
 
 Use `PortableTest` and `QGC_REGISTER_PORTABLE_TEST` for these suites. Full application
 builds use the existing UnitTest harness; standalone executables use Qt Test with warnings
-failing tests. Keep application-dependent fixtures in the full harness.
+failing tests. For a warning the code under test is meant to log, both harnesses provide
+`expectLogMessage(...)` and `verifyExpectedLogMessage()`; the standalone one expects a single
+message at a time. Keep application-dependent fixtures in the full harness.
 
 ## GPS Protocol Golden Transcripts
 

@@ -15,13 +15,14 @@ private slots:
     void _convertNedToGeoAtOrigin_test();
 
     void _convertGeoToUTM_test();
+    UT_PARAMETERIZED_TEST(_convertGeoToUTMOutsideUTM_test);
     void _convertUTMToGeo_test();
     void _convertGeoToMGRS_test();
     void _convertMGRSToGeo_test();
+    UT_PARAMETERIZED_TEST(_convertMGRSToGeoInvalid_test);
 
     void _convertDegreesToDMS_test();
-    void _convertDMSToDegrees_test_data();
-    void _convertDMSToDegrees_test();
+    UT_PARAMETERIZED_TEST(_convertDMSToDegrees_test);
     void _convertDMSToGeo_test();
     void _dmsRoundTrip_test();
 
@@ -50,9 +51,6 @@ private slots:
 
     // Benchmarks (nanobench)
     void _benchmarkCoordinateConversions();
-
-    // Benchmarks (QBENCHMARK)
-    void _qbenchmarkGeodesicDistance();
 
 private:
     /// Use ETH campus (47.3764° N, 8.5481° E)

@@ -13,7 +13,7 @@ private slots:
     void cleanupTestCase() override;
 
     void _singletonAccessible();
-    void _modelRolesExposed();
+    void _levelValues();
     void _modelReceivesEntries();
     void _filterBindingsWork();
 

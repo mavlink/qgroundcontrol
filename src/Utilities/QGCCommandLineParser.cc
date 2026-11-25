@@ -1,5 +1,6 @@
 #include "QGCCommandLineParser.h"
 
+#include <cstdlib>
 #include <limits>
 
 #include <QtCore/QCommandLineOption>
@@ -17,6 +18,11 @@ namespace QGCCommandLineParser {
 // ============================================================================
 
 namespace {
+
+// --- Options that QCommandLineParser::addHelpOption() and addVersionOption() add ---
+constexpr QLatin1StringView kOptHelp = QLatin1StringView("help");
+constexpr QLatin1StringView kOptHelpAll = QLatin1StringView("help-all");
+constexpr QLatin1StringView kOptVersion = QLatin1StringView("version");
 
 // --- Core options ---
 constexpr QLatin1StringView kOptSystemId      = QLatin1StringView("system-id");
@@ -62,11 +68,8 @@ constexpr QLatin1StringView kOptSwrast = QLatin1StringView("swrast");
 /// @brief Normalizes command-line arguments
 /// Converts colon-separated syntax (--option:value) to standard format (--option value)
 /// and handles special cases like --unittest without a value.
-#ifdef QGC_UNITTEST_BUILD
+/// Arguments already in the --option=value form are passed on unchanged.
 QStringList normalizeArgs(const QStringList &args)
-#else
-static QStringList normalizeArgs(const QStringList &args)
-#endif
 {
     QStringList out;
     out.reserve(args.size() + 4);
@@ -84,9 +87,11 @@ static QStringList normalizeArgs(const QStringList &args)
         }
 #endif
 
-        // Convert --option:value to --option value
-        if (arg.startsWith(QLatin1String("--")) && arg.contains(QLatin1Char(':'))) {
-            const qsizetype idx = arg.indexOf(QLatin1Char(':'));
+        // Convert --option:value to --option value. The first colon ends the option name; a colon
+        // after '=' is part of the value of an --option=value argument (a Windows path, a URL).
+        const qsizetype idx = arg.indexOf(QLatin1Char(':'));
+        const qsizetype equalsIdx = arg.indexOf(QLatin1Char('='));
+        if (arg.startsWith(QLatin1String("--")) && (idx >= 0) && ((equalsIdx < 0) || (idx < equalsIdx))) {
             const QString opt = arg.left(idx);
             const QString val = arg.mid(idx + 1);
             out << opt;
@@ -111,248 +116,83 @@ static QStringList normalizeArgs(const QStringList &args)
 // Command Line Parsing
 // ============================================================================
 
-CommandLineParseResult parseCommandLine()
+namespace {
+
+/// The error for options the parser does not know. It says so when the option exists in another build or on
+/// another platform.
+QString unknownOptionsError(const QStringList& unknownOptions)
 {
-    // Set application info (needed for --help and --version)
-    QCoreApplication::setApplicationName(QLatin1String(QGC_APP_NAME));
-    QCoreApplication::setApplicationVersion(QLatin1String(QGC_APP_VERSION_STR));
-
-    CommandLineParseResult out{};
-    out.parser = std::make_unique<QCommandLineParser>();
-
-    QCommandLineParser& parser = *out.parser;
-    parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
-    parser.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
-    parser.setApplicationDescription(QStringLiteral(QGC_APP_DESCRIPTION));
-
-    // --- Standard options ---
-    const QCommandLineOption helpOption = parser.addHelpOption();
-    const QCommandLineOption versionOption = parser.addVersionOption();
-
-    // --- Core options (always available) ---
-    const QCommandLineOption systemIdOpt(
-        QString(kOptSystemId),
-        QCoreApplication::translate("main", "MAVLink GCS system id."),
-        QCoreApplication::translate("main", "id"));
-    (void) parser.addOption(systemIdOpt);
-
-    const QCommandLineOption clearSettingsOpt(
-        QString(kOptClearSettings),
-        QCoreApplication::translate("main", "Clear stored application settings."));
-    (void) parser.addOption(clearSettingsOpt);
-
-    const QCommandLineOption clearCacheOpt(
-        QString(kOptClearCache),
-        QCoreApplication::translate("main", "Clear parameter and airframe caches."));
-    (void) parser.addOption(clearCacheOpt);
-
-    const QCommandLineOption loggingOpt(
-        QString(kOptLogging),
-        QCoreApplication::translate("main", "Enable logging with optional rules string."),
-        QCoreApplication::translate("main", "rules"));
-    (void) parser.addOption(loggingOpt);
-
-    const QCommandLineOption logOutputOpt(
-        QString(kOptLogOutput),
-        QCoreApplication::translate("main", "Log to console."));
-    (void) parser.addOption(logOutputOpt);
-
-    const QCommandLineOption simpleBootOpt(
-        QString(kOptSimpleBoot),
-        QCoreApplication::translate("main", "Initialize subsystems and exit."));
-    (void) parser.addOption(simpleBootOpt);
-
-#ifdef QGC_UNITTEST_BUILD
-    // --- Test options (only in test builds) ---
-    const QCommandLineOption unittestOpt(
-        QString(kOptUnittest),
-        QCoreApplication::translate("main", "Run unit tests (optional filter value)."),
-        QCoreApplication::translate("main", "filter"));
-    (void) parser.addOption(unittestOpt);
-
-    const QCommandLineOption unittestStressOpt(
-        QString(kOptUnittestStress),
-        QCoreApplication::translate("main", "Stress unit tests."),
-        QCoreApplication::translate("main", "count"));
-    (void) parser.addOption(unittestStressOpt);
-
-    const QCommandLineOption unittestOutputOpt(
-        QString(kOptUnittestOutput),
-        QCoreApplication::translate("main", "Output test results to file (JUnit XML format)."),
-        QCoreApplication::translate("main", "file"));
-    (void) parser.addOption(unittestOutputOpt);
-
-    const QCommandLineOption unittestShardOpt(
-        QString(kOptUnittestShard),
-        QCoreApplication::translate("main", "Run one shard of a single test's functions (1-based index/count)."),
-        QCoreApplication::translate("main", "index/count"));
-    (void) parser.addOption(unittestShardOpt);
-
-    const QCommandLineOption unittestLabelOpt(
-        QString(kOptUnittestLabel),
-        QCoreApplication::translate("main", "Filter tests by label (unit, integration, vehicle, missionmanager, etc.)."),
-        QCoreApplication::translate("main", "labels"));
-    (void) parser.addOption(unittestLabelOpt);
-
-    const QCommandLineOption listTestsOpt(
-        QString(kOptListTests),
-        QCoreApplication::translate("main", "List available unit tests and exit."));
-    (void) parser.addOption(listTestsOpt);
-
-    const QCommandLineOption onscreenOpt(
-        QString(kOptOnscreen),
-        QCoreApplication::translate("main", "Show test windows on screen instead of running offscreen."));
-    (void) parser.addOption(onscreenOpt);
-#endif
-
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    // --- Desktop-only options ---
-    const QCommandLineOption fakeMobileOpt(
-        QString(kOptFakeMobile),
-        QCoreApplication::translate("main", "Run with mobile-style UI."));
-    (void) parser.addOption(fakeMobileOpt);
-
-    const QCommandLineOption allowMultipleOpt(
-        QString(kOptAllowMultiple),
-        QCoreApplication::translate("main", "Bypass single-instance guard."));
-    (void) parser.addOption(allowMultipleOpt);
-#endif
-
-#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
-    // --- Windows/macOS options ---
-    const QCommandLineOption swrastOpt(QString(kOptSwrast),
-                                       QCoreApplication::translate("main", "Force software rendering."));
-    (void) parser.addOption(swrastOpt);
-#endif
-
-#ifdef Q_OS_WIN
-    // --- Windows-only options ---
-    const QCommandLineOption quietWinAssertOpt(
-        QString(kOptNoWinAssertUI),
-        QCoreApplication::translate("main", "Disable Windows assert dialog boxes."));
-    (void) parser.addOption(quietWinAssertOpt);
-#endif
-
-    // --- Parse arguments ---
-    const QStringList normalizedArgs = normalizeArgs(QCoreApplication::arguments());
-    parser.process(normalizedArgs);
-
-    // --- Validate unknown options ---
-    out.unknownOptions = parser.unknownOptionNames();
-
-    // Check for platform-specific option errors on wrong platform
-    if (!out.unknownOptions.isEmpty()) {
-        // Check for test options in non-test build
-        if (out.unknownOptions.contains(QLatin1String("unittest")) ||
-            out.unknownOptions.contains(QLatin1String("unittest-stress")) ||
-            out.unknownOptions.contains(QLatin1String("unittest-output")) ||
-            out.unknownOptions.contains(QLatin1String("unittest-shard")) ||
-            out.unknownOptions.contains(QLatin1String("list-tests"))) {
 #ifndef QGC_UNITTEST_BUILD
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString =
-                QCoreApplication::translate("main",
-                                            "--unittest/--unittest-stress/--unittest-output/--unittest-shard/"
-                                            "--list-tests options are only available in unittest builds.");
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
+    if (unknownOptions.contains(QLatin1String("unittest")) ||
+        unknownOptions.contains(QLatin1String("unittest-stress")) ||
+        unknownOptions.contains(QLatin1String("unittest-output")) ||
+        unknownOptions.contains(QLatin1String("unittest-shard")) ||
+        unknownOptions.contains(QLatin1String("list-tests"))) {
+        return QCoreApplication::translate("main",
+                                           "--unittest/--unittest-stress/--unittest-output/--unittest-shard/"
+                                           "--list-tests options are only available in unittest builds.");
+    }
 #endif
-        }
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-        // Mobile platforms don't support desktop options
-        if (out.unknownOptions.contains(QLatin1String("fake-mobile")) ||
-            out.unknownOptions.contains(QLatin1String("allow-multiple"))) {
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString = QCoreApplication::translate("main",
-                "--fake-mobile/--allow-multiple are not supported on mobile platforms.");
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
-        }
+    if (unknownOptions.contains(QLatin1String("fake-mobile")) ||
+        unknownOptions.contains(QLatin1String("allow-multiple"))) {
+        return QCoreApplication::translate("main",
+                                           "--fake-mobile/--allow-multiple are not supported on mobile platforms.");
+    }
 #endif
 
 #ifndef Q_OS_WIN
-        // Non-Windows platforms don't support Windows-specific options
-        if (out.unknownOptions.contains(QLatin1String("no-windows-assert-ui"))) {
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString = QCoreApplication::translate("main",
-                "--no-windows-assert-ui is only supported on Windows.");
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
-        }
+    if (unknownOptions.contains(QLatin1String("no-windows-assert-ui"))) {
+        return QCoreApplication::translate("main", "--no-windows-assert-ui is only supported on Windows.");
+    }
 #endif
 
 #if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
-        // Non-Windows/macOS platforms don't support swrast
-        if (out.unknownOptions.contains(QLatin1String("swrast"))) {
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString = QCoreApplication::translate("main",
-                "--swrast is only supported on Windows and macOS.");
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
-        }
+    if (unknownOptions.contains(QLatin1String("swrast"))) {
+        return QCoreApplication::translate("main", "--swrast is only supported on Windows and macOS.");
+    }
 #endif
 
-        // Generic unknown options error
-        out.statusCode = CommandLineParseResult::Status::Error;
-        out.errorString = QCoreApplication::translate("main", "Unknown options: %1")
-            .arg(out.unknownOptions.join(QLatin1String(", ")));
-        qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-        return out;
-    }
+    return QCoreApplication::translate("main", "Unknown options: %1").arg(unknownOptions.join(QLatin1String(", ")));
+}
 
+/// Reads the positional arguments and the options that @a parser parsed into @a out.
+/// @return The error text of a command line that is rejected
+std::optional<QString> readParsedOptions(const QCommandLineParser& parser, CommandLineParseResult& out)
+{
     // --- Validate positional arguments ---
     out.positional = parser.positionalArguments();
     if (!out.positional.isEmpty()) {
-        out.statusCode = CommandLineParseResult::Status::Error;
-        out.errorString = QCoreApplication::translate("main", "Unexpected positional arguments: %1")
+        return QCoreApplication::translate("main", "Unexpected positional arguments: %1")
             .arg(out.positional.join(QLatin1String(", ")));
-        qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-        return out;
-    }
-
-    // --- Handle help/version requests ---
-    if (parser.isSet(helpOption)) {
-        out.statusCode = CommandLineParseResult::Status::HelpRequested;
-        out.helpText = parser.helpText();
-        return out;
-    }
-
-    if (parser.isSet(versionOption)) {
-        out.statusCode = CommandLineParseResult::Status::VersionRequested;
-        out.versionText = QCoreApplication::applicationVersion();
-        return out;
     }
 
     // --- Parse core options ---
-    if (parser.isSet(systemIdOpt)) {
-        const QString systemIdStr = parser.value(systemIdOpt);
+    if (parser.isSet(kOptSystemId)) {
+        const QString systemIdStr = parser.value(kOptSystemId);
         const std::optional<quint32> systemId = parseSystemId(systemIdStr);
         if (!systemId) {
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString =
-                QCoreApplication::translate("main", "Invalid System ID (must be 1-4294967295): %1").arg(systemIdStr);
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
+            return QCoreApplication::translate("main", "Invalid System ID (must be 1-4294967295): %1").arg(systemIdStr);
         }
         out.systemId = systemId;
         qCDebug(QGCCommandLineParserLog) << "System ID:" << *systemId;
     }
 
-    out.clearSettingsOptions = parser.isSet(clearSettingsOpt);
-    out.clearCache = parser.isSet(clearCacheOpt);
-    if (parser.isSet(loggingOpt)) {
-        out.loggingOptions = parser.value(loggingOpt);
+    out.clearSettingsOptions = parser.isSet(kOptClearSettings);
+    out.clearCache = parser.isSet(kOptClearCache);
+    if (parser.isSet(kOptLogging)) {
+        out.loggingOptions = parser.value(kOptLogging);
         qCDebug(QGCCommandLineParserLog) << "Logging options:" << out.loggingOptions.value();
     }
-    out.logOutput = parser.isSet(logOutputOpt);
-    out.simpleBootTest = parser.isSet(simpleBootOpt);
+    out.logOutput = parser.isSet(kOptLogOutput);
+    out.simpleBootTest = parser.isSet(kOptSimpleBoot);
 
 #ifdef QGC_UNITTEST_BUILD
     // --- Parse test options ---
-    if (parser.isSet(unittestOpt)) {
+    if (parser.isSet(kOptUnittest)) {
         out.runningUnitTests = true;
-        const QStringList vals = parser.values(unittestOpt);
+        const QStringList vals = parser.values(kOptUnittest);
         // Filter out empty values (from bare --unittest)
         for (const QString& val : vals) {
             if (!val.isEmpty()) {
@@ -362,92 +202,183 @@ CommandLineParseResult parseCommandLine()
         qCDebug(QGCCommandLineParserLog) << "Unit tests:" << (out.unitTests.isEmpty() ? QStringLiteral("all") : out.unitTests.join(QLatin1String(", ")));
     }
 
-    if (parser.isSet(unittestStressOpt)) {
+    if (parser.isSet(kOptUnittestStress)) {
         out.runningUnitTests = true;
         out.stressUnitTests = true;
-        const QString stress = parser.value(unittestStressOpt);
+        const QString stress = parser.value(kOptUnittestStress);
         if (stress.isEmpty()) {
             out.stressUnitTestsCount = 20;
         } else {
             bool ok = false;
             const uint count = stress.toUInt(&ok);
             if (!ok || (count == 0)) {
-                out.statusCode = CommandLineParseResult::Status::Error;
-                out.errorString = QCoreApplication::translate("main", "Invalid stress test count (must be > 0): %1")
-                    .arg(stress);
-                qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-                return out;
+                return QCoreApplication::translate("main", "Invalid stress test count (must be > 0): %1").arg(stress);
             }
             out.stressUnitTestsCount = count;
         }
         qCDebug(QGCCommandLineParserLog) << "Stress test iterations:" << out.stressUnitTestsCount;
     }
 
-    if (parser.isSet(unittestOutputOpt)) {
-        out.unitTestOutput = parser.value(unittestOutputOpt);
+    if (parser.isSet(kOptUnittestOutput)) {
+        out.unitTestOutput = parser.value(kOptUnittestOutput);
         qCDebug(QGCCommandLineParserLog) << "Test output file:" << out.unitTestOutput.value();
     }
 
-    if (parser.isSet(unittestShardOpt)) {
-        const QString shardValue = parser.value(unittestShardOpt);
+    if (parser.isSet(kOptUnittestShard)) {
+        const QString shardValue = parser.value(kOptUnittestShard);
         const std::optional<std::pair<uint, uint>> shard = parseUnitTestShard(shardValue);
         if (!shard) {
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString =
-                QCoreApplication::translate(
-                    "main", "Invalid unit test shard (expected <index>/<count> with 1 <= index <= count): %1")
-                    .arg(shardValue);
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
+            return QCoreApplication::translate(
+                       "main", "Invalid unit test shard (expected <index>/<count> with 1 <= index <= count): %1")
+                .arg(shardValue);
         }
         if (out.unitTests.size() != 1) {
-            out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString =
-                QCoreApplication::translate("main", "--unittest-shard requires exactly one --unittest:<name>.");
-            qCWarning(QGCCommandLineParserLog) << out.errorString.value();
-            return out;
+            return QCoreApplication::translate("main", "--unittest-shard requires exactly one --unittest:<name>.");
         }
         out.unitTestShardIndex = shard->first;
         out.unitTestShardCount = shard->second;
         qCDebug(QGCCommandLineParserLog) << "Test shard:" << shard->first << "of" << shard->second;
     }
 
-    if (parser.isSet(unittestLabelOpt)) {
-        out.labelFilter = parser.value(unittestLabelOpt);
+    if (parser.isSet(kOptUnittestLabel)) {
+        out.labelFilter = parser.value(kOptUnittestLabel);
         qCDebug(QGCCommandLineParserLog) << "Label filter:" << out.labelFilter.value();
     }
 
-    out.listTests = parser.isSet(listTestsOpt);
+    out.listTests = parser.isSet(kOptListTests);
     if (out.listTests) {
         qCDebug(QGCCommandLineParserLog) << "List tests requested";
     }
 
-    out.onscreen = parser.isSet(onscreenOpt);
+    out.onscreen = parser.isSet(kOptOnscreen);
 #endif
 
     // --- Parse desktop options ---
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    out.fakeMobile = parser.isSet(fakeMobileOpt);
-    out.allowMultiple = parser.isSet(allowMultipleOpt);
-#else
-    out.fakeMobile = false;
-    out.allowMultiple = false;
+    out.fakeMobile = parser.isSet(kOptFakeMobile);
+    out.allowMultiple = parser.isSet(kOptAllowMultiple);
 #endif
 
     // --- Parse graphics options ---
 #ifdef Q_OS_WIN
-    out.quietWindowsAsserts = parser.isSet(quietWinAssertOpt);
-#else
-    out.quietWindowsAsserts = false;
+    out.quietWindowsAsserts = parser.isSet(kOptNoWinAssertUI);
 #endif
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
-    out.useSwRast = parser.isSet(swrastOpt);
-#else
-    out.useSwRast = false;
+    out.useSwRast = parser.isSet(kOptSwrast);
 #endif
 
-    out.statusCode = CommandLineParseResult::Status::Ok;
+    return std::nullopt;
+}
+
+}  // namespace
+
+CommandLineParseResult parseCommandLine()
+{
+    // Set application info (needed for --help and --version)
+    QCoreApplication::setApplicationName(QLatin1String(QGC_APP_NAME));
+    QCoreApplication::setApplicationVersion(QLatin1String(QGC_APP_VERSION_STR));
+
+    return parseArguments(QCoreApplication::arguments());
+}
+
+CommandLineParseResult parseArguments(const QStringList& arguments)
+{
+    CommandLineParseResult out{};
+    if (arguments.isEmpty()) {
+        // Not even the program name. QCommandLineParser has no error text for such a list, so the result has none.
+        out.statusCode = CommandLineParseResult::Status::Error;
+        qCWarning(QGCCommandLineParserLog) << "The argument list is empty: it must hold at least the program name";
+        return out;
+    }
+
+    out.parser = std::make_unique<QCommandLineParser>();
+
+    QCommandLineParser& parser = *out.parser;
+    parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+    parser.setOptionsAfterPositionalArgumentsMode(QCommandLineParser::ParseAsOptions);
+    parser.setApplicationDescription(QStringLiteral(QGC_APP_DESCRIPTION));
+
+    // --- Standard options ---
+    (void) parser.addHelpOption();
+    (void) parser.addVersionOption();
+
+    (void) parser.addOptions({
+        // --- Core options (always available) ---
+        {QString(kOptSystemId), QCoreApplication::translate("main", "MAVLink GCS system id."),
+         QCoreApplication::translate("main", "id")},
+        {QString(kOptClearSettings), QCoreApplication::translate("main", "Clear stored application settings.")},
+        {QString(kOptClearCache), QCoreApplication::translate("main", "Clear parameter and airframe caches.")},
+        {QString(kOptLogging), QCoreApplication::translate("main", "Enable logging with optional rules string."),
+         QCoreApplication::translate("main", "rules")},
+        {QString(kOptLogOutput), QCoreApplication::translate("main", "Log to console.")},
+        {QString(kOptSimpleBoot), QCoreApplication::translate("main", "Initialize subsystems and exit.")},
+#ifdef QGC_UNITTEST_BUILD
+        // --- Test options (only in test builds) ---
+        {QString(kOptUnittest), QCoreApplication::translate("main", "Run unit tests (optional filter value)."),
+         QCoreApplication::translate("main", "filter")},
+        {QString(kOptUnittestStress), QCoreApplication::translate("main", "Stress unit tests."),
+         QCoreApplication::translate("main", "count")},
+        {QString(kOptUnittestOutput),
+         QCoreApplication::translate("main", "Output test results to file (JUnit XML format)."),
+         QCoreApplication::translate("main", "file")},
+        {QString(kOptUnittestShard),
+         QCoreApplication::translate("main", "Run one shard of a single test's functions (1-based index/count)."),
+         QCoreApplication::translate("main", "index/count")},
+        {QString(kOptUnittestLabel),
+         QCoreApplication::translate("main",
+                                     "Filter tests by label (unit, integration, vehicle, missionmanager, etc.)."),
+         QCoreApplication::translate("main", "labels")},
+        {QString(kOptListTests), QCoreApplication::translate("main", "List available unit tests and exit.")},
+        {QString(kOptOnscreen),
+         QCoreApplication::translate("main", "Show test windows on screen instead of running offscreen.")},
+#endif
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+        // --- Desktop-only options ---
+        {QString(kOptFakeMobile), QCoreApplication::translate("main", "Run with mobile-style UI.")},
+        {QString(kOptAllowMultiple), QCoreApplication::translate("main", "Bypass single-instance guard.")},
+#endif
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+        // --- Windows/macOS options ---
+        {QString(kOptSwrast), QCoreApplication::translate("main", "Force software rendering.")},
+#endif
+#ifdef Q_OS_WIN
+        // --- Windows-only options ---
+        {QString(kOptNoWinAssertUI), QCoreApplication::translate("main", "Disable Windows assert dialog boxes.")},
+#endif
+    });
+
+    // --- Parse arguments ---
+    std::optional<QString> error;
+    if (parser.parse(normalizeArgs(arguments))) {
+        // --- Handle help/version requests ---
+        // Before any other check and the version first, as QCommandLineParser::process() answers them
+        if (parser.isSet(kOptVersion)) {
+            out.statusCode = CommandLineParseResult::Status::VersionRequested;
+            out.versionText = QCoreApplication::applicationVersion();
+            return out;
+        }
+
+        if (parser.isSet(kOptHelp) || parser.isSet(kOptHelpAll)) {
+            out.statusCode = CommandLineParseResult::Status::HelpRequested;
+            out.helpText = parser.helpText();
+            return out;
+        }
+
+        error = readParsedOptions(parser, out);
+    } else {
+        out.unknownOptions = parser.unknownOptionNames();
+        // Without an unknown option: an option without its value, or a value for an option that takes none
+        error = out.unknownOptions.isEmpty() ? parser.errorText() : unknownOptionsError(out.unknownOptions);
+    }
+
+    if (error) {
+        out.statusCode = CommandLineParseResult::Status::Error;
+        out.errorString = error;
+        qCWarning(QGCCommandLineParserLog) << *error;
+        return out;
+    }
+
     qCDebug(QGCCommandLineParserLog) << "Command line parsing completed successfully";
 
     return out;
@@ -459,7 +390,16 @@ CommandLineParseResult parse(int argc, char* argv[])
     overrideCommandLine(argc, argv);
 #endif
     const QCoreApplication app(argc, argv);
-    return parseCommandLine();
+    CommandLineParseResult result = parseCommandLine();
+
+    if ((result.statusCode == CommandLineParseResult::Status::HelpRequested) ||
+        (result.statusCode == CommandLineParseResult::Status::VersionRequested)) {
+        // Qt's help names the executable and, for --help-all, the generic options of the application object: it
+        // takes both from the QCoreApplication, so the request is answered while this one exists.
+        (void) handleParseResult(result);
+    }
+
+    return result;
 }
 
 std::optional<int> handleParseResult(const CommandLineParseResult& result)
@@ -467,11 +407,23 @@ std::optional<int> handleParseResult(const CommandLineParseResult& result)
     switch (result.statusCode) {
     case CommandLineParseResult::Status::Error: {
         const QString msg = result.errorString.value_or(QStringLiteral("Unknown error"));
-        QCommandLineParser::showMessageAndExit(QCommandLineParser::MessageType::Error, msg, 1);
+        QCommandLineParser::showMessageAndExit(QCommandLineParser::MessageType::Error, msg + QLatin1Char('\n'), 1);
         Q_UNREACHABLE();
     }
     case CommandLineParseResult::Status::HelpRequested:
+        if (result.parser) {
+            if (result.parser->isSet(kOptHelp)) {
+                result.parser->showHelp(EXIT_SUCCESS);
+            }
+            // --help-all: only process() shows the help that includes Qt's generic options. The first argument is
+            // the program name, which the parser skips.
+            result.parser->process(QStringList{QString(), QLatin1String("--") + kOptHelpAll});
+        }
+        return 0;
     case CommandLineParseResult::Status::VersionRequested:
+        if (result.parser) {
+            result.parser->showVersion();
+        }
         return 0;
     case CommandLineParseResult::Status::Ok:
         return std::nullopt;

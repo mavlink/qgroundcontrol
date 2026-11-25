@@ -2,34 +2,34 @@
 
 #include "AudioOutput.h"
 
+void AudioOutputTest::_testSpokenReplacements_data()
+{
+    QTest::addColumn<QString>("input");
+    QTest::addColumn<QString>("expected");
+
+    QTest::addRow("negative decimal meters")
+        << "-10.5m, -10.5m. -10.5 m"
+        << "negative 10 point 5 meters, negative 10 point 5 meters. negative 10 point 5  meters";
+    QTest::addRow("negative meters") << "-10m -10 m" << "negative 10 meters negative 10  meters";
+    QTest::addRow("inside a sentence") << "foo -10m -10 m bar" << "foo negative 10 meters negative 10  meters bar";
+    QTest::addRow("hyphen before a word") << "-foom" << "-foom";
+    // A hyphen joined to a preceding word or number is not a minus sign
+    QTest::addRow("hyphen after an acronym") << "GPS-1" << "G.P.S.-1";
+    QTest::addRow("hyphen between numbers") << "1-2" << "1-2";
+    QTest::addRow("negative in parentheses") << "(-5)" << "(negative 5)";
+    QTest::addRow("word starting with m after a number") << "10 moo" << "10 moo";
+    QTest::addRow("word starting with m joined to a number") << "10moo" << "10moo";
+    QTest::addRow("milliseconds below a second") << "10ms" << "10ms";
+    QTest::addRow("one second") << "1000ms" << "1 second";
+    QTest::addRow("second and millisecond") << "1001ms" << "1 second and 1 millisecond";
+}
+
 void AudioOutputTest::_testSpokenReplacements()
 {
-    QString result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("-10.5m, -10.5m. -10.5 m"));
-    QCOMPARE(result,
-             QStringLiteral("negative 10 point 5 meters, negative 10 point 5 meters. negative 10 point 5  meters"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("-10m -10 m"));
-    QCOMPARE(result, QStringLiteral("negative 10 meters negative 10  meters"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("foo -10m -10 m bar"));
-    QCOMPARE(result, QStringLiteral("foo negative 10 meters negative 10  meters bar"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("-foom"));
-    QCOMPARE(result, QStringLiteral("-foom"));
-    // A hyphen joined to a preceding word or number is not a minus sign
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("GPS-1"));
-    QCOMPARE(result, QStringLiteral("G.P.S.-1"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("1-2"));
-    QCOMPARE(result, QStringLiteral("1-2"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("(-5)"));
-    QCOMPARE(result, QStringLiteral("(negative 5)"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("10 moo"));
-    QCOMPARE(result, QStringLiteral("10 moo"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("10moo"));
-    QCOMPARE(result, QStringLiteral("10moo"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("10ms"));
-    QCOMPARE(result, QStringLiteral("10ms"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("1000ms"));
-    QCOMPARE(result, QStringLiteral("1 second"));
-    result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("1001ms"));
-    QCOMPARE(result, QStringLiteral("1 second and 1 millisecond"));
+    QFETCH(QString, input);
+    QFETCH(QString, expected);
+
+    QCOMPARE(AudioOutput::_fixTextMessageForAudio(input), expected);
 }
 
 // Issue 15110
@@ -58,7 +58,5 @@ void AudioOutputTest::_abbreviationsReplacedAtTokenBoundaries()
 
     QCOMPARE(AudioOutput::_replaceAbbreviations(input), expected);
 }
-
-#include "UnitTest.h"
 
 UT_REGISTER_TEST(AudioOutputTest, TestLabel::Unit, TestLabel::Utilities)

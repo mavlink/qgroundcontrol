@@ -1,15 +1,1 @@
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        QGCSqlHelperTest.cc
-        QGCSqlHelperTest.h
-)
-
-target_include_directories(
-    QGCUnitTests
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities/Database
-)
-
-add_qgc_test(QGCSqlHelperTest LABELS Unit Utilities)
+add_qgc_tests(QGCSqlHelperTest LABELS Unit Utilities)

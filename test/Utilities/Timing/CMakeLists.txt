@@ -1,19 +1,6 @@
-target_sources(
-    QGCUnitTests
-    PRIVATE
-        ExponentialBackoffTest.cc
-        ExponentialBackoffTest.h
-        MonotonicClockTest.cc
-        MonotonicClockTest.h
-        ScheduledTaskTest.cc
-        ScheduledTaskTest.h
+add_qgc_tests(
+    ExponentialBackoffTest
+    MonotonicClockTest
+    ScheduledTaskTest
+    LABELS Unit Utilities
 )
-target_link_libraries(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE
-        QGCClock
-        QGCTiming
-)
-add_qgc_test(ExponentialBackoffTest LABELS Unit Utilities)
-add_qgc_test(MonotonicClockTest LABELS Unit Utilities)
-add_qgc_test(ScheduledTaskTest LABELS Unit Utilities)

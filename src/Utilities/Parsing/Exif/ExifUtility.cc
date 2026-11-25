@@ -1,13 +1,84 @@
 #include "ExifUtility.h"
 #include "QGCLoggingCategory.h"
 
-#include <cassert>
 #include <cmath>
 
 QGC_LOGGING_CATEGORY(ExifUtilityLog, "Utilities.ExifUtility")
 
 namespace ExifUtility
 {
+
+namespace {
+
+/// Byte range of a JPEG's EXIF APP1 segment; empty at the place for a new one when the image has none.
+struct ExifSegmentRange
+{
+    qsizetype start = 0;
+    qsizetype end = 0;
+};
+
+/// Walks the marker segments that follow SOI, up to SOS or EOI.
+/// @return false if they are malformed
+bool findExifSegment(const QByteArray& jpeg, ExifSegmentRange& range)
+{
+    const QByteArrayView exifIdentifier("Exif\0\0", 6);
+    const auto byteAt = [&jpeg](qsizetype index) { return static_cast<unsigned char>(jpeg[index]); };
+
+    qsizetype pos = 2;
+    // A new EXIF segment goes after the JFIF APP0 segments, which have to stay first
+    qsizetype insertPos = pos;
+    bool leadingApp0 = true;
+
+    while (pos + 1 < jpeg.size()) {
+        if (byteAt(pos) != 0xFF) {
+            return false;
+        }
+        const unsigned char marker = byteAt(pos + 1);
+        if (marker == 0xFF) {  // Fill byte before a marker
+            pos++;
+            continue;
+        }
+        if (marker == 0xDA || marker == 0xD9) {  // SOS, EOI
+            range = {insertPos, insertPos};
+            return true;
+        }
+        // Every other marker allowed here starts a segment with a length field
+        if (marker < 0xC0 || (marker >= 0xD0 && marker <= 0xD8) || pos + 4 > jpeg.size()) {
+            return false;
+        }
+        const qsizetype segmentLen = (byteAt(pos + 2) << 8) | byteAt(pos + 3);
+        const qsizetype segmentEnd = pos + 2 + segmentLen;
+        if (segmentLen < 2 || segmentEnd > jpeg.size()) {
+            return false;
+        }
+
+        // XMP metadata is stored in APP1 too
+        if (marker == 0xE1 && QByteArrayView(jpeg).sliced(pos + 4, segmentLen - 2).startsWith(exifIdentifier)) {
+            range = {pos, segmentEnd};
+            return true;
+        }
+        if (leadingApp0 && marker == 0xE0) {
+            insertPos = segmentEnd;
+        } else {
+            leadingApp0 = false;
+        }
+        pos = segmentEnd;
+    }
+
+    return false;
+}
+
+/// @return 0 for a zero denominator
+double rationalToDouble(const unsigned char* bytes, ExifByteOrder order)
+{
+    const ExifRational rational = exif_get_rational(bytes, order);
+    if (rational.denominator == 0) {
+        return 0.0;
+    }
+    return static_cast<double>(rational.numerator) / static_cast<double>(rational.denominator);
+}
+
+}  // namespace
 
 // ============================================================================
 // EXIF Data Management
@@ -51,7 +122,12 @@ bool saveToBuffer(ExifData *data, QByteArray &buffer)
         return false;
     }
 
-    // Generate EXIF output
+    ExifSegmentRange exifSegment;
+    if (!findExifSegment(buffer, exifSegment)) {
+        qCWarning(ExifUtilityLog) << "Malformed JPEG segments";
+        return false;
+    }
+
     unsigned char *exifBuffer = nullptr;
     unsigned int exifSize = 0;
     exif_data_save_data(data, &exifBuffer, &exifSize);
@@ -62,37 +138,13 @@ bool saveToBuffer(ExifData *data, QByteArray &buffer)
         return false;
     }
 
-    // Find existing APP1 marker
-    int app1Start = -1;
-    int app1End = -1;
-    int pos = 2;
-
-    while (pos < buffer.size() - 3) {
-        if (static_cast<unsigned char>(buffer[pos]) == 0xFF) {
-            unsigned char marker = static_cast<unsigned char>(buffer[pos + 1]);
-
-            if (marker == 0xE1) {  // APP1 (EXIF)
-                app1Start = pos;
-                int segmentLen = (static_cast<unsigned char>(buffer[pos + 2]) << 8) |
-                                 static_cast<unsigned char>(buffer[pos + 3]);
-                app1End = pos + 2 + segmentLen;
-                break;
-            } else if (marker == 0xDA) {  // SOS - stop searching
-                break;
-            } else if (marker >= 0xE0 && marker <= 0xEF) {  // Other APPn
-                int segmentLen = (static_cast<unsigned char>(buffer[pos + 2]) << 8) |
-                                 static_cast<unsigned char>(buffer[pos + 3]);
-                pos += 2 + segmentLen;
-                continue;
-            } else if (marker == 0xD8 || marker == 0xD9 || marker == 0x00) {
-                pos++;
-                continue;
-            }
-        }
-        pos++;
+    // The 16-bit segment length counts its own two bytes
+    if (exifSize > 0xFFFF - 2) {
+        qCWarning(ExifUtilityLog) << "EXIF data does not fit in one JPEG segment:" << exifSize << "bytes";
+        free(exifBuffer);
+        return false;
     }
 
-    // Build new APP1 segment
     QByteArray newApp1;
     newApp1.append('\xFF');
     newApp1.append('\xE1');
@@ -104,50 +156,20 @@ bool saveToBuffer(ExifData *data, QByteArray &buffer)
 
     free(exifBuffer);
 
-    // Reconstruct JPEG
-    QByteArray newBuffer;
-    newBuffer.reserve(buffer.size() + newApp1.size());
-
-    // SOI marker
-    newBuffer.append(buffer.left(2));
-
-    // New APP1
-    newBuffer.append(newApp1);
-
-    // Rest of image (skip old APP1 if found)
-    if (app1Start > 0 && app1End > app1Start && app1End <= buffer.size()) {
-        newBuffer.append(buffer.mid(app1End));
-    } else {
-        newBuffer.append(buffer.mid(2));
-    }
-
-    buffer = newBuffer;
+    buffer.replace(exifSegment.start, exifSegment.end - exifSegment.start, newApp1);
     return true;
 }
 
 bool isJpeg(const QByteArray &buffer)
 {
-    return buffer.size() >= 2 &&
-           static_cast<unsigned char>(buffer[0]) == 0xFF &&
-           static_cast<unsigned char>(buffer[1]) == 0xD8;
+    return buffer.startsWith("\xFF\xD8");
 }
 
 bool isTiff(const QByteArray &buffer)
 {
-    if (buffer.size() < 4) {
-        return false;
-    }
     // TIFF files start with "II" (Intel/little-endian) or "MM" (Motorola/big-endian)
     // followed by magic number 42 (0x002A)
-    if (buffer[0] == 'I' && buffer[1] == 'I') {
-        return static_cast<unsigned char>(buffer[2]) == 0x2A &&
-               static_cast<unsigned char>(buffer[3]) == 0x00;
-    }
-    if (buffer[0] == 'M' && buffer[1] == 'M') {
-        return static_cast<unsigned char>(buffer[2]) == 0x00 &&
-               static_cast<unsigned char>(buffer[3]) == 0x2A;
-    }
-    return false;
+    return buffer.startsWith(QByteArrayView("II\x2A\x00", 4)) || buffer.startsWith(QByteArrayView("MM\x00\x2A", 4));
 }
 
 bool hasExifData(const QByteArray &buffer)
@@ -161,19 +183,9 @@ bool hasExifData(const QByteArray &buffer)
         return true;
     }
 
-    // For JPEG, check for APP1 marker with EXIF header
-    if (!isJpeg(buffer)) {
-        return false;
-    }
-
-    QByteArray app1Marker("\xFF\xE1", 2);
-    int app1Pos = buffer.indexOf(app1Marker, 2);
-    if (app1Pos < 0 || app1Pos + 10 > buffer.size()) {
-        return false;
-    }
-
-    QByteArray exifHeader("Exif\0\0", 6);
-    return buffer.mid(app1Pos + 4, 6) == exifHeader;
+    // A JPEG has it in an APP1 segment among the segments in front of the image data
+    ExifSegmentRange exifSegment;
+    return isJpeg(buffer) && findExifSegment(buffer, exifSegment) && (exifSegment.start != exifSegment.end);
 }
 
 // ============================================================================
@@ -219,12 +231,7 @@ double readRational(ExifData *data, ExifTag tag, ExifIfd ifd)
         return 0.0;
     }
 
-    ExifByteOrder order = exif_data_get_byte_order(data);
-    ExifRational rational = exif_get_rational(entry->data, order);
-    if (rational.denominator == 0) {
-        return 0.0;
-    }
-    return static_cast<double>(rational.numerator) / static_cast<double>(rational.denominator);
+    return rationalToDouble(entry->data, exif_data_get_byte_order(data));
 }
 
 // ============================================================================
@@ -235,20 +242,17 @@ ExifEntry* initTag(ExifData *data, ExifIfd ifd, ExifTag tag)
 {
     if (!data) return nullptr;
 
-    // Return existing tag if present
     ExifEntry *entry = exif_content_get_entry(data->ifd[ifd], tag);
     if (entry) {
         return entry;
     }
 
-    // Create new entry
     entry = exif_entry_new();
     if (!entry) return nullptr;
 
     // Tag must be set before adding to content
     entry->tag = tag;
 
-    // Add to IFD
     exif_content_add_entry(data->ifd[ifd], entry);
 
     // Initialize with default data (allocates memory for standard tags)
@@ -264,11 +268,9 @@ ExifEntry* createTag(ExifData *data, ExifIfd ifd, ExifTag tag, ExifFormat format
 {
     if (!data) return nullptr;
 
-    // Create a memory allocator for this entry
     ExifMem *mem = exif_mem_new_default();
     if (!mem) return nullptr;
 
-    // Create entry using our allocator
     ExifEntry *entry = exif_entry_new_mem(mem);
     if (!entry) {
         exif_mem_unref(mem);
@@ -284,14 +286,12 @@ ExifEntry* createTag(ExifData *data, ExifIfd ifd, ExifTag tag, ExifFormat format
         return nullptr;
     }
 
-    // Fill in entry fields
     entry->data = buf;
     entry->size = size;
     entry->tag = tag;
     entry->format = format;
     entry->components = components;
 
-    // Add to IFD
     exif_content_add_entry(data->ifd[ifd], entry);
 
     // Release our references - IFD now owns the entry
@@ -311,24 +311,9 @@ double gpsRationalToDecimal(ExifEntry *entry, ExifByteOrder order)
         return 0.0;
     }
 
-    double degrees = 0.0;
-    double minutes = 0.0;
-    double seconds = 0.0;
-
-    for (unsigned int i = 0; i < entry->components && i < 3; i++) {
-        ExifRational rational = exif_get_rational(entry->data + i * 8, order);
-        if (rational.denominator == 0) {
-            continue;
-        }
-        double value = static_cast<double>(rational.numerator) / static_cast<double>(rational.denominator);
-        switch (i) {
-            case 0: degrees = value; break;
-            case 1: minutes = value; break;
-            case 2: seconds = value; break;
-        }
-    }
-
-    return degrees + (minutes / 60.0) + (seconds / 3600.0);
+    // Degrees, minutes and seconds, 8 bytes each
+    return rationalToDouble(entry->data, order) + (rationalToDouble(entry->data + 8, order) / 60.0) +
+           (rationalToDouble(entry->data + 16, order) / 3600.0);
 }
 
 void writeGpsCoordinate(ExifEntry *entry, ExifByteOrder order, double value)

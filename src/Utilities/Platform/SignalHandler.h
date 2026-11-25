@@ -34,16 +34,18 @@ private:
 #ifdef Q_OS_WIN
     QWinEventNotifier* _notifier{nullptr};
     Qt::HANDLE _signalEvent{nullptr};
+    bool _sigIntTriggered{false};
 #else
     static void _intSignalHandler(int signum);
     static void _termSignalHandler(int signum);
+    static void _wakeEventLoop(int fd);
 
     int _sigIntFd[2] = {-1, -1};   // socketpair read=0, write=1
     int _sigTermFd[2] = {-1, -1};
     QSocketNotifier* _notifierInt{nullptr};
     QSocketNotifier* _notifierTerm{nullptr};
+    std::atomic<int> _sigIntCount{0};
 #endif
 
-    bool _sigIntTriggered{false};
     static std::atomic<SignalHandler*> s_current;
 };

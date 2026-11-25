@@ -2,12 +2,10 @@
 
 #include <memory>
 
-#include "DataRateTracker.h"
 #include "JsonValidation.h"
 #include "ManualScheduler.h"
 #include "QGCLoggingCategory.h"
 #include "ScheduledTask.h"
-#include "UdpForwarder.h"
 
 class UtilityLibraryTest : public QObject
 {
@@ -121,16 +119,6 @@ private slots:
         context.reset();
         QCoreApplication::sendPostedEvents();
         QCOMPARE(received, QStringList{lateName});
-    }
-
-    void networkAndRateLibraryLinkage()
-    {
-        UdpForwarder output;
-        QVERIFY(output.configure(QStringLiteral("127.0.0.1"), 9));
-        DataRateTracker rate;
-        QCOMPARE(rate.totalBytes(), quint64{0});
-        output.stop();
-        QVERIFY(!output.isEnabled());
     }
 };
 

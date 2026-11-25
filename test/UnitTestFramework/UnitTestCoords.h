@@ -18,23 +18,30 @@
         QVERIFY2(QTest::compareCoords((actual), (expected), _qcc_tol, _qcc_msg), qPrintable(_qcc_msg)); \
     } while (false)
 
-/// Verify coordinates are equal within tolerance (less verbose than QCOMPARE_COORDS)
-#define QVERIFY_COORDS_NEAR(actual, expected, toleranceMeters)   \
-    QVERIFY2((actual).distanceTo(expected) <= (toleranceMeters), \
-             qPrintable(QString("Coordinates differ by %1m").arg((actual).distanceTo(expected))))
+/// QCOMPARE_COORDS with a tolerance that has to be given; 0 or less stands for 1 m, as there. It is written out
+/// instead of expanding QCOMPARE_COORDS, whose __VA_OPT__ MSVC only takes with /Zc:preprocessor: the portable
+/// tests, which are built without that option, use this macro.
+#define QVERIFY_COORDS_NEAR(actual, expected, toleranceMeters)                                                   \
+    do {                                                                                                         \
+        QString _qcn_msg;                                                                                        \
+        QVERIFY2(QTest::compareCoords((actual), (expected), (toleranceMeters), _qcn_msg), qPrintable(_qcn_msg)); \
+    } while (false)
 
 namespace QTest {
 
 inline bool compareCoords(const QGeoCoordinate &actual, const QGeoCoordinate &expected, double toleranceMeters, QString &outMessage)
 {
     const double tolerance = (toleranceMeters > 0.0) ? toleranceMeters : 1.0;
+    // distanceTo() is 0 for a coordinate that is not valid, which is near no other
+    const bool comparable = actual.isValid() && expected.isValid();
     const double distance = actual.distanceTo(expected);
-    if (distance > tolerance) {
+    if (!comparable || (distance > tolerance)) {
         outMessage = QStringLiteral(
-                         "Coordinates differ by %1m (tolerance: %2m)\n"
+                         "Coordinates %1 (tolerance: %2m)\n"
                          "  Actual:   (%3, %4, %5)\n"
                          "  Expected: (%6, %7, %8)")
-                         .arg(distance, 0, 'f', 3)
+                         .arg(comparable ? QStringLiteral("differ by %1m").arg(distance, 0, 'f', 3)
+                                         : QStringLiteral("are not both valid"))
                          .arg(tolerance, 0, 'f', 3)
                          .arg(actual.latitude(), 0, 'f', 7)
                          .arg(actual.longitude(), 0, 'f', 7)

@@ -33,14 +33,7 @@ QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxByt
         return {};
     }
 
-    QByteArray data;
-    if (maxBytes > 0) {
-        data = file.read(maxBytes);
-    } else {
-        data = file.readAll();
-    }
-    file.close();
-    return data;
+    return (maxBytes > 0) ? file.read(maxBytes) : file.readAll();
 }
 
 size_t optimalBufferSize(const QString &path)
@@ -124,7 +117,6 @@ bool copyDirectoryRecursively(const QString &sourcePath, const QString &destPath
         return false;
     }
 
-    // Copy files
     const QStringList files = sourceDir.entryList(QDir::Files | QDir::NoDotAndDotDot);
     for (const QString &fileName : files) {
         const QString srcFilePath = joinPath(sourcePath, fileName);
@@ -135,7 +127,6 @@ bool copyDirectoryRecursively(const QString &sourcePath, const QString &destPath
         }
     }
 
-    // Recursively copy subdirectories
     const QStringList dirs = sourceDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QString &dirName : dirs) {
         const QString srcSubDir = joinPath(sourcePath, dirName);
@@ -151,7 +142,7 @@ bool copyDirectoryRecursively(const QString &sourcePath, const QString &destPath
 bool moveFileOrCopy(const QString &sourcePath, const QString &destPath)
 {
     if (sourcePath.isEmpty() || destPath.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "moveFileOrCopy: empty path";
+        qCWarning(QGCFileHelperLog) << "empty path";
         return false;
     }
 
@@ -161,7 +152,7 @@ bool moveFileOrCopy(const QString &sourcePath, const QString &destPath)
     }
 
     // Rename failed - fall back to copy + delete
-    qCDebug(QGCFileHelperLog) << "moveFileOrCopy: rename failed, using copy for:" << sourcePath;
+    qCDebug(QGCFileHelperLog) << "rename failed, using copy for:" << sourcePath;
 
     const bool isDir = QFileInfo(sourcePath).isDir();
     bool copySuccess = false;
@@ -179,7 +170,7 @@ bool moveFileOrCopy(const QString &sourcePath, const QString &destPath)
     }
 
     if (!copySuccess) {
-        qCWarning(QGCFileHelperLog) << "moveFileOrCopy: failed to move:" << sourcePath << "to" << destPath;
+        qCWarning(QGCFileHelperLog) << "failed to move:" << sourcePath << "to" << destPath;
     }
 
     return copySuccess;
@@ -188,32 +179,30 @@ bool moveFileOrCopy(const QString &sourcePath, const QString &destPath)
 bool atomicWrite(const QString &filePath, const QByteArray &data)
 {
     if (filePath.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "atomicWrite: file path is empty";
+        qCWarning(QGCFileHelperLog) << "file path is empty";
         return false;
     }
 
-    // Ensure parent directory exists
     if (!ensureParentExists(filePath)) {
-        qCWarning(QGCFileHelperLog) << "atomicWrite: failed to create parent directory for:" << filePath;
+        qCWarning(QGCFileHelperLog) << "failed to create parent directory for:" << filePath;
         return false;
     }
 
     // QSaveFile writes to temp file, then atomically renames on commit()
     QSaveFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        qCWarning(QGCFileHelperLog) << "atomicWrite: failed to open:" << filePath
-                                    << "-" << file.errorString();
+        qCWarning(QGCFileHelperLog) << "failed to open:" << filePath << "-" << file.errorString();
         return false;
     }
 
     if (file.write(data) != data.size()) {
-        qCWarning(QGCFileHelperLog) << "atomicWrite: write failed:" << file.errorString();
+        qCWarning(QGCFileHelperLog) << "write failed:" << file.errorString();
         file.cancelWriting();
         return false;
     }
 
     if (!file.commit()) {
-        qCWarning(QGCFileHelperLog) << "atomicWrite: commit failed:" << file.errorString();
+        qCWarning(QGCFileHelperLog) << "commit failed:" << file.errorString();
         return false;
     }
 
@@ -226,7 +215,6 @@ qint64 availableDiskSpace(const QString &path)
         return -1;
     }
 
-    // Get storage info for the path
     QStorageInfo storage(path);
     if (!storage.isValid()) {
         // Try parent directory if path doesn't exist yet
@@ -234,7 +222,7 @@ qint64 availableDiskSpace(const QString &path)
     }
 
     if (!storage.isValid()) {
-        qCDebug(QGCFileHelperLog) << "availableDiskSpace: cannot determine storage for:" << path;
+        qCDebug(QGCFileHelperLog) << "cannot determine storage for:" << path;
         return -1;
     }
 
@@ -249,7 +237,7 @@ bool hasSufficientDiskSpace(const QString &path, qint64 requiredBytes, double ma
 
     const qint64 bytesAvailable = availableDiskSpace(path);
     if (bytesAvailable < 0) {
-        qCDebug(QGCFileHelperLog) << "hasSufficientDiskSpace: cannot determine disk space, proceeding anyway";
+        qCDebug(QGCFileHelperLog) << "cannot determine disk space, proceeding anyway";
         return true;  // Proceed if we can't determine space
     }
 
@@ -271,6 +259,18 @@ bool hasSufficientDiskSpace(const QString &path, qint64 requiredBytes, double ma
 // URL/Path Utilities
 // ============================================================================
 
+// QUrl takes the drive letter of "C:/dir" or "C:\\dir" for a URL scheme. No real scheme is a single letter, so a
+// leading "X:" is a drive on every platform.
+static bool hasWindowsDrivePrefix(const QString& path)
+{
+    if ((path.size() < 2) || (path.at(1) != QLatin1Char(':'))) {
+        return false;
+    }
+
+    const char16_t letter = path.at(0).unicode();
+    return ((letter >= u'A') && (letter <= u'Z')) || ((letter >= u'a') && (letter <= u'z'));
+}
+
 QString toLocalPath(const QString &urlOrPath)
 {
     if (urlOrPath.isEmpty()) {
@@ -282,13 +282,15 @@ QString toLocalPath(const QString &urlOrPath)
         return urlOrPath;
     }
 
-    // Check if it's a URL (handles qrc:// -> :/ conversion)
+    if (hasWindowsDrivePrefix(urlOrPath)) {
+        return urlOrPath;
+    }
+
     QUrl url(urlOrPath);
     if (url.isValid() && !url.scheme().isEmpty()) {
         return toLocalPath(url);
     }
 
-    // Plain path - return as-is
     return urlOrPath;
 }
 
@@ -296,21 +298,15 @@ QString toLocalPath(const QUrl &url)
 {
     if (!url.isValid()) {
         // QUrl(":/resource") is invalid but still carries the usable path.
-        const QString path = url.path();
-        if (!path.isEmpty()) {
-            return path;
-        }
-        return {};
+        return url.path();
     }
 
     const QString scheme = url.scheme().toLower();
 
-    // file:// URL
     if (scheme == QLatin1String("file")) {
         return url.toLocalFile();
     }
 
-    // qrc:// URL -> :/ resource path
     if (scheme == QLatin1String("qrc")) {
         QString path = url.path();
         if (!path.startsWith(QLatin1Char('/'))) {
@@ -325,7 +321,7 @@ QString toLocalPath(const QUrl &url)
     }
 
     // Network or other URL - return the URL string
-    qCDebug(QGCFileHelperLog) << "toLocalPath: URL scheme not supported for local access:" << scheme;
+    qCDebug(QGCFileHelperLog) << "URL scheme not supported for local access:" << scheme;
     return url.toString();
 }
 
@@ -340,7 +336,10 @@ bool isLocalPath(const QString &urlOrPath)
         return true;
     }
 
-    // Check if it looks like a URL
+    if (hasWindowsDrivePrefix(urlOrPath)) {
+        return true;
+    }
+
     QUrl url(urlOrPath);
     if (url.isValid() && !url.scheme().isEmpty()) {
         const QString scheme = url.scheme().toLower();
@@ -348,7 +347,6 @@ bool isLocalPath(const QString &urlOrPath)
                scheme == QLatin1String("qrc");
     }
 
-    // Plain filesystem path
     return true;
 }
 
@@ -365,20 +363,19 @@ bool isQtResource(const QString &path)
 QString computeFileHash(const QString &filePath, QCryptographicHash::Algorithm algorithm)
 {
     if (filePath.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "computeFileHash: empty file path";
+        qCWarning(QGCFileHelperLog) << "empty file path";
         return QString();
     }
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        qCWarning(QGCFileHelperLog) << "computeFileHash: failed to open file:" << filePath
-                                    << "-" << file.errorString();
+        qCWarning(QGCFileHelperLog) << "failed to open file:" << filePath << "-" << file.errorString();
         return QString();
     }
 
     QCryptographicHash hash(algorithm);
     if (!hash.addData(&file)) {
-        qCWarning(QGCFileHelperLog) << "computeFileHash: failed to read file:" << filePath;
+        qCWarning(QGCFileHelperLog) << "failed to read file:" << filePath;
         return QString();
     }
 
@@ -394,7 +391,7 @@ bool verifyFileHash(const QString &filePath, const QString &expectedHash,
                     QCryptographicHash::Algorithm algorithm)
 {
     if (expectedHash.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "verifyFileHash: empty expected hash";
+        qCWarning(QGCFileHelperLog) << "empty expected hash";
         return false;
     }
 
@@ -405,8 +402,8 @@ bool verifyFileHash(const QString &filePath, const QString &expectedHash,
 
     const bool match = (actualHash.compare(expectedHash, Qt::CaseInsensitive) == 0);
     if (!match) {
-        qCWarning(QGCFileHelperLog) << "verifyFileHash: hash mismatch for" << filePath
-                                    << "- expected:" << expectedHash.left(16) << "..."
+        qCWarning(QGCFileHelperLog) << "hash mismatch for" << filePath << "- expected:" << expectedHash.left(16)
+                                    << "..."
                                     << "actual:" << actualHash.left(16) << "...";
     }
     return match;
@@ -475,7 +472,7 @@ QString uniqueTempPath(const QString &templateName)
 
     QTemporaryFile temp(tempDirectory() + QLatin1Char('/') + name);
     if (!temp.open()) {
-        qCWarning(QGCFileHelperLog) << "uniqueTempPath: failed to create temp file";
+        qCWarning(QGCFileHelperLog) << "failed to create temp file";
         return {};
     }
 
@@ -493,34 +490,31 @@ std::unique_ptr<QTemporaryFile> createTempFile(const QByteArray &data, const QSt
 
     auto temp = std::make_unique<QTemporaryFile>(tempDirectory() + QLatin1Char('/') + name);
     if (!temp->open()) {
-        qCWarning(QGCFileHelperLog) << "createTempFile: failed to create temp file";
+        qCWarning(QGCFileHelperLog) << "failed to create temp file";
         return nullptr;
     }
 
     if (temp->write(data) != data.size()) {
-        qCWarning(QGCFileHelperLog) << "createTempFile: failed to write data";
+        qCWarning(QGCFileHelperLog) << "failed to write data";
         return nullptr;
     }
 
-    // Seek to beginning for reading
     temp->seek(0);
 
-    qCDebug(QGCFileHelperLog) << "createTempFile: created" << temp->fileName()
-                              << "with" << data.size() << "bytes";
+    qCDebug(QGCFileHelperLog) << "created" << temp->fileName() << "with" << data.size() << "bytes";
     return temp;
 }
 
 std::unique_ptr<QTemporaryFile> createTempCopy(const QString &sourcePath, const QString &templateName)
 {
     if (sourcePath.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "createTempCopy: source path is empty";
+        qCWarning(QGCFileHelperLog) << "source path is empty";
         return nullptr;
     }
 
     QFile source(sourcePath);
     if (!source.open(QIODevice::ReadOnly)) {
-        qCWarning(QGCFileHelperLog) << "createTempCopy: failed to open source:" << sourcePath
-                                    << "-" << source.errorString();
+        qCWarning(QGCFileHelperLog) << "failed to open source:" << sourcePath << "-" << source.errorString();
         return nullptr;
     }
 
@@ -532,7 +526,7 @@ std::unique_ptr<QTemporaryFile> createTempCopy(const QString &sourcePath, const 
 
     auto temp = createTempFile(source.readAll(), name);
     if (temp) {
-        qCDebug(QGCFileHelperLog) << "createTempCopy: copied" << sourcePath << "to" << temp->fileName();
+        qCDebug(QGCFileHelperLog) << "copied" << sourcePath << "to" << temp->fileName();
     }
     return temp;
 }
@@ -540,35 +534,32 @@ std::unique_ptr<QTemporaryFile> createTempCopy(const QString &sourcePath, const 
 bool replaceFileFromTemp(QTemporaryFile *tempFile, const QString &targetPath, const QString &backupPath)
 {
     if (!tempFile || !tempFile->isOpen()) {
-        qCWarning(QGCFileHelperLog) << "replaceFileFromTemp: temp file is null or not open";
+        qCWarning(QGCFileHelperLog) << "temp file is null or not open";
         return false;
     }
 
     if (targetPath.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "replaceFileFromTemp: target path is empty";
+        qCWarning(QGCFileHelperLog) << "target path is empty";
         return false;
     }
 
-    // Ensure parent directory exists
     if (!ensureParentExists(targetPath)) {
-        qCWarning(QGCFileHelperLog) << "replaceFileFromTemp: failed to create parent directory";
+        qCWarning(QGCFileHelperLog) << "failed to create parent directory";
         return false;
     }
 
-    // Flush and close temp file
     tempFile->flush();
 
     // Create backup of existing file if requested
     if (!backupPath.isEmpty() && QFile::exists(targetPath)) {
         QFile::remove(backupPath);
         if (!QFile::copy(targetPath, backupPath)) {
-            qCWarning(QGCFileHelperLog) << "replaceFileFromTemp: failed to create backup";
+            qCWarning(QGCFileHelperLog) << "failed to create backup";
             return false;
         }
-        qCDebug(QGCFileHelperLog) << "replaceFileFromTemp: backed up to" << backupPath;
+        qCDebug(QGCFileHelperLog) << "backed up to" << backupPath;
     }
 
-    // Remove existing target
     QFile::remove(targetPath);
 
     // Keep temp file around (don't auto-remove) and rename it
@@ -577,12 +568,12 @@ bool replaceFileFromTemp(QTemporaryFile *tempFile, const QString &targetPath, co
     tempFile->close();
 
     if (!moveFileOrCopy(tempPath, targetPath)) {
-        qCWarning(QGCFileHelperLog) << "replaceFileFromTemp: failed to move temp file to target";
+        qCWarning(QGCFileHelperLog) << "failed to move temp file to target";
         QFile::remove(tempPath);  // Clean up on failure
         return false;
     }
 
-    qCDebug(QGCFileHelperLog) << "replaceFileFromTemp: replaced" << targetPath;
+    qCDebug(QGCFileHelperLog) << "replaced" << targetPath;
     return true;
 }
 

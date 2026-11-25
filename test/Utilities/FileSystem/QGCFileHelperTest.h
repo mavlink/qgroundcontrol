@@ -14,30 +14,15 @@ private slots:
     void _testExistsNonExistent();
     void _testExistsQtResource();
 
-    // ensureDirectoryExists() tests
-    void _testEnsureDirectoryExistsAlreadyExists();
-    void _testEnsureDirectoryExistsCreate();
-    void _testEnsureDirectoryExistsNested();
-
-    // ensureParentExists() tests
-    void _testEnsureParentExistsAlreadyExists();
-    void _testEnsureParentExistsCreate();
-    void _testEnsureParentExistsNested();
+    // ensureDirectoryExists() and ensureParentExists() tests
+    UT_PARAMETERIZED_TEST(_testEnsureDirectory);
 
     // optimalBufferSize() tests
-    void _testOptimalBufferSizeConstants();
-    void _testOptimalBufferSizeWithinBounds();
-    void _testOptimalBufferSizeCached();
-    void _testOptimalBufferSizeWithPath();
+    void _testOptimalBufferSize();
 
     // atomicWrite() tests
-    void _testAtomicWriteBasic();
-    void _testAtomicWriteOverwrite();
-    void _testAtomicWriteCreatesParent();
+    UT_PARAMETERIZED_TEST(_testAtomicWrite);
     void _testAtomicWriteEmptyPath();
-    void _testAtomicWriteEmptyData();
-    void _testReadCompressedFile();
-    void _testReadCompressedFileMaxBytes();
 
     // Disk space utilities tests
     void _testAvailableDiskSpaceBasic();
@@ -47,17 +32,13 @@ private slots:
     void _testHasSufficientDiskSpaceWithMargin();
 
     // URL/Path utilities tests
-    void _testToLocalPathPlainPaths();
-    void _testToLocalPathFileUrls();
-    void _testToLocalPathQrcUrls();
-    void _testToLocalPathCompressionInterop();
-    void _testIsLocalPath();
+    void _testToLocalPathFromUrl();
+    UT_PARAMETERIZED_TEST(_testLocalPaths);
     void _testIsQtResource();
 
     // Checksum utilities tests
     void _testComputeHash();
     void _testComputeFileHash();
-    void _testComputeDecompressedFileHash();
     void _testVerifyFileHash();
     void _testHashAlgorithmName();
 

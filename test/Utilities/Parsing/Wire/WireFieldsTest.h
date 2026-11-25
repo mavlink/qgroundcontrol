@@ -8,7 +8,6 @@ class WireFieldsTest : public PortableTest
 
 private slots:
     void _roundTrip();
-    void _truncatedInput_data();
-    void _truncatedInput();
+    UT_PARAMETERIZED_TEST(_truncatedInput);
     void _littleEndianScalars();
 };

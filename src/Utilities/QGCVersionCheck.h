@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -11,6 +12,8 @@ Q_DECLARE_LOGGING_CATEGORY(QGCVersionCheckLog)
 class QGCVersionCheck : public QObject
 {
     Q_OBJECT
+
+    friend class QGCVersionCheckTest;  // Unit test
 
 public:
     explicit QGCVersionCheck(QObject* parent = nullptr);
@@ -33,7 +36,7 @@ signals:
     void newStableVersionChanged();
 
 private:
-    void _downloadComplete(bool success, const QString& localFile, const QString& errorMsg);
+    void _downloadComplete(bool success, const QByteArray& versionFile, const QString& errorMsg);
 
     QString _newStableVersion;
 };

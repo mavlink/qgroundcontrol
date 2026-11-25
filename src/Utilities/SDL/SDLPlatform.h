@@ -24,29 +24,18 @@ QString getRevision();
 // Hints Management
 // ============================================================================
 
-/// Set an SDL hint
 bool setHint(const QString &name, const QString &value);
-
-/// Get an SDL hint value
 QString getHint(const QString &name);
-
-/// Get an SDL hint as boolean
 bool getHintBoolean(const QString &name, bool defaultValue = false);
-
-/// Reset an SDL hint to default
 bool resetHint(const QString &name);
-
-/// Reset all hints to defaults
 void resetHints();
 
 // ============================================================================
 // Platform / Capability Queries
 // ============================================================================
 
-/// Get the current platform name
 QString getPlatform();
 
-/// Check if we're running on a specific platform
 bool isAndroid();
 bool isIOS();
 bool isWindows();
@@ -56,20 +45,17 @@ bool isLinux();
 /// Check if tablet mode is active (Android/Windows)
 bool isTablet();
 
-/// Check if running on a TV device
 bool isTV();
 
 /// Check if running in DeX mode (Samsung)
 bool isDeXMode();
 
-/// Check if running on a Chromebook (Chrome OS)
 bool isChromebook();
 
 // ============================================================================
 // System Info
 // ============================================================================
 
-/// Get number of logical CPU cores
 int getNumLogicalCPUCores();
 
 /// Get system RAM in MB
@@ -91,7 +77,6 @@ QString getAndroidInternalStoragePath();
 /// Returns empty string on non-Android platforms
 QString getAndroidExternalStoragePath();
 
-/// Android external storage state flags
 enum AndroidStorageState {
     StorageStateNone = 0,
     StorageStateRead = 0x01,

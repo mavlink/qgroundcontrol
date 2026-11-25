@@ -1,8 +1,6 @@
 #include "LogEntryTest.h"
 
-
 #include "LogEntry.h"
-#include "UnitTestList.h"
 
 void LogEntryTest::_levelLabel()
 {

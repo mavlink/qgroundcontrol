@@ -13,26 +13,25 @@ private slots:
     // EXIF data detection
     void _testHasExifData();
     void _testHasExifDataInvalid();
-    void _testHasExifDataNoExif();
+    UT_PARAMETERIZED_TEST(_testHasExifDataJpegSegments);
 
     // Loading and saving
     void _testLoadFromBuffer();
     void _testLoadFromBufferInvalid();
     void _testSaveToBuffer();
-    void _testSaveToBufferRejectsNonJpeg();
-    void _testSaveToBufferRejectsTiff();
+    UT_PARAMETERIZED_TEST(_testSaveToBufferKeepsOtherSegments);
+    void _testSaveToBufferLargestExif();
+    void _testSaveToBufferRejectsOversizedExif();
+    UT_PARAMETERIZED_TEST(_testSaveToBufferRejectsInput);
 
     // Tag reading
-    void _testReadString();
-    void _testReadShort();
-    void _testReadRational();
+    void _testReadTags();
 
     // Tag writing
     void _testInitTag();
     void _testCreateTag();
 
     // GPS coordinate helpers
-    void _testWriteGpsCoordinate();
     void _testWriteRational();
     void _testGpsRationalToDecimal();
     void _testWriteDateTimeOriginalRejectsInvalidInput();

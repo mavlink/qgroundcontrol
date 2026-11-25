@@ -140,6 +140,7 @@ private slots:
     void _processPendingChanges();
 
 private:
+    bool _watch(const QString& path, ChangeCallback callback, bool isDirectory);
     void _scheduleCallback(const QString &path, bool isDirectory);
 
     QFileSystemWatcher *_watcher = nullptr;

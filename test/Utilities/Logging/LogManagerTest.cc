@@ -1,16 +1,14 @@
 #include "LogManagerTest.h"
 
-
 #include "LogManager.h"
-#include "UnitTestList.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LogManagerTestLog, "Test.Logging.LogManagerTest")
 
+// UnitTest::init() clears the captured messages and turns the capture on before each case
+
 void LogManagerTest::_buildEntry()
 {
-    LogManager::setCaptureEnabled(true);
-
     qInfo("test info message");
 
     const auto msgs = LogManager::capturedMessages();
@@ -33,9 +31,6 @@ void LogManagerTest::_buildEntry()
 
 void LogManagerTest::_captureMessages()
 {
-    LogManager::setCaptureEnabled(true);
-    LogManager::clearCapturedMessages();
-
     qWarning("capture test warning");
     qInfo("capture test info");
 
@@ -50,9 +45,6 @@ void LogManagerTest::_captureMessages()
 
 void LogManagerTest::_captureByCategory()
 {
-    LogManager::setCaptureEnabled(true);
-    LogManager::clearCapturedMessages();
-
     qCWarning(LogManagerTestLog) << "categorized message";
     qWarning("uncategorized message");
 
@@ -75,9 +67,6 @@ void LogManagerTest::_captureByCategory()
 
 void LogManagerTest::_hasCapturedWarning()
 {
-    LogManager::setCaptureEnabled(true);
-    LogManager::clearCapturedMessages();
-
     qCWarning(LogManagerTestLog) << "a warning";
 
     QVERIFY(LogManager::hasCapturedWarning(QStringLiteral("Test.Logging.LogManagerTest")));
@@ -89,9 +78,6 @@ void LogManagerTest::_hasCapturedWarning()
 
 void LogManagerTest::_hasCapturedCritical()
 {
-    LogManager::setCaptureEnabled(true);
-    LogManager::clearCapturedMessages();
-
     qCCritical(LogManagerTestLog) << "a critical";
 
     QVERIFY(LogManager::hasCapturedCritical(QStringLiteral("Test.Logging.LogManagerTest")));
@@ -102,9 +88,6 @@ void LogManagerTest::_hasCapturedCritical()
 
 void LogManagerTest::_hasCapturedUncategorized()
 {
-    LogManager::setCaptureEnabled(true);
-    LogManager::clearCapturedMessages();
-
     qInfo("uncategorized");
 
     QVERIFY(LogManager::hasCapturedUncategorizedMessage());

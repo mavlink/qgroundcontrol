@@ -1,8 +1,3 @@
-# ============================================================================
-# Platform Utilities Unit Tests
-# Tests for platform safety checks and environment setup
-# ============================================================================
-
 target_sources(
     QGCUnitTests
     PRIVATE
@@ -12,20 +7,10 @@ target_sources(
 
 # RunGuard and SignalHandler only available on desktop platforms
 if(NOT ANDROID AND NOT IOS)
-    target_sources(
-        QGCUnitTests
-        PRIVATE
-            RunGuardTest.cc
-            RunGuardTest.h
-            SignalHandlerTest.cc
-            SignalHandlerTest.h
-    )
-endif()
-
-target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-if(NOT ANDROID AND NOT IOS)
     add_qgc_test(PlatformTest LABELS Unit Utilities)
-    add_qgc_test(RunGuardTest LABELS Unit Utilities)
-    add_qgc_test(SignalHandlerTest LABELS Unit Utilities)
+    add_qgc_tests(
+        RunGuardTest
+        SignalHandlerTest
+        LABELS Unit Utilities
+    )
 endif()

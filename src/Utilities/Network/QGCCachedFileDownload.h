@@ -7,6 +7,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
+#include <QtNetwork/QNetworkRequest>
 
 class QGCFileDownload;
 class QNetworkDiskCache;
@@ -18,7 +19,6 @@ class QNetworkDiskCache;
 /// - Time-based cache expiration (configurable per-request)
 /// - Automatic fallback to cached version on network failure
 /// - Progress reporting
-/// - QML-compatible properties
 ///
 /// Cache behavior:
 /// 1. If cached file exists and is not expired → use cache immediately
@@ -33,21 +33,6 @@ class QNetworkDiskCache;
 ///     qDebug() << "Downloaded:" << path << "from cache:" << fromCache;
 /// });
 /// downloader->download("https://example.com/data.json", 3600);  // 1 hour cache
-/// @endcode
-///
-/// Example QML usage:
-/// @code
-/// QGCCachedFileDownload {
-///     id: cachedDownloader
-///     cacheDirectory: StandardPaths.writableLocation(StandardPaths.CacheLocation)
-///     onFinished: (success, path, error, fromCache) => {
-///         console.log("Downloaded:", path, "cached:", fromCache)
-///     }
-/// }
-/// Button {
-///     text: cachedDownloader.running ? "Downloading..." : "Download"
-///     onClicked: cachedDownloader.download(urlField.text, 3600)
-/// }
 /// @endcode
 ///
 class QGCCachedFileDownload : public QObject
@@ -162,31 +147,14 @@ public slots:
     bool removeFromCache(const QString &url);
 
 signals:
-    /// Emitted when download progress changes
     void progressChanged(qreal progress);
-
-    /// Emitted when running state changes
     void runningChanged(bool running);
-
-    /// Emitted when error string changes
     void errorStringChanged(const QString &errorString);
-
-    /// Emitted when URL changes
     void urlChanged(const QUrl &url);
-
-    /// Emitted when local path changes
     void localPathChanged(const QString &localPath);
-
-    /// Emitted when fromCache state changes
     void fromCacheChanged(bool fromCache);
-
-    /// Emitted when cache directory changes
     void cacheDirectoryChanged(const QString &directory);
-
-    /// Emitted when max cache size changes
     void maxCacheSizeChanged(qint64 bytes);
-
-    /// Emitted when cache size changes
     void cacheSizeChanged(qint64 bytes);
 
     /// Emitted when download completes
@@ -202,9 +170,10 @@ signals:
 
 private slots:
     void _onDownloadFinished(bool success, const QString &localPath, const QString &errorMessage);
-    void _onDownloadProgress(qint64 bytesReceived, qint64 totalBytes);
 
 private:
+    /// Checks that a download can start, reporting why it cannot, and resets the state the previous one left
+    bool _beginDownload(const QString& url, bool needsCacheDirectory);
     void _initializeCache(const QString &directory);
     void _setRunning(bool running);
     void _setProgress(qreal progress);
@@ -212,8 +181,9 @@ private:
     void _setFromCache(bool fromCache);
     void _updateCacheTimestamp(const QString &url);
     QDateTime _getCacheTimestamp(const QString &url) const;
-    bool _startDownload(const QString &url, bool forceNetwork, bool preferCache);
-    void _emitFinished(bool success, const QString &path, const QString &error);
+    bool _startDownload(const QString& url, QNetworkRequest::CacheLoadControl loadControl);
+    /// Ends the download: sets the error, clears the running state and emits finished()
+    void _finish(bool success, const QString& path, QString error);
 
     QGCFileDownload *_fileDownload = nullptr;
     QNetworkDiskCache *_diskCache = nullptr;
@@ -224,10 +194,10 @@ private:
     QString _pendingUrl;
 
     qreal _progress = 0.0;
-    int _maxCacheAgeSec = 0;
     bool _running = false;
     bool _fromCache = false;
     bool _networkAttemptFailed = false;
+    QString _networkErrorMessage;  ///< Error of the network attempt that led to the cache fallback
     bool _forceNetwork = false;
     bool _cancelRequested = false;
 };

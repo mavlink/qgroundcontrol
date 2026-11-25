@@ -22,9 +22,10 @@ ExifData* loadFromBuffer(const QByteArray &buffer);
 ExifData* createNew();
 
 /// Save EXIF data back to a JPEG buffer
-/// @param data The EXIF data to save
-/// @param buffer The original JPEG buffer (modified in place)
-/// @return true if successful
+/// Replaces the image's EXIF segment, or adds one after any leading JFIF segments. All other bytes are kept.
+/// @param buffer The original JPEG buffer (modified in place, unchanged on failure)
+/// @return true if successful, false if the EXIF data exceeds one segment (65533 bytes) or the JPEG's
+///         segments are malformed
 /// @note Only JPEG format is supported for writing. TIFF/DNG files return false.
 bool saveToBuffer(ExifData *data, QByteArray &buffer);
 
@@ -35,7 +36,8 @@ bool isJpeg(const QByteArray &buffer);
 /// TIFF files start with "II" (little-endian) or "MM" (big-endian)
 bool isTiff(const QByteArray &buffer);
 
-/// Check if a buffer contains valid JPEG with EXIF data
+/// Check if a buffer holds EXIF data: a TIFF-based image, or a JPEG with an EXIF segment among the well-formed
+/// segments in front of its image data
 bool hasExifData(const QByteArray &buffer);
 
 // ============================================================================
@@ -89,9 +91,6 @@ void writeGpsAltRef(ExifEntry *entry, unsigned char value);
 // ============================================================================
 
 /// Write a DateTime value to EXIF_TAG_DATE_TIME_ORIGINAL
-/// @param data The EXIF data structure
-/// @param dateTime The date/time to write
-/// @return true if successful
 bool writeDateTimeOriginal(ExifData *data, const QDateTime &dateTime);
 
 } // namespace ExifUtility

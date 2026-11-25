@@ -115,8 +115,9 @@ ctest --test-dir build --output-on-failure -L CMake
 Use `just configure`, `just build`, and the relevant CTest labels for the final validation described
 in the root [AGENTS.md](../AGENTS.md).
 
-`QGCTest.cmake` provides `add_qgc_test()` (see [test/README.md](../test/README.md#register-in-cmakeliststxt)), the
-`check*` convenience targets, and these cache options:
+`QGCTest.cmake` provides `add_qgc_test()` and `add_qgc_tests()` (see
+[test/README.md](../test/README.md#register-in-cmakeliststxt)), the `check*` convenience targets, and these cache
+options:
 
 | Option | Default | Purpose |
 | --- | --- | --- |

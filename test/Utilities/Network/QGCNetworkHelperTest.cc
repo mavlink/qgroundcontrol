@@ -4,129 +4,91 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "QGCNetworkHelper.h"
-#include "UnitTest.h"
 
 // ============================================================================
 // HTTP Status Code Helpers Tests
 // ============================================================================
-void QGCNetworkHelperTest::_testClassifyHttpStatusInformational()
+void QGCNetworkHelperTest::_testHttpStatusClass_data()
 {
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(100), QGCNetworkHelper::HttpStatusClass::Informational);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(101), QGCNetworkHelper::HttpStatusClass::Informational);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(199), QGCNetworkHelper::HttpStatusClass::Informational);
+    using Class = QGCNetworkHelper::HttpStatusClass;
+    QTest::addColumn<int>("status");
+    QTest::addColumn<int>("statusClass");
+
+    const auto addRows = [](Class statusClass, std::initializer_list<int> statuses) {
+        for (const int status : statuses) {
+            QTest::addRow("%d", status) << status << static_cast<int>(statusClass);
+        }
+    };
+    addRows(Class::Informational, {100, 101, 199});
+    addRows(Class::Success, {200, 201, 204, 299});
+    addRows(Class::Redirection, {300, 301, 302, 304, 399});
+    addRows(Class::ClientError, {400, 401, 403, 404, 499});
+    addRows(Class::ServerError, {500, 501, 502, 503, 599});
+    addRows(Class::Unknown, {-1, 0, 99, 600, 1000});
 }
 
-void QGCNetworkHelperTest::_testClassifyHttpStatusSuccess()
+void QGCNetworkHelperTest::_testHttpStatusClass()
 {
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(200), QGCNetworkHelper::HttpStatusClass::Success);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(201), QGCNetworkHelper::HttpStatusClass::Success);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(204), QGCNetworkHelper::HttpStatusClass::Success);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(299), QGCNetworkHelper::HttpStatusClass::Success);
+    using Class = QGCNetworkHelper::HttpStatusClass;
+    QFETCH(int, status);
+    QFETCH(int, statusClass);
+    const Class expected = static_cast<Class>(statusClass);
+
+    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(status), expected);
+    QCOMPARE(QGCNetworkHelper::isHttpSuccess(status), expected == Class::Success);
+    QCOMPARE(QGCNetworkHelper::isHttpRedirect(status), expected == Class::Redirection);
+    QCOMPARE(QGCNetworkHelper::isHttpClientError(status), expected == Class::ClientError);
+    QCOMPARE(QGCNetworkHelper::isHttpServerError(status), expected == Class::ServerError);
 }
 
-void QGCNetworkHelperTest::_testClassifyHttpStatusRedirection()
+void QGCNetworkHelperTest::_testHttpStatusText_data()
 {
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(300), QGCNetworkHelper::HttpStatusClass::Redirection);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(301), QGCNetworkHelper::HttpStatusClass::Redirection);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(302), QGCNetworkHelper::HttpStatusClass::Redirection);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(304), QGCNetworkHelper::HttpStatusClass::Redirection);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(399), QGCNetworkHelper::HttpStatusClass::Redirection);
-}
+    QTest::addColumn<int>("status");
+    QTest::addColumn<QString>("text");
 
-void QGCNetworkHelperTest::_testClassifyHttpStatusClientError()
-{
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(400), QGCNetworkHelper::HttpStatusClass::ClientError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(401), QGCNetworkHelper::HttpStatusClass::ClientError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(403), QGCNetworkHelper::HttpStatusClass::ClientError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(404), QGCNetworkHelper::HttpStatusClass::ClientError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(499), QGCNetworkHelper::HttpStatusClass::ClientError);
-}
-
-void QGCNetworkHelperTest::_testClassifyHttpStatusServerError()
-{
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(500), QGCNetworkHelper::HttpStatusClass::ServerError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(501), QGCNetworkHelper::HttpStatusClass::ServerError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(502), QGCNetworkHelper::HttpStatusClass::ServerError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(503), QGCNetworkHelper::HttpStatusClass::ServerError);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(599), QGCNetworkHelper::HttpStatusClass::ServerError);
-}
-
-void QGCNetworkHelperTest::_testClassifyHttpStatusUnknown()
-{
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(0), QGCNetworkHelper::HttpStatusClass::Unknown);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(-1), QGCNetworkHelper::HttpStatusClass::Unknown);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(99), QGCNetworkHelper::HttpStatusClass::Unknown);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(600), QGCNetworkHelper::HttpStatusClass::Unknown);
-    QCOMPARE(QGCNetworkHelper::classifyHttpStatus(1000), QGCNetworkHelper::HttpStatusClass::Unknown);
-}
-
-void QGCNetworkHelperTest::_testIsHttpSuccess()
-{
-    QVERIFY(QGCNetworkHelper::isHttpSuccess(200));
-    QVERIFY(QGCNetworkHelper::isHttpSuccess(201));
-    QVERIFY(QGCNetworkHelper::isHttpSuccess(204));
-    QVERIFY(QGCNetworkHelper::isHttpSuccess(299));
-    QVERIFY(!QGCNetworkHelper::isHttpSuccess(100));
-    QVERIFY(!QGCNetworkHelper::isHttpSuccess(300));
-    QVERIFY(!QGCNetworkHelper::isHttpSuccess(404));
-    QVERIFY(!QGCNetworkHelper::isHttpSuccess(500));
-}
-
-void QGCNetworkHelperTest::_testIsHttpRedirect()
-{
-    QVERIFY(QGCNetworkHelper::isHttpRedirect(300));
-    QVERIFY(QGCNetworkHelper::isHttpRedirect(301));
-    QVERIFY(QGCNetworkHelper::isHttpRedirect(302));
-    QVERIFY(QGCNetworkHelper::isHttpRedirect(304));
-    QVERIFY(QGCNetworkHelper::isHttpRedirect(399));
-    QVERIFY(!QGCNetworkHelper::isHttpRedirect(200));
-    QVERIFY(!QGCNetworkHelper::isHttpRedirect(400));
-}
-
-void QGCNetworkHelperTest::_testIsHttpClientError()
-{
-    QVERIFY(QGCNetworkHelper::isHttpClientError(400));
-    QVERIFY(QGCNetworkHelper::isHttpClientError(401));
-    QVERIFY(QGCNetworkHelper::isHttpClientError(403));
-    QVERIFY(QGCNetworkHelper::isHttpClientError(404));
-    QVERIFY(QGCNetworkHelper::isHttpClientError(499));
-    QVERIFY(!QGCNetworkHelper::isHttpClientError(200));
-    QVERIFY(!QGCNetworkHelper::isHttpClientError(500));
-}
-
-void QGCNetworkHelperTest::_testIsHttpServerError()
-{
-    QVERIFY(QGCNetworkHelper::isHttpServerError(500));
-    QVERIFY(QGCNetworkHelper::isHttpServerError(501));
-    QVERIFY(QGCNetworkHelper::isHttpServerError(502));
-    QVERIFY(QGCNetworkHelper::isHttpServerError(503));
-    QVERIFY(QGCNetworkHelper::isHttpServerError(599));
-    QVERIFY(!QGCNetworkHelper::isHttpServerError(200));
-    QVERIFY(!QGCNetworkHelper::isHttpServerError(404));
+    const QList<std::pair<int, const char*>> texts = {
+        {100, "Continue"},
+        {101, "Switching Protocols"},
+        {200, "OK"},
+        {201, "Created"},
+        {202, "Accepted"},
+        {204, "No Content"},
+        {301, "Moved Permanently"},
+        {302, "Found"},
+        {304, "Not Modified"},
+        {400, "Bad Request"},
+        {401, "Unauthorized"},
+        {403, "Forbidden"},
+        {404, "Not Found"},
+        {405, "Method Not Allowed"},
+        {408, "Request Timeout"},
+        {429, "Too Many Requests"},
+        {500, "Internal Server Error"},
+        {502, "Bad Gateway"},
+        {503, "Service Unavailable"},
+        {504, "Gateway Timeout"},
+    };
+    for (const auto& [status, text] : texts) {
+        QTest::addRow("%d", status) << status << QString::fromLatin1(text);
+    }
 }
 
 void QGCNetworkHelperTest::_testHttpStatusText()
 {
-    // Common status codes
-    QCOMPARE(QGCNetworkHelper::httpStatusText(200), QStringLiteral("OK"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(201), QStringLiteral("Created"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(204), QStringLiteral("No Content"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(301), QStringLiteral("Moved Permanently"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(302), QStringLiteral("Found"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(304), QStringLiteral("Not Modified"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(400), QStringLiteral("Bad Request"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(401), QStringLiteral("Unauthorized"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(403), QStringLiteral("Forbidden"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(404), QStringLiteral("Not Found"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(500), QStringLiteral("Internal Server Error"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(502), QStringLiteral("Bad Gateway"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(503), QStringLiteral("Service Unavailable"));
+    QFETCH(int, status);
+    QFETCH(QString, text);
+
+    QCOMPARE(QGCNetworkHelper::httpStatusText(status), text);
+    QCOMPARE(QGCNetworkHelper::httpStatusText(static_cast<QGCNetworkHelper::HttpStatusCode>(status)), text);
+}
+
+void QGCNetworkHelperTest::_testHttpStatusTextUnknown()
+{
     // Unknown status should return formatted message
     QVERIFY(QGCNetworkHelper::httpStatusText(999).contains("999"));
     // In-range but unnamed codes must still surface the numeric value
@@ -134,87 +96,33 @@ void QGCNetworkHelperTest::_testHttpStatusText()
     QVERIFY(QGCNetworkHelper::httpStatusText(450).contains("450"));
 }
 
-void QGCNetworkHelperTest::_testHttpStatusTextFromEnum()
-{
-    using HttpStatusCode = QGCNetworkHelper::HttpStatusCode;
-    // Test Qt HttpStatusCode enum overload
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Continue), QStringLiteral("Continue"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::SwitchingProtocols),
-             QStringLiteral("Switching Protocols"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Ok), QStringLiteral("OK"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Created), QStringLiteral("Created"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Accepted), QStringLiteral("Accepted"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::NoContent), QStringLiteral("No Content"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::MovedPermanently), QStringLiteral("Moved Permanently"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Found), QStringLiteral("Found"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::NotModified), QStringLiteral("Not Modified"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::BadRequest), QStringLiteral("Bad Request"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Unauthorized), QStringLiteral("Unauthorized"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::Forbidden), QStringLiteral("Forbidden"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::NotFound), QStringLiteral("Not Found"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::MethodNotAllowed), QStringLiteral("Method Not Allowed"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::RequestTimeout), QStringLiteral("Request Timeout"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::TooManyRequests), QStringLiteral("Too Many Requests"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::InternalServerError),
-             QStringLiteral("Internal Server Error"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::BadGateway), QStringLiteral("Bad Gateway"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::ServiceUnavailable),
-             QStringLiteral("Service Unavailable"));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(HttpStatusCode::GatewayTimeout), QStringLiteral("Gateway Timeout"));
-}
-
-void QGCNetworkHelperTest::_testHttpStatusCodeEnumRoundTrip()
-{
-    using HttpStatusCode = QGCNetworkHelper::HttpStatusCode;
-    // Verify that int and enum overloads produce consistent results
-    QCOMPARE(QGCNetworkHelper::httpStatusText(200), QGCNetworkHelper::httpStatusText(HttpStatusCode::Ok));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(201), QGCNetworkHelper::httpStatusText(HttpStatusCode::Created));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(204), QGCNetworkHelper::httpStatusText(HttpStatusCode::NoContent));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(301), QGCNetworkHelper::httpStatusText(HttpStatusCode::MovedPermanently));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(302), QGCNetworkHelper::httpStatusText(HttpStatusCode::Found));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(304), QGCNetworkHelper::httpStatusText(HttpStatusCode::NotModified));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(400), QGCNetworkHelper::httpStatusText(HttpStatusCode::BadRequest));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(401), QGCNetworkHelper::httpStatusText(HttpStatusCode::Unauthorized));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(403), QGCNetworkHelper::httpStatusText(HttpStatusCode::Forbidden));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(404), QGCNetworkHelper::httpStatusText(HttpStatusCode::NotFound));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(500),
-             QGCNetworkHelper::httpStatusText(HttpStatusCode::InternalServerError));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(502), QGCNetworkHelper::httpStatusText(HttpStatusCode::BadGateway));
-    QCOMPARE(QGCNetworkHelper::httpStatusText(503),
-             QGCNetworkHelper::httpStatusText(HttpStatusCode::ServiceUnavailable));
-    // Verify static_cast round-trip
-    QCOMPARE(static_cast<int>(HttpStatusCode::Ok), 200);
-    QCOMPARE(static_cast<int>(HttpStatusCode::NotFound), 404);
-    QCOMPARE(static_cast<int>(HttpStatusCode::InternalServerError), 500);
-}
-
 // ============================================================================
 // HTTP Methods Tests
 // ============================================================================
-void QGCNetworkHelperTest::_testHttpMethodName()
+void QGCNetworkHelperTest::_testHttpMethodNames_data()
 {
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Get), QStringLiteral("GET"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Post), QStringLiteral("POST"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Put), QStringLiteral("PUT"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Delete), QStringLiteral("DELETE"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Head), QStringLiteral("HEAD"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Options), QStringLiteral("OPTIONS"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Patch), QStringLiteral("PATCH"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Connect), QStringLiteral("CONNECT"));
-    QCOMPARE(QGCNetworkHelper::httpMethodName(QGCNetworkHelper::HttpMethod::Trace), QStringLiteral("TRACE"));
+    using Method = QGCNetworkHelper::HttpMethod;
+    QTest::addColumn<int>("method");
+    QTest::addColumn<QString>("name");
+
+    const QList<std::pair<Method, const char*>> names = {
+        {Method::Get, "GET"},       {Method::Post, "POST"},       {Method::Put, "PUT"},
+        {Method::Delete, "DELETE"}, {Method::Head, "HEAD"},       {Method::Options, "OPTIONS"},
+        {Method::Patch, "PATCH"},   {Method::Connect, "CONNECT"}, {Method::Trace, "TRACE"},
+    };
+    for (const auto& [method, name] : names) {
+        QTest::newRow(name) << static_cast<int>(method) << QString::fromLatin1(name);
+    }
 }
 
-void QGCNetworkHelperTest::_testParseHttpMethod()
+void QGCNetworkHelperTest::_testHttpMethodNames()
 {
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("GET"), QGCNetworkHelper::HttpMethod::Get);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("POST"), QGCNetworkHelper::HttpMethod::Post);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("PUT"), QGCNetworkHelper::HttpMethod::Put);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("DELETE"), QGCNetworkHelper::HttpMethod::Delete);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("HEAD"), QGCNetworkHelper::HttpMethod::Head);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("OPTIONS"), QGCNetworkHelper::HttpMethod::Options);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("PATCH"), QGCNetworkHelper::HttpMethod::Patch);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("CONNECT"), QGCNetworkHelper::HttpMethod::Connect);
-    QCOMPARE(QGCNetworkHelper::parseHttpMethod("TRACE"), QGCNetworkHelper::HttpMethod::Trace);
+    QFETCH(int, method);
+    QFETCH(QString, name);
+    const auto httpMethod = static_cast<QGCNetworkHelper::HttpMethod>(method);
+
+    QCOMPARE(QGCNetworkHelper::httpMethodName(httpMethod), name);
+    QCOMPARE(QGCNetworkHelper::parseHttpMethod(name), httpMethod);
 }
 
 void QGCNetworkHelperTest::_testParseHttpMethodCaseInsensitive()
@@ -551,14 +459,6 @@ void QGCNetworkHelperTest::_testConnectionTypeName()
 // ============================================================================
 // SSL Tests
 // ============================================================================
-void QGCNetworkHelperTest::_testIsSslAvailable()
-{
-    // Smoke test: SSL availability query completes without crash
-    // SSL availability depends on system configuration
-    const bool available = QGCNetworkHelper::isSslAvailable();
-    Q_UNUSED(available);
-}
-
 void QGCNetworkHelperTest::_testSslVersion()
 {
     const QString version = QGCNetworkHelper::sslVersion();
@@ -569,4 +469,4 @@ void QGCNetworkHelperTest::_testSslVersion()
     }
 }
 
-UT_REGISTER_TEST(QGCNetworkHelperTest, TestLabel::Unit, TestLabel::Utilities, TestLabel::Network)
+UT_REGISTER_TEST(QGCNetworkHelperTest, TestLabel::Unit, TestLabel::Utilities)

@@ -8,67 +8,27 @@
 
 // ---- Static formatting utilities ----
 
-void KMLDomDocumentTest::_kmlColorStringOpaque_test()
+void KMLDomDocumentTest::_kmlColorString_test()
 {
     // KML color format is AABBGGRR (alpha, blue, green, red)
-    // Red (255,0,0) at full opacity → "ff0000ff"
     QCOMPARE(KMLDomDocument::kmlColorString(QColor(255, 0, 0), 1.0), QStringLiteral("ff0000ff"));
-    // Green (0,255,0) → "ff00ff00"
     QCOMPARE(KMLDomDocument::kmlColorString(QColor(0, 255, 0), 1.0), QStringLiteral("ff00ff00"));
-    // Blue (0,0,255) → "ffff0000"
     QCOMPARE(KMLDomDocument::kmlColorString(QColor(0, 0, 255), 1.0), QStringLiteral("ffff0000"));
-    // White (255,255,255) → "ffffffff"
     QCOMPARE(KMLDomDocument::kmlColorString(QColor(255, 255, 255), 1.0), QStringLiteral("ffffffff"));
-}
-
-void KMLDomDocumentTest::_kmlColorStringPartialOpacity_test()
-{
-    // 50% opacity → alpha = 127 (0x7f)
-    const QString result = KMLDomDocument::kmlColorString(QColor(255, 0, 0), 0.5);
-    QVERIFY(result.startsWith(QStringLiteral("7f")));
-    QVERIFY(result.endsWith(QStringLiteral("ff"))); // red component last
-}
-
-void KMLDomDocumentTest::_kmlColorStringBlack_test()
-{
     QCOMPARE(KMLDomDocument::kmlColorString(QColor(0, 0, 0), 1.0), QStringLiteral("ff000000"));
+    // 50% opacity → alpha = 127 (0x7f)
+    QCOMPARE(KMLDomDocument::kmlColorString(QColor(255, 0, 0), 0.5), QStringLiteral("7f0000ff"));
 }
 
-void KMLDomDocumentTest::_kmlCoordStringWithAltitude_test()
+void KMLDomDocumentTest::_kmlCoordString_test()
 {
     // Format: "lon,lat,alt" with 7,7,2 decimal places
-    const QGeoCoordinate coord(47.1234567, -122.9876543, 100.5);
-    const QString result = KMLDomDocument::kmlCoordString(coord);
-    QVERIFY(result.contains(QStringLiteral("-122.9876543")));
-    QVERIFY(result.contains(QStringLiteral("47.1234567")));
-    QVERIFY(result.contains(QStringLiteral("100.50")));
-    // Verify order: lon,lat,alt
-    const QStringList parts = result.split(',');
-    QCOMPARE(parts.count(), 3);
-    QCOMPARE_FUZZY(parts[0].toDouble(), -122.9876543, 1e-6);
-    QCOMPARE_FUZZY(parts[1].toDouble(), 47.1234567, 1e-6);
-    QCOMPARE_FUZZY(parts[2].toDouble(), 100.50, 0.01);
-}
-
-void KMLDomDocumentTest::_kmlCoordStringNaNAltitude_test()
-{
-    // NaN altitude should be treated as 0
-    const QGeoCoordinate coord(47.0, -122.0);
-    const QString result = KMLDomDocument::kmlCoordString(coord);
-    const QStringList parts = result.split(',');
-    QCOMPARE(parts.count(), 3);
-    QCOMPARE_FUZZY(parts[2].toDouble(), 0.0, 0.01);
-}
-
-void KMLDomDocumentTest::_kmlCoordStringNoAltitude_test()
-{
-    // QGeoCoordinate without altitude → altitude is NaN → should become 0
-    const QGeoCoordinate coord(0.0, 0.0);
-    const QString result = KMLDomDocument::kmlCoordString(coord);
-    const QStringList parts = result.split(',');
-    QCOMPARE(parts.count(), 3);
-    QCOMPARE_FUZZY(parts[0].toDouble(), 0.0, 1e-6);
-    QCOMPARE_FUZZY(parts[1].toDouble(), 0.0, 1e-6);
+    QCOMPARE(KMLDomDocument::kmlCoordString(QGeoCoordinate(47.1234567, -122.9876543, 100.5)),
+             QStringLiteral("-122.9876543,47.1234567,100.50"));
+    // A coordinate without altitude is written with altitude 0
+    QCOMPARE(KMLDomDocument::kmlCoordString(QGeoCoordinate(47.0, -122.0)),
+             QStringLiteral("-122.0000000,47.0000000,0.00"));
+    QCOMPARE(KMLDomDocument::kmlCoordString(QGeoCoordinate(0.0, 0.0)), QStringLiteral("0.0000000,0.0000000,0.00"));
 }
 
 // ---- Document structure ----
@@ -118,15 +78,9 @@ void KMLDomDocumentTest::_addPlacemark_test()
 
     const QDomElement visibility = placemark.firstChildElement(QStringLiteral("visibility"));
     QCOMPARE(visibility.text(), QStringLiteral("1"));
-}
 
-void KMLDomDocumentTest::_addPlacemarkHidden_test()
-{
-    KMLDomDocument doc(QStringLiteral("Test"));
-    const QDomElement placemark = doc.addPlacemark(QStringLiteral("Hidden"), false);
-
-    const QDomElement visibility = placemark.firstChildElement(QStringLiteral("visibility"));
-    QCOMPARE(visibility.text(), QStringLiteral("0"));
+    const QDomElement hidden = doc.addPlacemark(QStringLiteral("Hidden"), false);
+    QCOMPARE(hidden.firstChildElement(QStringLiteral("visibility")).text(), QStringLiteral("0"));
 }
 
 // ---- Folder ----

@@ -9,28 +9,16 @@ class SDLTest : public UnitTest
 
 private slots:
     void initTestCase() override;
-    void init() override;
-    void cleanup() override;
 
     // =========================================================================
     // SDLPlatform Tests
     // =========================================================================
 
-    // Version info tests
     void _versionInfoTest();
-
-    // Platform detection tests
     void _platformDetectionTest();
-
-    // Hint management tests
     void _hintManagementTest();
-
-    // System info tests
     void _systemInfoTest();
-
-    // Power info tests
     void _powerInfoTest();
-
     // Android-specific tests (run on all platforms, verify graceful behavior)
     void _androidFunctionsTest();
 
@@ -38,30 +26,18 @@ private slots:
     // SDLJoystick Tests
     // =========================================================================
 
-    // Initialization tests
     void _initializationTest();
-
-    // Event control tests
     void _eventControlTest();
-
-    // Thread safety tests
+    void _pumpEventsEmptiesEventQueueTest();
     void _threadSafetyTest();
-
-    // Type/string conversion tests
     void _gamepadTypeConversionTest();
     void _gamepadAxisConversionTest();
     void _gamepadButtonConversionTest();
     void _connectionStateConversionTest();
-
-    // GUID utilities tests
     void _guidInfoTest();
-
-    // Virtual joystick tests
     void _virtualJoystickTest();
-
-    // Pre-open device query tests
     void _preOpenDeviceQueryTest();
-
-    // Mapping management tests
+    void _playerIndexTest();
     void _mappingManagementTest();
+    void _mappingPlatformFilterTest();
 };

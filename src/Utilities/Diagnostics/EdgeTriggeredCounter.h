@@ -1,11 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 
 namespace QGC {
 
 /// Edge-triggered consecutive-event counter. record() returns true exactly once when the count
 /// crosses `threshold` on the rising edge; subsequent record() calls return false until reset().
+/// The count stops at the largest value of CountT instead of wrapping.
 template <typename CountT = uint8_t>
 class EdgeTriggeredCounter
 {
@@ -15,7 +17,9 @@ public:
     /// Returns true on the rising-edge crossing into >= threshold.
     bool record()
     {
-        ++_count;
+        if (_count < std::numeric_limits<CountT>::max()) {
+            ++_count;
+        }
         if (_count >= _threshold && !_armed) {
             _armed = true;
             return true;

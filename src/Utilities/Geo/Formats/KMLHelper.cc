@@ -1,48 +1,66 @@
 #include "KMLHelper.h"
-#include "KMLSchemaValidator.h"
-#include "QGCLoggingCategory.h"
+
+#include <cmath>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
 
-#include <algorithm>
+#include "KMLSchemaValidator.h"
+#include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
 
 QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
 namespace KMLHelper
 {
-    QDomDocument _loadFile(const QString &kmlFile, QString &errorString);
-    bool _parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString);
-    void _filterVertices(QList<QGeoCoordinate> &vertices, double filterMeters, int minVertices);
-    void _checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index);
+bool _loadFile(const QString& kmlFile, QDomDocument& doc, QString& errorString);
+bool _parseCoordinateString(const QString& coordinatesString, QList<QGeoCoordinate>& coords, QString& errorString);
+void _checkAltitudeMode(const QDomNode& geometryNode, const QString& geometryType, int index);
+QString _loadError(const QString& detail);
 
-    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
+/// Passes the coordinates of each @a tag element of @a kmlFile to @a addShape. An element whose coordinates are
+/// missing, cannot be parsed or number fewer than @a minVertices is skipped with a warning.
+/// @param outerBoundary the coordinates are those of the element's outer boundary ring, as in a Polygon
+/// @param notFoundError translated message for a file without @a tag elements
+/// @param noneValidError translated message for a file whose @a tag elements were all skipped
+template <typename AddShape>
+bool _loadGeometries(const QString& kmlFile, const char* tag, bool outerBoundary, int minVertices,
+                     const QString& notFoundError, const QString& noneValidError, QString& errorString,
+                     AddShape addShape);
+}  // namespace KMLHelper
+
+QString KMLHelper::_loadError(const QString& detail)
+{
+    return QCoreApplication::translate("KMLHelper", "KML file load failed. %1").arg(detail);
 }
 
-QDomDocument KMLHelper::_loadFile(const QString &kmlFile, QString &errorString)
+bool KMLHelper::_loadFile(const QString& kmlFile, QDomDocument& doc, QString& errorString)
 {
     errorString.clear();
 
     QFile file(kmlFile);
     if (!file.exists()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "File not found: %1").arg(kmlFile));
-        return QDomDocument();
+        errorString = _loadError(QCoreApplication::translate("KML", "File not found: %1").arg(kmlFile));
+        return false;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to open file: %1 error: %2").arg(kmlFile, file.errorString()));
-        return QDomDocument();
+        errorString = _loadError(
+            QCoreApplication::translate("KML", "Unable to open file: %1 error: %2").arg(kmlFile, file.errorString()));
+        return false;
     }
 
-    QDomDocument doc;
     const QDomDocument::ParseResult result = doc.setContent(&file, QDomDocument::ParseOption::Default);
     if (!result) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(result.errorMessage).arg(result.errorLine));
-        return QDomDocument();
+        errorString = _loadError(QCoreApplication::translate("KML", "Unable to parse KML file: %1 error: %2 line: %3")
+                                     .arg(kmlFile)
+                                     .arg(result.errorMessage)
+                                     .arg(result.errorLine));
+        return false;
     }
 
-    return doc;
+    return true;
 }
 
 bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString)
@@ -50,7 +68,7 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
     coords.clear();
     const QString simplified = coordinatesString.simplified();
     if (simplified.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Empty coordinates string"));
+        errorString = _loadError(QCoreApplication::translate("KML", "Empty coordinates string"));
         return false;
     }
 
@@ -67,7 +85,8 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         bool lonOk = false, latOk = false;
         const double lon = rgValueStrings[0].toDouble(&lonOk);
         const double lat = rgValueStrings[1].toDouble(&latOk);
-        if (!lonOk || !latOk) {
+        // toDouble() reads "nan" and "inf" as numbers
+        if (!lonOk || !latOk || !std::isfinite(lon) || !std::isfinite(lat)) {
             qCWarning(KMLHelperLog) << "Failed to parse coordinate values:" << coordinateString;
             continue;
         }
@@ -81,32 +100,22 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         }
         double alt = 0.0;
         if (rgValueStrings.size() >= 3) {
-            alt = rgValueStrings[2].toDouble();
+            bool altOk = false;
+            alt = rgValueStrings[2].toDouble(&altOk);
+            // toDouble() reads "nan" and "inf" as numbers, and gives infinity for a number beyond its range
+            if (!altOk || !std::isfinite(alt)) {
+                alt = 0.0;
+                qCWarning(KMLHelperLog) << "Failed to parse altitude, using" << alt << "in:" << coordinateString;
+            }
         }
         coords.append(QGeoCoordinate(lat, lon, alt));
     }
 
     if (coords.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "No valid coordinates found"));
+        errorString = _loadError(QCoreApplication::translate("KML", "No valid coordinates found"));
         return false;
     }
     return true;
-}
-
-void KMLHelper::_filterVertices(QList<QGeoCoordinate> &vertices, double filterMeters, int minVertices)
-{
-    if (filterMeters <= 0 || vertices.count() <= minVertices) {
-        return;
-    }
-
-    int i = 0;
-    while (i < (vertices.count() - 1)) {
-        if ((vertices.count() > minVertices) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
-            vertices.removeAt(i + 1);
-        } else {
-            i++;
-        }
-    }
 }
 
 void KMLHelper::_checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index)
@@ -135,8 +144,8 @@ ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile,
 {
     using ShapeType = ShapeFileHelper::ShapeType;
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return ShapeType::Error;
     }
 
@@ -155,15 +164,15 @@ ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile,
         return ShapeType::Point;
     }
 
-    errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "No supported type found in KML file."));
+    errorString = _loadError(QCoreApplication::translate("KML", "No supported type found in KML file."));
     return ShapeType::Error;
 }
 
 int KMLHelper::getEntityCount(const QString &kmlFile, QString &errorString)
 {
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
-        return 0;
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
+        return -1;
     }
 
     int count = 0;
@@ -173,173 +182,94 @@ int KMLHelper::getEntityCount(const QString &kmlFile, QString &errorString)
     return count;
 }
 
-bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoordinate>> &polygons, QString &errorString, double filterMeters)
+template <typename AddShape>
+bool KMLHelper::_loadGeometries(const QString& kmlFile, const char* tag, bool outerBoundary, int minVertices,
+                                const QString& notFoundError, const QString& noneValidError, QString& errorString,
+                                AddShape addShape)
 {
-    errorString.clear();
-    polygons.clear();
-
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 
-    const QDomNodeList rgNodes = domDocument.elementsByTagName("Polygon");
+    const QDomNodeList rgNodes = domDocument.elementsByTagName(tag);
     if (rgNodes.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to find Polygon node in KML"));
+        errorString = _loadError(notFoundError);
         return false;
     }
 
+    bool anyValid = false;
     for (int nodeIdx = 0; nodeIdx < rgNodes.count(); nodeIdx++) {
-        const QDomNode polygonNode = rgNodes.item(nodeIdx);
-        _checkAltitudeMode(polygonNode, "Polygon", nodeIdx);
+        const QDomNode geometryNode = rgNodes.item(nodeIdx);
+        _checkAltitudeMode(geometryNode, tag, nodeIdx);
 
-        const QDomNode coordinatesNode = polygonNode.namedItem("outerBoundaryIs").namedItem("LinearRing").namedItem("coordinates");
+        const QDomNode ringNode =
+            outerBoundary ? geometryNode.namedItem("outerBoundaryIs").namedItem("LinearRing") : geometryNode;
+        const QDomNode coordinatesNode = ringNode.namedItem("coordinates");
         if (coordinatesNode.isNull()) {
-            qCWarning(KMLHelperLog) << "Polygon" << nodeIdx << QStringLiteral("(line %1)").arg(polygonNode.lineNumber())
+            qCWarning(KMLHelperLog) << tag << nodeIdx << QStringLiteral("(line %1)").arg(geometryNode.lineNumber())
                                     << "missing coordinates node, skipping";
             continue;
         }
 
         QList<QGeoCoordinate> rgCoords;
         if (!_parseCoordinateString(coordinatesNode.toElement().text(), rgCoords, errorString)) {
-            qCWarning(KMLHelperLog) << "Polygon" << nodeIdx << QStringLiteral("(line %1)").arg(coordinatesNode.lineNumber())
+            qCWarning(KMLHelperLog) << tag << nodeIdx << QStringLiteral("(line %1)").arg(coordinatesNode.lineNumber())
                                     << "failed to parse coordinates:" << errorString;
             errorString.clear();
             continue;
         }
 
-        if (rgCoords.count() < 3) {
-            qCWarning(KMLHelperLog) << "Polygon" << nodeIdx << QStringLiteral("(line %1)").arg(polygonNode.lineNumber())
-                                    << "has fewer than 3 vertices, skipping";
+        if (rgCoords.count() < minVertices) {
+            qCWarning(KMLHelperLog) << tag << nodeIdx << QStringLiteral("(line %1)").arg(geometryNode.lineNumber())
+                                    << "has fewer than" << minVertices << "vertices, skipping";
             continue;
         }
 
-        // Remove duplicate closing vertex (KML polygons repeat first vertex at end)
-        if (rgCoords.count() > 3 && rgCoords.first().latitude() == rgCoords.last().latitude() &&
-            rgCoords.first().longitude() == rgCoords.last().longitude()) {
-            rgCoords.removeLast();
-        }
-
-        // Determine winding, reverse if needed. QGC wants clockwise winding
-        double sum = 0;
-        for (int i = 0; i < rgCoords.count(); i++) {
-            const QGeoCoordinate &coord1 = rgCoords[i];
-            const QGeoCoordinate &coord2 = rgCoords[(i + 1) % rgCoords.count()];
-            sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
-        }
-        if (sum < 0.0) {
-            std::reverse(rgCoords.begin(), rgCoords.end());
-        }
-
-        _filterVertices(rgCoords, filterMeters, 3);
-        polygons.append(rgCoords);
+        addShape(rgCoords);
+        anyValid = true;
     }
 
-    if (polygons.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "No valid polygons found in KML file"));
+    if (!anyValid) {
+        errorString = _loadError(noneValidError);
         return false;
     }
 
     return true;
+}
+
+bool KMLHelper::loadPolygonsFromFile(const QString& kmlFile, QList<QList<QGeoCoordinate>>& polygons,
+                                     QString& errorString, double filterMeters)
+{
+    polygons.clear();
+    return _loadGeometries(kmlFile, "Polygon", true, 3,
+                           QCoreApplication::translate("KML", "Unable to find Polygon node in KML"),
+                           QCoreApplication::translate("KML", "No valid polygons found in KML file"), errorString,
+                           [&polygons, filterMeters](QList<QGeoCoordinate>& vertices) {
+                               ShapeVertices::removeClosingVertex(vertices);
+                               ShapeVertices::makeClockwise(vertices);
+                               ShapeVertices::filterNearby(vertices, filterMeters, 3);
+                               polygons.append(vertices);
+                           });
 }
 
 bool KMLHelper::loadPolylinesFromFile(const QString &kmlFile, QList<QList<QGeoCoordinate>> &polylines, QString &errorString, double filterMeters)
 {
-    errorString.clear();
     polylines.clear();
-
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
-        return false;
-    }
-
-    const QDomNodeList rgNodes = domDocument.elementsByTagName("LineString");
-    if (rgNodes.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to find LineString node in KML"));
-        return false;
-    }
-
-    for (int nodeIdx = 0; nodeIdx < rgNodes.count(); nodeIdx++) {
-        const QDomNode lineStringNode = rgNodes.item(nodeIdx);
-        _checkAltitudeMode(lineStringNode, "LineString", nodeIdx);
-
-        const QDomNode coordinatesNode = lineStringNode.namedItem("coordinates");
-        if (coordinatesNode.isNull()) {
-            qCWarning(KMLHelperLog) << "LineString" << nodeIdx << QStringLiteral("(line %1)").arg(lineStringNode.lineNumber())
-                                    << "missing coordinates node, skipping";
-            continue;
-        }
-
-        QList<QGeoCoordinate> rgCoords;
-        if (!_parseCoordinateString(coordinatesNode.toElement().text(), rgCoords, errorString)) {
-            qCWarning(KMLHelperLog) << "LineString" << nodeIdx << QStringLiteral("(line %1)").arg(coordinatesNode.lineNumber())
-                                    << "failed to parse coordinates:" << errorString;
-            errorString.clear();
-            continue;
-        }
-
-        if (rgCoords.count() < 2) {
-            qCWarning(KMLHelperLog) << "LineString" << nodeIdx << QStringLiteral("(line %1)").arg(lineStringNode.lineNumber())
-                                    << "has fewer than 2 vertices, skipping";
-            continue;
-        }
-
-        _filterVertices(rgCoords, filterMeters, 2);
-        polylines.append(rgCoords);
-    }
-
-    if (polylines.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "No valid polylines found in KML file"));
-        return false;
-    }
-
-    return true;
+    return _loadGeometries(kmlFile, "LineString", false, 2,
+                           QCoreApplication::translate("KML", "Unable to find LineString node in KML"),
+                           QCoreApplication::translate("KML", "No valid polylines found in KML file"), errorString,
+                           [&polylines, filterMeters](QList<QGeoCoordinate>& vertices) {
+                               ShapeVertices::filterNearby(vertices, filterMeters, 2);
+                               polylines.append(vertices);
+                           });
 }
 
 bool KMLHelper::loadPointsFromFile(const QString &kmlFile, QList<QGeoCoordinate> &points, QString &errorString)
 {
-    errorString.clear();
     points.clear();
-
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
-        return false;
-    }
-
-    const QDomNodeList rgNodes = domDocument.elementsByTagName("Point");
-    if (rgNodes.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to find Point node in KML"));
-        return false;
-    }
-
-    for (int nodeIdx = 0; nodeIdx < rgNodes.count(); nodeIdx++) {
-        const QDomNode pointNode = rgNodes.item(nodeIdx);
-        _checkAltitudeMode(pointNode, "Point", nodeIdx);
-
-        const QDomNode coordinatesNode = pointNode.namedItem("coordinates");
-        if (coordinatesNode.isNull()) {
-            qCWarning(KMLHelperLog) << "Point" << nodeIdx << QStringLiteral("(line %1)").arg(pointNode.lineNumber())
-                                    << "missing coordinates node, skipping";
-            continue;
-        }
-
-        QList<QGeoCoordinate> coords;
-        if (!_parseCoordinateString(coordinatesNode.toElement().text(), coords, errorString)) {
-            qCWarning(KMLHelperLog) << "Point" << nodeIdx << QStringLiteral("(line %1)").arg(coordinatesNode.lineNumber())
-                                    << "failed to parse coordinates:" << errorString;
-            errorString.clear();
-            continue;
-        }
-
-        if (!coords.isEmpty()) {
-            points.append(coords.first());
-        }
-    }
-
-    if (points.isEmpty()) {
-        errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "No valid points found in KML file"));
-        return false;
-    }
-
-    return true;
+    return _loadGeometries(kmlFile, "Point", false, 1,
+                           QCoreApplication::translate("KML", "Unable to find Point node in KML"),
+                           QCoreApplication::translate("KML", "No valid points found in KML file"), errorString,
+                           [&points](const QList<QGeoCoordinate>& coords) { points.append(coords.first()); });
 }

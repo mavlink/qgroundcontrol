@@ -2,7 +2,6 @@
 #include "LogEntry.h"
 #include "LogFormatter.h"
 #include "LogTestHelpers.h"
-#include "UnitTest.h"
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>

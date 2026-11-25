@@ -24,7 +24,7 @@ target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(Bluetooth)
 
-add_qgc_test(LinkConfigurationTest LABELS Unit Comms RESOURCE_LOCK Settings TempFiles)
+add_qgc_test(LinkConfigurationTest LABELS Unit Comms RESOURCE_LOCK Settings)
 add_qgc_test(LinkManagerTest LABELS Integration Comms SERIAL)
 add_qgc_test(LogReplayLinkControllerTest LABELS Unit Comms)
 add_qgc_test(LogReplayLinkTest LABELS Unit Comms)

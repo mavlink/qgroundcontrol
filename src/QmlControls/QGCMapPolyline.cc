@@ -343,10 +343,6 @@ bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
         QGC::showAppMessage(errorString);
         return false;
     }
-    if (polylines.isEmpty()) {
-        QGC::showAppMessage(tr("No polylines found in file"));
-        return false;
-    }
     const QList<QGeoCoordinate>& rgCoords = polylines.first();
 
     beginReset();
