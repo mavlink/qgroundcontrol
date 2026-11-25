@@ -18,7 +18,6 @@
 #include "SigningController.h"
 #include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
-#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -27,7 +26,9 @@ QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "Comms.MAVLinkProtocol")
 
 Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
-MAVLinkProtocol::MAVLinkProtocol(QObject* parent) : QObject(parent), _tempLogFile(new QFile(this))
+MAVLinkProtocol::MAVLinkProtocol(QObject* parent)
+    : QObject(parent)
+    , _logFile(new QFile(this))
 {
     // Bound memory for arbitrary sender IDs, retaining the most recently active streams.
     for (auto& sequences : _lastIndex) {
@@ -82,7 +83,7 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface* link, const QByteArray& 
 {
     Q_UNUSED(link);
 
-    if (_logSuspendError || _logSuspendReplay || !_tempLogFile->isOpen()) {
+    if (_logSuspendError || _logSuspendReplay || !_logFile->isOpen()) {
         return;
     }
 
@@ -93,12 +94,14 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface* link, const QByteArray& 
     QByteArray logData = data;
     QByteArray timeData = QByteArray::fromRawData(reinterpret_cast<const char*>(bytes_time), sizeof(bytes_time));
     (void)logData.prepend(timeData);
-    if (_tempLogFile->write(logData) != logData.length()) {
+    if (_logFile->write(logData) != logData.length()) {
         const QString message = QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.")
-                                    .arg(_tempLogFile->fileName());
+                                    .arg(_logFile->fileName());
         QGC::showAppMessage(message, getName());
         _stopLogging();
         _logSuspendError = true;
+    } else if (_logKeepCheckPending) {
+        _promoteLogFileIfKept();
     }
 }
 
@@ -233,7 +236,24 @@ void MAVLinkProtocol::_forwardSupport(const mavlink_message_t& message)
 
 void MAVLinkProtocol::_logData(LinkInterface* link, const mavlink_message_t& message)
 {
-    if (!_logSuspendError && !_logSuspendReplay && _tempLogFile->isOpen()) {
+    // Foreign traffic is still logged, but must not discover vehicles or set the armed state.
+    bool addressedElsewhere = false;
+    if (message.incompat_flags & MAVLINK_IFLAG_TARGET32) {
+        const uint8_t targetComponent = mavlink_msg_get_target_compid(&message, mavlink_get_msg_entry(message.msgid));
+        addressedElsewhere = (message.target_sysid != 0 && message.target_sysid != getSystemId()) ||
+                             (targetComponent != 0 && targetComponent != getComponentId());
+    }
+
+    // Checked before the log is known to be open so that the heartbeat that opens it counts. Replayed heartbeats
+    // are skipped: a live vehicle connected while the replay is paused would otherwise inherit their armed state.
+    if ((message.msgid == MAVLINK_MSG_ID_HEARTBEAT) && !_vehicleWasArmed && !addressedElsewhere &&
+        !link->isLogReplay()) {
+        if (mavlink_msg_heartbeat_get_base_mode(&message) & MAV_MODE_FLAG_DECODE_POSITION_SAFETY) {
+            _vehicleWasArmed = true;
+        }
+    }
+
+    if (!_logSuspendError && !_logSuspendReplay && _logFile->isOpen()) {
         // MAVLink spec §Logging: omit SETUP_SIGNING (contains secret key)
         if (message.msgid != MAVLINK_MSG_ID_SETUP_SIGNING) {
             // MAVLink spec §Logging: strip signature block from logged packets.
@@ -243,30 +263,27 @@ void MAVLinkProtocol::_logData(LinkInterface* link, const mavlink_message_t& mes
             log_data.resize(static_cast<qsizetype>(sizeof(timestamp)) + msgBytes.size());
             qToBigEndian(timestamp, reinterpret_cast<uint8_t*>(log_data.data()));
             std::memcpy(log_data.data() + sizeof(timestamp), msgBytes.constData(), msgBytes.size());
-            if (_tempLogFile->write(log_data) != log_data.size()) {
+            if (_logFile->write(log_data) != log_data.size()) {
                 const QString logErrorMessage =
                     QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.")
-                        .arg(_tempLogFile->fileName());
+                        .arg(_logFile->fileName());
                 QGC::showAppMessage(logErrorMessage, getName());
                 _stopLogging();
                 _logSuspendError = true;
             }
         }
 
-        if ((message.msgid == MAVLINK_MSG_ID_HEARTBEAT) && !_vehicleWasArmed) {
-            if (mavlink_msg_heartbeat_get_base_mode(&message) & MAV_MODE_FLAG_DECODE_POSITION_SAFETY) {
-                _vehicleWasArmed = true;
-            }
+        // A vehicle on a high latency link may never send a heartbeat.
+        const bool vehiclePresenceMessage = (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) ||
+                                            (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY) ||
+                                            (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY2);
+        if (vehiclePresenceMessage || _logKeepCheckPending) {
+            _promoteLogFileIfKept();
         }
     }
 
-    // Keep foreign traffic in the log, but do not discover vehicles from headers addressed elsewhere.
-    if (message.incompat_flags & MAVLINK_IFLAG_TARGET32) {
-        const uint8_t targetComponent = mavlink_msg_get_target_compid(&message, mavlink_get_msg_entry(message.msgid));
-        if ((message.target_sysid != 0 && message.target_sysid != getSystemId()) ||
-            (targetComponent != 0 && targetComponent != getComponentId())) {
-            return;
-        }
+    if (addressedElsewhere) {
+        return;
     }
 
     switch (message.msgid) {
@@ -317,23 +334,23 @@ bool MAVLinkProtocol::_updateStatus(LinkInterface* link, const SharedLinkInterfa
 
 bool MAVLinkProtocol::_closeLogFile()
 {
-    if (!_tempLogFile->isOpen()) {
+    if (!_logFile->isOpen()) {
         return false;
     }
 
-    if (_tempLogFile->size() == 0) {
-        (void)_tempLogFile->remove();
+    if (_logFile->size() == 0) {
+        (void) _logFile->remove();
         return false;
     }
 
-    (void)_tempLogFile->flush();
-    _tempLogFile->close();
+    (void) _logFile->flush();
+    _logFile->close();
     return true;
 }
 
 void MAVLinkProtocol::_startLogging()
 {
-    if (QGC::runningUnitTests()) {
+    if (QGC::runningUnitTests() && !_loggingEnabledForTest) {
         return;
     }
 
@@ -342,182 +359,156 @@ void MAVLinkProtocol::_startLogging()
         return;
     }
 
-    if (_tempLogFile->isOpen()) {
+    if (_logFile->isOpen()) {
         return;
     }
 
-    if (_logSuspendReplay) {
+    if (_logSuspendReplay || _logSuspendError) {
+        return;
+    }
+
+    // Called again on every heartbeat until the log opens, so a failure is only reported once.
+    const auto reportStartError = [this](const QString& message, const QString& title = QString()) {
+        if (!_logStartErrorShown) {
+            _logStartErrorShown = true;
+            QGC::showAppMessage(message, title);
+        }
+    };
+
+    const QString saveDirPath = appSettings->telemetrySavePath();
+    const QString savePathError = _telemetrySavePathError(saveDirPath);
+    if (!savePathError.isEmpty()) {
+        reportStartError(tr("Telemetry log save path is not valid. %1").arg(savePathError));
         return;
     }
 
     const QString startTimeString = QDateTime::currentDateTime().toString(QLatin1String(_logStartTimeFormat));
-    const QDir tempDir(QGCFileHelper::tempDirectory());
-    _tempLogFile->setFileName(
-        tempDir.filePath(QStringLiteral("%1.%2").arg(startTimeString, QLatin1String(_logFileExtension))));
-    if (!_tempLogFile->open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
+    const QString inProgressFileName = QStringLiteral("%1.%2.%3")
+                                           .arg(startTimeString, QLatin1String(AppSettings::telemetryFileExtension),
+                                                QLatin1String(_inProgressLogSuffix));
+    _logFile->setFileName(QDir(saveDirPath).filePath(inProgressFileName));
+    if (!_logFile->open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
         const QString message = QStringLiteral(
                                     "Opening Flight Data file for writing failed. "
                                     "Unable to write to %1. Please choose a different file location.")
-                                    .arg(_tempLogFile->fileName());
-        QGC::showAppMessage(message, getName());
-        _closeLogFile();
-        _logSuspendError = true;
+                                    .arg(_logFile->fileName());
+        reportStartError(message, getName());
         return;
     }
 
-    qCDebug(MAVLinkProtocolLog) << "Temp log" << _tempLogFile->fileName();
-    const QString savePathError = _telemetrySavePathError(appSettings->telemetrySavePath());
-    if (!savePathError.isEmpty()) {
-        QGC::showAppMessage(tr("Telemetry log save path is not valid. %1").arg(savePathError));
-    }
+    qCDebug(MAVLinkProtocolLog) << "In-progress log" << _logFile->fileName();
 
-    _logSuspendError = false;
+    _logStartErrorShown = false;
+    _logPromoteFailed = false;
+    _logKeepCheckPending = true;
+    _logFinalizePending = true;
 }
 
 void MAVLinkProtocol::_stopLogging()
 {
-    if (_tempLogFile->isOpen() && _closeLogFile()) {
-        auto appSettings = SettingsManager::instance()->appSettings();
-        auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
-        if ((_vehicleWasArmed || mavlinkSettings->telemetrySaveNotArmed()->rawValue().toBool()) &&
-            mavlinkSettings->telemetrySave()->rawValue().toBool() &&
-            !appSettings->disableAllPersistence()->rawValue().toBool()) {
-            _saveTelemetryLog(_tempLogFile->fileName());
-        } else {
-            (void)QFile::remove(_tempLogFile->fileName());
+    // A log that could not be reopened after its rename is already closed but still has to be finalized.
+    if (_logFinalizePending) {
+        _logFinalizePending = false;
+        // _closeLogFile() removes an empty log
+        const bool logHasData = !_logFile->isOpen() || _closeLogFile();
+        if (logHasData) {
+            if (!_keepLog()) {
+                (void) _logFile->remove();
+            } else if (!_promoteLogFile()) {
+                QGC::showAppMessage(tr("Unable to save telemetry log '%1': '%2'. Rename it to .%3 to keep it, "
+                                       "otherwise it is deleted the next time the application starts.")
+                                        .arg(_logFile->fileName(), _logFile->errorString(),
+                                             QLatin1String(AppSettings::telemetryFileExtension)));
+            }
         }
     }
 
     _vehicleWasArmed = false;
+    _logStartErrorShown = false;
+    _logSuspendError = false;
 }
 
-void MAVLinkProtocol::checkForLostLogFiles()
+bool MAVLinkProtocol::_logFileInProgress() const
 {
-    static const QDir tempDir(QGCFileHelper::tempDirectory());
-    static const QString filter(QStringLiteral("*.%1").arg(_logFileExtension));
-    static const QStringList filterList(filter);
+    return _logFile->fileName().endsWith(QLatin1String(_inProgressLogSuffix));
+}
 
-    // The armed state of an orphan is unknown, so after a crash it is kept whenever saving is on.
-    const bool saveOrphans = SettingsManager::instance()->mavlinkSettings()->telemetrySave()->rawValue().toBool() &&
-                             !SettingsManager::instance()->appSettings()->disableAllPersistence()->rawValue().toBool();
+bool MAVLinkProtocol::_keepLog() const
+{
+    MavlinkSettings* const mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
+    return (_vehicleWasArmed || mavlinkSettings->telemetrySaveNotArmed()->rawValue().toBool()) &&
+           mavlinkSettings->telemetrySave()->rawValue().toBool() &&
+           !SettingsManager::instance()->appSettings()->disableAllPersistence()->rawValue().toBool();
+}
 
-    const QFileInfoList fileInfoList = tempDir.entryInfoList(filterList, QDir::Files);
-    qCDebug(MAVLinkProtocolLog) << "Orphaned log file count" << fileInfoList.count();
+void MAVLinkProtocol::_promoteLogFileIfKept()
+{
+    // A crash would leave an empty .tlog behind, and a rename that failed is only retried when logging stops.
+    if (!_logFile->isOpen() || !_logFileInProgress() || _logPromoteFailed || (_logFile->pos() == 0)) {
+        return;
+    }
 
-    for (const QFileInfo& fileInfo : fileInfoList) {
-        qCDebug(MAVLinkProtocolLog) << "Orphaned log file" << fileInfo.filePath();
-        if ((fileInfo.size() == 0) || !saveOrphans) {
-            (void)QFile::remove(fileInfo.filePath());
-            continue;
-        }
-        _saveTelemetryLog(fileInfo.filePath());
+    _logKeepCheckPending = false;
+    if (_keepLog() && !_promoteLogFile()) {
+        _logPromoteFailed = true;
     }
 }
 
-void MAVLinkProtocol::deleteTempLogFiles()
+bool MAVLinkProtocol::_promoteLogFile()
 {
-    static const QDir tempDir(QGCFileHelper::tempDirectory());
-    static const QString filter(QStringLiteral("*.%1").arg(_logFileExtension));
-
-    const QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
-    qCDebug(MAVLinkProtocolLog) << "Temp log file count" << fileInfoList.count();
-
-    for (const QFileInfo& fileInfo : fileInfoList) {
-        qCDebug(MAVLinkProtocolLog) << "Temp log file" << fileInfo.filePath();
-        (void)QFile::remove(fileInfo.filePath());
+    if (!_logFileInProgress()) {
+        return true;
     }
-}
 
-void MAVLinkProtocol::_saveTelemetryLog(const QString& tempLogfile)
-{
-    const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
-    const QString savePathError = _telemetrySavePathError(saveDirPath);
-    if (savePathError.isEmpty()) {
-        const QDir saveDir(saveDirPath);
+    const QFileInfo inProgressInfo(_logFile->fileName());
+    const QDir saveDir = inProgressInfo.dir();
+    const QString startTimeString = inProgressInfo.baseName();
 
-        const QString nameFormat("%1%2.%3");
-        const QLatin1String startTimeFormat(_logStartTimeFormat);
-        const QFileInfo tempLogInfo(tempLogfile);
-        QDateTime startTime = QDateTime::fromString(tempLogInfo.completeBaseName(), startTimeFormat);
-        if (!startTime.isValid()) {
-            // Not named by _startLogging(), such as an orphan left by an older version
-            startTime = tempLogInfo.lastModified();
-        }
-        const QString startTimeString = startTime.toString(startTimeFormat);
+    const QString nameFormat("%1%2.%3");
+    int tryIndex = 1;
+    QString saveFileName = nameFormat.arg(startTimeString, QString(), AppSettings::telemetryFileExtension);
+    while (saveDir.exists(saveFileName)) {
+        saveFileName =
+            nameFormat.arg(startTimeString, QStringLiteral(".%1").arg(tryIndex++), AppSettings::telemetryFileExtension);
+    }
 
-        int tryIndex = 1;
-        QString saveFileName = nameFormat.arg(startTimeString, QString(), AppSettings::telemetryFileExtension);
-        while (saveDir.exists(saveFileName)) {
-            saveFileName = nameFormat.arg(startTimeString, QStringLiteral(".%1").arg(tryIndex++),
-                                          AppSettings::telemetryFileExtension);
-        }
-
-        const QString saveFilePath = saveDir.absoluteFilePath(saveFileName);
-
-        QFile in(tempLogfile);
-        if (!in.open(QIODevice::ReadOnly)) {
-            const QString error =
-                tr("Unable to save telemetry log. Error opening source '%1': '%2'.").arg(tempLogfile, in.errorString());
-            QGC::showAppMessage(error);
-            (void)QFile::remove(tempLogfile);
-            return;
-        }
-
-        QSaveFile out(saveFilePath);
-        out.setDirectWriteFallback(true);  // allows non-atomic fallback where rename isn’t possible
-
-        if (!out.open(QIODevice::WriteOnly)) {
-            const QString error = tr("Unable to save telemetry log. Error opening destination '%1': '%2'.")
-                                      .arg(saveFilePath, out.errorString());
-            QGC::showAppMessage(error);
-            (void)QFile::remove(tempLogfile);
-            return;
-        }
-
-        // Stream copy to avoid large allocations.
-        QByteArray buffer;
-        constexpr int bufferSize = 256 * 1024;  // 256 KiB
-        buffer.resize(bufferSize);
-        while (true) {
-            const qint64 n = in.read(buffer.data(), buffer.size());
-            if (n == 0) {
-                break;
-            }
-            if (n < 0) {
-                const QString error = tr("Unable to save telemetry log. Error reading source '%1': '%2'.")
-                                          .arg(tempLogfile, in.errorString());
-                QGC::showAppMessage(error);
-                out.cancelWriting();
-                (void)QFile::remove(tempLogfile);
-                return;
-            }
-            if (out.write(buffer.constData(), n) != n) {
-                const QString error = tr("Unable to save telemetry log. Error writing destination '%1': '%2'.")
-                                          .arg(saveFilePath, out.errorString());
-                QGC::showAppMessage(error);
-                out.cancelWriting();
-                (void)QFile::remove(tempLogfile);
-                return;
-            }
-        }
-
-        // QSaveFile applies permissions during commit().
+    // QFile::rename() closes the file first, which Windows needs in order to rename it.
+    const bool wasOpen = _logFile->isOpen();
+    const bool renamed = _logFile->rename(saveDir.filePath(saveFileName));
+    if (renamed) {
+        // Until it is saved the log keeps the mode the umask gave it, 0666 & ~umask.
         constexpr QFileDevice::Permissions perms =
             QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther;
-        (void) out.setPermissions(perms);
-
-        if (!out.commit()) {
-            const QString error =
-                tr("Unable to finalize telemetry log '%1': '%2'.").arg(saveFilePath, out.errorString());
-            QGC::showAppMessage(error);
-            (void)QFile::remove(tempLogfile);
-            return;
-        }
+        (void) _logFile->setPermissions(perms);
     } else {
-        QGC::showAppMessage(tr("Unable to save telemetry log. %1").arg(savePathError));
+        qCWarning(MAVLinkProtocolLog) << "Unable to rename log" << _logFile->fileName() << "to" << saveFileName
+                                      << "error:" << _logFile->errorString();
     }
 
-    (void)QFile::remove(tempLogfile);
+    if (wasOpen && !_logFile->isOpen() && !_logFile->open(QIODevice::WriteOnly | QIODevice::Append)) {
+        QGC::showAppMessage(tr("MAVLink Logging failed. Could not reopen file '%1': '%2', logging disabled.")
+                                .arg(_logFile->fileName(), _logFile->errorString()),
+                            getName());
+        _logSuspendError = true;
+    }
+
+    return renamed;
+}
+
+void MAVLinkProtocol::removeOrphanedLogFiles()
+{
+    const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
+    if (saveDirPath.isEmpty()) {
+        return;
+    }
+
+    const QString filter = QStringLiteral("*.%1.%2").arg(QLatin1String(AppSettings::telemetryFileExtension),
+                                                         QLatin1String(_inProgressLogSuffix));
+    const QFileInfoList fileInfoList = QDir(saveDirPath).entryInfoList(QStringList(filter), QDir::Files);
+    for (const QFileInfo& fileInfo : fileInfoList) {
+        qCDebug(MAVLinkProtocolLog) << "Removing orphaned log file" << fileInfo.filePath();
+        (void) QFile::remove(fileInfo.filePath());
+    }
 }
 
 QString MAVLinkProtocol::_telemetrySavePathError(const QString& saveDirPath)
