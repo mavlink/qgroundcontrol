@@ -7,12 +7,16 @@ class AdditionalStatesCoverageTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    void _testCircuitBreakerTripsAndFailFast();
-    void _testEventQueuedStateMatchesExpectedEvent();
-    void _testFallbackChainUsesFallbackStrategy();
-    void _testLoopStateProcessesFilteredItems();
-    void _testRetryThenFailEmitsExhausted();
-    void _testRetryThenSkipAdvancesAfterSkip();
-    void _testRollbackStateExecutesRollbackOnFailure();
-    void _testSequenceStateStopsOnFailedStep();
+    void _testStatesConstructWithoutVehicle();
+    UT_PARAMETERIZED_TEST(_testVehicleStatesFailWithoutVehicle);
+    void _testFunctionState();
+    void _testFunctionStateChain();
+    void _testDelayState();
+    UT_PARAMETERIZED_TEST(_testDelayStateMachineStopEndsDelay);
+    void _testDelayStateRestartStartsDelayOver();
+    void _testQGCStateExitCallback();
+    void _testQGCFinalState();
+    UT_PARAMETERIZED_TEST(_testWaitForMavlinkMessageCompletesOnFirstMatch);
+    UT_PARAMETERIZED_TEST(_testWaitForParamResponseEndsOnItsAnswer);
+    void _testWaitForParamResponseForgetsEarlierError();
 };

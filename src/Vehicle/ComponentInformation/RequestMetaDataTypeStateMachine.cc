@@ -12,20 +12,34 @@
 
 // State types included via QGCStateMachine.h in header
 
+#include <utility>
+
 #include <QtCore/QCoreApplication>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QStandardPaths>
 
 QGC_LOGGING_CATEGORY(RequestMetaDataTypeStateMachineLog, "ComponentInformation.RequestMetaDataTypeStateMachine")
 
-RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent)
+namespace {
+
+/// @return The URI in a MAVLink char field. A URI that fills its field has no terminator.
+template <size_t Length>
+QString metadataUriFromField(const char (&field)[Length])
+{
+    return QString::fromUtf8(field, static_cast<qsizetype>(qstrnlen(field, Length)));
+}
+
+}  // namespace
+
+RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr, QObject* parent,
+                                                                 const Timeouts& timeouts)
     : QGCStateMachine("RequestMetaDataType", compMgr->vehicle(), parent)
     , _compMgr(compMgr)
 {
     qCDebug(RequestMetaDataTypeStateMachineLog) << Q_FUNC_INFO << this;
 
-    _createStates();
+    _createStates(timeouts);
     _wireTransitions();
     _wireTimeoutHandling();
 }
@@ -35,111 +49,78 @@ RequestMetaDataTypeStateMachine::~RequestMetaDataTypeStateMachine()
     qCDebug(RequestMetaDataTypeStateMachineLog) << this;
 }
 
-void RequestMetaDataTypeStateMachine::_createStates()
+void RequestMetaDataTypeStateMachine::_createStates(const Timeouts& timeouts)
 {
     // State 1: Request COMPONENT_METADATA message
     _stateRequestCompInfo = new AsyncFunctionState(
-        "RequestCompMetadata",
-        this,
-        [this](AsyncFunctionState*) { _requestCompInfo(); },
-        _timeoutCompInfoRequest
-    );
-    registerState(_stateRequestCompInfo);
+        "RequestCompMetadata", this, [this](AsyncFunctionState*) { _requestCompInfo(); }, timeouts.compInfoRequest);
 
     // State 2: Fallback to deprecated COMPONENT_INFORMATION if needed
-    _stateRequestDeprecated = new SkippableAsyncState(
-        "RequestCompInfoDeprecated",
-        this,
-        [this]() { return _shouldSkipDeprecatedRequest(); },
-        [this](SkippableAsyncState*) { _requestCompInfoDeprecated(); },
-        nullptr,
-        _timeoutCompInfoRequest
-    );
-    registerState(_stateRequestDeprecated);
+    _stateRequestDeprecated = new AsyncFunctionState(
+        "RequestCompInfoDeprecated", this, [this](AsyncFunctionState*) { _requestCompInfoDeprecated(); },
+        timeouts.compInfoRequest);
+    _stateRequestDeprecated->setSkipPredicate([this]() { return _shouldSkipDeprecatedRequest(); });
 
     // State 3: Download metadata JSON
     _stateRequestMetaDataJson = new AsyncFunctionState(
-        "RequestMetaDataJson",
-        this,
-        [this](AsyncFunctionState*) { _requestMetaDataJson(); },
-        _timeoutMetaDataDownload
-    );
-    registerState(_stateRequestMetaDataJson);
+        "RequestMetaDataJson", this, [this](AsyncFunctionState*) { _requestMetaDataJson(); },
+        timeouts.metaDataDownload);
 
     // State 4: Try fallback URI if primary download failed
-    _stateRequestMetaDataJsonFallback = new SkippableAsyncState(
-        "RequestMetaDataJsonFallback",
-        this,
-        [this]() { return _shouldSkipFallback(); },
-        [this](SkippableAsyncState*) { _requestMetaDataJsonFallback(); },
-        nullptr,
-        _timeoutMetaDataDownload
-    );
-    registerState(_stateRequestMetaDataJsonFallback);
+    _stateRequestMetaDataJsonFallback = new AsyncFunctionState(
+        "RequestMetaDataJsonFallback", this, [this](AsyncFunctionState*) { _requestMetaDataJsonFallback(); },
+        timeouts.metaDataDownload);
+    _stateRequestMetaDataJsonFallback->setSkipPredicate([this]() { return _shouldSkipFallback(); });
 
     // State 5: Download translation JSON
     _stateRequestTranslationJson = new AsyncFunctionState(
-        "RequestTranslationJson",
-        this,
-        [this](AsyncFunctionState*) { _requestTranslationJson(); },
-        _timeoutMetaDataDownload
-    );
-    registerState(_stateRequestTranslationJson);
+        "RequestTranslationJson", this, [this](AsyncFunctionState*) { _requestTranslationJson(); },
+        timeouts.metaDataDownload);
 
     // State 6: Translate metadata
-    _stateRequestTranslate = new SkippableAsyncState(
-        "RequestTranslate",
-        this,
-        [this]() { return _shouldSkipTranslation(); },
-        [this](SkippableAsyncState*) { _requestTranslate(); },
-        nullptr,
-        _timeoutTranslation
-    );
-    registerState(_stateRequestTranslate);
+    _stateRequestTranslate = new AsyncFunctionState(
+        "RequestTranslate", this, [this](AsyncFunctionState*) { _requestTranslate(); }, timeouts.translation);
+    _stateRequestTranslate->setSkipPredicate([this]() { return _shouldSkipTranslation(); });
+
+    // A state that times out is left while what it asked for is still under way. Nothing of that may reach a
+    // later state, or the next request this machine makes.
+    _stateRequestCompInfo->setOnExit([this]() { _cancelMessageRequest(); });
+    _stateRequestDeprecated->setOnExit([this]() { _cancelMessageRequest(); });
+    _stateRequestMetaDataJson->setOnExit([this]() { _cancelTransfer(); });
+    _stateRequestMetaDataJsonFallback->setOnExit([this]() { _cancelTransfer(); });
+    _stateRequestTranslationJson->setOnExit([this]() { _cancelTransfer(); });
+    _stateRequestTranslate->setOnExit([this]() { _cancelTransfer(); });
 
     // State 7: Complete request
-    // Use ErrorRecoveryState shape (without retries/fallback) so completion
-    // stays in the unified recovery framework used by this utility.
-    _stateComplete = addErrorRecoveryState(
-        "CompleteRequest",
-        [this]() {
-            _completeRequest();
-            return true;
-        },
-        0,
-        0,
-        ErrorRecoveryBuilder::EmitError
-    );
+    _stateComplete = new FunctionState("CompleteRequest", this, [this]() { _completeRequest(); });
 
-    _stateFinal = addFinalState("Final");
+    _stateFinal = new QGCFinalState("Final", this);
 
     setInitialState(_stateRequestCompInfo);
 }
 
 void RequestMetaDataTypeStateMachine::_wireTransitions()
 {
-    // Use completed() for WaitStateBase-derived states (more semantic than advance())
-
     // RequestCompMetadata -> RequestDeprecated
-    _stateRequestCompInfo->addTransition(_stateRequestCompInfo, &WaitStateBase::completed, _stateRequestDeprecated);
+    _stateRequestCompInfo->addTransition(_stateRequestCompInfo, &QGCState::advance, _stateRequestDeprecated);
 
-    // RequestDeprecated -> RequestMetaDataJson (either via completed or skipped)
-    _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &WaitStateBase::completed, _stateRequestMetaDataJson);
-    _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &SkippableAsyncState::skipped, _stateRequestMetaDataJson);
+    // RequestDeprecated -> RequestMetaDataJson
+    _stateRequestDeprecated->addTransition(_stateRequestDeprecated, &QGCState::advance, _stateRequestMetaDataJson);
 
     // RequestMetaDataJson -> RequestMetaDataJsonFallback
-    _stateRequestMetaDataJson->addTransition(_stateRequestMetaDataJson, &WaitStateBase::completed, _stateRequestMetaDataJsonFallback);
+    _stateRequestMetaDataJson->addTransition(_stateRequestMetaDataJson, &QGCState::advance,
+                                             _stateRequestMetaDataJsonFallback);
 
     // RequestMetaDataJsonFallback -> RequestTranslationJson
-    _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &WaitStateBase::completed, _stateRequestTranslationJson);
-    _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &SkippableAsyncState::skipped, _stateRequestTranslationJson);
+    _stateRequestMetaDataJsonFallback->addTransition(_stateRequestMetaDataJsonFallback, &QGCState::advance,
+                                                     _stateRequestTranslationJson);
 
     // RequestTranslationJson -> RequestTranslate
-    _stateRequestTranslationJson->addTransition(_stateRequestTranslationJson, &WaitStateBase::completed, _stateRequestTranslate);
+    _stateRequestTranslationJson->addTransition(_stateRequestTranslationJson, &QGCState::advance,
+                                                _stateRequestTranslate);
 
     // RequestTranslate -> CompleteRequest
-    _stateRequestTranslate->addTransition(_stateRequestTranslate, &WaitStateBase::completed, _stateComplete);
-    _stateRequestTranslate->addTransition(_stateRequestTranslate, &SkippableAsyncState::skipped, _stateComplete);
+    _stateRequestTranslate->addTransition(_stateRequestTranslate, &QGCState::advance, _stateComplete);
 
     // CompleteRequest -> Final (QGCState advance())
     _stateComplete->addTransition(_stateComplete, &QGCState::advance, _stateFinal);
@@ -174,8 +155,6 @@ void RequestMetaDataTypeStateMachine::request(CompInfo* compInfo)
     _jsonMetadataFileName.clear();
     _jsonMetadataTranslatedFileName.clear();
     _jsonTranslationFileName.clear();
-    _activeAsyncState = nullptr;
-    _activeSkippableState = nullptr;
     _metadataSource = MetadataSource::None;
     _metadataUri.clear();
     _metadataIsFallback = false;
@@ -269,7 +248,7 @@ void RequestMetaDataTypeStateMachine::_handleCompMetadataResult(MAV_RESULT resul
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_component_metadata_t componentMetadata;
         mavlink_msg_component_metadata_decode(&message, &componentMetadata);
-        _compInfo->setUriMetaData(componentMetadata.uri, componentMetadata.file_crc);
+        _compInfo->setUriMetaData(metadataUriFromField(componentMetadata.uri), componentMetadata.file_crc);
     }
     // else: try deprecated COMPONENT_INFORMATION in next state
 
@@ -311,7 +290,8 @@ void RequestMetaDataTypeStateMachine::_handleCompInfoResult(MAV_RESULT result, V
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_component_information_t componentInformation;
         mavlink_msg_component_information_decode(&message, &componentInformation);
-        _compInfo->setUriMetaData(componentInformation.general_metadata_uri, componentInformation.general_metadata_file_crc);
+        _compInfo->setUriMetaData(metadataUriFromField(componentInformation.general_metadata_uri),
+                                  componentInformation.general_metadata_file_crc);
     } else {
         switch (failureCode) {
         case Vehicle::RequestMessageFailureCommandError:
@@ -340,9 +320,7 @@ void RequestMetaDataTypeStateMachine::_requestMetaDataJson()
 
     qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": requesting metadata (primary) from" << uri;
 
-    _activeAsyncState = _stateRequestMetaDataJson;
-    _activeSkippableState = nullptr;
-    _requestFile(fileTag, compInfo->crcMetaDataValid(), uri, _jsonMetadataFileName, true);
+    _requestFile(_stateRequestMetaDataJson, fileTag, compInfo->crcMetaDataValid(), uri, _jsonMetadataFileName, true);
 }
 
 void RequestMetaDataTypeStateMachine::_requestMetaDataJsonFallback()
@@ -355,9 +333,8 @@ void RequestMetaDataTypeStateMachine::_requestMetaDataJsonFallback()
     const QString uri = compInfo->uriMetaDataFallback();
     _jsonMetadataCrcValid = compInfo->crcMetaDataFallbackValid();
 
-    _activeAsyncState = nullptr;
-    _activeSkippableState = _stateRequestMetaDataJsonFallback;
-    _requestFile(fileTag, compInfo->crcMetaDataFallbackValid(), uri, _jsonMetadataFileName, true);
+    _requestFile(_stateRequestMetaDataJsonFallback, fileTag, compInfo->crcMetaDataFallbackValid(), uri,
+                 _jsonMetadataFileName, true);
 }
 
 void RequestMetaDataTypeStateMachine::_requestTranslationJson()
@@ -371,38 +348,33 @@ void RequestMetaDataTypeStateMachine::_requestTranslationJson()
         return;
     }
 
-    _activeAsyncState = _stateRequestTranslationJson;
-    _activeSkippableState = nullptr;
-    _requestFile("", false, uri, _jsonTranslationFileName, false);
+    _requestFile(_stateRequestTranslationJson, "", false, uri, _jsonTranslationFileName, false);
 }
 
 void RequestMetaDataTypeStateMachine::_requestTranslate()
 {
-    connect(_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
-            this, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
+    _stateRequestTranslate->connectToCompletion(
+        _compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
+        [this](const QString& translatedJsonTempFile, const QString& errorMsg) {
+            _transferInFlight = Transfer::None;
+            _jsonMetadataTranslatedFileName = translatedJsonTempFile;
+            if (!errorMsg.isEmpty()) {
+                qCWarning(RequestMetaDataTypeStateMachineLog) << "Metadata translation failed:" << errorMsg;
+            }
 
+            _stateRequestTranslate->complete();
+        });
+
+    // The translation file comes through the downloader that the metadata files use
+    _transferInFlight = Transfer::Http;
     if (!_compMgr->translation()->downloadAndTranslate(_jsonTranslationFileName,
                                                        _jsonMetadataFileName,
                                                        ComponentInformationManager::cachedFileMaxAgeSec,
                                                        typeToString())) {
-        disconnect(_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
-                   this, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
+        _transferInFlight = Transfer::None;
         qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": translation skipped (English locale, locale unavailable, or download failure), using untranslated metadata";
         _stateRequestTranslate->complete();
     }
-}
-
-void RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete(QString translatedJsonTempFile, QString errorMsg)
-{
-    disconnect(_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
-               this, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
-
-    _jsonMetadataTranslatedFileName = translatedJsonTempFile;
-    if (!errorMsg.isEmpty()) {
-        qCWarning(RequestMetaDataTypeStateMachineLog) << "Metadata translation failed:" << errorMsg;
-    }
-
-    _stateRequestTranslate->complete();
 }
 
 void RequestMetaDataTypeStateMachine::_completeRequest()
@@ -458,25 +430,15 @@ const char* RequestMetaDataTypeStateMachine::_metadataSourceToString(MetadataSou
     return "unknown";
 }
 
-void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName, bool trackMetadataSource)
+void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, const QString& cacheFileTag,
+                                                   bool crcValid, const QString& uri, QString& outputFileName,
+                                                   bool trackMetadataSource)
 {
-    FTPManager* ftpManager = _compInfo->vehicle->ftpManager();
-    _currentCacheFileTag = cacheFileTag;
-    _currentFileName = &outputFileName;
-    _currentFileValidCrc = crcValid;
     outputFileName.clear();
-
-    auto completeCurrentState = [this]() {
-        if (_activeAsyncState) {
-            _activeAsyncState->complete();
-        } else if (_activeSkippableState) {
-            _activeSkippableState->complete();
-        }
-    };
 
     if (!_compInfo->available() || uri.isEmpty()) {
         qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": metadata not available, skipping download";
-        completeCurrentState();
+        state->complete();
         return;
     }
 
@@ -489,7 +451,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
             _metadataUri = uri;
         }
         outputFileName = cachedFile;
-        completeCurrentState();
+        state->complete();
         return;
     }
 
@@ -501,75 +463,117 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
 
     qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": downloading json" << uri;
 
+    // The download belongs to the state that waits for it. Its completion is connected through the state, so the
+    // connection ends with the wait, and a download that is still running when the state is left is cancelled
+    // (_cancelTransfer()): one that outlived its state completed whichever state was current by then.
+    QString* const output = &outputFileName;
     if (_uriIsMAVLinkFTP(uri)) {
         if (trackMetadataSource) {
             _metadataSource = MetadataSource::FTP;
             _metadataUri = uri;
         }
-        connect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
+        FTPManager* const ftpManager = _compInfo->vehicle->ftpManager();
+        state->connectToCompletion(
+            ftpManager, &FTPManager::downloadComplete,
+            [this, state, output, cacheFileTag, crcValid](const QString& fileName, const QString& errorMsg) {
+                qCDebug(RequestMetaDataTypeStateMachineLog)
+                    << "FTP download complete fileName:errorMsg" << fileName << errorMsg;
+                _transferInFlight = Transfer::None;
+                if (errorMsg.isEmpty()) {
+                    *output = _downloadCompleteJsonWorker(fileName, cacheFileTag, crcValid);
+                } else {
+                    qCDebug(RequestMetaDataTypeStateMachineLog)
+                        << typeToString() << ": FTP download failed:" << errorMsg;
+                }
+                state->complete();
+            });
+        _transferInFlight = Transfer::Ftp;
         if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1, uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
             // Throughput is measured from the first data packet (see _ftpDownloadProgress), not from here: the
             // leading session reset and open can take several seconds on a lossy link without saying anything
             // about transfer speed
             _downloadStartTime.invalidate();
-            connect(ftpManager, &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
+            state->connectWhileWaiting(ftpManager, &FTPManager::commandProgress,
+                                       [this](float progress) { _ftpDownloadProgress(progress); });
         } else {
+            _transferInFlight = Transfer::None;
             qCWarning(RequestMetaDataTypeStateMachineLog) << "FTPManager::download returned failure";
-            disconnect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-            completeCurrentState();
+            state->complete();
         }
     } else {
         if (trackMetadataSource) {
             _metadataSource = MetadataSource::HTTP;
             _metadataUri = uri;
         }
-        connect(_compMgr->_cachedFileDownload, &QGCCachedFileDownload::finished,
-                this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
-        if (_compMgr->_cachedFileDownload->download(uri, crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec)) {
+        QGCCachedFileDownload* const cachedFileDownload = _compMgr->_cachedFileDownload;
+        state->connectToCompletion(
+            cachedFileDownload, &QGCCachedFileDownload::finished,
+            [this, state, output, cacheFileTag, crcValid](bool success, const QString& localFile,
+                                                          const QString& errorMsg, bool fromCache) {
+                qCDebug(RequestMetaDataTypeStateMachineLog)
+                    << "HTTP download complete success:localFile:errorMsg:fromCache" << success << localFile << errorMsg
+                    << fromCache;
+                _transferInFlight = Transfer::None;
+                if (success && errorMsg.isEmpty()) {
+                    *output = _downloadCompleteJsonWorker(localFile, cacheFileTag, crcValid);
+                } else {
+                    qCDebug(RequestMetaDataTypeStateMachineLog)
+                        << typeToString() << ": HTTP download failed:" << errorMsg;
+                }
+                state->complete();
+            });
+        _transferInFlight = Transfer::Http;
+        if (cachedFileDownload->download(uri, crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec)) {
             _downloadStartTime.start();
         } else {
+            _transferInFlight = Transfer::None;
             qCWarning(RequestMetaDataTypeStateMachineLog) << "QGCCachedFileDownload::download returned failure";
-            disconnect(_compMgr->_cachedFileDownload, &QGCCachedFileDownload::finished,
-                       this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
-            completeCurrentState();
+            state->complete();
         }
     }
 }
 
-QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QString& fileName)
+QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QString& fileName,
+                                                                     const QString& cacheFileTag, bool crcValid)
 {
-    const QString tempPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(_currentCacheFileTag);
+    const QString tempPath =
+        QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(cacheFileTag);
     QString outputFileName = QGCCompression::decompressIfNeeded(fileName, tempPath);
     if (outputFileName.isEmpty()) {
-        qCWarning(RequestMetaDataTypeStateMachineLog) << "Inflate of compressed json failed" << _currentCacheFileTag;
+        qCWarning(RequestMetaDataTypeStateMachineLog) << "Inflate of compressed json failed" << cacheFileTag;
     }
 
-    if (_currentFileValidCrc) {
+    if (crcValid) {
         // Cache the file (this will move/remove the temp file as well)
-        outputFileName = _compMgr->fileCache().insert(_currentCacheFileTag, outputFileName);
+        outputFileName = _compMgr->fileCache().insert(cacheFileTag, outputFileName);
     }
     return outputFileName;
 }
 
-void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileName, const QString& errorMsg)
+void RequestMetaDataTypeStateMachine::_cancelMessageRequest()
 {
-    qCDebug(RequestMetaDataTypeStateMachineLog) << "_ftpDownloadComplete fileName:errorMsg" << fileName << errorMsg;
-
-    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
-
-    if (errorMsg.isEmpty()) {
-        if (_currentFileName) {
-            *_currentFileName = _downloadCompleteJsonWorker(fileName);
-        }
-    } else {
-        qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": FTP download failed:" << errorMsg;
+    // The answer to a request that its state no longer waits for would set the URI of whatever is requested then
+    if (Vehicle* const requestVehicle = vehicle()) {
+        requestVehicle->cancelRequestMessage(this);
     }
+}
 
-    if (_activeAsyncState) {
-        _activeAsyncState->complete();
-    } else if (_activeSkippableState) {
-        _activeSkippableState->complete();
+void RequestMetaDataTypeStateMachine::_cancelTransfer()
+{
+    // Nothing is left to cancel once the completion has been handled. The two calls report the end of the
+    // download on the signals that the state, which is being left, has stopped listening to.
+    switch (std::exchange(_transferInFlight, Transfer::None)) {
+        case Transfer::None:
+            break;
+        case Transfer::Ftp:
+            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": state left, cancelling FTP download";
+            // Gives the FTP session of the vehicle back, which a fallback over FTP needs
+            _compInfo->vehicle->ftpManager()->cancelDownload();
+            break;
+        case Transfer::Http:
+            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": state left, cancelling HTTP download";
+            _compMgr->_cachedFileDownload->cancel();
+            break;
     }
 }
 
@@ -590,29 +594,6 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(float progress)
     if (elapsedSec > minElapsedSec && progress < 0.5 && totalDownloadTime > maxDownloadTimeSec) {
         qCDebug(RequestMetaDataTypeStateMachineLog) << "Slow download, aborting. Total time (s):" << totalDownloadTime;
         _compInfo->vehicle->ftpManager()->cancelDownload();
-    }
-}
-
-void RequestMetaDataTypeStateMachine::_httpDownloadComplete(bool success, const QString& localFile, const QString& errorMsg, bool fromCache)
-{
-    qCDebug(RequestMetaDataTypeStateMachineLog) << "_httpDownloadComplete success:localFile:errorMsg:fromCache"
-                                                << success << localFile << errorMsg << fromCache;
-
-    disconnect(_compMgr->_cachedFileDownload, &QGCCachedFileDownload::finished,
-               this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
-
-    if (success && errorMsg.isEmpty()) {
-        if (_currentFileName) {
-            *_currentFileName = _downloadCompleteJsonWorker(localFile);
-        }
-    } else {
-        qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": HTTP download failed:" << errorMsg;
-    }
-
-    if (_activeAsyncState) {
-        _activeAsyncState->complete();
-    } else if (_activeSkippableState) {
-        _activeSkippableState->complete();
     }
 }
 

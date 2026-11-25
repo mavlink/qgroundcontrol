@@ -85,6 +85,8 @@ void ComponentInformationManagerTest::_progressSignalsStayInRange()
              qPrintable(QStringLiteral("Expected meaningful progress delta, got min=%1 max=%2")
                             .arg(minProgress)
                             .arg(maxProgress)));
+    // The last report is that of the machine that has finished
+    QCOMPARE(progressValues.last(), 1.0f);
 }
 
 void ComponentInformationManagerTest::_requestCanRunMultipleTimes()

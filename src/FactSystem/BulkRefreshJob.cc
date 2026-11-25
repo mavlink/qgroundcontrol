@@ -6,19 +6,17 @@
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerLog)
 
-BulkRefreshJob::BulkRefreshJob(ParameterManager *mgr, int componentId, const QStringList &resolvedNames,
-                               bool notifyFailure, std::function<void(const QString &)> requestFn,
-                               QObject *parent)
+BulkRefreshJob::BulkRefreshJob(ParameterManager* mgr, int componentId, const QStringList& resolvedNames,
+                               bool notifyFailure, std::function<void(const QString&)> requestFn,
+                               RuntimeScheduler* scheduler, QObject* parent)
     : QObject(parent)
     , _mgr(mgr)
     , _componentId(componentId)
     , _notifyFailure(notifyFailure)
     , _requestFn(std::move(requestFn))
     , _pending(QSet<QString>(resolvedNames.cbegin(), resolvedNames.cend()))
-    , _retryBaseDelayMs(QGC::runningUnitTests() ? 50 : kRetryBaseDelayMs)
+    , _retryTask(scheduler, this)
 {
-    _retryTimer.setSingleShot(true);
-    connect(&_retryTimer, &QTimer::timeout, this, &BulkRefreshJob::_sendPendingRequests);
     connect(_mgr, &ParameterManager::_paramRequestReadSuccess, this, &BulkRefreshJob::_onParamSuccess);
     connect(_mgr, &ParameterManager::_paramRequestReadFailure, this, &BulkRefreshJob::_onParamFailure);
     _sendPendingRequests();
@@ -61,7 +59,7 @@ void BulkRefreshJob::_checkRoundComplete()
         return;
     }
 
-    _retryTimer.stop();
+    _retryTask.cancel();
 
     if (_failed.isEmpty()) {
         qCDebug(ParameterManagerLog) << "BulkRefreshJob: complete after round" << _round
@@ -71,14 +69,14 @@ void BulkRefreshJob::_checkRoundComplete()
     }
 
     if (_round < kMaxRetryRounds) {
-        const int delayMs = _retryBaseDelayMs << _round;
+        const int delayMs = kRetryBaseDelayMs << _round;
         qCDebug(ParameterManagerLog) << "BulkRefreshJob: round" << _round
                                      << "finished with" << _failed.count()
                                      << "failures \u2014 retrying in" << delayMs << "ms";
         _pending = std::move(_failed);
         _failed.clear();
         ++_round;
-        _retryTimer.start(delayMs);
+        _retryTask.schedule(std::chrono::milliseconds(delayMs), [this]() { _sendPendingRequests(); });
     } else {
         qCDebug(ParameterManagerLog) << "BulkRefreshJob: complete after round" << _round
                                      << "\u2014" << _failed.count() << "params still failed";

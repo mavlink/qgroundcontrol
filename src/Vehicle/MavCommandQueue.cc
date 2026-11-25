@@ -467,6 +467,9 @@ void MavCommandQueue::_sendFromList(int index)
             cmd.param3, cmd.param4, cmd.param5, cmd.param6, cmd.param7);
     }
 
+    // Every attempt gets the whole ack timeout: without the restart, the attempt after a resend follows at the
+    // next check
+    _list[index].elapsedTimer.start();
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 

@@ -3,7 +3,7 @@
 
 bool GuardedTransition::eventTest(QEvent* event)
 {
-    if (!QGCSignalTransition::eventTest(event)) {
+    if (!QSignalTransition::eventTest(event)) {
         return false;
     }
 

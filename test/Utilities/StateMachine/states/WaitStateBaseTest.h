@@ -8,11 +8,11 @@ class WaitStateBaseTest : public StateMachineTest
 
 private slots:
     void _testTimeoutEmission();
-    void _testWaitComplete();
-    void _testWaitFailed();
+    void _testTimeoutRunsOnMachineScheduler();
+    UT_PARAMETERIZED_TEST(_testCompleteAndFail);
+    UT_PARAMETERIZED_TEST(_testMachineStopEndsWait);
+    void _testMachineStopAfterExitEndsNothing();
+    void _testRestartKeepsOneCompletionConnection();
     void _testNoTimeoutWhenZero();
-    void _testDoubleCompleteProtection();
-    void _testDoubleFailProtection();
     void _testTimeoutCancelledOnComplete();
-    void _testSignalDisconnectOnExit();
 };

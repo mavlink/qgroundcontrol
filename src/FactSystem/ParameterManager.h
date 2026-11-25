@@ -1,17 +1,19 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QPair>
 #include <QtCore/QSet>
 #include <QtCore/QString>
-#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 #include "MAVLinkEnums.h"
 #include "QGCMAVLinkTypes.h"
+#include "ScheduledTask.h"
 
 class QTextStream;
 
@@ -75,6 +77,11 @@ public:
     /// @param notifyFailure  When true (default), shows a single user-visible message if any
     ///                       parameters still fail to respond after all retry rounds.
     void bulkRefresh(int componentId, const QStringList &names, bool notifyFailure = true);
+
+    /// Times what starts after the call with @a scheduler, for a test that advances the time itself: the parameter
+    /// writes and single reads, the rounds of a bulk refresh and the timeouts of a parameter load. It must share
+    /// the thread of this object and stay alive while it is set. nullptr sets the scheduler of this object again.
+    void setScheduler(RuntimeScheduler* scheduler);
 
     void resetAllParametersToDefaults();
     void resetAllToVehicleConfiguration();
@@ -164,6 +171,11 @@ private:
     void _startParameterDownload(uint8_t componentId);
     void _hashCheckTimeout();
     void _paramRequestListTimeout();
+    void _startHashCheckTimer();
+    void _startParamRequestListTimer();
+    void _startWaitingParamTimeoutTimer();
+    void _startTimer(std::optional<ScheduledTask>& timer, int intervalMs, void (ParameterManager::*timeout)());
+    static int _waitingParamTimeoutMs();
     /// Translates ParameterManager::defaultComponentId to real component id if needed
     int _actualComponentId(int componentId) const;
     void _mavlinkParamRequestRead(int componentId, const QString &paramName, int paramIndex, bool notifyFailure);
@@ -249,7 +261,6 @@ private:
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
     static constexpr int _maxInitialLoadRetrySingleParam = kMaxInitialLoadRetrySingleParam;
     bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)
-    const int _waitForParamValueAckMs;                          ///< 50 ms in unit tests, kWaitForParamValueAckMs otherwise
 
     bool _indexBatchQueueActive = false;    ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
     QList<QPair<int, int>> _indexBatchQueue;    ///< In-flight index re-requests: (component id, parameter index)
@@ -263,9 +274,13 @@ private:
     int _totalParamCount = 0;                   ///< Number of parameters across all components
     int _pendingWritesCount = 0;                ///< Number of parameters with pending writes
 
-    QTimer _hashCheckTimer;
-    QTimer _paramRequestListTimer;
-    QTimer _waitingParamTimeoutTimer;
+    RuntimeScheduler* _ownScheduler = nullptr;
+    RuntimeScheduler* _scheduler = nullptr;  ///< _ownScheduler, or the one a test has set
+
+    // Each is created when it is started, for the scheduler that is set then
+    std::optional<ScheduledTask> _hashCheckTimer;
+    std::optional<ScheduledTask> _paramRequestListTimer;
+    std::optional<ScheduledTask> _waitingParamTimeoutTimer;
 
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 

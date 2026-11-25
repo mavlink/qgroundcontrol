@@ -37,12 +37,6 @@ InitialConnectStateMachine::~InitialConnectStateMachine()
 {
 }
 
-void InitialConnectStateMachine::start()
-{
-    resetProgress();
-    QGCStateMachine::start();
-}
-
 void InitialConnectStateMachine::_createStates()
 {
     // State 0: Request autopilot version
@@ -85,8 +79,9 @@ void InitialConnectStateMachine::_createStates()
     // No timeout: download duration varies too much with link speed and param count.
     // ParameterManager handles all timeouts internally and always terminates via
     // parametersReadyChanged or initialParametersRequestFailed.
-    _stateParameters = new SkippableAsyncState(
-        QStringLiteral("RequestParameters"), this,
+    _stateParameters = new AsyncFunctionState(QStringLiteral("RequestParameters"), this,
+                                              [this](AsyncFunctionState* state) { _requestParameters(state); });
+    _stateParameters->setSkipPredicate(
         [this]() {
             if (_shouldSkipForArmed()) {
                 // PX4 can try a lightweight hash-check cache load
@@ -98,7 +93,6 @@ void InitialConnectStateMachine::_createStates()
             }
             return false;
         },
-        [this](SkippableAsyncState* state) { _requestParameters(state); },
         [this]() {
             qCDebug(InitialConnectStateMachineLog) << "Skipping parameter download" << _lastSkipReason;
             vehicle()->_parameterManager->setParameterDownloadSkipped(true);
@@ -106,21 +100,17 @@ void InitialConnectStateMachine::_createStates()
 
     // State 4: Request mission (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
-    _stateMission = new SkippableAsyncState(
-        QStringLiteral("RequestMission"),
-        this,
+    _stateMission = new AsyncFunctionState(QStringLiteral("RequestMission"), this,
+                                           [this](AsyncFunctionState* state) { _requestMission(state); });
+    _stateMission->setSkipPredicate(
         [this]() { return _shouldSkipForPlanLoad(); },
-        [this](SkippableAsyncState* state) { _requestMission(state); },
-        [this]() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping mission load" << _lastSkipReason;
-        }
-    );
+        [this]() { qCDebug(InitialConnectStateMachineLog) << "Skipping mission load" << _lastSkipReason; });
 
     // State 5: Request geofence (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
-    _stateGeoFence = new SkippableAsyncState(
-        QStringLiteral("RequestGeoFence"),
-        this,
+    _stateGeoFence = new AsyncFunctionState(QStringLiteral("RequestGeoFence"), this,
+                                            [this](AsyncFunctionState* state) { _requestGeoFence(state); });
+    _stateGeoFence->setSkipPredicate(
         [this]() {
             if (_shouldSkipForPlanLoad()) {
                 return true;
@@ -131,17 +121,13 @@ void InitialConnectStateMachine::_createStates()
             }
             return false;
         },
-        [this](SkippableAsyncState* state) { _requestGeoFence(state); },
-        [this]() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping geofence load" << _lastSkipReason;
-        }
-    );
+        [this]() { qCDebug(InitialConnectStateMachineLog) << "Skipping geofence load" << _lastSkipReason; });
 
     // State 6: Request rally points (skippable)
     // No timeout: PlanManager handles all timeouts/retries internally and always signals completion.
-    _stateRallyPoints = new SkippableAsyncState(
-        QStringLiteral("RequestRallyPoints"),
-        this,
+    _stateRallyPoints = new AsyncFunctionState(QStringLiteral("RequestRallyPoints"), this,
+                                               [this](AsyncFunctionState* state) { _requestRallyPoints(state); });
+    _stateRallyPoints->setSkipPredicate(
         [this]() {
             if (_shouldSkipForPlanLoad()) {
                 return true;
@@ -152,29 +138,15 @@ void InitialConnectStateMachine::_createStates()
             }
             return false;
         },
-        [this](SkippableAsyncState* state) { _requestRallyPoints(state); },
         [this]() {
             qCDebug(InitialConnectStateMachineLog) << "Skipping rally points load" << _lastSkipReason;
             // Mark plan request complete when skipping
             vehicle()->_initialPlanRequestComplete = true;
             emit vehicle()->initialPlanRequestCompleteChanged(true);
-        }
-    );
+        });
 
     // State 7: Signal completion
-    // Use RetryState with zero retries so completion participates in the unified
-    // retry/error state family while preserving immediate success behavior.
-    _stateComplete = new RetryState(
-        QStringLiteral("SignalComplete"),
-        this,
-        [this]() {
-            _signalComplete();
-            return true;
-        },
-        0,
-        0,
-        RetryState::EmitError
-    );
+    _stateComplete = new FunctionState(QStringLiteral("SignalComplete"), this, [this]() { _signalComplete(); });
 
     // Final state
     _stateFinal = new QGCFinalState(QStringLiteral("Final"), this);
@@ -182,26 +154,17 @@ void InitialConnectStateMachine::_createStates()
 
 void InitialConnectStateMachine::_wireTransitions()
 {
-    // Linear progression - use completed() for WaitStateBase-derived states (more semantic)
-    _stateAutopilotVersion->addTransition(_stateAutopilotVersion, &WaitStateBase::completed, _stateStandardModes);
-    _stateStandardModes->addTransition(_stateStandardModes, &WaitStateBase::completed, _stateCompInfo);
-    _stateCompInfo->addTransition(_stateCompInfo, &WaitStateBase::completed, _stateParameters);
+    // Linear progression
+    _stateAutopilotVersion->addTransition(_stateAutopilotVersion, &QGCState::advance, _stateStandardModes);
+    _stateStandardModes->addTransition(_stateStandardModes, &QGCState::advance, _stateCompInfo);
+    _stateCompInfo->addTransition(_stateCompInfo, &QGCState::advance, _stateParameters);
 
-    // SkippableAsyncStates: both completed and skipped go to next state
+    _stateParameters->addTransition(_stateParameters, &QGCState::advance, _stateMission);
+    _stateMission->addTransition(_stateMission, &QGCState::advance, _stateGeoFence);
+    _stateGeoFence->addTransition(_stateGeoFence, &QGCState::advance, _stateRallyPoints);
+    _stateRallyPoints->addTransition(_stateRallyPoints, &QGCState::advance, _stateComplete);
 
-    _stateParameters->addTransition(_stateParameters, &WaitStateBase::completed, _stateMission);
-    _stateParameters->addTransition(_stateParameters, &SkippableAsyncState::skipped, _stateMission);
-
-    _stateMission->addTransition(_stateMission, &WaitStateBase::completed, _stateGeoFence);
-    _stateMission->addTransition(_stateMission, &SkippableAsyncState::skipped, _stateGeoFence);
-
-    _stateGeoFence->addTransition(_stateGeoFence, &WaitStateBase::completed, _stateRallyPoints);
-    _stateGeoFence->addTransition(_stateGeoFence, &SkippableAsyncState::skipped, _stateRallyPoints);
-
-    _stateRallyPoints->addTransition(_stateRallyPoints, &WaitStateBase::completed, _stateComplete);
-    _stateRallyPoints->addTransition(_stateRallyPoints, &SkippableAsyncState::skipped, _stateComplete);
-
-    // Complete -> Final (RetryState emits advance() on success)
+    // Complete -> Final (FunctionState emits advance() after its function)
     _stateComplete->addTransition(_stateComplete, &QGCState::advance, _stateFinal);
 }
 
@@ -219,11 +182,6 @@ void InitialConnectStateMachine::_wireProgressTracking()
         {_stateRallyPoints, 1},
         {_stateComplete, 1}
     });
-}
-
-void InitialConnectStateMachine::_onSubProgressUpdate(double progressValue)
-{
-    setSubProgress(static_cast<float>(progressValue));
 }
 
 // ============================================================================
@@ -366,60 +324,42 @@ void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestCompInfo";
 
-    connect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
-    // Ensure progress tracking is always cleaned up, including timeout/skip paths.
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
-
+    state->connectWhileWaiting(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
+                               [this](float progress) { setSubProgress(progress); });
     state->connectToCompletion(vehicle()->_componentInformationManager, &ComponentInformationManager::requestAllComplete);
     vehicle()->_componentInformationManager->requestAllComponentInformation(nullptr, nullptr);
 }
 
-void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestParameters(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
 
     const bool cacheOnly = _shouldSkipForArmed();
-    QMetaObject::Connection cacheFailedConn;
     if (cacheOnly) {
         // If cache-only check fails (miss/timeout/non-PX4), complete the state without params
-        cacheFailedConn =
-            connect(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed, state, [state, this]() {
-                qCDebug(InitialConnectStateMachineLog)
-                    << "Parameter cache check failed while armed, advancing without parameters";
-                vehicle()->_parameterManager->setParameterDownloadSkipped(true);
-                state->complete();
-            });
+        state->connectToCompletion(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed,
+                                   [state, this]() {
+                                       qCDebug(InitialConnectStateMachineLog)
+                                           << "Parameter cache check failed while armed, advancing without parameters";
+                                       vehicle()->_parameterManager->setParameterDownloadSkipped(true);
+                                       state->complete();
+                                   });
     }
 
-    connect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
+    state->connectWhileWaiting(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
+                               [this](float progress) { setSubProgress(progress); });
 
     // If the vehicle never answers PARAM_REQUEST_LIST, advance without parameters
-    const QMetaObject::Connection requestFailedConn = connect(vehicle()->_parameterManager, &ParameterManager::initialParametersRequestFailed,
-            state, [state]() {
-                qCDebug(InitialConnectStateMachineLog) << "Initial parameter request failed, advancing without parameters";
-                state->complete();
-            });
+    state->connectToCompletion(
+        vehicle()->_parameterManager, &ParameterManager::initialParametersRequestFailed, [state]() {
+            qCDebug(InitialConnectStateMachineLog) << "Initial parameter request failed, advancing without parameters";
+            state->complete();
+        });
 
     state->connectToCompletion(vehicle()->_parameterManager, &ParameterManager::parametersReadyChanged,
         [this](bool parametersReady) {
             _onParametersReady(parametersReady);
         });
-
-    // Ensure progress tracking is always cleaned up, including failure/skip paths.
-    state->setOnExit([this, cacheFailedConn, requestFailedConn]() {
-        disconnect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-        disconnect(requestFailedConn);
-        if (cacheFailedConn) {
-            disconnect(cacheFailedConn);
-        }
-    });
 
     if (cacheOnly) {
         vehicle()->_parameterManager->tryHashCheckCacheLoad();
@@ -431,10 +371,6 @@ void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
 void InitialConnectStateMachine::_onParametersReady(bool parametersReady)
 {
     qCDebug(InitialConnectStateMachineLog) << "_onParametersReady" << parametersReady;
-
-    // Disconnect progress tracking from parameter manager
-    disconnect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
-               this, &InitialConnectStateMachine::_onSubProgressUpdate);
 
     if (parametersReady) {
         // Send time to vehicle (twice for reliability on noisy links)
@@ -452,49 +388,34 @@ void InitialConnectStateMachine::_onParametersReady(bool parametersReady)
     }
 }
 
-void InitialConnectStateMachine::_requestMission(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestMission(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
 
-    connect(vehicle()->_missionManager, &MissionManager::progressPctChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
+    state->connectWhileWaiting(vehicle()->_missionManager, &MissionManager::progressPctChanged,
+                               [this](double progress) { setSubProgress(static_cast<float>(progress)); });
     state->connectToCompletion(vehicle()->_missionManager, &MissionManager::newMissionItemsAvailable);
-
-    // Disconnect progress tracking on exit
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_missionManager, &MissionManager::progressPctChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
 
     vehicle()->_missionManager->loadFromVehicle();
 }
 
-void InitialConnectStateMachine::_requestGeoFence(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestGeoFence(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence";
 
-    connect(vehicle()->_geoFenceManager, &GeoFenceManager::progressPctChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
+    state->connectWhileWaiting(vehicle()->_geoFenceManager, &GeoFenceManager::progressPctChanged,
+                               [this](double progress) { setSubProgress(static_cast<float>(progress)); });
     state->connectToCompletion(vehicle()->_geoFenceManager, &GeoFenceManager::loadComplete);
-
-    // Disconnect progress tracking on exit
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_geoFenceManager, &GeoFenceManager::progressPctChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
 
     vehicle()->_geoFenceManager->loadFromVehicle();
 }
 
-void InitialConnectStateMachine::_requestRallyPoints(SkippableAsyncState* state)
+void InitialConnectStateMachine::_requestRallyPoints(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints";
 
-    connect(vehicle()->_rallyPointManager, &RallyPointManager::progressPctChanged,
-            this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
-
+    state->connectWhileWaiting(vehicle()->_rallyPointManager, &RallyPointManager::progressPctChanged,
+                               [this](double progress) { setSubProgress(static_cast<float>(progress)); });
     state->connectToCompletion(vehicle()->_rallyPointManager, &RallyPointManager::loadComplete,
         [this]() {
             // Mark initial plan request complete
@@ -505,12 +426,6 @@ void InitialConnectStateMachine::_requestRallyPoints(SkippableAsyncState* state)
                 _stateRallyPoints->complete();
             }
         });
-
-    // Always clean up progress tracking when leaving this state.
-    state->setOnExit([this]() {
-        disconnect(vehicle()->_rallyPointManager, &RallyPointManager::progressPctChanged,
-                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
-    });
 
     vehicle()->_rallyPointManager->loadFromVehicle();
 }

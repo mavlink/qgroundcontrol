@@ -1,33 +1,40 @@
 #include "AsyncFunctionState.h"
-#include "QGCLoggingCategory.h"
 
-AsyncFunctionState::AsyncFunctionState(const QString& stateName, QState* parent, SetupFunction setupFunction, int timeoutMsecs)
-    : WaitStateBase(stateName, parent, timeoutMsecs)
+AsyncFunctionState::AsyncFunctionState(const QString& stateName, QState* parent, SetupFunction setupFunction,
+                                       int timeoutMsecs)
+    : CompletionWaitState(stateName, parent, timeoutMsecs)
     , _setupFunction(std::move(setupFunction))
 {
 }
 
-void AsyncFunctionState::connectWaitSignal()
+void AsyncFunctionState::setSkipPredicate(SkipPredicate skipPredicate, SkipAction skipAction)
 {
-    // Connection is set up dynamically via connectToCompletion() in the setup function
-}
-
-void AsyncFunctionState::disconnectWaitSignal()
-{
-    if (_completionConnection) {
-        disconnect(_completionConnection);
-        _completionConnection = {};
-    }
+    _skipPredicate = std::move(skipPredicate);
+    _skipAction = std::move(skipAction);
 }
 
 void AsyncFunctionState::onWaitEntered()
 {
+    if (_skipPredicate && _skipPredicate()) {
+        qCDebug(QGCStateMachineLog) << "Skip condition met, skipping" << stateName();
+        if (_skipAction) {
+            _skipAction();
+        }
+        // The machine takes the transition once the state is entered: Qt queues a signal that a state emits
+        // while it is entered
+        complete();
+        return;
+    }
+
     if (_setupFunction) {
         _setupFunction(this);
     }
+    checkWaitCanEnd();
+}
 
-    if (!_completionConnection && timeoutMsecs() == 0) {
-        qCCritical(QGCStateMachineLog) << stateName()
-            << "has no completion connection and no timeout - state may hang indefinitely";
+void AsyncFunctionState::onWaitRestarted()
+{
+    if (_setupFunction) {
+        _setupFunction(this);
     }
 }

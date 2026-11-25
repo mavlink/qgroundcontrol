@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 
 #include "Fixtures/RAIIFixtures.h"
@@ -143,6 +144,45 @@ void SendMavCommandWithHandlerTest::_compIdAllFailure()
     vehicle->sendMavCommandWithHandler(&handlerInfo, MAV_COMP_ID_ALL, testCase.command);
     QCOMPARE(_resultHandlerCalled, true);
     QCOMPARE(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_ALL, testCase.command), -1);
+    QCOMPARE(_mockLink->receivedMavCommandCount(testCase.command), testCase.expectedSendCount);
+}
+
+void SendMavCommandWithHandlerTest::_everyAttemptWaitsTheAckTimeout()
+{
+    const int ackTimeoutMs = TestFixtures::MavCommandAckTimeoutFixture::kDefaultTimeoutMs;
+    const TestFixtures::MavCommandAckTimeoutFixture shortAckTimeout(ackTimeoutMs);
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
+
+    // A command which is resent and never answered
+    TestCase_t testCase = {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE,
+                           MAV_RESULT_FAILED,
+                           false,
+                           Vehicle::MavCmdResultFailureNoResponseToCommand,
+                           MavCommandQueue::kMaxRetryCount,
+                           true};
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    QVERIFY(vehicle);
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+    handlerInfo.resultHandler = _mavCmdResultHandler;
+    handlerInfo.resultHandlerData = &testCase;
+    _resultHandlerCalled = false;
+    _mockLink->clearReceivedMavCommandCounts();
+
+    QElapsedTimer sinceFirstSend;
+    sinceFirstSend.start();
+    vehicle->sendMavCommandWithHandler(&handlerInfo, MAV_COMP_ID_AUTOPILOT1, testCase.command);
+
+    // Each attempt is seen here after it was sent, so the times are lower bounds which a slow machine still meets.
+    // A third attempt that follows the second at the queue's next check comes well before two ack timeouts.
+    for (int attempt = 2; attempt <= MavCommandQueue::kMaxRetryCount; attempt++) {
+        QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(testCase.command) >= attempt, TestTimeout::longMs());
+        QCOMPARE_GE(sinceFirstSend.elapsed(), (attempt - 1) * ackTimeoutMs);
+    }
+
+    // The last attempt is given its ack timeout as well before the command fails
+    QVERIFY_TRUE_WAIT(_resultHandlerCalled, TestTimeout::longMs());
+    QCOMPARE_GE(sinceFirstSend.elapsed(), MavCommandQueue::kMaxRetryCount * ackTimeoutMs);
     QCOMPARE(_mockLink->receivedMavCommandCount(testCase.command), testCase.expectedSendCount);
 }
 

@@ -1,64 +1,64 @@
 #pragma once
 
-#include "QGCAbstractState.h"
+#include <functional>
+#include <utility>
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QString>
+#include <QtStateMachine/QState>
+
+class QGCStateMachine;
+class RuntimeScheduler;
+class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 
-class QGCStateMachine;
-class Vehicle;
-
-/// \brief Full-featured base class for QGroundControl state machine states.
+/// \brief Base class of the states of the module: a QState with a name for the log, the machine and the vehicle
+/// of the state, an exit callback, and the signals advance() and error().
 ///
-/// Extends QGCAbstractState with:
-/// - Local per-state error handling (setLocalErrorState)
-/// - Property assignment support (setProperty, setEnabled, setVisible)
-/// - Convenience transition helper (addThisTransition)
-///
-/// Use QGCAbstractState when you only need callback-driven entry/exit.
-/// Use QGCState when you need the extra features listed above.
-///
-class QGCState : public QGCAbstractState
+class QGCState : public QState
 {
     Q_OBJECT
     Q_DISABLE_COPY(QGCState)
 
 public:
+    using ExitCallback = std::function<void()>;
+
     QGCState(const QString& stateName, QState* parentState);
 
+    /// @return The machine of the state as a QGCStateMachine, nullptr for a state in a plain QStateMachine.
+    ///         Takes the place of QAbstractState::machine(), which a state names in full when it wants any machine.
+    QGCStateMachine* machine() const;  // NOLINT(bugprone-derived-method-shadowing-base-method)
+    Vehicle* vehicle() const;
+    QString stateName() const;
+
+    /// Set a callback to be invoked when the state is exited, for what the state has started and is to end with it
+    void setOnExit(ExitCallback callback) { _exitCallback = std::move(callback); }
+
     /// Simpler version of QState::addTransition which assumes the sender is this
-    template <typename PointerToMemberFunction> QSignalTransition *addThisTransition(PointerToMemberFunction signal, QAbstractState *target)
-        { return QState::addTransition(this, signal, target); };
+    template <typename PointerToMemberFunction>
+    QSignalTransition* addThisTransition(PointerToMemberFunction signal, QAbstractState* target)
+    {
+        return QState::addTransition(this, signal, target);
+    }
 
-    // -------------------------------------------------------------------------
-    // Error Handling
-    // -------------------------------------------------------------------------
+signals:
+    void advance();
+    void error();
 
-    /// Set a per-state error handler that overrides the global error state
-    /// @param errorState The state to transition to on error for this state only
-    void setLocalErrorState(QAbstractState* errorState);
+protected:
+    /// @return vehicle(). Without one, a warning that names the state is logged to @a category, for a state that
+    ///         fails because it has none.
+    Vehicle* vehicleOrWarn(const QLoggingCategory& (*category)() = QGCStateMachineLog) const;
 
-    /// Get the per-state error state (nullptr if using global)
-    QAbstractState* localErrorState() const { return _localErrorState; }
+    /// @return The scheduler for the waits and delays of the state: that of its QGCStateMachine, one of the state's
+    ///         own in a plain QStateMachine
+    RuntimeScheduler* scheduler();
 
-    // -------------------------------------------------------------------------
-    // Property Assignment
-    // -------------------------------------------------------------------------
-
-    /// Assign a property value when this state is entered
-    /// If RestoreProperties policy is set on the machine, the value is restored on exit
-    /// @param object The QObject to modify
-    /// @param name The property name
-    /// @param value The value to assign
-    void setProperty(QObject* object, const char* name, const QVariant& value);
-
-    /// Convenience overload for setting enabled state on widgets/controls
-    void setEnabled(QObject* object, bool enabled);
-
-    /// Convenience overload for setting visible state on widgets/controls
-    void setVisible(QObject* object, bool visible);
+    void onEntry(QEvent* event) override;
+    void onExit(QEvent* event) override;
 
 private:
-    QAbstractState* _localErrorState = nullptr;
+    ExitCallback _exitCallback;
+    RuntimeScheduler* _ownScheduler = nullptr;
 };

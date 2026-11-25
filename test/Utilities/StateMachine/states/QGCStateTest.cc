@@ -1,51 +1,60 @@
 #include "QGCStateTest.h"
+
 #include "StateTestCommon.h"
 
-
-void QGCStateTest::_testEntryExitCallbacks()
+void QGCStateTest::_testStateName()
 {
     QStateMachine machine;
-    bool entryCalled = false;
-    bool exitCalled = false;
 
-    auto* state = new QGCState(QStringLiteral("TestState"), &machine);
-    state->setOnEntry([&entryCalled]() { entryCalled = true; });
-    state->setOnExit([&exitCalled]() { exitCalled = true; });
+    auto* state = new TestSignalState(QStringLiteral("MyStateName"), &machine);
 
-    auto* finalState = addFinalState(&machine);
-    state->addTransition(state, &QState::entered, finalState);
-
-    machine.setInitialState(state);
-
-    QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(entryCalled);
-    QVERIFY(exitCalled);
+    QCOMPARE(state->stateName(), QStringLiteral("MyStateName"));
+    QCOMPARE(state->objectName(), QStringLiteral("MyStateName"));
 }
 
-void QGCStateTest::_testOnEnterOnLeaveVirtuals()
+void QGCStateTest::_testStateNameInQGCStateMachine()
 {
-    // Test that onEnter/onLeave virtuals are called in the correct order
-    class TestState : public QGCState
-    {
-    public:
-        TestState(QState* parent) : QGCState(QStringLiteral("TestState"), parent) {}
-        bool onEnterCalled = false;
-        bool onLeaveCalled = false;
-    protected:
-        void onEnter() override { onEnterCalled = true; }
-        void onLeave() override { onLeaveCalled = true; }
-    };
+    QGCStateMachine machine(QStringLiteral("Machine"), nullptr);
+
+    auto* state = new TestSignalState(QStringLiteral("State"), &machine);
+    auto* finalState = new QGCFinalState(QStringLiteral("Final"), &machine);
+
+    QCOMPARE(state->stateName(), QStringLiteral("Machine:State"));
+    QCOMPARE(finalState->stateName(), QStringLiteral("Machine:Final"));
+}
+
+void QGCStateTest::_testSignalStopsMachine_data()
+{
+    QTest::addColumn<bool>("emitError");
+
+    QTest::newRow("advance") << false;
+    QTest::newRow("error") << true;
+}
+
+void QGCStateTest::_testSignalStopsMachine()
+{
+    QFETCH(bool, emitError);
+    const auto signal = emitError ? &QGCState::error : &QGCState::advance;
 
     QStateMachine machine;
-    auto* state = new TestState(&machine);
-    auto* finalState = addFinalState(&machine);
 
-    state->addTransition(state, &QState::entered, finalState);
+    auto* state = new TestSignalState(QStringLiteral("TestSignal"), &machine);
     machine.setInitialState(state);
+    QObject::connect(state, signal, &machine, &QStateMachine::stop);
 
-    QVERIFY(startAndWaitForFinished(&machine));
-    QVERIFY(state->onEnterCalled);
-    QVERIFY(state->onLeaveCalled);
+    QSignalSpy signalSpy(state, signal);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+
+    QVERIFY(startAndWaitForEntered(&machine, state));
+
+    if (emitError) {
+        state->emitError();
+    } else {
+        state->emitAdvance();
+    }
+
+    QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
+    QCOMPARE(signalSpy.count(), 1);
 }
 
 UT_REGISTER_TEST(QGCStateTest, TestLabel::Unit, TestLabel::Utilities)

@@ -1,6 +1,7 @@
 #include "ParameterManagerTest.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -12,18 +13,47 @@
 
 #include "BulkRefreshJob.h"
 #include "LogManager.h"
+#include "MAVLinkLib.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCMath.h"
+#include "QGCStateMachine.h"
 #include "Vehicle.h"
 
 // Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
 void ParameterManagerTest::_ignoreParamResponseTimeouts()
 {
-    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+    ignoreLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("Timeout \".*WaitForParamResponseState\""));
+}
+
+void ParameterManagerTest::_timeRequestsByHand(Vehicle* vehicle)
+{
+    QVERIFY(vehicle);
+    if (!_scheduler) {
+        _scheduler = std::make_unique<ManualScheduler>();
+    }
+    vehicle->parameterManager()->setScheduler(_scheduler.get());
+}
+
+void ParameterManagerTest::_timeNextVehicleByHand()
+{
+    _vehicleAddedConnection = connect(
+        MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this,
+        [this](Vehicle* vehicle) { _timeRequestsByHand(vehicle); }, Qt::SingleShotConnection);
+}
+
+void ParameterManagerTest::_expireAckTimeout(uint32_t requestMessageId, int receivedCount)
+{
+    QVERIFY(_scheduler);
+    QTRY_COMPARE_WITH_TIMEOUT(_mockLink->receivedMavlinkMessageCount(requestMessageId), receivedCount,
+                              TestTimeout::mediumMs());
+    // The timeout of the attempt runs on the scheduler of the test, and not by itself. One ack timeout and no more:
+    // the timeout of the attempt that follows is not to expire with it.
+    QCOMPARE_GT(_scheduler->pendingCount(), 0);
+    QVERIFY(_scheduler->advanceBy(std::chrono::milliseconds(ParameterManager::kWaitForParamValueAckMs)));
 }
 
 void ParameterManagerTest::_expectIndexLoadFailureWarning()
@@ -81,6 +111,8 @@ void ParameterManagerTest::cleanup()
         }
     }
     VehicleTestManualConnect::cleanup();
+    disconnect(_vehicleAddedConnection);
+    _scheduler.reset();
 }
 
 /// Test failure modes which should still lead to param load success
@@ -139,6 +171,7 @@ void ParameterManagerTest::_requestListMissingParamSuccess()
 void ParameterManagerTest::_requestListNoResponse()
 {
     QVERIFY2(!_mockLink, "MockLink already connected");
+    _timeNextVehicleByHand();
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailParamNoResponseToRequestList);
     _mockLink->mockLinkFTP()->setParamPckEnabled(false);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
@@ -158,13 +191,60 @@ void ParameterManagerTest::_requestListNoResponse()
     expectAppMessage(QRegularExpression("did not respond to request for parameters"));
     expectLogMessage("FactSystem.ParameterManager", QtWarningMsg,
                      QRegularExpression("did not respond to request for parameters"));
-    // ParameterManager exhausts initial request retries in bounded test intervals and gives up
+    // ParameterManager sends the request again each time it is left unanswered, and gives up after its retries
     // without any progress bar updates or a parameter ready signal.
-    QVERIFY_SIGNAL_WAIT(spyRequestFailed, ParameterManager::kTestMaxInitialRequestTimeMs);
+    int requestsSent = 0;
+    while (spyRequestFailed.isEmpty()) {
+        requestsSent++;
+        QCOMPARE_LE(requestsSent, ParameterManager::kMaxInitialRequestListRetry + 1);
+        QTRY_COMPARE_WITH_TIMEOUT(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST),
+                                  requestsSent, TestTimeout::mediumMs());
+        QCOMPARE_GT(_scheduler->pendingCount(), 0);
+        QVERIFY(_scheduler->advanceBy(std::chrono::milliseconds(ParameterManager::kTestInitialRequestIntervalMs)));
+    }
+    // The download of the parameter file, which this vehicle refuses at once, was the first attempt
+    QCOMPARE(requestsSent, ParameterManager::kMaxInitialRequestListRetry);
     QCOMPARE(spyProgress.count(), 0);
     QCOMPARE(spyParamsReady.count(), 0);
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+}
+
+// ArduPilot streams parameters that nobody has asked for, with an index of 65535, and begins before it answers
+// PARAM_REQUEST_LIST. One of them is not the answer: taken for it, it ended the wait for the list.
+void ParameterManagerTest::_unrequestedParamBeforeListResponseIsDisregarded()
+{
+    _timeNextVehicleByHand();
+    Vehicle* const vehicle = _connectAndWaitForVehicle(MockConfiguration::FailParamNoResponseToRequestList);
+    QVERIFY(vehicle);
+    ParameterManager* const paramManager = vehicle->parameterManager();
+    QTRY_COMPARE_WITH_TIMEOUT(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST), 1,
+                              TestTimeout::mediumMs());
+
+    constexpr uint16_t unrequestedIndex = 65535;
+    bool paramValueHandled = false;
+    const QObject connectionContext;
+    connect(vehicle, &Vehicle::mavlinkMessageReceived, &connectionContext,
+            [&paramValueHandled](const mavlink_message_t& message) {
+                if ((message.msgid == MAVLINK_MSG_ID_PARAM_VALUE) &&
+                    (mavlink_msg_param_value_get_param_index(&message) == unrequestedIndex)) {
+                    paramValueHandled = true;
+                }
+            });
+    const char paramName[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN] = "UNREQUESTED";
+    mavlink_message_t message{};
+    (void) mavlink_msg_param_value_pack_chan(static_cast<uint8_t>(_mockLink->vehicleId()), MAV_COMP_ID_AUTOPILOT1,
+                                             _mockLink->outgoingMavlinkChannel(), &message, paramName, 1.0f,
+                                             MAV_PARAM_TYPE_REAL32, 1, unrequestedIndex);
+    _mockLink->respondWithMavlinkMessage(message);
+    // Vehicle hands a message to its parameter manager before it announces it
+    QTRY_VERIFY_WITH_TIMEOUT(paramValueHandled, TestTimeout::mediumMs());
+    QVERIFY(!paramManager->parameterExists(MAV_COMP_ID_AUTOPILOT1, QString::fromLatin1(paramName)));
+
+    // The list is still waited for, and requested again when it does not come
+    QVERIFY(_scheduler->advanceBy(std::chrono::milliseconds(ParameterManager::kTestInitialRequestIntervalMs)));
+    QTRY_COMPARE_WITH_TIMEOUT(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST), 2,
+                              TestTimeout::mediumMs());
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
@@ -418,8 +498,18 @@ void ParameterManagerTest::_paramWriteUInt16()
                              QStringLiteral("TEST_UINT16"), MAV_AUTOPILOT_GENERIC);
 }
 
+void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry_data()
+{
+    QTest::addColumn<bool>("timedByTest");
+
+    QTest::newRow("ack timeout on the scheduler of the test") << true;
+    QTest::newRow("ack timeout on the scheduler of the manager, which it is given back") << false;
+}
+
 void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry()
 {
+    QFETCH(bool, timedByTest);
+
     _ignoreParamResponseTimeouts();
     QVERIFY2(!_mockLink, "MockLink already connected");
     _connectMockLink();
@@ -427,6 +517,10 @@ void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry()
     QVERIFY(_vehicle);
     ParameterManager* const paramManager = _vehicle->parameterManager();
     QVERIFY(paramManager);
+    _timeRequestsByHand(_vehicle);
+    if (!timedByTest) {
+        paramManager->setScheduler(nullptr);
+    }
     _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadFirstAttemptNoResponse);
     Fact* const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
     QVERIFY(fact);
@@ -434,10 +528,17 @@ void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry()
     QSignalSpy paramReadSuccessSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
     QVERIFY(vehicleUpdatedSpy.isValid());
     QVERIFY(paramReadSuccessSpy.isValid());
+    _mockLink->clearReceivedMavlinkMessageCounts();
     paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name());
-    const int maxWaitTimeMs = ParameterManager::kWaitForParamValueAckMs
-                              * (ParameterManager::kParamRequestReadRetryCount + 1) + TestTimeout::shortMs();
-    QVERIFY_SIGNAL_WAIT(paramReadSuccessSpy, maxWaitTimeMs);
+    if (timedByTest) {
+        _expireAckTimeout(MAVLINK_MSG_ID_PARAM_REQUEST_READ, 1);
+    } else {
+        // The attempt ends by itself: the scheduler of the test has nothing of it to time
+        QTRY_COMPARE_WITH_TIMEOUT(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_READ), 1,
+                                  TestTimeout::mediumMs());
+        QCOMPARE(_scheduler->pendingCount(), 0);
+    }
+    QVERIFY_SIGNAL_COUNT_WAIT(paramReadSuccessSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(paramReadSuccessSpy.count(), 1);
     QCOMPARE(vehicleUpdatedSpy.count(), 1);
     _disconnectMockLink();
@@ -458,15 +559,84 @@ void ParameterManagerTest::_paramReadNoResponse()
     QSignalSpy paramReadFailureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
     QVERIFY(vehicleUpdatedSpy.isValid());
     QVERIFY(paramReadFailureSpy.isValid());
+    _timeRequestsByHand(_vehicle);
     _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNoResponse);
     expectAppMessage(QRegularExpression("Parameter read failed"));
+    _mockLink->clearReceivedMavlinkMessageCounts();
     paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name());
-    const int maxWaitTimeMs = ParameterManager::kWaitForParamValueAckMs
-                              * (ParameterManager::kParamRequestReadRetryCount + 1) + TestTimeout::shortMs();
-    QVERIFY_SIGNAL_WAIT(paramReadFailureSpy, maxWaitTimeMs);
+    for (int attempt = 1; attempt <= ParameterManager::kParamRequestReadRetryCount + 1; attempt++) {
+        _expireAckTimeout(MAVLINK_MSG_ID_PARAM_REQUEST_READ, attempt);
+    }
+    // The read fails with its last timeout
     QCOMPARE(paramReadFailureSpy.count(), 1);
     QCOMPARE(vehicleUpdatedSpy.count(), 0);
     verifyExpectedLogMessage();
+    _disconnectMockLink();
+}
+
+void ParameterManagerTest::_requestStateMachineDeletedWhenFinished_data()
+{
+    QTest::addColumn<bool>("write");
+    QTest::addColumn<bool>("vehicleResponds");
+
+    QTest::newRow("write acked") << true << true;
+    QTest::newRow("write retries exhausted") << true << false;
+    QTest::newRow("read answered") << false << true;
+    QTest::newRow("read retries exhausted") << false << false;
+}
+
+void ParameterManagerTest::_requestStateMachineDeletedWhenFinished()
+{
+    QFETCH(bool, write);
+    QFETCH(bool, vehicleResponds);
+
+    if (!vehicleResponds) {
+        _ignoreParamResponseTimeouts();
+    }
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+    Fact* const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
+    QVERIFY(fact);
+    QVERIFY(paramManager->findChildren<QGCStateMachine*>().isEmpty());
+    _timeRequestsByHand(_vehicle);
+    _mockLink->clearReceivedMavlinkMessageCounts();
+
+    if (write) {
+        _mockLink->setParamSetFailureMode(vehicleResponds ? MockLink::FailParamSetNone : MockLink::FailParamSetNoAck);
+        expectAppMessage(QRegularExpression("Vehicle reboot required for changes to take effect"));
+        if (!vehicleResponds) {
+            expectAppMessage(QRegularExpression("Parameter write failed"));
+        }
+        fact->setRawValue(fact->rawValue().toDouble() + 0.1);
+    } else {
+        _mockLink->setParamRequestReadFailureMode(vehicleResponds ? MockLink::FailParamRequestReadNone
+                                                                  : MockLink::FailParamRequestReadNoResponse);
+        paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name(), false /* notifyFailure */);
+    }
+    QVERIFY(!paramManager->findChildren<QGCStateMachine*>().isEmpty());
+    if (!vehicleResponds) {
+        const uint32_t requestMessageId = write ? MAVLINK_MSG_ID_PARAM_SET : MAVLINK_MSG_ID_PARAM_REQUEST_READ;
+        const int attempts =
+            (write ? ParameterManager::kParamSetRetryCount : ParameterManager::kParamRequestReadRetryCount) + 1;
+        for (int attempt = 1; attempt <= attempts; attempt++) {
+            _expireAckTimeout(requestMessageId, attempt);
+        }
+    }
+
+    // A failed write is followed by a refresh of the parameter, which runs a machine of its own
+    QVERIFY_TRUE_WAIT(paramManager->findChildren<QGCStateMachine*>().isEmpty(), TestTimeout::mediumMs());
+    if (write) {
+        verifyExpectedLogMessage();
+        if (!vehicleResponds) {
+            verifyExpectedLogMessage();
+        }
+    }
+    _mockLink->setParamSetFailureMode(MockLink::FailParamSetNone);
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNone);
     _disconnectMockLink();
 }
 
@@ -540,6 +710,14 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
     QVERIFY(vehicleMgr);
     ParameterManager* const paramManager = _vehicle->parameterManager();
     QVERIFY(paramManager);
+    _timeRequestsByHand(_vehicle);
+    // The attempts that the vehicle leaves unanswered
+    int unansweredAttempts = 0;
+    if (failureMode == MockLink::FailParamSetNoAck) {
+        unansweredAttempts = ParameterManager::kParamSetRetryCount + 1;
+    } else if (failureMode == MockLink::FailParamSetFirstAttemptNoAck) {
+        unansweredAttempts = 1;
+    }
     QVERIFY(!_vehicle->parameterManager()->pendingWrites());
     Fact* const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, paramName);
     QVERIFY(fact);
@@ -580,8 +758,12 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
     QSignalSpy paramSetFailureSpy(paramManager, &ParameterManager::_paramSetFailure);
     QVERIFY(paramSetFailureSpy.isValid());
     QVERIFY(!_vehicle->rebootRequired());
+    _mockLink->clearReceivedMavlinkMessageCounts();
     fact->setRawValue(newValue);
     QCOMPARE(_vehicle->rebootRequired(), fact->vehicleRebootRequired());
+    for (int attempt = 1; attempt <= unansweredAttempts; attempt++) {
+        _expireAckTimeout(MAVLINK_MSG_ID_PARAM_SET, attempt);
+    }
     // We should see pendingWrites go to true and then back to false
     bool sawPendingTrue = false;
     bool sawPendingFalse = false;
@@ -636,6 +818,8 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
         QCOMPARE(paramSetSuccessSpy.count(), 0);
         QCOMPARE(paramSetFailureSpy.count(), 1);
     }
+    // The write is pending once, from its first attempt to its result, however often PARAM_SET is sent
+    QCOMPARE(pendingSpy.count(), 2);
     // The first signal is the change we made, so we start checking from there
     QVERIFY(QGC::fuzzyCompare(rawValueChangedSpy[0][0].toDouble(), newValueDouble, 0.00001));
     if (!expectSuccess) {
@@ -647,7 +831,7 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
         QCOMPARE(rawValueChangedSpy.count(), 2);
         QVERIFY(QGC::fuzzyCompare(rawValueChangedSpy[1][0].toDouble(), originalDouble, 0.00001));
         // We should have also alerted the user of the failure
-        // Note that we can't easily check for the ShowAppMessageState usage here due to the
+        // Note that we can't easily check for the user notify state here due to the
         // complexity of the state machine and timing of the signals.
     }
     _mockLink->setParamSetFailureMode(MockLink::FailParamSetNone);
@@ -962,18 +1146,20 @@ void ParameterManagerTest::_bulkRefreshRetrySucceeds()
     QVERIFY(failureSpy.isValid());
 
     // Round 0: MockLink drops all responses — per-param SM exhausts retries → _paramRequestReadFailure
+    _timeRequestsByHand(_vehicle);
     _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNoResponse);
+    _mockLink->clearReceivedMavlinkMessageCounts();
     paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("BAT1_V_CHARGED")});
-
-    const int roundTimeMs = ParameterManager::kWaitForParamValueAckMs
-                            * (ParameterManager::kParamRequestReadRetryCount + 1)
-                            + TestTimeout::shortMs();
-    QVERIFY_SIGNAL_WAIT(failureSpy, roundTimeMs);
+    for (int attempt = 1; attempt <= ParameterManager::kParamRequestReadRetryCount + 1; attempt++) {
+        _expireAckTimeout(MAVLINK_MSG_ID_PARAM_REQUEST_READ, attempt);
+    }
     QCOMPARE(failureSpy.count(), 1);
 
-    // Allow BulkRefreshJob's retry round to succeed
+    // Allow BulkRefreshJob's retry round, which it starts after its delay, to succeed
     _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNone);
-    QVERIFY_SIGNAL_WAIT(successSpy, roundTimeMs);
+    QCOMPARE(_scheduler->pendingCount(), 1);
+    QVERIFY(_scheduler->advanceBy(std::chrono::milliseconds(BulkRefreshJob::kRetryBaseDelayMs)));
+    QVERIFY_SIGNAL_COUNT_WAIT(successSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(successSpy.count(), 1);
     QCOMPARE(successSpy.at(0).at(1).toString(), QStringLiteral("BAT1_V_CHARGED"));
 
@@ -995,17 +1181,25 @@ void ParameterManagerTest::_bulkRefreshAllRetriesExhausted()
     QVERIFY(successSpy.isValid());
     QVERIFY(failureSpy.isValid());
 
+    _timeRequestsByHand(_vehicle);
     _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNoResponse);
+    expectAppMessage(QRegularExpression("Parameter refresh failed"));
+    _mockLink->clearReceivedMavlinkMessageCounts();
     paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("BAT1_V_CHARGED")});
 
-    // Each round exhausts the per-param SM retries. Upper bound uses production constants;
-    // actual duration is ~1s in test mode (kWaitForParamValueAckMs and kRetryBaseDelayMs are
-    // reduced to 50ms when QGC::runningUnitTests() is true).
-    const int roundTimeMs = ParameterManager::kWaitForParamValueAckMs
-                            * (ParameterManager::kParamRequestReadRetryCount + 1);
-    const int maxWaitMs = roundTimeMs * (BulkRefreshJob::kMaxRetryRounds + 1) + TestTimeout::mediumMs();
-    expectAppMessage(QRegularExpression("Parameter refresh failed"));
-    QVERIFY_SIGNAL_COUNT_WAIT(failureSpy, BulkRefreshJob::kMaxRetryRounds + 1, maxWaitMs);
+    // Each round exhausts the per-param SM retries. Between the rounds the job waits for kRetryBaseDelayMs, doubled
+    // each round.
+    const int attemptsPerRound = ParameterManager::kParamRequestReadRetryCount + 1;
+    for (int round = 0; round <= BulkRefreshJob::kMaxRetryRounds; round++) {
+        for (int attempt = 1; attempt <= attemptsPerRound; attempt++) {
+            _expireAckTimeout(MAVLINK_MSG_ID_PARAM_REQUEST_READ, round * attemptsPerRound + attempt);
+        }
+        QCOMPARE(failureSpy.count(), round + 1);
+        if (round < BulkRefreshJob::kMaxRetryRounds) {
+            QCOMPARE(_scheduler->pendingCount(), 1);
+            QVERIFY(_scheduler->advanceBy(std::chrono::milliseconds(BulkRefreshJob::kRetryBaseDelayMs << round)));
+        }
+    }
     QCOMPARE(successSpy.count(), 0);
     verifyExpectedLogMessage();
 

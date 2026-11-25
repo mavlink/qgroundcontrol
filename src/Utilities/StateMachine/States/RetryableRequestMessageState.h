@@ -9,12 +9,25 @@ class Vehicle;
 
 #include <functional>
 
+#include <QtCore/QPointer>
+
 /// \brief Requests a MAVLink message with built-in retry logic.
 ///
-/// On failure, retries up to maxRetries times before giving up.
+/// On failure, retries up to maxRetries times before giving up. An attempt that times out counts as
+/// failed, but its request stays outstanding in Vehicle: the next request is sent once that one fails,
+/// and an answer to it is still accepted. No timeout runs while the state waits for that, so it waits
+/// for as long as Vehicle tracks the request; the timeout of the next attempt starts when it is sent.
+///
+/// Vehicle refuses a request while another one for the same message is outstanding. An attempt that is
+/// refused ends at its timeout like one that is not answered, so the retries are spread over the time the
+/// other request may take. Without a timeout the attempt fails at once.
+///
+/// The outstanding request is cancelled when the state is exited or destroyed. A vehicle that is
+/// destroyed while its answer is awaited fails the state.
 ///
 /// Emits advance() on success or after all retries exhausted.
-/// Emits error() only if explicitly requested via failOnMaxRetries.
+/// Emits error() only if explicitly requested via failOnMaxRetries, preceded by timedOut() when the
+/// last attempt timed out.
 ///
 /// Example usage:
 /// @code
@@ -53,6 +66,7 @@ public:
                                   int maxRetries = 1,
                                   int compId = MAV_COMP_ID_AUTOPILOT1,
                                   int timeoutMsecs = 5000);
+    ~RetryableRequestMessageState() override;
 
     /// Set handler called when all retries fail
     void setFailureHandler(FailureHandler handler) { _failureHandler = std::move(handler); }
@@ -66,9 +80,6 @@ public:
 
     /// Get the failure code from the last attempt
     VehicleTypes::RequestMessageResultHandlerFailureCode_t lastFailureCode() const { return _lastFailureCode; }
-
-    /// Get the MAV_RESULT from the last attempt
-    MAV_RESULT lastResult() const { return _lastResult; }
 
     /// Get current retry count
     int retryCount() const { return _retryCount; }
@@ -90,8 +101,12 @@ protected:
     void onWaitExited() override;
     void onWaitTimeout() override;
 
+private slots:
+    void _vehicleDestroyed();
+
 private:
     void _sendRequest();
+    void _cancelRequest();
     void _queueRetry();
     void _handleResult(MAV_RESULT result,
                        VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
@@ -107,7 +122,12 @@ private:
     bool _failOnMaxRetries = false;
 
     bool _requestActive = false;
+    bool _retryWhenRequestFails = false;
+    bool _requestRefused = false;
 
     VehicleTypes::RequestMessageResultHandlerFailureCode_t _lastFailureCode = VehicleTypes::RequestMessageNoFailure;
     MAV_RESULT _lastResult = MAV_RESULT_ACCEPTED;
+
+    /// Vehicle the last request was made to. The machine cannot be asked for it while it deletes its states.
+    QPointer<Vehicle> _requestVehicle;
 };

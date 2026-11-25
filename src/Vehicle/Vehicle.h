@@ -681,6 +681,10 @@ public:
     ///     @param resultHandlerData Opaque data passed back to resultHandler
     void requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f);
 
+    /// Stops the result callbacks of all outstanding requestMessage() calls made with @a resultHandlerData.
+    /// Call this before the object resultHandlerData points to is destroyed.
+    void cancelRequestMessage(void* resultHandlerData);
+
     int firmwareMajorVersion() const { return _firmwareMajorVersion; }
     int firmwareMinorVersion() const { return _firmwareMinorVersion; }
     int firmwarePatchVersion() const { return _firmwarePatchVersion; }

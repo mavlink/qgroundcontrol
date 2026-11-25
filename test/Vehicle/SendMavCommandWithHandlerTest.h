@@ -18,6 +18,7 @@ private slots:
     void _performTestCases();
     void _compIdAllFailure();
     void _duplicateCommand();
+    void _everyAttemptWaitsTheAckTimeout();
 
 private:
     struct TestCase_t

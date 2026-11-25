@@ -21,15 +21,8 @@ target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(
     QGCUnitTests
     PRIVATE
-        Helpers/ErrorRecoveryBuilderTest.cc
-        Helpers/ErrorRecoveryBuilderTest.h
-        Helpers/StateContextTest.cc
-        Helpers/StateContextTest.h
-        Helpers/StateHistoryRecorderTest.cc
-        Helpers/StateHistoryRecorderTest.h
+        Helpers/SignalSenderShapes.cc
 )
-
-target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Helpers)
 
 # ----------------------------------------------------------------------------
 # State Tests
@@ -38,46 +31,18 @@ target_sources(
     QGCUnitTests
     PRIVATE
         states/StateTestCommon.h
-        states/FunctionStateTest.cc
-        states/FunctionStateTest.h
-        states/DelayStateTest.cc
-        states/DelayStateTest.h
         states/AsyncFunctionStateTest.cc
         states/AsyncFunctionStateTest.h
-        states/WaitForSignalStateTest.cc
-        states/WaitForSignalStateTest.h
-        states/ConditionalStateTest.cc
-        states/ConditionalStateTest.h
-        states/SkippableAsyncStateTest.cc
-        states/SkippableAsyncStateTest.h
-        states/ParallelStateTest.cc
-        states/ParallelStateTest.h
-        states/SubMachineStateTest.cc
-        states/SubMachineStateTest.h
-        states/QGCStateTest.cc
-        states/QGCStateTest.h
-        states/QGCFinalStateTest.cc
-        states/QGCFinalStateTest.h
-        states/QGCHistoryStateTest.cc
-        states/QGCHistoryStateTest.h
-        states/ProgressStateTest.cc
-        states/ProgressStateTest.h
         states/RetryableRequestMessageStateTest.cc
         states/RetryableRequestMessageStateTest.h
         states/WaitStateBaseTest.cc
         states/WaitStateBaseTest.h
-        states/QGCAbstractStateTest.cc
-        states/QGCAbstractStateTest.h
-        states/ShowAppMessageStateTest.cc
-        states/ShowAppMessageStateTest.h
-        states/RequestMessageStateTest.cc
-        states/RequestMessageStateTest.h
+        states/QGCStateTest.cc
+        states/QGCStateTest.h
         states/SendMavlinkCommandStateTest.cc
         states/SendMavlinkCommandStateTest.h
-        states/SendMavlinkMessageStateTest.cc
-        states/SendMavlinkMessageStateTest.h
-        states/WaitForMavlinkMessageStateTest.cc
-        states/WaitForMavlinkMessageStateTest.h
+        states/VehicleMessageWaitStateTest.cc
+        states/VehicleMessageWaitStateTest.h
         states/AdditionalStatesCoverageTest.cc
         states/AdditionalStatesCoverageTest.h
 )
@@ -90,24 +55,8 @@ target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/stat
 target_sources(
     QGCUnitTests
     PRIVATE
-        transitions/TransitionTestCommon.cc
-        transitions/TransitionTestCommon.h
-        transitions/GuardedTransitionTest.cc
-        transitions/GuardedTransitionTest.h
-        transitions/InternalTransitionTest.cc
-        transitions/InternalTransitionTest.h
         transitions/MachineEventTransitionTest.cc
         transitions/MachineEventTransitionTest.h
-        transitions/NamedEventTransitionTest.cc
-        transitions/NamedEventTransitionTest.h
-        transitions/SignalDataTransitionTest.cc
-        transitions/SignalDataTransitionTest.h
-        transitions/QGCSignalTransitionTest.cc
-        transitions/QGCSignalTransitionTest.h
-        transitions/RetryTransitionTest.cc
-        transitions/RetryTransitionTest.h
-        transitions/TimeoutTransitionTest.cc
-        transitions/TimeoutTransitionTest.h
         transitions/AdditionalTransitionsCoverageTest.cc
         transitions/AdditionalTransitionsCoverageTest.h
 )
@@ -115,36 +64,12 @@ target_sources(
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/transitions)
 
 add_qgc_test(QGCStateMachineTest LABELS Unit Utilities)
-add_qgc_test(ErrorRecoveryBuilderTest LABELS Unit Utilities)
-add_qgc_test(StateContextTest LABELS Unit Utilities)
-add_qgc_test(StateHistoryRecorderTest LABELS Unit Utilities)
 add_qgc_test(AsyncFunctionStateTest LABELS Unit Utilities)
-add_qgc_test(ConditionalStateTest LABELS Unit Utilities)
-add_qgc_test(DelayStateTest LABELS Unit Utilities)
-add_qgc_test(FunctionStateTest LABELS Unit Utilities)
-add_qgc_test(ParallelStateTest LABELS Unit Utilities)
-add_qgc_test(ProgressStateTest LABELS Unit Utilities)
-add_qgc_test(QGCAbstractStateTest LABELS Unit Utilities)
-add_qgc_test(QGCFinalStateTest LABELS Unit Utilities)
-add_qgc_test(QGCHistoryStateTest LABELS Unit Utilities)
 add_qgc_test(QGCStateTest LABELS Unit Utilities)
-add_qgc_test(RequestMessageStateTest LABELS Unit Utilities)
 add_qgc_test(RetryableRequestMessageStateTest LABELS Integration Vehicle Utilities)
-add_qgc_test(SendMavlinkCommandStateTest LABELS Unit Utilities)
-add_qgc_test(SendMavlinkMessageStateTest LABELS Unit Utilities)
-add_qgc_test(ShowAppMessageStateTest LABELS Unit Utilities)
-add_qgc_test(SkippableAsyncStateTest LABELS Unit Utilities)
-add_qgc_test(SubMachineStateTest LABELS Unit Utilities)
-add_qgc_test(WaitForMavlinkMessageStateTest LABELS Unit Utilities)
-add_qgc_test(WaitForSignalStateTest LABELS Unit Utilities)
+add_qgc_test(SendMavlinkCommandStateTest LABELS Integration Vehicle Utilities)
+add_qgc_test(VehicleMessageWaitStateTest LABELS Integration Vehicle Utilities)
 add_qgc_test(WaitStateBaseTest LABELS Unit Utilities)
-add_qgc_test(GuardedTransitionTest LABELS Unit Utilities)
-add_qgc_test(InternalTransitionTest LABELS Unit Utilities)
 add_qgc_test(MachineEventTransitionTest LABELS Unit Utilities)
-add_qgc_test(NamedEventTransitionTest LABELS Unit Utilities)
-add_qgc_test(QGCSignalTransitionTest LABELS Unit Utilities)
-add_qgc_test(RetryTransitionTest LABELS Unit Utilities)
-add_qgc_test(SignalDataTransitionTest LABELS Unit Utilities)
-add_qgc_test(TimeoutTransitionTest LABELS Unit Utilities)
 add_qgc_test(AdditionalStatesCoverageTest LABELS Unit Utilities)
 add_qgc_test(AdditionalTransitionsCoverageTest LABELS Unit Utilities)

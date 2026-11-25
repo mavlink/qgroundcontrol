@@ -7,6 +7,7 @@ class QGCStateTest : public StateMachineTest
     Q_OBJECT
 
 private slots:
-    void _testEntryExitCallbacks();
-    void _testOnEnterOnLeaveVirtuals();
+    void _testStateName();
+    void _testStateNameInQGCStateMachine();
+    UT_PARAMETERIZED_TEST(_testSignalStopsMachine);
 };

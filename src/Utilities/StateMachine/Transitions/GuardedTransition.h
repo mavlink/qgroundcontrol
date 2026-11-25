@@ -1,14 +1,16 @@
 #pragma once
 
-#include "QGCSignalTransition.h"
-
 #include <functional>
+
+#include <QtStateMachine/QSignalTransition>
+
+#include "SignalSender.h"
 
 /// \brief A transition that only fires if a guard predicate returns true
 ///
 /// Useful for conditional transitions based on runtime state
 ///
-class GuardedTransition : public QGCSignalTransition
+class GuardedTransition : public QSignalTransition
 {
     Q_OBJECT
     Q_DISABLE_COPY(GuardedTransition)
@@ -21,12 +23,9 @@ public:
     /// @param signal Signal that triggers the transition
     /// @param target Target state
     /// @param guard Predicate that must return true for transition to fire
-    template<typename Func>
-    GuardedTransition(const typename QtPrivate::FunctionPointer<Func>::Object* sender,
-                      Func signalFn,
-                      QAbstractState* target,
-                      Guard guard)
-        : QGCSignalTransition(sender, signalFn)
+    template <typename Func>
+    GuardedTransition(const SignalSender<Func>* sender, Func signalFn, QAbstractState* target, Guard guard)
+        : QSignalTransition(sender, signalFn)
         , _guard(std::move(guard))
     {
         setTargetState(target);
@@ -36,20 +35,12 @@ public:
     /// @param sender Object that emits the signal
     /// @param signal Signal that triggers the transition
     /// @param guard Predicate that must return true for transition to fire
-    template<typename Func>
-    GuardedTransition(const typename QtPrivate::FunctionPointer<Func>::Object* sender,
-                      Func signalFn,
-                      Guard guard)
-        : QGCSignalTransition(sender, signalFn)
+    template <typename Func>
+    GuardedTransition(const SignalSender<Func>* sender, Func signalFn, Guard guard)
+        : QSignalTransition(sender, signalFn)
         , _guard(std::move(guard))
     {
     }
-
-    /// Set the guard predicate
-    void setGuard(Guard guard) { _guard = std::move(guard); }
-
-    /// Get the current guard predicate
-    Guard guard() const { return _guard; }
 
 protected:
     /// Override to check guard before allowing transition

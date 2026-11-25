@@ -12,6 +12,17 @@ class RetryableRequestMessageStateTest : public VehicleTestManualConnect
 private slots:
     void _testSuccessFirstAttempt();
     void _testRetryOnFailure();
+    UT_PARAMETERIZED_TEST(_testRetryAfterTimeout);
+    void _testRefusedRequestEndsAtItsTimeout();
     void _testMaxRetriesExhausted();
     void _testFailOnMaxRetries();
+    void _testFailOnMaxRetriesWhenVehicleReportsFailure();
+    void _testStateDestroyedWhileRequestOutstanding();
+    UT_PARAMETERIZED_TEST(_testVehicleDestroyedWhileMachineAlive);
+
+private:
+    /// Waits until the vehicle's own requests to the autopilot are done, so a test request is sent right away.
+    bool _waitForNoAutopilotRequests();
+    /// Sends the reply the vehicle has withheld: the command ack and the DEBUG message.
+    void _sendWithheldDebugReply();
 };

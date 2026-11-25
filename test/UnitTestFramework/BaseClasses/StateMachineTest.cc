@@ -8,7 +8,8 @@
 
 void StateMachineTest::ignoreTimeoutWarnings()
 {
-    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression(QStringLiteral("^Timeout \"")));
+    ignoreLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Timeout \"")));
     ignoreLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(QStringLiteral("timeout, retry")));
 }
 

@@ -1,17 +1,17 @@
 #include "MachineEventTransition.h"
-#include "QGCState.h"
+
+#include "QGCStateMachine.h"
 
 MachineEventTransition::MachineEventTransition(const QString& eventName, QAbstractState* target)
-    : QGCAbstractTransition(target)
-    , _eventName(eventName)
+    : MachineEventTransition(eventName, target, Guard())
 {
 }
 
 MachineEventTransition::MachineEventTransition(const QString& eventName, QAbstractState* target, Guard guard)
-    : QGCAbstractTransition(target)
-    , _eventName(eventName)
+    : _eventName(eventName)
     , _guard(std::move(guard))
 {
+    setTargetState(target);
 }
 
 bool MachineEventTransition::eventTest(QEvent* event)
@@ -36,9 +36,4 @@ bool MachineEventTransition::eventTest(QEvent* event)
 
     qCDebug(QGCStateMachineLog) << "MachineEventTransition matched event:" << _eventName;
     return true;
-}
-
-void MachineEventTransition::onTransition(QEvent* event)
-{
-    Q_UNUSED(event);
 }

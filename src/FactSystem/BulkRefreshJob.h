@@ -1,12 +1,13 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
-#include <QtCore/QTimer>
 
-#include <functional>
+#include "ScheduledTask.h"
 
 class ParameterManager;
 
@@ -17,9 +18,9 @@ class BulkRefreshJob : public QObject
     Q_OBJECT
 
 public:
-    BulkRefreshJob(ParameterManager *mgr, int componentId, const QStringList &resolvedNames,
-                   bool notifyFailure, std::function<void(const QString &)> requestFn,
-                   QObject *parent);
+    /// @param scheduler Times the wait between the rounds
+    BulkRefreshJob(ParameterManager* mgr, int componentId, const QStringList& resolvedNames, bool notifyFailure,
+                   std::function<void(const QString&)> requestFn, RuntimeScheduler* scheduler, QObject* parent);
 
     static constexpr int kMaxRetryRounds   = 3;    ///< Number of batch-level retry rounds before giving up
     static constexpr int kRetryBaseDelayMs = 1000;  ///< Base retry interval; doubled each round
@@ -37,6 +38,5 @@ private:
     QSet<QString> _pending;
     QSet<QString> _failed;
     int _round = 0;
-    const int _retryBaseDelayMs;  ///< 50 ms in unit tests, kRetryBaseDelayMs otherwise
-    QTimer _retryTimer;
+    ScheduledTask _retryTask;
 };
