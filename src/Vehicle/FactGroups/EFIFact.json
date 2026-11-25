@@ -12,14 +12,14 @@
     "name":             "ecuIndex",
     "shortDesc":        "Ecu Index",
     "type":             "float",
-    "decimalPlaces":    1,
-    "units":            "A"
+    "decimalPlaces":    0
 },
 {
     "name":             "rpm",
-    "shortDesc":        "Rpm",
+    "shortDesc":        "RPM",
     "type":             "float",
-    "decimalPlaces":    1
+    "decimalPlaces":    1,
+    "units":            "rpm"
 },
 {
     "name":             "fuelConsumed",
@@ -58,7 +58,7 @@
 },
 {
     "name":             "baroPress",
-    "shortDesc":        "BarometricPressure",
+    "shortDesc":        "Barometric Pressure",
     "type":             "float",
     "decimalPlaces":    1,
     "units":            "kPa"
