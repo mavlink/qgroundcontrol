@@ -33,7 +33,6 @@ See [Flight Status Badges](../fly_view/fly_view_toolbar.md#flight-status-badges)
 ### Log Files Named for Flight Start
 
 Telemetry logs (`.tlog`) are now named for the time recording started, instead of the time the log was saved at disconnect.
-A log recovered after a crash is also named for the start of its flight, not for the launch that recovered it, so it sorts in the right place among other logs.
 See [Telemetry Logs from Vehicle](../settings_view/general.md#telemetry_logs) for details.
 
 ## Custom Builds

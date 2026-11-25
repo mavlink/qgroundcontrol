@@ -362,8 +362,7 @@ void QGCApplication::_initForNormalAppBoot()
 #endif
 #endif
 
-    // Now that main window is up check for lost log files
-    MAVLinkProtocol::instance()->checkForLostLogFiles();
+    MAVLinkProtocol::removeOrphanedLogFiles();
 
     // Load known link configurations
     LinkManager::instance()->loadLinkConfigurationList();

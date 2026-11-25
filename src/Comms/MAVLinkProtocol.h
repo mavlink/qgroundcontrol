@@ -40,7 +40,11 @@ public:
 
     void suspendLogForReplay(bool suspend) { _logSuspendReplay = suspend; }
 
-    void checkForLostLogFiles();
+    /// Removes telemetry logs left behind by a crash. A log is renamed to .tlog as soon as it qualifies for
+    /// saving, so one still in progress never qualified.
+    static void removeOrphanedLogFiles();
+
+    void setLoggingEnabledForTest(bool enabled) { _loggingEnabledForTest = enabled; }
 
 signals:
     void vehicleHeartbeatInfo(LinkInterface* link, quint32 vehicleId, int componentId, int vehicleFirmwareType,
@@ -56,8 +60,6 @@ public slots:
 
     void logSentBytes(const LinkInterface* link, const QByteArray& data);
 
-    static void deleteTempLogFiles();
-
 private slots:
     void _vehicleCountChanged();
 
@@ -66,6 +68,15 @@ private:
     bool _closeLogFile();
     void _startLogging();
     void _stopLogging();
+    bool _logFileInProgress() const;
+    /// @return true if the log should be saved under the current settings and armed state
+    bool _keepLog() const;
+    /// Renames the in-progress log as soon as it qualifies for saving, so that it survives a crash without
+    /// any recovery.
+    void _promoteLogFileIfKept();
+    /// Renames the in-progress log to its final .tlog name, leaving it open if it was open.
+    /// @return true if the log has its final name
+    bool _promoteLogFile();
 
     void _forward(const mavlink_message_t& message);
     void _forwardSupport(const mavlink_message_t& message);
@@ -74,13 +85,17 @@ private:
     bool _updateStatus(LinkInterface* link, const SharedLinkInterfacePtr linkPtr, uint8_t mavlinkChannel,
                        const mavlink_message_t& message);
 
-    void _saveTelemetryLog(const QString& tempLogfile);
     /// @return What is wrong with saveDirPath as the telemetry log save path, empty if it is usable
     static QString _telemetrySavePathError(const QString& saveDirPath);
 
-    QFile* _tempLogFile = nullptr;
+    QFile* _logFile = nullptr;
 
-    bool _logSuspendError = false;
+    bool _logSuspendError = false;      ///< Logging failed and stays off until the last vehicle is gone
+    bool _logStartErrorShown = false;
+    bool _logKeepCheckPending = false;  ///< The log has not been checked for saving since it opened
+    bool _logPromoteFailed = false;
+    bool _logFinalizePending = false;   ///< A log was opened and not yet saved or deleted by _stopLogging()
+    bool _loggingEnabledForTest = false;
     bool _logSuspendReplay = false;
     bool _vehicleWasArmed = false;
 
@@ -93,9 +108,9 @@ private:
 
     bool _initialized = false;
 
-    /// Temp logs are named "<recording start time>.mavlink" so the saved .tlog can be named for that time.
+    /// A log is recorded in the telemetry save directory as "<recording start time>.tlog.inprogress".
     static constexpr const char* _logStartTimeFormat = "yyyy-MM-dd hh-mm-ss";
-    static constexpr const char* _logFileExtension = "mavlink";
+    static constexpr const char* _inProgressLogSuffix = "inprogress";
 
     static constexpr uint8_t kMaxCompId = MAV_COMPONENT_ENUM_END - 1;
 };
