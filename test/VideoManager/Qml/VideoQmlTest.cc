@@ -2,6 +2,7 @@
 
 #include <array>
 #include <functional>
+#include <optional>
 
 #include <QtCore/QLineF>
 #include <QtCore/QPointer>
@@ -12,7 +13,6 @@
 
 #include "MavlinkCameraControlInterface.h"
 #include "UVCCameraController.h"
-#include "VideoBackend.h"
 #include "VideoDecoderOptions.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
@@ -240,12 +240,24 @@ QList<QQuickItem*> shownTiles(const QQuickItem* tiles)
     return shown;
 }
 
+/// A videoBackend value whose receiver takes the decoder settings, where this build has such a receiver.
+std::optional<int> decoderSettingsBackend(VideoSettings* settings)
+{
+    for (const QVariant& value : settings->videoBackend()->enumValues()) {
+        if (settings->backendTakesDecoderSettings(value.toInt())) {
+            return value.toInt();
+        }
+    }
+    return std::nullopt;
+}
+
 }  // namespace
 
 void VideoQmlTest::_testDecodingSettingsGroupRestartsStreams()
 {
     Fact* const decoderFact = _videoSettings->forceVideoDecoder();
     Fact* const cpuPathFact = _videoSettings->forceCpuVideoPath();
+    Fact* const backendFact = _videoSettings->videoBackend();
     _facts->set(decoderFact, static_cast<int>(VideoDecoderOption::Default));
     _facts->set(cpuPathFact, false);
     _settle();
@@ -259,8 +271,16 @@ void VideoQmlTest::_testDecodingSettingsGroupRestartsStreams()
     QObject* const cpuPathControl = group->findChild<QObject*>(QStringLiteral("videoForceCpuPath"));
     QVERIFY(decoderControl);
     QVERIFY(cpuPathControl);
-    QCOMPARE(decoderControl->property("visible"), decoderFact->property("userVisible"));
-    QCOMPARE(cpuPathControl->property("visible"), cpuPathFact->property("userVisible"));
+    // Shown for a backend whose receiver takes them. Which one is chosen changes only once the restarts are counted:
+    // a new backend gives the sources new receivers.
+    const auto shownFor = [this, decoderControl, cpuPathControl, decoderFact, cpuPathFact](int backend) {
+        const bool taken = _videoSettings->backendTakesDecoderSettings(backend);
+        return (decoderControl->property("visible").toBool() ==
+                (taken && decoderFact->property("userVisible").toBool())) &&
+               (cpuPathControl->property("visible").toBool() ==
+                (taken && cpuPathFact->property("userVisible").toBool()));
+    };
+    QVERIFY(shownFor(backendFact->rawValue().toInt()));
 
     // As a click on the switch does.
     QVERIFY(cpuPathControl->setProperty("checked", true));
@@ -280,13 +300,23 @@ void VideoQmlTest::_testDecodingSettingsGroupRestartsStreams()
     QCOMPARE(decoderFact->rawValue().toInt(), static_cast<int>(VideoDecoderOption::Software));
     QCOMPARE(_primary->restarts, 2);
     QCOMPARE(_primary->configChanges, 0);
+
+    // The decoder is a setting of every build with a receiver that takes it, which Qt Multimedia's doesn't.
+    QVERIFY(!_videoSettings->backendTakesDecoderSettings(VideoSettings::VideoBackendQtMultimedia));
+    QCOMPARE(decoderFact->property("userVisible").toBool(), decoderSettingsBackend(_videoSettings).has_value());
+    for (const QVariant& backend : backendFact->enumValues()) {
+        _facts->set(backendFact, backend);
+        QVERIFY2(shownFor(backend.toInt()), qPrintable(backendFact->enumStringValue()));
+    }
 }
 
 void VideoQmlTest::_testStreamSettingsGroupFollowsLowLatency()
 {
-    if (!VideoBackend::instance().capabilities().pipelineSettings) {
-        QSKIP("The RTP jitter-buffer latency is a GStreamer setting");
+    const std::optional<int> backend = decoderSettingsBackend(_videoSettings);
+    if (!backend) {
+        QSKIP("No receiver of this build has an RTP jitter latency");
     }
+    _facts->set(_videoSettings->videoBackend(), *backend);
     _facts->set(_videoSettings->lowLatencyMode(), false);
 
     InlineQmlEngine engine;
@@ -303,6 +333,12 @@ void VideoQmlTest::_testStreamSettingsGroupFollowsLowLatency()
 
     // Low Latency Mode has no jitter buffer, so its latency is hidden.
     _facts->set(_videoSettings->lowLatencyMode(), true);
+    QVERIFY(!jitterControl->property("visible").toBool());
+
+    // Nor has Qt Multimedia's receiver one.
+    _facts->set(_videoSettings->lowLatencyMode(), false);
+    QVERIFY(jitterControl->property("visible").toBool());
+    _facts->set(_videoSettings->videoBackend(), static_cast<int>(VideoSettings::VideoBackendQtMultimedia));
     QVERIFY(!jitterControl->property("visible").toBool());
 }
 

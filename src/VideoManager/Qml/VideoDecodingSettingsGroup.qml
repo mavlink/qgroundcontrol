@@ -13,11 +13,8 @@ QGCGroupBox {
     id: root
 
     readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
-    // The backends that take the decoder and the CPU path: all but Qt Multimedia's in a build with the experimental
-    // FFmpeg backend, and GStreamer's alone in any other, whatever backend value is stored.
-    readonly property bool _decoderSettings: root._videoSettings.hasFFmpegBackend
-        ? root._videoSettings.videoBackend.rawValue !== VideoSettings.VideoBackendQtMultimedia
-        : root._videoSettings.videoBackend.rawValue === VideoSettings.VideoBackendGStreamer
+    readonly property bool _decoderSettings:
+        root._videoSettings.backendTakesDecoderSettings(root._videoSettings.videoBackend.rawValue)
 
     heading:    qsTr("Decoding")
     visible:    QGroundControl.videoManager.isStreamSource

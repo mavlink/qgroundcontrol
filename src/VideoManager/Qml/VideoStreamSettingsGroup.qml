@@ -27,10 +27,8 @@ QGCGroupBox {
         objectName: "videoRtpJitterLatency"
         label:      qsTr("RTP jitter latency")
         fact:       root._videoSettings.rtpJitterLatencyMs
-        // As VideoDecodingSettingsGroup's _decoderSettings: GStreamer's alone in a build without the FFmpeg backend.
+        // Of the backends that take it (VideoSettings::backendTakesDecoderSettings()), not of Qt Multimedia's.
         visible:    fact.userVisible && !root._videoSettings.lowLatencyMode.rawValue
-                    && (root._videoSettings.hasFFmpegBackend
-                        ? root._videoSettings.videoBackend.rawValue !== VideoSettings.VideoBackendQtMultimedia
-                        : root._videoSettings.videoBackend.rawValue === VideoSettings.VideoBackendGStreamer)
+                    && root._videoSettings.backendTakesDecoderSettings(root._videoSettings.videoBackend.rawValue)
     }
 }

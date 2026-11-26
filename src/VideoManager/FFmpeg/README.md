@@ -18,7 +18,9 @@ into the CPM cache, and generates the headers into `build/ffmpeg-<tag>` with FFm
 Configure fails when the headers' major versions differ from the sonames of the kit's libraries.
 
 In the application, with a stream as the video source, choose **FFmpeg (experimental)** as the Video Backend on the
-Video settings page; the streams restart with the new receiver.
+Video settings page; the streams restart with the new receiver. The page shows the decoder priority, the software
+decoder threads and the RTP jitter latency for it as for GStreamer, in a build without GStreamer as well
+(`VideoSettings::backendTakesDecoderSettings()`).
 
 ## Files
 

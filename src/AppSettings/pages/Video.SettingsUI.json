@@ -10,7 +10,7 @@
         "tilesShown": "QGroundControl.settingsManager.videoSettings.maxVideoTiles.rawValue > 0",
         "usbCamera": "QGroundControl.videoManager.hasUvcCamera",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
-        "decoderSettings": "QGroundControl.settingsManager.videoSettings.hasFFmpegBackend ? QGroundControl.settingsManager.videoSettings.videoBackend.rawValue !== 1 : QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0",
+        "decoderSettings": "QGroundControl.settingsManager.videoSettings.backendTakesDecoderSettings(QGroundControl.settingsManager.videoSettings.videoBackend.rawValue)",
         "recordingEncoded": "QGroundControl.videoManager.isUvc || (isStreamSource && QGroundControl.videoManager.primaryStream.encodesRecordings)"
     },
     "groups": [

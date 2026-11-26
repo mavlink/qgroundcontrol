@@ -14,6 +14,17 @@ bool hasPipelineSettings()
     return VideoBackend::instance().capabilities().pipelineSettings;
 }
 
+/// Whether a receiver of this build takes the decoder settings and the RTP jitter latency: GStreamer's or the
+/// experimental FFmpeg one.
+bool hasDecoderSettings()
+{
+#ifdef QGC_FFMPEG_VIDEO
+    return true;
+#else
+    return hasPipelineSettings();
+#endif
+}
+
 }  // namespace
 
 DECLARE_SETTINGGROUP(Video, "Video")
@@ -192,10 +203,10 @@ DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, true)
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, hasPipelineSettings())
 #endif
 
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(softwareDecoderThreads, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasDecoderSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(softwareDecoderThreads, hasDecoderSettings())
 DECLARE_SETTINGSFACT(VideoSettings, lowLatencyMode)
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasDecoderSettings())
 DECLARE_SETTINGSFACT(VideoSettings, rtspAutoReconnect)
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceCpuVideoPath, VideoBackend::instance().capabilities().gpuVideoPath)
 
@@ -225,6 +236,16 @@ double VideoSettings::aspectRatioOf(int forcedAspectRatio)
         default:
             return 0.0;
     }
+}
+
+bool VideoSettings::backendTakesDecoderSettings(int backend) const
+{
+#ifdef QGC_FFMPEG_VIDEO
+    if (backend == VideoBackendFFmpeg) {
+        return true;
+    }
+#endif
+    return (backend == VideoBackendGStreamer) && hasPipelineSettings();
 }
 
 void VideoSettings::pruneUnavailableDecoders()

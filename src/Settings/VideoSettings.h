@@ -99,15 +99,11 @@ public:
     };
     Q_ENUM(VideoBackendChoice)
 
-    /// True only in a build with QGC_ENABLE_FFMPEG_VIDEO, which offers and plays VideoBackendFFmpeg. For QML, which
-    /// can't ask for the option: the settings pages show by it which backends take the decoder settings.
-    Q_PROPERTY(bool hasFFmpegBackend READ hasFFmpegBackend CONSTANT)
-
-#ifdef QGC_FFMPEG_VIDEO
-    static bool hasFFmpegBackend() { return true; }
-#else
-    static bool hasFFmpegBackend() { return false; }
-#endif
+    /// Whether the receiver that plays for the videoBackend value @p backend takes the decoder settings
+    /// (forceVideoDecoder, softwareDecoderThreads, forceCpuVideoPath) and rtpJitterLatencyMs: GStreamer's, in a build
+    /// that has it, and the experimental FFmpeg one. Qt Multimedia's takes none of them, and it plays for
+    /// VideoBackendGStreamer in a build without GStreamer. The settings pages show those settings by it.
+    Q_INVOKABLE bool backendTakesDecoderSettings(int backend) const;
 
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
