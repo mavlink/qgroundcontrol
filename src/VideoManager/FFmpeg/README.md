@@ -8,8 +8,8 @@ application uses until the FFmpeg one is chosen.
 ## Build and try it
 
 `QGC_ENABLE_FFMPEG_VIDEO` is on by default, and builds the receiver where it can be built: on desktop Linux, with a Qt
-kit that ships its own FFmpeg libraries and FFmpeg plugin implementation, as the kits of Qt's installer do, and with
-`make` and `sh` on the host. Any other build leaves it out, and configure says so
+kit that ships its own FFmpeg libraries and FFmpeg plugin implementation, as the kits of Qt's installer do, with
+`make` and `sh` on the host, and not in a cross build. Any other build leaves it out, and configure says so
 (`FFmpeg video backend not built: ...`). A build directory configured before the option was on keeps it off:
 
 ```sh

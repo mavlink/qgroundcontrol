@@ -11,7 +11,8 @@ if(NOT QGC_ENABLE_FFMPEG_VIDEO)
 endif()
 
 # The option is ON by default, so a build that can't have the receiver goes without it: another platform, a Qt that
-# uses the system's FFmpeg rather than its own, or a host without the tools that generate the headers.
+# uses the system's FFmpeg rather than its own, a host without the tools that generate the headers, or a cross build,
+# as FFmpeg's configure runs what it compiles.
 if(NOT LINUX OR ANDROID)
     return()
 endif()
@@ -30,6 +31,9 @@ find_program(QGC_FFMPEG_MAKE NAMES make gmake)
 find_program(QGC_FFMPEG_SH NAMES sh bash)
 if(NOT QGC_FFMPEG_MAKE OR NOT QGC_FFMPEG_SH)
     set(_ffmpeg_missing "make and sh, which generate the FFmpeg headers, were not found")
+endif()
+if(CMAKE_CROSSCOMPILING)
+    set(_ffmpeg_missing "its headers are not generated in a cross build")
 endif()
 if(_ffmpeg_missing)
     message(STATUS "QGC: FFmpeg video backend not built: ${_ffmpeg_missing}")
@@ -121,6 +125,9 @@ foreach(_lib IN LISTS _ffmpeg_libraries)
     )
 endforeach()
 set(FFMPEG_DIR "${_ffmpeg_prefix}")
+# Global, as the targets Qt found at the top level are: the application target, which links these, is not of this
+# directory, and its AUTOMOC dependencies are resolved in its own.
+set(QT_PROMOTE_TO_GLOBAL_TARGETS TRUE)
 find_package(Qt6 ${QGC_QT_MINIMUM_VERSION} REQUIRED COMPONENTS FFmpegMediaPluginImplPrivate)
 # The receiver's tests read its recordings back with libavformat.
 set_target_properties(
