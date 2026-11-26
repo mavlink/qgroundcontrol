@@ -23,6 +23,9 @@ DECLARE_SETTINGGROUP(Video, "Video")
                    &VideoSettings::_updateVideoSources);
 
     _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+#ifdef QGC_FFMPEG_VIDEO
+    _nameToMetaDataMap[videoBackendName]->addEnumInfo(VideoSettings::tr("FFmpeg (experimental)"), VideoBackendFFmpeg);
+#endif
 }
 
 void VideoSettings::_updateVideoSources()
@@ -181,8 +184,13 @@ DECLARE_VIDEO_SETTINGSFACT_OFFERED(uvcRecordingCodec, _updateRecordingCodecs)
         return _##NAME##Fact;                                \
     }
 
+#ifdef QGC_FFMPEG_VIDEO
+// The experimental FFmpeg backend is a choice also without GStreamer, whose choice then plays through Qt Multimedia.
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, true)
+#else
 // Only a GStreamer build offers a choice: without GStreamer, Qt Multimedia plays the streams.
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, hasPipelineSettings())
+#endif
 
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasPipelineSettings())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(softwareDecoderThreads, hasPipelineSettings())

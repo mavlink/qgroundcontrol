@@ -3,7 +3,8 @@
 # VideoManager, the QML facade; Telemetry: the telemetry text; Streams: per-source control and the settings resolver;
 # Recording: file naming, storage and subtitles; UVC: the local camera's receiver; Receiver: the receiver API the
 # sources share; GStreamer: the network backend; QtMultimedia: the QMediaPlayer receiver, without GStreamer or by
-# choice; Qml: the QGroundControl.VideoManager QML module.
+# choice; FFmpeg: the experimental receiver on FFmpeg (QGC_ENABLE_FFMPEG_VIDEO); Qml: the QGroundControl.VideoManager
+# QML module.
 # ============================================================================
 
 target_sources(
@@ -44,6 +45,9 @@ target_include_directories(
 add_subdirectory(Receiver)
 add_subdirectory(QtMultimedia)
 add_subdirectory(GStreamer)
+if(QGC_ENABLE_FFMPEG_VIDEO)
+    add_subdirectory(FFmpeg)
+endif()
 add_subdirectory(Qml)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE VideoManagerModule)

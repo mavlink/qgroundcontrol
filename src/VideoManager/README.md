@@ -2,7 +2,8 @@
 
 Network video streams and USB cameras: their display, recording and statistics. Three receivers play video behind one
 interface, `VideoReceiver`: GStreamer's (`GstVideoReceiver`), Qt Multimedia's (`QtMultimediaVideoReceiver`) and the USB
-camera's (`UVCCameraController`).
+camera's (`UVCCameraController`). A build with `QGC_ENABLE_FFMPEG_VIDEO` has a fourth, experimental one on FFmpeg
+(`FFmpegVideoReceiver`, [FFmpeg/README.md](FFmpeg/README.md)).
 
 This page is a map of the folders. [GStreamer/README.md](GStreamer/README.md) is the guide to the GStreamer backend,
 and also says how the sources and tiles of `VideoManager` behave.
@@ -28,11 +29,15 @@ and also says how the sources and tiles of `VideoManager` behave.
 - `Receiver/`: the receiver contract and what its implementations share: `VideoReceiver`, `VideoBackend` and the
   run of its initialization (`VideoBackendInit`), the reconnect policy (`StreamSupervisor`), the files of a recording
   (`RecordingPlan`), screenshots, stream statistics and URI schemes. No receiver that plays anything is here: those
-  are in the next three folders.
+  are in the next four folders.
 - `GStreamer/`: the GStreamer backend, listed below.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
   `QMediaRecorder` that it and the USB camera record with, and `SharedVideoFrame`.
+- `FFmpeg/`: `FFmpegVideoReceiver`, experimental and Linux only, built with `QGC_ENABLE_FFMPEG_VIDEO`: a stream
+  received directly with the FFmpeg libraries of the Qt kit, by choice (`VideoSettings::videoBackend`). Its
+  `FFmpegStreamSession` reads and decodes, its `FFmpegStreamRecorder` records, and `FFmpegQtInternals` is its use of
+  Qt's FFmpeg plugin implementation, which is Qt-internal.
 - `UVC/`: the USB camera: `UVCCameraController` (a `QCamera` as a receiver) and `UVCDevices`.
 - `Qml/`: the `QGroundControl.VideoManager` QML module: `VideoView`, the tiles, the video outputs, the camera tracking
   controller (`OnScreenCameraTrackingController`), and the statistics and settings groups. `src/FlyView`,
@@ -62,8 +67,9 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
   and `Streams/` only. A receiver gets a `VideoReceiver::Config` and a `VideoReceiver::DisplayConfig`.
 - `Receiver/` names a backend in one place, `VideoBackend::instance()`.
 - A stream's receiver is chosen in one place, `VideoBackend::createReceiver()`: GStreamer's where the build has it,
-  it started and the backend setting asks for it, else Qt Multimedia's. `VideoManager` reaches it through
-  `QGCCorePlugin::createVideoReceiver()`, which a custom build overrides to supply its own.
+  it started and the backend setting asks for it, FFmpeg's where the build has it and the setting asks for it, else
+  Qt Multimedia's. `VideoManager` reaches it through `QGCCorePlugin::createVideoReceiver()`, which a custom build
+  overrides to supply its own.
 - The backends include each other in one place: `UVC/` records with `QtMultimedia/QtVideoRecorder`.
 - Inside `GStreamer/` the includes point one way: `GStreamerVideoBackend` and `SelfTest/`, then `Pipeline/`, then
   `Source/` and `Sink/QGCQVideoSinkController`, then `Runtime/`.
@@ -71,6 +77,7 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
   above they include one header, `Runtime/GstScoped.h`. Everything else is compiled into the application, which CI
   builds as unity units: a file-local name must not repeat in another `.cc` of the application.
 - With `QGC_ENABLE_GST_VIDEOSTREAMING` off, nothing of `GStreamer/` is built, and streams play through `QtMultimedia/`.
+- With `QGC_ENABLE_FFMPEG_VIDEO` off, which is the default, nothing of `FFmpeg/` is built.
 
 ## A frame, from the network to the screen
 
@@ -89,8 +96,11 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 8. `Qml/VideoStreamOutput.qml` shows it, inside `VideoView.qml` or `VideoTile.qml`.
 
 The other receivers take fewer steps. `QtMultimedia/QtMultimediaVideoReceiver` has a `QMediaPlayer` play into the
-`QVideoSink`. `UVC/UVCCameraController` puts a `QCamera` in a capture session, which plays into it. Every source's
-output is a `Qml/VideoStreamOutput.qml`, registered with the source's `VideoStreamController`.
+`QVideoSink`. `FFmpeg/FFmpegStreamSession` reads the stream with libavformat and decodes it with libavcodec on a thread
+of its own, Qt's `QFFmpegVideoBuffer` makes a `QVideoFrame` of each frame (`FFmpeg/FFmpegQtInternals`), and
+`FFmpeg/FFmpegVideoReceiver` sets the newest on the `QVideoSink` on the GUI thread. `UVC/UVCCameraController` puts a
+`QCamera` in a capture session, which plays into it. Every source's output is a `Qml/VideoStreamOutput.qml`, registered
+with the source's `VideoStreamController`.
 
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
 `GStreamer/Sink/gstqgc/GstQgcSinkStats`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
@@ -112,8 +122,10 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
    when the format asked for can't hold the stream's codec.
 3. Qt Multimedia and the USB camera: `QtMultimedia/QtVideoRecorder` encodes the stream's decoded frames, or the
    camera's capture session.
-4. `recordingStarted(file)` starts `Recording/SubtitleWriter` for that file, and `recordingFinished()` stops it.
-5. `src/AnalyzeView/VideoRecordings` plays the recordings with their subtitles.
+4. FFmpeg: `FFmpeg/FFmpegVideoReceiver` follows a `Receiver/RecordingPlan` too, and `FFmpeg/FFmpegStreamRecorder`
+   copies the stream's packets into each file with libavformat's muxers, on a thread of its own.
+5. `recordingStarted(file)` starts `Recording/SubtitleWriter` for that file, and `recordingFinished()` stops it.
+6. `src/AnalyzeView/VideoRecordings` plays the recordings with their subtitles.
 
 ## Where settings come in
 
@@ -140,6 +152,7 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 - `cmake/GStreamer/`: how each platform's GStreamer SDK is found, downloaded and installed.
 - `#if` blocks in `GStreamer/Runtime/GStreamerEnvironment.cc` (the layout of each platform's install) and
   `UVC/UVCCameraController.cc`.
+- `FFmpeg/`: built for Linux only; its hardware decoders, VA-API and NVDEC, are those of Linux.
 
 ## Tests
 
@@ -156,4 +169,7 @@ to yet, a stream lost with and without auto-reconnect, a restart, a recording en
 asked for before the stream's first frame. What a backend does on its own stays in its tests. The Qt Multimedia
 receiver's are `QtMultimediaVideoReceiverTest`, which needs neither a stream nor GStreamer, and
 `QtMultimediaVideoReceiverStreamTest`, which plays the streams of `MockVideoStreamServer`. That class and the contract
-test are built only with GStreamer, which sends their streams.
+test are built only with GStreamer, which sends their streams. So are the classes in `test/VideoManager/FFmpeg/`, which
+are built with `QGC_ENABLE_FFMPEG_VIDEO` as well: `FFmpegVideoReceiverStreamTest`, the experimental FFmpeg receiver's
+(the contract test doesn't hold that receiver to it), and `VideoReceiverDelayTest`, which measures the delay of one
+stream through each of the three network receivers.

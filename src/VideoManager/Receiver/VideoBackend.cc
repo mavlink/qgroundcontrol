@@ -14,6 +14,10 @@
 #include "GStreamerVideoBackend.h"
 #endif
 
+#ifdef QGC_FFMPEG_VIDEO
+#include "FFmpegVideoReceiver.h"
+#endif
+
 namespace {
 
 /// Without GStreamer: streams play in Qt Multimedia's player, which needs no setup.
@@ -38,6 +42,11 @@ VideoBackend& VideoBackend::instance()
 VideoReceiver* VideoBackend::createReceiver(QObject* parent)
 {
     const Fact* const chosen = SettingsManager::instance()->videoSettings()->videoBackend();
+#ifdef QGC_FFMPEG_VIDEO
+    if (chosen->rawValue().toInt() == VideoSettings::VideoBackendFFmpeg) {
+        return new FFmpegVideoReceiver(parent);
+    }
+#endif
     if (chosen->rawValue().toInt() != VideoSettings::VideoBackendQtMultimedia) {
         if (VideoReceiver* const receiver = createOwnReceiver(parent)) {
             return receiver;

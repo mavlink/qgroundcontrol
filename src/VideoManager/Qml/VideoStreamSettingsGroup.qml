@@ -5,8 +5,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-// How a network stream is received: Low Latency Mode or, without it, GStreamer's RTP jitter buffer latency. Shown only
-// for a network stream.
+// How a network stream is received: Low Latency Mode or, without it, the RTP jitter latency of GStreamer or of the
+// experimental FFmpeg backend. Shown only for a network stream.
 QGCGroupBox {
     id: root
 
@@ -27,7 +27,10 @@ QGCGroupBox {
         objectName: "videoRtpJitterLatency"
         label:      qsTr("RTP jitter latency")
         fact:       root._videoSettings.rtpJitterLatencyMs
+        // As VideoDecodingSettingsGroup's _decoderSettings: GStreamer's alone in a build without the FFmpeg backend.
         visible:    fact.userVisible && !root._videoSettings.lowLatencyMode.rawValue
-                    && root._videoSettings.videoBackend.rawValue === VideoSettings.VideoBackendGStreamer
+                    && (root._videoSettings.hasFFmpegBackend
+                        ? root._videoSettings.videoBackend.rawValue !== VideoSettings.VideoBackendQtMultimedia
+                        : root._videoSettings.videoBackend.rawValue === VideoSettings.VideoBackendGStreamer)
     }
 }

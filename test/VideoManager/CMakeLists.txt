@@ -91,3 +91,24 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
     add_qgc_test(QtMultimediaVideoReceiverStreamTest LABELS Integration)
     add_qgc_test(VideoReceiverContractTest LABELS Integration)
 endif()
+
+# The experimental FFmpeg receiver's streams are sent by GStreamer too.
+if(QGC_ENABLE_FFMPEG_VIDEO AND QGC_ENABLE_GST_VIDEOSTREAMING)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            FFmpeg/FFmpegVideoReceiverStreamTest.cc
+            FFmpeg/FFmpegVideoReceiverStreamTest.h
+            FFmpeg/VideoReceiverDelayTest.cc
+            FFmpeg/VideoReceiverDelayTest.h
+    )
+    target_link_libraries(
+        QGCUnitTests
+        PRIVATE
+            FFmpeg::avformat
+            FFmpeg::avcodec
+            FFmpeg::avutil
+    )
+    add_qgc_test(FFmpegVideoReceiverStreamTest LABELS Integration)
+    add_qgc_test(VideoReceiverDelayTest LABELS Integration Slow TIMEOUT 600)
+endif()

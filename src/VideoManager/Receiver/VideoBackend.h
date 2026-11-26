@@ -67,7 +67,8 @@ public:
     virtual Capabilities capabilities() const = 0;
 
     /// The receiver for a network stream, chosen here and nowhere else: the backend's own, or Qt Multimedia's player
-    /// when the user chose it (VideoSettings::videoBackend) or the backend has none to give.
+    /// when the user chose it (VideoSettings::videoBackend) or the backend has none to give. A build with
+    /// QGC_ENABLE_FFMPEG_VIDEO also offers the experimental FFmpegVideoReceiver.
     VideoReceiver* createReceiver(QObject* parent);
 
     // The rest is setup and tuning a backend that needs none leaves alone.

@@ -92,8 +92,22 @@ public:
     {
         VideoBackendGStreamer = 0,
         VideoBackendQtMultimedia = 1,
+#ifdef QGC_FFMPEG_VIDEO
+        /// The experimental FFmpegVideoReceiver: offered only in a build with QGC_ENABLE_FFMPEG_VIDEO.
+        VideoBackendFFmpeg = 2,
+#endif
     };
     Q_ENUM(VideoBackendChoice)
+
+    /// True only in a build with QGC_ENABLE_FFMPEG_VIDEO, which offers and plays VideoBackendFFmpeg. For QML, which
+    /// can't ask for the option: the settings pages show by it which backends take the decoder settings.
+    Q_PROPERTY(bool hasFFmpegBackend READ hasFFmpegBackend CONSTANT)
+
+#ifdef QGC_FFMPEG_VIDEO
+    static bool hasFFmpegBackend() { return true; }
+#else
+    static bool hasFFmpegBackend() { return false; }
+#endif
 
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
