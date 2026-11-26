@@ -59,6 +59,7 @@ public:
     ParameterMetaData *_createParameterMetaData() override;
     QString getHobbsMeter(Vehicle *vehicle) const override;
     bool hasGripper(const Vehicle *vehicle) const override;
+    bool supportsSplineWaypoints(const Vehicle* vehicle) const override;
     const QVariantList &toolIndicators(const Vehicle *vehicle) override;
     double maximumEquivalentAirspeed(Vehicle *vehicle) const override;
     double minimumEquivalentAirspeed(Vehicle *vehicle) const override;

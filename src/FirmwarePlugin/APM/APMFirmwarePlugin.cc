@@ -533,7 +533,6 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         MAV_CMD_NAV_RETURN_TO_LAUNCH,
         MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT,
         MAV_CMD_NAV_LOITER_TO_ALT,
-        MAV_CMD_NAV_SPLINE_WAYPOINT,
         MAV_CMD_NAV_GUIDED_ENABLE,
         MAV_CMD_NAV_DELAY,
         MAV_CMD_CONDITION_DELAY, MAV_CMD_CONDITION_DISTANCE, MAV_CMD_CONDITION_YAW,
@@ -575,6 +574,11 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleCl
         supportedCommands += flightCommands;
     } else if (vehicleClass == QGCMAVLink::VehicleClassFixedWing || vehicleClass == QGCMAVLink::VehicleClassMultiRotor) {
         supportedCommands += flightCommands;
+    }
+
+    // Only ArduCopter flies NAV_SPLINE_WAYPOINT; ArduPlane (including QuadPlane VTOL), Rover and Sub skip it in Auto
+    if (vehicleClass == QGCMAVLink::VehicleClassGeneric || vehicleClass == QGCMAVLink::VehicleClassMultiRotor) {
+        supportedCommands.append(MAV_CMD_NAV_SPLINE_WAYPOINT);
     }
 
     if (SettingsManager::instance()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
@@ -635,6 +639,13 @@ bool APMFirmwarePlugin::hasGripper(const Vehicle *vehicle) const
         return _hasGripper;
     }
     return false;
+}
+
+// Only ArduCopter (multirotor and heli) flies NAV_SPLINE_WAYPOINT as a curve. Checked against the vehicle type rather
+// than the plugin, since an offline vehicle keeps its plugin when only its vehicle type changes.
+bool APMFirmwarePlugin::supportsSplineWaypoints(const Vehicle* vehicle) const
+{
+    return vehicle && vehicle->multiRotor();
 }
 
 const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)

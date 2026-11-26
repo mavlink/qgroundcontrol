@@ -18,11 +18,6 @@
             "id":           21,
             "comment":      "MAV_CMD_NAV_LAND",
             "paramRemove":  "4"
-        },
-        {
-            "id":           82,
-            "comment":      "MAV_CMD_NAV_SPLINE_WAYPOINT",
-            "paramRemove":  "1"
         }
     ]
 }

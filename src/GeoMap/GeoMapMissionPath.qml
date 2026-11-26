@@ -23,7 +23,8 @@ import "GeoMapAltitude.js" as GeoMapAltitude
 /// through a complex item's own footprint rather than skipping it), at true
 /// (AMSL) altitude. A leg is flown in its destination item's frame (ArduPilot
 /// AC_WPNav): legs arriving at a terrain-frame item are draped over the DEM
-/// with a linear AGL ramp, all other legs are straight lines. Straight legs
+/// with a linear AGL ramp, legs arriving at a NAV_SPLINE_WAYPOINT follow the
+/// segment's 3D spline samples, all other legs are straight lines. Legs
 /// that pass below the terrain draw in collisionColor, as Plan view marks
 /// them. Stays visible
 /// in 2D mode (crossfade3D off), same as GeoMapFlightPath. Rebuilt wholesale
@@ -71,6 +72,9 @@ GeoMapItem {
     // terrainHeightAt does not notify: bumped as terrain tiles arrive while a route point waits on its terrain query
     property int _terrainRev: 0
 
+    // Last interior drawn for each spline leg ({to, interior}), keyed by the leg's origin item
+    property var _splineInteriors: new Map()
+
     // Altitude to draw a route point at; amsl is NaN while a terrain-frame item waits on its terrain query
     function _displayAmsl(visualItem, coordinate, amsl) {
         root._terrainRev
@@ -90,18 +94,22 @@ GeoMapItem {
     // (exitCoordinateSameAsEntry false) — for a simple item these are always
     // the same point, for a complex item this routes the ribbon straight
     // through its footprint edge-to-edge. Hitting RTL stops the walk and
-    // links the last point to home instead (linkEndToHome). A land item ends
+    // links the last point to home instead (linkEndToHome); a multirotor gets
+    // a level point over home first, then descends. A land item ends
     // the walk at its entry: its interior path (loiter exit -> touchdown) is
     // drawn by the landing pattern visual from the slope start, not straight
     // from the loiter center, and _recalcFlightPathSegments draws no segment
     // after a landing item either. The walk starts at item 1 (item 0 is the
     // MissionSettingsItem, i.e. home); home is prepended only when the mission
     // starts from the ground — rover, or a takeoff command before the first
-    // coordinate item — mirroring linkStartToHome. leg is the type of the leg
+    // coordinate item — mirroring linkStartToHome. A takeoff without a
+    // coordinate adds the top of its vertical climb over home. leg is the type of the leg
     // ARRIVING at a point, mirroring segmentTypeForPair: Takeoff / Land
     // destinations first, then Terrain for a terrain-frame destination
     // (MAV_FRAME_GLOBAL_TERRAIN_ALT), else Generic; Interior is a complex
-    // item's own entry -> exit span, which has no flight path segment. Recomputes automatically on any
+    // item's own entry -> exit span, which has no flight path segment. item is
+    // the visual item the point belongs to, used to look up the spline of the
+    // leg leaving it. Recomputes automatically on any
     // structural or per-item change since the loop below reads every
     // NOTIFY-backed property it depends on.
     readonly property var _routePoints: {
@@ -109,18 +117,32 @@ GeoMapItem {
         if (root.missionController) {
             const items = root.missionController.visualItems
             let linkStartToHome = root.vehicle ? root.vehicle.rover : false
+            let startTakeoff = null
             for (let i = 1; i < items.count; ++i) {
                 const visualItem = items.get(i)
                 if (visualItem.isSimpleItem && visualItem.command === MAVLinkEnums.MAV_CMD_NAV_RETURN_TO_LAUNCH) {
                     const returnCoordinate = root.plannedHomePosition.isValid ? root.plannedHomePosition
                                            : (root.vehicle ? root.vehicle.homePosition : QtPositioning.coordinate())
                     if (points.length > 0 && returnCoordinate.isValid) {
-                        points.push({ coordinate: returnCoordinate, leg: GeoMapMissionPath.Generic })
+                        // A multirotor RTL flies home level and descends over it; RTL_ALT is not accounted for (#15495)
+                        const descend = !!root.vehicle && root.vehicle.multiRotor
+                        if (descend) {
+                            points.push({
+                                coordinate: QtPositioning.coordinate(returnCoordinate.latitude, returnCoordinate.longitude,
+                                                                     points[points.length - 1].coordinate.altitude),
+                                leg: GeoMapMissionPath.Generic,
+                                item: null
+                            })
+                        }
+                        points.push({ coordinate: returnCoordinate,
+                                      leg: descend ? GeoMapMissionPath.Land : GeoMapMissionPath.Generic,
+                                      item: null })
                     }
                     break
                 }
                 if (points.length === 0 && visualItem.isTakeoffItem) {
                     linkStartToHome = true
+                    startTakeoff = visualItem
                 }
                 if (visualItem.specifiesCoordinate && !visualItem.isStandaloneCoordinate) {
                     points.push({
@@ -132,7 +154,8 @@ GeoMapItem {
                         leg: visualItem.isTakeoffItem ? GeoMapMissionPath.Takeoff
                              : visualItem.isLandCommand ? GeoMapMissionPath.Land
                              : (visualItem.isSimpleItem && visualItem.altitudeFrame === QGroundControl.AltitudeFrameTerrain) ? GeoMapMissionPath.Terrain
-                             : GeoMapMissionPath.Generic
+                             : GeoMapMissionPath.Generic,
+                        item: visualItem
                     })
                     if (visualItem.isLandCommand) {
                         break
@@ -144,7 +167,8 @@ GeoMapItem {
                                                                  root._displayAmsl(visualItem, visualItem.exitCoordinate,
                                                                                    visualItem.amslExitAlt)),
                             pendingAmsl: isNaN(visualItem.amslExitAlt),
-                            leg: GeoMapMissionPath.Interior
+                            leg: GeoMapMissionPath.Interior,
+                            item: visualItem
                         })
                     }
                 }
@@ -152,13 +176,30 @@ GeoMapItem {
             if (linkStartToHome && points.length > 0 && items.count > 0) {
                 const home = items.get(0)
                 if (home.coordinate.isValid) {
-                    points.unshift({
+                    // A takeoff without a coordinate (ArduPilot) has no route point, so add its vertical climb over
+                    // home; the leg leaving home then starts from the top of it (MissionController::climbFromHome)
+                    const climb = !!startTakeoff && !startTakeoff.specifiesCoordinate
+                                  && !(root.vehicle && root.vehicle.fixedWing)
+                    const start = [{
                         coordinate: QtPositioning.coordinate(home.coordinate.latitude,
                                                              home.coordinate.longitude,
                                                              root._displayAmsl(home, home.coordinate, home.amslEntryAlt)),
                         pendingAmsl: isNaN(home.amslEntryAlt),
-                        leg: GeoMapMissionPath.Generic
-                    })
+                        leg: GeoMapMissionPath.Generic,
+                        item: climb ? null : home
+                    }]
+                    if (climb) {
+                        start.push({
+                            coordinate: QtPositioning.coordinate(home.coordinate.latitude,
+                                                                 home.coordinate.longitude,
+                                                                 root._displayAmsl(startTakeoff, home.coordinate,
+                                                                                   startTakeoff.amslExitAlt)),
+                            pendingAmsl: isNaN(startTakeoff.amslExitAlt),
+                            leg: GeoMapMissionPath.Takeoff,
+                            item: home
+                        })
+                    }
+                    points.unshift(...start)
                 }
             }
         }
@@ -197,7 +238,10 @@ GeoMapItem {
                     coordinates.push(prev)
                     highlights.push(collision)
                 }
-                if (points[i].leg === GeoMapMissionPath.Terrain && root.surfaceModel) {
+                const spline = root._splineLegInterior(points, i)
+                if (spline.length > 0) {
+                    coordinates.push(...spline)
+                } else if (points[i].leg === GeoMapMissionPath.Terrain && root.surfaceModel) {
                     root._appendTerrainLeg(coordinates, prev, coord)
                 } else {
                     coordinates.push(...root._longLegSubdivision(prev, coord))
@@ -212,6 +256,55 @@ GeoMapItem {
             }
         }
         return { coordinates: coordinates, highlights: highlights }
+    }
+
+    // Interior points of the leg arriving at points[i] when it is flown as a
+    // spline (none otherwise): the segment's samples between the endpoints,
+    // at their AMSL altitude. A sample's altitude is unknown while an endpoint
+    // waits on its terrain query, so it is ramped between the endpoints then,
+    // like a straight leg. A terrain-frame spline is flown relative to the
+    // terrain (ArduPilot AC_WPNav terrain_alt), so its samples are draped over
+    // the DEM with the same AGL ramp as a straight terrain leg, plus the
+    // curve's own vertical shape. The samples are recomputed after an edit
+    // moves the route's endpoints, so until they join them again the leg
+    // keeps its last drawn curve rather than flashing straight on each drag step.
+    function _splineLegInterior(points, i) {
+        const result = []
+        if (points[i].leg === GeoMapMissionPath.Interior || !root.missionController || !points[i - 1].item) {
+            return result
+        }
+        const samples = root.missionController.splinePathFrom(points[i - 1].item)
+        if (samples.length < 3) {
+            return result
+        }
+        const prev = points[i - 1].coordinate
+        const coord = points[i].coordinate
+        const first = samples[0]
+        const last = samples[samples.length - 1]
+        if (first.latitude !== prev.latitude || first.longitude !== prev.longitude
+                || last.latitude !== coord.latitude || last.longitude !== coord.longitude) {
+            const drawn = root._splineInteriors.get(points[i - 1].item)
+            return drawn && drawn.to === points[i].item ? drawn.interior : result
+        }
+        const drape = points[i].leg === GeoMapMissionPath.Terrain && !!root.surfaceModel
+        const prevTerrain = drape ? root.surfaceModel.terrainHeightAt(prev) : 0
+        const destTerrain = drape ? root.surfaceModel.terrainHeightAt(coord) : 0
+        for (let j = 1; j < samples.length - 1; ++j) {
+            const sample = samples[j]
+            const fraction = j / (samples.length - 1)
+            let altitude
+            if (drape) {
+                altitude = GeoMapAltitude.drapedSplineAltitude(samples, j, prev.altitude, coord.altitude, prevTerrain,
+                                                               destTerrain, root.surfaceModel.terrainHeightAt(sample))
+            } else if (isNaN(sample.altitude)) {
+                altitude = prev.altitude + ((coord.altitude - prev.altitude) * fraction)
+            } else {
+                altitude = sample.altitude
+            }
+            result.push(QtPositioning.coordinate(sample.latitude, sample.longitude, altitude))
+        }
+        root._splineInteriors.set(points[i - 1].item, { to: points[i].item, interior: result })
+        return result
     }
 
     // Interior points of a straight leg (none when it is short enough)
@@ -256,8 +349,9 @@ GeoMapItem {
     }
 
     // Per route point: the leg arriving there passes below the terrain
-    // (FlightPathSegment::terrainCollision rules). Terrain-frame legs ride the
-    // terrain and never collide.
+    // (FlightPathSegment::terrainCollision rules). A straight terrain-frame leg
+    // rides the terrain and never collides; a terrain-frame spline does where
+    // its own vertical shape takes it below the terrain.
     property var _legCollisions: []
 
     // FlightPathSegment::_collisionIgnoreMeters: takeoff and land legs meet the ground at one end
@@ -273,7 +367,13 @@ GeoMapItem {
         const straightUpTakeoff = !(root.vehicle && root.vehicle.fixedWing)
         for (let i = 1; i < points.length; ++i) {
             const leg = points[i].leg
-            if (leg === GeoMapMissionPath.Terrain || leg === GeoMapMissionPath.Interior) {
+            if (leg === GeoMapMissionPath.Interior) {
+                continue
+            }
+            if (leg === GeoMapMissionPath.Terrain) {
+                // The draped samples carry the leg's clearance over the terrain under each of them
+                collisions[i] = root._splineLegInterior(points, i).some(
+                            sample => root._demFrame(sample).altitude < root.surfaceModel.terrainHeightAt(sample))
                 continue
             }
             const coord = points[i].coordinate
@@ -283,8 +383,9 @@ GeoMapItem {
             if (leg === GeoMapMissionPath.Takeoff && straightUpTakeoff) {
                 prev = QtPositioning.coordinate(prev.latitude, prev.longitude, coord.altitude)
             }
-            // Check the same great-circle pieces _expandedPath draws
-            const chain = [prev, ...root._longLegSubdivision(prev, coord), coord]
+            // Check the same pieces _expandedPath draws
+            const spline = root._splineLegInterior(points, i)
+            const chain = [prev, ...(spline.length > 0 ? spline : root._longLegSubdivision(prev, coord)), coord]
             for (let j = 1; j < chain.length && !collisions[i]; ++j) {
                 collisions[i] = root.surfaceModel.segmentBelowTerrain(
                             root._demFrame(chain[j - 1]), root._demFrame(chain[j]),
@@ -307,6 +408,12 @@ GeoMapItem {
 
     function _reloadPath() {
         if (_geometry) {
+            const routeItems = new Set(root._routePoints.map(point => point.item))
+            for (const item of Array.from(root._splineInteriors.keys())) {
+                if (!routeItems.has(item)) {
+                    root._splineInteriors.delete(item)
+                }
+            }
             root._legCollisions = root._computeLegCollisions()
             root._setGeometryPath()
         }
@@ -343,6 +450,14 @@ GeoMapItem {
 
     on_RoutePointsChanged: _scheduleReloadPath()
     onHomeTerrainBiasChanged: _scheduleCollisionRefresh()
+
+    // Spline samples are recomputed after the route's own properties change,
+    // and also on edits the route does not observe (a waypoint's hold time)
+    Connections {
+        target: root.missionController
+
+        function onSplinePathsChanged() { root._scheduleReloadPath() }
+    }
 
     readonly property bool _hasTerrainLeg: _routePoints.some(p => p.leg === GeoMapMissionPath.Terrain)
     readonly property bool _hasPendingAmsl: _routePoints.some(p => p.pendingAmsl)
