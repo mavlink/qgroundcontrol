@@ -129,8 +129,7 @@ GstAHardwareBufferVideoBuffer::GstAHardwareBufferVideoBuffer(GstSample* sample, 
 // texcoords are bottom-left, so apply the static Y-flip Qt's SurfaceTexture path also applies (flipV, row-major).
 QMatrix4x4 GstAHardwareBufferVideoBuffer::externalTextureMatrix() const
 {
-    // GStreamer exposes no per-buffer decoder transform at this layer, so we apply the static external-OES Y-flip
-    // (top-left vs GL bottom-left origin). If a device ever needs crop-inset/rotation, source it from GstVideoCropMeta.
+    // A crop inset or rotation, should a device need one, would come from GstVideoCropMeta.
     static const QMatrix4x4 flipV(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
                                   0.0f, 1.0f);
     return flipV;
@@ -138,8 +137,6 @@ QMatrix4x4 GstAHardwareBufferVideoBuffer::externalTextureMatrix() const
 
 bool GstAHardwareBufferVideoBuffer::validatePlaneHandles() const
 {
-    // Qt 6.10-6.12 has the right ExternalOES rendering path, but upstream GStreamer still does not expose this
-    // AHardwareBuffer memory API. If a future GStreamer/Qt release grows an official API, replace these vendor hooks.
     return validatePlanes([](GstMemory* mem) {
         if (!mem || !gst_is_ahardware_buffer_memory(mem))
             return false;
@@ -194,7 +191,6 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi,
         return {};
     }
 
-    // Block until the producer's GPU write completes before importing/sampling the recycled AHB.
     waitProducerComplete(buffer);
 
     // Before the import: a frame Qt can't wrap must not cost one.

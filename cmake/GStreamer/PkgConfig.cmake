@@ -45,7 +45,7 @@ endfunction()
 #                        Homebrew) ahead of the SDK. System .pc files invisible.
 # MODE SYSTEM_AUGMENT  — prepend <libdirs> to PKG_CONFIG_PATH so SDK .pc files
 #                        win but system glib/gobject .pc files stay discoverable.
-#                        Used by Linux distro-installed GStreamer.
+#                        Used for a Linux GStreamer_ROOT_DIR (platform/Linux.cmake).
 # PKG_CONFIG_EXECUTABLE / PKG_CONFIG_ARGN / PKG_CONFIG_USE_CMAKE_PREFIX_PATH are set as normal variables in the caller's
 # scope.
 # cmakelang reads set(ENV{<name>}) as a variable name.

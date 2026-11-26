@@ -49,7 +49,7 @@ enum class GpuBinMode
 {
     Passthrough,   ///< Every compiled native memory straight into qgcqvideosink (Windows, Apple, ...).
     GlUpload,      ///< glupload → glcolorconvert → GLMemory 2D; gst-gl imports LINEAR and vendor-tiled DMABuf.
-    DirectDmaBuf,  ///< memory:DMABuf and DMA_DRM into QGC's own importer (LINEAR only), skipping gst-gl's copy.
+    DirectDmaBuf,  ///< memory:DMABuf and importable DMA_DRM layouts into QGC's own importer, skipping gst-gl's copy.
     /// A switchbin routes each stream by the memory its decoder negotiates: DMABuf and DMA_DRM that QGC's importer
     /// takes go straight into it, as in DirectDmaBuf; GLMemory and system memory go through glupload →
     /// glcolorconvert, as in GlUpload. Needs switchbin of GStreamer 1.24 or later, else the bin is GlUpload.
@@ -124,7 +124,8 @@ struct SinkCapsPolicy
 
 /// The caps qgcqvideosink accepts under @p policy, most preferred first, all in the Qt-renderable formats of
 /// kVideoFormatTable. The glupload variant takes GLMemory only, as glcolorconvert outputs it; the DMABuf-or-glupload
-/// variant takes that and, ahead of it, the EGL-importable DMA_DRM and DMABuf of the direct DMABuf variant. Otherwise,
+/// variant takes that and, ahead of it, the EGL-importable DMA_DRM and DMABuf of the direct DMABuf variant; the
+/// d3d12convert variant takes RGBA and BGRA D3D12Memory only. Otherwise,
 /// with gpuZeroCopy, the GPU memory @p policy's render target imports comes first: EGL-importable DMA_DRM and DMABuf
 /// on OpenGL over EGL while the DMABuf import works; GLMemory, unless the direct DMABuf variant, wherever gst-gl shares
 /// Qt's OpenGL context (EGL or GLX); AHardwareBuffer on OpenGL over EGL (Android); on Direct3D11 NV12 and P010

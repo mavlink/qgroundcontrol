@@ -31,11 +31,10 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-// Process-wide CVMetalTextureCache, keyed by MTLDevice*. Apple's documented bridge between
-// CVPixelBuffer/IOSurface and Metal — reuses MTLTexture objects when the decoder recycles
-// IOSurfaces (typical with VideoToolbox), and avoids per-frame MTLTextureDescriptor allocation.
-// Apple's docs guarantee thread-safety. Recreated on QRhi device change (window
-// destroy/recreate); the live cache is released by reset() at receiver teardown.
+// Process-wide CVMetalTextureCache, keyed by MTLDevice*. Apple's documented bridge between CVPixelBuffer/IOSurface and
+// Metal — reuses MTLTexture objects when the decoder recycles IOSurfaces (typical with VideoToolbox), and avoids
+// per-frame MTLTextureDescriptor allocation. Apple's docs guarantee thread-safety. Recreated on QRhi device change
+// (window destroy/recreate); resetTextureCache() releases it when the GPU caches are reset.
 struct MetalTextureCache
 {
     CVMetalTextureCacheRef cache = nullptr;
@@ -137,10 +136,8 @@ void GstIOSurfaceVideoBuffer::resetTextureCache() noexcept
 
 QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
 {
-    // *** UNTESTED on macOS hardware. CI compiles this path; runtime validation TBD. ***
-    // Pulls a CVPixelBufferRef from the GstBuffer (gst-vt path), grabs its
-    // IOSurfaceRef, imports each plane via [MTLDevice newTextureWithDescriptor:
-    // iosurface:plane:], and wraps each MTLTexture in a QRhiTexture.
+    // Untested on Apple hardware: CI only compiles this path. Takes the CVPixelBufferRef from the buffer's
+    // GstCoreVideoMeta (vtdec) and each plane's MTLTexture from the CVMetalTextureCache, which Qt then wraps.
     // IOSurface is device-agnostic so no shared-MTLDevice bridge is required.
     GstBuffer* buffer = nullptr;
     if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::Metal), GstIOSurfaceLog(), buffer)) {

@@ -764,7 +764,8 @@ void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec()
     const GStreamer::GstPadPtr peer = GStreamer::adoptPad(gst_pad_get_peer(pad));
     const GStreamer::GstElementPtr linkedTo = GStreamer::adoptElement(gst_pad_get_parent_element(peer.get()));
     if (parser.isEmpty()) {
-        // As before the bin knew of encodings: parsebin plugs the depayloader once the stream's caps arrive.
+        // A codec the bin doesn't parse itself is left to parsebin, which plugs the depayloader once the stream's caps
+        // arrive.
         QCOMPARE(linkedTo.get(), GstTest::findByFactory(rtsp.bin.get(), "parsebin").get());
         QVERIFY(RtspSource::pushAccessUnit(pad, 1111, {}));
         QVERIFY(GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()));

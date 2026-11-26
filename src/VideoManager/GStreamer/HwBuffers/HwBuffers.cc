@@ -48,7 +48,7 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* ca
         return nullptr;
     }
 
-    // Validate before commit — failure resets matchedPath so per-path counters don't double-count.
+    // Validated before the cache commits to the path; a failure leaves matchedPath None, as the frame goes to the CPU.
     auto buildOrFallback = [&matchedPath, &info, cache](auto&& buf) -> std::unique_ptr<QHwVideoBuffer> {
         if (!buf || !buf->validatePlaneHandles()) {
             GstHwPathTelemetry::recordFallbackReason(matchedPath, GstHwPathTelemetry::HwFallbackReason::ValidateFailed);
@@ -86,7 +86,6 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* ca
             return nullptr;
         }
         matchedPath = path.path;
-        // The sample a backend buffer holds, created only now that a path has matched the memory.
         GstSample* const sample = gst_sample_new(buffer, caps, nullptr, nullptr);
         auto imported = buildOrFallback(path.construct(sample, info, format, context));
         gst_sample_unref(sample);
@@ -95,8 +94,8 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* ca
 
     const auto paths = GstHwPathRegistry::paths();
 
-    // Fast path: only the paths behind a sample validated earlier this epoch are tried. Allocator and handle checks
-    // stay per-buffer: decoders can swap memory or recycle bad handles under stable caps.
+    // Fast path: the path that validated a sample earlier this epoch is tried first. Allocator and handle checks stay
+    // per-buffer: decoders can swap memory or recycle bad handles under stable caps.
     if (cache && cache->validated && cache->path != HwVideoBufferPath::None) {
         for (const HwPathDescriptor* path : paths) {
             if ((path->path == cache->path) && path->matches(mem0)) {

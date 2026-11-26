@@ -1,9 +1,9 @@
 # Acquiring a GStreamer SDK: qgc_gst_acquire_sdk downloads a platform's packages (Packages.cmake) into
 # CPM_SOURCE_CACHE and extracts them once into the SDK tree, and the per-platform acquirers in acquire/<platform>.cmake,
 # included at the end, name the packages, the cache directory and the extractor. CI keys its cache of the extracted
-# trees on this file, acquire/, Packages.cmake and the gstreamer section of .github/build-config.json
-# (.github/actions/cache/action.yml), so keep everything that decides an extracted tree in those files and nothing
-# else.
+# trees on this file, acquire/, Packages.cmake and the gstreamer section of .github/build-config.json without its plugin
+# lists (.github/actions/cache/action.yml), so keep everything that decides an extracted tree in those files and
+# nothing else.
 
 include_guard(GLOBAL)
 

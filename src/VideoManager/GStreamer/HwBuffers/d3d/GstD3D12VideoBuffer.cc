@@ -235,7 +235,7 @@ std::shared_ptr<InteropFence> interopFence(ID3D11Device* device11, ID3D12Device*
 #endif
 
 /// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard and the decoder sync run in the
-/// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so mapTextures() on the
+/// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so importTextures() on the
 /// render thread only imports resolved resources. A Direct3D 12 QRhi samples the resource itself. A Direct3D 11 QRhi
 /// can't, but the resource opens as a texture of its device: the picture is copied out of that on the render thread,
 /// as the D3D11 path copies it out of a decoder's padded texture, and GStreamer never uses Qt's device.
@@ -245,8 +245,8 @@ public:
     D3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
         : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D12)
     {
-        // The D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path, here for the
-        // whole stream rather than frame by frame in mapTextures().
+        // The D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path, refused here on
+        // the streaming thread rather than in importTextures().
         if (qtRendersWithD3D12() && !d3d12RhiSamples(format.pixelFormat())) {
             QGC_HW_WARN_ONCE(GstD3D12Log,
                              "resolve: multi-plane D3D12Memory" << format.pixelFormat() << "can't be sampled by QRhi");
@@ -293,7 +293,7 @@ public:
 
 private:
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    /// mapTextures() for a Direct3D 11 QRhi.
+    /// importTextures() for a Direct3D 11 QRhi.
     QVideoFrameTexturesUPtr mapOnD3D11(QRhi& rhi, QVideoFrameTexturesUPtr& old)
     {
         GstBuffer* const buffer = beginMap(rhi, QRhi::D3D11);

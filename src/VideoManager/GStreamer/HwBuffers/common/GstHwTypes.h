@@ -15,9 +15,9 @@ enum class HwVideoBufferPath
     Count,
 };
 
-/// Inputs the factory needs to build a GPU buffer, which qgcqvideosink fills for each frame. The layout is the same in
-/// every build: native handles are stored as void* (EGLDisplay is a void* typedef, EGL_NO_DISPLAY is null), so no EGL
-/// or Vulkan header or QGC_HAS_* define is needed here.
+/// Inputs makeHwVideoBuffer() needs to build a GPU buffer, which qgcqvideosink fills for each frame. The layout is the
+/// same in every build: native handles are stored as void* (EGLDisplay is a void* typedef, EGL_NO_DISPLAY is null), so
+/// no EGL or Vulkan header or QGC_HAS_* define is needed here.
 struct HwVideoBufferContext
 {
     bool gpuEnabled = false;

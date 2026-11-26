@@ -28,18 +28,18 @@ struct Config
     JitterBuffer jitterBuffer = JitterBuffer::DropOnLatency;
     int latencyMs = 80;
     bool doRetransmission = true;  ///< RTSP only: plain UDP/TCP sources have no RTCP back-channel for NACKs.
-    /// RTSP only: how long rtspsrc waits to connect and for the answer to each request (20 s by default). It doesn't
-    /// end a stream whose TCP-interleaved data stops: there rtspsrc only sends a keep-alive when the time is up, and
-    /// it is the receiver's watchdog that notices the stall.
+    /// RTSP only: how long rtspsrc waits to connect and for the answer to each request (its own default is 20 s). It
+    /// doesn't end a stream whose TCP-interleaved data stops: there rtspsrc only sends a keep-alive when the time is
+    /// up, and it is the receiver's watchdog that notices the stall.
     std::chrono::milliseconds rtspTcpTimeout{5000};
 };
 
-/// Build a source bin for `uri`: `source` [+ `tsdemux`] + `parsebin`, or for RTP over UDP
-/// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser, which also take the place of an RTSP bin's
-/// `parsebin` once `rtspsrc` tells that its stream is H.264 or H.265, as the parser alone does of an MPEG-TS bin's
-/// once `tsdemux` tells so. Supported schemes: rtsp/rtspt,
-/// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with
-/// port 0 listens on a free port, and one without a host on every IPv4 address.
+/// Build a source bin for `uri`: `source` [+ `tsdemux`] + `parsebin`, or for RTP over UDP `udpsrc`
+/// [+ `rtpjitterbuffer`] + the codec's depayloader and parser. The same depayloader and parser take the place of an
+/// RTSP bin's `parsebin` once `rtspsrc` tells that its stream is H.264 or H.265, as a `capsfilter` and the parser do
+/// of an MPEG-TS bin's once `tsdemux` tells so. Supported schemes: rtsp/rtspt, tcp:// (MPEG-TS), udp:// (H.264 RTP),
+/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with port 0 listens on a free port, and one
+/// without a host on every IPv4 address.
 ///
 /// The RTP over UDP bin has its source pad from the start, and counts its RTP packets itself
 /// (GStreamer::rtpPacketCounts()). The others' ghost pads are wired lazily; for

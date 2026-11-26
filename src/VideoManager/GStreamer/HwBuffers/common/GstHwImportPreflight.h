@@ -15,7 +15,7 @@ namespace GstHwImportPreflight {
 /// Pre-flight + telemetry: true iff @p rhi can create every plane texture of @p pixelFormat with @p flags at @p size
 /// (format supported AND within TextureSizeMax). Each plane's QRhiTexture::Format + plane size come from
 /// QVideoTextureHelper: NV12 (R8/RG8), P010 (R16/RG16). A rejection records an ImportUnsupported fallback for @p path
-/// so it shows up in the per-(path,reason) breakdown. Call it on @p rhi's thread (mapTextures()).
+/// so it shows up in the per-(path,reason) breakdown. Call it on @p rhi's thread (importTextures()).
 bool preflightOrRecord(QRhi& rhi, HwVideoBufferPath path, QVideoFrameFormat::PixelFormat pixelFormat, const QSize& size,
                        QRhiTexture::Flags flags = {});
 

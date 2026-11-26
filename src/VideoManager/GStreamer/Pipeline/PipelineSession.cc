@@ -303,8 +303,8 @@ void PipelineSession::shutdown()
     _phase = Phase::TearingDown;
 
     if (_recording && _pipeline && _recording->beginTeardown()) {
-        // Handles the recorder's messages until it is finalized. The pump discards every other type, which
-        // _handleMessage() ignores anyway while tearing down.
+        // Handles the recorder's messages until it is finalized. The pump discards every other type: while tearing
+        // down, _handleMessage() would only log rtspsrc's progress from them.
         _bus.pumpUntil(
             static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_ELEMENT),
             [this]() { return !_recording->finalizing(); }, QDeadlineTimer(RecordingBranch::kFinalizeTimeout));

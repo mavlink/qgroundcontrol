@@ -13,9 +13,6 @@ namespace GstQgc {
 struct SinkBin;
 }
 
-// What GstVideoReceiver and its GstReceiverWorker pass between their threads: the receiver hands over the whole
-// GstReceiverRequest after each of its requests, and the worker reports its whole GstReceiverStatus after each change.
-
 struct GstRecordingRequest
 {
     QString file;
@@ -24,7 +21,7 @@ struct GstRecordingRequest
     quint64 id = 0;
 };
 
-/// Everything the receiver asks for, as it stands after each of its requests.
+/// Everything GstVideoReceiver asks of its GstReceiverWorker, handed whole to the worker's thread after each request.
 struct GstReceiverRequest
 {
     bool active = false;
@@ -38,7 +35,7 @@ struct GstReceiverRequest
     std::optional<GstRecordingRequest> recording;
 };
 
-/// What the worker reports, as it stands after each change.
+/// What GstReceiverWorker reports, whole, to the receiver's GUI thread after each change.
 struct GstReceiverStatus
 {
     VideoReceiver::State state = VideoReceiver::State::Stopped;

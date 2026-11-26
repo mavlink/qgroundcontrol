@@ -65,7 +65,7 @@ public:
     struct Failure
     {
         QString message;
-        /// Another session can't fare better: the stream has no video, or its URL is one FFmpeg can't open.
+        /// Another session can't fare better: FFmpeg has no protocol or demuxer for the URL.
         bool permanent = false;
     };
 

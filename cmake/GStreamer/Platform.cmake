@@ -43,7 +43,7 @@ endfunction()
 #   <prefix>_PKG_CONFIG       TRUE when the SDK is read through pkg-config (not iOS's merged framework)
 #   <prefix>_TARGETS          the function that creates the GStreamer:: targets (Targets.cmake, platform/IOS.cmake)
 #   <prefix>_PLUGIN_ARCHIVES  TRUE when the SDK ships its plugins as static archives the build may leave unused
-#   <prefix>_PATH_LABEL       how the configure status line names the SDK's linkage (a macOS framework says so)
+#   <prefix>_PATH_LABEL       how the configure status line names the SDK's linkage
 #   <prefix>_NOTICE_ASSETS    TRUE when the GStreamer notice ships as an APK asset
 # Fails configure on any other platform.
 # cmake-lint: disable=C0103,E1121

@@ -208,7 +208,7 @@ void QtVideoRecorder::_recordNextFormat()
     // times the bit rate Qt worked out from the quality: 45 Mbit/s rather than 6 for 1080p at High on a Snapdragon
     // 778G. No setting of the recorder corrects the times; a lower quality still makes a smaller file.
     _recorder->setQuality(_quality);
-    // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingBranch).
+    // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingSink).
     QMediaMetaData metaData;
     metaData.insert(QMediaMetaData::Date, QDateTime::currentDateTimeUtc());
     metaData.insert(QMediaMetaData::Comment, VideoReceiver::recordingComment());

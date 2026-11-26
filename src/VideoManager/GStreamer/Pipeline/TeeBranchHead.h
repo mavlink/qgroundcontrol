@@ -16,7 +16,7 @@ class TeeBranchHead
 {
 public:
     /// Adds the queue and the closed valve to @p pipeline and links them behind @p tee. False on failure, logged with
-    /// @p what naming the branch; nothing stays built then.
+    /// @p what naming the branch; the head then holds nothing, though what was added stays in @p pipeline.
     [[nodiscard]] bool build(GstElement* pipeline, GstElement* tee, GStreamer::PipelineBranch branch, const char* what);
     /// Forgets the elements, which the pipeline still owns, and disconnects the overrun handler.
     void reset();

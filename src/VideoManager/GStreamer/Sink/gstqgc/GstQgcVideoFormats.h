@@ -19,10 +19,9 @@ inline constexpr unsigned kOfferGlUpload = 1u << 0;
 /// The EGL-derived DMA_DRM caps: formats the DMABuf importer takes with an explicit modifier.
 inline constexpr unsigned kOfferDmaDrm = 1u << 1;
 
-/// Single source of truth linking a GStreamer video format to its Qt pixel format and (optionally) its
-/// negotiation caps token. Every advertised caps format list (GstQgcSinkPolicy) and toQtPixelFormat()
-/// derive from this table, so a format can never be advertised without a Qt mapping,
-/// nor mapped-and-renderable without being offered.
+/// Single source of truth linking a GStreamer video format to its Qt pixel format and (optionally) its negotiation caps
+/// token. Every advertised caps format list (GstQgcSinkPolicy) and toQtPixelFormat() derive from this table, so a
+/// format can never be advertised without a Qt mapping.
 struct VideoFormatEntry
 {
     GstVideoFormat gst;
@@ -72,7 +71,7 @@ inline std::vector<GstVideoFormat> advertisedFormats(unsigned requiredOffers = 0
 }
 
 /// "{ NV12, NV21, ... }" — the advertised formats carrying every flag in @p requiredOffers, in table order, for a caps
-/// string. Built once at caps setup.
+/// string.
 inline std::string advertisedFormatList(unsigned requiredOffers = 0)
 {
     std::string out = "{ ";

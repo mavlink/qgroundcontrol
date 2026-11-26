@@ -163,7 +163,7 @@ protected:
         return true;
     }
 
-    /// Shared mapTextures preamble; warns once per cause, returns false on first failure.
+    /// Shared importTextures() preamble; warns once per cause, returns false on first failure.
     bool checkMapPreconditions(const QRhi& rhi, int expectedBackend, const QLoggingCategory& cat,
                                GstBuffer*& outBuffer) const;
 

@@ -16,8 +16,8 @@
 #   - it registers every plugin it is given, while QGC registers only the allowlisted plugins that have a static
 #     archive (failing configure when a bundle-required one is missing), with its own registration template
 #     (Mobile.cmake);
-#   - it copies the plugin Java sources and fonts/CA assets into the source tree, while QGC stages them in the build
-#     directory for Gradle;
+#   - it copies the plugin Java sources and the fonts and CA assets into the source tree, while QGC stages the Java
+#     sources and the CA bundle in the build directory for Gradle;
 #   - its static-library and SDK discovery come from the SDK's FindGStreamer.cmake, while QGC's are its own
 #     (Targets.cmake, Acquire.cmake).
 
@@ -292,8 +292,8 @@ endfunction()
 # generated gst_init_static_plugins() and carries the JNI state GStreamer's Android plugins need (gst_android_jni.c).
 # GStreamer::GStreamer carries the SDK's headers and links GStreamer::mobile (_qgc_gst_android_usage_target): the app
 # takes every GStreamer function from that library, which keeps QGC_GST_APP_CORE_SYMBOLS for it. Also stages the plugin
-# Java sources and the fonts/CA assets for the APK. Sets GSTREAMER_STATIC_PLUGINS, the plugins registered, in the
-# caller's scope.
+# Java sources and the CA bundle for the APK. Sets GSTREAMER_STATIC_PLUGINS, the plugins registered, in the caller's
+# scope.
 function(_qgc_gst_create_android_mobile_target)
     qgc_gst_layout_get(ROOT_DIR _gst_root)
     qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)

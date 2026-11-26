@@ -33,7 +33,7 @@ class GstVideoReceiverTestBase : public GStreamerTestBase
 
 public:
     /// Runs @p task with @p receiver's pipeline (null when none runs) on the worker thread that owns it, and waits for
-    /// it, for at most a few seconds: false when the worker didn't get to it.
+    /// it, for at most ten seconds: false when the worker didn't get to it.
     static bool runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
     static GstElement* displaySink(const GstVideoReceiver* receiver);
     /// The qgcqvideosink of @p receiver's display sink; null while it has none.

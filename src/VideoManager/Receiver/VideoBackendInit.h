@@ -35,8 +35,8 @@ public:
     /// Takes @p initialization for the backend's: Pending until it finishes. What start() does with the backend's
     /// own, and tests with one they finish themselves.
     void start(const QFuture<bool>& initialization);
-    /// Blocks until the initialization is over, starting it if needed; finished() is emitted before this returns.
-    /// True when the backend is ready.
+    /// Blocks until the initialization is over, starting it if needed; a pending one emits finished() before this
+    /// returns. True when the backend is ready.
     bool waitUntilFinished();
 
 signals:

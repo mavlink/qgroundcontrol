@@ -73,7 +73,6 @@ public:
     static QMediaFormat::VideoCodec recordingCodec(const QString& key);
     /// The name of the codec of key @p key, such as "H.264", for display.
     static QString recordingCodecName(const QString& key);
-    /// The container of @p format.
     static QMediaFormat::FileFormat container(VideoReceiver::FileFormat format);
     /// The quality of value @p value, one of VideoSettings::uvcRecordingQuality's; HighQuality for any other.
     static QMediaRecorder::Quality recordingQuality(int value);

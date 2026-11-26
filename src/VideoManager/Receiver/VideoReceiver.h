@@ -62,7 +62,7 @@ public:
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;
         /// Frames a software decoder decodes at once, each on a thread of its own; above 1, each delays the picture
-        /// by a frame at most. For the GStreamer receiver's libav decoders only.
+        /// by a frame at most. For the software decoders of the GStreamer receiver (libav) and of the FFmpeg receiver.
         int softwareDecoderThreads = 1;
         /// Reconnect with backoff after a failure. Applies at once; changing any other field restarts the stream.
         bool autoReconnect = true;
@@ -106,7 +106,7 @@ public:
 
     /// "mkv", "mov" or "mp4".
     static QString fileExtension(FileFormat format);
-    /// The comment recordings carry, of GStreamer and of a USB camera alike: the application and its version.
+    /// The comment every receiver's recordings carry: the application and its version.
     static QString recordingComment();
     static bool isValidFileFormat(int format);
     /// The size @p frame is presented at: its format's viewport (the picture without decoder padding or crop), else the

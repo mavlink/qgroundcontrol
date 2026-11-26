@@ -345,7 +345,7 @@ void GstQgcSinkTest::_testAllocationQueryHwMemoryPoolHint_data()
     QTest::addColumn<QByteArray>("minBuffersEnv");
     QTest::addColumn<int>("expectedMinBuffers");
 
-    // Default: a buffer beyond those the sink and Qt hold.
+    // Default: as many decoder buffers as one sink's frames hold in steady flow (kProposedMinBuffers).
     constexpr int kDefault = 5;
     QTest::newRow("default") << QByteArray() << kDefault;
     QTest::newRow("env-override") << QByteArrayLiteral("3") << 3;
@@ -561,7 +561,6 @@ void GstQgcSinkTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 1);
     QCOMPARE(lastStartUs, qint64(3 * GST_SECOND / GST_USECOND));
-    // The two frames never shown are counted as superseded.
     QCOMPARE(GstQgc::sinkStats(harness.element()).superseded, quint64(2));
 
     // Delivery re-arms once the GUI side has taken the frame.
@@ -1174,7 +1173,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
                                     feature.isEmpty() ? nullptr : feature.constData(), environment);
     QVERIFY(harness.isReady());
 
-    // Periodic per-failure warnings are rate-limited by process-global counters, so their count is not fixed.
+    // A run of failures is warned of on its first and every 64th failure (GstQgc::PathSession::onMapFailed()).
     ignoreLogMessage("Video.GStreamer.QgcQVideoSink", QtWarningMsg,
                      QRegularExpression(QStringLiteral("mapping failed")));
     expectLogMessage("Video.GStreamer.QgcQVideoSink", QtWarningMsg,
@@ -1349,8 +1348,8 @@ void GstQgcSinkTest::_testGpuBinSelection_data()
     const int passthrough = int(GpuBinMode::Passthrough);
     const int openGl = int(RenderBackend::OpenGL);
     const int vulkan = int(RenderBackend::Vulkan);
-    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect. WGL and CGL contexts aren't
-    // wrapped, so there it is no GPU bin.
+    // The DMABuf-or-glupload bin's sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect. WGL
+    // and CGL contexts aren't wrapped, so there it is no GPU bin.
 #if defined(Q_OS_LINUX)
     const int withoutEgl = dmaBufOrGlUpload;
 #else

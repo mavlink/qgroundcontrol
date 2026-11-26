@@ -4,7 +4,7 @@
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/../modules/Download.cmake") # qgc_resilient_download / qgc_parse_expected_hash
+include("${CMAKE_CURRENT_LIST_DIR}/../modules/Download.cmake") # qgc_resilient_download
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
 
 # _qgc_gst_package_path(<package> <version> <output_var>)

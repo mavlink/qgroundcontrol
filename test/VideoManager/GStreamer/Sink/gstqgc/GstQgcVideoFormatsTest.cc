@@ -78,7 +78,7 @@ void GstQgcVideoFormatsTest::_testD3D12ConvertCapsAreSinglePlane()
 
 void GstQgcVideoFormatsTest::_testColorimetryColorSpaceMapping()
 {
-    // Mirrors Qt 6.10.3 qgst.cpp: SMPTE240M maps to AdobeRgb, FCC remains Undefined.
+    // As Qt's own GStreamer backend maps them (qgst.cpp, Qt 6.12).
     QCOMPARE(toQtColorSpace(GST_VIDEO_COLOR_MATRIX_SMPTE240M), QVideoFrameFormat::ColorSpace_AdobeRgb);
     QCOMPARE(toQtColorSpace(GST_VIDEO_COLOR_MATRIX_FCC), QVideoFrameFormat::ColorSpace_Undefined);
 }

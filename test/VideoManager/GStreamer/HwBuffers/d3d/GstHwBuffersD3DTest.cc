@@ -265,8 +265,8 @@ QByteArray d3dMemoryCaps(const QString& api, const QString& format, const QStrin
 }
 
 /// Converts the uploaded frame with QVideoFrame::toImage() on @p rhi and compares it with the frame before the upload,
-/// passed through @p cpuElement into @p cpuCaps. @p subsampledInput: the source has 2x2 chroma, which a GPU
-/// interpolates across bar edges.
+/// passed through @p cpuElement into @p cpuCaps. @p subsampledInput: the source has one chroma sample per 2x2 pixels,
+/// which the GPU interpolates up to two pixels into a neighbor bar.
 void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadElement, const char* capsFilter,
                          const char* cpuElement, const char* cpuCaps, QVideoFrameFormat::PixelFormat pixelFormat,
                          bool subsampledInput, HwVideoBufferPath expectedPath)
@@ -295,7 +295,6 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
     const QImage actual =
         QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), &rhi)).toImage();
     const QImage expected = GstTest::cpuImage(mapCpuFrame(gst_sample_get_buffer(cpu.sample), cpu.info, format));
-    // NV12 carries one chroma sample per 2x2 pixels, which the GPU interpolates up to two pixels into a neighbor bar.
     const int chromaEdgeRadius = subsampledInput ? 2 : 0;
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8, chromaEdgeRadius);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));

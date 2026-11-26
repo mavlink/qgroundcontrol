@@ -35,9 +35,9 @@ public:
     /// Primes the bridge unless it already is, or failed for good; true once primed. Thread-safe.
     bool prime();
 
-    /// Drops the shared objects and the retry latch, so the next request primes from scratch. Returns the top-level
-    /// bins that got this bridge's device and are still alive, which it forgets: every bin served up to the drop,
-    /// for HwBuffers::onGraphicsDeviceRemoved() to tell. Thread-safe.
+    /// Drops the shared objects and the retry latch, so the next provideContexts() or prime() primes from scratch.
+    /// Returns the top-level bins that got this bridge's device and are still alive, which it forgets: every bin served
+    /// up to the drop, for HwBuffers::onGraphicsDeviceRemoved() to tell. Thread-safe.
     std::vector<GStreamer::GstElementPtr> reset();
 
     /// True from noteDeviceRemoved() until the bridge primes again. Thread-safe.
@@ -66,7 +66,8 @@ protected:
     /// Drops the shared objects; the mutex is held.
     virtual void clearLocked() = 0;
 
-    /// For primeLocked(): the next request tries again. Returns false so a failure path can `return retryLater();`.
+    /// For primeLocked(): the next provideContexts() or prime() tries again. Returns false so a failure path can
+    /// `return retryLater();`.
     bool retryLater() noexcept;
 
     /// For a subclass whose device reported its removal, on any thread: deviceLost() from now on, and the GUI thread

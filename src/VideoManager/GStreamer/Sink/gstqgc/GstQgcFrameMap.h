@@ -11,7 +11,7 @@
 
 #include "HwBuffers/HwBuffers.h"
 
-/// Sample-to-frame helpers for qgcqvideosink's show_frame; pure functions, streaming-thread safe.
+/// Sample-to-frame helpers for qgcqvideosink's show_frame, on the streaming thread.
 
 /// The frame a buffer holds and the picture in it, as upstream's sinks read them (glimagesink, waylandsink): the frame
 /// is as large as the buffer's GstVideoMeta, which a decoder pads beyond the caps (1088 rows for 1080) or leaves
@@ -46,9 +46,7 @@ QVideoFrameFormat withFrameGeometry(QVideoFrameFormat format, const FrameGeometr
 /// holds the frame. Read-only; invalid when the buffer doesn't map.
 QVideoFrame mapCpuFrame(GstBuffer* buffer, const GstVideoInfo& info, const QVideoFrameFormat& format);
 
-/// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT take the caller's refs on
-/// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU
-/// path takes whose layout the CPU can't read (a tiled DMA_DRM modifier) comes back invalid, with noCpuLayout set.
+/// mapSampleToFrame()'s result.
 struct MappedFrame
 {
     QVideoFrame frame;
@@ -57,6 +55,9 @@ struct MappedFrame
     bool noCpuLayout = false;  ///< Dropped instead of read as linear rows, which would show it scrambled.
 };
 
+/// @p buffer as a frame, through a GPU path when one takes it, else mapped on the CPU. Does NOT take the caller's refs
+/// on @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU
+/// path takes whose layout the CPU can't read (a tiled DMA_DRM modifier) comes back invalid, with noCpuLayout set.
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, const HwVideoBufferContext& hwContext,
                              HwResolvedPathCache* pathCache = nullptr);

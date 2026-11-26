@@ -550,10 +550,8 @@ void GstSourceFactoryStreamTest::_testUdpSourceStopsRightAfterPlaying()
     // An unfixed udpsrc corrupts the heap in most runs of a few thousand cycles; each takes well under a millisecond.
     constexpr int kImmediateStopCycles = 10000;
 
-    // The factory's UDP sources are udpsrc. Before gst-plugins-good 1.24.10, leaving PLAYING while its streaming thread
-    // still clears the previous unlock cancels a freed GCancellable and corrupts the heap; GStreamer::completeInit()
-    // serializes the two. Downstream elements delay the source's own state change and hide the race, so the source
-    // runs bare.
+    // The udpsrc defect of the factory's UDP sources that GStreamer::serializeUdpSrcUnlock() works around. Downstream
+    // elements delay the source's own state change and hide the race, so the source runs bare.
     for (int cycle = 0; cycle < kImmediateStopCycles; ++cycle) {
         GstTest::TestPipeline pipeline;
         QVERIFY2(pipeline.launch(QStringLiteral("udpsrc address=127.0.0.1 port=0 ! fakesink")),

@@ -313,9 +313,8 @@ ParserStage buildParserStage(const H26xCodec* rtpCodec, bool isRtsp)
     }
 
     if (rtpCodec) {
-        // RTP over UDP has no SDP/RTSP control plane. Make depayloading and parser config explicit
-        // so hardware decoders, especially Android MediaCodec, see repeated parameter sets at IDR
-        // boundaries instead of depending on parsebin's defaults after startup or reconnect.
+        // In parsebin's place and configured as parsebin's would be (configureAutopluggedElement()); the caller links
+        // them through linkDepayToParser(), so the parser gets whole access units.
         stage.depay = makeElement(rtpCodec->depayloader);
         if (!stage.depay) {
             qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << rtpCodec->depayloader << ") failed";
@@ -427,8 +426,7 @@ bool linkDepayToParser(GstElement* depay, GstElement* parser, const H26xCodec& c
 bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement* depay, GstElement* parser,
                                 const H26xCodec& codec, const Config& config, guint latencyMs)
 {
-    // The bin counts the packets itself, where they arrive, with a jitter buffer too: the jitter buffer's own count
-    // takes the sequence numbers a sender skips when it starts over for packets lost.
+    // Where the packets arrive, ahead of any jitter buffer: see countRtpPackets().
     const GstPadPtr sourcePad = adoptPad(gst_element_get_static_pad(source, "src"));
     if (!sourcePad || !countRtpPackets(bin, sourcePad.get(), kRtpVideoClockRate)) {
         qCWarning(GstSourceFactoryLog) << "Unable to count the RTP packets where they arrive";
@@ -593,7 +591,7 @@ int udpReceiveBufferSize()
     // (scary warning) then clamps. Request the kernel-permitted max instead (Linux/Android only).
     int udpBufferSize = kUdpBufferSizeBytes;
 #ifdef Q_OS_LINUX
-    // rmem_max is a boot-time sysctl; parse once and cache (0 = unreadable, leave request unclamped).
+    // Read once and cached: rmem_max is normally set at boot (0 = unreadable, leave the request unclamped).
     static const int s_rmemMax = [] {
         QFile rmemMaxFile(QStringLiteral("/proc/sys/net/core/rmem_max"));
         if (rmemMaxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -645,10 +643,10 @@ GstElement* create(const QString& uri, const Config& config)
     }
 
     const bool isRtsp = (*transport == Transport::Rtsp);
-    // RTP on udpsrc is depayloaded and parsed for the codec its scheme names; the others leave it to parsebin.
+    // RTP on udpsrc is depayloaded and parsed for the codec its scheme names. The others start with parsebin, which
+    // plugRtspCodec() and plugTsCodec() replace for H.264 and H.265.
     const H26xCodec* const rtpCodec =
         (*transport == Transport::RtpUdpH264) ? &kH264 : ((*transport == Transport::RtpUdpH265) ? &kH265 : nullptr);
-    // tsdemux ahead of the parser: Android's parsebin can't detect MPEG-TS.
     const bool demuxMpegTs = (*transport == Transport::MpegTsUdp) || (*transport == Transport::MpegTsTcp);
 
     GstElementPtr source;

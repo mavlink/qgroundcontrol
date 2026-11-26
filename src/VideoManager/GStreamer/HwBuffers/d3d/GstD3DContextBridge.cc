@@ -28,8 +28,7 @@ gint64 GstD3DContextBridge::readAdapterLuid(gpointer device)
     return luid;
 }
 
-// Reads QGCRhiCapture::deviceSnapshot() via atomic loads — safe from the bus-sync thread without touching QRhi
-// cross-thread.
+// Reads QGCRhiCapture::deviceSnapshot() via atomic loads — safe off the render thread without touching QRhi.
 bool GstD3DContextBridge::snapshotBackendMatches()
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);

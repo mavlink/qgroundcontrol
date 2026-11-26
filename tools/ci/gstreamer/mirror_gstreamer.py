@@ -5,8 +5,8 @@ Downloads the prebuilt SDK packages published at gstreamer.freedesktop.org for a
 given version, verifies each against its checksum pinned in .github/build-config.json
 (else its upstream ``.sha256sum`` sidecar), then uploads them to
 ``s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>`` — the layout the
-build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
-shared with cmake/GStreamer/Packages.cmake and the installers.
+build's S3 fallback mirror reads. ``common.gstreamer`` reads the package layout from
+build-config.json, as cmake/GStreamer/Packages.cmake does.
 
 Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; without a version
 ``gstreamer.version.sdk`` in build-config.json is mirrored, and the work directory falls back to

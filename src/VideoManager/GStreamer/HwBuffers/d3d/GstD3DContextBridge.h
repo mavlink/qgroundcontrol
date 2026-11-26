@@ -34,7 +34,8 @@ protected:
 
     ~GstD3DContextBridge() = default;
 
-    /// Wraps QRhi's device from QGCRhiCapture's snapshot; logs and returns null on failure. The mutex is held.
+    /// The device to share, from QGCRhiCapture's snapshot: D3D11 wraps QRhi's device, D3D12 creates one on QRhi's
+    /// adapter. Logs and returns null on failure. The mutex is held.
     virtual GstObject* createDevice() = 0;
 
     /// New GstContext carrying @p device (the context refs it).

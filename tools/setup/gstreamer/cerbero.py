@@ -24,7 +24,7 @@ class CerberoBuilder:
 
     Cerbero's ``package`` command leaves package files, which this unpacks: the prefix is then what
     QGC's configure takes as ``GStreamer_ROOT_DIR``. For Android that is the SDK tree of one arch, or
-    of a universal build one tree per arch; for iOS a ``GStreamer.xcframework``.
+    of a universal build one tree per arch; for iOS the directory of a ``GStreamer.xcframework``.
     """
 
     # Archs with a config/cross-android-<arch>.cbc at the pinned Cerbero version. The universal

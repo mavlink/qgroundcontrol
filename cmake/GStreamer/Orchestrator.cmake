@@ -9,7 +9,8 @@
 # their pkg-config environment) and sets, in the including directory, GStreamer_ROOT_DIR and GStreamer_AUTO_DOWNLOADED
 # (the SDK discovery settled on), GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION, GSTREAMER_SELECTED_COMPONENTS,
 # GSTREAMER_PLUGINS, GSTREAMER_STATIC_PLUGINS and G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional
-# components) and QGC_GST_HAS_DMABUF (Linux).
+# components) and QGC_GST_HAS_DMABUF (Linux). Those are directory-scope normal variables, so include() this file at
+# directory scope, never inside a function.
 
 # The helper modules, each described in its header, then each platform's discovery (platform/*.cmake).
 foreach(
@@ -52,10 +53,6 @@ endif()
 if(GStreamer_ROOT_DIR)
     _qgc_gst_require_no_spaces(GStreamer_ROOT_DIR "${GStreamer_ROOT_DIR}")
 endif()
-
-# The SDK's linkage: the desktop SDKs are shared, Android's are static archives linked into GStreamer::mobile
-# (platform/Android.cmake), and iOS links one merged static archive (platform/IOS.cmake). CONTRACT: include() this file
-# at directory scope, never inside a function: its outputs are directory-scope normal variables.
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable. Declared before
 # discovery, so that FindPkgConfig, which caches the value it finds when there is no cache entry, never caches them.
@@ -101,6 +98,9 @@ if(_qgc_gst_platform_PKG_CONFIG)
     find_package(PkgConfig REQUIRED QUIET)
     set(_qgc_gst_fingerprint_pkg_config "${PKG_CONFIG_EXECUTABLE}|$CACHE{PKG_CONFIG_ARGN}")
 endif()
+# The SDK's linkage: the desktop SDKs are shared, and Android's are static archives linked into GStreamer::mobile
+# (platform/Android.cmake), read with pkg-config --static. iOS links one merged static archive without pkg-config
+# (platform/IOS.cmake).
 set(_qgc_gst_linkage ${_qgc_gst_platform_LINKAGE})
 # A normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
 if(_qgc_gst_linkage STREQUAL "static" AND NOT "--static" IN_LIST PKG_CONFIG_ARGN)

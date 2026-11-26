@@ -97,9 +97,9 @@ def compute_cpm_fingerprint(root: Path) -> str:
 
 
 def compute_gstreamer_fingerprint(root: Path) -> str:
-    """Hash what decides an SDK tree in build-config.json's gstreamer section: versions, checksums, CA bundle.
+    """Hash what decides an SDK tree: build-config.json's gstreamer section except the allowlist.
 
-    Not the plugin allowlist, which chooses among a tree's plugins at build time.
+    The plugin allowlist (gstreamer.plugins) only chooses among a tree's plugins at build time.
     """
     config = read_json(root / ".github/build-config.json")
     sdk = {key: value for key, value in config.get("gstreamer", {}).items() if key != "plugins"}

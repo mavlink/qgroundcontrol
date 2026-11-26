@@ -82,7 +82,7 @@ int resolvePlanes(GstBuffer* buffer, Api& api, PlaneResourceGuard<typename Api::
         // gst-d3d makes a device of its own in a pipeline built before the bridge had Qt's; sampling a foreign-device
         // resource from QRhi corrupts silently.
         if (i == 0) {
-            // currentDevice() is transfer-full — unref on every branch to avoid UAF after reset().
+            // bridgeDevice() is transfer-full — unref on every branch to avoid UAF after reset().
             Device* bridgeDev = Api::bridgeDevice();
             if (bridgeDev && !Api::sameDevice(d3dmem->device, bridgeDev)) {
                 const gint64 bridgeLuid = GstD3DContextBridge::readAdapterLuid(bridgeDev);
@@ -156,7 +156,7 @@ private:
 };
 
 /// The D3D11/D3D12 QHwVideoBuffer shell: the planes resolvePlanes() resolved on the streaming thread (AddRef'd, and
-/// released with the buffer), their check before import, and the start and end of mapTextures(). Each API's buffer
+/// released with the buffer), their check before import, and the start and end of importTextures(). Each API's buffer
 /// adds what differs: D3D11 copies array slices and padded textures on the render thread.
 template <class Resolver>
 class VideoBuffer : public GstHwVideoBuffer
@@ -213,7 +213,7 @@ protected:
         return true;
     }
 
-    /// mapTextures()'s preconditions on @p backend: the buffer to import, or null when the frame goes to the CPU.
+    /// importTextures()'s preconditions on @p backend: the buffer to import, or null when the frame goes to the CPU.
     GstBuffer* beginMap(QRhi& rhi, QRhi::Implementation backend)
     {
         GstBuffer* buffer = nullptr;

@@ -213,7 +213,7 @@ def test_workflow_mirrors_build_config_changes_on_master() -> None:
         "branches": ["master"],
         "paths": [".github/build-config.json"],
     }
-    # A push has no inputs: every platform's build-config version is mirrored and uploaded.
+    # A push has no inputs: gstreamer.version.sdk is mirrored and uploaded for every platform.
     assert resolve_platforms("") == PLATFORMS
     assert workflow["jobs"]["mirror"]["if"] == (
         "github.event_name == 'workflow_dispatch' || github.repository == 'mavlink/qgroundcontrol'"

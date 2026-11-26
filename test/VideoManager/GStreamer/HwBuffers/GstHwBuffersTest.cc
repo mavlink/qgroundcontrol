@@ -230,7 +230,7 @@ void GstHwBuffersTest::_testGraphicsDeviceSettledUnderSoftwareSceneGraph()
     // Without a main window nothing waits for its device.
     QVERIFY(HwBuffers::graphicsDeviceSettled());
 
-    // Known once a window exists.
+    // The scene graph backend is known once a window exists.
     QQuickWindow window;
     if (QQuickWindow::sceneGraphBackend() != QLatin1String("software")) {
         QSKIP("Qt Quick renders through a QRhi here");
@@ -245,8 +245,8 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
-    // Create an offscreen window and connect it. The scene graph is never initialized here, so the Null QRhi's device
-    // stands in for the one its render thread would publish.
+    // The scene graph is never initialized here, so the Null QRhi's device stands in for the one its render thread
+    // would publish.
     auto* window = new QQuickWindow();
     QGCRhiCapture::connectWindow(window);
     QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
@@ -261,7 +261,6 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
 #if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {
 
-// Concrete subclass for unit-testing GstHwVideoBuffer's protected/base behavior.
 class TestableHwVideoBuffer : public GstHwVideoBuffer
 {
 public:

@@ -15,7 +15,7 @@
 #include "VideoDecoderOptions.h"
 
 // Video decoder classification and the autoplug rank overrides behind the forceVideoDecoder setting. Every rank change
-// goes through here, so a feature named in GST_PLUGIN_FEATURE_RANK keeps the user's rank.
+// goes through DecoderRankApplier.
 namespace GStreamer {
 
 /// Invokes @p visitor for every video decoder factory of at least @p minRank in the default registry. The factory is

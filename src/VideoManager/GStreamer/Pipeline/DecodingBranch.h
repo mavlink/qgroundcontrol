@@ -128,8 +128,8 @@ private:
     [[nodiscard]] bool _tryInsertDecoder();
     /// Closes the valve and takes the video sink and the decoder out of the pipeline; keeps the sink.
     void _removeDecoder();
-    /// Takes the decoder out and tries one again after the backoff. Tells the listener @p cause, unless it was told
-    /// since a decoder last brought a frame.
+    /// With the decoder taken out by the caller, tries one again after the backoff. Tells the listener @p cause, unless
+    /// it was told since a decoder last brought a frame.
     void _giveUp(const QString& cause);
     void _linkDecoderPad(GstPad* pad);
     /// Takes the hardware decoder decodebin3 plugged out of autoplug, when another decoder can take the stream.

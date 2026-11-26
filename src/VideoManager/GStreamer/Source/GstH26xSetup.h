@@ -6,8 +6,9 @@
 /// plugs.
 namespace GStreamer::SourceFactory {
 
-/// When @p element is h264parse or h265parse, repeats the codec parameter sets at every IDR, so a recording started
-/// mid-stream can build its codec_data.
+/// When @p element is h264parse or h265parse, repeats the codec parameter sets at every IDR, for a camera that sends
+/// them only at startup: a recording started mid-stream builds its codec_data from them, and a decoder inserted
+/// mid-stream, Android MediaCodec's in particular, starts from them.
 void configureH26xParser(GstElement* element);
 
 /// When @p element is rtph264depay or rtph265depay, gates its output on the parameter sets (gateOnParameterSets()) and,

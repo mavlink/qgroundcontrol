@@ -89,8 +89,7 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch()
 
     const GStreamer::GstMessagePtr msg = pipeline.waitForEosOrError();
     if (msg && (GST_MESSAGE_TYPE(msg.get()) == GST_MESSAGE_ERROR)) {
-        // Common in headless envs without an EGL/GLX-capable display. Treat as
-        // skip so the test is informative when GL is available, harmless when not.
+        // A headless host without an EGL/GLX-capable display fails here.
         QSKIP(qPrintable(
             QStringLiteral("GLMemory pipeline error (likely no GL context): %1").arg(GstTest::errorText(msg.get()))));
     }

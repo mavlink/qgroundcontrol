@@ -17,7 +17,6 @@ QGC_LOGGING_CATEGORY(VehicleVideoStreamsLog, "Video.VehicleVideoStreams")
 
 namespace {
 
-/// The cameras of @p cameraManager.
 QList<MavlinkCameraControlInterface*> vehicleCameras(QGCCameraManager* cameraManager)
 {
     QList<MavlinkCameraControlInterface*> cameras;

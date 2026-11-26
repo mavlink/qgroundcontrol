@@ -47,15 +47,15 @@ bool canImport(const GstQtDmaBufImport::PlaneFourccs& planeFourccs, quint64 modi
 std::vector<quint64> importableModifiers(quint32 planeFourcc);
 
 /// Imports @p planes, which must match GstQtDmaBufImport::planeFourccs(@p pixelFormat), as textures of @p rhi that
-/// sample the dma-bufs in place. @p source's sample and @p buffer stay referenced until the GPU has finished with the
-/// textures. Without textures, @p failure tells why: NotImportable, Rejected or FdDupFailed. @p rhi's thread, Vulkan
-/// only.
+/// sample the dma-bufs in place. @p buffer stays referenced until the GPU has finished with the textures, @p source's
+/// sample until Qt destroys them. Without textures, @p failure tells why: NotImportable, Rejected or FdDupFailed.
+/// @p rhi's thread, Vulkan only.
 QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi,
                                        std::span<const GstQtDmaBufImport::Plane> planes,
                                        QVideoFrameFormat::PixelFormat pixelFormat, QSize frameSize, GstBuffer* buffer,
                                        GstQtDmaBufImport::ImportOutcome& failure);
 
-/// Re-arms the once-logged warnings and makes every render thread resolve its Vulkan device functions again.
+/// Makes every render thread resolve its Vulkan device functions again.
 void resetCachedState() noexcept;
 
 /// Entry points the import needs. Device-level ones come from vkGetDeviceProcAddr for the QRhi's VkDevice: an
@@ -90,8 +90,8 @@ struct DeviceFns
 /// what it created. Why the import failed; nothing when it didn't.
 std::optional<GstQtDmaBufImport::ImportOutcome> importPlaneForTest(const DeviceFns& fns,
                                                                    const GstQtDmaBufImport::Plane& plane);
-/// The release callback importTextures() gives a frame bundle, for a bundle whose one image and its memory are on a
-/// device that is @p fns alone and of @p rhi, and which holds a new reference to @p buffer.
+/// The release callback importTextures() gives a frame's textures, for textures whose one image and its memory are on
+/// a device that is @p fns alone and of @p rhi, and which hold a new reference to @p buffer.
 std::function<void()> deferredReleaseForTest(QRhi& rhi, const DeviceFns& fns, GstBuffer* buffer);
 #endif
 

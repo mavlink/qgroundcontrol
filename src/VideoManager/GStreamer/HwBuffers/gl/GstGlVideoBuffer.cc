@@ -20,11 +20,11 @@
 
 #include "QGCLoggingCategory.h"
 
-// Qt's portable GL types (GLuint et al.) — works on Linux/macOS/Android without GLES2 SDK headers.
 #include <algorithm>
 #include <atomic>
 #include <utility>
 
+// Qt's portable GL types (GLuint et al.) — works on Linux/macOS/Android without GLES2 SDK headers.
 #include <QtGui/qopengl.h>
 
 #ifndef GL_TIMEOUT_IGNORED
@@ -107,11 +107,11 @@ void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
     GstHwPathTelemetry::record(HwVideoBufferPath::GlMemory, GstHwPathTelemetry::Counter::CpuWaits);
 }
 
-// mapTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
-// non-GL RHI (forced Vulkan): those frames take the CPU path. Streaming thread, so read the published backend rather
-// than the render-thread-owned QRhi. So do frames from a GL context outside Qt's share group, which gst-gl creates
-// when no element got the bridge's: their texture names mean nothing in Qt's context, which would sample another
-// texture or black. Records each rejected frame.
+// importTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
+// non-GL RHI (forced Vulkan): those frames take the CPU path, as do frames from a GL context outside Qt's share group,
+// which gst-gl creates when no element got the bridge's: their texture names mean nothing in Qt's context, which would
+// sample another texture or black. Streaming thread, so it reads the published backend rather than the
+// render-thread-owned QRhi. Records each rejected frame.
 bool admitGlMemory(GstMemory* mem, const HwVideoBufferContext&)
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);

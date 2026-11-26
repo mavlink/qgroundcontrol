@@ -90,7 +90,7 @@ private:
     std::array<bool, kMaxPlanes> _copied{};
 };
 
-/// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. mapTextures() runs on the render
+/// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. importTextures() runs on the render
 /// thread, where QRhi drives the same immediate context: a texture-array slice or a padded texture is copied there,
 /// ordered with QRhi's own reads and writes without a Flush(), and only for frames that are actually shown.
 class D3D11VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D11PlaneResolver>

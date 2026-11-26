@@ -19,8 +19,8 @@ class GstContextBridgeBase;
 class GstHwVideoBuffer;
 class QRhi;
 
-/// Everything the factory and the HwBuffers facade know about one compiled GPU path. Each backend defines its
-/// descriptor in its own translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
+/// Everything the HwBuffers facade knows about one compiled GPU path. Each backend defines its descriptor in its own
+/// translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
 struct HwPathDescriptor
 {
     /// Path the imported buffers report.

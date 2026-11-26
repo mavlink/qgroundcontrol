@@ -291,9 +291,7 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
     } else {
         QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), 0));
         uri = server.servedUri();
-        // gst-rtsp-server defect, seen once with GStreamer 1.28.8 on a loaded macOS host: a client's socket is closed
-        // while a main context of the server still polls it. GLib polls with select() there, which fails for a closed
-        // descriptor where Linux's poll() only flags it, and GLib warns of the failure.
+        // As in QtMultimediaVideoReceiverStreamTest: a gst-rtsp-server defect, seen on a loaded macOS host.
         ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                          QRegularExpression(QStringLiteral("poll\\(2\\) failed due to: Bad file descriptor")));
     }

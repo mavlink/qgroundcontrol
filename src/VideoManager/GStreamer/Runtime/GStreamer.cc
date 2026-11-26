@@ -40,9 +40,9 @@ namespace {
 #ifdef QGC_GST_STATIC_BUILD
 void _registerPlugins()
 {
-    // gst_init_static_plugins() is not idempotent: a second pass re-registers GTypes ("cannot register existing type
-    // 'GstBaseQTMux'") and aborts, so run once. The generated shim's registrations are registry-guarded: gst_init()
-    // may already have run it (see cmake/GStreamer/gst_static_plugins.c.in).
+    // gst_init() may already have run the generated shim, whose registrations are registry-guarded: an unguarded second
+    // pass re-registers GTypes ("cannot register existing type 'GstBaseQTMux'") and aborts (see
+    // cmake/GStreamer/gst_static_plugins.c.in).
     static std::once_flag s_pluginsRegistered;
     std::call_once(s_pluginsRegistered, [] { gst_init_static_plugins(); });
 }

@@ -146,7 +146,8 @@ public:
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
     /// Keeps the registered output from the receiver while @p suspended, as while the application is in the
-    /// background: a receiver without an output decodes nothing, and goes on recording.
+    /// background: a receiver without an output decodes nothing. One that records the stream as it arrives goes on
+    /// recording; one that encodes the frames on display anew records none meanwhile.
     void setDisplaySuspended(bool suspended);
 
     /// True when the source has video to record: it is enabled and has a stream, or a camera, to play.

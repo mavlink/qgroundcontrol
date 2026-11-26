@@ -517,7 +517,7 @@ elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
         -DEXPECT_VERSION=1.24.0
     )
 elseif(SCENARIO STREQUAL "macos-discovery")
-    # macOS discovery (platform/MacOS.cmake) uses the SDK an earlier configure downloaded again, as a download.
+    # macOS discovery (platform/MacOS.cmake) reuses the SDK an earlier configure downloaded, still as auto-downloaded.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
     file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgstcoreelements.dylib" "")
     _qgc_configure_ok(

@@ -8,10 +8,10 @@
 /// One video stream's health, as its VideoReceiver measured it last: about once a second while it streams.
 ///
 /// A field that doesn't apply to the stream is -1, which tells it apart from a measured zero: the RTP fields for a
-/// stream whose RTP packets nothing counts (MPEG-TS, Qt Multimedia), those only an RTP jitter buffer measures (late,
-/// duplicate and retransmitted packets) for a stream without one (UDP RTP in low-latency mode), latencyMs while the
-/// pipeline can't tell its latency, keyframeIntervalMs until two keyframes arrived and the recording fields while not
-/// recording. Strings are empty until known.
+/// stream whose RTP packets nothing counts (MPEG-TS, Qt Multimedia, FFmpeg), those only an RTP jitter buffer measures
+/// (late, duplicate and retransmitted packets) for a stream without one (UDP RTP in low-latency mode), latencyMs while
+/// the pipeline can't tell its latency, keyframeIntervalMs until two keyframes arrived and the recording fields while
+/// not recording. Strings are empty until known.
 struct VideoStreamStats
 {
     Q_GADGET

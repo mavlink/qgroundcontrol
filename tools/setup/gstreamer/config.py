@@ -26,7 +26,7 @@ MESON_COMMON = {
     # gst-plugin-scanner, which QGC installs with the plugins, and gst-inspect-1.0 and gst-launch-1.0.
     "tools": "enabled",
     # gstreamer-rtsp-server-1.0, which a Debug build of QGC links for MockLink's video stream. Where the prefix lacks
-    # it, a Linux configure takes the system's, of another GStreamer version.
+    # it, a Linux configure goes without, as the system's is another GStreamer's (cmake/GStreamer/Targets.cmake).
     "rtsp_server": "enabled",
     # gstreamer-check-1.0, which QGC's GstHarness tests link. gst-plugins-good's and gst-libav's docs/meson.build also
     # read a variable that the core's defines only after it, so configure stops without it.

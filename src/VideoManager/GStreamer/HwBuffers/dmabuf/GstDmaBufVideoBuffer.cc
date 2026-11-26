@@ -56,7 +56,7 @@ using GstHw::kMaxPlanes;
 
 // Set when an import fails in a way no later frame avoids: EGL_BAD_MATCH from a broken EGL/VA-API combination
 // (QTBUG-112312), or a driver rejecting the stream's layout frame after frame. Qt's importer warns on every failed
-// frame, so the latch also bounds that log. Short-circuits mapTextures() and validatePlaneHandles().
+// frame, so the latch also bounds that log. Short-circuits importTextures() and validatePlaneHandles().
 std::atomic<bool> s_importDisabled{false};
 
 /// What decides whether a frame imports; the frames of one stream share it.
@@ -226,7 +226,7 @@ bool tryExplicitFenceWait(EGLDisplay eglDpy, GstBuffer* buffer)
         if (ioctl(dmaFd, DMA_BUF_IOCTL_EXPORT_SYNC_FILE, &req) != 0 || req.fd < 0) {
             return false;
         }
-        // EGL owns req.fd once the sync is created (closed by eglDestroySync); close it ourselves only on failure.
+        // EGL owns req.fd once the sync is created (closed by eglDestroySync); it is closed here only on failure.
         const EGLint attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID, req.fd, EGL_NONE};
         EGLSyncKHR sync = createSyncKHR(eglDpy, EGL_SYNC_NATIVE_FENCE_ANDROID, attribs);
         if (sync == EGL_NO_SYNC_KHR) {

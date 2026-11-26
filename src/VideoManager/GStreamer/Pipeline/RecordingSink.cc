@@ -167,7 +167,7 @@ SinkBin create(const QString& file, VideoReceiver::FileFormat format, const GstC
         return {};
     }
 
-    // Tagged with the time it starts and the application, as a USB camera's recordings are (UVCCameraController).
+    // Tagged with the time it starts and the application, as a USB camera's recordings are (QtVideoRecorder).
     GstDateTime* const started = gst_date_time_new_from_g_date_time(g_date_time_new_now_utc());
     gst_tag_setter_add_tags(GST_TAG_SETTER(muxerOwner.get()), GST_TAG_MERGE_REPLACE, GST_TAG_DATE_TIME, started,
                             GST_TAG_COMMENT, VideoReceiver::recordingComment().toUtf8().constData(), nullptr);

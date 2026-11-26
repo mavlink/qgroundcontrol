@@ -33,8 +33,8 @@ public:
 
     VideoReceiver::FileFormat format() const { return _format; }
 
-    /// What is recorded next goes into @p format's container, in files named for it: "<base>.<its extension>", with
-    /// the part's number as before. A part that got frames keeps its file, and the next one begins.
+    /// What is recorded next goes into @p format's container, in files named for it: "<base>.<its extension>", parts
+    /// numbered on. A part that got frames keeps its file, and the next one begins.
     void setFormat(VideoReceiver::FileFormat format);
 
     int part() const { return _part; }

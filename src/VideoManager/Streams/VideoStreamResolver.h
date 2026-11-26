@@ -31,7 +31,7 @@ enum class Role : uint8_t
 };
 Q_ENUM_NS(Role)
 
-/// The video settings resolve() reads, and what they depend on.
+/// The video settings that resolve(), forcedAspectRatio() and displayConfig() read.
 struct Settings
 {
     QString videoSource;
@@ -72,7 +72,7 @@ bool isAutoStream(const QGCVideoStreamInfo* streamInfo);
 bool isNetworkSource(const QString& videoSource);
 
 /// How a stream arrives, from its URI scheme: "RTSP", "RTP/UDP (H.264)", "MPEG-TS/TCP", ...; the upper-cased scheme
-/// for one resolve() never produces, empty for an empty @p uri.
+/// for one VideoStreamUri doesn't know, as a camera may advertise, and empty for an empty @p uri.
 QString transportName(const QString& uri);
 
 }  // namespace VideoStreamResolver

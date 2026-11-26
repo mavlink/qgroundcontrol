@@ -145,7 +145,7 @@ bool GlContextBridge::primeLocked()
         // Qt's QGLXContext exposes the X11 Display* + GLXContext we need to wrap.
         auto* glx = qtCtx->nativeInterface<QNativeInterface::QGLXContext>();
         // What Qt's context is can't change while the application runs, so these stay off rather than retry (and
-        // warn) on every context request.
+        // warn) for every pipeline.
         if (!glx) {
             qCWarning(GstGlBridgeLog) << "Qt GL context exposes neither EGL nor GLX; GL bridge disabled";
             return false;

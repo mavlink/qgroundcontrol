@@ -11,7 +11,7 @@
 
 class QRhi;
 
-/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples. mapTextures() (render thread) waits for the
+/// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples. importTextures() (render thread) waits for the
 /// producer's writes, then hands the planes to Qt's DMABuf importer under a GL QRhi, or imports them as VkImages under
 /// a Vulkan QRhi (GstDmaBufVulkanImport). The buffer stays referenced until the textures are gone and the GPU has
 /// drawn with them.
@@ -37,7 +37,7 @@ public:
     /// Failed imports of one layout in a row that disable the path: Qt's importer warns on every one.
     static constexpr int kMaxConsecutiveImportFailures = 30;
 
-    /// How mapTextures() ended, for the disable latch.
+    /// How importTextures() ended, for the disable latch.
     using ImportOutcome = GstQtDmaBufImport::ImportOutcome;
 
     /// True once an import failed in a way later frames can't avoid; cleared by resetCachedState().
@@ -47,9 +47,9 @@ public:
 #ifdef QGC_UNITTEST_BUILD
     /// Feeds one import the driver refused, of no particular frame, into the disable latch.
     static void recordImportFailureForTest(bool unrecoverable);
-    /// Feeds the outcome of one import of this frame into the disable latch, as mapTextures() does.
+    /// Feeds the outcome of one import of this frame into the disable latch, as importTextures() does.
     void noteImportOutcomeForTest(ImportOutcome outcome) const;
-    /// The wait on the producer's writes mapTextures() runs before importing @p buffer; true once they completed.
+    /// The wait on the producer's writes importTextures() runs before importing @p buffer; true once they completed.
     static bool waitForProducerWritesForTest(GstBuffer* buffer);
     /// Stands in for the fence of the GPU's work when a GL import's textures are deleted: @p fd turns readable once
     /// the test lets the GPU be done. -1 restores EGL's fence.

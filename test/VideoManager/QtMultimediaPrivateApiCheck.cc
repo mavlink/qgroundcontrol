@@ -8,8 +8,9 @@
 //   Sink/gstqgc/GstQgcFrameMap.cc (QHwVideoBuffer::mapTextures(), the texture pool's slot reuse, plane formats).
 // - qdmabuftextureimporter_p.h, qmultimedia_drm_support_p.h: HwBuffers/dmabuf/GstQtDmaBufImport.cc, including its fix
 //   for Qt's BGRA fourcc.
-// - qvideoframe_p.h, qvideoframeconverter_p.h, qquickvideooutput_p.h, qcameradevice_p.h, qmultimediautils_p.h: tests
-//   only.
+// - qvideoframe_p.h: src/VideoManager/FFmpeg/FFmpegQtInternals.cc, which checks its use of Qt's FFmpeg plugin
+//   internals for itself, and tests.
+// - qvideoframeconverter_p.h, qquickvideooutput_p.h, qcameradevice_p.h, qmultimediautils_p.h: tests only.
 
 #include <QtCore/qtversionchecks.h>
 

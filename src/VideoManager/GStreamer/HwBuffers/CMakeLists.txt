@@ -162,7 +162,6 @@ if(MACOS OR IOS)
     )
 endif()
 
-# ---- GPU path table (row order matters: DMABuf_Vulkan builds on DMABuf) ----
 # cmake-format: off
 # Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
 # cmake/GStreamer/Orchestrator.cmake. The sources read libdrm's drm_fourcc.h: a distribution's gstreamer-allocators-1.0
@@ -224,6 +223,7 @@ set(_qgc_gpu_row_AHardwareBuffer
 
 # No bin offers this memory, so it is compiled only on request.
 set(_qgc_gpu_opt_in_rows AHardwareBuffer)
+# In this order: DMABuf_Vulkan requires the DMABuf path (_qgc_gpu_DMABuf).
 set(_qgc_gpu_rows
     DMABuf
     DMABuf_Vulkan

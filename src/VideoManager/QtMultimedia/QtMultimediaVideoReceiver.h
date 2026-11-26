@@ -22,11 +22,11 @@ class QVideoFrameInput;
 /// displays anew (QtVideoRecorder), as startRecording() is told: only while an output displays the stream, and after a
 /// reconnect in the same file.
 ///
-/// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
-/// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
-/// has failed: its StreamSupervisor reconnects it after 1 s, doubling up to 30 s, while autoReconnect is on, and it
-/// stops with errorOccurred() otherwise. A UDP port nobody sends to yet hasn't failed: once FFmpeg gives up on it, the
-/// receiver listens again at once, for as long as it takes.
+/// Streaming once the player has buffered the stream or its first frame arrives; decoding while frames reach the
+/// output. A stream that errors, ends, or shows no frame for the config's timeout while displaying (5 s more for the
+/// first, while FFmpeg probes the stream) has failed: its StreamSupervisor reconnects it after 1 s, doubling up to
+/// 30 s, while autoReconnect is on, and it stops with errorOccurred() otherwise. A UDP port nobody sends to yet hasn't
+/// failed: once FFmpeg gives up on it, the receiver listens again at once, for as long as it takes.
 class QtMultimediaVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -119,7 +119,7 @@ private:
     /// Created for the first recording: the frames on display reach the recorder through its frame input.
     QMediaCaptureSession* _recordingSession = nullptr;
     QVideoFrameInput* _frameInput = nullptr;
-    /// Since the recorder started a file: the times of the frames in it.
+    /// Since the first frame of the file being recorded: the times of the frames in it.
     QElapsedTimer _sinceRecordingStarted;
     /// The recording and stream times of the last frame the recording took; -1 before its first.
     qint64 _lastRecordedUs = -1;

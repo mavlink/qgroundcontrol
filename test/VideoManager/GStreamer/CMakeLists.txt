@@ -55,9 +55,9 @@ target_sources(
         Sink/gstqgc/GstQgcVideoFormatsTest.h
 )
 
-# Sink, so that "gstqgc/GstQgcTestSupport.h" resolves as the sink's headers do in the sources
-# ("gstqgc/GstQgcSinkPolicy.h"). The GPU paths' folders, which only the GStreamer library has on its include path: the
-# tests look into the paths.
+# Sink/ makes "gstqgc/GstQgcTestSupport.h" resolve the way the sources include the sink's headers
+# ("gstqgc/GstQgcSinkPolicy.h"). The tests look into the GPU paths, whose folders only the GStreamer library has on its
+# include path.
 set(_qgc_gst_hwbuffers_dir "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/HwBuffers")
 target_include_directories(
     QGCUnitTests
@@ -131,9 +131,9 @@ _qgc_gst_test_has(_qgc_test_iosurface QGC_HAS_GST_IOSURFACE_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_d3d11 QGC_HAS_GST_D3D11_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_d3d12 QGC_HAS_GST_D3D12_GPU_PATH)
 
-# moc reads these definitions in the test headers, and the classes built follow them, but nothing runs moc again when
-# they change in a build directory that exists: its command depends on the files it read alone. Without its timestamp it
-# runs.
+# moc reads these definitions in the test headers, and the classes built follow them, but AUTOMOC reruns moc in an
+# existing build directory only when the files it read change. Removing its timestamp when the definitions change makes
+# it run.
 get_target_property(_qgc_gst_definitions QGCGStreamer INTERFACE_COMPILE_DEFINITIONS)
 set(_qgc_gst_definitions_file "${CMAKE_CURRENT_BINARY_DIR}/gst-definitions.txt")
 set(_qgc_gst_previous_definitions "")

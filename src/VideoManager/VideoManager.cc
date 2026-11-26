@@ -198,9 +198,10 @@ void VideoManager::_connectSettings()
 
     // How a change to a video setting reaches the sources. Not listed: forcedAspectRatio, which each
     // VideoStreamController follows itself; videoFit and gridLines, read by QML; showTelemetryOverlay, read by
-    // VideoTelemetryOverlay; recordingFormat, uvcRecordingCodec, uvcRecordingQuality, enableStorageLimit and
-    // maxVideoSize, read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance,
-    // uvcZoom, uvcExposureCompensation and uvcFocusMode, which go to the USB camera (below).
+    // VideoTelemetryOverlay; recordingFormat, uvcRecordingCodec and uvcRecordingQuality, read when a recording starts;
+    // enableStorageLimit and maxVideoSize, read when one starts and each minute while it runs; uvcCameraFormat,
+    // uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance, uvcZoom, uvcExposureCompensation and uvcFocusMode, which go
+    // to the USB camera (below).
 
     // Live: the sources resolve their config again. VideoReceiver restarts for a changed config, except for a change
     // of autoReconnect alone, which applies at once.

@@ -240,7 +240,8 @@ const DeviceFns& deviceFns(QVulkanInstance& inst, VkDevice dev)
     return fns;
 }
 
-/// The images of one frame and their memory, owned by one frame bundle, and the buffer they sample.
+/// The images of one frame and their memory, owned by the frame's GstVulkanOwnedFrameTextures, and the buffer they
+/// sample.
 struct OwnedPlanes
 {
     VkDevice dev = VK_NULL_HANDLE;
@@ -362,13 +363,13 @@ void retire(VkQueue queue, const OwnedPlanes& owned)
     reapRetired(owned.dev, /*waitAll=*/false);
 }
 
-/// Release callback for a frame bundle owning @p owned (see GstVulkanOwnedFrameTextures::adoptVulkanResources). Qt
-/// destroys a bundle when its pool slot is reused, which can be right after the frame that last sampled it was
-/// submitted, so the callback queues a fence behind QRhi's submitted work. Another thread waits for the fence and then
-/// lets go of the buffer, so the decoder gets it back without a later frame: one with a fixed pool may need it to
-/// decode that frame. The images, their memory and the fence are destroyed on the render thread, which Vulkan requires
-/// to be the only thread using them then: when a later bundle is released, and by a keyed QRhi cleanup callback, which
-/// destroys what is left while the device still exists. Render thread only.
+/// Release callback for the textures owning @p owned (see GstVulkanOwnedFrameTextures::adoptVulkanResources). Qt
+/// destroys a frame's textures when their pool slot is reused, which can be right after the frame that last sampled
+/// them was submitted, so the callback queues a fence behind QRhi's submitted work. Another thread waits for the fence
+/// and then lets go of the buffer, so the decoder gets it back without a later frame: one with a fixed pool may need it
+/// to decode that frame. The images, their memory and the fence are destroyed on the render thread, which Vulkan
+/// requires to be the only thread using them then: when a later frame's textures are released, and by a keyed QRhi
+/// cleanup callback, which destroys what is left while the device still exists. Render thread only.
 std::function<void()> deferredRelease(QRhi& rhi, VkQueue queue, const OwnedPlanes& owned)
 {
     const VkDevice dev = owned.dev;

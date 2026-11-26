@@ -26,7 +26,7 @@ struct SinkStats
     std::array<quint64, GstHw::kPathCount> pathFrames{};
     /// Frames a GPU path was tried for but the CPU delivered.
     quint64 gpuFallbacks = 0;
-    /// Caps epochs that started on a GPU path and fell back to the CPU.
+    /// Caps epochs in which a GPU path was tried for a frame the CPU delivered: the first of gpuFallbacks in each.
     quint64 streamDemotions = 0;
     /// Frames dropped because no GPU path imported them and the CPU can't read their tiled DMA_DRM layout.
     quint64 tiledDrops = 0;

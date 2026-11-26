@@ -228,8 +228,8 @@ static void gst_qgc_q_video_sink_init(GstQgcQVideoSink* self)
 {
     new (&self->state) PrivState();
     gst_video_info_init(&self->state.video_info);
-    // sync=FALSE: drone video is "as fast as decoded"; GstBaseSink clock-sync would
-    // stall on live RTSP. async=FALSE skips preroll wait so caps changes don't stall.
+    // Unsynced until the receiver decides per stream (DecodingBranch syncs a live source unless low latency is asked
+    // for). async=FALSE skips preroll wait so caps changes don't stall.
     gst_base_sink_set_sync(GST_BASE_SINK(self), FALSE);
     gst_base_sink_set_async_enabled(GST_BASE_SINK(self), FALSE);
     // A frame that comes late for the clock is shown at once. GstVideoSink would drop it instead, when it is already
@@ -445,9 +445,9 @@ namespace GstQgc {
 namespace {
 
 // The decoder buffers one sink's frames hold in steady flow: the frame being mapped, the one waiting for the GUI thread
-// (FrameDelivery keeps only the latest), the frame Qt shows, the one before it, whose texture bundle keeps it until Qt
-// reuses that in-flight slot (QRhi FramesInFlight is 2 on the common backends), and the bundle Qt moves out of a
-// reused slot and keeps until that render frame ends. Qt lets each go without waiting for a newer frame.
+// (FrameDelivery keeps only the latest), the frame Qt shows, the one before it, whose textures keep it until Qt reuses
+// that in-flight slot (QRhi FramesInFlight is 2 on the common backends), and the textures Qt moves out of a reused slot
+// and keeps until that render frame ends. Qt lets each go without waiting for a newer frame.
 constexpr guint kProposedMinBuffers = 5;
 
 // QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS overrides kProposedMinBuffers, like Qt's
@@ -539,8 +539,8 @@ bool populateAllocationQuery(GstQuery* query)
 
 }  // namespace GstQgc
 
-// Add qgcqvideosink's consumed metas + min-buffer pool hint, then chain so GstBaseSink's default
-// allocation bookkeeping still runs. A query without video caps fails, as in upstream's sinks.
+// Adds qgcqvideosink's consumed metas and min-buffer pool hint. A query without video caps fails, as in upstream's
+// sinks.
 static gboolean gst_qgc_q_video_sink_propose_allocation(GstBaseSink* bsink, GstQuery* query)
 {
     if (!GstQgc::populateAllocationQuery(query)) {

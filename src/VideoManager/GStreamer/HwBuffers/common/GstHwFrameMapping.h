@@ -20,7 +20,7 @@ public:
     FrameMapping(const FrameMapping&) = delete;
     FrameMapping& operator=(const FrameMapping&) = delete;
 
-    /// Maps @p buffer with @p flags on the first call; false when that fails.
+    /// Maps @p buffer with @p flags unless a map is already held; false when that fails.
     bool mapFrame(GstBuffer* buffer, const GstVideoInfo& info, GstMapFlags flags = GST_MAP_READ);
 
     /// The mapped frame; valid while mapFrame() succeeded and unmap() hasn't run.

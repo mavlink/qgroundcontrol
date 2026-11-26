@@ -14,8 +14,8 @@ include(CMakePushCheckState)
 # qgc_gst_check_header(VAR <out_var> HEADER <header_path> SYMBOL <symbol> [TARGET <gst_target>] [INCLUDES <dirs>])
 # Compile-tests that <header> can be included and <symbol> referenced when linked against <gst_target> (defaults to
 # GStreamer::GStreamer, or on Android GStreamer::Static, the libraries GStreamer::mobile is built from). Result is set
-# in OUT_VAR (TRUE/FALSE in PARENT_SCOPE) and cached under that name, which must start with QGC_GST_HAS_, so incremental
-# reconfigures skip the test; an SDK change purges it.
+# in <out_var> (TRUE/FALSE in PARENT_SCOPE) and cached under that name, which must start with QGC_GST_HAS_, so
+# incremental reconfigures skip the test; an SDK change purges it.
 function(qgc_gst_check_header)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "VAR;HEADER;SYMBOL;TARGET" "INCLUDES")
     _qgc_gst_check_args(qgc_gst_check_header VAR HEADER SYMBOL)

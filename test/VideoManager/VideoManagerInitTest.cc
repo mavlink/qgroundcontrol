@@ -58,7 +58,7 @@ void VideoManagerInitTest::init()
     UnitTest::init();
 
 #ifdef QGC_GST_STREAMING
-    // Completing the init prunes the decoders from the GStreamer registry, which these tests don't initialize.
+    // Completing the init looks the decoders up in the GStreamer registry, which these tests don't initialize.
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, GstTest::glibTypeRegistrationCriticals());
 #endif
 }

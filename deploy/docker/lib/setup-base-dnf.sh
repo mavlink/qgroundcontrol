@@ -11,8 +11,8 @@ printf 'retries=10\ntimeout=30\nmax_parallel_downloads=10\nfastestmirror=True\n'
 
 dnf -y install ca-certificates git python3 glibc-langpack-en dnf-plugins-core
 
-# RPM Fusion free provides gstreamer1-plugins-ugly and libavcodec-freeworld, whose
-# H.264 and H.265 decoders Fedora's libavcodec, which gstreamer1-plugin-libav uses, lacks.
+# RPM Fusion free provides gstreamer1-plugins-ugly and libavcodec-freeworld: Fedora's
+# own libavcodec, which the libav plugin uses, has no H.264 or H.265 decoder.
 release=$(rpm -E %fedora)
 case "${release}" in
     ''|*[!0-9]*) echo "Cannot determine Fedora release (got '${release}')" >&2; exit 1 ;;

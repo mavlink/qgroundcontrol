@@ -9,7 +9,6 @@
 
 bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement*)>& task)
 {
-    // The wait for the worker to run the task.
     constexpr std::chrono::seconds kRunOnPipelineTimeout{10};
 
     if (!receiver) {

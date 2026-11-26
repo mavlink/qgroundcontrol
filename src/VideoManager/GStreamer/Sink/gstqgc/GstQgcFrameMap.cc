@@ -176,8 +176,8 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInf
             out.gpuPath = matchedPath;
             return out;
         }
-        // HW selection failed though GPU was requested: signal the demotion. show_frame owns the
-        // once-per-epoch latch and the counters.
+        // HW selection failed though GPU was requested: signal the demotion, which the sink's PathSession counts
+        // (once per epoch as a stream demotion).
         out.demoted = true;
     }
 #endif

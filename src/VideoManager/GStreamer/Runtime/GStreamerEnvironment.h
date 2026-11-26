@@ -37,12 +37,11 @@ enum class DesktopInstall
 /// be checked on any host.
 BundleLayout bundleLayout(DesktopInstall install, const QString& appDir);
 
-/// Apply all GStreamer env vars for this process from bundled-paths discovery + platform validation, for the app in
-/// @p appDir (default: QCoreApplication::applicationDirPath()). A desktop runtime bundled with the app replaces the
-/// default plugin path; GStreamer keeps scanning its plugins out of process, so a plugin that crashes while loading is
-/// blacklisted instead of taking QGC down. Idempotent: a later call applies the same environment, as it doesn't take
-/// the values an earlier one set for the user's. Returns the validation outcome by value (threaded explicitly to
-/// initialize(), not a cross-thread global).
+/// Apply all GStreamer env vars for this process from bundled-paths discovery, for the app in @p appDir (default:
+/// QCoreApplication::applicationDirPath()). A desktop runtime bundled with the app replaces the default plugin path;
+/// GStreamer keeps scanning its plugins out of process, so a plugin that crashes while loading is blacklisted instead
+/// of taking QGC down. Idempotent: a later call applies the same environment, as it doesn't take the values an earlier
+/// one set for the user's. The result, which initialize() is handed, is always ok.
 /// Not thread-safe: call it on the GUI thread, before gst_init() and any thread that reads the environment.
 VideoBackend::EnvPrepResult prepareEnvironment(const QString& appDir = QString());
 

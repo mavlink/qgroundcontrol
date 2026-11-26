@@ -359,7 +359,7 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
 
 #elif defined(Q_OS_ANDROID)
     // Static plugins — no GST_PLUGIN_PATH; APK assets are read-only, so the CA bundle is extracted
-    // to filesDir, and again when an update changes it (we run gst_init from C++, not Java's GStreamer.init).
+    // to filesDir, and again when an update changes it (gst_init runs from C++, not from Java's GStreamer.init).
     {
         _setAndroidJniState();
 

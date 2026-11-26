@@ -193,9 +193,6 @@ void configureH26xParser(GstElement* element)
 {
     const char* factoryName = factoryNameOf(GST_OBJECT_CAST(element));
     if ((g_strcmp0(factoryName, "h264parse") == 0) || (g_strcmp0(factoryName, "h265parse") == 0)) {
-        // Recording can begin long after RTSP setup. Repeat codec parameter sets at every IDR so
-        // the late-opened recording branch can construct MP4/MOV codec_data without relying on
-        // the camera to resend its startup-only VPS/SPS/PPS or SPS/PPS.
         g_object_set(element, "config-interval", -1, nullptr);
     }
 }

@@ -46,7 +46,8 @@ constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
     {"amcviddec-omxgoogle", VideoDecoderOption::Default, false},
     {"amcviddec-c2android", VideoDecoderOption::Default, false},
     {"amcviddec-", VideoDecoderOption::Default, true},
-    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by VideoDecoderOption::VAAPI (modern va* only).
+    // Legacy gstreamer-vaapi: out of autoplug under VideoDecoderOption::Default on Linux, and never bumped by
+    // VideoDecoderOption::VAAPI (modern va* only).
     {"vaapi", VideoDecoderOption::Default, true},
     {"va", VideoDecoderOption::VAAPI, true},
     {"nv", VideoDecoderOption::NVIDIA, true},

@@ -28,7 +28,7 @@ set(_ffmpeg_qt_libdir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}")
 set(_ffmpeg_prefix "${CMAKE_BINARY_DIR}/ffmpeg-${QGC_FFMPEG_TAG}")
 set(_ffmpeg_libraries avformat avcodec avutil swresample swscale)
 
-# --- Headers: from the release's source, through its configure and "make install-headers", which compile nothing.
+# The headers come from the release's source, through its configure and "make install-headers", which compile nothing.
 if(NOT EXISTS "${_ffmpeg_prefix}/include/libavcodec/version_major.h")
     CPMAddPackage(
         NAME ffmpeg_source
@@ -69,7 +69,7 @@ if(NOT EXISTS "${_ffmpeg_prefix}/include/libavcodec/version_major.h")
     file(REMOVE_RECURSE "${_ffmpeg_header_build}")
 endif()
 
-# --- The headers must be those of the kit's libraries: their major versions name the libraries' ABI.
+# The headers must be those of the kit's libraries: their major versions name the libraries' ABI.
 foreach(_lib avcodec avformat avutil)
     string(TOUPPER "${_lib}" _upper)
     set(_version_header "${_ffmpeg_prefix}/include/lib${_lib}/version_major.h")
@@ -97,7 +97,7 @@ foreach(_lib avcodec avformat avutil)
     endif()
 endforeach()
 
-# --- Qt's FindFFmpeg (FFMPEG_DIR) wants the headers and libraries under one prefix, with a pkg-config file each.
+# Qt's FindFFmpeg (FFMPEG_DIR) wants the headers and libraries under one prefix, with a pkg-config file each.
 file(MAKE_DIRECTORY "${_ffmpeg_prefix}/lib/pkgconfig")
 foreach(_lib IN LISTS _ffmpeg_libraries)
     file(CREATE_LINK "${_ffmpeg_qt_libdir}/lib${_lib}.so" "${_ffmpeg_prefix}/lib/lib${_lib}.so" SYMBOLIC)

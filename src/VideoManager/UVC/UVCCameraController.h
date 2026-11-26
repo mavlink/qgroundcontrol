@@ -38,8 +38,8 @@ class QtVideoRecorder;
 ///
 /// Its stats come from the frames the capture session hands the VideoOutput, about once a second while they arrive:
 /// valid, fps, cameraFps, codec (the camera's capture format, such as "MJPEG" or "YUYV"), gpuPath ("CPU" for frames
-/// in memory, "GPU" for textures), uptimeMs, and recordingMs and recordingBytes while it records; framesDropped is
-/// -1, and the network stream fields keep their defaults.
+/// in memory, "GPU" for textures), uptimeMs, and recordingMs and recordingBytes while it records; framesDropped and
+/// bitrateKbps are -1, and the other network stream fields keep their defaults.
 class UVCCameraController : public VideoReceiver
 {
     Q_OBJECT

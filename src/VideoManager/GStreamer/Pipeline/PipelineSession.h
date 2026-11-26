@@ -29,9 +29,8 @@ struct SinkBin;
 /// and the branches. Streaming threads hand their work to the session as queued calls, so once shutdown() has stopped
 /// the pipeline and detached the bus, deleting the session drops whatever they left behind.
 ///
-/// Bus handling, through a GstBusPump: a sync handler does only what can't wait (GPU context requests, stream
-/// selection, and closing the valve in front of a failing branch); everything else is popped on the worker, where the
-/// bus's poll fd wakes it up.
+/// Bus handling, through a GstBusPump: a sync handler does only what can't wait, closing the valve in front of a
+/// failing branch; everything else is popped on the worker, where the bus's poll fd wakes it up.
 ///
 /// The session recovers its branches from their errors itself: a failing decoder is replaced, or given up for a while
 /// when it keeps failing or misses a plugin, and a failing recorder ends the recording. A stalled decoder is the

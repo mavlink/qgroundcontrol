@@ -139,8 +139,8 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     videoManager._createVideoReceivers();
     videoManager._vehicleStreams->setVehicle(_vehicle);
     settle();
-    // The vehicle's current stream is asked for, as ever. The second stream shares its address: the camera sends
-    // one of the two at a time, so it gets no tile.
+    // The vehicle's current stream is asked for. The second stream shares its address: the camera sends one of the two
+    // at a time, so it gets no tile.
     VideoStreamController* const firstSource = videoManager.primaryStream();
     auto* const firstReceiver = qobject_cast<FakeVideoReceiver*>(firstSource->receiver());
     QVERIFY(firstReceiver);
@@ -223,7 +223,7 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     QVERIFY_TRUE_WAIT(!_mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, 1), TestTimeout::mediumMs());
     QCOMPARE(stopped(), 3);
 
-    // The vehicle is no longer the one on display: its current stream is stopped, as ever.
+    // The vehicle is no longer the one on display: its current stream is stopped.
     videoManager._vehicleStreams->setVehicle(nullptr);
     QVERIFY_TRUE_WAIT(stopped() == 4, TestTimeout::mediumMs());
     QCOMPARE(started(), 4);
@@ -392,8 +392,8 @@ void VideoManagerVehicleTest::_testThermalStreamOfAnyCameraIsShown()
     QVERIFY(videoManager.hasThermal());
     QCOMPARE(videoManager._sources.size(), 3);
 
-    // Nobody looks at it yet: it isn't connected to, and once the camera has been asked for its current stream, as
-    // ever, it has not been asked for the thermal one.
+    // Nobody looks at it yet: it isn't connected to, and once the camera has been asked for its current stream, it
+    // has not been asked for the thermal one.
     QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, MAV_COMP_ID_CAMERA) == 1,
                       TestTimeout::mediumMs());
     QVERIFY_TRUE_WAIT(!_vehicle->isMavCommandPending(MAV_COMP_ID_CAMERA, MAV_CMD_VIDEO_START_STREAMING) &&

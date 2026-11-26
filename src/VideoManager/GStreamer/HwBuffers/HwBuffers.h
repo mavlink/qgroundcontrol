@@ -72,10 +72,10 @@ void onGraphicsDeviceRemoved();
 /// that fails meanwhile isn't at fault. Always false when no GPU path is compiled. Safe off the GUI thread.
 bool graphicsDeviceLost() noexcept;
 
-/// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. On
-/// desktop Linux it sets Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts, and
-/// with the DMABuf import under Vulkan it asks for the device extensions that takes, should Qt Quick render with
-/// Vulkan. No-op otherwise.
+/// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. With the
+/// GL or DMABuf path it shares Qt's OpenGL contexts and, on desktop Linux, selects Qt's xcb EGL integration unless
+/// QT_XCB_GL_INTEGRATION is set; with the DMABuf import under Vulkan it asks for the device extensions that takes,
+/// should Qt Quick render with Vulkan.
 void configureQtGraphics(bool softwareRendering);
 
 /// What configureQtGraphics() was told: the user asked for software rendering (--swrast). Safe off the GUI thread.
