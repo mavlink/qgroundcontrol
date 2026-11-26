@@ -50,6 +50,11 @@ bool exists(const QString &path);
 /// @return Combined path (dir + "/" + name)
 QString joinPath(const QString &dir, const QString &name);
 
+/// Whether a path is a directory or below it, going by the names: symbolic links are not resolved
+/// @param directoryPath Absolute and clean (QDir::cleanPath), which can be the root of a file system or a drive
+/// @param path Absolute and clean
+bool isInDirectory(const QString& directoryPath, const QString& path);
+
 /// Ensure directory exists, creating it if necessary
 /// @param path Directory path to ensure exists
 /// @return true if directory exists or was created successfully

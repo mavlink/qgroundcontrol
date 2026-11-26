@@ -81,7 +81,7 @@ void HealthAndArmingCheckReportTest::_testFirstReportInUnmappedMode()
     EventHandler handler(
         nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
         MAV_COMP_ID_AUTOPILOT1);
-    handler.setMetadata(metadataFile);
+    handler.setMetadata(EventHandler::loadMetadata(metadataFile));
     EventStream eventStream(1);
     const uint32_t canArmModeGroups = modeGroupBit(ManualModeGroup) | modeGroupBit(MissionModeGroup);
     for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, AllModeGroups)) {
@@ -142,7 +142,7 @@ void HealthAndArmingCheckReportTest::_testUpdateFromHealthReport()
     EventHandler handler(
         nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
         MAV_COMP_ID_AUTOPILOT1);
-    handler.setMetadata(metadataFile);
+    handler.setMetadata(EventHandler::loadMetadata(metadataFile));
     QVERIFY(handler.healthAndArmingChecksSupported());
     QCOMPARE(handler.getModeGroup(manualCustomMode), ManualModeGroup);
     QCOMPARE(handler.getModeGroup(takeoffCustomMode), TakeoffModeGroup);
@@ -180,7 +180,7 @@ void HealthAndArmingCheckReportTest::_testUnmappedModeKeepsResultsFresh()
     EventHandler handler(
         nullptr, QStringLiteral("dev"), [](auto) {}, [](auto&, uint32_t) {}, 255, MAV_COMP_ID_MISSIONPLANNER, 1,
         MAV_COMP_ID_AUTOPILOT1);
-    handler.setMetadata(metadataFile);
+    handler.setMetadata(EventHandler::loadMetadata(metadataFile));
     EventStream eventStream(1);
     const auto sendReport = [&handler, &eventStream](uint32_t canArmModeGroups, uint32_t canRunModeGroups) {
         for (const mavlink_message_t& message : eventStream.report(canArmModeGroups, canRunModeGroups)) {

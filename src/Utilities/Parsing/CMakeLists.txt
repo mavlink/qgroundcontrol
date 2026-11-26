@@ -180,11 +180,11 @@ target_link_libraries(
     QGCParsing
     PUBLIC
         Qt6::Core
+        QGCCompression
         QGCJsonValidation
         exif
         ulog_cpp::ulog_cpp
     PRIVATE
-        QGCCompression
         QGCLogging
         QGCWire
         ValiJSON::valijson

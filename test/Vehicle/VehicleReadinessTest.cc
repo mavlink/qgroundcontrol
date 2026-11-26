@@ -10,6 +10,7 @@
 #include "APMFirmwarePlugin.h"
 #include "APMVehicleReadiness.h"
 #include "AppSettings.h"
+#include "EventHandler.h"
 #include "Fact.h"
 #include "FirmwarePlugin.h"
 #include "HealthReportFixtures.h"
@@ -236,7 +237,7 @@ void VehicleReadinessPX4Test::_testCurrentModeIntentionRefreshesReadiness()
     const QString metadataFile =
         writeMetadata(metadataDir.path(), heartbeatCustomMode, takeoffCustomMode, missionCustomMode);
     QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, EventHandler::loadMetadata(metadataFile));
 
     // Only the takeoff mode group can arm, so the HEARTBEAT mode is not ready
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
@@ -282,7 +283,7 @@ void VehicleReadinessPX4Test::_testUnmappedModeMakesReadinessUnknown()
     const QString metadataFile =
         writeMetadata(metadataDir.path(), heartbeatCustomMode, takeoffCustomMode, missionCustomMode);
     QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, EventHandler::loadMetadata(metadataFile));
 
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
     for (const mavlink_message_t& message : eventStream.report(AllModeGroups, AllModeGroups)) {
@@ -320,7 +321,7 @@ void VehicleReadinessPX4Test::_testMissingHealthReportFallsBack()
     QVERIFY(metadataDir.isValid());
     const QString metadataFile = writeMetadata(metadataDir.path(), vehicle->effectiveCustomMode(), 1, 2);
     QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, EventHandler::loadMetadata(metadataFile));
 
     // The vehicle supports health reports but none arrives, so readiness waits
     readiness->update();
@@ -482,7 +483,7 @@ void VehicleReadinessPX4Test::_testHealthReportReadiness()
     const QString metadataFile =
         writeMetadata(metadataDir.path(), currentCustomMode, takeoffCustomMode, missionCustomMode);
     QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, EventHandler::loadMetadata(metadataFile));
     QVERIFY(vehicle->healthAndArmingChecksSupported(MAV_COMP_ID_AUTOPILOT1));
 
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
@@ -591,7 +592,7 @@ void VehicleReadinessAPMTest::_testHealthReportUsesArduPilotActionModes()
     QVERIFY(metadataDir.isValid());
     const QString metadataFile = writeMetadata(metadataDir.path(), currentCustomMode, guidedCustomMode, autoCustomMode);
     QVERIFY(!metadataFile.isEmpty());
-    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, metadataFile);
+    vehicle->setEventsMetadata(MAV_COMP_ID_AUTOPILOT1, EventHandler::loadMetadata(metadataFile));
 
     EventStream eventStream(static_cast<uint8_t>(mockLink()->vehicleId()));
     const auto sendReport = [this, &eventStream](uint32_t canArmModeGroups, uint32_t canRunModeGroups) {

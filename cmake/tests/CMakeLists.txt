@@ -38,6 +38,11 @@ qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid
 qgc_add_cmake_contract_test(QmlCodegenConfigureListOutputs qml-codegen-configure-list-outputs)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 qgc_add_cmake_contract_test(QGCTestShards qgc-test-shards)
+qgc_add_cmake_contract_test(LibArchiveDecodersPresent libarchive-decoders-present)
+qgc_add_cmake_contract_test(LibArchiveDecodersUnbuildable libarchive-decoders-unbuildable)
+# A check that cannot be built warns, and lets the configure go on
+set_tests_properties(CMake.LibArchiveDecodersPresent PROPERTIES FAIL_REGULAR_EXPRESSION "cannot check that")
+set_tests_properties(CMake.LibArchiveDecodersUnbuildable PROPERTIES PASS_REGULAR_EXPRESSION "cannot check that")
 
 qgc_add_expected_failure_test(
     NAME CMake.CustomDirEscape
@@ -94,6 +99,7 @@ set(_qgc_expected_failure_cases
     "HelpersJsonUnknownArgument|helpers-json-unknown-argument|unknown arguments"
     "HelpersJsonEscapedPattern|helpers-json-escaped-pattern|PATTERN must remain under the current source directory"
     "PythonVenvMissingUv|python-venv-missing-uv|uv was not found"
+    "LibArchiveDecodersMissing|libarchive-decoders-missing|built without zlib or liblzma"
 )
 # <test name>|<ModuleContracts TEST_CASE>|<expected diagnostic>
 foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)

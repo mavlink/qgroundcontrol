@@ -1,8 +1,12 @@
 #include "RequestMetaDataTypeStateMachineTest.h"
 
+#include <memory>
+
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QFutureWatcher>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
@@ -12,22 +16,28 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QThreadPool>
 #include <QtCore/QUuid>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
+#include "ArchiveFixtures.h"
+#include "CompInfoEvents.h"
 #include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
 #include "ComponentInformationCache.h"
 #include "ComponentInformationManager.h"
 #include "FTPManager.h"
 #include "FactMetaData.h"
+#include "FileFixtures.h"
 #include "LinkManager.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
+#include "ProcessFixtures.h"
+#include "QGCCachedFileDownload.h"
 #include "QGCLoggingCategoryManager.h"
 #include "RequestMetaDataTypeStateMachine.h"
 #include "UnitTest.h"
@@ -480,6 +490,71 @@ void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
     }
 }
 
+void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManager_data()
+{
+    QTest::addColumn<bool>("ftp");
+
+    QTest::newRow("MAVLink FTP") << true;
+    QTest::newRow("HTTP or local file") << false;
+}
+
+// Vehicles download files of the same names, and may do so at the same time. Each manager writes them, and their
+// as they were sent, into a directory of its own, which goes with the manager together with what is left in it.
+void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManager()
+{
+    QFETCH(bool, ftp);
+
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    QString uri = QStringLiteral("mftp://[;comp=1]parameter.json.xz");
+    if (!ftp) {
+        uri = directory.filePath(QStringLiteral("parameter.json.gz"));
+        QVERIFY(TestFixtures::writeFile(
+            uri,
+            TestFixtures::gzipMember(R"({"version":1,"parameters":[{"name":"DOWNLOADED_PARAM","type":"Float"}]})")));
+    }
+
+    // A second manager of the vehicle stands for the manager of another vehicle. It makes its directory once it
+    // downloads: one that downloads nothing, as that of an offline vehicle, leaves nothing behind.
+    const QDir tempDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    const QStringList directoriesBefore = tempDir.entryList({QStringLiteral("qgc_compinfo_*")}, QDir::Dirs);
+    auto otherManager = std::make_unique<ComponentInformationManager>(vehicle());
+    QCOMPARE(tempDir.entryList({QStringLiteral("qgc_compinfo_*")}, QDir::Dirs), directoriesBefore);
+    const QString otherDirectory = otherManager->downloadDirectory();
+    QVERIFY(QFileInfo(otherDirectory).isDir());
+    QVERIFY(otherDirectory != manager->downloadDirectory());
+
+    for (ComponentInformationManager* const requester : {manager, otherManager.get()}) {
+        auto* const param = requester->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+        QVERIFY(param);
+        // Random CRC so the file cache cannot satisfy the request
+        param->setUriMetaData(uri, QRandomGenerator::global()->generate());
+
+        QSignalSpy ftpSpy(vehicle()->ftpManager(), &FTPManager::downloadComplete);
+        QSignalSpy httpSpy(requester->findChild<QGCCachedFileDownload*>(), &QGCCachedFileDownload::finished);
+        QVERIFY(httpSpy.isValid());
+        RequestMetaDataTypeStateMachine requestMachine(requester, this);
+        QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+        requestMachine.request(param);
+        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+
+        const QSignalSpy& downloadSpy = ftp ? ftpSpy : httpSpy;
+        QCOMPARE(downloadSpy.count(), 1);
+        const QFileInfo downloaded(downloadSpy.first().at(ftp ? 0 : 1).toString());
+        QCOMPARE(downloaded.fileName(),
+                 ftp ? QStringLiteral("parameter.json.xz") : QStringLiteral("parameter.json.gz"));
+        QCOMPARE(downloaded.absolutePath(), requester->downloadDirectory());
+    }
+
+    QVERIFY(TestFixtures::writeFile(QDir(otherDirectory).filePath(QStringLiteral("parameter.json.xz")), "left"));
+    otherManager.reset();
+    QVERIFY(!QFileInfo::exists(otherDirectory));
+}
+
 // A state whose download cannot be started ends at once. What it leaves behind is not its own: the vehicle's FTP
 // session is busy with a download of something else, which the state cancelled when it took it for its own.
 void RequestMetaDataTypeStateMachineTest::_downloadThatCannotStartLeavesTheOneInProgress()
@@ -524,11 +599,13 @@ void RequestMetaDataTypeStateMachineTest::_downloadThatCannotStartLeavesTheOneIn
 }
 
 void RequestMetaDataTypeStateMachineTest::_setUpTranslatedParameterMetadata(const QString& directory,
-                                                                            const QString& translationUrl)
+                                                                            const QString& translationUrl,
+                                                                            bool compressed)
 {
     const QDir dir(directory);
     const QString metadataFile = dir.filePath(QStringLiteral("parameter.json"));
-    const QString summaryFile = dir.filePath(QStringLiteral("summary.json"));
+    const QString summaryFile =
+        dir.filePath(compressed ? QStringLiteral("summary.json.gz") : QStringLiteral("summary.json"));
     const QString generalFile = dir.filePath(QStringLiteral("general.json"));
 
     QVERIFY(writeRequestMetaDataTestFile(
@@ -537,7 +614,9 @@ void RequestMetaDataTypeStateMachineTest::_setUpTranslatedParameterMetadata(cons
         R"("parameters":[{"name":"TRANSLATED_PARAM","type":"Float","shortDesc":"In English"}]})"));
 
     const QJsonObject summary{{QLocale::system().name(), QJsonObject{{QStringLiteral("url"), translationUrl}}}};
-    QVERIFY(writeRequestMetaDataTestFile(summaryFile, QJsonDocument(summary).toJson()));
+    const QByteArray summaryJson = QJsonDocument(summary).toJson();
+    QVERIFY(
+        writeRequestMetaDataTestFile(summaryFile, compressed ? TestFixtures::gzipMember(summaryJson) : summaryJson));
 
     // Random CRC so the file cache cannot satisfy the request
     const QJsonObject parameterType{
@@ -554,7 +633,7 @@ void RequestMetaDataTypeStateMachineTest::_setUpTranslatedParameterMetadata(cons
 
     // A type has the URI of its translation from the general metadata only
     CompInfoGeneral general(MAV_COMP_ID_AUTOPILOT1, vehicle());
-    general.setJson(generalFile);
+    general.setJson(generalFile, CompInfo::parseJsonFile(generalFile, general.jsonSchema()));
     auto* const param = vehicle()->compInfoManager()->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
     QVERIFY(param);
     general.setUris(*param);
@@ -565,19 +644,22 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale_d
 {
     QTest::addColumn<bool>("translationNamed");
     QTest::addColumn<bool>("translationReachable");
+    QTest::addColumn<bool>("compressed");
 
-    QTest::newRow("the summary names a translation") << true << true;
-    QTest::newRow("the summary names none") << false << false;
-    QTest::newRow("the translation cannot be downloaded") << true << false;
+    QTest::newRow("the summary names a translation") << true << true << false;
+    QTest::newRow("the summary and the translation are compressed") << true << true << true;
+    QTest::newRow("the summary names none") << false << false << false;
+    QTest::newRow("the translation cannot be downloaded") << true << false << false;
 }
 
 // Metadata is translated unless the system locale is English, with the file that the translation summary names for
 // the locale. The metadata, the summary and that file come from the downloader that takes every URI which is not
-// MAVLink FTP. Without a translation the metadata is used as it was downloaded.
+// MAVLink FTP, and decompressed where they are read. Without a translation the metadata is used as it was downloaded.
 void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
 {
     QFETCH(bool, translationNamed);
     QFETCH(bool, translationReachable);
+    QFETCH(bool, compressed);
 
     auto* manager = vehicle()->compInfoManager();
     QVERIFY(manager);
@@ -595,12 +677,15 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
-    const QString translationFile = directory.filePath(QStringLiteral("translation.ts"));
-    QVERIFY(writeRequestMetaDataTestFile(
-        translationFile, R"(<?xml version="1.0" encoding="utf-8"?><!DOCTYPE TS><TS version="2.1"><context>)"
-                         R"(<name>/parameters/TRANSLATED_PARAM/shortDesc</name>)"
-                         R"(<message><source>In English</source><translation>Translated</translation></message>)"
-                         R"(</context></TS>)"));
+    const QString translationFile =
+        directory.filePath(compressed ? QStringLiteral("translation.ts.gz") : QStringLiteral("translation.ts"));
+    const QByteArray translation(
+        R"(<?xml version="1.0" encoding="utf-8"?><!DOCTYPE TS><TS version="2.1"><context>)"
+        R"(<name>/parameters/TRANSLATED_PARAM/shortDesc</name>)"
+        R"(<message><source>In English</source><translation>Translated</translation></message>)"
+        R"(</context></TS>)");
+    QVERIFY(writeRequestMetaDataTestFile(translationFile,
+                                         compressed ? TestFixtures::gzipMember(translation) : translation));
     QString translationUrl;
     if (translationNamed && translationReachable) {
         translationUrl = translationFile;
@@ -610,7 +695,7 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsTranslatedForSystemLocale()
         QVERIFY(server.listen(QHostAddress::LocalHost));
         translationUrl = QStringLiteral("http://127.0.0.1:%1/translation.ts").arg(server.serverPort());
     }
-    _setUpTranslatedParameterMetadata(directory.path(), translationUrl);
+    _setUpTranslatedParameterMetadata(directory.path(), translationUrl, compressed);
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -733,6 +818,137 @@ void RequestMetaDataTypeStateMachineTest::_answerAfterRequestTimeoutIsNotUsed()
     // Vehicle hands a message to its requests before it announces it
     QTRY_VERIFY_WITH_TIMEOUT(answerReceived, TestTimeout::mediumMs());
     QVERIFY(general.uriMetaData().isEmpty());
+}
+
+void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker_data()
+{
+    QTest::addColumn<int>("type");
+    QTest::addColumn<QString>("end");
+    QTest::addColumn<QString>("file");
+
+    for (const int type : {COMP_METADATA_TYPE_PARAMETER, COMP_METADATA_TYPE_EVENTS}) {
+        const char* const name = (type == COMP_METADATA_TYPE_EVENTS) ? "events" : "parameters";
+        QTest::addRow("%s parsed", name) << type << QStringLiteral("none") << QStringLiteral("plain");
+        QTest::addRow("%s, load state timed out", name) << type << QStringLiteral("timeout") << QStringLiteral("plain");
+        QTest::addRow("%s, machine deleted", name) << type << QStringLiteral("delete") << QStringLiteral("plain");
+        // The cache keeps a file as it was downloaded
+        QTest::addRow("%s, compressed", name) << type << QStringLiteral("none") << QStringLiteral("compressed");
+        QTest::addRow("%s, compressed and truncated", name)
+            << type << QStringLiteral("none") << QStringLiteral("truncated");
+        QTest::addRow("%s, larger than the limit once decompressed", name)
+            << type << QStringLiteral("none") << QStringLiteral("over the limit");
+    }
+}
+
+// The metadata file comes from the vehicle, or from where it points to, and may be large: it is read, decompressed
+// if it is compressed, and parsed on a worker thread, while its state waits. A file that cannot be decompressed, or
+// is larger than Compression::kMaxSmallFileBytes once it is, sets nothing. So does a parse that ends after its state
+// was left, or its machine deleted. The events metadata is parsed by libevents, and once it is in place the vehicle
+// is asked for its prearm checks.
+void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
+{
+    QFETCH(int, type);
+    QFETCH(QString, end);
+    QFETCH(QString, file);
+    const bool events = (type == COMP_METADATA_TYPE_EVENTS);
+    const bool readable = (file == QStringLiteral("plain")) || (file == QStringLiteral("compressed"));
+
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // A component of its own, so that only this test sets its metadata
+    constexpr uint8_t compId = 43;
+    CompInfoParam* const param = manager->compInfoParam(compId);
+    QVERIFY(param);
+    CompInfoEvents eventsInfo(compId, vehicle());
+    CompInfo* const compInfo = events ? static_cast<CompInfo*>(&eventsInfo) : param;
+    const uint32_t crc = QRandomGenerator::global()->generate();
+    compInfo->setUriMetaData(QStringLiteral("http://example.invalid/worker-metadata.json"), crc);
+
+    // From the file cache, so that nothing but the parse uses a worker thread
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const QString metadataFile = directory.filePath(QStringLiteral("worker-metadata.json"));
+    const QByteArray contents =
+        events ? R"({"version":2,"components":{"43":{"namespace":"worker",)"
+                 R"("supported_protocols":["health_and_arming_check"]}}})"
+               : R"({"version":1,"parameters":[{"name":"WORKER_PARAM","type":"Float","shortDesc":"Parsed"}]})";
+    if (file == QStringLiteral("plain")) {
+        QVERIFY(writeRequestMetaDataTestFile(metadataFile, contents));
+    } else if (file == QStringLiteral("compressed")) {
+        QVERIFY(writeRequestMetaDataTestFile(metadataFile, TestFixtures::gzipMember(contents)));
+    } else if (file == QStringLiteral("truncated")) {
+        const QByteArray compressed = TestFixtures::gzipMember(contents);
+        QVERIFY(writeRequestMetaDataTestFile(metadataFile, compressed.first(compressed.size() / 2)));
+    } else {
+        // 1025 members of 64 KiB: 64 KiB more than the limit
+        QVERIFY(ArchiveFixtures::writeGzipOfZeros(metadataFile, 1025));
+    }
+    if (!readable) {
+        const QString reason = (file == QStringLiteral("truncated")) ? "truncated" : "size limit exceeded";
+        if (events) {
+            expectLogMessage("MAVLink.LibEvents.EventHandler", QtWarningMsg,
+                             QRegularExpression("Failed to load events JSON metadata file.*" + reason));
+        } else {
+            expectLogMessage("ComponentInformation.CompInfoParam", QtWarningMsg,
+                             QRegularExpression("Metadata json file open failed.*" + reason));
+        }
+    }
+    const QString fileTag = QString::asprintf("%08x_%02i_%i", crc, static_cast<int>(compInfo->type), 0);
+    QVERIFY(!manager->fileCache().insert(fileTag, metadataFile).isEmpty());
+
+    RequestMetaDataTypeStateMachine::Timeouts timeouts = RequestMetaDataTypeStateMachine::defaultTimeouts;
+    if (end == QStringLiteral("timeout")) {
+        timeouts.metaDataLoad = 100;
+    }
+    auto requestMachine = std::make_unique<RequestMetaDataTypeStateMachine>(manager, nullptr, timeouts);
+    QSignalSpy completeSpy(requestMachine.get(), &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+    _mockLink->clearReceivedMavCommandCounts();
+
+    TestFixtures::ThreadPoolBlocker blocker;
+    QVERIFY(blocker.isBlocking());
+    requestMachine->request(compInfo);
+    QTRY_VERIFY_WITH_TIMEOUT(requestMachine->findChild<QFutureWatcherBase*>(), TestTimeout::mediumMs());
+    QCOMPARE(completeSpy.count(), 0);
+    QVERIFY(!vehicle()->healthAndArmingChecksSupported(compId));
+
+    if (end == QStringLiteral("timeout")) {
+        expectLogMessage("Utilities.StateMachine.QGCStateMachine", QtWarningMsg,
+                         QRegularExpression("^Timeout \".*LoadMetaData\" after 100 ms"));
+        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        verifyExpectedLogMessage();
+    } else if (end == QStringLiteral("delete")) {
+        requestMachine.reset();
+    }
+
+    blocker.release();
+    const bool loaded = (end == QStringLiteral("none")) && readable;
+    if (end == QStringLiteral("none")) {
+        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+        if (!readable) {
+            verifyExpectedLogMessage();
+        }
+    } else {
+        QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+        QCoreApplication::sendPostedEvents();
+    }
+
+    if (events) {
+        QCOMPARE(vehicle()->healthAndArmingChecksSupported(compId), loaded);
+        if (loaded) {
+            QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MAV_CMD_RUN_PREARM_CHECKS) == 1,
+                              TestTimeout::mediumMs());
+        } else {
+            QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_RUN_PREARM_CHECKS), 0);
+        }
+    } else {
+        FactMetaData* const metadata =
+            param->factMetaDataForName(QStringLiteral("WORKER_PARAM"), FactMetaData::valueTypeFloat);
+        QVERIFY(metadata);
+        QCOMPARE(metadata->shortDescription() == QStringLiteral("Parsed"), loaded);
+    }
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

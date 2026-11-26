@@ -163,13 +163,13 @@ void ComponentInformationManagerTest::_replacementJsonReplacesResolvedMetaData()
     QVERIFY(!firstPath.isEmpty());
     QVERIFY(!secondPath.isEmpty());
 
-    param->setJson(firstPath);
+    param->setJson(firstPath, CompInfo::parseJsonFile(firstPath, param->jsonSchema()));
     FactMetaData* const first =
         param->factMetaDataForName(QStringLiteral("REPLACED_PARAM"), FactMetaData::valueTypeFloat);
     QVERIFY(first);
     QCOMPARE(first->shortDescription(), QStringLiteral("First"));
 
-    param->setJson(secondPath);
+    param->setJson(secondPath, CompInfo::parseJsonFile(secondPath, param->jsonSchema()));
     FactMetaData* const second =
         param->factMetaDataForName(QStringLiteral("REPLACED_PARAM"), FactMetaData::valueTypeFloat);
     QVERIFY(second);

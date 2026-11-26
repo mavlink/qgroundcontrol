@@ -44,6 +44,9 @@ public:
     /// Empty if the name is unknown.
     QByteArray logFileContents(const QString &name) const;
 
+    /// Serves the local file @p localFileName to OpenFileRO of @p path
+    void setServedFile(const QString& path, const QString& localFileName) { _servedFiles.insert(path, localFileName); }
+
     /// Delays each burst read by delayMs to simulate a slow link. Runs on the
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
@@ -246,6 +249,7 @@ private:
     QStringList _fileList;                      ///< List of files returned by List command
     QList<LogFile> _logFiles;                   ///< Log files served from the @MAV_LOG virtual directory
     QHash<QString, QString> _logFileTempPaths;  ///< Temp files backing @MAV_LOG downloads
+    QHash<QString, QString> _servedFiles;       ///< Local files served by setServedFile(), by path
     uint16_t _lastReplySequence = 0;
 
     static constexpr uint8_t _sessionId = 1;    ///< We only support a single fixed session

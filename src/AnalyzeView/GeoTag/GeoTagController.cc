@@ -1,11 +1,4 @@
 #include "GeoTagController.h"
-#include "DataFlashParser.h"
-#include "ExifParser.h"
-#include "GeoTagImageModel.h"
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-#include "ULogParser.h"
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QDir>
@@ -16,6 +9,14 @@
 #include <QtCore/QMultiMap>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
+
+#include "Compression.h"
+#include "DataFlashParser.h"
+#include "ExifParser.h"
+#include "GeoTagImageModel.h"
+#include "QGCFileHelper.h"
+#include "QGCLoggingCategory.h"
+#include "ULogParser.h"
 
 QGC_LOGGING_CATEGORY(GeoTagControllerLog, "AnalyzeView.GeoTagController")
 
@@ -740,7 +741,8 @@ GeoTagController::ExifResult GeoTagController::_parseExifForImage(const QFileInf
     QString errorString;
     const QByteArray imageBuffer = _readImageCached(imageInfo.absoluteFilePath(), &errorString);
     if (imageBuffer.isEmpty()) {
-        result.errorMessage = tr("Geotagging failed. Couldn't open image: %1").arg(imageInfo.fileName());
+        result.errorMessage =
+            tr("Geotagging failed. Couldn't open image: %1 (%2)").arg(imageInfo.fileName(), errorString);
         return result;
     }
 
@@ -963,7 +965,7 @@ GeoTagController::TagResult GeoTagController::_tagImage(const TagTask &task)
     QString errorString;
     QByteArray imageBuffer = _readImageCached(task.imageInfo.absoluteFilePath(), &errorString);
     if (imageBuffer.isEmpty()) {
-        result.errorMessage = tr("Geotagging failed. Couldn't open image: %1").arg(result.fileName);
+        result.errorMessage = tr("Geotagging failed. Couldn't open image: %1 (%2)").arg(result.fileName, errorString);
         return result;
     }
 
@@ -1004,12 +1006,12 @@ QByteArray GeoTagController::_readImageCached(const QString &path, QString *erro
     }
 
     // Read from disk (outside lock to allow parallel reads)
-    QString error;
-    QByteArray data = QGCCompression::readFile(path, &error);
+    QByteArray data;
+    const Compression::Outcome read = Compression::readFile(path, data);
 
     if (data.isEmpty()) {
         if (errorString) {
-            *errorString = error;
+            *errorString = read ? tr("The file is empty") : read.description();
         }
         return {};
     }

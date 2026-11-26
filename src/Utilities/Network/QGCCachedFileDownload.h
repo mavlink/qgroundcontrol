@@ -25,6 +25,15 @@ class QNetworkDiskCache;
 /// 2. If cached file exists but is expired → try network, fallback to cache on failure
 /// 3. If no cached file → download from network
 ///
+/// A result is the file as the server sent it, compressed or not, written where fileDownloader() puts it: in its
+/// outputDirectory(), under the file name of the URL, unless it has an outputPath.
+///
+/// Decompression: a caller that needs the decompressed file on disk turns on QGCFileDownload::autoDecompress on
+/// fileDownloader(), with a limit set by QGCFileDownload::setMaxDecompressedBytes(). The cache keeps what the server
+/// sent, compressed, and every result, also one from the cache, is then decompressed to a file of its own beside
+/// it: finished() gives that file. A decompression that fails fails the download, and cancel() also cancels a
+/// decompression in progress.
+///
 /// Example C++ usage:
 /// @code
 /// auto *downloader = new QGCCachedFileDownload("/path/to/cache", this);

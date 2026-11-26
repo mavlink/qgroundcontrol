@@ -1,8 +1,13 @@
 #pragma once
 
-#include "MAVLinkEnums.h"
+#include <any>
+#include <functional>
 
+#include <QtCore/QJsonDocument>
 #include <QtCore/QObject>
+#include <QtCore/QString>
+
+#include "MAVLinkEnums.h"
 
 class FactMetaData;
 class Vehicle;
@@ -29,7 +34,32 @@ public:
 
     void setUriMetaData(const QString& uri, uint32_t crc);
 
-    virtual void setJson(const QString& metaDataJsonFileName) = 0;
+    /// What parseJsonFile() made of a metadata file
+    struct ParsedJson
+    {
+        QJsonDocument document;  ///< Null if the file could not be read or parsed
+        QString readError;       ///< Why the file could not be read or parsed
+        QString schemaError;     ///< Why the document does not match its schema, which does not stop its use
+        std::any data;           ///< What the fileParser() of a type that parses the file itself made of it
+    };
+
+    /// Reads and parses a metadata file, decompressed if it is compressed and held to Compression::kMaxSmallFileBytes,
+    /// and checks it against the JSON schema @p schemaResourcePath. It uses nothing but its arguments, so that it can
+    /// run on a worker thread: the file comes from the vehicle, or from where the vehicle points to, and may be large.
+    static ParsedJson parseJsonFile(const QString& fileName, const QString& schemaResourcePath);
+
+    /// JSON schema of this type of metadata, for parseJsonFile()
+    virtual QString jsonSchema() const = 0;
+
+    using FileParser = std::function<ParsedJson(const QString& fileName)>;
+
+    /// Reads and parses a metadata file of this type, on a worker thread, so it holds copies of what it uses and
+    /// never this object. parseJsonFile() with jsonSchema() unless a type parses the file itself.
+    virtual FileParser fileParser() const;
+
+    /// Takes the metadata in @p fileName. Called on the thread of this object, with what fileParser() made of the
+    /// file, or with nothing if @p fileName is empty, which means there is no metadata.
+    virtual void setJson(const QString& fileName, const ParsedJson& json) = 0;
 
     bool available() const { return !_uris.uriMetaData.isEmpty(); }
 

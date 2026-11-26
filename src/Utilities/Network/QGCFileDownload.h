@@ -3,16 +3,18 @@
 /// @file QGCFileDownload.h
 /// @brief Unified file download utility with decompression, verification, and QML support
 
-#include "QGCNetworkHelper.h"
-
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QUrl>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
+#include "CompressionTypes.h"
+#include "QGCNetworkHelper.h"
+
 class QNetworkAccessManager;
 class QAbstractNetworkCache;
-class QGCCompressionJob;
+class CompressionJob;
 class QFile;
 
 /// \brief File download with progress, decompression, and hash verification
@@ -21,7 +23,7 @@ class QFile;
 /// - HTTP/HTTPS and local file:// downloads
 /// - Automatic redirect handling
 /// - Progress reporting with cancellation
-/// - Optional auto-decompression of .gz/.xz/.zst/.bz2 files
+/// - Optional decompression of a compressed download on a worker thread (see autoDecompress)
 /// - Optional SHA-256 hash verification
 /// - Streaming to file (memory-efficient)
 /// - QML-compatible properties and signals
@@ -44,7 +46,6 @@ class QFile;
 /// @code
 /// QGCFileDownload {
 ///     id: downloader
-///     autoDecompress: true
 ///     onProgressChanged: progressBar.value = progress
 ///     onFinished: (success, path, error) => {
 ///         if (!success) console.log("Error:", error)
@@ -83,13 +84,19 @@ class QGCFileDownload : public QObject
     /// Bytes downloaded so far
     Q_PROPERTY(qint64 bytesReceived READ bytesReceived NOTIFY bytesReceivedChanged FINAL)
 
-    /// Whether to auto-decompress compressed files after download
+    /// Whether to decompress a download that Compression::isCompressedFile() finds compressed, on a worker thread,
+    /// before finished(). Off by default: QGC itself decompresses a file where it reads it, and keeps the download as
+    /// it was sent. This is for a caller that needs the decompressed file on disk. The decompressed file is written
+    /// beside the download, under its name without the compression extension (Compression::strippedPath()), and
+    /// replaces it: finished() gives its path. A decompression that fails, also one over maxDecompressedBytes(),
+    /// fails the download and leaves neither file. cancel() also cancels it.
     Q_PROPERTY(bool autoDecompress READ autoDecompress WRITE setAutoDecompress NOTIFY autoDecompressChanged FINAL)
 
-    /// Custom output path (empty = auto-generate in temp directory)
+    /// Custom output path (empty = a file in outputDirectory() named after the URL)
     Q_PROPERTY(QString outputPath READ outputPath WRITE setOutputPath NOTIFY outputPathChanged FINAL)
 
-    /// Expected SHA-256 hash for verification (empty = skip verification)
+    /// Expected SHA-256 hash for verification (empty = skip verification). It is checked on the file as downloaded,
+    /// before autoDecompress
     Q_PROPERTY(QString expectedHash READ expectedHash WRITE setExpectedHash NOTIFY expectedHashChanged FINAL)
 
 public:
@@ -110,20 +117,36 @@ public:
 
     // Property getters
     qreal progress() const { return _progress; }
-    bool isRunning() const {
-        return _state == State::Downloading || _state == State::Decompressing
-               || _state == State::Verifying;
+
+    bool isRunning() const
+    {
+        return _state == State::Downloading || _state == State::Decompressing || _state == State::Verifying;
     }
     QString errorString() const { return _errorString; }
     QUrl url() const { return _url; }
     QString localPath() const { return _localPath; }
     qint64 totalBytes() const { return _totalBytes; }
     qint64 bytesReceived() const { return _bytesReceived; }
+
     bool autoDecompress() const { return _autoDecompress; }
     QString outputPath() const { return _outputPath; }
     QString expectedHash() const { return _expectedHash; }
     State state() const { return _state; }
     bool lastResultFromCache() const { return _lastResultFromCache; }
+
+    /// Largest size a file decompressed by autoDecompress may have. The default is
+    /// Compression::kDefaultMaxDecompressedFileBytes
+    qint64 maxDecompressedBytes() const { return _maxDecompressedBytes; }
+
+    /// Set the largest size a file decompressed by autoDecompress may have. Choose it for what is done with the file
+    void setMaxDecompressedBytes(qint64 maxBytes) { _maxDecompressedBytes = maxBytes; }
+
+    /// Directory of a download without outputPath, which keeps the file name of its URL. By default the temp
+    /// location, or the download location if there is none
+    QString outputDirectory() const;
+
+    /// Set the directory of a download without outputPath (empty = the default)
+    void setOutputDirectory(const QString& directory) { _outputDirectory = directory; }
 
     // Property setters
     void setAutoDecompress(bool enabled);
@@ -204,7 +227,6 @@ private slots:
     void _onDownloadProgress(qint64 bytesReceived, qint64 totalBytes);
     void _onDownloadFinished();
     void _onDownloadError(QNetworkReply::NetworkError code);
-    void _onDecompressionFinished(bool success);
     void _onReadyRead();
 
 private:
@@ -221,19 +243,20 @@ private:
 
     QNetworkAccessManager *_networkManager = nullptr;
     QNetworkReply *_currentReply = nullptr;
-    QGCCompressionJob *_decompressionJob = nullptr;
+    QPointer<CompressionJob> _decompressionJob;
     QFile *_outputFile = nullptr;
 
     QUrl _url;
     QString _localPath;
     QString _outputPath;
+    QString _outputDirectory;
     QString _expectedHash;
     QString _errorString;
-    QString _compressedFilePath;
 
     qreal _progress = 0.0;
     qint64 _totalBytes = -1;
     qint64 _bytesReceived = 0;
+    qint64 _maxDecompressedBytes = Compression::kDefaultMaxDecompressedFileBytes;
     int _timeoutMs = QGCNetworkHelper::kDefaultTimeoutMs;
 
     State _state = State::Idle;

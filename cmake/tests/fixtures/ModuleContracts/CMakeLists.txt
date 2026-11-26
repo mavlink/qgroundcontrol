@@ -830,4 +830,37 @@ if(TEST_CASE MATCHES "^qgc-test-")
     return()
 endif()
 
+# A stand-in for a system libarchive: a header whose decoder versions say what the case needs, or a library that is not
+# there to link
+if(TEST_CASE MATCHES "^libarchive-decoders-(present|missing|unbuildable)$")
+    set(_libarchive "${CMAKE_MATCH_1}")
+    enable_language(C)
+    set(_zlib_version "\"1.3\"")
+    if(_libarchive STREQUAL "missing")
+        set(_zlib_version "0")
+    endif()
+    file(
+        WRITE "${CMAKE_CURRENT_BINARY_DIR}/libarchive/archive.h"
+        "static const char* archive_zlib_version(void) { return ${_zlib_version}; }
+static const char* archive_liblzma_version(void) { return \"5.8\"; }
+"
+    )
+    add_library(StandInLibArchive INTERFACE IMPORTED)
+    set_target_properties(
+        StandInLibArchive
+        PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/libarchive"
+    )
+    if(_libarchive STREQUAL "unbuildable")
+        set_target_properties(
+            StandInLibArchive
+            PROPERTIES
+                INTERFACE_LINK_LIBRARIES qgc_no_such_libarchive
+        )
+    endif()
+    include("${QGC_MODULE_DIR}/modules/LibArchiveDecoders.cmake")
+    qgc_check_libarchive_decoders(StandInLibArchive NoSuchZlibTarget)
+    return()
+endif()
+
 message(FATAL_ERROR "Unknown TEST_CASE: ${TEST_CASE}")

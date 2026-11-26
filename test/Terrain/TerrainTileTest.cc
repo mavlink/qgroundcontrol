@@ -1,5 +1,12 @@
 #include "TerrainTileTest.h"
 
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+
+#include "FileFixtures.h"
+#include "TerrainTileCopernicus.h"
+
 QByteArray TerrainTileTest::_createValidTileData(double swLat, double swLon, double neLat, double neLon,
                                                  int16_t minElev, int16_t maxElev, double avgElev, int16_t gridSizeLat,
                                                  int16_t gridSizeLon, int16_t fillElevation)
@@ -184,6 +191,63 @@ void TerrainTileTest::_testInvalidTileElevation()
     QVERIFY(qIsNaN(tile.minElevation()));
     QVERIFY(qIsNaN(tile.maxElevation()));
     QVERIFY(qIsNaN(tile.avgElevation()));
+}
+
+QByteArray TerrainTileTest::_copernicusTileResponse()
+{
+    constexpr int gridSize = 37;
+    QJsonArray carpet;
+    for (int latIndex = 0; latIndex < gridSize; ++latIndex) {
+        QJsonArray row;
+        for (int lonIndex = 0; lonIndex < gridSize; ++lonIndex) {
+            row.append(8848.123456789012);
+        }
+        carpet.append(row);
+    }
+    const QJsonObject data{
+        {"bounds", QJsonObject{{"sw", QJsonArray{-48.88, -123.40}}, {"ne", QJsonArray{-48.87, -123.39}}}},
+        {"stats", QJsonObject{{"min", 8848}, {"max", 8848}, {"avg", 8848.123456789012}}},
+        {"carpet", carpet},
+    };
+    return QJsonDocument(QJsonObject{{"status", "success"}, {"data", data}}).toJson(QJsonDocument::Indented);
+}
+
+void TerrainTileTest::_testCopernicusResponseSize_data()
+{
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<bool>("accepted");
+
+    const QByteArray tile = _copernicusTileResponse();
+    // Whitespace may follow a JSON document, so padding makes a valid response of any larger size
+    const QByteArray atLimit =
+        tile + QByteArray(static_cast<qsizetype>(TerrainTileCopernicus::kMaxResponseBytes) - tile.size(), ' ');
+
+    QTest::newRow("tile") << tile << true;
+    QTest::newRow("compressed tile") << TestFixtures::gzipMember(tile) << true;
+    QTest::newRow("compressed, at the limit") << TestFixtures::gzipMember(atLimit) << true;
+    // A few kilobytes that would expand beyond the limit
+    QTest::newRow("compressed, over the limit") << TestFixtures::gzipMember(atLimit + ' ') << false;
+}
+
+void TerrainTileTest::_testCopernicusResponseSize()
+{
+    QFETCH(QByteArray, response);
+    QFETCH(bool, accepted);
+
+    if (!accepted) {
+        expectLogMessage("Terrain.TerrainTileCopernicus", QtWarningMsg,
+                         QRegularExpression("cannot be decompressed.*size limit exceeded"));
+    }
+    const QByteArray serialized = TerrainTileCopernicus::serializeFromData(response);
+    if (!accepted) {
+        verifyExpectedLogMessage();
+        QVERIFY(serialized.isEmpty());
+        return;
+    }
+
+    const TerrainTile tile(serialized);
+    QVERIFY(tile.isValid());
+    QCOMPARE(tile.elevation(QGeoCoordinate(-48.875, -123.395)), 8848.0);
 }
 
 UT_REGISTER_TEST(TerrainTileTest, TestLabel::Unit, TestLabel::Terrain)

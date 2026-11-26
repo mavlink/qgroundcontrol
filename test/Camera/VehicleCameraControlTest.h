@@ -28,7 +28,10 @@ private slots:
     void _testDistinctCameraNamesDoNotShareCacheFile();
     void _testConstructorBuildsCacheFileFromBoundedNames();
     void _testFtpDefinitionDownloadRefusedFallsBack();
+    UT_PARAMETERIZED_TEST(_testFtpDefinitionDownloadFailureFallsBack);
     UT_PARAMETERIZED_TEST(_testFtpDefinitionDownloadIsSavedAsCacheFile);
+    UT_PARAMETERIZED_TEST(_testHttpDefinitionIsHeldToSizeAndDecompressed);
+    UT_PARAMETERIZED_TEST(_testDefinitionIsReadAndParsedOnWorker);
 
 private:
     void _connectVehicle(MockConfiguration* mockConfig);

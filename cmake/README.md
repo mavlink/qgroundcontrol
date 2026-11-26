@@ -187,8 +187,10 @@ need, and unity builds of QGC targets (`QGC_UNITY_BUILD=ON`). CI builds with the
 
 - `Linux-coverage` — Debug with tests and `QGC_ENABLE_COVERAGE=ON`, in `build/Linux-coverage`.
 - `Linux-sanitizers` — Debug with tests, ASan + UBSan and `QGC_TEST_DETECT_LEAKS=ON`, in `build/Linux-sanitizers`;
-  its test preset also excludes `NoSanitizer`. `cmake --workflow --preset Linux-sanitizers` reproduces CI's
-  sanitizer job.
+  its test preset also excludes `NoSanitizer`. It is the one preset that builds the optional compression formats:
+  the BZip2, LZ4, Zstandard and legacy lzma decoders and the 7z and TAR archive readers (`QGC_ENABLE_BZIP2`,
+  `QGC_ENABLE_LZ4`, `QGC_ENABLE_ZSTD`, `QGC_ENABLE_LZMA`, `QGC_ENABLE_7ZIP`, `QGC_ENABLE_TAR`), so their tests run
+  in CI. `cmake --workflow --preset Linux-sanitizers` reproduces CI's sanitizer job.
 - `iOS-simulator` — x86_64 simulator Debug build without tests.
 
 The `just configure` and `just build` recipes use the matching `default*` configure and build

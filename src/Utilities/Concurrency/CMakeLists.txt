@@ -1,8 +1,10 @@
 add_library(QGCConcurrency INTERFACE)
 
-target_sources(QGCConcurrency
+target_sources(
+    QGCConcurrency
     INTERFACE
         AutoSuspendGuard.h
+        WorkerJob.h
 )
 
 target_include_directories(QGCConcurrency INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

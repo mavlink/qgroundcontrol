@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "MAVLinkEnums.h"
 #include "QGCStateMachine.h"
 #include "RequestMetaDataTypeStateMachine.h"
@@ -14,6 +16,7 @@ class QGCCachedFileDownload;
 class AsyncFunctionState;
 class FunctionState;
 class QGCFinalState;
+class QTemporaryDir;
 
 class ComponentInformationManager : public QGCStateMachine
 {
@@ -31,6 +34,11 @@ public:
 
     ComponentInformationCache &fileCache() { return _fileCache; }
     ComponentInformationTranslation *translation() { return _translation; }
+
+    /// Where the metadata downloads of this vehicle are written: a directory of its own, removed with this manager,
+    /// so that the files of two vehicles never share a path. The first call creates it and directs the downloader of
+    /// the manager to it. The temp location if it cannot be created
+    QString downloadDirectory();
 
     static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
 
@@ -56,6 +64,7 @@ private:
     static QString _getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation);
 
     RequestMetaDataTypeStateMachine _requestTypeStateMachine;
+    std::unique_ptr<QTemporaryDir> _downloadDir;
     RequestAllCompleteFn            _requestAllCompleteFn       = nullptr;
     void*                           _requestAllCompleteFnData   = nullptr;
     QGCCachedFileDownload*          _cachedFileDownload         = nullptr;

@@ -1,13 +1,14 @@
 #include "QGCFileDownload.h"
-#include "QGCCompression.h"
-#include "QGCCompressionJob.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkAccessManager>
+
+#include "Compression.h"
+#include "CompressionJob.h"
+#include "QGCFileHelper.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
 
@@ -60,6 +61,16 @@ void QGCFileDownload::setCache(QAbstractNetworkCache *cache)
 void QGCFileDownload::setTimeout(int timeoutMs)
 {
     _timeoutMs = timeoutMs;
+}
+
+QString QGCFileDownload::outputDirectory() const
+{
+    if (!_outputDirectory.isEmpty()) {
+        return _outputDirectory;
+    }
+
+    const QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    return tempDir.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) : tempDir;
 }
 
 // ============================================================================
@@ -190,8 +201,10 @@ void QGCFileDownload::cancel()
         _currentReply->abort();
     }
 
-    if (_decompressionJob != nullptr && _decompressionJob->isRunning()) {
+    if (_decompressionJob) {
+        qCDebug(QGCFileDownloadLog) << "Cancelling decompression";
         _decompressionJob->cancel();
+        _decompressionJob = nullptr;
     }
 
     _cleanup();
@@ -302,7 +315,7 @@ void QGCFileDownload::_onDownloadFinished()
     }
 
     // Auto-decompress if enabled and file is compressed
-    if (_autoDecompress && QGCCompression::isCompressedFile(_localPath)) {
+    if (_autoDecompress && Compression::isCompressedFile(_localPath)) {
         _startDecompression();
         return;
     }
@@ -351,40 +364,6 @@ void QGCFileDownload::_onDownloadError(QNetworkReply::NetworkError code)
     qCWarning(QGCFileDownloadLog) << "Download error:" << errorMsg << "url:"
                                   << _url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment);
     _setErrorString(errorMsg);
-}
-
-void QGCFileDownload::_onDecompressionFinished(bool success)
-{
-    if (_state == State::Cancelled) {
-        _compressedFilePath.clear();
-        return;
-    }
-
-    if (success) {
-        const QString decompressedPath = _decompressionJob->outputPath();
-        qCDebug(QGCFileDownloadLog) << "Decompression completed:" << decompressedPath;
-
-        // Remove compressed file if different from output
-        if (_compressedFilePath != decompressedPath && QFile::exists(_compressedFilePath)) {
-            QFile::remove(_compressedFilePath);
-        }
-
-        _localPath = decompressedPath;
-        emit localPathChanged(_localPath);
-
-        _setState(State::Completed);
-        _emitFinished(true, _localPath, QString());
-    } else {
-        const QString error = tr("Decompression failed: %1").arg(_decompressionJob->errorString());
-        qCWarning(QGCFileDownloadLog) << error;
-        _setErrorString(error);
-        _setState(State::Failed);
-
-        // Return compressed file path on decompression failure
-        _emitFinished(false, _compressedFilePath, error);
-    }
-
-    _compressedFilePath.clear();
 }
 
 // ============================================================================
@@ -496,12 +475,7 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
         fileName = fileName.left(queryIndex);
     }
 
-    // Find writable directory
-    QString downloadDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    if (downloadDir.isEmpty()) {
-        downloadDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    }
-
+    const QString downloadDir = outputDirectory();
     if (downloadDir.isEmpty()) {
         qCWarning(QGCFileDownloadLog) << "No writable download location found";
         return QString();
@@ -532,20 +506,35 @@ bool QGCFileDownload::_verifyHash()
 
 void QGCFileDownload::_startDecompression()
 {
-    _compressedFilePath = _localPath;
-    const QString decompressedPath = QGCCompression::strippedPath(_localPath);
+    const QString compressedPath = _localPath;
+    const QString decompressedPath = Compression::strippedPath(compressedPath);
 
-    qCDebug(QGCFileDownloadLog) << "Starting decompression:" << _localPath << "->" << decompressedPath;
+    qCDebug(QGCFileDownloadLog) << "Starting decompression:" << compressedPath << "->" << decompressedPath;
 
     _setState(State::Decompressing);
 
-    if (_decompressionJob == nullptr) {
-        _decompressionJob = new QGCCompressionJob(this);
-        connect(_decompressionJob, &QGCCompressionJob::progressChanged,
-                this, &QGCFileDownload::decompressionProgress);
-        connect(_decompressionJob, &QGCCompressionJob::finished,
-                this, &QGCFileDownload::_onDecompressionFinished);
-    }
+    // A file whose name says it is compressed is passed on whatever its content is. A body that the server sent with
+    // a content encoding has been decoded by the network stack, and is then the content as it is: the job copies it.
+    _decompressionJob = CompressionJob::startDecompressionConsumingInput(
+        this, compressedPath, decompressedPath, _maxDecompressedBytes,
+        [this, decompressedPath](const Compression::Outcome& outcome) {
+            _decompressionJob = nullptr;
 
-    _decompressionJob->decompressFile(_localPath, decompressedPath);
+            if (!outcome) {
+                // The description says that the decompression failed, and why
+                const QString error = outcome.description();
+                qCWarning(QGCFileDownloadLog) << error;
+                _setErrorString(error);
+                _setState(State::Failed);
+                _emitFinished(false, QString(), error);
+                return;
+            }
+
+            qCDebug(QGCFileDownloadLog) << "Decompression completed:" << decompressedPath;
+            _localPath = decompressedPath;
+            emit localPathChanged(_localPath);
+            _setState(State::Completed);
+            _emitFinished(true, _localPath, QString());
+        });
+    (void) connect(_decompressionJob, &CompressionJob::progressChanged, this, &QGCFileDownload::decompressionProgress);
 }

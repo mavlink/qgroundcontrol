@@ -4,8 +4,8 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
+#include "Compression.h"
 #include "JsonParsing.h"
-#include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
@@ -22,8 +22,15 @@ TerrainTileCopernicus::~TerrainTileCopernicus()
 
 QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray& input)
 {
+    // The body of a tile can be compressed
+    QByteArray json;
+    if (const Compression::Outcome read = Compression::decompressData(input, json, kMaxResponseBytes); !read) {
+        qCWarning(TerrainTileCopernicusLog) << "Terrain tile json doc cannot be decompressed" << read.description();
+        return QJsonValue();
+    }
+
     QJsonParseError parseError;
-    const QJsonDocument document = QGCCompression::parseCompressedJson(input, &parseError);
+    const QJsonDocument document = QJsonDocument::fromJson(json, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
         qCWarning(TerrainTileCopernicusLog)
             << "Terrain tile json doc parse error" << parseError.errorString();

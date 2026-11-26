@@ -82,6 +82,10 @@ class VehicleReadiness;
 class VehicleSigningController;
 class VehicleSupports;
 
+namespace events::parser {
+class Parser;
+}
+
 class Vehicle : public VehicleFactGroup, public VehicleTypes
 {
     Q_OBJECT
@@ -1362,7 +1366,8 @@ public:
     /// Autopilot health and arming check mode group of a custom mode. -1 if unknown.
     int healthAndArmingCheckModeGroup(uint32_t customMode) const;
 
-    void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName);
+    /// Uses the events metadata of a component, from EventHandler::loadMetadata(), and asks for the prearm checks
+    void setEventsMetadata(uint8_t compid, const std::shared_ptr<events::parser::Parser>& metadata);
 
 private:
     void _createMAVLinkEventManager();

@@ -10,13 +10,13 @@
 #include "AppMessages.h"
 #include "AutoPilotPlugin.h"
 #include "Autotune.h"
+#include "Compression.h"
 #include "GenericAutoPilotPlugin.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
-#include "QGCCompression.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
@@ -633,10 +633,11 @@ void FirmwarePlugin::cacheParameterMetaDataFile(const QString &metaDataFile)
         return;
     }
 
-    QString readError;
-    const QByteArray data = QGCCompression::readFile(metaDataFile, &readError);
+    QByteArray data;
+    const Compression::Outcome read = Compression::readFile(metaDataFile, data);
     if (data.isEmpty()) {
-        qCWarning(FirmwarePluginLog) << "Cannot cache parameter metadata: failed to read" << metaDataFile << readError;
+        qCWarning(FirmwarePluginLog) << "Cannot cache parameter metadata: failed to read" << metaDataFile
+                                     << read.description();
         return;
     }
 

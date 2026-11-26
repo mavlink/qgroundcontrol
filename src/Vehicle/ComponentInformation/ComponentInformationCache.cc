@@ -136,7 +136,7 @@ void ComponentInformationCache::initializeDirectory()
             const uint32_t expectedVersion = m.version;
             if (meta.open(QIODevice::ReadOnly)) {
                 if (meta.read((char*)&m, sizeof(m)) == sizeof(m)) {
-                    if (m.magic != expectedMagic || m.version != expectedVersion) {
+                    if (m.magic != expectedMagic || m.version > expectedVersion) {
                         validationFailed = true;
                     }
                 } else {

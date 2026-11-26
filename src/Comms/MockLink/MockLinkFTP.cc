@@ -171,6 +171,8 @@ void MockLinkFTP::_openCommand(quint32 senderSystemId, uint8_t senderComponentId
         tmpFilename = _generateParamPck(withDefaults);
     } else if (path.startsWith(QStringLiteral("@MAV_LOG/"))) {
         tmpFilename = _logFileTempPath(path.mid(QStringLiteral("@MAV_LOG/").length()));
+    } else if (_servedFiles.contains(path)) {
+        tmpFilename = _servedFiles.value(path);
     }
 
     if (!tmpFilename.isEmpty()) {

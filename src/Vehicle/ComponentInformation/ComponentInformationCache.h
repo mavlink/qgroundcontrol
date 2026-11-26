@@ -43,7 +43,9 @@ private:
 
     struct Meta {
         uint32_t magic{0x9a9cad0e};
-        uint32_t version{0};
+        /// 1: the file is kept as it was downloaded, possibly compressed. 0: decompressed. An older QGC, which
+        /// takes only version 0, removes an entry of version 1 rather than read a file it may not decompress
+        uint32_t version{1};
         AccessCounterType accessCounter{0};
     };
 

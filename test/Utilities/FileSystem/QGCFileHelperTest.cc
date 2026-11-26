@@ -4,11 +4,11 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 
-#include "QGCCompression.h"
+#include "Compression.h"
 #include "QGCFileHelper.h"
-#include <QtCore/QTemporaryDir>
 
 // ============================================================================
 // exists() tests
@@ -51,6 +51,37 @@ void QGCFileHelperTest::_testExistsQtResource()
     // Even non-existent resource paths return true (by design - Qt handles validation)
     // This is intentional: the function assumes :/ paths are valid resources
     QVERIFY(QGCFileHelper::exists(":/any/resource/path"));
+}
+
+// ============================================================================
+// isInDirectory() tests
+// ============================================================================
+void QGCFileHelperTest::_testIsInDirectory_data()
+{
+    QTest::addColumn<QString>("directory");
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<bool>("inside");
+
+    // "/" or the drive, whose path ends in the separator as no other directory's does
+    const QString root = QDir::rootPath();
+    const QString directory = root + QStringLiteral("output");
+
+    QTest::newRow("the directory") << directory << directory << true;
+    QTest::newRow("below it") << directory << directory + QStringLiteral("/nested/file.txt") << true;
+    QTest::newRow("its name continued") << directory << directory + QStringLiteral("-other/file.txt") << false;
+    QTest::newRow("beside it") << directory << root + QStringLiteral("file.txt") << false;
+    QTest::newRow("above it") << directory << root << false;
+    QTest::newRow("the root") << root << root << true;
+    QTest::newRow("below the root") << root << directory + QStringLiteral("/file.txt") << true;
+}
+
+void QGCFileHelperTest::_testIsInDirectory()
+{
+    QFETCH(QString, directory);
+    QFETCH(QString, path);
+    QFETCH(bool, inside);
+
+    QCOMPARE(QGCFileHelper::isInDirectory(directory, path), inside);
 }
 
 // ============================================================================
@@ -224,20 +255,10 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
 
 void QGCFileHelperTest::_testReadCompressedFile()
 {
-    QString error;
-    const QByteArray data = QGCCompression::readFile(":/unittest/manifest.json.gz", &error);
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!data.isEmpty());
+    QByteArray data;
+    const Compression::Outcome read = Compression::readFile(":/unittest/manifest.json.gz", data);
+    QVERIFY2(read, qPrintable(read.description()));
     QVERIFY(data.contains("\"name\""));
-}
-
-void QGCFileHelperTest::_testReadCompressedFileMaxBytes()
-{
-    QString error;
-    const QByteArray partial = QGCCompression::readFile(":/unittest/manifest.json.gz", &error, 8);
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!partial.isEmpty());
-    QVERIFY(partial.size() <= 8);
 }
 
 // ============================================================================
@@ -340,22 +361,18 @@ void QGCFileHelperTest::_testToLocalPathCompressionInterop()
     QTemporaryDir tempDir;
     const QString archivePath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.zip")));
     QCOMPARE(archivePath, QStringLiteral(":/unittest/manifest.json.zip"));
-    QCOMPARE(QGCCompression::detectFormat(archivePath), QGCCompression::Format::ZIP);
-    QVERIFY(QGCCompression::validateArchive(archivePath));
-
-    const QStringList entries = QGCCompression::listArchive(archivePath);
-    QVERIFY(entries.contains(QStringLiteral("manifest.json")));
+    QVERIFY(Compression::isArchiveFile(archivePath));
 
     const QString extractDir = tempDir.filePath("from_url_extract");
-    QVERIFY(QGCCompression::extractArchive(archivePath, extractDir));
+    QVERIFY(Compression::extractArchive(archivePath, extractDir));
     QVERIFY(QFile::exists(extractDir + QStringLiteral("/manifest.json")));
 
     const QString gzipPath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.gz")));
     QCOMPARE(gzipPath, QStringLiteral(":/unittest/manifest.json.gz"));
 
-    const QString decompressedPath = tempDir.filePath("from_url_manifest.json");
-    QVERIFY(QGCCompression::decompressFile(gzipPath, decompressedPath));
-    QVERIFY(QFile::exists(decompressedPath));
+    QByteArray decompressed;
+    QVERIFY(Compression::readFile(gzipPath, decompressed));
+    QVERIFY(decompressed.contains("\"name\""));
 }
 
 void QGCFileHelperTest::_testIsLocalPath()
@@ -435,28 +452,6 @@ void QGCFileHelperTest::_testComputeFileHash()
     expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: empty file path"));
     QVERIFY(QGCFileHelper::computeFileHash(QString()).isEmpty());
     verifyExpectedLogMessage();
-}
-
-void QGCFileHelperTest::_testComputeDecompressedFileHash()
-{
-    const QString gzPath = QStringLiteral(":/unittest/manifest.json.gz");
-    QString error;
-    const QByteArray plainData = QGCCompression::readFile(gzPath, &error);
-    QVERIFY2(error.isEmpty(), qPrintable(error));
-    QVERIFY(!plainData.isEmpty());
-
-    const QString expectedPlainHash = QGCFileHelper::computeHash(plainData);
-    QVERIFY(!expectedPlainHash.isEmpty());
-
-    const QString decompressedHash = QGCCompression::computeFileHash(gzPath);
-    QVERIFY(!decompressedHash.isEmpty());
-    QCOMPARE(decompressedHash, expectedPlainHash);
-
-    // For uncompressed files, QGCCompression::computeFileHash should match QGCFileHelper::computeFileHash().
-    const QString passthroughPath = QStringLiteral(":/unittest/arducopter.apj");
-    const QString regularHash = QGCFileHelper::computeFileHash(passthroughPath);
-    const QString passthroughHash = QGCCompression::computeFileHash(passthroughPath);
-    QCOMPARE(passthroughHash, regularHash);
 }
 
 void QGCFileHelperTest::_testVerifyFileHash()

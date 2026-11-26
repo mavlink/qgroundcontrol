@@ -15,8 +15,8 @@ private slots:
     void _testValidateKeyTypesNullAcceptsDouble();
     void _testPossibleNaNJsonValue();
     void _testIsJsonFileBytes();
-    void _testIsJsonFileInvalidBytes();
     void _testIsJsonFileCompressedResourceBytes();
     void _testIsJsonFileCompressedResourcePath();
     void _testIsJsonFileMissingPath();
+    UT_PARAMETERIZED_TEST(_testIsJsonFileReplacesStaleError);
 };

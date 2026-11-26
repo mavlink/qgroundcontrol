@@ -1,12 +1,13 @@
 #include "ParameterMetaData.h"
-#include "JsonParsing.h"
-#include "QGCCompression.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
+
+#include "Compression.h"
+#include "JsonParsing.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(ParameterMetaDataLog, "FirmwarePlugin.ParameterMetaData")
 
@@ -109,10 +110,11 @@ QVersionNumber ParameterMetaData::versionFromJsonData(const QByteArray &jsonData
 
 QVersionNumber ParameterMetaData::versionFromMetaDataFile(const QString &metaDataFile)
 {
-    QString errorString;
-    const QByteArray data = QGCCompression::readFile(metaDataFile, &errorString);
+    QByteArray data;
+    const Compression::Outcome read = Compression::readFile(metaDataFile, data);
     if (data.isEmpty()) {
-        qCWarning(ParameterMetaDataLog) << "Failed to read parameter meta data file:" << metaDataFile << errorString;
+        qCWarning(ParameterMetaDataLog) << "Failed to read parameter meta data file:" << metaDataFile
+                                        << read.description();
         return {};
     }
 

@@ -9,44 +9,54 @@
 #include <QtCore/QObject>
 #include <QtCore/QTranslator>
 
-#include "QGCCompression.h"
+#include "Compression.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(JsonParsingLog, "Utilities.Parsing.Json")
 
 namespace JsonParsing {
 
-bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
+/// Parse JSON text, which is what bytes or a file that can be compressed have been decompressed to
+static bool parseJsonText(const QByteArray& json, QJsonDocument& jsonDoc, QString& errorString)
 {
     QJsonParseError parseError;
-    jsonDoc = QGCCompression::parseCompressedJson(bytes, &parseError);
+    jsonDoc = QJsonDocument::fromJson(json, &parseError);
 
     if (parseError.error == QJsonParseError::NoError) {
+        // The caller may pass the error string of an earlier call
+        errorString.clear();
         return true;
     }
 
-    if (QGCCompression::looksLikeCompressedData(bytes)) {
-        // parseError.offset refers to the decompressed text, so a slice of `bytes` would be garbage.
-        qCDebug(JsonParsingLog) << "Json read error (compressed input) offset" << parseError.offset;
-    } else {
-        const int startPos = qMax(0, parseError.offset - 100);
-        const int length = qMin(bytes.length() - startPos, 200);
-        qCDebug(JsonParsingLog) << "Json read error" << bytes.mid(startPos, length).constData();
-    }
+    const int startPos = qMax(0, parseError.offset - 100);
+    qCDebug(JsonParsingLog) << "Json read error" << json.mid(startPos, 200).constData();
     errorString = QStringLiteral("%1 (offset %2)").arg(parseError.errorString()).arg(parseError.offset);
 
     return false;
 }
 
-bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString)
+bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
 {
-    const QByteArray jsonBytes = QGCCompression::readFile(fileName, &errorString);
-    if (jsonBytes.isEmpty() && !errorString.isEmpty()) {
+    QByteArray json;
+    if (const Compression::Outcome read = Compression::decompressData(bytes, json); !read) {
         jsonDoc = {};
+        errorString = read.description();
         return false;
     }
 
-    return isJsonFile(jsonBytes, jsonDoc, errorString);
+    return parseJsonText(json, jsonDoc, errorString);
+}
+
+bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes)
+{
+    QByteArray json;
+    if (const Compression::Outcome read = Compression::readFile(fileName, json, maxBytes); !read) {
+        jsonDoc = {};
+        errorString = read.description();
+        return false;
+    }
+
+    return parseJsonText(json, jsonDoc, errorString);
 }
 
 double possibleNaNJsonValue(const QJsonValue& value)

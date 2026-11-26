@@ -14,6 +14,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonParseError>
+#include <QtCore/QMutex>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
 
@@ -25,9 +26,12 @@ namespace JsonSchemaValidator {
 
 namespace {
 
+/// Guards the caches below: metadata is validated on worker threads
+Q_CONSTINIT QMutex cacheMutex;
+
 std::shared_ptr<const valijson::Schema> loadSchema(const QString& schemaResourcePath, QString& errorString)
 {
-    // Unguarded static: component-metadata validation runs on the main thread only.
+    const QMutexLocker locker(&cacheMutex);
     static QHash<QString, std::shared_ptr<const valijson::Schema>> schemaCache;
 
     if (const auto cached = schemaCache.value(schemaResourcePath)) {
@@ -83,15 +87,18 @@ bool validate(const QJsonDocument& doc, const QString& schemaResourcePath, QStri
     const QJsonValue root = doc.isArray() ? QJsonValue(doc.array()) : QJsonValue(doc.object());
 
     // Vehicles send the same component metadata on every connection, so remember documents that
-    // already passed. Unguarded static: component-metadata validation runs on the main thread only.
+    // already passed
     static QSet<QByteArray> validatedDocuments;
     QCryptographicHash digest(QCryptographicHash::Sha256);
     digest.addData(schemaResourcePath.toUtf8());
     digest.addData(QByteArrayView("\0", 1));
     digest.addData(QCborValue::fromJsonValue(root).toCbor());
     const QByteArray documentKey = digest.result();
-    if (validatedDocuments.contains(documentKey)) {
-        return true;
+    {
+        const QMutexLocker locker(&cacheMutex);
+        if (validatedDocuments.contains(documentKey)) {
+            return true;
+        }
     }
 
     const auto schema = loadSchema(schemaResourcePath, errorString);
@@ -104,6 +111,7 @@ bool validate(const QJsonDocument& doc, const QString& schemaResourcePath, QStri
     const valijson::adapters::QtJsonAdapter docAdapter(root);
 
     if (validator.validate(*schema, docAdapter, &results)) {
+        const QMutexLocker locker(&cacheMutex);
         validatedDocuments.insert(documentKey);
         return true;
     }

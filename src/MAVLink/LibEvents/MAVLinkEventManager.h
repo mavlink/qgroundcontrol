@@ -16,6 +16,7 @@ class Vehicle;
 
 namespace events::parser {
 class ParsedEvent;
+class Parser;
 }
 
 /// \brief Owns per-component EventHandler instances and drives the Health & Arming
@@ -35,8 +36,8 @@ public:
     /// RESPONSE_EVENT_ERROR) to the EventHandler for the source component.
     void handleEventMessage(const mavlink_message_t &message);
 
-    /// Load event metadata JSON for a component.
-    void setMetadata(uint8_t compid, const QString &metadataJsonFileName);
+    /// Uses the event metadata of a component, from EventHandler::loadMetadata().
+    void setMetadata(uint8_t compid, const std::shared_ptr<events::parser::Parser>& metadata);
 
     /// Health and arming check mode group of a custom mode, from the component's
     /// metadata. -1 if the component or mode is unknown.

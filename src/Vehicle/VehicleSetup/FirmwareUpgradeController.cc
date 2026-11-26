@@ -389,7 +389,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 /// @brief Begins the process of downloading the selected firmware file.
 void FirmwareUpgradeController::_downloadFirmware(void)
 {
-    Q_ASSERT(!_firmwareFilename.isEmpty());
+    if (_firmwareFilename.isEmpty()) {
+        _errorCancel(tr("No firmware file selected"));
+        return;
+    }
 
     _flashCancelled = false;
 
@@ -524,7 +527,9 @@ void FirmwareUpgradeController::_eraseProgressTick(void)
 /// Appends the specified text to the status log area in the ui
 void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool critical)
 {
-    Q_ASSERT(_statusLog);
+    if (!_statusLog) {
+        return;
+    }
 
     QString varText;
 
@@ -710,8 +715,6 @@ void FirmwareUpgradeController::_downloadArduPilotManifest(void)
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::finished, downloader, &QObject::deleteLater);
     connect(downloader, &QGCFileDownload::finished, this, &FirmwareUpgradeController::_ardupilotManifestDownloadComplete);
-    // Use autoDecompress to stream-decompress directly during download
-    downloader->setAutoDecompress(true);
     if (!downloader->start(QStringLiteral("https://firmware.ardupilot.org/manifest.json.gz"))) {
         qCWarning(FirmwareUpgradeControllerLog) << "ArduPilot Manifest download did not start:" << downloader->errorString();
         downloader->deleteLater();
@@ -732,7 +735,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(bool success,
     if (success) {
         qCDebug(FirmwareUpgradeControllerLog) << "_ardupilotManifestDownloadFinished" << localFile;
 
-        // localFile is already decompressed (autoDecompress=true streams directly to .json)
+        // Compressed with gzip: isJsonFile() decompresses it
         QString         errorString;
         QJsonDocument   doc;
         if (!JsonParsing::isJsonFile(localFile, doc, errorString)) {

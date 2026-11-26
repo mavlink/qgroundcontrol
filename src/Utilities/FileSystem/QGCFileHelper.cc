@@ -43,14 +43,8 @@ QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxByt
     return data;
 }
 
-size_t optimalBufferSize(const QString &path)
+static size_t bufferSizeFor(const QString& path)
 {
-    // Cache the result - only compute once per process
-    static size_t cachedSize = 0;
-    if (cachedSize != 0) {
-        return cachedSize;
-    }
-
     qint64 blockSize = 0;
 
     // Try to get block size from specified path
@@ -67,17 +61,20 @@ size_t optimalBufferSize(const QString &path)
     }
 
     if (blockSize <= 0) {
-        cachedSize = kBufferSizeDefault;
-    } else {
-        // Use 16 blocks, clamped to min/max bounds
-        // Typical: 4KB block × 16 = 64KB
-        cachedSize = static_cast<size_t>(
-            qBound(static_cast<qint64>(kBufferSizeMin),
-                   blockSize * 16,
-                   static_cast<qint64>(kBufferSizeMax))
-        );
+        return kBufferSizeDefault;
     }
 
+    // Use 16 blocks, clamped to min/max bounds
+    // Typical: 4KB block × 16 = 64KB
+    return static_cast<size_t>(
+        qBound(static_cast<qint64>(kBufferSizeMin), blockSize * 16, static_cast<qint64>(kBufferSizeMax)));
+}
+
+size_t optimalBufferSize(const QString& path)
+{
+    // Computed once per process, for the first path asked about. A static local is initialized by one thread
+    // only, also when worker threads ask at the same time
+    static const size_t cachedSize = bufferSizeFor(path);
     return cachedSize;
 }
 
@@ -95,6 +92,15 @@ QString joinPath(const QString &dir, const QString &name)
         return dir + name;
     }
     return dir + QLatin1Char('/') + name;
+}
+
+bool isInDirectory(const QString& directoryPath, const QString& path)
+{
+    if (path == directoryPath) {
+        return true;
+    }
+    // A root ("/", "E:/") is the one directory whose clean path ends in the separator
+    return path.startsWith(directoryPath.endsWith(QLatin1Char('/')) ? directoryPath : directoryPath + QLatin1Char('/'));
 }
 
 bool ensureDirectoryExists(const QString &path)

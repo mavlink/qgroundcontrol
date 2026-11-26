@@ -1,17 +1,21 @@
 #include "QGCFileDownloadTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
-#include "QGCCompression.h"
+#include "Compression.h"
+#include "CompressionJob.h"
+#include "FileFixtures.h"
+#include "ProcessFixtures.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
-#include <QtCore/QTemporaryDir>
-#include <QtCore/QDir>
 
 void QGCFileDownloadTest::_testFileDownload()
 {
@@ -19,7 +23,7 @@ void QGCFileDownloadTest::_testFileDownload()
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
 
     QVERIFY(downloader.start(":/unittest/arducopter.apj"));
-    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::shortMs());
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
     QCOMPARE(finishedSpy.count(), 1);
 
     const QList<QVariant> args = finishedSpy.first();
@@ -123,6 +127,25 @@ void QGCFileDownloadTest::_testFileDownloadCustomOutputPath()
     QFile::remove(customOutput);
 }
 
+void QGCFileDownloadTest::_testFileDownloadOutputDirectory()
+{
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+
+    // The download keeps the name of the URL, and its content as it was sent
+    downloader.setOutputDirectory(outputDir.path());
+    QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    QCOMPARE(args.at(1).toString(), outputDir.filePath(QStringLiteral("manifest.json.gz")));
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files), QStringList{QStringLiteral("manifest.json.gz")});
+    QCOMPARE(TestFixtures::readFile(args.at(1).toString()), TestFixtures::readFile(":/unittest/manifest.json.gz"));
+}
+
 void QGCFileDownloadTest::_testFileDownloadNonExistentLocalFile()
 {
     QTemporaryDir tempDir;
@@ -161,7 +184,6 @@ void QGCFileDownloadTest::_testFileDownloadCancelSingleCompletion()
     QGCFileDownload downloader(this);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
 
-    downloader.setAutoDecompress(true);
     QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
     downloader.cancel();
 
@@ -172,107 +194,148 @@ void QGCFileDownloadTest::_testFileDownloadCancelSingleCompletion()
     QVERIFY(!args.at(0).toBool());
 }
 
-void QGCFileDownloadTest::_testAutoDecompressGzip()
+void QGCFileDownloadTest::_testAutoDecompress_data()
 {
-    // Test downloading a .gz file with autoDecompress=true
-    // Uses manifest.json.gz from compression test resources
-    QGCFileDownload* const downloader = new QGCFileDownload(this);
-    QString resultLocalFile;
-    QString resultErrorMsg;
-    (void)connect(downloader, &QGCFileDownload::finished, this,
-                  [&resultLocalFile, &resultErrorMsg](bool success, const QString& localFile, const QString& errorMsg) {
-                      QVERIFY(success);
-                      resultLocalFile = localFile;
-                      resultErrorMsg = errorMsg;
-                  });
-    QSignalSpy spy(downloader, &QGCFileDownload::finished);
-    // Download with autoDecompress=true
-    downloader->setAutoDecompress(true);
-    QVERIFY(downloader->start(":/unittest/manifest.json.gz"));
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
-    downloader->deleteLater();
-    // Verify no error
-    QVERIFY2(resultErrorMsg.isEmpty(), qPrintable(resultErrorMsg));
-    // Verify the output file is decompressed (should be manifest.json, not .gz)
-    QVERIFY2(!resultLocalFile.isEmpty(), "Local file path is empty");
-    QVERIFY2(!resultLocalFile.endsWith(".gz"), "File should be decompressed (no .gz extension)");
-    QVERIFY2(QFile::exists(resultLocalFile), qPrintable("Output file doesn't exist: " + resultLocalFile));
-    // Verify content is valid JSON (not compressed data)
-    QFile outputFile(resultLocalFile);
-    QVERIFY(outputFile.open(QIODevice::ReadOnly));
-    const QByteArray content = outputFile.readAll();
-    outputFile.close();
-    QVERIFY2(!content.isEmpty(), "Decompressed file is empty");
-    QVERIFY2(content.contains("\"name\""), "Content doesn't look like valid JSON");
-    // Cleanup
-    QFile::remove(resultLocalFile);
+    // The file to download: a resource, or empty for a local file "content.json.gz" of the content
+    QTest::addColumn<QString>("source");
+    QTest::addColumn<QByteArray>("content");
+    // Name of the file that finished() gives, the only one left in the output directory
+    QTest::addColumn<QString>("resultName");
+
+    QByteArray manifest;
+    QVERIFY(Compression::readFile(QStringLiteral(":/unittest/manifest.json.gz"), manifest));
+    QTest::newRow("compressed") << ":/unittest/manifest.json.gz" << manifest << "manifest.json";
+    // As when the HTTP client has taken a content encoding off: the content is kept under the name without the
+    // extension
+    const QByteArray plain("{\"name\": \"not compressed\"}\n");
+    QTest::newRow("only the name compressed") << QString() << plain << "content.json";
+    // A file whose name and content are not compressed is not touched
+    QTest::newRow("not compressed") << ":/unittest/arducopter.apj"
+                                    << TestFixtures::readFile(QStringLiteral(":/unittest/arducopter.apj"))
+                                    << "arducopter.apj";
 }
 
-void QGCFileDownloadTest::_testAutoDecompressDisabled()
+// With autoDecompress, a compressed download is replaced by the file it decompresses to
+void QGCFileDownloadTest::_testAutoDecompress()
 {
-    // Test downloading a .gz file with autoDecompress=false (default)
-    // The file should remain compressed
-    QGCFileDownload* const downloader = new QGCFileDownload(this);
-    QString resultLocalFile;
-    QString resultErrorMsg;
-    (void)connect(downloader, &QGCFileDownload::finished, this,
-                  [&resultLocalFile, &resultErrorMsg](bool success, const QString& localFile, const QString& errorMsg) {
-                      QVERIFY(success);
-                      resultLocalFile = localFile;
-                      resultErrorMsg = errorMsg;
-                  });
-    QSignalSpy spy(downloader, &QGCFileDownload::finished);
-    // Download with autoDecompress=false (default)
-    downloader->setAutoDecompress(false);
-    QVERIFY(downloader->start(":/unittest/manifest.json.gz"));
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
-    downloader->deleteLater();
-    // Verify no error
-    QVERIFY2(resultErrorMsg.isEmpty(), qPrintable(resultErrorMsg));
-    // Verify the output file is still compressed (.gz extension)
-    QVERIFY2(!resultLocalFile.isEmpty(), "Local file path is empty");
-    QVERIFY2(resultLocalFile.endsWith(".gz"), "File should remain compressed with .gz extension");
-    QVERIFY2(QFile::exists(resultLocalFile), qPrintable("Output file doesn't exist: " + resultLocalFile));
-    // Verify content is compressed (starts with gzip magic bytes 1f 8b)
-    QFile outputFile(resultLocalFile);
-    QVERIFY(outputFile.open(QIODevice::ReadOnly));
-    const QByteArray content = outputFile.readAll();
-    outputFile.close();
-    QVERIFY2(!content.isEmpty(), "File is empty");
-    QVERIFY2(content.size() >= 2, "File too small to be gzip");
-    QVERIFY2(static_cast<unsigned char>(content[0]) == 0x1f && static_cast<unsigned char>(content[1]) == 0x8b,
-             "File doesn't have gzip magic bytes");
-    // Cleanup
-    QFile::remove(resultLocalFile);
+    QFETCH(QString, source);
+    QFETCH(QByteArray, content);
+    QFETCH(QString, resultName);
+
+    QTemporaryDir sourceDir;
+    QTemporaryDir outputDir;
+    QVERIFY(sourceDir.isValid());
+    QVERIFY(outputDir.isValid());
+    if (source.isEmpty()) {
+        source = sourceDir.filePath(QStringLiteral("content.json.gz"));
+        QVERIFY(TestFixtures::writeFile(source, content));
+    }
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setOutputDirectory(outputDir.path());
+    QVERIFY(downloader.start(source));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    QCOMPARE(args.at(1).toString(), outputDir.filePath(resultName));
+    QCOMPARE(downloader.localPath(), outputDir.filePath(resultName));
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files | QDir::Hidden), QStringList{resultName});
+    QCOMPARE(TestFixtures::readFile(outputDir.filePath(resultName)), content);
 }
 
-void QGCFileDownloadTest::_testAutoDecompressUncompressedFile()
+void QGCFileDownloadTest::_testAutoDecompressFailure_data()
 {
-    // Test downloading a non-compressed file with autoDecompress=true
-    // Should work normally without any decompression attempt
-    QGCFileDownload* const downloader = new QGCFileDownload(this);
-    QString resultLocalFile;
-    QString resultErrorMsg;
-    (void)connect(downloader, &QGCFileDownload::finished, this,
-                  [&resultLocalFile, &resultErrorMsg](bool success, const QString& localFile, const QString& errorMsg) {
-                      QVERIFY(success);
-                      resultLocalFile = localFile;
-                      resultErrorMsg = errorMsg;
-                  });
-    QSignalSpy spy(downloader, &QGCFileDownload::finished);
-    // Download non-compressed file with autoDecompress=true
-    downloader->setAutoDecompress(true);
-    QVERIFY(downloader->start(":/unittest/arducopter.apj"));
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
-    downloader->deleteLater();
-    // Verify no error
-    QVERIFY2(resultErrorMsg.isEmpty(), qPrintable(resultErrorMsg));
-    // Verify file downloaded successfully
-    QVERIFY2(!resultLocalFile.isEmpty(), "Local file path is empty");
-    QVERIFY2(QFile::exists(resultLocalFile), qPrintable("Output file doesn't exist: " + resultLocalFile));
-    QVERIFY2(QFileInfo(resultLocalFile).size() > 0, "Downloaded file is empty");
-    // Cleanup
-    QFile::remove(resultLocalFile);
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<qint64>("maxDecompressedBytes");
+    // The start of the error, after the path of the download, and what follows
+    QTest::addColumn<QString>("reason");
+
+    const QByteArray compressed = TestFixtures::gzipMember(QByteArray(4096, 'x'));
+    QTest::newRow("truncated") << compressed.first(compressed.size() / 2)
+                               << Compression::kDefaultMaxDecompressedFileBytes << " \\(.*truncated gzip input";
+    QTest::newRow("over the limit") << compressed << qint64{1024} << ": size limit exceeded$";
+}
+
+// A download that cannot be decompressed, also one over the limit, fails with the reason and leaves no file
+void QGCFileDownloadTest::_testAutoDecompressFailure()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(qint64, maxDecompressedBytes);
+    QFETCH(QString, reason);
+
+    QTemporaryDir sourceDir;
+    QTemporaryDir outputDir;
+    QVERIFY(sourceDir.isValid());
+    QVERIFY(outputDir.isValid());
+    const QString sourcePath = sourceDir.filePath(QStringLiteral("content.gz"));
+    QVERIFY(TestFixtures::writeFile(sourcePath, content));
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setMaxDecompressedBytes(maxDecompressedBytes);
+    downloader.setOutputPath(outputDir.filePath(QStringLiteral("content.gz")));
+
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Decompression failed"));
+    QVERIFY(downloader.start(sourcePath));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY(!args.at(0).toBool());
+    QVERIFY(args.at(1).toString().isEmpty());
+    // The error names the download as the caller knows it
+    const QString error = args.at(2).toString();
+    const QRegularExpression expected(QStringLiteral("^Decompression failed: ") +
+                                          QRegularExpression::escape(outputDir.filePath("content.gz")) + reason,
+                                      QRegularExpression::CaseInsensitiveOption);
+    QVERIFY2(error.contains(expected), qPrintable(error));
+    QCOMPARE(downloader.state(), QGCFileDownload::State::Failed);
+    QVERIFY(QDir(outputDir.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot));
+}
+
+// Cancelling a download while its file is decompressed ends it at once, and the decompression leaves no file once it
+// has ended. The decompression, which still waits for a thread, does not complete the next download.
+void QGCFileDownloadTest::_testAutoDecompressCancelled()
+{
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+
+    TestFixtures::ThreadPoolBlocker blocker;
+    QVERIFY(blocker.isBlocking());
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setOutputPath(outputDir.filePath(QStringLiteral("manifest.json.gz")));
+    QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
+    QTRY_COMPARE_WITH_TIMEOUT(downloader.state(), QGCFileDownload::State::Decompressing, TestTimeout::mediumMs());
+    QVERIFY(downloader.isRunning());
+    const QPointer<CompressionJob> job = downloader.findChild<CompressionJob*>();
+    QVERIFY(job);
+
+    downloader.cancel();
+    QCOMPARE(finishedSpy.count(), 1);
+    QVERIFY(!finishedSpy.first().at(0).toBool());
+    QVERIFY(!QFileInfo::exists(outputDir.filePath(QStringLiteral("manifest.json.gz"))));
+    QVERIFY(!QFileInfo::exists(outputDir.filePath(QStringLiteral("manifest.json"))));
+
+    // Saved under another name, so that a result of the cancelled decompression would show
+    downloader.setOutputPath(outputDir.filePath(QStringLiteral("next.json.gz")));
+    QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
+    blocker.release();
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 2, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
+    QCOMPARE(finishedSpy.count(), 2);
+    const QList<QVariant> args = finishedSpy.last();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    const QString decompressedPath = outputDir.filePath(QStringLiteral("next.json"));
+    QCOMPARE(args.at(1).toString(), decompressedPath);
+    QVERIFY(TestFixtures::readFile(decompressedPath).contains("\"name\""));
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files | QDir::Hidden), QStringList{QStringLiteral("next.json")});
 }
 
 // ============================================================================
@@ -282,7 +345,7 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
 {
     QTemporaryDir tempDir;
     // Integration test: Download a ZIP archive and extract it
-    // This tests the full workflow of QGCFileDownload + QGCCompression
+    // This tests the full workflow of QGCFileDownload + Compression
     QGCFileDownload* const downloader = new QGCFileDownload(this);
     QString resultLocalFile;
     QString resultErrorMsg;
@@ -293,8 +356,6 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
                       resultErrorMsg = errorMsg;
                   });
     QSignalSpy spy(downloader, &QGCFileDownload::finished);
-    // Download ZIP archive (no auto-decompress for archives)
-    downloader->setAutoDecompress(false);
     QVERIFY(downloader->start(":/unittest/manifest.json.zip"));
     QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
     downloader->deleteLater();
@@ -305,9 +366,9 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
     const QString extractDir = tempDir.path() + "/extract_zip";
     QDir().mkpath(extractDir);
     QVERIFY(!extractDir.isEmpty());
-    // Extract the downloaded archive using QGCCompression
-    const bool extractResult = QGCCompression::extractArchive(resultLocalFile, extractDir);
-    QVERIFY2(extractResult, qPrintable("Extraction failed: " + QGCCompression::lastErrorString()));
+    // Extract the downloaded archive using Compression
+    const Compression::Outcome extractResult = Compression::extractArchive(resultLocalFile, extractDir);
+    QVERIFY2(extractResult, qPrintable("Extraction failed: " + extractResult.message));
     // Verify extracted content
     const QString extractedFile = extractDir + "/manifest.json";
     QVERIFY2(QFile::exists(extractedFile), qPrintable("Extracted file doesn't exist: " + extractedFile));
@@ -325,44 +386,4 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
     QFile::remove(resultLocalFile);
 }
 
-void QGCFileDownloadTest::_testDownloadDecompressAndParse()
-{
-    // Integration test: Download a gzipped JSON file, decompress it, and parse
-    // This tests the full workflow with auto-decompression
-    QGCFileDownload* const downloader = new QGCFileDownload(this);
-    QString resultLocalFile;
-    QString resultErrorMsg;
-    (void)connect(downloader, &QGCFileDownload::finished, this,
-                  [&resultLocalFile, &resultErrorMsg](bool success, const QString& localFile, const QString& errorMsg) {
-                      QVERIFY(success);
-                      resultLocalFile = localFile;
-                      resultErrorMsg = errorMsg;
-                  });
-    QSignalSpy spy(downloader, &QGCFileDownload::finished);
-    // Download with auto-decompress enabled
-    downloader->setAutoDecompress(true);
-    QVERIFY(downloader->start(":/unittest/manifest.json.gz"));
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
-    downloader->deleteLater();
-    // Verify download and decompression succeeded
-    QVERIFY2(resultErrorMsg.isEmpty(), qPrintable(resultErrorMsg));
-    QVERIFY2(QFile::exists(resultLocalFile), qPrintable("Decompressed file doesn't exist: " + resultLocalFile));
-    // Parse the decompressed JSON directly
-    QFile jsonFile(resultLocalFile);
-    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
-    const QByteArray jsonData = jsonFile.readAll();
-    jsonFile.close();
-    // Verify it's valid JSON
-    QJsonParseError parseError;
-    const QJsonDocument doc = QJsonDocument::fromJson(jsonData, &parseError);
-    QVERIFY2(!doc.isNull(), qPrintable("Invalid JSON after decompression: " + parseError.errorString()));
-    QVERIFY(doc.isObject());
-    // Verify expected content
-    const QJsonObject obj = doc.object();
-    QVERIFY(obj.contains("name"));
-    QCOMPARE(obj.value("name").toString(), QStringLiteral("test"));
-    // Cleanup
-    QFile::remove(resultLocalFile);
-}
-
-UT_REGISTER_TEST(QGCFileDownloadTest, TestLabel::Integration, TestLabel::Network, TestLabel::Utilities)
+UT_REGISTER_TEST(QGCFileDownloadTest, TestLabel::Integration, TestLabel::Utilities)

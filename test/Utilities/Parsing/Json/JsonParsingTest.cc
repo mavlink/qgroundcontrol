@@ -3,8 +3,10 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QTemporaryFile>
 #include <QtCore/qnumeric.h>
 
+#include "Compression.h"
 #include "JsonParsing.h"
 #include "QGCFileHelper.h"
 
@@ -99,16 +101,6 @@ void JsonParsingTest::_testIsJsonFileBytes()
     QCOMPARE(document.object().value(QStringLiteral("version")).toInt(), 1);
 }
 
-void JsonParsingTest::_testIsJsonFileInvalidBytes()
-{
-    const QByteArray data = QByteArrayLiteral("{invalid-json");
-    QJsonDocument document;
-    QString errorString;
-
-    QVERIFY(!JsonParsing::isJsonFile(data, document, errorString));
-    QVERIFY(!errorString.isEmpty());
-}
-
 void JsonParsingTest::_testIsJsonFileCompressedResourceBytes()
 {
     QString fileError;
@@ -120,6 +112,12 @@ void JsonParsingTest::_testIsJsonFileCompressedResourceBytes()
     QString errorString;
     QVERIFY(JsonParsing::isJsonFile(data, document, errorString));
     QVERIFY(document.isObject());
+
+    // Damaged compression is reported as that, not as a syntax error in bytes that are no text
+    QVERIFY(!JsonParsing::isJsonFile(data.first(data.size() / 2), document, errorString));
+    QVERIFY(document.isNull());
+    QVERIFY2(errorString.startsWith("Failed to decompress data"), qPrintable(errorString));
+    QVERIFY2(errorString.contains("truncated"), qPrintable(errorString));
 }
 
 void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
@@ -127,8 +125,17 @@ void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
     QJsonDocument document;
     QString errorString;
 
-    QVERIFY(JsonParsing::isJsonFile(QStringLiteral(":/unittest/manifest.json.gz"), document, errorString));
+    const QString path = QStringLiteral(":/unittest/manifest.json.gz");
+    QVERIFY(JsonParsing::isJsonFile(path, document, errorString));
     QVERIFY(document.isObject());
+
+    // The limit is on the decompressed content: a file of exactly the limit is parsed, a larger one is not
+    QByteArray content;
+    QVERIFY(Compression::readFile(path, content));
+    QVERIFY(JsonParsing::isJsonFile(path, document, errorString, content.size()));
+    QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, content.size() - 1));
+    QVERIFY(document.isNull());
+    QVERIFY2(errorString.contains(QStringLiteral("size limit exceeded")), qPrintable(errorString));
 }
 
 void JsonParsingTest::_testIsJsonFileMissingPath()
@@ -138,6 +145,45 @@ void JsonParsingTest::_testIsJsonFileMissingPath()
 
     QVERIFY(!JsonParsing::isJsonFile(QStringLiteral("/definitely/missing/file.json"), document, errorString));
     QVERIFY(!errorString.isEmpty());
+}
+
+void JsonParsingTest::_testIsJsonFileReplacesStaleError_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<bool>("fromFile");
+    QTest::addColumn<bool>("isJson");
+
+    QTest::newRow("valid-bytes") << QByteArrayLiteral("{}") << false << true;
+    QTest::newRow("valid-file") << QByteArrayLiteral("{}") << true << true;
+    QTest::newRow("invalid-bytes") << QByteArrayLiteral("{") << false << false;
+    QTest::newRow("invalid-file") << QByteArrayLiteral("{") << true << false;
+    QTest::newRow("empty-file") << QByteArray() << true << false;
+}
+
+void JsonParsingTest::_testIsJsonFileReplacesStaleError()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(bool, fromFile);
+    QFETCH(bool, isJson);
+
+    QTemporaryFile file;
+    QVERIFY(file.open());
+    QCOMPARE(file.write(content), content.size());
+    file.close();
+
+    const auto parse = [&](QString& errorString) {
+        QJsonDocument document;
+        return fromFile ? JsonParsing::isJsonFile(file.fileName(), document, errorString)
+                        : JsonParsing::isJsonFile(content, document, errorString);
+    };
+
+    QString freshError;
+    QCOMPARE(parse(freshError), isJson);
+    QCOMPARE(freshError.isEmpty(), isJson);
+
+    QString staleError = QStringLiteral("error of an earlier call");
+    QCOMPARE(parse(staleError), isJson);
+    QCOMPARE(staleError, freshError);
 }
 
 UT_REGISTER_TEST(JsonParsingTest, TestLabel::Unit, TestLabel::Utilities)

@@ -18,13 +18,16 @@ private slots:
     UT_PARAMETERIZED_TEST(_metadataUriFillsItsField);
     void _downloadEndsWithItsState();
     void _httpDownloadEndsWithItsState();
+    UT_PARAMETERIZED_TEST(_downloadsUseTheDirectoryOfTheirManager);
     void _downloadThatCannotStartLeavesTheOneInProgress();
     UT_PARAMETERIZED_TEST(_metadataIsTranslatedForSystemLocale);
     void _translationDownloadEndsWithItsState();
     void _answerAfterRequestTimeoutIsNotUsed();
+    UT_PARAMETERIZED_TEST(_metadataIsParsedOnWorker);
 
 private:
     /// Gives the parameter metadata of the vehicle a file to download from @a directory, and a translation summary
-    /// that names @a translationUrl for the system locale
-    void _setUpTranslatedParameterMetadata(const QString& directory, const QString& translationUrl);
+    /// that names @a translationUrl for the system locale, compressed with gzip if @a compressed
+    void _setUpTranslatedParameterMetadata(const QString& directory, const QString& translationUrl,
+                                           bool compressed = false);
 };

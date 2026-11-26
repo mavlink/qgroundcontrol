@@ -18,7 +18,8 @@ public:
 
     FactMetaData *factMetaDataForName(const QString &name, FactMetaData::ValueType_t valueType);
 
-    void setJson(const QString &metadataJsonFileName) override;
+    QString jsonSchema() const override;
+    void setJson(const QString& fileName, const ParsedJson& json) override;
 
 private:
     ParameterMetaData *_getParameterMetaData();

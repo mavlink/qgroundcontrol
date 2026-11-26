@@ -24,6 +24,7 @@
   - [QML Test Split](#qml-test-split)
 - [Portable Utility Tests](#portable-utility-tests)
 - [GPS Protocol Golden Transcripts](#gps-protocol-golden-transcripts)
+- [Compression Fuzzing](#compression-fuzzing)
 - [MultiSignalSpy](#multisignalspy)
 - [Manual Test Plans](#manual-test-plans)
 - [Code Coverage](#code-coverage)
@@ -118,8 +119,9 @@ For tests that repeat the same assertions across a set of literal inputs, use Qt
 table-driven pattern (`_data()` + `QTest::addColumn`/`QFETCH`) rather than copy-pasting
 near-identical method bodies. Each row gets its own failure tag, so a single bad
 permutation is identified without re-running the whole method. See
-`Utilities/Compression/QGCCompressionTest.cc` (`_testFormatDetection`,
-`_testDetectFormatFromMagicBytes`) for the canonical shape.
+`Utilities/Compression/QGCCompressionTest.cc` (`_testKindFromName`,
+`_testKindFromContent`) for the canonical shape. `UT_PARAMETERIZED_TEST(_myCase);` in the
+class declares the test slot and its `_data()` companion.
 
 ### Register in CMakeLists.txt
 
@@ -406,10 +408,13 @@ ctest --test-dir build -R QmlTestFileValidator --output-on-failure
 
 Windows x64 and the macOS Release CI leg enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal
 application build (the macOS Debug leg runs the Unit and Integration suites instead, same as
-Linux). The ten `Portable.*` CTest entries use small Qt Test executables, with the same test
-bodies and production utility libraries as the Linux application tests. They require no
-QGCApplication, vehicles, or QML engine. The portable command-line parser target enables
-its own test hooks; the packaged application keeps its normal build configuration.
+Linux). Fifteen of the sixteen `Portable.*` CTest entries use small Qt Test executables, with the
+same test bodies and production utility libraries as the Linux application tests, among them the three
+Compression suites with the files they read from `:/unittest/`. They require no QGCApplication,
+vehicles, or QML engine. The portable command-line parser target enables its own test hooks; the
+packaged application keeps its normal build configuration. The sixteenth,
+`Portable.QGCCompressionFuzzSmoke`, runs the [Compression fuzz harness](#compression-fuzzing) on its
+fixed inputs.
 
 ```bash
 cmake -S . -B build -DQGC_BUILD_PORTABLE_TESTS=ON
@@ -418,8 +423,12 @@ ctest --test-dir build --build-config Debug --output-on-failure -L Portable
 ```
 
 Use `PortableTest` and `QGC_REGISTER_PORTABLE_TEST` for these suites. Full application
-builds use the existing UnitTest harness; standalone executables use Qt Test with warnings
-failing tests. Keep application-dependent fixtures in the full harness.
+builds run them in the UnitTest harness. A standalone executable runs them in `PortableTest`, which
+shares `UnitTestBase` with `UnitTest`: the [wait helpers](#waittimeout-helpers), `TestTimeout`, and the
+strict log checking with `expectLogMessage`, `verifyExpectedLogMessage` and `ignoreLogMessage`. It
+captures the log itself, and turns off debug and info messages as the application does for its own
+categories. `FileFixtures.h` and `ProcessFixtures.h` need no application; keep application-dependent
+fixtures in the full harness. Each portable test gets its own `TMPDIR`, as the application's tests do.
 
 ## GPS Protocol Golden Transcripts
 
@@ -449,6 +458,44 @@ NTRIP libFuzzer harnesses and builds both libraries with ASan and UBSan:
 cmake -S test/GPS/Standalone -B build-gps -DCMAKE_CXX_COMPILER=clang++ -DQGC_GPS_LIBFUZZER=ON
 cmake --build build-gps && ctest --test-dir build-gps
 ```
+
+## Compression Fuzzing
+
+`test/Utilities/Compression/Fuzz` holds two libFuzzer targets for `QGCCompression`
+(`QGCCompressionFuzzTargets.h`). The stream target reads each input as a compressed stream in memory and touches no
+file. The extraction target writes the input as files: it checks the kind of the file, reads it as a compressed
+stream from a file and to a file, and extracts it as an archive. They abort if a file is detected as both kinds, if
+the ways of reading the input disagree, if input that is not compressed comes back changed, if a refused input or a
+failed extraction leaves data, a file or a directory behind, if a size limit is exceeded, or if an extraction writes
+outside its output directory, creates a link, or writes a name that is not portable or that differs from another
+only in case or Unicode normalisation. In a build with the optional decoders (`QGC_ENABLE_LZMA`, `QGC_ENABLE_BZIP2`,
+`QGC_ENABLE_LZ4`, `QGC_ENABLE_ZSTD`) both also abort if the rules by which a build without a decoder refuses its
+streams disagree with libarchive's own bidders (`Fuzz/BidAgreement.h`), which `QGCCompressionTest` checks on inputs
+at the edges of those rules. The test build runs both targets on fixed inputs as `QGCCompressionFuzzSmoke` (label
+`Fuzz`), and a portable test build as `Portable.QGCCompressionFuzzSmoke`. That program also checks what some of the
+inputs give: entry names beyond ASCII, entries of the same name, an output path that names the input, and gzip
+streams of several members or with a wrong checksum.
+
+With Clang, `-DQGC_COMPRESSION_LIBFUZZER=ON` adds the `qgc_compression_stream_fuzzer` and
+`qgc_compression_extraction_fuzzer` targets. It builds `QGCCompression` with ASan, UBSan and the fuzzer's
+instrumentation, and the bundled libarchive and decoders with ASan and the fuzzer's instrumentation. In such a build
+directory, build only these targets and the smoke test, which writes the seed corpus. Add the options of the optional
+formats to fuzz their decoders and the agreement of the bid rules too. Each fuzzer adds the inputs it finds to the
+first corpus directory it is given, so give each a copy:
+
+```bash
+cmake -S . -B build-fuzz -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DQGC_COMPRESSION_LIBFUZZER=ON
+cmake --build build-fuzz --target qgc_compression_stream_fuzzer qgc_compression_extraction_fuzzer \
+    qgc_compression_fuzz_smoke
+build-fuzz/Debug/qgc_compression_fuzz_smoke test/Utilities/Compression --write-corpus corpus-stream
+cp -r corpus-stream corpus-extraction
+build-fuzz/Debug/qgc_compression_stream_fuzzer corpus-stream -max_len=65536
+TMPDIR=/dev/shm build-fuzz/Debug/qgc_compression_extraction_fuzzer corpus-extraction -max_len=65536
+```
+
+The extraction target writes every input, its decompressed output and what it extracts as files in the temporary
+directory. On Linux, run it with `TMPDIR=/dev/shm`: with its files in memory, it ran more than twice as many inputs in
+the same time. The stream target needs no files: in one minute with `-fork=4` it ran about ten times as many inputs.
 
 ## MultiSignalSpy
 

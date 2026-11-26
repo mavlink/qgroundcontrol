@@ -1,10 +1,15 @@
 #include "ComponentInformationCacheTest.h"
 
+#include <cstring>
+
 #include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUuid>
 
 #include "ComponentInformationCache.h"
+#include "FileFixtures.h"
 #include "UnitTest.h"
 
 ComponentInformationCacheTest::ComponentInformationCacheTest()
@@ -132,6 +137,65 @@ void ComponentInformationCacheTest::_multi_test()
         QVERIFY(cache.access(_tmpFiles[10].cacheTag) == _tmpFiles[10].cachedPath);
     }
     _cleanup();
+}
+
+namespace {
+
+/// The meta file of a cache entry, as ComponentInformationCache writes it
+struct CacheTestMeta
+{
+    uint32_t magic = 0x9a9cad0e;
+    uint32_t version = 0;
+    uint64_t accessCounter = 0;
+};
+
+}  // namespace
+
+void ComponentInformationCacheTest::_version_test_data()
+{
+    QTest::addColumn<uint>("version");
+    QTest::addColumn<bool>("kept");
+
+    // Version 0 is a decompressed file, which an earlier QGC wrote: it is read as it is
+    QTest::newRow("decompressed, of an earlier QGC") << 0U << true;
+    QTest::newRow("as downloaded") << 1U << true;
+    QTest::newRow("of a later QGC") << 2U << false;
+}
+
+// An entry is kept as it was downloaded, possibly compressed, which its version says. An entry of a version this
+// QGC does not know is removed, as an earlier QGC removes those of this one
+void ComponentInformationCacheTest::_version_test()
+{
+    QFETCH(uint, version);
+    QFETCH(bool, kept);
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    const CacheTestMeta meta{.version = version};
+    QVERIFY(TestFixtures::writeFile(directory.filePath(QStringLiteral("entry.meta")),
+                                    QByteArray(reinterpret_cast<const char*>(&meta), sizeof(meta))));
+    QVERIFY(TestFixtures::writeFile(directory.filePath(QStringLiteral("entry.cache")), "content"));
+
+    if (!kept) {
+        expectLogMessage("ComponentInformation.ComponentInformationCache", QtWarningMsg,
+                         QRegularExpression("Validation failed"));
+    }
+    ComponentInformationCache cache(QDir(directory.path()), 10);
+    if (!kept) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(cache.access(QStringLiteral("entry")).isEmpty(), !kept);
+    QCOMPARE(QFile::exists(directory.filePath(QStringLiteral("entry.cache"))), kept);
+
+    // A new entry has the version of a file as it was downloaded
+    const QString downloaded = directory.filePath(QStringLiteral("downloaded.json.xz"));
+    QVERIFY(TestFixtures::writeFile(downloaded, "compressed"));
+    QVERIFY(!cache.insert(QStringLiteral("new"), downloaded).isEmpty());
+    const QByteArray newMeta = TestFixtures::readFile(directory.filePath(QStringLiteral("new.meta")));
+    CacheTestMeta written;
+    QCOMPARE(newMeta.size(), static_cast<qsizetype>(sizeof(written)));
+    std::memcpy(&written, newMeta.constData(), sizeof(written));
+    QCOMPARE(written.version, 1U);
 }
 
 UT_REGISTER_TEST(ComponentInformationCacheTest, TestLabel::Unit, TestLabel::Vehicle)

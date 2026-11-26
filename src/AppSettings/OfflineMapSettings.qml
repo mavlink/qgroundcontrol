@@ -16,6 +16,9 @@ Item {
     property var _appSettings:      QGroundControl.settingsManager.appSettings
     property bool _currentlyImportOrExporting: _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionExporting ||
                                                _mapEngineManager.importAction === QGCMapEngineManager.ImportAction.ActionImporting
+    readonly property string _tileSetFilter: qsTr("Tile Sets (*.%1)").arg(_appSettings.tilesetFileExtension)
+    // A tile set file can be imported from the archive it was packed into, in a format this build extracts
+    readonly property string _importFilter:  qsTr("Tile Sets and Archives (*.%1 %2)").arg(_appSettings.tilesetFileExtension).arg(_mapEngineManager.importArchivePatterns.join(" "))
 
     Component.onCompleted: _mapEngineManager.loadTileSets()
 
@@ -91,7 +94,7 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings.missionSavePath
-        nameFilters:    [ qsTr("Tile Sets (*.%1)").arg(defaultSuffix) ]
+        nameFilters:    [ root._tileSetFilter ]
         defaultSuffix:  _appSettings.tilesetFileExtension
 
         onAcceptedForSave: (file) => {
@@ -120,6 +123,7 @@ Item {
             onAccepted: {
                 close()
                 fileDialog.title = qsTr("Export Tiles")
+                fileDialog.nameFilters = [ root._tileSetFilter ]
                 fileDialog.openForSave()
             }
 
@@ -154,6 +158,7 @@ Item {
             onAccepted: {
                 close()
                 fileDialog.title = qsTr("Import Tiles")
+                fileDialog.nameFilters = [ root._importFilter ]
                 fileDialog.openForLoad()
             }
 

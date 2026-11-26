@@ -1,13 +1,16 @@
 #pragma once
 
+#include <QtCore/QPointer>
 #include <QtCore/QSet>
 
+#include "CompressionTypes.h"
 #include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
 
 class QGCVideoStreamInfo;
 class QNetworkAccessManager;
+class QDomDocument;
 class QDomNode;
 class QDomNodeList;
 
@@ -243,6 +246,9 @@ protected slots:
     virtual void    _requestStorageInfo     ();
     virtual void    _downloadFinished       ();
     virtual void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
+    /// Loads the camera definition in @p data, or the offline one if @p data is empty, then initialises the camera.
+    /// The definition is parsed on a worker thread, so the camera is initialised after this returns, unless there is
+    /// no definition to parse. A later call drops the definition that an earlier one is still parsing.
     virtual void    _dataReady              (QByteArray data);
     virtual void    _streamInfoTimeout      ();
     virtual void    _streamStatusTimeout    ();
@@ -254,9 +260,20 @@ protected slots:
     void            _paramDone              () override;
 
 private:
-    bool    _handleLocalization             (QByteArray& bytes);
-    bool    _replaceLocaleStrings           (const QDomNode node, QByteArray& bytes);
-    bool    _loadCameraDefinitionFile       (QByteArray& bytes);
+    struct DefinitionFile;
+    struct ParsedDefinition;
+
+    // These use nothing but their arguments: they run on worker threads, as the definition comes from the camera
+    /// Reads a definition file, decompressed if it is compressed and held to @p maxBytes
+    static DefinitionFile _readDefinitionFile(const QString& fileName, qint64 maxBytes, bool checkWellFormed);
+    static ParsedDefinition _parseDefinition(const QByteArray& bytes, const QString& localeName);
+    /// Puts the strings of @p localeName in @p bytes. @return false if there are none to put in
+    static bool _localize(const QDomDocument& doc, const QString& localeName, QByteArray& bytes,
+                          ParsedDefinition& parsed);
+    static void _replaceLocaleStrings(const QDomNode node, QByteArray& bytes);
+    void _parseAndLoadDefinition(const QByteArray& bytes);
+    void _startDefinitionJob(QObject* job);
+    bool _loadCameraDefinitionFile(const ParsedDefinition& parsed);
     bool    _loadConstants                  (const QDomNodeList nodeList);
     bool    _loadSettings                   (const QDomNodeList nodeList);
     void    _processRanges                  ();
@@ -278,6 +295,9 @@ private:
     QStringList     _loadUpdates            (QDomNode option);
     QString         _getParamName           (const char* param_id);
 
+    /// Reads or parses the camera definition on a worker thread. Deleting it drops its result.
+    QPointer<QObject> _definitionJob;
+
 protected:
     int                                 _compID             = 0;
     mavlink_camera_information_t        _mavlinkCameraInfo;
@@ -294,6 +314,8 @@ protected:
     QString                             _vendor;
     QString                             _cacheFile;
     QString _cacheFileToken;  ///< sanitised "<vendor>_<model>_<hash>_<NNN>", no extension
+    /// Largest size of the camera definition, as downloaded and decompressed
+    qint64 _maxDefinitionBytes = Compression::kMaxSmallFileBytes;
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     QStringList                         _activeSettings;
     QStringList                         _settings;
