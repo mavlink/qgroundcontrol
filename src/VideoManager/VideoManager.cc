@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <optional>
+#include <utility>
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDateTime>
@@ -15,6 +16,7 @@
 #include "Fact.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkAvailabilityMonitor.h"
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
@@ -332,6 +334,7 @@ void VideoManager::init(QQuickWindow* mainWindow)
                    [](const QVariant& value) { VideoBackend::instance().setDebugLevel(value.toInt()); });
 
     _vehicleStreams->followActiveVehicle();
+    _followNetwork(new QGCNetworkAvailabilityMonitor(this));
 
     _onMainWindowReady();
 }
@@ -601,41 +604,45 @@ void VideoManager::_updateStateNow()
     // After the extra streams: they leave the display first.
     _vehicleStreams->setPlaying(streamWanted && !_videoStopped);
 
-    if (autoStreamConfigured != _autoStreamConfigured) {
-        _autoStreamConfigured = autoStreamConfigured;
+    // Every member changes before the first signal: a slot or a QML binding that runs on one of them finds the others
+    // as they are to be, not as they were.
+    const bool wasAutoStreamConfigured = std::exchange(_autoStreamConfigured, autoStreamConfigured);
+    const bool wasStreamSource = std::exchange(_isStreamSource, isStreamSource);
+    const QString formerUvcVideoSourceID = std::exchange(_uvcVideoSourceID, uvcVideoSourceID);
+    const bool hadVideo = std::exchange(_hasVideo, hasVideo);
+    const bool hadThermal = std::exchange(_hasThermal, hasThermal);
+    const bool hadUvcCamera = std::exchange(_hasUvcCamera, hasUvcCamera);
+    const NoVideoReason formerNoVideoReason = std::exchange(_noVideoReason, noVideoReason);
+
+    if (autoStreamConfigured != wasAutoStreamConfigured) {
         emit autoStreamConfiguredChanged();
     }
-    if (isStreamSource != _isStreamSource) {
-        _isStreamSource = isStreamSource;
+    if (isStreamSource != wasStreamSource) {
         emit isStreamSourceChanged();
     }
-    if (uvcVideoSourceID != _uvcVideoSourceID) {
-        qCDebug(VideoManagerLog) << "UVC changed from [" << _uvcVideoSourceID << "] to [" << uvcVideoSourceID << "]";
-        const bool wasUvc = isUvc();
-        _uvcVideoSourceID = uvcVideoSourceID;
+    if (uvcVideoSourceID != formerUvcVideoSourceID) {
+        qCDebug(VideoManagerLog) << "UVC changed from [" << formerUvcVideoSourceID << "] to [" << uvcVideoSourceID
+                                 << "]";
         emit isUvcChanged();
+        const bool wasUvc = !formerUvcVideoSourceID.isEmpty();
         if (isUvc() != wasUvc) {
             emit mainSourceChanged();
         }
     }
-    if (hasVideo != _hasVideo) {
-        _hasVideo = hasVideo;
+    if (hasVideo != hadVideo) {
         emit hasVideoChanged();
-        if (!_hasVideo) {
+        if (!hasVideo) {
             // The Fly View swaps the video out of its PiP when hasVideo drops; nothing in QML could leave full screen.
             setFullScreen(false);
         }
     }
-    if (hasThermal != _hasThermal) {
-        _hasThermal = hasThermal;
+    if (hasThermal != hadThermal) {
         emit hasThermalChanged();
     }
-    if (hasUvcCamera != _hasUvcCamera) {
-        _hasUvcCamera = hasUvcCamera;
+    if (hasUvcCamera != hadUvcCamera) {
         emit hasUvcCameraChanged();
     }
-    if (noVideoReason != _noVideoReason) {
-        _noVideoReason = noVideoReason;
+    if (noVideoReason != formerNoVideoReason) {
         emit noVideoReasonChanged();
     }
 }
@@ -796,6 +803,15 @@ void VideoManager::_communicationLostChanged(bool communicationLost)
     } else {
         _reconnectStreams();
     }
+}
+
+void VideoManager::_followNetwork(QGCNetworkAvailabilityMonitor* network)
+{
+    (void) connect(network, &QGCNetworkAvailabilityMonitor::availableChanged, this, [this](bool available) {
+        if (available) {
+            _reconnectStreams();
+        }
+    });
 }
 
 void VideoManager::_reconnectStreams()

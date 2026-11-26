@@ -54,6 +54,7 @@ class UVCCameraController : public VideoReceiver
 
     friend class UVCCameraControllerTest;
     friend class VideoManagerTest;
+    friend class VideoQmlTest;
 
 public:
     static constexpr int kMaxRetries = 3;

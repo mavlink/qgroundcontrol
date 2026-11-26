@@ -90,7 +90,8 @@ Connection settings vary by source type:
   and up to 30 s between later ones (default: on). It applies to every stream, whatever its transport (RTSP, UDP, TCP or
   MPEG-TS) and whether it is the configured source or one a camera advertises, in a tile or not; USB cameras don't use
   it. A stream
-  waiting to reconnect does so at once when a vehicle connects or its link returns. When off, the stream stops after the
+  waiting to reconnect does so at once when a vehicle connects or its link returns, or when the ground station's own
+  network connection comes back. When off, the stream stops after the
   first failure. An RTSP stream whose camera refuses the user name or password in its URL stops with a message whatever
   this setting, and is tried again once the URL changes or the video is restarted.
   A UDP source that has received nothing yet hasn't failed: with either setting QGC keeps listening until
@@ -126,7 +127,9 @@ has the same settings.
 
 ## Local Video Storage
 
-Recordings are saved in the `Video` folder of the [Application Load/Save Path](general.md#load_save_path).
+Recordings are saved in the `Video` folder of the [Application Load/Save Path](general.md#load_save_path). A recording
+needs 256 MB free on that storage: with less it isn't started, and one that is running is stopped, with a message.
+Free space that can't be read keeps nothing from being recorded.
 
 - **Record File Format** — mp4 / mov / mkv
 - **Recording Codec** (USB cameras, and streams with the Qt Multimedia [video backend](#settings)) — the codec a
@@ -140,6 +143,7 @@ Recordings are saved in the `Video` folder of the [Application Load/Save Path](g
   quality makes a smaller file. On Android these recordings are several times larger than the quality asks for, a defect
   in Qt 6.12: about 340 MB a minute for 1080p at High and 45 MB at Very Low on the tablet tested.
 - **Auto-Delete Saved Recordings** — automatically delete the oldest recordings when the storage limit is reached. The
-  limit is checked when a recording starts and every minute while one runs. Files being recorded are kept, so a long
+  limit is checked when a recording starts and every minute while one runs. At a start it makes room first: the free
+  space a recording needs is looked at once the oldest recordings are deleted. Files being recorded are kept, so a long
   recording can end up with only its latest [parts](../fly_view/video.md#record-video-stream-on-gcs).
 - **Max Storage Usage** — maximum disk space for saved recordings (default: 10240 MB)

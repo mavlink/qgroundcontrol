@@ -1,6 +1,6 @@
 # ============================================================================
 # Video Manager Module
-# VideoManager, the QML facade, and its telemetry overlay; Streams: per-source control and the settings resolver;
+# VideoManager, the QML facade; Telemetry: the telemetry text; Streams: per-source control and the settings resolver;
 # Recording: file naming, storage and subtitles; UVC: the local camera's receiver; Receiver: the receiver API the
 # sources share; GStreamer: the network backend; QtMultimedia: the QMediaPlayer receiver, without GStreamer or by
 # choice; Qml: the QGroundControl.VideoManager QML module.
@@ -11,12 +11,8 @@ target_sources(
     PRIVATE
         VideoManager.cc
         VideoManager.h
-        VideoTelemetryOverlay.cc
-        VideoTelemetryOverlay.h
         Recording/SubtitleWriter.cc
         Recording/SubtitleWriter.h
-        Recording/TelemetryBarValues.cc
-        Recording/TelemetryBarValues.h
         Recording/VideoRecordingService.cc
         Recording/VideoRecordingService.h
         Streams/VehicleVideoStreams.cc
@@ -25,6 +21,10 @@ target_sources(
         Streams/VideoStreamController.h
         Streams/VideoStreamResolver.cc
         Streams/VideoStreamResolver.h
+        Telemetry/TelemetryBarValues.cc
+        Telemetry/TelemetryBarValues.h
+        Telemetry/VideoTelemetryOverlay.cc
+        Telemetry/VideoTelemetryOverlay.h
         UVC/UVCCameraController.cc
         UVC/UVCCameraController.h
         UVC/UVCDevices.cc
@@ -37,6 +37,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Recording
         ${CMAKE_CURRENT_SOURCE_DIR}/Streams
+        ${CMAKE_CURRENT_SOURCE_DIR}/Telemetry
         ${CMAKE_CURRENT_SOURCE_DIR}/UVC
 )
 

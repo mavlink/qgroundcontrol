@@ -27,20 +27,24 @@ target_sources(
         VideoManagerInitTest.h
         VideoManagerTest.cc
         VideoManagerTest.h
+        VideoManagerTestBase.cc
+        VideoManagerTestBase.h
         VideoManagerVehicleTest.cc
         VideoManagerVehicleTest.h
+        Qml/VideoQmlTest.cc
+        Qml/VideoQmlTest.h
         Recording/VideoRecordingServiceTest.cc
         Recording/VideoRecordingServiceTest.h
         Receiver/VideoScreenshotTest.cc
         Receiver/VideoScreenshotTest.h
-        VideoStreamOutputRenderTest.cc
-        VideoStreamOutputRenderTest.h
+        Qml/VideoStreamOutputRenderTest.cc
+        Qml/VideoStreamOutputRenderTest.h
         Streams/VideoStreamResolverTest.cc
         Streams/VideoStreamResolverTest.h
         Receiver/VideoStreamStatsMeterTest.cc
         Receiver/VideoStreamStatsMeterTest.h
-        VideoTelemetryOverlayTest.cc
-        VideoTelemetryOverlayTest.h
+        Telemetry/VideoTelemetryOverlayTest.cc
+        Telemetry/VideoTelemetryOverlayTest.h
         VideoTestHelpers.h
 )
 
@@ -57,6 +61,7 @@ add_qgc_test(UVCDevicesTest LABELS Unit)
 add_qgc_test(VideoManagerInitTest LABELS Unit)
 add_qgc_test(VideoManagerTest LABELS Unit)
 add_qgc_test(VideoManagerVehicleTest LABELS Integration Vehicle)
+add_qgc_test(VideoQmlTest LABELS Integration)
 add_qgc_test(VideoRecordingServiceTest LABELS Unit)
 add_qgc_test(VideoScreenshotTest LABELS Unit)
 # Reads back what Qt Quick draws, and its software backend draws no video. On Linux the offscreen platform has OpenGL

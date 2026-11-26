@@ -352,4 +352,169 @@ void VideoRecordingServiceTest::_testStorageLimitAppliesWhileRecording()
     QVERIFY(!_service->_storageLimitTimer.isActive());
 }
 
+void VideoRecordingServiceTest::_testStartNeedsFreeSpace_data()
+{
+    QTest::addColumn<qint64>("freeSpace");
+    QTest::addColumn<bool>("records");
+
+    QTest::newRow("below the floor") << VideoRecordingService::kFreeSpaceFloor - 1 << false;
+    QTest::newRow("at the floor") << VideoRecordingService::kFreeSpaceFloor << true;
+    // As on a volume that tells no size: nothing says it is full.
+    QTest::newRow("unknown") << qint64(-1) << true;
+}
+
+void VideoRecordingServiceTest::_testStartNeedsFreeSpace()
+{
+    QFETCH(qint64, freeSpace);
+    QFETCH(bool, records);
+
+    _activate(_primaryStream);
+    QString volumeOf;
+    _service->_freeSpace = [&volumeOf, freeSpace](const QString& directory) {
+        volumeOf = directory;
+        return freeSpace;
+    };
+
+    if (!records) {
+        expectLogMessage("Video.VideoRecordingService", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Not starting a recording: too little free space")));
+        expectAppMessage(QRegularExpression(QStringLiteral("Unable to record video: less than 256 MB free in ") +
+                                            QRegularExpression::escape(_videoDir)));
+    }
+    _service->startRecording(QStringLiteral("flight"));
+    if (!records) {
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(volumeOf, _videoDir);
+    QCOMPARE(_primary->recordings.size(), records ? 1 : 0);
+}
+
+void VideoRecordingServiceTest::_testStartShortOfSpaceWaitsForStorageLimit_data()
+{
+    QTest::addColumn<bool>("makesRoom");
+    QTest::addColumn<bool>("stopped");
+
+    QTest::newRow("the pruning makes room") << true << false;
+    QTest::newRow("the pruning makes too little room") << false << false;
+    QTest::newRow("stopped meanwhile") << true << true;
+}
+
+void VideoRecordingServiceTest::_testStartShortOfSpaceWaitsForStorageLimit()
+{
+    QFETCH(bool, makesRoom);
+    QFETCH(bool, stopped);
+
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    _facts->set(videoSettings->enableStorageLimit(), true);
+    _facts->set(videoSettings->maxVideoSize(), 0);
+    const QString earlier = _videoDir + QStringLiteral("/earlier.mkv");
+    writeFile(earlier, 10, QDateTime::currentDateTime().addSecs(-500));
+    _activate(_primaryStream);
+    int reads = 0;
+    _service->_freeSpace = [&reads, &earlier, makesRoom](const QString&) {
+        ++reads;
+        const bool roomMade = makesRoom && !QFile::exists(earlier);
+        return VideoRecordingService::kFreeSpaceFloor - (roomMade ? 0 : 1);
+    };
+
+    // Short of space, the start waits for the storage limit to remove the earlier recording, and looks again.
+    _service->startRecording(QStringLiteral("flight"));
+    QCOMPARE(reads, 1);
+    QVERIFY(_primary->recordings.isEmpty());
+    // Another start meanwhile is refused, as one is while a recording runs.
+    expectLogMessage("Video.VideoRecordingService", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("one waits for the storage limit")));
+    _service->startRecording(QStringLiteral("second"));
+    verifyExpectedLogMessage();
+    if (stopped) {
+        _service->stopRecording();
+    }
+    const bool refused = !makesRoom && !stopped;
+    if (refused) {
+        expectLogMessage("Video.VideoRecordingService", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Not starting a recording: too little free space")));
+        expectAppMessage(QRegularExpression(QStringLiteral("Unable to record video: less than 256 MB free")));
+    }
+    QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+    QVERIFY(!QFile::exists(earlier));
+
+    if (stopped) {
+        // The start was given up: the pruning's end, which this thread is told of by now, starts nothing.
+        QCoreApplication::processEvents();
+        QCOMPARE(reads, 1);
+        QVERIFY(_primary->recordings.isEmpty());
+        return;
+    }
+    QTRY_COMPARE_WITH_TIMEOUT(reads, 2, TestTimeout::shortMs());
+    if (refused) {
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+        QVERIFY(_primary->recordings.isEmpty());
+        return;
+    }
+    QCOMPARE(_primary->recordings.size(), 1);
+    QCOMPARE(_primary->recordings.first().file, _videoDir + QStringLiteral("/flight.mkv"));
+}
+
+void VideoRecordingServiceTest::_testRecordingStopsShortOfFreeSpace_data()
+{
+    QTest::addColumn<qint64>("freeSpace");
+    QTest::addColumn<bool>("stops");
+
+    QTest::newRow("below the floor") << VideoRecordingService::kFreeSpaceFloor - 1 << true;
+    QTest::newRow("at the floor") << VideoRecordingService::kFreeSpaceFloor << false;
+    QTest::newRow("unknown") << qint64(-1) << false;
+}
+
+void VideoRecordingServiceTest::_testRecordingStopsShortOfFreeSpace()
+{
+    QFETCH(qint64, freeSpace);
+    QFETCH(bool, stops);
+
+    _activate(_primaryStream);
+    qint64 reported = VideoRecordingService::kFreeSpaceFloor;
+    int checks = 0;
+    _service->_freeSpace = [&reported, &checks](const QString&) {
+        ++checks;
+        return reported;
+    };
+    // The checks come every 10 s, which the test doesn't wait for.
+    _service->_freeSpaceTimer.setInterval(0);
+    const QString file = _videoDir + QStringLiteral("/flight.mkv");
+    _service->startRecording(QStringLiteral("flight"));
+    QCOMPARE(_primary->recordings.size(), 1);
+    emit _primary->recordingStarted(file);
+    _primary->setRecording(true);
+    QVERIFY(_service->recording());
+
+    // The storage fills up as the recording runs.
+    reported = freeSpace;
+    checks = 0;
+    if (stops) {
+        expectLogMessage("Video.VideoRecordingService", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Stopping the recording: too little free space")));
+        expectAppMessage(QRegularExpression(QStringLiteral("Video recording stopped: less than 256 MB free in ") +
+                                            QRegularExpression::escape(_videoDir)));
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(checks > 0, TestTimeout::shortMs());
+    if (!stops) {
+        QCOMPARE(_primary->recordingStops, 0);
+        QVERIFY(_service->recording());
+        return;
+    }
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(_primary->recordingStops, 1);
+
+    // Stopped as stopRecording() does, the source finishes its file, which is no failure. The user was told, and
+    // isn't again while that takes its time. Nothing starts another recording.
+    QCoreApplication::processEvents();
+    QCOMPARE(checks, 1);
+    emit _primary->recordingFinished(file, QString());
+    _primary->setRecording(false);
+    QVERIFY(!_service->recording());
+    QCOMPARE(_primary->recordings.size(), 1);
+}
+
 UT_REGISTER_TEST(VideoRecordingServiceTest, TestLabel::Unit)

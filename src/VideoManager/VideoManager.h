@@ -11,6 +11,7 @@
 
 #include "VehicleVideoStreams.h"
 
+class QGCNetworkAvailabilityMonitor;
 class QGCVideoStreamInfo;
 class QQuickWindow;
 class UVCCameraController;
@@ -89,7 +90,9 @@ class VideoManager : public QObject
     friend class TopLevelViewsTest;
     friend class VideoManagerInitTest;
     friend class VideoManagerTest;
+    friend class VideoManagerTestBase;
     friend class VideoManagerVehicleTest;
+    friend class VideoQmlTest;
 
 public:
     explicit VideoManager(QObject* parent = nullptr);
@@ -245,8 +248,11 @@ private:
     void _updateSourceSummary();
     void _onArmedChanged(bool armed);
     void _communicationLostChanged(bool communicationLost);
-    /// The streams' sources are likely back, with a vehicle that connected or whose link returned: a stream waiting
-    /// to reconnect does so now.
+    /// Reconnects the streams when @p network, the device's own, comes back: no vehicle's link tells of it without
+    /// a vehicle, or with video on another network than the telemetry. init() gives the platform's.
+    void _followNetwork(QGCNetworkAvailabilityMonitor* network);
+    /// The streams' sources are likely back, with a vehicle that connected or whose link returned, or with the
+    /// device's network: a stream waiting to reconnect does so now.
     void _reconnectStreams();
 
     VideoSettings* const _videoSettings;

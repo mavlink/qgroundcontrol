@@ -180,7 +180,9 @@ Video stream recording is controlled on the [video stream instrument page](camer
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 The file starts with the stream's next keyframe that comes with the stream's parameter sets, as the keyframes of most cameras do.
 If the camera sends keyframes but none that a file can start with, QGroundControl reports five seconds later that the recording failed, rather than record nothing.
-If the storage fills up, the recording ends and QGroundControl reports that the storage is full; the video stays on display.
+A recording isn't started while less than 256 MB is free on the storage the recordings are saved to, and one that is running is stopped once the free space falls below that; QGroundControl says so, the files recorded until then are complete, and recording doesn't start again by itself.
+With [Auto-Delete Saved Recordings](../settings_view/video.md#local-video-storage) on, the oldest recordings over its limit are deleted first, to make room.
+If the storage fills up all the same, as where its free space can't be read, the recording ends and QGroundControl reports that the storage is full; the video stays on display.
 If the stream drops out while recording, the recording continues once the stream is back, in a new file named after the first with `_part2`, `_part3` and so on added (for example `2026-10-24_10.15.00_part2.mp4`).
 A recording that runs for longer than an hour continues in a new part the same way, without losing a frame between the parts.
 An MP4 or MOV part ends sooner when the space the file sets aside for its index is about to run out, which a very high frame rate can cause.

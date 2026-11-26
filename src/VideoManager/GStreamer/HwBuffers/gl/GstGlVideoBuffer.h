@@ -17,6 +17,7 @@ public:
     using GstHwVideoBuffer::GstHwVideoBuffer;
 
     HwVideoBufferPath path() const override { return HwVideoBufferPath::GlMemory; }
+
     QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 };

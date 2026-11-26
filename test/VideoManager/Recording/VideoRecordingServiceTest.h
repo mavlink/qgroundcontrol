@@ -32,6 +32,12 @@ private slots:
     void _testPruneStorageLeavesFilesBeingWritten();
     void _testPruneStorageCountsOnlyRemovedFiles();
     void _testStorageLimitAppliesWhileRecording();
+    void _testStartNeedsFreeSpace_data();
+    void _testStartNeedsFreeSpace();
+    void _testStartShortOfSpaceWaitsForStorageLimit_data();
+    void _testStartShortOfSpaceWaitsForStorageLimit();
+    void _testRecordingStopsShortOfFreeSpace_data();
+    void _testRecordingStopsShortOfFreeSpace();
 
 private:
     void _activate(VideoStreamController* stream);

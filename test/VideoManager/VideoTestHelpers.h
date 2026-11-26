@@ -146,6 +146,27 @@ private:
     QString _error;
 };
 
+/// VideoStreamOutput inside a container that tests move between windows.
+inline constexpr const char* kStreamOutputQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+Item {
+    id: root
+
+    property var stream
+
+    Item {
+        objectName: "holder"
+
+        VideoStreamOutput {
+            objectName: "output"
+            stream: root.stream
+        }
+    }
+}
+)QML";
+
 /// A QML VideoOutput of 64 × 48, as created by @p engine.
 inline std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
 {

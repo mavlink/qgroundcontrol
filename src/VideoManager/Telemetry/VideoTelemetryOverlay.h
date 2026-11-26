@@ -14,7 +14,7 @@ class VideoTelemetryOverlay : public QObject
 {
     Q_OBJECT
 
-    friend class VideoManagerTest;
+    friend class VideoQmlTest;
     friend class VideoTelemetryOverlayTest;
 
 public:

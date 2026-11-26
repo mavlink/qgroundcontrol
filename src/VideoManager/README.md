@@ -17,12 +17,14 @@ and also says how the sources and tiles of `VideoManager` behave.
 ## Folders
 
 - This folder: `VideoManager`, the QML facade of the sources (the primary stream, the thermal stream, the USB camera
-  and the streams in tiles), and `VideoTelemetryOverlay`, the telemetry text shown over the video.
+  and the streams in tiles).
 - `Streams/`: `VideoStreamController`, one for each source; `VideoStreamResolver`, which turns the video settings
   and a camera's advertised stream into a `VideoReceiver::Config`; and `VehicleVideoStreams`, which reads the streams
   the active vehicle's cameras advertise and tells the cameras which of them play.
 - `Recording/`: what is recorded and where. `VideoRecordingService` names the files, starts and stops the sources'
   recordings and keeps the storage limit; `SubtitleWriter` writes the telemetry subtitles beside a recording.
+- `Telemetry/`: `TelemetryBarValues`, the values the Fly View's telemetry bar shows, which the subtitles show too,
+  and `VideoTelemetryOverlay`, the telemetry text shown over the video.
 - `Receiver/`: the receiver contract and what its implementations share: `VideoReceiver`, `VideoBackend` and the
   run of its initialization (`VideoBackendInit`), the reconnect policy (`StreamSupervisor`), the files of a recording
   (`RecordingPlan`), screenshots, stream statistics and URI schemes. No receiver that plays anything is here: those
@@ -56,9 +58,8 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 ## The rules the folders keep
 
 - `VideoSettings` is read by `VideoManager.cc`, `Streams/`, `Recording/VideoRecordingService.cc` and
-  `Receiver/VideoBackend.cc` (the backend setting) only, and the vehicle and its cameras are known to
-  `VideoTelemetryOverlay.cc`, `Streams/` and `Recording/TelemetryBarValues.cc` only. A receiver gets a
-  `VideoReceiver::Config` and a `VideoReceiver::DisplayConfig`.
+  `Receiver/VideoBackend.cc` (the backend setting) only, and the vehicle and its cameras are known to `Telemetry/`
+  and `Streams/` only. A receiver gets a `VideoReceiver::Config` and a `VideoReceiver::DisplayConfig`.
 - `Receiver/` names a backend in one place, `VideoBackend::instance()`.
 - A stream's receiver is chosen in one place, `VideoBackend::createReceiver()`: GStreamer's where the build has it,
   it started and the backend setting asks for it, else Qt Multimedia's. `VideoManager` reaches it through
@@ -101,7 +102,11 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 
 1. `VideoManager::startRecording()` calls `Recording/VideoRecordingService`, which picks the file name, applies the
    storage limit and calls `VideoStreamController::startRecording()` for the main picture and the thermal stream,
-   which connects for it if its view is off. While a recording runs the service refuses another start.
+   which connects for it if its view is off. While a recording runs the service refuses another start. It refuses one
+   as well, and stops a recording that runs, while less than `VideoRecordingService::kFreeSpaceFloor` (256 MiB) is free
+   on the volume of the video save directory: it looks at a start and every 10 s while recording, and a start short
+   of space first waits for the storage limit's pruning, which runs on the thread pool. Free space that isn't known
+   stops nothing.
 2. GStreamer: `GstReceiverWorker` follows a `Receiver/RecordingPlan`, which names the parts a recording continues in,
    and `GStreamer/Pipeline/RecordingBranch` writes each file (parser, muxer, file sink): in Matroska, as `<base>.mkv`,
    when the format asked for can't hold the stream's codec.
@@ -139,9 +144,11 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 ## Tests
 
 `test/VideoManager` has the same folders: the tests of `Receiver/` are in `test/VideoManager/Receiver/`, those of
-`GStreamer/Source/` in `test/VideoManager/GStreamer/Source/`. `Qml/` has no folder there: `VideoManagerTest` tests the
-QML module. [GStreamer/README.md](GStreamer/README.md#automated-tests) lists the GStreamer classes and says how to
-run them.
+`GStreamer/Source/` in `test/VideoManager/GStreamer/Source/`. Those of `Qml/` are in `test/VideoManager/Qml/`:
+`VideoQmlTest` shows the views, the tiles, the overlays and the Video indicator's groups with a `VideoManager`, and
+`VideoStreamOutputRenderTest` reads back what Qt Quick draws of a `VideoStreamOutput`. `VideoManagerTest` tests the
+manager and its sources; it and `VideoQmlTest` share their fixture, `VideoManagerTestBase`.
+[GStreamer/README.md](GStreamer/README.md#automated-tests) lists the GStreamer classes and says how to run them.
 
 `VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common. Each of
 its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream: a port nobody sends
