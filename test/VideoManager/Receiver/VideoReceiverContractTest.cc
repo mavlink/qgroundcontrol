@@ -391,8 +391,10 @@ void VideoReceiverContractTest::_testDeactivateEndsRecording()
     QVERIFY_TRUE_WAIT(!stream.receiver->recording() && !stream.receiver->decoding() && !stream.receiver->stats().valid,
                       TestTimeout::shortMs());
 
-    // Activating again doesn't bring the recording back.
-    QVERIFY(stream.startStreaming());
+    // Activating again doesn't bring the recording back. The stream is still sent, so the receiver may be streaming
+    // again before it is seen connecting.
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForDisplay());
     QVERIFY(!stream.receiver->recording());
     QCOMPARE(stream.recordingStartedSpy.count(), 1);
     QVERIFY(stream.errorSpy.isEmpty());
