@@ -370,6 +370,7 @@ void QGCCameraManager::_checkForLostCameras()
         return;
     }
 
+    const MavlinkCameraControlInterface* const previousCamera = currentCameraInstance();
     bool removedAny = false;
     for (const QString& key : std::as_const(stale)) {
         CameraStruct* pInfo = _cameraInfoRequest.take(key);
@@ -403,8 +404,10 @@ void QGCCameraManager::_checkForLostCameras()
     emit cameraLabelsChanged();
     emit camerasChanged();
 
-    if (_currentCameraIndex != 0) {
-        _currentCameraIndex = 0;
+    // Also when the camera lost was the first one: the current camera is then another one at the same index.
+    const bool indexChanged = (_currentCameraIndex != 0);
+    _currentCameraIndex = 0;
+    if (indexChanged || (currentCameraInstance() != previousCamera)) {
         emit currentCameraChanged();
     }
     emit streamChanged();
