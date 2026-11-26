@@ -59,11 +59,20 @@ public:
     SetTotalsResult computeSetTotals(quint64 setID, bool isDefault, quint32 totalTileCount, const QString &type);
 
     // Import/Export
+    /// Replace the cache with a tile set file. A file that is not one, or is of another schema version, is refused,
+    /// and so is the import that fails at any step: the cache is then as it was. While the cache is replaced, it is
+    /// kept in a backup beside it. A backup that an import left, by a crash or a failed restore, is never removed:
+    /// while there is one, the import is refused. init() puts it back if no cache is in its place
     /// @param movable Whether @a path may be moved into place: a file of the caller's own, on the disk of the database.
     ///        It is copied if it cannot be moved
     DatabaseResult importSetsReplace(const QString& path, ProgressCallback progressCb, bool movable = false);
+    /// Add the tile sets of a tile set file to the cache. A file that is not one is refused
     DatabaseResult importSetsMerge(const QString &path, ProgressCallback progressCb);
     DatabaseResult exportSets(const QList<TileSetRecord> &sets, const QString &path, ProgressCallback progressCb);
+
+    /// SQLite URI that opens @a absolutePath read-only, as it is ("immutable"). Its authority stays empty, as SQLite
+    /// requires: a UNC path (//server/share/x.db) gives file:////server/share/x.db, a drive path file:///C:/x.db
+    static QString immutableFileUri(const QString& absolutePath);
 
     // Exposed for unit tests only
     QSqlDatabase database() const;
@@ -74,6 +83,13 @@ private:
     bool _ensureConnected() const;
     QSqlDatabase _database() const;
     bool _checkSchemaVersion();
+    /// Why a file cannot be imported, empty if it can
+    /// @param requireCurrentSchema Whether the file must have the schema version of the cache, which a replace import
+    ///        needs: init() would discard the tiles of another
+    static QString _importRefusal(const QString& path, bool requireCurrentSchema);
+    /// Put the cache that importSetsReplace() set aside back in place, and open it
+    /// @return What became of it, for the message of the failed import
+    QString _restoreAfterFailedImport(const QString& backupPath, bool hasBackup);
     bool _createDB(QSqlDatabase db, bool createDefault = true);
     quint64 _getDefaultTileSet();
     bool _deleteTilesByIDs(const QList<quint64> &ids);

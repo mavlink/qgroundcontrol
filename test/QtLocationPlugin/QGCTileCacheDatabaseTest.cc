@@ -1,17 +1,21 @@
 #include "QGCTileCacheDatabaseTest.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
+#include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 
+#include "FileFixtures.h"
 #include "QGCCacheTile.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
-#include <QtCore/QTemporaryDir>
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 
@@ -385,6 +389,440 @@ void QGCTileCacheDatabaseTest::_testExportImportReplace()
 
     QVERIFY(db2->findTile(QStringLiteral("exp1")).has_value());
     QVERIFY(db2->findTile(QStringLiteral("exp2")).has_value());
+    QVERIFY(!QFile::exists(tempDir.filePath("tiles2.db.bak")));
+}
+
+bool QGCTileCacheDatabaseTest::_writeTileSetFile(const QString& path, const QString& hash)
+{
+    QTemporaryDir sourceDir;
+    QGCTileCacheDatabase source(sourceDir.filePath(QStringLiteral("source.db")));
+    if (!source.init() || !source.connectDB() ||
+        !source.saveTile(hash, QStringLiteral("png"), QByteArray(30, 'S'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet)) {
+        return false;
+    }
+    const QList<TileSetRecord> sets = source.getTileSets();
+    if (sets.isEmpty()) {
+        return false;
+    }
+    TileSetRecord defaultSet = sets.constFirst();
+    defaultSet.numTiles = 1;
+    return source.exportSets({defaultSet}, path, nullptr).success;
+}
+
+void QGCTileCacheDatabaseTest::_verifyCacheUsable(QGCTileCacheDatabase* db, const QString& keptHash)
+{
+    QVERIFY(db->isValid());
+    QVERIFY(db->findTile(keptHash).has_value());
+    QVERIFY(db->saveTile(QStringLiteral("after"), QStringLiteral("png"), QByteArray(10, 'A'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(db->findTile(QStringLiteral("after")).has_value());
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceRefused_data()
+{
+    QTest::addColumn<QString>("kind");
+    QTest::addColumn<QString>("refusal");
+
+    QTest::newRow("not SQLite") << QStringLiteral("text") << QStringLiteral("is not a tile set file");
+    QTest::newRow("SQLite without the schema") << QStringLiteral("other") << QStringLiteral("is not a tile set file");
+    QTest::newRow("schema of another version")
+        << QStringLiteral("version") << QStringLiteral("format of another version");
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceRefused()
+{
+    QFETCH(QString, kind);
+    QFETCH(QString, refusal);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+    QVERIFY(db->saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(50, 'K'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    const QString importPath = tempDir.filePath(QStringLiteral("import.qgctiledb"));
+    if (kind == QStringLiteral("text")) {
+        QVERIFY(
+            TestFixtures::writeFile(importPath, QByteArrayLiteral("not a database, but long enough to have a header")));
+    } else if (kind == QStringLiteral("other")) {
+        QGCSqlHelper::ScopedConnection other(importPath);
+        QVERIFY(other.isValid());
+        QSqlQuery query(other.database());
+        QVERIFY(query.exec(QStringLiteral("CREATE TABLE Other(value INTEGER)")));
+        QVERIFY(query.exec(QStringLiteral("INSERT INTO Other(value) VALUES(1)")));
+    } else {
+        // A tile set file of a QGC that had no schema version, whose tiles init() discards
+        QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+        QGCSqlHelper::ScopedConnection legacy(importPath);
+        QVERIFY(legacy.isValid());
+        QSqlDatabase legacyDB = legacy.database();
+        QVERIFY(QGCSqlHelper::setUserVersion(legacyDB, 0));
+    }
+
+    const DatabaseResult result = db->importSetsReplace(importPath, nullptr, /*movable=*/true);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(refusal), qPrintable(result.errorString));
+    QVERIFY(QFile::exists(importPath));
+    QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("tiles.db.bak"))));
+    _verifyCacheUsable(db.get(), QStringLiteral("kept"));
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceFailsHalfway_data()
+{
+    QTest::addColumn<bool>("movable");
+    QTest::addColumn<int>("failAtProgress");
+
+    // The import file is gone when it is to be put in place
+    QTest::newRow("copy fails") << false << 10;
+    QTest::newRow("move fails") << true << 10;
+    // The file put in place cannot be opened as the cache
+    QTest::newRow("placed file damaged") << true << 25;
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceFailsHalfway()
+{
+    QFETCH(bool, movable);
+    QFETCH(int, failAtProgress);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+    QVERIFY(db->saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(50, 'K'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    const QString importPath = tempDir.filePath(QStringLiteral("import.qgctiledb"));
+    QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+
+    const QString cachePath = tempDir.filePath(QStringLiteral("tiles.db"));
+    bool failed = false;
+    const auto progress = [&](int percent) {
+        if ((percent != failAtProgress) || failed) {
+            return;
+        }
+        failed = true;
+        if (failAtProgress == 10) {
+            (void) QFile::remove(importPath);
+        } else {
+            (void) TestFixtures::writeFile(cachePath, QByteArrayLiteral("damaged on its way into the cache"));
+        }
+    };
+
+    const DatabaseResult result = db->importSetsReplace(importPath, progress, movable);
+    QVERIFY(failed);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(QStringLiteral("The tile cache is unchanged")),
+             qPrintable(result.errorString));
+    QVERIFY(!QFile::exists(cachePath + QStringLiteral(".bak")));
+    _verifyCacheUsable(db.get(), QStringLiteral("kept"));
+    QVERIFY(!db->findTile(QStringLiteral("imported")).has_value());
+}
+
+void QGCTileCacheDatabaseTest::_testImportMergeRefusesNonTileSet()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+    QVERIFY(db->saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(50, 'K'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    const QString importPath = tempDir.filePath(QStringLiteral("import.qgctiledb"));
+    QVERIFY(TestFixtures::writeFile(importPath, QByteArrayLiteral("not a database, but long enough to have a header")));
+
+    const DatabaseResult result = db->importSetsMerge(importPath, nullptr);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(QStringLiteral("is not a tile set file")), qPrintable(result.errorString));
+    _verifyCacheUsable(db.get(), QStringLiteral("kept"));
+}
+
+void QGCTileCacheDatabaseTest::_testImportFromPickedDirectory_data()
+{
+    QTest::addColumn<bool>("replace");
+    QTest::addColumn<bool>("readOnly");
+
+    QTest::newRow("replace") << true << false;
+    QTest::newRow("merge") << false << false;
+    // A write-protected SD card or USB stick, a share or another account's folder
+    QTest::newRow("replace, read-only directory") << true << true;
+    QTest::newRow("merge, read-only directory") << false << true;
+}
+
+void QGCTileCacheDatabaseTest::_testImportFromPickedDirectory()
+{
+    QFETCH(bool, replace);
+    QFETCH(bool, readOnly);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+
+    QTemporaryDir pickedDir;
+    QVERIFY(pickedDir.isValid());
+    const QDir directory(pickedDir.path());
+    const QString importPath = directory.filePath(QStringLiteral("picked.qgctiledb"));
+    QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+    const QStringList pickedFiles = directory.entryList(QDir::Files | QDir::Hidden);
+    QCOMPARE(pickedFiles, QStringList{QStringLiteral("picked.qgctiledb")});
+
+    const QFileDevice::Permissions permissions = QFile::permissions(directory.path());
+    const auto restorePermissions =
+        qScopeGuard([&directory, permissions] { (void) QFile::setPermissions(directory.path(), permissions); });
+    if (readOnly) {
+        QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        QFile probe(directory.filePath(QStringLiteral("probe")));
+        if (probe.open(QIODevice::WriteOnly)) {
+            probe.close();
+            (void) probe.remove();
+            QSKIP("This system lets the test write to a directory without write permission (root, Windows)");
+        }
+    }
+
+    const DatabaseResult result =
+        replace ? db->importSetsReplace(importPath, nullptr) : db->importSetsMerge(importPath, nullptr);
+    QVERIFY2(result.success, qPrintable(result.errorString));
+    QVERIFY(db->findTile(QStringLiteral("imported")).has_value());
+    // Nothing is written beside the picked file: SQLite reads it as it is
+    QCOMPARE(directory.entryList(QDir::Files | QDir::Hidden), pickedFiles);
+}
+
+void QGCTileCacheDatabaseTest::_testImportRefusesFileInUse_data()
+{
+    QTest::addColumn<bool>("replace");
+
+    QTest::newRow("replace") << true;
+    QTest::newRow("merge") << false;
+}
+
+void QGCTileCacheDatabaseTest::_testImportRefusesFileInUse()
+{
+    QFETCH(bool, replace);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+    QVERIFY(db->saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(50, 'K'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    QTemporaryDir pickedDir;
+    QVERIFY(pickedDir.isValid());
+    const QString importPath = pickedDir.filePath(QStringLiteral("picked.qgctiledb"));
+    QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+
+    // Another program has the file open, and what it wrote last is still in the write-ahead log beside it, which a
+    // copy of the file alone would not hold
+    QGCSqlHelper::ScopedConnection writer(importPath);
+    QVERIFY(writer.isValid());
+    QSqlQuery query(writer.database());
+    QVERIFY(query.exec(QStringLiteral(
+        "INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES('unsaved', 'png', x'00', 1, 0, 0)")));
+    QVERIFY(QFileInfo(importPath + QStringLiteral("-wal")).size() > 0);
+
+    const DatabaseResult result =
+        replace ? db->importSetsReplace(importPath, nullptr) : db->importSetsMerge(importPath, nullptr);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(QStringLiteral("picked.qgctiledb-wal")), qPrintable(result.errorString));
+    _verifyCacheUsable(db.get(), QStringLiteral("kept"));
+    QVERIFY(!db->findTile(QStringLiteral("imported")).has_value());
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceKeepsLeftoverBackup_data()
+{
+    QTest::addColumn<bool>("tileSetFile");
+
+    QTest::newRow("tile set file") << true;
+    QTest::newRow("not a tile set file") << false;
+}
+
+void QGCTileCacheDatabaseTest::_testImportReplaceKeepsLeftoverBackup()
+{
+    QFETCH(bool, tileSetFile);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+    QVERIFY(db->saveTile(QStringLiteral("current"), QStringLiteral("png"), QByteArray(50, 'C'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    // An import that crashed, or could not put the cache back, left the only copy of the user's tiles
+    const QString backupPath = tempDir.filePath(QStringLiteral("tiles.db.bak"));
+    QVERIFY(_writeTileSetFile(backupPath, QStringLiteral("leftover")));
+    const QByteArray backup = TestFixtures::readFile(backupPath);
+
+    const QString importPath = tempDir.filePath(QStringLiteral("import.qgctiledb"));
+    QVERIFY(tileSetFile ? _writeTileSetFile(importPath, QStringLiteral("imported"))
+                        : TestFixtures::writeFile(importPath, QByteArrayLiteral("not a database")));
+
+    const DatabaseResult result = db->importSetsReplace(importPath, nullptr, /*movable=*/true);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(backupPath), qPrintable(result.errorString));
+    // A running QGC has the cache open: the user's renames would fail on Windows, and go unseen elsewhere
+    QVERIFY2(result.errorString.contains(QStringLiteral("close QGroundControl")), qPrintable(result.errorString));
+    QCOMPARE(TestFixtures::readFile(backupPath), backup);
+    _verifyCacheUsable(db.get(), QStringLiteral("current"));
+}
+
+void QGCTileCacheDatabaseTest::_testInitPutsBackupBack_data()
+{
+    QTest::addColumn<bool>("cacheInPlace");
+
+    // A crash after the cache was set aside, before the import was put in its place
+    QTest::newRow("no cache in place") << false;
+    // The cache in place may hold tiles of its own: which one the user wants cannot be told
+    QTest::newRow("cache in place") << true;
+}
+
+void QGCTileCacheDatabaseTest::_testInitPutsBackupBack()
+{
+    QFETCH(bool, cacheInPlace);
+
+    QTemporaryDir tempDir;
+    const QString cachePath = tempDir.filePath(QStringLiteral("tiles.db"));
+    const QString backupPath = cachePath + QStringLiteral(".bak");
+    const QString setAsidePath = tempDir.filePath(QStringLiteral("set-aside.db"));
+    {
+        QGCTileCacheDatabase setAside(setAsidePath);
+        QVERIFY(setAside.init());
+        QVERIFY(setAside.connectDB());
+        QVERIFY(setAside.saveTile(QStringLiteral("leftover"), QStringLiteral("png"), QByteArray(50, 'L'),
+                                  kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet));
+    }
+    if (cacheInPlace) {
+        QGCTileCacheDatabase newer(cachePath);
+        QVERIFY(newer.init());
+        QVERIFY(newer.connectDB());
+        QVERIFY(newer.saveTile(QStringLiteral("newer"), QStringLiteral("png"), QByteArray(50, 'N'), kFixedProviderType,
+                               QGCTileCacheDatabase::kInvalidTileSet));
+    } else {
+        expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Put back the tile cache that an import set aside")));
+    }
+    QVERIFY(QFile::rename(setAsidePath, backupPath));
+
+    QGCTileCacheDatabase db(cachePath);
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+    if (cacheInPlace) {
+        QVERIFY(db.findTile(QStringLiteral("newer")).has_value());
+        QVERIFY(!db.findTile(QStringLiteral("leftover")).has_value());
+        QVERIFY(QFile::exists(backupPath));
+    } else {
+        verifyExpectedLogMessage();
+        QVERIFY(db.findTile(QStringLiteral("leftover")).has_value());
+        QVERIFY(!QFile::exists(backupPath));
+    }
+}
+
+void QGCTileCacheDatabaseTest::_testImmutableFileUri_data()
+{
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<QString>("uri");
+
+    QTest::newRow("plain") << QStringLiteral("/home/pilot/tiles.qgctiledb")
+                           << QStringLiteral("file:///home/pilot/tiles.qgctiledb?immutable=1");
+    QTest::newRow("space, ?, # and %") << QStringLiteral("/data/a b?c#d%e.db")
+                                       << QStringLiteral("file:///data/a%20b%3Fc%23d%25e.db?immutable=1");
+    QTest::newRow("what looks encoded or like a parameter")
+        << QStringLiteral("/data/%41&immutable=0;x.db")
+        << QStringLiteral("file:///data/%2541%26immutable%3D0%3Bx.db?immutable=1");
+    QTest::newRow("non-ASCII") << QStringLiteral("/data/Z\u00FCrich \u6771\u4EAC.db")
+                               << QStringLiteral("file:///data/Z%C3%BCrich%20%E6%9D%B1%E4%BA%AC.db?immutable=1");
+    QTest::newRow("drive") << QStringLiteral("C:/Users/pilot/tiles.db")
+                           << QStringLiteral("file:///C:/Users/pilot/tiles.db?immutable=1");
+    // A Windows network share: SQLite refuses an authority, so the server stays in the path
+    QTest::newRow("UNC") << QStringLiteral("//nas/share/tiles.db")
+                         << QStringLiteral("file:////nas/share/tiles.db?immutable=1");
+}
+
+void QGCTileCacheDatabaseTest::_testImmutableFileUri()
+{
+    QFETCH(QString, path);
+    QFETCH(QString, uri);
+
+    QCOMPARE(QGCTileCacheDatabase::immutableFileUri(path), uri);
+}
+
+void QGCTileCacheDatabaseTest::_testImportFileNameAsUri_data()
+{
+    QTest::addColumn<QString>("fileName");
+
+    // Windows allows no ? in a file name
+#ifdef Q_OS_WIN
+    QTest::newRow("#, % and space") << QStringLiteral("pick #1 %41.qgctiledb");
+#else
+    QTest::newRow("?, #, % and space") << QStringLiteral("pick? #1 %41.qgctiledb");
+#endif
+}
+
+void QGCTileCacheDatabaseTest::_testImportFileNameAsUri()
+{
+    QFETCH(QString, fileName);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+
+    QTemporaryDir pickedDir;
+    QVERIFY(pickedDir.isValid());
+    const QString importPath = QDir(pickedDir.path()).filePath(fileName);
+    QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+
+    const DatabaseResult result = db->importSetsMerge(importPath, nullptr);
+    QVERIFY2(result.success, qPrintable(result.errorString));
+    QVERIFY(db->findTile(QStringLiteral("imported")).has_value());
+}
+
+void QGCTileCacheDatabaseTest::_testImportReadOnlyFile_data()
+{
+    QTest::addColumn<bool>("movable");
+
+    QTest::newRow("copied") << false;
+    QTest::newRow("moved") << true;
+}
+
+void QGCTileCacheDatabaseTest::_testImportReadOnlyFile()
+{
+    QFETCH(bool, movable);
+
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+
+    // A file from a CD, or one marked read-only: the copy or the move keeps its permissions
+    const QString importPath = tempDir.filePath(QStringLiteral("import.qgctiledb"));
+    QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+    QVERIFY(
+        QFile::setPermissions(importPath, QFileDevice::ReadOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther));
+
+    const DatabaseResult result = db->importSetsReplace(importPath, nullptr, movable);
+    QVERIFY2(result.success, qPrintable(result.errorString));
+    QVERIFY(QFile::permissions(tempDir.filePath(QStringLiteral("tiles.db"))).testFlag(QFileDevice::WriteOwner));
+    _verifyCacheUsable(db.get(), QStringLiteral("imported"));
+}
+
+void QGCTileCacheDatabaseTest::_testReadOnlyCacheHeals()
+{
+    // A cache that an import of an earlier build left read-only
+    QTemporaryDir tempDir;
+    const QString cachePath = tempDir.filePath(QStringLiteral("tiles.db"));
+    {
+        auto db = _createInitializedDB(tempDir);
+        QVERIFY(db);
+        QVERIFY(db->saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(50, 'K'), kFixedProviderType,
+                             QGCTileCacheDatabase::kInvalidTileSet));
+    }
+    QVERIFY(QFile::setPermissions(cachePath, QFileDevice::ReadOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther));
+
+    QGCTileCacheDatabase db(cachePath);
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+    _verifyCacheUsable(&db, QStringLiteral("kept"));
+
+    const QString importPath = tempDir.filePath(QStringLiteral("import.qgctiledb"));
+    QVERIFY(_writeTileSetFile(importPath, QStringLiteral("imported")));
+    const DatabaseResult result = db.importSetsReplace(importPath, nullptr);
+    QVERIFY2(result.success, qPrintable(result.errorString));
+    QVERIFY(!QFile::exists(cachePath + QStringLiteral(".bak")));
+    _verifyCacheUsable(&db, QStringLiteral("imported"));
 }
 
 void QGCTileCacheDatabaseTest::_linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID)

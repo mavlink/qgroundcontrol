@@ -8,6 +8,7 @@
 
 #include "ArchiveFixtures.h"
 #include "FileFixtures.h"
+#include "QGCFormat.h"
 #include "QGCMapEngineManager.h"
 #include "QGCTileCacheDatabase.h"
 #include "QGCWorkDirectory.h"
@@ -164,9 +165,10 @@ void QGCMapEngineManagerArchiveTest::_importArchiveRejectsSeveralTileSets()
 
 void QGCMapEngineManagerArchiveTest::_importArchiveStopsAtSizeLimit()
 {
-    // A tile set of zeros, 128 MiB in an archive of a few hundred KiB: far more than a tile set grows by
+    // A tile set of zeros, 128 MiB in an archive of a few hundred KiB: far more than a tile set grows by. The name,
+    // as a URL-encoded download may have it, holds the markers that a message substitutes
     QTemporaryDir tempDir;
-    const QString archivePath = tempDir.filePath(QStringLiteral("zeros.zip"));
+    const QString archivePath = tempDir.filePath(QStringLiteral("zeros%2C%1.zip"));
     QVERIFY(ArchiveFixtures::writeZipOfZeros(archivePath, "zeros.qgctiledb", Q_INT64_C(128) * 1024 * 1024));
 
     const QStringList unpackedBefore = unpackDirectories();
@@ -175,8 +177,12 @@ void QGCMapEngineManagerArchiveTest::_importArchiveStopsAtSizeLimit()
     QVERIFY(manager.importArchive(archivePath));
     QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
                               TestTimeout::longMs());
-    QVERIFY2(manager.errorMessage().contains(QStringLiteral("size limit exceeded"), Qt::CaseInsensitive),
-             qPrintable(manager.errorMessage()));
+    // The archive is small, so its limit is the least one: the message names the archive, the limit and the rule
+    const QString limit = QGC::bigSizeToString(Q_UINT64_C(64) * 1024 * 1024);
+    QCOMPARE(manager.errorMessage(),
+             QStringLiteral("zeros%2C%1.zip unpacks to more than ") + limit +
+                 QStringLiteral(", the most a tile set archive may unpack to: 20 times its size, ") + limit +
+                 QStringLiteral(" at least"));
     QCOMPARE(unpackDirectories(), unpackedBefore);
 }
 

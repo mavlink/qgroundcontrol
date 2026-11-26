@@ -1,16 +1,19 @@
 #include "QGCTileCacheDatabase.h"
 
+#include <algorithm>
+#include <atomic>
+#include <iterator>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSettings>
+#include <QtCore/QUrl>
 #include <QtCore/QUuid>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlError>
 #include <QtSql/QSqlQuery>
-
-#include <atomic>
 
 #include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
@@ -22,6 +25,119 @@
 QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "QtLocationPlugin.QGCTileCacheDatabase")
 
 static std::atomic<quint64> s_connectionCounter{0};
+
+namespace {
+
+/// Where a replace import sets the cache aside until the import has opened as the new cache
+QString tileCacheBackupPath(const QString& databasePath)
+{
+    return databasePath + QStringLiteral(".bak");
+}
+
+/// Suffixes of a database and of the files SQLite keeps beside it: the write-ahead log, its index and the rollback
+/// journal. Those belong to the database of their name: one left beside another database would be applied to it
+QStringList tileDatabaseFileSuffixes()
+{
+    return {QString(), QStringLiteral("-wal"), QStringLiteral("-shm"), QStringLiteral("-journal")};
+}
+
+/// Let the owner write a file of the cache. A file QGC did not make may forbid it (a file from a CD or one marked
+/// read-only keeps that through a copy or a move): SQLite then opens it read-only without a word, and Windows
+/// refuses to remove a file with the read-only attribute
+void makeTileDatabaseFileWritable(const QString& path)
+{
+    if (QFile::exists(path)) {
+        (void) QFile::setPermissions(path, QFile::permissions(path) | QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    }
+}
+
+/// Rename a database with the files SQLite keeps beside it. If one cannot be renamed, those already renamed are put
+/// back
+bool renameTileDatabaseFiles(const QString& from, const QString& to)
+{
+    QStringList renamed;
+    for (const QString& suffix : tileDatabaseFileSuffixes()) {
+        if (!QFile::exists(from + suffix)) {
+            continue;
+        }
+        makeTileDatabaseFileWritable(from + suffix);
+        if (!QFile::rename(from + suffix, to + suffix)) {
+            for (const QString& done : std::as_const(renamed)) {
+                (void) QFile::rename(to + done, from + done);
+            }
+            return false;
+        }
+        renamed.append(suffix);
+    }
+    return true;
+}
+
+void removeTileDatabaseFiles(const QString& path)
+{
+    for (const QString& suffix : tileDatabaseFileSuffixes()) {
+        makeTileDatabaseFileWritable(path + suffix);
+        (void) QFile::remove(path + suffix);
+    }
+}
+
+bool anyTileDatabaseFileExists(const QString& path)
+{
+    const QStringList suffixes = tileDatabaseFileSuffixes();
+    return std::any_of(suffixes.cbegin(), suffixes.cend(),
+                       [&path](const QString& suffix) { return QFile::exists(path + suffix); });
+}
+
+std::atomic<quint64> s_tileSetFileReaderCounter{0};
+
+/// Read-only connection to a tile set file that SQLite reads as it is ("immutable"): it writes nothing beside the
+/// file, so a tile set file in WAL mode, as exportSets() writes it, can be read in a folder QGC cannot write to.
+/// It does not see what a write-ahead log or a rollback journal beside the file holds: _importRefusal() refuses a
+/// file that has one
+class TileSetFileReader
+{
+public:
+    explicit TileSetFileReader(const QString& path)
+        : _connectionName(QStringLiteral("QGeoTileSetFile_%1").arg(s_tileSetFileReaderCounter.fetch_add(1)))
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), _connectionName);
+        db.setDatabaseName(QGCTileCacheDatabase::immutableFileUri(QFileInfo(path).absoluteFilePath()));
+        db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY;QSQLITE_OPEN_URI"));
+        _valid = db.open();
+    }
+
+    ~TileSetFileReader()
+    {
+        {
+            QSqlDatabase db = QSqlDatabase::database(_connectionName, false);
+            if (db.isOpen()) {
+                db.close();
+            }
+        }
+        QSqlDatabase::removeDatabase(_connectionName);
+    }
+
+    TileSetFileReader(const TileSetFileReader&) = delete;
+    TileSetFileReader& operator=(const TileSetFileReader&) = delete;
+
+    bool isValid() const { return _valid; }
+
+    QSqlDatabase database() const { return QSqlDatabase::database(_connectionName, false); }
+
+private:
+    QString _connectionName;
+    bool _valid = false;
+};
+
+}  // namespace
+
+QString QGCTileCacheDatabase::immutableFileUri(const QString& absolutePath)
+{
+    // QUrl::fromLocalFile() takes the server of a UNC path for the authority, which SQLite refuses. Everything but
+    // the separators and a drive's colon is encoded, so that no character of a name ends the path or starts a parameter
+    const QString path = QString::fromLatin1(QUrl::toPercentEncoding(absolutePath, QByteArrayLiteral("/:")));
+    const QString authority = path.startsWith(QLatin1Char('/')) ? QStringLiteral("//") : QStringLiteral("///");
+    return QStringLiteral("file:") + authority + path + QStringLiteral("?immutable=1");
+}
 
 QGCTileCacheDatabase::QGCTileCacheDatabase(const QString &databasePath)
     : _databasePath(databasePath)
@@ -99,6 +215,22 @@ bool QGCTileCacheDatabase::init()
     _failed = false;
     if (!_databasePath.isEmpty()) {
         qCDebug(QGCTileCacheDatabaseLog) << "Mapping cache directory:" << _databasePath;
+
+        // A replace import that did not end, by a crash or a failed restore, left the cache in the backup. Only
+        // where no cache has been made since is it certain that putting it back loses nothing. Otherwise the backup
+        // stays, and a replace import refuses to run until the user has dealt with it
+        const QString backupPath = tileCacheBackupPath(_databasePath);
+        if (!anyTileDatabaseFileExists(_databasePath) && QFile::exists(backupPath)) {
+            if (renameTileDatabaseFiles(backupPath, _databasePath)) {
+                qCWarning(QGCTileCacheDatabaseLog) << "Put back the tile cache that an import set aside:" << backupPath;
+            } else {
+                qCWarning(QGCTileCacheDatabaseLog)
+                    << "Could not put back the tile cache that an import set aside:" << backupPath;
+            }
+        }
+        // A cache that an earlier import of a read-only file left read-only heals here
+        makeTileDatabaseFileWritable(_databasePath);
+
         if (connectDB()) {
             if (!_checkSchemaVersion()) {
                 _failed = true;
@@ -128,14 +260,19 @@ bool QGCTileCacheDatabase::connectDB()
         disconnectDB();
     }
 
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", _connectionName);
-    db.setDatabaseName(_databasePath);
-    _valid = db.open();
-    if (_valid) {
-        QGCSqlHelper::applySqlitePragmas(db);
-        _connected = true;
-    } else {
-        qCCritical(QGCTileCacheDatabaseLog) << "Map Cache SQL error (open db):" << db.lastError();
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", _connectionName);
+        db.setDatabaseName(_databasePath);
+        _valid = db.open();
+        if (_valid) {
+            QGCSqlHelper::applySqlitePragmas(db);
+            _connected = true;
+        } else {
+            qCCritical(QGCTileCacheDatabaseLog) << "Map Cache SQL error (open db):" << db.lastError();
+        }
+    }
+    if (!_valid) {
+        // Once no handle of the connection is left: Qt warns about one that is removed while in use
         QSqlDatabase::removeDatabase(_connectionName);
     }
     return _valid;
@@ -878,6 +1015,72 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
     return result;
 }
 
+QString QGCTileCacheDatabase::_importRefusal(const QString& path, bool requireCurrentSchema)
+{
+    const QString fileName = QFileInfo(path).fileName();
+
+    // What a write-ahead log or a hot journal beside the file holds is not in the file: a copy of it, or a read that
+    // writes nothing, would miss it
+    for (const QString& suffix : {QStringLiteral("-wal"), QStringLiteral("-journal")}) {
+        if (QFileInfo(path + suffix).size() > 0) {
+            return QCoreApplication::translate("QGCTileCacheDatabase",
+                                               "%1 cannot be imported while %2 is beside it: another program has it "
+                                               "open, or did not close it")
+                .arg(fileName, fileName + suffix);
+        }
+    }
+
+    TileSetFileReader importDB(path);
+    if (!importDB.isValid()) {
+        return QCoreApplication::translate("QGCTileCacheDatabase", "%1 cannot be opened: %2")
+            .arg(fileName, importDB.database().lastError().text());
+    }
+
+    // Opening does not read the file: the first query fails for a file that is no SQLite database
+    QSqlDatabase db = importDB.database();
+    const std::optional<int> version = QGCSqlHelper::userVersion(db);
+    static const char* const tableChecks[] = {
+        "SELECT tileID, hash, format, tile, size, type, date FROM Tiles LIMIT 0",
+        // In parentheses: clang takes two adjacent literals in a list for a missing comma
+        ("SELECT setID, name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, "
+         "numTiles, defaultSet, date FROM TileSets LIMIT 0"),
+        "SELECT setID, tileID FROM SetTiles LIMIT 0",
+    };
+    QSqlQuery query(db);
+    const bool hasTables = version && std::all_of(std::begin(tableChecks), std::end(tableChecks),
+                                                  [&query](const char* sql) { return query.exec(QLatin1String(sql)); });
+    if (!hasTables) {
+        return QCoreApplication::translate("QGCTileCacheDatabase", "%1 is not a tile set file of QGroundControl")
+            .arg(fileName);
+    }
+
+    // init() would discard the tiles of another schema version
+    if (requireCurrentSchema && (*version != kSchemaVersion)) {
+        return QCoreApplication::translate("QGCTileCacheDatabase",
+                                           "%1 holds tile sets in the format of another version of QGroundControl, "
+                                           "which cannot replace the tile cache")
+            .arg(fileName);
+    }
+
+    return {};
+}
+
+QString QGCTileCacheDatabase::_restoreAfterFailedImport(const QString& backupPath, bool hasBackup)
+{
+    disconnectDB();
+    removeTileDatabaseFiles(_databasePath);
+    const bool restored = !hasBackup || renameTileDatabaseFiles(backupPath, _databasePath);
+    if (init()) {
+        (void) connectDB();
+    }
+    if (!restored) {
+        qCWarning(QGCTileCacheDatabaseLog) << "Could not put the tile cache back from" << backupPath;
+        return QCoreApplication::translate("QGCTileCacheDatabase", "The tile cache could not be put back: it is in %1")
+            .arg(backupPath);
+    }
+    return QCoreApplication::translate("QGCTileCacheDatabase", "The tile cache is unchanged");
+}
+
 DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, ProgressCallback progressCb, bool movable)
 {
     DatabaseResult result;
@@ -885,37 +1088,92 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, Prog
         result.errorString = "Import path must differ from the active database";
         return result;
     }
-    _defaultSet = kInvalidTileSet;
-    disconnectDB();
-    const QString backupPath = _databasePath + QStringLiteral(".bak");
-    (void) QFile::remove(backupPath);
-    const bool hasBackup = QFile::rename(_databasePath, backupPath);
-    if (!hasBackup) {
-        (void) QFile::remove(_databasePath);
-    }
-    if (!(movable && QFile::rename(path, _databasePath)) && !QFile::copy(path, _databasePath)) {
-        if (hasBackup) {
-            (void) QFile::rename(backupPath, _databasePath);
-        }
-        result.errorString = "Failed to copy import database";
-        _valid = false;
-        _failed = true;
+
+    // A backup that is left is the only copy of the tiles of an import that did not end
+    const QString backupPath = tileCacheBackupPath(_databasePath);
+    if (anyTileDatabaseFileExists(backupPath)) {
+        result.errorString = QCoreApplication::translate("QGCTileCacheDatabase",
+                                                         "An earlier import that did not end left the tile cache in "
+                                                         "%1: close QGroundControl, then put that file in place of %2 "
+                                                         "or move it away, and import again")
+                                 .arg(backupPath, _databasePath);
         return result;
     }
-    (void) QFile::remove(backupPath);
-    if (progressCb) progressCb(25);
-    init();
-    if (!_valid) {
-        result.errorString = QStringLiteral("Failed to initialize tile cache database after import");
-    } else {
-        if (progressCb) progressCb(50);
-        connectDB();
-        if (!_valid) {
-            result.errorString = QStringLiteral("Failed to connect to tile cache database after import");
-        }
+
+    // init() takes any SQLite file for the cache and adds the tables it lacks: what is not a tile set file must
+    // never get there
+    result.errorString = _importRefusal(path, /*requireCurrentSchema=*/true);
+    if (!result.errorString.isEmpty()) {
+        return result;
     }
-    if (progressCb) progressCb(100);
-    result.success = _valid;
+
+    const QString fileName = QFileInfo(path).fileName();
+    _defaultSet = kInvalidTileSet;
+    disconnectDB();
+
+    // The cache is set aside, and kept until the import has opened as the new cache
+    const bool hasBackup = QFile::exists(_databasePath);
+    if (hasBackup && !renameTileDatabaseFiles(_databasePath, backupPath)) {
+        if (init()) {
+            (void) connectDB();
+        }
+        result.errorString =
+            QCoreApplication::translate(
+                "QGCTileCacheDatabase",
+                "The tile cache could not be set aside for the import of %1. The tile cache is unchanged")
+                .arg(fileName);
+        return result;
+    }
+    if (progressCb) {
+        progressCb(10);
+    }
+
+    // A copy is made under a name of its own and renamed into place: a crash then leaves the cache either missing or
+    // complete, never a part of it where init() would take it for the cache
+    const auto putImportInPlace = [this, &path, movable]() {
+        if (movable && QFile::rename(path, _databasePath)) {
+            makeTileDatabaseFileWritable(_databasePath);
+            return true;
+        }
+        const QString copyPath = _databasePath + QStringLiteral(".import");
+        removeTileDatabaseFiles(copyPath);
+        if (QFile::copy(path, copyPath)) {
+            makeTileDatabaseFileWritable(copyPath);
+            if (QFile::rename(copyPath, _databasePath)) {
+                return true;
+            }
+        }
+        removeTileDatabaseFiles(copyPath);
+        return false;
+    };
+    if (!putImportInPlace()) {
+        result.errorString =
+            QCoreApplication::translate("QGCTileCacheDatabase", "%1 could not be copied into the tile cache. %2")
+                .arg(fileName, _restoreAfterFailedImport(backupPath, hasBackup));
+        return result;
+    }
+    if (progressCb) {
+        progressCb(25);
+    }
+
+    // A database that cannot be written opens all the same: a write proves it
+    const auto writable = [this]() {
+        QSqlDatabase db = _database();
+        return QGCSqlHelper::setUserVersion(db, kSchemaVersion);
+    };
+    if (!_importRefusal(_databasePath, /*requireCurrentSchema=*/true).isEmpty() || !init() || !connectDB() ||
+        !writable()) {
+        result.errorString =
+            QCoreApplication::translate("QGCTileCacheDatabase", "%1 could not be opened as the tile cache. %2")
+                .arg(fileName, _restoreAfterFailedImport(backupPath, hasBackup));
+        return result;
+    }
+    removeTileDatabaseFiles(backupPath);
+
+    if (progressCb) {
+        progressCb(100);
+    }
+    result.success = true;
     return result;
 }
 
@@ -930,9 +1188,12 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
         result.errorString = "Database not connected";
         return result;
     }
+    result.errorString = _importRefusal(path, /*requireCurrentSchema=*/false);
+    if (!result.errorString.isEmpty()) {
+        return result;
+    }
 
-    QGCSqlHelper::ScopedConnection importDB(path, /*readOnly=*/true,
-                                            QStringLiteral("QGeoTileImportSession"));
+    TileSetFileReader importDB(path);
     if (!importDB.isValid()) {
         result.errorString = "Error opening import database";
         return result;

@@ -136,7 +136,9 @@ private slots:
 
 private:
     /// @param tileSetEntries How many entries of the archive have the name of a tile set file
-    void _handleExtractionFinished(const Compression::Outcome& outcome, int tileSetEntries);
+    /// @param sizeLimitMessage What to tell the user if the archive unpacks to more than its limit
+    void _handleExtractionFinished(const Compression::Outcome& outcome, int tileSetEntries,
+                                   const QString& sizeLimitMessage);
 
     QmlObjectListModel *_tileSets = nullptr;
     QGCTileSet _imageSet;

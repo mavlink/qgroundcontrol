@@ -618,15 +618,21 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
     // and fails the import once the extraction has ended: which one is meant cannot be told. The filter runs on the
     // worker, and the count is read in the callback, which comes after the worker has ended
     const auto tileSetEntries = std::make_shared<std::atomic_int>(0);
+    const qint64 maxBytes = std::max(archiveSize * kMaxTileSetExpansion, kMinTileSetLimitBytes);
+    const QString sizeLimitMessage =
+        tr("%1 unpacks to more than %2, the most a tile set archive may unpack to: %3 times its size, %4 at least")
+            .arg(QFileInfo(archivePath).fileName(), QGC::bigSizeToString(static_cast<quint64>(maxBytes)),
+                 QString::number(kMaxTileSetExpansion),
+                 QGC::bigSizeToString(static_cast<quint64>(kMinTileSetLimitBytes)));
     _extractionJob = CompressionJob::startExtraction(
         this, archivePath, QDir(_extractionDirectory->path()).filePath(QStringLiteral("unpacked")),
-        {.maxBytes = std::max(archiveSize * kMaxTileSetExpansion, kMinTileSetLimitBytes),
+        {.maxBytes = maxBytes,
          .filter =
              [tileSetEntries](const Compression::ArchiveEntry& entry) {
                  return !entry.isDirectory && isTileSetFileName(entry.name) && (tileSetEntries->fetch_add(1) == 0);
              }},
-        [this, tileSetEntries](const Compression::Outcome& outcome) {
-            _handleExtractionFinished(outcome, tileSetEntries->load());
+        [this, tileSetEntries, sizeLimitMessage](const Compression::Outcome& outcome) {
+            _handleExtractionFinished(outcome, tileSetEntries->load(), sizeLimitMessage);
         });
     (void) connect(_extractionJob, &CompressionJob::progressChanged, this,
                    &QGCMapEngineManager::_handleExtractionProgress);
@@ -643,10 +649,12 @@ void QGCMapEngineManager::_handleExtractionProgress(qreal progress)
     setActionProgress(static_cast<int>(progress * 50.0));
 }
 
-void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& outcome, int tileSetEntries)
+void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& outcome, int tileSetEntries,
+                                                    const QString& sizeLimitMessage)
 {
     if (!outcome) {
-        setErrorMessage(outcome.description());
+        setErrorMessage((outcome.error == Compression::Error::SizeLimitExceeded) ? sizeLimitMessage
+                                                                                 : outcome.description());
         setImportAction(ImportAction::ActionDone);
         _removeExtractionOutput();
         return;
