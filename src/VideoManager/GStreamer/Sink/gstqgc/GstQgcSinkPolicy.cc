@@ -120,7 +120,7 @@ const char* toString(RenderBackend backend) noexcept
 
 GpuBinPreference parseGpuBinPreference(QByteArrayView value)
 {
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const QByteArray choice = value.trimmed().toByteArray().toLower();
     if (choice == "dmabuf") {
         return {.mode = GpuBinMode::DirectDmaBuf, .explicitChoice = true};
@@ -137,8 +137,6 @@ GpuBinPreference parseGpuBinPreference(QByteArrayView value)
     Q_UNUSED(value);
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     return {.mode = GpuBinMode::GlUpload};
-#elif defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    return {.mode = GpuBinMode::DirectDmaBuf};
 #else
     return {};
 #endif
@@ -221,17 +219,12 @@ static_assert(GpuBinMode{} == GpuBinMode::Passthrough,
 namespace {
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-/// The DMA_DRM fragments the DMABuf importer takes on @p display; "" before GStreamer 1.24 or when EGL reports none.
-std::string sinkDmaDrmCaps([[maybe_unused]] void* display)
+/// The DMA_DRM fragments the DMABuf importer takes on @p display; "" when EGL reports none.
+std::string sinkDmaDrmCaps(void* display)
 {
-    std::string caps;
-#if GST_CHECK_VERSION(1, 24, 0)
-    const std::vector<GstVideoFormat> formats = advertisedFormats(kOfferDmaDrm);
     // Best-effort: advertise the GPU's actually-supported (format, modifier) pairs (EGL query) so modifier-aware
     // drivers negotiate a tiling QGC's importer can consume. Additive; empty on any query failure.
-    caps += GstHw::buildSupportedDmaDrmCaps(formats, &toQtPixelFormat, display);
-#endif
-    return caps;
+    return GstHw::buildSupportedDmaDrmCaps(advertisedFormats(kOfferDmaDrm), &toQtPixelFormat, display);
 }
 #endif
 
@@ -308,7 +301,7 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
         case RenderBackend::Vulkan:
             // DMA_DRM only, in the layouts Qt's Vulkan device imports: Vulkan needs the modifier, which legacy
             // memory:DMABuf caps don't carry.
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) && GST_CHECK_VERSION(1, 24, 0)
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
             if (policy.dmaBufDisplay) {
                 caps += GstHw::buildVulkanDmaDrmCaps(advertisedFormats(kOfferDmaDrm), &toQtPixelFormat);
             }

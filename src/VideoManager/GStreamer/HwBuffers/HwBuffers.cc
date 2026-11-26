@@ -225,8 +225,7 @@ bool graphicsDeviceLost() noexcept
 void configureQtGraphics(bool softwareRendering)
 {
     s_softwareRendering.store(softwareRendering, std::memory_order_release);
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
-    (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     // GStreamer's zero-copy imports need Qt on EGL, but Qt's xcb integration picks GLX first (the AppImage runs xcb
     // even in Wayland sessions). Qt falls back to GLX when EGL fails to initialize; the user's value wins.
     if (!qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
@@ -234,7 +233,7 @@ void configureQtGraphics(bool softwareRendering)
     }
 #endif
     // The GL and DMABuf paths both need QOpenGLContext::globalShareContext(), which this attribute enables.
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #endif
     // Read only when Qt creates a Vulkan device, as it does with QSG_RHI_BACKEND=vulkan.

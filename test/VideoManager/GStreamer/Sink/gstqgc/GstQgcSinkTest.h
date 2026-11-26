@@ -58,7 +58,7 @@ private slots:
     void _testAdapterFlushDropsInFlightSamples();
     void _testFrameDeliveryKeepsTheLatestFrame();
     void _testPathSessionFailurePolicy();
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     void _testGpuBinPreferenceParse_data();
     void _testGpuBinPreferenceParse();
 #endif

@@ -169,10 +169,8 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
 
     const QString systemMemory = QStringLiteral("memory:SystemMemory");
     const QStringList passthroughChildren = withConverter({QStringLiteral("GstQgcQVideoSink")});
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    const int openGl = int(GstQgc::RenderBackend::OpenGL);
-#endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    const int openGl = int(GstQgc::RenderBackend::OpenGL);
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     const QStringList gluploadChildren = withConverter(
         {QStringLiteral("glcolorconvert"), QStringLiteral("glupload"), QStringLiteral("GstQgcQVideoSink")});
@@ -189,8 +187,6 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
     // DMA_DRM fragments carry memory:DMABuf too; GLMemory stays out so gst-gl can't take the import over.
     QTest::newRow("direct-dmabuf") << int(GstQgc::GpuBinMode::DirectDmaBuf) << openGl << true << passthroughChildren
                                    << QStringList{QStringLiteral("memory:DMABuf"), systemMemory} << false;
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
     // Without switchbin the variant is the glupload one.
     const bool memorySwitch = GstQgcTest::hasMemorySwitch();
@@ -206,7 +202,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
     QTest::newRow("dmabuf-or-glupload-egl-unknown")
         << dmaBufOrGlUpload << openGl << false << switchChildren << glMemory << true;
 #endif
-#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     QStringList direct3D11Features;
 #if defined(QGC_HAS_GST_D3D_GPU_PATH)
     // Offered where Qt's Direct3D 11 device opens it, as this test's environment says it does.
@@ -1293,7 +1289,7 @@ void GstQgcSinkTest::_testPathSessionFailurePolicy()
     QCOMPARE(GstQgc::formatSinkStats(stats).line, QStringLiteral(" gpu-fallbacks:3 stream-demotions:2 tiled-drops:3"));
 }
 
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 void GstQgcSinkTest::_testGpuBinPreferenceParse_data()
 {
     QTest::addColumn<QByteArray>("value");

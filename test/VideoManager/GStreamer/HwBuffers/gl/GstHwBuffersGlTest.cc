@@ -23,7 +23,7 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch_data()
 #else
     QTest::newRow("passthrough bin") << int(GstQgc::GpuBinMode::Passthrough);
 #endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QTest::newRow("DMABuf-or-glupload bin") << int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
 #endif
 }

@@ -184,11 +184,14 @@ endif()
 # cmake-format: off
 # Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
 # cmake/GStreamer/Orchestrator.cmake. The sources read libdrm's drm_fourcc.h: a distribution's gstreamer-allocators-1.0
-# requires libdrm and so names its include directory, one built without the DRM allocator does not.
+# requires libdrm and so names its include directory, one built without the DRM allocator does not. They read DMA_DRM
+# caps too, which GStreamer has from 1.24: an older one shows its DMABuf frames through glupload. Built with the
+# GLMemory path only, which takes every stream this one does not.
 set(_qgc_gpu_row_DMABuf
     PLATFORMS LINUX
-    REQUIRES QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
+    REQUIRES _qgc_gpu_GLMemory QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
     PROBE HAS_VAR QGC_GST_HAS_DRM_FOURCC HEADER drm_fourcc.h SYMBOL DRM_FORMAT_MOD_LINEAR PC_MODULE libdrm
+    PROBE_ALSO HAS_VAR QGC_GST_HAS_DMA_DRM HEADER gst/video/video-info-dma.h SYMBOL gst_video_info_dma_drm_from_caps
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
     SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstDmaDrmCaps.cc
@@ -244,8 +247,8 @@ set(_qgc_gpu_row_AHardwareBuffer
 
 # No bin offers this memory, so it is compiled only on request.
 set(_qgc_gpu_opt_in_rows AHardwareBuffer)
-# In this order: DMABuf_Vulkan requires the DMABuf path (_qgc_gpu_DMABuf).
-set(_qgc_gpu_rows DMABuf DMABuf_Vulkan GLMemory IOSurface D3D AHardwareBuffer)
+# In this order: DMABuf requires the GLMemory path (_qgc_gpu_GLMemory), and DMABuf_Vulkan the DMABuf path.
+set(_qgc_gpu_rows GLMemory DMABuf DMABuf_Vulkan IOSurface D3D AHardwareBuffer)
 foreach(_row IN LISTS _qgc_gpu_rows)
     _qgc_add_gpu_path(${_row} ${_qgc_gpu_row_${_row}})
 endforeach()
@@ -258,18 +261,13 @@ endif()
 # amcvideodec needs for Surface output); gst-gl imports both LINEAR and vendor-tiled dmabuf to GLMemory. Direct DMABuf
 # feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both route each stream by the
 # memory its decoder negotiates (DMABuf direct, the rest through glupload) unless QGC_GST_GPU_BIN forces one.
-if(LINUX
-   AND _qgc_gpu_GLMemory
-   AND _qgc_gpu_DMABuf
-)
+if(_qgc_gpu_DMABuf)
     message(
         STATUS
             "QGCGStreamer: GPU bins compiled: glupload and direct DMABuf, picked per stream; QGC_GST_GPU_BIN forces one"
     )
 elseif(_qgc_gpu_GLMemory)
     message(STATUS "QGCGStreamer: GPU bin routes through glupload (gst-gl EGLImage import)")
-elseif(LINUX AND _qgc_gpu_DMABuf)
-    message(STATUS "QGCGStreamer: GPU bin direct-imports DMABuf (no gst-gl/GLMemory available)")
 endif()
 # The glupload bin offers only GLMemory caps.
 if(ANDROID

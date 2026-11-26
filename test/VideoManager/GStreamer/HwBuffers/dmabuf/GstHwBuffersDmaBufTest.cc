@@ -418,15 +418,11 @@ void GstHwBuffersDmaBufTest::_testDmaDrmModifierPolicy_data()
 
 void GstHwBuffersDmaBufTest::_testDmaDrmModifierPolicy()
 {
-#if GST_CHECK_VERSION(1, 24, 0)
     QFETCH(quint64, modifier);
     QFETCH(bool, importable);
 
     // Qt imports each plane as its own EGLImage: compression and auxiliary (CCS/DCC) planes can't survive that.
     QCOMPARE(GstHw::dmaDrmModifierImportableForTest(modifier), importable);
-#else
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#endif
 }
 
 void GstHwBuffersDmaBufTest::_testDmaBufImportsEveryPlaneOfOfferedFormats()
@@ -549,9 +545,6 @@ void GstHwBuffersDmaBufTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
 
 void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameRefusesCpuMap()
 {
-#if !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#else
     GstDmaBufVideoBuffer::resetCachedState();
     const QVideoFrameFormat format(QSize(64, 64), QVideoFrameFormat::Format_NV12);
     GstVideoInfo info;
@@ -577,7 +570,6 @@ void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameRefusesCpuMap()
     QCOMPARE(tiled.map(QVideoFrame::ReadOnly).planeCount, 0);
     verifyExpectedLogMessage();
     QVERIFY2(!tiled.validatePlaneHandles(), "A tiled frame imports only through EGL modifier attributes");
-#endif
 }
 
 void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport_data()
@@ -596,9 +588,6 @@ void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport_data()
 
 void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport()
 {
-#if !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#else
     QFETCH(QString, drmFormat);
     QFETCH(bool, qtDisplay);
     QFETCH(bool, importDisabled);
@@ -633,7 +622,6 @@ void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport()
     QCOMPARE(mapped.gpuPath, HwVideoBufferPath::None);
     QCOMPARE(mapped.frame.isValid(), cpuFrame);
     QVERIFY2(mapped.noCpuLayout != cpuFrame, "a tiled frame must be dropped rather than read as linear rows");
-#endif
 }
 
 void GstHwBuffersDmaBufTest::_testDmaBufFailedImportKeepsShownTextures_data()
@@ -651,9 +639,6 @@ void GstHwBuffersDmaBufTest::_testDmaBufFailedImportKeepsShownTextures_data()
 
 void GstHwBuffersDmaBufTest::_testDmaBufFailedImportKeepsShownTextures()
 {
-#if !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#else
     QFETCH(QString, drmFormat);
     QFETCH(int, mappedRows);
     QFETCH(bool, handedBack);
@@ -681,7 +666,6 @@ void GstHwBuffersDmaBufTest::_testDmaBufFailedImportKeepsShownTextures()
     const QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, replaced);
     QCOMPARE(textures.get(), handedBack ? shown : nullptr);
     QCOMPARE(replaced.get(), handedBack ? nullptr : shown);
-#endif
 }
 
 void GstHwBuffersDmaBufTest::_testDmaBufImportFailureLatch_data()
@@ -711,13 +695,11 @@ void GstHwBuffersDmaBufTest::_testDmaBufImportFailureLatch_data()
     // The process is out of file descriptors, which is not the driver's refusal.
     QTest::newRow("a LINEAR frame whose fd can't be duplicated is left to the CPU map")
         << int(Outcome::FdDupFailed) << false << int(ImportedBetween::Nothing) << never << QString();
-#if GST_CHECK_VERSION(1, 24, 0)
     QTest::newRow("a tiled frame the QRhi can't import has no other way out")
         << int(Outcome::NotImportable) << true << int(ImportedBetween::Nothing) << limit << failed;
     QTest::newRow("a tiled frame whose fd can't be duplicated has no other way out either")
         << int(Outcome::FdDupFailed) << true << int(ImportedBetween::Nothing) << limit
         << QStringLiteral("could not be duplicated");
-#endif
 }
 
 void GstHwBuffersDmaBufTest::_testDmaBufImportFailureLatch()

@@ -80,18 +80,6 @@ bool addConverter(GstElement* bin, const QByteArray& factoryName, const GstQgc::
     return linkChain({head, tail});
 }
 
-// switchbin offers upstream what its paths take. Before GStreamer 1.24 it didn't ask the sink what a path without an
-// element takes, so it would offer every DMABuf layout, importable or not.
-bool memorySwitchAvailable()
-{
-    guint major = 0;
-    guint minor = 0;
-    guint micro = 0;
-    guint nano = 0;
-    gst_version(&major, &minor, &micro, &nano);
-    return ((major > 1) || ((major == 1) && (minor >= 24))) && GStreamer::hasElementFactory("switchbin");
-}
-
 // The switchbin of the DMABuf-or-glupload variant, floating; null when its elements are missing. A caps event picks
 // the path, so the memory a decoder negotiates does: DMABuf goes straight on, and the sink offers only layouts its
 // importer takes; GLMemory and system memory go through glupload ! glcolorconvert.
@@ -123,9 +111,8 @@ GstQgc::GpuBinMode selectBinVariant(const GstQgc::SinkEnvironment& environment)
     const GstQgc::GpuBinPreference preference = environment.gpuBin;
     const GstQgc::RenderTarget target = environment.target;
     const GstQgc::GpuBinMode mode = GstQgc::selectGpuBin(preference, target);
-    if ((mode == GstQgc::GpuBinMode::DmaBufOrGlUpload) && !memorySwitchAvailable()) {
-        qCDebug(GstQgcGpuBinLog) << "no switchbin of GStreamer 1.24 or later: using the glupload GPU bin, where gst-gl "
-                                    "imports DMABuf";
+    if ((mode == GstQgc::GpuBinMode::DmaBufOrGlUpload) && !GStreamer::hasElementFactory("switchbin")) {
+        qCDebug(GstQgcGpuBinLog) << "no switchbin: using the glupload GPU bin, where gst-gl imports DMABuf";
         return GstQgc::GpuBinMode::GlUpload;
     }
     if ((mode == GstQgc::GpuBinMode::D3D12Convert) &&

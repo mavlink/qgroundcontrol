@@ -11,9 +11,20 @@
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cerrno>
+#include <drm_fourcc.h>
 #include <gst/allocators/gstdmabuf.h>
+#include <gst/video/video-info-dma.h>
 #include <gst/video/video.h>
+#include <limits>
+#include <memory>
+#include <poll.h>
 #include <rhi/qrhi.h>
+#include <span>
+#include <unistd.h>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
@@ -23,20 +34,6 @@
 #include <QtGui/QOpenGLFunctions>
 
 #include "QGCLoggingCategory.h"
-#if GST_CHECK_VERSION(1, 24, 0)
-#include <gst/video/video-info-dma.h>
-#endif
-
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <cerrno>
-#include <drm_fourcc.h>
-#include <limits>
-#include <memory>
-#include <poll.h>
-#include <span>
-#include <unistd.h>
 
 // Producer dma-buf fence export: optional. The header exists on Ubuntu 22.04 but predates the
 // EXPORT_SYNC_FILE uAPI (kernel ~6.0), so gate on the ioctl token, not just header presence.
@@ -441,7 +438,6 @@ GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo
     if (_packedYuvFourcc != 0) {
         _format = GstHw::withPixelFormat(_format, QVideoFrameFormat::Format_RGBA8888);
     }
-#if GST_CHECK_VERSION(1, 24, 0)
     if (GstCaps* caps = gst_sample_get_caps(sample); caps && gst_video_is_dma_drm_caps(caps)) {
         GstVideoInfoDmaDrm drmInfo = {};
         gst_video_info_dma_drm_init(&drmInfo);
@@ -449,7 +445,6 @@ GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo
             _drmModifier = drmInfo.drm_modifier;
         }
     }
-#endif
 }
 
 EGLDisplay GstDmaBufVideoBuffer::eglDisplayFor(const HwVideoBufferContext& context)

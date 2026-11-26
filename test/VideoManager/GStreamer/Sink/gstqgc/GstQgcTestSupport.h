@@ -42,16 +42,11 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char
                                                const GstQgc::SinkBinConfig& config = {},
                                                const char* sourceProperties = "", bool captureCenterPixel = false);
 
-/// Whether the sink bin is built as its DMABuf-or-glupload variant here: without switchbin of GStreamer 1.24 or later
-/// it is the glupload variant instead.
+/// Whether the sink bin is built as its DMABuf-or-glupload variant here: without switchbin it is the glupload variant
+/// instead.
 inline bool hasMemorySwitch()
 {
-    guint major = 0;
-    guint minor = 0;
-    guint micro = 0;
-    guint nano = 0;
-    gst_version(&major, &minor, &micro, &nano);
-    return ((major > 1) || (minor >= 24)) && GstTest::firstMissingFactory({"switchbin"}).isEmpty();
+    return GstTest::firstMissingFactory({"switchbin"}).isEmpty();
 }
 
 /// A new qgcqvideosink (GstQgc::makeVideoSink()).

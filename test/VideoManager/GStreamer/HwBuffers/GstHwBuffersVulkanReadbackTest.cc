@@ -169,9 +169,6 @@ void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage_data()
 
 void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage()
 {
-#if !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#else
     QFETCH(int, gstFormat);
     QFETCH(int, qtFormat);
     QFETCH(QString, source);
@@ -211,14 +208,10 @@ void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage()
     const QString mismatch =
         vulkanImportMismatch(std::move(frame), *rhi, frames.cpu.get(), cpuInfo, GST_VIDEO_INFO_IS_YUV(&cpuInfo));
     QVERIFY2(mismatch.isEmpty(), qPrintable(QStringLiteral("%1 (%2)").arg(mismatch, QLatin1String(negotiated.get()))));
-#endif
 }
 
 void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
 {
-#if !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#else
     QRhi* rhi = _vulkanRhi();
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
@@ -272,7 +265,6 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
     QVideoFrameTexturesUPtr none;
     const QVideoFrameTexturesUPtr textures = buffer->mapTextures(*rhi, none);
     QVERIFY2(textures, qPrintable(QStringLiteral("the delivered frame did not import (%1)").arg(negotiated)));
-#endif
 }
 
 UT_REGISTER_TEST(GstHwBuffersVulkanReadbackTest, TestLabel::Integration)

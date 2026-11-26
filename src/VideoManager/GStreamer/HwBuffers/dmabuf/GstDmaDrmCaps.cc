@@ -1,6 +1,6 @@
 #include "GstDmaDrmCaps.h"
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <algorithm>
 #include <drm_fourcc.h>
 #include <gst/video/video-info-dma.h>
@@ -231,4 +231,4 @@ bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept
 
 }  // namespace GstHw
 
-#endif  // QGC_HAS_GST_DMABUF_GPU_PATH && GST_CHECK_VERSION(1, 24, 0)
+#endif  // QGC_HAS_GST_DMABUF_GPU_PATH

@@ -283,9 +283,10 @@ the layout that keeps their contents (`dmabuf/GstDmaBufVulkanImport`):
   change since its own snapshot, so receivers don't take each other's counts.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
   that compile a path in or out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Windows builds
-  leave out the GLMemory path: Qt 6's OpenGL there is WGL, which gst-gl can't share. Linux builds with gst-gl and
-  DMABuf compile both GPU bins and the one that picks between them per stream; see
-  [GPU bin selection](#gpu-bin-selection).
+  leave out the GLMemory path: Qt 6's OpenGL there is WGL, which gst-gl can't share. The DMABuf path is built on
+  Linux with the GLMemory path and GStreamer 1.24 or later, whose DMA_DRM caps it reads; such a build compiles both
+  GPU bins and the one that picks between them per stream, see [GPU bin selection](#gpu-bin-selection). An older
+  GStreamer shows its DMABuf frames through glupload.
 - **Opt-in AHardwareBuffer path**: `android/` is compiled only with `QGC_GST_ENABLE_AHARDWAREBUFFER=ON`, because no
   stream reaches it: Android's glupload bin offers only GLMemory. It is written against `<gst/android/gstandroid.h>`
   (`gst_ahardware_buffer_memory_get_buffer()`), which no GStreamer release has, so `QGC_GST_ENABLE_AHARDWAREBUFFER=ON`
@@ -420,13 +421,13 @@ Installs, AppImages and the DEB, RPM and Arch packages bundle the system's allow
 
 With GPU zero-copy, the sink bin picks one of five variants when it is built:
 
-- DMABuf-or-glupload (the default on Linux with gst-gl and DMABuf): the converter feeds a `switchbin`, which routes
+- DMABuf-or-glupload (the default on Linux with the DMABuf path): the converter feeds a `switchbin`, which routes
   each stream by the memory its decoder negotiates. DMABuf and DMA_DRM go straight to Qt's DMABuf importer, as in
   `dmabuf`; GLMemory and system memory go through glupload → glcolorconvert, as in `glupload`. So a VA decoder's
   frames are imported without a copy, a software decoder's are uploaded off Qt's render thread, and a decoder that
   hands over GL textures (NVDEC) keeps them. The sink offers only the DMABuf layouts its importer takes, so a decoder
-  with another layout negotiates system memory, which glupload uploads. It needs `switchbin` (gst-plugins-bad) of
-  GStreamer 1.24 or later, where it offers upstream what the sink takes; without it the bin is `glupload`.
+  with another layout negotiates system memory, which glupload uploads. It needs `switchbin` (gst-plugins-bad);
+  without it the bin is `glupload`.
 - `glupload` (the default on Android): the converter feeds glupload → glcolorconvert → GLMemory. On EGL, gst-gl
   imports LINEAR and vendor-tiled DMABuf, at the cost of its own copy/convert; on GLX it uploads system memory. It
   imports a VA decoder's tiled DMABuf as an external texture, which the driver converts to RGB: BT.709 video came out
@@ -449,10 +450,10 @@ the bin falls back to passthrough, which on Linux means DMA_DRM
 frames under Vulkan (see [DMABuf under Vulkan](#dmabuf-under-vulkan)) and system memory otherwise: gst-gl's GLMemory
 would otherwise be downloaded and uploaded again for every frame.
 
-When both are compiled, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensitive, read once per process) forces
-one of them for every stream, and an explicit value is used even under a renderer the variant doesn't suit, with a
-warning. An unknown value logs a warning and keeps the default. Builds with only one variant ignore the variable:
-Android always uses glupload, Linux without gst-gl always imports DMABuf directly. The choice is logged once under
+In a build with the DMABuf path, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensitive, read once per process)
+forces one of them for every stream, and an explicit value is used even under a renderer the variant doesn't suit,
+with a warning. An unknown value logs a warning and keeps the default. Builds without that path ignore the variable:
+Android, and Linux where the path is left out, always use glupload. The choice is logged once under
 `Video.GStreamer.GstQgcGpuBin`, as are each bin's variant and why a bin could not be built.
 
 Qt's xcb platform, which the AppImage uses even in Wayland sessions, picks GLX before EGL. Linux builds with the GL or

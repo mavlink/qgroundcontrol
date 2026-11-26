@@ -43,7 +43,7 @@ RenderTarget currentRenderTarget();
 
 const char* toString(RenderBackend backend) noexcept;
 
-/// Head of the sink bin's GPU branch. Linux builds with both gst-gl and DMABuf compile GlUpload, DirectDmaBuf and
+/// Head of the sink bin's GPU branch. Linux builds with the DMABuf path compile GlUpload, DirectDmaBuf and
 /// DmaBufOrGlUpload; every other build compiles exactly one.
 enum class GpuBinMode
 {
@@ -52,7 +52,7 @@ enum class GpuBinMode
     DirectDmaBuf,  ///< memory:DMABuf and importable DMA_DRM layouts into QGC's own importer, skipping gst-gl's copy.
     /// A switchbin routes each stream by the memory its decoder negotiates: DMABuf and DMA_DRM that QGC's importer
     /// takes go straight into it, as in DirectDmaBuf; GLMemory and system memory go through glupload →
-    /// glcolorconvert, as in GlUpload. Needs switchbin of GStreamer 1.24 or later, else the bin is GlUpload.
+    /// glcolorconvert, as in GlUpload. Needs switchbin, else the bin is GlUpload.
     DmaBufOrGlUpload,
     /// d3d12upload → d3d12convert → single-plane D3D12Memory RGBA/BGRA: Qt's D3D12 QRhi has no plane views, so it
     /// can't sample NV12/P010 resources. The only variant for a Direct3D12 render target.

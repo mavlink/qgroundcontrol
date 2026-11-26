@@ -259,11 +259,9 @@ void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack_data()
     QTest::newRow("dma-buf per plane, implicit modifier") << true << legacy.arg(kWidth).arg(kHeight);
     // The buffer's GstVideoMeta keeps the padded size: the import takes the whole frame, and the viewport the picture.
     QTest::newRow("one dma-buf, padded beyond the caps") << false << legacy.arg(kWidth).arg(kHeight - 8);
-#if GST_CHECK_VERSION(1, 24, 0)
     const QString linearDrm =
         QStringLiteral("video/x-raw(memory:DMABuf),format=DMA_DRM,drm-format=NV12,width=%1,height=%2");
     QTest::newRow("one dma-buf, LINEAR modifier") << false << linearDrm.arg(kWidth).arg(kHeight);
-#endif
 }
 
 void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack()
@@ -338,9 +336,6 @@ void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack()
 
 void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
 {
-#if !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMA_DRM caps need GStreamer 1.24");
-#else
     QRhi* rhi = _glRhi();
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
@@ -401,7 +396,6 @@ void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
     const QString chroma = firstMismatch(readBack(*rhi, textures->texture(1)), kVaWidth / 2, kVaHeight / 2, 2,
                                          [&](int x, int y, int c) { return referenceAt(1, x, y, c); });
     QVERIFY2(chroma.isEmpty(), qPrintable(QStringLiteral("UV plane %1 (%2)").arg(chroma, negotiated.get())));
-#endif
 }
 
 void GstHwBuffersGlReadbackTest::_testDmaBufBufferReturnsAfterGpuReads()
