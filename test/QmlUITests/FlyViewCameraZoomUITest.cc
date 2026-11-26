@@ -135,11 +135,11 @@ void FlyViewCameraZoomUITest::_testPinchOnFullSizeVideoStepsZoom()
             QQuickItem* const pipView = findVisibleItem(_rootItem, pipName, TestTimeout::mediumMs());
             QVERIFY2(pipView, "PiP view not visible");
             QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
-            QQuickItem* const mouseArea = findItem(_rootItem, QStringLiteral("flyViewVideoMouseArea"));
+            QQuickItem* const mouseArea = findItem(_rootItem, QStringLiteral("videoViewMouseArea"));
             QVERIFY(mouseArea);
             QTRY_VERIFY(mouseArea->property("enabled").toBool());
 
-            QObject* const clickTimer = mouseArea->findChild<QObject*>(QStringLiteral("flyViewVideoClickTimer"));
+            QObject* const clickTimer = mouseArea->findChild<QObject*>(QStringLiteral("videoViewClickTimer"));
             QVERIFY(clickTimer);
 
             QPointingDevice* const touchScreen = QTest::createTouchDevice();

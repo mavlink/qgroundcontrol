@@ -13,6 +13,7 @@ qt_add_qml_module(
     QML_FILES
         CameraPinchZoom.qml
         NoVideoPlaceholder.qml
+        OnScreenCameraTrackingController.qml
         TelemetryOverlayText.qml
         ThermalVideoOverlay.qml
         UVCControlSlider.qml

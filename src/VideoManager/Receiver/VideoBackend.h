@@ -4,6 +4,7 @@
 
 #include <QtCore/QList>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/qcontainerfwd.h>
 
 #include "VideoDecoderOptions.h"
@@ -55,6 +56,8 @@ public:
 
     struct InitParams
     {
+        /// QCoreApplication::arguments(), snapshotted on the GUI thread.
+        QStringList arguments;
         /// What prepareEnvironment() did.
         EnvPrepResult environment;
         /// The persisted debug threshold to start with (persistedDebugLevel()).

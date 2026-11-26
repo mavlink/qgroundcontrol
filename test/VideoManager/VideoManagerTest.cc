@@ -2379,6 +2379,50 @@ void VideoManagerTest::_testFlyViewLeavesTapsOnTilesToThem()
     QVERIFY(!_videoManager->isUvc());
 }
 
+void VideoManagerTest::_testVideoViewReportsClicksAndDrags()
+{
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kVideoViewQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(view, qPrintable(engine.error()));
+    QVERIFY(view->setProperty("interactive", true));
+    QQuickWindow window;
+    window.resize(400, 400);
+    view->setParentItem(window.contentItem());
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+    auto* const clickTimer = view->findChild<QObject*>(QStringLiteral("videoViewClickTimer"));
+    QVERIFY(clickTimer);
+    QSignalSpy clicked(view.get(), SIGNAL(clicked(double, double)));
+    QSignalSpy dragStarted(view.get(), SIGNAL(dragStarted(double, double)));
+    QSignalSpy dragMoved(view.get(), SIGNAL(dragMoved(double, double)));
+    QSignalSpy dragEnded(view.get(), SIGNAL(dragEnded(double, double)));
+
+    // A press that moves past the drag threshold is a drag, from where it was pressed to where it was released, and
+    // no click.
+    QTest::mousePress(&window, Qt::LeftButton, Qt::NoModifier, QPoint(100, 200));
+    QTest::mouseMove(&window, QPoint(130, 200));
+    QTest::mouseRelease(&window, Qt::LeftButton, Qt::NoModifier, QPoint(130, 200));
+    QCOMPARE(dragStarted.count(), 1);
+    QCOMPARE(dragStarted.first(), QVariantList({100.0, 200.0}));
+    QCOMPARE(dragMoved.last(), QVariantList({130.0, 200.0}));
+    QCOMPARE(dragEnded.count(), 1);
+    QCOMPARE(dragEnded.first(), QVariantList({130.0, 200.0}));
+    QVERIFY(!clickTimer->property("running").toBool());
+
+    // A double-click toggles full screen and leaves no click to report.
+    _videoManager->_fullScreen = true;
+    QTest::mouseDClick(&window, Qt::LeftButton, Qt::NoModifier, QPoint(200, 300));
+    QVERIFY(!_videoManager->fullScreen());
+    QVERIFY(!clickTimer->property("running").toBool());
+
+    // A click is reported once no second click followed it.
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier, QPoint(300, 300));
+    QVERIFY_SIGNAL_WAIT(clicked, TestTimeout::shortMs());
+    QCOMPARE(clicked.count(), 1);
+    QCOMPARE(clicked.first(), QVariantList({300.0, 300.0}));
+}
+
 void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
 {
     const auto thermalInfo =

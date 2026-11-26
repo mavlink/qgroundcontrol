@@ -11,6 +11,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QList>
 #include <QtCore/QStringList>
+#include <QtCore/QVarLengthArray>
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerEnvironment.h"
@@ -136,16 +137,31 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
 
 namespace {
 
-bool _initGstRuntime(const VideoBackend::EnvPrepResult& env)
+bool _initGstRuntime(const QStringList& args, const VideoBackend::EnvPrepResult& env)
 {
     if (!env.ok) {
         qCCritical(GStreamerLog) << "Invalid GStreamer environment configuration:" << env.error;
         return false;
     }
 
-    // No command line: QGC's option parser rejects GStreamer's options, so none could reach it.
+    // args is snapshotted on the GUI thread: QCoreApplication::arguments() is not thread-safe
+    // and initialize() runs on a QtConcurrent pool thread.
+    QByteArrayList argStorage;
+    argStorage.reserve(args.size());
+    for (const QString& arg : args) {
+        argStorage.append(arg.toUtf8());
+    }
+
+    QVarLengthArray<char*, 16> argv;
+    for (QByteArray& arg : argStorage) {
+        argv.append(arg.data());
+    }
+
+    int argc = argv.size();
+    char** argvPtr = argv.data();
     GError* error = nullptr;
-    if (!gst_init_check(nullptr, nullptr, &error)) {
+
+    if (!gst_init_check(&argc, &argvPtr, &error)) {
         qCCritical(GStreamerLog) << "Failed to initialize GStreamer:" << (error ? error->message : "unknown error");
         g_clear_error(&error);
         return false;
@@ -207,7 +223,7 @@ bool initialize(const VideoBackend::InitParams& params)
     // own output, which gst_init_check() would otherwise keep; its raw ANSI codes corrupt the terminal on macOS.
     GStreamer::configureDebugLogging(params.debugLevel);
 
-    if (!_initGstRuntime(params.environment)) {
+    if (!_initGstRuntime(params.arguments, params.environment)) {
         return false;
     }
 
@@ -216,7 +232,9 @@ bool initialize(const VideoBackend::InitParams& params)
         qAddPostRoutine(_deinitGStreamer);
     }
 
-    return completeInit(params.debugLevel);
+    // The threshold in effect: the persisted level, unless a GStreamer option among the arguments (--gst-debug-level)
+    // replaced it during gst_init_check(), which then stays.
+    return completeInit(static_cast<int>(gst_debug_get_default_threshold()));
 }
 
 void onMainWindowReady(QQuickWindow* window)

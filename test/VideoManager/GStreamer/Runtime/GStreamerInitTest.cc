@@ -57,18 +57,19 @@ void GStreamerInitTest::_testInitializeLogsFromItsFirstLine()
         ignoreLogMessage("Video.GStreamer.GStreamerAPI", type, anything);
         ignoreLogMessage("Video.GStreamer.GStreamerLogging", type, anything);
     }
-    // GStreamer's first log line: at the persisted level.
+    // GStreamer's first log line, which it writes before it reads its options: at the persisted level.
     expectLogMessage("Video.GStreamer.GStreamerAPI", QtInfoMsg,
                      QRegularExpression(QStringLiteral("Initializing GStreamer Core Library")));
     const VideoBackend::InitParams params{
+        .arguments = {QStringLiteral("QGroundControl"), QStringLiteral("--gst-debug-level=3")},
         .environment = GStreamer::Environment::prepareEnvironment(),
         .debugLevel = static_cast<int>(GST_LEVEL_INFO),
     };
     QVERIFY(GStreamer::initialize(params));
     verifyExpectedLogMessage();
 
-    // And the threshold once GStreamer runs.
-    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_INFO);
+    // The level GStreamer's own option set among the arguments is not replaced by the persisted one.
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_FIXME);
 }
 
 void GStreamerInitTest::_testNativeDebugLogRequested_data()

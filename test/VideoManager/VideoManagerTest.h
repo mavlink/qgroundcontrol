@@ -73,6 +73,7 @@ private slots:
     void _testTappedTileBecomesMainPicture();
     void _testTilesOutlastViewOnItsWayToFullSize();
     void _testFlyViewLeavesTapsOnTilesToThem();
+    void _testVideoViewReportsClicksAndDrags();
     void _testThermalDecodesOnlyWhileShown();
     void _testThermalOverlayHasThePicturesShape();
     void _testThermalPlaysOnlyWhileInUse();

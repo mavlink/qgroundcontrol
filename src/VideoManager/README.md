@@ -32,8 +32,9 @@ and also says how the sources and tiles of `VideoManager` behave.
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
   `QMediaRecorder` that it and the USB camera record with, and `SharedVideoFrame`.
 - `UVC/`: the USB camera: `UVCCameraController` (a `QCamera` as a receiver) and `UVCDevices`.
-- `Qml/`: the `QGroundControl.VideoManager` QML module: `VideoView`, the tiles, the video outputs, and the statistics
-  and settings groups. `src/FlyView`, `src/FlightMap/Widgets`, `src/Toolbar` and the video settings page import it.
+- `Qml/`: the `QGroundControl.VideoManager` QML module: `VideoView`, the tiles, the video outputs, the camera tracking
+  controller (`OnScreenCameraTrackingController`), and the statistics and settings groups. `src/FlyView`,
+  `src/FlightMap/Widgets`, `src/Toolbar` and the video settings page import it.
 
 Inside `GStreamer/`:
 

@@ -6,7 +6,8 @@ import QGroundControl
 import QGroundControl.Controls
 
 // The video of the primary stream or the UVC camera, fitted to the view, with grid lines, the telemetry overlay and the
-// thermal stream. Where it is asked to, it shows the other video sources in tiles along its top.
+// thermal stream. Where it is asked to, it shows the other video sources in tiles along its top, and takes the presses
+// on the video: it reports clicks and drags, and toggles full screen on a double-click. Two fingers zoom the camera.
 Item {
     id: root
 
@@ -17,12 +18,18 @@ Item {
     property bool showTiles: false
     /// Width covered at the right of the view, which the tiles stay clear of.
     property real tilesRightInset: 0
-    /// The camera whose thermal mode the view follows: the active vehicle's current camera by default. Any object with
-    /// the camera properties the view reads will do, as the tests' stand-ins.
+    /// The camera whose thermal mode the view follows and whose zoom two fingers step: the active vehicle's current
+    /// camera by default. Any object with the camera properties the view reads will do, as the tests' stand-ins.
     property var camera: root._activeVehicle && root._activeVehicle.cameraManager
                          ? root._activeVehicle.cameraManager.currentCameraInstance : null
     /// The manager whose video the view shows.
     property VideoManager videoManager: QGroundControl.videoManager
+    /// Whether the video is shown: the picture, or why there is none, and the tiles. Presses and pinches are taken
+    /// either way.
+    property bool showVideo: true
+    /// Whether the view takes the presses on the video, for clicks, drags and double-clicks. A press on a tile is the
+    /// tile's.
+    property bool interactive: false
 
     /// Size of the video fitted to the view: larger than the view where the fit mode crops, smaller where it doesn't.
     readonly property real videoWidth: {
@@ -80,6 +87,15 @@ Item {
     readonly property bool _thermalPipShown: thermalOverlay.visible && !!root.camera
                                              && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
 
+    /// A click at @p x, @p y, reported once the double-click interval has passed without a second click.
+    signal clicked(real x, real y)
+    /// A drag began at @p x, @p y, where it was pressed.
+    signal dragStarted(real x, real y)
+    /// The drag is at @p x, @p y.
+    signal dragMoved(real x, real y)
+    /// The drag ended at @p x, @p y: where it was released, or where it began once a second finger made it a pinch.
+    signal dragEnded(real x, real y)
+
     /// Whether a tile is at @p x, @p y of the view: a press there is the tile's.
     function tileAt(x, y) {
         return tiles.visible && !!tiles.childAt(x - tiles.x, y - tiles.y)
@@ -88,78 +104,219 @@ Item {
     // The grid lines span the fitted video, beyond the view where it crops.
     clip: true
 
-    NoVideoPlaceholder {
+    // Under the tiles, which take their touches first, and under the mouse area. With one finger down as the mouse
+    // area's press, a second one reaches it: the two pinch.
+    CameraPinchZoom {
+        id:             pinchZoom
         anchors.fill:   parent
-        useSmallFont:   root.useSmallFont
-        videoManager:   root.videoManager
-        visible:        !root._hasPicture
+        camera:         root.camera
+        heldFinger:     Qt.point(mouseArea.mouseX, mouseArea.mouseY)
+        heldFingerDown: mouseArea.pressed
+
+        onPinchingChanged: {
+            if (pinchZoom.pinching) {
+                mouseArea.pinchBegan()
+            }
+        }
     }
 
-    Rectangle {
+    // The video alone is hidden: a hidden item loses the presses it has, which the mouse area and the pinch keep.
+    Item {
         anchors.fill:   parent
-        color:          "black"
-        visible:        root._hasPicture
+        visible:        root.showVideo
 
-        VideoStreamOutput {
-            id:             mainOutput
-            objectName:     "videoViewOutput"
+        NoVideoPlaceholder {
             anchors.fill:   parent
-            stream:         root._mainSource
-            crop:           root._cropsVideo
-        }
-
-        Item {
-            id:                 videoContentArea
-            width:              root.videoWidth
-            height:             root.videoHeight
-            anchors.centerIn:   parent
-
-            VideoGridLines {
-                anchors.fill:   parent
-                visible:        root._videoSettings.gridLines.rawValue && !root.videoManager.fullScreen
-            }
-        }
-
-        // The part of the fitted video that is on screen.
-        Item {
-            width:              Math.min(root.videoWidth, root.width)
-            height:             Math.min(root.videoHeight, root.height)
-            anchors.centerIn:   parent
-
-            TelemetryOverlayText {
-                objectName:     "videoTelemetryOverlay"
-                text:           root.videoManager.telemetryOverlayText
-                useSmallFont:   root.useSmallFont
-            }
-        }
-
-        // Frozen video must not pass for live.
-        VideoStatusLabel {
-            anchors.centerIn:   parent
-            useSmallFont:       root.useSmallFont
-            text:               qsTr("VIDEO LOST - RECONNECTING")
-            visible:            root._streamLost
-        }
-
-        ThermalVideoOverlay {
-            id:             thermalOverlay
-            objectName:     "videoViewThermal"
-            camera:         root.camera
-            pipTopInset:    root.thermalPipTopInset
+            useSmallFont:   root.useSmallFont
             videoManager:   root.videoManager
+            visible:        !root._hasPicture
+        }
+
+        Rectangle {
+            anchors.fill:   parent
+            color:          "black"
+            visible:        root._hasPicture
+
+            VideoStreamOutput {
+                id:             mainOutput
+                objectName:     "videoViewOutput"
+                anchors.fill:   parent
+                stream:         root._mainSource
+                crop:           root._cropsVideo
+            }
+
+            Item {
+                id:                 videoContentArea
+                width:              root.videoWidth
+                height:             root.videoHeight
+                anchors.centerIn:   parent
+
+                VideoGridLines {
+                    anchors.fill:   parent
+                    visible:        root._videoSettings.gridLines.rawValue && !root.videoManager.fullScreen
+                }
+            }
+
+            // The part of the fitted video that is on screen.
+            Item {
+                width:              Math.min(root.videoWidth, root.width)
+                height:             Math.min(root.videoHeight, root.height)
+                anchors.centerIn:   parent
+
+                TelemetryOverlayText {
+                    objectName:     "videoTelemetryOverlay"
+                    text:           root.videoManager.telemetryOverlayText
+                    useSmallFont:   root.useSmallFont
+                }
+            }
+
+            // Frozen video must not pass for live.
+            VideoStatusLabel {
+                anchors.centerIn:   parent
+                useSmallFont:       root.useSmallFont
+                text:               qsTr("VIDEO LOST - RECONNECTING")
+                visible:            root._streamLost
+            }
+
+            ThermalVideoOverlay {
+                id:             thermalOverlay
+                objectName:     "videoViewThermal"
+                camera:         root.camera
+                pipTopInset:    root.thermalPipTopInset
+                videoManager:   root.videoManager
+            }
+        }
+
+        // Along the top, right of the thermal picture-in-picture, or in its place: clear of the Fly View's tool strip,
+        // as that one is.
+        VideoTiles {
+            id:             tiles
+            objectName:     "videoViewTiles"
+            x:              root._thermalPipShown ? thermalOverlay.x + thermalOverlay.width + root._tilesMargin
+                                                  : ScreenTools.defaultFontPixelWidth * 12
+            y:              root.thermalPipTopInset + root._tilesMargin
+            maximumWidth:   root.width - tiles.x - root.tilesRightInset - root._tilesMargin
+            videoManager:   root.videoManager
+            shown:          root.showTiles
         }
     }
 
-    // Along the top, right of the thermal picture-in-picture, or in its place: clear of the Fly View's tool strip, as
-    // that one is.
-    VideoTiles {
-        id:             tiles
-        objectName:     "videoViewTiles"
-        x:              root._thermalPipShown ? thermalOverlay.x + thermalOverlay.width + root._tilesMargin
-                                              : ScreenTools.defaultFontPixelWidth * 12
-        y:              root.thermalPipTopInset + root._tilesMargin
-        maximumWidth:   root.width - tiles.x - root.tilesRightInset - root._tilesMargin
-        videoManager:   root.videoManager
-        shown:          root.showTiles
+    QGCLabel {
+        id: fullScreenHint
+
+        text: qsTr("Double-click to exit full screen")
+        font.pointSize: ScreenTools.largeFontPointSize
+        visible: root.interactive && root.videoManager.fullScreen
+        anchors.centerIn: parent
+
+        // Starts over each time the hint is shown. Left to itself it runs once, from when the view was created.
+        PropertyAnimation on opacity {
+            running: fullScreenHint.visible
+            duration: 10000
+            from: 1.0
+            to: 0.0
+            easing.type: Easing.InExpo
+        }
+    }
+
+    // Over the tiles. It leaves a press to a tile by where the tiles are placed, not by whether one takes it: a press
+    // on a tile that doesn't take it, as can happen right after a tap selects a tile, is nobody's.
+    MouseArea {
+        id: mouseArea
+
+        property real _pressX: 0
+        property real _pressY: 0
+        property bool _dragging: false
+        property bool _doubleClicked: false
+        // A second finger made the press a pinch, which is neither a click nor a drag.
+        property bool _pinched: false
+        readonly property real _dragThreshold: 10
+
+        function pinchBegan() {
+            mouseArea._pinched = true
+            if (mouseArea._dragging) {
+                // The drag spans nothing: it ends where it began.
+                root.dragEnded(mouseArea._pressX, mouseArea._pressY)
+                mouseArea._dragging = false
+            }
+        }
+
+        objectName:     "videoViewMouseArea"
+        anchors.fill:   parent
+        enabled:        root.interactive
+
+        // Defer single-click handling so a double-click (fullscreen toggle) doesn't also
+        // report an unintended click on its first click.
+        Timer {
+            id:         singleClickTimer
+            objectName: "videoViewClickTimer"
+
+            property real clickX: 0
+            property real clickY: 0
+
+            interval:   Qt.styleHints.mouseDoubleClickInterval
+            repeat:     false
+
+            onTriggered: root.clicked(singleClickTimer.clickX, singleClickTimer.clickY)
+        }
+
+        onDoubleClicked: (mouse) => {
+            if (root.tileAt(mouse.x, mouse.y)) {
+                mouse.accepted = false
+                return
+            }
+            // Fires on the second press of a double-click. The second release still emits
+            // onReleased, so flag it to prevent re-arming the single-click timer.
+            mouseArea._doubleClicked = true
+            singleClickTimer.stop()
+            root.videoManager.fullScreen = !root.videoManager.fullScreen
+        }
+
+        onPressed: (mouse) => {
+            // A press on a video tile is the tile's, which is below this area.
+            if (root.tileAt(mouse.x, mouse.y)) {
+                mouse.accepted = false
+                return
+            }
+            mouseArea._pressX = mouse.x
+            mouseArea._pressY = mouse.y
+            mouseArea._dragging = false
+            mouseArea._pinched = false
+            // Clear any stale flag (e.g. double-click followed by drag releases through the
+            // drag branch without consuming it). Safe: pressed is emitted before doubleClicked.
+            mouseArea._doubleClicked = false
+        }
+
+        onPositionChanged: (mouse) => {
+            if (mouseArea._pinched) {
+                return
+            }
+            if (!mouseArea._dragging
+                    && (Math.abs(mouse.x - mouseArea._pressX) >= mouseArea._dragThreshold
+                        || Math.abs(mouse.y - mouseArea._pressY) >= mouseArea._dragThreshold)) {
+                mouseArea._dragging = true
+                root.dragStarted(mouseArea._pressX, mouseArea._pressY)
+            }
+            if (mouseArea._dragging) {
+                root.dragMoved(mouse.x, mouse.y)
+            }
+        }
+
+        onReleased: (mouse) => {
+            if (mouseArea._pinched) {
+                return
+            }
+            if (mouseArea._dragging) {
+                root.dragEnded(mouse.x, mouse.y)
+            } else if (mouseArea._doubleClicked) {
+                // Second release of a double-click - fullscreen toggle already handled
+                mouseArea._doubleClicked = false
+            } else {
+                singleClickTimer.clickX = mouse.x
+                singleClickTimer.clickY = mouse.y
+                singleClickTimer.restart()
+            }
+            mouseArea._dragging = false
+        }
     }
 }
