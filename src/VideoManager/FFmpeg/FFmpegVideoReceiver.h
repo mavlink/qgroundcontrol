@@ -15,6 +15,7 @@
 #include "FFmpegStreamSession.h"
 #include "RecordingPlan.h"
 #include "StreamSupervisor.h"
+#include "StreamWatchdog.h"
 #include "VideoReceiver.h"
 #include "VideoStreamStatsSampler.h"
 
@@ -121,8 +122,8 @@ private:
     Config _sessionConfig;
     /// Since the session was created.
     QElapsedTimer _sinceOpened;
-    /// Since the session started, the output was set, or the last frame was shown.
-    QElapsedTimer _sinceFrame;
+    /// Of the current session: its video packets are the source's frames, the frames shown the sink's.
+    StreamWatchdog _watchdog;
     quint64 _framesShown = 0;
     FFmpegStreamSession::DecoderInfo _decoderInfo;
     QString _codec;

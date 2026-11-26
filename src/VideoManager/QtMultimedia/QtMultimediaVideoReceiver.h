@@ -5,6 +5,7 @@
 #include <QtMultimedia/QMediaPlayer>
 
 #include "StreamSupervisor.h"
+#include "StreamWatchdog.h"
 #include "VideoReceiver.h"
 #include "VideoStreamStatsSampler.h"
 
@@ -89,8 +90,8 @@ private:
     QTimer _sampleTimer;
     /// Since the session's player was created.
     QElapsedTimer _sinceOpened;
-    /// Since the session started, or its last frame.
-    QElapsedTimer _sinceFrame;
+    /// Of the current session's frames at the output, the sink's: the player doesn't tell when its stream arrives.
+    StreamWatchdog _watchdog;
     VideoStreamStatsSampler _statsSampler;
     quint64 _frames = 0;
     bool _gpuFrames = false;

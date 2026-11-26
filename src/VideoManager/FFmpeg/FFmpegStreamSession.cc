@@ -14,6 +14,7 @@
 #include "FFmpegQtInternals.h"
 #include "FFmpegVideoReceiver.h"
 #include "QGCLoggingCategory.h"
+#include "StreamWatchdog.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -206,11 +207,12 @@ QString ffmpegTranslate(const char* text)
 }  // namespace
 
 FFmpegStreamSession::FFmpegStreamSession(quint64 id, const Settings& settings, Listener& listener,
-                                         FFmpegStreamRecorder& recorder)
+                                         FFmpegStreamRecorder& recorder, StreamWatchdog& watchdog)
     : _id(id)
     , _settings(settings)
     , _listener(listener)
     , _recorder(recorder)
+    , _watchdog(watchdog)
 {}
 
 FFmpegStreamSession::~FFmpegStreamSession()
@@ -219,12 +221,6 @@ FFmpegStreamSession::~FFmpegStreamSession()
     if (_thread.joinable()) {
         _thread.join();
     }
-}
-
-qint64 FFmpegStreamSession::nowMs()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count();
 }
 
 void FFmpegStreamSession::start()
@@ -250,7 +246,6 @@ FFmpegStreamSession::Counters FFmpegStreamSession::counters() const
             .bytes = _bytes.load(),
             .framesDecoded = _framesDecoded.load(),
             .hardwareFrames = _hardwareFrames.load(),
-            .lastPacketMs = _lastPacketMs.load(),
             .keyframeIntervalMs = _keyframes.intervalMs()};
 }
 
@@ -362,7 +357,7 @@ void FFmpegStreamSession::_onVideoPacket(const AVStream& stream, AVPacket& packe
 {
     const bool first = (_packets.fetch_add(1) == 0);
     _bytes.fetch_add(static_cast<quint64>(std::max(packet.size, 0)));
-    _lastPacketMs.store(nowMs());
+    (void) _watchdog.noteSourceFrame(StreamWatchdog::now());
     if (first) {
         _listener.onSessionStreaming(_id, ffmpegCodecName(stream.codecpar->codec_id));
     }

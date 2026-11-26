@@ -27,7 +27,7 @@ namespace {
 constexpr int kSampleIntervalMs = 1000;
 /// Before a session's first frame, on top of the timeout: FFmpeg probes a stream for up to 5 s (its default
 /// analyzeduration) before it decodes, and then waits for a keyframe.
-constexpr qint64 kFirstFrameGraceMs = 5000;
+constexpr std::chrono::milliseconds kFirstFrameGrace{5000};
 /// The encoder's time base for a recording without a fixed frame rate is as coarse as a millisecond.
 constexpr qint64 kMinFrameStepUs = 1000;
 /// A larger step in the stream's times is a jump, as after a reconnect.
@@ -152,8 +152,8 @@ void QtMultimediaVideoReceiver::onVideoOutputChanged()
         _startOver();
     }
     _bindVideoSink();
-    // The watchdog counts from now: no frame reached an output while there was none.
-    _sinceFrame.start();
+    // No frame reached an output while there was none.
+    _watchdog.excuseSinkSilence(StreamWatchdog::now());
 }
 
 void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format,
@@ -244,7 +244,8 @@ void QtMultimediaVideoReceiver::_open()
         _player->setSourceDevice(sdp, source->url);
     }
     qCDebug(QtMultimediaVideoReceiverLog) << name() << "playing" << _redactedUri();
-    _sinceFrame.start();
+    _watchdog.start(_sessionConfig.timeout, std::nullopt, {.timeouts = 1, .firstFrameGrace = kFirstFrameGrace});
+    _watchdog.startSinkClock(StreamWatchdog::now());
     _sampleTimer.start();
     _player->play();
 }
@@ -359,7 +360,7 @@ void QtMultimediaVideoReceiver::_onVideoFrame(const QVideoFrame& frame)
     if (!_player || !frame.isValid()) {
         return;
     }
-    _sinceFrame.restart();
+    (void) _watchdog.noteSinkFrame(StreamWatchdog::now());
     ++_frames;
     _gpuFrames = (frame.handleType() != QVideoFrame::NoHandle);
     setVideoSize(presentedSize(frame));
@@ -407,10 +408,9 @@ void QtMultimediaVideoReceiver::_sample()
     if (!_player) {
         return;
     }
-    const qint64 timeoutMs = std::chrono::duration_cast<std::chrono::milliseconds>(config().timeout).count() +
-                             ((_frames == 0) ? kFirstFrameGraceMs : 0);
-    if (videoSink() && (_sinceFrame.elapsed() > timeoutMs)) {
-        _fail(tr("no video for %1 s").arg(timeoutMs / 1000));
+    const StreamWatchdog::Result stalled = _watchdog.check(StreamWatchdog::now(), videoSink() != nullptr);
+    if (stalled.stall != StreamWatchdog::Stall::None) {
+        _fail(tr("no video for %1 s").arg(stalled.silentMs / 1000));
         return;
     }
     if (_frames == 0) {

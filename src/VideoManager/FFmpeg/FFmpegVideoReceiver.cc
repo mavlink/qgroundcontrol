@@ -19,14 +19,9 @@ QGC_LOGGING_CATEGORY(FFmpegVideoReceiverLog, "Video.FFmpegVideoReceiver")
 namespace {
 
 constexpr int kFFmpegSampleIntervalMs = 1000;
-/// Before a session's first frame, on top of the timeout: decoding starts at the stream's next keyframe, which a camera
-/// may send seconds apart.
-constexpr qint64 kFFmpegFirstFrameGraceMs = 5000;
-
-qint64 ffmpegMilliseconds(std::chrono::seconds duration)
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-}
+/// On top of the timeout, for a server's first packet, and for a session's first frame: decoding starts at the stream's
+/// next keyframe, which a camera may send seconds apart.
+constexpr std::chrono::milliseconds kFFmpegFirstFrameGrace{5000};
 
 }  // namespace
 
@@ -103,8 +98,8 @@ void FFmpegVideoReceiver::onVideoOutputChanged()
         }
         setDecoding(false);
     }
-    // The watchdog counts from now: no frame reached an output while there was none.
-    _sinceFrame.start();
+    // No frame reached an output while there was none.
+    _watchdog.excuseSinkSilence(StreamWatchdog::now());
 }
 
 void FFmpegVideoReceiver::onStartRecording(const QString& file, FileFormat format,
@@ -192,12 +187,19 @@ void FFmpegVideoReceiver::_open()
         .squarePixels = !displayConfig().disablePixelAspectRatio,
     };
     FFmpegStreamSession::Listener& listener = *this;
-    _session = std::make_unique<FFmpegStreamSession>(++_lastSessionId, settings, listener, *_recorder);
+    // A UDP port waits for its sender for as long as it takes; a server that sends nothing has failed.
+    const bool listens = source->transport && VideoStreamUri::listens(*source->transport);
+    _watchdog.start(_sessionConfig.timeout, listens ? std::nullopt : std::optional(kFFmpegFirstFrameGrace),
+                    {.timeouts = 1, .firstFrameGrace = kFFmpegFirstFrameGrace});
+    const qint64 now = StreamWatchdog::now();
+    _watchdog.startSinkClock(now);
+    // Starts the clock of the first packet now, rather than with the first sample.
+    (void) _watchdog.check(now, false);
+    _session = std::make_unique<FFmpegStreamSession>(++_lastSessionId, settings, listener, *_recorder, _watchdog);
     _session->setDecoding(videoSink() != nullptr);
     _updateRecorder();
     qCDebug(FFmpegVideoReceiverLog) << name() << "playing" << _redactedUri();
     _sinceOpened.start();
-    _sinceFrame.start();
     _sampleTimer.start();
     _session->start();
 }
@@ -289,7 +291,7 @@ void FFmpegVideoReceiver::_showFrame()
     }
     sink->setVideoFrame(frame);
     ++_framesShown;
-    _sinceFrame.restart();
+    (void) _watchdog.noteSinkFrame(StreamWatchdog::now());
     setVideoSize(presentedSize(frame));
     setDecoding(true);
 }
@@ -300,24 +302,20 @@ void FFmpegVideoReceiver::_sample()
         return;
     }
     const FFmpegStreamSession::Counters counters = _session->counters();
-    const qint64 timeoutMs = ffmpegMilliseconds(_sessionConfig.timeout);
-    const std::optional<VideoStreamUri::Transport> transport = _session->settings().source.transport;
+    // A picture is due once the stream arrives, unless it can't be decoded.
+    const bool pictureDue = videoSink() && !_sessionUndecodable && (counters.packets > 0);
+    const StreamWatchdog::Result stalled = _watchdog.check(StreamWatchdog::now(), pictureDue);
+    switch (stalled.stall) {
+        case StreamWatchdog::Stall::None:
+            break;
+        case StreamWatchdog::Stall::Source:
+            _fail(tr("no video received for %1 s").arg(stalled.silentMs / 1000));
+            return;
+        case StreamWatchdog::Stall::Decoder:
+            _fail(tr("no picture for %1 s").arg(stalled.silentMs / 1000));
+            return;
+    }
     if (counters.packets == 0) {
-        // A UDP port waits for its sender for as long as it takes; a server that sends nothing has failed.
-        const bool listens = transport && VideoStreamUri::listens(*transport);
-        if (!listens && (_sinceOpened.elapsed() > (timeoutMs + kFFmpegFirstFrameGraceMs))) {
-            _fail(tr("no video received for %1 s").arg(_sinceOpened.elapsed() / 1000));
-        }
-        return;
-    }
-    const qint64 silentMs = FFmpegStreamSession::nowMs() - counters.lastPacketMs;
-    if (silentMs > timeoutMs) {
-        _fail(tr("no video received for %1 s").arg(silentMs / 1000));
-        return;
-    }
-    const qint64 frameTimeoutMs = timeoutMs + ((_framesShown == 0) ? kFFmpegFirstFrameGraceMs : 0);
-    if (videoSink() && !_sessionUndecodable && (_sinceFrame.elapsed() > frameTimeoutMs)) {
-        _fail(tr("no picture for %1 s").arg(_sinceFrame.elapsed() / 1000));
         return;
     }
     if (_recording && _recording->partDue()) {

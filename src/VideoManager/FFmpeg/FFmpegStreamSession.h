@@ -16,6 +16,7 @@
 #include "VideoStreamUri.h"
 
 struct AVStream;
+class StreamWatchdog;
 
 /// One connection of an FFmpegVideoReceiver to its stream, on a thread of its own: opens the stream with libavformat,
 /// reads its video packets, and while the receiver displays decodes them with libavcodec, a hardware decoder first, and
@@ -71,8 +72,6 @@ public:
         quint64 framesDecoded = 0;
         /// The last frame decoded was in GPU memory.
         bool hardwareFrames = false;
-        /// nowMs() at the last video packet; 0 before the first.
-        qint64 lastPacketMs = 0;
         /// KeyframeIntervalMeter's, of the video packets' timestamps; -1 before the second keyframe.
         double keyframeIntervalMs = -1.0;
     };
@@ -94,15 +93,14 @@ public:
         virtual void onSessionEnded(quint64 session, const std::optional<Failure>& failure) = 0;
     };
 
-    /// @p id names the session in the listener's calls and to @p recorder.
-    FFmpegStreamSession(quint64 id, const Settings& settings, Listener& listener, FFmpegStreamRecorder& recorder);
+    /// @p id names the session in the listener's calls and to @p recorder. Each video packet is a source frame of
+    /// @p watchdog, noted on the session's thread.
+    FFmpegStreamSession(quint64 id, const Settings& settings, Listener& listener, FFmpegStreamRecorder& recorder,
+                        StreamWatchdog& watchdog);
     ~FFmpegStreamSession();
 
     FFmpegStreamSession(const FFmpegStreamSession&) = delete;
     FFmpegStreamSession& operator=(const FFmpegStreamSession&) = delete;
-
-    /// Monotonic milliseconds, the clock of Counters::lastPacketMs.
-    static qint64 nowMs();
 
     quint64 id() const { return _id; }
 
@@ -138,6 +136,7 @@ private:
     const Settings _settings;
     Listener& _listener;
     FFmpegStreamRecorder& _recorder;
+    StreamWatchdog& _watchdog;
     std::thread _thread;
     std::atomic<bool> _stopRequested{false};
     std::atomic<bool> _decodingWanted{false};
@@ -145,7 +144,6 @@ private:
     std::atomic<quint64> _bytes{0};
     std::atomic<quint64> _framesDecoded{0};
     std::atomic<bool> _hardwareFrames{false};
-    std::atomic<qint64> _lastPacketMs{0};
     /// Noted on the session's thread.
     KeyframeIntervalMeter _keyframes;
 

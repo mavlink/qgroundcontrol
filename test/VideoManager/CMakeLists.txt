@@ -19,6 +19,8 @@ target_sources(
         QtMultimedia/SharedVideoFrameTest.h
         Receiver/StreamSupervisorTest.cc
         Receiver/StreamSupervisorTest.h
+        Receiver/StreamWatchdogTest.cc
+        Receiver/StreamWatchdogTest.h
         Recording/SubtitleWriterTest.cc
         Recording/SubtitleWriterTest.h
         UVC/UVCCameraControllerTest.cc
@@ -60,6 +62,7 @@ add_qgc_test(QtVideoRecorderTest LABELS Integration)
 add_qgc_test(RecordingPlanTest LABELS Unit)
 add_qgc_test(SharedVideoFrameTest LABELS Unit)
 add_qgc_test(StreamSupervisorTest LABELS Unit)
+add_qgc_test(StreamWatchdogTest LABELS Unit)
 add_qgc_test(SubtitleWriterTest LABELS Integration Vehicle)
 add_qgc_test(UVCCameraControllerTest LABELS Unit)
 add_qgc_test(UVCDevicesTest LABELS Unit)

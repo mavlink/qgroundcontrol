@@ -7,8 +7,6 @@
 namespace {
 
 constexpr qint64 kMinTimeoutMs = 1000;
-// The decoder may lag the source by up to this many timeouts before it counts as stalled.
-constexpr qint64 kDecoderTimeoutFactor = 2;
 
 }  // namespace
 
@@ -17,7 +15,8 @@ qint64 StreamWatchdog::now()
     return MonotonicClock::nowMs();
 }
 
-void StreamWatchdog::start(std::chrono::seconds timeout, std::optional<std::chrono::milliseconds> firstFrameGrace)
+void StreamWatchdog::start(std::chrono::seconds timeout, std::optional<std::chrono::milliseconds> firstFrameGrace,
+                           SinkLimits sink)
 {
     // A zero timeout would otherwise trip on every check.
     _timeoutMs = std::max<qint64>(std::chrono::milliseconds(timeout).count(), kMinTimeoutMs);
@@ -25,10 +24,17 @@ void StreamWatchdog::start(std::chrono::seconds timeout, std::optional<std::chro
     if (firstFrameGrace) {
         _firstFrameGraceMs = std::max<qint64>(firstFrameGrace->count(), 0);
     }
+    _sinkTimeoutMs = _timeoutMs * std::max(sink.timeouts, 1);
+    _firstSinkFrameGraceMs = std::max<qint64>(sink.firstFrameGrace.count(), 0);
     _sourceFrames.store(0, std::memory_order_relaxed);
     _lastSourceFrameMs.store(0, std::memory_order_relaxed);
     _lastSinkFrameMs.store(0, std::memory_order_relaxed);
     _sinkFrameSeen.store(false, std::memory_order_relaxed);
+}
+
+void StreamWatchdog::start(std::chrono::seconds timeout, std::optional<std::chrono::milliseconds> firstFrameGrace)
+{
+    start(timeout, firstFrameGrace, SinkLimits{});
 }
 
 quint64 StreamWatchdog::noteSourceFrame(qint64 nowMs)
@@ -44,7 +50,7 @@ bool StreamWatchdog::noteSinkFrame(qint64 nowMs)
     return !_sinkFrameSeen.exchange(true, std::memory_order_relaxed);
 }
 
-void StreamWatchdog::noteFrameWithheld(qint64 nowMs)
+void StreamWatchdog::excuseSinkSilence(qint64 nowMs)
 {
     _lastSinkFrameMs.store(nowMs, std::memory_order_relaxed);
 }
@@ -75,8 +81,12 @@ StreamWatchdog::Result StreamWatchdog::check(qint64 nowMs, bool displaying)
     }
 
     if (displaying) {
+        // The flag before the time, as for the source: a first frame noted in between gets the grace, not a false
+        // stall.
+        const qint64 sinkTimeoutMs =
+            _sinkTimeoutMs + (_sinkFrameSeen.load(std::memory_order_relaxed) ? 0 : _firstSinkFrameGraceMs);
         const qint64 sinkSilentMs = nowMs - _lastSinkFrameMs.load(std::memory_order_relaxed);
-        if (sinkSilentMs > (_timeoutMs * kDecoderTimeoutFactor)) {
+        if (sinkSilentMs > sinkTimeoutMs) {
             return {.stall = Stall::Decoder, .silentMs = sinkSilentMs};
         }
     }

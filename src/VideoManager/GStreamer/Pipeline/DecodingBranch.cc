@@ -502,7 +502,7 @@ GstPadProbeReturn DecodingBranch::_gateProbe(GstPad* /*pad*/, GstPadProbeInfo* i
             (void) self->_framesDropped.fetch_add(1, std::memory_order_relaxed);
             // The gate's time is not the decoder's: with the shortest stream timeout the decoder counts as stalled
             // after as long as the gate may stay closed.
-            self->_context.watchdog->noteFrameWithheld(now);
+            self->_context.watchdog->excuseSinkSilence(now);
             return GST_PAD_PROBE_DROP;
         }
         // Told once at a level that shows: the same holds for every later request to this stream's sender.

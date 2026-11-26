@@ -49,7 +49,7 @@ The components, in the order of their folders: `Pipeline/`, `Source/`, `Sink/`, 
 | `TeeBranchHead` | The `tee ! queue ! valve` head both branches start with, which also turns a push that fails behind it into its branch's own `ERROR`. |
 | `GstReceiverTimings` | The receiver's intervals and timeouts that a test can't wait out, with the app's values as defaults. |
 | `BranchContext` | What `PipelineSession` lends its branches, and the branch marks that blame a bus message on the branch it came from. |
-| `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock. |
+| `../Receiver/StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock. Shared with the other receivers. |
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Builds the source bin for the transport the stream URI's scheme selects, with its RTP jitter-buffer policy. |
 | `GstRtpPacketProbe` | Counts the RTP packets a pad pushes: those `udpsrc` receives, for RTP over UDP. |

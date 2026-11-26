@@ -162,8 +162,6 @@ target_sources(
         Pipeline/RecordingBranch.h
         Pipeline/RecordingSink.cc
         Pipeline/RecordingSink.h
-        Pipeline/StreamWatchdog.cc
-        Pipeline/StreamWatchdog.h
         Pipeline/TeeBranchHead.cc
         Pipeline/TeeBranchHead.h
         # Sink: the Qt side of qgcqvideosink (Sink/gstqgc is in QGCGStreamer).

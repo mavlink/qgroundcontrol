@@ -1,7 +1,7 @@
 # ============================================================================
 # Video Receiver API
-# The backend-neutral VideoReceiver and VideoBackend, the reconnect policy, the stream statistics and screenshots;
-# GStreamer/ implements them
+# The backend-neutral VideoReceiver and VideoBackend, the reconnect policy, the stall watchdog, the stream statistics
+# and screenshots; GStreamer/ implements them
 # ============================================================================
 
 target_sources(
@@ -13,6 +13,8 @@ target_sources(
         RecordingPlan.h
         StreamSupervisor.cc
         StreamSupervisor.h
+        StreamWatchdog.cc
+        StreamWatchdog.h
         VideoReceiver.cc
         VideoReceiver.h
         VideoBackend.cc
