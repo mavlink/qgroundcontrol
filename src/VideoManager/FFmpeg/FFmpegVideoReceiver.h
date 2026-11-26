@@ -23,7 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(FFmpegVideoReceiverLog)
 
 /// Experimental, and built only with QGC_ENABLE_FFMPEG_VIDEO: a network video stream received directly with the
 /// FFmpeg libraries Qt ships, for VideoSettings::videoBackend's FFmpeg choice. Plays the stream URIs the other
-/// receivers play (FFmpegStreamSession::sourceFor()): RTSP, also over TCP (rtspt://), H.264 or H.265 RTP over UDP with
+/// receivers play (VideoStreamUri::ffmpegSource()): RTSP, also over TCP (rtspt://), H.264 or H.265 RTP over UDP with
 /// payload type 96, and MPEG-TS over UDP or TCP.
 ///
 /// Each connection is an FFmpegStreamSession, which opens, reads and decodes the stream on a thread of its own and

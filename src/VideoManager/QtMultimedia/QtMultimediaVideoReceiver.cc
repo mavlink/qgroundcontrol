@@ -1,8 +1,10 @@
 #include "QtMultimediaVideoReceiver.h"
 
 #include <algorithm>
+#include <optional>
 
 #include <QtCore/QBuffer>
+#include <QtCore/QUrl>
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QMediaMetaData>
@@ -67,14 +69,6 @@ void setRtspTransport(bool overTcp)
     }
 }
 
-/// An SDP description of a stream of @p encoding RTP packets, payload type 96, arriving at @p port.
-QByteArray rtpSdp(const QString& host, int port, QByteArrayView encoding)
-{
-    const QByteArray address = (host.isEmpty() ? QStringLiteral("0.0.0.0") : host).toLatin1();
-    return QByteArrayLiteral("v=0\r\n") + "o=- 0 0 IN IP4 " + address + "\r\ns=QGroundControl\r\nc=IN IP4 " + address +
-           "\r\nt=0 0\r\nm=video " + QByteArray::number(port) + " RTP/AVP 96\r\na=rtpmap:96 " + encoding + "/90000\r\n";
-}
-
 }  // namespace
 
 QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
@@ -111,39 +105,6 @@ QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
     if (_player) {
         _player->setSource(QUrl());
     }
-}
-
-std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::playerSource(const QString& uri)
-{
-    const QUrl url(uri);
-    if (uri.isEmpty() || !url.isValid() || url.scheme().isEmpty()) {
-        return std::nullopt;
-    }
-
-    using VideoStreamUri::Transport;
-    const std::optional<Transport> transport = VideoStreamUri::transportFor(url);
-    // A free port (0) is no use to listen on: the player doesn't tell which one it got.
-    if (transport &&
-        (VideoStreamUri::addressError(*transport, url) || (VideoStreamUri::listens(*transport) && (url.port() == 0)))) {
-        return std::nullopt;
-    }
-    if ((transport == Transport::RtpUdpH264) || (transport == Transport::RtpUdpH265)) {
-        const QByteArrayView encoding = (transport == Transport::RtpUdpH265) ? "H265" : "H264";
-        return Source{.url = QUrl(QStringLiteral("stream.sdp")),
-                      .sdp = rtpSdp(url.host(), url.port(), encoding),
-                      .streamsDescribed = true};
-    }
-    if (transport == Transport::MpegTsUdp) {
-        QUrl udp(url);
-        udp.setScheme(QStringLiteral("udp"));
-        return Source{udp, {}};
-    }
-    if ((transport == Transport::Rtsp) && (url.scheme().compare(QStringLiteral("rtspt"), Qt::CaseInsensitive) == 0)) {
-        QUrl rtsp(url);
-        rtsp.setScheme(QStringLiteral("rtsp"));
-        return Source{.url = rtsp, .sdp = {}, .rtspOverTcp = true, .streamsDescribed = true};
-    }
-    return Source{.url = url, .sdp = {}, .streamsDescribed = (transport == Transport::Rtsp)};
 }
 
 void QtMultimediaVideoReceiver::onConfigChanged()
@@ -229,7 +190,7 @@ void QtMultimediaVideoReceiver::_start()
         _supervisor->stop();
         return;
     }
-    if (!playerSource(config().uri)) {
+    if (!VideoStreamUri::ffmpegSource(config().uri)) {
         qCWarning(QtMultimediaVideoReceiverLog) << name() << "can't play" << _redactedUri();
         const QString message = tr("Unable to play the video stream %1.").arg(_redactedUri());
         (void) _supervisor->sessionFailed(message, StreamSupervisor::Failure::Permanent, config().autoReconnect);
@@ -249,7 +210,7 @@ void QtMultimediaVideoReceiver::_open()
 {
     _openPending = false;
     // Stopped or restarted meanwhile: that _start() reported or opens it.
-    const std::optional<Source> source = playerSource(config().uri);
+    const std::optional<VideoStreamUri::FFmpegSource> source = VideoStreamUri::ffmpegSource(config().uri);
     if (_player || !active() || !source || _closing) {
         return;
     }
@@ -263,7 +224,7 @@ void QtMultimediaVideoReceiver::_open()
     if (config().lowLatency) {
         options.setPlaybackIntent(QPlaybackOptions::PlaybackIntent::LowLatencyStreaming);
     }
-    if (kShortProbe && source->streamsDescribed) {
+    if (kShortProbe && source->streamsDescribed()) {
         options.setProbeSize(kDescribedStreamProbeBytes);
     }
     _player->setPlaybackOptions(options);

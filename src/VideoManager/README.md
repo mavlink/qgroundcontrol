@@ -28,8 +28,8 @@ the guide to the GStreamer backend.
   and `VideoTelemetryOverlay`, the telemetry text shown over the video.
 - `Receiver/`: the receiver contract and what its implementations share: `VideoReceiver`, `VideoBackend` and the
   run of its initialization (`VideoBackendInit`), the reconnect policy (`StreamSupervisor`), the files of a recording
-  (`RecordingPlan`), screenshots, stream statistics and URI schemes. No receiver that plays anything is here: those
-  are in the next four folders.
+  (`RecordingPlan`), screenshots, stream statistics, and the URI schemes with what FFmpeg opens for each
+  (`VideoStreamUri`). No receiver that plays anything is here: those are in the next four folders.
 - `GStreamer/`: the GStreamer backend, whose folders [its README](GStreamer/README.md#source-code-architecture)
   lists.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by

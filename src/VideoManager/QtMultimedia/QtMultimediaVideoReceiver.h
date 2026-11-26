@@ -1,11 +1,7 @@
 #pragma once
 
-#include <optional>
-
-#include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
-#include <QtCore/QUrl>
 #include <QtMultimedia/QMediaPlayer>
 
 #include "StreamSupervisor.h"
@@ -18,9 +14,9 @@ class QVideoFrameInput;
 
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
-/// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Records by encoding the frames it
-/// displays anew (QtVideoRecorder), as startRecording() is told: only while an output displays the stream, and after a
-/// reconnect in the same file.
+/// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about (VideoStreamUri::ffmpegSource()).
+/// Records by encoding the frames it displays anew (QtVideoRecorder), as startRecording() is told: only while an output
+/// displays the stream, and after a reconnect in the same file.
 ///
 /// Streaming once the player has buffered the stream or its first frame arrives; decoding while frames reach the
 /// output. A stream that errors, ends, or shows no frame for the config's timeout while displaying (5 s more for the
@@ -34,25 +30,8 @@ class QtMultimediaVideoReceiver : public VideoReceiver
     friend class QtMultimediaVideoReceiverTest;
 
 public:
-    /// What QMediaPlayer plays for a stream URI: a URL, or for RTP over UDP an SDP description of it.
-    struct Source
-    {
-        QUrl url;
-        QByteArray sdp;
-        /// RTSP interleaved over its TCP connection, rather than over UDP with FFmpeg's fallback to TCP.
-        bool rtspOverTcp = false;
-        /// An SDP names the streams, this one's or the RTSP server's: FFmpeg needn't read the stream to find them.
-        bool streamsDescribed = false;
-    };
-
     explicit QtMultimediaVideoReceiver(QObject* parent = nullptr);
     ~QtMultimediaVideoReceiver() override;
-
-    /// The source for @p uri, one of VideoStreamResolver's: rtsp(s):// and tcp:// as they are, rtspt:// as rtsp:// over
-    /// TCP, as GStreamer plays it, mpegts:// as udp://, and udp:// (H.264) or udp265:// (H.265) RTP as an SDP
-    /// description. Other URLs play as they are; nullopt for an invalid one, and for one of those whose address no
-    /// receiver opens (VideoStreamUri::addressError()) or names port 0 to listen on.
-    static std::optional<Source> playerSource(const QString& uri);
 
     bool encodesRecordings() const override { return true; }
 

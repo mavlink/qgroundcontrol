@@ -157,7 +157,7 @@ void FFmpegVideoReceiver::_start()
         _supervisor->stop();
         return;
     }
-    if (!FFmpegStreamSession::sourceFor(config().uri)) {
+    if (!VideoStreamUri::ffmpegSource(config().uri)) {
         qCWarning(FFmpegVideoReceiverLog) << name() << "can't play" << _redactedUri();
         const QString message = tr("Unable to play the video stream %1.").arg(_redactedUri());
         (void) _supervisor->sessionFailed(message, StreamSupervisor::Failure::Permanent, config().autoReconnect);
@@ -174,7 +174,7 @@ void FFmpegVideoReceiver::_start()
 void FFmpegVideoReceiver::_open()
 {
     _openPending = false;
-    const std::optional<FFmpegStreamSession::Source> source = FFmpegStreamSession::sourceFor(config().uri);
+    const std::optional<VideoStreamUri::FFmpegSource> source = VideoStreamUri::ffmpegSource(config().uri);
     if (_session || !active() || !source) {
         return;
     }

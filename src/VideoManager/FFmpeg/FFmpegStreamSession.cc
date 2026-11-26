@@ -173,14 +173,6 @@ struct FFmpegOptions
     void set(const char* key, int64_t value) { (void) av_dict_set_int(&dictionary, key, value, 0); }
 };
 
-/// An SDP description of a stream of @p encoding RTP packets, payload type 96, arriving at @p port.
-QByteArray ffmpegRtpSdp(const QString& host, int port, QByteArrayView encoding)
-{
-    const QByteArray address = (host.isEmpty() ? QStringLiteral("0.0.0.0") : host).toLatin1();
-    return QByteArrayLiteral("v=0\r\n") + "o=- 0 0 IN IP4 " + address + "\r\ns=QGroundControl\r\nc=IN IP4 " + address +
-           "\r\nt=0 0\r\nm=video " + QByteArray::number(port) + " RTP/AVP 96\r\na=rtpmap:96 " + encoding + "/90000\r\n";
-}
-
 /// The codec's name as the other receivers' statistics give it.
 QString ffmpegCodecName(AVCodecID codec)
 {
@@ -227,39 +219,6 @@ FFmpegStreamSession::~FFmpegStreamSession()
     if (_thread.joinable()) {
         _thread.join();
     }
-}
-
-std::optional<FFmpegStreamSession::Source> FFmpegStreamSession::sourceFor(const QString& uri)
-{
-    const QUrl url(uri);
-    if (uri.isEmpty() || !url.isValid() || url.scheme().isEmpty()) {
-        return std::nullopt;
-    }
-
-    using VideoStreamUri::Transport;
-    const std::optional<Transport> transport = VideoStreamUri::transportFor(url);
-    // A free port (0) is no use to listen on: the sender must know it.
-    if (transport &&
-        (VideoStreamUri::addressError(*transport, url) || (VideoStreamUri::listens(*transport) && (url.port() == 0)))) {
-        return std::nullopt;
-    }
-
-    Source source{.url = QString::fromUtf8(url.toEncoded()), .sdp = {}, .transport = transport};
-    if ((transport == Transport::RtpUdpH264) || (transport == Transport::RtpUdpH265)) {
-        source.url = QStringLiteral("stream.sdp");
-        source.sdp = ffmpegRtpSdp(url.host(), url.port(), (transport == Transport::RtpUdpH265) ? "H265" : "H264");
-    } else if (transport == Transport::MpegTsUdp) {
-        QUrl udp(url);
-        udp.setScheme(QStringLiteral("udp"));
-        source.url = QString::fromUtf8(udp.toEncoded());
-    } else if ((transport == Transport::Rtsp) &&
-               (url.scheme().compare(QStringLiteral("rtspt"), Qt::CaseInsensitive) == 0)) {
-        QUrl rtsp(url);
-        rtsp.setScheme(QStringLiteral("rtsp"));
-        source.url = QString::fromUtf8(rtsp.toEncoded());
-        source.rtspOverTcp = true;
-    }
-    return source;
 }
 
 qint64 FFmpegStreamSession::nowMs()
@@ -314,7 +273,7 @@ void FFmpegStreamSession::_run()
 
 std::optional<FFmpegStreamSession::Failure> FFmpegStreamSession::_receive()
 {
-    const Source& source = _settings.source;
+    const VideoStreamUri::FFmpegSource& source = _settings.source;
     using VideoStreamUri::Transport;
     const bool rtp = (source.transport == Transport::Rtsp) || (source.transport == Transport::RtpUdpH264) ||
                      (source.transport == Transport::RtpUdpH265);
@@ -361,7 +320,7 @@ std::optional<FFmpegStreamSession::Failure> FFmpegStreamSession::_receive()
 
     qCDebug(FFmpegVideoReceiverLog) << "Opening" << _settings.redactedUri;
     AVFormatContext* opened = input.release();
-    const QByteArray url = source.url.toUtf8();
+    const QByteArray url = source.url.toEncoded();
     const int openResult = avformat_open_input(&opened, url.constData(), format, &options.dictionary);
     input.reset(opened);
     if (openResult < 0) {

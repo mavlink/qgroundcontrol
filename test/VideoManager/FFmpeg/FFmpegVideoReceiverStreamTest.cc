@@ -157,56 +157,6 @@ void FFmpegVideoReceiverStreamTest::_testChosenByBackendSetting()
     QVERIFY(qobject_cast<FFmpegVideoReceiver*>(receiver.get()));
 }
 
-void FFmpegVideoReceiverStreamTest::_testSourceFor_data()
-{
-    QTest::addColumn<QString>("uri");
-    QTest::addColumn<bool>("valid");
-    QTest::addColumn<QString>("url");
-    QTest::addColumn<QString>("sdpEncoding");
-    QTest::addColumn<bool>("overTcp");
-
-    QTest::newRow("rtsp") << QStringLiteral("rtsp://user:pw@10.0.0.2:8554/live") << true
-                          << QStringLiteral("rtsp://user:pw@10.0.0.2:8554/live") << QString() << false;
-    QTest::newRow("rtsp over tcp") << QStringLiteral("rtspt://10.0.0.2:8554/live") << true
-                                   << QStringLiteral("rtsp://10.0.0.2:8554/live") << QString() << true;
-    QTest::newRow("rtp h264") << QStringLiteral("udp://0.0.0.0:5600") << true << QStringLiteral("stream.sdp")
-                              << QStringLiteral("H264") << false;
-    QTest::newRow("rtp h265") << QStringLiteral("udp265://0.0.0.0:5600") << true << QStringLiteral("stream.sdp")
-                              << QStringLiteral("H265") << false;
-    QTest::newRow("mpeg-ts udp") << QStringLiteral("mpegts://0.0.0.0:5600") << true
-                                 << QStringLiteral("udp://0.0.0.0:5600") << QString() << false;
-    QTest::newRow("mpeg-ts tcp") << QStringLiteral("tcp://10.0.0.2:5600") << true
-                                 << QStringLiteral("tcp://10.0.0.2:5600") << QString() << false;
-    QTest::newRow("free port to listen on")
-        << QStringLiteral("udp://0.0.0.0:0") << false << QString() << QString() << false;
-    QTest::newRow("tcp without host") << QStringLiteral("tcp://:5600") << false << QString() << QString() << false;
-    QTest::newRow("no scheme") << QStringLiteral("10.0.0.2:5600") << false << QString() << QString() << false;
-}
-
-void FFmpegVideoReceiverStreamTest::_testSourceFor()
-{
-    QFETCH(QString, uri);
-    QFETCH(bool, valid);
-    QFETCH(QString, url);
-    QFETCH(QString, sdpEncoding);
-    QFETCH(bool, overTcp);
-
-    const std::optional<FFmpegStreamSession::Source> source = FFmpegStreamSession::sourceFor(uri);
-    QCOMPARE(source.has_value(), valid);
-    if (!source) {
-        return;
-    }
-    QCOMPARE(source->url, url);
-    QCOMPARE(source->rtspOverTcp, overTcp);
-    if (sdpEncoding.isEmpty()) {
-        QVERIFY(source->sdp.isEmpty());
-    } else {
-        QVERIFY2(source->sdp.contains("m=video 5600 RTP/AVP 96\r\n"), source->sdp.constData());
-        QVERIFY2(source->sdp.contains(QStringLiteral("a=rtpmap:96 %1/90000\r\n").arg(sdpEncoding).toLatin1()),
-                 source->sdp.constData());
-    }
-}
-
 void FFmpegVideoReceiverStreamTest::_testPlaysMockStreams_data()
 {
     QTest::addColumn<int>("streamType");

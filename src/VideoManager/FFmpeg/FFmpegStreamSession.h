@@ -32,24 +32,9 @@ struct AVStream;
 class FFmpegStreamSession
 {
 public:
-    /// What FFmpeg opens for a stream URI.
-    struct Source
-    {
-        /// What avformat_open_input() opens; for an SDP description, the name it is opened under.
-        QString url;
-        /// RTP over UDP: the SDP description FFmpeg reads in place of a URL.
-        QByteArray sdp;
-        /// nullopt for a URL that is none of VideoStreamResolver's, which FFmpeg opens as it is.
-        std::optional<VideoStreamUri::Transport> transport;
-        /// RTSP interleaved over its TCP connection, rather than FFmpeg's choice, which tries UDP first.
-        bool rtspOverTcp = false;
-
-        friend bool operator==(const Source&, const Source&) = default;
-    };
-
     struct Settings
     {
-        Source source;
+        VideoStreamUri::FFmpegSource source;
         /// The stream's URI without credentials, for logs.
         QString redactedUri;
         /// How long FFmpeg waits on a server that doesn't answer (RTSP, TCP). A UDP port waits for its sender.
@@ -115,12 +100,6 @@ public:
 
     FFmpegStreamSession(const FFmpegStreamSession&) = delete;
     FFmpegStreamSession& operator=(const FFmpegStreamSession&) = delete;
-
-    /// What FFmpeg opens for @p uri, one of VideoStreamResolver's: rtsp(s):// and tcp:// as they are, rtspt:// as
-    /// rtsp:// over TCP, mpegts:// as udp://, and udp:// (H.264) or udp265:// (H.265) RTP, payload type 96, as an SDP
-    /// description. Other URLs as they are; nullopt for an invalid one, and for one of those whose address no receiver
-    /// opens (VideoStreamUri::addressError()) or names port 0 to listen on.
-    static std::optional<Source> sourceFor(const QString& uri);
 
     /// Monotonic milliseconds, the clock of Counters::lastPacketMs.
     static qint64 nowMs();

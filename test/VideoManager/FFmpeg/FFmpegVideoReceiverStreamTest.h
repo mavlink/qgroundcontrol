@@ -24,8 +24,6 @@ private:
 
 private slots:
     void _testChosenByBackendSetting();
-    void _testSourceFor_data();
-    void _testSourceFor();
     void _testPlaysMockStreams_data();
     void _testPlaysMockStreams();
     void _testStopWhileConnectingIsPrompt_data();

@@ -43,6 +43,8 @@ target_sources(
         Streams/VideoStreamResolverTest.h
         Receiver/VideoStreamStatsMeterTest.cc
         Receiver/VideoStreamStatsMeterTest.h
+        Receiver/VideoStreamUriTest.cc
+        Receiver/VideoStreamUriTest.h
         Telemetry/VideoTelemetryOverlayTest.cc
         Telemetry/VideoTelemetryOverlayTest.h
         VideoTestHelpers.h
@@ -74,6 +76,7 @@ endif()
 add_qgc_test(VideoStreamOutputRenderTest LABELS Integration NoSanitizer ${_video_render_env_mod})
 add_qgc_test(VideoStreamResolverTest LABELS Unit)
 add_qgc_test(VideoStreamStatsMeterTest LABELS Unit)
+add_qgc_test(VideoStreamUriTest LABELS Unit)
 add_qgc_test(VideoTelemetryOverlayTest LABELS Integration Vehicle)
 
 # Without GStreamer its tests aren't built, nor those of a receiver playing a stream: GStreamer sends the stream,

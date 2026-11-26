@@ -20,8 +20,6 @@ private:
     void _ignoreEncoderFallbacks();
 
 private slots:
-    void _testPlayerSource_data();
-    void _testPlayerSource();
     void _testUnplayableUri();
     void _testRecordingNeedsActiveStream();
     void _testStartWhileRecordingIsRefused();
