@@ -13,6 +13,8 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 
+import "GeoMapAltitude.js" as GeoMapAltitude
+
 /// General flight-path direction indicators for the GeoMap: one arrow per
 /// entry in MissionController.directionArrows (added to the second flight
 /// path segment and every 5 segments thereafter, regardless of simple vs
@@ -39,17 +41,45 @@ Item {
             visible: !isNaN(object.coord1AMSLAlt) && !isNaN(object.coord2AMSLAlt)
             fromCoord: {
                 _terrainRev
+                const path = object.splinePath
+                if (path.length > 1) {
+                    return _splinePoint(path, 0)
+                }
                 return _terrainLeg ? _drapedPoint(0.75 - _halfChordFraction)
                                    : QtPositioning.coordinate(object.coordinate1.latitude, object.coordinate1.longitude,
                                                               object.coord1AMSLAlt + root.homeTerrainBias)
             }
             toCoord: {
                 _terrainRev
+                const path = object.splinePath
+                if (path.length > 1) {
+                    return _splinePoint(path, 1)
+                }
                 return _terrainLeg ? _drapedPoint(0.75 + _halfChordFraction)
                                    : QtPositioning.coordinate(object.coordinate2.latitude, object.coordinate2.longitude,
                                                               object.coord2AMSLAlt + root.homeTerrainBias)
             }
-            fraction: _terrainLeg ? 0.5 : 0.75
+            fraction: object.splinePath.length > 1 ? 0 : (_terrainLeg ? 0.5 : 0.75)
+
+            // A spline leg follows the segment's samples (see GeoMapMissionPath),
+            // so anchor the arrow to the sample at the 0.75 mark and head it
+            // towards the next sample. A terrain-frame spline is draped over
+            // the DEM like a straight terrain leg, plus the curve's own
+            // vertical shape. The index comes from the caller's path, since a
+            // separate binding can lag behind a change in the sample count.
+            function _splinePoint(path, offset) {
+                const index = Math.min(Math.round((path.length - 1) * 0.75), path.length - 2) + offset
+                const sample = path[index]
+                let altitude = sample.altitude
+                if (_terrainLeg) {
+                    altitude = GeoMapAltitude.drapedSplineAltitude(
+                                path, index, object.coord1AMSLAlt, object.coord2AMSLAlt,
+                                root.surfaceModel.terrainHeightAt(object.coordinate1),
+                                root.surfaceModel.terrainHeightAt(object.coordinate2),
+                                root.surfaceModel.terrainHeightAt(sample))
+                }
+                return QtPositioning.coordinate(sample.latitude, sample.longitude, altitude + root.homeTerrainBias)
+            }
 
             // Terrain-frame legs are draped over the DEM (see
             // GeoMapMissionPath), so anchor the arrow to a short draped chord

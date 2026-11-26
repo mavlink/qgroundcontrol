@@ -50,4 +50,34 @@ TestCase {
         compare(coordinate.x, data.x)
         compare(coordinate.z, data.z)
     }
+
+    function test_splineVerticalShape_data() {
+        return [
+            { tag: "straightRampHasNoShape", altitudes: [100, 110, 120], index: 1, expected: 0 },
+            { tag: "bulgeAboveRamp", altitudes: [100, 125, 120], index: 1, expected: 15 },
+            { tag: "dipBelowRamp", altitudes: [100, 100, 100, 130], index: 2, expected: -20 },
+            { tag: "unknownSampleIsFlat", altitudes: [100, NaN, 120], index: 1, expected: 0 },
+            { tag: "unknownEndpointIsFlat", altitudes: [NaN, 125, 120], index: 1, expected: 0 },
+        ]
+    }
+
+    function test_splineVerticalShape(data) {
+        const samples = data.altitudes.map(altitude => ({ altitude: altitude }))
+        compare(GeoMapAltitude.splineVerticalShape(samples, data.index), data.expected)
+    }
+
+    // Terrain is 100 m at the start of the leg, 150 m at its end and 120 m under the middle sample
+    function test_drapedSplineAltitude_data() {
+        return [
+            { tag: "constantClearanceFollowsTerrain", altitudes: [150, 175, 200], startAltitude: 150, expected: 170 },
+            { tag: "curveShapeIsAdded", altitudes: [150, 185, 200], startAltitude: 150, expected: 180 },
+            { tag: "startsAtFirstSampleAfterClimbFromHome", altitudes: [150, 175, 200], startAltitude: 100, expected: 170 },
+            { tag: "unknownSamplesUseTheEndpointAltitudes", altitudes: [NaN, NaN, NaN], startAltitude: 150, expected: 170 },
+        ]
+    }
+
+    function test_drapedSplineAltitude(data) {
+        const samples = data.altitudes.map(altitude => ({ altitude: altitude }))
+        compare(GeoMapAltitude.drapedSplineAltitude(samples, 1, data.startAltitude, 200, 100, 150, 120), data.expected)
+    }
 }

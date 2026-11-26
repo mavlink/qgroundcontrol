@@ -430,6 +430,7 @@ Item {
                     delegate: MapLineArrow {
                         fromCoord: object ? object.coordinate1 : undefined
                         toCoord: object ? object.coordinate2 : undefined
+                        splinePath: object ? object.splinePath : []
                         arrowPosition: 3
                         mapControl: qtLocationMap
                         z: QGroundControl.zOrderWaypointLines + 1
@@ -456,7 +457,17 @@ Item {
 
                     function _updateScreenLegLength() {
                         const segment = _root._missionController.splitSegment
-                        if (segment && segment.coordinate1.isValid && segment.coordinate2.isValid) {
+                        if (segment && segment.splinePath.length > 1) {
+                            // A curve can be far longer on screen than its chord
+                            let length = 0
+                            let prevPoint = qtLocationMap.fromCoordinate(segment.splinePath[0], false /* clipToViewPort */)
+                            for (let i = 1; i < segment.splinePath.length; i++) {
+                                const point = qtLocationMap.fromCoordinate(segment.splinePath[i], false /* clipToViewPort */)
+                                length += Math.hypot(point.x - prevPoint.x, point.y - prevPoint.y)
+                                prevPoint = point
+                            }
+                            _screenLegLength = length
+                        } else if (segment && segment.coordinate1.isValid && segment.coordinate2.isValid) {
                             const fromPoint = qtLocationMap.fromCoordinate(segment.coordinate1, false /* clipToViewPort */)
                             const toPoint = qtLocationMap.fromCoordinate(segment.coordinate2, false /* clipToViewPort */)
                             _screenLegLength = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y)
@@ -465,11 +476,34 @@ Item {
                         }
                     }
 
+                    // Halfway along a spline leg by distance: its samples are evenly spaced in the curve's parameter
+                    function _splineMidpoint(splinePath) {
+                        let remaining = 0
+                        for (let i = 1; i < splinePath.length; i++) {
+                            remaining += splinePath[i - 1].distanceTo(splinePath[i])
+                        }
+                        remaining /= 2
+                        for (let i = 1; i < splinePath.length; i++) {
+                            const from = splinePath[i - 1]
+                            const step = from.distanceTo(splinePath[i])
+                            if (step >= remaining) {
+                                const point = from.atDistanceAndAzimuth(remaining, from.azimuthTo(splinePath[i]))
+                                return QtPositioning.coordinate(point.latitude, point.longitude)
+                            }
+                            remaining -= step
+                        }
+                        const last = splinePath[splinePath.length - 1]
+                        return QtPositioning.coordinate(last.latitude, last.longitude)
+                    }
+
                     function _updateSplitCoord() {
-                        if (_missionController.splitSegment) {
-                            var distance = _missionController.splitSegment.coordinate1.distanceTo(_missionController.splitSegment.coordinate2)
-                            var azimuth = _missionController.splitSegment.coordinate1.azimuthTo(_missionController.splitSegment.coordinate2)
-                            splitSegmentItem.coordinate = _missionController.splitSegment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
+                        const segment = _missionController.splitSegment
+                        if (segment && segment.splinePath.length > 1) {
+                            splitSegmentItem.coordinate = _splineMidpoint(segment.splinePath)
+                        } else if (segment) {
+                            var distance = segment.coordinate1.distanceTo(segment.coordinate2)
+                            var azimuth = segment.coordinate1.azimuthTo(segment.coordinate2)
+                            splitSegmentItem.coordinate = segment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
                         } else {
                             coordinate = QtPositioning.coordinate()
                         }
@@ -485,6 +519,7 @@ Item {
                         target: _missionController.splitSegment
                         function onCoordinate1Changed()   { splitSegmentItem._updateSplitCoord() }
                         function onCoordinate2Changed()   { splitSegmentItem._updateSplitCoord() }
+                        function onSplinePathChanged()    { splitSegmentItem._updateSplitCoord() }
                     }
 
                     Connections {

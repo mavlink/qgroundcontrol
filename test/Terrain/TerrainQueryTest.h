@@ -10,6 +10,7 @@ private slots:
     void _testRequestCoordinateHeights();
     void _testRequestCoordinateHeightsSlope();
     void _testRequestCoordinateHeightsOutsideRegions();
+    void _testCoordinateBatchFailureSendsQueuedRequests();
     void _testRequestPathHeights();
     void _testRequestPathHeightsSpacing();
     void _testRequestCarpetHeights();

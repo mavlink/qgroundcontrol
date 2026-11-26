@@ -53,7 +53,10 @@ void TerrainProfile::_newVisualItems(void)
     emit _updateSignal();
 }
 
-void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cFlightProfileSegments, int& cTerrainProfilePoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& minTerrainHeight, double& maxTerrainHeight)
+void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cFlightProfileSegments,
+                                          int& cTerrainProfilePoints, int& cMissingTerrainSegments,
+                                          int& cTerrainCollisionSegments, double& minProfileHeight,
+                                          double& maxProfileHeight)
 {
     if (_shouldAddFlightProfileSegment(segment)) {
         if (segment->segmentType() == FlightPathSegment::SegmentTypeTerrainFrame) {
@@ -68,8 +71,16 @@ void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cFlig
     } else {
         cTerrainProfilePoints += segment->amslTerrainHeights().count();
         for (int i=0; i<segment->amslTerrainHeights().count(); i++) {
-            minTerrainHeight = std::fmin(minTerrainHeight, segment->amslTerrainHeights()[i].value<double>());
-            maxTerrainHeight = std::fmax(maxTerrainHeight, segment->amslTerrainHeights()[i].value<double>());
+            minProfileHeight = std::fmin(minProfileHeight, segment->amslTerrainHeights()[i].value<double>());
+            maxProfileHeight = std::fmax(maxProfileHeight, segment->amslTerrainHeights()[i].value<double>());
+        }
+    }
+    // A spline can overshoot its waypoint altitudes, so its samples take part in the vertical bounds too
+    for (const QVariant& sample : segment->splinePath()) {
+        const double sampleAlt = sample.value<QGeoCoordinate>().altitude();
+        if (!qIsNaN(sampleAlt)) {
+            minProfileHeight = std::fmin(minProfileHeight, sampleAlt);
+            maxProfileHeight = std::fmax(maxProfileHeight, sampleAlt);
         }
     }
     if (segment->terrainCollision()) {
@@ -87,8 +98,8 @@ void TerrainProfile::_updateProfile(void)
     int    cMissingTerrainSegments =   0;
     int    cFlightProfileSegments =    0;
     int    cTerrainCollisionSegments = 0;
-    double minTerrainHeight =          qQNaN();
-    double maxTerrainHeight =          qQNaN();
+    double minProfileHeight = qQNaN();
+    double maxProfileHeight = qQNaN();
 
     for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
         VisualMissionItem*  visualItem =    _visualItems->value<VisualMissionItem*>(viIndex);
@@ -96,19 +107,21 @@ void TerrainProfile::_updateProfile(void)
 
         if (visualItem->simpleFlightPathSegment()) {
             FlightPathSegment* segment = visualItem->simpleFlightPathSegment();
-            _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments, cTerrainCollisionSegments, minTerrainHeight, maxTerrainHeight);
+            _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments,
+                                 cTerrainCollisionSegments, minProfileHeight, maxProfileHeight);
         }
 
         if (complexItem) {
             for (int segmentIndex=0; segmentIndex<complexItem->flightPathSegments()->count(); segmentIndex++) {
                 FlightPathSegment* segment = complexItem->flightPathSegments()->value<FlightPathSegment*>(segmentIndex);
-                _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments, cTerrainCollisionSegments, minTerrainHeight, maxTerrainHeight);
+                _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments,
+                                     cTerrainCollisionSegments, minProfileHeight, maxProfileHeight);
             }
         }
     }
 
-    _minAMSLAlt = std::fmin(_missionController->minAMSLAltitude(), minTerrainHeight);
-    _maxAMSLAlt = std::fmax(_missionController->maxAMSLAltitude(), maxTerrainHeight);
+    _minAMSLAlt = std::fmin(_missionController->minAMSLAltitude(), minProfileHeight);
+    _maxAMSLAlt = std::fmax(_missionController->maxAMSLAltitude(), maxProfileHeight);
 
     double amslAltRange = _maxAMSLAlt - _minAMSLAlt;
     double amslAltRangeBuffer = amslAltRange * 0.1;
@@ -122,16 +135,16 @@ void TerrainProfile::_updateProfile(void)
     _pixelsPerMeter = (missionTotalDistance > 0.0) ? (_visibleWidth / missionTotalDistance) : 0.0;
 
     static int counter = 0;
-    qCDebug(TerrainProfileLog).noquote() << "counter" << counter++ <<
-        "\n\tmissionController minAMSLAltitude" << _missionController->minAMSLAltitude() <<
-        "\n\tmissionController maxAMSLAltitude" << _missionController->maxAMSLAltitude() <<
-        "\n\tcFlightProfileSegments" << cFlightProfileSegments <<
-        "\n\tcTerrainProfilePoints" << cTerrainProfilePoints <<
-        "\n\tcMissingTerrainSegments" << cMissingTerrainSegments <<
-        "\n\tcTerrainCollisionSegments" << cTerrainCollisionSegments <<
-        "\n\t_minAMSLAlt" << _minAMSLAlt <<
-        "\n\t_maxAMSLAlt" << _maxAMSLAlt <<
-        "\n\tmaxTerrainHeight" << maxTerrainHeight;
+    qCDebug(TerrainProfileLog).noquote() << "counter" << counter++ << "\n\tmissionController minAMSLAltitude"
+                                         << _missionController->minAMSLAltitude()
+                                         << "\n\tmissionController maxAMSLAltitude"
+                                         << _missionController->maxAMSLAltitude() << "\n\tcFlightProfileSegments"
+                                         << cFlightProfileSegments << "\n\tcTerrainProfilePoints"
+                                         << cTerrainProfilePoints << "\n\tcMissingTerrainSegments"
+                                         << cMissingTerrainSegments << "\n\tcTerrainCollisionSegments"
+                                         << cTerrainCollisionSegments << "\n\t_minAMSLAlt" << _minAMSLAlt
+                                         << "\n\t_maxAMSLAlt" << _maxAMSLAlt << "\n\tmaxProfileHeight"
+                                         << maxProfileHeight;
 
     setImplicitWidth(_visibleWidth);
     setWidth(implicitWidth());
@@ -244,31 +257,50 @@ void TerrainProfile::_addFlightPoints(FlightPathSegment* segment, double current
     }
 
     if (segment->segmentType() == FlightPathSegment::SegmentTypeTerrainFrame) {
-        double terrainDistance = 0;
-        const double totalDistance = segment->totalDistance();
-        const double beginDistanceToSurface =
-            segment->coord1AMSLAlt() - segment->amslTerrainHeights().first().value<double>();
-        const double endDistanceToSurface =
-            segment->coord2AMSLAlt() - segment->amslTerrainHeights().last().value<double>();
-        for (int heightIndex=0; heightIndex<segment->amslTerrainHeights().count(); heightIndex++) {
-            if (heightIndex == 0) {
-                // First point
-            } else if (heightIndex == segment->amslTerrainHeights().count() - 2) {
-                terrainDistance += segment->finalDistanceBetween();
-            } else {
-                terrainDistance += segment->distanceBetween();
-            }
+        _addTerrainFrameAltitudePoints(segment, currentDistance, points);
+    } else {
+        _addFlightAltitudePoints(segment, currentDistance, points);
+    }
+}
 
-            // Terrain clearance ramps linearly from origin AGL to destination AGL (ArduPilot AC_WPNav terrain offset).
-            // The last sample is pinned to the destination clearance: accumulated sample distance can drift from
-            // totalDistance, and a zero-length leg would otherwise never reach it.
-            const bool lastSample = heightIndex == segment->amslTerrainHeights().count() - 1;
-            const double fraction =
-                lastSample ? 1.0 : (totalDistance > 0 ? qMin(terrainDistance / totalDistance, 1.0) : 0.0);
-            const double distanceToSurface =
-                beginDistanceToSurface + ((endDistanceToSurface - beginDistanceToSurface) * fraction);
-            const double amslTerrainHeight = (segment->amslTerrainHeights()[heightIndex].value<double>() + distanceToSurface) * _verticalScale;
-            points.append(QPointF((currentDistance + terrainDistance) * _horizontalScale, amslTerrainHeight));
+// The flown altitude over each terrain sample of a terrain-frame leg
+void TerrainProfile::_addTerrainFrameAltitudePoints(FlightPathSegment* segment, double currentDistance,
+                                                    QList<QPointF>& points)
+{
+    // A spline with no horizontal extent has a terrain sample only at each end, so the altitudes in between come
+    // from its own samples
+    if (segment->splineSampleDistances().count() > 1 && segment->totalDistance() <= 0) {
+        _addFlightAltitudePoints(segment, currentDistance, points);
+        return;
+    }
+
+    double terrainDistance = 0;
+    for (int heightIndex = 0; heightIndex < segment->amslTerrainHeights().count(); heightIndex++) {
+        if (heightIndex == 0) {
+            // First point
+        } else if (heightIndex == segment->amslTerrainHeights().count() - 2) {
+            terrainDistance += segment->finalDistanceBetween();
+        } else {
+            terrainDistance += segment->distanceBetween();
+        }
+
+        points.append(QPointF((currentDistance + terrainDistance) * _horizontalScale,
+                              segment->terrainFrameAltitudeAt(heightIndex, terrainDistance) * _verticalScale));
+    }
+}
+
+// The flown altitude along the leg: at every spline sample for a spline leg, otherwise a straight ramp
+void TerrainProfile::_addFlightAltitudePoints(FlightPathSegment* segment, double currentDistance,
+                                              QList<QPointF>& points)
+{
+    const QList<double>& sampleDistances = segment->splineSampleDistances();
+    if (sampleDistances.count() > 1) {
+        // Each sample's own altitude, which also covers a vertical spline whose samples all share one distance
+        for (int i = 0; i < sampleDistances.count(); i++) {
+            const double sampleAlt = segment->splinePath()[i].value<QGeoCoordinate>().altitude();
+            const double altitude = qIsNaN(sampleAlt) ? segment->amslAltitudeAtDistance(sampleDistances[i]) : sampleAlt;
+            points.append(
+                QPointF((currentDistance + sampleDistances[i]) * _horizontalScale, altitude * _verticalScale));
         }
     } else {
         points.append(QPointF(currentDistance * _horizontalScale, segment->coord1AMSLAlt() * _verticalScale));
@@ -294,8 +326,11 @@ void TerrainProfile::_addCollisionPoints(FlightPathSegment* segment, double curr
         if (!points.isEmpty()) {
             points.append(QPointF(currentDistance * _horizontalScale, qQNaN()));
         }
-        points.append(QPointF(currentDistance * _horizontalScale, segment->coord1AMSLAlt() * _verticalScale));
-        points.append(QPointF((currentDistance + segment->totalDistance()) * _horizontalScale, segment->coord2AMSLAlt() * _verticalScale));
+        if (segment->segmentType() == FlightPathSegment::SegmentTypeTerrainFrame) {
+            _addTerrainFrameAltitudePoints(segment, currentDistance, points);
+        } else {
+            _addFlightAltitudePoints(segment, currentDistance, points);
+        }
     }
 }
 
