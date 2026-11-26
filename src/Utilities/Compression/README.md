@@ -47,7 +47,7 @@ formats the build reads (`readFormats()`, the one place that decides it), the fi
 registers, and the streams the build cannot decode. `ArchiveReader` owns the libarchive reader and the file it
 reads; each operation opens one of its own. `GzipCheck` checks the checksums of gzip input with zlib, which
 libarchive does not (libarchive/libarchive#3728). `EntryData` copies the data of an entry to memory or to a file,
-within the limits. `StreamDecompression` and
+within the limits, and `EntryNames` tells the entry names that every system writes alike. `StreamDecompression` and
 `ArchiveExtraction` are the two kinds of operation. Each step returns a `Result` (`ArchiveReader.h`), and
 `Operation` builds the `Outcome` from the one the operation ends with. Code outside the module cannot include
 these headers, except its tests.

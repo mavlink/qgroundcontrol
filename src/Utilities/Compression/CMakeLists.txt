@@ -17,6 +17,8 @@ qt_add_library(
     private/ArchiveReader.h
     private/EntryData.cc
     private/EntryData.h
+    private/EntryNames.cc
+    private/EntryNames.h
     private/Formats.cc
     private/Formats.h
     private/GzipCheck.cc

@@ -9,6 +9,7 @@ class QGCMapEngineManagerArchiveTest : public UnitTest
 private slots:
     void _importArchiveRejectsInvalidInput();
     void _importArchiveNoTileDatabase();
+    void _importArchiveTellsSkippedTileSet();
     void _importSetsUnpacksArchive();
     void _importArchiveUnpacksOnlyTileSetFiles();
     void _importArchiveFindsExportedFile();

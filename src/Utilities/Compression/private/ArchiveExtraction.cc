@@ -11,6 +11,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "EntryData.h"
+#include "EntryNames.h"
 #include "QGCFileHelper.h"
 
 namespace LibArchive {
@@ -30,10 +31,21 @@ using ExtractOptions = Compression::ExtractOptions;
 /// name. A name without a UTF-8 form, because its bytes are not valid in the charset of the archive, is read from
 /// those bytes, with a replacement character for each one that is not UTF-8. On Windows libarchive gives no such
 /// name at all, and the entry is skipped.
+/// A backslash is a separator, as archivers on Windows write it, on every system. libarchive turns it into a slash
+/// only in a name of a ZIP archive made on Windows that has no slash.
 QString pathnameOf(struct archive_entry* entry)
 {
     const char* const name = archive_entry_pathname_utf8(entry);
-    return QString::fromUtf8((name != nullptr) ? name : archive_entry_pathname(entry));
+    return QString::fromUtf8((name != nullptr) ? name : archive_entry_pathname(entry))
+        .replace(QLatin1Char('\\'), QLatin1Char('/'));
+}
+
+/// An entry name as a warning shows it: a long one is cut
+QString shownName(const QString& entryName)
+{
+    constexpr qsizetype kShownCharacters = 200;
+    return (entryName.size() > kShownCharacters) ? (entryName.left(kShownCharacters) + QStringLiteral("..."))
+                                                 : entryName;
 }
 
 /// The entry as an entry filter sees it
@@ -142,10 +154,14 @@ public:
     /// The compression filter of the archive, once its first entry has been read
     QString filterName() const { return _reader.filterName(); }
 
+    /// Entries skipped with a warning so far
+    int skippedEntries() const { return _skippedEntries; }
+
 private:
     Result _extractEntries();
     Result _extractEntry(struct archive_entry* entry);
     QString _entryPath(struct archive_entry* entry) const;
+    bool _claimSpelling(const QString& path, const QString& entryName);
     Result _makeDirectory(const QString& path);
     Result _writeFile(struct archive_entry* entry, const QString& path);
 
@@ -153,6 +169,9 @@ private:
     const ExtractOptions& _options;
 
     QString _root;  ///< Canonical path of the output directory
+    /// Spelling of each file and directory written. An entry that the filter refuses writes nothing, and claims none
+    EntrySpellings _spellings;
+    int _skippedEntries = 0;
     /// Holds each file to what is left of the limit and of the room on the disk: before it is written, by the
     /// size its entry declares, and while it is written, by the data the entry holds
     DataTransfer _transfer;
@@ -245,7 +264,8 @@ Result Extraction::_extractEntry(struct archive_entry* entry)
     }
 
     const QString path = _entryPath(entry);
-    if (path.isEmpty()) {
+    if (path.isEmpty() || !_claimSpelling(path, pathnameOf(entry))) {
+        ++_skippedEntries;
         return {};
     }
     // A parent that cannot be created, because an earlier entry wrote a file there, makes the entry fail below
@@ -263,6 +283,14 @@ Result Extraction::_extractEntry(struct archive_entry* entry)
 QString Extraction::_entryPath(struct archive_entry* entry) const
 {
     const QString entryName = pathnameOf(entry);
+
+    // Skipped on every system, so that an archive extracts the same everywhere. First, because it also bounds the
+    // length of the name that every later step works on
+    if (const QString reason = nonPortableNameReason(entryName); !reason.isEmpty()) {
+        qCWarning(LibArchiveLog).noquote()
+            << QStringLiteral("Skipping entry whose name has %1:").arg(reason) << shownName(entryName);
+        return {};
+    }
 
     // Prevent path traversal attacks. A name such as "." or "a/.." resolves to the root itself. The extraction
     // creates no links, so a path inside the root stays there on disk
@@ -292,6 +320,21 @@ QString Extraction::_entryPath(struct archive_entry* entry) const
     }
 
     return path;
+}
+
+/// Record the spelling of the path of an entry and of each directory above it in the output directory
+/// A file system that ignores case or Unicode normalisation takes another spelling of a path that an earlier entry
+/// wrote for that path. Such an entry is skipped on every system, so that an archive extracts the same everywhere.
+/// @return false, after a warning, for an entry that is skipped
+bool Extraction::_claimSpelling(const QString& path, const QString& entryName)
+{
+    const QStringView relativePath =
+        QStringView(path).mid(_root.endsWith(QLatin1Char('/')) ? _root.size() : _root.size() + 1);
+    if (const QString clash = _spellings.claim(relativePath); !clash.isEmpty()) {
+        qCWarning(LibArchiveLog).noquote() << "Skipping entry whose name clashes with" << clash << ":" << entryName;
+        return false;
+    }
+    return true;
 }
 
 /// Create the directory of an entry, unless it already exists
@@ -325,6 +368,7 @@ Result extractArchive(const QString& archivePath, const QString& outputDirectory
     Extraction extraction(options);
     Result extracted = extraction.run(archivePath, outputDirectoryPath);
     extracted.filterName = extraction.filterName();
+    extracted.skippedEntries = extraction.skippedEntries();
     return extracted;
 }
 

@@ -42,6 +42,8 @@ struct [[nodiscard]] Result
     /// Compression filter that the reader of an operation detected (ArchiveReader::filterName()). Set by the
     /// operation, also when it fails
     QString filterName = {};
+    /// Entries that an extraction skipped with a warning (Compression::Outcome::skippedEntries)
+    int skippedEntries = 0;
 
     explicit operator bool() const { return error == Error::None; }
 };

@@ -45,6 +45,10 @@ struct [[nodiscard]] Outcome
     /// Compression filter libarchive detected ("gzip", "xz", "zstd", ...), or "none" for input that is not
     /// compressed. Empty if the operation ended before it read the first header of its input
     QString filterName = {};
+    /// Entries that an extraction skipped with a warning, as extractArchive() lists them: for their names or their
+    /// types, and not those that the entry filter refused. Also set when the extraction fails. 0 for the other
+    /// operations
+    int skippedEntries = 0;
 
     explicit operator bool() const { return error == Error::None; }
 
@@ -78,7 +82,7 @@ using ProgressCallback = std::function<bool(qint64 bytesProcessed, qint64 totalB
 /// Archive entry as an EntryFilter sees it
 struct ArchiveEntry
 {
-    QString name;  ///< Path within the archive
+    QString name;  ///< Path within the archive, with slashes: a backslash in it is a separator too
     bool isDirectory = false;
 };
 

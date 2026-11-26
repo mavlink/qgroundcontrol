@@ -9,12 +9,14 @@
 #include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QTemporaryDir>
 
 #include "BidAgreement.h"
 #include "Compression.h"
+#include "EntryNames.h"
 
 namespace {
 constexpr size_t MAX_INPUT_BYTES = 64 * 1024;
@@ -110,9 +112,10 @@ void decompressFile(const QByteArray& input, const QByteArray& stream, bool deco
 }
 
 /// The input as an archive to extract, into a directory that is new or, for every other input, empty: whatever its
-/// entries are named and link to, nothing appears beside the output directory and no link inside it. Whatever sizes
-/// they declare, the files take no more than the limit. A failed extraction leaves nothing: no output directory
-/// that it created, and nothing in one that was there
+/// entries are named and link to, nothing appears beside the output directory and no link inside it, and every name
+/// written is portable and differs from the others in more than case or normalisation. Whatever sizes the entries
+/// declare, the files take no more than the limit. A failed extraction leaves nothing: no output directory that it
+/// created, and nothing in one that was there
 void extractArchive(const QByteArray& input)
 {
     const QString archivePath = workDirectory().filePath(QStringLiteral("input.zip"));
@@ -138,11 +141,17 @@ void extractArchive(const QByteArray& input)
     require(beside.isEmpty() || (beside == QStringList{QStringLiteral("output")}));
 
     qint64 written = 0;
+    QSet<QString> spellings;
+    const QDir output(outputPath);
     QDirIterator entries(outputPath, QDir::AllEntries | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot,
                          QDirIterator::Subdirectories);
     while (entries.hasNext()) {
         const QFileInfo entry = entries.nextFileInfo();
         require(!entry.isSymLink());
+        const QString name = output.relativeFilePath(entry.filePath());
+        require(LibArchive::nonPortableNameReason(name).isEmpty());
+        require(!spellings.contains(LibArchive::nameCollisionKey(name)));
+        spellings.insert(LibArchive::nameCollisionKey(name));
         if (entry.isFile()) {
             written += entry.size();
         }

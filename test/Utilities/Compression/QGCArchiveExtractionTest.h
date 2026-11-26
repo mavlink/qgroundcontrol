@@ -30,6 +30,11 @@ private slots:
     UT_PARAMETERIZED_TEST(_testCancelledWhereNoDataIsCopied);
     void _testExtractArchiveToSymlinkedOutputPath();
     UT_PARAMETERIZED_TEST(_testExtractRejectsEscapingNames);
+    UT_PARAMETERIZED_TEST(_testExtractSkipsNamesThatAreNotPortable);
+    UT_PARAMETERIZED_TEST(_testExtractSkipsSpellingsThatClash);
+    void _testSpellingsGrowWithNewComponentsOnly();
+    UT_PARAMETERIZED_TEST(_testExtractTakesBackslashForSeparator);
+    void _testExtractCountsSkippedEntries();
     UT_PARAMETERIZED_TEST(_testExtractNameThatIsNotUtf8);
     void _testExtractLeavesOutOverlongPath();
     UT_PARAMETERIZED_TEST(_testExtractLeavesOutLinks);

@@ -134,6 +134,8 @@ foreach(_suite IN ITEMS QGCArchiveExtractionTest QGCCompressionJobTest QGCCompre
     qgc_add_compression_test_resources(${_suite})
 endforeach()
 target_link_libraries(QGCArchiveExtractionTest PRIVATE Qt6::Concurrent)
+# EntrySpellings, which the extraction test checks directly
+target_include_directories(QGCArchiveExtractionTest PRIVATE ${PROJECT_SOURCE_DIR}/src/Utilities/Compression/private)
 include(${PROJECT_SOURCE_DIR}/test/Utilities/Compression/Fuzz/BidAgreement.cmake)
 target_sources(
     QGCCompressionTest

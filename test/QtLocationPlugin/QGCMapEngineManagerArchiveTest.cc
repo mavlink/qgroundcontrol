@@ -68,6 +68,24 @@ void QGCMapEngineManagerArchiveTest::_importArchiveNoTileDatabase()
     QVERIFY(manager.errorMessage().contains(QStringLiteral("No tile database found in archive")));
 }
 
+void QGCMapEngineManagerArchiveTest::_importArchiveTellsSkippedTileSet()
+{
+    // The tile set file has a device name of Windows, which an extraction skips on every system
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(QStringLiteral("device.zip"));
+    QVERIFY(TestFixtures::writeFile(archivePath,
+                                    ArchiveFixtures::makeZip({{.name = "Tiles/COM1.qgctiledb", .data = "tiles"}})));
+
+    QGCMapEngineManager manager;
+    expectLogMessage("Utilities.LibArchive", QtWarningMsg, QRegularExpression("device name of Windows"));
+    QVERIFY(manager.importArchive(archivePath));
+    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                              TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.errorMessage(),
+             QStringLiteral("No tile database found in archive (entries skipped for their names or types: 1)"));
+}
+
 void QGCMapEngineManagerArchiveTest::_importSetsUnpacksArchive()
 {
     // The import of the Offline Maps page takes an archive as it takes a tile set file

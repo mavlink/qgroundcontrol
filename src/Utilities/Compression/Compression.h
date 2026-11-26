@@ -126,16 +126,24 @@ Outcome decompressData(const QByteArray& data, QByteArray& decompressed, qint64 
 /// "." and ".." in it are resolved by name.
 ///
 /// Only files and directories are written, and only inside the output directory. These entries are skipped with
-/// a warning:
+/// a warning, and counted in Outcome::skippedEntries:
 /// - an entry whose path leads outside the output directory
 /// - every link, hard or symbolic, and every special file (FIFO, device node, socket)
 /// - a sparse file (TAR only), whose holes the archive does not store
 /// - a non-directory entry that names the output directory itself ("."), which stays a directory
+/// - an entry whose name some system would write differently or not at all, on every system: a name longer than 4096
+///   bytes in UTF-8, or one with a part between slashes that ends with a dot or a space, holds a control character
+///   or one of < > : " | ? *, is longer than 255 bytes in UTF-8, or is a device name of Windows (CON, PRN, AUX, NUL,
+///   COM0 to COM9, LPT0 to LPT9, CONIN$, CONOUT$), also with an extension ("nul.txt")
+/// - an entry whose path, or a directory above it, is that of an earlier entry written in another spelling, as a
+///   file system that ignores case or Unicode normalisation takes it ("Data/a" after "data/b"). An entry that the
+///   filter refuses writes nothing, and so clashes with none
 /// - an entry whose path in the output directory is longer than the system allows (PATH_MAX). A build for Windows
 ///   defines no PATH_MAX and has no such check
 ///
-/// The name of an entry is read as UTF-8 unless the archive declares another charset for it. An entry replaces the
-/// file that an earlier entry of the same name wrote.
+/// The name of an entry is read as UTF-8 unless the archive declares another charset for it. A backslash in it is
+/// a separator, as archivers on Windows write it, on every system: "Tiles\a.db" is "Tiles/a.db", and "..\a" leads
+/// outside. An entry replaces the file that an earlier entry of the same name wrote.
 ///
 /// A failed extraction leaves nothing, whatever the reason, also an exception that the filter or the progress
 /// callback throws, which is passed on to the caller: an output directory that the extraction created is removed,

@@ -65,12 +65,13 @@ static QString failureReason(Error error)
 Outcome operationOutcome(const LibArchive::Result& result, const QString& what)
 {
     if (result) {
-        return {.filterName = result.filterName};
+        return {.filterName = result.filterName, .skippedEntries = result.skippedEntries};
     }
     return {.error = result.error,
             .message = what + failureReason(result.error),
             .detail = result.detail,
-            .filterName = result.filterName};
+            .filterName = result.filterName,
+            .skippedEntries = result.skippedEntries};
 }
 
 }  // namespace Compression

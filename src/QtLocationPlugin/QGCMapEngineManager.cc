@@ -670,7 +670,11 @@ void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& 
     }
 
     if (tileSetFiles.isEmpty()) {
-        setErrorMessage(tr("No tile database found in archive"));
+        // A tile set file whose name the extraction does not write is skipped, and leaves a hint in the log only
+        setErrorMessage((outcome.skippedEntries > 0)
+                            ? tr("No tile database found in archive (entries skipped for their names or types: %1)")
+                                  .arg(outcome.skippedEntries)
+                            : tr("No tile database found in archive"));
         setImportAction(ImportAction::ActionDone);
         _removeExtractionOutput();
         return;
