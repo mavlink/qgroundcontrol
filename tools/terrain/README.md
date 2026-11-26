@@ -24,7 +24,7 @@ The tiles serve two consumers, and the format decisions below are driven by the 
 | Pixel convention | Pixel `(px, py)` covers `[px, px+1) / 256` of its tile; its value is the height at the pixel center, matching `TerrariumTileFetcher` |
 | Height step | 0.25 m: heights are rounded to the nearest quarter meter |
 | Heights | Copernicus DSM (surface incl. canopy, buildings, snow and ice) in meters above the EGM2008 geoid |
-| Ocean | Exactly 0 m; all-ocean tiles share one byte-identical 564-byte PNG |
+| Ocean | Exactly 0 m; all-ocean tiles share one byte-identical 757-byte PNG |
 | Metadata | `tilejson.json` (TileJSON 3.0.0 with the data `version` and an update `notice`, plus `encoding`, `height_step_m`, `vertical_datum`, `surface`) and `ATTRIBUTION.txt`, next to `terrarium/` |
 
 The tiles decode with today's terrarium client, but switching QGC to them takes more than a new
@@ -217,12 +217,19 @@ serves at `https://terrain.assets.qgroundcontrol.com/validation/terrarium/...`.
 `upload` (`--production` or `--prefix NAME`, plus a required `--data-version`) runs three steps,
 stopping at the first failure:
 
-1. **Tiles:** `aws s3 sync` with a one-day max-age. Remote tiles missing locally are deleted only
-   with `--mirror`, which is refused for production: a full build writes every key, and a partial
-   one would wipe the rest. The sync's line per transferred tile is replaced by a count: a
+1. **Tiles:** `aws s3 sync` with a one-day max-age, as `--workers` processes at once (default
+   16, or the CPU count if lower), each syncing one `<zoom>/<x>` directory: a single sync is
+   held to about 600 tiles a second by one CPU core. A sync that fails (S3 throttling, say) does
+   not stop the others: the failed directories are listed and the upload ends there, before the
+   invalidation, for a rerun to retry them. The first `--workers` syncs run to the end on
+   their own; if every one of them fails, the rest are not started.
+   Remote tiles missing locally are deleted only with `--mirror`, which is refused for
+   production: a full build writes every key, and a partial one would wipe the rest. A mirror
+   runs as one sync of the whole tree, since only that removes remote directories that no
+   longer exist locally. The syncs' line per transferred tile is replaced by a count: a
    `[progress]` line a minute with the rate, also while `aws` prints nothing (comparing an
-   already uploaded tree), then a `[summary]` line. A dry run's listing and `aws` failures
-   still print.
+   already uploaded tree), then a `[summary]` line. A dry run is one sync that lists every
+   tile, and `aws` failures still print.
 2. **CloudFront invalidation** of `<target>/terrarium/*`, waiting until it completes.
 3. **Metadata:** `ATTRIBUTION.txt`, then `tilejson.json` with `version` set to `--data-version`
    and the `notice`, both with a five-minute max-age. `tilejson.json` goes last, so the new
@@ -418,8 +425,9 @@ real instance before relying on the run time.
 
 ### Size
 
-Mean tile sizes measured on the sample areas (`stats`). The samples are land-heavy and
-mountainous, so these are upper estimates; flat land and ice compress better.
+Mean tile sizes measured on the sample areas (`stats`) at Pillow's `optimize=True`; tiles are
+now written at zlib level 6, about 4% larger. The samples are land-heavy and mountainous, so
+these are upper estimates; flat land and ice compress better.
 
 | Zoom | 13 | 12 | 11 | 10 | 9 |
 | ---- | -- | -- | -- | -- | - |
@@ -435,24 +443,25 @@ Greenland and Antarctica, so this is about half of each zoom.
 | --- | ------ |
 | Objects, z0–z13 | 89.5M (every key exists, ocean included) |
 | Land tiles | ~1.75 TB |
-| Ocean tiles | ~46M × 564 B ≈ 26 GB |
+| Ocean tiles | ~46M × 757 B ≈ 35 GB |
 | Total | **~1.8 TB** |
 
 ### Cost
 
-AWS list prices assumed (checked October 2026; check again before sign-off): S3 Standard
-us-west-2 $0.023/GB-month and $0.005 per 1,000 PUT; inter-region transfer from eu-central-1
-$0.02/GB; c7gd.16xlarge in eu-central-1 ~$3.36/hour (64 vCPU, 128 GiB, 2×1.9 TB NVMe);
-CloudFront $0.085/GB and $0.01 per 10,000 HTTPS requests beyond the always-free 1 TB and 10M
-requests a month.
+AWS list prices assumed (S3 and CloudFront checked October 2026, EC2 November 2026; check again
+before a run): S3 Standard us-west-2 $0.023/GB-month and $0.005 per 1,000 PUT; c7gd.16xlarge
+in us-west-2 $2.903/hour (64 vCPU, 128 GiB, 2×1.9 TB NVMe); CloudFront $0.085/GB and $0.01
+per 10,000 HTTPS requests beyond the always-free 1 TB and 10M requests a month. The instance
+runs in us-west-2, next to the bucket, so the upload crosses no region.
 
 | One-time | Basis | Cost |
 | -------- | ----- | ---- |
 | S3 PUT requests | 89.5M objects | ~$450 |
-| Transfer eu-central-1 → us-west-2 | ~1.8 TB | ~$36 |
-| Reading Copernicus | Same-region AWS Open Data | $0 |
-| EC2 c7gd.16xlarge | ~1–2 days, see below | ~$80–160 |
-| **Total** | | **~$570–650** |
+| Transfer to the bucket | Same region (us-west-2) | $0 |
+| Reading Copernicus | AWS Open Data in eu-central-1, not requester-pays | $0 |
+| EC2 c7gd.16xlarge, generation | ~11 hours, projected (see below) | ~$32 |
+| EC2 c7gd.16xlarge, upload | Not measured yet; 40 hours with a single sync | up to ~$116 |
+| **Total** | | **~$480–600** |
 
 | Ongoing | Basis | Cost |
 | ------- | ----- | ---- |
@@ -462,13 +471,23 @@ requests a month.
 
 Requests run out before bytes: 10M free requests is about 370 GB of z13 tiles.
 
-**Run time.** Generation needs roughly 10 CPU-seconds per land job and much less per ocean job,
-so about 400 CPU-hours for the ~127k land jobs: about 6 hours on 64 vCPUs. Uploading 89.5M
-objects dominates. The upload runs from eu-central-1 to us-west-2, where a request takes about
-150 ms, so the AWS CLI's default of 10 concurrent requests manages under a hundred PUTs a second:
-days to weeks for a full upload. Raise it, e.g.
-`aws configure set s3.max_concurrent_requests 256 --profile <profile>`, for about 1,000–3,000
-PUTs a second, roughly 8–25 hours.
+**Run time.** Measured in November 2026 on a c7gd.16xlarge (64 vCPU Graviton3) in us-west-2
+with Pillow 13.0.0, on 455 jobs over central Europe:
+
+- **Generation** is bound by PNG encoding, not by source reads. Reading and warping a land job
+  took under 5 CPU-seconds, also from us-west-2. Its 341 tiles took 86 more at Pillow's
+  `optimize=True`, the setting then in use: about 40 land jobs a minute, some 50 hours for the
+  ~127k land jobs. At zlib level 6 (`terrarium.PNG_COMPRESS_LEVEL`) a tile encodes in 43 ms
+  instead of 269 ms for 3.7% more bytes, which projects to about 20 CPU-seconds a land job and
+  11 hours. That projection, and the time of the ocean jobs, are not measured yet.
+- **Upload:** one `aws s3 sync` managed 625 tiles a second with
+  `s3.max_concurrent_requests` at 256, using one CPU core fully while the other 63 idled: 40
+  hours for 89.5M objects. `upload` therefore runs `--workers` syncs at once. Their combined
+  rate is not measured yet, and S3 may throttle a prefix above about 3,500 PUTs a second until
+  it has scaled.
+
+Run a small `--bbox` and upload it to a test prefix before a global run, and read both rates
+from the `[progress]` lines.
 
 **Disk.** Tiles are written locally, then uploaded, so the run needs ~1.8 TB of scratch.
 A c7gd.8xlarge (1.9 TB NVMe, ~$1.68/hour) is too tight; use a c7gd.16xlarge. Uploading in
@@ -505,6 +524,9 @@ mosaic, lattice alignment, warp and Mercator math together, with no network. Cas
 - A failed job keeps its worker's traceback until a rerun completes it, and is listed in the
   run's summary; the tile sync prints a count instead of a line per tile. Progress lines keep
   coming while every job is still running and while the sync prints nothing.
+- The tile sync runs one process per tile directory and finishes the others when one fails,
+  withholding the invalidation; it stops early only when every sync of the first batch
+  fails, and syncs the whole tree in one process for a mirror.
 - `--retries` reruns only the failed jobs and those a broken worker pool left, the jobs in
   flight when it broke last and without a failure record, and stops counting a job as failed
   once an attempt completes it. A failure record that cannot be written or removed does not
@@ -542,8 +564,9 @@ $TT upload --out build/terrain --prefix validation --data-version 0.1.0 --profil
 $TT upload --out build/terrain --production --data-version 1.0.0 --notice "Initial terrain data" --profile qgc-terrain --dryrun
 ```
 
-- Jobs are bound by source reads. Run the global `generate --all` on EC2 in eu-central-1, next
-  to the source buckets; from elsewhere a job takes 10–100 s.
+- Run the global `generate --all` on EC2. From us-west-2 a land job's source reads and warp
+  took under 5 s, so the instance need not be in eu-central-1 next to the source buckets; from
+  a home connection a job can take 10–100 s.
 - `generate` spawns its workers instead of forking them (still the Linux default on Python
   3.12): a worker forked while the progress thread prints could inherit a held lock and hang.
 - GDAL's block cache is capped at 512 MB per process (`GDAL_ENV`); its default, 5% of physical
@@ -552,6 +575,8 @@ $TT upload --out build/terrain --production --data-version 1.0.0 --notice "Initi
   instead of hanging the run; GDAL's defaults never time out. Rerun to retry it.
 - `check`, `stats` and `diff` need only numpy and Pillow, not rasterio.
 - Generation is resumable: rerunning skips jobs with a done marker (`--force` regenerates).
+  A build started before a change to `terrarium.PNG_COMPRESS_LEVEL` needs `--force`: `check`
+  rejects all-sea tiles that are not byte-identical to the current shared one.
   Failed jobs leave no marker and are retried on the next run.
 - `--retries N` reruns the failed jobs, and those a crashed worker left unrun, up to N more
   times in a new worker pool, each after a 30-second pause, so an unattended run survives a
@@ -567,14 +592,11 @@ $TT upload --out build/terrain --production --data-version 1.0.0 --notice "Initi
   `<out>/_reference/ardupilot/`.
 - Always `--dryrun` an upload first: it lists the tiles to upload and, with `--mirror`, the
   tiles to delete. A dry run skips the CloudFront invalidation.
-- For a full upload, raise the CLI's S3 concurrency first (see
-  [Size and Cost Estimates](#size-and-cost-estimates)).
+- For a full upload, set `--workers` (see [Size and Cost Estimates](#size-and-cost-estimates)).
 
 ## Open Items
 
 - Confirm the Copernicus licence attribution wording (`metadata.ATTRIBUTION_NOTICES`).
-- Infrastructure sign-off for the global run: EC2 access in eu-central-1, an instance role for
-  the bucket, and the costs above.
 - Global-run disk: ~1.8 TB of output needs a ≥ 3.8 TB instance (c7gd.16xlarge), since a
   production upload takes one complete local build.
 - The validation sampler leaves out neighbors on a different lattice at band and GLO-90 edges

@@ -10,15 +10,19 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
 
 from .jobs import (
     PROGRESS_INTERVAL_S,
     TILES_DIR,
+    bounded_completion,
     check_passed_marker,
     done_markers,
     periodic_progress,
+    print_line,
 )
 from .metadata import TILEJSON_NAME, write_metadata
 from .tilemath import JOB_ZOOM
@@ -35,6 +39,7 @@ TILE_CACHE_CONTROL = "public, max-age=86400"
 METADATA_CACHE_CONTROL = "public, max-age=300"
 _PREFIX = re.compile(r"[a-z0-9][a-z0-9._-]*")
 _DATA_VERSION = re.compile(r"\d+\.\d+\.\d+")
+MAX_LISTED_FAILURES = 20
 
 
 def validate_prefix(prefix: str | None) -> None:
@@ -85,8 +90,8 @@ def check_complete_build(out: Path, expected_jobs: int = 1 << (2 * JOB_ZOOM)) ->
         raise ValueError("The build changed after the last passing check; rerun check")
 
 
-def _key_path(prefix: str | None, name: str) -> str:
-    return f"{prefix}/{name}" if prefix else name
+def _key_path(prefix: str | None, name: str | None) -> str:
+    return "/".join(part for part in (prefix, name) if part)
 
 
 def _aws_options(profile: str | None) -> list[str]:
@@ -97,10 +102,30 @@ def _s3_options(profile: str | None, dryrun: bool) -> list[str]:
     return ["--no-progress", *_aws_options(profile), *(["--dryrun"] if dryrun else [])]
 
 
+def tile_directories(out: Path) -> list[str]:
+    """Every ``<zoom>/<x>`` directory of the tile tree: what one sync process uploads."""
+    return sorted(
+        f"{zoom.name}/{column.name}"
+        for zoom in (out / TILES_DIR).iterdir()
+        if zoom.is_dir()
+        for column in zoom.iterdir()
+        if column.is_dir()
+    )
+
+
 def sync_command(
-    out: Path, prefix: str | None, *, mirror: bool, profile: str | None, dryrun: bool
+    out: Path,
+    prefix: str | None,
+    *,
+    mirror: bool,
+    profile: str | None,
+    dryrun: bool,
+    directory: str | None = None,
 ) -> list[str]:
-    """Tile sync; deletes remote tiles missing locally only with *mirror*, never in production."""
+    """Tile sync of the whole tree, or of one of its *tile_directories*.
+
+    Deletes remote tiles missing locally only with *mirror*, never in production.
+    """
     validate_prefix(prefix)
     if mirror and prefix is None:
         raise ValueError("--mirror is only for test prefixes: a partial build would delete tiles")
@@ -109,8 +134,8 @@ def sync_command(
         "aws",
         "s3",
         "sync",
-        str(out / TILES_DIR),
-        f"s3://{BUCKET}/{_key_path(prefix, TILES_DIR)}",
+        str(out / TILES_DIR / directory) if directory else str(out / TILES_DIR),
+        f"s3://{BUCKET}/{_key_path(prefix, _key_path(TILES_DIR, directory))}",
         "--exclude",
         "*",
         "--include",
@@ -198,30 +223,94 @@ def _run(command: list[str]) -> int:
     return subprocess.run(command, check=False).returncode
 
 
-def _run_sync(command: list[str]) -> int:
-    """Run the tile sync, printing a periodic count instead of its line per transferred tile.
+def _sync_tiles(
+    out: Path, prefix: str | None, *, mirror: bool, profile: str | None, workers: int
+) -> int:
+    """Sync the tiles with *workers* ``aws`` processes at once, each on its own tile directory.
 
-    A full upload would print ~90M such lines. Everything else passes through, including
-    failures and warnings, which aws writes to stderr.
+    One ``aws s3 sync`` is held to about 600 tiles a second by a single CPU core, so the tree
+    is split by directory. A mirror stays one process over the whole tree: only that also
+    deletes remote directories that no longer exist locally.
+
+    A failed sync does not stop the others, so one throttled directory costs a rerun of that
+    directory, not of the upload; the failures are listed and the first one's status returned.
+    Only when every sync of the first batch, *workers* of them, fails (credentials, the bucket)
+    are the rest not started.
+
+    The syncs' line per transferred tile (~90M for a full upload) becomes a periodic count.
+    Everything else passes through, including failures and warnings, which aws writes to stderr.
     """
-    print(" ".join(command), flush=True)
+    directories: list[str | None] = [None] if mirror else [*tile_directories(out)]
+
+    def command_for(directory: str | None) -> list[str]:
+        return sync_command(
+            out, prefix, mirror=mirror, profile=profile, dryrun=False, directory=directory
+        )
+
+    if mirror:
+        print(" ".join(command_for(None)), flush=True)
+    else:
+        print(
+            f"aws s3 sync of {len(directories)} tile directories, {workers} at a time", flush=True
+        )
+        if directories:
+            print(f"The first: {' '.join(command_for(directories[0]))}", flush=True)
     start = time.monotonic()
     count = 0
+    count_lock = threading.Lock()
+
+    def sync(directory: str | None) -> int:
+        nonlocal count
+        command = command_for(directory)
+        with subprocess.Popen(command, stdout=subprocess.PIPE, text=True) as process:
+            for line in process.stdout or ():
+                if line.startswith(("upload: ", "delete: ")):
+                    with count_lock:
+                        count += 1
+                else:
+                    print_line(line.rstrip("\n"))
+        return process.returncode
 
     def progress(rate: float) -> str:
         return f"{count} tiles in {time.monotonic() - start:.0f}s; {rate:.0f} tiles/s"
 
+    returncode = 0
+    failed: list[str] = []
     with (
-        subprocess.Popen(command, stdout=subprocess.PIPE, text=True) as process,
+        ThreadPoolExecutor(max_workers=workers) as pool,
         periodic_progress(lambda: count, progress, PROGRESS_INTERVAL_S),
     ):
-        for line in process.stdout or ():
-            if line.startswith(("upload: ", "delete: ")):
-                count += 1
-            else:
-                print(line, end="", flush=True)
+
+        def sync_all(batch: list[str | None]) -> None:
+            nonlocal returncode
+            completed = bounded_completion(
+                lambda directory: pool.submit(sync, directory), batch, limit=workers
+            )
+            for directory, future in completed:
+                status = future.result()
+                if status:
+                    returncode = returncode or status
+                    failed.append(directory or TILES_DIR)
+                    print_line(f"aws s3 sync of {failed[-1]} exited with {status}")
+
+        # The first batch runs to the end on its own: judged while the rest were starting,
+        # a quick failure and its replacement could outrun a sync that is working.
+        first_batch, rest = directories[:workers], directories[workers:]
+        sync_all(first_batch)
+        if rest and len(failed) == len(first_batch):
+            print_line("Every sync of the first batch failed; not starting the rest")
+        else:
+            sync_all(rest)
     print(f"[summary] {count} tiles in {time.monotonic() - start:.0f}s", flush=True)
-    return process.returncode
+    if failed:
+        listed = " ".join(failed[:MAX_LISTED_FAILURES])
+        more = len(failed) - MAX_LISTED_FAILURES
+        print(
+            f"{len(failed)} of {len(directories)} sync(s) failed; rerun upload to retry: {listed}"
+            + (f" ... and {more} more" if more > 0 else ""),
+            flush=True,
+        )
+    return returncode
 
 
 def _invalidate(prefix: str | None, profile: str | None) -> int:
@@ -243,6 +332,7 @@ def upload(
     mirror: bool,
     profile: str | None,
     dryrun: bool,
+    workers: int = 1,
 ) -> int:
     """Tiles, then a completed CloudFront invalidation, then metadata with the new version.
 
@@ -262,9 +352,11 @@ def upload(
         check_complete_build(out)
         check_version_increases(data_version, published_version(profile=profile))
     files = write_metadata(out, PUBLIC_URL, prefix, data_version, notice)
-    # A dry run's output is the listing of what would be transferred, so it prints in full.
-    run_sync = _run if dryrun else _run_sync
-    returncode = run_sync(sync_command(out, prefix, mirror=mirror, profile=profile, dryrun=dryrun))
+    if dryrun:
+        # Its output is the listing of what would be transferred, so it prints in full.
+        returncode = _run(sync_command(out, prefix, mirror=mirror, profile=profile, dryrun=True))
+    else:
+        returncode = _sync_tiles(out, prefix, mirror=mirror, profile=profile, workers=workers)
     if returncode:
         return returncode
     if dryrun:
