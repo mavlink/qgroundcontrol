@@ -199,7 +199,8 @@ globe and run in a process pool. Per job ([`generate.py`](generate.py)):
    the encoded RGB, whose encoding is not linear). Heights are rounded to the 0.25 m step only
    when each tile is encoded.
 6. **Mark** the job done in `<out>/_done/` with its status (`ocean` or the cell count), so
-   reruns resume.
+   reruns resume. A job that fails leaves its traceback in `<out>/_failed/` instead, removed once
+   a later run completes it.
 
 `overviews` then builds z8..z0 from the z9 tiles by decoding, averaging and re-encoding; missing
 children count as sea level. Each zoom's tiles are built in a process pool (`--workers`, default
@@ -218,7 +219,10 @@ stopping at the first failure:
 
 1. **Tiles:** `aws s3 sync` with a one-day max-age. Remote tiles missing locally are deleted only
    with `--mirror`, which is refused for production: a full build writes every key, and a partial
-   one would wipe the rest.
+   one would wipe the rest. The sync's line per transferred tile is replaced by a count: a
+   `[progress]` line a minute with the rate, also while `aws` prints nothing (comparing an
+   already uploaded tree), then a `[summary]` line. A dry run's listing and `aws` failures
+   still print.
 2. **CloudFront invalidation** of `<target>/terrarium/*`, waiting until it completes.
 3. **Metadata:** `ATTRIBUTION.txt`, then `tilejson.json` with `version` set to `--data-version`
    and the `notice`, both with a five-minute max-age. `tilejson.json` goes last, so the new
@@ -275,7 +279,7 @@ Missing keys return **403**, not 404: CloudFront's access to the bucket excludes
 | [`copernicus.py`](copernicus.py) | Cell naming, tile lists, GLO-30/GLO-90 cell map, cell selection |
 | [`terrarium.py`](terrarium.py) | Terrarium encode/decode, 0.25 m rounding, height averaging, PNG I/O |
 | [`generate.py`](generate.py) | Per-lattice grids, void fill, warp, pyramid, overviews, process pool |
-| [`jobs.py`](jobs.py) | Tile paths (`TILES_DIR`), job done markers, bounded job scheduling and validation job selection (pure Python) |
+| [`jobs.py`](jobs.py) | Tile paths (`TILES_DIR`), job done markers and failure records, progress lines, bounded job scheduling and validation job selection (pure Python) |
 | [`validate.py`](validate.py) | Source, ArduPilot and Tilezen checks, their pass/fail thresholds, per-job worker pool |
 | [`check.py`](check.py) | Whole-build check of every tile: structure, seams, height jumps |
 | [`compare.py`](compare.py) | Tile-by-tile comparison of two builds |
@@ -498,6 +502,13 @@ mosaic, lattice alignment, warp and Mercator math together, with no network. Cas
   requested count, and a job with none to compare is reported instead of crashing.
 - A broken worker pool counts every unfinished job as failed; in `validate`, `check` and `diff`
   a failing or broken worker is reported as a problem instead of ending the run.
+- A failed job keeps its worker's traceback until a rerun completes it, and is listed in the
+  run's summary; the tile sync prints a count instead of a line per tile. Progress lines keep
+  coming while every job is still running and while the sync prints nothing.
+- `--retries` reruns only the failed jobs and those a broken worker pool left, the jobs in
+  flight when it broke last and without a failure record, and stops counting a job as failed
+  once an attempt completes it. A failure record that cannot be written or removed does not
+  end the run.
 - Validation gates: each source and ArduPilot threshold at and past its limit, a planted
   land-as-sea block found by the ArduPilot comparison, and the exit status that follows; the
   ArduPilot cell cache keeps downloads and 404s on disk and raises other HTTP errors.
@@ -533,6 +544,8 @@ $TT upload --out build/terrain --production --data-version 1.0.0 --notice "Initi
 
 - Jobs are bound by source reads. Run the global `generate --all` on EC2 in eu-central-1, next
   to the source buckets; from elsewhere a job takes 10–100 s.
+- `generate` spawns its workers instead of forking them (still the Linux default on Python
+  3.12): a worker forked while the progress thread prints could inherit a held lock and hang.
 - GDAL's block cache is capped at 512 MB per process (`GDAL_ENV`); its default, 5% of physical
   RAM, would be multiplied by every pool worker.
 - A source read that stalls (no connection within 30 s, or under 1 byte/s for 60 s) fails its job
@@ -540,6 +553,16 @@ $TT upload --out build/terrain --production --data-version 1.0.0 --notice "Initi
 - `check`, `stats` and `diff` need only numpy and Pillow, not rasterio.
 - Generation is resumable: rerunning skips jobs with a done marker (`--force` regenerates).
   Failed jobs leave no marker and are retried on the next run.
+- `--retries N` reruns the failed jobs, and those a crashed worker left unrun, up to N more
+  times in a new worker pool, each after a 30-second pause, so an unattended run survives a
+  stalled source read or a worker killed for memory. The jobs queued or running when a pool
+  broke are all named and retried last: one of them may have killed its worker. A job that fails
+  every attempt (an unfillable void) still fails the run, and a `[done]` line gives the total.
+- `generate` prints a line per job, a `[progress]` line a minute (jobs done as land, ocean,
+  skipped and failed, and land jobs per minute, which set the pace), also while no job
+  finishes, then a `[summary]` line and
+  the failed jobs. A record still in `<out>/_failed/` after a rerun that attempted its job
+  means the job failed again. Nothing is written to a log file: pipe long runs through `tee`.
 - `validate` caches tile lists in `<out>/_source/` and ArduPilot cells (~10 MB each) in
   `<out>/_reference/ardupilot/`.
 - Always `--dryrun` an upload first: it lists the tiles to upload and, with `--mirror`, the

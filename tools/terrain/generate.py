@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import math
+import multiprocessing
 import time
-from collections import defaultdict
+import traceback
+from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from typing import TYPE_CHECKING, Any, NamedTuple
@@ -24,10 +26,14 @@ from .copernicus import COARSEST_PIXEL_DEG, MIN_VALID_HEIGHT, cells_for_bounds, 
 from .jobs import (
     IN_FLIGHT_PER_WORKER,
     OCEAN_STATUS,
+    PROGRESS_INTERVAL_S,
     TILES_DIR,
     bounded_completion,
     done_marker,
+    failure_record,
     mark_done,
+    periodic_progress,
+    print_line,
     tile_path,
 )
 from .tilemath import (
@@ -43,7 +49,7 @@ from .tilemath import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
-    from concurrent.futures import Executor
+    from concurrent.futures import Executor, Future
     from pathlib import Path
 
     from affine import Affine
@@ -58,6 +64,12 @@ CELL_BUFFER_DEG = (VOID_FILL_PIXELS + 4) * COARSEST_PIXEL_DEG
 _MERCATOR_RADIUS = MERCATOR_HALF_EXTENT / math.pi
 # Pixels: float error in a cell's offset on its group's lattice, far below any real misalignment.
 _LATTICE_TOLERANCE = 1e-6
+SKIPPED_STATUS = "skipped"
+# Progress count of the jobs that had source cells; their status reports the cells instead.
+LAND_JOBS = "land"
+MAX_LISTED_JOBS = 100
+# Seconds before a retry pass, so a brief source outage does not use up every retry.
+RETRY_DELAY_S = 30.0
 
 GDAL_ENV: dict[str, Any] = {
     "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
@@ -350,7 +362,7 @@ def write_job_pyramid(out: Path, job: TileKey, heights: np.ndarray) -> None:
 
 def run_job(out: Path, job: TileKey, cells: Mapping[tuple[int, int], str], force: bool) -> str:
     if done_marker(out, job).exists() and not force:
-        return "skipped"
+        return SKIPPED_STATUS
     if cells:
         with rasterio.Env(**GDAL_ENV):
             heights, voids_filled = warp_job(job, cells)
@@ -364,43 +376,150 @@ def run_job(out: Path, job: TileKey, cells: Mapping[tuple[int, int], str], force
     return status
 
 
+def _listed(jobs: list[TileKey], limit: int | None) -> str:
+    listed = " ".join(str(job) for job in sorted(jobs)[:limit])
+    more = 0 if limit is None else len(jobs) - limit
+    return listed + (f" ... and {more} more" if more > 0 else "")
+
+
+def _spawned_pool(max_workers: int) -> Executor:
+    """A process pool whose workers are spawned, never forked.
+
+    Fork is still the Linux default on Python 3.12. A worker forked while the progress thread
+    holds a lock (stdout's, while it prints) inherits it locked, and hangs on its next use.
+    """
+    return ProcessPoolExecutor(
+        max_workers=max_workers, mp_context=multiprocessing.get_context("spawn")
+    )
+
+
+def _run_pass(
+    out: Path,
+    jobs: list[TileKey],
+    cells: Mapping[tuple[int, int], str],
+    workers: int,
+    force: bool,
+    executor_factory: Callable[..., Executor],
+) -> list[TileKey]:
+    """Run the jobs once in a pool; returns those that failed or that a broken pool never ran.
+
+    Jobs in flight when the pool broke come last: one of them may have killed its worker, and
+    would break a retry's pool again before the others ran.
+    """
+    counts: Counter[str] = Counter()
+    submitted: list[TileKey] = []
+    succeeded: set[TileKey] = set()
+    failed: list[TileKey] = []
+    in_flight: list[TileKey] = []
+    start = time.monotonic()
+
+    def finished() -> int:
+        return counts.total() + len(failed)
+
+    def summary(now: float) -> str:
+        return (
+            f"{finished()}/{len(jobs)} jobs in {now - start:.0f}s: {counts[LAND_JOBS]} land, "
+            f"{counts[OCEAN_STATUS]} ocean, {counts[SKIPPED_STATUS]} skipped, "
+            f"{len(failed)} failed"
+        )
+
+    with (
+        executor_factory(max_workers=workers) as pool,
+        periodic_progress(
+            # Land jobs set the pace: ocean and skipped jobs take almost no time.
+            lambda: counts[LAND_JOBS],
+            lambda rate: f"{summary(time.monotonic())}; {rate * 60:.1f} land jobs/min",
+            PROGRESS_INTERVAL_S,
+        ),
+    ):
+
+        def submit(job: TileKey) -> Future[str]:
+            future = pool.submit(run_job, out, job, job_cells(job, cells), force)
+            submitted.append(job)
+            return future
+
+        completed = bounded_completion(submit, jobs, limit=workers * IN_FLIGHT_PER_WORKER)
+        try:
+            for job, future in completed:
+                record = failure_record(out, job)
+                try:
+                    status = future.result()
+                except BrokenProcessPool:
+                    raise
+                except Exception as error:
+                    failed.append(job)
+                    status = f"FAILED: {error}"
+                    # From a process pool this includes the worker's own traceback, as the cause.
+                    details = f"job {job}\n" + "".join(traceback.format_exception(error))
+                    try:
+                        record.parent.mkdir(parents=True, exist_ok=True)
+                        record.write_text(details, encoding="utf-8")
+                    except OSError as write_error:
+                        print_line(f"Could not write {record}: {write_error}")
+                else:
+                    succeeded.add(job)
+                    try:
+                        record.unlink(missing_ok=True)
+                    except OSError as remove_error:
+                        print_line(f"Could not remove {record}: {remove_error}")
+                    counts[status if status in (OCEAN_STATUS, SKIPPED_STATUS) else LAND_JOBS] += 1
+                elapsed = time.monotonic() - start
+                print_line(f"[{finished()}/{len(jobs)} {elapsed:7.1f}s] job {job}: {status}")
+        except BrokenProcessPool as error:
+            collected = succeeded.union(failed)
+            in_flight = [job for job in submitted if job not in collected]
+            # All of them: this line is the only record of which job may have killed its worker.
+            print_line(
+                f"Worker pool broke ({error}); {len(jobs) - finished()} job(s) not run, "
+                f"{len(in_flight)} of them queued or running: {_listed(in_flight, limit=None)}"
+            )
+    not_run = len(jobs) - finished()
+    print(
+        f"[summary] {summary(time.monotonic())}" + (f", {not_run} not run" if not_run else ""),
+        flush=True,
+    )
+    if failed:
+        print(
+            f"Failed jobs (tracebacks in {failure_record(out, failed[0]).parent}): "
+            f"{_listed(failed, MAX_LISTED_JOBS)}",
+            flush=True,
+        )
+    done_or_suspect = succeeded.union(in_flight)
+    return [job for job in jobs if job not in done_or_suspect] + in_flight
+
+
 def generate(
     out: Path,
     jobs: list[TileKey],
     cells: Mapping[tuple[int, int], str],
     workers: int,
     force: bool,
-    executor_factory: Callable[..., Executor] = ProcessPoolExecutor,
+    executor_factory: Callable[..., Executor] = _spawned_pool,
+    retries: int = 0,
 ) -> int:
     """Run all jobs in a process pool; returns the number of failed jobs.
 
+    A failed job leaves its traceback in ``<out>/_failed/`` until a later run completes it.
     If a worker dies (e.g. out of memory) the pool breaks: every job not yet finished counts
-    as failed, and a rerun resumes from the done markers.
+    as failed. Each of the *retries* reruns what is left in a new pool; after the last, a
+    rerun resumes from the done markers.
     """
-    failures = 0
-    finished = 0
-    start = time.monotonic()
-    with executor_factory(max_workers=workers) as pool:
-        completed = bounded_completion(
-            lambda job: pool.submit(run_job, out, job, job_cells(job, cells), force),
-            jobs,
-            limit=workers * IN_FLIGHT_PER_WORKER,
+    remaining = _run_pass(out, jobs, cells, workers, force, executor_factory)
+    attempts = 1
+    while remaining and attempts <= retries:
+        print(
+            f"[retry {attempts}/{retries}] {len(remaining)} job(s) in {RETRY_DELAY_S:.0f}s",
+            flush=True,
         )
-        try:
-            for job, future in completed:
-                finished += 1
-                try:
-                    status = future.result()
-                except Exception as error:
-                    failures += 1
-                    status = f"FAILED: {error}"
-                elapsed = time.monotonic() - start
-                print(f"[{finished}/{len(jobs)} {elapsed:7.1f}s] job {job}: {status}", flush=True)
-        except BrokenProcessPool as error:
-            unfinished = len(jobs) - finished
-            failures += unfinished
-            print(f"Worker pool broke ({error}); {unfinished} job(s) not run", flush=True)
-    return failures
+        time.sleep(RETRY_DELAY_S)
+        remaining = _run_pass(out, remaining, cells, workers, force, executor_factory)
+        attempts += 1
+    if attempts > 1:
+        print(
+            f"[done] {len(remaining)} of {len(jobs)} job(s) incomplete after {attempts} attempts",
+            flush=True,
+        )
+    return len(remaining)
 
 
 def _overview_tile(out: Path, key: TileKey) -> int:

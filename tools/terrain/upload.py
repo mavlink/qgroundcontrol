@@ -10,9 +10,16 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import time
 from typing import TYPE_CHECKING
 
-from .jobs import TILES_DIR, check_passed_marker, done_markers
+from .jobs import (
+    PROGRESS_INTERVAL_S,
+    TILES_DIR,
+    check_passed_marker,
+    done_markers,
+    periodic_progress,
+)
 from .metadata import TILEJSON_NAME, write_metadata
 from .tilemath import JOB_ZOOM
 
@@ -191,6 +198,32 @@ def _run(command: list[str]) -> int:
     return subprocess.run(command, check=False).returncode
 
 
+def _run_sync(command: list[str]) -> int:
+    """Run the tile sync, printing a periodic count instead of its line per transferred tile.
+
+    A full upload would print ~90M such lines. Everything else passes through, including
+    failures and warnings, which aws writes to stderr.
+    """
+    print(" ".join(command), flush=True)
+    start = time.monotonic()
+    count = 0
+
+    def progress(rate: float) -> str:
+        return f"{count} tiles in {time.monotonic() - start:.0f}s; {rate:.0f} tiles/s"
+
+    with (
+        subprocess.Popen(command, stdout=subprocess.PIPE, text=True) as process,
+        periodic_progress(lambda: count, progress, PROGRESS_INTERVAL_S),
+    ):
+        for line in process.stdout or ():
+            if line.startswith(("upload: ", "delete: ")):
+                count += 1
+            else:
+                print(line, end="", flush=True)
+    print(f"[summary] {count} tiles in {time.monotonic() - start:.0f}s", flush=True)
+    return process.returncode
+
+
 def _invalidate(prefix: str | None, profile: str | None) -> int:
     command = invalidation_command(prefix, profile=profile)
     print(" ".join(command), flush=True)
@@ -229,7 +262,9 @@ def upload(
         check_complete_build(out)
         check_version_increases(data_version, published_version(profile=profile))
     files = write_metadata(out, PUBLIC_URL, prefix, data_version, notice)
-    returncode = _run(sync_command(out, prefix, mirror=mirror, profile=profile, dryrun=dryrun))
+    # A dry run's output is the listing of what would be transferred, so it prints in full.
+    run_sync = _run if dryrun else _run_sync
+    returncode = run_sync(sync_command(out, prefix, mirror=mirror, profile=profile, dryrun=dryrun))
     if returncode:
         return returncode
     if dryrun:

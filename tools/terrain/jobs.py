@@ -1,10 +1,13 @@
-"""Output paths, job markers, bounded job scheduling and validation job selection (stdlib only)."""
+"""Output paths, job markers, failure records, progress lines and job scheduling (stdlib only)."""
 
 from __future__ import annotations
 
 import itertools
 import random
+import threading
+import time
 from concurrent.futures import FIRST_COMPLETED, wait
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from .tilemath import JOB_ZOOM, TileKey
@@ -19,6 +22,8 @@ TILES_DIR = "terrarium"
 OCEAN_STATUS = "ocean"
 # Tasks queued per pool worker: enough to keep every worker busy while results are collected.
 IN_FLIGHT_PER_WORKER = 4
+# Seconds between the progress lines of a long generation or upload.
+PROGRESS_INTERVAL_S = 60.0
 
 
 def tile_path(out: Path, key: TileKey) -> Path:
@@ -27,6 +32,11 @@ def tile_path(out: Path, key: TileKey) -> Path:
 
 def done_marker(out: Path, job: TileKey) -> Path:
     return out / "_done" / f"{job.z}_{job.x}_{job.y}"
+
+
+def failure_record(out: Path, job: TileKey) -> Path:
+    """Traceback of the job's last failed attempt; removed once the job succeeds."""
+    return out / "_failed" / f"{job.z}_{job.x}_{job.y}"
 
 
 def job_from_marker(marker: Path) -> TileKey:
@@ -54,6 +64,41 @@ def completed_jobs(out: Path) -> dict[TileKey, str]:
         job_from_marker(marker): marker.read_text(encoding="utf-8").strip()
         for marker in done_markers(out)
     }
+
+
+def print_line(text: str) -> None:
+    """Print in one write, so a line from the progress thread cannot land inside another."""
+    print(f"{text}\n", end="", flush=True)
+
+
+@contextmanager
+def periodic_progress(
+    count: Callable[[], int], describe: Callable[[float], str], interval: float
+) -> Iterator[None]:
+    """Print a ``[progress]`` line every *interval* seconds until the block ends.
+
+    *describe* gets the rate of *count* per second since the previous line. The lines come
+    from a thread, so they keep coming while the caller waits on a job or a child process
+    that has nothing to report.
+    """
+    stop = threading.Event()
+
+    def report() -> None:
+        last_time, last_count = time.monotonic(), count()
+        while not stop.wait(interval):
+            now, current = time.monotonic(), count()
+            # A coarse clock may not have advanced over a very short interval.
+            rate = (current - last_count) / (now - last_time) if now > last_time else 0.0
+            print_line(f"[progress] {describe(rate)}")
+            last_time, last_count = now, current
+
+    thread = threading.Thread(target=report, daemon=True)
+    thread.start()
+    try:
+        yield
+    finally:
+        stop.set()
+        thread.join()
 
 
 def bounded_completion[T, R](

@@ -6,11 +6,16 @@ import functools
 import os
 import subprocess
 import sys
+import threading
 from concurrent.futures import Future
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from terrain import cli, copernicus, jobs, metadata, tilemath, upload
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
 
 TileKey = tilemath.TileKey
 
@@ -231,6 +236,24 @@ def test_notice_needs_known_severity_and_text(severity: str, text: str) -> None:
         metadata.Notice(severity, text).validate()
 
 
+class _FakeSync:
+    """Stands in for the ``aws s3 sync`` process: its stdout lines and exit status.
+
+    Like Popen, it has no exit status until the ``with`` block waits for the process.
+    """
+
+    def __init__(self, lines: Iterable[str], returncode: int = 0) -> None:
+        self.stdout = iter(lines)
+        self.returncode: int | None = None
+        self._exit_status = returncode
+
+    def __enter__(self) -> _FakeSync:
+        return self
+
+    def __exit__(self, *_args: object) -> None:
+        self.returncode = self._exit_status
+
+
 @pytest.mark.parametrize(
     ("invalidation_returncode", "expected"),
     [
@@ -261,7 +284,12 @@ def test_upload_publishes_metadata_only_after_invalidation_completes(
         returncode = invalidation_returncode if command[2] == "create-invalidation" else 0
         return subprocess.CompletedProcess(command, returncode, stdout="I123\n", stderr="")
 
+    def popen(command: list[str], **_kwargs: object) -> _FakeSync:
+        steps.append(command[2])
+        return _FakeSync([])
+
     monkeypatch.setattr(upload.subprocess, "run", run)
+    monkeypatch.setattr(upload.subprocess, "Popen", popen)
     returncode = upload.upload(
         tmp_path,
         None,
@@ -273,6 +301,82 @@ def test_upload_publishes_metadata_only_after_invalidation_completes(
     )
     assert steps == expected
     assert returncode == invalidation_returncode
+
+
+def test_a_dry_run_lists_every_tile_it_would_transfer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "terrarium").mkdir()
+    monkeypatch.setattr(upload, "write_metadata", lambda *_args: [])
+    ran: list[list[str]] = []
+
+    def run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        ran.append(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    def popen(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("a dry run must not reduce the sync's output to a count")
+
+    monkeypatch.setattr(upload.subprocess, "run", run)
+    monkeypatch.setattr(upload.subprocess, "Popen", popen)
+    returncode = upload.upload(
+        tmp_path,
+        "validation",
+        data_version="0.1.0",
+        notice=None,
+        mirror=False,
+        profile=None,
+        dryrun=True,
+    )
+    assert returncode == 0
+    assert [command[2] for command in ran] == ["sync"]
+    assert ran[0][-1] == "--dryrun"
+
+
+def test_tile_sync_prints_a_count_instead_of_a_line_per_tile(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    lines = [
+        "upload: out/terrarium/0/0/0.png to s3://qgc-terrain-assets/terrarium/0/0/0.png\n",
+        "upload: out/terrarium/1/0/0.png to s3://qgc-terrain-assets/terrarium/1/0/0.png\n",
+        "delete: s3://qgc-terrain-assets/terrarium/1/1/1.png\n",
+        "Anything else the sync prints\n",
+    ]
+    monkeypatch.setattr(upload.subprocess, "Popen", lambda *_args, **_kwargs: _FakeSync(lines, 1))
+    assert upload._run_sync(["aws", "s3", "sync"]) == 1
+    printed = capsys.readouterr().out.splitlines()
+    assert printed[0] == "aws s3 sync"
+    assert printed[1] == lines[3].rstrip()
+    assert printed[2].startswith("[summary] 3 tiles in ")
+    assert len(printed) == 3
+
+
+def test_tile_sync_reports_progress_while_aws_prints_nothing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    progressed = threading.Event()
+    print_line = jobs.print_line
+
+    def note_progress(text: str) -> None:
+        print_line(text)
+        progressed.set()
+
+    def silent_until_progress_was_reported() -> Iterator[str]:
+        assert progressed.wait(timeout=30)
+        yield "upload: out/terrarium/0/0/0.png to s3://qgc-terrain-assets/terrarium/0/0/0.png\n"
+
+    monkeypatch.setattr(jobs, "print_line", note_progress)
+    monkeypatch.setattr(upload, "PROGRESS_INTERVAL_S", 0.001)
+    monkeypatch.setattr(
+        upload.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: _FakeSync(silent_until_progress_was_reported()),
+    )
+    assert upload._run_sync(["aws", "s3", "sync"]) == 0
+    printed = capsys.readouterr().out.splitlines()
+    assert printed[1].startswith("[progress] 0 tiles in ")
+    assert printed[1].endswith("; 0 tiles/s")
+    assert printed[-1].startswith("[summary] 1 tiles in ")
 
 
 def job_key(x: int, y: int) -> TileKey:
@@ -488,6 +592,15 @@ def test_cli_counts_must_be_at_least_one(
     else:
         with pytest.raises(SystemExit):
             parse()
+
+
+def test_generate_retries_may_be_zero_but_not_negative() -> None:
+    parse = cli.build_parser().parse_args
+    argv = ["generate", "--all", "--out", "out"]
+    assert parse(argv).retries == 0
+    assert parse([*argv, "--retries", "3"]).retries == 3
+    with pytest.raises(SystemExit):
+        parse([*argv, "--retries", "-1"])
 
 
 def test_validate_defaults_to_one_worker() -> None:

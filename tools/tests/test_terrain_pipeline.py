@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 import zipfile
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
@@ -53,6 +54,7 @@ OSLO_JOB = TileKey(generate.JOB_ZOOM, 270, 148)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from multiprocessing.context import BaseContext
 
 
 def ramp(lon, lat):
@@ -639,6 +641,156 @@ def test_a_broken_worker_pool_counts_every_unfinished_job_as_failed(tmp_path: Pa
     job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(5)]
     failures = generate.generate(tmp_path, job_list, {}, 1, False, executor_factory=_BrokenPool)
     assert failures == len(job_list)
+
+
+def test_generate_spawns_its_workers_instead_of_forking_them(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    start_methods: list[str] = []
+
+    def pool(max_workers: int, mp_context: BaseContext) -> Executor:
+        start_methods.append(mp_context.get_start_method())
+        return ThreadPoolExecutor(max_workers=max_workers)
+
+    monkeypatch.setattr(generate, "ProcessPoolExecutor", pool)
+    assert generate.generate(tmp_path, [TileKey(generate.JOB_ZOOM, 0, 0)], {}, 1, False) == 0
+    assert start_methods == ["spawn"]
+
+
+def test_jobs_lost_to_a_broken_worker_pool_get_no_failure_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The cap on listed jobs is for failed jobs, which also have records on disk.
+    monkeypatch.setattr(generate, "MAX_LISTED_JOBS", 1)
+    # Both jobs are queued before the first result, a broken pool, is collected.
+    job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(2)]
+    assert generate.generate(tmp_path, job_list, {}, 1, False, _BrokenPool) == 2
+    assert not jobs.failure_record(tmp_path, job_list[0]).parent.exists()
+    printed = capsys.readouterr().out
+    assert "2 of them queued or running: 9/0/0 9/1/0\n" in printed
+    assert "0 land, 0 ocean, 0 skipped, 0 failed, 2 not run\n" in printed
+
+
+def test_retries_rerun_the_jobs_a_broken_worker_pool_left(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(generate, "RETRY_DELAY_S", 0)
+    # The pool breaks with the first two jobs queued, before the third is submitted.
+    job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(3)]
+    pools = iter([_BrokenPool, ThreadPoolExecutor])
+
+    def next_pool(max_workers: int) -> Executor:
+        return next(pools)(max_workers=max_workers)
+
+    assert generate.generate(tmp_path, job_list, {}, 1, False, next_pool, retries=1) == 0
+    assert jobs.completed_jobs(tmp_path) == dict.fromkeys(job_list, "ocean")
+    retry = capsys.readouterr().out.split("[retry 1/1] 3 job(s)")[1]
+    # The jobs that were in flight, either of which may have broken the pool, run last.
+    assert [line.split()[3] for line in retry.splitlines() if " job 9/" in line] == [
+        "9/2/0:",
+        "9/0/0:",
+        "9/1/0:",
+    ]
+    assert "[done] 0 of 3 job(s) incomplete after 2 attempts" in retry
+
+
+@pytest.mark.parametrize(("retries", "still_failed"), [(0, 1), (1, 1), (2, 0)])
+def test_retries_rerun_only_the_failed_jobs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, retries: int, still_failed: int
+) -> None:
+    job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(2)]
+    run_job = generate.run_job
+    attempts: list[TileKey] = []
+
+    def fail_one_job_twice(
+        out: Path, job: TileKey, cells: dict[tuple[int, int], str], force: bool
+    ) -> str:
+        attempts.append(job)
+        if job == job_list[1] and attempts.count(job) <= 2:
+            raise OSError("source read stalled")
+        return run_job(out, job, cells, force)
+
+    monkeypatch.setattr(generate, "RETRY_DELAY_S", 0)
+    monkeypatch.setattr(generate, "run_job", fail_one_job_twice)
+    failures = generate.generate(
+        tmp_path, job_list, {}, 1, False, ThreadPoolExecutor, retries=retries
+    )
+    assert failures == still_failed
+    assert attempts.count(job_list[0]) == 1
+    assert jobs.failure_record(tmp_path, job_list[1]).exists() == bool(still_failed)
+
+
+def test_a_failed_job_keeps_its_worker_traceback_until_it_succeeds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ocean_job = TileKey(generate.JOB_ZOOM, 0, 0)
+    missing = {(lat, lon): str(tmp_path / "missing.tif") for lat in (45, 46) for lon in (7, 8)}
+    record = jobs.failure_record(tmp_path, ALPS_JOB)
+
+    # The default process pool: the traceback has to survive the trip back from the worker.
+    assert generate.generate(tmp_path, [ocean_job, ALPS_JOB], missing, 1, False) == 1
+    details = record.read_text(encoding="utf-8")
+    assert details.startswith(f"job {ALPS_JOB}\n")
+    assert "_read_groups" in details
+    assert jobs.completed_jobs(tmp_path) == {ocean_job: "ocean"}
+    printed = capsys.readouterr().out
+    assert "[summary] 2/2 jobs in " in printed
+    assert "0 land, 1 ocean, 0 skipped, 1 failed" in printed
+    assert f"Failed jobs (tracebacks in {record.parent}): {ALPS_JOB}\n" in printed
+
+    rerun = generate.generate(
+        tmp_path, [ocean_job, ALPS_JOB], alps_cells(tmp_path), 1, False, ThreadPoolExecutor
+    )
+    assert rerun == 0
+    assert not record.exists()
+    assert "1 land, 0 ocean, 1 skipped, 0 failed\n" in capsys.readouterr().out
+
+
+def test_progress_is_reported_while_every_job_is_still_running(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    job = TileKey(generate.JOB_ZOOM, 0, 0)
+    progressed = threading.Event()
+    print_line = jobs.print_line
+
+    def note_progress(text: str) -> None:
+        print_line(text)
+        if text.startswith("[progress] "):
+            progressed.set()
+
+    def run_once_progress_was_reported(*_args: object) -> str:
+        assert progressed.wait(timeout=30)
+        return "ocean"
+
+    monkeypatch.setattr(jobs, "print_line", note_progress)
+    monkeypatch.setattr(generate, "PROGRESS_INTERVAL_S", 0.001)
+    monkeypatch.setattr(generate, "run_job", run_once_progress_was_reported)
+    assert generate.generate(tmp_path, [job], {}, 1, False, ThreadPoolExecutor) == 0
+    first = capsys.readouterr().out.splitlines()[0]
+    assert first.startswith("[progress] 0/1 jobs in ")
+    assert first.endswith("0 land, 0 ocean, 0 skipped, 0 failed; 0.0 land jobs/min")
+
+
+def test_a_failure_record_that_cannot_be_written_or_removed_does_not_end_the_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    job_list = [TileKey(generate.JOB_ZOOM, x, 0) for x in range(2)]
+    (tmp_path / "_failed").write_text("in the way of the records directory", encoding="utf-8")
+    run_job = generate.run_job
+
+    def fail_the_second_job(
+        out: Path, job: TileKey, cells: dict[tuple[int, int], str], force: bool
+    ) -> str:
+        if job == job_list[1]:
+            raise OSError("disk full")
+        return run_job(out, job, cells, force)
+
+    monkeypatch.setattr(generate, "run_job", fail_the_second_job)
+    assert generate.generate(tmp_path, job_list, {}, 1, False, ThreadPoolExecutor) == 1
+    printed = capsys.readouterr().out
+    assert f"Could not remove {jobs.failure_record(tmp_path, job_list[0])}: " in printed
+    assert f"Could not write {jobs.failure_record(tmp_path, job_list[1])}: " in printed
+    assert "0 land, 1 ocean, 0 skipped, 1 failed" in printed
 
 
 def test_fit_offset_recovers_a_known_shift() -> None:
