@@ -85,6 +85,50 @@ void QGCFileHelperTest::_testIsInDirectory()
 }
 
 // ============================================================================
+// localFileName() tests
+// ============================================================================
+void QGCFileHelperTest::_testLocalFileName_data()
+{
+    QTest::addColumn<QString>("name");
+    // Empty if the name is refused
+    QTest::addColumn<QString>("fileName");
+
+    QTest::newRow("a name") << "parameters.json.xz" << "parameters.json.xz";
+    QTest::newRow("a path") << "/etc/extras/parameters.json.xz" << "parameters.json.xz";
+    QTest::newRow("backslashes") << "..\\..\\evil.json" << "evil.json";
+    QTest::newRow("both separators") << "a/..\\b\\../evil.json" << "evil.json";
+    QTest::newRow("a drive path") << "C:\\Windows\\evil.json" << "evil.json";
+    // Callers give a URL's name decoded: what is left encoded is a part of the name
+    QTest::newRow("an encoded separator") << "..%5C..%5Cevil.json" << "..%5C..%5Cevil.json";
+    QTest::newRow("empty") << "" << "";
+    QTest::newRow("dot") << "." << "";
+    QTest::newRow("dot dot") << "a\\.." << "";
+    QTest::newRow("a trailing slash") << "dir/" << "";
+    QTest::newRow("a trailing backslash") << "dir\\" << "";
+    QTest::newRow("a trailing dot") << "evil.json." << "";
+    QTest::newRow("a trailing space") << "evil.json " << "";
+    QTest::newRow("relative to a drive") << "C:evil.json" << "";
+    QTest::newRow("an alternate data stream") << "evil.json:stream" << "";
+    QTest::newRow("a wildcard") << "evil*.json" << "";
+    QTest::newRow("a control character") << "evil\n.json" << "";
+    QTest::newRow("a device") << "dir/NUL" << "";
+    QTest::newRow("a device with an extension") << "com1.json" << "";
+    QTest::newRow("a device with a space before the extension") << "CON .json" << "";
+    QTest::newRow("a device with a superscript digit") << QStringLiteral("LPT\u00B9.json") << "";
+    QTest::newRow("a device name and more") << "COM10.json" << "COM10.json";
+    QTest::newRow("255 bytes") << QString(255, QLatin1Char('a')) << QString(255, QLatin1Char('a'));
+    QTest::newRow("256 bytes of UTF-8") << QString(128, QChar(0x00E9)) << "";
+}
+
+void QGCFileHelperTest::_testLocalFileName()
+{
+    QFETCH(QString, name);
+    QFETCH(QString, fileName);
+
+    QCOMPARE(QGCFileHelper::localFileName(name), fileName);
+}
+
+// ============================================================================
 // ensureDirectoryExists() tests
 // ============================================================================
 void QGCFileHelperTest::_testEnsureDirectoryExistsAlreadyExists()

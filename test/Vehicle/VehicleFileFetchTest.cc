@@ -4,6 +4,7 @@
 #include <utility>
 
 #include <QtCore/QDir>
+#include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
@@ -379,6 +380,69 @@ void VehicleFileFetchTest::_testUriOtherThanFtpOrHttpRefused()
     QVERIFY(owner.children().isEmpty());
     QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList());
     QCOMPARE(result.calls, 0);
+}
+
+// Over HTTP the URL or the caller names the file in the directory, never where it goes, and the same way on every
+// system. A name that cannot be used is refused, as over MAVLink FTP (FTPManagerTest::_testDownloadFileName)
+void VehicleFileFetchTest::_testHttpFileName_data()
+{
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<QString>("fileName");
+    // Name of the fetched file in the directory, empty if the fetch is refused
+    QTest::addColumn<QString>("localName");
+
+    // Decoded, "%5C" is a backslash, a separator on Windows
+    QTest::newRow("encoded backslashes in the URL") << "/a/..%5C..%5Cescaped.json" << "" << "escaped.json";
+    QTest::newRow("backslashes in the name") << "/file.bin" << "..\\..\\escaped.json" << "escaped.json";
+    QTest::newRow("no name in the URL") << "/dir/" << "" << "";
+    QTest::newRow("a device in the URL") << "/a/COM1.json" << "" << "";
+    QTest::newRow("relative to a drive in the name") << "/file.bin" << "C:escaped.json" << "";
+}
+
+void VehicleFileFetchTest::_testHttpFileName()
+{
+    QFETCH(QString, path);
+    QFETCH(QString, fileName);
+    QFETCH(QString, localName);
+
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY(server.listen());
+    const QByteArray body = fetchTestSizeFileContent(1024);
+    server.installHttpResponder(body);
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    // Two levels down, so that a name that climbs two levels would still land in the temporary directory
+    const QString directory = root.filePath(QStringLiteral("a/b"));
+    QVERIFY(QDir().mkpath(directory));
+
+    QObject owner;
+    Result result;
+    const auto record = [&result](const QString& file, const QString& errorMsg) {
+        result.calls++;
+        result.file = file;
+        result.error = errorMsg;
+    };
+    if (localName.isEmpty()) {
+        expectLogMessage("Vehicle.VehicleFileFetch", QtWarningMsg, QRegularExpression("not a file name"));
+        QVERIFY(!VehicleFileFetch::start(&owner, nullptr, server.url(path),
+                                         {.directory = directory, .fileName = fileName}, record));
+        verifyExpectedLogMessage();
+        QCOMPARE(server.connectionCount(), 0);
+    } else {
+        QVERIFY(VehicleFileFetch::start(&owner, nullptr, server.url(path),
+                                        {.directory = directory, .fileName = fileName}, record));
+        QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::mediumMs());
+        QCOMPARE(result.error, QString());
+        QCOMPARE(result.file, QDir(directory).filePath(localName));
+        QCOMPARE(TestFixtures::readFile(result.file), body);
+    }
+
+    QStringList written;
+    QDirIterator files(root.path(), QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
+    while (files.hasNext()) {
+        written.append(QDir(root.path()).relativeFilePath(files.next()));
+    }
+    QCOMPARE(written, localName.isEmpty() ? QStringList() : QStringList{QStringLiteral("a/b/") + localName});
 }
 
 // The scheme is taken in any case, and a URI without one that names a host is HTTP, as the camera took it before

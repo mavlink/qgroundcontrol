@@ -496,6 +496,42 @@ void RequestMetaDataTypeStateMachineTest::_httpDownloadEndsWithItsState()
     }
 }
 
+// A new build of a vehicle serves its metadata at the URL of the build before, with another CRC. The file of the new
+// CRC is fetched from the server, not taken from the network disk cache, which keeps the file of that URL whatever
+// its CRC.
+void RequestMetaDataTypeStateMachineTest::_newCrcIsNotTakenFromTheHttpCache()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY(server.listen());
+    const QString uri = server.url(_uniqueServerPath(QStringLiteral("parameter.json")));
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+
+    for (const QString& build : {QStringLiteral("First build"), QStringLiteral("Next build")}) {
+        // The server lets the file be cached
+        server.installHttpResponder(
+            QStringLiteral(R"({"version":1,"parameters":[{"name":"BUILD_PARAM","type":"Float","shortDesc":"%1"}]})")
+                .arg(build)
+                .toUtf8(),
+            200, "application/json", 3600);
+        param->setUriMetaData(uri, QRandomGenerator::global()->generate());
+        requestMachine.request(param);
+        QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+
+        FactMetaData* const metadata =
+            param->factMetaDataForName(QStringLiteral("BUILD_PARAM"), FactMetaData::valueTypeFloat);
+        QVERIFY(metadata);
+        QCOMPARE(metadata->shortDescription(), build);
+    }
+    QCOMPARE(server.connectionCount(), 2);
+}
+
 void RequestMetaDataTypeStateMachineTest::_downloadsUseTheDirectoryOfTheirManager_data()
 {
     QTest::addColumn<bool>("ftp");
@@ -866,9 +902,10 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker_data()
 
 // The metadata file comes from the vehicle, or from where it points to, and may be large: it is read, decompressed
 // if it is compressed, and parsed on a worker thread, while its state waits. A file that cannot be decompressed, or
-// is larger than VehicleFileFetch::kMaxSmallFileBytes once it is, sets nothing. So does a parse that ends after its
-// state was left, or its machine deleted. The events metadata is parsed by libevents, and once it is in place the
-// vehicle is asked for its prearm checks.
+// is larger than VehicleFileFetch::kMaxSmallFileBytes once it is, sets nothing, and its entry leaves the file cache, so
+// that the next connection downloads it again. So does a parse that ends after its state was left, or its machine
+// deleted, which leaves the entry. The events metadata is parsed by libevents, and once it is in place the vehicle is
+// asked for its prearm checks.
 void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
 {
     QFETCH(int, type);
@@ -973,6 +1010,76 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
         QVERIFY(metadata);
         QCOMPARE(metadata->shortDescription() == QStringLiteral("Parsed"), loaded);
     }
+    QCOMPARE(manager->fileCache().access(fileTag).isEmpty(), (end == QStringLiteral("none")) && !readable);
+}
+
+void RequestMetaDataTypeStateMachineTest::_downloadIsCachedOnceRead_data()
+{
+    QTest::addColumn<int>("type");
+    QTest::addColumn<bool>("readable");
+
+    for (const int type : {COMP_METADATA_TYPE_PARAMETER, COMP_METADATA_TYPE_EVENTS}) {
+        const char* const name = (type == COMP_METADATA_TYPE_EVENTS) ? "events" : "parameters";
+        QTest::addRow("%s read", name) << type << true;
+        QTest::addRow("%s, truncated", name) << type << false;
+    }
+}
+
+// A downloaded metadata file is cached under its CRC once it has been read and parsed. One that cannot be, such as a
+// transfer cut off, is not: it would be taken from the cache at every later connection. It is removed with the other
+// downloads of the request.
+void RequestMetaDataTypeStateMachineTest::_downloadIsCachedOnceRead()
+{
+    QFETCH(int, type);
+    QFETCH(bool, readable);
+    const bool events = (type == COMP_METADATA_TYPE_EVENTS);
+
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->inProgress(), TestTimeout::mediumMs());
+
+    // A component of its own, so that only this test sets its metadata
+    constexpr uint8_t compId = 44;
+    CompInfoParam* const param = manager->compInfoParam(compId);
+    QVERIFY(param);
+    CompInfoEvents eventsInfo(compId, vehicle());
+    CompInfo* const compInfo = events ? static_cast<CompInfo*>(&eventsInfo) : param;
+
+    const QByteArray contents =
+        events ? R"({"version":2,"components":{"44":{"namespace":"cached",)"
+                 R"("supported_protocols":["health_and_arming_check"]}}})"
+               : R"({"version":1,"parameters":[{"name":"CACHED_PARAM","type":"Float","shortDesc":"Read"}]})";
+    const QByteArray compressed = TestFixtures::gzipMember(contents);
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY(server.listen());
+    server.installHttpResponder(readable ? compressed : compressed.first(compressed.size() / 2));
+    const uint32_t crc = QRandomGenerator::global()->generate();
+    compInfo->setUriMetaData(server.url(_uniqueServerPath(QStringLiteral("metadata.json.gz"))), crc);
+    if (!readable) {
+        if (events) {
+            expectLogMessage("MAVLink.LibEvents.EventHandler", QtWarningMsg,
+                             QRegularExpression("Failed to load events JSON metadata file.*truncated"));
+        } else {
+            expectLogMessage("ComponentInformation.CompInfoParam", QtWarningMsg,
+                             QRegularExpression("Metadata json file open failed.*truncated"));
+        }
+    }
+
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    requestMachine.request(compInfo);
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    if (!readable) {
+        verifyExpectedLogMessage();
+    }
+
+    const QString cachedFile =
+        manager->fileCache().access(QString::asprintf("%08x_%02i_%i", crc, static_cast<int>(compInfo->type), 0));
+    QCOMPARE(cachedFile.isEmpty(), !readable);
+    if (readable) {
+        QCOMPARE(TestFixtures::readFile(cachedFile), compressed);
+    }
+    QCOMPARE(QDir(manager->downloadDirectory()).entryList(QDir::Files), QStringList());
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

@@ -40,7 +40,8 @@ private slots:
     void _testReadChunkSizeFollowsLinkType_data();
     void _testReadChunkSizeFollowsLinkType();
     void _testReadChunkSizeShrinksWhenRadioDetectedMidDownload();
-    void _testDownloadExplicitFileNameIsBasename();
+    UT_PARAMETERIZED_TEST(_testDownloadFileName);
+    void _testControllerNamesRefusedFileName();
     void _testDownloadRejectsMissingDestination();
     UT_PARAMETERIZED_TEST(_testDownloadSizeLimit);
     void _testQueuedRequestsRunInOrder();

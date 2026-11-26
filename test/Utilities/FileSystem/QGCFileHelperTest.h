@@ -17,6 +17,9 @@ private slots:
     // isInDirectory() tests
     UT_PARAMETERIZED_TEST(_testIsInDirectory);
 
+    // localFileName() tests
+    UT_PARAMETERIZED_TEST(_testLocalFileName);
+
     // ensureDirectoryExists() tests
     void _testEnsureDirectoryExistsAlreadyExists();
     void _testEnsureDirectoryExistsCreate();

@@ -103,6 +103,51 @@ bool isInDirectory(const QString& directoryPath, const QString& path)
     return path.startsWith(directoryPath.endsWith(QLatin1Char('/')) ? directoryPath : directoryPath + QLatin1Char('/'));
 }
 
+namespace {
+
+/// Whether a file name, without its extension, names a device on Windows, which then opens the device instead of a
+/// file. Windows ignores spaces before the extension
+bool isWindowsDeviceFileName(QStringView name)
+{
+    QStringView stem = name.left(name.indexOf(QLatin1Char('.')));
+    while (stem.endsWith(QLatin1Char(' '))) {
+        stem.chop(1);
+    }
+    for (const QLatin1StringView device :
+         {QLatin1StringView("CON"), QLatin1StringView("PRN"), QLatin1StringView("AUX"), QLatin1StringView("NUL"),
+          QLatin1StringView("CONIN$"), QLatin1StringView("CONOUT$")}) {
+        if (stem.compare(device, Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+    // COM and LPT with a digit, also a superscript one
+    if ((stem.size() != 4) || !(stem.startsWith(QLatin1StringView("COM"), Qt::CaseInsensitive) ||
+                                stem.startsWith(QLatin1StringView("LPT"), Qt::CaseInsensitive))) {
+        return false;
+    }
+    const char16_t digit = stem.at(3).unicode();
+    return ((digit >= u'0') && (digit <= u'9')) || (digit == u'\u00B9') || (digit == u'\u00B2') || (digit == u'\u00B3');
+}
+
+}  // namespace
+
+QString localFileName(QStringView name)
+{
+    const QStringView fileName =
+        name.sliced(qMax(name.lastIndexOf(QLatin1Char('/')), name.lastIndexOf(QLatin1Char('\\'))) + 1);
+    constexpr qsizetype kMaxFileNameBytes = 255;
+    if (fileName.isEmpty() || fileName.endsWith(QLatin1Char('.')) || fileName.endsWith(QLatin1Char(' ')) ||
+        isWindowsDeviceFileName(fileName) || (fileName.toUtf8().size() > kMaxFileNameBytes)) {
+        return {};
+    }
+    for (const QChar character : fileName) {
+        if ((character.unicode() < 0x20) || QStringView(u"<>:\"|?*").contains(character)) {
+            return {};
+        }
+    }
+    return fileName.toString();
+}
+
 bool ensureDirectoryExists(const QString &path)
 {
     QDir dir(path);

@@ -23,7 +23,8 @@ void CompInfo::setUriMetaData(const QString &uri, uint32_t crc)
 CompInfo::ParsedJson CompInfo::parseJsonFile(const QString& fileName, const QString& schemaResourcePath)
 {
     ParsedJson json;
-    if (JsonParsing::isJsonFile(fileName, json.document, json.readError, VehicleFileFetch::kMaxSmallFileBytes)) {
+    json.read = JsonParsing::isJsonFile(fileName, json.document, json.readError, VehicleFileFetch::kMaxSmallFileBytes);
+    if (json.read) {
         (void) JsonSchemaValidator::validate(json.document, schemaResourcePath, json.schemaError);
     }
     return json;

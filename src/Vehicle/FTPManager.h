@@ -107,7 +107,9 @@ public:
 
     struct DownloadOptions
     {
-        /// Local file name, empty for the name of the file on the vehicle. Only its last component is used.
+        /// Local file name, empty for the name of the file on the vehicle. Only its last component is used, after a
+        /// slash or a backslash, and only if every system writes it as it is (QGCFileHelper::localFileName()):
+        /// otherwise the download is refused.
         QString fileName{};
         /// If true compare the filesize indicated in the open response with the transmitted filesize. If false the
         /// transmission is tftp style and the indicated filesize from MAVFTP fileopen response is ignored. This is
@@ -128,10 +130,12 @@ public:
     ///                       specified, then the id set via fromCompId is used.
     ///     @param toDir      Local directory to download file to. Must be non-empty and already exist.
     ///     @param done       Called with the local file and the error message
+    ///     @param refusal    If set, receives a translated sentence for the user when the download is refused for its
+    ///                       file name
     /// @return The request, queued, or nullptr for arguments that cannot be used: nothing is queued and done is not
     ///         called. Hold it in a QPointer to cancel it.
     FTPRequest* download(QObject* context, uint8_t fromCompId, const QString& fromURI, const QString& toDir,
-                         const DownloadOptions& options, FileCallback done);
+                         const DownloadOptions& options, FileCallback done, QString* refusal = nullptr);
 
     /// Uploads a local file to the specified URI on the vehicle.
     ///     @param toCompId Component id of the component to upload to. If toCompId is MAV_COMP_ID_ALL, then

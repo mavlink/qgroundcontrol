@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <QtCore/QDir>
+#include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
@@ -151,6 +152,53 @@ void QGCFileDownloadTest::_testFileDownloadOutputDirectory()
     QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
              QStringList{QStringLiteral("manifest.json.gz")});
     QCOMPARE(TestFixtures::readFile(args.at(1).toString()), TestFixtures::readFile(":/unittest/manifest.json.gz"));
+}
+
+void QGCFileDownloadTest::_testFileDownloadNameFromUrl_data()
+{
+    QTest::addColumn<QString>("path");
+    // Name of the file in the output directory, the only file written
+    QTest::addColumn<QString>("fileName");
+
+    // Decoded, "%5C" is a backslash, a separator on Windows
+    QTest::newRow("encoded backslashes") << "/a/..%5C..%5Cescaped.json" << "escaped.json";
+    // Names that Windows writes as something else take the name of a download without one
+    QTest::newRow("relative to a drive") << "/a/C:escaped.json" << "DownloadedFile";
+    QTest::newRow("a device") << "/a/COM1.json" << "DownloadedFile";
+}
+
+// The URL names the file in the output directory, never where it goes, and the same way on every system
+void QGCFileDownloadTest::_testFileDownloadNameFromUrl()
+{
+    QFETCH(QString, path);
+    QFETCH(QString, fileName);
+
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    // Two levels down, so that a name that climbs two levels would still land in the temporary directory
+    const QString outputDirectory = root.filePath(QStringLiteral("a/b"));
+    QVERIFY(QDir().mkpath(outputDirectory));
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY(server.listen());
+    const QByteArray body("{}");
+    server.installHttpResponder(body);
+
+    QGCFileDownload downloader(this);
+    downloader.setOutputDirectory(outputDirectory);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    QVERIFY(downloader.start(server.url(path)));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    QCOMPARE(args.at(1).toString(), QDir(outputDirectory).filePath(fileName));
+    QStringList written;
+    QDirIterator files(root.path(), QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
+    while (files.hasNext()) {
+        written.append(QDir(root.path()).relativeFilePath(files.next()));
+    }
+    QCOMPARE(written, QStringList{QStringLiteral("a/b/") + fileName});
+    QCOMPARE(TestFixtures::readFile(args.at(1).toString()), body);
 }
 
 void QGCFileDownloadTest::_testFileDownloadNonExistentLocalFile()

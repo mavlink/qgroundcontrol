@@ -19,6 +19,9 @@ public:
 
     static ComponentInformationCache& defaultInstance();
 
+    /// Directory of defaultInstance()
+    static QString defaultDirectory();
+
     /**
      * Try to access a file and set the access counter
      * @param fileTag
@@ -35,6 +38,9 @@ public:
      */
     QString insert(const QString &fileTag, const QString& fileName);
 
+    /// Remove the entry of @a fileTag, such as one whose file cannot be read, if there is one
+    void remove(const QString& fileTag);
+
 private:
 
     static constexpr const char* _metaExtension = ".meta";
@@ -44,8 +50,8 @@ private:
 
     struct Meta {
         uint32_t magic{0x9a9cad0e};
-        /// 1: the file is kept as it was downloaded, possibly compressed. 0: decompressed. An older QGC, which
-        /// takes only version 0, removes an entry of version 1 rather than read a file it may not decompress
+        /// 1: the file is kept as it was downloaded, possibly compressed. An entry of another version is removed.
+        /// An older QGC, which takes only version 0 (decompressed), keeps its entries in another directory
         uint32_t version{1};
         AccessCounterType accessCounter{0};
     };

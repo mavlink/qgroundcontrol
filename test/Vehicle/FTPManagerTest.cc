@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <QtCore/QDir>
+#include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
 #include <QtCore/QRandomGenerator>
@@ -17,6 +18,7 @@
 #include "AppSettings.h"
 #include "CompInfoParam.h"
 #include "ComponentInformationManager.h"
+#include "FTPController.h"
 #include "FTPManager.h"
 #include "FileFixtures.h"
 #include "MAVLinkLib.h"
@@ -56,30 +58,82 @@ FTPManager::ListCallback FTPManagerTest::_recordList(Result& result)
     };
 }
 
-void FTPManagerTest::_testDownloadExplicitFileNameIsBasename()
+void FTPManagerTest::_testDownloadFileName_data()
 {
-    // An explicit fileName can come from the vehicle: a ListDirectory entry is surfaced to
-    // QML and passed straight back as the local name. It must not be usable as a path.
+    QTest::addColumn<QString>("pathOnVehicle");
+    QTest::addColumn<QString>("fileName");
+    // Name of the downloaded file in the destination, empty if the download is refused
+    QTest::addColumn<QString>("localName");
+
+    QTest::newRow("backslashes on the vehicle") << "/dir\\..\\..\\escaped.json" << "" << "escaped.json";
+    // An explicit fileName can come from the vehicle too: a ListDirectory entry is surfaced to QML and passed straight
+    // back as the local name
+    QTest::newRow("slashes in the name") << "/general.json" << "../../escaped.json" << "escaped.json";
+    QTest::newRow("backslashes in the name") << "/general.json" << "..\\..\\escaped.json" << "escaped.json";
+    QTest::newRow("no name on the vehicle") << "/dir/" << "" << "";
+    QTest::newRow("dot dot on the vehicle") << "/dir/.." << "" << "";
+    QTest::newRow("a device on the vehicle") << "/dir/COM1.json" << "" << "";
+    QTest::newRow("relative to a drive in the name") << "/general.json" << "C:escaped.json" << "";
+}
+
+// The vehicle names the file in the destination, never where it goes, and the same way on every system
+void FTPManagerTest::_testDownloadFileName()
+{
+    QFETCH(QString, pathOnVehicle);
+    QFETCH(QString, fileName);
+    QFETCH(QString, localName);
+
     _connectMockLinkNoInitialConnectSequence();
+    _mockLink->mockLinkFTP()->setServedFile(pathOnVehicle, QStringLiteral(":MockLink/General.MetaData.json"));
     FTPManager* ftpManager = _vehicle->ftpManager();
 
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    // Two levels down, so that a name that climbs two levels would still land in the temporary directory
+    const QString destination = root.filePath(QStringLiteral("a/b"));
+    QVERIFY(QDir().mkpath(destination));
 
     QObject owner;
     Result result;
-    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, tempDir.path(),
-                                 {.fileName = QStringLiteral("../../QGC03_escaped.bin")}, _record(result)));
-    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
-    QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
+    if (localName.isEmpty()) {
+        expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression("Not a file name"));
+        QVERIFY(!ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, pathOnVehicle, destination,
+                                      {.fileName = fileName}, _record(result)));
+        verifyExpectedLogMessage();
+        QCOMPARE(ftpManager->requestCount(), 0);
+    } else {
+        QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, pathOnVehicle, destination, {.fileName = fileName},
+                                     _record(result)));
+        QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+        QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
+        QCOMPARE(result.path, QDir(destination).absoluteFilePath(localName));
+    }
 
-    const QString downloaded = QDir::cleanPath(QFileInfo(result.path).absoluteFilePath());
-    const QString root = QDir::cleanPath(QDir(tempDir.path()).absolutePath());
-    QVERIFY2(downloaded.startsWith(root + QLatin1Char('/')), qPrintable(downloaded));
-    QCOMPARE(QFileInfo(downloaded).fileName(), QStringLiteral("QGC03_escaped.bin"));
-    QVERIFY(!QFile::exists(QDir(root).filePath(QStringLiteral("../../QGC03_escaped.bin"))));
+    QStringList written;
+    QDirIterator files(root.path(), QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
+    while (files.hasNext()) {
+        written.append(QDir(root.path()).relativeFilePath(files.next()));
+    }
+    QCOMPARE(written, localName.isEmpty() ? QStringList() : QStringList{QStringLiteral("a/b/") + localName});
+    _disconnectMockLink();
+}
 
-    QFile::remove(downloaded);
+// The MAVLink FTP browser tells the user that the file name is why a download was refused
+void FTPManagerTest::_testControllerNamesRefusedFileName()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPController controller;
+    QTemporaryDir destination;
+    QVERIFY(destination.isValid());
+
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression("Not a file name"));
+    expectLogMessage("Vehicle.FTPController", QtWarningMsg, QRegularExpression("Failed to start download"));
+    QVERIFY(!controller.downloadFile(QStringLiteral("/general.json"), destination.path(), QStringLiteral("COM1.json")));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(controller.errorString(),
+             QStringLiteral("\"COM1.json\" is not a file name that every system can save, so it was not downloaded"));
+    QCOMPARE(QDir(destination.path()).entryList(QDir::AllEntries | QDir::NoDotAndDotDot), QStringList());
     _disconnectMockLink();
 }
 

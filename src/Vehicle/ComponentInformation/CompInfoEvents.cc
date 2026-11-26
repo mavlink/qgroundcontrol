@@ -13,7 +13,9 @@ CompInfo::FileParser CompInfoEvents::fileParser() const
 {
     return [](const QString& fileName) {
         ParsedJson parsed;
-        parsed.data = EventHandler::loadMetadata(fileName);
+        const EventMetadata metadata = EventHandler::loadMetadata(fileName);
+        parsed.read = (metadata != nullptr);
+        parsed.data = metadata;
         return parsed;
     };
 }

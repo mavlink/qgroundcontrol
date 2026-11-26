@@ -153,14 +153,14 @@ void ComponentInformationCacheTest::_version_test_data()
     QTest::addColumn<uint>("version");
     QTest::addColumn<bool>("kept");
 
-    // Version 0 is a decompressed file, which an earlier QGC wrote: it is read as it is
-    QTest::newRow("decompressed, of an earlier QGC") << 0U << true;
+    // An earlier QGC keeps its entries of version 0, decompressed, in a directory of their own
+    QTest::newRow("decompressed, of an earlier QGC") << 0U << false;
     QTest::newRow("as downloaded") << 1U << true;
     QTest::newRow("of a later QGC") << 2U << false;
 }
 
-// An entry is kept as it was downloaded, possibly compressed, which its version says. An entry of a version this
-// QGC does not know is removed, as an earlier QGC removes those of this one
+// An entry is kept as it was downloaded, possibly compressed, which its version says. An entry of another version is
+// removed, as an earlier QGC removes those of this one
 void ComponentInformationCacheTest::_version_test()
 {
     QFETCH(uint, version);

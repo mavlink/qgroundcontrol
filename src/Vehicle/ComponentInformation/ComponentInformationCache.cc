@@ -16,9 +16,15 @@ ComponentInformationCache::ComponentInformationCache(const QDir& path, int maxNu
 
 ComponentInformationCache& ComponentInformationCache::defaultInstance()
 {
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
-    static ComponentInformationCache instance(cacheDir, 50);
+    static ComponentInformationCache instance(defaultDirectory(), 50);
     return instance;
+}
+
+QString ComponentInformationCache::defaultDirectory()
+{
+    // Not "QGCCompInfoCache", where an earlier QGC keeps its entries of version 0 and removes every other one when it
+    // starts
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCacheV1");
 }
 
 QString ComponentInformationCache::metaFileName(const QString& fileTag)
@@ -121,6 +127,17 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
     return data.fileName();
 }
 
+void ComponentInformationCache::remove(const QString& fileTag)
+{
+    qCDebug(ComponentInformationCacheLog) << "Removing" << fileTag;
+    // The meta file first: without it the entry is not found, also while its data file cannot be removed, which
+    // insert() then replaces
+    (void) QFile::remove(metaFileName(fileTag));
+    (void) QFile::remove(dataFileName(fileTag));
+    _numFiles -=
+        static_cast<int>(_cachedFiles.removeIf([&fileTag](const auto& entry) { return entry.value() == fileTag; }));
+}
+
 void ComponentInformationCache::initializeDirectory()
 {
     if (!QGCFileHelper::ensureDirectoryExists(_path.path())) {
@@ -146,7 +163,7 @@ void ComponentInformationCache::initializeDirectory()
             const uint32_t expectedVersion = m.version;
             if (meta.open(QIODevice::ReadOnly)) {
                 if (meta.read((char*)&m, sizeof(m)) == sizeof(m)) {
-                    if (m.magic != expectedMagic || m.version > expectedVersion) {
+                    if (m.magic != expectedMagic || m.version != expectedVersion) {
                         validationFailed = true;
                     }
                 } else {

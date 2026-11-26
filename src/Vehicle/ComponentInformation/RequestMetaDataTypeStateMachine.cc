@@ -162,6 +162,8 @@ void RequestMetaDataTypeStateMachine::request(CompInfo* compInfo)
     qCDebug(RequestMetaDataTypeStateMachineLog) << Q_FUNC_INFO << typeToString();
 
     _jsonMetadataFileName.clear();
+    _jsonMetadataCacheTag.clear();
+    _jsonMetadataDownloaded = false;
     _jsonMetadataTranslatedFileName.clear();
     _jsonTranslationFileName.clear();
     _metadataSource = MetadataSource::None;
@@ -404,6 +406,7 @@ void RequestMetaDataTypeStateMachine::_loadMetaData()
     const auto load = [fileName, parse = _compInfo->fileParser()]() { return parse(fileName); };
     auto* const job = QGC::runOnWorker(this, load, [this, fileName](const CompInfo::ParsedJson& json) {
         _compInfo->setJson(fileName, json);
+        _updateFileCache(json.read);
         _stateLoadMetaData->complete();
     });
     _loadJob = job;
@@ -419,8 +422,7 @@ void RequestMetaDataTypeStateMachine::_completeRequest()
     if (translated) {
         temporaryFiles.append(_jsonMetadataTranslatedFileName);
     }
-    // If we don't have a CRC we didn't cache the file and need to delete it
-    if (!_jsonMetadataCrcValid && !_jsonMetadataFileName.isEmpty()) {
+    if (_jsonMetadataDownloaded) {
         temporaryFiles.append(_jsonMetadataFileName);
     }
     if (!_jsonMetadataCrcValid && !_jsonTranslationFileName.isEmpty()) {
@@ -485,6 +487,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, c
         if (trackMetadataSource) {
             _metadataSource = MetadataSource::Cache;
             _metadataUri = uri;
+            _jsonMetadataCacheTag = cacheFileTag;
         }
         outputFileName = cachedFile;
         state->complete();
@@ -509,11 +512,13 @@ void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, c
         _metadataSource = ftp ? MetadataSource::FTP : MetadataSource::HTTP;
         _metadataUri = uri;
     }
+    // A file with a CRC is cached under it, and it was not found there: the network disk cache, which goes by the
+    // URL, would give the file of an earlier build that the vehicle served at the same URL
     const VehicleFileFetch::Options options{
         .directory = _compMgr->downloadDirectory(),
         .maxBytes = VehicleFileFetch::kMaxSmallFileBytes,
-        .httpCacheDirectory = ComponentInformationManager::httpCacheDirectory(),
-        .httpCacheMaxAgeSec = crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec,
+        .httpCacheDirectory = crcValid ? QString() : ComponentInformationManager::httpCacheDirectory(),
+        .httpCacheMaxAgeSec = ComponentInformationManager::cachedFileMaxAgeSec,
     };
     QString* const output = &outputFileName;
     _fetch = VehicleFileFetch::start(
@@ -523,7 +528,13 @@ void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, c
                 << "Download complete fileName:errorMsg" << fileName << errorMsg;
             _transferInFlight = Transfer::None;
             if (errorMsg.isEmpty()) {
-                *output = _downloadCompleteJsonWorker(fileName, cacheFileTag, crcValid);
+                *output = fileName;
+                // The metadata file is cached once it has been read: one that cannot be would be taken from the
+                // cache at every connection
+                if (output == &_jsonMetadataFileName) {
+                    _jsonMetadataCacheTag = crcValid ? cacheFileTag : QString();
+                    _jsonMetadataDownloaded = true;
+                }
             } else {
                 qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": download failed:" << errorMsg;
             }
@@ -550,11 +561,30 @@ void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, c
     }
 }
 
-QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QString& fileName,
-                                                                     const QString& cacheFileTag, bool crcValid)
+void RequestMetaDataTypeStateMachine::_updateFileCache(bool read)
 {
-    // Cache the file (this will move/remove the temp file as well)
-    return crcValid ? _compMgr->fileCache().insert(cacheFileTag, fileName) : fileName;
+    if (_jsonMetadataCacheTag.isEmpty()) {
+        return;
+    }
+
+    if (!_jsonMetadataDownloaded) {
+        if (!read) {
+            // Its reader has said why. It is downloaded again at the next connection
+            qCDebug(RequestMetaDataTypeStateMachineLog)
+                << typeToString() << ": the cached metadata file cannot be read, it is removed from the cache";
+            _compMgr->fileCache().remove(_jsonMetadataCacheTag);
+        }
+        return;
+    }
+
+    if (read) {
+        // Moves the file: insert() gives another path if it has
+        const QString cachedFile = _compMgr->fileCache().insert(_jsonMetadataCacheTag, _jsonMetadataFileName);
+        if (!cachedFile.isEmpty() && (cachedFile != _jsonMetadataFileName)) {
+            _jsonMetadataFileName = cachedFile;
+            _jsonMetadataDownloaded = false;
+        }
+    }
 }
 
 void RequestMetaDataTypeStateMachine::_cancelMessageRequest()

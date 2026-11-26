@@ -55,6 +55,15 @@ QString joinPath(const QString &dir, const QString &name);
 /// @param path Absolute and clean
 bool isInDirectory(const QString& directoryPath, const QString& path);
 
+/// The name under which a file that another system names, such as a vehicle or a URL, is written into a directory:
+/// the last component of @a name after a slash or a backslash, on every system. Give a URL's name decoded, as
+/// QUrl::fileName() does: an encoded separator is then a separator.
+/// @return The name, or an empty string if every system would not write it as a file of that name: it is empty,
+///         holds a control character or one of < > : " | ? *, ends with a dot (also "." and "..") or a space, is
+///         longer than 255 bytes in UTF-8, or is a device name of Windows (CON, PRN, AUX, NUL, COM0 to COM9, LPT0 to
+///         LPT9, CONIN$, CONOUT$), also with an extension
+QString localFileName(QStringView name);
+
 /// Ensure directory exists, creating it if necessary
 /// @param path Directory path to ensure exists
 /// @return true if directory exists or was created successfully

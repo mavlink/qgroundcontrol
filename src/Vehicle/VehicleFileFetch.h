@@ -48,7 +48,8 @@ public:
         /// Directory the file is written to. It must exist.
         QString directory{};
         /// Name of the file in the directory, empty for the last component of the URI. Only its last component is
-        /// used.
+        /// used, after a slash or a backslash: a name that every system would not write as it is
+        /// (QGCFileHelper::localFileName()) is not fetched.
         QString fileName{};
         /// Largest size of the file as it is transferred, 0 = unlimited. A larger file fails the fetch.
         qint64 maxBytes = 0;
@@ -67,8 +68,8 @@ public:
 
     /// @param vehicle Needed for a MAVLink FTP URI only
     /// @return The fetch, running, or nullptr if it cannot start: the URI is neither MAVLink FTP nor HTTP(S), the
-    ///         directory or, for MAVLink FTP, the vehicle is missing, or the URI cannot be used. A warning says why,
-    ///         and nothing is called back. Hold it in a QPointer to cancel it.
+    ///         directory or, for MAVLink FTP, the vehicle is missing, or the URI or the file name cannot be used. A
+    ///         warning says why, and nothing is called back. Hold it in a QPointer to cancel it.
     static VehicleFileFetch* start(QObject* context, Vehicle* vehicle, const QString& uri, const Options& options,
                                    Callback done);
 

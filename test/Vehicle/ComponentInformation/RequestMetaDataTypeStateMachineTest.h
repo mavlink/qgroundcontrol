@@ -24,12 +24,14 @@ private slots:
     UT_PARAMETERIZED_TEST(_metadataUriFillsItsField);
     void _downloadEndsWithItsState();
     void _httpDownloadEndsWithItsState();
+    void _newCrcIsNotTakenFromTheHttpCache();
     UT_PARAMETERIZED_TEST(_downloadsUseTheDirectoryOfTheirManager);
     void _downloadWaitsForTheOneInProgress();
     UT_PARAMETERIZED_TEST(_metadataIsTranslatedForSystemLocale);
     void _translationDownloadEndsWithItsState();
     void _answerAfterRequestTimeoutIsNotUsed();
     UT_PARAMETERIZED_TEST(_metadataIsParsedOnWorker);
+    UT_PARAMETERIZED_TEST(_downloadIsCachedOnceRead);
 
 private:
     /// Gives the parameter metadata of the vehicle a file to download from @a server, and a translation summary there

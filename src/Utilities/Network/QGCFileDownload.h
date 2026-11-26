@@ -11,7 +11,6 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 
-#include "CompressionTypes.h"
 #include "QGCNetworkHelper.h"
 
 class QNetworkAccessManager;
@@ -99,7 +98,8 @@ class QGCFileDownload : public QObject
     /// stopped.
     Q_PROPERTY(bool autoDecompress READ autoDecompress WRITE setAutoDecompress NOTIFY autoDecompressChanged FINAL)
 
-    /// Custom output path (empty = a file in outputDirectory() named after the URL)
+    /// Custom output path (empty = a file in outputDirectory() named by the last component of the URL's path, or
+    /// "DownloadedFile" if that is no name that every system writes as it is, see QGCFileHelper::localFileName())
     Q_PROPERTY(QString outputPath READ outputPath WRITE setOutputPath NOTIFY outputPathChanged FINAL)
 
     /// Expected SHA-256 hash for verification (empty = skip verification). It is checked on the file as downloaded,
@@ -150,7 +150,7 @@ public:
     /// more, and fails if it decompresses to more than this
     void setMaxDecompressedBytes(qint64 maxBytes) { _maxDecompressedBytes = maxBytes; }
 
-    /// Directory of a download without outputPath, which keeps the file name of its URL. By default the temp
+    /// Directory of a download without outputPath, which is named after its URL (see outputPath). By default the temp
     /// location, or the download location if there is none
     QString outputDirectory() const;
 
@@ -288,7 +288,8 @@ private:
     qint64 _totalBytes = -1;
     qint64 _bytesReceived = 0;
     qint64 _maxBytes = 0;
-    qint64 _maxDecompressedBytes = Compression::kDefaultMaxDecompressedFileBytes;
+    /// Set in the constructor: QGCNetwork links the Compression module, whose default it is, privately
+    qint64 _maxDecompressedBytes = 0;
     bool _verifyPeer = true;
     int _timeoutMs = QGCNetworkHelper::kDefaultTimeoutMs;
 

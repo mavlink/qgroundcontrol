@@ -7,6 +7,7 @@
 #include <QtCore/QTimer>
 
 #include "FTPManager.h"
+#include "FileFixtures.h"
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "MockLinkFTP.h"
@@ -746,6 +747,97 @@ void OnboardLogFtpDownloadTest::_ftpDownloadErrorDisablesFtpTest()
     QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
     QCOMPARE(controller->transport(), QStringLiteral("messages"));
     QCOMPARE(controller->_getModel()->count(), 1);
+}
+
+void OnboardLogFtpDownloadTest::_ftpExistingLogKeptTest_data()
+{
+    QTest::addColumn<bool>("transferFails");
+
+    QTest::newRow("transfer succeeds") << false;
+    QTest::newRow("transfer fails") << true;
+}
+
+// FTPManager takes a name after its last backslash, on every system. A log the user already has under that name is
+// neither truncated nor removed, also when the transfer of the new one fails and its file is removed.
+void OnboardLogFtpDownloadTest::_ftpExistingLogKeptTest()
+{
+    QFETCH(bool, transferFails);
+
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed())
+        return;
+
+    _mockLink->mockLinkFTP()->setLogFiles({{QStringLiteral("sub\\10_30_00.ulg"), 5000, 1700000000}});
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QmlObjectListModel* const model = controller->_getModel();
+    QCOMPARE(model->count(), 1);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QByteArray earlierLog = QByteArrayLiteral("a log downloaded before");
+    const QString earlierLogPath = QDir(tempDir.path()).filePath(QStringLiteral("10_30_00.ulg"));
+    QFile earlierLogFile(earlierLogPath);
+    QVERIFY(earlierLogFile.open(QIODevice::WriteOnly));
+    QCOMPARE(earlierLogFile.write(earlierLog), earlierLog.size());
+    earlierLogFile.close();
+
+    if (transferFails) {
+        // The local file is opened, then the data ends before the size the vehicle announced
+        _mockLink->mockLinkFTP()->setAnnouncedFileLength(10000);
+        expectLogMessage("AnalyzeView.OnboardLogController", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("ftp: download error")));
+    }
+    model->value<QGCOnboardLogEntry*>(0)->setSelected(true);
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+    if (transferFails) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(TestFixtures::readFile(earlierLogPath), earlierLog);
+    QStringList expectedFiles{QStringLiteral("10_30_00.ulg")};
+    if (!transferFails) {
+        expectedFiles.append(QStringLiteral("10_30_00_1.ulg"));
+        QCOMPARE(TestFixtures::readFile(QDir(tempDir.path()).filePath(expectedFiles.last())),
+                 _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("sub\\10_30_00.ulg")));
+    }
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files, QDir::Name), expectedFiles);
+}
+
+// A log whose name cannot be written as it is on every system is saved under a name of the controller's, and FTP
+// stays in use
+void OnboardLogFtpDownloadTest::_ftpRefusedNameFallbackTest()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed())
+        return;
+
+    _mockLink->mockLinkFTP()->setLogFiles({{QStringLiteral("COM1.ulg"), 5000, 1700000000}});
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QmlObjectListModel* const model = controller->_getModel();
+    QCOMPARE(model->count(), 1);
+    QGCOnboardLogEntry* const entry = model->value<QGCOnboardLogEntry*>(0);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    entry->setSelected(true);
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+
+    QCOMPARE(entry->status(), QStringLiteral("Downloaded"));
+    const QString fallbackName = QStringLiteral("log_%1.ulg").arg(entry->id());
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files), QStringList{fallbackName});
+    QCOMPARE(TestFixtures::readFile(QDir(tempDir.path()).filePath(fallbackName)),
+             _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("COM1.ulg")));
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QCOMPARE(controller->transport(), QStringLiteral("ftp"));
 }
 
 void OnboardLogFtpDownloadTest::_ftpSortOrderTest()

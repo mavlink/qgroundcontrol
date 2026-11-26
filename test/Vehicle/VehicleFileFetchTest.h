@@ -14,6 +14,7 @@ private slots:
     void _testFetchesOfOneVehicleQueue();
     UT_PARAMETERIZED_TEST(_testRefused);
     UT_PARAMETERIZED_TEST(_testUriOtherThanFtpOrHttpRefused);
+    UT_PARAMETERIZED_TEST(_testHttpFileName);
     UT_PARAMETERIZED_TEST(_testHttpUriForms);
     void _testHttpCache();
     UT_PARAMETERIZED_TEST(_testServerCertificate);

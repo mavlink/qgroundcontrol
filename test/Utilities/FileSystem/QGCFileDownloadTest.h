@@ -14,6 +14,7 @@ private slots:
     void _testFileDownloadHashVerificationSuccess();
     void _testFileDownloadCustomOutputPath();
     void _testFileDownloadOutputDirectory();
+    UT_PARAMETERIZED_TEST(_testFileDownloadNameFromUrl);
     void _testFileDownloadNonExistentLocalFile();
     void _testFileDownloadOutputPathIsDirectory();
     void _testFileDownloadCancelSingleCompletion();

@@ -27,9 +27,10 @@ constexpr QLatin1StringView kDownloadWorkDirectoryPrefix(".qgc-download-");
 
 }  // namespace
 
-QGCFileDownload::QGCFileDownload(QObject *parent)
+QGCFileDownload::QGCFileDownload(QObject* parent)
     : QObject(parent)
     , _networkManager(QGCNetworkHelper::createNetworkManager(this))
+    , _maxDecompressedBytes(Compression::kDefaultMaxDecompressedFileBytes)
 {
     qCDebug(QGCFileDownloadLog) << "Created" << this;
 }
@@ -589,16 +590,18 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
         return _outputPath;
     }
 
-    // Extract filename from URL
+    // The URL names the file only, never where it goes: a "%5C" in it is decoded to a backslash, a separator on Windows
     QString fileName = QUrl(remoteUrl).fileName();
-    if (fileName.isEmpty()) {
-        fileName = QStringLiteral("DownloadedFile");
-    }
 
     // Strip query parameters
     const int queryIndex = fileName.indexOf(QLatin1Char('?'));
     if (queryIndex != -1) {
         fileName = fileName.left(queryIndex);
+    }
+
+    fileName = QGCFileHelper::localFileName(fileName);
+    if (fileName.isEmpty()) {
+        fileName = QStringLiteral("DownloadedFile");
     }
 
     const QString downloadDir = outputDirectory();
@@ -607,7 +610,13 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
         return QString();
     }
 
-    return QGCFileHelper::joinPath(downloadDir, fileName);
+    const QString path = QGCFileHelper::joinPath(downloadDir, fileName);
+    if (!QGCFileHelper::isInDirectory(QDir::cleanPath(QDir(downloadDir).absolutePath()),
+                                      QDir::cleanPath(QFileInfo(path).absoluteFilePath()))) {
+        qCWarning(QGCFileDownloadLog) << "Output path is outside the download directory:" << path;
+        return QString();
+    }
+    return path;
 }
 
 bool QGCFileDownload::_verifyHash()

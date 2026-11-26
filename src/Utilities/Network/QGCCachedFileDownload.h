@@ -26,7 +26,7 @@ class QNetworkDiskCache;
 /// 3. If no cached file → download from network
 ///
 /// A result is the file as the server sent it, compressed or not, written where fileDownloader() puts it: in its
-/// outputDirectory(), under the file name of the URL, unless it has an outputPath.
+/// outputDirectory(), under a name taken from the URL (see QGCFileDownload::outputPath), unless it has an outputPath.
 ///
 /// Decompression: a caller that needs the decompressed file on disk turns on QGCFileDownload::autoDecompress on
 /// fileDownloader(), with a limit set by QGCFileDownload::setMaxDecompressedBytes(). The cache keeps what the server

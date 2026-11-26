@@ -27,7 +27,7 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObje
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
     qCDebug(ComponentInformationManagerLog) << this;
-    qCDebug(ComponentInformationManagerLog) << "Cache location:" << QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
+    qCDebug(ComponentInformationManagerLog) << "Cache location:" << ComponentInformationCache::defaultDirectory();
 
     // The translation summary and the translation file come from where the vehicle points to, and are read whole
     _cachedFileDownload->fileDownloader()->setMaxBytes(VehicleFileFetch::kMaxSmallFileBytes);

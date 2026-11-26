@@ -88,16 +88,18 @@ bool FTPController::downloadFile(const QString &uri, const QString &localDir, co
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
+    QString refusal;
     if (_ftpManager) {
         _request = _ftpManager->download(
             this, compId, uri, absoluteLocalDir, {.fileName = fileName},
-            [this](const QString& filePath, const QString& error) { _handleDownloadComplete(filePath, error); });
+            [this](const QString& filePath, const QString& error) { _handleDownloadComplete(filePath, error); },
+            &refusal);
     }
     if (_request) {
         (void) connect(_request, &FTPRequest::progressChanged, this, &FTPController::_handleCommandProgress);
     } else {
         qCWarning(FTPControllerLog) << "Failed to start download" << uri << absoluteLocalDir;
-        const QString error = tr("Failed to download %1").arg(uri);
+        const QString error = refusal.isEmpty() ? tr("Failed to download %1").arg(uri) : refusal;
         _setErrorString(error);
         _setBusy(false);
         _clearOperation();

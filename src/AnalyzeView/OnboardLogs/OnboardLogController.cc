@@ -1,17 +1,4 @@
 #include "OnboardLogController.h"
-#include "AppSettings.h"
-#include "FTPManager.h"
-#include "OnboardLogEntry.h"
-#include "MAVLinkLib.h"
-#include "MAVLinkProtocol.h"
-#include "MultiVehicleManager.h"
-#include "ParameterManager.h"
-#include "QGCFormat.h"
-#include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
-#include "SettingsManager.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
 
 #include <algorithm>
 
@@ -19,6 +6,21 @@
 #include <QtCore/QDir>
 #include <QtCore/QTimeZone>
 #include <QtCore/QTimer>
+
+#include "AppSettings.h"
+#include "FTPManager.h"
+#include "MAVLinkLib.h"
+#include "MAVLinkProtocol.h"
+#include "MultiVehicleManager.h"
+#include "OnboardLogEntry.h"
+#include "ParameterManager.h"
+#include "QGCFileHelper.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(OnboardLogControllerLog, "AnalyzeView.OnboardLogController")
 
@@ -1267,13 +1269,19 @@ void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry *entry)
 
     entry->setStatus(tr("Downloading"));
 
-    // Save under the remote log file name
-    QString localFilename = entry->ftpPath().section(QLatin1Char('/'), -1);
+    // Save under the remote log file name, as FTPManager would take it from the path, so that the check for an
+    // existing file below is on the file that is written. A name that FTPManager would refuse gets one of our own.
+    const QString extension = entry->ftpPath().endsWith(QStringLiteral(".bin"), Qt::CaseInsensitive)
+                                  ? QStringLiteral(".bin")
+                                  : QStringLiteral(".ulg");
+    const QString fallbackBase = QStringLiteral("log_") + QString::number(entry->id());
+    QString localFilename = QGCFileHelper::localFileName(entry->ftpPath());
     if (localFilename.isEmpty()) {
-        localFilename = QStringLiteral("log_") + QString::number(entry->id()) + QStringLiteral(".ulg");
+        localFilename = fallbackBase + extension;
     }
 
-    if (QFile::exists(_downloadPath + localFilename)) {
+    const QDir downloadDir(_downloadPath);
+    if (QFile::exists(downloadDir.filePath(localFilename))) {
         const int dotIdx = localFilename.lastIndexOf(QLatin1Char('.'));
         const QString base = (dotIdx > 0) ? localFilename.left(dotIdx) : localFilename;
         const QString ext = (dotIdx > 0) ? localFilename.mid(dotIdx) : QString();
@@ -1281,10 +1289,15 @@ void OnboardLogController::_ftpDownloadEntry(QGCOnboardLogEntry *entry)
         do {
             numDups++;
             localFilename = base + QStringLiteral("_") + QString::number(numDups) + ext;
-        } while (QFile::exists(_downloadPath + localFilename));
+            // The suffix can make a long name too long
+            if (QGCFileHelper::localFileName(localFilename) != localFilename) {
+                localFilename = fallbackBase + QStringLiteral("_") + QString::number(numDups) + extension;
+            }
+        } while (QFile::exists(downloadDir.filePath(localFilename)));
     }
 
-    qCDebug(OnboardLogControllerLog) << "ftp: downloading" << entry->ftpPath() << "to" << _downloadPath + localFilename;
+    qCDebug(OnboardLogControllerLog) << "ftp: downloading" << entry->ftpPath() << "to"
+                                     << downloadDir.filePath(localFilename);
 
     _ftpRequest = _vehicle->ftpManager()->download(
         this, MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, {.fileName = localFilename},

@@ -10,6 +10,7 @@
 #include "FTPManager.h"
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
@@ -119,6 +120,23 @@ bool VehicleFileFetch::_startFtp(Vehicle* vehicle, const QString& uri, const Opt
 bool VehicleFileFetch::_startHttp(const QUrl& url, const Options& options)
 {
     const QString uri = url.toString();
+
+    // The name, also one that the URL gives, names the file only, never where it goes. A name that cannot be used is
+    // refused, as over MAVLink FTP
+    const QString givenName = options.fileName.isEmpty() ? url.fileName() : options.fileName;
+    const QString fileName = QGCFileHelper::localFileName(givenName);
+    if (fileName.isEmpty()) {
+        qCWarning(VehicleFileFetchLog) << "Cannot fetch" << uri
+                                       << "- not a file name that every system writes as it is:" << givenName;
+        return false;
+    }
+    const QString localPath = QDir(options.directory).filePath(fileName);
+    if (!QGCFileHelper::isInDirectory(QDir::cleanPath(QDir(options.directory).absolutePath()),
+                                      QDir::cleanPath(QFileInfo(localPath).absoluteFilePath()))) {
+        qCWarning(VehicleFileFetchLog) << "Cannot fetch" << uri << "- the file would be outside" << options.directory;
+        return false;
+    }
+
     if (options.httpCacheDirectory.isEmpty()) {
         _download = new QGCFileDownload(this);
     } else {
@@ -127,10 +145,7 @@ bool VehicleFileFetch::_startHttp(const QUrl& url, const Options& options)
     }
     _download->setMaxBytes(options.maxBytes);
     _download->setVerifyPeer(options.verifyPeer);
-    _download->setOutputDirectory(options.directory);
-    if (!options.fileName.isEmpty()) {
-        _download->setOutputPath(QDir(options.directory).filePath(QFileInfo(options.fileName).fileName()));
-    }
+    _download->setOutputPath(localPath);
 
     const auto finished = [this](bool success, const QString& localFile, const QString& errorMsg) {
         if (success) {

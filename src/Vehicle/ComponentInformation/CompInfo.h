@@ -41,6 +41,7 @@ public:
         QString readError;       ///< Why the file could not be read or parsed
         QString schemaError;     ///< Why the document does not match its schema, which does not stop its use
         std::any data;           ///< What the fileParser() of a type that parses the file itself made of it
+        bool read = false;       ///< Whether the file could be read and parsed, so that it may be cached
     };
 
     /// Reads and parses a metadata file, decompressed if it is compressed and held to

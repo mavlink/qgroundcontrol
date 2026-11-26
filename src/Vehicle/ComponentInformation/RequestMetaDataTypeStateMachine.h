@@ -72,7 +72,9 @@ private:
     // Download helpers
     void _requestFile(CompletionWaitState* state, const QString& cacheFileTag, bool crcValid, const QString& uri,
                       QString& outputFileName, bool trackMetadataSource);
-    QString _downloadCompleteJsonWorker(const QString& jsonFileName, const QString& cacheFileTag, bool crcValid);
+    /// Caches the metadata file once it has been read, or removes it from the cache if it came from there and could
+    /// not be read
+    void _updateFileCache(bool read);
     void _ftpDownloadProgress(CompletionWaitState* state, float progress);
 
     // What a state that is left gives up, so that nothing of it reaches a later state
@@ -107,6 +109,10 @@ private:
     QString _jsonMetadataFileName;
     QString _jsonMetadataTranslatedFileName;
     bool _jsonMetadataCrcValid = false;
+    /// Tag of _jsonMetadataFileName in the file cache, empty if it is not cached for lack of a CRC
+    QString _jsonMetadataCacheTag;
+    /// _jsonMetadataFileName is a download that is not in the file cache, removed when the request completes
+    bool _jsonMetadataDownloaded = false;
     QString _jsonTranslationFileName;
 
     Transfer _transferInFlight = Transfer::None;

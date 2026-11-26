@@ -11,6 +11,7 @@
 
 #include "AppMessages.h"
 #include "MAVLinkProtocol.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -93,7 +94,7 @@ FTPManager::~FTPManager()
 }
 
 FTPRequest* FTPManager::download(QObject* context, uint8_t fromCompId, const QString& fromURI, const QString& toDir,
-                                 const DownloadOptions& options, FileCallback done)
+                                 const DownloadOptions& options, FileCallback done, QString* refusal)
 {
     qCDebug(FTPManagerLog) << "Download fromCompId:" << fromCompId << "fromURI:" << fromURI << "to:" << toDir
                            << "fileName:" << options.fileName;
@@ -115,16 +116,24 @@ FTPRequest* FTPManager::download(QObject* context, uint8_t fromCompId, const QSt
         return nullptr;
     }
 
-    QString fileName;
-    if (options.fileName.isEmpty()) {
-        // We need to strip off the file name from the fully qualified path. We can't use the usual QDir
-        // routines because this path does not exist locally.
-        fileName = pathOnVehicle.section(QLatin1Char('/'), -1);
-    } else {
-        // fileName can originate from the vehicle: a MAVLink-FTP ListDirectory entry is
-        // surfaced to QML and handed straight back here as the local name. Reduce it the
-        // same way the derived branch above already does, so it cannot act as a path.
-        fileName = QFileInfo(options.fileName).fileName();
+    // The name can come from the vehicle also when the caller gives it: a MAVLink-FTP ListDirectory entry is surfaced
+    // to QML and handed straight back here as the local name. It names the file only, never where it goes.
+    const QString givenName = options.fileName.isEmpty() ? pathOnVehicle : options.fileName;
+    const QString fileName = QGCFileHelper::localFileName(givenName);
+    // No fixed name instead: it could replace a file of the user's in toDir
+    if (fileName.isEmpty()) {
+        qCWarning(FTPManagerLog) << "Cannot download. Not a file name that every system writes as it is:" << givenName;
+        if (refusal) {
+            *refusal =
+                tr("\"%1\" is not a file name that every system can save, so it was not downloaded").arg(givenName);
+        }
+        return nullptr;
+    }
+    const QString resultPath = QDir(toDir).absoluteFilePath(fileName);
+    if (!QGCFileHelper::isInDirectory(QDir::cleanPath(QDir(toDir).absolutePath()), QDir::cleanPath(resultPath))) {
+        qCWarning(FTPManagerLog) << "Cannot download. The file would be outside the destination directory:"
+                                 << resultPath;
+        return nullptr;
     }
 
     FTPRequest* const request = _enqueue(context, FTPRequest::Operation::Download, compId, pathOnVehicle);
@@ -135,7 +144,7 @@ FTPRequest* FTPManager::download(QObject* context, uint8_t fromCompId, const QSt
     request->_fileName = fileName;
     request->_checksize = options.checksize;
     request->_maxBytes = options.maxBytes;
-    request->_resultPath = QDir(toDir).absoluteFilePath(fileName);
+    request->_resultPath = resultPath;
     request->_fileDone = std::move(done);
     return request;
 }
