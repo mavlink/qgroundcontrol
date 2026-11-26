@@ -39,7 +39,7 @@ target_sources(
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
 #                   [REQUIRES <vars>...] [PROBE <qgc_gst_probe_library args>...] [PROBE_ALSO <args>...]
 #                   [EGL REQUIRED|OPTIONAL] [LIBS <libs>...] [UNSTABLE_API])
-# One row of the GPU path table. On a matching platform with QGC_GST_ENABLE_<NAME> on, every REQUIRES variable truthy
+# One row of the GPU path table. On a matching platform with QGC_GST_ENABLE_GPU_PATHS on, every REQUIRES variable truthy
 # and the probed libraries found (PROBE_ALSO is a second one the path needs), adds the sources and libraries to
 # QGCGStreamer and defines <macro>=1. Sets _qgc_gpu_<name> and
 # _qgc_any_gpu_path TRUE in the caller's scope; UNSTABLE_API rows set _qgc_gpu_unstable_api.
@@ -69,23 +69,17 @@ function(_qgc_add_gpu_path name)
         return()
     endif()
 
-    string(TOUPPER "${name}" _upper)
-    set(_default ON)
-    if(name IN_LIST _qgc_gpu_opt_in_rows)
-        set(_default OFF)
-    endif()
-    option(
-        QGC_GST_ENABLE_${_upper} "Build the ${name} zero-copy GPU path when its GStreamer pieces are found" ${_default}
-    )
     set(_reason "")
-    if(NOT QGC_GST_ENABLE_${_upper})
-        set(_reason "QGC_GST_ENABLE_${_upper}=OFF")
+    if(NOT QGC_GST_ENABLE_GPU_PATHS)
+        set(_reason "QGC_GST_ENABLE_GPU_PATHS=OFF")
     endif()
     foreach(_var IN LISTS ARG_REQUIRES)
         if(_reason OR ${_var})
             continue()
         elseif(_var MATCHES "^_qgc_gpu_(.+)$")
             set(_reason "needs the ${CMAKE_MATCH_1} path")
+        elseif(_var MATCHES "^QGC_GST_ENABLE_")
+            set(_reason "${_var}=OFF")
         else()
             set(_reason "${_var} unavailable")
         endif()
@@ -239,14 +233,18 @@ set(_qgc_gpu_row_D3D
 # the row compiles only against an SDK that adds this one. GLMemory is Android's path.
 set(_qgc_gpu_row_AHardwareBuffer
     PLATFORMS ANDROID
+    REQUIRES QGC_GST_ENABLE_AHARDWAREBUFFER
     PROBE HAS_VAR QGC_GST_HAS_AHARDWAREBUFFER HEADER gst/android/gstandroid.h SYMBOL gst_is_ahardware_buffer_memory
     EGL REQUIRED
     DEFINE QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH
     SOURCES android/GstAHardwareBufferVideoBuffer.cc android/GstAHardwareBufferVideoBuffer.h)
 # cmake-format: on
 
+option(QGC_GST_ENABLE_GPU_PATHS "Build the zero-copy GPU video paths whose GStreamer pieces are found" ON)
 # No bin offers this memory, so it is compiled only on request.
-set(_qgc_gpu_opt_in_rows AHardwareBuffer)
+if(ANDROID)
+    option(QGC_GST_ENABLE_AHARDWAREBUFFER "Build the AHardwareBuffer GPU path, which no sink bin reaches" OFF)
+endif()
 # In this order: DMABuf requires the GLMemory path (_qgc_gpu_GLMemory), and DMABuf_Vulkan the DMABuf path.
 set(_qgc_gpu_rows GLMemory DMABuf DMABuf_Vulkan IOSurface D3D AHardwareBuffer)
 foreach(_row IN LISTS _qgc_gpu_rows)

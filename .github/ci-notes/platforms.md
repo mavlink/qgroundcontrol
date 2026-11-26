@@ -259,11 +259,10 @@ How CI runs, retries, and reports the application tests is described in
 - **Video without GPU paths** (`linux.yml`'s `no-gpu-path` job, behind the Linux gate): the build
   without a GPU video path (no `QGC_HAS_ANY_GPU_PATH`) is what configure produces where it finds
   the GStreamer pieces of none, and no other job compiles it. This one configures `Linux-debug`
-  with every Linux path off (`QGC_GST_ENABLE_DMABUF`, `_GLMEMORY`), fails if configure still
-  reports a path enabled, and builds the `QGCGStreamer` target, about twenty files. A path added
-  to the table for Linux has to be turned off there as well. The target's definitions are public,
-  so the job also compiles the code outside it that they reach: the application's sources under
-  `src/VideoManager/GStreamer` and the tests under `test/VideoManager/GStreamer`. Those belong to
+  with the GPU paths off (`QGC_GST_ENABLE_GPU_PATHS=OFF`), fails if configure still reports a path
+  enabled, and builds the `QGCGStreamer` target, about twenty files. The target's definitions are
+  public, so the job also compiles the code outside it that they reach: the application's sources
+  under `src/VideoManager/GStreamer` and the tests under `test/VideoManager/GStreamer`. Those belong to
   the application and to `QGCUnitTests`, which the job does not build: `cmake-build`'s
   `objects-under` builds their object files, read from `compile_commands.json`, and with them
   what those wait for: generated sources, the two precompiled headers and the compression

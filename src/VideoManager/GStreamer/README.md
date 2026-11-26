@@ -281,12 +281,12 @@ the layout that keeps their contents (`dmabuf/GstDmaBufVulkanImport`):
   every path) for fallback diagnostics. A receiver's `GPU path live` and `GPU path stats` debug lines pair its own sink's `GstQgc::sinkStats()` with
   them, both counted from when its session took the sink. Reading never resets the counters: each reader reports the
   change since its own snapshot, so receivers don't take each other's counts.
-- **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
-  that compile a path in or out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Windows builds
-  leave out the GLMemory path: Qt 6's OpenGL there is WGL, which gst-gl can't share. The DMABuf path is built on
-  Linux with the GLMemory path and GStreamer 1.24 or later, whose DMA_DRM caps it reads; such a build compiles both
-  GPU bins and the one that picks between them per stream, see [GPU bin selection](#gpu-bin-selection). An older
-  GStreamer shows its DMABuf frames through glupload.
+- **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; `QGC_GST_ENABLE_GPU_PATHS`, the switch
+  that compiles the paths in or out, is described in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Windows
+  builds leave out the GLMemory path: Qt 6's OpenGL there is WGL, which gst-gl can't share. The DMABuf path is built on
+  Linux with the GLMemory path and GStreamer 1.24 or later, whose DMA_DRM caps it reads; such a build compiles both GPU
+  bins and the one that picks between them per stream, see [GPU bin selection](#gpu-bin-selection). An older GStreamer
+  shows its DMABuf frames through glupload.
 - **Opt-in AHardwareBuffer path**: `android/` is compiled only with `QGC_GST_ENABLE_AHARDWAREBUFFER=ON`, because no
   stream reaches it: Android's glupload bin offers only GLMemory. It is written against `<gst/android/gstandroid.h>`
   (`gst_ahardware_buffer_memory_get_buffer()`), which no GStreamer release has, so `QGC_GST_ENABLE_AHARDWAREBUFFER=ON`
@@ -497,9 +497,9 @@ Qt Quick renders with OpenGL on Linux unless told otherwise; `QSG_RHI_BACKEND=vu
 instead. The DMABuf path then imports each plane of a frame as a single-plane VkImage on Qt's device, bound to the
 dma-buf through `VK_EXT_external_memory_dma_buf` with the frame's modifier (`VK_EXT_image_drm_format_modifier`), in
 the format Qt samples that plane as (R8, RG8, R16, RG16, RGBA8 or BGRA8). That is what Qt's EGL importer does with one
-EGLImage per plane, so NV12, P010 and I420 need no multi-planar image and no YCbCr sampler. Built with
-`QGC_GST_ENABLE_DMABUF_VULKAN` (on by default where Qt has Vulkan support and found the Vulkan headers); it needs
-neither gst-vulkan nor a link to the Vulkan loader.
+EGLImage per plane, so NV12, P010 and I420 need no multi-planar image and no YCbCr sampler. Built with the DMABuf
+path where Qt has Vulkan support and found the Vulkan headers; it needs neither gst-vulkan nor a link to the Vulkan
+loader.
 
 - Qt's device must have `VK_KHR_external_memory_fd`, `VK_EXT_external_memory_dma_buf` and
   `VK_EXT_image_drm_format_modifier` enabled, so QGC adds them to `QT_VULKAN_DEVICE_EXTENSIONS` before Qt starts;

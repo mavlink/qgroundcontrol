@@ -566,11 +566,8 @@ jobs:
         uses: ./.github/actions/cmake-configure
         with:
           preset: Linux-debug
-          extra-args: >-
-            -DQGC_GST_ENABLE_DMABUF=OFF
-            -DQGC_GST_ENABLE_GLMEMORY=OFF
+          extra-args: -DQGC_GST_ENABLE_GPU_PATHS=OFF
 
-      # A row added to the table is on by default: it must be turned off above as well.
       - name: Require no GPU path in the build
         run: |
           if grep -- "-- QGCGStreamer: .* zero-copy GPU path enabled" "${RUNNER_TEMP}/build/cmake-configure.log"; then
