@@ -61,6 +61,8 @@ protected:
     void onRestartRequested() override;
     void onReconnectRequested() override;
     void onVideoOutputChanged() override;
+    /// A start while a recording is in progress, or awaits its first frame, is refused: reported as
+    /// recordingFinished() for @p file with the reason, while that recording goes on.
     void onStartRecording(const QString& file, FileFormat format) override;
     void onStopRecording() override;
 
@@ -74,6 +76,8 @@ private:
     void _open();
     /// Ends the session: no player, frame or stats.
     void _stopSession();
+    /// The URI without its credentials, for logs and messages.
+    QString _redactedUri() const;
     /// The session listens on a UDP port, for at least its timeout, and no stream has arrived.
     bool _awaitingSender() const;
     /// The session failed for @p reason: reconnects with backoff, or stops and reports it. One still awaiting its

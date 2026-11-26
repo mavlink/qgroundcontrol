@@ -100,10 +100,9 @@ std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeWaitingLocked(
     return bins;
 }
 
-std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeServed()
+std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeServedLocked()
 {
     std::vector<GStreamer::GstElementPtr> bins;
-    QMutexLocker lock(&_mutex);
     if (const std::unique_ptr<WeakRefs> served = std::move(_served)) {
         for (const auto& ref : *served) {
             if (GstElement* const bin = GST_ELEMENT(g_weak_ref_get(ref.get()))) {
@@ -262,16 +261,18 @@ void GstContextBridgeBase::serveWaitingPipelines()
     (void) prime();
 }
 
-void GstContextBridgeBase::reset()
+std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::reset()
 {
-    // Dropped without the mutex.
-    const std::vector<GStreamer::GstElementPtr> served = takeServed();
     QMutexLocker lock(&_mutex);
+    // Under the lock that drops the objects: a bin served on another thread is either among these, or primes anew.
+    // The caller drops the refs, without the mutex.
+    std::vector<GStreamer::GstElementPtr> served = takeServedLocked();
     clearLocked();
     _primed = false;
     _primeAttempted = false;
     _failedPrimes = 0;
     qCDebug(category()) << _apiName << "bridge reset";
+    return served;
 }
 
 void GstContextBridgeBase::rearm()

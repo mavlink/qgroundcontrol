@@ -171,12 +171,15 @@ void QtMultimediaVideoReceiverTest::_testUnplayableUri()
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("0.0.0.0:5600")));
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("udp://0.0.0.0")));
 
-    ReceiverUnderTest stream(QStringLiteral("udp://0.0.0.0"));
-    expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("can't play")));
+    // The URI's credentials stay out of the log and the message.
+    ReceiverUnderTest stream(QStringLiteral("udp://user:secret@0.0.0.0"));
+    expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^(?!.*secret).*can't play")));
     stream.receiver->setActive(true);
     verifyExpectedLogMessage();
     QCOMPARE(stream.receiver->state(), State::Stopped);
     QCOMPARE(stream.errorSpy.count(), 1);
+    QVERIFY(!stream.errorSpy.first().first().toString().contains(QStringLiteral("secret")));
 }
 
 void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
@@ -192,6 +195,37 @@ void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
     QCOMPARE(stream.errorSpy.count(), 1);
     QVERIFY(!stream.receiver->recording());
     QVERIFY(!QFile::exists(file));
+}
+
+void QtMultimediaVideoReceiverTest::_testStartWhileRecordingIsRefused()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString second = dir.filePath(QStringLiteral("second.mkv"));
+
+    _ignorePlayerLogs();
+    _ignoreEncoderFallbacks();
+    // Nobody sends the stream, so the recorder waits for its first frame.
+    ReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
+    stream.receiver->setActive(true);
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("first.mkv")), VideoReceiver::FileFormat::Mkv);
+    const QtVideoRecorder* const recorder = stream.receiver->_recorder;
+    QVERIFY(recorder->active());
+    const QUrl recorded = recorder->mediaRecorder()->outputLocation();
+
+    // Whoever asks for another recording meanwhile is told that its file isn't recorded: the first one goes on.
+    QSignalSpy finishedSpy(stream.receiver.get(), &VideoReceiver::recordingFinished);
+    expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("recording already")));
+    stream.receiver->startRecording(second, VideoReceiver::FileFormat::Mkv);
+    verifyExpectedLogMessage();
+    QCOMPARE(finishedSpy.count(), 1);
+    QCOMPARE(finishedSpy.first().at(0).toString(), second);
+    QVERIFY(!finishedSpy.first().at(1).toString().isEmpty());
+    QVERIFY(recorder->active());
+    QCOMPARE(recorder->mediaRecorder()->outputLocation(), recorded);
+    QVERIFY(!QFile::exists(second));
+    QVERIFY(stream.errorSpy.isEmpty());
 }
 
 void QtMultimediaVideoReceiverTest::_testRecordingUsesEncodingSet()

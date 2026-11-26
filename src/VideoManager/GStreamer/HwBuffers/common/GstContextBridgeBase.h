@@ -47,13 +47,10 @@ public:
     /// device becomes known; no-op when no bin waits. Thread-safe.
     void serveWaitingPipelines();
 
-    /// Drops the shared objects and the retry latch, so the next request primes from scratch, and forgets the
-    /// pipelines it served.
-    void reset();
-
-    /// The top-level bins that got this bridge's device and are still alive, which it then forgets: for
-    /// HwBuffers::onGraphicsDeviceRemoved(). Thread-safe.
-    std::vector<GStreamer::GstElementPtr> takeServed();
+    /// Drops the shared objects and the retry latch, so the next request primes from scratch. Returns the top-level
+    /// bins that got this bridge's device and are still alive, which it forgets: every bin served up to the drop,
+    /// for HwBuffers::onGraphicsDeviceRemoved() to tell. Thread-safe.
+    std::vector<GStreamer::GstElementPtr> reset();
 
     /// True from noteDeviceRemoved() until the bridge primes again. Thread-safe.
     bool deviceLost() const noexcept { return _deviceLost.load(std::memory_order_acquire); }
@@ -132,6 +129,8 @@ private:
     /// The waiting bins that are still alive, which wait no longer and count as served; the mutex is held. The refs
     /// taken meanwhile go to @p released, as for rememberLocked().
     std::vector<GStreamer::GstElementPtr> takeWaitingLocked(std::vector<GStreamer::GstElementPtr>& released);
+    /// The served bins that are still alive, which the bridge then forgets; the mutex is held.
+    std::vector<GStreamer::GstElementPtr> takeServedLocked();
     /// Sets every context of this bridge on @p topLevelBins; the mutex is not held.
     void giveContexts(const std::vector<GStreamer::GstElementPtr>& topLevelBins);
 

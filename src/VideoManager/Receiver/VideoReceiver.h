@@ -171,7 +171,8 @@ public:
     /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
     /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
     /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as recordingEncoding() says, keeps
-    /// to the same file.
+    /// to the same file. Where @p format's container can't hold the video, the recording goes into another one, in a
+    /// file named for it ("<base>.mkv"): recordingStarted() tells the file recorded.
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
@@ -187,14 +188,16 @@ signals:
     void streamingChanged(bool streaming);
     void decodingChanged(bool decoding);
     void recordingChanged(bool recording);
-    /// A recording file opened: the first one after startRecording(), or the recording's next part.
+    /// A recording file opened: the first one after startRecording(), or the recording's next part. @p file is the
+    /// file recorded, whose extension is that of the container used.
     void recordingStarted(const QString& file);
     /// A recording file closed. @p error is empty when the file was finalized cleanly.
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
     void statsChanged(const VideoStreamStats& stats);
-    /// A failure worth telling the user about (stream error with autoReconnect off, recording error, a screenshot that
-    /// couldn't be saved). Not emitted for failures the receiver recovers from by reconnecting.
+    /// A failure worth telling the user about (stream error with autoReconnect off, a stream that is received but
+    /// can't be decoded, recording error, a screenshot that couldn't be saved). Not emitted for failures the receiver
+    /// recovers from by reconnecting.
     void errorOccurred(const QString& message);
 
 protected:

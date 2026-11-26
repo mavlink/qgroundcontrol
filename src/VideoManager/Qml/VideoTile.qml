@@ -93,6 +93,7 @@ Rectangle {
     QGCLabel {
         id:                     nameLabel
         text:                   root.source.displayName
+        textFormat:             Text.PlainText
         color:                  qgcPal.mapWidgetBorderLight
         font.pointSize:         ScreenTools.smallFontPointSize
         horizontalAlignment:    Text.AlignHCenter

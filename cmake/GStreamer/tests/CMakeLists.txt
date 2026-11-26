@@ -24,6 +24,7 @@ set(_qgc_gst_tests
     test_sdk_acquire
     test_android_sdk_extract
     test_ios_sdk_extract
+    test_macos_sdk_extract
     test_android_pkg_config
     test_static_init
     test_ios_static_plugins
@@ -46,8 +47,11 @@ foreach(_t IN LISTS _qgc_gst_tests)
             FAIL_REGULAR_EXPRESSION "ASSERT|FATAL_ERROR|CMake Error"
     )
 endforeach()
-# The stand-in installer is a shell script, which a Windows host cannot run.
-set_tests_properties(GStreamer.test_windows_installer_guard PROPERTIES SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED")
+# The stand-in installer and pkgutil are shell scripts, which a Windows host cannot run.
+set_tests_properties(
+    GStreamer.test_windows_installer_guard GStreamer.test_macos_sdk_extract
+    PROPERTIES SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
+)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING
    AND NOT ANDROID

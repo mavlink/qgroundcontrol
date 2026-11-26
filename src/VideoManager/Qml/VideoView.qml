@@ -18,8 +18,8 @@ Item {
     property bool showTiles: false
     /// Width covered at the right of the view, which the tiles stay clear of.
     property real tilesRightInset: 0
-    /// The camera whose thermal mode and zoom the view follows: the active vehicle's current camera by default. Any
-    /// object with the camera properties the view reads will do, as the tests' stand-ins.
+    /// The camera whose thermal mode the view follows: the active vehicle's current camera by default. Any object with
+    /// the camera properties the view reads will do, as the tests' stand-ins.
     property var camera: root._activeVehicle && root._activeVehicle.cameraManager
                          ? root._activeVehicle.cameraManager.currentCameraInstance : null
     /// The manager whose video the view shows.
@@ -183,11 +183,6 @@ Item {
             camera:         root.camera
             pipTopInset:    root.thermalPipTopInset
             videoManager:   root.videoManager
-        }
-
-        CameraPinchZoom {
-            anchors.fill:   parent
-            camera:         root.camera
         }
     }
 

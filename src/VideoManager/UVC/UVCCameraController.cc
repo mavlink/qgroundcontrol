@@ -177,6 +177,7 @@ void UVCCameraController::onStartRecording(const QString& file, FileFormat forma
 {
     if (_recorder->active()) {
         qCWarning(UVCCameraControllerLog) << "Not recording the camera to" << file << "- recording already";
+        emit recordingFinished(file, tr("A recording is in progress already"));
         return;
     }
     if (!_running()) {

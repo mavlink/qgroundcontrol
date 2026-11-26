@@ -185,7 +185,9 @@ function(_qgc_gst_install_runtime_closure library_dest)
     endif()
     # The system's libraries resolve outside the SDK and are excluded; API sets, the MSVC runtime (installed by
     # InstallRequiredSystemLibraries) and macOS system libraries in the dyld cache may not resolve at all.
-    # libproxy keeps the backend library its own library links (pxbackend) in lib/libproxy.
+    # libproxy keeps the backend library its own library links (pxbackend) in lib/libproxy. On macOS that directory is
+    # part of the name it is loaded by, @rpath/libproxy/<backend>, so the installer bundles it there itself
+    # (platform/MacOS.cmake) and it is left out here.
     install(
         RUNTIME_DEPENDENCY_SET
         qgc_gstreamer
@@ -199,6 +201,7 @@ function(_qgc_gst_install_runtime_closure library_dest)
         "^(vcruntime|msvcp|concrt|ucrtbase)"
         "^/usr/lib/"
         "^/System/"
+        "^@rpath/libproxy/"
         POST_INCLUDE_REGEXES
         ${_qgc_gst_include_res}
         POST_EXCLUDE_REGEXES

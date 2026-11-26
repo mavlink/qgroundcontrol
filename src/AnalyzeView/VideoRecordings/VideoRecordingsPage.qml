@@ -51,7 +51,9 @@ AnalyzePage {
                 }
                 return null
             }
-            readonly property bool _hasSubtitles: page._selected !== null && page._selected.subtitles.toString() !== ""
+            /// False once the selected recording has left the list, as when its file is deleted outside the page.
+            readonly property bool _hasSelection: page._selected !== null
+            readonly property bool _hasSubtitles: page._hasSelection && page._selected.subtitles.toString() !== ""
             readonly property int _seekStepMs: 5000
 
             width:      root.availableWidth
@@ -64,7 +66,7 @@ AnalyzePage {
             Keys.onRightPressed: page._seekBy(page._seekStepMs)
 
             function _togglePlayback() {
-                if (page.selectedPath === "") {
+                if (!page._hasSelection) {
                     return
                 }
                 if (player.playbackState === MediaPlayer.PlayingState) {
@@ -168,6 +170,8 @@ AnalyzePage {
                 }
 
                 QGCLabel {
+                    // The view: its content item, the parent by default, has no height without rows.
+                    parent:                 recordingListView
                     anchors.fill:           parent
                     anchors.margins:        root._margin
                     visible:                recordingListView.count === 0
@@ -240,6 +244,8 @@ AnalyzePage {
                                 x:                      subtitleText.modelData.x * subtitleArea._scaleX - subtitleText._column * subtitleText.width / 2
                                 y:                      subtitleText.modelData.y * subtitleArea._scaleY - (2 - subtitleText._row) * subtitleText.height / 2
                                 text:                   subtitleText.modelData.text
+                                // From a file: never markup.
+                                textFormat:             Text.PlainText
                                 horizontalAlignment:    subtitleText._column === 0 ? Text.AlignLeft
                                                                                    : (subtitleText._column === 1 ? Text.AlignHCenter : Text.AlignRight)
                                 color:                  "white"
@@ -253,7 +259,7 @@ AnalyzePage {
 
                     QGCLabel {
                         anchors.centerIn:   parent
-                        visible:            page.selectedPath === ""
+                        visible:            !page._hasSelection
                         text:               qsTr("Select a recording to play it")
                         color:              "white"
                     }
@@ -275,7 +281,7 @@ AnalyzePage {
 
                 RowLayout {
                     spacing:            root._margin
-                    enabled:            page.selectedPath !== ""
+                    enabled:            page._hasSelection
                     Layout.fillWidth:   true
 
                     QGCButton {

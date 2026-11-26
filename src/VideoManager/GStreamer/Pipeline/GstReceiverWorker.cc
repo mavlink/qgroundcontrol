@@ -79,6 +79,7 @@ void GstReceiverWorker::apply(const Request& request)
 void GstReceiverWorker::_onActiveChanged()
 {
     _supervisor->startOver();
+    _decoderFailureReported = false;
     if (_requested.active) {
         _dotDumper.setReceiverName(_requested.name);
     } else {
@@ -167,6 +168,7 @@ void GstReceiverWorker::_reconcile()
 void GstReceiverWorker::_restartStream()
 {
     _supervisor->startOver();
+    _decoderFailureReported = false;
     _stopSession();
     _reconcile();
 }
@@ -280,7 +282,10 @@ void GstReceiverWorker::_onWatchdogTick()
             qCDebug(GstVideoReceiverLog) << "Video decoder timeout, no frames for" << result.silentMs << "ms"
                                          << _redactedUri();
             _session->snapshot(QStringLiteral("pipeline-decoder-timeout"));
-            _session->restartDecoder("decoder watchdog");
+            _session->restartDecoder(
+                "decoder watchdog",
+                QCoreApplication::translate("GstVideoReceiver", "The video decoder gave no picture for %1 s.")
+                    .arg(result.silentMs / 1000));
             return;
         case StreamWatchdog::Stall::Source:
             qCDebug(GstVideoReceiverLog) << "Stream timeout, no frames for" << result.silentMs << "ms"
@@ -333,6 +338,9 @@ void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)
 
 void GstReceiverWorker::onDecodingChanged(bool decoding)
 {
+    if (decoding) {
+        _decoderFailureReported = false;
+    }
     _updateStatus(&Status::decoding, decoding);
 }
 
@@ -341,11 +349,15 @@ void GstReceiverWorker::onDecoderNameChanged(const QString& name)
     _updateStatus(&Status::decoderName, name);
 }
 
-void GstReceiverWorker::onDecoderFailing()
+void GstReceiverWorker::onDecoderFailed(const QString& cause)
 {
-    onSessionFailed({.reason = QStringLiteral("decoder failing"),
-                     .message = QCoreApplication::translate("GstVideoReceiver", "The video decoder keeps failing."),
-                     .permanent = false});
+    if (std::exchange(_decoderFailureReported, true)) {
+        return;
+    }
+    const QString message =
+        QCoreApplication::translate("GstVideoReceiver", "Unable to decode the video: %1").arg(cause);
+    qCWarning(GstVideoReceiverLog) << "Video stream without a picture:" << message << _redactedUri();
+    emit errorOccurred(message);
 }
 
 void GstReceiverWorker::onRecordingFileOpened(const QString& file)
@@ -384,5 +396,15 @@ void GstReceiverWorker::onRecordingNeedsNewFile(const QString& file)
     }
     _recording->nextPart();
     qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
+    _session->setRecording(_recordingRequest());
+}
+
+void GstReceiverWorker::onRecordingNeedsFormat(const QString& file, VideoReceiver::FileFormat format)
+{
+    if (!_session || !_recording || (file != _recording->currentFile())) {
+        return;
+    }
+    _recording->setFormat(format);
+    qCDebug(GstVideoReceiverLog) << "Recording to" << _recording->currentFile() << "instead of" << file;
     _session->setRecording(_recordingRequest());
 }

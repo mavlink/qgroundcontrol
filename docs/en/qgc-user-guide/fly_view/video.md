@@ -19,11 +19,15 @@ When a stream is lost, its last picture stays on screen, dimmed, under **VIDEO L
 returns. A stream you stop or change is cleared instead.
 
 A video view without a picture says why: **WAITING FOR VIDEO** until the stream arrives, **VIDEO DISABLED WHILE
-DISARMED** when [Disable Video Stream When Disarmed](../settings_view/video.md#settings) has stopped it until the vehicle
-arms, and **VIDEO STOPPED** once the video was stopped.
+DISARMED** while [Disable Video Stream When Disarmed](../settings_view/video.md#settings) keeps it off for a disarmed
+vehicle, and **VIDEO STOPPED** once the video was stopped.
 
 If a video decoder or a recording stops responding, _QGroundControl_ tells you after about a minute, and a picture
 that froze is taken off the screen. That video works again only once _QGroundControl_ is restarted.
+
+When a stream arrives but can't be decoded, as on a ground station that has no decoder for its codec, _QGroundControl_
+says why, once. The stream is still received and [can be recorded](#record-video-stream-on-gcs), and its picture
+appears as soon as a decoder works: one is tried again after a second, and then at intervals that grow to 30 seconds.
 
 On Android and iOS the video is not decoded while _QGroundControl_ is in the background, which saves battery. Back in
 the app, the view says **WAITING FOR VIDEO** until the stream's next keyframe arrives. A recording goes on for as long
@@ -36,6 +40,20 @@ later ask once whether _QGroundControl_ may show notifications; the stream and t
 without it too. Telemetry is not handled while the app is in the background: the vehicle's messages are handled when
 the app returns, and a recording's telemetry subtitles have a gap for that time.
 
+## Thermal Video
+
+A thermal stream that the vehicle's cameras advertise is shown over the video, in the thermal view mode of the
+current camera: blended with the video, in its place, or as a small picture in the top left corner.
+
+The thermal stream is the current camera's own. When that camera has none, it is the thermal stream of the first of
+the vehicle's other cameras that has one: camera software that presents every stream as a camera of its own, such as
+mavlink-camera-manager, sends its thermal stream that way.
+
+When the current camera advertises a thermal stream and no other, that stream is the main picture, in place of the
+video source of the settings, and no thermal stream is shown over it.
+
+The vehicle is asked to send the thermal stream only while it is shown or recorded.
+
 ## Video Tiles
 
 While the video is in the foreground, _QGroundControl_ shows the other video it can play in small tiles along the top
@@ -43,8 +61,8 @@ of the video, each under its name:
 
 1. The USB camera chosen as **USB Camera Tile** in [Application Settings > Video](../settings_view/video.md#video-source),
    while the video source is a stream.
-1. The other video streams of the vehicle's current camera: those that are neither on display already nor its thermal
-   stream, which is shown with the video as before.
+1. The other video streams of the vehicle's current camera: those that are neither on display already nor a thermal
+   stream. A thermal stream gets no tile: it is [shown with the video](#thermal-video).
 1. The video streams of the vehicle's other MAVLink cameras, in the order the camera tools list the cameras.
 
 At most three tiles are shown. [Video Tiles](../settings_view/video.md#settings) sets how many, up to four, and 0 turns
@@ -54,8 +72,8 @@ time, so only one of those streams gets a picture.
 
 The tiles share the width of the video, and are never smaller than half their full size. Where the video is too narrow
 for all of them at that size, as on a phone held upright, it shows as many as fit, in the same order, and the sources
-left without a tile aren't connected to. Where not even one tile fits, the stream is the main picture, also when the
-USB camera was made the main picture.
+left without a tile aren't connected to. A USB camera that was made the main picture stays the main picture where no
+tile fits.
 
 Tap a tile to make it the main picture:
 
@@ -68,8 +86,11 @@ Tap a tile to make it the main picture:
   it is plugged back in, until you tap the stream's tile or choose another **USB Camera Tile**.
 
 A tile says **WAITING FOR VIDEO** until its video arrives and **VIDEO LOST - RECONNECTING** while its stream is lost, as
-the main picture does. The tiles are not shown in the video switcher window, and their streams aren't decoded while the
-video is there.
+the main picture does. The tiles are not shown in the video switcher window. While the video is there, their streams
+aren't decoded, and once it has been there for 15 seconds they are disconnected, so that tiles nobody sees take none
+of the link's bandwidth. Back in the foreground within that time, the video finds its tiles playing. After it, and
+when _QGroundControl_ starts with the video in the switcher window, the tiles connect once the video is in the
+foreground. A USB camera in a tile is turned off and on the same way.
 
 The vehicle is asked to send each stream that has a tile, and to stop it once it has none, so every tile takes some of
 the link's bandwidth, as well as a video decoder on the ground station.
@@ -94,9 +115,9 @@ dropdown shows, about once a second:
 - **Keyframe interval**: the time between the last two keyframes. A long interval makes the picture take longer to
   recover from packet loss.
 - **Decoder**: the video decoder, and whether it decodes in hardware or software. **Decoder restarts** counts the times
-  the decoder was replaced after an error or a stall. A hardware decoder that shows nothing after it was replaced is
-  left out from then on, and the next decoder takes over. It gets its turn again when the decoder setting changes or
-  QGroundControl restarts.
+  the decoder was replaced after an error or a stall. A hardware decoder that shows nothing, though the stream gave
+  it a keyframe to start from or it had replaced a decoder that failed, is left out from then on, and the next decoder
+  takes over. It gets its turn again when the decoder setting changes or QGroundControl restarts.
 - **Display path**: how decoded frames reach the screen: `CPU`, or the zero-copy GPU path (for example `DMABuf`, `GL`
   or `D3D11`). **GPU fallbacks** counts frames the GPU path couldn't import, which took the CPU path instead.
 - **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).
@@ -116,10 +137,12 @@ dropdown shows, about once a second:
 For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
 The indicator's figures are the main picture's. The statistics of each stream in a [tile](#video-tiles) appear below
 those of the main picture, under the stream's name.
-When a camera also sends a thermal stream, its statistics appear below. The thermal stream is decoded only while the
-camera's thermal view is on. With the view off it is still received, and GStreamer still records it with the video (the
-Qt Multimedia backend records only video on display), but it shows no frame rate, and turning the view on shows it from
-its next keyframe.
+When a [thermal stream](#thermal-video) goes with the video, its statistics appear below. The thermal stream is
+connected to only while the thermal view is on or the stream is being recorded: 15 seconds after the view was turned
+off it is disconnected, the vehicle is asked to stop sending it, and its statistics go. Turning the view on connects
+it again, and shows it from its next keyframe.
+GStreamer still records the thermal stream with the video while its view is off (the Qt Multimedia backend records
+only video on display): the stream connects for the recording, so its file can start a moment after the video's.
 
 For a USB camera, the indicator shows the frame rate and the resolution (for example `1080p`), and its dropdown shows
 under **USB Camera**:
@@ -161,6 +184,7 @@ If the stream drops out while recording, the recording continues once the stream
 A recording that runs for longer than an hour continues in a new part the same way, without losing a frame between the parts.
 An MP4 or MOV part ends sooner when the space the file sets aside for its index is about to run out, which a very high frame rate can cause.
 A new part also starts when the camera changes its resolution or encoding profile during a recording, so that each file holds video of one kind.
+A stream whose codec the recording format can't hold (MP4 holds neither MJPEG, VP8 nor MPEG-2 video, and MOV no MPEG-2) is recorded as Matroska instead, in files that end in `.mkv`.
 With the Qt Multimedia [video backend](../settings_view/video.md#settings) a stream is recorded as a USB camera is (below),
 from the video on display: it continues in the same file once the stream is back.
 Recordings carry the time they started and, as their comment, the _QGroundControl_ version that recorded them.
@@ -179,8 +203,7 @@ Video stream recording is configured in the [Application Settings > General tab]
 - [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.
 
   ::: info
-  Videos are saved in Matroska format (.mkv) by default.
-  This format is relatively robust against corruption in case of errors.
+  Videos are saved in MP4 format (.mp4) by default; MOV and Matroska (.mkv) can be chosen instead.
   :::
 
 - [Miscellaneous](../settings_view/general.md#miscellaneous) - Streamed video is saved under the **Application Load/Save Path**.

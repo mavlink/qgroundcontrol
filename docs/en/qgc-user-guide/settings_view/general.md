@@ -147,7 +147,7 @@ The settings are:
 
 - **URL/Port**: Connection type-specific stream address (may be port or URL).
 - **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
-- **Disabled When Disarmed**: Stop the video stream, and any recording, when the vehicle disarms. The stream starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is started again.
+- **Disabled When Disarmed**: Keep the video stream off, and stop any recording, while the active vehicle is disarmed, also for a vehicle that connects disarmed. The vehicle's camera is asked to stop sending its video meanwhile. The stream starts again when the vehicle arms, when this setting is turned off, or when video is started again, which lasts until the vehicle next arms or disarms.
 - **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->
 
 ## Video Recording

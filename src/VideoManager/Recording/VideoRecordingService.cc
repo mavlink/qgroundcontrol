@@ -130,6 +130,12 @@ QStringList VideoRecordingService::_openFiles() const
 
 void VideoRecordingService::startRecording(const QString& baseName)
 {
+    if (_recording) {
+        // Left to the receivers, one would go on in the new file and another keep to its own.
+        qCWarning(VideoRecordingServiceLog) << "Not starting a recording: one is running";
+        return;
+    }
+
     VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
     const int formatValue = videoSettings->recordingFormat()->rawValue().toInt();
     if (!VideoReceiver::isValidFileFormat(formatValue)) {
@@ -146,7 +152,7 @@ void VideoRecordingService::startRecording(const QString& baseName)
 
     QList<VideoStreamController*> sources;
     for (VideoStreamController* source : std::as_const(_sources)) {
-        if (source->active() && !source->tile()) {
+        if (source->canRecord() && !source->tile()) {
             sources.append(source);
         }
     }
@@ -220,9 +226,9 @@ QStringList VideoRecordingService::pruneStorage(const QString& directory, quint6
         if (open.contains(file.absoluteFilePath()) || (file.lastModified() > beingWrittenSince)) {
             continue;
         }
-        total -= static_cast<quint64>(file.size());
         const QString path = file.filePath();
         if (QFile::remove(path)) {
+            total -= static_cast<quint64>(file.size());
             qCDebug(VideoRecordingServiceLog) << "Removed old recording" << path;
             removed.append(path);
         } else {

@@ -473,6 +473,8 @@ On macOS and Windows, the GStreamer packages come from the official server, fall
 QGroundControl's public S3 mirror: the official server gets two tries and three minutes, then the
 mirror resumes the partial download. Both sources are verified against the SHA-256 checksums
 pinned in `.github/build-config.json`; installation stops if a package cannot be verified.
+`--skip-gstreamer` installs none on either platform, as CI does: configure then downloads the SDK,
+unless it finds one already installed.
 
 ```bash
 # Linux: Install all dependencies

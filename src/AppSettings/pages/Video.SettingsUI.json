@@ -134,6 +134,23 @@
             ]
         },
         {
+            "heading": "Video Display",
+            "keywords": ["grid lines", "telemetry overlay", "osd", "display fit", "fit width", "fit height", "fill", "crop"],
+            "showWhen": "!sourceDisabled",
+            "controls": [
+                {
+                    "setting": "videoSettings.videoFit",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "videoSettings.gridLines"
+                },
+                {
+                    "setting": "videoSettings.showTelemetryOverlay"
+                }
+            ]
+        },
+        {
             "heading": "Local Video Storage",
             "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec", "encoder", "quality"],
             "showWhen": "!sourceDisabled",

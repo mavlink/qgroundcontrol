@@ -30,6 +30,7 @@ private slots:
     void _testRecordingFailureReachesUser();
     void _testPruneStorage();
     void _testPruneStorageLeavesFilesBeingWritten();
+    void _testPruneStorageCountsOnlyRemovedFiles();
     void _testStorageLimitAppliesWhileRecording();
 
 private:
@@ -41,6 +42,7 @@ private:
     std::unique_ptr<QObject> _owner;
     VideoStreamController* _primaryStream = nullptr;
     VideoStreamController* _thermalStream = nullptr;
+    VideoStreamController* _cameraStream = nullptr;
     VideoRecordingService* _service = nullptr;
     FakeVideoReceiver* _primary = nullptr;
     FakeVideoReceiver* _thermal = nullptr;

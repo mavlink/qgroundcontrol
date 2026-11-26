@@ -92,9 +92,11 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 ## A recording
 
 1. `VideoManager::startRecording()` calls `Recording/VideoRecordingService`, which picks the file name, applies the
-   storage limit and calls `VideoStreamController::startRecording()` for the main picture and the thermal stream.
+   storage limit and calls `VideoStreamController::startRecording()` for the main picture and the thermal stream,
+   which connects for it if its view is off. While a recording runs the service refuses another start.
 2. GStreamer: `GstReceiverWorker` follows a `Receiver/RecordingPlan`, which names the parts a recording continues in,
-   and `GStreamer/Pipeline/RecordingBranch` writes each file (parser, muxer, file sink).
+   and `GStreamer/Pipeline/RecordingBranch` writes each file (parser, muxer, file sink): in Matroska, as `<base>.mkv`,
+   when the format asked for can't hold the stream's codec.
 3. Qt Multimedia and the USB camera: `QtMultimedia/QtVideoRecorder` encodes the stream's decoded frames, or the
    camera's capture session.
 4. `recordingStarted(file)` starts `Recording/SubtitleWriter` for that file, and `recordingFinished()` stops it.

@@ -1,5 +1,7 @@
 #include "SubtitleTrack.h"
 
+#include <algorithm>
+
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStringList>
@@ -10,6 +12,11 @@
 QGC_LOGGING_CATEGORY(SubtitleTrackLog, "AnalyzeView.SubtitleTrack")
 
 namespace {
+
+constexpr double kDefaultFontSize = 20;
+/// Bounds the sizes read from a file: the page divides by and scales with them.
+constexpr int kMaxResolution = 32768;
+constexpr qint64 kMaxHours = 1000;
 
 /// An ASS time, H:MM:SS.CC, in milliseconds; -1 when malformed.
 qint64 parseTime(const QString& time)
@@ -27,7 +34,19 @@ qint64 parseTime(const QString& time)
     if (!hoursOk || !minutesOk || !secondsOk) {
         return -1;
     }
+    // Negated tests, so that NaN fails them.
+    if ((hours < 0) || (hours > kMaxHours) || (minutes < 0) || (minutes >= 60) || !(seconds >= 0) || !(seconds < 60)) {
+        return -1;
+    }
     return (hours * 3'600'000) + (minutes * 60'000) + qRound64(seconds * 1000);
+}
+
+/// A script resolution; 0, as for one the file doesn't give, when it isn't a plausible size.
+int parseResolution(const QString& value)
+{
+    bool ok = false;
+    const int resolution = value.toInt(&ok);
+    return (ok && (resolution > 0) && (resolution <= kMaxResolution)) ? resolution : 0;
 }
 
 /// @p values split at commas into @p count fields, the last keeping the rest of the line (an event's text may hold
@@ -74,15 +93,25 @@ void SubtitleTrack::setSource(const QUrl& source)
     QString content;
     if (!source.isEmpty()) {
         QFile file(source.toLocalFile());
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            content = QString::fromUtf8(file.readAll());
-        } else {
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qCWarning(SubtitleTrackLog) << "Unable to read" << file.fileName() << file.errorString();
+        } else if (file.size() > kMaxFileBytes) {
+            qCWarning(SubtitleTrackLog) << "Not reading" << file.fileName() << "of" << file.size() << "bytes";
+        } else {
+            content = QString::fromUtf8(file.readAll());
         }
     }
     _parse(content);
     emit sourceChanged();
+
+    // The same indexes are other events now.
+    const bool hadShown = !_shown.isEmpty();
+    _shownIndexes.clear();
+    _shown.clear();
     _updateShown();
+    if (hadShown && _shown.isEmpty()) {
+        emit eventsChanged();
+    }
 }
 
 void SubtitleTrack::setPosition(qint64 position)
@@ -104,7 +133,7 @@ void SubtitleTrack::_parse(const QString& content)
     _events.clear();
     _playResX = 0;
     _playResY = 0;
-    _fontSize = 20;
+    _fontSize = kDefaultFontSize;
     int styleAlignment = 2;
     int marginL = 10;
     int marginR = 10;
@@ -137,9 +166,9 @@ void SubtitleTrack::_parse(const QString& content)
         const QString values = line.mid(colon + 1).trimmed();
         if (section == QStringLiteral("[script info]")) {
             if (key == QStringLiteral("PlayResX")) {
-                _playResX = values.toInt();
+                _playResX = parseResolution(values);
             } else if (key == QStringLiteral("PlayResY")) {
-                _playResY = values.toInt();
+                _playResY = parseResolution(values);
             }
         } else if (section == QStringLiteral("[v4+ styles]")) {
             if (key == QStringLiteral("Format")) {
@@ -153,7 +182,10 @@ void SubtitleTrack::_parse(const QString& content)
                 // The Default style, else the first.
                 if (!styleRead || (field(QStringLiteral("Name")) == QStringLiteral("Default"))) {
                     styleRead = true;
-                    _fontSize = field(QStringLiteral("Fontsize")).toDouble();
+                    bool fontSizeOk = false;
+                    const double fontSize = field(QStringLiteral("Fontsize")).toDouble(&fontSizeOk);
+                    _fontSize =
+                        (fontSizeOk && (fontSize > 0) && (fontSize <= kMaxResolution)) ? fontSize : kDefaultFontSize;
                     styleAlignment = field(QStringLiteral("Alignment")).toInt();
                     marginL = field(QStringLiteral("MarginL")).toInt();
                     marginR = field(QStringLiteral("MarginR")).toInt();
@@ -174,9 +206,9 @@ void SubtitleTrack::_parse(const QString& content)
         _playResX = 384;
         _playResY = 288;
     } else if (_playResX <= 0) {
-        _playResX = (_playResY * 4) / 3;
+        _playResX = std::max(1, (_playResY * 4) / 3);
     } else if (_playResY <= 0) {
-        _playResY = (_playResX * 3) / 4;
+        _playResY = std::max(1, (_playResX * 3) / 4);
     }
     if ((styleAlignment < 1) || (styleAlignment > 9)) {
         styleAlignment = 2;
