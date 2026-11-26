@@ -23,14 +23,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
-from common.build_config import get_build_config_value, get_gstreamer_version
+from common.build_config import get_gstreamer_version
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
-from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
+from common.gstreamer import (
+    package_platform,
+    package_url,
+    pinned_checksum,
+    platform_packages,
+    upstream_checksum,
+)
 from common.markdown import code_span, md_table, summary_section
-from common.net import download_file, read_url_text
+from common.net import download_file
 
 S3_BUCKET = "qgroundcontrol"
-PLATFORMS = tuple(PLATFORM_PACKAGES)
 
 
 @dataclass(frozen=True)
@@ -49,35 +54,27 @@ class Artifact:
         return f"dependencies/gstreamer/{self.s3_dir}/{self.filename}"
 
 
-def _version_tuple(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in version.split(".") if part.isdigit())
-
-
-def artifacts_for(platform: str, version: str, minimum: str | None = None) -> list[Artifact]:
-    """Return the upstream artifact(s) to mirror for *platform* at *version*.
-
-    *minimum* defaults to build-config.json's ``gstreamer.version.bundled_minimum``, the oldest SDK the build accepts.
-    """
-    if platform not in PLATFORM_PACKAGES:
+def artifacts_for(platform: str, version: str) -> list[Artifact]:
+    """Return the upstream artifact(s) to mirror for *platform* at *version*."""
+    packages = platform_packages()
+    if platform not in packages:
         raise ValueError(f"Unknown platform: {platform!r}")
-    minimum = minimum or get_build_config_value("gstreamer.version.bundled_minimum")
-    if minimum and _version_tuple(version) < _version_tuple(minimum):
-        raise ValueError(f"GStreamer SDKs require version >= {minimum} (got {version!r})")
     return [
         Artifact(package, package_url(package, version), package_platform(package))
-        for package in PLATFORM_PACKAGES[platform]
+        for package in packages[platform]
     ]
 
 
 def resolve_platforms(value: str) -> list[str]:
     """Expand 'all' or a comma list into validated platform names."""
+    platforms = list(platform_packages())
     if not value or value == "all":
-        return list(PLATFORMS)
+        return platforms
     requested = [p.strip() for p in value.split(",") if p.strip()]
-    unknown = [p for p in requested if p not in PLATFORMS]
+    unknown = [p for p in requested if p not in platforms]
     if unknown:
         raise ValueError(
-            f"Unknown platform(s): {', '.join(unknown)}; valid: {', '.join(PLATFORMS)}"
+            f"Unknown platform(s): {', '.join(unknown)}; valid: {', '.join(platforms)}"
         )
     return requested
 
@@ -88,10 +85,9 @@ def _download(url: str, dest: Path, expected_sha256: str) -> None:
 
 def _expected_sha(artifact: Artifact, version: str) -> str:
     """Return the pinned checksum, which the build treats as authoritative, else the upstream sidecar's."""
-    pinned = pinned_checksum(version, artifact.package)
-    if pinned:
-        return pinned
-    return read_url_text(f"{artifact.url}.sha256sum", timeout=60).split()[0].strip().lower()
+    return pinned_checksum(version, artifact.package) or upstream_checksum(
+        artifact.package, version
+    )
 
 
 def mirror_artifact(

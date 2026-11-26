@@ -4,8 +4,8 @@
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
 # its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (qgc_gst_resolve_layout) and its
-# pkg-config view (qgc_gst_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
-# returns with _qgc_gst_return_discovery() (Layout.cmake), which records those in the GStreamer layout store.
+# pkg-config view (qgc_gst_apply_pkgconfig_env), and returns with _qgc_gst_return_discovery() (Layout.cmake), which
+# records those in the GStreamer layout store.
 
 include_guard(GLOBAL)
 
@@ -98,22 +98,6 @@ function(qgc_gst_platform prefix)
     return(PROPAGATE ${_outputs})
 endfunction()
 
-# _qgc_gst_require_bundled_version(<platform> <version> <floor>)
-# Fails configure when <platform> uses an official SDK (every platform but Linux, whose system GStreamer has its own
-# floor) and <version> is older than <floor>, gstreamer.version.bundled_minimum: discovery reads the SDK layouts from
-# that release on (the Windows installers' names, iOS's merged framework).
-function(_qgc_gst_require_bundled_version platform version floor)
-    if(platform STREQUAL "linux" OR version VERSION_GREATER_EQUAL floor)
-        return()
-    endif()
-    message(
-        FATAL_ERROR
-            "GStreamer: the ${platform} SDK must be ${floor} or later (gstreamer.version.bundled_minimum), but "
-            "${version} was requested. Set QGC_GST_VERSION, or gstreamer.version.${platform} in "
-            ".github/build-config.json, to ${floor} or later."
-    )
-endfunction()
-
 # _qgc_gst_require_no_spaces(<what> <path>)
 # Fails configure when <path> contains a space: pkg-config prints paths unquoted, so FindPkgConfig would split them. iOS
 # reads its SDK without pkg-config, so any path does there.
@@ -124,9 +108,8 @@ function(_qgc_gst_require_no_spaces what path)
     message(
         FATAL_ERROR
             "GStreamer: ${what} '${path}' contains a space, which pkg-config cannot pass on: it prints paths "
-            "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64, where "
-            "tools/setup/install_dependencies installs it) and point GStreamer_ROOT_DIR at it, or unset "
-            "GStreamer_ROOT_DIR to download one."
+            "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64) and point "
+            "GStreamer_ROOT_DIR at it, or unset GStreamer_ROOT_DIR to download one."
     )
 endfunction()
 

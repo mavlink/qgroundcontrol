@@ -17,9 +17,9 @@ string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
 file(READ "${QGC_MODULE_DIR}/../.github/build-config.json" _qgc_test_real_config)
 string(JSON _qgc_test_policy_json GET "${_qgc_test_real_config}" gstreamer_plugin_policy)
 string(
-    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"bundled_minimum\": "
-           "\"1.20.0\", \"android\": \"1.20.0\", \"macos\": \"1.22.0\"}, \"plugins\": {\"common\": "
-           "[\"${_qgc_test_plugins_json}\"]}}, \"gstreamer_plugin_policy\": ${_qgc_test_policy_json}}"
+    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": "
+           "\"1.20.0\", \"macos\": \"1.22.0\"}, \"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}, "
+           "\"gstreamer_plugin_policy\": ${_qgc_test_policy_json}}"
 )
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
@@ -165,18 +165,10 @@ if(QGC_TEST_INSTALL_REQUIRED_PLUGINS)
     string(REPLACE "," ";" _qgc_required_plugins "${QGC_TEST_INSTALL_REQUIRED_PLUGINS}")
     qgc_gst_install_platform_sdk(QGCFake REQUIRED_PLUGINS ${_qgc_required_plugins})
 endif()
-# QGC_TEST_INSTALL_MACOS_FRAMEWORK: install this GStreamer.framework into a QGCFake.app bundle.
-# QGC_TEST_INSTALL_MACOS_FLAT: install the SDK's .dylib files into a QGCFake.app bundle.
-if(QGC_TEST_INSTALL_MACOS_FRAMEWORK)
-    qgc_gst_layout_set(FRAMEWORK_BUNDLE "${QGC_TEST_INSTALL_MACOS_FRAMEWORK}")
+# QGC_TEST_INSTALL_MACOS: install the SDK's .dylib files into a QGCFake.app bundle.
+if(QGC_TEST_INSTALL_MACOS)
     qgc_gst_install_macos_sdk(QGCFake _qgc_plugin_dest)
-    qgc_test_assert_streq(
-        "framework plugin dir" "QGCFake.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"
-        "${_qgc_plugin_dest}"
-    )
-elseif(QGC_TEST_INSTALL_MACOS_FLAT)
-    qgc_gst_install_macos_sdk(QGCFake _qgc_plugin_dest)
-    qgc_test_assert_streq("flat plugin dir" "QGCFake.app/Contents/lib/gstreamer-1.0" "${_qgc_plugin_dest}")
+    qgc_test_assert_streq("plugin dir" "QGCFake.app/Contents/lib/gstreamer-1.0" "${_qgc_plugin_dest}")
 endif()
 
 if(NOT DEFINED EXPECT_ROOT)

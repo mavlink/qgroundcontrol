@@ -78,25 +78,6 @@ _parallel_codesign(
 # ----------------------------------------------------------------------------
 # Sign GStreamer Helpers
 # ----------------------------------------------------------------------------
-if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
-    _parallel_codesign(
-        "$ENV{QGC_MACOS_SIGNING_IDENTITY}"
-        "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f
-    )
-    execute_process(
-        COMMAND
-            codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}"
-            "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer"
-            COMMAND_ERROR_IS_FATAL ANY
-    )
-    execute_process(
-        COMMAND
-            codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}"
-            "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/GStreamer"
-            COMMAND_ERROR_IS_FATAL ANY
-    )
-endif()
-
 if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0")
     _parallel_codesign(
         "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0" -type f -perm
@@ -131,13 +112,6 @@ foreach(_framework_dir ${_framework_dirs})
                 "${_framework_dir}" COMMAND_ERROR_IS_FATAL ANY
     )
 endforeach()
-
-if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
-    execute_process(
-        COMMAND codesign --verify --deep --strict --verbose=2
-                "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework" COMMAND_ERROR_IS_FATAL ANY
-    )
-endif()
 
 # ----------------------------------------------------------------------------
 # Sign Main Application Bundle

@@ -1,56 +1,47 @@
-"""GStreamer SDK package layout shared by the installers, the S3 mirror and dependency checks.
+"""The GStreamer SDK packages, for the S3 mirror, the pin command and dependency checks.
 
-Mirrors ``qgc_gst_get_package_url`` / ``qgc_gst_get_s3_mirror_url`` in
-cmake/GStreamer/Packages.cmake. A package key is the ``gstreamer.checksums.<version>.<key>``
-entry in .github/build-config.json that pins it.
+``gstreamer.packages`` in .github/build-config.json holds the path of each package under
+``gstreamer.package_url``, with ``{version}`` for the release; cmake/GStreamer/Packages.cmake reads
+the same table. A package's key is also its ``gstreamer.checksums.<version>`` entry, and the first
+directory of its path is its platform: the ``gstreamer.version`` entry that names its release and
+its directory on the mirror.
 """
 
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .build_config import load_build_config
+from .net import read_url_text
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-UPSTREAM_BASE_URL = "https://gstreamer.freedesktop.org/data/pkg"
-S3_MIRROR_BASE_URL = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer"
 
-# Package key -> (platform directory, path under <platform>/<version>/ with {version} placeholders)
-_PACKAGES: dict[str, tuple[str, str]] = {
-    "android": ("android", "gstreamer-1.0-android-universal-{version}.tar.xz"),
-    "ios": ("ios", "gstreamer-1.0-devel-{version}-ios-universal.pkg"),
-    "macos": ("macos", "gstreamer-1.0-{version}-universal.pkg"),
-    "macos_devel": ("macos", "gstreamer-1.0-devel-{version}-universal.pkg"),
-    "windows_msvc_x64": ("windows", "msvc/gstreamer-1.0-msvc-x86_64-{version}.exe"),
-    "windows_msvc_arm64": ("windows", "msvc/gstreamer-1.0-msvc-arm64-{version}.exe"),
-}
-
-# From 1.28.8 on, the iOS SDK is an xcframework tarball instead of a devel .pkg.
-_IOS_XCFRAMEWORK_SINCE = (1, 28, 8)
-_IOS_XCFRAMEWORK_PATH = "gstreamer-{version}-xcframework.tar.xz"
-
-# Platforms with prebuilt upstream SDKs, and their packages.
-PLATFORM_PACKAGES: dict[str, tuple[str, ...]] = {
-    "android": ("android",),
-    "ios": ("ios",),
-    "macos": ("macos", "macos_devel"),
-    "windows": ("windows_msvc_x64", "windows_msvc_arm64"),
-}
+def _config() -> dict[str, Any]:
+    return load_build_config()["gstreamer"]
 
 
-def _package(package: str) -> tuple[str, str]:
+def _package_path(package: str) -> str:
     try:
-        return _PACKAGES[package]
+        return _config()["packages"][package]
     except KeyError:
         raise ValueError(f"Unknown GStreamer package: {package!r}") from None
 
 
+def platform_packages() -> dict[str, tuple[str, ...]]:
+    """Return the platforms with official SDKs and the packages of each, in build-config.json order."""
+    platforms: dict[str, tuple[str, ...]] = {}
+    for package, path in _config()["packages"].items():
+        platform = path.split("/", 1)[0]
+        platforms[platform] = (*platforms.get(platform, ()), package)
+    return platforms
+
+
 def package_platform(package: str) -> str:
-    """Return the platform directory *package* is published under."""
-    return _package(package)[0]
+    """Return the platform of *package*, the directory it is published under."""
+    return _package_path(package).split("/", 1)[0]
 
 
 def package_filename(package: str, version: str) -> str:
@@ -58,28 +49,23 @@ def package_filename(package: str, version: str) -> str:
     return package_url(package, version).rsplit("/", 1)[-1]
 
 
-def _version_key(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in re.findall(r"\d+", version)[:3])
-
-
 def package_url(package: str, version: str) -> str:
-    """Return the gstreamer.freedesktop.org URL of *package* at *version*."""
-    platform, path = _package(package)
-    if package == "ios" and _version_key(version) >= _IOS_XCFRAMEWORK_SINCE:
-        path = _IOS_XCFRAMEWORK_PATH
-    return f"{UPSTREAM_BASE_URL}/{platform}/{version}/{path.format(version=version)}"
+    """Return the upstream URL of *package* at *version*."""
+    path = _package_path(package).replace("{version}", version)
+    return f"{_config()['package_url']}/{path}"
 
 
 def mirror_url(package: str, version: str) -> str:
-    """Return the QGC S3 mirror URL of *package* at *version*."""
-    return f"{S3_MIRROR_BASE_URL}/{package_platform(package)}/{package_filename(package, version)}"
+    """Return the QGC mirror URL of *package* at *version*."""
+    mirror = _config()["package_mirror_url"]
+    return f"{mirror}/{package_platform(package)}/{package_filename(package, version)}"
 
 
 def release_index_url(platform: str) -> str:
     """Return the upstream directory listing the released versions for *platform*."""
-    if platform not in PLATFORM_PACKAGES:
+    if platform not in platform_packages():
         raise ValueError(f"Unknown GStreamer platform: {platform!r}")
-    return f"{UPSTREAM_BASE_URL}/{platform}/"
+    return f"{_config()['package_url']}/{platform}/"
 
 
 def pinned_checksum(version: str, package: str, *, config_file: Path | None = None) -> str | None:
@@ -90,3 +76,15 @@ def pinned_checksum(version: str, package: str, *, config_file: Path | None = No
         return None
     value = checksums.get(version, {}).get(package)
     return str(value) if value else None
+
+
+def upstream_checksum(package: str, version: str) -> str:
+    """Return the SHA-256 in the ``.sha256sum`` file upstream publishes beside *package* at *version*.
+
+    Raises OSError when upstream has no such file and RuntimeError when it holds no SHA-256.
+    """
+    url = f"{package_url(package, version)}.sha256sum"
+    fields = read_url_text(url).split()
+    if not fields or not re.fullmatch(r"[0-9a-fA-F]{64}", fields[0]):
+        raise RuntimeError(f"{url} does not start with a SHA-256")
+    return fields[0].lower()

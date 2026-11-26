@@ -15,9 +15,8 @@ set(_qgc_gst_tests
     test_install_filter
     test_sdk_state
     test_windows_sdk_root
-    test_windows_installer_guard
+    test_windows_sdk_extract
     test_platform
-    test_checksum_authority
     test_ios_bundle_from_root
     test_ios_xcframework_slice
     test_sdk_acquire
@@ -48,7 +47,7 @@ foreach(_t IN LISTS _qgc_gst_tests)
 endforeach()
 # The stand-in installer and pkgutil are shell scripts, which a Windows host cannot run.
 set_tests_properties(
-    GStreamer.test_windows_installer_guard GStreamer.test_macos_sdk_extract
+    GStreamer.test_windows_sdk_extract GStreamer.test_macos_sdk_extract
     PROPERTIES SKIP_REGULAR_EXPRESSION "QGC_TEST_SKIPPED"
 )
 
@@ -56,7 +55,7 @@ set_tests_properties(
 # with TEST_CASE when given, and must fail with that diagnostic (qgc_add_expected_failure_test).
 set(_qgc_gst_failure_cases
     "test_android_abi_info|||Unsupported Android ABI: mips"
-    "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
+    "test_download|Unpinned|unpinned|no checksum is pinned for the android 9.1.2 package"
     "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
     "test_plugin_policy|MissingRequired|missing-required|bundle-required plugins are missing from the fake SDK: rtsp"
@@ -64,8 +63,6 @@ set(_qgc_gst_failure_cases
     "test_platform|DownloadSpaces|download-spaces-unix|where the GStreamer SDK is downloaded, contains a space,"
     "test_platform|DownloadNoShortName|download-spaces-no-short-name|contains a space and no 8.3 short path without one"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
-    "test_platform|BelowBundledFloor|below-bundled-floor|the windows SDK must be 1.28.0 or later"
-    "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
     "test_ios_sdk_version|BelowRequested|below-requested|older than the requested 1.28.4"
     "test_windows_sdk_root|ExplicitIncomplete|explicit-incomplete|\\(GStreamer_ROOT_DIR\\) is incomplete"
     "test_windows_sdk_root|ExplicitOld|explicit-old|\\(GStreamer_ROOT_DIR\\) has version '1.26.0'"
@@ -100,8 +97,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
             reconfigure
             reuse-auto-root
             legacy-pkg-config-args
-            version-override
-            version-format
+            sdk-too-old
             missing-mandatory
             missing-gl
             plugin-allowlist
@@ -110,7 +106,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
             android-mobile
             ios-link
             sdk-prefix-decoy
-            homebrew
+            macos-discovery
     )
         add_test(
             NAME "GStreamer.test_orchestrator.${_qgc_scenario}"

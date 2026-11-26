@@ -3,7 +3,7 @@
 # that would ship a GPL library or plugin, _qgc_gst_install_gpl_check; verifying the installed plugins) and the
 # dispatcher qgc_gst_install_platform_sdk, called from src/VideoManager/GStreamer/CMakeLists.txt after the
 # ANDROID/IOS early-return. Each platform's installer is in platform/<platform>.cmake.
-# Depends on: Platform.cmake (qgc_gst_platform), Layout.cmake (the Orchestrator's BUNDLED_PLUGINS, HOMEBREW_PREFIX)
+# Depends on: Platform.cmake (qgc_gst_platform), Layout.cmake (the Orchestrator's BUNDLED_PLUGINS)
 #             and PluginPolicy.cmake (qgc_gst_platform_plugin_attrs, GSTREAMER_BUNDLE_REQUIRED_PLUGINS,
 #             GSTREAMER_GPL_DENYLIST; included again by the install-time checks).
 
@@ -288,18 +288,7 @@ function(qgc_gst_install_platform_sdk app_name)
         message(STATUS "GStreamer: QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
         return()
     endif()
-    # Homebrew's libraries, plugins and plugin scanner load each other by absolute paths under its prefix (no @rpath),
-    # so copies bundled into the app would not be the ones loaded.
-    qgc_gst_layout_get(HOMEBREW_PREFIX _gips_homebrew_prefix)
-    if(_gips_homebrew_prefix)
-        set(_gips_message "GStreamer: this build uses Homebrew's GStreamer (${_gips_homebrew_prefix}), which cannot be")
-        string(
-            APPEND _gips_message " bundled. Configure with the official SDK (QGC_GST_USE_HOMEBREW=OFF and "
-            "GStreamer_ROOT_DIR unset) to install or package."
-        )
-        install(CODE "message(FATAL_ERROR \"${_gips_message}\")")
-        return()
-    endif()
+
     if(NOT ARG_REQUIRED_PLUGINS)
         list(APPEND ARG_REQUIRED_PLUGINS ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     endif()

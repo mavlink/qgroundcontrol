@@ -93,3 +93,33 @@ function(qgc_test_split case)
         )
     endforeach()
 endfunction()
+
+# qgc_test_build_config([<version> [<package> <sha256>]...])
+# Sets QGC_BUILD_CONFIG_CONTENT in the caller to the repository's build-config.json, with gstreamer.checksums holding
+# only these pins of the <version> SDK packages.
+function(qgc_test_build_config)
+    file(READ "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../.github/build-config.json" _config)
+    set(_checksums "{}")
+    if(ARGN)
+        list(POP_FRONT ARGN _version)
+        set(_pins "{}")
+        while(ARGN)
+            list(POP_FRONT ARGN _package _sha256)
+            string(JSON _pins SET "${_pins}" "${_package}" "\"${_sha256}\"")
+        endwhile()
+        string(JSON _checksums SET "{}" "${_version}" "${_pins}")
+    endif()
+    string(
+        JSON
+        _config
+        SET
+        "${_config}"
+        gstreamer
+        checksums
+        "${_checksums}"
+    )
+    set(QGC_BUILD_CONFIG_CONTENT
+        "${_config}"
+        PARENT_SCOPE
+    )
+endfunction()

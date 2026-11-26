@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 from common.gstreamer import (
-    PLATFORM_PACKAGES,
     mirror_url,
     package_filename,
     package_url,
     pinned_checksum,
+    platform_packages,
     release_index_url,
 )
 
@@ -22,7 +22,7 @@ from ._helpers import REPO_ROOT
 if TYPE_CHECKING:
     from pathlib import Path
 
-PACKAGES = [package for packages in PLATFORM_PACKAGES.values() for package in packages]
+PACKAGES = [package for packages in platform_packages().values() for package in packages]
 
 
 def test_package_urls() -> None:
@@ -40,16 +40,8 @@ def test_package_urls() -> None:
     assert release_index_url("ios") == "https://gstreamer.freedesktop.org/data/pkg/ios/"
 
 
-@pytest.mark.parametrize(
-    ("version", "filename"),
-    [
-        ("1.28.7", "gstreamer-1.0-devel-1.28.7-ios-universal.pkg"),
-        ("1.28.8", "gstreamer-1.28.8-xcframework.tar.xz"),
-        ("1.29.1", "gstreamer-1.29.1-xcframework.tar.xz"),
-    ],
-)
-def test_ios_package_format_depends_on_version(version: str, filename: str) -> None:
-    assert package_filename("ios", version) == filename
+def test_ios_package_is_the_xcframework_tarball() -> None:
+    assert package_filename("ios", "1.28.8") == "gstreamer-1.28.8-xcframework.tar.xz"
 
 
 @pytest.mark.parametrize(
@@ -70,11 +62,12 @@ def test_pinned_checksum(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(shutil.which("cmake") is None, reason="cmake is not installed")
-@pytest.mark.parametrize("version", ["1.28.7", "1.28.8"])
-def test_layout_matches_cmake(tmp_path: Path, version: str) -> None:
-    """The configure-time download (cmake/GStreamer/Packages.cmake) must fetch the same files."""
+def test_layout_matches_cmake(tmp_path: Path) -> None:
+    """The configure-time download (cmake/GStreamer/Packages.cmake) reads the table the same way."""
+    version = "1.28.8"
     script = tmp_path / "urls.cmake"
     script.write_text(
+        f'file(READ "{REPO_ROOT}/.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)\n'
         f'include("{REPO_ROOT}/cmake/GStreamer/Packages.cmake")\n'
         f"foreach(_package IN ITEMS {' '.join(PACKAGES)})\n"
         f"    qgc_gst_get_package_url(${{_package}} {version} _url)\n"

@@ -192,6 +192,9 @@
       "type": "object",
       "required": [
         "version",
+        "package_url",
+        "package_mirror_url",
+        "packages",
         "ca_bundle_url",
         "ca_bundle_sha256",
         "plugins",
@@ -202,9 +205,7 @@
         "version": {
           "type": "object",
           "required": [
-            "default",
             "minimum",
-            "bundled_minimum",
             "android",
             "ios",
             "macos",
@@ -212,16 +213,7 @@
           ],
           "additionalProperties": false,
           "properties": {
-            "default": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
             "minimum": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
-            "bundled_minimum": {
-              "description": "Oldest official SDK (Windows, macOS, Android, iOS) the build can download or bundle; the system GStreamer of Linux has minimum instead.",
               "type": "string",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             },
@@ -240,6 +232,55 @@
             "windows": {
               "type": "string",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            }
+          }
+        },
+        "package_url": {
+          "type": "string",
+          "description": "Server of the official SDK packages; a package's URL is this and its path in packages",
+          "pattern": "^https://[^ ]*[^ /]$"
+        },
+        "package_mirror_url": {
+          "type": "string",
+          "description": "QGC's mirror of the SDK packages, which holds each as <platform>/<file name>",
+          "pattern": "^https://[^ ]*[^ /]$"
+        },
+        "packages": {
+          "type": "object",
+          "description": "Path of each SDK package under package_url, by its key in checksums. {version} stands for the release; the first directory is the platform, whose gstreamer.version entry is that release",
+          "required": [
+            "android",
+            "ios",
+            "macos",
+            "macos_devel",
+            "windows_msvc_x64",
+            "windows_msvc_arm64"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "android": {
+              "type": "string",
+              "pattern": "^(android|ios|macos|windows)/\\{version\\}/[^ ]*[^ /]$"
+            },
+            "ios": {
+              "type": "string",
+              "pattern": "^(android|ios|macos|windows)/\\{version\\}/[^ ]*[^ /]$"
+            },
+            "macos": {
+              "type": "string",
+              "pattern": "^(android|ios|macos|windows)/\\{version\\}/[^ ]*[^ /]$"
+            },
+            "macos_devel": {
+              "type": "string",
+              "pattern": "^(android|ios|macos|windows)/\\{version\\}/[^ ]*[^ /]$"
+            },
+            "windows_msvc_x64": {
+              "type": "string",
+              "pattern": "^(android|ios|macos|windows)/\\{version\\}/[^ ]*[^ /]$"
+            },
+            "windows_msvc_arm64": {
+              "type": "string",
+              "pattern": "^(android|ios|macos|windows)/\\{version\\}/[^ ]*[^ /]$"
             }
           }
         },

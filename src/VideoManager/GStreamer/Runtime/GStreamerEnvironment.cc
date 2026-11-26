@@ -93,17 +93,6 @@ bool _setByUser(const char* name)
     return (managed == s_managedEnvValues.constEnd()) || (qEnvironmentVariable(name) != managed.value());
 }
 
-QString _firstExistingPath(const QStringList& paths)
-{
-    for (const QString& path : paths) {
-        if (QFileInfo::exists(path)) {
-            return path;
-        }
-    }
-
-    return {};
-}
-
 // An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
 // such an install after what stays put, the AppImage file or the translocated app's name.
 QString _stableInstallPath(const QString& installPath)
@@ -294,6 +283,17 @@ void _warnIfScannerMissing(const QString& platformLabel, const QString& scannerP
     }
 }
 
+QString _firstExistingPath(const QStringList& paths)
+{
+    for (const QString& path : paths) {
+        if (QFileInfo::exists(path)) {
+            return path;
+        }
+    }
+
+    return {};
+}
+
 // Points GStreamer at the bundled runtime. Returns false, leaving the environment untouched, when no
 // bundled plugin directory exists (system GStreamer is used as-is).
 bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout)
@@ -323,21 +323,8 @@ VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
 
 #if defined(Q_OS_MACOS)
-    const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-#if defined(QGC_GST_MACOS_FRAMEWORK)
-    const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::MacOSFramework, appDir);
-#else
-    const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::MacOSFlat, appDir);
-#endif
-    const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
-
-    if (!_applyBundleLayout(QStringLiteral("macOS"), layout) && hasBundledFramework) {
-        result.ok = false;
-        result.error =
-            QStringLiteral("GStreamer: bundled macOS framework found but plugin directory is missing under %1")
-                .arg(frameworkDir);
-        qCCritical(GStreamerEnvLog) << result.error;
-    }
+    (void) _applyBundleLayout(QStringLiteral("macOS"),
+                              GStreamer::Environment::bundleLayout(DesktopInstall::MacOS, appDir));
 
 #elif defined(Q_OS_WIN)
     if (_applyBundleLayout(QStringLiteral("Windows"),
@@ -444,23 +431,8 @@ BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
     QStringList helperDirs{_cleanJoin(appDir, "../libexec/gstreamer-1.0")};
     QString exeSuffix;
     switch (install) {
-        case DesktopInstall::MacOSFramework:
-        case DesktopInstall::MacOSFlat: {
-            const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-            QString rootDir = _firstExistingPath({
-                _cleanJoin(frameworkDir, "Versions/1.0"),
-                _cleanJoin(frameworkDir, "Versions/Current"),
-                frameworkDir,
-            });
-            if (rootDir.isEmpty()) {
-                rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
-            }
-            const QString frameworkLib = _cleanJoin(rootDir, "lib");
-            libDirs = (install == DesktopInstall::MacOSFramework) ? QStringList{frameworkLib, appLib}
-                                                                  : QStringList{appLib, frameworkLib};
-            helperDirs.append(_cleanJoin(rootDir, "libexec/gstreamer-1.0"));
+        case DesktopInstall::MacOS:
             break;
-        }
         case DesktopInstall::Windows:
             exeSuffix = QStringLiteral(".exe");
             break;

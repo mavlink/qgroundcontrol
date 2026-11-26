@@ -59,6 +59,7 @@ tools/
 ├── moccache_launcher.py     # moccache entry point: the CMake AUTOMOC launcher and the stats/trim CLI
 ├── pre_commit.py            # Pre-commit runner with CI summaries
 ├── terrain_tiles.py         # Terrarium elevation tiles from Copernicus GLO-30 (GeoMap)
+├── update_gstreamer.py      # Pin a GStreamer SDK release (versions and package checksums) in build-config.json
 ├── update_px4_metadata.py   # Refresh the bundled PX4 airframe and parameter metadata
 ├── validate_cmake_presets.py # CMake presets against the locked cmake package's schema (hook)
 ├── validate_configs.py      # Cross-field checks for build-config.json and link exceptions
@@ -152,6 +153,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | `just info`              | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...)                  |
 | `just check-deps`        | Check Qt, GStreamer, Python, and build tool versions (`tools/check_deps.py`)                          |
 | `just check-gstreamer`   | Check the latest GStreamer patch common to all SDK platforms                                          |
+| `just update-gstreamer`  | Pin the GStreamer SDK release given as argument ([update_gstreamer.py](#update_gstreamerpy))          |
 | `just translations`      | Update translation sources (`tools/translations/qgc_lupdate.py`); `--check` only reports bad `tr()`   |
 | `just distclean`         | Clean build, caches, generated files, and `node_modules/`                                             |
 | `just validate-configs`  | Validate build settings and link exceptions ([Centralized Configuration](#centralized-configuration)) |
@@ -377,6 +379,14 @@ python tools/check_deps.py --qt         # Check Qt version
 python tools/check_deps.py --gstreamer  # Find latest patch common to all SDK platforms
 ```
 
+### update_gstreamer.py
+
+Pins a GStreamer SDK release: `just update-gstreamer 1.28.9` sets `gstreamer.version.<platform>` of the four SDK
+platforms in `.github/build-config.json` and replaces `gstreamer.checksums` with the SHA-256 of the release's six
+packages, read from the `.sha256sum` file upstream publishes beside each. It writes nothing unless upstream has
+every package. Review the diff like any other pin: configure then holds each SDK download to these checksums, and
+`mirror-gstreamer.yml` copies the packages to the S3 mirror once the change reaches `master`.
+
 ### API documentation (Doxygen)
 
 Run Doxygen from the repository root, as the Doxygen workflow does; HTML goes to `docs/api/html/`.
@@ -445,8 +455,8 @@ install prefix, such as a source build's.
 | `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                                     |
 | `install_dependencies --platform fedora`  | Linux (Fedora/RHEL)   | Install build dependencies via dnf                                                     |
 | `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                                  |
-| `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                          |
-| `install_dependencies --platform windows` | Windows               | Install GStreamer (optional `--vulkan`, `--msvc`, `--msvc-arm64`, `--nsis`)            |
+| `install_dependencies --platform macos`   | macOS                 | Install build dependencies via Homebrew                                                |
+| `install_dependencies --platform windows` | Windows               | Install on request: `--msvc`, `--msvc-arm64`, `--nsis`, `--vulkan`                     |
 | `install_uv.py`                           | Linux, macOS          | Install the uv release named by `required-version` when `uv` is not on `PATH`          |
 | `install_python.py`                       | All                   | Install locked Python tool groups via uv ([Python Environment](#python-environment))   |
 | `install_qt.py`                           | All                   | Install Qt with [QGC's installer or aqtinstall](#qt-installer) (`just qt`: `local`)    |
@@ -469,12 +479,8 @@ Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, 
 `tools/.venv` and print how to activate it; CI build jobs instead use the `build.cmake_version` and
 `build.ninja_version` pins in `build-config.json`, which `build-setup` installs.
 
-On macOS and Windows, the GStreamer packages come from the official server, falling back to
-QGroundControl's public S3 mirror: the official server gets two tries and three minutes, then the
-mirror resumes the partial download. Both sources are verified against the SHA-256 checksums
-pinned in `.github/build-config.json`; installation stops if a package cannot be verified.
-`--skip-gstreamer` installs none on either platform, as CI does: configure then downloads the SDK,
-unless it finds one already installed.
+On macOS and Windows the script installs no GStreamer: CMake downloads the SDK when it configures
+([details](../src/VideoManager/GStreamer/README.md#macos--windows--ios)).
 
 ```bash
 # Linux: Install all dependencies

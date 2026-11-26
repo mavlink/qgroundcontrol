@@ -29,16 +29,9 @@ if(NOT CMAKE_HOST_WIN32)
     qgc_test_pass("root with ':'")
 endif()
 
-set(_bundle "${_sandbox}/GStreamer.framework")
-qgc_gst_resolve_layout(SDK_ROOT "${_flat}" FRAMEWORK_BUNDLE "${_bundle}")
-qgc_test_assert_streq("framework" "${_bundle}" "${GSTREAMER_FRAMEWORK_PATH}")
-qgc_test_pass("FRAMEWORK_BUNDLE")
-
 # The layout store works in script mode too: a key reads back as set, and as "" before it is.
 qgc_gst_layout_get(NEVER_SET _none)
 qgc_test_assert_streq("unset key" "" "${_none}")
-qgc_gst_layout_get(FRAMEWORK_BUNDLE _bundle_key)
-qgc_test_assert_streq("FRAMEWORK_BUNDLE key" "${_bundle}" "${_bundle_key}")
 qgc_gst_layout_set(FOO bar)
 qgc_gst_layout_get(FOO _foo)
 qgc_test_assert_streq("set key" "bar" "${_foo}")

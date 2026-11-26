@@ -155,4 +155,5 @@ and the full list. Each rule's reason is its `description` in `renovate.json`.
   tracked set equal to these pins plus CMake and Ninja. Renovate does not track the other
   `build-config.json` values (Qt, the Android SDK and NDK, Xcode, GStreamer, the analysis
   toolchain); bump them by hand (`just check-deps` and `just check-gstreamer` report newer Qt and
-  GStreamer releases).
+  GStreamer releases; `just update-gstreamer <version>` writes a GStreamer release's versions and
+  package checksums).

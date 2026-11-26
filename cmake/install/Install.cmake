@@ -144,34 +144,9 @@ if(LINUX)
     )
 endif()
 
-# GStreamer framework rpath fixup: component dylibs (libgstrtsp, libgstvideo, etc.)
-# are inside the framework's lib/ directory, but the binary's @rpath resolves to
-# Contents/Frameworks/ (flat). Add the framework lib path so dyld finds them.
-# Runs after Qt deploy to survive any rpath rewriting by macdeployqt.
-set(_qgc_gst_framework_bundle "")
-if(MACOS AND COMMAND qgc_gst_layout_get)
-    qgc_gst_layout_get(FRAMEWORK_BUNDLE _qgc_gst_framework_bundle)
-endif()
-if(MACOS AND _qgc_gst_framework_bundle)
-    install(
-        CODE "
-        set(_bundle \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app\")
-        set(_binary \"\${_bundle}/Contents/MacOS/${CMAKE_PROJECT_NAME}\")
-        if(EXISTS \"\${_binary}\")
-            execute_process(
-                COMMAND install_name_tool -add_rpath
-                    @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib
-                    \"\${_binary}\"
-                ERROR_QUIET
-            )
-        endif()
-    "
-    )
-endif()
-
 # Bundle cleanup after macdeployqt, which can't exclude plugins: drop the SQL drivers but SQLite, whose client
 # libraries the bundle lacks, and the absolute LC_RPATHs that pkg-config link flags (the GStreamer SDK's) leave on the
-# executable ahead of the bundle's, through which dyld would load an installed GStreamer.framework instead.
+# executable ahead of the bundle's, through which dyld would load the build machine's GStreamer instead.
 if(MACOS)
     install(CODE "set(_qgc_bundle \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app\")")
     install(

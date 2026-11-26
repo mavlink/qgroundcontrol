@@ -136,7 +136,7 @@ class TestInstall:
 
 
 @pytest.mark.parametrize(("flag", "arm64"), [("", False), ("true", True), ("false", False)])
-def test_windows_installs_msvc_and_nsis_without_gstreamer(monkeypatch, flag, arm64):
+def test_windows_installs_msvc_and_nsis(monkeypatch, flag, arm64):
     monkeypatch.setenv("INPUT_MSVC_ARM64", flag)
     with patch.object(helper, "install_with_retries", return_value=3) as install:
         assert helper.main(["windows"]) == 3
@@ -147,7 +147,6 @@ def test_windows_installs_msvc_and_nsis_without_gstreamer(monkeypatch, flag, arm
     assert command[2:] == [
         "--platform",
         "windows",
-        "--skip-gstreamer",
         "--msvc",
         "--nsis",
         *(["--msvc-arm64"] if arm64 else []),
@@ -169,14 +168,13 @@ def test_macos_retries_single_attempts_in_child_processes():
 
 
 @pytest.mark.parametrize(("installed", "status"), [(True, 0), (False, 1)])
-def test_macos_installs_homebrew_packages_ci_does_not_provide_without_gstreamer(installed, status):
+def test_macos_installs_homebrew_packages_ci_does_not_provide(installed, status):
     with patch.object(helper, "install_macos", return_value=installed) as install:
         assert helper.main(["macos", "--single-attempt"]) == status
 
     packages = install.call_args.kwargs["packages"]
     assert {"create-dmg", "pkgconf"} <= set(packages)
     assert not set(packages) & helper.CI_PROVIDED_TOOLS
-    assert install.call_args.kwargs["skip_gstreamer"] is True
 
 
 def test_installs_retry_and_kill_each_hung_attempts_process_tree():
