@@ -36,12 +36,12 @@ GstStaticPadTemplate s_stubDecoderSrc =
 
 G_DEFINE_TYPE(GstTestStubDecoder, gst_test_stub_decoder, GST_TYPE_ELEMENT)
 
-std::atomic<bool> s_stubDecoderFails = false;
+std::atomic<GstTest::StubDecoderFailure> s_stubDecoderFailure = GstTest::StubDecoderFailure::None;
 
 GstFlowReturn stubDecoderChain([[maybe_unused]] GstPad* pad, GstObject* parent, GstBuffer* buffer)
 {
     gst_buffer_unref(buffer);
-    if (!s_stubDecoderFails.load()) {
+    if (s_stubDecoderFailure.load() != GstTest::StubDecoderFailure::AtFirstFrame) {
         return GST_FLOW_OK;
     }
     GST_ELEMENT_ERROR(GST_ELEMENT(parent), STREAM, DECODE, ("Simulated hardware decoder failure"), (nullptr));
@@ -53,7 +53,11 @@ gboolean stubDecoderEvent(GstPad* pad, GstObject* parent, GstEvent* event)
     // Takes the stream's caps without passing them on: nothing ever leaves the decoder.
     if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
         gst_event_unref(event);
-        return TRUE;
+        if (s_stubDecoderFailure.load() != GstTest::StubDecoderFailure::AtCaps) {
+            return TRUE;
+        }
+        GST_ELEMENT_ERROR(GST_ELEMENT(parent), RESOURCE, FAILED, ("Simulated hardware decoder failure"), (nullptr));
+        return FALSE;
     }
     return gst_pad_event_default(pad, parent, event);
 }
@@ -600,9 +604,9 @@ QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware)
     return ranks;
 }
 
-GStreamer::GstFeaturePtr registerStubDecoder(bool fails)
+GStreamer::GstFeaturePtr registerStubDecoder(StubDecoderFailure failure)
 {
-    s_stubDecoderFails.store(fails);
+    s_stubDecoderFailure.store(failure);
     if (!gst_element_register(nullptr, kStubDecoderName, GST_RANK_NONE, gst_test_stub_decoder_get_type())) {
         return nullptr;
     }

@@ -72,8 +72,8 @@ private:
 class StubDecoderRegistration
 {
 public:
-    explicit StubDecoderRegistration(bool fails = false)
-        : _registered(GstTest::registerStubDecoder(fails) &&
+    explicit StubDecoderRegistration(GstTest::StubDecoderFailure failure = GstTest::StubDecoderFailure::None)
+        : _registered(GstTest::registerStubDecoder(failure) &&
                       GStreamer::DecoderRankApplier::instance().setRank(gst_registry_get(), kStubDecoderName,
                                                                         GST_RANK_PRIMARY + 100))
     {}
@@ -570,13 +570,24 @@ void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()
                       TestTimeout::mediumMs());
 }
 
+void GstVideoReceiverPipelineTest::_testFailingHardwareDecoderGivesWayToTheNext_data()
+{
+    QTest::addColumn<int>("failure");
+
+    QTest::newRow("fails at its first frame") << int(GstTest::StubDecoderFailure::AtFirstFrame);
+    // As VideoToolbox's hardware decoder in a VM without one: it has not taken the stream's caps when it fails.
+    QTest::newRow("refuses the stream's caps") << int(GstTest::StubDecoderFailure::AtCaps);
+}
+
 void GstVideoReceiverPipelineTest::_testFailingHardwareDecoderGivesWayToTheNext()
 {
+    QFETCH(int, failure);
+
     GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
     // Without the host's hardware decoders, so the decoder ranked after the failing one is the same everywhere.
     const GstTest::DecoderRankSnapshot decoderRanks;
     GStreamer::setCodecPriorities(VideoDecoderOption::Software);
-    const StubDecoderRegistration failingDecoder(/*fails=*/true);
+    const StubDecoderRegistration failingDecoder(static_cast<GstTest::StubDecoderFailure>(failure));
     QVERIFY(failingDecoder.registered());
 
     // The failure as GStreamer logs it and as the session reports it: for the first decoder and for its replacement.
@@ -720,7 +731,7 @@ void GstVideoReceiverPipelineTest::_testDecoderFailingOnALostGraphicsDeviceKeeps
     GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
     const GstTest::DecoderRankSnapshot decoderRanks;
     GStreamer::setCodecPriorities(VideoDecoderOption::Software);
-    const StubDecoderRegistration failingDecoder(/*fails=*/true);
+    const StubDecoderRegistration failingDecoder(GstTest::StubDecoderFailure::AtFirstFrame);
     QVERIFY(failingDecoder.registered());
 
     static LostDeviceBridge lostDeviceBridge;

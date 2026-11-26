@@ -249,11 +249,18 @@ QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware = std::n
 /// The factory name of the stub decoder.
 inline constexpr char kStubDecoderName[] = "qgcstubh264dec";
 
+/// How the stub decoder fails, as a hardware decoder may in a VM.
+enum class StubDecoderFailure
+{
+    None,          ///< It takes the stream and gives nothing back, no frame and no message either.
+    AtFirstFrame,  ///< It posts an error for the first frame.
+    AtCaps,        ///< It refuses the stream's caps with an error, as one whose hardware session can't be created.
+};
+
 /// Registers the stub decoder, unranked, and returns its factory: an H.264 "hardware" decoder (so says its klass) that
-/// takes the stream and gives nothing back, no frame and no message either. With @p fails it posts an error for the
-/// first frame instead, as a hardware decoder may in a VM. The factory stays registered: the element class points at
-/// it for good. Null when the registry refuses it.
-GStreamer::GstFeaturePtr registerStubDecoder(bool fails = false);
+/// fails as @p failure says. The factory stays registered: the element class points at it for good. Null when the
+/// registry refuses it.
+GStreamer::GstFeaturePtr registerStubDecoder(StubDecoderFailure failure = StubDecoderFailure::None);
 
 /// An RTSP server on a free loopback port, for driving rtspsrc without gst-rtsp-server. Given an SDP, it answers
 /// OPTIONS and DESCRIBE and records each SETUP URL without answering it, so the client stops right after picking

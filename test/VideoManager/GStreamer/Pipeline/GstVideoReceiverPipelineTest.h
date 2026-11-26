@@ -20,6 +20,7 @@ private slots:
     void _testDecoderThreads_data();
     void _testDecoderThreads();
     void _testDisplaySinkHasLatencyOnceLinked();
+    void _testFailingHardwareDecoderGivesWayToTheNext_data();
     void _testFailingHardwareDecoderGivesWayToTheNext();
     void _testSilentHardwareDecoderGivesWayAfterOneStall();
     void _testFailedDecoderLeavesAutoplugOnlyForAnother_data();

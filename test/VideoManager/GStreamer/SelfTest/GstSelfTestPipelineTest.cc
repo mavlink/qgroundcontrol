@@ -33,7 +33,8 @@ void GstSelfTestPipelineTest::_testFailingHardwareDecoderFallsBackToSoftware()
     }
 
     // A "hardware" decoder that starts but fails on the first frame, as one may in a VM.
-    const GStreamer::GstFeaturePtr failingDecoder = GstTest::registerStubDecoder(/*fails=*/true);
+    const GStreamer::GstFeaturePtr failingDecoder =
+        GstTest::registerStubDecoder(GstTest::StubDecoderFailure::AtFirstFrame);
     QVERIFY(failingDecoder);
     gst_plugin_feature_set_rank(failingDecoder.get(), GST_RANK_PRIMARY + 100);
     const auto unrank = qScopeGuard([&failingDecoder] { gst_plugin_feature_set_rank(failingDecoder.get(), 0); });

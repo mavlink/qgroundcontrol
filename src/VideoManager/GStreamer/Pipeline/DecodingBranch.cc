@@ -426,8 +426,12 @@ void DecodingBranch::_demoteFailedDecoder()
         return;
     }
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_pluggedDecoder.get(), "sink"));
-    const GStreamer::GstCapsPtr caps =
-        GStreamer::adoptCaps(sinkPad ? gst_pad_get_current_caps(sinkPad.get()) : nullptr);
+    GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(sinkPad ? gst_pad_get_current_caps(sinkPad.get()) : nullptr);
+    if (!caps && sinkPad) {
+        // A decoder that failed as it was given the stream's caps has not taken them; the pad that sent them has.
+        const GStreamer::GstPadPtr peer = GStreamer::adoptPad(gst_pad_get_peer(sinkPad.get()));
+        caps = GStreamer::adoptCaps(peer ? gst_pad_get_current_caps(peer.get()) : nullptr);
+    }
     if (caps && GStreamer::demoteFailedDecoder(_decoderName.toUtf8().constData(), caps.get())) {
         qCWarning(GstVideoReceiverLog) << "The hardware decoder" << _decoderName
                                        << "brought no frame: the next decoder takes over" << _context.redactedUri;
