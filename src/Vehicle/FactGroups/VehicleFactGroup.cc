@@ -178,7 +178,7 @@ void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle *vehicle, const mavlink
     // if repr_offset is valid, rotate attitude and rates
     if (repr_offset.length() >= 0.5f) {
         quat *= repr_offset;
-        rates = repr_offset * rates;
+        rates = repr_offset.conjugated() * rates;
     }
 
     float attRoll, attPitch, attYaw;
