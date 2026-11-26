@@ -144,11 +144,6 @@ if(_qgc_gst_missing_components)
     message(STATUS "QGCGStreamer: optional components not found: ${_qgc_gst_missing_components}")
 endif()
 
-# Mobile apps register their plugins in GStreamer::mobile's generated gst_init_static_plugins() (Mobile.cmake).
-if(_qgc_gst_platform_STATIC_PLUGINS)
-    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
-endif()
-
 # Plugins the app can use: mobile layouts register GSTREAMER_STATIC_PLUGINS, which their backends resolve from the
 # SDK's plugin archives while creating GStreamer::mobile; desktop layouts load the plugin files at runtime, and
 # Install.cmake verifies what desktop installs bundle.

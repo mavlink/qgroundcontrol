@@ -2,9 +2,7 @@
 
 #include <algorithm>
 #include <gst/gst.h>
-#ifdef QGC_GST_STATIC_BUILD
 #include <mutex>
-#endif
 #include <utility>
 
 #include <QtCore/QByteArrayList>
@@ -25,7 +23,7 @@
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
-#ifdef QGC_GST_STATIC_BUILD
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 G_BEGIN_DECLS
 // Generated from cmake/GStreamer/gst_static_plugins.c.in by qgc_gst_generate_static_init (Mobile.cmake):
 // registers every configured plugin and loads the static GIO modules (gioopenssl + the bundled CA bundle on mobile).
@@ -37,7 +35,7 @@ namespace GStreamer {
 
 namespace {
 
-#ifdef QGC_GST_STATIC_BUILD
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 void _registerPlugins()
 {
     // gst_init() may already have run the generated shim, whose registrations are registry-guarded: an unguarded second
@@ -198,7 +196,7 @@ bool completeInit(std::optional<int> debugLevel)
                                 << GST_VERSION_MAJOR << "." << GST_VERSION_MINOR << "QGC was built against";
     }
 
-#ifdef QGC_GST_STATIC_BUILD
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     _registerPlugins();
 #endif
 
