@@ -2,14 +2,16 @@
 # OSM Provider
 # ============================================================================
 
-qt_add_library(Osm3D STATIC
+qt_add_library(
+    Osm3D STATIC
     OsmParserThread.cc
     OsmParserThread.h
 )
 
 target_include_directories(Osm3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(Osm3D
+target_link_libraries(
+    Osm3D
     PUBLIC
         Qt6::Core
         Qt6::Gui
@@ -22,7 +24,8 @@ target_link_libraries(Osm3D
 # libosmium pulls <windows.h> via std::filesystem; without these the
 # min/max macros and missing M_PI break MSVC compilation of OsmParserThread.cc.
 if(WIN32)
-    target_compile_definitions(Osm3D
+    target_compile_definitions(
+        Osm3D
         PRIVATE
             _USE_MATH_DEFINES
             NOMINMAX
@@ -34,31 +37,51 @@ endif()
 # libexpat — XML parser backend for libosmium
 # ----------------------------------------------------------------------------
 
-# Package name is EXPAT (not libexpat) so QGC_USE_SYSTEM_LIBS resolves via the
-# builtin FindEXPAT module; CPM checks ${NAME}_FOUND = EXPAT_FOUND.
-CPMAddPackage(
-    NAME EXPAT
-    GITHUB_REPOSITORY libexpat/libexpat
-    GIT_TAG R_2_7_5
-    SOURCE_SUBDIR expat
-    OPTIONS
-        "EXPAT_BUILD_TESTS OFF"
-        "EXPAT_BUILD_EXAMPLES OFF"
-        "EXPAT_BUILD_TOOLS OFF"
-        "EXPAT_BUILD_DOCS OFF"
-        "EXPAT_SHARED_LIBS OFF"
-)
-
-# EXPAT_ADDED: CPM built the static lib (target expat). Otherwise FindEXPAT resolved
-# a system copy; alias its EXPAT::EXPAT onto the bare `expat` name Osm3D links.
-if(EXPAT_ADDED)
-    qgc_disable_dependency_warnings(expat)
-elseif(EXPAT_FOUND)
-    if(NOT TARGET expat AND TARGET EXPAT::EXPAT)
-        add_library(expat ALIAS EXPAT::EXPAT)
+# With QGC_USE_SYSTEM_LIBS, an installed expat of any version: distributions fix theirs without a new version number
+# (Ubuntu 24.04's 2.6.1), so a floor would reject fixed copies, and an unfixed one would be linked just as well. This
+# looks for it itself: CPM runs find_package() inside a function, so its EXPAT_FOUND never reaches this file. FindEXPAT
+# makes EXPAT::EXPAT, the CMake package expat installs expat::expat.
+set(_qgc_system_expat "")
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    find_package(EXPAT QUIET)
+    if(NOT TARGET EXPAT::EXPAT)
+        find_package(expat CONFIG QUIET)
     endif()
+    foreach(_qgc_expat_target IN ITEMS EXPAT::EXPAT expat::expat)
+        if(TARGET ${_qgc_expat_target})
+            set(_qgc_system_expat ${_qgc_expat_target})
+            break()
+        endif()
+    endforeach()
+endif()
+
+if(_qgc_system_expat)
+    # Osm3D, the only target that links expat, is in this directory
+    add_library(expat ALIAS ${_qgc_system_expat})
+    if(EXPAT_VERSION)
+        set(_qgc_expat_version "${EXPAT_VERSION}")
+    else()
+        set(_qgc_expat_version "${expat_VERSION}")
+    endif()
+    message(STATUS "QGC: EXPAT: the installed ${_qgc_expat_version} (QGC_USE_SYSTEM_LIBS)")
 else()
-    message(FATAL_ERROR "QGC: EXPAT (required dependency) was not resolved")
+    CPMAddPackage(
+        NAME EXPAT
+        GITHUB_REPOSITORY libexpat/libexpat
+        GIT_TAG R_2_11_0
+        SOURCE_SUBDIR expat
+        OPTIONS
+            "EXPAT_BUILD_TESTS OFF"
+            "EXPAT_BUILD_EXAMPLES OFF"
+            "EXPAT_BUILD_TOOLS OFF"
+            "EXPAT_BUILD_DOCS OFF"
+            "EXPAT_SHARED_LIBS OFF"
+    )
+    # The library is built here (target expat)
+    qgc_require_cpm_added(EXPAT)
+    qgc_disable_dependency_warnings(expat)
+    get_directory_property(_qgc_expat_version DIRECTORY "${EXPAT_SOURCE_DIR}/expat" DEFINITION PACKAGE_VERSION)
+    message(STATUS "QGC: EXPAT: the bundled ${_qgc_expat_version}")
 endif()
 
 target_link_libraries(Osm3D PRIVATE expat)
@@ -85,8 +108,8 @@ CPMAddPackage(
     DOWNLOAD_ONLY YES
 )
 
-target_include_directories(Osm3D
-    SYSTEM
+target_include_directories(
+    Osm3D SYSTEM
     PRIVATE
         ${protozero_SOURCE_DIR}/include
         ${libosmium_SOURCE_DIR}/include
@@ -98,7 +121,8 @@ target_include_directories(Osm3D
 # on ${CMAKE_PROJECT_NAME}. They use Osm3D via the link below.
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         CityMapGeometry.cc
         CityMapGeometry.h
@@ -126,7 +150,8 @@ CPMAddPackage(
     SYSTEM YES
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Osm3D
         earcut_hpp::earcut_hpp
