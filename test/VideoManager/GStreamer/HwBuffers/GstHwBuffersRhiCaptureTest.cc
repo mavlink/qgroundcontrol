@@ -6,6 +6,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
+#include "HwBuffers/HwBuffers.h"
 #include "QGCRhiCapture.h"
 
 void GstHwBuffersRhiCaptureTest::_testDevicePublishedAfterSceneGraphReinitialises()
@@ -28,16 +29,21 @@ void GstHwBuffersRhiCaptureTest::_testDevicePublishedAfterSceneGraphReinitialise
     window.resize(64, 64);
     QGCRhiCapture::connectWindow(&window);
     const auto publishedBackend = [] { return QGCRhiCapture::deviceSnapshot().backend.load(); };
+    // The decoders wait for the device while the scene graph is down.
+    QVERIFY(!HwBuffers::graphicsDeviceSettled());
 
     window.show();
     QTRY_COMPARE_WITH_TIMEOUT(publishedBackend(), static_cast<int>(QRhi::OpenGLES2), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(HwBuffers::graphicsDeviceSettled(), TestTimeout::mediumMs());
 
     window.hide();
     QTRY_COMPARE_WITH_TIMEOUT(publishedBackend(), -1, TestTimeout::mediumMs());
+    QVERIFY(!HwBuffers::graphicsDeviceSettled());
 
     // Qt's threaded render loop emits sceneGraphInitialized before it sets QQuickWindow::rhi() this time.
     window.show();
     QTRY_COMPARE_WITH_TIMEOUT(publishedBackend(), static_cast<int>(QRhi::OpenGLES2), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(HwBuffers::graphicsDeviceSettled(), TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(GstHwBuffersRhiCaptureTest, TestLabel::Integration)

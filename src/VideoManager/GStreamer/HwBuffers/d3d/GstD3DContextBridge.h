@@ -9,10 +9,9 @@
 #include "GstContextBridgeBase.h"
 
 /// Shares one GstD3D11Device/GstD3D12Device on QRhi's adapter through a single device-handle context type. Priming
-/// waits for QRhi to run the matching backend and retries at each new pipeline and publication of Qt's device until it
-/// does. When GStreamer reports the
-/// device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped and the pipelines
-/// that got the device are told (noteDeviceRemoved()).
+/// waits for QRhi to run the matching backend and retries for each decoder a pipeline takes until it does. When
+/// GStreamer reports the device removed (its `device-removed-reason`, from 1.26), every cached GPU resource is dropped
+/// and the pipelines that got the device are told (noteDeviceRemoved()).
 class GstD3DContextBridge : public GstContextBridgeBase
 {
 public:

@@ -37,13 +37,12 @@ public:
         : GstContextBridgeBase("Test", contextTypes, &TestContextBridgeLog)
     {}
 
-    /// Unprimed, with zeroed counters and its device known.
+    /// Unprimed, with zeroed counters.
     void restart()
     {
         reset();
         primes = 0;
         clears = 0;
-        deviceKnown = true;
     }
 
     /// As a device that reports its removal has its bridge do, on the thread it notifies on.
@@ -51,15 +50,10 @@ public:
 
     int primes = 0;
     int clears = 0;
-    /// False while Qt's device isn't published yet: the bridge can't prime, and tries again when asked.
-    bool deviceKnown = true;
 
 private:
     bool primeLocked() override
     {
-        if (!deviceKnown) {
-            return retryLater();
-        }
         ++primes;
         _object = GST_OBJECT(gst_object_ref_sink(gst_element_factory_make("identity", nullptr)));
         return _object != nullptr;
@@ -135,12 +129,6 @@ bool nextElementMessageIs(GstElement* pipeline, const char* name)
            (GST_MESSAGE_SRC(message.get()) == GST_OBJECT(pipeline));
 }
 
-/// Whether a bridge posted on @p pipeline's bus that it served the pipeline after one of its elements had asked.
-bool servedLate(GstElement* pipeline)
-{
-    return nextElementMessageIs(pipeline, HwBuffers::kGraphicsDeviceServedMessage);
-}
-
 /// A new identity element in @p bin, which owns it; null when it couldn't be added.
 GstElement* addIdentityTo(GstElement* bin)
 {
@@ -193,46 +181,6 @@ void GstHwBuffersTest::_testPipelineHandsBridgeContextsToItsElements()
     QVERIFY(holdsTestBridgeContext(pluggedLater));
     QVERIFY(holdsTestBridgeContext(sibling));
     QCOMPARE(testBridgeA().primes, 1);
-
-    // Served when it was built, the pipeline holds nothing on another device: its owner has nothing to replace.
-    QVERIFY(!servedLate(pipeline.get()));
-}
-
-void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
-{
-    testBridgeA().restart();
-    testBridgeA().deviceKnown = false;
-    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
-    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
-
-    const GStreamer::GstElementPtr pipeline = newPipeline();
-    HwBuffers::provideGraphicsContexts(pipeline.get());
-    QVERIFY(!holdsTestBridgeContext(pipeline.get()));
-    GstElement* const asking = addIdentityTo(pipeline.get());
-    QVERIFY(asking);
-
-    // Left without the bridge's device, an element makes a device of its own and posts it, which its pipeline keeps
-    // for the elements it is given later.
-    GstContext* const ownDevice = gst_context_new(kTestContextTypeA[0], TRUE);
-    gst_element_set_context(asking, ownDevice);
-    QVERIFY(gst_element_post_message(asking, gst_message_new_have_context(GST_OBJECT(asking), ownDevice)));
-    const GStreamer::GstContextPtr kept =
-        GStreamer::adoptContext(gst_element_get_context(pipeline.get(), kTestContextTypeA[0]));
-    QVERIFY2(kept && !holdsTestBridgeContext(pipeline.get()), "the pipeline did not keep the element's own device");
-
-    // Qt's device becomes known, as when the scene graph starts.
-    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
-    QVERIFY(rhi);
-    testBridgeA().deviceKnown = true;
-    const auto withdraw = qScopeGuard([] { QGCRhiCapture::publishDeviceSnapshotForTest(nullptr); });
-    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
-    QCOMPARE(testBridgeA().primes, 1);
-    // The element that made its own device keeps it, so the pipeline's owner is told to replace it.
-    QVERIFY(servedLate(pipeline.get()));
-
-    GstElement* const later = addIdentityTo(pipeline.get());
-    QVERIFY(later);
-    QVERIFY2(holdsTestBridgeContext(later), "an element added after the bridge primed got the device of another");
 }
 
 void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
@@ -275,6 +223,21 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     HwBuffers::resetCachedGpuResources();
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
+}
+
+void GstHwBuffersTest::_testGraphicsDeviceSettledUnderSoftwareSceneGraph()
+{
+    // Without a main window nothing waits for its device.
+    QVERIFY(HwBuffers::graphicsDeviceSettled());
+
+    // Known once a window exists.
+    QQuickWindow window;
+    if (QQuickWindow::sceneGraphBackend() != QLatin1String("software")) {
+        QSKIP("Qt Quick renders through a QRhi here");
+    }
+    // The software scene graph publishes no device, and its threaded render loop never reports that it is up.
+    HwBuffers::connectMainWindow(&window);
+    QVERIFY(HwBuffers::graphicsDeviceSettled());
 }
 
 void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()

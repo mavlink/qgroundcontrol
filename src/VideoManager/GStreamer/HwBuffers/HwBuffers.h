@@ -39,10 +39,6 @@ std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* ca
 
 namespace HwBuffers {
 
-/// Name of the element message a context bridge posts on a pipeline built before the device Qt renders with was known,
-/// once it gives the pipeline that device: what was built meanwhile may work on another device, and keeps it.
-inline constexpr char kGraphicsDeviceServedMessage[] = "qgc-graphics-device-served";
-
 /// Name of the element message onGraphicsDeviceRemoved() posts on the pipelines a context bridge gave its device,
 /// once that device is reported removed (a driver reset or update): their GPU elements can't go on, and they hold
 /// references that keep the device's successor from being created.
@@ -51,11 +47,18 @@ inline constexpr char kGraphicsDeviceLostMessage[] = "qgc-graphics-device-lost";
 // noexcept marks what GStreamer's C callbacks call straight into (qgcqvideosink's vfuncs): no exception may unwind
 // through those, so one thrown here, such as a failed allocation, ends the process on purpose.
 
-/// For a receiver's new pipeline, before any element is added: the context bridges set their contexts on @p pipeline,
-/// which hands them to every element it is given, so the GPU elements work on the device Qt renders with. A bridge
-/// that can't yet waits for Qt's device and gives them then (kGraphicsDeviceServedMessage). No-op when no GPU path is
-/// compiled.
+/// For a receiver's pipeline, before its decoder and video sink join it: the context bridges set their contexts on
+/// @p pipeline, which hands them to every element it is given, so the GPU elements work on the device Qt renders with.
+/// A bridge that can't prime, as before graphicsDeviceSettled(), sets none. No-op when no GPU path is compiled.
 void provideGraphicsContexts(GstElement* pipeline);
+
+/// False while the device Qt renders the main window with is unknown: the window is connected (connectMainWindow()),
+/// its scene graph renders through a QRhi, and isn't up, as before the window is first exposed or after its scene graph
+/// was torn down (a device loss). A decoder plugged meanwhile would work on a device of its own for as long as it ran.
+/// True otherwise: with no main window (unit tests), with a scene graph of another kind (the software one), and
+/// without a GPU path. Each time it turns true, the handler of setGraphicsDevicePublishedHandler() runs. Safe off the
+/// GUI thread.
+bool graphicsDeviceSettled() noexcept;
 
 /// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
 /// stream, so only for scene-graph teardown, window swaps and device loss.
@@ -104,8 +107,9 @@ bool dmaBufImportDisabled() noexcept;
 /// until the scene graph publishes that device, and for any other renderer. Safe off the GUI thread.
 qint64 graphicsAdapterLuid() noexcept;
 
-/// Has @p handler called each time the scene graph publishes the device Qt Quick renders with, on its render thread:
-/// what depends on that device (the decoder ranks) follows it then. Null for none. No-op when no GPU path is compiled.
+/// Has @p handler called each time the main window's scene graph comes up, on its render thread, once it has published
+/// the device Qt Quick renders with, if any: what depends on that device (the decoder ranks, the decoders) follows it
+/// then. Null for none. No-op when no GPU path is compiled.
 void setGraphicsDevicePublishedHandler(void (*handler)()) noexcept;
 
 /// True when the Direct3D 11 device Qt Quick renders with is known to open a Direct3D 12 device's resources as

@@ -41,7 +41,8 @@ GstObject* D3D12ContextBridge::createDevice()
 {
     const QGCRhiCapture::DeviceSnapshot& snapshot = QGCRhiCapture::deviceSnapshot();
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    // Every pipeline gets the device: under a Direct3D 11 QRhi it is created only where Qt's device opens its frames.
+    // Every pipeline that takes a decoder gets the device: under a Direct3D 11 QRhi it is created only where Qt's
+    // device opens its frames.
     if ((snapshot.backend.load(std::memory_order_acquire) == int(QRhi::D3D11)) &&
         !snapshot.d3d11OpensD3D12.load(std::memory_order_acquire)) {
         qCDebug(GstD3D12BridgeLog) << "Qt's D3D11 device opens no D3D12 resources; no D3D12 device shared";

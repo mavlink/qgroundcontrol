@@ -31,14 +31,14 @@ bool GstContextBridgeBase::primeIfNeededLocked()
     return _primed;
 }
 
-void GstContextBridgeBase::rememberLocked(std::unique_ptr<WeakRefs>& bins, GstElement* topLevelBin,
-                                          std::vector<GStreamer::GstElementPtr>& released)
+void GstContextBridgeBase::rememberServedLocked(GstElement* topLevelBin,
+                                                std::vector<GStreamer::GstElementPtr>& released)
 {
-    if (!bins) {
-        bins = std::make_unique<WeakRefs>();
+    if (!_served) {
+        _served = std::make_unique<WeakRefs>();
     }
     bool known = false;
-    std::erase_if(*bins, [&](const auto& ref) {
+    std::erase_if(*_served, [&](const auto& ref) {
         GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(g_weak_ref_get(ref.get())));
         if (!bin) {
             return true;
@@ -50,26 +50,8 @@ void GstContextBridgeBase::rememberLocked(std::unique_ptr<WeakRefs>& bins, GstEl
     if (!known) {
         GWeakRef* const ref = new GWeakRef;
         g_weak_ref_init(ref, topLevelBin);
-        bins->emplace_back(ref);
+        _served->emplace_back(ref);
     }
-}
-
-std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeWaitingLocked(
-    std::vector<GStreamer::GstElementPtr>& released)
-{
-    std::vector<GStreamer::GstElementPtr> bins;
-    if (const std::unique_ptr<WeakRefs> waiting = std::move(_waiting)) {
-        for (const auto& ref : *waiting) {
-            if (GstElement* const bin = GST_ELEMENT(g_weak_ref_get(ref.get()))) {
-                bins.push_back(GStreamer::adoptElement(bin));
-            }
-        }
-    }
-    // They are given the contexts next.
-    for (const GStreamer::GstElementPtr& bin : bins) {
-        rememberLocked(_served, bin.get(), released);
-    }
-    return bins;
 }
 
 std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::takeServedLocked()
@@ -109,83 +91,29 @@ GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextTy
     return GStreamer::adoptContext(buildContext(contextType, object.get()));
 }
 
-bool GstContextBridgeBase::setContexts(GstElement* bin)
-{
-    bool given = false;
-    for (const char* const contextType : _contextTypes) {
-        if (const GStreamer::GstContextPtr context = makeContext(contextType)) {
-            gst_element_set_context(bin, context.get());
-            given = true;
-        }
-    }
-    return given;
-}
-
-void GstContextBridgeBase::giveContexts(const std::vector<GStreamer::GstElementPtr>& topLevelBins)
-{
-    for (const GStreamer::GstElementPtr& bin : topLevelBins) {
-        if (!setContexts(bin.get())) {
-            continue;
-        }
-        qCDebug(category()) << "Provided" << _apiName << "contexts to" << GST_ELEMENT_NAME(bin.get())
-                            << "which was built before the bridge was primed";
-        // An element that has a device ignores the context: only the bin's owner can replace it.
-        (void) gst_element_post_message(
-            bin.get(), gst_message_new_element(GST_OBJECT(bin.get()),
-                                               gst_structure_new_empty(HwBuffers::kGraphicsDeviceServedMessage)));
-    }
-}
-
 void GstContextBridgeBase::provideContexts(GstElement* pipeline)
 {
-    // Released, and served, without the mutex.
+    // Released without the mutex.
     std::vector<GStreamer::GstElementPtr> released;
-    std::vector<GStreamer::GstElementPtr> waiting;
     {
         QMutexLocker lock(&_mutex);
-        const bool wasPrimed = _primed;
         if (!primeIfNeededLocked()) {
-            rememberLocked(_waiting, pipeline, released);
             return;
         }
-        if (!wasPrimed) {
-            waiting = takeWaitingLocked(released);
-        }
-        rememberLocked(_served, pipeline, released);
+        rememberServedLocked(pipeline, released);
     }
-    giveContexts(waiting);
-    if (setContexts(pipeline)) {
-        qCDebug(category()) << "Provided" << _apiName << "contexts to" << GST_ELEMENT_NAME(pipeline);
+    for (const char* const contextType : _contextTypes) {
+        if (const GStreamer::GstContextPtr context = makeContext(contextType)) {
+            gst_element_set_context(pipeline, context.get());
+            qCDebug(category()) << "Provided" << _apiName << contextType << "context to" << GST_ELEMENT_NAME(pipeline);
+        }
     }
 }
 
 bool GstContextBridgeBase::prime()
 {
-    std::vector<GStreamer::GstElementPtr> released;
-    std::vector<GStreamer::GstElementPtr> bins;
-    {
-        QMutexLocker lock(&_mutex);
-        const bool wasPrimed = _primed;
-        if (!primeIfNeededLocked()) {
-            return false;
-        }
-        if (!wasPrimed) {
-            bins = takeWaitingLocked(released);
-        }
-    }
-    giveContexts(bins);
-    return true;
-}
-
-void GstContextBridgeBase::serveWaitingPipelines()
-{
-    {
-        QMutexLocker lock(&_mutex);
-        if (!_waiting || _waiting->empty()) {
-            return;
-        }
-    }
-    (void) prime();
+    QMutexLocker lock(&_mutex);
+    return primeIfNeededLocked();
 }
 
 std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::reset()

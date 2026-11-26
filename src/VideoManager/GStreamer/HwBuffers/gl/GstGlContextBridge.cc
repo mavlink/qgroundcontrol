@@ -47,8 +47,8 @@ GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
 }
 
 constexpr char kGlAppContextType[] = "gst.gl.app_context";
-// Set in this order: a gst-gl element that has a display of its own, in a pipeline served late, creates its GL context
-// as soon as it is handed another, sharing with the app context it holds by then.
+// Set in this order: a gst-gl element that has a display already creates its GL context as soon as it is handed
+// another, sharing with the app context it holds by then.
 constexpr const char* kContextTypes[] = {kGlAppContextType, GST_GL_DISPLAY_CONTEXT_TYPE};
 
 class GlContextBridge final : public GstContextBridgeBase

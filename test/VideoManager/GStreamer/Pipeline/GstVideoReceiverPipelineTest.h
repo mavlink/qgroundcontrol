@@ -24,8 +24,7 @@ private slots:
     void _testSilentHardwareDecoderGivesWayAfterOneStall();
     void _testFailedDecoderLeavesAutoplugOnlyForAnother_data();
     void _testFailedDecoderLeavesAutoplugOnlyForAnother();
-    void _testLateGraphicsDeviceReplacesHardwareDecoder_data();
-    void _testLateGraphicsDeviceReplacesHardwareDecoder();
+    void _testDecoderWaitsForTheMainWindowsSceneGraph();
     void _testLostGraphicsDeviceRestartsTheStream();
 #if defined(QGC_HAS_ANY_GPU_PATH)
     void _testDecoderFailingOnALostGraphicsDeviceKeepsItsRank();

@@ -12,9 +12,9 @@ private slots:
 #if defined(QGC_HAS_ANY_GPU_PATH)
     void _testContextBridgeRegistry();
     void _testPipelineHandsBridgeContextsToItsElements();
-    void _testContextBridgeServesPipelineOnceDeviceIsKnown();
     void _testRemovedDeviceIsToldToThePipelinesThatGotIt();
     void _testHwBufferLifecycleResetsNativeCaches();
+    void _testGraphicsDeviceSettledUnderSoftwareSceneGraph();
     void _testQGCRhiCaptureCacheLifecycle();
     void _testHwPathRegistrySelection_data();
     void _testHwPathRegistrySelection();

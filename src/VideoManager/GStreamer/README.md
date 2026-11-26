@@ -271,22 +271,25 @@ the layout that keeps their contents (`dmabuf/GstDmaBufVulkanImport`):
   another device before the bridge was primed, and GLMemory frames from a GL context outside Qt's share group, which
   gst-gl creates for itself when no element was handed the GL bridge's. The GL bridge limits gst-gl to the OpenGL API of
   Qt's context, desktop OpenGL or OpenGL ES: gst-gl would otherwise create OpenGL ES contexts wherever EGL offers them,
-  and EGL shares only within one API. `PipelineSession` has the bridges set their contexts on its pipeline before it
-  adds any element (`HwBuffers::provideGraphicsContexts()`), and the pipeline hands them to every element it is given,
-  which then asks nobody. A bridge primes at the first pipeline; the Direct3D bridges can't before the scene graph
-  publishes Qt's device. An element of a pipeline built before then made a device of its own, which its pipeline would
-  hand on instead: when the scene graph publishes Qt's device, the bridges give those pipelines their contexts. Elements
-  built from then on use Qt's device; the one that made its own keeps it until it is rebuilt. So each bridge also posts
-  a `qgc-graphics-device-served` element message on such a pipeline, and the session replaces a hardware decoder plugged
-  by then (`DecodingBranch`): a Direct3D 11 decoder left on its own device would have every frame copied through the CPU
-  for as long as the stream ran. When GStreamer reports the Direct3D device a bridge shares removed (its devices'
-  `device-removed-reason`, from 1.26: a driver reset or update), the bridges and the paths' caches are dropped as they
-  are when Qt tears its scene graph down, and every pipeline a bridge gave its device, which is every pipeline built
-  since it primed, gets a `qgc-graphics-device-lost` element message. Its receiver then restarts the stream with a new
-  video sink, so that nothing holds the removed device: Direct3D 12 creates no new device on an adapter while the
-  removed one is referenced, which would keep Qt from recovering. The new pipeline gets the device Qt renders with by
-  then, or the one it publishes later. Until a bridge has a device again, a decoder that fails is not taken out of
-  autoplug: none works on a removed device.
+  and EGL shares only within one API. `DecodingBranch` has the bridges set their contexts on the pipeline before it adds
+  the decoder and the video sink (`HwBuffers::provideGraphicsContexts()`), and the pipeline hands them to every element
+  it is given, which then asks nobody. The Direct3D bridges can't prime before the scene graph publishes Qt's device,
+  and a decoder plugged before then would make a device of its own and keep it: a Direct3D 11 decoder left on its own
+  device would have every frame copied through the CPU for as long as the stream ran. So a receiver hands its worker the
+  video sink, and its stream gets a decoder, only once `HwBuffers::graphicsDeviceSettled()`: while the main window's
+  scene graph renders through a `QRhi` and is not up (the window not yet exposed, or its scene graph torn down, as after
+  a device loss), a stream is received and recorded but not decoded, and each time the scene graph comes up every
+  receiver asks again (`GstVideoReceiver::onGraphicsDeviceSettled()`): the picture then waits for a keyframe. Nothing
+  waits without a main window (unit tests), without a GPU path, or under a scene graph of another kind: the software
+  one, which Qt also picks on a platform without a 3D API such as offscreen, publishes no device, and its threaded
+  render loop never reports that it is up. When GStreamer reports the Direct3D device a bridge shares removed (its
+  devices' `device-removed-reason`, from 1.26: a driver reset or update), the bridges and the paths' caches are dropped
+  as they are when Qt tears its scene graph down, and every pipeline a bridge gave its device, which is every pipeline
+  that took a decoder since it primed, gets a `qgc-graphics-device-lost` element message. Its receiver then restarts the
+  stream with a new video sink, so that nothing holds the removed device: Direct3D 12 creates no new device on an
+  adapter while the removed one is referenced, which would keep Qt from recovering. The new pipeline's decoder takes the
+  device Qt renders with by then, or waits for the one it publishes later. Until a bridge has a device again, a decoder
+  that fails is not taken out of autoplug: none works on a removed device.
 - **Failed imports**: when a path's import (`importTextures()`) fails on the render thread, Qt uploads the frame's
   CPU map (`GstHwVideoBuffer::map()`) instead. For a frame without one (a tiled DMABuf, an external-OES frame, one
   advertised in another format for its import, memory `gst_video_frame_map()` refuses), `mapTextures()` hands Qt back
@@ -681,7 +684,7 @@ Each class has a line here; the comment on the class in its header says more.
 | `GstHwBuffersD3DTest` | Integration, GPU | The Direct3D 11 and 12 paths fed by pipelines. Built on Windows with either path. |
 | `GstHwBuffersIOSurfaceTest` | Integration, GPU | The IOSurface path fed by VideoToolbox. Built on macOS with the path. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | GPU frames imported into a GL QRhi and read back (xcb with `xcb_egl`). Built on Linux with the DMABuf or the GLMemory path. |
-| `GstHwBuffersRhiCaptureTest` | Integration | `QGCRhiCapture` under a real scene graph (OpenGL, threaded render loop): the device is published again when the scene graph is initialised anew. Built on Linux with a GPU path. |
+| `GstHwBuffersRhiCaptureTest` | Integration | `QGCRhiCapture` under a real scene graph (OpenGL, threaded render loop): the device is published again when the scene graph is initialised anew, and the decoders wait for it while the scene graph is down. Built on Linux with a GPU path. |
 | `GstHwBuffersVulkanReadbackTest` | Integration, GPU | DMABuf frames imported into a Vulkan QRhi (xcb). Built with the DMABuf import under Vulkan. |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end: states, display, restarts, decoders and screenshots. |
 | `GstVideoReceiverReconnectTest` | Integration | How `GstVideoReceiver` gives up on, or reconnects to, a stream that fails or stops, and what it reports of a stuck worker. |

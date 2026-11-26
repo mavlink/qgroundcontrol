@@ -37,9 +37,19 @@ void publishDeviceSnapshotForTest(QRhi* rhi);
 /// snapshot.
 void connectWindow(QQuickWindow* window);
 
-/// Has @p handler called after each publication of a device in deviceSnapshot(), on the thread that publishes it
-/// (the render thread); null for none.
+#ifdef QGC_UNITTEST_BUILD
+/// connectWindow(@p window), its scene graph counting as Qt Quick's QRhi one whatever this process renders with (the
+/// unit tests' is the software one).
+void connectQRhiWindowForTest(QQuickWindow* window);
+#endif
+
+/// Has @p handler called each time the connected window's scene graph comes up, once its device, if any, is in
+/// deviceSnapshot(), on the render thread; null for none.
 void setPublishedHandler(void (*handler)()) noexcept;
+
+/// HwBuffers::graphicsDeviceSettled(): no window is connected, its scene graph doesn't render through a QRhi, or it is
+/// up. Any thread.
+bool deviceSettled() noexcept;
 
 /// The EGLDisplay (as void*) Qt's OpenGL renders with; null when Qt's OpenGL doesn't run on EGL (GLX, WGL, CGL, no
 /// OpenGL) or that isn't known yet. Taken from Qt's global share context, else from the scene graph's OpenGL context

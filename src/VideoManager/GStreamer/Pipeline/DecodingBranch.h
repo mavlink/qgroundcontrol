@@ -98,11 +98,6 @@ public:
     /// Gives the decoder up for @p cause without replacing it first: it reported a plugin as missing, which one
     /// plugged right away would miss as well.
     void failDecoder(const QString& cause);
-    /// The pipeline got the graphics device Qt renders with after its elements had asked for it
-    /// (HwBuffers::kGraphicsDeviceServedMessage). A hardware decoder plugged meanwhile decodes on a device of its own,
-    /// which it keeps, so its frames reach Qt through the CPU: replaces it by one that takes the pipeline's device.
-    /// Not counted as a restart: the decoder didn't fail.
-    void onGraphicsDeviceServed();
 
     /// A decoder is inserted, so frames are due at the sink.
     bool displaying() const { return _decoder != nullptr; }

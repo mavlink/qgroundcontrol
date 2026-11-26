@@ -166,8 +166,6 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     qCDebug(GstVideoReceiverLog) << "Starting" << _settings.redactedUri << "lowLatency" << _settings.lowLatency;
 
     _pipeline = GStreamer::adoptFloating(gst_pipeline_new(_dotDumper.pipelineName().constData()));
-    // Before any element is added: the pipeline hands its contexts to each element it is given.
-    HwBuffers::provideGraphicsContexts(_pipeline.get());
     _bus.attach(
         _pipeline.get(), [this](GstMessage* message) { return _onBusSync(message); },
         [this](GstMessage* message) {
@@ -382,12 +380,6 @@ void PipelineSession::_handleMessage(GstMessage* message)
             }
             break;
         case GST_MESSAGE_ELEMENT:
-            if (gst_message_has_name(message, HwBuffers::kGraphicsDeviceServedMessage)) {
-                if (!_tearingDown()) {
-                    _decoding->onGraphicsDeviceServed();
-                }
-                break;
-            }
             if (gst_message_has_name(message, HwBuffers::kGraphicsDeviceLostMessage)) {
                 if (_phase == Phase::Running) {
                     qCDebug(GstVideoReceiverLog) << "The graphics device is gone" << _settings.redactedUri;

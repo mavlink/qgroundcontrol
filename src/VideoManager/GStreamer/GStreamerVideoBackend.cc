@@ -98,5 +98,18 @@ void GStreamerVideoBackend::setDebugLevel(int level)
 
 void GStreamerVideoBackend::onMainWindowReady(QQuickWindow* window)
 {
+    // Which decoders rank first depends on the device Qt renders with: its API, its adapter and what it opens. The
+    // decoders wait for it. The render thread publishes it; the ranks and the receivers are the GUI thread's.
+    HwBuffers::setGraphicsDevicePublishedHandler([] {
+        if (QCoreApplication* const app = QCoreApplication::instance()) {
+            (void) QMetaObject::invokeMethod(
+                app,
+                [] {
+                    GStreamer::DecoderRankApplier::instance().reapply();
+                    GstVideoReceiver::onGraphicsDeviceSettled();
+                },
+                Qt::QueuedConnection);
+        }
+    });
     GStreamer::onMainWindowReady(window);
 }

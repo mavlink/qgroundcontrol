@@ -61,6 +61,10 @@ public:
     /// that long.
     void setHeartbeatInterval(std::chrono::milliseconds interval);
 
+    /// Has every receiver hand its worker the display sink, which waits for HwBuffers::graphicsDeviceSettled(): for
+    /// each time the main window's scene graph comes up. GUI thread.
+    static void onGraphicsDeviceSettled();
+
 protected:
     void onConfigChanged() override;
     void onActiveChanged() override;

@@ -6,7 +6,6 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
-#include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
 #include "HwBuffers.h"
 #if QT_CONFIG(opengl) && QT_CONFIG(egl)
@@ -44,6 +43,11 @@ std::array<QMetaObject::Connection, 3> s_connections;
 // Qt's EGLDisplay once found; Qt keeps it for the application's lifetime.
 std::atomic<void*> s_qtEglDisplay{nullptr};
 std::atomic<void (*)()> s_publishedHandler{nullptr};
+// The connected window's scene graph is up, and its device published.
+std::atomic<bool> s_sceneGraphUp{false};
+// The connected window's scene graph is Qt Quick's QRhi one, not another kind (software), which publishes no device and
+// may never report that it is up.
+std::atomic<bool> s_rhiSceneGraph{true};
 
 #if defined(QGC_RHI_CAPTURE_PROBES_EGL)
 void* eglDisplayOf(const QOpenGLContext* context)
@@ -135,16 +139,6 @@ void populateSnapshot(QRhi* rhi)
     s_snapshot.d3d11Device.store(d3d11, std::memory_order_release);
     s_snapshot.adapterLuid.store(luid, std::memory_order_release);
     s_snapshot.backend.store(backend, std::memory_order_release);
-
-    // A pipeline that asked a bridge for this device before it was published has it from now on.
-    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (path->bridge) {
-            path->bridge().serveWaitingPipelines();
-        }
-    }
-    if (void (*const handler)() = s_publishedHandler.load(std::memory_order_acquire)) {
-        handler();
-    }
 }
 
 /// The QRhi @p window's scene graph renders with; null under the software backend. Qt's threaded render loop emits
@@ -162,15 +156,21 @@ QRhi* rhiOf(QQuickWindow* window)
                : nullptr;
 }
 
-/// Publishes the native device handles of @p window's QRhi. Render thread, where the QRhi is valid.
+/// Publishes the native device handles of @p window's QRhi, and that its scene graph is up. Render thread, where the
+/// QRhi is valid.
 void publishRhi(QQuickWindow* window)
 {
     populateSnapshot(rhiOf(window));
+    s_sceneGraphUp.store(true, std::memory_order_release);
+    if (void (*const handler)() = s_publishedHandler.load(std::memory_order_acquire)) {
+        handler();
+    }
 }
 
 /// Withdraws the published QRhi's handles, and drops the native GPU handles that wrap its device or context.
 void unpublishRhi()
 {
+    s_sceneGraphUp.store(false, std::memory_order_release);
     clearSnapshot();
     HwBuffers::resetCachedGpuResources();
 }
@@ -211,6 +211,12 @@ void setPublishedHandler(void (*handler)()) noexcept
     s_publishedHandler.store(handler, std::memory_order_release);
 }
 
+bool deviceSettled() noexcept
+{
+    return !s_connectedWindow.load(std::memory_order_acquire) || !s_rhiSceneGraph.load(std::memory_order_acquire) ||
+           s_sceneGraphUp.load(std::memory_order_acquire);
+}
+
 void connectWindow(QQuickWindow* window)
 {
     if (!window)
@@ -232,6 +238,7 @@ void connectWindow(QQuickWindow* window)
         conn = QMetaObject::Connection();
     }
 
+    s_rhiSceneGraph.store(QQuickWindow::sceneGraphBackend().isEmpty(), std::memory_order_release);
     s_connectedWindow.store(window, std::memory_order_release);
     // sceneGraphInitialized fires on the render thread, at each initialisation of the scene graph: snapshot native
     // device pointers there so bus-sync callbacks never deref QRhi* cross-thread.
@@ -255,5 +262,13 @@ void connectWindow(QQuickWindow* window)
         window->update();
     }
 }
+
+#ifdef QGC_UNITTEST_BUILD
+void connectQRhiWindowForTest(QQuickWindow* window)
+{
+    connectWindow(window);
+    s_rhiSceneGraph.store(true, std::memory_order_release);
+}
+#endif
 
 }  // namespace QGCRhiCapture

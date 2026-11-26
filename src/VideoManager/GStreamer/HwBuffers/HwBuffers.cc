@@ -311,6 +311,15 @@ qint64 graphicsAdapterLuid() noexcept
 #endif
 }
 
+bool graphicsDeviceSettled() noexcept
+{
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    return QGCRhiCapture::deviceSettled();
+#else
+    return true;
+#endif
+}
+
 void setGraphicsDevicePublishedHandler([[maybe_unused]] void (*handler)()) noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)

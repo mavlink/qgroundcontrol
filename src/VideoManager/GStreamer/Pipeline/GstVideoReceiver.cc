@@ -5,12 +5,14 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDeadlineTimer>
+#include <QtCore/QList>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
 #include "GstReceiverWorker.h"
+#include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcSinkBin.h"
@@ -28,6 +30,13 @@ static_assert(GstVideoReceiver::kHeartbeatInterval > kWorkerShutdownTimeout);
 // check comes a full interval after the one before, so one that is late (a suspended machine, a stopped process, a
 // stalled GUI thread) can't count twice against a worker that got no time to run a task.
 constexpr int kStuckWorkerChecks = 6;
+
+/// The receivers alive. GUI thread.
+QList<GstVideoReceiver*>& liveReceivers()
+{
+    static QList<GstVideoReceiver*> receivers;
+    return receivers;
+}
 
 }  // namespace
 
@@ -56,10 +65,12 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent, const GstReceiverTimings& ti
     _worker->moveToThread(_workerThread);
     (void) connect(_workerThread, &QThread::finished, _worker, &QObject::deleteLater);
     _workerThread->start();
+    liveReceivers().append(this);
 }
 
 GstVideoReceiver::~GstVideoReceiver()
 {
+    (void) liveReceivers().removeOne(this);
     _postToWorker([](GstReceiverWorker& worker) { worker.shutdown(); });
     if (_workerThread->wait(QDeadlineTimer(kWorkerShutdownTimeout))) {
         qCDebug(GstVideoReceiverLog) << this;
@@ -82,6 +93,14 @@ GstVideoReceiver::~GstVideoReceiver()
 void GstVideoReceiver::setHeartbeatInterval(std::chrono::milliseconds interval)
 {
     _heartbeatTimer->setInterval(interval);
+}
+
+void GstVideoReceiver::onGraphicsDeviceSettled()
+{
+    const QList<GstVideoReceiver*> receivers = liveReceivers();
+    for (GstVideoReceiver* const receiver : receivers) {
+        receiver->_postRequest();
+    }
 }
 
 void GstVideoReceiver::onConfigChanged()
@@ -149,7 +168,8 @@ void GstVideoReceiver::_postRequest()
     _request.active = active();
     _request.name = name();
     _request.config = config();
-    _request.videoSink = videoSink() ? _displaySink : nullptr;
+    // A decoder plugged before the device Qt renders with is known would keep a device of its own.
+    _request.videoSink = (videoSink() && HwBuffers::graphicsDeviceSettled()) ? _displaySink : nullptr;
     _postToWorker([request = _request](GstReceiverWorker& worker) { worker.apply(request); });
 }
 

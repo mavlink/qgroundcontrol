@@ -39,26 +39,6 @@ gint decodeVideoOnly([[maybe_unused]] GstElement* decodebin, [[maybe_unused]] Gs
     return ((gst_stream_get_stream_type(stream) & GST_STREAM_TYPE_VIDEO) != 0) ? 1 : 0;
 }
 
-/// Whether decodebin3 @p decodebin has plugged a hardware decoder. Read from its elements rather than from what the
-/// branch was told of them, which reaches the worker after the decoder is in place.
-bool hasHardwareDecoder(GstElement* decodebin)
-{
-    bool hardware = false;
-    GstIterator* const elements = gst_bin_iterate_recurse(GST_BIN(decodebin));
-    const auto note = [](const GValue* item, gpointer data) {
-        GstElementFactory* const factory = gst_element_get_factory(GST_ELEMENT(g_value_get_object(item)));
-        if (factory && gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER) &&
-            GStreamer::isHardwareDecoderFactory(factory)) {
-            *static_cast<bool*>(data) = true;
-        }
-    };
-    while (gst_iterator_foreach(elements, note, &hardware) == GST_ITERATOR_RESYNC) {
-        gst_iterator_resync(elements);
-    }
-    gst_iterator_free(elements);
-    return hardware;
-}
-
 /// Whether a live source feeds @p decodebin, as the decoders inside it ask their own upstream.
 bool fedByLiveSource(GstElement* decodebin)
 {
@@ -271,18 +251,6 @@ void DecodingBranch::failDecoder(const QString& cause)
     _giveUp(cause);
 }
 
-void DecodingBranch::onGraphicsDeviceServed()
-{
-    if (!_decoder || !hasHardwareDecoder(_decoder.get())) {
-        return;
-    }
-    qCDebug(GstVideoReceiverLog) << "Replacing the decoder" << _decoderName
-                                 << "by one on the graphics device Qt renders with" << _context.redactedUri;
-    _removeDecoder();
-    _setDecoding(false);
-    _insertDecoder();
-}
-
 bool DecodingBranch::isCurrent(GstObject* source) const
 {
     return _head.contains(source) || isInside(source, _decoder.get()) || (_decoder && isInside(source, _sink.get()));
@@ -366,6 +334,8 @@ void DecodingBranch::_giveUp(const QString& cause)
 
 bool DecodingBranch::_tryInsertDecoder()
 {
+    // Before the sink and the decoder join: the pipeline hands them the contexts of the device Qt renders with.
+    HwBuffers::provideGraphicsContexts(_context.pipeline);
     if (!gst_bin_add(GST_BIN(_context.pipeline), _sink.get())) {
         qCWarning(GstVideoReceiverLog) << "Failed to add the video sink" << _context.redactedUri;
         return false;
