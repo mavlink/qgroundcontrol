@@ -332,7 +332,7 @@ everything else is read on the worker.
 | `gpuPath` | The delivery path most frames took since the previous sample, as `GstHw::toString()` names it: `CPU`, `DMABuf`, `GL`, `D3D11`, `D3D12`, `IOSurface` or `AHWBuf`. Empty for a display sink other than the sink bin. |
 | `codec` | The caps on the tee: `H.264`, `H.265`, `AV1`, `VP8`, `VP9`, `MJPEG`, `MPEG-2`, ... |
 | `packetsLate`, `packetsDuplicate`, `rtxRequested`, `rtxRecovered` | The same jitter buffers' `num-late`, `num-duplicates`, `rtx-count` and `rtx-success-count`, since the stream started. -1 without a jitter buffer, which alone tells them: MPEG-TS, and UDP RTP in low-latency mode. |
-| `keyframeIntervalMs` | The tee's buffer probe (`PipelineStatsProbe`): the average time between the timestamps (PTS, else DTS) of the last five buffers without `DELTA_UNIT`, so the arrival times a stream without a jitter buffer is stamped with don't swing it. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
+| `keyframeIntervalMs` | The tee's buffer probe (`PipelineStatsProbe`) and `../Receiver/KeyframeIntervalMeter`, shared with the FFmpeg receiver: the average time between the timestamps (PTS, else DTS) of the last five buffers without `DELTA_UNIT`, so the arrival times a stream without a jitter buffer is stamped with don't swing it. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
 | `gpuFallbacks` | The display sink's GPU fallbacks (`GstQgc::SinkStats::gpuFallbacks`) since the stream started, the sinks a decoder restart replaced included. |
 | `decoderRestarts` | Decoders `DecodingBranch::restartDecoder()` replaced since the stream started. |
 | `uptimeMs`, `reconnects` | The worker's `StreamSupervisor`: the time since the session reported its first frame, and the sessions that streamed since the stream was started or restarted, less one. |
@@ -352,8 +352,8 @@ packets lost in between. The jitter is the interarrival jitter of appendix A.8 f
 `udpsrc` stamps its buffers with, which is how `rtpjitterbuffer` measures its `avg-jitter`.
 
 `VideoStreamStatsMeterTest` covers the rate math on a fake clock and the sampler's session fields,
-`RtpPacketCounterTest` the packet counter, `GstVideoReceiverComponentsTest` its probe, `GstVideoReceiverStatsTest` the
-stats of real streams.
+`KeyframeIntervalMeterTest` the keyframe interval, `RtpPacketCounterTest` the packet counter,
+`GstVideoReceiverComponentsTest` its probe, `GstVideoReceiverStatsTest` the stats of real streams.
 
 ### Qt defects worked around
 

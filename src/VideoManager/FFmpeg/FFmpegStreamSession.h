@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <deque>
 #include <optional>
 #include <thread>
 
@@ -13,6 +12,7 @@
 
 #include "FFmpegPointers.h"
 #include "FFmpegStreamRecorder.h"
+#include "KeyframeIntervalMeter.h"
 #include "VideoStreamUri.h"
 
 struct AVStream;
@@ -73,7 +73,7 @@ public:
         bool hardwareFrames = false;
         /// nowMs() at the last video packet; 0 before the first.
         qint64 lastPacketMs = 0;
-        /// Between keyframes, from their timestamps, averaged over the last kKeyframeWindow; -1 before the second.
+        /// KeyframeIntervalMeter's, of the video packets' timestamps; -1 before the second keyframe.
         double keyframeIntervalMs = -1.0;
     };
 
@@ -104,10 +104,6 @@ public:
     /// Monotonic milliseconds, the clock of Counters::lastPacketMs.
     static qint64 nowMs();
 
-    /// Keyframes the keyframe interval averages over, as the GStreamer receiver's: a stream's timestamps can be
-    /// arrival times, which a busy sender or network bunches up.
-    static constexpr int kKeyframeWindow = 5;
-
     quint64 id() const { return _id; }
 
     const Settings& settings() const { return _settings; }
@@ -127,7 +123,6 @@ private:
     /// Receives until a stop request (nullopt) or a failure.
     std::optional<Failure> _receive();
     void _onVideoPacket(const AVStream& stream, AVPacket& packet);
-    void _noteKeyframe(const AVStream& stream, const AVPacket& packet);
     void _decode(const AVStream& stream, AVPacket& packet);
     /// Opens _decoder for @p stream, in hardware where it can; the message why not otherwise. @p keyframe: the packet
     /// decoding starts at.
@@ -151,7 +146,8 @@ private:
     std::atomic<quint64> _framesDecoded{0};
     std::atomic<bool> _hardwareFrames{false};
     std::atomic<qint64> _lastPacketMs{0};
-    std::atomic<double> _keyframeIntervalMs{-1.0};
+    /// Noted on the session's thread.
+    KeyframeIntervalMeter _keyframes;
 
     // The session's thread only.
     /// The video stream, as the recorder takes it: created with its first packet.
@@ -169,6 +165,4 @@ private:
     /// Decoding starts, and starts again after a pause, at a keyframe.
     bool _awaitingKeyframe = true;
     bool _decoderFailed = false;
-    /// The timestamps of the last keyframes, in ms, oldest first.
-    std::deque<double> _keyframeTimesMs;
 };

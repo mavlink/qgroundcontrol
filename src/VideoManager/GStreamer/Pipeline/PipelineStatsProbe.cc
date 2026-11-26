@@ -105,7 +105,7 @@ void PipelineStatsProbe::noteBuffer(GstBuffer* buffer)
     }
     const GstClockTime time = GST_BUFFER_PTS_IS_VALID(buffer) ? GST_BUFFER_PTS(buffer) : GST_BUFFER_DTS(buffer);
     if (GST_CLOCK_TIME_IS_VALID(time)) {
-        _noteKeyframe(time);
+        _keyframes.note(std::chrono::nanoseconds(time));
     }
 }
 
@@ -121,30 +121,6 @@ void PipelineStatsProbe::noteElementMessage(GstMessage* message)
     }
     const gsize total = GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey)) + dropped;
     g_object_set_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey, GSIZE_TO_POINTER(total));
-}
-
-void PipelineStatsProbe::_noteKeyframe(GstClockTime time)
-{
-    if (_keyframeTimeCount > 0) {
-        const GstClockTime previous = _keyframeTimes[_keyframeTimeCount - 1];
-        // Parameter sets that arrive in a buffer of their own share the keyframe's timestamp.
-        if (time == previous) {
-            return;
-        }
-        // Timestamps that went back start over, as after a new segment.
-        if (time < previous) {
-            _keyframeTimeCount = 0;
-        }
-    }
-    if (_keyframeTimeCount == kKeyframeWindow) {
-        std::shift_left(_keyframeTimes.begin(), _keyframeTimes.end(), 1);
-        --_keyframeTimeCount;
-    }
-    _keyframeTimes[_keyframeTimeCount++] = time;
-    if (_keyframeTimeCount >= 2) {
-        const GstClockTime span = _keyframeTimes[_keyframeTimeCount - 1] - _keyframeTimes[0];
-        _keyframeInterval.store(span / (_keyframeTimeCount - 1), std::memory_order_relaxed);
-    }
 }
 
 void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstElement* tee,
@@ -186,9 +162,7 @@ void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstEle
             .packetsLost = jitterBuffers.packetsLost + jitterBuffers.packetsDroppedOnLatency};
     }
 
-    const GstClockTime keyframeInterval = _keyframeInterval.load(std::memory_order_relaxed);
-    stats.keyframeIntervalMs =
-        GST_CLOCK_TIME_IS_VALID(keyframeInterval) ? static_cast<double>(keyframeInterval) / GST_MSECOND : -1.0;
+    stats.keyframeIntervalMs = _keyframes.intervalMs();
 
     GstClockTime minLatency = 0;
     GstClockTime maxLatency = 0;

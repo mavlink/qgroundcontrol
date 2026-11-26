@@ -137,7 +137,8 @@ with the source's `VideoStreamController`.
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
 `GStreamer/Sink/gstqgc/GstQgcSinkStats`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`, and the other receivers
 themselves), and `Receiver/VideoStreamStatsMeter` and `Receiver/VideoStreamStatsSampler` make the `VideoStreamStats` of
-the counters that `Qml/VideoStreamStatsGroup.qml` shows.
+the counters that `Qml/VideoStreamStatsGroup.qml` shows. `Receiver/KeyframeIntervalMeter` is the keyframe interval of
+the GStreamer and FFmpeg receivers.
 
 ## A recording
 

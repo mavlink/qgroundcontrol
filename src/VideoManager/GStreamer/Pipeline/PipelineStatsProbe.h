@@ -1,12 +1,11 @@
 #pragma once
 
-#include <array>
 #include <atomic>
-#include <cstddef>
 #include <gst/gst.h>
 
 #include <QtCore/QString>
 
+#include "KeyframeIntervalMeter.h"
 #include "VideoStreamStatsMeter.h"
 
 struct VideoStreamStats;
@@ -41,20 +40,10 @@ public:
     static QString codecName(const GstCaps* caps);
 
 private:
-    void _noteKeyframe(GstClockTime time);
-
-    /// Keyframes whose timestamps the keyframe interval averages over: on a stream without a jitter buffer they are
-    /// arrival times, which a busy sender or network bunches up, and an average across several keyframes evens that
-    /// out.
-    static constexpr std::size_t kKeyframeWindow = 5;
-
     /// Compressed bytes that reached the tee.
     std::atomic<quint64> _bytesReceived = 0;
-    /// Timestamps of the last keyframes at the tee, oldest first. Only the tee's streaming thread uses them.
-    std::array<GstClockTime, kKeyframeWindow> _keyframeTimes{};
-    std::size_t _keyframeTimeCount = 0;
-    /// The average time between the keyframes in _keyframeTimes; GST_CLOCK_TIME_NONE before the second.
-    std::atomic<GstClockTime> _keyframeInterval = GST_CLOCK_TIME_NONE;
+    /// Of the keyframes at the tee. Only the tee's streaming thread notes them.
+    KeyframeIntervalMeter _keyframes;
     /// The most packets sample() has reported lost for a source that counts its own.
     quint64 _rtpPacketsLost = 0;
 };

@@ -7,6 +7,8 @@
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        KeyframeIntervalMeter.cc
+        KeyframeIntervalMeter.h
         RecordingPlan.cc
         RecordingPlan.h
         StreamSupervisor.cc

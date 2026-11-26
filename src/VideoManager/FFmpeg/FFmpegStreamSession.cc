@@ -251,7 +251,7 @@ FFmpegStreamSession::Counters FFmpegStreamSession::counters() const
             .framesDecoded = _framesDecoded.load(),
             .hardwareFrames = _hardwareFrames.load(),
             .lastPacketMs = _lastPacketMs.load(),
-            .keyframeIntervalMs = _keyframeIntervalMs.load()};
+            .keyframeIntervalMs = _keyframes.intervalMs()};
 }
 
 int FFmpegStreamSession::_interrupt(void* opaque)
@@ -366,8 +366,9 @@ void FFmpegStreamSession::_onVideoPacket(const AVStream& stream, AVPacket& packe
     if (first) {
         _listener.onSessionStreaming(_id, ffmpegCodecName(stream.codecpar->codec_id));
     }
-    if ((packet.flags & AV_PKT_FLAG_KEY) != 0) {
-        _noteKeyframe(stream, packet);
+    const int64_t timestamp = (packet.pts != AV_NOPTS_VALUE) ? packet.pts : packet.dts;
+    if (((packet.flags & AV_PKT_FLAG_KEY) != 0) && (timestamp != AV_NOPTS_VALUE) && (stream.time_base.den > 0)) {
+        _keyframes.note(std::chrono::nanoseconds(av_rescale_q(timestamp, stream.time_base, AVRational{1, 1000000000})));
     }
     if (!_recordedStream) {
         auto recorded = std::make_shared<FFmpegStreamRecorder::Stream>();
@@ -382,27 +383,6 @@ void FFmpegStreamSession::_onVideoPacket(const AVStream& stream, AVPacket& packe
         _recorder.write(_id, _recordedStream, packet);
     }
     _decode(stream, packet);
-}
-
-void FFmpegStreamSession::_noteKeyframe(const AVStream& stream, const AVPacket& packet)
-{
-    const int64_t timestamp = (packet.pts != AV_NOPTS_VALUE) ? packet.pts : packet.dts;
-    if ((timestamp == AV_NOPTS_VALUE) || (stream.time_base.den <= 0)) {
-        return;
-    }
-    const double timeMs = static_cast<double>(timestamp) * 1000.0 * stream.time_base.num / stream.time_base.den;
-    // A time that goes back is a new start, as after the sender restarted.
-    if (!_keyframeTimesMs.empty() && (timeMs <= _keyframeTimesMs.back())) {
-        _keyframeTimesMs.clear();
-    }
-    _keyframeTimesMs.push_back(timeMs);
-    if (_keyframeTimesMs.size() > static_cast<size_t>(kKeyframeWindow)) {
-        _keyframeTimesMs.pop_front();
-    }
-    if (_keyframeTimesMs.size() >= 2) {
-        _keyframeIntervalMs.store((_keyframeTimesMs.back() - _keyframeTimesMs.front()) /
-                                  static_cast<double>(_keyframeTimesMs.size() - 1));
-    }
 }
 
 void FFmpegStreamSession::_decode(const AVStream& stream, AVPacket& packet)

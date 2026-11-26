@@ -11,6 +11,8 @@ target_sources(
         QtMultimedia/QtMultimediaVideoReceiverTest.h
         QtMultimedia/QtVideoRecorderTest.cc
         QtMultimedia/QtVideoRecorderTest.h
+        Receiver/KeyframeIntervalMeterTest.cc
+        Receiver/KeyframeIntervalMeterTest.h
         Receiver/RecordingPlanTest.cc
         Receiver/RecordingPlanTest.h
         QtMultimedia/SharedVideoFrameTest.cc
@@ -52,6 +54,7 @@ target_sources(
 
 target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_qgc_test(KeyframeIntervalMeterTest LABELS Unit)
 add_qgc_test(QtMultimediaVideoReceiverTest LABELS Integration)
 add_qgc_test(QtVideoRecorderTest LABELS Integration)
 add_qgc_test(RecordingPlanTest LABELS Unit)
