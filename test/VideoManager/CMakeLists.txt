@@ -93,7 +93,8 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
 endif()
 
 # The experimental FFmpeg receiver's streams are sent by GStreamer too.
-if(QGC_ENABLE_FFMPEG_VIDEO AND QGC_ENABLE_GST_VIDEOSTREAMING)
+get_property(_qgc_ffmpeg_video_built GLOBAL PROPERTY QGC_FFMPEG_VIDEO_BUILT)
+if(_qgc_ffmpeg_video_built AND QGC_ENABLE_GST_VIDEOSTREAMING)
     target_sources(
         QGCUnitTests
         PRIVATE

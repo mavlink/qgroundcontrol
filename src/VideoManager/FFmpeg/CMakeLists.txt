@@ -1,5 +1,5 @@
 # ============================================================================
-# FFmpeg Video Receiver (experimental, QGC_ENABLE_FFMPEG_VIDEO, Linux only so far)
+# FFmpeg Video Receiver (experimental, QGC_ENABLE_FFMPEG_VIDEO, desktop Linux only so far)
 # Network streams received directly with the FFmpeg libraries Qt ships, for VideoSettings::videoBackend's FFmpeg
 # choice. Links Qt's FFmpeg plugin implementation (Qt6::FFmpegMediaPluginImplPrivate), which is Qt-internal, and the
 # FFmpeg libraries of the Qt kit. The kit has no FFmpeg headers: they are generated at configure time from the source
@@ -10,8 +10,30 @@ if(NOT QGC_ENABLE_FFMPEG_VIDEO)
     return()
 endif()
 
+# The option is ON by default, so a build that can't have the receiver goes without it: another platform, a Qt that
+# uses the system's FFmpeg rather than its own, or a host without the tools that generate the headers.
 if(NOT LINUX OR ANDROID)
-    message(FATAL_ERROR "QGC: QGC_ENABLE_FFMPEG_VIDEO is only built for Linux so far")
+    return()
+endif()
+set(_ffmpeg_qt_libdir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}")
+set(_ffmpeg_libraries avformat avcodec avutil swresample swscale)
+set(_ffmpeg_missing "")
+foreach(_lib IN LISTS _ffmpeg_libraries)
+    if(NOT EXISTS "${_ffmpeg_qt_libdir}/lib${_lib}.so")
+        set(_ffmpeg_missing "the Qt kit has no lib${_lib}.so")
+    endif()
+endforeach()
+if(NOT EXISTS "${_ffmpeg_qt_libdir}/cmake/Qt6FFmpegMediaPluginImplPrivate")
+    set(_ffmpeg_missing "the Qt kit has no Qt6FFmpegMediaPluginImplPrivate package")
+endif()
+find_program(QGC_FFMPEG_MAKE NAMES make gmake)
+find_program(QGC_FFMPEG_SH NAMES sh bash)
+if(NOT QGC_FFMPEG_MAKE OR NOT QGC_FFMPEG_SH)
+    set(_ffmpeg_missing "make and sh, which generate the FFmpeg headers, were not found")
+endif()
+if(_ffmpeg_missing)
+    message(STATUS "QGC: FFmpeg video backend not built: ${_ffmpeg_missing}")
+    return()
 endif()
 
 # The FFmpeg release Qt 6.12.0's kit ships.
@@ -24,9 +46,7 @@ set(QGC_FFMPEG_SOURCE_SHA256
     CACHE STRING "SHA-256 of the source archive of QGC_FFMPEG_TAG"
 )
 
-set(_ffmpeg_qt_libdir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}")
 set(_ffmpeg_prefix "${CMAKE_BINARY_DIR}/ffmpeg-${QGC_FFMPEG_TAG}")
-set(_ffmpeg_libraries avformat avcodec avutil swresample swscale)
 
 # The headers come from the release's source, through its configure and "make install-headers", which compile nothing.
 if(NOT EXISTS "${_ffmpeg_prefix}/include/libavcodec/version_major.h")
@@ -38,8 +58,6 @@ if(NOT EXISTS "${_ffmpeg_prefix}/include/libavcodec/version_major.h")
     )
     qgc_require_cpm_added(ffmpeg_source)
 
-    find_program(QGC_FFMPEG_MAKE NAMES make gmake REQUIRED)
-    find_program(QGC_FFMPEG_SH NAMES sh bash REQUIRED)
     set(_ffmpeg_header_build "${CMAKE_BINARY_DIR}/ffmpeg-${QGC_FFMPEG_TAG}-headers-build")
     file(REMOVE_RECURSE "${_ffmpeg_header_build}")
     file(MAKE_DIRECTORY "${_ffmpeg_header_build}")
@@ -78,12 +96,6 @@ foreach(_lib avcodec avformat avutil)
     endif()
     file(STRINGS "${_version_header}" _define REGEX "#define LIB${_upper}_VERSION_MAJOR +[0-9]+")
     string(REGEX MATCH "[0-9]+$" _header_major "${_define}")
-    if(NOT EXISTS "${_ffmpeg_qt_libdir}/lib${_lib}.so")
-        message(
-            FATAL_ERROR "QGC: QGC_ENABLE_FFMPEG_VIDEO needs Qt's FFmpeg libraries; "
-                        "${_ffmpeg_qt_libdir}/lib${_lib}.so is missing"
-        )
-    endif()
     get_filename_component(_library "${_ffmpeg_qt_libdir}/lib${_lib}.so" REALPATH)
     get_filename_component(_library_name "${_library}" NAME)
     string(REGEX MATCH "\\.so\\.([0-9]+)" _ "${_library_name}")
@@ -92,7 +104,7 @@ foreach(_lib avcodec avformat avutil)
             FATAL_ERROR
                 "QGC: The FFmpeg ${QGC_FFMPEG_TAG} headers are lib${_lib} ${_header_major}, but Qt's library is "
                 "${_library_name}. Set QGC_FFMPEG_TAG and QGC_FFMPEG_SOURCE_SHA256 to the FFmpeg release of this Qt "
-                "kit, and delete ${_ffmpeg_prefix}."
+                "kit and delete ${_ffmpeg_prefix}, or configure with -DQGC_ENABLE_FFMPEG_VIDEO=OFF."
         )
     endif()
 endforeach()
@@ -136,6 +148,8 @@ target_sources(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_FFMPEG_VIDEO)
+# For the tests and the configure summary, which can't tell from the option that the receiver is in the build.
+set_property(GLOBAL PROPERTY QGC_FFMPEG_VIDEO_BUILT TRUE)
 target_link_libraries(
     ${CMAKE_PROJECT_NAME}
     PRIVATE

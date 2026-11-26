@@ -2,9 +2,15 @@
 
 A third network video receiver, `FFmpegVideoReceiver`, written directly on the FFmpeg libraries that the Qt kit
 ships, to try in the application whether FFmpeg could replace GStreamer, and to measure it against the GStreamer and
-Qt Multimedia receivers. It is a prototype: off by default, built for Linux only, and not part of any package.
+Qt Multimedia receivers. It is a prototype, built for desktop Linux only, and GStreamer stays the backend the
+application uses until the FFmpeg one is chosen.
 
 ## Build and try it
+
+`QGC_ENABLE_FFMPEG_VIDEO` is on by default, and builds the receiver where it can be built: on desktop Linux, with a Qt
+kit that ships its own FFmpeg libraries and FFmpeg plugin implementation, as the kits of Qt's installer do, and with
+`make` and `sh` on the host. Any other build leaves it out, and configure says so
+(`FFmpeg video backend not built: ...`). A build directory configured before the option was on keeps it off:
 
 ```sh
 cmake --preset default -DQGC_ENABLE_FFMPEG_VIDEO=ON
@@ -72,6 +78,10 @@ whose API is internal to Qt and may change in any release, and `Qt6::MultimediaP
 `QFFmpeg::getFormat()`, the decoder's format choice that Qt's texture converters need; and
 `QVideoFramePrivate::createFrame()`. It compiles with Qt 6.12.0 only (`static_assert`). The application then holds a
 second copy of the plugin's code beside the plugin itself; its symbols are not exported.
+
+A new Qt version therefore needs the receiver looked at again before it builds: `QGC_FFMPEG_TAG` and its hash follow
+the FFmpeg release of the kit (configure fails when they don't match its libraries), and the `static_assert` follows
+once the three Qt-internal calls are checked against the new Qt. Until then, set `QGC_ENABLE_FFMPEG_VIDEO` to `OFF`.
 
 ## Tests
 
