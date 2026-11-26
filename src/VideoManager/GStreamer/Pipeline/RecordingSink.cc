@@ -21,14 +21,14 @@ namespace {
 // index grows faster at higher frame rates, and when no two frames last the same, as without a jitter buffer, so
 // the muxer's own estimate of the room left is watched too (RecordingBranch::kHeaderSpaceMargin).
 // The period bounds crash data loss without rewriting the growing moov too often.
-constexpr guint64 kRecordingReservedMaxDurationNs = 2 * 3600 * GST_SECOND;
+constexpr guint64 kRecordingReservedMaxDurationNs = 2 * (3600 * GST_SECOND);
 constexpr guint64 kRecordingMoovUpdatePeriodNs = 5 * GST_SECOND;
 // matroskamux never has its file synced, as qtmux has with each header update. Storage that takes writes into a cache
 // (an Android SD card, a network share) reports a full disk only to a sync: a recording there would lose everything
 // without an error. A sync as often as the MP4's also bounds what a power loss takes.
 constexpr gint64 kRecordingSyncPeriodUs = static_cast<gint64>(kRecordingMoovUpdatePeriodNs / GST_USECOND);
 static_assert(std::chrono::nanoseconds(GstReceiverTimings{}.recordingHeaderEstimateDelay).count() >=
-                  static_cast<qint64>(2 * kRecordingMoovUpdatePeriodNs),
+                  2 * static_cast<qint64>(kRecordingMoovUpdatePeriodNs),
               "The muxer's estimate of its header space counts from its second header update");
 static_assert((2 * std::chrono::nanoseconds(RecordingPlan::kMaxPartDuration).count()) <=
                   static_cast<qint64>(kRecordingReservedMaxDurationNs),

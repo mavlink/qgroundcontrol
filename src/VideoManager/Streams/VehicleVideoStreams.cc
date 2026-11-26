@@ -159,7 +159,7 @@ void VehicleVideoStreams::select(Stream stream)
     if (!camera || !stream.streamInfo || !cameraManager) {
         return;
     }
-    const int streamIndex = camera->streamLabels().indexOf(stream.streamInfo->name());
+    const int streamIndex = static_cast<int>(camera->streamLabels().indexOf(stream.streamInfo->name()));
     // The stream first: the camera then becomes the current one with the stream to show.
     if (streamIndex >= 0) {
         camera->setCurrentStream(streamIndex);

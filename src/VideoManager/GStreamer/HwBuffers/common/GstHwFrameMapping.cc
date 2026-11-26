@@ -14,7 +14,8 @@ QAbstractVideoBuffer::MapData mapDataFor(const GstVideoFrame& frame)
     for (int i = 0; i < data.planeCount; ++i) {
         data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&frame, i));
         data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i);
-        data.dataSize[i] = static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * planeHeight(frame.info, i);
+        data.dataSize[i] = static_cast<int>(static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) *
+                                            planeHeight(frame.info, i));
     }
     return data;
 }

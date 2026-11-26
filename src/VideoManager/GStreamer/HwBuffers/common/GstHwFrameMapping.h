@@ -31,7 +31,8 @@ public:
     void unmap() noexcept;
 
 private:
-    GstVideoFrame _frame = {};
+    // A C struct, zeroed: its flags have no enumerator for none.
+    GstVideoFrame _frame = {};  // NOLINT(bugprone-invalid-enum-default-initialization)
     bool _mapped = false;
 };
 

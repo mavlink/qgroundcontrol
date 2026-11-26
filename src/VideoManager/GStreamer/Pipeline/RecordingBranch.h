@@ -72,7 +72,7 @@ public:
     /// covers slow storage. A stopped recording first has as long to take the frames its queue still holds.
     static constexpr std::chrono::seconds kFinalizeTimeout{3};
     /// Backlog the recording queue holds for slow storage before the recording gives up.
-    static constexpr guint64 kQueueMaxBytes = 64 * 1024 * 1024;
+    static constexpr guint64 kQueueMaxBytes = guint64{64} * 1024 * 1024;
     /// The recording time an MP4 or MOV file's header must have room for; with less left, the recording asks for
     /// another file. Covers the wait for the keyframe the next file starts with.
     static constexpr std::chrono::seconds kHeaderSpaceMargin{60};

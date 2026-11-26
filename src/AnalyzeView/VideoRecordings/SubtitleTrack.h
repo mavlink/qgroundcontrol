@@ -29,7 +29,7 @@ public:
     explicit SubtitleTrack(QObject* parent = nullptr);
 
     /// A larger file isn't read: about a day of what SubtitleWriter writes.
-    static constexpr qint64 kMaxFileBytes = 64 * 1024 * 1024;
+    static constexpr qint64 kMaxFileBytes = qint64{64} * 1024 * 1024;
 
     /// A local file; empty for none.
     QUrl source() const { return _source; }

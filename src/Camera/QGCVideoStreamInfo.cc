@@ -34,6 +34,9 @@ qreal QGCVideoStreamInfo::aspectRatio() const
 
 bool QGCVideoStreamInfo::update(const mavlink_video_stream_information_t& info)
 {
+    // Equal bytes are equal fields. Fields that are equal with other bytes, as a string with a different rest behind
+    // its terminator, count as a change, which every message was before the two were compared.
+    // NOLINTNEXTLINE(bugprone-suspicious-memory-comparison)
     if (memcmp(&_streamInfo, &info, sizeof(mavlink_video_stream_information_t)) == 0) {
         return false;
     }

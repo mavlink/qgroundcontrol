@@ -280,10 +280,12 @@ void RecordingBranch::_switchAtKeyframe()
         return;
     }
     const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
-    (void) _switchHold.add(valveSrc.get(),
-                           static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
-                           _switchProbe, new SwitchWatch{.branch = this, .hold = ++_switchHoldId},
-                           [](gpointer watch) { delete static_cast<SwitchWatch*>(watch); });
+    (void) _switchHold.add(
+        valveSrc.get(),
+        // GstPadProbeType is a flags type: NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+        static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER), _switchProbe,
+        new SwitchWatch{.branch = this, .hold = ++_switchHoldId},
+        [](gpointer watch) { delete static_cast<SwitchWatch*>(watch); });
     _switching = true;
     // Not left to the stream: with a long GOP, or a camera that sends keyframes on request only, the current file
     // would go on growing meanwhile.
@@ -694,6 +696,7 @@ GstPadProbeReturn RecordingBranch::_capsProbe(GstPad* pad, GstPadProbeInfo* info
     const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
     self->_capsHold.store(
         gst_pad_add_probe(valveSrc.get(),
+                          // A flags type: NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
                           static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
                           holdCapsEvent, gst_caps_ref(caps),
                           [](gpointer held) { gst_caps_unref(static_cast<GstCaps*>(held)); }),

@@ -36,9 +36,8 @@ QVideoFrameFormat::ColorTransfer toQtColorTransfer(GstVideoTransferFunction tran
         case GST_VIDEO_TRANSFER_BT2020_10:
         case GST_VIDEO_TRANSFER_BT2020_12:
         case GST_VIDEO_TRANSFER_BT709:
+        case GST_VIDEO_TRANSFER_GAMMA20:  // best fit per Qt
             return QVideoFrameFormat::ColorTransfer_BT709;
-        case GST_VIDEO_TRANSFER_GAMMA20:
-            return QVideoFrameFormat::ColorTransfer_BT709;  // best fit per Qt
         // SMPTE 240M uses a ~2.2 power curve, not BT.709 piecewise-linear; Qt groups it with Gamma22.
         case GST_VIDEO_TRANSFER_SMPTE240M:
         case GST_VIDEO_TRANSFER_GAMMA22:
@@ -121,9 +120,9 @@ void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int stream
     }
     if (GST_BUFFER_PTS_IS_VALID(buffer)) {
         // GstClockTime is ns; QVideoFrame timestamps are µs.
-        frame.setStartTime(GST_BUFFER_PTS(buffer) / GST_USECOND);
+        frame.setStartTime(static_cast<qint64>(GST_BUFFER_PTS(buffer) / GST_USECOND));
         if (GST_BUFFER_DURATION_IS_VALID(buffer)) {
-            frame.setEndTime((GST_BUFFER_PTS(buffer) + GST_BUFFER_DURATION(buffer)) / GST_USECOND);
+            frame.setEndTime(static_cast<qint64>((GST_BUFFER_PTS(buffer) + GST_BUFFER_DURATION(buffer)) / GST_USECOND));
         }
     }
 }
