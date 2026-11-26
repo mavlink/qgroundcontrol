@@ -1,5 +1,9 @@
 #include "QGCFileDownload.h"
 
+#include <filesystem>
+#include <system_error>
+
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QLocale>
@@ -12,8 +16,16 @@
 #include "CompressionJob.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
+#include "QGCWorkDirectory.h"
 
 QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
+
+namespace {
+
+/// Start of the name of the work directory of an autoDecompress download
+constexpr QLatin1StringView kDownloadWorkDirectoryPrefix(".qgc-download-");
+
+}  // namespace
 
 QGCFileDownload::QGCFileDownload(QObject *parent)
     : QObject(parent)
@@ -25,6 +37,7 @@ QGCFileDownload::QGCFileDownload(QObject *parent)
 QGCFileDownload::~QGCFileDownload()
 {
     qCDebug(QGCFileDownloadLog) << "Destroying" << this;
+    // A decompression job, a child, waits for its worker when it is deleted with this object
     cancel();
 }
 
@@ -145,12 +158,30 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
         return false;
     }
 
+    _downloadPath = _localPath;
+    if (_autoDecompress) {
+        // The download, and what it decompresses to, stay in a directory of its own until the result is moved into
+        // place: a download that fails or is cancelled leaves nothing where the caller looks, and the next download
+        // to the same path does not meet this one's files
+        const QString outputDirectory = QFileInfo(_localPath).absolutePath();
+        // What a download that crashed or was killed left behind goes first. One that another download runs stays
+        (void) QGCWorkDirectory::removeStale(outputDirectory, kDownloadWorkDirectoryPrefix);
+        auto workDirectory = std::make_unique<QGCWorkDirectory>(outputDirectory, kDownloadWorkDirectoryPrefix);
+        if (!workDirectory->isValid()) {
+            _setErrorString(tr("Cannot create a directory for the download: %1").arg(workDirectory->errorString()));
+            return false;
+        }
+        _workDirectory = std::move(workDirectory);
+        _downloadPath = QDir(_workDirectory->path()).filePath(QFileInfo(_localPath).fileName());
+    }
+
     // Open output file for streaming write
-    _outputFile = new QFile(_localPath, this);
+    _outputFile = new QFile(_downloadPath, this);
     if (!_outputFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         _setErrorString(tr("Cannot open output file: %1").arg(_outputFile->errorString()));
         delete _outputFile;
         _outputFile = nullptr;
+        _removeWorkDirectory();
         return false;
     }
 
@@ -174,6 +205,7 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
         _outputFile->close();
         delete _outputFile;
         _outputFile = nullptr;
+        _removeWorkDirectory();
         return false;
     }
 
@@ -201,7 +233,6 @@ void QGCFileDownload::cancel()
     if (shouldEmitCancel) {
         _setState(State::Cancelled);
         _setErrorString(tr("Download cancelled"));
-        _emitFinished(false, QString(), _errorString);
     }
 
     if (_currentReply != nullptr) {
@@ -211,11 +242,14 @@ void QGCFileDownload::cancel()
 
     if (_decompressionJob) {
         qCDebug(QGCFileDownloadLog) << "Cancelling decompression";
-        _decompressionJob->cancel();
-        _decompressionJob = nullptr;
     }
 
     _cleanup();
+
+    // Last, so that a handler may start the next download: the cleanup would end that one
+    if (shouldEmitCancel) {
+        _emitFinished(false, QString(), _errorString);
+    }
 }
 
 // ============================================================================
@@ -297,6 +331,7 @@ void QGCFileDownload::_onDownloadFinished()
     if (reply->error() != QNetworkReply::NoError) {
         // Error already handled in _onDownloadError
         if (_state == State::Downloading || _state == State::Verifying) {
+            _removeWorkDirectory();
             _setState(State::Failed);
             _emitFinished(false, QString(), QGCNetworkHelper::errorMessage(reply));
         }
@@ -311,29 +346,35 @@ void QGCFileDownload::_onDownloadFinished()
                 .arg(statusCode)
                 .arg(QGCNetworkHelper::httpStatusText(statusCode));
             _setErrorString(error);
+            _removeWorkDirectory();
             _setState(State::Failed);
             _emitFinished(false, QString(), error);
             return;
         }
     }
 
-    qCDebug(QGCFileDownloadLog) << "Download finished:" << _localPath
-                                 << "size:" << QFileInfo(_localPath).size();
+    qCDebug(QGCFileDownloadLog) << "Download finished:" << _localPath << "size:" << QFileInfo(_downloadPath).size();
 
     // Verify hash if expected
     if (!_expectedHash.isEmpty()) {
         _setState(State::Verifying);
         if (!_verifyHash()) {
+            _removeWorkDirectory();
             _setState(State::Failed);
             _emitFinished(false, QString(), _errorString);
             return;
         }
     }
 
-    // Auto-decompress if enabled and file is compressed
-    if (_autoDecompress && Compression::isCompressedFile(_localPath)) {
-        _startDecompression();
-        return;
+    if (_autoDecompress) {
+        // The name of the download, which it keeps in the work directory, and its content tell whether it is compressed
+        if (Compression::isCompressedFile(_downloadPath)) {
+            _startDecompression();
+            return;
+        }
+        if (!_moveIntoPlace(_downloadPath, _localPath)) {
+            return;
+        }
     }
 
     // Success!
@@ -430,6 +471,47 @@ void QGCFileDownload::_cleanup()
         delete _outputFile;
         _outputFile = nullptr;
     }
+
+    if (_decompressionJob) {
+        // The worker may still write into the work directory, which therefore goes once the job is gone. The job ends
+        // on its own when its worker stops; waiting for that here would hold the caller as long as the worker writes
+        _decompressionJob->cancel();
+        // Progress the worker reported before it saw the cancellation belongs to no download any more
+        (void) _decompressionJob->disconnect(this);
+        (void) connect(_decompressionJob, &QObject::destroyed,
+                       [workDirectory = std::shared_ptr<QGCWorkDirectory>(std::move(_workDirectory))]() mutable {
+                           workDirectory.reset();
+                       });
+        _decompressionJob = nullptr;
+    }
+    _removeWorkDirectory();
+}
+
+void QGCFileDownload::_removeWorkDirectory()
+{
+    _workDirectory.reset();
+}
+
+bool QGCFileDownload::_moveIntoPlace(const QString& path, const QString& resultPath)
+{
+    // One rename that replaces a file at the result path, which stays as it was if the rename fails: rename() on
+    // POSIX, MoveFileEx() with MOVEFILE_REPLACE_EXISTING on Windows. QFile::rename() does not replace a file. The work
+    // directory is in the directory of the result, on its disk, so nothing is copied
+    std::error_code renameError;
+    std::filesystem::rename(QFileInfo(path).filesystemAbsoluteFilePath(),
+                            QFileInfo(resultPath).filesystemAbsoluteFilePath(), renameError);
+    if (!renameError) {
+        _removeWorkDirectory();
+        return true;
+    }
+
+    const QString error = tr("Cannot write the downloaded file: %1").arg(resultPath);
+    qCWarning(QGCFileDownloadLog) << error << QString::fromLocal8Bit(renameError.message());
+    _setErrorString(error);
+    _removeWorkDirectory();
+    _setState(State::Failed);
+    _emitFinished(false, QString(), error);
+    return false;
 }
 
 void QGCFileDownload::_emitFinished(bool success, const QString &localPath, const QString &errorMessage)
@@ -496,7 +578,7 @@ void QGCFileDownload::_failForSize()
     }
 
     _cleanup();
-    (void) QFile::remove(_localPath);
+    (void) QFile::remove(_downloadPath);
     _emitFinished(false, QString(), error);
 }
 
@@ -530,9 +612,9 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
 
 bool QGCFileDownload::_verifyHash()
 {
-    qCDebug(QGCFileDownloadLog) << "Verifying hash for:" << _localPath;
+    qCDebug(QGCFileDownloadLog) << "Verifying hash for:" << _downloadPath;
 
-    const QString actualHash = QGCFileHelper::computeFileHash(_localPath);
+    const QString actualHash = QGCFileHelper::computeFileHash(_downloadPath);
     if (actualHash.isEmpty()) {
         _setErrorString(tr("Failed to compute file hash"));
         return false;
@@ -550,32 +632,38 @@ bool QGCFileDownload::_verifyHash()
 
 void QGCFileDownload::_startDecompression()
 {
-    const QString compressedPath = _localPath;
-    const QString decompressedPath = Compression::strippedPath(compressedPath);
+    // Decompressed in the work directory too, and moved into place once it is complete
+    const QString decompressedPath = Compression::strippedPath(_downloadPath);
+    const QString resultPath = QFileInfo(_localPath).dir().filePath(QFileInfo(decompressedPath).fileName());
 
-    qCDebug(QGCFileDownloadLog) << "Starting decompression:" << compressedPath << "->" << decompressedPath;
+    qCDebug(QGCFileDownloadLog) << "Starting decompression:" << _downloadPath << "->" << decompressedPath;
 
     _setState(State::Decompressing);
 
     // A file whose name says it is compressed is passed on whatever its content is. A body that the server sent with
     // a content encoding has been decoded by the network stack, and is then the content as it is: the job copies it.
-    _decompressionJob = CompressionJob::startDecompressionConsumingInput(
-        this, compressedPath, decompressedPath, _maxDecompressedBytes,
-        [this, decompressedPath](const Compression::Outcome& outcome) {
+    _decompressionJob = CompressionJob::startDecompression(
+        this, _downloadPath, decompressedPath, _maxDecompressedBytes,
+        [this, decompressedPath, resultPath](const Compression::Outcome& outcome) {
             _decompressionJob = nullptr;
 
             if (!outcome) {
-                // The description says that the decompression failed, and why
-                const QString error = outcome.description();
+                // The description says that the decompression failed, and why. It names the download as the caller
+                // knows it, not as it is in the work directory
+                const QString error = outcome.description().replace(_downloadPath, _localPath);
                 qCWarning(QGCFileDownloadLog) << error;
                 _setErrorString(error);
+                _removeWorkDirectory();
                 _setState(State::Failed);
                 _emitFinished(false, QString(), error);
                 return;
             }
 
-            qCDebug(QGCFileDownloadLog) << "Decompression completed:" << decompressedPath;
-            _localPath = decompressedPath;
+            if (!_moveIntoPlace(decompressedPath, resultPath)) {
+                return;
+            }
+            qCDebug(QGCFileDownloadLog) << "Decompression completed:" << resultPath;
+            _localPath = resultPath;
             emit localPathChanged(_localPath);
             _setState(State::Completed);
             _emitFinished(true, _localPath, QString());

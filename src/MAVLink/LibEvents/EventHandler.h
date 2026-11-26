@@ -39,7 +39,7 @@ public:
     void handleEvents(const mavlink_message_t &message);
 
     /// Reads and parses an events metadata file, decompressed if it is compressed and held to
-    /// Compression::kMaxSmallFileBytes. It uses nothing but its argument, so that it can run on a worker thread.
+    /// VehicleFileFetch::kMaxSmallFileBytes. It uses nothing but its argument, so that it can run on a worker thread.
     /// Null, after a warning, if the file cannot be read or parsed.
     static EventMetadata loadMetadata(const QString& metadataJsonFileName);
 

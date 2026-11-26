@@ -53,19 +53,11 @@ struct [[nodiscard]] Outcome
 };
 
 // ============================================================================
-// Default Limits
+// Default Limit
 // ============================================================================
-
-/// Default limit for decompressed data held in memory (256 MiB)
-constexpr qint64 kDefaultMaxDecompressedMemoryBytes = 256LL * 1024 * 1024;
 
 /// Default limit for a file decompressed to another file (1 GiB)
 constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
-
-/// Limit for a small file that its caller reads whole, decompressed if it is compressed, such as the metadata of a
-/// vehicle (64 MiB). It keeps a file that is far larger than it should be from being parsed. The download of such a
-/// file is held to it too: a compressed file is not larger than its content
-constexpr qint64 kMaxSmallFileBytes = 64LL * 1024 * 1024;
 
 // ============================================================================
 // Progress Callback

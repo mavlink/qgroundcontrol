@@ -3,17 +3,32 @@
 #include <utility>
 
 #include <QtConcurrent/QtConcurrentRun>
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
 #include <QtCore/QPromise>
-#include <QtCore/QRandomGenerator>
+#include <QtCore/QThreadPool>
 
 #include "Compression.h"
-#include "Operation.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(CompressionJobLog, "Utilities.CompressionJob")
+
+namespace {
+
+/// The pool of CompressionJob. Two threads: an operation is bound by the disk, so more would not make the jobs
+/// faster, and a second one lets a short decompression run beside a long extraction
+class CompressionJobThreadPool : public QThreadPool
+{
+public:
+    CompressionJobThreadPool()
+    {
+        setMaxThreadCount(2);
+        setObjectName(QStringLiteral("CompressionJob"));
+    }
+};
+
+Q_GLOBAL_STATIC(CompressionJobThreadPool, compressionJobThreadPool)
+
+}  // namespace
 
 CompressionJob::CompressionJob(QObject* context, Callback done)
     : QObject(context)
@@ -35,64 +50,43 @@ CompressionJob::~CompressionJob()
 
     _cancelRequested->store(true);
     _watcher->waitForFinished();
-    _removeInput(false);
-    _discardOutput(_watcher->result());
 }
 
 CompressionJob* CompressionJob::startExtraction(QObject* context, const QString& archivePath,
-                                                const QString& outputDirectoryPath, qint64 maxBytes,
-                                                Compression::EntryFilter filter, Callback done)
+                                                const QString& outputDirectoryPath, Compression::ExtractOptions options,
+                                                Callback done)
 {
     qCDebug(CompressionJobLog) << "Extracting" << archivePath << "to" << outputDirectoryPath;
 
     auto* const job = new CompressionJob(context, std::move(done));
-    job->_start([archivePath, outputDirectoryPath, maxBytes,
-                 filter = std::move(filter)](const Compression::ProgressCallback& progress) {
-        return Compression::extractArchive(archivePath, outputDirectoryPath,
-                                           {.maxBytes = maxBytes, .filter = filter, .progress = progress});
+    job->_start([archivePath, outputDirectoryPath,
+                 options = std::move(options)](const Compression::ProgressCallback& progress) {
+        Compression::ExtractOptions jobOptions = options;
+        jobOptions.progress = [&progress, &callerProgress = options.progress](qint64 bytesProcessed,
+                                                                              qint64 totalBytes) {
+            return progress(bytesProcessed, totalBytes) &&
+                   (!callerProgress || callerProgress(bytesProcessed, totalBytes));
+        };
+        return Compression::extractArchive(archivePath, outputDirectoryPath, jobOptions);
     });
     return job;
 }
 
-CompressionJob* CompressionJob::startDecompressionConsumingInput(QObject* context, const QString& inputPath,
-                                                                 const QString& outputPath, qint64 maxBytes,
-                                                                 Callback done)
+CompressionJob* CompressionJob::startDecompression(QObject* context, const QString& inputPath,
+                                                   const QString& outputPath, qint64 maxBytes, Callback done)
 {
+    qCDebug(CompressionJobLog) << "Decompressing" << inputPath << "to" << outputPath;
+
     auto* const job = new CompressionJob(context, std::move(done));
-    job->_inputPath = inputPath;
-    job->_outputPath = outputPath;
-
-    // An output path that names the input is refused by Compression::decompressFile(), which can tell that only
-    // while the input has its name: such an input is not taken
-    if (!Compression::isSameFile(inputPath, outputPath)) {
-        // Tried once, under a name that is free: QFile::rename() does not replace a file, and where it cannot rename
-        // one it copies it, here on the thread of the caller
-        QString takenPath;
-        do {
-            takenPath = QStringLiteral("%1.qgc-decompressing-%2")
-                            .arg(inputPath)
-                            .arg(QRandomGenerator::global()->generate(), 8, 16, QLatin1Char('0'));
-        } while (QFileInfo::exists(takenPath));
-        if (QFile::rename(inputPath, takenPath)) {
-            job->_takenInputPath = takenPath;
-        } else {
-            qCDebug(CompressionJobLog) << "Could not take the input, it is read where it is:" << inputPath;
-        }
-    }
-
-    qCDebug(CompressionJobLog) << "Decompressing" << inputPath << "as" << job->_takenInputPath << "to" << outputPath;
-
-    job->_start([inputPath, readPath = job->_takenInputPath.isEmpty() ? inputPath : job->_takenInputPath, outputPath,
-                 maxBytes](const Compression::ProgressCallback& progress) {
-        if (outputPath.isEmpty()) {
-            // Compression::decompressFile() would choose a path from the name the input was taken under
-            qCDebug(CompressionJobLog) << "No output path to decompress to:" << inputPath;
-            return Compression::Outcome{.error = Compression::Error::IoError,
-                                        .message = Compression::errorName(Compression::Error::IoError)};
-        }
-        return Compression::decompressFile(readPath, outputPath, progress, maxBytes);
+    job->_start([inputPath, outputPath, maxBytes](const Compression::ProgressCallback& progress) {
+        return Compression::decompressFile(inputPath, outputPath, progress, maxBytes);
     });
     return job;
+}
+
+QThreadPool* CompressionJob::threadPool()
+{
+    return compressionJobThreadPool();
 }
 
 void CompressionJob::cancel()
@@ -113,7 +107,7 @@ void CompressionJob::_onProgressValueChanged(int progressValue)
 void CompressionJob::_onFutureFinished()
 {
     // The result of the worker is how the operation ended, also when cancel() came too late to stop it
-    Compression::Outcome outcome = _watcher->result();
+    const Compression::Outcome outcome = _watcher->result();
 
     qCDebug(CompressionJobLog) << "Operation finished:" << outcome.error << outcome.message;
 
@@ -128,15 +122,7 @@ void CompressionJob::_onFutureFinished()
     }
 
     _ended = true;
-    const bool report = !_cancelRequested->load();
-    if (!_takenInputPath.isEmpty()) {
-        // The outcome names the input as the caller knows it
-        outcome.message.replace(_takenInputPath, _inputPath);
-        outcome.detail.replace(_takenInputPath, _inputPath);
-    }
-    _removeInput(report);
-    if (!report) {
-        _discardOutput(outcome);
+    if (_cancelRequested->load()) {
         return;
     }
 
@@ -150,9 +136,8 @@ void CompressionJob::_onFutureFinished()
 void CompressionJob::_start(Work work)
 {
     // QtConcurrent passes in the promise of the returned future, through which progress is reported
-    _watcher->setFuture(QtConcurrent::run([work = std::move(work),
-                                           cancelRequested = std::shared_ptr<const std::atomic_bool>(_cancelRequested)](
-                                              QPromise<Compression::Outcome>& promise) {
+    auto run = [work = std::move(work), cancelRequested = std::shared_ptr<const std::atomic_bool>(_cancelRequested)](
+                   QPromise<Compression::Outcome>& promise) {
         using Compression::Error;
         using Compression::Outcome;
 
@@ -196,34 +181,8 @@ void CompressionJob::_start(Work work)
             promise.setProgressValue(100);
         }
         promise.addResult(outcome);
-    }));
-}
-
-void CompressionJob::_removeInput(bool reported)
-{
-    if (!_takenInputPath.isEmpty()) {
-        if (!QFile::remove(_takenInputPath)) {
-            qCWarning(CompressionJobLog) << "Could not remove the decompressed input:" << _takenInputPath;
-        }
-    } else if (!_inputPath.isEmpty()) {
-        // Once the job ends without calling back, the caller may have written a newer file of that name
-        if (reported) {
-            (void) QFile::remove(_inputPath);
-        } else {
-            qCDebug(CompressionJobLog) << "Leaving the input of a cancelled operation:" << _inputPath;
-        }
-    }
-    _inputPath.clear();
-    _takenInputPath.clear();
-}
-
-void CompressionJob::_discardOutput(const Compression::Outcome& outcome) const
-{
-    // A failed operation wrote nothing, and a file already at the output path is not its own
-    if (outcome && !_outputPath.isEmpty()) {
-        qCDebug(CompressionJobLog) << "Removing the output of a cancelled operation:" << _outputPath;
-        (void) QFile::remove(_outputPath);
-    }
+    };
+    _watcher->setFuture(QtConcurrent::run(threadPool(), std::move(run)));
 }
 
 void CompressionJob::_setProgress(qreal progress)

@@ -620,10 +620,11 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
     const auto tileSetEntries = std::make_shared<std::atomic_int>(0);
     _extractionJob = CompressionJob::startExtraction(
         this, archivePath, QDir(_extractionDirectory->path()).filePath(QStringLiteral("unpacked")),
-        std::max(archiveSize * kMaxTileSetExpansion, kMinTileSetLimitBytes),
-        [tileSetEntries](const Compression::ArchiveEntry& entry) {
-            return !entry.isDirectory && isTileSetFileName(entry.name) && (tileSetEntries->fetch_add(1) == 0);
-        },
+        {.maxBytes = std::max(archiveSize * kMaxTileSetExpansion, kMinTileSetLimitBytes),
+         .filter =
+             [tileSetEntries](const Compression::ArchiveEntry& entry) {
+                 return !entry.isDirectory && isTileSetFileName(entry.name) && (tileSetEntries->fetch_add(1) == 0);
+             }},
         [this, tileSetEntries](const Compression::Outcome& outcome) {
             _handleExtractionFinished(outcome, tileSetEntries->load());
         });

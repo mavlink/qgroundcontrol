@@ -5,14 +5,13 @@
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
 
-#include "CompressionTypes.h"
 #include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
+#include "VehicleFileFetch.h"
 
 class QGCVideoStreamInfo;
 class QTemporaryDir;
-class VehicleFileFetch;
 class QDomDocument;
 class QDomNode;
 class QDomNodeList;
@@ -319,7 +318,7 @@ protected:
     QString                             _cacheFile;
     QString _cacheFileToken;  ///< sanitised "<vendor>_<model>_<hash>_<NNN>", no extension
     /// Largest size of the camera definition, as downloaded and decompressed
-    qint64 _maxDefinitionBytes = Compression::kMaxSmallFileBytes;
+    qint64 _maxDefinitionBytes = VehicleFileFetch::kMaxSmallFileBytes;
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     QStringList                         _activeSettings;
     QStringList                         _settings;

@@ -5,7 +5,6 @@
 #include <QtCore/QJsonValue>
 #include <QtCore/QStringList>
 
-#include "CompressionTypes.h"
 #include "JsonValidation.h"
 
 class QTranslator;
@@ -19,13 +18,13 @@ constexpr const char *jsonFileTypeKey = "fileType";
 /// Compressed content (gzip, xz, ...) is decompressed first.
 /// @param errorString Why it does not; empty when it does
 /// @param maxBytes Largest size of the content, once decompressed. A larger file is not parsed
-bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString,
-                qint64 maxBytes = Compression::kDefaultMaxDecompressedMemoryBytes);
+bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes);
 
 /// Determines whether an in-memory byte buffer contains parseable JSON content.
 /// Compressed content is decompressed first, as for a file.
 /// @param errorString Why it does not; empty when it does
-bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString);
+/// @param maxBytes Largest size of the content, once decompressed. Larger content is not parsed
+bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes);
 
 /// Returns NaN if the value is null, or the value converted to double otherwise.
 double possibleNaNJsonValue(const QJsonValue& value);

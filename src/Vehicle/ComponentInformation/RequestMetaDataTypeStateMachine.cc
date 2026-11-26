@@ -4,7 +4,6 @@
 #include "ComponentInformationCache.h"
 #include "ComponentInformationManager.h"
 #include "ComponentInformationTranslation.h"
-#include "CompressionTypes.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -512,7 +511,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, c
     }
     const VehicleFileFetch::Options options{
         .directory = _compMgr->downloadDirectory(),
-        .maxBytes = Compression::kMaxSmallFileBytes,
+        .maxBytes = VehicleFileFetch::kMaxSmallFileBytes,
         .httpCacheDirectory = ComponentInformationManager::httpCacheDirectory(),
         .httpCacheMaxAgeSec = crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec,
     };

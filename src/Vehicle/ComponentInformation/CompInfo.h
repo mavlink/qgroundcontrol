@@ -43,9 +43,10 @@ public:
         std::any data;           ///< What the fileParser() of a type that parses the file itself made of it
     };
 
-    /// Reads and parses a metadata file, decompressed if it is compressed and held to Compression::kMaxSmallFileBytes,
-    /// and checks it against the JSON schema @p schemaResourcePath. It uses nothing but its arguments, so that it can
-    /// run on a worker thread: the file comes from the vehicle, or from where the vehicle points to, and may be large.
+    /// Reads and parses a metadata file, decompressed if it is compressed and held to
+    /// VehicleFileFetch::kMaxSmallFileBytes, and checks it against the JSON schema @p schemaResourcePath. It uses
+    /// nothing but its arguments, so that it can run on a worker thread: the file comes from the vehicle, or from where
+    /// the vehicle points to, and may be large.
     static ParsedJson parseJsonFile(const QString& fileName, const QString& schemaResourcePath);
 
     /// JSON schema of this type of metadata, for parseJsonFile()

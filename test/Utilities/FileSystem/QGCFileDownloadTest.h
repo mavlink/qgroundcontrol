@@ -21,6 +21,11 @@ private slots:
     UT_PARAMETERIZED_TEST(_testAutoDecompress);
     UT_PARAMETERIZED_TEST(_testAutoDecompressFailure);
     void _testAutoDecompressCancelled();
+    UT_PARAMETERIZED_TEST(_testAutoDecompressEndedWithoutResult);
+    void _testAutoDecompressCancelledWhileRunning();
+    UT_PARAMETERIZED_TEST(_testAutoDecompressLeavesNewerFile);
+    void _testAutoDecompressRemovesStaleDirectories();
+    UT_PARAMETERIZED_TEST(_testAutoDecompressReplacesExistingFile);
 
     // Integration tests (download + compression)
     void _testDownloadAndExtractZip();

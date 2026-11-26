@@ -1,5 +1,7 @@
 #include "QGCFileDownloadTest.h"
 
+#include <memory>
+
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -8,8 +10,10 @@
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QThreadPool>
 #include <QtTest/QSignalSpy>
 
+#include "ArchiveFixtures.h"
 #include "Compression.h"
 #include "CompressionJob.h"
 #include "FileFixtures.h"
@@ -17,6 +21,7 @@
 #include "ProcessFixtures.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
+#include "QGCWorkDirectory.h"
 
 void QGCFileDownloadTest::_testFileDownload()
 {
@@ -143,7 +148,8 @@ void QGCFileDownloadTest::_testFileDownloadOutputDirectory()
     const QList<QVariant> args = finishedSpy.first();
     QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
     QCOMPARE(args.at(1).toString(), outputDir.filePath(QStringLiteral("manifest.json.gz")));
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files), QStringList{QStringLiteral("manifest.json.gz")});
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("manifest.json.gz")});
     QCOMPARE(TestFixtures::readFile(args.at(1).toString()), TestFixtures::readFile(":/unittest/manifest.json.gz"));
 }
 
@@ -267,7 +273,7 @@ void QGCFileDownloadTest::_testFileDownloadSizeLimit()
         QVERIFY(args.at(1).toString().isEmpty());
         QVERIFY2(args.at(2).toString().startsWith(QStringLiteral("File is larger than")),
                  qPrintable(args.at(2).toString()));
-        QCOMPARE(downloads.entryList(QDir::Files), QStringList());
+        QCOMPARE(downloads.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot), QStringList());
     } else {
         QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
         QCOMPARE(TestFixtures::readFile(args.at(1).toString()), body);
@@ -282,8 +288,10 @@ void QGCFileDownloadTest::_testAutoDecompress_data()
     // Name of the file that finished() gives, the only one left in the output directory
     QTest::addColumn<QString>("resultName");
 
+    // The test manifest is a few bytes
+    constexpr qint64 maxManifestBytes = 1024;
     QByteArray manifest;
-    QVERIFY(Compression::readFile(QStringLiteral(":/unittest/manifest.json.gz"), manifest));
+    QVERIFY(Compression::readFile(QStringLiteral(":/unittest/manifest.json.gz"), manifest, maxManifestBytes));
     QTest::newRow("compressed") << ":/unittest/manifest.json.gz" << manifest << "manifest.json";
     // As when the HTTP client has taken a content encoding off: the content is kept under the name without the
     // extension
@@ -322,7 +330,8 @@ void QGCFileDownloadTest::_testAutoDecompress()
     QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
     QCOMPARE(args.at(1).toString(), outputDir.filePath(resultName));
     QCOMPARE(downloader.localPath(), outputDir.filePath(resultName));
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files | QDir::Hidden), QStringList{resultName});
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{resultName});
     QCOMPARE(TestFixtures::readFile(outputDir.filePath(resultName)), content);
 }
 
@@ -386,7 +395,7 @@ void QGCFileDownloadTest::_testAutoDecompressCancelled()
     QTemporaryDir outputDir;
     QVERIFY(outputDir.isValid());
 
-    TestFixtures::ThreadPoolBlocker blocker;
+    TestFixtures::ThreadPoolBlocker blocker(CompressionJob::threadPool());
     QVERIFY(blocker.isBlocking());
 
     QGCFileDownload downloader(this);
@@ -399,7 +408,9 @@ void QGCFileDownloadTest::_testAutoDecompressCancelled()
     const QPointer<CompressionJob> job = downloader.findChild<CompressionJob*>();
     QVERIFY(job);
 
+    // cancel() returns without waiting for the worker, which the blocker holds
     downloader.cancel();
+    QVERIFY(job);
     QCOMPARE(finishedSpy.count(), 1);
     QVERIFY(!finishedSpy.first().at(0).toBool());
     QVERIFY(!QFileInfo::exists(outputDir.filePath(QStringLiteral("manifest.json.gz"))));
@@ -417,7 +428,249 @@ void QGCFileDownloadTest::_testAutoDecompressCancelled()
     const QString decompressedPath = outputDir.filePath(QStringLiteral("next.json"));
     QCOMPARE(args.at(1).toString(), decompressedPath);
     QVERIFY(TestFixtures::readFile(decompressedPath).contains("\"name\""));
-    QCOMPARE(QDir(outputDir.path()).entryList(QDir::Files | QDir::Hidden), QStringList{QStringLiteral("next.json")});
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("next.json")});
+}
+
+void QGCFileDownloadTest::_testAutoDecompressEndedWithoutResult_data()
+{
+    QTest::addColumn<bool>("destroy");
+    QTest::addColumn<bool>("workerFinished");
+
+    QTest::newRow("cancelled after its worker finished") << false << true;
+    QTest::newRow("destroyed before its worker starts") << true << false;
+    QTest::newRow("destroyed after its worker finished") << true << true;
+}
+
+// A download that is cancelled or destroyed while its file is decompressed leaves nothing, also once the worker has
+// written the decompressed file
+void QGCFileDownloadTest::_testAutoDecompressEndedWithoutResult()
+{
+    QFETCH(bool, destroy);
+    QFETCH(bool, workerFinished);
+
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+
+    // Holds the worker back until the download is decompressing
+    TestFixtures::ThreadPoolBlocker blocker(CompressionJob::threadPool());
+    QVERIFY(blocker.isBlocking());
+
+    auto downloader = std::make_unique<QGCFileDownload>();
+    bool succeeded = false;
+    (void) connect(downloader.get(), &QGCFileDownload::finished, this,
+                   [&succeeded](bool success, const QString&, const QString&) { succeeded = succeeded || success; });
+    downloader->setAutoDecompress(true);
+    downloader->setOutputPath(outputDir.filePath(QStringLiteral("manifest.json.gz")));
+    QVERIFY(downloader->start(":/unittest/manifest.json.gz"));
+    QTRY_COMPARE_WITH_TIMEOUT(downloader->state(), QGCFileDownload::State::Decompressing, TestTimeout::mediumMs());
+
+    if (workerFinished) {
+        // No event is handled here, so the download cannot learn what the worker has done
+        blocker.release();
+        QVERIFY(CompressionJob::threadPool()->waitForDone(TestTimeout::mediumMs()));
+    }
+    if (destroy) {
+        downloader.reset();
+    } else {
+        downloader->cancel();
+    }
+    blocker.release();
+
+    // A cancelled job ends on its own, and its work directory goes with it
+    QVERIFY(!succeeded);
+    QTRY_VERIFY_WITH_TIMEOUT(QDir(outputDir.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+                             TestTimeout::mediumMs());
+}
+
+// A download that is cancelled while its worker decompresses leaves nothing, also on Windows, where a file that the
+// worker has open cannot be removed
+void QGCFileDownloadTest::_testAutoDecompressCancelledWhileRunning()
+{
+    QTemporaryDir sourceDir;
+    QTemporaryDir outputDir;
+    QVERIFY(sourceDir.isValid());
+    QVERIFY(outputDir.isValid());
+    // Expands to 512 MiB, so the worker is still busy when its first progress report is handled here
+    const QString sourcePath = sourceDir.filePath(QStringLiteral("zeros.gz"));
+    QVERIFY(ArchiveFixtures::writeGzipOfZeros(sourcePath, 8192));
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setOutputDirectory(outputDir.path());
+    qreal firstProgress = 0.0;
+    (void) connect(&downloader, &QGCFileDownload::decompressionProgress, this,
+                   [&downloader, &firstProgress](qreal progress) {
+                       if (qFuzzyIsNull(firstProgress)) {
+                           firstProgress = progress;
+                           downloader.cancel();
+                       }
+                   });
+    QVERIFY(downloader.start(sourcePath));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::longMs());
+
+    QVERIFY(!finishedSpy.first().at(0).toBool());
+    QVERIFY(firstProgress > 0.0);
+    QVERIFY(firstProgress < 1.0);
+    QCOMPARE(downloader.state(), QGCFileDownload::State::Cancelled);
+    QTRY_VERIFY_WITH_TIMEOUT(QDir(outputDir.path()).isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+                             TestTimeout::mediumMs());
+}
+
+void QGCFileDownloadTest::_testAutoDecompressLeavesNewerFile_data()
+{
+    QTest::addColumn<bool>("cancel");
+
+    QTest::newRow("completed") << false;
+    QTest::newRow("cancelled") << true;
+}
+
+// A file written to the path of the download while it is decompressed, such as the next download of that name, is
+// not the download's: it neither reads nor removes it, however the download ends
+void QGCFileDownloadTest::_testAutoDecompressLeavesNewerFile()
+{
+    QFETCH(bool, cancel);
+
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+    const QString downloadPath = outputDir.filePath(QStringLiteral("manifest.json.gz"));
+
+    // Holds the worker back until the newer file is there
+    TestFixtures::ThreadPoolBlocker blocker(CompressionJob::threadPool());
+    QVERIFY(blocker.isBlocking());
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setOutputPath(downloadPath);
+    QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
+    QTRY_COMPARE_WITH_TIMEOUT(downloader.state(), QGCFileDownload::State::Decompressing, TestTimeout::mediumMs());
+    const QByteArray newer = TestFixtures::gzipMember("newer");
+    QVERIFY(TestFixtures::writeFile(downloadPath, newer));
+    if (cancel) {
+        downloader.cancel();
+    }
+    blocker.release();
+
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    const auto entries = [&outputDir]() {
+        return QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name);
+    };
+    if (cancel) {
+        QVERIFY(!finishedSpy.first().at(0).toBool());
+        // Once the cancelled job has ended
+        QTRY_COMPARE_WITH_TIMEOUT(entries(), QStringList{QStringLiteral("manifest.json.gz")}, TestTimeout::mediumMs());
+    } else {
+        QVERIFY2(finishedSpy.first().at(0).toBool(), qPrintable(finishedSpy.first().at(2).toString()));
+        QVERIFY(TestFixtures::readFile(outputDir.filePath(QStringLiteral("manifest.json"))).contains("\"name\""));
+        QCOMPARE(entries(), (QStringList{QStringLiteral("manifest.json"), QStringLiteral("manifest.json.gz")}));
+    }
+    QCOMPARE(TestFixtures::readFile(downloadPath), newer);
+}
+
+void QGCFileDownloadTest::_testAutoDecompressReplacesExistingFile_data()
+{
+    // What fails: nothing, the transfer, the decompression, or the move of the result into place
+    QTest::addColumn<QString>("failure");
+    // Start of the warning the failure logs
+    QTest::addColumn<QString>("warning");
+
+    QTest::newRow("nothing") << QString() << QString();
+    QTest::newRow("transfer") << QStringLiteral("transfer") << QStringLiteral("File is larger than");
+    QTest::newRow("decompression") << QStringLiteral("decompression") << QStringLiteral("Decompression failed");
+    QTest::newRow("move into place") << QStringLiteral("move") << QStringLiteral("Cannot write the downloaded file");
+}
+
+// A file already at the path of the result is replaced in one step when the download succeeds, and stays as it was
+// when the download fails, at whatever step
+void QGCFileDownloadTest::_testAutoDecompressReplacesExistingFile()
+{
+    QFETCH(QString, failure);
+    QFETCH(QString, warning);
+
+    QTemporaryDir sourceDir;
+    QTemporaryDir outputDir;
+    QVERIFY(sourceDir.isValid());
+    QVERIFY(outputDir.isValid());
+    const QString resultPath = outputDir.filePath(QStringLiteral("manifest.json"));
+    QVERIFY(TestFixtures::writeFile(resultPath, "existing"));
+    QString source = QStringLiteral(":/unittest/manifest.json.gz");
+    if (failure == QStringLiteral("decompression")) {
+        const QByteArray compressed = TestFixtures::gzipMember(QByteArray(4096, 'x'));
+        source = sourceDir.filePath(QStringLiteral("manifest.json.gz"));
+        QVERIFY(TestFixtures::writeFile(source, compressed.first(compressed.size() / 2)));
+    }
+
+    // For the move: holds the worker back, so that its result can be taken away before the download moves it
+    std::unique_ptr<TestFixtures::ThreadPoolBlocker> blocker;
+    if (failure == QStringLiteral("move")) {
+        blocker = std::make_unique<TestFixtures::ThreadPoolBlocker>(CompressionJob::threadPool());
+        QVERIFY(blocker->isBlocking());
+    }
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setOutputDirectory(outputDir.path());
+    if (failure == QStringLiteral("transfer")) {
+        downloader.setMaxBytes(1);
+    }
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression(warning));
+    }
+    QVERIFY(downloader.start(source));
+
+    if (blocker) {
+        QTRY_COMPARE_WITH_TIMEOUT(downloader.state(), QGCFileDownload::State::Decompressing, TestTimeout::mediumMs());
+        blocker->release();
+        // No event is handled here, so the download has not seen the result yet
+        QVERIFY(CompressionJob::threadPool()->waitForDone(TestTimeout::mediumMs()));
+        const QStringList workDirectories =
+            QDir(outputDir.path()).entryList({QStringLiteral(".qgc-download-*")}, QDir::Dirs | QDir::Hidden);
+        QCOMPARE(workDirectories.size(), 1);
+        QVERIFY(
+            QFile::remove(QDir(outputDir.filePath(workDirectories.first())).filePath(QStringLiteral("manifest.json"))));
+    }
+
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+    const QList<QVariant> args = finishedSpy.first();
+    QCOMPARE(args.at(0).toBool(), failure.isEmpty());
+    if (failure.isEmpty()) {
+        QVERIFY(TestFixtures::readFile(resultPath).contains("\"name\""));
+    } else {
+        QCOMPARE(TestFixtures::readFile(resultPath), QByteArray("existing"));
+    }
+    QCOMPARE(QDir(outputDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{QStringLiteral("manifest.json")});
+}
+
+// What a download that crashed left beside the output path is removed when the next one starts. The work directory of a
+// download that another QGC runs stays
+void QGCFileDownloadTest::_testAutoDecompressRemovesStaleDirectories()
+{
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+    const QDir output(outputDir.path());
+    const QString stale = QStringLiteral(".qgc-download-stale");
+    QVERIFY(output.mkdir(stale));
+    QVERIFY(TestFixtures::writeFile(output.filePath(stale + QStringLiteral("/manifest.json.gz")), "left"));
+    const QGCWorkDirectory running(outputDir.path(), QStringLiteral(".qgc-download-"));
+    QVERIFY(running.isValid());
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    downloader.setAutoDecompress(true);
+    downloader.setOutputDirectory(outputDir.path());
+    QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY2(finishedSpy.first().at(0).toBool(), qPrintable(finishedSpy.first().at(2).toString()));
+
+    QCOMPARE(output.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
+             (QStringList{QFileInfo(running.path()).fileName(), QStringLiteral("manifest.json")}));
 }
 
 // ============================================================================

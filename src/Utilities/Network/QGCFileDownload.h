@@ -3,6 +3,8 @@
 /// @file QGCFileDownload.h
 /// @brief Unified file download utility with decompression, verification, and QML support
 
+#include <memory>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QUrl>
@@ -16,6 +18,7 @@ class QNetworkAccessManager;
 class QAbstractNetworkCache;
 class CompressionJob;
 class QFile;
+class QGCWorkDirectory;
 
 /// \brief File download with progress, decompression, and hash verification
 ///
@@ -86,10 +89,14 @@ class QGCFileDownload : public QObject
 
     /// Whether to decompress a download that Compression::isCompressedFile() finds compressed, on a worker thread,
     /// before finished(). Off by default: QGC itself decompresses a file where it reads it, and keeps the download as
-    /// it was sent. This is for a caller that needs the decompressed file on disk. The decompressed file is written
-    /// beside the download, under its name without the compression extension (Compression::strippedPath()), and
-    /// replaces it: finished() gives its path. A decompression that fails, also one over maxDecompressedBytes(),
-    /// fails the download and leaves neither file. cancel() also cancels it.
+    /// it was sent. This is for a caller that needs the decompressed file on disk. The download is written into a
+    /// directory of its own beside the output path, and only the result is moved out of it, replacing a file of that
+    /// name: the decompressed file, under the name of the download without the compression extension
+    /// (Compression::strippedPath()), or the download itself if it is not compressed. finished() gives its path. A
+    /// download that fails, also a decompression over maxDecompressedBytes(), or that is cancelled leaves nothing. The
+    /// work directory that a download which crashed or was killed left behind is removed when the next one starts.
+    /// cancel() also cancels the decompression, without waiting for its worker: what the worker wrote goes once it has
+    /// stopped.
     Q_PROPERTY(bool autoDecompress READ autoDecompress WRITE setAutoDecompress NOTIFY autoDecompressChanged FINAL)
 
     /// Custom output path (empty = a file in outputDirectory() named after the URL)
@@ -255,6 +262,10 @@ private:
     QString _generateOutputPath(const QString &remoteUrl) const;
     bool _verifyHash();
     void _startDecompression();
+    /// Remove the work directory of an autoDecompress download, and all in it
+    void _removeWorkDirectory();
+    /// Move @a path of the work directory to @a resultPath, replacing a file there, or fail the download
+    bool _moveIntoPlace(const QString& path, const QString& resultPath);
 
     QNetworkAccessManager *_networkManager = nullptr;
     QNetworkReply *_currentReply = nullptr;
@@ -263,6 +274,11 @@ private:
 
     QUrl _url;
     QString _localPath;
+    /// Path the body is written to: _localPath, or with autoDecompress a file of its name in _workDirectory
+    QString _downloadPath;
+    /// With autoDecompress, the directory of the download's own beside _localPath, which holds the download and what it
+    /// decompresses to until the result is moved into place
+    std::unique_ptr<QGCWorkDirectory> _workDirectory;
     QString _outputPath;
     QString _outputDirectory;
     QString _expectedHash;

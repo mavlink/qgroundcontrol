@@ -1,8 +1,8 @@
 #include "CompInfo.h"
 
-#include "CompressionTypes.h"
 #include "JsonParsing.h"
 #include "JsonSchemaValidator.h"
+#include "VehicleFileFetch.h"
 
 CompInfo::CompInfo(COMP_METADATA_TYPE type_, uint8_t compId_, Vehicle* vehicle_, QObject* parent)
     : QObject   (parent)
@@ -23,7 +23,7 @@ void CompInfo::setUriMetaData(const QString &uri, uint32_t crc)
 CompInfo::ParsedJson CompInfo::parseJsonFile(const QString& fileName, const QString& schemaResourcePath)
 {
     ParsedJson json;
-    if (JsonParsing::isJsonFile(fileName, json.document, json.readError, Compression::kMaxSmallFileBytes)) {
+    if (JsonParsing::isJsonFile(fileName, json.document, json.readError, VehicleFileFetch::kMaxSmallFileBytes)) {
         (void) JsonSchemaValidator::validate(json.document, schemaResourcePath, json.schemaError);
     }
     return json;

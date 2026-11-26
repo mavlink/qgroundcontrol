@@ -1,6 +1,8 @@
 #include "GeoTagControllerTest.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
@@ -8,11 +10,10 @@
 
 #include "ExifParser.h"
 #include "ExifUtility.h"
+#include "FileFixtures.h"
 #include "GeoTagController.h"
 #include "GeoTagImageModel.h"
 #include "ULogTestGenerator.h"
-#include <QtCore/QScopedPointer>
-#include <QtCore/QTemporaryDir>
 
 namespace {
 
@@ -565,6 +566,45 @@ void GeoTagControllerTest::_calibratorClosestMatchTest()
     QCOMPARE(result.imageIndices.count(), 1);
     QCOMPARE(result.triggerIndices.count(), 1);
     QCOMPARE(result.triggerIndices[0], 1);  // Second trigger (99) matches due to offset alignment
+}
+
+void GeoTagControllerTest::_readImageTest_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<qint64>("size");  // Size the file is given, -1 for that of the content
+    QTest::addColumn<QString>("error");
+
+    // An image is read as it is, also one whose content looks compressed
+    QTest::newRow("compressed content") << TestFixtures::gzipMember("image") << qint64{-1} << QString();
+    QTest::newRow("empty") << QByteArray() << qint64{-1} << QStringLiteral("The file is empty");
+    // Its size is checked before it is read: the file has no data on disk
+    QTest::newRow("larger than the limit")
+        << QByteArray() << (GeoTagController::kMaxImageBytes + 1) << QStringLiteral("The file is larger than");
+}
+
+void GeoTagControllerTest::_readImageTest()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(qint64, size);
+    QFETCH(QString, error);
+
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath(QStringLiteral("image.jpg"));
+    QVERIFY(TestFixtures::writeFile(path, content));
+    if (size >= 0) {
+        QVERIFY(QFile::resize(path, size));
+    }
+
+    GeoTagController controller(nullptr);
+    QString errorString;
+    const QByteArray data = controller._readImageCached(path, &errorString);
+    if (error.isEmpty()) {
+        QVERIFY2(errorString.isEmpty(), qPrintable(errorString));
+        QCOMPARE(data, content);
+    } else {
+        QVERIFY(data.isEmpty());
+        QVERIFY2(errorString.startsWith(error), qPrintable(errorString));
+    }
 }
 
 UT_REGISTER_TEST(GeoTagControllerTest, TestLabel::Unit, TestLabel::AnalyzeView)

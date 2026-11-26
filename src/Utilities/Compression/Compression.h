@@ -15,7 +15,8 @@
 /// - archivePath, inputPath, filePath: the file to read. It can be a Qt resource (:/...), or a file that cannot
 ///   seek, such as a pipe, which is read in order. Only a 7z archive needs a file that can seek. An operation
 ///   waits for the writer of a pipe, and cannot be cancelled while it waits
-/// - maxDecompressedBytes: the maximum number of bytes the decompressed stream may have (0 = unlimited).
+/// - maxDecompressedBytes: the maximum number of bytes the decompressed stream may have (0 = unlimited). Data read
+///   into memory has no default: the caller chooses the limit for what it reads.
 ///   ExtractOptions::maxBytes limits an extraction. The output of an operation that writes to disk is also limited
 ///   by the free space on the disk (see extractArchive())
 ///
@@ -24,7 +25,9 @@
 /// whether it is worth a warning.
 ///
 /// libarchive detects the format from the content, among the formats this build supports. The function you call
-/// decides whether the input is read as a single stream or as an archive.
+/// decides whether the input is read as a single stream or as an archive. No external program is ever run to
+/// decompress, and an encrypted archive fails with Error::InvalidArchive. The functions block until they are done:
+/// CompressionJob runs an extraction or the decompression of a file on a thread of its own pool.
 namespace Compression {
 
 // ============================================================================
@@ -99,13 +102,13 @@ Outcome decompressFile(const QString& inputPath, const QString& outputPath = QSt
 /// Read the content of a file, decompressed if it is compressed
 /// A truncated or corrupt compressed file gives no data, not the part that could be read.
 /// @param data Receives the content
-Outcome readFile(const QString& filePath, QByteArray& data,
-                 qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
+Outcome readFile(const QString& filePath, QByteArray& data, qint64 maxDecompressedBytes);
 
 /// Decompress data in memory
+/// Data that is not compressed is returned shared with @a data, not copied, if that array owns its bytes. Those of
+/// QByteArray::fromRawData() are copied, so that the caller may free them after the call.
 /// @param decompressed Receives the decompressed data. It can be the same object as @a data
-Outcome decompressData(const QByteArray& data, QByteArray& decompressed,
-                       qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
+Outcome decompressData(const QByteArray& data, QByteArray& decompressed, qint64 maxDecompressedBytes);
 
 // ============================================================================
 // Archive Extraction
@@ -137,7 +140,7 @@ Outcome decompressData(const QByteArray& data, QByteArray& decompressed,
 /// A failed extraction leaves nothing, whatever the reason, also an exception that the filter or the progress
 /// callback throws, which is passed on to the caller: an output directory that the extraction created is removed,
 /// and one that was there is emptied (missing directories above it, which the extraction also creates, stay). Each
-/// file is moved into place only once it is complete.
+/// file is written at its own path while its entry is extracted, and a failure removes it with the rest.
 ///
 /// The output directory is checked only at the start. Nothing guards against another process that changes it
 /// during the extraction, so extract into a directory that only QGC writes to.

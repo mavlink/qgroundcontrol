@@ -16,28 +16,41 @@
 #include "FileFixtures.h"
 #include "ProcessFixtures.h"
 
+namespace {
+
+/// Limit of what the decompression jobs of these tests write, which is a few KiB
+constexpr qint64 kCompressionJobTestMaxBytes = 1024 * 1024;
+
+}  // namespace
+
 void QGCCompressionJobTest::_testExtraction_data()
 {
     QTest::addColumn<QByteArray>("archive");
-    QTest::addColumn<QString>("onlyEntry");  // Empty: no filter
+    QTest::addColumn<QString>("onlyEntry");       // Empty: no filter
+    QTest::addColumn<bool>("progressContinues");  // What the progress callback of the options returns
     QTest::addColumn<Compression::Error>("expectedError");
     QTest::addColumn<QStringList>("expectedEntries");
 
-    QTest::newRow("all entries") << TestFixtures::readFile(ArchiveFixtures::zipResource) << QString()
+    QTest::newRow("all entries") << TestFixtures::readFile(ArchiveFixtures::zipResource) << QString() << true
                                  << Compression::Error::None << QStringList{QStringLiteral("manifest.json")};
     QTest::newRow("filtered") << TestFixtures::readFile(QStringLiteral(":/unittest/tree.zip"))
-                              << QStringLiteral("readme.txt") << Compression::Error::None
+                              << QStringLiteral("readme.txt") << true << Compression::Error::None
                               << QStringList{QStringLiteral("readme.txt")};
-    QTest::newRow("not an archive") << QByteArray("This is not a valid ZIP file") << QString()
+    QTest::newRow("not an archive") << QByteArray("This is not a valid ZIP file") << QString() << true
                                     << Compression::Error::InvalidArchive << QStringList();
+    QTest::newRow("cancelled by its progress callback")
+        << TestFixtures::readFile(ArchiveFixtures::zipResource) << QString() << false << Compression::Error::Cancelled
+        << QStringList();
 }
 
 // The job calls back once, on the thread of its context, with the outcome of the extraction, reports its progress
-// up to 1.0 on success, and then deletes itself
+// up to 1.0 on success, and then deletes itself. It passes on the options, also the progress callback, which can
+// cancel the extraction
 void QGCCompressionJobTest::_testExtraction()
 {
     QFETCH(QByteArray, archive);
     QFETCH(QString, onlyEntry);
+    QFETCH(bool, progressContinues);
     QFETCH(Compression::Error, expectedError);
     QFETCH(QStringList, expectedEntries);
 
@@ -56,7 +69,9 @@ void QGCCompressionJobTest::_testExtraction()
     QThread* callbackThread = nullptr;
     QPointer<CompressionJob> job;
     qreal progressAtCallback = -1.0;
-    job = CompressionJob::startExtraction(&context, archivePath, outputDir, 0, filter,
+    const Compression::ExtractOptions options{
+        .filter = filter, .progress = [progressContinues](qint64, qint64) { return progressContinues; }};
+    job = CompressionJob::startExtraction(&context, archivePath, outputDir, options,
                                           [&](const Compression::Outcome& outcome) {
                                               outcomes.append(outcome);
                                               callbackThread = QThread::currentThread();
@@ -72,10 +87,11 @@ void QGCCompressionJobTest::_testExtraction()
     const Compression::Outcome& outcome = outcomes.first();
     QCOMPARE(outcome.error, expectedError);
     QCOMPARE(ArchiveFixtures::entriesBelow(outputDir), expectedEntries);
-    if (fails) {
+    if (expectedError == Compression::Error::InvalidArchive) {
         QCOMPARE(outcome.message, QStringLiteral("Failed to extract archive: ") + archivePath);
         QVERIFY2(outcome.detail.contains("Unrecognized archive format"), qPrintable(outcome.detail));
-    } else {
+    }
+    if (!fails) {
         QCOMPARE(outcome.filterName, QStringLiteral("none"));
         QVERIFY(!progressSpy.isEmpty());
         QCOMPARE(progressSpy.last().first().toReal(), 1.0);
@@ -102,19 +118,19 @@ void QGCCompressionJobTest::_testExtractionFilterThrows()
 
     QObject context;
     QList<Compression::Outcome> outcomes;
-    const QPointer<CompressionJob> job = CompressionJob::startExtraction(
-        &context, QStringLiteral(":/unittest/tree.zip"), outputDir, 0,
-        [standardException](const Compression::ArchiveEntry& entry) -> bool {
-            // Thrown after a file and a directory have been written
-            if (entry.name == "data/values.json") {
-                if (standardException) {
-                    throw std::runtime_error("refused");
-                }
-                throw 42;
-            }
-            return true;
-        },
-        [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
+    const QPointer<CompressionJob> job =
+        CompressionJob::startExtraction(&context, QStringLiteral(":/unittest/tree.zip"), outputDir,
+                                        {.filter = [standardException](const Compression::ArchiveEntry& entry) -> bool {
+                                            // Thrown after a file and a directory have been written
+                                            if (entry.name == "data/values.json") {
+                                                if (standardException) {
+                                                    throw std::runtime_error("refused");
+                                                }
+                                                throw 42;
+                                            }
+                                            return true;
+                                        }},
+                                        [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
     QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
 
     QCOMPARE(outcomes.size(), 1);
@@ -145,7 +161,7 @@ void QGCCompressionJobTest::_testDecompression_data()
 }
 
 // The job decompresses its input within its limit, calls back once on the thread of its context, and deletes itself.
-// It consumes its input: the directory then holds the output alone, and nothing after a failure
+// It writes nothing after a failure, and leaves its input
 void QGCCompressionJobTest::_testDecompression()
 {
     QFETCH(QByteArray, input);
@@ -162,7 +178,7 @@ void QGCCompressionJobTest::_testDecompression()
     QObject context;
     QList<Compression::Outcome> outcomes;
     QThread* callbackThread = nullptr;
-    const QPointer<CompressionJob> job = CompressionJob::startDecompressionConsumingInput(
+    const QPointer<CompressionJob> job = CompressionJob::startDecompression(
         &context, inputPath, outputPath, maxBytes, [&](const Compression::Outcome& outcome) {
             outcomes.append(outcome);
             callbackThread = QThread::currentThread();
@@ -176,67 +192,14 @@ void QGCCompressionJobTest::_testDecompression()
     const Compression::Outcome& outcome = outcomes.first();
     QVERIFY2(outcome.error == expectedError, qPrintable(outcome.description()));
     if (fails) {
-        // The outcome names the input as the caller gave it
         QCOMPARE(outcome.message, QStringLiteral("Decompression failed: %1: size limit exceeded").arg(inputPath));
-        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList());
+        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("data.bin.gz")});
     } else {
         QCOMPARE(outcome.filterName, expectedFilter);
-        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("data.bin")});
+        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()),
+                 (QStringList{QStringLiteral("data.bin"), QStringLiteral("data.bin.gz")}));
         QCOMPARE(TestFixtures::readFile(outputPath), QByteArray(4096, 'z'));
     }
-}
-
-void QGCCompressionJobTest::_testDecompressionRefusesOutputPath_data()
-{
-    QTest::addColumn<QString>("outputName");
-    QTest::addColumn<QString>("message");  // %1: the input path
-
-    // The default of Compression::decompressFile() would come from the name the job took the input under
-    QTest::newRow("no output path") << QString() << Compression::errorName(Compression::Error::IoError);
-    // As Compression::decompressFile() refuses it, also in another spelling of the path
-    QTest::newRow("the input") << "./data.bin.gz" << "Cannot decompress a file onto itself: %1";
-}
-
-// A job fails without an output path, and with one that names its input. It consumes its input all the same
-void QGCCompressionJobTest::_testDecompressionRefusesOutputPath()
-{
-    QFETCH(QString, outputName);
-    QFETCH(QString, message);
-
-    QTemporaryDir tempDir;
-    const QString inputPath = tempDir.filePath(QStringLiteral("data.bin.gz"));
-    QVERIFY(TestFixtures::writeFile(inputPath, TestFixtures::gzipMember("data")));
-
-    QObject context;
-    QList<Compression::Outcome> outcomes;
-    const QPointer<CompressionJob> job = CompressionJob::startDecompressionConsumingInput(
-        &context, inputPath, outputName.isEmpty() ? QString() : tempDir.filePath(outputName),
-        Compression::kMaxSmallFileBytes,
-        [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
-
-    QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
-    QCOMPARE(outcomes.size(), 1);
-    QCOMPARE(outcomes.first().error, Compression::Error::IoError);
-    QCOMPARE(outcomes.first().message, message.replace(QStringLiteral("%1"), inputPath));
-    QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList());
-}
-
-// An input that cannot be renamed, here a resource, is read where it is
-void QGCCompressionJobTest::_testDecompressionOfInputThatCannotBeTaken()
-{
-    QTemporaryDir tempDir;
-    const QString outputPath = tempDir.filePath(QStringLiteral("manifest.json"));
-
-    QObject context;
-    QList<Compression::Outcome> outcomes;
-    const QPointer<CompressionJob> job = CompressionJob::startDecompressionConsumingInput(
-        &context, ArchiveFixtures::gzResource, outputPath, Compression::kMaxSmallFileBytes,
-        [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
-
-    QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
-    QCOMPARE(outcomes.size(), 1);
-    QVERIFY2(outcomes.first(), qPrintable(outcomes.first().description()));
-    QVERIFY(TestFixtures::readFile(outputPath).contains("\"name\""));
 }
 
 void QGCCompressionJobTest::_testDecompressionProgressOfUnknownSize()
@@ -244,21 +207,21 @@ void QGCCompressionJobTest::_testDecompressionProgressOfUnknownSize()
 #ifndef Q_OS_UNIX
     QSKIP("Needs /dev/zero, an input without a size");
 #else
-    // /dev/zero has no size and no end: the limit ends the operation. The job consumes a link to it
+    // /dev/zero has no size and no end: the limit ends the operation. The job reads it through a link
     QTemporaryDir tempDir;
     const QString inputPath = tempDir.filePath(QStringLiteral("zeros"));
     QVERIFY(QFile::link(QStringLiteral("/dev/zero"), inputPath));
 
     QObject context;
     QList<Compression::Outcome> outcomes;
-    const QPointer<CompressionJob> job = CompressionJob::startDecompressionConsumingInput(
+    const QPointer<CompressionJob> job = CompressionJob::startDecompression(
         &context, inputPath, tempDir.filePath(QStringLiteral("zeros.bin")), 4 * 1024 * 1024,
         [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
     QSignalSpy progressSpy(job.data(), &CompressionJob::progressChanged);
     QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
     QCOMPARE(outcomes.size(), 1);
     QCOMPARE(outcomes.first().error, Compression::Error::SizeLimitExceeded);
-    QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList());
+    QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("zeros")});
 
     // Without a total, the progress grows towards one half and stays below it
     QVERIFY(!progressSpy.isEmpty());
@@ -271,55 +234,6 @@ void QGCCompressionJobTest::_testDecompressionProgressOfUnknownSize()
 #endif
 }
 
-void QGCCompressionJobTest::_testDecompressionLeavesNewerInput_data()
-{
-    QTest::addColumn<bool>("cancel");
-
-    QTest::newRow("completed") << false;
-    QTest::newRow("cancelled") << true;
-}
-
-// A file written to the path of the input once the job has started, such as the next download of that name, is not
-// the job's: the job neither reads nor removes it, however it ends
-void QGCCompressionJobTest::_testDecompressionLeavesNewerInput()
-{
-    QFETCH(bool, cancel);
-
-    QTemporaryDir tempDir;
-    const QString inputPath = tempDir.filePath(QStringLiteral("data.bin.gz"));
-    const QString outputPath = tempDir.filePath(QStringLiteral("data.bin"));
-    QVERIFY(TestFixtures::writeFile(inputPath, TestFixtures::gzipMember("older")));
-
-    // Holds the worker back until the newer file is there
-    TestFixtures::ThreadPoolBlocker blocker;
-    QVERIFY(blocker.isBlocking());
-
-    QObject context;
-    QList<Compression::Outcome> outcomes;
-    const QPointer<CompressionJob> job = CompressionJob::startDecompressionConsumingInput(
-        &context, inputPath, outputPath, Compression::kMaxSmallFileBytes,
-        [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
-    const QByteArray newer = TestFixtures::gzipMember("newer");
-    QVERIFY(TestFixtures::writeFile(inputPath, newer));
-    if (cancel) {
-        job->cancel();
-    }
-    blocker.release();
-
-    QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
-    QCOMPARE(TestFixtures::readFile(inputPath), newer);
-    if (cancel) {
-        QVERIFY(outcomes.isEmpty());
-        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("data.bin.gz")});
-    } else {
-        QCOMPARE(outcomes.size(), 1);
-        QVERIFY2(outcomes.first(), qPrintable(outcomes.first().description()));
-        QCOMPARE(TestFixtures::readFile(outputPath), QByteArray("older"));
-        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()),
-                 (QStringList{QStringLiteral("data.bin"), QStringLiteral("data.bin.gz")}));
-    }
-}
-
 void QGCCompressionJobTest::_testCancelledWhileRunning_data()
 {
     QTest::addColumn<bool>("extract");
@@ -328,9 +242,7 @@ void QGCCompressionJobTest::_testCancelledWhileRunning_data()
     QTest::newRow("extraction") << true;
 }
 
-// A job cancelled while its worker reads the input stops, does not call back and leaves no output. A decompression
-// leaves no input either: once the job is gone, no file with the compressed content is left, also on Windows, where
-// a file that the worker has open cannot be removed
+// A job cancelled while its worker reads the input stops, does not call back and leaves no output
 void QGCCompressionJobTest::_testCancelledWhileRunning()
 {
     QFETCH(bool, extract);
@@ -352,8 +264,8 @@ void QGCCompressionJobTest::_testCancelledWhileRunning()
     bool calledBack = false;
     const auto done = [&calledBack](const Compression::Outcome&) { calledBack = true; };
     const QPointer<CompressionJob> job =
-        extract ? CompressionJob::startExtraction(&context, inputPath, outputPath, 0, nullptr, done)
-                : CompressionJob::startDecompressionConsumingInput(&context, inputPath, outputPath, 0, done);
+        extract ? CompressionJob::startExtraction(&context, inputPath, outputPath, {}, done)
+                : CompressionJob::startDecompression(&context, inputPath, outputPath, 0, done);
     qreal firstProgress = 0.0;
     connect(job.data(), &CompressionJob::progressChanged, this, [&job, &firstProgress](qreal progress) {
         if (qFuzzyIsNull(firstProgress)) {
@@ -367,7 +279,7 @@ void QGCCompressionJobTest::_testCancelledWhileRunning()
     QVERIFY(firstProgress > 0.0);
     QVERIFY(firstProgress < 1.0);
     QVERIFY(!calledBack);
-    QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), extract ? QStringList{inputName} : QStringList());
+    QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{inputName});
 }
 
 void QGCCompressionJobTest::_testEndedWithoutCallback_data()
@@ -385,8 +297,7 @@ void QGCCompressionJobTest::_testEndedWithoutCallback_data()
     }
 }
 
-// However a job ends before it has called back, it does not call back. A decompression then leaves neither its input
-// nor its output, also once its worker has written it. An extraction leaves what its worker had extracted
+// However a job ends before it has called back, it does not call back. It leaves what its worker had written
 void QGCCompressionJobTest::_testEndedWithoutCallback()
 {
     QFETCH(bool, extract);
@@ -401,7 +312,7 @@ void QGCCompressionJobTest::_testEndedWithoutCallback()
     // Holds the worker back before it starts
     std::unique_ptr<TestFixtures::ThreadPoolBlocker> blocker;
     if (!workerFinished) {
-        blocker = std::make_unique<TestFixtures::ThreadPoolBlocker>();
+        blocker = std::make_unique<TestFixtures::ThreadPoolBlocker>(CompressionJob::threadPool());
         QVERIFY(blocker->isBlocking());
     }
 
@@ -409,14 +320,13 @@ void QGCCompressionJobTest::_testEndedWithoutCallback()
     bool calledBack = false;
     const auto done = [&calledBack](const Compression::Outcome&) { calledBack = true; };
     const QPointer<CompressionJob> job =
-        extract
-            ? CompressionJob::startExtraction(context.get(), ArchiveFixtures::zipResource, outputPath, 0, nullptr, done)
-            : CompressionJob::startDecompressionConsumingInput(context.get(), inputPath, outputPath,
-                                                               Compression::kMaxSmallFileBytes, done);
+        extract ? CompressionJob::startExtraction(context.get(), ArchiveFixtures::zipResource, outputPath, {}, done)
+                : CompressionJob::startDecompression(context.get(), inputPath, outputPath, kCompressionJobTestMaxBytes,
+                                                     done);
 
     if (workerFinished) {
         // No event is handled here, so the job cannot report what its worker has done
-        QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+        QVERIFY(CompressionJob::threadPool()->waitForDone(TestTimeout::mediumMs()));
         QVERIFY(QFileInfo::exists(extract ? outputPath + QStringLiteral("/manifest.json") : outputPath));
     }
 
@@ -436,8 +346,29 @@ void QGCCompressionJobTest::_testEndedWithoutCallback()
         QCOMPARE(ArchiveFixtures::entriesBelow(outputPath),
                  workerFinished ? QStringList{QStringLiteral("manifest.json")} : QStringList());
     } else {
-        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList());
+        QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()),
+                 workerFinished ? (QStringList{QStringLiteral("data.bin.gz"), QStringLiteral("output")})
+                                : QStringList{QStringLiteral("data.bin.gz")});
     }
+}
+
+// A job runs on a pool of its own: work that occupies every thread of the global pool, such as QGC::runOnWorker() jobs,
+// does not hold it back, and it does not hold them back
+void QGCCompressionJobTest::_testRunsBesideGlobalPool()
+{
+    QTemporaryDir tempDir;
+    TestFixtures::ThreadPoolBlocker blocker;
+    QVERIFY(blocker.isBlocking());
+
+    QObject context;
+    QList<Compression::Outcome> outcomes;
+    const QPointer<CompressionJob> job = CompressionJob::startExtraction(
+        &context, ArchiveFixtures::zipResource, tempDir.filePath(QStringLiteral("output")), {},
+        [&outcomes](const Compression::Outcome& outcome) { outcomes.append(outcome); });
+
+    QTRY_VERIFY_WITH_TIMEOUT(job.isNull(), TestTimeout::mediumMs());
+    QCOMPARE(outcomes.size(), 1);
+    QVERIFY2(outcomes.first(), qPrintable(outcomes.first().description()));
 }
 
 QGC_REGISTER_PORTABLE_TEST(QGCCompressionJobTest, TestLabel::Unit, TestLabel::Utilities)

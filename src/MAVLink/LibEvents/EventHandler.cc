@@ -9,6 +9,7 @@
 #include "Compression.h"
 #include "LibEvents.h"
 #include "QGCLoggingCategory.h"
+#include "VehicleFileFetch.h"
 
 QGC_LOGGING_CATEGORY(EventHandlerLog, "MAVLink.LibEvents.EventHandler")
 
@@ -136,7 +137,7 @@ EventMetadata EventHandler::loadMetadata(const QString& metadataJsonFileName)
 {
     QByteArray json;
     if (const Compression::Outcome read =
-            Compression::readFile(metadataJsonFileName, json, Compression::kMaxSmallFileBytes);
+            Compression::readFile(metadataJsonFileName, json, VehicleFileFetch::kMaxSmallFileBytes);
         !read) {
         qCWarning(EventHandlerLog) << "Failed to load events JSON metadata file:" << read.description();
         return nullptr;

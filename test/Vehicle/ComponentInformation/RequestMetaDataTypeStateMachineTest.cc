@@ -866,9 +866,9 @@ void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker_data()
 
 // The metadata file comes from the vehicle, or from where it points to, and may be large: it is read, decompressed
 // if it is compressed, and parsed on a worker thread, while its state waits. A file that cannot be decompressed, or
-// is larger than Compression::kMaxSmallFileBytes once it is, sets nothing. So does a parse that ends after its state
-// was left, or its machine deleted. The events metadata is parsed by libevents, and once it is in place the vehicle
-// is asked for its prearm checks.
+// is larger than VehicleFileFetch::kMaxSmallFileBytes once it is, sets nothing. So does a parse that ends after its
+// state was left, or its machine deleted. The events metadata is parsed by libevents, and once it is in place the
+// vehicle is asked for its prearm checks.
 void RequestMetaDataTypeStateMachineTest::_metadataIsParsedOnWorker()
 {
     QFETCH(int, type);

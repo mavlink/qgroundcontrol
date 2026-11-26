@@ -12,15 +12,17 @@
 
 #include "CompressionTypes.h"
 
+class QThreadPool;
+
 /// \brief Runs one Compression operation on a worker thread, and reports its outcome through a callback
 ///
-/// A job is started by startExtraction() or startDecompressionConsumingInput() and is running when they return. It
+/// A job is started by startExtraction() or startDecompression() and is running when they return. It
 /// is a child of the context given to it, deletes itself once it has ended, and calls its callback once, on the
 /// thread of the context. cancel() on the job, deleting it and deleting the context all end it the same way: the
 /// callback is not called. A caller that has moved on needs no check in the callback.
 ///
 /// @code
-/// _job = CompressionJob::startExtraction(this, archivePath, _outputDirectory, 0, nullptr,
+/// _job = CompressionJob::startExtraction(this, archivePath, _outputDirectory, {.maxBytes = limit},
 ///                                        [this](const Compression::Outcome& outcome) { ... });
 /// connect(_job, &CompressionJob::progressChanged, this, &MyClass::_showProgress);
 /// // Later, if the result is no longer wanted. _job is a QPointer: the job deletes itself
@@ -47,27 +49,27 @@ public:
     /// A failed or cancelled extraction leaves nothing, as Compression::extractArchive() documents. A job that ends
     /// without calling @a done after its worker has completed leaves what it extracted. Extract into a directory of
     /// your own, and remove it when the job ends without calling back.
-    /// @param maxBytes Largest size of what is extracted (0 = unlimited)
-    /// @param filter Which entries to extract (not set = all of them). It is called on the worker thread
+    /// @param options As Compression::extractArchive() takes them. The filter and the progress callback are called
+    ///        on the worker thread. A progress callback that returns false ends the extraction with
+    ///        Error::Cancelled, which the job reports; the job reports its progress with progressChanged() either way
     /// @return The job, already running. Hold it in a QPointer to cancel it
     static CompressionJob* startExtraction(QObject* context, const QString& archivePath,
-                                           const QString& outputDirectoryPath, qint64 maxBytes,
-                                           Compression::EntryFilter filter, Callback done);
+                                           const QString& outputDirectoryPath, Compression::ExtractOptions options,
+                                           Callback done);
 
-    /// Decompress a file, or copy it if it is not compressed, as Compression::decompressFile() does, and remove it
-    /// The job takes the input for itself at once, by renaming it within its directory, so that a file that is
-    /// written to @a inputPath meanwhile, such as the next download of that name, is not the job's. It removes the
-    /// input once the worker has ended, however the job ends. If the input cannot be renamed, the job reads it where
-    /// it is and removes it only when it calls @a done: once it ends without calling back, the caller may have
-    /// written a newer file there. A failure message names @a inputPath, not the name the input was taken under.
-    ///
-    /// A job that ends without calling @a done leaves no output, also if the worker had already written it.
-    /// @param outputPath Path of the decompressed file. Without one, or with one that names the input file itself,
-    ///        the job fails with Error::IoError
+    /// Decompress a file, or copy it if it is not compressed, as Compression::decompressFile() does
+    /// A failed or cancelled decompression writes nothing, as Compression::decompressFile() documents. A job that ends
+    /// without calling @a done after its worker has completed leaves the output. Decompress to a path of your own,
+    /// and remove it when the job ends without calling back.
+    /// @param outputPath Path of the decompressed file, empty for the default of Compression::decompressFile()
     /// @param maxBytes Largest size the decompressed file may have. Choose it for what is done with the file
     /// @return The job, already running. Hold it in a QPointer to cancel it
-    static CompressionJob* startDecompressionConsumingInput(QObject* context, const QString& inputPath,
-                                                            const QString& outputPath, qint64 maxBytes, Callback done);
+    static CompressionJob* startDecompression(QObject* context, const QString& inputPath, const QString& outputPath,
+                                              qint64 maxBytes, Callback done);
+
+    /// Pool that the workers of all jobs run on, of two threads. It is apart from QThreadPool::globalInstance(): an
+    /// extraction can take minutes, and must not hold a thread that short work, such as QGC::runOnWorker(), waits for
+    static QThreadPool* threadPool();
 
     /// Progress of the operation, from 0.0 to 1.0
     qreal progress() const { return _progress; }
@@ -92,11 +94,6 @@ private:
 
     void _start(Work work);
     void _setProgress(qreal progress);
-    /// Remove the input of a decompression once the worker has ended
-    /// @param reported Whether the job calls back, which lets it remove an input it could not take
-    void _removeInput(bool reported);
-    /// Remove what a successful decompression wrote, for a job that ended without calling back
-    void _discardOutput(const Compression::Outcome& outcome) const;
 
     QFutureWatcher<Compression::Outcome>* _watcher = nullptr;
     /// Set by cancel(). Shared with the worker, so that it outlives a job deleted while the worker winds down
@@ -105,10 +102,4 @@ private:
     /// Set once the job has called back or decided not to
     bool _ended = false;
     qreal _progress = 0.0;
-
-    // Of a decompression only
-    QString _inputPath;
-    /// Name the input was taken under, empty if it could not be renamed
-    QString _takenInputPath;
-    QString _outputPath;
 };

@@ -37,6 +37,12 @@ class VehicleFileFetch : public QObject
     Q_DISABLE_COPY_MOVE(VehicleFileFetch)
 
 public:
+    /// Largest size of a file that a vehicle sends or points to and that QGC reads whole, decompressed if it is
+    /// compressed: component metadata, its translations, events metadata and camera definitions (64 MiB). These are
+    /// a few MiB at most, so a far larger file is not parsed. The fetch of such a file is held to it too
+    /// (Options::maxBytes): a compressed file is not larger than its content
+    static constexpr qint64 kMaxSmallFileBytes = 64LL * 1024 * 1024;
+
     struct Options
     {
         /// Directory the file is written to. It must exist.

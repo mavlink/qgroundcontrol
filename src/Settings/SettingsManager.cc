@@ -147,6 +147,13 @@ LogManagerSettings *SettingsManager::logManagerSettings() const { return _logMan
 LogViewerSettings *SettingsManager::logViewerSettings() const { return _logViewerSettings; }
 Viewer3DSettings *SettingsManager::viewer3DSettings() const { return _viewer3DSettings; }
 
+namespace {
+
+/// Largest size of a settings file, decompressed. It holds values of settings, a few KiB
+constexpr qint64 kMaxSettingsFileBytes = 16LL * 1024 * 1024;
+
+}  // namespace
+
 void SettingsManager::_loadSettingsFiles()
 {
     // Settings files can be found in the settingsSavePath() directory
@@ -184,7 +191,7 @@ void SettingsManager::_loadSettingsFiles()
 
         QJsonDocument jsonDoc;
         QString errorString;
-        if (!JsonParsing::isJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString)) {
+        if (!JsonParsing::isJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString, kMaxSettingsFileBytes)) {
             qCWarning(SettingsManagerLog) << "Failed to load settings file:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }

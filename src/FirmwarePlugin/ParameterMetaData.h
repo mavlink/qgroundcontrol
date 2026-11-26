@@ -25,6 +25,10 @@ public:
 
     static const FactMetaData::DefineMap_t kEmptyDefines;
 
+    /// Largest size of a parameter metadata file, decompressed. That of PX4 or of an ArduPilot vehicle is a few MiB.
+    /// It is the limit of a file that a vehicle sends, as the file may come from the vehicle
+    static constexpr qint64 kMaxMetaDataFileBytes = 64LL * 1024 * 1024;
+
 protected:
     virtual void parseParameterJson(const QJsonObject &json) = 0;
     virtual FactMetaData *_lookupMetaData(const QString &name, FactMetaData::ValueType_t type);

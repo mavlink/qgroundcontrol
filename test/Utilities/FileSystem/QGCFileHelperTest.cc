@@ -255,8 +255,10 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
 
 void QGCFileHelperTest::_testReadCompressedFile()
 {
+    // The test manifest is a few bytes
+    constexpr qint64 maxManifestBytes = 1024;
     QByteArray data;
-    const Compression::Outcome read = Compression::readFile(":/unittest/manifest.json.gz", data);
+    const Compression::Outcome read = Compression::readFile(":/unittest/manifest.json.gz", data, maxManifestBytes);
     QVERIFY2(read, qPrintable(read.description()));
     QVERIFY(data.contains("\"name\""));
 }
@@ -370,8 +372,10 @@ void QGCFileHelperTest::_testToLocalPathCompressionInterop()
     const QString gzipPath = QGCFileHelper::toLocalPath(QUrl(QStringLiteral("qrc:/unittest/manifest.json.gz")));
     QCOMPARE(gzipPath, QStringLiteral(":/unittest/manifest.json.gz"));
 
+    // The test manifest is a few bytes
+    constexpr qint64 maxManifestBytes = 1024;
     QByteArray decompressed;
-    QVERIFY(Compression::readFile(gzipPath, decompressed));
+    QVERIFY(Compression::readFile(gzipPath, decompressed, maxManifestBytes));
     QVERIFY(decompressed.contains("\"name\""));
 }
 

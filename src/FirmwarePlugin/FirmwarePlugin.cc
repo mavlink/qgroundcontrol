@@ -634,7 +634,8 @@ void FirmwarePlugin::cacheParameterMetaDataFile(const QString &metaDataFile)
     }
 
     QByteArray data;
-    const Compression::Outcome read = Compression::readFile(metaDataFile, data);
+    const Compression::Outcome read =
+        Compression::readFile(metaDataFile, data, ParameterMetaData::kMaxMetaDataFileBytes);
     if (data.isEmpty()) {
         qCWarning(FirmwarePluginLog) << "Cannot cache parameter metadata: failed to read" << metaDataFile
                                      << read.description();

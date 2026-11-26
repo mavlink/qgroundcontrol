@@ -56,7 +56,7 @@ void ComponentInformationTranslationTest::_basic_test_data()
 
     QTest::newRow("plain") << QString();
     QTest::newRow("JSON and TS compressed") << QStringLiteral("gzip");
-    // Decompressed, either file is larger than Compression::kMaxSmallFileBytes
+    // Decompressed, either file is larger than VehicleFileFetch::kMaxSmallFileBytes
     QTest::newRow("JSON over the limit") << QStringLiteral("json over the limit");
     QTest::newRow("TS over the limit") << QStringLiteral("ts over the limit");
 }

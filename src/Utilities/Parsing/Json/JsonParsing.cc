@@ -16,6 +16,10 @@ QGC_LOGGING_CATEGORY(JsonParsingLog, "Utilities.Parsing.Json")
 
 namespace JsonParsing {
 
+/// Largest size of a JSON file of QGC's own, a resource or a file such as the MAVLink actions, which are at most a
+/// few hundred KiB
+static constexpr qint64 kMaxQGCJsonFileBytes = 16LL * 1024 * 1024;
+
 /// Parse JSON text, which is what bytes or a file that can be compressed have been decompressed to
 static bool parseJsonText(const QByteArray& json, QJsonDocument& jsonDoc, QString& errorString)
 {
@@ -35,10 +39,10 @@ static bool parseJsonText(const QByteArray& json, QJsonDocument& jsonDoc, QStrin
     return false;
 }
 
-bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
+bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes)
 {
     QByteArray json;
-    if (const Compression::Outcome read = Compression::decompressData(bytes, json); !read) {
+    if (const Compression::Outcome read = Compression::decompressData(bytes, json, maxBytes); !read) {
         jsonDoc = {};
         errorString = read.description();
         return false;
@@ -231,7 +235,7 @@ QJsonObject openInternalQGCJsonFile(const QString &jsonFilename, const QString &
                                     const QStringList &defaultArrayIDKeys)
 {
     QJsonDocument doc;
-    if (!isJsonFile(jsonFilename, doc, errorString)) {
+    if (!isJsonFile(jsonFilename, doc, errorString, kMaxQGCJsonFileBytes)) {
         errorString = QObject::tr("Unable to parse json file: %1 error: %2").arg(jsonFilename, errorString);
         return {};
     }

@@ -5,12 +5,12 @@
 #include <QtCore/QDirIterator>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QLocale>
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QMultiMap>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
 
-#include "Compression.h"
 #include "DataFlashParser.h"
 #include "ExifParser.h"
 #include "GeoTagImageModel.h"
@@ -1005,13 +1005,29 @@ QByteArray GeoTagController::_readImageCached(const QString &path, QString *erro
         }
     }
 
-    // Read from disk (outside lock to allow parallel reads)
+    // Read from disk (outside lock to allow parallel reads). An image is read as it is: it is not a compressed file
+    QFile file(path);
     QByteArray data;
-    const Compression::Outcome read = Compression::readFile(path, data);
-
-    if (data.isEmpty()) {
+    QString error;
+    if (!file.open(QIODevice::ReadOnly)) {
+        error = tr("Cannot read the file: %1").arg(file.errorString());
+    } else if (file.size() > kMaxImageBytes) {
+        error = tr("The file is larger than %1").arg(QLocale().formattedDataSize(kMaxImageBytes));
+    } else {
+        // One byte more than its size tells a file that grows while it is read
+        const qint64 size = file.size();
+        data = file.read(size + 1);
+        if (file.error() != QFileDevice::NoError) {
+            error = tr("Cannot read the file: %1").arg(file.errorString());
+        } else if (data.isEmpty()) {
+            error = tr("The file is empty");
+        } else if (data.size() != size) {
+            error = tr("The file changed while it was read");
+        }
+    }
+    if (!error.isEmpty()) {
         if (errorString) {
-            *errorString = read ? tr("The file is empty") : read.description();
+            *errorString = error;
         }
         return {};
     }

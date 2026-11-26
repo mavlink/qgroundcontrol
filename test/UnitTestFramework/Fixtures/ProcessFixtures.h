@@ -5,10 +5,11 @@
 #include <QtCore/QByteArray>
 
 class QSemaphore;
+class QThreadPool;
 
 /// @file
-/// @brief RAII guards for state that the whole test process shares: environment variables and the global thread
-/// pool. They need nothing of the application, so the portable test executables use them too.
+/// @brief RAII guards for state that the whole test process shares: environment variables and the thread
+/// pools. They need nothing of the application, so the portable test executables use them too.
 
 namespace TestFixtures {
 
@@ -36,17 +37,18 @@ private:
 };
 
 // ============================================================================
-// ThreadPoolBlocker - RAII wrapper that holds back work on the global thread pool
+// ThreadPoolBlocker - RAII wrapper that holds back work on a thread pool
 // ============================================================================
 
-/// RAII fixture that occupies every thread of QThreadPool::globalInstance() until release() or destruction. Work
-/// started meanwhile, such as the worker of a CompressionJob, waits for a thread: it is held back without a
-/// timing assumption.
+/// RAII fixture that occupies every thread of a thread pool until release() or destruction. Work started on it
+/// meanwhile, such as the worker of a QGC::runOnWorker() job on the global pool, or of a CompressionJob on
+/// CompressionJob::threadPool(), waits for a thread: it is held back without a timing assumption.
 class ThreadPoolBlocker
 {
 public:
     /// Returns once every thread is occupied, or after TestTimeout::mediumMs(): check isBlocking()
-    ThreadPoolBlocker();
+    /// @param pool The pool to occupy, QThreadPool::globalInstance() if null
+    explicit ThreadPoolBlocker(QThreadPool* pool = nullptr);
     ~ThreadPoolBlocker();
 
     ThreadPoolBlocker(const ThreadPoolBlocker&) = delete;

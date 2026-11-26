@@ -10,6 +10,13 @@
 #include "JsonParsing.h"
 #include "QGCFileHelper.h"
 
+namespace {
+
+/// Limit of the content these tests parse, which is a few bytes
+constexpr qint64 kJsonParsingTestMaxBytes = 1024;
+
+}  // namespace
+
 void JsonParsingTest::_testValidateRequiredKeysSuccess()
 {
     const QJsonObject object = {
@@ -96,7 +103,7 @@ void JsonParsingTest::_testIsJsonFileBytes()
     QJsonDocument document;
     QString errorString;
 
-    QVERIFY(JsonParsing::isJsonFile(data, document, errorString));
+    QVERIFY(JsonParsing::isJsonFile(data, document, errorString, kJsonParsingTestMaxBytes));
     QVERIFY(document.isObject());
     QCOMPARE(document.object().value(QStringLiteral("version")).toInt(), 1);
 }
@@ -110,11 +117,18 @@ void JsonParsingTest::_testIsJsonFileCompressedResourceBytes()
 
     QJsonDocument document;
     QString errorString;
-    QVERIFY(JsonParsing::isJsonFile(data, document, errorString));
+    QVERIFY(JsonParsing::isJsonFile(data, document, errorString, kJsonParsingTestMaxBytes));
     QVERIFY(document.isObject());
 
+    // The limit is on the decompressed content, as for a file
+    QByteArray content;
+    QVERIFY(Compression::decompressData(data, content, kJsonParsingTestMaxBytes));
+    QVERIFY(JsonParsing::isJsonFile(data, document, errorString, content.size()));
+    QVERIFY(!JsonParsing::isJsonFile(data, document, errorString, content.size() - 1));
+    QVERIFY2(errorString.contains(QStringLiteral("size limit exceeded")), qPrintable(errorString));
+
     // Damaged compression is reported as that, not as a syntax error in bytes that are no text
-    QVERIFY(!JsonParsing::isJsonFile(data.first(data.size() / 2), document, errorString));
+    QVERIFY(!JsonParsing::isJsonFile(data.first(data.size() / 2), document, errorString, kJsonParsingTestMaxBytes));
     QVERIFY(document.isNull());
     QVERIFY2(errorString.startsWith("Failed to decompress data"), qPrintable(errorString));
     QVERIFY2(errorString.contains("truncated"), qPrintable(errorString));
@@ -126,12 +140,12 @@ void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
     QString errorString;
 
     const QString path = QStringLiteral(":/unittest/manifest.json.gz");
-    QVERIFY(JsonParsing::isJsonFile(path, document, errorString));
+    QVERIFY(JsonParsing::isJsonFile(path, document, errorString, kJsonParsingTestMaxBytes));
     QVERIFY(document.isObject());
 
     // The limit is on the decompressed content: a file of exactly the limit is parsed, a larger one is not
     QByteArray content;
-    QVERIFY(Compression::readFile(path, content));
+    QVERIFY(Compression::readFile(path, content, kJsonParsingTestMaxBytes));
     QVERIFY(JsonParsing::isJsonFile(path, document, errorString, content.size()));
     QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, content.size() - 1));
     QVERIFY(document.isNull());
@@ -143,7 +157,8 @@ void JsonParsingTest::_testIsJsonFileMissingPath()
     QJsonDocument document;
     QString errorString;
 
-    QVERIFY(!JsonParsing::isJsonFile(QStringLiteral("/definitely/missing/file.json"), document, errorString));
+    QVERIFY(!JsonParsing::isJsonFile(QStringLiteral("/definitely/missing/file.json"), document, errorString,
+                                     kJsonParsingTestMaxBytes));
     QVERIFY(!errorString.isEmpty());
 }
 
@@ -173,8 +188,8 @@ void JsonParsingTest::_testIsJsonFileReplacesStaleError()
 
     const auto parse = [&](QString& errorString) {
         QJsonDocument document;
-        return fromFile ? JsonParsing::isJsonFile(file.fileName(), document, errorString)
-                        : JsonParsing::isJsonFile(content, document, errorString);
+        return fromFile ? JsonParsing::isJsonFile(file.fileName(), document, errorString, kJsonParsingTestMaxBytes)
+                        : JsonParsing::isJsonFile(content, document, errorString, kJsonParsingTestMaxBytes);
     };
 
     QString freshError;

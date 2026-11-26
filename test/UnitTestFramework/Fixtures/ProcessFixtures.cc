@@ -47,10 +47,12 @@ EnvVarFixture::EnvVarFixture(EnvVarFixture&& other) noexcept
 // ThreadPoolBlocker Implementation
 // ============================================================================
 
-ThreadPoolBlocker::ThreadPoolBlocker()
+ThreadPoolBlocker::ThreadPoolBlocker(QThreadPool* pool)
     : _letGo(std::make_shared<QSemaphore>())
 {
-    QThreadPool* const pool = QThreadPool::globalInstance();
+    if (pool == nullptr) {
+        pool = QThreadPool::globalInstance();
+    }
     _threadCount = pool->maxThreadCount();
     const auto busy = std::make_shared<QSemaphore>();
     for (int thread = 0; thread < _threadCount; ++thread) {

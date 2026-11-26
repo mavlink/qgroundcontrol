@@ -14,6 +14,7 @@ private slots:
     void _calibrationMismatchTest();
     void _fullGeotaggingTest();
     void _previewModeTest();
+    UT_PARAMETERIZED_TEST(_readImageTest);
 
     // Calibrator algorithm tests
     void _calibratorEmptyInputsTest();

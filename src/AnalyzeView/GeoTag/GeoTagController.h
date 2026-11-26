@@ -51,6 +51,9 @@ class GeoTagController : public QObject
     QML_ELEMENT
     QML_SINGLETON
     Q_MOC_INCLUDE("GeoTagImageModel.h")
+#ifdef QGC_UNITTEST_BUILD
+    friend class GeoTagControllerTest;
+#endif
 
     Q_PROPERTY(QString           logFile         READ logFile        WRITE setLogFile        NOTIFY logFileChanged)
     Q_PROPERTY(QString           imageDirectory  READ imageDirectory WRITE setImageDirectory NOTIFY imageDirectoryChanged)
@@ -176,6 +179,9 @@ private:
 
     ExifResult _parseExifForImage(const QFileInfo &imageInfo);
     TagResult _tagImage(const TagTask &task);
+
+    /// Largest size of an image to geotag. A JPEG, TIFF or DNG file of a survey camera is 5 to 100 MiB
+    static constexpr qint64 kMaxImageBytes = 256LL * 1024 * 1024;
 
     // Image buffer cache (thread-safe)
     QByteArray _readImageCached(const QString &path, QString *errorString = nullptr);

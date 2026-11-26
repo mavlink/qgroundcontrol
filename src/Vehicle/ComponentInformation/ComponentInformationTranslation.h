@@ -43,7 +43,7 @@ public:
     void cancel();
 
     /// Translates @p toTranslateJsonFile with the TS file @p tsFile into a new temporary file in @p outputDirectory.
-    /// Both files are decompressed if they are compressed, and held to Compression::kMaxSmallFileBytes. It uses
+    /// Both files are decompressed if they are compressed, and held to VehicleFileFetch::kMaxSmallFileBytes. It uses
     /// nothing but its arguments, so that it can run on a worker thread.
     static Translation translateJsonUsingTS(const QString& toTranslateJsonFile, const QString& tsFile,
                                             const QString& outputDirectory);

@@ -379,10 +379,17 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 }
 
+namespace {
+
+/// Largest size of a plan file, decompressed. A plan of ten thousand mission items is a few MiB
+constexpr qint64 kMaxPlanFileBytes = 64LL * 1024 * 1024;
+
+}  // namespace
+
 bool PlanMasterController::_loadPlanJson(const QByteArray& bytes, QString& errorString)
 {
     QJsonDocument jsonDoc;
-    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
+    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString, kMaxPlanFileBytes)) {
         return false;
     }
 

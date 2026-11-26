@@ -10,11 +10,11 @@
 #include "CompInfoParam.h"
 #include "ComponentInformationCache.h"
 #include "ComponentInformationTranslation.h"
-#include "CompressionTypes.h"
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleFileFetch.h"
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformation.ComponentInformationManager")
 
@@ -30,7 +30,7 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle, QObje
     qCDebug(ComponentInformationManagerLog) << "Cache location:" << QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
 
     // The translation summary and the translation file come from where the vehicle points to, and are read whole
-    _cachedFileDownload->fileDownloader()->setMaxBytes(Compression::kMaxSmallFileBytes);
+    _cachedFileDownload->fileDownloader()->setMaxBytes(VehicleFileFetch::kMaxSmallFileBytes);
 
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
