@@ -60,6 +60,11 @@ public:
     explicit FFmpegStreamRecorder(Listener& listener);
     ~FFmpegStreamRecorder();
 
+    /// Gives @p parameters what a muxer and a MediaCodec decoder need and a stream received without them lacks: the
+    /// parameter sets (SPS and PPS, and VPS for H.265), which RTP and MPEG-TS carry in the stream, and the picture
+    /// size, both from @p keyframe. Any thread.
+    static void completeParameters(AVCodecParameters& parameters, const AVPacket& keyframe);
+
     FFmpegStreamRecorder(const FFmpegStreamRecorder&) = delete;
     FFmpegStreamRecorder& operator=(const FFmpegStreamRecorder&) = delete;
 

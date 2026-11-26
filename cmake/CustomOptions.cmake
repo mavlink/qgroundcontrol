@@ -149,8 +149,8 @@ option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer video backend" ON)
 # Experimental: a third video backend on the FFmpeg libraries of the Qt kit (src/VideoManager/FFmpeg). Built on desktop
-# Linux with a Qt kit that ships them; left out of every other build.
-option(QGC_ENABLE_FFMPEG_VIDEO "Enable the experimental FFmpeg video backend (desktop Linux)" ON)
+# Linux and Android with a Qt kit that ships them; left out of every other build.
+option(QGC_ENABLE_FFMPEG_VIDEO "Enable the experimental FFmpeg video backend (desktop Linux, Android)" ON)
 
 # ============================================================================
 # MAVLink Configuration

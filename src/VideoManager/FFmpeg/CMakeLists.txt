@@ -1,5 +1,5 @@
 # ============================================================================
-# FFmpeg Video Receiver (experimental, QGC_ENABLE_FFMPEG_VIDEO, desktop Linux only so far)
+# FFmpeg Video Receiver (experimental, QGC_ENABLE_FFMPEG_VIDEO, desktop Linux and Android so far)
 # Network streams received directly with the FFmpeg libraries Qt ships, for VideoSettings::videoBackend's FFmpeg
 # choice. Links Qt's FFmpeg plugin implementation (Qt6::FFmpegMediaPluginImplPrivate), which is Qt-internal, and the
 # FFmpeg libraries of the Qt kit. The kit has no FFmpeg headers: they are generated at configure time from the source
@@ -11,9 +11,10 @@ if(NOT QGC_ENABLE_FFMPEG_VIDEO)
 endif()
 
 # The option is ON by default, so a build that can't have the receiver goes without it: another platform, a Qt that
-# uses the system's FFmpeg rather than its own, a host without the tools that generate the headers, or a cross build,
-# as FFmpeg's configure runs what it compiles.
-if(NOT LINUX OR ANDROID)
+# uses the system's FFmpeg rather than its own, a host without the tools that generate the headers (a Windows host
+# counts as one), or a cross build other than Android's, as FFmpeg's configure runs what it compiles unless it is told
+# the target.
+if(NOT LINUX AND NOT ANDROID)
     return()
 endif()
 set(_ffmpeg_qt_libdir "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}")
@@ -32,8 +33,12 @@ find_program(QGC_FFMPEG_SH NAMES sh bash)
 if(NOT QGC_FFMPEG_MAKE OR NOT QGC_FFMPEG_SH)
     set(_ffmpeg_missing "make and sh, which generate the FFmpeg headers, were not found")
 endif()
-if(CMAKE_CROSSCOMPILING)
+if(CMAKE_CROSSCOMPILING AND NOT ANDROID)
     set(_ffmpeg_missing "its headers are not generated in a cross build")
+endif()
+if(CMAKE_HOST_WIN32)
+    # Untried: an Android build on Windows, where FFmpeg's configure would run in whatever sh was found.
+    set(_ffmpeg_missing "its headers are not generated on a Windows host")
 endif()
 if(_ffmpeg_missing)
     message(STATUS "QGC: FFmpeg video backend not built: ${_ffmpeg_missing}")
@@ -65,12 +70,28 @@ if(NOT EXISTS "${_ffmpeg_prefix}/include/libavcodec/version_major.h")
     set(_ffmpeg_header_build "${CMAKE_BINARY_DIR}/ffmpeg-${QGC_FFMPEG_TAG}-headers-build")
     file(REMOVE_RECURSE "${_ffmpeg_header_build}")
     file(MAKE_DIRECTORY "${_ffmpeg_header_build}")
+    if(ANDROID)
+        # A cross build, with the NDK's compiler for the ABI: configure then runs nothing of what it compiles.
+        set(_ffmpeg_target
+            --enable-cross-compile
+            --target-os=android
+            "--arch=${CMAKE_SYSTEM_PROCESSOR}"
+            "--cc=${CMAKE_C_COMPILER} --target=${CMAKE_C_COMPILER_TARGET}"
+            "--ar=${CMAKE_AR}"
+            "--nm=${CMAKE_NM}"
+            "--ranlib=${CMAKE_RANLIB}"
+            "--strip=${CMAKE_STRIP}"
+            --disable-asm
+        )
+    else()
+        set(_ffmpeg_target "--cc=${CMAKE_C_COMPILER}" --disable-x86asm)
+    endif()
     message(STATUS "QGC: Generating the FFmpeg ${QGC_FFMPEG_TAG} headers")
     execute_process(
         COMMAND
-            "${QGC_FFMPEG_SH}" "${ffmpeg_source_SOURCE_DIR}/configure" "--prefix=${_ffmpeg_prefix}"
-            "--cc=${CMAKE_C_COMPILER}" --disable-programs --disable-doc --disable-avdevice --disable-avfilter
-            --disable-autodetect --disable-x86asm --enable-shared --disable-static
+            "${QGC_FFMPEG_SH}" "${ffmpeg_source_SOURCE_DIR}/configure" "--prefix=${_ffmpeg_prefix}" ${_ffmpeg_target}
+            --disable-programs --disable-doc --disable-avdevice --disable-avfilter --disable-autodetect --enable-shared
+            --disable-static
         WORKING_DIRECTORY "${_ffmpeg_header_build}"
         RESULT_VARIABLE _ffmpeg_result
         OUTPUT_FILE "${_ffmpeg_header_build}/configure.log"
@@ -92,6 +113,7 @@ if(NOT EXISTS "${_ffmpeg_prefix}/include/libavcodec/version_major.h")
 endif()
 
 # The headers must be those of the kit's libraries: their major versions name the libraries' ABI.
+set(_ffmpeg_header_majors "")
 foreach(_lib avcodec avformat avutil)
     string(TOUPPER "${_lib}" _upper)
     set(_version_header "${_ffmpeg_prefix}/include/lib${_lib}/version_major.h")
@@ -100,10 +122,27 @@ foreach(_lib avcodec avformat avutil)
     endif()
     file(STRINGS "${_version_header}" _define REGEX "#define LIB${_upper}_VERSION_MAJOR +[0-9]+")
     string(REGEX MATCH "[0-9]+$" _header_major "${_define}")
+    list(APPEND _ffmpeg_header_majors "QGC_FFMPEG_LIB${_upper}_MAJOR=${_header_major}")
     get_filename_component(_library "${_ffmpeg_qt_libdir}/lib${_lib}.so" REALPATH)
     get_filename_component(_library_name "${_library}" NAME)
-    string(REGEX MATCH "\\.so\\.([0-9]+)" _ "${_library_name}")
-    if(NOT _header_major OR NOT "${_header_major}" STREQUAL "${CMAKE_MATCH_1}")
+    set(_library_major "")
+    if(_library_name MATCHES "\\.so\\.([0-9]+)")
+        set(_library_major "${CMAKE_MATCH_1}")
+    else()
+        # Android's libraries have no version in their names. libavcodec and libavformat hold theirs as a string
+        # ("Lavc63.1.101"); libavutil holds none, and goes unchecked there.
+        file(
+            STRINGS "${_library}" _ident
+            REGEX "^Lav[cf][0-9]+\\.[0-9]+\\.[0-9]+$"
+            LIMIT_COUNT 1
+        )
+        if(_ident MATCHES "^Lav[cf]([0-9]+)\\.")
+            set(_library_major "${CMAKE_MATCH_1}")
+        elseif(_lib STREQUAL "avutil")
+            continue()
+        endif()
+    endif()
+    if(NOT _header_major OR NOT "${_header_major}" STREQUAL "${_library_major}")
         message(
             FATAL_ERROR
                 "QGC: The FFmpeg ${QGC_FFMPEG_TAG} headers are lib${_lib} ${_header_major}, but Qt's library is "
@@ -129,6 +168,43 @@ set(FFMPEG_DIR "${_ffmpeg_prefix}")
 # directory, and its AUTOMOC dependencies are resolved in its own.
 set(QT_PROMOTE_TO_GLOBAL_TARGETS TRUE)
 find_package(Qt6 ${QGC_QT_MINIMUM_VERSION} REQUIRED COMPONENTS FFmpegMediaPluginImplPrivate)
+if(ANDROID)
+    # Qt's library defines an exported JNI_OnLoad() in an object file that comes along with everything the receiver uses
+    # of it, and QGroundControl has its own (src/Android/AndroidInit.cc): the link would fail on the duplicate. Linked
+    # in its place is a copy in which Qt's is local to that object file. Nothing calls it then, and nothing needs to:
+    # FFmpegStreamSession gives FFmpeg the Java VM, and the native methods it registers are the plugin's, which
+    # registers its own.
+    get_target_property(_ffmpeg_impl Qt6::FFmpegMediaPluginImplPrivate IMPORTED_LOCATION)
+    cmake_path(GET _ffmpeg_impl FILENAME _ffmpeg_impl_name)
+    set(_ffmpeg_impl_copy "${CMAKE_CURRENT_BINARY_DIR}/${_ffmpeg_impl_name}")
+    add_custom_command(
+        OUTPUT "${_ffmpeg_impl_copy}"
+        COMMAND "${CMAKE_OBJCOPY}" --localize-symbol=JNI_OnLoad "${_ffmpeg_impl}" "${_ffmpeg_impl_copy}"
+        DEPENDS "${_ffmpeg_impl}"
+        COMMENT "Copying ${_ffmpeg_impl_name} without its JNI_OnLoad"
+        VERBATIM
+    )
+    add_custom_target(
+        QGCFFmpegMediaPluginImpl
+        DEPENDS "${_ffmpeg_impl_copy}"
+        COMMENT "Qt's FFmpeg plugin library without its JNI_OnLoad"
+    )
+    # Qt gives the one library as the location for each configuration and for none.
+    set_target_properties(
+        Qt6::FFmpegMediaPluginImplPrivate
+        PROPERTIES
+            IMPORTED_LOCATION "${_ffmpeg_impl_copy}"
+    )
+    get_target_property(_ffmpeg_impl_configs Qt6::FFmpegMediaPluginImplPrivate IMPORTED_CONFIGURATIONS)
+    foreach(_config IN LISTS _ffmpeg_impl_configs)
+        set_target_properties(
+            Qt6::FFmpegMediaPluginImplPrivate
+            PROPERTIES
+                IMPORTED_LOCATION_${_config} "${_ffmpeg_impl_copy}"
+        )
+    endforeach()
+    add_dependencies(Qt6::FFmpegMediaPluginImplPrivate QGCFFmpegMediaPluginImpl)
+endif()
 # The receiver's tests read its recordings back with libavformat.
 set_target_properties(
     FFmpeg::avformat
@@ -154,7 +230,15 @@ target_sources(
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_FFMPEG_VIDEO)
+# Ahead of every other directory: GStreamer's Android SDK has the headers of its own FFmpeg, another release with
+# other struct layouts, and the system may have one's too. FFmpegPointers.cc checks which ones the compiler found.
+target_include_directories(${CMAKE_PROJECT_NAME} BEFORE PRIVATE "${_ffmpeg_prefix}/include")
+target_compile_definitions(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGC_FFMPEG_VIDEO
+        ${_ffmpeg_header_majors}
+)
 # For the tests and the configure summary, which can't tell from the option that the receiver is in the build.
 set_property(GLOBAL PROPERTY QGC_FFMPEG_VIDEO_BUILT TRUE)
 target_link_libraries(

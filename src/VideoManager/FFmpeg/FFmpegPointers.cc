@@ -1,13 +1,25 @@
 #include "FFmpegPointers.h"
 
+#include <QtCore/QtGlobal>
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavcodec/bsf.h>
+#ifdef Q_OS_ANDROID
+#include <libavcodec/mediacodec.h>
+#endif
 #include <libavformat/avformat.h>
 #include <libavutil/buffer.h>
 #include <libavutil/frame.h>
 #include <libavutil/mem.h>
 }
+
+// The headers of another FFmpeg release compile, and then read the libraries' structs at the wrong places.
+static_assert((LIBAVCODEC_VERSION_MAJOR == QGC_FFMPEG_LIBAVCODEC_MAJOR) &&
+                  (LIBAVFORMAT_VERSION_MAJOR == QGC_FFMPEG_LIBAVFORMAT_MAJOR) &&
+                  (LIBAVUTIL_VERSION_MAJOR == QGC_FFMPEG_LIBAVUTIL_MAJOR),
+              "The FFmpeg headers found are not those generated for the Qt kit's libraries "
+              "(src/VideoManager/FFmpeg/CMakeLists.txt): another include directory has FFmpeg headers too");
 
 namespace FFmpegPointers {
 
@@ -23,6 +35,13 @@ void PacketDeleter::operator()(AVPacket* packet) const
 
 void CodecContextDeleter::operator()(AVCodecContext* context) const
 {
+#ifdef Q_OS_ANDROID
+    // What Qt's QFFmpeg::getFormat() gives a MediaCodec decoder with av_mediacodec_default_init(), a reference to
+    // the Surface among it, is its caller's to free: avcodec_free_context() leaves it.
+    if (context) {
+        av_mediacodec_default_free(context);
+    }
+#endif
     avcodec_free_context(&context);
 }
 

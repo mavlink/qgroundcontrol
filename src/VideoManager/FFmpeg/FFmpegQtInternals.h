@@ -16,6 +16,11 @@ namespace FFmpegQtInternals {
 /// a QVideoFrame takes without a conversion, if the decoder offers one.
 void chooseFormatsAsQt(AVCodecContext& context);
 
+/// Android: a MediaCodec decoder's frames come without the hardware frames context through which Qt's texture
+/// converter finds the Surface the decoder renders to. Gives @p frame the one in @p framesContext, made of
+/// @p decoder's device for the first such frame, as Qt's player does. Elsewhere, and for any other frame, nothing.
+void completeHardwareFrame(const AVCodecContext& decoder, AVFrame& frame, FFmpegPointers::Buffer& framesContext);
+
 /// @p frame, decoded, as a QVideoFrame, which takes it over. A hardware frame stays in GPU memory: Qt's texture
 /// converter shows it where it can, and maps it into memory otherwise. @p squarePixels: presented at its pixel aspect
 /// ratio, scaled to square pixels; otherwise at its size in pixels. Invalid for a null frame.

@@ -41,9 +41,14 @@ const char* ffmpegMuxerName(VideoReceiver::FileFormat format)
     return "matroska";
 }
 
-/// Gives @p parameters what a muxer needs and a stream received without them lacks: the parameter sets (SPS and PPS,
-/// and VPS for H.265), which RTP and MPEG-TS carry in the stream, and the picture size, both from @p keyframe.
-void ffmpegCompleteParameters(AVCodecParameters& parameters, const AVPacket& keyframe)
+}  // namespace
+
+FFmpegStreamRecorder::FFmpegStreamRecorder(Listener& listener)
+    : _listener(listener)
+    , _comment(VideoReceiver::recordingComment().toUtf8())
+{}
+
+void FFmpegStreamRecorder::completeParameters(AVCodecParameters& parameters, const AVPacket& keyframe)
 {
     if (parameters.extradata_size <= 0) {
         AVBSFContext* context = nullptr;
@@ -86,13 +91,6 @@ void ffmpegCompleteParameters(AVCodecParameters& parameters, const AVPacket& key
         }
     }
 }
-
-}  // namespace
-
-FFmpegStreamRecorder::FFmpegStreamRecorder(Listener& listener)
-    : _listener(listener)
-    , _comment(VideoReceiver::recordingComment().toUtf8())
-{}
 
 FFmpegStreamRecorder::~FFmpegStreamRecorder()
 {
@@ -285,7 +283,7 @@ bool FFmpegStreamRecorder::_open(const Target& target, const Stream& stream, con
         return refuse(ffmpegRecorderError(AVERROR(ENOMEM)));
     }
     outStream->codecpar->codec_tag = 0;
-    ffmpegCompleteParameters(*outStream->codecpar, keyframe);
+    completeParameters(*outStream->codecpar, keyframe);
     outStream->time_base = AVRational{stream.timeBaseNum, stream.timeBaseDen};
     (void) av_dict_set(&output->metadata, "comment", _comment.constData(), 0);
 

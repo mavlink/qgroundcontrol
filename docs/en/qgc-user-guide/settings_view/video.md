@@ -65,10 +65,10 @@ Connection settings vary by source type:
   apply to it, so they are hidden. Changing it restarts the video stream. Builds without GStreamer always
   use Qt Multimedia and don't show the setting. When GStreamer fails to start, QGroundControl says so in a message and
   plays the streams with Qt Multimedia, whatever this setting.
-  On Linux there is a third choice, **FFmpeg (experimental)**, which plays the same streams with the FFmpeg libraries
-  directly and shows each frame as soon as it is decoded. It records a stream as GStreamer does, without encoding it
-  again. It doesn't measure packet loss, and of the **Force video decoder priority** choices it follows only
-  **Software**.
+  On Linux and Android there is a third choice, **FFmpeg (experimental)**, which plays the same streams with the
+  FFmpeg libraries directly and shows each frame as soon as it is decoded. It records a stream as GStreamer does,
+  without encoding it again. It doesn't measure packet loss, and of the **Force video decoder priority** choices it
+  follows only **Software**.
 - **Aspect Ratio** — the shape the video is shown with: **Auto** (default), 16:9, 4:3, 5:4, 3:2 or 1:1. Auto shows
   the video with the ratio of its frames. Choose a ratio for a camera whose video looks squeezed or stretched, as that
   of an analog camera behind a digital encoder may: the video is then stretched to that ratio, in the main view and

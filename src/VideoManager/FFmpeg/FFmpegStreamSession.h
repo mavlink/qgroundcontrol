@@ -19,10 +19,11 @@ struct AVStream;
 
 /// One connection of an FFmpegVideoReceiver to its stream, on a thread of its own: opens the stream with libavformat,
 /// reads its video packets, and while the receiver displays decodes them with libavcodec, a hardware decoder first, and
-/// hands over each frame as soon as it is decoded; every video packet also goes to the receiver's recorder, which
-/// copies it while it records this session. Nothing waits for a clock and nothing is queued: FFmpeg's input
-/// buffering is off, its RTP reordering waits the config's jitter latency (none in low-latency mode), and the decoder
-/// gives out each frame as it can (slice threads; frame threads only when the config asks for more than one).
+/// hands over each frame as soon as it is decoded (a MediaCodec decoder's when it is ready, see _awaitFrame()); every
+/// video packet also goes to the receiver's recorder, which copies it while it records this session. Nothing waits for
+/// a clock and nothing is queued: FFmpeg's input buffering is off, its RTP reordering waits the config's jitter latency
+/// (none in low-latency mode), and the decoder gives out each frame as it can (slice threads; frame threads only when
+/// the config asks for more than one).
 ///
 /// Threading: the receiver constructs, starts, steers (setDecoding(), requestStop()) and destroys it on its own thread.
 /// The session's thread runs everything else and calls the Listener. A stop request interrupts a blocking open or read
@@ -56,7 +57,7 @@ public:
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;
         int softwareDecoderThreads = 1;
-        /// A hardware decoder is tried first: VA-API, then NVDEC.
+        /// A hardware decoder is tried first: VA-API, then NVDEC; MediaCodec on Android.
         bool hardwareDecoding = true;
         /// Frames are presented at their pixel aspect ratio.
         bool squarePixels = true;
@@ -71,7 +72,8 @@ public:
 
     struct DecoderInfo
     {
-        /// The libavcodec decoder, with the hardware it decodes on: "h264 (VA-API)".
+        /// The libavcodec decoder, with the hardware it decodes on unless it is that hardware's own decoder:
+        /// "h264 (VA-API)", "h264_mediacodec".
         QString name;
         bool hardware = false;
     };
@@ -148,9 +150,15 @@ private:
     void _onVideoPacket(const AVStream& stream, AVPacket& packet);
     void _noteKeyframe(const AVStream& stream, const AVPacket& packet);
     void _decode(const AVStream& stream, AVPacket& packet);
-    /// Opens _decoder for @p stream, in hardware where it can; the message why not otherwise.
-    std::optional<QString> _openDecoder(const AVStream& stream);
-    void _deliverFrames();
+    /// Opens _decoder for @p stream, in hardware where it can; the message why not otherwise. @p keyframe: the packet
+    /// decoding starts at.
+    std::optional<QString> _openDecoder(const AVStream& stream, const AVPacket& keyframe);
+    /// Hands over the frames the decoder has ready; how many.
+    int _deliverFrames();
+    /// For a decoder that gives a packet's frame some milliseconds after it took the packet (MediaCodec): hands over
+    /// what is ready, or waits for that frame rather than hand it over with the next packet, but never longer than
+    /// half the time between packets, so that reading keeps up with the stream.
+    void _awaitFrame();
 
     const quint64 _id;
     const Settings _settings;
@@ -169,7 +177,15 @@ private:
     // The session's thread only.
     /// The video stream, as the recorder takes it: created with its first packet.
     std::shared_ptr<const FFmpegStreamRecorder::Stream> _recordedStream;
-    FFmpegPointers::CodecContext _decoder;
+    /// Shared with the frames of a MediaCodec decoder, which need it for as long as they live.
+    std::shared_ptr<AVCodecContext> _decoder;
+    /// FFmpegQtInternals::completeHardwareFrame()'s, of _decoder.
+    FFmpegPointers::Buffer _hardwareFramesContext;
+    /// _decoder gives its frames when they are ready, not as it takes their packets.
+    bool _framesComeLater = false;
+    std::chrono::steady_clock::time_point _lastSendTime;
+    /// The time between the packets the decoder took, smoothed; zero before the second.
+    std::chrono::microseconds _packetInterval{0};
     FFmpegPointers::Frame _decodedFrame;
     /// Decoding starts, and starts again after a pause, at a keyframe.
     bool _awaitingKeyframe = true;

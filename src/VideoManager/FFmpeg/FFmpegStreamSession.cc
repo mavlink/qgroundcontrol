@@ -7,6 +7,9 @@
 #include <QtCore/QFile>
 #include <QtCore/QLibrary>
 #include <QtCore/QUrl>
+#ifdef Q_OS_ANDROID
+#include <QtCore/QJniEnvironment>
+#endif
 
 #include "FFmpegQtInternals.h"
 #include "FFmpegVideoReceiver.h"
@@ -15,11 +18,15 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/buffer.h>
 #include <libavutil/dict.h>
 #include <libavutil/error.h>
 #include <libavutil/hwcontext.h>
 #include <libavutil/mathematics.h>
 #include <libavutil/mem.h>
+#ifdef Q_OS_ANDROID
+#include <libavcodec/jni.h>
+#endif
 }
 
 namespace {
@@ -28,8 +35,17 @@ namespace {
 constexpr int kFFmpegMaxFrameThreads = 4;
 constexpr int kFFmpegSdpBufferBytes = 4096;
 
+/// How often a packet the decoder doesn't take yet is offered again, a millisecond apart.
+constexpr int kFFmpegSendAttempts = 50;
+/// A decoder's frame is waited for no longer than this, whatever the time between packets.
+constexpr std::chrono::milliseconds kFFmpegFrameWaitLimit{20};
+/// A longer time between two packets, as after a pause, counts as this in the smoothed one.
+constexpr std::chrono::milliseconds kFFmpegPacketIntervalLimit{100};
+
 /// The hardware the decoder is tried on, in this order, before software.
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_ANDROID)
+constexpr AVHWDeviceType kFFmpegHardwareDevices[] = {AV_HWDEVICE_TYPE_MEDIACODEC};
+#elif defined(Q_OS_LINUX)
 constexpr AVHWDeviceType kFFmpegHardwareDevices[] = {AV_HWDEVICE_TYPE_VAAPI, AV_HWDEVICE_TYPE_CUDA};
 #else
 // Untried elsewhere: software decoding only.
@@ -50,6 +66,8 @@ QString ffmpegHardwareName(AVHWDeviceType type)
             return QStringLiteral("VA-API");
         case AV_HWDEVICE_TYPE_CUDA:
             return QStringLiteral("NVDEC");
+        case AV_HWDEVICE_TYPE_MEDIACODEC:
+            return QStringLiteral("MediaCodec");
         default:
             return QString::fromUtf8(av_hwdevice_get_type_name(type));
     }
@@ -81,6 +99,41 @@ bool ffmpegDecoderTakesDevice(const AVCodec* codec, AVHWDeviceType type)
         if (((config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) != 0) && (config->device_type == type)) {
             return true;
         }
+    }
+}
+
+/// The decoder of @p codec that decodes on @p device: the one FFmpeg decodes the codec with, where it takes the
+/// device (VA-API, NVDEC), else one that is the device's own (MediaCodec's are); null where there is none.
+const AVCodec* ffmpegDecoderOn(AVCodecID codec, AVHWDeviceType device)
+{
+    const AVCodec* const standard = avcodec_find_decoder(codec);
+    if (standard && ffmpegDecoderTakesDevice(standard, device)) {
+        return standard;
+    }
+    void* position = nullptr;
+    while (const AVCodec* const candidate = av_codec_iterate(&position)) {
+        if ((candidate->id == codec) && (av_codec_is_decoder(candidate) != 0) &&
+            ffmpegDecoderTakesDevice(candidate, device)) {
+            return candidate;
+        }
+    }
+    return nullptr;
+}
+
+/// Has @p frame keep @p decoder alive. FFmpeg's MediaCodec decoder logs through its AVCodecContext whenever a
+/// frame's buffer is released, also once the decoder is closed, and a frame on its way to the screen, or the last
+/// one shown, outlives the session. A frame releases its opaque_ref after its buffer.
+void ffmpegKeepDecoder(AVFrame& frame, const std::shared_ptr<AVCodecContext>& decoder)
+{
+    if (frame.opaque_ref) {
+        return;
+    }
+    auto* const keeper = new std::shared_ptr<AVCodecContext>(decoder);
+    frame.opaque_ref = av_buffer_create(
+        reinterpret_cast<uint8_t*>(keeper), sizeof(*keeper),
+        [](void*, uint8_t* data) { delete reinterpret_cast<std::shared_ptr<AVCodecContext>*>(data); }, nullptr, 0);
+    if (!frame.opaque_ref) {
+        delete keeper;
     }
 }
 
@@ -255,6 +308,7 @@ void FFmpegStreamSession::_run()
         failure.reset();
     }
     _decoder.reset();
+    _hardwareFramesContext.reset();
     _listener.onSessionEnded(_id, failure);
 }
 
@@ -411,34 +465,83 @@ void FFmpegStreamSession::_decode(const AVStream& stream, AVPacket& packet)
         }
     }
     if (!_decoder) {
-        if (const std::optional<QString> error = _openDecoder(stream)) {
+        if (const std::optional<QString> error = _openDecoder(stream, packet)) {
             _decoderFailed = true;
             qCWarning(FFmpegVideoReceiverLog) << "Can't decode" << _settings.redactedUri << ":" << *error;
             _listener.onSessionDecoderFailed(_id, *error);
             return;
         }
     }
-    const int sent = avcodec_send_packet(_decoder.get(), &packet);
-    if ((sent < 0) && (sent != AVERROR(EAGAIN))) {
-        qCDebug(FFmpegVideoReceiverLog) << "Decoder refused a packet:" << ffmpegErrorString(sent);
+    int sent = avcodec_send_packet(_decoder.get(), &packet);
+    // A decoder that gives its frames when they are ready takes no packet while it is full of them.
+    for (int attempt = 1; (sent == AVERROR(EAGAIN)) && (attempt < kFFmpegSendAttempts) && !_stopRequested.load();
+         ++attempt) {
+        (void) _deliverFrames();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        sent = avcodec_send_packet(_decoder.get(), &packet);
     }
-    _deliverFrames();
+    if (sent < 0) {
+        qCDebug(FFmpegVideoReceiverLog) << "Decoder refused a packet:" << ffmpegErrorString(sent);
+        if (sent == AVERROR(EAGAIN)) {
+            // Without this packet the pictures that follow are damaged, up to the next keyframe.
+            _awaitingKeyframe = true;
+        }
+    }
+    if (_framesComeLater && (sent >= 0)) {
+        _awaitFrame();
+    } else {
+        (void) _deliverFrames();
+    }
 }
 
-std::optional<QString> FFmpegStreamSession::_openDecoder(const AVStream& stream)
+void FFmpegStreamSession::_awaitFrame()
 {
-    const AVCodec* const codec = avcodec_find_decoder(stream.codecpar->codec_id);
-    if (!codec) {
-        return ffmpegTranslate("no decoder for %1").arg(QString::fromUtf8(avcodec_get_name(stream.codecpar->codec_id)));
+    const auto now = std::chrono::steady_clock::now();
+    if (_lastSendTime != std::chrono::steady_clock::time_point{}) {
+        const auto interval = std::min<std::chrono::microseconds>(
+            std::chrono::duration_cast<std::chrono::microseconds>(now - _lastSendTime), kFFmpegPacketIntervalLimit);
+        _packetInterval = (_packetInterval.count() == 0) ? interval : ((_packetInterval * 7) + interval) / 8;
     }
+    _lastSendTime = now;
+    const auto deadline = now + std::min<std::chrono::microseconds>(_packetInterval / 2, kFFmpegFrameWaitLimit);
+    // A frame that is ready at once is an earlier packet's, whose own didn't come within the wait: this packet's
+    // wouldn't either.
+    while ((_deliverFrames() == 0) && !_stopRequested.load() && (std::chrono::steady_clock::now() < deadline)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
 
-    const auto open = [this, &stream, codec](AVHWDeviceType device) -> FFmpegPointers::CodecContext {
+std::optional<QString> FFmpegStreamSession::_openDecoder(const AVStream& stream, const AVPacket& keyframe)
+{
+    const AVCodec* const standard = avcodec_find_decoder(stream.codecpar->codec_id);
+
+    const auto open = [this, &stream, &keyframe](const AVCodec* codec,
+                                                 AVHWDeviceType device) -> FFmpegPointers::CodecContext {
+        const AVCodecParameters* parameters = stream.codecpar;
+        FFmpegPointers::CodecParameters completed;
+        if (device == AV_HWDEVICE_TYPE_MEDIACODEC) {
+            // MediaCodec is set up with the picture's size and parameter sets, which the parameters of a stream
+            // that wasn't probed (_receive()) lack.
+            completed.reset(avcodec_parameters_alloc());
+            if (!completed || (avcodec_parameters_copy(completed.get(), stream.codecpar) < 0)) {
+                return {};
+            }
+            FFmpegStreamRecorder::completeParameters(*completed, keyframe);
+            parameters = completed.get();
+        }
         FFmpegPointers::CodecContext context(avcodec_alloc_context3(codec));
-        if (!context || (avcodec_parameters_to_context(context.get(), stream.codecpar) < 0)) {
+        if (!context || (avcodec_parameters_to_context(context.get(), parameters) < 0)) {
             return {};
         }
         context->pkt_timebase = stream.time_base;
         if (device != AV_HWDEVICE_TYPE_NONE) {
+#ifdef Q_OS_ANDROID
+            // FFmpeg reaches MediaCodec through the Java VM. Qt's FFmpeg plugin gives it one as it is loaded; given
+            // here as well, the receiver doesn't depend on that.
+            if (av_jni_set_java_vm(QJniEnvironment::javaVM(), nullptr) < 0) {
+                return {};
+            }
+#endif
             AVBufferRef* deviceContext = nullptr;
             if (av_hwdevice_ctx_create(&deviceContext, device, nullptr, nullptr, 0) < 0) {
                 return {};
@@ -465,21 +568,34 @@ std::optional<QString> FFmpegStreamSession::_openDecoder(const AVStream& stream)
         return context;
     };
 
-    DecoderInfo info{.name = QString::fromUtf8(codec->name), .hardware = false};
+    DecoderInfo info;
     if (_settings.hardwareDecoding) {
         for (const AVHWDeviceType device : kFFmpegHardwareDevices) {
-            if (!ffmpegHardwareDevicePresent(device) || !ffmpegDecoderTakesDevice(codec, device)) {
+            const AVCodec* const codec =
+                ffmpegHardwareDevicePresent(device) ? ffmpegDecoderOn(stream.codecpar->codec_id, device) : nullptr;
+            if (!codec) {
                 continue;
             }
-            if ((_decoder = open(device))) {
-                info.name += QStringLiteral(" (%1)").arg(ffmpegHardwareName(device));
-                info.hardware = true;
-                break;
+            if (!(_decoder = open(codec, device))) {
+                qCDebug(FFmpegVideoReceiverLog) << codec->name << "didn't open on" << ffmpegHardwareName(device);
+                continue;
             }
+            info.name = QString::fromUtf8(codec->name);
+            if (codec == standard) {
+                info.name += QStringLiteral(" (%1)").arg(ffmpegHardwareName(device));
+            }
+            info.hardware = true;
+            _framesComeLater = (device == AV_HWDEVICE_TYPE_MEDIACODEC);
+            break;
         }
     }
     if (!_decoder) {
-        _decoder = open(AV_HWDEVICE_TYPE_NONE);
+        if (!standard) {
+            return ffmpegTranslate("no decoder for %1")
+                .arg(QString::fromUtf8(avcodec_get_name(stream.codecpar->codec_id)));
+        }
+        info.name = QString::fromUtf8(standard->name);
+        _decoder = open(standard, AV_HWDEVICE_TYPE_NONE);
     }
     if (!_decoder) {
         return ffmpegTranslate("the %1 decoder didn't open").arg(info.name);
@@ -489,14 +605,20 @@ std::optional<QString> FFmpegStreamSession::_openDecoder(const AVStream& stream)
     return std::nullopt;
 }
 
-void FFmpegStreamSession::_deliverFrames()
+int FFmpegStreamSession::_deliverFrames()
 {
+    int delivered = 0;
     while (true) {
         FFmpegPointers::Frame frame(av_frame_alloc());
         if (!frame || (avcodec_receive_frame(_decoder.get(), frame.get()) < 0)) {
-            return;
+            return delivered;
         }
+        ++delivered;
         _framesDecoded.fetch_add(1);
+        if (frame->format == AV_PIX_FMT_MEDIACODEC) {
+            ffmpegKeepDecoder(*frame, _decoder);
+        }
+        FFmpegQtInternals::completeHardwareFrame(*_decoder, *frame, _hardwareFramesContext);
         _hardwareFrames.store(frame->hw_frames_ctx != nullptr);
         const int64_t timestamp = frame->best_effort_timestamp;
         const AVRational timeBase = _decoder->pkt_timebase;

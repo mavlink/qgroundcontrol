@@ -2,7 +2,7 @@
 
 Network video streams and USB cameras: their display, recording and statistics. Three receivers play video behind one
 interface, `VideoReceiver`: GStreamer's (`GstVideoReceiver`), Qt Multimedia's (`QtMultimediaVideoReceiver`) and the USB
-camera's (`UVCCameraController`). A desktop Linux build has a fourth, experimental one on FFmpeg
+camera's (`UVCCameraController`). A desktop Linux or Android build has a fourth, experimental one on FFmpeg
 (`FFmpegVideoReceiver`, [FFmpeg/README.md](FFmpeg/README.md)).
 
 This page is a map of the folders and the rules of the application layer. [GStreamer/README.md](GStreamer/README.md) is
@@ -35,7 +35,7 @@ the guide to the GStreamer backend.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
   `QMediaRecorder` that it and the USB camera record with, and `SharedVideoFrame`.
-- `FFmpeg/`: `FFmpegVideoReceiver`, experimental and desktop Linux only (`QGC_ENABLE_FFMPEG_VIDEO`): a stream
+- `FFmpeg/`: `FFmpegVideoReceiver`, experimental, on desktop Linux and Android (`QGC_ENABLE_FFMPEG_VIDEO`): a stream
   received directly with the FFmpeg libraries of the Qt kit, by choice (`VideoSettings::videoBackend`). Its
   `FFmpegStreamSession` reads and decodes, its `FFmpegStreamRecorder` records, and `FFmpegQtInternals` is its use of
   Qt's FFmpeg plugin implementation, which is Qt-internal.
@@ -60,7 +60,8 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
   which a custom build overrides to supply its own.
 - The backends include each other in one place: `UVC/` records with `QtMultimedia/QtVideoRecorder`.
 - With `QGC_ENABLE_GST_VIDEOSTREAMING` off, nothing of `GStreamer/` is built, and streams play through `QtMultimedia/`.
-- With `QGC_ENABLE_FFMPEG_VIDEO` off, and in every build but a desktop Linux one, nothing of `FFmpeg/` is built.
+- With `QGC_ENABLE_FFMPEG_VIDEO` off, and in every build but a desktop Linux or Android one, nothing of `FFmpeg/` is
+  built.
 - Inside `GStreamer/`, [its README](GStreamer/README.md#source-code-architecture) says which way the includes point.
 
 ## Sources and tiles
@@ -183,7 +184,7 @@ the counters that `Qml/VideoStreamStatsGroup.qml` shows.
 - `cmake/GStreamer/`: how each platform's GStreamer SDK is found, downloaded and installed.
 - `#if` blocks in `GStreamer/Runtime/GStreamerEnvironment.cc` (the layout of each platform's install) and
   `UVC/UVCCameraController.cc`.
-- `FFmpeg/`: built for Linux only; its hardware decoders, VA-API and NVDEC, are those of Linux.
+- `FFmpeg/`: built for Linux and Android only; its hardware decoders are theirs: VA-API and NVDEC, and MediaCodec.
 
 ## Tests
 
