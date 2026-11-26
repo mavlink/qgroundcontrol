@@ -16,7 +16,6 @@
 
 #include "GstD3D12ContextBridge.h"
 #include "GstHwPathRegistry.h"
-#include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -267,7 +266,7 @@ public:
     }
 #endif
 
-    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, [[maybe_unused]] QVideoFrameTexturesUPtr& old) override
     {
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         if (rhi.backend() == QRhi::D3D11) {
@@ -275,21 +274,21 @@ public:
         }
 #endif
         if (!beginMap(rhi, QRhi::D3D12)) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
         if (!d3d12RhiSamples(_format.pixelFormat())) {
             QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: multi-plane D3D12Memory" << _format.pixelFormat()
                                                                                  << "can't be sampled by QRhi");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
         // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: a resource of another device
         // imports fine but renders corrupt.
         const auto* native = static_cast<const QRhiD3D12NativeHandles*>(rhi.nativeHandles());
         if (!native || !onDevice(_handles[0], native->dev)) {
             QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: decoder resource is not on QRhi's device — CPU fallback");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
-        return finishMap(rhi, old, _handles);
+        return importResolved(rhi, _handles);
     }
 
 private:
@@ -302,7 +301,7 @@ private:
         auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
         if (!buffer || !device || !context) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
         // One NV12/P010 resource holds every plane. Its Direct3D 11 view belongs to the memory, which keeps one per
         // device; none opens for a resource on another adapter, or one whose heap isn't shared.
@@ -314,26 +313,20 @@ private:
             QGC_HW_WARN_ONCE(GstD3D12Log,
                              "mapTextures: the decoder's resource can't be shared with QRhi's Direct3D 11 device "
                              "— CPU fallback");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
 
         ID3D11Texture2D* const picture =
             GstD3D11PictureCopy::copy(device, context, shared, 0, QRect(QPoint(0, 0), _format.frameSize()), old, 0);
         if (!picture) {
             QGC_HW_WARN_ONCE(GstD3D12Log, "mapTextures: CreateTexture2D for the picture copy failed");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+            return {};
         }
         _readFence = fence;
         _readValue = fence->signal(context);
 
-        const GstHwMapTail tail{.path = HwVideoBufferPath::D3D12,
-                                .frameSize = _format.frameSize(),
-                                .pixelFormat = _format.pixelFormat(),
-                                .log = &GstD3D12Log(),
-                                .successTag = "D3D12 on D3D11"};
         const std::array<ID3D11Texture2D*, GstHw::kMaxPlanes> planes{picture};
-        QVideoFrameTexturesUPtr textures =
-            GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, planes, 1);
+        QVideoFrameTexturesUPtr textures = importPlanes(rhi, planes, 1, "D3D12 on D3D11");
         picture->Release();
         return textures;
     }

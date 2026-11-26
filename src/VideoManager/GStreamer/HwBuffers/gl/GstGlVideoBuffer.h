@@ -16,6 +16,7 @@ public:
     /// @p sample is ref'd; the buffer keeps it alive until destruction.
     using GstHwVideoBuffer::GstHwVideoBuffer;
 
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::GlMemory; }
     QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 };

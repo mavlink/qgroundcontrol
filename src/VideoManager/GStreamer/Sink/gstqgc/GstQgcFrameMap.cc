@@ -13,8 +13,6 @@
 #include <QtMultimedia/QAbstractVideoBuffer>
 #include <QtMultimedia/QVideoFrame>
 
-#include "HwBuffers/common/GstHwFrameMapping.h"
-#include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)

@@ -5,6 +5,7 @@
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 
 #include "GstHwVideoBuffer.h"
+#include "GstQtDmaBufImport.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -27,6 +28,8 @@ public:
 
     bool isDmaBuf() const override { return true; }
 
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::DmaBuf; }
+
     MapData map(QVideoFrame::MapMode mode) override;
     QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
@@ -35,14 +38,7 @@ public:
     static constexpr int kMaxConsecutiveImportFailures = 30;
 
     /// How mapTextures() ended, for the disable latch.
-    enum class ImportOutcome
-    {
-        Imported,
-        NotImportable,  ///< Stopped before the driver was asked: by the QRhi mapping it, or by the frame's layout.
-        Rejected,       ///< The driver refused the frame.
-        Unrecoverable,  ///< The driver refused it in a way no later frame avoids (EGL_BAD_MATCH).
-        FdDupFailed,    ///< A plane's dma-buf fd could not be duplicated (EMFILE, EBADF): no fault of the driver's.
-    };
+    using ImportOutcome = GstQtDmaBufImport::ImportOutcome;
 
     /// True once an import failed in a way later frames can't avoid; cleared by resetCachedState().
     static bool importDisabled() noexcept;
@@ -63,10 +59,9 @@ public:
 private:
     /// The import itself; without textures, @p failure tells why when the driver refused or a dma-buf fd could not be
     /// duplicated.
-    QVideoFrameTexturesUPtr importFrame(QRhi& rhi, QVideoFrameTexturesUPtr& old, ImportOutcome& failure);
+    QVideoFrameTexturesUPtr importFrame(QRhi& rhi, ImportOutcome& failure);
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, GstBuffer* buffer, QVideoFrameTexturesUPtr& old,
-                                         ImportOutcome& failure);
+    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
 #endif
     QVideoFrameTexturesUPtr importGl(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
     /// Counts @p outcome in the run of failed imports of this frame's layout, which disables the path at

@@ -1,10 +1,13 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
+#include <memory>
 #include <private/qhwvideobuffer_p.h>
+#include <type_traits>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QSize>
@@ -37,13 +40,6 @@ QVideoFrameFormat withPixelFormat(const QVideoFrameFormat& format, QVideoFrameFo
 
 }  // namespace GstHw
 
-namespace GstHwPathTelemetry {
-
-/// Records a map failure for @p path and returns the empty bundle mapTextures() reports it with.
-QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
-
-}  // namespace GstHwPathTelemetry
-
 /// True the first time control reaches it, and the first time after each GstHw::rearmOnceLatches(). Each use has a
 /// latch of its own; in a template, one for each instantiation.
 #define QGC_HW_ONCE()                         \
@@ -60,6 +56,44 @@ QVideoFrameTexturesUPtr fail(HwVideoBufferPath path) noexcept;
         }                                     \
     } while (0)
 
+/// What keeps one frame's native textures valid while Qt samples them, and their handles, which Qt wraps
+/// (QVideoTextureHelper::createTexturesFromHandles()): the frame's sample, and what a path's subclass adds. The
+/// textures own it until Qt deletes them, so nothing it holds may be released before its destructor.
+class GstHwTextureHandles : public QVideoFrameTexturesHandles
+{
+public:
+    /// Takes over @p sample's reference.
+    explicit GstHwTextureHandles(GstSample* sample) noexcept
+        : _sample(sample)
+    {}
+
+    ~GstHwTextureHandles() override;
+
+    GstHwTextureHandles(const GstHwTextureHandles&) = delete;
+    GstHwTextureHandles& operator=(const GstHwTextureHandles&) = delete;
+
+    /// The native texture of @p plane, 0 for a plane without one, which then fails the whole import.
+    quint64 textureHandle(QRhi& rhi, int plane) override;
+
+    /// Sets @p plane's native texture: a GL name, an ID3D11Texture2D*, ID3D12Resource* or MTLTexture.
+    template <class Handle>
+    void setHandle(int plane, Handle handle) noexcept
+    {
+        if ((plane < 0) || (plane >= GstHw::kMaxPlanes)) {
+            return;
+        }
+        if constexpr (std::is_pointer_v<Handle>) {
+            _handles[std::size_t(plane)] = static_cast<quint64>(reinterpret_cast<quintptr>(handle));
+        } else {
+            _handles[std::size_t(plane)] = static_cast<quint64>(handle);
+        }
+    }
+
+private:
+    GstSample* _sample;
+    std::array<quint64, GstHw::kMaxPlanes> _handles{};
+};
+
 /// \brief Common base for GStreamer-backed QHwVideoBuffer subclasses.
 class GstHwVideoBuffer : public QHwVideoBuffer
 {
@@ -69,10 +103,13 @@ public:
 
     QVideoFrameFormat format() const override { return _format; }
 
-    /// The path's importTextures(). When that fails, Qt uploads map() instead; for a frame map() can't read either,
-    /// @p oldTextures comes back, so the picture shown before stays. Qt's texture pool deletes @p oldTextures at the
-    /// end of the frame, and its video material goes on sampling the last textures it got when a frame yields none
-    /// (QSGVideoMaterial::updateTextures()).
+    /// The GPU path this buffer imports through, which its timing and failures are counted for.
+    virtual HwVideoBufferPath path() const = 0;
+
+    /// The path's importTextures(), timed for the path's map time; a failure is counted for the path. When the import
+    /// fails, Qt uploads map() instead; for a frame map() can't read either, @p oldTextures comes back, so the picture
+    /// shown before stays. Qt's texture pool deletes @p oldTextures at the end of the frame, and its video material
+    /// goes on sampling the last textures it got when a frame yields none (QSGVideoMaterial::updateTextures()).
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) final;
 
     /// CPU view of the sample through gst_video_frame_map (e.g. GL memory downloads, DMABuf mmaps). Qt's
@@ -84,15 +121,22 @@ public:
     /// Streaming-thread sanity check on per-plane handles; failure routes to CPU memcpy.
     virtual bool validatePlaneHandles() const { return true; }
 
-    /// New sample ref for the texture bundle built in mapTextures(). The buffer keeps its own ref so map() and a
-    /// repeated mapTextures() (another window, QRhi re-creation) still find the sample; Qt keeps this frame alive
-    /// alongside the bundle anyway (QVideoFrameTextures::setSourceFrame), so no buffer is held longer.
+    /// New sample ref for the textures an import hands Qt. The buffer keeps its own ref so map() and a repeated
+    /// mapTextures() (another window, QRhi re-creation) still find the sample; Qt keeps this frame alive alongside the
+    /// textures anyway (QVideoFrameTextures::setSourceFrame), so no buffer is held longer.
     GstSample* refSample() noexcept { return _sample ? gst_sample_ref(_sample) : nullptr; }
 
 protected:
-    /// The frame's GPU import into @p rhi, on its thread; null when it fails. @p oldTextures is the bundle Qt's texture
-    /// pool replaces, which the import may reuse.
+    /// The frame's GPU import into @p rhi, on its thread; null when it fails, which mapTextures() counts.
+    /// @p oldTextures are the textures Qt's texture pool replaces, which mapTextures() hands back when the frame shows
+    /// nothing else: an import may read them, and take their handles only once its own textures exist.
     virtual QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) = 0;
+
+    /// Qt's textures of @p handles in @p rhi, for format(), which then own @p handles. Null when a plane doesn't
+    /// wrap, which is warned of on @p log once per path. @p successTag names the path in a line logged at its first
+    /// import.
+    QVideoFrameTexturesUPtr wrapTextures(QRhi& rhi, std::unique_ptr<GstHwTextureHandles> handles,
+                                         const QLoggingCategory& log, const char* successTag = nullptr) const;
 
     /// False for a frame whose memory can't be read as format() describes it: an external-OES frame (Qt would read it
     /// as RGBA8), or one whose format() advertises another pixel format than its memory holds (Qt would upload it in

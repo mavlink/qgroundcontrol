@@ -16,6 +16,9 @@ class QRhi;
 /// bindRhiContext(), renderDisplay(), imageTargetTexture2D() and destroyImageKHR() serve only the AHardwareBuffer path.
 namespace GstEglHelpers {
 
+/// The extension a DMABuf import needs to name a buffer's layout (its DRM modifier).
+inline constexpr char kDmaBufModifiersExt[] = "EGL_EXT_image_dma_buf_import_modifiers";
+
 /// Makes @p rhi's GL context current on the calling render thread (EGL/GL calls otherwise no-op into a foreign or null
 /// context) and returns it; nullptr when the QRhi exposes none or it can't be made current (a lost context).
 QOpenGLContext* bindRhiContext(QRhi& rhi);

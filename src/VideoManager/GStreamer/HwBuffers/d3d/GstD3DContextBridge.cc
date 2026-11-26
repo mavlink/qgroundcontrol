@@ -34,7 +34,7 @@ bool GstD3DContextBridge::snapshotBackendMatches()
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
     if (backend < 0) {
-        qCDebug(category()) << "QRhi snapshot not yet populated; will retry on next NEED_CONTEXT";
+        qCDebug(category()) << "QRhi snapshot not yet populated; will retry once it is";
         return false;
     }
     if ((backend != _qrhiBackend) && (backend != _secondQrhiBackend)) {
@@ -101,7 +101,7 @@ void GstD3DContextBridge::logAdapterMatch(gint64 expectedLuid, gpointer gstDevic
     if (actualLuid != expectedLuid) {
         qCWarning(category()).noquote() << apiName() << "bridge: gst device LUID mismatch — QRhi LUID=" << expectedLuid
                                         << "but wrapped device LUID=" << actualLuid
-                                        << "(zero-copy will appear corrupt; check NEED_CONTEXT race)";
+                                        << "(zero-copy will appear corrupt)";
         return;
     }
     qCInfo(category()).noquote() << apiName() << "bridge adapter LUID="

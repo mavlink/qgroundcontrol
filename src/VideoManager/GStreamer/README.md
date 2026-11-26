@@ -18,7 +18,8 @@ The backend is split into focused components, by folder:
 - `Pipeline/`: the receiver, its worker, sessions and branches.
 - `Sink/`: `QGCQVideoSinkController`, and in `Sink/gstqgc/` QGC's video sink `qgcqvideosink` with the bin around it.
 - `HwBuffers/`: the zero-copy GPU paths: the `HwBuffers` facade the other folders call, a folder for each path, and
-  `common/`, which the paths share.
+  `common/`, which the paths share. The other folders include `HwBuffers/HwBuffers.h` only: the folders below it are
+  include directories of the GStreamer library alone, and the facade includes what it shares of them by path.
 - `SelfTest/`: the boot self-test and the encoded samples it decodes and records (`SelfTest/Media/`).
 - `Platform/`: platform shims (`IOSPipe2Compat.c`) and the Android JNI state `GStreamer::mobile` keeps for GStreamer's Android plugins (`gst_android_jni.c`).
 
@@ -126,8 +127,7 @@ MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) ser
   and the video size, read from each frame the output's `QVideoSink` shows: its viewport (decoder padding and crop left
   out), turned as Qt presents it.
 - **Worker thread** (one per receiver, running its `GstReceiverWorker`): the reconnect logic, every change to the
-  pipeline, and its bus. A sync handler only does what can't wait: answers `NEED_CONTEXT`, selects the video streams,
-  and closes the valve in front of a branch that posted an `ERROR`, so the error stays out of the tee (a failed push
+  pipeline, and its bus. A sync handler only does what can't wait: selects the video streams, and closes the valve in front of a branch that posted an `ERROR`, so the error stays out of the tee (a failed push
   without an `ERROR` gets one posted at the branch's entrance, `TeeBranchHead::absorbFlowErrors()`). Everything else
   is popped on the worker, which a `QSocketNotifier` (`QWinEventNotifier` on Windows) on the bus's poll fd wakes up,
   as Qt's `QGstBusObserver` does.
@@ -233,7 +233,8 @@ it has no element factory.
   no crop meta: the decoders then crop a picture that starts off their texture's origin themselves, where the D3D
   paths would copy it from the origin. It asks for GL sync metas as upstream's Qt sink does, which has glcolorconvert end each
   frame with a sync point. The GL path leaves a frame's sync meta alone, since other consumers share the buffer: it
-  sets a sync point of its own, in a buffer its texture bundles hand on, and waits for it in Qt's context.
+  sets a sync point of its own, in a buffer each frame's textures hand on to the next once that one's exist, and
+  waits for it in Qt's context.
   `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
   does, e.g. to save CMA memory with 4K decoders on i.MX or Raspberry Pi.
 - **`QGCQVideoSinkController`** — GUI-thread companion that binds the sink to a `QVideoSink`, lets it deliver only
@@ -241,38 +242,51 @@ it has no element factory.
 
 ### `HwBuffers` — GPU paths
 
-Per-platform import of decoded GPU frames without a copy. Most paths wrap their native textures in
-`GstHwFrameTexturesBase : QVideoFrameTextures`; the DMABuf path hands its planes to Qt Multimedia's DMABuf importer
-(`dmabuf/GstQtDmaBufImport`, the only code using that private Qt API), or, when Qt Quick renders with Vulkan, imports
-them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
+Per-platform import of decoded GPU frames without a copy. A path hands Qt the native textures of a frame's planes
+(GL names, Direct3D resources, Metal textures) as a `GstHwTextureHandles`, which also holds what keeps them valid (the
+frame's sample, and what the path made of it) until Qt deletes the textures, and Qt wraps them
+(`QVideoTextureHelper::createTexturesFromHandles()`), as Qt's own hardware decoders do. The DMABuf path gets its
+handles from Qt Multimedia's DMABuf importer (`dmabuf/GstQtDmaBufImport`, the only code using that private Qt API), or,
+when Qt Quick renders with Vulkan, imports the planes as VkImages and wraps them itself, since QRhi must take them in
+the layout that keeps their contents (`dmabuf/GstDmaBufVulkanImport`):
 
 - **Platforms**: `dmabuf` (Linux/VA-API), `gl` (Linux, Android), `d3d` (D3D11/D3D12), `apple` (IOSurface), `android` (AHardwareBuffer).
 - **`HwPathDescriptor`**: each backend describes its path once (memory match, buffer construction, cache reset,
-  pool proposal, context bridge). `GstHwPathRegistry` lists the compiled ones in a constant array, and the factory
-  beside it, `makeHwVideoBuffer()`, selects the first path whose descriptor matches a frame's memory. The facade loops
-  over the list for bus messages, context queries, restarts and resets.
-- **`GstContextBridgeBase`**: GL, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
-  `NEED_CONTEXT` and context queries. Under a Direct3D 11
-  renderer the D3D12 bridge hands out a device of GStreamer's own on Qt's adapter instead. Qt's is the main window's
-  device: a VideoOutput popped out into its own window renders on that window's device, so on Direct3D11 its frames
-  take the CPU path. So do Direct3D frames a decoder allocated on another device before the bridge was primed, and
-  GLMemory frames from a GL context outside Qt's share group, which gst-gl creates for itself when no element was
-  handed the GL bridge's. The GL bridge limits gst-gl to the OpenGL API of Qt's context, desktop OpenGL or OpenGL ES:
-  gst-gl would otherwise create OpenGL ES contexts wherever EGL offers them, and EGL shares only within one API.
-  A bridge sets the context it answers a `NEED_CONTEXT` with on the pipeline of the element that asked, and the
-  pipeline hands it to the elements it is given later. An element that asked before Qt's device was known made a
-  device of its own, which its pipeline would hand on instead without asking again: when the scene graph publishes
-  Qt's device, the bridges give those pipelines their contexts. Elements built from then on use Qt's device; the one
-  that made its own keeps it until it is rebuilt. So each bridge also posts a `qgc-graphics-device-served` element
-  message on such a pipeline, and the session replaces a hardware decoder plugged by then (`DecodingBranch`): a
-  Direct3D 11 decoder left on its own device would have every frame copied through the CPU for as long as the stream
-  ran. When GStreamer reports the Direct3D device a bridge shares removed (its devices' `device-removed-reason`, from
-  1.26: a driver reset or update), the bridges and the paths' caches are dropped as they are when Qt tears its scene
-  graph down, and every pipeline a bridge gave its device gets a `qgc-graphics-device-lost` element message. Its
-  receiver then restarts the stream with a new video sink, so that nothing holds the removed device: Direct3D 12
-  creates no new device on an adapter while the removed one is referenced, which would keep Qt from recovering. The
-  new pipeline gets the device Qt renders with by then, or the one it publishes later. Until a bridge has a device
-  again, a decoder that fails is not taken out of autoplug: none works on a removed device.
+  pool proposal, context bridge). `GstHwPathRegistry` lists the compiled ones in a constant array. The facade's
+  factory, `makeHwVideoBuffer()`, selects the first path whose descriptor matches a frame's memory, and the facade
+  loops over the list for the pipelines' contexts, restarts and resets. A path's import (`importTextures()`) is
+  called in one place, `GstHwVideoBuffer::mapTextures()`, which times it for the path's map time and counts its
+  failures.
+- **`QGCRhiCapture`** publishes the device Qt Quick renders the main window with: its render thread reads the
+  native handles of the scene graph's `QRhi` each time the scene graph is initialised (`sceneGraphInitialized`), and
+  withdraws them when it is invalidated; other threads read only the snapshot's atomics. That includes each
+  initialisation after a device loss or after the window released its graphics: Qt's threaded render loop then emits
+  the signal before it sets `QQuickWindow::rhi()`, so the `QRhi` is read from the window's renderer interface
+  (`QSGRendererInterface::RhiResource`), which has it already. Under Qt Quick's software backend there is no `QRhi`,
+  and nothing is published.
+- **`GstContextBridgeBase`**: GL, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements. Under a
+  Direct3D 11 renderer the D3D12 bridge hands out a device of GStreamer's own on Qt's adapter instead, and only where
+  Qt's device opens its frames. Qt's is the main window's device: a VideoOutput popped out into its own window renders
+  on that window's device, so on Direct3D11 its frames take the CPU path. So do Direct3D frames a decoder allocated on
+  another device before the bridge was primed, and GLMemory frames from a GL context outside Qt's share group, which
+  gst-gl creates for itself when no element was handed the GL bridge's. The GL bridge limits gst-gl to the OpenGL API of
+  Qt's context, desktop OpenGL or OpenGL ES: gst-gl would otherwise create OpenGL ES contexts wherever EGL offers them,
+  and EGL shares only within one API. `PipelineSession` has the bridges set their contexts on its pipeline before it
+  adds any element (`HwBuffers::provideGraphicsContexts()`), and the pipeline hands them to every element it is given,
+  which then asks nobody. A bridge primes at the first pipeline; the Direct3D bridges can't before the scene graph
+  publishes Qt's device. An element of a pipeline built before then made a device of its own, which its pipeline would
+  hand on instead: when the scene graph publishes Qt's device, the bridges give those pipelines their contexts. Elements
+  built from then on use Qt's device; the one that made its own keeps it until it is rebuilt. So each bridge also posts
+  a `qgc-graphics-device-served` element message on such a pipeline, and the session replaces a hardware decoder plugged
+  by then (`DecodingBranch`): a Direct3D 11 decoder left on its own device would have every frame copied through the CPU
+  for as long as the stream ran. When GStreamer reports the Direct3D device a bridge shares removed (its devices'
+  `device-removed-reason`, from 1.26: a driver reset or update), the bridges and the paths' caches are dropped as they
+  are when Qt tears its scene graph down, and every pipeline a bridge gave its device, which is every pipeline built
+  since it primed, gets a `qgc-graphics-device-lost` element message. Its receiver then restarts the stream with a new
+  video sink, so that nothing holds the removed device: Direct3D 12 creates no new device on an adapter while the
+  removed one is referenced, which would keep Qt from recovering. The new pipeline gets the device Qt renders with by
+  then, or the one it publishes later. Until a bridge has a device again, a decoder that fails is not taken out of
+  autoplug: none works on a removed device.
 - **Failed imports**: when a path's import (`importTextures()`) fails on the render thread, Qt uploads the frame's
   CPU map (`GstHwVideoBuffer::map()`) instead. For a frame without one (a tiled DMABuf, an external-OES frame, one
   advertised in another format for its import, memory `gst_video_frame_map()` refuses), `mapTextures()` hands Qt back
@@ -305,8 +319,8 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   (Qt 6.12.0, GStreamer 1.28.8, Intel Arc, 875 frames). To repeat the run, set `GST_ENABLE_D3D12_DEBUG=1` along
   with `QSG_RHI_DEBUG_LAYER=1`: the layer can't be turned on for a device GStreamer already created, and Qt then
   falls back to WARP.
-- **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
-  diagnostics. A receiver's `GPU path live` and `GPU path stats` debug lines pair its own sink's `GstQgc::sinkStats()` with
+- **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, sync waits, and the map time of
+  every path) for fallback diagnostics. A receiver's `GPU path live` and `GPU path stats` debug lines pair its own sink's `GstQgc::sinkStats()` with
   them, both counted from when its session took the sink. Reading never resets the counters: each reader reports the
   change since its own snapshot, so receivers don't take each other's counts.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
@@ -652,7 +666,7 @@ Each class has a line here; the comment on the class in its header says more.
 | `GstSourceFactoryTest` | Unit | The source bin built for each URI, without a stream. |
 | `RtpPacketCounterTest` | Unit | `RtpPacketCounter` on sequence numbers, timestamps and arrival times given by hand. |
 | `GstHwBuffersTest` | Unit | What the `HwBuffers` paths share, without a pipeline or a GPU. |
-| `GstHwFrameTexturesTest` | Unit | The frame-texture bundles a GPU path hands Qt, on the Null QRhi. Built with any GPU path. |
+| `GstHwFrameTexturesTest` | Unit | The textures a GPU path hands Qt through its native handles, on the Null QRhi. Built with any GPU path. |
 | `GstHwBuffersDmaBufTest` | Unit | The DMABuf path without a pipeline or a GPU. Built with the path. |
 | `GstQgcSinkHarnessTest` | Unit | The sink bin under GstHarness, bound to a `QVideoSink`. |
 | `GstSourceFactoryHarnessTest` | Unit | The parameter-set gate under GstHarness: on NAL units pushed by hand, and on a real H.264/H.265 depayloader. |
@@ -667,6 +681,7 @@ Each class has a line here; the comment on the class in its header says more.
 | `GstHwBuffersD3DTest` | Integration, GPU | The Direct3D 11 and 12 paths fed by pipelines. Built on Windows with either path. |
 | `GstHwBuffersIOSurfaceTest` | Integration, GPU | The IOSurface path fed by VideoToolbox. Built on macOS with the path. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | GPU frames imported into a GL QRhi and read back (xcb with `xcb_egl`). Built on Linux with the DMABuf or the GLMemory path. |
+| `GstHwBuffersRhiCaptureTest` | Integration | `QGCRhiCapture` under a real scene graph (OpenGL, threaded render loop): the device is published again when the scene graph is initialised anew. Built on Linux with a GPU path. |
 | `GstHwBuffersVulkanReadbackTest` | Integration, GPU | DMABuf frames imported into a Vulkan QRhi (xcb). Built with the DMABuf import under Vulkan. |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end: states, display, restarts, decoders and screenshots. |
 | `GstVideoReceiverReconnectTest` | Integration | How `GstVideoReceiver` gives up on, or reconnects to, a stream that fails or stops, and what it reports of a stuck worker. |

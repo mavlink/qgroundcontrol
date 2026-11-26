@@ -14,6 +14,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
+#include "HwBuffers/HwBuffers.h"
 #include "gstqgc/GstQgcSinkBin.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/gstqgcqvideosink.h"
@@ -60,7 +61,8 @@ inline GStreamer::GstElementPtr makeVideoSink(bool gpuZeroCopy = false)
 }
 
 /// Launches @p upstream (GstTest::TestPipeline::launchInto()) into a new sink bin built with @p config, and returns the
-/// bin; empty, with pipeline.error() saying why, when either fails.
+/// bin; empty, with pipeline.error() saying why, when either fails. The pipeline holds the graphics contexts a
+/// receiver's pipeline gets.
 inline GstQgc::SinkBin launchIntoSinkBin(GstTest::TestPipeline& pipeline, const QString& upstream,
                                          const GstQgc::SinkBinConfig& config = {})
 {
@@ -68,6 +70,7 @@ inline GstQgc::SinkBin launchIntoSinkBin(GstTest::TestPipeline& pipeline, const 
     if (!pipeline.launchInto(upstream, sinkBin.bin.get())) {
         return {};
     }
+    HwBuffers::provideGraphicsContexts(pipeline.get());
     return sinkBin;
 }
 

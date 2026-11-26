@@ -22,8 +22,6 @@ namespace GstHw {
 
 namespace {
 
-constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
-
 // Qt's importer binds one EGLImage per format plane, so compressed layouts and those with auxiliary planes (CCS, DCC,
 // AFBC, UBWC) can't be imported. Plain vendor tilings can: the modifier goes with each plane.
 bool modifierImportable(guint64 modifier) noexcept
@@ -133,7 +131,7 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, Qt
     }
 
     const auto dpy = static_cast<EGLDisplay>(display);
-    if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
+    if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, GstEglHelpers::kDmaBufModifiersExt)) {
         qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (no DMABuf import display, or no "
                                      "EGL_EXT_image_dma_buf_import_modifiers); offering no DMA_DRM caps";
         return std::string();

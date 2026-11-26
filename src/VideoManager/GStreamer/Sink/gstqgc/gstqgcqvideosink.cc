@@ -22,7 +22,6 @@
 #include "GstQgcVideoFormats.h"
 #include "GstScoped.h"
 #include "HwBuffers/HwBuffers.h"
-#include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 #include <gst/gl/gstglsyncmeta.h>
@@ -556,14 +555,9 @@ static gboolean gst_qgc_q_video_sink_propose_allocation(GstBaseSink* bsink, GstQ
     return TRUE;
 }
 
-// Answer CONTEXT (gst.gl.GLDisplay/app_context, Vulkan, D3D devices) synchronously so upstream GPU elements share Qt's
-// RHI device; the bus NEED_CONTEXT fallback races state changes. ALLOCATION reaches propose_allocation via the parent.
+// ALLOCATION reaches propose_allocation via the parent.
 static gboolean gst_qgc_q_video_sink_query(GstBaseSink* bsink, GstQuery* query)
 {
-    if ((GST_QUERY_TYPE(query) == GST_QUERY_CONTEXT) &&
-        HwBuffers::answerSinkBinContextQuery(query, GST_ELEMENT(bsink))) {
-        return TRUE;
-    }
     if (GST_QUERY_TYPE(query) == GST_QUERY_ACCEPT_CAPS) {
         // GstBaseSink wants a subset of get_caps, which rejects caps without a pixel-aspect-ratio (square pixels).
         GstCaps* caps = nullptr;

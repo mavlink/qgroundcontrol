@@ -34,8 +34,8 @@ QGC_LOGGING_CATEGORY(GstDmaBufVulkanLog, "Video.GStreamer.HwBuffers.GstDmaBufVul
 namespace {
 
 using GstDmaBufVulkan::DeviceFns;
-using GstDmaBufVulkan::ImportFailure;
 using GstHw::kMaxPlanes;
+using GstQtDmaBufImport::ImportOutcome;
 
 constexpr char kDeviceExtensionsVariable[] = "QT_VULKAN_DEVICE_EXTENSIONS";
 
@@ -381,7 +381,7 @@ std::function<void()> deferredRelease(QRhi& rhi, VkQueue queue, const OwnedPlane
 /// plane's dma-buf, imported for it alone: a dedicated allocation, which some drivers require of dma-buf images.
 /// Why it could not, with the cause logged once: the driver refused, or the plane's fd could not be duplicated. The
 /// caller destroys what @p image and @p memory hold.
-std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDevice,
+std::optional<ImportOutcome> importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDevice,
                                          const GstQtDmaBufImport::Plane& plane, VkFormat format, QSize size,
                                          VkImage& image, VkDeviceMemory& memory)
 {
@@ -419,7 +419,7 @@ std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkP
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
                          "vkCreateImage failed (VkResult=" << result << "format=" << format << "modifier=" << Qt::hex
                                                            << modifierInfo.drmFormatModifier << Qt::dec << ")");
-        return ImportFailure::Rejected;
+        return ImportOutcome::Rejected;
     }
 
     // Vulkan owns an imported fd from a successful allocation on; until then it is ours to close.
@@ -429,7 +429,7 @@ std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkP
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, "duplicating a plane's dma-buf fd failed: errno"
                                                  << dupError << qUtf8Printable(qt_error_string(dupError))
                                                  << "(the driver refused nothing)");
-        return ImportFailure::FdDupFailed;
+        return ImportOutcome::FdDupFailed;
     }
     VkMemoryFdPropertiesKHR fdProperties = {};
     fdProperties.sType = VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR;
@@ -470,11 +470,11 @@ std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkP
         ::close(fd);
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
                          "importing a dma-buf as image memory failed (VkResult=" << allocated << ")");
-        return ImportFailure::Rejected;
+        return ImportOutcome::Rejected;
     }
     if (const VkResult bound = fns.bindImageMemory(dev, image, memory, 0); bound != VK_SUCCESS) {
         QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, "vkBindImageMemory failed (VkResult=" << bound << ")");
-        return ImportFailure::Rejected;
+        return ImportOutcome::Rejected;
     }
     return std::nullopt;
 }
@@ -578,23 +578,23 @@ void resetCachedState() noexcept
     s_deviceFnsGeneration.fetch_add(1, std::memory_order_acq_rel);
 }
 
-QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVideoFrameTexturesUPtr& old,
+QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi,
                                        std::span<const GstQtDmaBufImport::Plane> planes,
                                        QVideoFrameFormat::PixelFormat pixelFormat, QSize frameSize, GstBuffer* buffer,
-                                       ImportFailure& failure)
+                                       ImportOutcome& failure)
 {
-    failure = ImportFailure::NotImportable;
+    failure = ImportOutcome::NotImportable;
     const auto* handles = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
     const auto* description = QVideoTextureHelper::textureDescription(pixelFormat);
     // Another window's QRhi, whose device wasn't probed, may lack the extensions or the layouts.
     if (!handles || !handles->inst || (handles->dev == VK_NULL_HANDLE) || (handles->gfxQueue == VK_NULL_HANDLE) ||
         (handles->physDev != importDevice()) || !description || planes.empty() ||
         (std::ssize(planes) != description->nplanes) || (planes.size() > std::size_t(kMaxPlanes))) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
     const DeviceFns& fns = deviceFns(*handles->inst, handles->dev);
     if (!fns.ok()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
     OwnedPlanes owned;
@@ -615,7 +615,7 @@ QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVid
             imported = false;
             break;
         }
-        if (const std::optional<ImportFailure> planeFailure =
+        if (const std::optional<ImportOutcome> planeFailure =
                 importPlane(fns, handles->dev, handles->physDev, planes[i], kPlaneFormats[format].vkFormat,
                             description->rhiPlaneSize(frameSize, int(i), &rhi), owned.images[i], owned.memories[i])) {
             failure = *planeFailure;
@@ -624,39 +624,37 @@ QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVid
     }
     if (!imported) {
         destroyPlanes(owned);
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
-    const GstHwMapTail tail{.path = HwVideoBufferPath::DmaBuf,
-                            .frameSize = frameSize,
-                            .pixelFormat = pixelFormat,
-                            .log = &GstDmaBufVulkanLog(),
-                            .preflight = false,
-                            .successTag = "DMABuf->Vulkan"};
-    bool adopted = false;
-    QVideoFrameTexturesUPtr textures =
-        GstHwFrameTexturesBase::finishMap<GstVulkanOwnedFrameTextures>(source, rhi, old, tail, nullptr, [&] {
-            auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(
-                &rhi, frameSize, pixelFormat, std::span<const VkImage>(owned.images.data(), planes.size()));
-            if (bundle->allPlanesValid()) {
-                owned.buffer = gst_buffer_ref(buffer);
-                bundle->adoptVulkanResources(deferredRelease(rhi, handles->gfxQueue, owned));
-                adopted = true;
-            }
-            return bundle;
-        });
-    if (!adopted) {
+    auto textures = std::make_unique<GstVulkanOwnedFrameTextures>(
+        &rhi, frameSize, pixelFormat, std::span<const VkImage>(owned.images.data(), planes.size()));
+    // NV12 chroma can fail while luma succeeds; a partial set would render with missing planes.
+    if (!textures->allPlanesValid()) {
+        textures.reset();
         destroyPlanes(owned);
+        GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
+                                                 GstHwPathTelemetry::HwFallbackReason::MapFailed);
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
+                         "QRhiTexture::createFrom failed (format=" << int(pixelFormat) << "size=" << frameSize << ")");
+        return {};
+    }
+    owned.buffer = gst_buffer_ref(buffer);
+    textures->adoptVulkanResources(deferredRelease(rhi, handles->gfxQueue, owned));
+    textures->holdSample(source.refSample());
+    if (QGC_HW_ONCE()) {
+        qCInfo(GstDmaBufVulkanLog) << "First DMABuf->Vulkan zero-copy mapTextures success: size=" << frameSize
+                                   << "format=" << int(pixelFormat) << "planes=" << planes.size();
     }
     return textures;
 }
 
 #ifdef QGC_UNITTEST_BUILD
-std::optional<ImportFailure> importPlaneForTest(const DeviceFns& fns, const GstQtDmaBufImport::Plane& plane)
+std::optional<ImportOutcome> importPlaneForTest(const DeviceFns& fns, const GstQtDmaBufImport::Plane& plane)
 {
     OwnedPlanes owned;
     owned.fns = fns;
-    const std::optional<ImportFailure> failure =
+    const std::optional<ImportOutcome> failure =
         importPlane(fns, VK_NULL_HANDLE, VK_NULL_HANDLE, plane, VK_FORMAT_R8_UNORM, QSize(64, 64), owned.images[0],
                     owned.memories[0]);
     destroyPlanes(owned);
@@ -677,5 +675,65 @@ std::function<void()> deferredReleaseForTest(QRhi& rhi, const DeviceFns& fns, Gs
 #endif
 
 }  // namespace GstDmaBufVulkan
+
+GstVulkanOwnedFrameTextures::GstVulkanOwnedFrameTextures(QRhi* rhi, QSize size,
+                                                         QVideoFrameFormat::PixelFormat pixelFormat,
+                                                         std::span<const VkImage> images)
+    : _count(static_cast<int>((std::min) (images.size(), std::size_t(kMaxPlanes))))
+{
+    const auto* description = QVideoTextureHelper::textureDescription(pixelFormat);
+    if (!description) {
+        return;
+    }
+    for (int i = 0; i < _count; ++i) {
+        const VkImage image = images[std::size_t(i)];
+        if (image == VK_NULL_HANDLE) {
+            continue;
+        }
+        // A substituted format would misread the image.
+        auto& texture = _textures[std::size_t(i)];
+        texture.reset(rhi->newTexture(
+            description->rhiTextureFormat(i, rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable),
+            description->rhiPlaneSize(size, i, rhi), 1));
+        // QRhi's first barrier transitions from this layout; UNDEFINED would let the driver discard the imported
+        // contents, GENERAL preserves them.
+        if (texture && !texture->createFrom({quint64(image), VK_IMAGE_LAYOUT_GENERAL})) {
+            texture.reset();
+        }
+    }
+}
+
+GstVulkanOwnedFrameTextures::~GstVulkanOwnedFrameTextures()
+{
+    // The QRhiTextures must be gone before the VkImages they wrap.
+    for (auto& texture : _textures) {
+        texture.reset();
+    }
+    if (_release) {
+        _release();
+    }
+    if (_sample) {
+        gst_sample_unref(_sample);
+    }
+}
+
+QRhiTexture* GstVulkanOwnedFrameTextures::texture(uint plane) const
+{
+    return (plane < static_cast<uint>(_count)) ? _textures[plane].get() : nullptr;
+}
+
+bool GstVulkanOwnedFrameTextures::allPlanesValid() const noexcept
+{
+    return (_count > 0) && std::all_of(_textures.begin(), _textures.begin() + _count,
+                                       [](const std::unique_ptr<QRhiTexture>& texture) { return texture != nullptr; });
+}
+
+void GstVulkanOwnedFrameTextures::holdSample(GstSample* sample) noexcept
+{
+    if (_sample) {
+        gst_sample_unref(_sample);
+    }
+    _sample = sample;
+}
 
 #endif  // QGC_HAS_GST_DMABUF_VULKAN_IMPORT

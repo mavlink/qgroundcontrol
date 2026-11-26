@@ -56,12 +56,20 @@ target_sources(
 )
 
 # Sink, so that "gstqgc/GstQgcTestSupport.h" resolves as the sink's headers do in the sources
-# ("gstqgc/GstQgcSinkPolicy.h").
+# ("gstqgc/GstQgcSinkPolicy.h"). The GPU paths' folders, which only the GStreamer library has on its include path: the
+# tests look into the paths.
+set(_qgc_gst_hwbuffers_dir "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/HwBuffers")
 target_include_directories(
     QGCUnitTests
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Sink
+        ${_qgc_gst_hwbuffers_dir}/common
+        ${_qgc_gst_hwbuffers_dir}/dmabuf
+        ${_qgc_gst_hwbuffers_dir}/gl
+        ${_qgc_gst_hwbuffers_dir}/d3d
+        ${_qgc_gst_hwbuffers_dir}/apple
+        ${_qgc_gst_hwbuffers_dir}/android
 )
 
 # The encoded stream the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by
@@ -192,6 +200,21 @@ if(LINUX AND (_qgc_test_dmabuf OR _qgc_test_glmemory))
     add_qgc_test(
         GstHwBuffersGlReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
                                                                            "QT_XCB_GL_INTEGRATION=set:xcb_egl"
+    )
+endif()
+
+if(LINUX AND _qgc_test_any_gpu_path)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwBuffersRhiCaptureTest.cc
+            HwBuffers/GstHwBuffersRhiCaptureTest.h
+    )
+    # Qt Quick on OpenGL, on the offscreen platform with GLX (Mesa llvmpipe), as VideoStreamOutputRenderTest has it,
+    # and with the threaded render loop, whose order of initialisation the test needs.
+    add_qgc_test(
+        GstHwBuffersRhiCaptureTest LABELS Integration NoSanitizer
+        ENV_MODIFICATION "QT_QUICK_BACKEND=set:rhi" "QSG_RHI_BACKEND=set:opengl" "QSG_RENDER_LOOP=set:threaded"
     )
 endif()
 

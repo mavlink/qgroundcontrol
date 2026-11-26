@@ -900,7 +900,7 @@ void GstHwBuffersDmaBufTest::_testDmaBufVulkanRequestsDeviceExtensions()
 
 void GstHwBuffersDmaBufTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
 {
-    using GstDmaBufVulkan::ImportFailure;
+    using GstQtDmaBufImport::ImportOutcome;
     const auto resetGuard = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
     const GstDmaBufVulkan::DeviceFns fns = standInVulkanDeviceFns();
     // No open descriptor has this number: fcntl() fails on it with EBADF, as it fails on any with EMFILE once the
@@ -913,7 +913,7 @@ void GstHwBuffersDmaBufTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
     s_standInVulkanDevice.refusesImages = true;
     expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBufVulkan", QtWarningMsg,
                      QRegularExpression(QStringLiteral("vkCreateImage failed")));
-    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::Rejected);
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportOutcome::Rejected);
     verifyExpectedLogMessage();
 
     // Warned about once, with the errno, until the scene graph is recreated.
@@ -921,9 +921,9 @@ void GstHwBuffersDmaBufTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
     s_standInVulkanDevice.restart();
     expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBufVulkan", QtWarningMsg,
                      QRegularExpression(QStringLiteral("dma-buf fd failed: errno %1 ").arg(EBADF)));
-    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::FdDupFailed);
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportOutcome::FdDupFailed);
     verifyExpectedLogMessage();
-    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportFailure::FdDupFailed);
+    QVERIFY(GstDmaBufVulkan::importPlaneForTest(fns, plane) == ImportOutcome::FdDupFailed);
 
     // And counted apart from the imports a driver refused.
     GstVideoInfo info;

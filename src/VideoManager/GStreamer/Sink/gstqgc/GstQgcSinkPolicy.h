@@ -23,7 +23,7 @@ enum class RenderBackend
 struct RenderTarget
 {
     RenderBackend backend = RenderBackend::Unknown;
-    /// Qt's OpenGL is known to run on EGL (QGCRhiCapture::qtEglDisplay()), so GStreamer's EGLImages (DMABuf,
+    /// Qt's OpenGL is known to run on EGL (HwBuffers::qtEglDisplay()), so GStreamer's EGLImages (DMABuf,
     /// AHardwareBuffer) can use its display. False for GLX, WGL and CGL, and while that isn't known yet (Android before
     /// the scene graph runs).
     bool egl = false;
@@ -38,7 +38,7 @@ struct RenderTarget
 };
 
 /// What qgcqvideosink renders into now; callable from any thread. The backend of QGC's scene graph once it runs
-/// (QGCRhiCapture); before that, the API Qt Quick was asked to use, as last read on the GUI thread.
+/// (HwBuffers::renderBackend()); before that, the API Qt Quick was asked to use, as last read on the GUI thread.
 RenderTarget currentRenderTarget();
 
 const char* toString(RenderBackend backend) noexcept;

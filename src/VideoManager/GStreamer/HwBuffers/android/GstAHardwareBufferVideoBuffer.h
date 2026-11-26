@@ -21,6 +21,7 @@ public:
     GstAHardwareBufferVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
                                   EGLDisplay eglDisplay);
 
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::AHardwareBuffer; }
     QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 

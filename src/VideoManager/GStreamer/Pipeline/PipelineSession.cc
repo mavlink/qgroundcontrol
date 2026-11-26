@@ -166,8 +166,8 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     qCDebug(GstVideoReceiverLog) << "Starting" << _settings.redactedUri << "lowLatency" << _settings.lowLatency;
 
     _pipeline = GStreamer::adoptFloating(gst_pipeline_new(_dotDumper.pipelineName().constData()));
-    // The sync handler is in place before anything can post: the context bridges must see NEED_CONTEXT, which upstream
-    // queries during PAUSED->PLAYING.
+    // Before any element is added: the pipeline hands its contexts to each element it is given.
+    HwBuffers::provideGraphicsContexts(_pipeline.get());
     _bus.attach(
         _pipeline.get(), [this](GstMessage* message) { return _onBusSync(message); },
         [this](GstMessage* message) {
@@ -538,11 +538,6 @@ void PipelineSession::_logLatency()
 
 GstBusSyncReply PipelineSession::_onBusSync(GstMessage* message)
 {
-    // The context bridges answer NEED_CONTEXT synchronously and consume (unref) the requests they handle.
-    if (HwBuffers::onBusSyncMessage(message) == GST_BUS_DROP) {
-        return GST_BUS_DROP;
-    }
-
     if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
         // Closed now, before the failing element returns its flow error: the valve reports OK for a push that fails
         // after drop was set, which keeps the error out of the tee and so out of the other branch.

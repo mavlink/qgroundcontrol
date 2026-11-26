@@ -4,6 +4,7 @@
 
 #include <QtCore/QRunnable>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
 
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
@@ -146,10 +147,25 @@ void populateSnapshot(QRhi* rhi)
     }
 }
 
-/// Publishes the native device handles of @p window's QRhi. Render thread, where rhi() is valid.
+/// The QRhi @p window's scene graph renders with; null under the software backend. Qt's threaded render loop emits
+/// sceneGraphInitialized before it sets QQuickWindow::rhi() when it initialises a scene graph again, after a device
+/// loss or once the window's graphics were released (QSGRenderThread::ensureRhi(), Qt 6.12); its render context has
+/// the QRhi by then, and the renderer interface reads it from there. Render thread.
+QRhi* rhiOf(QQuickWindow* window)
+{
+    if (QRhi* const rhi = window->rhi()) {
+        return rhi;
+    }
+    const QSGRendererInterface* const rendererInterface = window->rendererInterface();
+    return rendererInterface
+               ? static_cast<QRhi*>(rendererInterface->getResource(window, QSGRendererInterface::RhiResource))
+               : nullptr;
+}
+
+/// Publishes the native device handles of @p window's QRhi. Render thread, where the QRhi is valid.
 void publishRhi(QQuickWindow* window)
 {
-    populateSnapshot(window->rhi());
+    populateSnapshot(rhiOf(window));
 }
 
 /// Withdraws the published QRhi's handles, and drops the native GPU handles that wrap its device or context.
@@ -217,8 +233,8 @@ void connectWindow(QQuickWindow* window)
     }
 
     s_connectedWindow.store(window, std::memory_order_release);
-    // sceneGraphInitialized fires on the render thread where rhi() is valid — snapshot native device pointers here so
-    // bus-sync callbacks never deref QRhi* cross-thread.
+    // sceneGraphInitialized fires on the render thread, at each initialisation of the scene graph: snapshot native
+    // device pointers there so bus-sync callbacks never deref QRhi* cross-thread.
     s_connections[0] = QObject::connect(
         window, &QQuickWindow::sceneGraphInitialized, window, [window]() { publishRhi(window); }, Qt::DirectConnection);
     s_connections[1] =

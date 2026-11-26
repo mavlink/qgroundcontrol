@@ -14,7 +14,6 @@
 #include "GstD3D11ContextBridge.h"
 #include "GstD3D11PictureCopy.h"
 #include "GstHwPathRegistry.h"
-#include "GstHwPathTelemetry.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
 
@@ -122,7 +121,7 @@ public:
     {
         GstBuffer* const buffer = beginMap(rhi, QRhi::D3D11);
         if (!buffer) {
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
+            return {};
         }
         // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: QRhi can't sample another
         // device's texture.
@@ -131,7 +130,7 @@ public:
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
         if (!device || !context || !GstD3D11PictureCopy::onDevice(_handles[0], device)) {
             QGC_HW_WARN_ONCE(GstD3D11Log, "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
-            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
+            return {};
         }
 
         std::array<ID3D11Texture2D*, kMaxPlanes> planes = _handles;
@@ -149,12 +148,12 @@ public:
             }
             copies[std::size_t(i)] = copyPicture(rhi, device, context, buffer, i, old);
             if (!copies[std::size_t(i)]) {
-                return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
+                return {};
             }
             planes[std::size_t(i)] = copies[std::size_t(i)];
         }
 
-        return finishMap(rhi, old, planes);
+        return importResolved(rhi, planes);
     }
 
 private:

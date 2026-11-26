@@ -3,15 +3,14 @@
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 
 #include <algorithm>
-
-#include "GstD3DVideoBufferCommon.h"
+#include <rhi/qrhi.h>
 
 namespace GstD3D11PictureCopy {
 
 namespace {
 
-// Tags the textures copy() creates: only those may be overwritten by a later frame. A previous bundle can also wrap a
-// texture GStreamer still owns.
+// Tags the textures copy() creates: only those may be overwritten by a later frame. The textures a frame replaces can
+// also wrap a texture GStreamer still owns.
 constexpr GUID kCopyTargetTag = {0x6d3c1f52, 0x8a4e, 0x4b7f, {0x9c, 0x21, 0x5e, 0x0b, 0x7a, 0x93, 0xd4, 0x18}};
 constexpr quint8 kCopyTargetMark = 1;
 
@@ -28,11 +27,13 @@ UINT textureExtent(int extent, DXGI_FORMAT format)
     return static_cast<UINT>(hasEvenSizes(format) ? ((extent + 1) & ~1) : extent);
 }
 
-/// @p old's plane @p plane texture, AddRef'd, when it is a texture copy() made with @p desc's layout.
+/// @p old's plane @p plane texture, AddRef'd, when it is a texture copy() made with @p desc's layout. Read through the
+/// texture QRhi wraps: @p old keeps its handles until the new import has its textures.
 ID3D11Texture2D* reusableTarget(const QVideoFrameTexturesUPtr& old, int plane, const D3D11_TEXTURE2D_DESC& desc)
 {
-    auto* previous = dynamic_cast<GstD3DVideoBufferCommon::FrameTextures<ID3D11Texture2D>*>(old.get());
-    ID3D11Texture2D* texture = previous ? previous->handle(plane) : nullptr;
+    QRhiTexture* const wrapper = old ? old->texture(static_cast<uint>(plane)) : nullptr;
+    auto* const texture =
+        wrapper ? reinterpret_cast<ID3D11Texture2D*>(static_cast<quintptr>(wrapper->nativeTexture().object)) : nullptr;
     if (!texture || !isCopyTarget(texture)) {
         return nullptr;
     }

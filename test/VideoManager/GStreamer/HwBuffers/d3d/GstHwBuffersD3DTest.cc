@@ -16,7 +16,6 @@
 #include "GStreamer.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
-#include "GstHwFrameTexturesBase.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwVideoBuffer.h"
 #include "HwBuffers/GstHwImageReadback.h"
@@ -179,17 +178,8 @@ void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadE
     result.sink = result.pipeline.element("sink");
     QVERIFY2(result.sink, "Could not find appsink");
 
-    if (bridgePath != HwVideoBufferPath::None) {
-        const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(result.pipeline.get()));
-        QVERIFY2(bus, "Could not get D3D test pipeline bus");
-        gst_bus_set_sync_handler(
-            bus.get(),
-            [](GstBus*, GstMessage* message, gpointer userData) -> GstBusSyncReply {
-                GstContextBridgeBase* const bridge =
-                    d3dContextBridge(static_cast<HwVideoBufferPath>(GPOINTER_TO_INT(userData)));
-                return bridge ? bridge->handleSyncMessage(message) : GST_BUS_PASS;
-            },
-            GINT_TO_POINTER(static_cast<int>(bridgePath)), nullptr);
+    if (GstContextBridgeBase* const bridge = d3dContextBridge(bridgePath)) {
+        bridge->provideContexts(result.pipeline.get());
     }
 
     if (!result.pipeline.play()) {
@@ -260,8 +250,7 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
         QVERIFY2(textures->texture(static_cast<uint>(plane)),
                  qPrintable(QStringLiteral("D3D QRhi texture bundle has no plane %1 texture").arg(plane)));
     }
-    QVERIFY2(dynamic_cast<GstHwFrameTexturesBase*>(textures.get()),
-             "D3D texture bundle does not use the HW frame texture base");
+    QVERIFY2(textures->takeHandles(), "D3D textures are not Qt's wraps of the frame's native handles");
 }
 
 /// The caps filter after the upload: @p api's memory in @p outputFormat, converted by d3d12convert first when it

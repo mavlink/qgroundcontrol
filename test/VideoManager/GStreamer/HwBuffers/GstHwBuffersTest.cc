@@ -113,12 +113,16 @@ const HwPathDescriptor kTestBridgePathB = {
     .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
 };
 
-/// True when @p element holds a context of bridge A's type that a TestContextBridge built.
-bool holdsTestBridgeContext(GstElement* element)
+/// True when @p element holds a context of @p contextType that a TestContextBridge built.
+bool holdsTestBridgeContext(GstElement* element, const char* contextType = kTestContextTypeA[0])
 {
-    const GStreamer::GstContextPtr context =
-        GStreamer::adoptContext(gst_element_get_context(element, kTestContextTypeA[0]));
+    const GStreamer::GstContextPtr context = GStreamer::adoptContext(gst_element_get_context(element, contextType));
     return context && gst_structure_has_field(gst_context_get_structure(context.get()), "object");
+}
+
+GStreamer::GstElementPtr newPipeline()
+{
+    return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
 }
 
 /// Takes the next element message off @p pipeline's bus: whether it is the pipeline's own message @p name.
@@ -156,68 +160,41 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
     });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA, &kTestBridgePathB});
 
-    const GStreamer::GstElementPtr owner = GStreamer::makeElement("identity");
-    QVERIFY(owner);
-    GstElement* const element = owner.get();
-
-    // NEED_CONTEXT reaches the bridge owning the context type, and only that bridge primes.
-    GstMessage* needA = gst_message_new_need_context(GST_OBJECT(element), kTestContextTypeA[0]);
-    QCOMPARE(HwBuffers::onBusSyncMessage(needA), GST_BUS_DROP);
-    GstContext* deliveredA = gst_element_get_context(element, kTestContextTypeA[0]);
-    QVERIFY2(deliveredA, "Bridge A's context was not set on the requesting element");
-    gst_context_unref(deliveredA);
-    QCOMPARE(testBridgeA().primes, 1);
-    QCOMPARE(testBridgeB().primes, 0);
-
-    GstMessage* unknown = gst_message_new_need_context(GST_OBJECT(element), "qgc.test.context-unknown");
-    QCOMPARE(HwBuffers::onBusSyncMessage(unknown), GST_BUS_PASS);
-    gst_message_unref(unknown);
-
-    // A context query is answered through the same bridges; a primed bridge isn't primed again.
-    GstQuery* queryB = gst_query_new_context(kTestContextTypeB[0]);
-    QVERIFY(HwBuffers::answerSinkBinContextQuery(queryB));
-    GstContext* answeredB = nullptr;
-    gst_query_parse_context(queryB, &answeredB);
-    QVERIFY(answeredB);
-    QCOMPARE(QByteArray(gst_context_get_context_type(answeredB)), QByteArray(kTestContextTypeB[0]));
-    gst_query_unref(queryB);
-
-    GstQuery* queryA = gst_query_new_context(kTestContextTypeA[0]);
-    QVERIFY(HwBuffers::answerSinkBinContextQuery(queryA));
-    gst_query_unref(queryA);
+    // Every bridge sets its contexts on each new pipeline, and primes for the first only.
+    for (int i = 0; i < 2; ++i) {
+        const GStreamer::GstElementPtr pipeline = newPipeline();
+        HwBuffers::provideGraphicsContexts(pipeline.get());
+        QVERIFY(holdsTestBridgeContext(pipeline.get(), kTestContextTypeA[0]));
+        QVERIFY(holdsTestBridgeContext(pipeline.get(), kTestContextTypeB[0]));
+    }
     QCOMPARE(testBridgeA().primes, 1);
     QCOMPARE(testBridgeB().primes, 1);
-
-    GstQuery* unknownQuery = gst_query_new_context("qgc.test.context-unknown");
-    QVERIFY(!HwBuffers::answerSinkBinContextQuery(unknownQuery));
-    gst_query_unref(unknownQuery);
 }
 
-void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
+void GstHwBuffersTest::_testPipelineHandsBridgeContextsToItsElements()
 {
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
 
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    const GStreamer::GstElementPtr pipeline = newPipeline();
+    HwBuffers::provideGraphicsContexts(pipeline.get());
+
+    // A bin built before it joins the pipeline, as the sink bin is, and an element added to it later, as decodebin3
+    // plugs a decoder: each takes the device from the pipeline, without asking the bridge.
     GstElement* const bin = gst_bin_new(nullptr);
+    GstElement* const builtFirst = addIdentityTo(bin);
+    QVERIFY(builtFirst);
     QVERIFY(gst_bin_add(GST_BIN(pipeline.get()), bin));
-    GstElement* const asking = addIdentityTo(bin);
+    GstElement* const pluggedLater = addIdentityTo(bin);
     GstElement* const sibling = addIdentityTo(pipeline.get());
-    QVERIFY(asking && sibling);
-
-    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
-             GST_BUS_DROP);
-    QVERIFY(holdsTestBridgeContext(asking));
+    QVERIFY(pluggedLater && sibling);
+    QVERIFY(holdsTestBridgeContext(builtFirst));
+    QVERIFY(holdsTestBridgeContext(pluggedLater));
     QVERIFY(holdsTestBridgeContext(sibling));
+    QCOMPARE(testBridgeA().primes, 1);
 
-    // An element the pipeline is given later takes its device from the pipeline, without asking the bridge.
-    GstElement* const later = addIdentityTo(pipeline.get());
-    QVERIFY(later);
-    QVERIFY(holdsTestBridgeContext(later));
-
-    // Served when it asked, the pipeline holds nothing on another device: its owner has nothing to replace.
+    // Served when it was built, the pipeline holds nothing on another device: its owner has nothing to replace.
     QVERIFY(!servedLate(pipeline.get()));
 }
 
@@ -228,16 +205,14 @@ void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
 
-    const GStreamer::GstElementPtr pipeline =
-        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    const GStreamer::GstElementPtr pipeline = newPipeline();
+    HwBuffers::provideGraphicsContexts(pipeline.get());
+    QVERIFY(!holdsTestBridgeContext(pipeline.get()));
     GstElement* const asking = addIdentityTo(pipeline.get());
     QVERIFY(asking);
 
-    // Left without an answer, an element makes a device of its own and posts it, which its pipeline keeps for the
-    // elements it is given later.
-    GstMessage* const unanswered = gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0]);
-    QCOMPARE(HwBuffers::onBusSyncMessage(unanswered), GST_BUS_PASS);
-    gst_message_unref(unanswered);
+    // Left without the bridge's device, an element makes a device of its own and posts it, which its pipeline keeps
+    // for the elements it is given later.
     GstContext* const ownDevice = gst_context_new(kTestContextTypeA[0], TRUE);
     gst_element_set_context(asking, ownDevice);
     QVERIFY(gst_element_post_message(asking, gst_message_new_have_context(GST_OBJECT(asking), ownDevice)));
@@ -266,21 +241,11 @@ void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
 
-    const auto newPipeline = [] {
-        return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
-    };
-    // One pipeline got the device for a NEED_CONTEXT, one through a context query its sink answered, one not at all.
-    const GStreamer::GstElementPtr asked = newPipeline();
-    GstElement* const asking = addIdentityTo(asked.get());
-    QVERIFY(asking);
-    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
-             GST_BUS_DROP);
-    const GStreamer::GstElementPtr queried = newPipeline();
-    GstElement* const sink = addIdentityTo(queried.get());
-    QVERIFY(sink);
-    GstQuery* const query = gst_query_new_context(kTestContextTypeA[0]);
-    QVERIFY(HwBuffers::answerSinkBinContextQuery(query, sink));
-    gst_query_unref(query);
+    // Two pipelines got the device when they were built, one did not.
+    const GStreamer::GstElementPtr first = newPipeline();
+    HwBuffers::provideGraphicsContexts(first.get());
+    const GStreamer::GstElementPtr second = newPipeline();
+    HwBuffers::provideGraphicsContexts(second.get());
     const GStreamer::GstElementPtr bystander = newPipeline();
     QVERIFY(!HwBuffers::graphicsDeviceLost());
 
@@ -289,8 +254,8 @@ void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
     QVERIFY(HwBuffers::graphicsDeviceLost());
     // The GUI thread drops the device and tells the pipelines, which hold elements that work on it.
     QTRY_COMPARE_WITH_TIMEOUT(testBridgeA().clears, 1, TestTimeout::mediumMs());
-    QVERIFY(nextElementMessageIs(asked.get(), HwBuffers::kGraphicsDeviceLostMessage));
-    QVERIFY(nextElementMessageIs(queried.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(nextElementMessageIs(first.get(), HwBuffers::kGraphicsDeviceLostMessage));
+    QVERIFY(nextElementMessageIs(second.get(), HwBuffers::kGraphicsDeviceLostMessage));
     QVERIFY(!nextElementMessageIs(bystander.get(), HwBuffers::kGraphicsDeviceLostMessage));
 
     // Lost until the bridge has a device again.
@@ -340,6 +305,8 @@ public:
     TestableHwVideoBuffer(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat fmt)
         : GstHwVideoBuffer(sample, info, std::move(fmt))
     {}
+
+    HwVideoBufferPath path() const override { return HwVideoBufferPath::GlMemory; }
 
     /// Always fails, like a GPU import the active QRhi rejects.
     QVideoFrameTexturesUPtr importTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
@@ -468,7 +435,7 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
     auto hw = std::make_unique<TestableHwVideoBuffer>(
         sample.get(), info, QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::Format_BGRA8888));
     sample.reset();
-    // A bundle from an earlier successful import takes its own sample ref; the CPU view must survive that.
+    // The textures of an earlier successful import take their own sample ref; the CPU view must survive that.
     gst_sample_unref(hw->refSample());
     QVideoFrame frame(std::move(hw));
 

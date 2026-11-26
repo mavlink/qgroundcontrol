@@ -14,16 +14,12 @@
 #include <private/qhwvideobuffer_p.h>
 #include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
-#include <span>
 
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
 #include "GstD3DContextBridge.h"
-#include "GstHwFrameTexturesBase.h"
-#include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 
 /// Shared scaffolding for D3D11 / D3D12 zero-copy QHwVideoBuffer wrappers.
@@ -83,8 +79,8 @@ int resolvePlanes(GstBuffer* buffer, Api& api, PlaneResourceGuard<typename Api::
             return 0;
         }
         auto* d3dmem = reinterpret_cast<Memory*>(mem);
-        // gst-d3d may land on an isolated device when NEED_CONTEXT was preempted; sampling a foreign-device resource
-        // from QRhi corrupts silently.
+        // gst-d3d makes a device of its own in a pipeline built before the bridge had Qt's; sampling a foreign-device
+        // resource from QRhi corrupts silently.
         if (i == 0) {
             // currentDevice() is transfer-full — unref on every branch to avoid UAF after reset().
             Device* bridgeDev = Api::bridgeDevice();
@@ -94,7 +90,7 @@ int resolvePlanes(GstBuffer* buffer, Api& api, PlaneResourceGuard<typename Api::
                 gst_object_unref(bridgeDev);
                 QGC_HW_WARN_ONCE(Api::log, "resolve:" << Api::kMemoryName << "on foreign device (bridge LUID="
                                                       << bridgeLuid << "buffer LUID=" << bufLuid
-                                                      << "); bridge missed NEED_CONTEXT race — rejecting frame");
+                                                      << "); not the bridge's device — rejecting frame");
                 return 0;
             }
             if (bridgeDev) {
@@ -125,90 +121,39 @@ int resolvePlanes(GstBuffer* buffer, Api& api, PlaneResourceGuard<typename Api::
     return memCount;
 }
 
-/// Wraps an array of D3D native handles (ID3D11Texture2D*/ID3D12Resource*) as QRhi-importable textures; releases them
-/// in the dtor, so the caller must own a fresh ref before constructing.
+/// One frame's Direct3D resources (ID3D11Texture2D*/ID3D12Resource*), one reference each, as the native handles of its
+/// planes: QRhi wraps them in place, and they are released with the handles.
 template <class HandleT>
-class FrameTextures final : public GstHwFrameTexturesBase
+class TextureHandles final : public GstHwTextureHandles
 {
 public:
-    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                  std::array<HandleT*, kMaxPlanes> handles, int count)
-        : _handles(handles)
-    {
-        wrapPlanes(rhi, size, pixelFormat,
-                   std::span<HandleT* const>(_handles.data(), std::size_t(std::clamp(count, 0, kMaxPlanes))));
-    }
-
-    ~FrameTextures() override
+    /// AddRefs the first @p count of @p resources.
+    TextureHandles(GstSample* sample, const std::array<HandleT*, kMaxPlanes>& resources, int count)
+        : GstHwTextureHandles(sample)
+        , _resources(resources)
+        , _count(std::clamp(count, 0, kMaxPlanes))
     {
         for (int i = 0; i < _count; ++i) {
-            if (_handles[i])
-                _handles[i]->Release();
+            if (_resources[std::size_t(i)]) {
+                _resources[std::size_t(i)]->AddRef();
+            }
+            setHandle(i, _resources[std::size_t(i)]);
         }
     }
 
-    /// The native resource plane @p plane wraps; null past the bundle's planes.
-    HandleT* handle(int plane) const noexcept { return (plane >= 0 && plane < _count) ? _handles[plane] : nullptr; }
+    ~TextureHandles() override
+    {
+        for (int i = 0; i < _count; ++i) {
+            if (_resources[std::size_t(i)]) {
+                _resources[std::size_t(i)]->Release();
+            }
+        }
+    }
 
 private:
-    std::array<HandleT*, kMaxPlanes> _handles;
+    std::array<HandleT*, kMaxPlanes> _resources;
+    int _count;
 };
-
-/// Shared D3D11/D3D12 render-thread tail run after the streaming-thread resolve: aliases a single NV12/P010 resource
-/// across its planes, then reuses the prior bundle when it wraps the same handles or builds a fresh one over AddRef'd
-/// handles. `HandleT` is deduced from the resolved handle array (ID3D11Texture2D / ID3D12Resource).
-template <class HandleT>
-QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, QVideoFrameTexturesUPtr& old,
-                                            const GstHwMapTail& tail,
-                                            const std::array<HandleT*, kMaxPlanes>& resolvedHandles, int resolvedCount)
-{
-    using BundleT = FrameTextures<HandleT>;
-
-    const auto* desc = QVideoTextureHelper::textureDescription(tail.pixelFormat);
-    if (!desc || desc->nplanes <= 0) {
-        return GstHwPathTelemetry::fail(tail.path);
-    }
-
-    const int textureCount = (std::min) (desc->nplanes, kMaxPlanes);
-    if (resolvedCount <= 0 || resolvedCount > kMaxPlanes) {
-        return GstHwPathTelemetry::fail(tail.path);
-    }
-
-    std::array<HandleT*, kMaxPlanes> handles{};
-    for (int i = 0; i < (std::min) (resolvedCount, textureCount); ++i) {
-        handles[i] = resolvedHandles[i];
-    }
-
-    if (resolvedCount < textureCount) {
-        // D3D NV12/P010 output is one texture, which Qt samples the chroma of through a two-channel view.
-        using Description = QVideoTextureHelper::TextureDescription;
-        const bool chromaIsTwoChannel =
-            (desc->textureFormat[1] == Description::RG_8) || (desc->textureFormat[1] == Description::RG_16);
-        if (resolvedCount != 1 || !handles[0] || !chromaIsTwoChannel) {
-            return GstHwPathTelemetry::fail(tail.path);
-        }
-        for (int i = resolvedCount; i < textureCount; ++i) {
-            handles[i] = handles[0];
-        }
-    }
-
-    // Reuse-eligible when the handles are identical: a decoder's pool and a path's copy targets rotate a stable set of
-    // resources, so the existing QRhiTexture views sample the new frame.
-    return GstHwFrameTexturesBase::finishMap<BundleT>(
-        self, rhi, old, tail,
-        [&](BundleT& prev) {
-            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat,
-                                      std::span<HandleT* const>(handles.data(), std::size_t(textureCount)));
-        },
-        [&] {
-            // The bundle owns these AddRef'd refs; the buffer dtor releases the originals independently.
-            for (int i = 0; i < textureCount; ++i) {
-                if (handles[i])
-                    handles[i]->AddRef();
-            }
-            return std::make_unique<BundleT>(&rhi, tail.frameSize, tail.pixelFormat, handles, textureCount);
-        });
-}
 
 /// The D3D11/D3D12 QHwVideoBuffer shell: the planes resolvePlanes() resolved on the streaming thread (AddRef'd, and
 /// released with the buffer), their check before import, and the start and end of mapTextures(). Each API's buffer
@@ -227,6 +172,8 @@ public:
             }
         }
     }
+
+    HwVideoBufferPath path() const override { return _path; }
 
     bool validatePlaneHandles() const override
     {
@@ -276,16 +223,41 @@ protected:
         return buffer;
     }
 
-    /// Imports @p planes, the resolved planes or copies of them, through mapResolvedTextures().
-    QVideoFrameTexturesUPtr finishMap(QRhi& rhi, QVideoFrameTexturesUPtr& old,
-                                      const std::array<Handle*, kMaxPlanes>& planes)
+    /// Imports the first @p count of @p planes, the resolved planes or copies of them: one NV12/P010 resource stands
+    /// for each of its planes, which Qt samples the chroma of through a two-channel view. @p successTag names the
+    /// import in the line logged at its first success.
+    template <class HandleT>
+    QVideoFrameTexturesUPtr importPlanes(QRhi& rhi, const std::array<HandleT*, kMaxPlanes>& planes, int count,
+                                         const char* successTag)
     {
-        const GstHwMapTail tail{.path = _path,
-                                .frameSize = _format.frameSize(),
-                                .pixelFormat = _format.pixelFormat(),
-                                .log = &Resolver::log(),
-                                .successTag = GstHw::toString(_path)};
-        return mapResolvedTextures(*this, rhi, old, tail, planes, _count);
+        const auto* desc = QVideoTextureHelper::textureDescription(_format.pixelFormat());
+        if (!desc || (desc->nplanes <= 0) || (count <= 0) || (count > kMaxPlanes)) {
+            return {};
+        }
+        const int textureCount = (std::min) (desc->nplanes, kMaxPlanes);
+        std::array<HandleT*, kMaxPlanes> handles{};
+        for (int i = 0; i < (std::min) (count, textureCount); ++i) {
+            handles[std::size_t(i)] = planes[std::size_t(i)];
+        }
+        if (count < textureCount) {
+            using Description = QVideoTextureHelper::TextureDescription;
+            const bool chromaIsTwoChannel =
+                (desc->textureFormat[1] == Description::RG_8) || (desc->textureFormat[1] == Description::RG_16);
+            if ((count != 1) || !handles[0] || !chromaIsTwoChannel) {
+                return {};
+            }
+            for (int i = count; i < textureCount; ++i) {
+                handles[std::size_t(i)] = handles[0];
+            }
+        }
+        return wrapTextures(rhi, std::make_unique<TextureHandles<HandleT>>(refSample(), handles, textureCount),
+                            Resolver::log(), successTag);
+    }
+
+    /// Imports the resolved planes, or copies of them in @p planes.
+    QVideoFrameTexturesUPtr importResolved(QRhi& rhi, const std::array<Handle*, kMaxPlanes>& planes)
+    {
+        return importPlanes(rhi, planes, _count, GstHw::toString(_path));
     }
 
     std::array<Handle*, kMaxPlanes> _handles{};

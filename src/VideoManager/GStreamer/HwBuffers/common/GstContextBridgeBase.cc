@@ -9,38 +9,10 @@
 
 #include "HwBuffers.h"
 
-namespace {
-
-/// The bin at the top of @p element's hierarchy, a pipeline for an element that posts on a bus; @p element itself
-/// when it has no parent.
-GStreamer::GstElementPtr topLevelBinOf(GstElement* element)
-{
-    GStreamer::GstObjectPtr top = GStreamer::adoptObject(GST_OBJECT(gst_object_ref(element)));
-    while (GStreamer::GstObjectPtr parent = GStreamer::adoptObject(gst_object_get_parent(top.get()))) {
-        top = std::move(parent);
-    }
-    return GStreamer::adoptElement(GST_ELEMENT(top.release()));
-}
-
-}  // namespace
-
 void GstContextBridgeBase::WeakRefDeleter::operator()(GWeakRef* ref) const noexcept
 {
     g_weak_ref_clear(ref);
     delete ref;
-}
-
-const char* GstContextBridgeBase::matchContextType(const char* type) const
-{
-    if (!type) {
-        return nullptr;
-    }
-    for (const char* const known : _contextTypes) {
-        if (g_strcmp0(type, known) == 0) {
-            return known;
-        }
-    }
-    return nullptr;
 }
 
 bool GstContextBridgeBase::primeIfNeededLocked()
@@ -123,52 +95,13 @@ void GstContextBridgeBase::noteDeviceRemoved()
     }
 }
 
-void GstContextBridgeBase::giveContexts(const std::vector<GStreamer::GstElementPtr>& topLevelBins)
-{
-    for (const GStreamer::GstElementPtr& bin : topLevelBins) {
-        bool given = false;
-        for (const char* const contextType : _contextTypes) {
-            if (const GStreamer::GstContextPtr context = makeContext(contextType)) {
-                gst_element_set_context(bin.get(), context.get());
-                given = true;
-                qCDebug(category()) << "Provided" << _apiName << contextType << "context to"
-                                    << GST_ELEMENT_NAME(bin.get()) << "which asked before the bridge was primed";
-            }
-        }
-        if (given) {
-            // An element that has a device ignores the context: only the bin's owner can replace it.
-            (void) gst_element_post_message(
-                bin.get(), gst_message_new_element(GST_OBJECT(bin.get()),
-                                                   gst_structure_new_empty(HwBuffers::kGraphicsDeviceServedMessage)));
-        }
-    }
-}
-
-GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextType, GstElement* topLevelBin,
-                                                           bool mayWait)
+GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextType)
 {
     GStreamer::GstObjectPtr object;
-    // Released, and served, without the mutex.
-    std::vector<GStreamer::GstElementPtr> released;
-    std::vector<GStreamer::GstElementPtr> bins;
     {
         QMutexLocker lock(&_mutex);
-        const bool wasPrimed = _primed;
-        if (!primeIfNeededLocked()) {
-            if (topLevelBin && mayWait) {
-                rememberLocked(_waiting, topLevelBin, released);
-            }
-            return nullptr;
-        }
-        if (!wasPrimed) {
-            bins = takeWaitingLocked(released);
-        }
-        if (topLevelBin) {
-            rememberLocked(_served, topLevelBin, released);
-        }
         object = GStreamer::adoptObject(refObject(contextType));
     }
-    giveContexts(bins);
     if (!object) {
         return nullptr;
     }
@@ -176,60 +109,54 @@ GStreamer::GstContextPtr GstContextBridgeBase::makeContext(const char* contextTy
     return GStreamer::adoptContext(buildContext(contextType, object.get()));
 }
 
-GstBusSyncReply GstContextBridgeBase::handleSyncMessage(GstMessage* message)
+bool GstContextBridgeBase::setContexts(GstElement* bin)
 {
-    if (GST_MESSAGE_TYPE(message) != GST_MESSAGE_NEED_CONTEXT) {
-        return GST_BUS_PASS;
+    bool given = false;
+    for (const char* const contextType : _contextTypes) {
+        if (const GStreamer::GstContextPtr context = makeContext(contextType)) {
+            gst_element_set_context(bin, context.get());
+            given = true;
+        }
     }
-    const gchar* contextType = nullptr;
-    if (!gst_message_parse_context_type(message, &contextType)) {
-        return GST_BUS_PASS;
-    }
-    const char* matched = matchContextType(contextType);
-    if (!matched) {
-        return GST_BUS_PASS;
-    }
-    GstElement* element = GST_ELEMENT(GST_MESSAGE_SRC(message));
-    if (!element) {
-        return GST_BUS_PASS;
-    }
-
-    const GStreamer::GstElementPtr topLevelBin = topLevelBinOf(element);
-    const GStreamer::GstContextPtr context = makeContext(matched, topLevelBin.get(), /*mayWait=*/true);
-    if (!context) {
-        return GST_BUS_PASS;
-    }
-    // The bin sets it on @p element and on every other element it holds or is given later.
-    gst_element_set_context(topLevelBin.get(), context.get());
-    qCDebug(category()) << "Provided" << _apiName << matched << "context to" << GST_ELEMENT_NAME(topLevelBin.get())
-                        << "for" << GST_ELEMENT_NAME(element);
-    // `element` is borrowed from the message, so the message must outlive its last use.
-    gst_message_unref(message);
-    return GST_BUS_DROP;
+    return given;
 }
 
-bool GstContextBridgeBase::answerContextQuery(GstQuery* query, GstElement* asker)
+void GstContextBridgeBase::giveContexts(const std::vector<GStreamer::GstElementPtr>& topLevelBins)
 {
-    if (!query || GST_QUERY_TYPE(query) != GST_QUERY_CONTEXT) {
-        return false;
+    for (const GStreamer::GstElementPtr& bin : topLevelBins) {
+        if (!setContexts(bin.get())) {
+            continue;
+        }
+        qCDebug(category()) << "Provided" << _apiName << "contexts to" << GST_ELEMENT_NAME(bin.get())
+                            << "which was built before the bridge was primed";
+        // An element that has a device ignores the context: only the bin's owner can replace it.
+        (void) gst_element_post_message(
+            bin.get(), gst_message_new_element(GST_OBJECT(bin.get()),
+                                               gst_structure_new_empty(HwBuffers::kGraphicsDeviceServedMessage)));
     }
-    const gchar* contextType = nullptr;
-    if (!gst_query_parse_context_type(query, &contextType)) {
-        return false;
-    }
-    const char* matched = matchContextType(contextType);
-    if (!matched) {
-        return false;
-    }
+}
 
-    // The element that asks takes the device from the answer, without a NEED_CONTEXT that would name its pipeline.
-    const GStreamer::GstElementPtr topLevelBin = asker ? topLevelBinOf(asker) : nullptr;
-    const GStreamer::GstContextPtr context = makeContext(matched, topLevelBin.get());
-    if (!context) {
-        return false;
+void GstContextBridgeBase::provideContexts(GstElement* pipeline)
+{
+    // Released, and served, without the mutex.
+    std::vector<GStreamer::GstElementPtr> released;
+    std::vector<GStreamer::GstElementPtr> waiting;
+    {
+        QMutexLocker lock(&_mutex);
+        const bool wasPrimed = _primed;
+        if (!primeIfNeededLocked()) {
+            rememberLocked(_waiting, pipeline, released);
+            return;
+        }
+        if (!wasPrimed) {
+            waiting = takeWaitingLocked(released);
+        }
+        rememberLocked(_served, pipeline, released);
     }
-    gst_query_set_context(query, context.get());
-    return true;
+    giveContexts(waiting);
+    if (setContexts(pipeline)) {
+        qCDebug(category()) << "Provided" << _apiName << "contexts to" << GST_ELEMENT_NAME(pipeline);
+    }
 }
 
 bool GstContextBridgeBase::prime()

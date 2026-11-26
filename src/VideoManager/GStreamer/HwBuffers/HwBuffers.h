@@ -1,25 +1,46 @@
 #pragma once
 
-/// Umbrella header / public facade for the HwBuffers subsystem; per-platform bridges stay internal.
+/// The HwBuffers facade: all that the other folders use of the GPU paths, the same in every build and free of EGL and
+/// Qt-private headers. The folders below HwBuffers/ are include directories of the GStreamer library alone, so the
+/// headers this one shares are included by their path from here.
 
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
+#include <memory>
 
 #include <QtCore/QString>
 #include <QtCore/qglobal.h>
+#include <QtMultimedia/QVideoFrameFormat>
 
+#include "common/GstHwFrameMapping.h"   // GstHw::FrameMapping, the CPU frame map
+#include "common/GstHwPathTelemetry.h"  // the GPU path statistics
+#include "common/GstHwTypes.h"          // HwVideoBufferPath, HwVideoBufferContext
+#include "common/GstHwVideoInfo.h"      // GstHw::dmaDrmAwareVideoInfo()
+#include "dmabuf/GstDmaDrmCaps.h"       // the DMA_DRM sink caps, with the DMABuf path only
+
+class QHwVideoBuffer;
 class QQuickWindow;
 
-// Free of EGL/Qt-private headers, and the same in every build but for the path registry, which a build without a GPU
-// path leaves out; GstHwVideoBuffer.h (Qt-private) is included where needed.
-#include "GstHwPathRegistry.h"  // makeHwVideoBuffer, HwResolvedPathCache
-#include "GstHwPathTelemetry.h"
-#include "GstHwTypes.h"
+/// Per-stream GPU path cache, keyed to a caps epoch. Once a sample validated on a path, makeHwVideoBuffer() tries that
+/// path's descriptors first; an allocator no path imports skips GPU selection altogether. Reset on set_caps.
+struct HwResolvedPathCache
+{
+    HwVideoBufferPath path = HwVideoBufferPath::None;
+    bool validated = false;                     // path resolved by a prior validated sample this epoch
+    GType unmatchedAllocator = G_TYPE_INVALID;  // allocator no compiled path imports; its frames go straight to the CPU
+    bool validationFailureLogged = false;       // one warning per epoch for buffers that fail plane-handle validation
+};
+
+/// Selects the zero-copy QHwVideoBuffer for @p buffer; returns nullptr when no GPU path matches (CPU fallback). The
+/// GstSample the buffer holds is only created once a path matches. Defined only in builds with a GPU path.
+std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
+                                                  QVideoFrameFormat format, const HwVideoBufferContext& context,
+                                                  HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache = nullptr);
 
 namespace HwBuffers {
 
-/// Name of the element message a context bridge posts on a pipeline it gives the device Qt renders with after an
-/// element of the pipeline had asked for one in vain: what was built meanwhile works on another device, and keeps it.
+/// Name of the element message a context bridge posts on a pipeline built before the device Qt renders with was known,
+/// once it gives the pipeline that device: what was built meanwhile may work on another device, and keeps it.
 inline constexpr char kGraphicsDeviceServedMessage[] = "qgc-graphics-device-served";
 
 /// Name of the element message onGraphicsDeviceRemoved() posts on the pipelines a context bridge gave its device,
@@ -27,12 +48,14 @@ inline constexpr char kGraphicsDeviceServedMessage[] = "qgc-graphics-device-serv
 /// references that keep the device's successor from being created.
 inline constexpr char kGraphicsDeviceLostMessage[] = "qgc-graphics-device-lost";
 
-// noexcept marks what GStreamer's C callbacks call straight into (a bus sync handler, qgcqvideosink's vfuncs): no
-// exception may unwind through those, so one thrown here, such as a failed allocation, ends the process on purpose.
+// noexcept marks what GStreamer's C callbacks call straight into (qgcqvideosink's vfuncs): no exception may unwind
+// through those, so one thrown here, such as a failed allocation, ends the process on purpose.
 
-/// For a receiver's bus sync handler: the context bridges answer NEED_CONTEXT. GST_BUS_DROP means @p msg was consumed
-/// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
-GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
+/// For a receiver's new pipeline, before any element is added: the context bridges set their contexts on @p pipeline,
+/// which hands them to every element it is given, so the GPU elements work on the device Qt renders with. A bridge
+/// that can't yet waits for Qt's device and gives them then (kGraphicsDeviceServedMessage). No-op when no GPU path is
+/// compiled.
+void provideGraphicsContexts(GstElement* pipeline);
 
 /// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
 /// stream, so only for scene-graph teardown, window swaps and device loss.
@@ -59,6 +82,14 @@ bool softwareRenderingRequested() noexcept;
 /// QRhi. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window);
 
+/// The QRhi::Implementation the scene graph renders with, as its render thread published it; -1 until it did, and
+/// always without a GPU path. Safe off the GUI thread.
+int renderBackend() noexcept;
+
+/// Qt's EGLDisplay once Qt's OpenGL is known to run on EGL, else null; always null without a GPU path. Safe off the
+/// GUI thread.
+void* qtEglDisplay() noexcept;
+
 /// What the DMABuf path imports with now, as HwVideoBufferContext::dmaBufImporter stores it: Qt's EGLDisplay
 /// (QGCRhiCapture::qtEglDisplay()), or, once Qt Quick renders with Vulkan, its VkPhysicalDevice when that device
 /// imports dma-bufs. Null when Qt renders without either or that isn't known yet, or no DMABuf path is compiled.
@@ -82,16 +113,12 @@ void setGraphicsDevicePublishedHandler(void (*handler)()) noexcept;
 /// in builds without both D3D paths. Safe off the GUI thread.
 bool d3d11OpensD3D12() noexcept;
 
-/// Synchronously answer GST_QUERY_CONTEXT through the GPU paths' context bridges; false -> let bus NEED_CONTEXT run.
-/// @p sink, the element the query reached, names the pipeline that gets the device this way.
-bool answerSinkBinContextQuery(GstQuery* query, GstElement* sink = nullptr) noexcept;
-
 /// Add a buffer pool on Qt's D3D11 device to an ALLOCATION query for caps in that memory, so the decoder allocates on
 /// the device the importer samples from. False for any other memory, or before the device bridge is primed.
 bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
                             guint minBuffers) noexcept;
 
-/// Process-wide render-time counters no sink can attribute (map failures, texture reuse, producer waits, fallback
+/// Process-wide render-time counters no sink can attribute (map failures, producer waits, fallback
 /// reasons, ...) accumulated since @p baseline, each printed only when nonzero. Reading never resets them, so every
 /// receiver can report its own window.
 QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline);

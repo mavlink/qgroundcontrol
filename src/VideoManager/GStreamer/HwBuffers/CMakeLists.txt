@@ -5,6 +5,20 @@
 
 include(GStreamer/Probe)
 
+# The paths' folders are this library's own. Everything else includes the facade by its path, HwBuffers/HwBuffers.h,
+# and the tests name the folders they look into themselves.
+target_include_directories(
+    QGCGStreamer
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/common
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf
+        ${CMAKE_CURRENT_SOURCE_DIR}/gl
+        ${CMAKE_CURRENT_SOURCE_DIR}/d3d
+        ${CMAKE_CURRENT_SOURCE_DIR}/apple
+        ${CMAKE_CURRENT_SOURCE_DIR}/android
+)
+
 # Private-Qt-free core (facade, telemetry, CPU frame mapping): compiled unconditionally so a CPU-only build (no GPU
 # path qualified) still links the base sources. Qt-private bits stay gated below.
 target_sources(
@@ -281,8 +295,8 @@ target_sources(
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc

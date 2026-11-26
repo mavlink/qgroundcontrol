@@ -93,13 +93,6 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/Sink
         ${CMAKE_CURRENT_SOURCE_DIR}/Sink/gstqgc
         ${CMAKE_CURRENT_SOURCE_DIR}/SelfTest
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/common
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/gl
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/d3d
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/apple
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/android
     PRIVATE ${CMAKE_BINARY_DIR}
 )
 

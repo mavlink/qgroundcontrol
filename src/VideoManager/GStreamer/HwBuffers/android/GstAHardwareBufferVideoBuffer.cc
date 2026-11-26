@@ -7,9 +7,9 @@
 #include <gst/android/gstandroid.h>
 #include <gst/gl/gstglsyncmeta.h>
 #include <gst/video/video.h>
+#include <memory>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
-#include <span>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QSize>
@@ -17,7 +17,7 @@
 #include <QtGui/QOpenGLFunctions>
 
 #include "GstEglHelpers.h"
-#include "GstHwFrameTexturesBase.h"
+#include "GstHwImportPreflight.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -62,28 +62,26 @@ void rearmImport()
     s_consecutiveImportFailures.store(0, std::memory_order_relaxed);
 }
 
-/// One frame's import, which the bundle owns: an EGLImage of the frame's AHardwareBuffer and the external-OES texture
-/// bound to it. The frame's sample, which the bundle holds too, keeps the buffer.
-class FrameTextures final : public GstHwFrameTexturesBase
+/// One frame's import, which the handles own: an EGLImage of the frame's AHardwareBuffer and the external-OES texture
+/// bound to it. The frame's sample, which the handles hold too, keeps the buffer. Qt wraps the texture as
+/// external-OES, as its Format_SamplerExternalOES asks on Android, else OES_EGL_image_external samples black on GLES2.
+class AhbTextureHandles final : public GstHwTextureHandles
 {
 public:
-    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, EGLDisplay display,
-                  EGLImageKHR image, GLuint name)
-        : _display(display)
+    AhbTextureHandles(GstSample* sample, QRhi* rhi, EGLDisplay display, EGLImageKHR image, GLuint name)
+        : GstHwTextureHandles(sample)
+        , _rhi(rhi)
+        , _display(display)
         , _image(image)
         , _name(name)
     {
-        // ExternalOES: bind GL_TEXTURE_EXTERNAL_OES + emit SamplerExternalOES, else OES_EGL_image_external samples
-        // black on GLES2.
-        wrapPlanes(rhi, size, pixelFormat, std::span<const GLuint>(&name, 1), 0, QRhiTexture::ExternalOES);
+        setHandle(0, name);
     }
 
-    ~FrameTextures() override
+    ~AhbTextureHandles() override
     {
-        // Qt destroys the bundle on the QRhi's render thread, whose context the texture name belongs to.
-        if (_rhi) {
-            _rhi->makeThreadLocalNativeContextCurrent();
-        }
+        // Qt destroys the textures on the QRhi's render thread, whose context the texture name belongs to.
+        _rhi->makeThreadLocalNativeContextCurrent();
         if (QOpenGLContext* context = QOpenGLContext::currentContext()) {
             context->functions()->glDeleteTextures(1, &_name);
         }
@@ -93,6 +91,7 @@ public:
     }
 
 private:
+    QRhi* const _rhi;
     const EGLDisplay _display;
     const EGLImageKHR _image;
     const GLuint _name;
@@ -148,32 +147,32 @@ bool GstAHardwareBufferVideoBuffer::validatePlaneHandles() const
     });
 }
 
-QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
 {
     GstBuffer* buffer = nullptr;
     if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstAHWBufLog(), buffer)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
     if (!glContext) {
         QGC_HW_WARN_ONCE(GstAHWBufLog, "QRhi's GL context can't be made current; frame not shown");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
     // Sampling an EGLImage created on a foreign display silently returns black.
     const EGLDisplay eglDpy = GstEglHelpers::renderDisplay(glContext, _eglDisplay);
     if (eglDpy == EGL_NO_DISPLAY) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     GstMemory* mem0 = gst_buffer_peek_memory(buffer, 0);
     if (!mem0 || !gst_is_ahardware_buffer_memory(mem0)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     if (!GstEglHelpers::displaySupportsExtension(eglDpy, kNativeBufferExt)) {
         disableImport("EGL_ANDROID_image_native_buffer unavailable");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     static const auto eglGetNativeClientBufferANDROID_ =
@@ -186,13 +185,13 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi,
     if (!eglGetNativeClientBufferANDROID_ || !eglCreateImageKHR_ || !eglDestroyImageKHR_ ||
         !glEGLImageTargetTexture2DOES_) {
         disableImport("required EGL/GL functions unavailable");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     AHardwareBuffer* ahwb = gst_ahardware_buffer_memory_get_buffer(GST_AHARDWARE_BUFFER_MEMORY_CAST(mem0));
     if (!ahwb) {
         qCWarning(GstAHWBufLog) << "gst_ahardware_buffer_memory_get_buffer returned null";
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     // Block until the producer's GPU write completes before importing/sampling the recycled AHB.
@@ -203,14 +202,14 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi,
     if (!GstHwImportPreflight::preflightOrRecord(rhi, HwVideoBufferPath::AHardwareBuffer,
                                                  QVideoFrameFormat::Format_SamplerExternalOES, frameSize,
                                                  QRhiTexture::ExternalOES)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID_(ahwb);
     if (!clientBuffer) {
         QGC_HW_WARN_ONCE(GstAHWBufLog, "eglGetNativeClientBufferANDROID returned null; frame not shown");
         noteImportRefused();
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     const EGLint attribs[] = {EGL_NONE};
@@ -220,7 +219,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi,
         QGC_HW_WARN_ONCE(GstAHWBufLog,
                          "eglCreateImageKHR failed, err=" << Qt::hex << eglGetError() << "; frame not shown");
         noteImportRefused();
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
 
     QOpenGLFunctions functions(glContext);
@@ -239,20 +238,13 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi,
         functions.glDeleteTextures(1, &name);
         eglDestroyImageKHR_(eglDpy, image);
         noteImportRefused();
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
+        return {};
     }
     s_consecutiveImportFailures.store(0, std::memory_order_relaxed);
 
-    const GstHwMapTail tail{.path = HwVideoBufferPath::AHardwareBuffer,
-                            .frameSize = frameSize,
-                            .pixelFormat = QVideoFrameFormat::Format_SamplerExternalOES,
-                            .textureFlags = QRhiTexture::ExternalOES,
-                            .log = &GstAHWBufLog(),
-                            .preflight = false};
-    // No reuse: each frame has an import of its own, which its bundle takes over here and releases.
-    return GstHwFrameTexturesBase::finishMap<FrameTextures>(*this, rhi, old, tail, nullptr, [&] {
-        return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, eglDpy, image, name);
-    });
+    // Each frame has an import of its own, which its handles take over here and release.
+    return wrapTextures(rhi, std::make_unique<AhbTextureHandles>(refSample(), &rhi, eglDpy, image, name),
+                        GstAHWBufLog());
 }
 
 namespace {

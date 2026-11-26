@@ -13,13 +13,10 @@
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include <rhi/qrhi.h>
-
-#include "HwBuffers/common/QGCRhiCapture.h"
 #endif
 #include "GstQgcVideoFormats.h"
 #include "GstScoped.h"
 #include "HwBuffers/HwBuffers.h"
-#include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GstQgcGpuBinLog, "Video.GStreamer.GstQgcGpuBin")
@@ -82,10 +79,10 @@ RenderTarget currentRenderTarget()
     }
     RenderTarget target{.backend = static_cast<RenderBackend>(s_requestedBackend.load(std::memory_order_relaxed))};
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    if (const int live = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire); live >= 0) {
+    if (const int live = HwBuffers::renderBackend(); live >= 0) {
         target.backend = fromRhiImplementation(live);
     }
-    target.egl = (target.backend == RenderBackend::OpenGL) && QGCRhiCapture::qtEglDisplay();
+    target.egl = (target.backend == RenderBackend::OpenGL) && HwBuffers::qtEglDisplay();
 #endif
     return target;
 }

@@ -115,18 +115,6 @@ GstElement* makeMemorySwitch()
     return memorySwitch;
 }
 
-// Has the sink answer a CONTEXT query that reaches the switchbin. Until a stream's first caps event the switchbin has
-// no path, so the query of an element that asks downstream for Qt's device as it starts (a decoder with GL output)
-// would end there, and the element would make a device of its own.
-GstPadProbeReturn answerContextQueryFromSink(GstPad*, GstPadProbeInfo* info, gpointer sinkPad)
-{
-    GstQuery* const query = GST_PAD_PROBE_INFO_QUERY(info);
-    if ((GST_QUERY_TYPE(query) == GST_QUERY_CONTEXT) && gst_pad_query(GST_PAD(sinkPad), query)) {
-        return GST_PAD_PROBE_HANDLED;
-    }
-    return GST_PAD_PROBE_OK;
-}
-
 // The GPU variant for the render target of @p environment (GstQgc::selectGpuBin). Any other renderer gets the
 // passthrough variant, whose sink offers only memory that renderer imports (a glupload bin under Vulkan would download
 // every frame and upload it again).
@@ -199,16 +187,6 @@ GstElement* buildChain(GstElement* bin, const GstQgc::SinkBinConfig& config)
             qCWarning(GstQgcGpuBinLog) << "Failed to create switchbin with glupload ! glcolorconvert";
             return NULL;
         }
-        const GStreamer::GstPadPtr switchPad = GStreamer::adoptPad(gst_element_get_static_pad(memorySwitch, "sink"));
-        GstPad* sinkPad = gst_element_get_static_pad(videosink, "sink");
-        if (!switchPad || !sinkPad) {
-            gst_clear_object(&sinkPad);
-            qCWarning(GstQgcGpuBinLog) << "switchbin or qgcqvideosink has no sink pad";
-            return NULL;
-        }
-        // The probe owns the sink pad's reference.
-        gst_pad_add_probe(switchPad.get(), GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM, answerContextQueryFromSink, sinkPad,
-                          gst_object_unref);
         tail = linkChain({tail, memorySwitch}) ? memorySwitch : NULL;
     } else if (gpuBin == GstQgc::GpuBinMode::D3D12Convert) {
         // Decoder output passes the converter as D3D12Memory; d3d12upload uploads software-decoded frames.

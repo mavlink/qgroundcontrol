@@ -473,7 +473,7 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack_data()
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     QTest::newRow("RGBA, glupload bin") << glUpload << QStringLiteral("RGBA");
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    // Its switchbin has no path yet when the element upstream asks downstream for a GL context.
+    // The glupload ahead of its switchbin stands for a decoder with GL output, which needs Qt's context as it starts.
     const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
     QTest::newRow("RGBA, DMABuf-or-glupload bin") << dmaBufOrGlUpload << QStringLiteral("RGBA");
     // Two textures a frame, as NVDEC hands them on.
@@ -592,13 +592,7 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
                                             "appsink name=gpu sync=false "
                                             "t. ! queue ! appsink name=cpu sync=false")),
              qPrintable(pipeline.error()));
-    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline.get()));
-    gst_bus_set_sync_handler(
-        bus.get(),
-        [](GstBus*, GstMessage* message, gpointer) {
-            return GstGlContextBridge::instance().handleSyncMessage(message);
-        },
-        nullptr, nullptr);
+    GstGlContextBridge::instance().provideContexts(pipeline.get());
     QVERIFY(pipeline.play());
     const GstTest::SamplePtr gpuSample = pipeline.pullSample("gpu");
     const GstTest::SamplePtr cpuSample = pipeline.pullSample("cpu");
@@ -701,13 +695,7 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryMapLeavesFrameSyncMeta()
                                             "video/x-raw,format=RGBA,width=64,height=48,framerate=30/1 ! glupload ! "
                                             "video/x-raw(memory:GLMemory),format=RGBA ! appsink name=gpu sync=false")),
              qPrintable(pipeline.error()));
-    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline.get()));
-    gst_bus_set_sync_handler(
-        bus.get(),
-        [](GstBus*, GstMessage* message, gpointer) {
-            return GstGlContextBridge::instance().handleSyncMessage(message);
-        },
-        nullptr, nullptr);
+    GstGlContextBridge::instance().provideContexts(pipeline.get());
     QVERIFY(pipeline.play());
     const GstTest::SamplePtr sample = pipeline.pullSample("gpu");
     QVERIFY2(sample, "the pipeline produced no frame");
@@ -781,24 +769,21 @@ void GstHwBuffersGlReadbackTest::_testGlBridgeKeepsGstGlInQtsApi()
         QSKIP(qPrintable(_rhiUnavailable));
     }
 
-    // The display and the wrap of Qt's context, as an element asking the bridge gets them.
-    GstQuery* const displayQuery = gst_query_new_context(GST_GL_DISPLAY_CONTEXT_TYPE);
-    const auto unrefDisplayQuery = qScopeGuard([displayQuery] { gst_query_unref(displayQuery); });
-    QVERIFY(GstGlContextBridge::instance().answerContextQuery(displayQuery));
-    GstContext* displayContext = nullptr;
-    gst_query_parse_context(displayQuery, &displayContext);
+    // The display and the wrap of Qt's context, as a pipeline gets them.
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    GstGlContextBridge::instance().provideContexts(pipeline.get());
+    const GStreamer::GstContextPtr displayContext =
+        GStreamer::adoptContext(gst_element_get_context(pipeline.get(), GST_GL_DISPLAY_CONTEXT_TYPE));
     GstGLDisplay* display = nullptr;
-    QVERIFY(gst_context_get_gl_display(displayContext, &display));
+    QVERIFY(displayContext && gst_context_get_gl_display(displayContext.get(), &display));
     const auto unrefDisplay = qScopeGuard([display] { gst_object_unref(display); });
 
-    GstQuery* const wrapQuery = gst_query_new_context("gst.gl.app_context");
-    const auto unrefWrapQuery = qScopeGuard([wrapQuery] { gst_query_unref(wrapQuery); });
-    QVERIFY(GstGlContextBridge::instance().answerContextQuery(wrapQuery));
-    GstContext* wrapContext = nullptr;
-    gst_query_parse_context(wrapQuery, &wrapContext);
+    const GStreamer::GstContextPtr wrapContext =
+        GStreamer::adoptContext(gst_element_get_context(pipeline.get(), "gst.gl.app_context"));
     GstGLContext* qtContext = nullptr;
-    QVERIFY(
-        gst_structure_get(gst_context_get_structure(wrapContext), "context", GST_TYPE_GL_CONTEXT, &qtContext, nullptr));
+    QVERIFY(wrapContext && gst_structure_get(gst_context_get_structure(wrapContext.get()), "context",
+                                             GST_TYPE_GL_CONTEXT, &qtContext, nullptr));
     const auto unrefQtContext = qScopeGuard([qtContext] { gst_object_unref(qtContext); });
 
     // gst-gl creates its contexts in an API of the display's, whatever the context it is told to share with.

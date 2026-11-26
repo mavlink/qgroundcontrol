@@ -7,6 +7,7 @@
 #include <array>
 #include <functional>
 #include <gst/gst.h>
+#include <memory>
 #include <optional>
 #include <span>
 #include <vector>
@@ -15,7 +16,7 @@
 #include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "GstHwFrameTexturesBase.h"
+#include "GstHwVideoBuffer.h"
 #include "GstQtDmaBufImport.h"
 
 /// DMABuf frames under a Vulkan QRhi. Each plane becomes a single-plane VkImage on Qt's device over the imported
@@ -45,21 +46,14 @@ bool canImport(const GstQtDmaBufImport::PlaneFourccs& planeFourccs, quint64 modi
 /// The modifiers the probed device imports a plane sampled as DRM @p planeFourcc with. Any thread.
 std::vector<quint64> importableModifiers(quint32 planeFourcc);
 
-/// Why importTextures() gave no textures.
-enum class ImportFailure
-{
-    NotImportable,  ///< Stopped before the driver was asked.
-    Rejected,       ///< The driver refused the import.
-    FdDupFailed,    ///< A plane's dma-buf fd could not be duplicated: the process's failure, which no driver refused.
-};
-
 /// Imports @p planes, which must match GstQtDmaBufImport::planeFourccs(@p pixelFormat), as textures of @p rhi that
 /// sample the dma-bufs in place. @p source's sample and @p buffer stay referenced until the GPU has finished with the
-/// textures. Without textures, @p failure tells why. @p rhi's thread, Vulkan only.
-QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVideoFrameTexturesUPtr& old,
+/// textures. Without textures, @p failure tells why: NotImportable, Rejected or FdDupFailed. @p rhi's thread, Vulkan
+/// only.
+QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi,
                                        std::span<const GstQtDmaBufImport::Plane> planes,
                                        QVideoFrameFormat::PixelFormat pixelFormat, QSize frameSize, GstBuffer* buffer,
-                                       ImportFailure& failure);
+                                       GstQtDmaBufImport::ImportOutcome& failure);
 
 /// Re-arms the once-logged warnings and makes every render thread resolve its Vulkan device functions again.
 void resetCachedState() noexcept;
@@ -94,7 +88,8 @@ struct DeviceFns
 #ifdef QGC_UNITTEST_BUILD
 /// Imports @p plane as importTextures() does each plane of a frame, on a device that is @p fns alone, and destroys
 /// what it created. Why the import failed; nothing when it didn't.
-std::optional<ImportFailure> importPlaneForTest(const DeviceFns& fns, const GstQtDmaBufImport::Plane& plane);
+std::optional<GstQtDmaBufImport::ImportOutcome> importPlaneForTest(const DeviceFns& fns,
+                                                                   const GstQtDmaBufImport::Plane& plane);
 /// The release callback importTextures() gives a frame bundle, for a bundle whose one image and its memory are on a
 /// device that is @p fns alone and of @p rhi, and which holds a new reference to @p buffer.
 std::function<void()> deferredReleaseForTest(QRhi& rhi, const DeviceFns& fns, GstBuffer* buffer);
@@ -102,34 +97,33 @@ std::function<void()> deferredReleaseForTest(QRhi& rhi, const DeviceFns& fns, Gs
 
 }  // namespace GstDmaBufVulkan
 
-/// Owns the VkImages and VkDeviceMemory a DMABuf import created, one per plane; released with the bundle.
-class GstVulkanOwnedFrameTextures final : public GstHwFrameTexturesBase
+/// Owns the VkImages and VkDeviceMemory a DMABuf import created, one per plane, and the frame's sample; released with
+/// the textures. Wraps the images itself, where every other path has Qt wrap its handles: QRhi must take them in
+/// VK_IMAGE_LAYOUT_GENERAL, and Qt's helper passes layout 0.
+class GstVulkanOwnedFrameTextures final : public QVideoFrameTextures
 {
 public:
+    /// Planes QRhi rejects stay null, as do null images.
     GstVulkanOwnedFrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat,
-                                std::span<const VkImage> images)
-    {
-        // QRhi's first barrier transitions from this layout; UNDEFINED would let the driver discard the imported
-        // contents, GENERAL preserves them.
-        wrapPlanes(rhi, size, pixelFormat, images, VK_IMAGE_LAYOUT_GENERAL);
-    }
+                                std::span<const VkImage> images);
+    ~GstVulkanOwnedFrameTextures() override;
 
-    ~GstVulkanOwnedFrameTextures() override
-    {
-        // The QRhiTextures must be gone before the VkImages they wrap.
-        for (auto& texture : _textures) {
-            texture.reset();
-        }
-        if (_release) {
-            _release();
-        }
-    }
+    QRhiTexture* texture(uint plane) const override;
 
-    /// Transfers the VkImages and their memory into the bundle: @p release runs once, when Qt destroys the bundle.
+    /// True when the textures have planes and every one of them wrapped its image.
+    bool allPlanesValid() const noexcept;
+
+    /// Transfers the VkImages and their memory into the textures: @p release runs once, when Qt destroys them.
     void adoptVulkanResources(std::function<void()> release) noexcept { _release = std::move(release); }
 
+    /// Takes over @p sample's reference, held until destruction.
+    void holdSample(GstSample* sample) noexcept;
+
 private:
+    std::array<std::unique_ptr<QRhiTexture>, GstHw::kMaxPlanes> _textures;
+    int _count = 0;
     std::function<void()> _release;
+    GstSample* _sample = nullptr;
 };
 
 #endif  // QGC_HAS_GST_DMABUF_VULKAN_IMPORT

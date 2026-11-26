@@ -7,8 +7,7 @@
 #include <QtCore/QString>
 #include <QtCore/QtTypes>
 
-#include "HwBuffers/common/GstHwPathRegistry.h"
-#include "HwBuffers/common/GstHwTypes.h"
+#include "HwBuffers/HwBuffers.h"
 
 struct MappedFrame;
 

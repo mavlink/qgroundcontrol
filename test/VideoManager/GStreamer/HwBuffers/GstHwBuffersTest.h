@@ -11,7 +11,7 @@ class GstHwBuffersTest : public GStreamerTestBase
 private slots:
 #if defined(QGC_HAS_ANY_GPU_PATH)
     void _testContextBridgeRegistry();
-    void _testContextBridgeAnswersWholePipeline();
+    void _testPipelineHandsBridgeContextsToItsElements();
     void _testContextBridgeServesPipelineOnceDeviceIsKnown();
     void _testRemovedDeviceIsToldToThePipelinesThatGotIt();
     void _testHwBufferLifecycleResetsNativeCaches();

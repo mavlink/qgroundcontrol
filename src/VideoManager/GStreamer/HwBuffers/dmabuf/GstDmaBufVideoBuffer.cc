@@ -2,7 +2,7 @@
 
 #include "GstDmaBufVulkanImport.h"
 #include "GstEglHelpers.h"
-#include "GstHwFrameTexturesBase.h"
+#include "GstHwImportPreflight.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -123,7 +123,6 @@ private:
 
 ImportFailureRuns s_importFailures;
 
-constexpr const char* kModifiersExt = "EGL_EXT_image_dma_buf_import_modifiers";
 constexpr const char* kNativeFenceExt = "EGL_ANDROID_native_fence_sync";
 
 void disableImport(GstHwPathTelemetry::HwFallbackReason reason, const char* cause)
@@ -562,8 +561,8 @@ bool GstDmaBufVideoBuffer::validatePlaneHandles() const
     }
 #endif
     // A tiled layout imports only through the modifier attributes.
-    return !isTiled() ||
-           ((_eglDisplay != EGL_NO_DISPLAY) && GstEglHelpers::displaySupportsExtension(_eglDisplay, kModifiersExt));
+    return !isTiled() || ((_eglDisplay != EGL_NO_DISPLAY) &&
+                          GstEglHelpers::displaySupportsExtension(_eglDisplay, GstEglHelpers::kDmaBufModifiersExt));
 }
 
 QAbstractVideoBuffer::MapData GstDmaBufVideoBuffer::map(QVideoFrame::MapMode mode)
@@ -576,53 +575,49 @@ QAbstractVideoBuffer::MapData GstDmaBufVideoBuffer::map(QVideoFrame::MapMode mod
     return GstHwVideoBuffer::map(mode);
 }
 
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& /*old*/)
 {
-    const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::DmaBuf);
     if (importDisabled()) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
     ImportOutcome failure = ImportOutcome::NotImportable;
-    QVideoFrameTexturesUPtr textures = importFrame(rhi, old, failure);
+    QVideoFrameTexturesUPtr textures = importFrame(rhi, failure);
     noteImportOutcome(textures ? ImportOutcome::Imported : failure);
     return textures;
 }
 
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importFrame(QRhi& rhi, QVideoFrameTexturesUPtr& old,
-                                                          ImportOutcome& failure)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importFrame(QRhi& rhi, ImportOutcome& failure)
 {
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     const bool vulkan = (rhi.backend() == QRhi::Vulkan);
 #else
     constexpr bool vulkan = false;
-    Q_UNUSED(old);
 #endif
     GstBuffer* buffer = nullptr;
     if (!checkMapPreconditions(rhi, static_cast<int>(vulkan ? QRhi::Vulkan : QRhi::OpenGLES2), GstDmaBufLog(),
                                buffer)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     if (vulkan) {
-        return importVulkan(rhi, buffer, old, failure);
+        return importVulkan(rhi, buffer, failure);
     }
 #endif
     return importGl(rhi, buffer, failure);
 }
 
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, GstBuffer* buffer, QVideoFrameTexturesUPtr& old,
-                                                           ImportOutcome& failure)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure)
 {
     const QVideoFrameFormat::PixelFormat pixelFormat = _format.pixelFormat();
     const GstQtDmaBufImport::PlaneFourccs fourccs = GstQtDmaBufImport::planeFourccs(pixelFormat);
     std::array<GstQtDmaBufImport::Plane, kMaxPlanes> planes{};
     if (!locateImportPlanes(buffer, _videoInfo, fourccs, _drmModifier, planes)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
     if (!GstHwImportPreflight::preflightOrRecord(rhi, HwVideoBufferPath::DmaBuf, pixelFormat, _format.frameSize())) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
     // Vulkan does not wait on the implicit fences of imported dma-buf memory, and QRhi's submission can't be given the
@@ -631,24 +626,11 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, GstBuffer*
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                  GstHwPathTelemetry::HwFallbackReason::VulkanNoSync);
         QGC_HW_WARN_ONCE(GstDmaBufLog, "Vulkan import refused: producer writes not known complete — CPU fallback");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
-    GstDmaBufVulkan::ImportFailure vulkanFailure = GstDmaBufVulkan::ImportFailure::NotImportable;
-    QVideoFrameTexturesUPtr textures =
-        GstDmaBufVulkan::importTextures(*this, rhi, old, std::span(planes.data(), std::size_t(fourccs.count)),
-                                        pixelFormat, _format.frameSize(), buffer, vulkanFailure);
-    switch (vulkanFailure) {
-        case GstDmaBufVulkan::ImportFailure::NotImportable:
-            break;
-        case GstDmaBufVulkan::ImportFailure::Rejected:
-            failure = ImportOutcome::Rejected;
-            break;
-        case GstDmaBufVulkan::ImportFailure::FdDupFailed:
-            failure = ImportOutcome::FdDupFailed;
-            break;
-    }
-    return textures;
+    return GstDmaBufVulkan::importTextures(*this, rhi, std::span(planes.data(), std::size_t(fourccs.count)),
+                                           pixelFormat, _format.frameSize(), buffer, failure);
 }
 #endif
 
@@ -660,7 +642,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
                          "Qt's GL context is not EGL or can't bind EGLImages — DMABuf frames take the CPU path");
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf,
                                                  GstHwPathTelemetry::HwFallbackReason::NoExt);
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
     const QVideoFrameFormat::PixelFormat pixelFormat = _format.pixelFormat();
@@ -668,17 +650,17 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
     if (_packedYuvFourcc != 0) {
         fourccs = {.fourcc = {_packedYuvFourcc}, .count = 1};
     }
-    const quint64 modifier =
-        ((_drmModifier != DRM_FORMAT_MOD_INVALID) && GstEglHelpers::displaySupportsExtension(eglDpy, kModifiersExt))
-            ? _drmModifier
-            : GstQtDmaBufImport::kImplicitModifier;
+    const quint64 modifier = ((_drmModifier != DRM_FORMAT_MOD_INVALID) &&
+                              GstEglHelpers::displaySupportsExtension(eglDpy, GstEglHelpers::kDmaBufModifiersExt))
+                                 ? _drmModifier
+                                 : GstQtDmaBufImport::kImplicitModifier;
     std::array<GstQtDmaBufImport::Plane, kMaxPlanes> planes{};
     if (!locateImportPlanes(buffer, _videoInfo, fourccs, modifier, planes)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
     if (!GstHwImportPreflight::preflightOrRecord(rhi, HwVideoBufferPath::DmaBuf, pixelFormat, _format.frameSize())) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
 
     waitForProducer(eglDpy, buffer);
@@ -692,7 +674,7 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
                                           _format.frameSize(), std::move(keepAlive));
     if (!imported.textures) {
         failure = imported.unrecoverable ? ImportOutcome::Unrecoverable : ImportOutcome::Rejected;
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
+        return {};
     }
     if (QGC_HW_ONCE()) {
         qCDebug(GstDmaBufLog) << "First DMABuf import: size=" << _format.frameSize() << "format=" << pixelFormat
