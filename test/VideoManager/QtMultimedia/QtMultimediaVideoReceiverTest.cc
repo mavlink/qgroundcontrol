@@ -87,6 +87,11 @@ void QtMultimediaVideoReceiverTest::_testUnplayableUri()
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QString()));
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("0.0.0.0:5600")));
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("udp://0.0.0.0")));
+    // Addresses FFmpeg would be given only to fail on at every reconnect.
+    QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("udp://0.0.0.0:0")));
+    QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("mpegts://0.0.0.0")));
+    QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("tcp://192.168.143.200")));
+    QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("tcp://:3001")));
 
     // The URI's credentials stay out of the log and the message.
     ReceiverUnderTest stream(QStringLiteral("udp://user:secret@0.0.0.0"));
@@ -140,6 +145,7 @@ void QtMultimediaVideoReceiverTest::_testStartWhileRecordingIsRefused()
     QCOMPARE(finishedSpy.first().at(0).toString(), second);
     QVERIFY(!finishedSpy.first().at(1).toString().isEmpty());
     QVERIFY(recorder->active());
+    QVERIFY(stream.receiver->recording());
     QCOMPARE(recorder->mediaRecorder()->outputLocation(), recorded);
     QVERIFY(!QFile::exists(second));
     QVERIFY(stream.errorSpy.isEmpty());
@@ -179,19 +185,19 @@ void QtMultimediaVideoReceiverTest::_testRecordingUsesEncodingSet()
     _ignoreEncoderFallbacks();
     // Nobody sends the stream, so the recorder waits for its first frame, set up as the recording was started.
     ReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
-    stream.receiver->setRecordingEncoding(encoding);
     stream.receiver->setActive(true);
-    stream.receiver->startRecording(dir.filePath(QStringLiteral("first.mkv")), VideoReceiver::FileFormat::Mkv);
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("first.mkv")), VideoReceiver::FileFormat::Mkv,
+                                    encoding);
     const QtVideoRecorder* const recorder = stream.receiver->_recorder;
     QVERIFY(recorder->active());
     QCOMPARE(recorder->mediaRecorder()->mediaFormat().videoCodec(), encoding.codec);
     QCOMPARE(recorder->mediaRecorder()->quality(), encoding.quality);
 
-    // The next recording is encoded as set by then.
+    // The next recording is encoded as it is told, not as the one before.
     stream.receiver->stopRecording();
-    stream.receiver->setRecordingEncoding({.quality = QMediaRecorder::VeryHighQuality});
     QTRY_VERIFY_WITH_TIMEOUT(!recorder->active(), TestTimeout::mediumMs());
-    stream.receiver->startRecording(dir.filePath(QStringLiteral("next.mkv")), VideoReceiver::FileFormat::Mkv);
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("next.mkv")), VideoReceiver::FileFormat::Mkv,
+                                    {.quality = QMediaRecorder::VeryHighQuality});
     QVERIFY(recorder->active());
     QCOMPARE(recorder->mediaRecorder()->mediaFormat().videoCodec(),
              QtVideoRecorder::recordingFormats(QMediaFormat::Matroska).first().videoCodec());

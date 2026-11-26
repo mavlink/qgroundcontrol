@@ -137,7 +137,6 @@ void VideoSettings::_offerChoices(FactMetaData* metaData, Fact* fact, QVariantLi
 DECLARE_SETTINGSFACT(VideoSettings, videoFit)
 DECLARE_SETTINGSFACT(VideoSettings, gridLines)
 DECLARE_SETTINGSFACT(VideoSettings, showTelemetryOverlay)
-DECLARE_SETTINGSFACT(VideoSettings, showRecControl)
 DECLARE_SETTINGSFACT(VideoSettings, recordingFormat)
 DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
 DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
@@ -232,7 +231,7 @@ void VideoSettings::pruneUnavailableDecoders()
     }
     static const QList<VideoDecoderOption> hardwareFamilies{
         VideoDecoderOption::NVIDIA,       VideoDecoderOption::VAAPI, VideoDecoderOption::DirectX3D,
-        VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel, VideoDecoderOption::Vulkan,
+        VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel,
     };
 
     const QList<VideoDecoderOption> available = VideoBackend::instance().availableDecoderFamilies();

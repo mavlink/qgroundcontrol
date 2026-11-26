@@ -147,13 +147,6 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
                 planner.prioritizeZeroCopy();
             }
             break;
-        case VideoDecoderOption::Vulkan:
-            // gst-vulkan's decoders output VulkanImage memory only, which no sink bin offers: Qt can't sample the
-            // images of their VkDevice.
-            plan.warnings.append(
-                QStringLiteral("Forcing Vulkan video decoders: they output VulkanImage memory only, which the video "
-                               "sink does not take, so the streams they decode will not display."));
-            [[fallthrough]];
         case VideoDecoderOption::VAAPI:
         case VideoDecoderOption::NVIDIA:
         case VideoDecoderOption::DirectX3D:

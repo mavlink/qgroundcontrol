@@ -8,6 +8,7 @@
 #include <QtQuick/QQuickWindow>
 
 #include "QGCLoggingCategory.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 QGC_LOGGING_CATEGORY(QGCQVideoSinkControllerLog, "Video.GStreamer.QGCQVideoSinkController")
 
@@ -135,3 +136,53 @@ void QGCQVideoSinkController::_clearVideoSinkFrame()
     releaseFrame();
     _videoSink.clear();
 }
+
+namespace GStreamer {
+
+// Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
+// adopts. While decoding, the pipeline bin takes another on gst_bin_add (dropped by gst_bin_remove).
+GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio,
+                            [[maybe_unused]] bool gpuZeroCopy)
+{
+    GstQgc::SinkBinConfig config{.conversionElement = conversionElement, .disablePar = disablePixelAspectRatio};
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    config.gpuZeroCopy = gpuZeroCopy;
+#endif
+    GstElement* const videoSinkBin = GstQgc::makeSinkBin(config);
+    if (!videoSinkBin) {
+        // completeInit() found the sink's elements at startup: the registry changed underfoot, or the chain doesn't
+        // link here.
+        qCCritical(QGCQVideoSinkControllerLog) << "the video sink bin could not be built";
+        return nullptr;
+    }
+    // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
+    return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
+}
+
+QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent)
+{
+    if (!sinkBin || !videoSink || !controllerParent) {
+        // controllerParent owns the controller's QObject lifetime — else it leaks (caller has no handle).
+        qCWarning(QGCQVideoSinkControllerLog) << "null sinkBin, videoSink, or controllerParent";
+        return nullptr;
+    }
+
+    // Accessor returns a transfer-full ref; the guard releases it once the controller has taken
+    // its own ref for deferred QObject teardown.
+    const GstObjectPtr element(GST_OBJECT(GstQgc::sinkBinVideoSink(sinkBin)));
+    if (!element) {
+        qCCritical(QGCQVideoSinkControllerLog) << "bin has no qgcqvideosink child";
+        return nullptr;
+    }
+    GstElement* const elementRaw = GST_ELEMENT(element.get());
+
+    auto* controller = new QGCQVideoSinkController(elementRaw, controllerParent);
+
+    // Route the initial install through the controller so its destroyed-sink QPointer guard
+    // covers setup, not just later swaps.
+    controller->setVideoSink(QPointer<QVideoSink>(videoSink));
+
+    return controller;
+}
+
+}  // namespace GStreamer

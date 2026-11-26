@@ -1,8 +1,11 @@
 #pragma once
 
 #include <gst/gst.h>
+#include <optional>
 
 #include <QtCore/QByteArray>
+
+#include "GstQgcSinkPolicy.h"
 
 namespace GstQgc {
 
@@ -19,6 +22,9 @@ struct SinkBinConfig
     /// a picture shown stretched to a forced ratio, and for v4l2 drivers without VIDIOC_CROPCAP, which deadlock when
     /// the ratio is forced.
     bool disablePar = false;
+    /// Stands in for the process's environment (currentSinkEnvironment()), which the bin reads as it is built and its
+    /// sink follows from then on. For tests, which have no scene graph to render with.
+    std::optional<SinkEnvironment> environment = {};
 };
 
 /// A new bin, floating, of [converter ! (GPU upload !) qgcqvideosink] behind a "sink" ghost pad. qgcqvideosink's

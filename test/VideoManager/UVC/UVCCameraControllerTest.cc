@@ -317,10 +317,12 @@ void UVCCameraControllerTest::_testStartWhileRecordingIsRefused()
     QCOMPARE(finishedSpy.first().at(0).toString(), second);
     QVERIFY(!finishedSpy.first().at(1).toString().isEmpty());
     QVERIFY(controller._recorder->active());
+    QVERIFY(controller.recording());
     QVERIFY(!QFile::exists(second));
 
     controller.stopRecording();
     QTRY_VERIFY_WITH_TIMEOUT(!controller._recorder->active(), TestTimeout::mediumMs());
+    QVERIFY(!controller.recording());
 }
 
 void UVCCameraControllerTest::_countCameraFrames(UVCCameraController& controller, int count)

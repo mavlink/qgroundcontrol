@@ -16,7 +16,8 @@
 #include "VideoStreamStats.h"
 #include "VideoTestHelpers.h"
 
-/// What the tests that run a QtMultimediaVideoReceiver share.
+/// What the tests that run a QtMultimediaVideoReceiver share, and the log lines every test of a QtVideoRecorder lets
+/// pass.
 namespace QtMultimediaTest {
 
 /// A log line a test lets pass: the arguments of UnitTest::ignoreLogMessage(), which only a test class can call.

@@ -12,7 +12,6 @@ enum class HwVideoBufferPath
     D3D12,
     IOSurface,
     AHardwareBuffer,
-    Vulkan,
     Count,
 };
 
@@ -51,8 +50,6 @@ constexpr const char* toString(HwVideoBufferPath path) noexcept
             return "IOSurface";
         case HwVideoBufferPath::AHardwareBuffer:
             return "AHWBuf";
-        case HwVideoBufferPath::Vulkan:
-            return "Vulkan";
         case HwVideoBufferPath::Count:
             break;
     }

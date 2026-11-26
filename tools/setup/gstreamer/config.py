@@ -96,9 +96,6 @@ PLUGIN_OPTIONS = {
     "switchbin": "gst-plugins-bad:switchbin",
     "va": "gst-plugins-bad:va",
     "videoparsersbad": "gst-plugins-bad:videoparsers",
-    # Without its decoders, a feature of their own (vulkan-video): GStreamer 1.28's need Vulkan headers 1.4.317,
-    # which Ubuntu 24.04 has not, and configure stops there with the feature on.
-    "vulkan": "gst-plugins-bad:vulkan",
 }
 
 # Allowlisted plugins without a plugin option here, and why.

@@ -2,8 +2,8 @@
 
 #include "GStreamerTestBase.h"
 
-/// The GStreamer facade without a running pipeline: decoder classification, recording sinks, init and the VideoBackend
-/// that forwards to it.
+/// The GStreamer facade without a running pipeline: decoder classification, init and the VideoBackend that forwards to
+/// it.
 class GStreamerTest : public GStreamerTestBase
 {
     Q_OBJECT
@@ -16,13 +16,9 @@ private slots:
     void _testAvailableDecoderFamilies();
     void _testStoredDecoderOption_data();
     void _testStoredDecoderOption();
-    void _testDecoderPriorityWarnings();
     void _testLogDecoderRanks();
-    void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCompleteInitNamesBlacklistedPlugins();
     void _testVideoBackendForwards();
     void _testVideoBackendRunsInOrder();
-    void _testRecordingSinkAcceptsElementaryStreams_data();
-    void _testRecordingSinkAcceptsElementaryStreams();
 };

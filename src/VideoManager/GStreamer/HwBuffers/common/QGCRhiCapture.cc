@@ -16,13 +16,8 @@
 #include <qpa/qplatformnativeinterface.h>
 #define QGC_RHI_CAPTURE_PROBES_EGL 1
 #endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH) || \
-    (defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
 #include <rhi/qrhi_platform.h>
-#endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
-#include <QtGui/QVulkanFunctions>
-#include <QtGui/QVulkanInstance>
 #endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 #include <d3d11.h>
@@ -33,7 +28,6 @@
 
 #include <array>
 #include <atomic>
-#include <cstring>
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 QGC_LOGGING_CATEGORY(QGCRhiCaptureLog, "Video.GStreamer.HwBuffers.RhiCapture")
@@ -67,11 +61,6 @@ void clearSnapshot()
     s_snapshot.d3d11Device.store(nullptr, std::memory_order_release);
     s_snapshot.adapterLuid.store(0, std::memory_order_release);
     s_snapshot.d3d11OpensD3D12.store(false, std::memory_order_release);
-    s_snapshot.vkVendorId.store(0, std::memory_order_release);
-    s_snapshot.vkDeviceId.store(0, std::memory_order_release);
-    for (std::atomic<quint64>& half : s_snapshot.vkPipelineCacheUuid) {
-        half.store(0, std::memory_order_release);
-    }
 }
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -103,9 +92,6 @@ void populateSnapshot(QRhi* rhi)
     const int backend = static_cast<int>(rhi->backend());
     void* d3d11 = nullptr;
     qint64 luid = 0;
-    quint32 vkVendorId = 0;
-    quint32 vkDeviceId = 0;
-    std::array<quint64, 2> vkPipelineCacheUuid{};
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (rhi->backend() == QRhi::D3D11) {
@@ -139,19 +125,6 @@ void populateSnapshot(QRhi* rhi)
         }
     }
 #endif
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
-    if (rhi->backend() == QRhi::Vulkan) {
-        const auto* h = static_cast<const QRhiVulkanNativeHandles*>(rhi->nativeHandles());
-        if (h && h->inst && (h->physDev != VK_NULL_HANDLE)) {
-            VkPhysicalDeviceProperties properties{};
-            h->inst->functions()->vkGetPhysicalDeviceProperties(h->physDev, &properties);
-            vkVendorId = properties.vendorID;
-            vkDeviceId = properties.deviceID;
-            static_assert(sizeof(vkPipelineCacheUuid) == sizeof(properties.pipelineCacheUUID));
-            std::memcpy(vkPipelineCacheUuid.data(), properties.pipelineCacheUUID, sizeof(vkPipelineCacheUuid));
-        }
-    }
-#endif
 
     for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
         if (path->probeDevice) {
@@ -163,11 +136,6 @@ void populateSnapshot(QRhi* rhi)
     // acquire-load on backend != -1 is guaranteed to see them.
     s_snapshot.d3d11Device.store(d3d11, std::memory_order_release);
     s_snapshot.adapterLuid.store(luid, std::memory_order_release);
-    s_snapshot.vkVendorId.store(vkVendorId, std::memory_order_release);
-    s_snapshot.vkDeviceId.store(vkDeviceId, std::memory_order_release);
-    for (std::size_t i = 0; i < vkPipelineCacheUuid.size(); ++i) {
-        s_snapshot.vkPipelineCacheUuid[i].store(vkPipelineCacheUuid[i], std::memory_order_release);
-    }
     s_snapshot.backend.store(backend, std::memory_order_release);
 
     // A pipeline that asked a bridge for this device before it was published has it from now on.

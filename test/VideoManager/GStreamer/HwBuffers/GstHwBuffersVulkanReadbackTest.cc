@@ -1,7 +1,6 @@
 #include "GstHwBuffersVulkanReadbackTest.h"
 
 #include <array>
-#include <atomic>
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <memory>
@@ -9,58 +8,35 @@
 #include <rhi/qrhi_platform.h>
 #include <string>
 
-#include <QtCore/QByteArray>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QImage>
 #include <QtGui/private/qvulkandefaultinstance_p.h>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
-
-#include "GStreamer.h"
-#include "GStreamerTestHelpers.h"
-#include "QGCRhiCapture.h"
-
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-#include <QtMultimedia/private/qhwvideobuffer_p.h>
-
-// gst-vulkan's gstvkdecoder.h declares a struct member named `slots`, which collides with Qt's `slots` keyword macro.
-#pragma push_macro("slots")
-#undef slots
-#include <gst/vulkan/gstvkdevice.h>
-#include <gst/vulkan/gstvkimagememory.h>
-#include <gst/vulkan/gstvkinstance.h>
-#pragma pop_macro("slots")
-
-#include "GstHwPathTelemetry.h"
-#include "GstScoped.h"
-#include "GstVulkanContextBridge.h"
-#include "GstVulkanVideoBuffer.h"
-#endif
-
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
 #include <QtMultimedia/private/qhwvideobuffer_p.h>
 #include <QtMultimedia/private/qvideoframe_p.h>
 
 #include "CpuVideoFramePool.h"
+#include "GStreamerTestHelpers.h"
 #include "GstDmaBufVideoBuffer.h"
 #include "GstDmaBufVulkanImport.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoInfo.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "gstqgc/GstQgcCaps.h"
+#include "QGCQVideoSinkController.h"
+#include "QGCRhiCapture.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
-#endif
+#include "gstqgc/GstQgcVideoFormats.h"
 
 namespace {
 
-/// A Vulkan QRhi on the instance Qt Quick renders with, on the software device when @p software; null with the
-/// reason in @p unavailable.
-std::unique_ptr<QRhi> createGstVulkanTestRhi(bool software, QString& unavailable)
+/// A Vulkan QRhi on the instance Qt Quick renders with; null with the reason in @p unavailable.
+std::unique_ptr<QRhi> createGstVulkanTestRhi(QString& unavailable)
 {
     QRhiVulkanInitParams params;
     params.inst = QVulkanDefaultInstance::instance();
@@ -68,13 +44,9 @@ std::unique_ptr<QRhi> createGstVulkanTestRhi(bool software, QString& unavailable
         unavailable = QStringLiteral("No Vulkan instance on the %1 platform").arg(QGuiApplication::platformName());
         return {};
     }
-    std::unique_ptr<QRhi> rhi(
-        QRhi::create(QRhi::Vulkan, &params, software ? QRhi::Flags(QRhi::PreferSoftwareRenderer) : QRhi::Flags()));
+    std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Vulkan, &params));
     if (!rhi) {
         unavailable = QStringLiteral("QRhi::create(Vulkan) failed");
-    } else if (software && (rhi->driverInfo().deviceType != QRhiDriverInfo::CpuDevice)) {
-        unavailable = QStringLiteral("No software Vulkan device");
-        rhi.reset();
     }
     return rhi;
 }
@@ -86,14 +58,13 @@ GstHwBuffersVulkanReadbackTest::~GstHwBuffersVulkanReadbackTest() = default;
 
 QRhi* GstHwBuffersVulkanReadbackTest::_vulkanRhi()
 {
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     if (_rhiProbed) {
         return _rhi.get();
     }
     _rhiProbed = true;
     // As HwBuffers::configureQtGraphics() does before the application's QRhi exists.
     GstDmaBufVulkan::requestDeviceExtensions();
-    _rhi = createGstVulkanTestRhi(/*software=*/false, _rhiUnavailable);
+    _rhi = createGstVulkanTestRhi(_rhiUnavailable);
     if (!_rhi) {
         return nullptr;
     }
@@ -104,10 +75,6 @@ QRhi* GstHwBuffersVulkanReadbackTest::_vulkanRhi()
         _rhi.reset();
     }
     return _rhi.get();
-#else
-    _rhiUnavailable = QStringLiteral("DMABuf import under Vulkan not compiled in this build");
-    return nullptr;
-#endif
 }
 
 void GstHwBuffersVulkanReadbackTest::init()
@@ -125,47 +92,6 @@ void GstHwBuffersVulkanReadbackTest::cleanupTestCase()
     GStreamerTestBase::cleanupTestCase();
 }
 
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-namespace {
-
-/// Publishes @p rhi as the render thread publishes the scene graph's, primes the gst-vulkan bridge on it and returns
-/// the GstVulkanDevice the bridge then answers context queries with; null when it doesn't prime.
-GStreamer::GstObjectPtr primeVulkanBridgeOn(QRhi& rhi)
-{
-    GstContextBridgeBase& bridge = GstVulkanContextBridge::instance();
-    QGCRhiCapture::publishDeviceSnapshotForTest(&rhi);
-    bridge.reset();
-    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_context("gst.vulkan.device"));
-    if (!bridge.prime() || !bridge.answerContextQuery(query.get())) {
-        return {};
-    }
-    GstContext* context = nullptr;
-    gst_query_parse_context(query.get(), &context);
-    const GValue* const device =
-        context ? gst_structure_get_value(gst_context_get_structure(context), "gst.vulkan.device") : nullptr;
-    return (device && G_VALUE_HOLDS_OBJECT(device)) ? GStreamer::adoptObject(GST_OBJECT(g_value_dup_object(device)))
-                                                    : GStreamer::GstObjectPtr();
-}
-
-/// A GObject type named @p name whose create-device signal returns a GstVulkanDevice, as GstVulkanInstance's does,
-/// and takes one @p parameter, or none for G_TYPE_NONE. Registered once: GLib keeps its types.
-GType createDeviceSignalType(const char* name, GType parameter)
-{
-    GType type = g_type_from_name(name);
-    if (type == 0) {
-        type = g_type_register_static_simple(G_TYPE_OBJECT, name, sizeof(GObjectClass), nullptr, sizeof(GObject),
-                                             nullptr, GTypeFlags(0));
-        const bool hasParameter = (parameter != G_TYPE_NONE);
-        g_signal_newv("create-device", type, G_SIGNAL_RUN_LAST, nullptr, nullptr, nullptr, nullptr,
-                      GST_TYPE_VULKAN_DEVICE, hasParameter ? 1 : 0, hasParameter ? &parameter : nullptr);
-    }
-    return type;
-}
-
-}  // namespace
-#endif
-
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
 namespace {
 
 /// The renderer the streaming-thread checks see while alive: a Vulkan scene graph.
@@ -260,7 +186,7 @@ void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage()
     const ScopedVulkanSnapshot vulkanSceneGraph;
     const auto format = static_cast<GstVideoFormat>(gstFormat);
     const std::array formats{format};
-    std::string drmCaps = GstHw::buildVulkanDmaDrmCaps(formats);
+    std::string drmCaps = GstHw::buildVulkanDmaDrmCaps(formats, &toQtPixelFormat);
     if (drmCaps.empty()) {
         QSKIP("The Vulkan device imports no layout of this format");
     }
@@ -301,8 +227,8 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
     GSTTEST_SKIP_UNLESS_FACTORIES("vah264enc", "vah264dec");
     const ScopedVulkanSnapshot vulkanSceneGraph;
     // What the sink reads once Qt Quick's Vulkan scene graph runs on this device.
-    const GstQgc::ScopedSinkEnvironmentForTest environment(
-        {.target = {.backend = GstQgc::RenderBackend::Vulkan}, .dmaBufDisplay = GstDmaBufVulkan::importDevice()});
+    const GstQgc::SinkEnvironment environment{.target = {.backend = GstQgc::RenderBackend::Vulkan},
+                                              .dmaBufDisplay = GstDmaBufVulkan::importDevice()};
     GstDmaBufVideoBuffer::resetCachedState();
 
     QVideoSink videoSink;
@@ -318,7 +244,7 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
                                        QStringLiteral("videotestsrc num-buffers=10 ! "
                                                       "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
                                                       "vah264enc ! h264parse ! vah264dec"),
-                                       {.gpuZeroCopy = true})) {
+                                       {.gpuZeroCopy = true, .environment = environment})) {
         QSKIP(qPrintable(QStringLiteral("VA pipeline parse skipped: %1").arg(pipeline.error())));
     }
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
@@ -348,180 +274,6 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
     QVideoFrameTexturesUPtr none;
     const QVideoFrameTexturesUPtr textures = buffer->mapTextures(*rhi, none);
     QVERIFY2(textures, qPrintable(QStringLiteral("the delivered frame did not import (%1)").arg(negotiated)));
-#endif
-}
-#endif
-
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice_data()
-{
-    QTest::addColumn<bool>("software");
-
-    QTest::newRow("default device") << false;
-    // Next to a GPU, not the first device either instance enumerates.
-    QTest::newRow("software device") << true;
-}
-
-void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice()
-{
-    QFETCH(bool, software);
-
-    QString unavailable;
-    const std::unique_ptr<QRhi> rhi = createGstVulkanTestRhi(software, unavailable);
-    if (!rhi) {
-        QSKIP(qPrintable(unavailable));
-    }
-
-    const auto withdraw = qScopeGuard([this] { _withdrawPublishedRhi(); });
-    const GStreamer::GstObjectPtr device = primeVulkanBridgeOn(*rhi);
-    QVERIFY2(device, "GStreamer's Vulkan instance has no physical device matching the QRhi's");
-
-    GstObject* physicalDevice = nullptr;
-    g_object_get(device.get(), "physical-device", &physicalDevice, nullptr);
-    const GStreamer::GstObjectPtr physicalDeviceOwner = GStreamer::adoptObject(physicalDevice);
-    QVERIFY(physicalDevice);
-    gchar* name = nullptr;
-    g_object_get(physicalDevice, "name", &name, nullptr);
-    const GStreamer::GCharPtr nameOwner(name);
-    QCOMPARE(QByteArray(name), rhi->driverInfo().deviceName);
-}
-
-void GstHwBuffersVulkanReadbackTest::_testGstVulkanInstanceCreatesBridgeDevice()
-{
-    QString unavailable;
-    const std::unique_ptr<QRhi> rhi = createGstVulkanTestRhi(/*software=*/false, unavailable);
-    if (!rhi) {
-        QSKIP(qPrintable(unavailable));
-    }
-    const auto withdraw = qScopeGuard([this] { _withdrawPublishedRhi(); });
-    const GStreamer::GstObjectPtr device = primeVulkanBridgeOn(*rhi);
-    QVERIFY2(device, "GStreamer's Vulkan instance has no physical device matching the QRhi's");
-
-    // What a gst-vulkan element does that finds no device on its pads, as one that isn't linked to the sink yet: the
-    // instance's create-device signal, which every gst-vulkan release emits its own way, must answer with the
-    // bridge's device.
-    GError* error = nullptr;
-    const GStreamer::GstObjectPtr created = GStreamer::adoptObject(
-        GST_OBJECT(gst_vulkan_instance_create_device(GST_VULKAN_DEVICE(device.get())->instance, &error)));
-    const QByteArray failure = error ? QByteArray(error->message) : QByteArray("no device");
-    g_clear_error(&error);
-    QVERIFY2(created, failure.constData());
-    QCOMPARE(created.get(), device.get());
-}
-
-void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal_data()
-{
-    QTest::addColumn<QByteArray>("typeName");
-    QTest::addColumn<quint64>("parameter");
-    QTest::addColumn<bool>("served");
-
-    QTest::newRow("no parameter: gst-vulkan 1.20 to 1.24")
-        << QByteArray("QgcTestCreateDeviceWithoutParameter") << quint64(G_TYPE_NONE) << true;
-    QTest::newRow("the device's index: gst-vulkan 1.26 on")
-        << QByteArray("QgcTestCreateDeviceWithIndex") << quint64(G_TYPE_UINT) << true;
-    // Not connected, rather than called with arguments its handler doesn't declare.
-    QTest::newRow("a parameter no release has")
-        << QByteArray("QgcTestCreateDeviceWithString") << quint64(G_TYPE_STRING) << false;
-}
-
-void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal()
-{
-    QFETCH(QByteArray, typeName);
-    QFETCH(quint64, parameter);
-    QFETCH(bool, served);
-
-    // Any GstVulkanDevice, which need not be opened: the handlers only hand it out.
-    const GStreamer::GstObjectPtr vulkan = GStreamer::adoptObject(GST_OBJECT(gst_vulkan_instance_new()));
-    if (!gst_vulkan_instance_open(GST_VULKAN_INSTANCE(vulkan.get()), nullptr) ||
-        (GST_VULKAN_INSTANCE(vulkan.get())->n_physical_devices == 0)) {
-        QSKIP("GStreamer finds no Vulkan device");
-    }
-    const GStreamer::GstObjectPtr device =
-        GStreamer::adoptObject(GST_OBJECT(gst_vulkan_device_new_with_index(GST_VULKAN_INSTANCE(vulkan.get()), 0)));
-    QVERIFY(device);
-    const gint refsBefore = GST_OBJECT_REFCOUNT_VALUE(device.get());
-
-    const auto parameterType = static_cast<GType>(parameter);
-    GObject* const source =
-        G_OBJECT(g_object_new(createDeviceSignalType(typeName.constData(), parameterType), nullptr));
-    const auto sourceGuard = qScopeGuard([source] { g_object_unref(source); });
-    const gulong handler = GstVulkanContextBridge::connectCreateDevice(source, device.get());
-    QCOMPARE(handler != 0, served);
-
-    // As gst_vulkan_instance_create_device() emits it in a release whose signal has these parameters.
-    GstVulkanDevice* created = nullptr;
-    if (parameterType == G_TYPE_NONE) {
-        g_signal_emit_by_name(source, "create-device", &created);
-    } else if (parameterType == G_TYPE_UINT) {
-        g_signal_emit_by_name(source, "create-device", guint(1), &created);
-    } else {
-        g_signal_emit_by_name(source, "create-device", "", &created);
-    }
-    const GStreamer::GstObjectPtr createdOwner = GStreamer::adoptObject(GST_OBJECT(created));
-    QCOMPARE(GST_OBJECT(created), served ? device.get() : nullptr);
-
-    // The handler holds the device for as long as it is connected, and each answer is a reference of its own.
-    QCOMPARE(GST_OBJECT_REFCOUNT_VALUE(device.get()), refsBefore + (served ? 2 : 0));
-    if (served) {
-        g_signal_handler_disconnect(source, handler);
-        QCOMPARE(GST_OBJECT_REFCOUNT_VALUE(device.get()), refsBefore + 1);
-    }
-}
-
-void GstHwBuffersVulkanReadbackTest::_testVulkanImageFrameIsNotImported()
-{
-    QString unavailable;
-    const std::unique_ptr<QRhi> rhi = createGstVulkanTestRhi(/*software=*/false, unavailable);
-    if (!rhi) {
-        QSKIP(qPrintable(unavailable));
-    }
-    const auto withdraw = qScopeGuard([this] { _withdrawPublishedRhi(); });
-    const GStreamer::GstObjectPtr device = primeVulkanBridgeOn(*rhi);
-    QVERIFY2(device, "GStreamer's Vulkan instance has no physical device matching the QRhi's");
-
-    // A frame as a gst-vulkan element on the bridge's device allocates it, in device-local memory. Allocated here
-    // rather than by vulkanupload, whose upload hangs the GPU on some drivers (Mesa ANV with gst-vulkan 1.24).
-    gst_vulkan_image_memory_init_once();
-    GstMemory* const memory = gst_vulkan_image_memory_alloc(
-        GST_VULKAN_DEVICE(device.get()), VK_FORMAT_R8G8B8A8_UNORM, 320, 240, VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    QVERIFY(memory);
-    GstBuffer* const buffer = gst_buffer_new();
-    gst_buffer_append_memory(buffer, memory);
-    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(
-        gst_caps_from_string("video/x-raw(memory:VulkanImage),format=RGBA,width=320,height=240,framerate=30/1"));
-    const GstTest::SamplePtr sample(gst_sample_new(buffer, caps.get(), nullptr, nullptr));
-    gst_buffer_unref(buffer);
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_from_caps(&info, caps.get()));
-    GstVulkanVideoBuffer frame(sample.get(), info,
-                               QVideoFrameFormat(QSize(320, 240), QVideoFrameFormat::Format_RGBA8888));
-    QVERIFY(frame.validatePlaneHandles());
-
-    // The image is on the same physical device as the QRhi but on GStreamer's VkDevice, so it can't be wrapped.
-    using GstHwPathTelemetry::HwFallbackReason;
-    const quint64 refusedBefore =
-        GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt);
-    // Warned about once per device.
-    ignoreLogMessage("Video.GStreamer.HwBuffers.GstVulkanBuf", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("VkDevice != QRhi VkDevice")));
-    QVideoFrameTexturesUPtr none;
-    QVERIFY(!frame.mapTextures(*rhi, none));
-    QCOMPARE(GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::Vulkan, HwFallbackReason::NoExt),
-             refusedBefore + 1);
-    // Nor has the frame a CPU map for Qt to show it from: gst-vulkan maps host-visible memory only.
-    QCOMPARE(frame.map(QVideoFrame::ReadOnly).planeCount, 0);
-}
-#endif
-
-void GstHwBuffersVulkanReadbackTest::_withdrawPublishedRhi()
-{
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QGCRhiCapture::publishDeviceSnapshotForTest(nullptr);
-    GstVulkanContextBridge::instance().reset();
-    // Publishing probed the GPU paths with a test's own QRhi; the other tests probe theirs again.
-    _rhi.reset();
-    _rhiProbed = false;
 #endif
 }
 

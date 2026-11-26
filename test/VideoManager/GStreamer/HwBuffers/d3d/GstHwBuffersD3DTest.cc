@@ -18,8 +18,8 @@
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwFrameTexturesBase.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "QGCRhiCapture.h"
 #include "gstqgc/GstQgcTestSupport.h"
@@ -506,7 +506,7 @@ void GstHwBuffersD3DTest::_testWindowsGpuSinkPreservesSoftwarePixels()
     QVideoSink videoSink;
     const auto result = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
-        /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red",
+        /*numBuffers*/ 5, {.gpuZeroCopy = true}, "pattern=red",
         /*captureCenterPixel*/ true);
 
     QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("Software-frame pipeline: %1").arg(result.errorMessage)));
@@ -529,7 +529,7 @@ void GstHwBuffersD3DTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
         videoSink,
         "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! d3d11upload ! "
         "video/x-raw(memory:D3D11Memory),format=NV12",
-        /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+        /*numBuffers*/ 5, {.gpuZeroCopy = true});
     if (!result.eos && result.errorMessage.contains(QStringLiteral("d3d11"), Qt::CaseInsensitive)) {
         QSKIP(qPrintable(QStringLiteral("D3D11 device unavailable in this runner: %1").arg(result.errorMessage)));
     }

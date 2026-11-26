@@ -122,10 +122,12 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
 
     using VideoStreamUri::Transport;
     const std::optional<Transport> transport = VideoStreamUri::transportFor(url);
+    // A free port (0) is no use to listen on: the player doesn't tell which one it got.
+    if (transport &&
+        (VideoStreamUri::addressError(*transport, url) || (VideoStreamUri::listens(*transport) && (url.port() == 0)))) {
+        return std::nullopt;
+    }
     if ((transport == Transport::RtpUdpH264) || (transport == Transport::RtpUdpH265)) {
-        if (url.port() <= 0) {
-            return std::nullopt;
-        }
         const QByteArrayView encoding = (transport == Transport::RtpUdpH265) ? "H265" : "H264";
         return Source{.url = QUrl(QStringLiteral("stream.sdp")),
                       .sdp = rtpSdp(url.host(), url.port(), encoding),
@@ -147,13 +149,12 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
 void QtMultimediaVideoReceiver::onConfigChanged()
 {
     // autoReconnect alone applies at once: a reconnect it no longer allows is dropped.
-    if (_player || _supervisor->reconnectPending()) {
-        Config previous = _sessionConfig;
-        previous.autoReconnect = config().autoReconnect;
-        if (previous == config()) {
-            (void) _supervisor->autoReconnectChanged(config().autoReconnect);
-            return;
+    if ((_player || _supervisor->reconnectPending()) && config().sameStreamAs(_sessionConfig)) {
+        if (_supervisor->autoReconnectChanged(config().autoReconnect) ==
+            StreamSupervisor::AutoReconnectChange::Halted) {
+            _onHalted(_supervisor->lastFailure());
         }
+        return;
     }
     _startOver();
 }
@@ -194,8 +195,13 @@ void QtMultimediaVideoReceiver::onVideoOutputChanged()
     _sinceFrame.start();
 }
 
-void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format)
+void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format,
+                                                 const RecordingEncoding& encoding)
 {
+    if (_supervisor->halted()) {
+        emit errorOccurred(tr("Unable to record video: the video stream has stopped."));
+        return;
+    }
     if (_recorder->active()) {
         qCWarning(QtMultimediaVideoReceiverLog) << "Not recording" << name() << "to" << file << "- recording already";
         emit recordingFinished(file, tr("A recording is in progress already"));
@@ -208,7 +214,7 @@ void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat
         _recordingSession->setRecorder(_recorder->mediaRecorder());
     }
     qCDebug(QtMultimediaVideoReceiverLog) << name() << "recording to" << file;
-    _recorder->start(file, QtVideoRecorder::container(format), recordingEncoding().codec, recordingEncoding().quality);
+    _recorder->start(file, QtVideoRecorder::container(format), encoding.codec, encoding.quality);
 }
 
 void QtMultimediaVideoReceiver::onStopRecording()
@@ -225,8 +231,9 @@ void QtMultimediaVideoReceiver::_start()
     }
     if (!playerSource(config().uri)) {
         qCWarning(QtMultimediaVideoReceiverLog) << name() << "can't play" << _redactedUri();
-        _supervisor->stop();
-        emit errorOccurred(tr("Unable to play the video stream %1.").arg(_redactedUri()));
+        const QString message = tr("Unable to play the video stream %1.").arg(_redactedUri());
+        (void) _supervisor->sessionFailed(message, StreamSupervisor::Failure::Permanent, config().autoReconnect);
+        _onHalted(message);
         return;
     }
     _supervisor->sessionStarted();
@@ -334,15 +341,22 @@ void QtMultimediaVideoReceiver::_fail(const QString& reason)
         return;
     }
     _stopSession();
+    const QString message = tr("Video stream failed: %1").arg(reason);
     const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(reason, StreamSupervisor::Failure::Transient, config().autoReconnect);
+        _supervisor->sessionFailed(message, StreamSupervisor::Failure::Transient, config().autoReconnect);
     if (outcome.halted) {
         qCDebug(QtMultimediaVideoReceiverLog) << name() << "failed:" << reason;
-        emit errorOccurred(tr("Video stream failed: %1").arg(reason));
+        _onHalted(message);
     } else {
         qCDebug(QtMultimediaVideoReceiverLog)
             << name() << "failed, reconnecting in" << outcome.reconnectDelay << ":" << reason;
     }
+}
+
+void QtMultimediaVideoReceiver::_onHalted(const QString& message)
+{
+    _recorder->stop();
+    emit errorOccurred(message);
 }
 
 void QtMultimediaVideoReceiver::_bindVideoSink()
@@ -454,7 +468,9 @@ void QtMultimediaVideoReceiver::_sample()
     // The player doesn't tell how many bytes it received, so there is no bitrate.
     VideoStreamStatsMeter::Counters counters;
     counters.framesDisplayed = _frames;
-    if (_statsSampler.sample(counters, stats, nullptr)) {
+    stats.recordingMs = _recorder->recordedMs();
+    stats.recordingBytes = _recorder->recordedBytes();
+    if (_statsSampler.sample(counters, stats)) {
         setStats(_statsSampler.stats());
     }
 }

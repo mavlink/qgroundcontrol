@@ -162,7 +162,7 @@ def test_gstreamer_build_excluded_from_aggregate() -> None:
         for pkg in pkgs
     }
     only_gstreamer_build = set(get_debian_packages("gstreamer_build")) - others
-    assert {"libva-dev", "glslc"} <= only_gstreamer_build
+    assert {"libva-dev", "libopenh264-dev"} <= only_gstreamer_build
     assert not only_gstreamer_build & set(get_debian_packages())
 
 

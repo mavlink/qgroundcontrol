@@ -10,7 +10,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/HwBuffers.h"
-#include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
 void GstHwBuffersGlTest::_testGlMemoryDispatch_data()
@@ -40,9 +40,8 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("An NSApplication needs to be running")));
 #endif
-    const GstQgc::ScopedSinkEnvironmentForTest environment(
-        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
-         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
+    const GstQgc::SinkEnvironment environment{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+                                              .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}};
 
     GSTTEST_SKIP_UNLESS_FACTORIES("glupload");
 
@@ -52,7 +51,7 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch()
                                                       "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
                                                       "glupload ! "
                                                       "video/x-raw(memory:GLMemory)"),
-                                       {.gpuZeroCopy = true})) {
+                                       {.gpuZeroCopy = true, .environment = environment})) {
         QSKIP(qPrintable(QStringLiteral("GLMemory pipeline parse skipped: %1").arg(pipeline.error())));
     }
 
@@ -136,9 +135,8 @@ void GstHwBuffersGlTest::_testGlUploadBinTakesSoftwareFrames()
     QFETCH(int, mode);
     QFETCH(QString, format);
     QFETCH(QString, pixelAspectRatio);
-    const GstQgc::ScopedSinkEnvironmentForTest environment(
-        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
-         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
+    const GstQgc::SinkEnvironment environment{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+                                              .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}};
 
     QVideoSink videoSink;
     const QByteArray capsLine =
@@ -146,7 +144,7 @@ void GstHwBuffersGlTest::_testGlUploadBinTakesSoftwareFrames()
             .arg(format, pixelAspectRatio)
             .toLatin1();
     const GstQgcTest::PipelineRunResult r = GstQgcTest::runPipelineThroughQVideoSink(
-        videoSink, capsLine.constData(), /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+        videoSink, capsLine.constData(), /*numBuffers*/ 5, {.gpuZeroCopy = true, .environment = environment});
     // The bin's glupload needs an EGL/GL context, which a headless runner may not have.
     if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
                    r.errorMessage.contains(QStringLiteral("gl context"), Qt::CaseInsensitive))) {

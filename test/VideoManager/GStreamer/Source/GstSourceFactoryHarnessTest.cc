@@ -7,8 +7,8 @@
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerTestHelpers.h"
+#include "GstH26xSetup.h"
 #include "GstScoped.h"
-#include "GstSourceFactory.h"
 
 namespace {
 

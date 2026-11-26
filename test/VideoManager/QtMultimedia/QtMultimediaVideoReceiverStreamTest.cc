@@ -182,12 +182,21 @@ void QtMultimediaVideoReceiverStreamTest::_testRecordsStream()
     const QString file = startedSpy.first().first().toString();
     QElapsedTimer recorded;
     recorded.start();
+    // The statistics tell how long the recording is, and how large its file, which Qt writes a buffer at a time.
+    QTRY_VERIFY_WITH_TIMEOUT(stream.receiver->stats().recordingMs > 0, TestTimeout::longMs());
+    const qint64 recordedMs = stream.receiver->stats().recordingMs;
+    QTRY_VERIFY_WITH_TIMEOUT(
+        (stream.receiver->stats().recordingMs > recordedMs) && (stream.receiver->stats().recordingBytes > 0),
+        TestTimeout::longMs());
     QTRY_VERIFY_WITH_TIMEOUT(recorded.hasExpired(1500), TestTimeout::longMs());
     stream.receiver->stopRecording();
     QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 1, TestTimeout::longMs());
     QCOMPARE(finishedSpy.first().at(0).toString(), file);
     QVERIFY2(finishedSpy.first().at(1).toString().isEmpty(), qPrintable(finishedSpy.first().at(1).toString()));
     QVERIFY(!stream.receiver->recording());
+    // The stream plays on, without a recording to measure.
+    QTRY_COMPARE_WITH_TIMEOUT(stream.receiver->stats().recordingMs, qint64(-1), TestTimeout::mediumMs());
+    QCOMPARE(stream.receiver->stats().recordingBytes, qint64(-1));
 
     QMediaPlayer player;
     player.setSource(QUrl::fromLocalFile(file));

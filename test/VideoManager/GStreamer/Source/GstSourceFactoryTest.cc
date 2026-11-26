@@ -10,6 +10,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerTestHelpers.h"
+#include "GstH26xSetup.h"
 #include "GstRtpPacketProbe.h"
 #include "GstRtspSource.h"
 #include "GstScoped.h"
@@ -458,9 +459,8 @@ void GstSourceFactoryTest::_testSourceFactoryRtspCredentials()
 
 void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri()
 {
-    ignoreLogMessage(
-        "Video.GStreamer.GstSourceFactory", QtWarningMsg,
-        QRegularExpression(QStringLiteral("URI is not specified|Unsupported URI scheme|Invalid UDP port")));
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("URI is not specified|Unsupported URI scheme|Invalid port in")));
 
     GStreamer::SourceFactory::Config config;
     QVERIFY(!GstTest::createSource(QString(), config));
@@ -497,7 +497,7 @@ void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
 void GstSourceFactoryTest::_testSourceFactoryRejectsBadTcpUri()
 {
     ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Invalid TCP port|Missing host in TCP URI")));
+                     QRegularExpression(QStringLiteral("Invalid port in|Missing host in")));
 
     GStreamer::SourceFactory::Config config;
     QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://192.168.1.50"), config),
@@ -945,6 +945,44 @@ void GstSourceFactoryTest::_testTransportFor()
     QCOMPARE(actual ? int(*actual) : -1, transport);
     const std::optional<std::chrono::milliseconds> grace = GStreamer::SourceFactory::connectGracePeriod(uri);
     QCOMPARE(grace ? int(grace->count()) : -1, connectGraceMs);
+}
+
+void GstSourceFactoryTest::_testStartsAccessUnit_data()
+{
+    QTest::addColumn<QByteArray>("bytes");
+    QTest::addColumn<bool>("h265");
+    QTest::addColumn<bool>("starts");
+
+    const auto hex = [](const char* text) { return QByteArray::fromHex(text); };
+    QTest::newRow("h264 delimiter") << hex("00000001 09f0") << false << true;
+    QTest::newRow("h264 parameter set") << hex("00000001 6742c01e") << false << true;
+    QTest::newRow("h264 sei") << hex("000001 0605ff") << false << true;
+    QTest::newRow("h264 first slice of a keyframe") << hex("00000001 658884") << false << true;
+    QTest::newRow("h264 first slice") << hex("000001 419a24") << false << true;
+    QTest::newRow("h264 later slice") << hex("000001 41059a") << false << false;
+    QTest::newRow("h264 end of sequence") << hex("000001 0a00") << false << false;
+    QTest::newRow("h264 within a unit") << hex("9a246c41ffe0") << false << false;
+    QTest::newRow("h264 start code alone") << hex("00000001") << false << false;
+    QTest::newRow("h265 delimiter") << hex("00000001 460150") << true << true;
+    QTest::newRow("h265 parameter set") << hex("00000001 40010c01") << true << true;
+    QTest::newRow("h265 prefix sei") << hex("000001 4e0105") << true << true;
+    QTest::newRow("h265 first slice of a keyframe") << hex("00000001 2601af") << true << true;
+    QTest::newRow("h265 first slice") << hex("000001 0201d0") << true << true;
+    QTest::newRow("h265 later slice segment") << hex("000001 020150") << true << false;
+    QTest::newRow("h265 suffix sei") << hex("000001 500105") << true << false;
+    QTest::newRow("h265 within a unit") << hex("d0a1b2c3d4e5") << true << false;
+}
+
+void GstSourceFactoryTest::_testStartsAccessUnit()
+{
+    QFETCH(QByteArray, bytes);
+    QFETCH(bool, h265);
+    QFETCH(bool, starts);
+
+    GstBuffer* const buffer = gst_buffer_new_memdup(bytes.constData(), static_cast<gsize>(bytes.size()));
+    const bool actual = GStreamer::SourceFactory::startsAccessUnit(buffer, h265);
+    gst_buffer_unref(buffer);
+    QCOMPARE(actual, starts);
 }
 
 UT_REGISTER_TEST(GstSourceFactoryTest, TestLabel::Unit)

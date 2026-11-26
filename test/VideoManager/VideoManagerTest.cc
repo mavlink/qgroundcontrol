@@ -840,7 +840,7 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
     const bool mainPicture = !camera.isEmpty() && !tile;
     QCOMPARE(_videoManager->isUvc(), mainPicture);
     QCOMPARE(_videoManager->mainSource(), mainPicture ? _videoManager->_cameraSource : _videoManager->primaryStream());
-    QCOMPARE(_videoManager->uvcVideoSourceID(), mainPicture ? camera : QString());
+    QCOMPARE(_videoManager->_uvcVideoSourceID, mainPicture ? camera : QString());
     QCOMPARE(_videoManager->isStreamSource(), videoSource == QString(VideoSettings::videoSourceUDPH264));
 }
 
@@ -888,7 +888,7 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     QCOMPARE(mainSourceSpy.count(), 1);
     QCOMPARE(_videoManager->mainSource(), cameraSource);
     QVERIFY(_videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool());
-    QCOMPARE(_videoManager->uvcVideoSourceID(), camera);
+    QCOMPARE(_videoManager->_uvcVideoSourceID, camera);
     QVERIFY(!cameraSource->tile());
     QVERIFY(primaryStream->tile());
     QCOMPARE(_videoManager->primaryStream(), primaryStream);
@@ -1600,46 +1600,6 @@ void VideoManagerTest::_testUvcControlsReachCamera()
                                                  .exposureCompensation = -0.5f,
                                                  .focusMode = QCamera::FocusModeInfinity};
     QCOMPARE(camera->controls(), expected);
-}
-
-void VideoManagerTest::_testRecordingEncodingReachesEverySource()
-{
-    const auto receivers = [this] {
-        QList<VideoReceiver*> receivers;
-        for (const VideoStreamController* source : std::as_const(_videoManager->_sources)) {
-            receivers.append(source->receiver());
-        }
-        return receivers;
-    };
-    // Set first, so that choosing the other backend below is a change.
-    _facts->set(_videoSettings->videoBackend(), int(VideoSettings::VideoBackendGStreamer));
-
-    _facts->set(_videoSettings->uvcRecordingCodec(), QStringLiteral("MPEG2"));
-    _facts->set(_videoSettings->uvcRecordingQuality(), int(QMediaRecorder::LowQuality));
-    const VideoReceiver::RecordingEncoding expected{.codec = QMediaFormat::VideoCodec::MPEG2,
-                                                    .quality = QMediaRecorder::LowQuality};
-    // A tile's source, made after the settings were, among them: it records once it is the primary stream.
-    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
-    const auto other = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
-    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
-                                         {{other.get(), nullptr, QStringLiteral("Other")}});
-    QCOMPARE(receivers().size(), 4);
-    for (const VideoReceiver* receiver : receivers()) {
-        QVERIFY(receiver);
-        QCOMPARE(receiver->recordingEncoding(), expected);
-    }
-
-    // The receivers another video backend gives the streams get them too.
-    _primary = nullptr;
-    _thermal = nullptr;
-    _facts->set(_videoSettings->videoBackend(), int(VideoSettings::VideoBackendQtMultimedia));
-    QVERIFY(!_videoManager->primaryStream()->receiver());
-    _videoManager->_createVideoReceivers();
-    for (const VideoReceiver* receiver : receivers()) {
-        QVERIFY(receiver);
-        QCOMPARE(receiver->recordingEncoding(), expected);
-    }
-    _videoManager->_setAdvertisedStreams({}, nullptr, {});
 }
 
 void VideoManagerTest::_testStreamStatsReachQml()

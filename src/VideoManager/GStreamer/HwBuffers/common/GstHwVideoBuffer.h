@@ -12,7 +12,7 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "CpuVideoFramePool.h"
+#include "GstHwFrameMapping.h"
 #include "GstHwTypes.h"
 
 namespace GstHw {
@@ -117,5 +117,5 @@ private:
     /// Pixel format of the sample's memory, as constructed. A subclass may advertise another in _format for its GPU
     /// import (the DMABuf eglfs YUYV/UYVY-as-RGBA quirk); such frames have no CPU layout matching format().
     QVideoFrameFormat::PixelFormat _memoryPixelFormat;
-    CpuVideoFramePool::FrameMapping _cpuView;
+    GstHw::FrameMapping _cpuView;
 };

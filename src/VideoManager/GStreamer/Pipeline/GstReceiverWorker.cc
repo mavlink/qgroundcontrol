@@ -94,9 +94,7 @@ void GstReceiverWorker::_onConfigChanged(const VideoReceiver::Config& previous)
         return;
     }
     const VideoReceiver::Config& config = _requested.config;
-    VideoReceiver::Config sameStream = previous;
-    sameStream.autoReconnect = config.autoReconnect;
-    if (sameStream != config) {
+    if (!config.sameStreamAs(previous)) {
         _restartStream();
         return;
     }

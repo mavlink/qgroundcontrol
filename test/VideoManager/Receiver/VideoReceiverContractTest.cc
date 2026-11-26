@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
@@ -182,6 +183,63 @@ void VideoReceiverContractTest::_testListensUntilStreamStarts()
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
+void VideoReceiverContractTest::_testIncompleteAddressStops_data()
+{
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<QString>("uri");
+
+    QTest::newRow("GStreamer, TCP without a port")
+        << int(ContractBackend::GStreamer) << QStringLiteral("tcp://127.0.0.1");
+    QTest::newRow("GStreamer, UDP without a port")
+        << int(ContractBackend::GStreamer) << QStringLiteral("mpegts://127.0.0.1");
+    QTest::newRow("Qt Multimedia, TCP without a port")
+        << int(ContractBackend::QtMultimedia) << QStringLiteral("tcp://127.0.0.1");
+    QTest::newRow("Qt Multimedia, UDP without a port")
+        << int(ContractBackend::QtMultimedia) << QStringLiteral("mpegts://127.0.0.1");
+}
+
+void VideoReceiverContractTest::_testIncompleteAddressStops()
+{
+    QFETCH(int, backend);
+    QFETCH(QString, uri);
+    const auto contractBackend = static_cast<ContractBackend>(backend);
+    _ignoreBackendLogs();
+
+    ContractStream stream(contractBackend, /*autoReconnect=*/true);
+    VideoReceiver::Config config = stream.receiver->config();
+    config.uri = uri;
+    stream.receiver->setConfig(config);
+
+    const bool gstreamer = (contractBackend == ContractBackend::GStreamer);
+    if (gstreamer) {
+        expectLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Invalid port in")));
+        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Video stream stopped:")));
+    } else {
+        expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("can't play")));
+    }
+    stream.receiver->setActive(true);
+
+    // Connecting again can't complete the address: the receiver stops at once, though it reconnects after a failure.
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    if (gstreamer) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(stream.receiver->state(), VideoReceiver::State::Stopped);
+    QVERIFY(!stream.passedThrough(VideoReceiver::State::Reconnecting));
+
+    // A stream that doesn't run takes no recording.
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("stream.mkv")), VideoReceiver::FileFormat::Mkv);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 2, TestTimeout::mediumMs());
+    QVERIFY(!stream.receiver->recording());
+    QVERIFY(QDir(dir.path()).isEmpty());
+}
+
 void VideoReceiverContractTest::_testStreamLossRestartPolicy_data()
 {
     QTest::addColumn<int>("backend");
@@ -292,6 +350,101 @@ void VideoReceiverContractTest::_testDeactivateEndsRecording()
     QVERIFY(stream.waitForState(VideoReceiver::State::Stopped));
     QVERIFY_TRUE_WAIT(!stream.receiver->recording() && !stream.receiver->decoding() && !stream.receiver->stats().valid,
                       TestTimeout::shortMs());
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void VideoReceiverContractTest::_testStreamStoppedForGoodEndsRecording_data()
+{
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<bool>("autoReconnectTurnedOff");
+
+    QTest::newRow("GStreamer, stream lost") << int(ContractBackend::GStreamer) << false;
+    QTest::newRow("GStreamer, auto-reconnect turned off") << int(ContractBackend::GStreamer) << true;
+    QTest::newRow("Qt Multimedia, stream lost") << int(ContractBackend::QtMultimedia) << false;
+    QTest::newRow("Qt Multimedia, auto-reconnect turned off") << int(ContractBackend::QtMultimedia) << true;
+}
+
+void VideoReceiverContractTest::_testStreamStoppedForGoodEndsRecording()
+{
+    QFETCH(int, backend);
+    QFETCH(bool, autoReconnectTurnedOff);
+    const auto contractBackend = static_cast<ContractBackend>(backend);
+    const bool gstreamer = (contractBackend == ContractBackend::GStreamer);
+    if (gstreamer) {
+        GSTTEST_SKIP_UNLESS_FACTORIES("matroskamux");
+    }
+    _ignoreBackendLogs();
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    // Either the stream is lost with auto-reconnect off, or it is turned off while the stream waits to reconnect.
+    ContractStream stream(contractBackend, /*autoReconnect=*/autoReconnectTurnedOff);
+    QVERIFY(stream.startStreaming());
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("stream.mkv")), VideoReceiver::FileFormat::Mkv);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 1, TestTimeout::longMs());
+    const QString file = stream.recordingStartedSpy.constFirst().constFirst().toString();
+
+    if (gstreamer) {
+        expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Video stream stopped:")));
+    }
+    stream.sender.stop();
+    if (autoReconnectTurnedOff) {
+        QVERIFY(stream.waitForState(VideoReceiver::State::Reconnecting));
+        VideoReceiver::Config config = stream.receiver->config();
+        config.autoReconnect = false;
+        stream.receiver->setConfig(config);
+    }
+
+    // The receiver says that the stream stopped, and ends the recording rather than have it wait for frames that
+    // won't come.
+    QVERIFY(stream.waitForState(VideoReceiver::State::Stopped));
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::shortMs());
+    if (gstreamer) {
+        verifyExpectedLogMessage();
+    }
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::longMs());
+    QCOMPARE(stream.recordingFinishedSpy.constFirst().at(0).toString(), file);
+    QVERIFY(QFileInfo(file).size() > 0);
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());
+
+    // It takes no other one either.
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("second.mkv")), VideoReceiver::FileFormat::Mkv);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 2, TestTimeout::mediumMs());
+    QVERIFY(!stream.receiver->recording());
+    QCOMPARE(stream.recordingStartedSpy.count(), 1);
+}
+
+void VideoReceiverContractTest::_testRecordingBeforeFirstFrame_data()
+{
+    addBackendRows();
+}
+
+void VideoReceiverContractTest::_testRecordingBeforeFirstFrame()
+{
+    QFETCH(int, backend);
+    if (static_cast<ContractBackend>(backend) == ContractBackend::GStreamer) {
+        GSTTEST_SKIP_UNLESS_FACTORIES("matroskamux");
+    }
+    _ignoreBackendLogs();
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ContractStream stream(static_cast<ContractBackend>(backend), /*autoReconnect=*/false);
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(VideoReceiver::State::Connecting));
+
+    // Nobody sends the stream yet: the recording is taken on and waits for it, with no file to tell of.
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("stream.mkv")), VideoReceiver::FileFormat::Mkv);
+    QVERIFY_TRUE_WAIT(stream.receiver->recording(), TestTimeout::shortMs());
+    QVERIFY(stream.recordingStartedSpy.isEmpty());
+
+    // It ends when asked to, and leaves nothing behind.
+    stream.receiver->stopRecording();
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::mediumMs());
+    QVERIFY(stream.recordingStartedSpy.isEmpty());
+    QVERIFY(stream.recordingFinishedSpy.isEmpty());
+    QVERIFY(QDir(dir.path()).isEmpty());
     QVERIFY(stream.errorSpy.isEmpty());
 }
 

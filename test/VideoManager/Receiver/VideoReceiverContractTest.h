@@ -15,10 +15,16 @@ private:
 private slots:
     void _testListensUntilStreamStarts_data();
     void _testListensUntilStreamStarts();
+    void _testIncompleteAddressStops_data();
+    void _testIncompleteAddressStops();
     void _testStreamLossRestartPolicy_data();
     void _testStreamLossRestartPolicy();
     void _testRestartReopensPort_data();
     void _testRestartReopensPort();
     void _testDeactivateEndsRecording_data();
     void _testDeactivateEndsRecording();
+    void _testStreamStoppedForGoodEndsRecording_data();
+    void _testStreamStoppedForGoodEndsRecording();
+    void _testRecordingBeforeFirstFrame_data();
+    void _testRecordingBeforeFirstFrame();
 };

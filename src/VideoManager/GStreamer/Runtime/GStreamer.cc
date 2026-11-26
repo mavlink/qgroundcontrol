@@ -8,10 +8,8 @@
 #include <QtCore/QByteArrayList>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QList>
-#include <QtCore/QPointer>
 #include <QtCore/QStringList>
 #include <QtCore/QVarLengthArray>
-#include <QtMultimedia/QVideoSink>
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerEnvironment.h"
@@ -21,9 +19,7 @@
 #include "GstScoped.h"
 #include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
-#include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcRenderTarget.h"
-#include "gstqgc/GstQgcSinkBin.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
@@ -253,52 +249,6 @@ bool initialize(const VideoBackend::InitParams& params)
     return completeInit(static_cast<int>(gst_debug_get_default_threshold()));
 }
 
-// Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller
-// adopts. While decoding, the pipeline bin takes another on gst_bin_add (dropped by gst_bin_remove).
-GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio,
-                            [[maybe_unused]] bool gpuZeroCopy)
-{
-    GstQgc::SinkBinConfig config{.conversionElement = conversionElement, .disablePar = disablePixelAspectRatio};
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    config.gpuZeroCopy = gpuZeroCopy;
-#endif
-    GstElement* const videoSinkBin = GstQgc::makeSinkBin(config);
-    if (!videoSinkBin) {
-        // completeInit() found the sink's elements at startup: the registry changed underfoot, or the chain doesn't
-        // link here.
-        qCCritical(GStreamerLog) << "the video sink bin could not be built";
-        return nullptr;
-    }
-    // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
-    return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
-}
-
-QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent)
-{
-    if (!sinkBin || !videoSink || !controllerParent) {
-        // controllerParent owns the controller's QObject lifetime — else it leaks (caller has no handle).
-        qCWarning(GStreamerLog) << "null sinkBin, videoSink, or controllerParent";
-        return nullptr;
-    }
-
-    // Accessor returns a transfer-full ref; the guard releases it once the controller has taken
-    // its own ref for deferred QObject teardown.
-    const GstObjectPtr element(GST_OBJECT(GstQgc::sinkBinVideoSink(sinkBin)));
-    if (!element) {
-        qCCritical(GStreamerLog) << "bin has no qgcqvideosink child";
-        return nullptr;
-    }
-    GstElement* const elementRaw = GST_ELEMENT(element.get());
-
-    auto* controller = new QGCQVideoSinkController(elementRaw, controllerParent);
-
-    // Route the initial install through the controller so its destroyed-sink QPointer guard
-    // covers setup, not just later swaps.
-    controller->setVideoSink(QPointer<QVideoSink>(videoSink));
-
-    return controller;
-}
-
 void onMainWindowReady(QQuickWindow* window)
 {
     // Which decoders rank first depends on the device Qt renders with: its API, its adapter and what it opens. The
@@ -310,9 +260,7 @@ void onMainWindowReady(QQuickWindow* window)
         }
     });
     HwBuffers::connectMainWindow(window);
-    const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
-    qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)
-                         << "→ zero-copy path:" << GstQgc::zeroCopyPathName(backend);
+    qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(GstQgc::currentRenderTarget().backend);
 }
 
 }  // namespace GStreamer

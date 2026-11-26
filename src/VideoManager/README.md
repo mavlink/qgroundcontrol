@@ -18,13 +18,15 @@ and also says how the sources and tiles of `VideoManager` behave.
 
 - This folder: `VideoManager`, the QML facade of the sources (the primary stream, the thermal stream, the USB camera
   and the streams in tiles), and `VideoTelemetryOverlay`, the telemetry text shown over the video.
-- `Streams/`: `VideoStreamController`, one for each source, and `VideoStreamResolver`, which turns the video settings
-  and a camera's advertised stream into a `VideoReceiver::Config`.
+- `Streams/`: `VideoStreamController`, one for each source; `VideoStreamResolver`, which turns the video settings
+  and a camera's advertised stream into a `VideoReceiver::Config`; and `VehicleVideoStreams`, which reads the streams
+  the active vehicle's cameras advertise and tells the cameras which of them play.
 - `Recording/`: what is recorded and where. `VideoRecordingService` names the files, starts and stops the sources'
   recordings and keeps the storage limit; `SubtitleWriter` writes the telemetry subtitles beside a recording.
-- `Receiver/`: the receiver contract and what its implementations share: `VideoReceiver`, `VideoBackend`, the
-  reconnect policy (`StreamSupervisor`), the files of a recording (`RecordingPlan`), screenshots, stream statistics
-  and URI schemes. No receiver that plays anything is here: those are in the next three folders.
+- `Receiver/`: the receiver contract and what its implementations share: `VideoReceiver`, `VideoBackend` and the
+  run of its initialization (`VideoBackendInit`), the reconnect policy (`StreamSupervisor`), the files of a recording
+  (`RecordingPlan`), screenshots, stream statistics and URI schemes. No receiver that plays anything is here: those
+  are in the next three folders.
 - `GStreamer/`: the GStreamer backend, listed below.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
@@ -53,16 +55,16 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 ## The rules the folders keep
 
 - `VideoSettings` is read by `VideoManager.cc`, `Streams/`, `Recording/VideoRecordingService.cc` and
-  `Receiver/VideoBackend.cc` (the backend setting) only, and the vehicle and its cameras are known to this folder,
-  `Streams/` and `Recording/TelemetryBarValues.cc` only. A receiver gets a `VideoReceiver::Config` and a
-  `VideoReceiver::DisplayConfig`.
+  `Receiver/VideoBackend.cc` (the backend setting) only, and the vehicle and its cameras are known to
+  `VideoTelemetryOverlay.cc`, `Streams/` and `Recording/TelemetryBarValues.cc` only. A receiver gets a
+  `VideoReceiver::Config` and a `VideoReceiver::DisplayConfig`.
 - `Receiver/` names a backend in one place, `VideoBackend::instance()`.
 - A stream's receiver is chosen in one place, `VideoBackend::createReceiver()`: GStreamer's where the build has it,
   it started and the backend setting asks for it, else Qt Multimedia's. `VideoManager` reaches it through
   `QGCCorePlugin::createVideoReceiver()`, which a custom build overrides to supply its own.
 - The backends include each other in one place: `UVC/` records with `QtMultimedia/QtVideoRecorder`.
 - Inside `GStreamer/` the includes point one way: `GStreamerVideoBackend` and `SelfTest/`, then `Pipeline/`, then
-  `Source/`, then `Runtime/`.
+  `Source/` and `Sink/QGCQVideoSinkController`, then `Runtime/`.
 - `HwBuffers/` and `Sink/gstqgc/` are the static library `QGCGStreamer`, which is not a unity build. Of the folders
   above they include one header, `Runtime/GstScoped.h`. Everything else is compiled into the application, which CI
   builds as unity units: a file-local name must not repeat in another `.cc` of the application.
@@ -79,7 +81,7 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 5. `GStreamer/Pipeline/DecodingBranch` decodes with `decodebin3`, which plugs the decoder that
    `GStreamer/Runtime/GStreamerDecoderRanks` ranked first.
 6. `GStreamer/Sink/gstqgc/gstqgcqvideosink` makes a `QVideoFrame` of the decoded frame (`GstQgcFrameMap`): through a
-   GPU path of `GStreamer/HwBuffers/`, or on the CPU (`HwBuffers/common/CpuVideoFramePool`).
+   GPU path of `GStreamer/HwBuffers/`, or on the CPU (`Sink/gstqgc/CpuVideoFramePool`).
 7. `GStreamer/Sink/gstqgc/GstQgcFrameDelivery` gives the latest frame to the `QVideoSink` that
    `GStreamer/Sink/QGCQVideoSinkController` bound.
 8. `Qml/VideoStreamOutput.qml` shows it, inside `VideoView.qml` or `VideoTile.qml`.
@@ -89,7 +91,7 @@ The other receivers take fewer steps. `QtMultimedia/QtMultimediaVideoReceiver` h
 output is a `Qml/VideoStreamOutput.qml`, registered with the source's `VideoStreamController`.
 
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
-`GStreamer/Sink/gstqgc/GstQgcSinkCounters`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
+`GStreamer/Sink/gstqgc/GstQgcSinkStats`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
 `UVC/UVCCameraController`),
 and `Receiver/VideoStreamStatsMeter` and `Receiver/VideoStreamStatsSampler` make the `VideoStreamStats` of the
 counters that `Qml/VideoStreamStatsGroup.qml` shows.
@@ -126,7 +128,7 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 ## What is platform-specific
 
 - `GStreamer/HwBuffers/`: `d3d/` is for Windows, `apple/` for macOS and iOS, `dmabuf/` for Linux, `gl/` for Linux and
-  Android; `cuda/` (Linux), `android/` and `vulkan/` are built only on request. `GStreamer/HwBuffers/CMakeLists.txt`
+  Android; `android/` is built only on request. `GStreamer/HwBuffers/CMakeLists.txt`
   has the table of the paths with their conditions.
 - `GStreamer/Platform/`, which `cmake/GStreamer/platform/Android.cmake` and `cmake/platform/Apple.cmake` compile.
 - `cmake/GStreamer/`: how each platform's GStreamer SDK is found, downloaded and installed.
@@ -142,7 +144,8 @@ run them.
 
 `VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common. Each of
 its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream: a port nobody sends
-to yet, a stream lost with and without auto-reconnect, a restart, and a recording ended by stopping the stream. What a
-backend does on its own stays in its tests. The Qt Multimedia receiver's are `QtMultimediaVideoReceiverTest`, which
-needs neither a stream nor GStreamer, and `QtMultimediaVideoReceiverStreamTest`, which plays the streams of
-`MockVideoStreamServer`. That class and the contract test are built only with GStreamer, which sends their streams.
+to yet, a stream lost with and without auto-reconnect, a restart, a recording ended by stopping the stream, and one
+asked for before the stream's first frame. What a backend does on its own stays in its tests. The Qt Multimedia
+receiver's are `QtMultimediaVideoReceiverTest`, which needs neither a stream nor GStreamer, and
+`QtMultimediaVideoReceiverStreamTest`, which plays the streams of `MockVideoStreamServer`. That class and the contract
+test are built only with GStreamer, which sends their streams.

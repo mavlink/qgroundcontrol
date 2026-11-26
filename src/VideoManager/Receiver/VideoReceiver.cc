@@ -119,7 +119,7 @@ void VideoReceiver::_onVideoOutputDestroyed()
     onVideoOutputChanged();
 }
 
-void VideoReceiver::startRecording(const QString& file, FileFormat format)
+void VideoReceiver::startRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding)
 {
     if (!_active) {
         qCWarning(VideoReceiverLog) << "Not recording" << _name << "- the stream is not active";
@@ -131,7 +131,7 @@ void VideoReceiver::startRecording(const QString& file, FileFormat format)
         emit errorOccurred(tr("Unable to record video: no file name."));
         return;
     }
-    onStartRecording(file, format);
+    onStartRecording(file, format, encoding);
 }
 
 void VideoReceiver::stopRecording()

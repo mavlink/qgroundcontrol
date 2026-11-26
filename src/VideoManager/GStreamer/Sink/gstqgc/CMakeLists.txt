@@ -8,25 +8,18 @@ target_sources(
         gstqgcelements.h
         gstqgcqvideosink.cc
         gstqgcqvideosink.h
+        CpuVideoFramePool.cc
+        CpuVideoFramePool.h
         GstQgcFrameMap.cc
         GstQgcFrameMap.h
-        GstQgcAllocation.cc
-        GstQgcAllocation.h
         GstQgcSinkBin.cc
         GstQgcSinkBin.h
-        GstQgcCaps.cc
-        GstQgcCaps.h
         GstQgcFrameDelivery.cc
         GstQgcFrameDelivery.h
-        GstQgcGpuBin.cc
-        GstQgcGpuBin.h
-        GstQgcPathSession.cc
-        GstQgcPathSession.h
-        GstQgcRenderTarget.cc
-        GstQgcRenderTarget.h
-        GstQgcSinkCounters.cc
-        GstQgcSinkCounters.h
+        GstQgcSinkPolicy.cc
+        GstQgcSinkPolicy.h
         GstQgcSinkStats.cc
         GstQgcSinkStats.h
+        GstQgcVideoFormats.cc
         GstQgcVideoFormats.h
 )

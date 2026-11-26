@@ -152,11 +152,18 @@ void VideoRecordingServiceTest::_testCameraRecordsAsTheVideo()
     // Running in place of the primary stream, the camera gets its file name and its subtitles.
     _cameraStream->setCamera(QStringLiteral("QGC Test Camera"));
     _activate(_cameraStream);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    _facts->set(videoSettings->uvcRecordingCodec(), QStringLiteral("MPEG2"));
+    _facts->set(videoSettings->uvcRecordingQuality(), int(QMediaRecorder::LowQuality));
     _service->startRecording(QStringLiteral("flight"));
     const QString file = _videoDir + QStringLiteral("/flight.mkv");
     QVERIFY(_primary->recordings.isEmpty());
     QCOMPARE(_camera->recordings.size(), 1);
     QCOMPARE(_camera->recordings.first().file, file);
+    // It encodes the recording itself, as the settings say when the recording starts.
+    const VideoReceiver::RecordingEncoding encoding{.codec = QMediaFormat::VideoCodec::MPEG2,
+                                                    .quality = QMediaRecorder::LowQuality};
+    QCOMPARE(_camera->recordings.first().encoding, encoding);
 
     emit _camera->recordingStarted(file);
     _camera->setRecording(true);

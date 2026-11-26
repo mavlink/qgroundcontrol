@@ -494,12 +494,10 @@ QGC with.
   FFmpeg built without GPL parts that decodes H.264, H.265, MPEG-2, MPEG-4 and H.263 video,
   encodes MPEG-2 video for one of the tests, and has no other codec (`FFMPEG_FEATURES` in
   `config.py`): FFmpeg's Meson port makes each codec an option, which that setting turns off.
-- **Linux** links the system's libraries (GLib, libva, libdrm, the X11, Wayland, GL and Vulkan
+- **Linux** links the system's libraries (GLib, libva, libdrm, the X11, Wayland and GL
   libraries, libjpeg, libvpx, OpenH264), so its VA decoders find the system's drivers. Debian's
   `gstreamer_build` category installs them, and configure stops at a missing one. Only orc and
-  FFmpeg are built with GStreamer. The `vulkan` plugin comes without its decoders, which GStreamer
-  1.28 builds only with Vulkan headers 1.4.317 or newer: Ubuntu 24.04 has 1.3.275. Everything
-  installed has the prefix's `lib/` as its run path:
+  FFmpeg are built with GStreamer. Everything installed has the prefix's `lib/` as its run path:
   without one, a program built against the prefix loads the libraries it does not link itself
   (`libgstaudio`, for one) from the system's GStreamer.
 - **macOS and Windows** build every dependency GStreamer has a fallback for into the prefix. A

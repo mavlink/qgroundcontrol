@@ -33,4 +33,16 @@ constexpr bool isValidPort(int port)
     return (port > 0) && (port <= 65535);
 }
 
+/// What a stream URI lacks for a receiver to open it.
+enum class AddressError : uint8_t
+{
+    InvalidPort,  ///< None, or one that is no port.
+    MissingHost,
+};
+
+/// What @p url lacks as the address of a stream over @p transport; nullopt when a receiver can open it. A stream that
+/// is listened for needs the port, where 0 stands for a free one, and may leave out the local address. MPEG-TS over
+/// TCP needs the server's host and port. An RTSP URI is left to the RTSP client that opens it.
+std::optional<AddressError> addressError(Transport transport, const QUrl& url);
+
 }  // namespace VideoStreamUri

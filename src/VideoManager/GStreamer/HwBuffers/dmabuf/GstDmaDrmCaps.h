@@ -5,21 +5,28 @@
 #include <span>
 #include <string>
 
+#include <QtMultimedia/QVideoFrameFormat>
+
 /// Defined only in builds with the DMABuf path (QGC_HAS_GST_DMABUF_GPU_PATH) on GStreamer 1.24 or later.
 namespace GstHw {
 
+/// The Qt pixel format the sink shows the frames of a GStreamer format as.
+using QtPixelFormatOf = QVideoFrameFormat::PixelFormat (*)(GstVideoFormat format);
+
 /// Best-effort DMA_DRM caps string built from the (format, modifier) pairs EGL @p display (Qt's EGLDisplay, as
 /// HwBuffers::dmaBufImportDisplay() returns it) reports, intersected with @p formats: a pair is offered when Qt's
-/// DMABuf importer can sample every plane of the format with that modifier (no compression or auxiliary planes).
+/// DMABuf importer can sample every plane of the format, shown as @p pixelFormatOf tells, with that modifier (no
+/// compression or auxiliary planes).
 /// Returns a single ready-to-prepend "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ FMT:0xMOD, ... }; "
 /// fragment, or "" on ANY failure (null display, no modifier query). Additive only: callers must keep the existing
 /// system catch-all.
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, void* display);
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, QtPixelFormatOf pixelFormatOf,
+                                     void* display);
 
 /// The same fragment for Qt Quick on Vulkan: the (format, modifier) pairs of @p formats every plane of which Qt's
 /// Vulkan device imports as an image of its own (GstDmaBufVulkan::probeDevice()). "" until that device is known, when
 /// it can't import, and in builds without the DMABuf import under Vulkan.
-std::string buildVulkanDmaDrmCaps(std::span<const GstVideoFormat> formats);
+std::string buildVulkanDmaDrmCaps(std::span<const GstVideoFormat> formats, QtPixelFormatOf pixelFormatOf);
 
 #ifdef QGC_UNITTEST_BUILD
 /// True when @p modifier carries no compression or auxiliary plane, so its planes can be imported one by one.

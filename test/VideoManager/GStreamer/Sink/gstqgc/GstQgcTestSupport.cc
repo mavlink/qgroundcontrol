@@ -6,14 +6,14 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
-#include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "QGCQVideoSinkController.h"
 
 namespace GstQgcTest {
 
 PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers,
-                                               bool gpuZerocopy, const char* sourceProperties, bool captureCenterPixel)
+                                               const GstQgc::SinkBinConfig& config, const char* sourceProperties,
+                                               bool captureCenterPixel)
 {
     PipelineRunResult r;
     const auto owner = std::make_unique<QObject>();
@@ -24,7 +24,7 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char
                                .arg(QString::fromUtf8(sourceProperties))
                                .arg(numBuffers)
                                .arg(QString::fromUtf8(capsLine)),
-                           {.gpuZeroCopy = gpuZerocopy})) {
+                           config)) {
         r.errorMessage = pipeline.error();
         return r;
     }

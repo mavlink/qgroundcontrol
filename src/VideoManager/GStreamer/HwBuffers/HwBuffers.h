@@ -10,10 +10,11 @@
 
 class QQuickWindow;
 
-// Same in every build and free of EGL/Qt-private headers; GstHwVideoBuffer.h (Qt-private) is included where needed.
+// Free of EGL/Qt-private headers, and the same in every build but for the path registry, which a build without a GPU
+// path leaves out; GstHwVideoBuffer.h (Qt-private) is included where needed.
+#include "GstHwPathRegistry.h"  // makeHwVideoBuffer, HwResolvedPathCache
 #include "GstHwPathTelemetry.h"
 #include "GstHwTypes.h"
-#include "GstHwVideoBufferFactory.h"  // makeHwVideoBuffer, HwResolvedPathCache
 
 namespace HwBuffers {
 
@@ -65,9 +66,13 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 
 /// What the DMABuf path imports with now, as HwVideoBufferContext::dmaBufImporter stores it: Qt's EGLDisplay
 /// (QGCRhiCapture::qtEglDisplay()), or, once Qt Quick renders with Vulkan, its VkPhysicalDevice when that device
-/// imports dma-bufs. Null when Qt renders without either or that isn't known yet, an import failure disabled the path
-/// (until resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
+/// imports dma-bufs. Null when Qt renders without either or that isn't known yet, or no DMABuf path is compiled.
+/// Safe off the GUI thread.
 void* dmaBufImportDisplay() noexcept;
+
+/// True once an import failure has disabled the DMABuf path, until resetCachedGpuResources(): nothing imports with
+/// its display meanwhile. Safe off the GUI thread.
+bool dmaBufImportDisabled() noexcept;
 
 /// The DXGI adapter of the Direct3D device Qt Quick renders with, as the decoders' "adapter-luid" names theirs; 0
 /// until the scene graph publishes that device, and for any other renderer. Safe off the GUI thread.

@@ -10,7 +10,6 @@
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 
-#include "GStreamer.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcTestSupport.h"
 

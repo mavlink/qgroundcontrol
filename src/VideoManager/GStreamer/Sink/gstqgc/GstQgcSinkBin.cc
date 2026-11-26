@@ -3,8 +3,7 @@
 #include <atomic>
 #include <initializer_list>
 
-#include "GstQgcGpuBin.h"
-#include "GstQgcRenderTarget.h"
+#include "GstQgcSinkPolicy.h"
 #include "GstScoped.h"
 #include "gstqgcelements.h"
 #include "gstqgcqvideosink.h"
@@ -15,14 +14,13 @@ namespace {
 
 constexpr char kVideoSinkName[] = "qgcqvideosink";
 
-// A single-element converter, floating: the one of @p factoryName, else a SoC converter, else videoconvertscale
-// (GStreamer 1.22+). Null when none is available.
-GstElement* makeConversionElement(GstElement* bin, const QByteArray& factoryName)
+// A single-element converter, floating: the one of @p factoryName where it suits @p target, else a SoC converter, else
+// videoconvertscale (GStreamer 1.22+). Null when none is available.
+GstElement* makeConversionElement(GstElement* bin, const QByteArray& factoryName, const GstQgc::RenderTarget& target)
 {
     if (!factoryName.isEmpty()) {
         const char* const name = factoryName.constData();
         const GStreamer::GstFactoryPtr factory = GStreamer::adoptFactory(gst_element_factory_find(name));
-        const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
         if (factory && !GstQgc::converterSuitsRenderTarget(
                            gst_plugin_feature_get_plugin_name(GST_PLUGIN_FEATURE(factory.get())), name, target)) {
             GST_WARNING_OBJECT(bin,
@@ -71,9 +69,10 @@ bool linkChain(std::initializer_list<GstElement*> chain)
 // Adds the bin's head, which converts and scales system memory into what qgcqvideosink offers (scaling lets its
 // square-pixel caps take non-square-pixel sources) and passes GPU memory through. Before GStreamer 1.22 that's
 // videoconvert ! videoscale; @p head and @p tail are its ends.
-bool addConverter(GstElement* bin, const QByteArray& factoryName, GstElement*& head, GstElement*& tail)
+bool addConverter(GstElement* bin, const QByteArray& factoryName, const GstQgc::RenderTarget& target, GstElement*& head,
+                  GstElement*& tail)
 {
-    if (GstElement* const converter = makeConversionElement(bin, factoryName)) {
+    if (GstElement* const converter = makeConversionElement(bin, factoryName, target)) {
         head = tail = addToBin(bin, converter);
         return head != NULL;
     }
@@ -129,13 +128,13 @@ GstPadProbeReturn answerContextQueryFromSink(GstPad*, GstPadProbeInfo* info, gpo
     return GST_PAD_PROBE_OK;
 }
 
-// The GPU variant for the render target (GstQgc::selectGpuBin). Any other renderer gets the passthrough variant, whose
-// sink offers only memory that renderer imports (a glupload bin under Vulkan would download every frame and upload it
-// again).
-GstQgc::GpuBinMode selectBinVariant(GstElement* bin)
+// The GPU variant for the render target of @p environment (GstQgc::selectGpuBin). Any other renderer gets the
+// passthrough variant, whose sink offers only memory that renderer imports (a glupload bin under Vulkan would download
+// every frame and upload it again).
+GstQgc::GpuBinMode selectBinVariant(GstElement* bin, const GstQgc::SinkEnvironment& environment)
 {
-    const GstQgc::GpuBinPreference preference = GstQgc::gpuBinPreference();
-    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    const GstQgc::GpuBinPreference preference = environment.gpuBin;
+    const GstQgc::RenderTarget target = environment.target;
     const GstQgc::GpuBinMode mode = GstQgc::selectGpuBin(preference, target);
     if ((mode == GstQgc::GpuBinMode::DmaBufOrGlUpload) && !memorySwitchAvailable()) {
         GST_INFO_OBJECT(bin,
@@ -175,12 +174,18 @@ bool buildChain(GstElement* bin, const GstQgc::SinkBinConfig& config)
     // No QoS events upstream, which a GstVideoSink sends by default. Its "processing-deadline" stays the video sink's
     // own (15 ms; GstBaseSink's is 20 ms): a live pipeline that syncs to the clock adds the deadline to its latency.
     g_object_set(videosink, "active", (gboolean) TRUE, "sync", (gboolean) FALSE, "qos", (gboolean) FALSE, NULL);
-    const GstQgc::GpuBinMode gpuBin = config.gpuZeroCopy ? selectBinVariant(bin) : GstQgc::GpuBinMode::Passthrough;
+    if (config.environment) {
+        GstQgc::setSinkEnvironment(videosink, *config.environment);
+    }
+    const GstQgc::SinkEnvironment environment =
+        config.environment ? *config.environment : GstQgc::currentSinkEnvironment();
+    const GstQgc::GpuBinMode gpuBin =
+        config.gpuZeroCopy ? selectBinVariant(bin, environment) : GstQgc::GpuBinMode::Passthrough;
     GstQgc::configureSinkCaps(videosink, gpuBin, !config.disablePar);
 
     GstElement* head = NULL;
     GstElement* tail = NULL;
-    if (!addConverter(bin, config.conversionElement, head, tail)) {
+    if (!addConverter(bin, config.conversionElement, environment.target, head, tail)) {
         GST_ERROR_OBJECT(bin, "Failed to create the video conversion element");
         return false;
     }

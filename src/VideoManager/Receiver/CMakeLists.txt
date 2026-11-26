@@ -15,6 +15,8 @@ target_sources(
         VideoReceiver.h
         VideoBackend.cc
         VideoBackend.h
+        VideoBackendInit.cc
+        VideoBackendInit.h
         VideoDecoderOptions.h
         VideoScreenshot.cc
         VideoScreenshot.h

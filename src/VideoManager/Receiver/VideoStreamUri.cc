@@ -25,4 +25,29 @@ std::optional<Transport> transportFor(const QUrl& url)
     return std::nullopt;
 }
 
+std::optional<AddressError> addressError(Transport transport, const QUrl& url)
+{
+    const int port = url.port();
+    switch (transport) {
+        case Transport::Rtsp:
+            break;
+        case Transport::RtpUdpH264:
+        case Transport::RtpUdpH265:
+        case Transport::MpegTsUdp:
+            if ((port != 0) && !isValidPort(port)) {
+                return AddressError::InvalidPort;
+            }
+            break;
+        case Transport::MpegTsTcp:
+            if (!isValidPort(port)) {
+                return AddressError::InvalidPort;
+            }
+            if (url.host().isEmpty()) {
+                return AddressError::MissingHost;
+            }
+            break;
+    }
+    return std::nullopt;
+}
+
 }  // namespace VideoStreamUri

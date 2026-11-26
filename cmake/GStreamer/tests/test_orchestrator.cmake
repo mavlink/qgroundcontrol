@@ -103,7 +103,7 @@ function(_qgc_write_fake_android_sdk root version)
 endfunction()
 
 # _qgc_write_fake_probe_lib(<root> <version>)
-# Adds the optional gstreamer-qgcprobe-1.0 library the fixture probes like HwBuffers probes gst-d3d11 or gst-vulkan.
+# Adds the optional gstreamer-qgcprobe-1.0 library the fixture probes like HwBuffers probes gst-d3d11 or gst-d3d12.
 function(_qgc_write_fake_probe_lib root version)
     file(WRITE "${root}/include/gstreamer-1.0/gst/qgcprobe.h" "extern \"C\" int qgc_probe;\n")
     file(WRITE "${root}/lib/libgstqgcprobe-1.0.so" "")

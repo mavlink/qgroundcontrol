@@ -5,7 +5,7 @@
 # lookup of macOS hosts (_qgc_gst_find_apple_pkg_config).
 #
 # The pkg-config state discovery derives is scoped to the GStreamer subtree, whose
-# later probes (HwBuffers' gstreamer-{cuda,vulkan,d3d*}-1.0) need the same SDK view:
+# later probes (HwBuffers' gstreamer-d3d*-1.0) need the same SDK view:
 # PKG_CONFIG_EXECUTABLE, PKG_CONFIG_USE_CMAKE_PREFIX_PATH and the derived PKG_CONFIG_ARGN flags are normal variables of
 # the calling directory, never written to the cache, and the environment is restored
 # by qgc_gst_restore_pkgconfig_env once that subtree is configured.

@@ -11,6 +11,7 @@
 #include "AppSettings.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
+#include "QtVideoRecorder.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
 #include "VideoSettings.h"
@@ -143,6 +144,10 @@ void VideoRecordingService::startRecording(const QString& baseName)
         return;
     }
     const auto format = static_cast<VideoReceiver::FileFormat>(formatValue);
+    // For the sources that encode their recordings anew: the USB camera's and Qt Multimedia's.
+    const VideoReceiver::RecordingEncoding encoding{
+        .codec = QtVideoRecorder::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()),
+        .quality = QtVideoRecorder::recordingQuality(videoSettings->uvcRecordingQuality()->rawValue().toInt())};
 
     const QString directory = SettingsManager::instance()->appSettings()->videoSavePath();
     if (directory.isEmpty()) {
@@ -165,7 +170,7 @@ void VideoRecordingService::startRecording(const QString& baseName)
 
     const QString name = baseName.isEmpty() ? uniqueBaseName(directory, QDateTime::currentDateTime()) : baseName;
     for (VideoStreamController* source : std::as_const(sources)) {
-        source->startRecording(recordingFile(directory, name, source, format), format);
+        source->startRecording(recordingFile(directory, name, source, format), format, encoding);
     }
 }
 

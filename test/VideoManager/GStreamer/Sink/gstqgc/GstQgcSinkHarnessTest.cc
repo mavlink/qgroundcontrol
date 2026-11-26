@@ -8,8 +8,8 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
-#include "GStreamer.h"
 #include "GstScoped.h"
+#include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcSinkBin.h"
 
 namespace {

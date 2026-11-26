@@ -102,10 +102,8 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/dmabuf
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/gl
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/d3d
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/vulkan
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/apple
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/android
-        ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/cuda
     PRIVATE ${CMAKE_BINARY_DIR}
 )
 
@@ -143,7 +141,8 @@ target_sources(
         Runtime/GStreamerUdpSrcWorkaround.h
         Runtime/GstScoped.h
         # Source: the source bins, from a stream's URI to its parsed stream.
-        Source/GstH26xParameterSetGate.cc
+        Source/GstH26xSetup.cc
+        Source/GstH26xSetup.h
         Source/GstRtpPacketProbe.cc
         Source/GstRtpPacketProbe.h
         Source/GstRtspSource.cc
@@ -172,6 +171,8 @@ target_sources(
         Pipeline/PipelineStatsProbe.h
         Pipeline/RecordingBranch.cc
         Pipeline/RecordingBranch.h
+        Pipeline/RecordingSink.cc
+        Pipeline/RecordingSink.h
         Pipeline/StreamWatchdog.cc
         Pipeline/StreamWatchdog.h
         Pipeline/TeeBranchHead.cc

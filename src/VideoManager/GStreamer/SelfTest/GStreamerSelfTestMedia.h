@@ -51,7 +51,7 @@ struct DecodeResult
 /// appsrc ! <parser> ! decodebin3 ! appsink, the sink taking raw video in system memory, which every decoder can give.
 DecodeResult decodeSample(const Sample& sample, const QByteArray& data, std::chrono::milliseconds timeout);
 
-/// appsrc ! RecordingBranch's file sink (h264parse ! muxer ! filesink), as a recording is muxed.
+/// appsrc ! the recording sink (h264parse ! muxer ! filesink), as a recording is muxed.
 QString recordSample(const QString& file, VideoReceiver::FileFormat format, const QByteArray& h264,
                      std::chrono::milliseconds timeout);
 

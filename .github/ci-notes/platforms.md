@@ -118,7 +118,7 @@ How CI runs, retries, and reports the application tests is described in
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
   (`run-unit-tests`' `tests-regex`
-  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan|SharedVideoFrame)`,
+  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan|SharedVideoFrame|RtpPacketCounter)`,
   Unit and Integration), with the Qt Multimedia receiver, its recorder and shared frame, the USB camera classes and
   the reconnect and recording-part policies both receivers share, so the script tests' Windows-only branches (8.3
   short paths, SDK architecture) run on Windows. The build tree finds the
@@ -256,25 +256,19 @@ How CI runs, retries, and reports the application tests is described in
   Linux legs run the integration suites and cover Release compiles. Outside pull requests it also
   installs the build stripped (`cmake --install --strip`; the Debug binary carries ~800 MB of debug
   info, measured for pull request 15375, October 2026) into an AppImage and boots that. `custom-example/` changes trigger the Linux workflow.
-- **GPU video path variants** (`linux.yml`'s `gpu-variants` job, behind the Linux gate): the
-  gst-vulkan and CUDA paths are off by default (`QGC_GST_ENABLE_VULKAN`, `QGC_GST_ENABLE_CUDA`), so
-  no other job compiles them. This one configures `Linux-debug` with both on, fails unless
-  configure reports both paths enabled (it drops a path whose GStreamer pieces are missing and goes
-  on), and builds the `QGCGStreamer` target, about sixty files. `cuda.h` comes from GStreamer's
-  stub headers, checked out from its GitHub mirror at the release Ubuntu 24.04 packages (1.24.2):
-  bump the commit with the runner image. It then configures the same build directory with every
-  Linux path off (`QGC_GST_ENABLE_DMABUF`, `_GLMEMORY`, `_VULKAN`, `_CUDA`), fails if configure
-  still reports a path enabled, and builds the target again, about twenty files: the build without
-  a GPU path (no `QGC_HAS_ANY_GPU_PATH`), which no other job compiles either. A path added to the
-  table for Linux has to be turned off there as well. The target's definitions are public, so in
-  each variant the job also compiles the code outside it that they reach: the application's
-  sources under `src/VideoManager/GStreamer` and the tests under `test/VideoManager/GStreamer`.
-  Those belong to the application and to `QGCUnitTests`, which the job does not build:
-  `cmake-build`'s `objects-under` builds their object files, read from `compile_commands.json`,
-  and with them what those wait for: generated sources, the two precompiled headers and the
-  compression libraries the application links. Nothing is run, as no runner has the
-  hardware, and the AHardwareBuffer path is compiled in neither variant: its header is in no
-  GStreamer SDK. The job has a compiler-cache variant of its own and saves none.
+- **Video without GPU paths** (`linux.yml`'s `no-gpu-path` job, behind the Linux gate): the build
+  without a GPU video path (no `QGC_HAS_ANY_GPU_PATH`) is what configure produces where it finds
+  the GStreamer pieces of none, and no other job compiles it. This one configures `Linux-debug`
+  with every Linux path off (`QGC_GST_ENABLE_DMABUF`, `_GLMEMORY`), fails if configure still
+  reports a path enabled, and builds the `QGCGStreamer` target, about twenty files. A path added
+  to the table for Linux has to be turned off there as well. The target's definitions are public,
+  so the job also compiles the code outside it that they reach: the application's sources under
+  `src/VideoManager/GStreamer` and the tests under `test/VideoManager/GStreamer`. Those belong to
+  the application and to `QGCUnitTests`, which the job does not build: `cmake-build`'s
+  `objects-under` builds their object files, read from `compile_commands.json`, and with them
+  what those wait for: generated sources, the two precompiled headers and the compression
+  libraries the application links. Nothing is run. The job has a compiler-cache variant of its
+  own and saves none.
 - **ClusterFuzzLite**: PR runs use the bundled seed corpus without querying historical artifacts
   (`NO_CLUSTERFUZZ_DEPLOYMENT=true`), which also disables previous-build crash comparison:
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF

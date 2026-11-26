@@ -10,10 +10,11 @@
 #include <QtCore/QLoggingCategory>
 #include <QtMultimedia/QAbstractVideoBuffer>
 
+#include "GstHwFrameMapping.h"
 #include "GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(CpuVideoFramePoolLog, "Video.GStreamer.HwBuffers.CpuPool")
+QGC_LOGGING_CATEGORY(CpuVideoFramePoolLog, "Video.GStreamer.CpuPool")
 
 namespace {
 
@@ -93,7 +94,7 @@ private:
     GstVideoInfo _info;
     QVideoFrameFormat _format;
     CpuVideoFramePool::PinnedFrameCounter _pinned;
-    CpuVideoFramePool::FrameMapping _cpuView;
+    GstHw::FrameMapping _cpuView;
 };
 
 // Check-and-increment in one step so concurrent callers can never overshoot the cap.
@@ -131,43 +132,6 @@ CpuVideoFramePool::PlaneLayout CpuVideoFramePool::computeLayout(const GstVideoIn
     }
     L.byteSize = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info));
     return L;
-}
-
-QAbstractVideoBuffer::MapData CpuVideoFramePool::mapDataFor(const GstVideoFrame& frame)
-{
-    QAbstractVideoBuffer::MapData data;
-    data.planeCount = static_cast<int>(GST_VIDEO_FRAME_N_PLANES(&frame));
-    for (int i = 0; i < data.planeCount; ++i) {
-        data.data[i] = static_cast<uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&frame, i));
-        data.bytesPerLine[i] = GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i);
-        data.dataSize[i] =
-            static_cast<qsizetype>(GST_VIDEO_FRAME_PLANE_STRIDE(&frame, i)) * GstHw::planeHeight(frame.info, i);
-    }
-    return data;
-}
-
-bool CpuVideoFramePool::FrameMapping::mapFrame(GstBuffer* buffer, const GstVideoInfo& info, GstMapFlags flags)
-{
-    if (!_mapped) {
-        _mapped = buffer && gst_video_frame_map(&_frame, &info, buffer, flags);
-    }
-    return _mapped;
-}
-
-QAbstractVideoBuffer::MapData CpuVideoFramePool::FrameMapping::map(GstBuffer* buffer, const GstVideoInfo& info)
-{
-    if (!mapFrame(buffer, info)) {
-        return {};
-    }
-    return mapDataFor(_frame);
-}
-
-void CpuVideoFramePool::FrameMapping::unmap() noexcept
-{
-    if (_mapped) {
-        gst_video_frame_unmap(&_frame);
-        _mapped = false;
-    }
 }
 
 QByteArray CpuVideoFramePool::acquireBacking(const PlaneLayout& layout, QSize size,
@@ -264,7 +228,7 @@ QVideoFrame CpuVideoFramePool::copyFromBuffer(GstBuffer* buffer, const GstVideoI
         return {};
     }
 
-    FrameMapping source;
+    GstHw::FrameMapping source;
     if (!source.mapFrame(buffer, videoInfo)) {
         static std::atomic<quint64> s_failCount{0};
         const quint64 count = s_failCount.fetch_add(1, std::memory_order_relaxed) + 1;

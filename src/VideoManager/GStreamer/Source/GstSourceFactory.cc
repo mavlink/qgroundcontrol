@@ -14,6 +14,7 @@
 #include <QtNetwork/QHostAddress>
 
 #include "GStreamerHelpers.h"
+#include "GstH26xSetup.h"
 #include "GstRtpPacketProbe.h"
 #include "GstRtspSource.h"
 #include "GstScoped.h"
@@ -131,19 +132,21 @@ namespace {
 
 using VideoStreamUri::Transport;
 
-/// The codec of RTP arriving on a plain UDP port, which the URI's scheme names as there is no SDP to tell.
-struct RtpCodec
+/// A codec the bin parses itself, in parsebin's place: as RTP, on a plain UDP port (the URI's scheme names it, as there
+/// is no SDP to tell) and in an RTSP session, and in MPEG-TS.
+struct H26xCodec
 {
     const char* encodingName;  ///< In the caps udpsrc announces
+    const char* mediaType;     ///< In the caps tsdemux announces
     const char* depayloader;
     const char* parser;
-    const char* byteStreamCaps;  ///< Between the two
+    const char* byteStreamCaps;  ///< Into the parser: each buffer holds whole access units
 };
 
-constexpr RtpCodec kRtpH264{"H264", "rtph264depay", "h264parse",
-                            "video/x-h264, stream-format=(string)byte-stream, alignment=(string)au"};
-constexpr RtpCodec kRtpH265{"H265", "rtph265depay", "h265parse",
-                            "video/x-h265, stream-format=(string)byte-stream, alignment=(string)au"};
+constexpr H26xCodec kH264{"H264", "video/x-h264", "rtph264depay", "h264parse",
+                          "video/x-h264, stream-format=(string)byte-stream, alignment=(string)au"};
+constexpr H26xCodec kH265{"H265", "video/x-h265", "rtph265depay", "h265parse",
+                          "video/x-h265, stream-format=(string)byte-stream, alignment=(string)au"};
 
 // Retransmission stays off: these sources have no RTCP back-channel, so the jitterbuffer's
 // retransmission requests would only reach the source element, which drops them.
@@ -166,16 +169,18 @@ GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
 // Heap-owned context for the dynamic (pad-added) link path; freed with the pad-added handler it is given to.
 struct DynamicLinkContext
 {
-    /// What the source's video pad is linked into: parsebin, or the depayloader that took its place (plugRtspCodec()).
+    /// What the source's video pad is linked into: parsebin, or the depayloader (plugRtspCodec()) or the alignment
+    /// filter (plugTsCodec()) that took its place.
     GstElement* binParser;
     bool isRtsp;
-    /// The codec whose depayloader and parser took parsebin's place.
-    const RtpCodec* rtspCodec;
+    /// The codec whose elements took parsebin's place.
+    const H26xCodec* codec;
     /// rtspsrc adds the pads of each of a session's streams on a thread of their own.
     std::mutex linking;
 };
 
 void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding);
+void plugTsCodec(DynamicLinkContext* ctx, GstPad* pad);
 
 // rtspsrc names the pad of each RTP stream it receives "recv_rtp_src_<stream>_<SSRC>_<payload type>", the stream
 // being the one of the session, in the SDP's order. nullopt for any other pad.
@@ -267,6 +272,8 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
         qCDebug(GstSourceFactoryLog) << "The RTSP stream goes on on a new pad:" << GST_PAD_NAME(pad);
     } else if (isRtp && ctx->isRtsp) {
         plugRtspCodec(ctx, rtpEncodingOfPad(pad));
+    } else if (!ctx->isRtsp) {
+        plugTsCodec(ctx, pad);
     }
 
     const GCharPtr name = adoptGChar(gst_pad_get_name(pad));
@@ -276,44 +283,25 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
 }
 
 // Each build* helper makes and configures the source element for one scheme family, logs the
-// specific failure, and returns the owning element (or nullptr). create() owns it from here on.
+// specific failure, and returns the owning element (or nullptr). create() owns it from here on, and has checked the
+// URL's address (VideoStreamUri::addressError()).
 
 GstElementPtr buildTcpSource(const QUrl& sourceUrl)
 {
-    const int port = sourceUrl.port();
-    if (!VideoStreamUri::isValidPort(port)) {
-        qCWarning(GstSourceFactoryLog) << "Invalid TCP port" << port << "in"
-                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
-        return nullptr;
-    }
-    const QString host = sourceUrl.host();
-    if (host.isEmpty()) {
-        qCWarning(GstSourceFactoryLog) << "Missing host in TCP URI"
-                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
-        return nullptr;
-    }
-
     GstElementPtr source = makeElement("tcpclientsrc", "source");
     if (!source) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('tcpclientsrc') failed";
         return nullptr;
     }
 
-    g_object_set(source.get(), "host", host.toUtf8().constData(), "port", static_cast<int>(port), "timeout",
+    g_object_set(source.get(), "host", sourceUrl.host().toUtf8().constData(), "port", sourceUrl.port(), "timeout",
                  kTcpTimeoutSeconds, nullptr);
     return source;
 }
 
+// With port 0 udpsrc binds a free port, which it then reports in its "port" property.
 GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
 {
-    // Port 0 binds a free port, which udpsrc then reports in its "port" property.
-    const int port = sourceUrl.port();
-    if ((port != 0) && !VideoStreamUri::isValidPort(port)) {
-        qCWarning(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
-                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
-        return nullptr;
-    }
-
     GstElementPtr source = makeElement("udpsrc", "source");
     if (!source) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('udpsrc') failed";
@@ -349,11 +337,11 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
 struct ParserStage
 {
     GstElementPtr parser;
-    GstElementPtr depay;  ///< Set only with an RtpCodec
+    GstElementPtr depay;  ///< Set only with a codec
 };
 
 // The parser and the depayloader of @p rtpCodec, or parsebin without one, configured but not yet in a bin.
-ParserStage buildParserStage(const RtpCodec* rtpCodec, bool isRtsp)
+ParserStage buildParserStage(const H26xCodec* rtpCodec, bool isRtsp)
 {
     const char* const parserFactory = rtpCodec ? rtpCodec->parser : "parsebin";
     ParserStage stage{makeElement(parserFactory, "parser"), {}};
@@ -450,11 +438,11 @@ void storeParsedCapsOnPad([[maybe_unused]] GstElement* parser, GstPad* pad, [[ma
 // stream. Neither gets a jitter buffer here: rtspsrc runs its own, and tsdemux's pads carry no RTP.
 void linkSourceToParserOnPadAdded(GstElement* upstream, GstElement* binParser, bool isRtsp)
 {
-    // The context lives as long as the handler: binParser may be replaced (plugRtspCodec()).
+    // The context lives as long as the handler: binParser may be replaced (plugRtspCodec(), plugTsCodec()).
     auto* ctx = new DynamicLinkContext{
         .binParser = binParser,
         .isRtsp = isRtsp,
-        .rtspCodec = nullptr,
+        .codec = nullptr,
         .linking = {},
     };
     (void) g_signal_connect_data(
@@ -466,7 +454,7 @@ void linkSourceToParserOnPadAdded(GstElement* upstream, GstElement* binParser, b
     (void) g_signal_connect(binParser, "pad-added", G_CALLBACK(wrapWithGhostPad), nullptr);
 }
 
-bool linkDepayToParser(GstElement* depay, GstElement* parser, const RtpCodec& codec)
+bool linkDepayToParser(GstElement* depay, GstElement* parser, const H26xCodec& codec)
 {
     // Left to negotiate, the depayloader may pick the length-prefixed format (avc, hvc1), whose caps it only sets once
     // in-band parameter sets arrive, so its segment can go out first (GStreamer 1.28 warns) and the parameter-set
@@ -480,7 +468,7 @@ bool linkDepayToParser(GstElement* depay, GstElement* parser, const RtpCodec& co
 }
 
 bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement* depay, GstElement* parser,
-                                const RtpCodec& codec, const Config& config, guint latencyMs)
+                                const H26xCodec& codec, const Config& config, guint latencyMs)
 {
     // The bin counts the packets itself, where they arrive, with a jitter buffer too: the jitter buffer's own count
     // takes the sequence numbers a sender skips when it starts over for packets lost.
@@ -516,10 +504,10 @@ bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement*
 // and the parser then can't tell that a frame is complete until the next one starts: a frame interval of latency.
 void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding)
 {
-    const RtpCodec* const codec =
-        (encoding == kRtpH264.encodingName) ? &kRtpH264 : ((encoding == kRtpH265.encodingName) ? &kRtpH265 : nullptr);
+    const H26xCodec* const codec =
+        (encoding == kH264.encodingName) ? &kH264 : ((encoding == kH265.encodingName) ? &kH265 : nullptr);
     const GstObjectPtr bin = adoptObject(gst_object_get_parent(GST_OBJECT(ctx->binParser)));
-    if (!codec || ctx->rtspCodec || !bin) {
+    if (!codec || ctx->codec || !bin) {
         return;
     }
 
@@ -546,7 +534,98 @@ void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding)
 
     disposeChildAsync(ctx->binParser);
     ctx->binParser = depay;
-    ctx->rtspCodec = codec;
+    ctx->codec = codec;
+}
+
+/// What dropAlignmentWithinFrame() needs of the MPEG-TS stream it watches.
+struct AlignmentClaim
+{
+    GstElement* filter;  ///< Owned
+    const H26xCodec* codec;
+};
+
+// A PES packet that begins within a frame: the stream's packets don't each hold whole access units, and a parser
+// told that they do would hand on the pieces as frames. The claim goes, so the parser finds where a frame ends as
+// it does behind parsebin, and the caps go through the filter again to tell it.
+GstPadProbeReturn dropAlignmentWithinFrame(GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    const auto* const claim = static_cast<AlignmentClaim*>(data);
+    GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer || startsAccessUnit(buffer, claim->codec == &kH265)) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    qCWarning(GstSourceFactoryLog) << "A packet of the MPEG-TS video starts within a frame: its frames are shown a "
+                                      "frame interval later";
+    const GstCapsPtr unaligned = adoptCaps(gst_caps_new_empty_simple(claim->codec->mediaType));
+    g_object_set(claim->filter, "caps", unaligned.get(), nullptr);
+    if (GstCapsPtr caps = adoptCaps(gst_pad_get_current_caps(pad))) {
+        (void) gst_pad_push_event(pad, gst_event_new_caps(caps.get()));
+    }
+    return GST_PAD_PROBE_REMOVE;
+}
+
+// tsdemux hands on a buffer for each PES packet and tells nothing of their alignment, so the parser that parsebin
+// plugs can't tell that a frame is complete until the next one starts: a frame interval of latency, on top of the one
+// tsdemux needs itself. An H.264 or H.265 stream gets its parser in @p ctx's parsebin's place, behind a filter that
+// says each buffer holds whole access units, which is how encoders fill PES packets. parsebin stays for any other
+// codec.
+void plugTsCodec(DynamicLinkContext* ctx, GstPad* pad)
+{
+    const GstCapsPtr padCaps = adoptCaps(gst_pad_get_current_caps(pad));
+    const GstStructure* const structure =
+        (padCaps && !gst_caps_is_empty(padCaps.get())) ? gst_caps_get_structure(padCaps.get(), 0) : nullptr;
+    const H26xCodec* codec = nullptr;
+    for (const H26xCodec* candidate : {&kH264, &kH265}) {
+        if (structure && gst_structure_has_name(structure, candidate->mediaType)) {
+            codec = candidate;
+        }
+    }
+    const GstObjectPtr bin = adoptObject(gst_object_get_parent(GST_OBJECT(ctx->binParser)));
+    if (!codec || ctx->codec || !bin) {
+        return;
+    }
+
+    GstElementPtr newFilter = makeElement("capsfilter");
+    GstElementPtr newParser = makeElement(codec->parser);
+    const GstCapsPtr aligned = adoptCaps(gst_caps_from_string(codec->byteStreamCaps));
+    if (!newFilter || !newParser || !aligned) {
+        qCWarning(GstSourceFactoryLog) << "Unable to make capsfilter and" << codec->parser
+                                       << "for the MPEG-TS stream; leaving it to parsebin";
+        return;
+    }
+    g_object_set(newFilter.get(), "caps", aligned.get(), nullptr);
+    configureH26xParser(newParser.get());
+    GstElement* const filter = addToBin(GST_ELEMENT(bin.get()), std::move(newFilter), "capsfilter");
+    GstElement* const parser = addToBin(GST_ELEMENT(bin.get()), std::move(newParser), codec->parser);
+    if (!filter || !parser || !gst_element_link(filter, parser) || !gst_element_sync_state_with_parent(parser) ||
+        !gst_element_sync_state_with_parent(filter) || !addStaticGhostPad(parser)) {
+        qCWarning(GstSourceFactoryLog) << "Unable to plug" << codec->parser
+                                       << "for the MPEG-TS stream; leaving it to parsebin";
+        if (filter) {
+            disposeChildAsync(filter);
+        }
+        if (parser) {
+            disposeChildAsync(parser);
+        }
+        return;
+    }
+
+    // As create() arranges for parsebin's pad.
+    const GstPadPtr parserSrc = adoptPad(gst_element_get_static_pad(parser, "src"));
+    (void) gst_pad_add_probe(parserSrc.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, storeParsedCapsOnStream, nullptr,
+                             nullptr);
+    (void) gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, dropAlignmentWithinFrame,
+                             new AlignmentClaim{.filter = GST_ELEMENT(gst_object_ref(filter)), .codec = codec},
+                             [](gpointer data) {
+                                 auto* const claim = static_cast<AlignmentClaim*>(data);
+                                 gst_object_unref(claim->filter);
+                                 delete claim;
+                             });
+
+    disposeChildAsync(ctx->binParser);
+    ctx->binParser = filter;
+    ctx->codec = codec;
 }
 
 }  // namespace
@@ -601,12 +680,17 @@ GstElement* create(const QString& uri, const Config& config)
                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
+    if (const std::optional<VideoStreamUri::AddressError> error = VideoStreamUri::addressError(*transport, sourceUrl)) {
+        qCWarning(GstSourceFactoryLog) << ((*error == VideoStreamUri::AddressError::MissingHost) ? "Missing host in"
+                                                                                                 : "Invalid port in")
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+        return nullptr;
+    }
 
     const bool isRtsp = (*transport == Transport::Rtsp);
     // RTP on udpsrc is depayloaded and parsed for the codec its scheme names; the others leave it to parsebin.
-    const RtpCodec* const rtpCodec = (*transport == Transport::RtpUdpH264)
-                                         ? &kRtpH264
-                                         : ((*transport == Transport::RtpUdpH265) ? &kRtpH265 : nullptr);
+    const H26xCodec* const rtpCodec =
+        (*transport == Transport::RtpUdpH264) ? &kH264 : ((*transport == Transport::RtpUdpH265) ? &kH265 : nullptr);
     // tsdemux ahead of the parser: Android's parsebin can't detect MPEG-TS.
     const bool demuxMpegTs = (*transport == Transport::MpegTsUdp) || (*transport == Transport::MpegTsTcp);
 

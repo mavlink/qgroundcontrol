@@ -9,25 +9,10 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
+#include "CpuVideoFramePool.h"
 #include "HwBuffers/HwBuffers.h"
-#include "HwBuffers/common/CpuVideoFramePool.h"
 
 /// Sample-to-frame helpers for qgcqvideosink's show_frame; pure functions, streaming-thread safe.
-
-QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix);
-QVideoFrameFormat::ColorTransfer toQtColorTransfer(GstVideoTransferFunction transfer);
-QVideoFrameFormat::PixelFormat toQtPixelFormat(GstVideoFormat fmt);
-QVideoFrameFormat::ColorRange toQtColorRange(GstVideoColorRange range);
-
-/// Apply rotation + mirror flags derived from GstVideoOrientationMethod.
-void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod method);
-
-/// The stream's orientation + PTS/duration timing; @p streamOrientation is GstVideoOrientationMethod cast to int.
-void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int streamOrientation);
-
-/// Set color-space/transfer/range from gst-video colorimetry + HDR (MaxCLL preferred);
-/// infers BT.601/709 from height when caps omit it.
-void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCaps* caps);
 
 /// The frame a buffer holds and the picture in it, as upstream's sinks read them (glimagesink, waylandsink): the frame
 /// is as large as the buffer's GstVideoMeta, which a decoder pads beyond the caps (1088 rows for 1080) or leaves

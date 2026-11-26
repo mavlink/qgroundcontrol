@@ -145,12 +145,12 @@ runs:
     # macOS, Windows, Android and iOS builds download one; desktop Linux
     # uses the system GStreamer. The key covers what selects, fetches
     # and extracts the SDK (the build-config.json gstreamer section, not the
-    # whole file, and cmake/GStreamer/{Packages,Acquire}.cmake), so other
-    # GStreamer CMake edits keep it. Only the extracted
-    # trees are cached: configure uses a tree stamped with the pinned
-    # checksums without its downloaded archive. actions/cache archives a
-    # matched directory whole, so the paths match each SDK directory's entries
-    # for the exclusions to apply.
+    # whole file, cmake/GStreamer/{Packages,Acquire}.cmake and
+    # cmake/GStreamer/acquire/), so other GStreamer CMake edits keep it.
+    # Only the extracted trees are cached: configure uses a tree stamped
+    # with the pinned checksums without its downloaded archive. actions/cache
+    # archives a matched directory whole, so the paths match each SDK
+    # directory's entries for the exclusions to apply.
     - name: Cache GStreamer SDK (restore and save)
       id: gst-save
       if: steps.plan.outputs.gst_mode == 'save'

@@ -16,14 +16,15 @@
 #include <QtGui/qopenglcontext_platform.h>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwVideoInfo.h"
 #include "GstQgcFrameMap.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
-#include "gstqgc/GstQgcGpuBin.h"
+#include "QGCQVideoSinkController.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcTestSupport.h"
+#include "gstqgc/GstQgcVideoFormats.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <fcntl.h>
@@ -51,9 +52,8 @@
 #include "CpuVideoFramePool.h"
 #include "GstGlContextBridge.h"
 #include "GstGlVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
+#include "GstHwPathRegistry.h"
 #include "HwBuffers/HwBuffers.h"
-#include "gstqgc/GstQgcCaps.h"
 #endif
 
 GstHwBuffersGlReadbackTest::GstHwBuffersGlReadbackTest() = default;
@@ -351,7 +351,7 @@ void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
     }
     GSTTEST_SKIP_UNLESS_FACTORIES("vah264enc", "vah264dec");
     constexpr std::array kNv12{GST_VIDEO_FORMAT_NV12};
-    std::string drmCaps = GstHw::buildSupportedDmaDrmCaps(kNv12, QGCRhiCapture::qtEglDisplay());
+    std::string drmCaps = GstHw::buildSupportedDmaDrmCaps(kNv12, &toQtPixelFormat, QGCRhiCapture::qtEglDisplay());
     if (drmCaps.empty()) {
         QSKIP("Qt's EGL display offers no importable NV12 modifier");
     }
@@ -380,9 +380,6 @@ void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
                                QVideoFrameFormat(QSize(kVaWidth, kVaHeight), QVideoFrameFormat::Format_NV12),
                                static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
     QVERIFY(frame.validatePlaneHandles());
-    // What a driver exports is a dma-buf to the kernel too, unlike the memfds other tests wrap as one.
-    QVERIFY(GstDmaBufVideoBuffer::isDmaBufFd(
-        gst_dmabuf_memory_get_fd(gst_buffer_peek_memory(gst_sample_get_buffer(gpuSample), 0))));
     QVideoFrameTexturesUPtr none;
     const QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, none);
     const GStreamer::GCharPtr negotiated = GStreamer::adoptGChar(gst_caps_to_string(gst_sample_get_caps(gpuSample)));
@@ -494,9 +491,8 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
         QSKIP(qPrintable(_rhiUnavailable));
     }
     GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "glcolorconvert", "videoconvert");
-    const GstQgc::ScopedSinkEnvironmentForTest environment(
-        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
-         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
+    const GstQgc::SinkEnvironment environment{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+                                              .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}};
 
     constexpr int kFrameWidth = 64;
     constexpr int kFrameHeight = 48;
@@ -536,7 +532,7 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
                                            QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! glupload ! "
                                                           "video/x-raw(memory:GLMemory),format=%2")
                                                .arg(rawCaps, format),
-                                           {.gpuZeroCopy = true}),
+                                           {.gpuZeroCopy = true, .environment = environment}),
              qPrintable(pipeline.error()));
     QVERIFY(GStreamer::setupQVideoSinkElement(pipeline.element("sink").get(), &videoSink, &owner));
     QVERIFY(pipeline.play());

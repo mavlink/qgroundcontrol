@@ -28,8 +28,9 @@
 /// to the disk before it is reported closed. A recording that is stopped ends behind the frames its queue still
 /// holds, which it has kFinalizeTimeout more to take. A request whose container can't hold the stream's codec (MP4
 /// takes neither MJPEG, VP8 nor MPEG-2) isn't started: the branch asks the listener for a file in the container
-/// that does (containerFor()), and the recording fails, naming the codec, when none does. The start timeout, and how
-/// soon a muxer's estimate of its header space counts, are GstReceiverTimings's.
+/// that does (GStreamer::RecordingSink::containerFor()), and the recording fails, naming the codec, when none does.
+/// The start timeout, and how soon a muxer's estimate of its header space counts, are GstReceiverTimings's. The bin
+/// behind the valve is GStreamer::RecordingSink::create()'s.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -74,16 +75,6 @@ public:
     /// The recording time an MP4 or MOV file's header must have room for; with less left, the recording asks for
     /// another file. Covers the wait for the keyframe the next file starts with.
     static constexpr std::chrono::seconds kHeaderSpaceMargin{60};
-
-    /// The sink bin a recording links to the valve: an optional parser for @p inputCaps, the muxer for @p format and a
-    /// filesink writing @p file. Returns an owned, non-floating ref, or null on failure.
-    static GStreamer::GstElementPtr makeFileSink(const QString& file, VideoReceiver::FileFormat format,
-                                                 const GstCaps* inputCaps);
-    /// The container a recording of a stream with @p inputCaps goes into when @p format is asked for: @p format where
-    /// its muxer takes the stream's codec, else Matroska, which holds every codec the receiver plays. nullopt when
-    /// neither muxer takes it. Without caps that tell the codec, @p format.
-    static std::optional<VideoReceiver::FileFormat> containerFor(VideoReceiver::FileFormat format,
-                                                                 const GstCaps* inputCaps);
 
     RecordingBranch(const BranchContext& context, Listener& listener);
     ~RecordingBranch();

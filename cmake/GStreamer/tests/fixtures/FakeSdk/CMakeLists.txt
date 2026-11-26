@@ -56,7 +56,7 @@ set(_qgc_pkg_config_libdir_before "$ENV{PKG_CONFIG_LIBDIR}")
 include(GStreamer/Orchestrator)
 
 # EXPECT_PROBE_ROOT: probe the optional gstreamer-qgcprobe-1.0 library before the pkg-config environment is restored, as
-# HwBuffers/CMakeLists.txt probes gst-d3d11 or gst-vulkan, and check that it and the core resolved to that SDK.
+# HwBuffers/CMakeLists.txt probes gst-d3d11 or gst-d3d12, and check that it and the core resolved to that SDK.
 if(EXPECT_PROBE_ROOT)
     qgc_gst_probe_library(
         QGCProbe

@@ -23,7 +23,6 @@ private slots:
     void _testDmaBufImportFailureLatch();
     void _testDmaBufProducerWaitNeedsSignalledFences_data();
     void _testDmaBufProducerWaitNeedsSignalledFences();
-    void _testDmaBufFdCheckRejectsOtherFds();
     void _testTelemetryDmaBufExtraStats();
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     void _testDmaBufVulkanImportNeedsProbedDevice_data();

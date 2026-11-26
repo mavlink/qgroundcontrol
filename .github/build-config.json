@@ -93,8 +93,7 @@
         "nvcodec",
         "qsv",
         "switchbin",
-        "va",
-        "vulkan"
+        "va"
       ]
     },
     "checksums": {
@@ -140,8 +139,7 @@
       "openh264",
       "qsv",
       "va",
-      "vpx",
-      "vulkan"
+      "vpx"
     ],
     "mock_server_debug": [
       "mpegtsmux",

@@ -1,19 +1,19 @@
 #pragma once
 
-#include <QtCore/qglobal.h>
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
-#include <initializer_list>
 #include <memory>
-#include <span>
-#include <vector>
 
+#include <QtCore/qglobal.h>
 #include <QtMultimedia/QVideoFrameFormat>
 
 #include "GstHwTypes.h"
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+
+#include <initializer_list>
+#include <span>
+#include <vector>
 
 class GstContextBridgeBase;
 class GstHwVideoBuffer;
@@ -23,7 +23,7 @@ class QRhi;
 /// descriptor in its own translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
 struct HwPathDescriptor
 {
-    /// Path the imported buffers report. CUDA reports DmaBuf: it imports through the DMABuf importer.
+    /// Path the imported buffers report.
     HwVideoBufferPath path = HwVideoBufferPath::None;
 
     /// True when this path imports @p mem's kind of memory; plane 0's memory is the dispatch key. Decided by the memory
@@ -70,12 +70,10 @@ std::unique_ptr<GstHwVideoBuffer> construct(GstSample* sample, const GstVideoInf
     return std::make_unique<Buffer>(sample, info, format);
 }
 
-extern const HwPathDescriptor kCuda;
 extern const HwPathDescriptor kDmaBuf;
 extern const HwPathDescriptor kGlMemory;
 extern const HwPathDescriptor kD3D11;
 extern const HwPathDescriptor kD3D12;
-extern const HwPathDescriptor kVulkan;
 extern const HwPathDescriptor kIOSurface;
 extern const HwPathDescriptor kAHardwareBuffer;
 
@@ -109,3 +107,21 @@ private:
 }  // namespace GstHwPathRegistry
 
 #endif  // QGC_HAS_ANY_GPU_PATH
+
+class QHwVideoBuffer;
+
+/// Per-stream GPU path cache, keyed to a caps epoch. Once a sample validated on a path, makeHwVideoBuffer() tries that
+/// path's descriptors first; an allocator no path imports skips GPU selection altogether. Reset on set_caps.
+struct HwResolvedPathCache
+{
+    HwVideoBufferPath path = HwVideoBufferPath::None;
+    bool validated = false;                     // path resolved by a prior validated sample this epoch
+    GType unmatchedAllocator = G_TYPE_INVALID;  // allocator no compiled path imports; its frames go straight to the CPU
+    bool validationFailureLogged = false;       // one warning per epoch for buffers that fail plane-handle validation
+};
+
+/// Selects the zero-copy QHwVideoBuffer for @p buffer; returns nullptr when no GPU path matches (CPU fallback). The
+/// GstSample the buffer holds is only created once a path matches.
+std::unique_ptr<QHwVideoBuffer> makeHwVideoBuffer(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
+                                                  QVideoFrameFormat format, const HwVideoBufferContext& context,
+                                                  HwVideoBufferPath& matchedPath, HwResolvedPathCache* cache = nullptr);

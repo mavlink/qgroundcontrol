@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 
 #include <QtCore/QObject>
@@ -23,12 +22,6 @@ struct DeviceSnapshot
     /// The Direct3D 11 device Qt renders with opens a Direct3D 12 device's resources as textures, as the D3D12 path
     /// found on the render thread; false for any other backend.
     std::atomic<bool> d3d11OpensD3D12{false};
-    /// The Vulkan physical device Qt renders on, as its VkPhysicalDeviceProperties name it: the VkPhysicalDevice handle
-    /// belongs to Qt's VkInstance and matches nothing in another one, such as GStreamer's. Zero unless the backend is
-    /// Vulkan and the gst-vulkan path is compiled.
-    std::atomic<quint32> vkVendorId{0};                         ///< vendorID
-    std::atomic<quint32> vkDeviceId{0};                         ///< deviceID
-    std::array<std::atomic<quint64>, 2> vkPipelineCacheUuid{};  ///< pipelineCacheUUID, 8 bytes each in memory order
 };
 
 /// Returns the global snapshot. Atomic fields make individual reads thread-safe.

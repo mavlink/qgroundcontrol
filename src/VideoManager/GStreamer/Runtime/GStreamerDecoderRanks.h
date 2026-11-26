@@ -33,7 +33,7 @@ VideoDecoderOption decoderFamilyForFactory(const char* factoryName);
 
 /// Hardware decoder families currently present in the GStreamer registry (never VideoDecoderOption::Default or
 /// Software). Lets the settings layer validate a persisted forceVideoDecoder choice against what the running build can
-/// actually provide. Vulkan is only offered with the opt-in Vulkan GPU path.
+/// actually provide.
 QList<VideoDecoderOption> availableDecoderFamilies();
 
 /// Applies decoder rank plans (planRanks()) to the default registry. It remembers the rank each feature had before QGC

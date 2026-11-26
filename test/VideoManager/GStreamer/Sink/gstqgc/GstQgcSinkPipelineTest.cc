@@ -8,11 +8,11 @@
 #include <QtMultimedia/QVideoSink>
 #include <QtTest/QSignalSpy>
 
-#include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "HwBuffers/HwBuffers.h"
-#include "gstqgc/GstQgcCaps.h"
+#include "QGCQVideoSinkController.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
 void GstQgcSinkPipelineTest::_testFrameDelivery()
@@ -36,7 +36,7 @@ void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
     QVideoSink videoSink;
     const auto r = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1,colorimetry=(string)bt709",
-        /*numBuffers=*/5, /*gpuZerocopy=*/false, "do-timestamp=true");
+        /*numBuffers=*/5, /*config=*/{}, "do-timestamp=true");
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
     // The bin leaves YUV to Qt's shaders instead of converting it to RGB.
@@ -71,9 +71,9 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback()
     QFETCH(int, mode);
     QFETCH(int, backend);
     QFETCH(QString, format);
-    const GstQgc::ScopedSinkEnvironmentForTest environment(
-        {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true},
-         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
+    const GstQgc::SinkEnvironment environment{
+        .target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true},
+        .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}};
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const quint64 dmabufBefore =
@@ -84,7 +84,7 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback()
     const QByteArray capsLine =
         QStringLiteral("video/x-raw,format=%1,width=320,height=240,framerate=30/1").arg(format).toLatin1();
     auto r = GstQgcTest::runPipelineThroughQVideoSink(videoSink, capsLine.constData(), /*numBuffers*/ 5,
-                                                      /*gpuZerocopy*/ true);
+                                                      {.gpuZeroCopy = true, .environment = environment});
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
     QVERIFY(r.frameCount > 0);
     QVERIFY(r.lastFormat.pixelFormat() != QVideoFrameFormat::Format_Invalid);
@@ -114,7 +114,7 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
     QFETCH(bool, gpuZeroCopy);
     QFETCH(bool, disablePar);
     // Software frames take the GPU bin's system-memory caps too.
-    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = {.backend = GstQgc::RenderBackend::Vulkan}});
+    const GstQgc::SinkEnvironment environment{.target = {.backend = GstQgc::RenderBackend::Vulkan}};
 
     // A 720x576 PAL source with 12/11 pixels, as analog encoders and DVRs send.
     constexpr int kWidth = 720;
@@ -133,7 +133,7 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
                                 "video/x-raw,format=I420,width=%1,height=%2,pixel-aspect-ratio=12/11,framerate=30/1")
                      .arg(kWidth)
                      .arg(kHeight),
-                 {.gpuZeroCopy = gpuZeroCopy, .disablePar = disablePar}),
+                 {.gpuZeroCopy = gpuZeroCopy, .disablePar = disablePar, .environment = environment}),
              qPrintable(pipeline.error()));
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(sinkBin);

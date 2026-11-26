@@ -40,6 +40,7 @@ public:
     {
         QString file;
         FileFormat format;
+        RecordingEncoding encoding;
     };
 
     int configChanges = 0;
@@ -62,7 +63,10 @@ protected:
 
     void onVideoOutputChanged() override { ++videoOutputChanges; }
 
-    void onStartRecording(const QString& file, FileFormat format) override { recordings.append({file, format}); }
+    void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override
+    {
+        recordings.append({file, format, encoding});
+    }
 
     void onStopRecording() override { ++recordingStops; }
 

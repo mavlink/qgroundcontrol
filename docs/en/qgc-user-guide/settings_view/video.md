@@ -99,7 +99,7 @@ Connection settings vary by source type:
   [settings override file](../../qgc-dev-guide/file_formats/settings_override.md) or a custom build sets it.
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
   restarts the video stream.
-- **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Only the families of the installed decoders are listed, and Vulkan only in builds with the Vulkan GPU path (`QGC_GST_ENABLE_VULKAN`). Changing it restarts the video stream.
+- **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel. Only the families of the installed decoders are listed. Changing it restarts the video stream.
 - **Software decoder threads** — how many frames a software decoder decodes at once, each on a CPU core of its own:
   1 to 4 (default: 1). A software decoder decodes one frame at a time, on one core unless the camera sends its frames
   in slices. Raise it when the video stutters because the computer is too slow or too busy to decode the stream on one

@@ -77,14 +77,6 @@
             "label": "Video Display Fit"
         },
         {
-            "name": "showRecControl",
-            "shortDesc": "Show Video Record Control",
-            "longDesc": "Show recording control in the UI.",
-            "type": "bool",
-            "default": true,
-            "label": "Show Video Record Control"
-        },
-        {
             "name": "recordingFormat",
             "shortDesc": "File format for saved video recordings.",
             "longDesc": "Video recording file format.",
@@ -183,8 +175,8 @@
             "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
             "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary. Changing it restarts the video stream.",
             "type": "uint32",
-            "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force Direct3D decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
-            "enumValues": "0,1,8,2,3,4,5,6,7",
+            "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force Direct3D decoder,Force VideoToolbox decoder,Force Intel decoder",
+            "enumValues": "0,1,8,2,3,4,5,6",
             "default": 0,
             "label": "Force video decoder priority",
             "keywords": "decoder,hardware decode"

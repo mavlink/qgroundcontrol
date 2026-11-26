@@ -10,7 +10,6 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
-#include "GStreamer.h"
 #include "GstReceiverWorker.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
@@ -130,7 +129,8 @@ void GstVideoReceiver::onVideoOutputChanged()
     _postRequest();
 }
 
-void GstVideoReceiver::onStartRecording(const QString& file, FileFormat format)
+void GstVideoReceiver::onStartRecording(const QString& file, FileFormat format,
+                                        [[maybe_unused]] const RecordingEncoding& encoding)
 {
     const quint64 id = (_request.recording ? _request.recording->id : 0) + 1;
     _request.recording = GstRecordingRequest{.file = file, .format = format, .id = id};

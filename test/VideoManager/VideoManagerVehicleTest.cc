@@ -12,6 +12,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleVideoStreams.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -136,7 +137,7 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     VideoManager videoManager;
     videoManager._receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
     videoManager._createVideoReceivers();
-    videoManager._setActiveVehicle(_vehicle);
+    videoManager._vehicleStreams->setVehicle(_vehicle);
     settle();
     // The vehicle's current stream is asked for, as ever. The second stream shares its address: the camera sends
     // one of the two at a time, so it gets no tile.
@@ -223,7 +224,7 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
     QCOMPARE(stopped(), 3);
 
     // The vehicle is no longer the one on display: its current stream is stopped, as ever.
-    videoManager._setActiveVehicle(nullptr);
+    videoManager._vehicleStreams->setVehicle(nullptr);
     QVERIFY_TRUE_WAIT(stopped() == 4, TestTimeout::mediumMs());
     QCOMPARE(started(), 4);
 }
@@ -258,7 +259,7 @@ void VideoManagerVehicleTest::_testVideoOffStopsCameraStream()
     VideoManager videoManager;
     videoManager._receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
     videoManager._createVideoReceivers();
-    videoManager._setActiveVehicle(_vehicle);
+    videoManager._vehicleStreams->setVehicle(_vehicle);
     QVERIFY(_selectStreamingCamera());
     settle();
     auto* const receiver = qobject_cast<FakeVideoReceiver*>(videoManager.primaryStream()->receiver());
@@ -322,7 +323,7 @@ void VideoManagerVehicleTest::_testVideoOffStopsCameraStream()
     QCOMPARE(stopped(), 5);
 
     // The camera was told to stop already when the vehicle leaves the display.
-    videoManager._setActiveVehicle(nullptr);
+    videoManager._vehicleStreams->setVehicle(nullptr);
     QVERIFY(setArmed(true));
     QCOMPARE(stopped(), 5);
     QCOMPARE(started(), 4);
@@ -375,7 +376,7 @@ void VideoManagerVehicleTest::_testThermalStreamOfAnyCameraIsShown()
     VideoManager videoManager;
     videoManager._receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
     videoManager._createVideoReceivers();
-    videoManager._setActiveVehicle(_vehicle);
+    videoManager._vehicleStreams->setVehicle(_vehicle);
     videoManager.setTileRoom(3);
     settle();
 
@@ -476,7 +477,7 @@ void VideoManagerVehicleTest::_testThermalCameraIsMainPictureWhileCurrent()
     VideoManager videoManager;
     videoManager._receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
     videoManager._createVideoReceivers();
-    videoManager._setActiveVehicle(_vehicle);
+    videoManager._vehicleStreams->setVehicle(_vehicle);
     VideoTestHelpers::InlineQmlEngine engine;
     const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
         kVehicleVideoViewQml, {{QStringLiteral("videoManager"), QVariant::fromValue(&videoManager)}});

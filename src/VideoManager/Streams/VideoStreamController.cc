@@ -183,7 +183,6 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
                        });
         (void) connect(_receiver, &VideoReceiver::errorOccurred, this, &VideoStreamController::errorOccurred);
         _receiver->setDisplayConfig(_resolvedDisplayConfig());
-        _receiver->setRecordingEncoding(_recordingEncoding);
         _receiver->setVideoOutput(_displaySuspended ? nullptr : _videoOutput.data());
         _apply();
     }
@@ -512,7 +511,8 @@ bool VideoStreamController::canRecord() const
     return _receiver && _enabled && configured();
 }
 
-void VideoStreamController::startRecording(const QString& file, VideoReceiver::FileFormat format)
+void VideoStreamController::startRecording(const QString& file, VideoReceiver::FileFormat format,
+                                           const VideoReceiver::RecordingEncoding& encoding)
 {
     if (!_receiver) {
         return;
@@ -522,7 +522,7 @@ void VideoStreamController::startRecording(const QString& file, VideoReceiver::F
     // Now, not on the next pass: a receiver takes a recording only while it is active, which the thermal stream out
     // of use isn't.
     _apply();
-    _receiver->startRecording(file, format);
+    _receiver->startRecording(file, format, encoding);
 }
 
 void VideoStreamController::stopRecording()
@@ -537,14 +537,6 @@ void VideoStreamController::stopRecording()
 bool VideoStreamController::encodesRecordings() const
 {
     return _receiver && _receiver->encodesRecordings();
-}
-
-void VideoStreamController::setRecordingEncoding(const VideoReceiver::RecordingEncoding& encoding)
-{
-    _recordingEncoding = encoding;
-    if (_receiver) {
-        _receiver->setRecordingEncoding(encoding);
-    }
 }
 
 bool VideoStreamController::canTakeScreenshot() const

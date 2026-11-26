@@ -11,7 +11,7 @@
 #include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
 #ifdef Q_OS_WIN
-#include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #endif
 
 QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.DecoderRanks")
@@ -57,7 +57,8 @@ constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
     {"vt", VideoDecoderOption::VideoToolbox, true},
     {"qsv", VideoDecoderOption::Intel, true},
     {"msdk", VideoDecoderOption::Intel, true},
-    {"vulkan", VideoDecoderOption::Vulkan, true},
+    // No family: gst-vulkan's decoders output VulkanImage memory only, which no sink takes.
+    {"vulkan", VideoDecoderOption::Default, true},
 };
 
 const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
@@ -350,12 +351,6 @@ QList<VideoDecoderOption> availableDecoderFamilies()
     forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
         const VideoDecoderOption family =
             decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
-#ifndef QGC_HAS_GST_VULKAN_GPU_PATH
-        // Only a build with the opt-in Vulkan GPU path has a use for them: no sink takes their VulkanImage memory.
-        if (family == VideoDecoderOption::Vulkan) {
-            return;
-        }
-#endif
         if ((family != VideoDecoderOption::Default) && !families.contains(family)) {
             families.append(family);
         }

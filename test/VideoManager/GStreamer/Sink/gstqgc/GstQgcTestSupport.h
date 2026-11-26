@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gst/gst.h>
+#include <optional>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <gst/allocators/gstfdmemory.h>
 #endif
@@ -15,6 +16,7 @@
 #include "GstScoped.h"
 #include "gstqgc/GstQgcSinkBin.h"
 #include "gstqgc/GstQgcSinkStats.h"
+#include "gstqgc/gstqgcqvideosink.h"
 
 class QVideoSink;
 
@@ -33,11 +35,11 @@ struct PipelineRunResult
     QString errorMessage;
 };
 
-/// Plays "videotestsrc @p sourceProperties ! @p capsLine" into a sink bin to EOS with the bin bound to @p videoSink,
-/// as VideoManager binds it, and records the frames that reach the QVideoSink.
+/// Plays "videotestsrc @p sourceProperties ! @p capsLine" into a sink bin built with @p config to EOS with the bin
+/// bound to @p videoSink, as VideoManager binds it, and records the frames that reach the QVideoSink.
 PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers = 5,
-                                               bool gpuZerocopy = false, const char* sourceProperties = "",
-                                               bool captureCenterPixel = false);
+                                               const GstQgc::SinkBinConfig& config = {},
+                                               const char* sourceProperties = "", bool captureCenterPixel = false);
 
 /// Whether the sink bin is built as its DMABuf-or-glupload variant here: without switchbin of GStreamer 1.24 or later
 /// it is the glupload variant instead.
@@ -87,7 +89,8 @@ inline qint64 sinkStat(GstElement* qvideosink, const char* field)
 /// Drives a standalone qgcqvideosink from the test thread through a linked source pad. show_frame runs inside
 /// pushFrame(), so element counters are exact, and GUI-thread delivery happens only when the test pumps events.
 /// Once isReady(), the sink is PLAYING and has had stream-start, BGRA caps (in @p memoryFeature, if given) and a TIME
-/// segment, as an upstream element sends before its first buffer.
+/// segment, as an upstream element sends before its first buffer. It reads @p environment, if given, in place of the
+/// process's.
 class SinkHarness
 {
 public:
@@ -95,13 +98,17 @@ public:
     static constexpr int kHeight = 4;
     static constexpr gsize kFrameBytes = kWidth * kHeight * 4;
 
-    explicit SinkHarness(QVideoSink* target, bool gpuZeroCopy = false, const char* memoryFeature = nullptr)
+    explicit SinkHarness(QVideoSink* target, bool gpuZeroCopy = false, const char* memoryFeature = nullptr,
+                         const std::optional<GstQgc::SinkEnvironment>& environment = std::nullopt)
         : _sink(sinkElement(gpuZeroCopy))
         , _bus(GStreamer::adoptBus(gst_bus_new()))
         , _src(GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC)))
     {
         if (!_sink) {
             return;
+        }
+        if (environment) {
+            GstQgc::setSinkEnvironment(_sink.get(), *environment);
         }
         gst_element_set_bus(_sink.get(), _bus.get());
         g_object_set(_sink.get(), "qvideosink", static_cast<gpointer>(target), nullptr);

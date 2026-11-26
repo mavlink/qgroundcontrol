@@ -19,7 +19,7 @@ class QVideoFrameInput;
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
 /// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Records by encoding the frames it
-/// displays anew (QtVideoRecorder), as recordingEncoding() says: only while an output displays the stream, and after a
+/// displays anew (QtVideoRecorder), as startRecording() is told: only while an output displays the stream, and after a
 /// reconnect in the same file.
 ///
 /// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
@@ -50,7 +50,8 @@ public:
 
     /// The source for @p uri, one of VideoStreamResolver's: rtsp(s):// and tcp:// as they are, rtspt:// as rtsp:// over
     /// TCP, as GStreamer plays it, mpegts:// as udp://, and udp:// (H.264) or udp265:// (H.265) RTP as an SDP
-    /// description. Other URLs play as they are; nullopt for an invalid one.
+    /// description. Other URLs play as they are; nullopt for an invalid one, and for one of those whose address no
+    /// receiver opens (VideoStreamUri::addressError()) or names port 0 to listen on.
     static std::optional<Source> playerSource(const QString& uri);
 
     bool encodesRecordings() const override { return true; }
@@ -63,7 +64,7 @@ protected:
     void onVideoOutputChanged() override;
     /// A start while a recording is in progress, or awaits its first frame, is refused: reported as
     /// recordingFinished() for @p file with the reason, while that recording goes on.
-    void onStartRecording(const QString& file, FileFormat format) override;
+    void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
     void onStopRecording() override;
 
 private:
@@ -83,6 +84,8 @@ private:
     /// The session failed for @p reason: reconnects with backoff, or stops and reports it. One still awaiting its
     /// sender starts anew instead.
     void _fail(const QString& reason);
+    /// The stream has stopped for good, until it is started over: ends its recording and reports @p message.
+    void _onHalted(const QString& message);
     void _bindVideoSink();
     void _onMediaStatusChanged(QMediaPlayer::MediaStatus status);
     void _onVideoFrame(const QVideoFrame& frame);

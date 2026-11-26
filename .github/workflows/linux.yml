@@ -501,20 +501,17 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
-  # No other job compiles the two ends of the GPU path table: the gst-vulkan and CUDA rows, which
-  # are off by default (QGC_GST_ENABLE_VULKAN, QGC_GST_ENABLE_CUDA), and the build with no GPU path
-  # at all, which is what configure produces where it finds the GStreamer pieces of none. This one
-  # compiles the GStreamer module, the application's GStreamer sources and the GStreamer tests both
-  # ways and runs nothing: no runner has the hardware. The AHardwareBuffer row stays uncompiled, as
-  # its header is in no GStreamer SDK.
-  gpu-variants:
-    name: GPU path variants (compile)
+  # No other job compiles the build with no GPU path at all, which is what configure produces where
+  # it finds the GStreamer pieces of none. This one compiles the GStreamer module, the application's
+  # GStreamer sources and the GStreamer tests that way and runs nothing.
+  no-gpu-path:
+    name: Video without GPU paths (compile)
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-gpu-variants-{1}-{2}/runner=linux-x64-tester',
+        format('runs-on={0}-no-gpu-path-{1}-{2}/runner=linux-x64-tester',
           github.run_id, github.run_attempt, strategy.job-index) ||
         'ubuntu-24.04'
       }}
@@ -553,18 +550,6 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      # gst/cuda/gstcuda.h includes <cuda.h>, which only the CUDA Toolkit installs. GStreamer's stub
-      # headers stand in for it, from the release whose development packages Ubuntu 24.04 has.
-      - name: Checkout GStreamer's CUDA stub headers
-        uses: actions/checkout@v7
-        with:
-          repository: GStreamer/gstreamer
-          ref: 2d8273151571fcab887cc81de48e87aeb61b5c06 # 1.24.2
-          path: gstreamer-cuda-stub
-          sparse-checkout: subprojects/gst-plugins-bad/gst-libs/gst/cuda/stub
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
       # A variant of its own: the build saves no compiler cache, and must not restore another leg's.
       - name: Build Setup
         uses: ./.github/actions/build-setup
@@ -572,41 +557,11 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
-          cache-variant: gpu-variants
+          cache-variant: no-gpu-path
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Configure with the opt-in paths
-        uses: ./.github/actions/cmake-configure
-        with:
-          preset: Linux-debug
-          extra-args: >-
-            -DQGC_GST_ENABLE_VULKAN=ON
-            -DQGC_GST_ENABLE_CUDA=ON
-            -DQGC_GST_CUDA_STUB_DIR=${{ github.workspace }}/gstreamer-cuda-stub/subprojects/gst-plugins-bad/gst-libs/gst/cuda/stub
-
-      # Configure drops a path whose GStreamer pieces it does not find and goes on without it.
-      - name: Require both paths in the build
-        run: |
-          for path in Vulkan CUDA; do
-            grep -x -- "-- QGCGStreamer: ${path} zero-copy GPU path enabled" "${RUNNER_TEMP}/build/cmake-configure.log"
-          done
-
-      - name: Build with the opt-in paths
-        uses: ./.github/actions/cmake-build
-        with:
-          target: QGCGStreamer
-
-      # The module's definitions are PUBLIC: the application's GStreamer sources and the GStreamer
-      # tests compile with them too. Those belong to the application and the test target, which
-      # are not built here: their object files are.
-      - name: Compile the application's GStreamer sources and tests with the opt-in paths
-        uses: ./.github/actions/cmake-build
-        with:
-          objects-under: src/VideoManager/GStreamer test/VideoManager/GStreamer
-
-      # The same build directory: the changed definitions compile the module again.
       - name: Configure without GPU paths
         uses: ./.github/actions/cmake-configure
         with:
@@ -614,8 +569,6 @@ jobs:
           extra-args: >-
             -DQGC_GST_ENABLE_DMABUF=OFF
             -DQGC_GST_ENABLE_GLMEMORY=OFF
-            -DQGC_GST_ENABLE_VULKAN=OFF
-            -DQGC_GST_ENABLE_CUDA=OFF
 
       # A row added to the table is on by default: it must be turned off above as well.
       - name: Require no GPU path in the build
@@ -630,6 +583,9 @@ jobs:
         with:
           target: QGCGStreamer
 
+      # The module's definitions are PUBLIC: the application's GStreamer sources and the GStreamer
+      # tests compile with them too. Those belong to the application and the test target, which
+      # are not built here: their object files are.
       - name: Compile the application's GStreamer sources and tests without GPU paths
         uses: ./.github/actions/cmake-build
         with:
@@ -645,7 +601,7 @@ jobs:
   linux-ok:
     name: Linux
     if: always()
-    needs: [changes, build, appimage-distros, debug-validation, custom-plugin, gpu-variants]
+    needs: [changes, build, appimage-distros, debug-validation, custom-plugin, no-gpu-path]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -658,5 +614,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: build, appimage-distros, debug-validation, custom-plugin, gpu-variants
+          allowed-skips: build, appimage-distros, debug-validation, custom-plugin, no-gpu-path
           jobs: ${{ toJSON(needs) }}

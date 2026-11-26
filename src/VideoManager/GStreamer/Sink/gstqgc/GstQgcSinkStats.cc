@@ -1,11 +1,17 @@
 #include "GstQgcSinkStats.h"
 
 #include <array>
+#include <utility>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMutexLocker>
 
+#include "GstQgcFrameMap.h"
 #include "GstQgcSinkBin.h"
 #include "gstqgcqvideosink.h"
+
+Q_DECLARE_LOGGING_CATEGORY(GstQgcQVideoSinkLog)
 
 namespace GstQgc {
 
@@ -58,6 +64,85 @@ PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since)
         }
     }
     return out;
+}
+
+quint64 SinkCounters::noteDelivered(HwVideoBufferPath path, bool superseded)
+{
+    {
+        const QMutexLocker locker(&_deliveryMutex);
+        (void) _pathFrames[static_cast<std::size_t>(path)].fetch_add(1, std::memory_order_relaxed);
+        if (superseded) {
+            (void) _superseded.fetch_add(1, std::memory_order_relaxed);
+        }
+    }
+    return _delivered.fetch_add(1, std::memory_order_relaxed) + 1;
+}
+
+void SinkCounters::noteGpuFallback(bool firstOfEpoch)
+{
+    (void) _gpuFallbacks.fetch_add(1, std::memory_order_relaxed);
+    if (firstOfEpoch) {
+        (void) _streamDemotions.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+GstStructure* SinkCounters::frameStats() const
+{
+    GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
+    gst_structure_set(stats, kGpuFallbacksField, G_TYPE_UINT64,
+                      static_cast<guint64>(_gpuFallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
+                      G_TYPE_UINT64, static_cast<guint64>(_streamDemotions.load(std::memory_order_relaxed)), nullptr);
+    gst_structure_set(stats, kTiledDropsField, G_TYPE_UINT64,
+                      static_cast<guint64>(_tiledDrops.load(std::memory_order_relaxed)), nullptr);
+    {
+        const QMutexLocker locker(&_deliveryMutex);
+        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+            gst_structure_set(stats, sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
+                              static_cast<guint64>(_pathFrames[i].load(std::memory_order_relaxed)), nullptr);
+        }
+        gst_structure_set(stats, kSupersededFramesField, G_TYPE_UINT64,
+                          static_cast<guint64>(_superseded.load(std::memory_order_relaxed)), nullptr);
+    }
+    return stats;
+}
+
+void PathSession::startEpoch()
+{
+    _pathCache = HwResolvedPathCache{};
+    _demotionRecorded = false;
+    _tiledDropLogged = false;
+}
+
+void PathSession::stop()
+{
+    startEpoch();
+    _consecutiveMapFailures = 0;
+}
+
+PathSession::Verdict PathSession::onMapFailed(const MappedFrame& mapped, SinkCounters& counters)
+{
+    const quint64 failures = ++_consecutiveMapFailures;
+    if (mapped.noCpuLayout) {
+        // Until upstream renegotiates (the sink asked for it when the DMABuf import stopped), or the run escalates.
+        counters.noteTiledDrop();
+        if (!std::exchange(_tiledDropLogged, true)) {
+            qCWarning(GstQgcQVideoSinkLog) << "tiled DMA_DRM frame not imported and has no CPU layout — dropped";
+        }
+    } else if ((failures & 0x3F) == 1) {
+        qCWarning(GstQgcQVideoSinkLog) << "mapping failed, consecutive=" << failures;
+    }
+    if (failures >= kMaxConsecutiveMapFailures) {
+        qCWarning(GstQgcQVideoSinkLog) << failures << "consecutive map failures — erroring out";
+        return Verdict::Error;
+    }
+    return Verdict::Drop;
+}
+
+void PathSession::onDelivered(const MappedFrame& mapped, SinkCounters& counters)
+{
+    if (mapped.demoted) {
+        counters.noteGpuFallback(!std::exchange(_demotionRecorded, true));
+    }
 }
 
 }  // namespace GstQgc

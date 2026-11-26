@@ -5,25 +5,30 @@
 #include <gst/video/video.h>
 #include <memory>
 #include <new>
+#include <optional>
 #include <utility>
 
 #include <QtCore/QRect>
 #include <QtCore/QSize>
+#include <QtCore/QtEnvironmentVariables>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
-#include "GstQgcAllocation.h"
-#include "GstQgcCaps.h"
+#include "CpuVideoFramePool.h"
 #include "GstQgcFrameDelivery.h"
 #include "GstQgcFrameMap.h"
-#include "GstQgcPathSession.h"
-#include "GstQgcSinkCounters.h"
+#include "GstQgcSinkPolicy.h"
 #include "GstQgcSinkStats.h"
+#include "GstQgcVideoFormats.h"
+#include "GstScoped.h"
 #include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 #include "gstqgcelements.h"
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+#include <gst/gl/gstglsyncmeta.h>
+#endif
 
 QGC_LOGGING_CATEGORY(GstQgcQVideoSinkLog, "Video.GStreamer.QgcQVideoSink")
 
@@ -44,6 +49,8 @@ struct PrivState
     // Set by the sink bin before linking (configureSinkCaps); with gpu_zerocopy, they decide what get_caps offers.
     GstQgc::GpuBinMode gpu_bin = GstQgc::GpuBinMode::Passthrough;
     bool square_pixels = true;
+    // Read in place of the process's environment once set (setSinkEnvironment); under GST_OBJECT_LOCK.
+    std::optional<GstQgc::SinkEnvironment> environment;
     // What get_caps last offered, and for which policy; under GST_OBJECT_LOCK. Rebuilt when the policy changes, e.g.
     // the render target or the DMABuf import state: building may query EGL.
     GstCaps* offered_caps = nullptr;
@@ -100,26 +107,33 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
     return priv_of(self)->delivery.sink() != nullptr;
 }
 
-/// What the GPU paths import now, as the caps policy takes it.
-struct ImportState
+/// What the sink reads now: the environment it was given (setSinkEnvironment()), else the process's. Either is
+/// without its DMABuf display while an import failure has that path disabled.
+GstQgc::SinkEnvironment environment_now(GstQgcQVideoSink* self)
 {
-    void* dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
-    bool d3d11OpensD3D12 = HwBuffers::d3d11OpensD3D12();
-};
+    GST_OBJECT_LOCK(self);
+    std::optional<GstQgc::SinkEnvironment> environment = priv_of(self)->environment;
+    GST_OBJECT_UNLOCK(self);
+    if (!environment) {
+        environment = GstQgc::currentSinkEnvironment();
+    }
+    if (HwBuffers::dmaBufImportDisabled()) {
+        environment->dmaBufDisplay = nullptr;
+    }
+    return *environment;
+}
 
-/// The caps policy for @p target and what the GPU paths import (@p imports); under GST_OBJECT_LOCK. Neither decides
-/// the caps of a CPU sink or of the glupload and d3d12convert variants, so they are left out there: equal policies
-/// offer equal caps.
-GstQgc::SinkCapsPolicy caps_policy_locked(const PrivState* p, const GstQgc::RenderTarget& target,
-                                          const ImportState& imports)
+/// The caps policy under @p environment; under GST_OBJECT_LOCK. The environment doesn't decide the caps of a CPU sink
+/// or of the glupload and d3d12convert variants, so it is left out there: equal policies offer equal caps.
+GstQgc::SinkCapsPolicy caps_policy_locked(const PrivState* p, const GstQgc::SinkEnvironment& environment)
 {
     const bool followsRenderer = p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload) &&
                                  (p->gpu_bin != GstQgc::GpuBinMode::D3D12Convert);
     return {.gpuZeroCopy = p->gpu_zerocopy,
             .gpuBin = p->gpu_bin,
-            .target = followsRenderer ? target : GstQgc::RenderTarget{},
-            .dmaBufDisplay = followsRenderer ? imports.dmaBufDisplay : nullptr,
-            .d3d11OpensD3D12 = followsRenderer && imports.d3d11OpensD3D12,
+            .target = followsRenderer ? environment.target : GstQgc::RenderTarget{},
+            .dmaBufDisplay = followsRenderer ? environment.dmaBufDisplay : nullptr,
+            .d3d11OpensD3D12 = followsRenderer && environment.d3d11OpensD3D12,
             .squarePixels = p->square_pixels};
 }
 
@@ -127,10 +141,10 @@ GstQgc::SinkCapsPolicy caps_policy_locked(const PrivState* p, const GstQgc::Rend
 GstCaps* offered_caps(GstQgcQVideoSink* self)
 {
     PrivState* const p = priv_of(self);
-    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
-    const ImportState imports;
+    const GstQgc::SinkEnvironment environment = environment_now(self);
+    const GstQgc::RenderTarget& target = environment.target;
     GST_OBJECT_LOCK(self);
-    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, imports);
+    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, environment);
     if (p->offered_caps && (p->offered_policy == policy)) {
         GstCaps* const cached = gst_caps_ref(p->offered_caps);
         GST_OBJECT_UNLOCK(self);
@@ -160,10 +174,10 @@ GstCaps* offered_caps(GstQgcQVideoSink* self)
 GstQgc::SinkCapsPolicy reconfigure_on_policy_change(GstQgcQVideoSink* self)
 {
     PrivState* const p = priv_of(self);
-    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
-    const ImportState imports;
+    const GstQgc::SinkEnvironment environment = environment_now(self);
+    const GstQgc::RenderTarget& target = environment.target;
     GST_OBJECT_LOCK(self);
-    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, imports);
+    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, environment);
     const bool changed = p->offered_caps && (p->offered_policy != policy);
     if (changed) {
         // Rebuilt by the next get_caps, which also re-arms this check.
@@ -529,6 +543,103 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     return parentClass->stop ? parentClass->stop(bsink) : TRUE;
 }
 
+namespace GstQgc {
+
+namespace {
+
+// Most decoder buffers downstream holds at once: kMaxPinnedFrames, plus the texture bundle Qt moves out of a reused
+// in-flight slot and keeps (with its sample) until that render frame ends.
+constexpr guint kProposedMinBuffers = CpuVideoFramePool::kMaxPinnedFrames + 1;
+
+// QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS overrides kProposedMinBuffers, like Qt's
+// QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS, e.g. to save CMA memory with 4K decoders on i.MX or Raspberry Pi.
+guint proposedMinBuffers()
+{
+    bool ok = false;
+    const int minBuffers = qEnvironmentVariableIntValue("QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS", &ok);
+    return (ok && (minBuffers > 0)) ? static_cast<guint>(minBuffers) : kProposedMinBuffers;
+}
+
+// Advertise every meta API qgcqvideosink/GstQgcFrameMap consume so upstream keeps them;
+// else gst-vaapi/v4l2 crop into a copy of each frame instead of attaching the crop meta.
+void addConsumedAllocationMetas(GstQuery* query, bool cropMeta = true)
+{
+    gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, NULL);
+    if (cropMeta) {
+        gst_query_add_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, NULL);
+    }
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    // As upstream's Qt sink asks: glcolorconvert then ends each frame it renders with a sync point, which flushes its
+    // context. GstGlVideoBuffer doesn't wait on that fence: it sets one of its own once the frame is mapped.
+    gst_query_add_allocation_meta(query, GST_GL_SYNC_META_API_TYPE, NULL);
+#endif
+}
+
+// A GstVideoBufferPool, unlike a plain GstBufferPool, supports VIDEO_META and attaches GstVideoMeta per buffer, so
+// decoders that check the option (avdec direct rendering) decode straight into it instead of copying.
+bool tryProposeMetaPool(GstQuery* query, GstCaps* caps, gsize size, guint minBuffers)
+{
+    const std::unique_ptr<GstBufferPool, GStreamer::GstObjectDeleter> pool{gst_video_buffer_pool_new()};
+    if (!pool) {
+        return false;
+    }
+
+    GstStructure* config = gst_buffer_pool_get_config(pool.get());
+    gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+    gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+    if (!gst_buffer_pool_set_config(pool.get(), config)) {
+        return false;
+    }
+    gst_query_add_allocation_pool(query, pool.get(), size, minBuffers, 0);
+    return true;
+}
+
+}  // namespace
+
+bool populateAllocationQuery(GstQuery* query)
+{
+    GstCaps* caps = nullptr;
+    gboolean need_pool = FALSE;
+    gst_query_parse_allocation(query, &caps, &need_pool);
+    if (!caps) {
+        return false;
+    }
+
+    GstVideoInfo vinfo;
+    if (!GstHw::dmaDrmAwareVideoInfo(caps, &vinfo)) {
+        return false;
+    }
+    const gsize size = GST_VIDEO_INFO_SIZE(&vinfo);
+    const guint minBuffers = proposedMinBuffers();
+
+    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
+    const bool is_system_memory =
+        !features || gst_caps_features_is_equal(features, GST_CAPS_FEATURES_MEMORY_SYSTEM_MEMORY);
+
+    if (!is_system_memory) {
+        if (!HwBuffers::proposeDeviceBoundPool(query, caps, &vinfo, size, minBuffers)) {
+            gst_query_add_allocation_pool(query, NULL, size, minBuffers, 0);
+        }
+        // A d3d11 or d3d12 decoder offered crop meta hands over its whole texture when the picture starts off the
+        // texture's origin, with the meta saying where; the D3D paths copy the picture from the origin. Without the
+        // offer the decoder crops such a picture itself.
+        const bool d3dMemory = gst_caps_features_contains(features, "memory:D3D11Memory") ||
+                               gst_caps_features_contains(features, "memory:D3D12Memory");
+        addConsumedAllocationMetas(query, !d3dMemory);
+        return true;
+    }
+
+    // The entry carries the buffers the sink holds, which a producer with a pool of its own adds to that pool's size:
+    // it goes in without a pool when none is asked for, as in upstream's sinks.
+    if (!need_pool || !tryProposeMetaPool(query, caps, size, minBuffers)) {
+        gst_query_add_allocation_pool(query, NULL, size, minBuffers, 0);
+    }
+    addConsumedAllocationMetas(query);
+    return true;
+}
+
+}  // namespace GstQgc
+
 // Add qgcqvideosink's consumed metas + min-buffer pool hint, then chain so GstBaseSink's default
 // allocation bookkeeping still runs. A query without video caps fails, as in upstream's sinks.
 static gboolean gst_qgc_q_video_sink_propose_allocation(GstBaseSink* bsink, GstQuery* query)
@@ -613,8 +724,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
         gobject_class, PROP_FRAMES_DELIVERED,
         g_param_spec_uint64("frames-delivered", "Frames delivered",
                             "Buffers that survived every drop check and were handed to the QVideoSink. Delivery keeps "
-                            "only the latest frame, so frames superseded before the GUI thread ran are counted too. "
-                            "Per-element — the GUI controller reads this for the QML frameCount.",
+                            "only the latest frame, so frames superseded before the GUI thread ran are counted too.",
                             0, G_MAXUINT64, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     // Not "stats": that is GstBaseSink's own property (average-rate, dropped, rendered), which generic tools read.
@@ -623,8 +733,8 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
         g_param_spec_boxed("frame-stats", "Frame statistics",
                            "This sink's own frame accounting, as a qgc-video-sink-stats structure of guint64 fields: "
                            "frames-<path> per delivery path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, "
-                           "frames-d3d12, frames-iosurface, frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU "
-                           "path was tried for but the CPU delivered), stream-demotions (caps epochs that fell back "
+                           "frames-d3d12, frames-iosurface, frames-ahwbuf); gpu-fallbacks (frames a GPU path was "
+                           "tried for but the CPU delivered), stream-demotions (caps epochs that fell back "
                            "from a GPU path), tiled-drops (frames in a tiled DMA_DRM layout that no GPU path "
                            "imported and the CPU can't read) and superseded-frames (delivered frames a newer one "
                            "replaced before the QVideoSink took them).",
@@ -669,6 +779,18 @@ void configureSinkCaps(GstElement* sink, GpuBinMode gpuBin, bool squarePixels)
     priv_of(self)->gpu_bin = gpuBin;
     priv_of(self)->square_pixels = squarePixels;
     gst_clear_caps(&priv_of(self)->offered_caps);
+    GST_OBJECT_UNLOCK(self);
+}
+
+void setSinkEnvironment(GstElement* sink, const SinkEnvironment& environment)
+{
+    if (!sink || !GST_IS_QGC_Q_VIDEO_SINK(sink)) {
+        return;
+    }
+    GstQgcQVideoSink* const self = GST_QGC_Q_VIDEO_SINK(sink);
+    // The caps offered so far stay: the next frame compares their policy with the new one and asks for renegotiation.
+    GST_OBJECT_LOCK(self);
+    priv_of(self)->environment = environment;
     GST_OBJECT_UNLOCK(self);
 }
 

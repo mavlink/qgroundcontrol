@@ -1,11 +1,7 @@
-// The H.264/H.265 part of GStreamer::SourceFactory, declared in GstSourceFactory.h: the setup of the depayloaders and
-// parsers, and the gate that holds a depayloader's output until its parameter sets have arrived.
-
-#include <gst/gst.h>
+#include "GstH26xSetup.h"
 
 #include "GStreamerHelpers.h"
 #include "GstScoped.h"
-#include "GstSourceFactory.h"
 
 namespace GStreamer::SourceFactory {
 
@@ -13,13 +9,18 @@ namespace {
 
 // NAL unit types (ITU-T H.264 and H.265, table 7-1). Slices are the types up to the last one named here.
 constexpr guint kH264NalSliceFirst = 1;
+constexpr guint kH264NalSlicePartitionA = 2;
 constexpr guint kH264NalSliceIdr = 5;
+constexpr guint kH264NalSei = 6;
 constexpr guint kH264NalSps = 7;
 constexpr guint kH264NalPps = 8;
+constexpr guint kH264NalDelimiter = 9;
 constexpr guint kH265NalSliceLast = 31;
 constexpr guint kH265NalVps = 32;
 constexpr guint kH265NalSps = 33;
 constexpr guint kH265NalPps = 34;
+constexpr guint kH265NalDelimiter = 35;
+constexpr guint kH265NalPrefixSei = 39;
 
 bool isH26xRtpDepayloader(const char* factoryName)
 {
@@ -155,6 +156,38 @@ GstPadProbeReturn holdUntilParameterSets(GstPad* pad, GstPadProbeInfo* info, gpo
 }
 
 }  // namespace
+
+bool startsAccessUnit(GstBuffer* buffer, bool h265)
+{
+    // Leading zero bytes, the start code, the NAL unit's header and the first byte after it.
+    guint8 head[16];
+    const gsize size = gst_buffer_extract(buffer, 0, head, sizeof(head));
+    gsize i = 0;
+    while ((i < size) && (head[i] == 0)) {
+        ++i;
+    }
+    const gsize headerSize = h265 ? 2 : 1;
+    if ((i < 2) || ((i + 1 + headerSize) >= size) || (head[i] != 1)) {
+        return false;
+    }
+    const guint8 header = head[i + 1];
+    // first_mb_in_slice is 0, or first_slice_segment_in_pic_flag is set: both read as a leading 1 bit.
+    const bool firstSliceOfPicture = (head[i + 1 + headerSize] & 0x80U) != 0;
+    // What may precede a picture's first slice in its access unit (H.264 7.4.1.2.3, H.265 7.4.2.4.4).
+    if (h265) {
+        const guint nalType = (header >> 1) & 0x3FU;
+        if (nalType <= kH265NalSliceLast) {
+            return firstSliceOfPicture;
+        }
+        return ((nalType >= kH265NalVps) && (nalType <= kH265NalDelimiter)) || (nalType == kH265NalPrefixSei) ||
+               ((nalType >= 41) && (nalType <= 44)) || ((nalType >= 48) && (nalType <= 55));
+    }
+    const guint nalType = header & 0x1FU;
+    if ((nalType == kH264NalSliceFirst) || (nalType == kH264NalSlicePartitionA) || (nalType == kH264NalSliceIdr)) {
+        return firstSliceOfPicture;
+    }
+    return ((nalType >= kH264NalSei) && (nalType <= kH264NalDelimiter)) || ((nalType >= 14) && (nalType <= 18));
+}
 
 void configureH26xParser(GstElement* element)
 {

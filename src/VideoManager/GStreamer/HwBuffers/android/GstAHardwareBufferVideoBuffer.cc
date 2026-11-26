@@ -19,7 +19,6 @@
 
 #include "GstEglHelpers.h"
 #include "GstHwFrameTexturesBase.h"
-#include "GstHwImportPreflight.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"

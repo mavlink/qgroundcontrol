@@ -22,19 +22,18 @@
 #include <QtMultimedia/QVideoSink>
 
 #include "Fixtures/RAIIFixtures.h"
-#include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstDmaBufVideoBuffer.h"
 #include "GstDmaBufVulkanImport.h"
+#include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
-#include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
 #include "GstQtDmaBufImport.h"
 #include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "QGCQVideoSinkController.h"
 #include "QGCRhiCapture.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
@@ -154,9 +153,9 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufDispatch()
     }
     // The sink offers DMABuf only to Qt's OpenGL over EGL.
     constexpr GstQgc::RenderTarget kDmaBufTarget{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
-    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = kDmaBufTarget,
-                                                            .gpuBin = {.mode = GstQgc::GpuBinMode::DirectDmaBuf},
-                                                            .dmaBufDisplay = QGCRhiCapture::qtEglDisplay()});
+    const GstQgc::SinkEnvironment environment{.target = kDmaBufTarget,
+                                              .gpuBin = {.mode = GstQgc::GpuBinMode::DirectDmaBuf},
+                                              .dmaBufDisplay = QGCRhiCapture::qtEglDisplay()};
 
     GSTTEST_SKIP_UNLESS_FACTORIES("vah264enc", "vah264dec", "vapostproc");
 
@@ -211,7 +210,7 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufDispatch()
                                                       "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
                                                       "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
                                                       "capsfilter name=qgccaps"),
-                                       {.gpuZeroCopy = true})) {
+                                       {.gpuZeroCopy = true, .environment = environment})) {
         QSKIP(qPrintable(QStringLiteral("DMABuf pipeline parse skipped: %1").arg(pipeline.error())));
     }
     g_object_set(pipeline.element("qgccaps").get(), "caps", qgcDmaBufCaps.get(), nullptr);
@@ -306,15 +305,14 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
     GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "glupload", "glcolorconvert");
     // A stand-in for Qt's EGLDisplay makes the sink offer DMABuf. Nothing imports with it: no QVideoSink is bound, so
     // the sink drops each frame once it has arrived.
-    const GstQgc::ScopedSinkEnvironmentForTest environment(
-        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
-         .gpuBin = {.mode = GstQgc::GpuBinMode::DmaBufOrGlUpload},
-         .dmaBufDisplay = reinterpret_cast<void*>(quintptr(1))});
+    const GstQgc::SinkEnvironment environment{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+                                              .gpuBin = {.mode = GstQgc::GpuBinMode::DmaBufOrGlUpload},
+                                              .dmaBufDisplay = reinterpret_cast<void*>(quintptr(1))};
 
     GstTest::TestPipeline pipeline;
-    QVERIFY2(
-        GstQgcTest::launchIntoSinkBin(pipeline, QStringLiteral("appsrc name=src format=time"), {.gpuZeroCopy = true}),
-        qPrintable(pipeline.error()));
+    QVERIFY2(GstQgcTest::launchIntoSinkBin(pipeline, QStringLiteral("appsrc name=src format=time"),
+                                           {.gpuZeroCopy = true, .environment = environment}),
+             qPrintable(pipeline.error()));
     const GStreamer::GstElementPtr source = pipeline.element("src");
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(source && sinkBin);
@@ -765,19 +763,6 @@ void GstHwBuffersDmaBufTest::_testDmaBufProducerWaitNeedsSignalledFences()
     if (hungUp) {
         verifyExpectedLogMessage();
     }
-}
-
-void GstHwBuffersDmaBufTest::_testDmaBufFdCheckRejectsOtherFds()
-{
-    // GStreamer's dmabuf allocator calls any fd a dma-buf, as the memfd-backed samples of these tests rely on.
-    GstVideoInfo info;
-    const GstTest::SamplePtr sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
-    QVERIFY(sample);
-    GstMemory* const memory = gst_buffer_peek_memory(gst_sample_get_buffer(sample.get()), 0);
-    QVERIFY(gst_is_dmabuf_memory(memory));
-
-    QVERIFY(!GstDmaBufVideoBuffer::isDmaBufFd(gst_dmabuf_memory_get_fd(memory)));
-    QVERIFY(!GstDmaBufVideoBuffer::isDmaBufFd(-1));
 }
 
 void GstHwBuffersDmaBufTest::_testTelemetryDmaBufExtraStats()

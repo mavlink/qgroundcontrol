@@ -1,8 +1,6 @@
 #include "HwBuffers/GstHwBuffersTest.h"
 
-#include <cstring>
 #include <gst/gst.h>
-#include <gst/video/gstvideometa.h>
 #include <memory>
 #include <rhi/qrhi.h>
 #include <span>
@@ -16,18 +14,12 @@
 #include <QtMultimedia/private/qvideotexturehelper_p.h>
 #include <QtQuick/QQuickWindow>
 
-#include "CpuVideoFramePool.h"
 #include "GStreamerTestHelpers.h"
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
-#include "GstQgcFrameMap.h"
 #include "HwBuffers/HwBuffers.h"
-#include "gstqgc/GstQgcGpuBin.h"
-#include "gstqgc/GstQgcRenderTarget.h"
-#include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
 #endif
@@ -116,7 +108,7 @@ const HwPathDescriptor kTestBridgePathA = {
 };
 
 const HwPathDescriptor kTestBridgePathB = {
-    .path = HwVideoBufferPath::Vulkan,
+    .path = HwVideoBufferPath::AHardwareBuffer,
     .matches = [](GstMemory*) { return false; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
 };
@@ -338,242 +330,6 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
 }
 #endif
 
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
-{
-    QTest::addColumn<QByteArray>("value");
-    QTest::addColumn<int>("expectedMode");
-    QTest::addColumn<bool>("explicitChoice");
-    QTest::addColumn<bool>("warns");
-
-    const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
-    const int directDmaBuf = int(GstQgc::GpuBinMode::DirectDmaBuf);
-    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
-    QTest::newRow("unset") << QByteArray() << dmaBufOrGlUpload << false << false;
-    QTest::newRow("glupload") << QByteArray("glupload") << glUpload << true << false;
-    QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << true << false;
-    QTest::newRow("unknown") << QByteArray("vulkan") << dmaBufOrGlUpload << false << true;
-}
-
-void GstHwBuffersTest::_testGpuBinPreferenceParse()
-{
-    QFETCH(QByteArray, value);
-    QFETCH(int, expectedMode);
-    QFETCH(bool, explicitChoice);
-    QFETCH(bool, warns);
-
-    if (warns) {
-        expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default bin")));
-    }
-    const GstQgc::GpuBinPreference preference = GstQgc::parseGpuBinPreference(value);
-    QCOMPARE(int(preference.mode), expectedMode);
-    QCOMPARE(preference.explicitChoice, explicitChoice);
-    if (warns) {
-        verifyExpectedLogMessage();
-    }
-}
-#endif
-
-void GstHwBuffersTest::_testGpuBinSelection_data()
-{
-    QTest::addColumn<int>("preferred");
-    QTest::addColumn<bool>("explicitChoice");
-    QTest::addColumn<int>("backend");
-    QTest::addColumn<bool>("egl");
-    QTest::addColumn<int>("expected");
-
-    using GstQgc::GpuBinMode;
-    using GstQgc::RenderBackend;
-    const int glUpload = int(GpuBinMode::GlUpload);
-    const int directDmaBuf = int(GpuBinMode::DirectDmaBuf);
-    const int dmaBufOrGlUpload = int(GpuBinMode::DmaBufOrGlUpload);
-    const int passthrough = int(GpuBinMode::Passthrough);
-    const int openGl = int(RenderBackend::OpenGL);
-    const int vulkan = int(RenderBackend::Vulkan);
-    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect. WGL and CGL contexts aren't
-    // wrapped, so there it is no GPU bin.
-#if defined(Q_OS_LINUX)
-    const int withoutEgl = dmaBufOrGlUpload;
-#else
-    const int withoutEgl = passthrough;
-#endif
-    QTest::newRow("dmabuf-or-glupload-opengl-egl") << dmaBufOrGlUpload << false << openGl << true << dmaBufOrGlUpload;
-    QTest::newRow("dmabuf-or-glupload-opengl-not-egl") << dmaBufOrGlUpload << false << openGl << false << withoutEgl;
-    QTest::newRow("dmabuf-or-glupload-vulkan") << dmaBufOrGlUpload << false << vulkan << false << passthrough;
-    QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
-    QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
-    QTest::newRow("glupload-vulkan-explicit") << glUpload << true << vulkan << false << glUpload;
-    QTest::newRow("dmabuf-opengl-egl") << directDmaBuf << false << openGl << true << directDmaBuf;
-    QTest::newRow("dmabuf-opengl-not-egl") << directDmaBuf << false << openGl << false << passthrough;
-    QTest::newRow("dmabuf-opengl-not-egl-explicit") << directDmaBuf << true << openGl << false << directDmaBuf;
-    QTest::newRow("passthrough-vulkan") << passthrough << false << vulkan << false << passthrough;
-    const int direct3D12 = int(RenderBackend::Direct3D12);
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    // Direct3D12 has one GPU variant, whatever was asked for.
-    const int d3d12Convert = int(GpuBinMode::D3D12Convert);
-    QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << d3d12Convert;
-    QTest::newRow("glupload-d3d12-explicit") << glUpload << true << direct3D12 << false << d3d12Convert;
-#else
-    QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << passthrough;
-#endif
-}
-
-void GstHwBuffersTest::_testGpuBinSelection()
-{
-    QFETCH(int, preferred);
-    QFETCH(bool, explicitChoice);
-    QFETCH(int, backend);
-    QFETCH(bool, egl);
-    QFETCH(int, expected);
-
-    const GstQgc::GpuBinPreference preference{.mode = static_cast<GstQgc::GpuBinMode>(preferred),
-                                              .explicitChoice = explicitChoice};
-    const GstQgc::RenderTarget target{.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl};
-    QCOMPARE(int(GstQgc::selectGpuBin(preference, target)), expected);
-}
-
-void GstHwBuffersTest::_testCpuLayoutSizesPlanesByComponent()
-{
-    // AV12's third plane holds component 3 (full-height alpha); component 2 is the half-height V in plane 1.
-    // _testCpuCopyOddDimensions covers the formats whose planes and components line up.
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, GST_VIDEO_FORMAT_AV12, 64, 48));
-    const CpuVideoFramePool::PlaneLayout layout = CpuVideoFramePool::computeLayout(info);
-    QCOMPARE(layout.planeCount, 3);
-    QCOMPARE(layout.height[0], 48);
-    QCOMPARE(layout.height[1], 24);
-    QCOMPARE(layout.height[2], 48);
-}
-
-void GstHwBuffersTest::_testCpuCopyOddDimensions_data()
-{
-    QTest::addColumn<int>("gstFormat");
-    QTest::addColumn<int>("qtFormat");
-    QTest::addColumn<QList<int>>("planeRows");
-    QTest::addColumn<QList<int>>("planeRowBytes");
-
-    // 5x3: chroma rounds up to 3x2.
-    QTest::newRow("I420") << int(GST_VIDEO_FORMAT_I420) << int(QVideoFrameFormat::Format_YUV420P) << QList<int>{3, 2, 2}
-                          << QList<int>{5, 3, 3};
-    QTest::newRow("YV12") << int(GST_VIDEO_FORMAT_YV12) << int(QVideoFrameFormat::Format_YV12) << QList<int>{3, 2, 2}
-                          << QList<int>{5, 3, 3};
-    QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << int(QVideoFrameFormat::Format_NV12) << QList<int>{3, 2}
-                          << QList<int>{5, 6};
-    // Packed 4:2:2: the last macropixel's chroma ends past the last luma byte (YUY2 V at byte 11, UYVY V at 10).
-    QTest::newRow("YUY2") << int(GST_VIDEO_FORMAT_YUY2) << int(QVideoFrameFormat::Format_YUYV) << QList<int>{3}
-                          << QList<int>{12};
-    QTest::newRow("UYVY") << int(GST_VIDEO_FORMAT_UYVY) << int(QVideoFrameFormat::Format_UYVY) << QList<int>{3}
-                          << QList<int>{11};
-}
-
-void GstHwBuffersTest::_testCpuCopyOddDimensions()
-{
-    QFETCH(int, gstFormat);
-    QFETCH(int, qtFormat);
-    QFETCH(QList<int>, planeRows);
-    QFETCH(QList<int>, planeRowBytes);
-
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, static_cast<GstVideoFormat>(gstFormat), 5, 3));
-    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    QVERIFY(buffer);
-    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    GstMapInfo source;
-    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
-    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
-    for (gsize i = 0; i < source.size; ++i) {
-        source.data[i] = static_cast<guint8>((i * 7) + 1);
-    }
-
-    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(
-        buffer, info, QVideoFrameFormat(QSize(5, 3), static_cast<QVideoFrameFormat::PixelFormat>(qtFormat)));
-    QVERIFY(frame.isValid());
-    QVERIFY(frame.map(QVideoFrame::ReadOnly));
-    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
-    QCOMPARE(frame.planeCount(), planeRows.size());
-    for (int plane = 0; plane < frame.planeCount(); ++plane) {
-        const int stride = frame.bytesPerLine(plane);
-        QVERIFY(frame.mappedBytes(plane) >= ((planeRows[plane] - 1) * stride) + planeRowBytes[plane]);
-        const auto* const src = reinterpret_cast<const char*>(source.data + GST_VIDEO_INFO_PLANE_OFFSET(&info, plane));
-        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
-        for (int row = 0; row < planeRows[plane]; ++row) {
-            QCOMPARE(QByteArray(dst + (row * stride), planeRowBytes[plane]),
-                     QByteArray(src + (row * GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)), planeRowBytes[plane]));
-        }
-    }
-}
-
-void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer_data()
-{
-    QTest::addColumn<int>("metaWidth");
-    QTest::addColumn<QSize>("frameSize");
-
-    // A v4l2 stateless decoder's 1080p frame: 1080 rows in the caps, 1088 in the buffer's GstVideoMeta.
-    QTest::newRow("taller") << 32 << QSize(32, 1080);
-    // Padded columns as well, so the source's strides and plane offsets differ from the destination's.
-    QTest::newRow("taller-and-wider") << 48 << QSize(32, 1080);
-    // The buffer's whole frame, as the sink asks for it (frameGeometry()).
-    QTest::newRow("whole-frame") << 48 << QSize(48, 1088);
-}
-
-void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer()
-{
-    QFETCH(int, metaWidth);
-    QFETCH(QSize, frameSize);
-    constexpr int kMetaRows = 1088;
-
-    GstVideoInfo capsInfo;
-    GstVideoInfo metaInfo;
-    GstVideoInfo frameInfo;
-    QVERIFY(gst_video_info_set_format(&capsInfo, GST_VIDEO_FORMAT_NV12, 32, 1080));
-    QVERIFY(gst_video_info_set_format(&metaInfo, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows));
-    QVERIFY(gst_video_info_set_format(&frameInfo, GST_VIDEO_FORMAT_NV12, frameSize.width(), frameSize.height()));
-    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&metaInfo), nullptr);
-    QVERIFY(buffer);
-    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    gst_buffer_add_video_meta_full(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows,
-                                   GST_VIDEO_INFO_N_PLANES(&metaInfo), metaInfo.offset, metaInfo.stride);
-    GstMapInfo source;
-    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
-    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
-    for (gsize i = 0; i < source.size; ++i) {
-        source.data[i] = static_cast<guint8>(i % 251);
-    }
-
-    // The copy's destination comes from the pool: hand the pool one with guard bytes behind the frame, which a copy of
-    // the meta's rows would overwrite.
-    const QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
-    constexpr char kGuardByte = char(0xA5);
-    constexpr qsizetype guardBytes = 1024;
-    const auto frameBytes = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&frameInfo));
-    QByteArray backing;
-    backing.reserve(frameBytes + 1 + guardBytes);
-    backing.resize(frameBytes);
-    char* const guard = backing.data() + frameBytes + 1;
-    std::memset(guard, kGuardByte, static_cast<std::size_t>(guardBytes));
-    CpuVideoFramePool::instance().releaseBacking(format.frameSize(), format.pixelFormat(), std::move(backing));
-
-    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(buffer, capsInfo, format);
-    QVERIFY(frame.isValid());
-    QVERIFY(frame.map(QVideoFrame::ReadOnly));
-    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
-    QCOMPARE(reinterpret_cast<const char*>(frame.bits(0)), guard - frameBytes - 1);
-    QCOMPARE(frame.planeCount(), 2);
-    for (int plane = 0; plane < frame.planeCount(); ++plane) {
-        // NV12: both planes hold a byte per column in a row, the chroma plane half the rows.
-        const int rows = (plane == 0) ? frameSize.height() : (frameSize.height() / 2);
-        QCOMPARE(frame.mappedBytes(plane), rows * frame.bytesPerLine(plane));
-        const auto* const src = reinterpret_cast<const char*>(source.data + metaInfo.offset[plane]);
-        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
-        for (int row = 0; row < rows; ++row) {
-            QCOMPARE(QByteArray(dst + (row * frame.bytesPerLine(plane)), frameSize.width()),
-                     QByteArray(src + (row * metaInfo.stride[plane]), frameSize.width()));
-        }
-    }
-    QCOMPARE(QByteArray(guard, guardBytes), QByteArray(guardBytes, kGuardByte));
-}
-
 #if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {
 
@@ -629,7 +385,7 @@ const HwPathDescriptor kTestSelectPathA = {
 };
 
 const HwPathDescriptor kTestSelectPathB = {
-    .path = HwVideoBufferPath::Vulkan,
+    .path = HwVideoBufferPath::AHardwareBuffer,
     .matches = [](GstMemory*) { return s_testPathB.matches; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathB, sample, info, format); },
@@ -646,15 +402,15 @@ void GstHwBuffersTest::_testHwPathRegistrySelection_data()
     QTest::addColumn<int>("expectedPath");
     QTest::addColumn<int>("expectedBConstructed");
 
-    // Path A (GL) is registered before path B (Vulkan); B always matches and imports.
+    // Path A (GL) is registered before path B (AHardwareBuffer); B always matches and imports.
     const int none = int(HwVideoBufferPath::None);
     const int gl = int(HwVideoBufferPath::GlMemory);
-    const int vulkan = int(HwVideoBufferPath::Vulkan);
+    const int ahb = int(HwVideoBufferPath::AHardwareBuffer);
     QTest::newRow("first-registered-match-wins") << true << true << true << none << gl << 0;
-    QTest::newRow("non-matching-path-skipped") << false << true << true << none << vulkan << 1;
+    QTest::newRow("non-matching-path-skipped") << false << true << true << none << ahb << 1;
     QTest::newRow("declining-path-sends-frame-to-cpu") << true << false << true << none << none << 0;
     QTest::newRow("failed-import-sends-frame-to-cpu") << true << true << false << none << none << 0;
-    QTest::newRow("validated-path-tried-first") << true << true << true << vulkan << vulkan << 1;
+    QTest::newRow("validated-path-tried-first") << true << true << true << ahb << ahb << 1;
 }
 
 void GstHwBuffersTest::_testHwPathRegistrySelection()
@@ -823,62 +579,9 @@ void GstHwBuffersTest::_testTexturePadsPicture()
 }
 #endif
 
-void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas_data()
-{
-    QTest::addColumn<QSize>("metaSize");  // invalid: no GstVideoMeta
-    QTest::addColumn<QRect>("crop");      // null: no GstVideoCropMeta
-    QTest::addColumn<QSize>("frameSize");
-    QTest::addColumn<QRect>("viewport");
-
-    // Under 400x200 caps.
-    const QSize capsSize(400, 200);
-    const QRect capsRect(QPoint(0, 0), capsSize);
-    QTest::newRow("no-metas") << QSize() << QRect() << capsSize << capsRect;
-    QTest::newRow("meta-of-caps-size") << capsSize << QRect() << capsSize << capsRect;
-    // v4l2 stateless decoders: the meta has the coded size, and the picture is its top-left part.
-    QTest::newRow("padded") << QSize(400, 208) << QRect() << QSize(400, 208) << capsRect;
-    // gst-va with a left or top crop: the meta has the uncropped size, and the crop meta the picture in it.
-    QTest::newRow("padded-and-cropped") << QSize(416, 208) << QRect(8, 4, 400, 200) << QSize(416, 208)
-                                        << QRect(8, 4, 400, 200);
-    QTest::newRow("cropped") << QSize() << QRect(100, 50, 200, 100) << capsSize << QRect(100, 50, 200, 100);
-    // No frame gst_video_frame_map() would map.
-    QTest::newRow("meta-smaller-than-caps") << QSize(400, 192) << QRect() << capsSize << capsRect;
-}
-
-void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas()
-{
-    QFETCH(QSize, metaSize);
-    QFETCH(QRect, crop);
-    QFETCH(QSize, frameSize);
-    QFETCH(QRect, viewport);
-
-    // The geometry reaches the frame as QVideoFrameFormat's frame size and viewport, not through
-    // externalTextureMatrix.
-    GstVideoInfo info;
-    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info));
-    QVERIFY(sample);
-    GstBuffer* const buffer = gst_sample_get_buffer(sample.get());
-    if (metaSize.isValid()) {
-        gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12,
-                                  static_cast<guint>(metaSize.width()), static_cast<guint>(metaSize.height()));
-    }
-    if (!crop.isNull()) {
-        GstVideoCropMeta* const cropMeta = gst_buffer_add_video_crop_meta(buffer);
-        cropMeta->x = static_cast<guint>(crop.x());
-        cropMeta->y = static_cast<guint>(crop.y());
-        cropMeta->width = static_cast<guint>(crop.width());
-        cropMeta->height = static_cast<guint>(crop.height());
-    }
-
-    const QVideoFrameFormat format = withFrameGeometry(
-        QVideoFrameFormat(QSize(400, 200), QVideoFrameFormat::Format_NV12), frameGeometry(buffer, info));
-    QCOMPARE(format.frameSize(), frameSize);
-    QCOMPARE(format.viewport(), viewport);
-}
-
 void GstHwBuffersTest::_testTelemetryMapDurationEwma()
 {
-    const HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
+    const HwVideoBufferPath path = HwVideoBufferPath::AHardwareBuffer;
 
     GstHwPathTelemetry::recordMapDuration(path, 80000);
     const quint64 seeded = GstHwPathTelemetry::peekMapDurationUsEwma(path);

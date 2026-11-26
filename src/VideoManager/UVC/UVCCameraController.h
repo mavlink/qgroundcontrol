@@ -38,15 +38,14 @@ class QtVideoRecorder;
 ///
 /// Its stats come from the frames the capture session hands the VideoOutput, about once a second while they arrive:
 /// valid, fps, cameraFps, codec (the camera's capture format, such as "MJPEG" or "YUYV"), gpuPath ("CPU" for frames
-/// in memory, "GPU" for textures) and uptimeMs; framesDropped is -1, and the network stream fields keep their
-/// defaults.
+/// in memory, "GPU" for textures), uptimeMs, and recordingMs and recordingBytes while it records; framesDropped is
+/// -1, and the network stream fields keep their defaults.
 class UVCCameraController : public VideoReceiver
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
 
-    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged FINAL)
     Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged FINAL)
     Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged FINAL)
     Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged FINAL)
@@ -137,7 +136,7 @@ protected:
     /// device or format, an unplug, a retry) ends the recording; Qt finishes writing the file. A start it refuses,
     /// as the camera isn't running or a recording is in progress, is reported as recordingFinished() for @p file
     /// with the reason.
-    void onStartRecording(const QString& file, FileFormat format) override;
+    void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
     void onStopRecording() override;
     /// Takes a photo, turned and mirrored as setTransform() says and saved off the GUI thread: a still capture where
     /// Qt takes one (Android, Apple), else the frame on display. Saves the frame on display too while the camera

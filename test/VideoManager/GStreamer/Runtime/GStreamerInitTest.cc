@@ -553,10 +553,6 @@ void GStreamerInitTest::_testPlanRanks_data()
     QTest::newRow("D3D family keeps the other API demoted")
         << int(VideoDecoderOption::DirectX3D) << false << 12 << windowsDecoders
         << QStringList{"d3d11h264dec=0", "d3d12h264dec=257"} << QString() << false;
-    QTest::newRow("vulkan warns") << int(VideoDecoderOption::Vulkan) << false << 0
-                                  << QStringList{"vulkanh264dec 256 hw", "avdec_h264 256 sw"}
-                                  << QStringList{"vulkanh264dec=257"}
-                                  << QStringLiteral("^Forcing Vulkan video decoders") << false;
     // GPU Safe Mode keeps off the GPU: the hardware decoders the platform rule raised rank below the software ones.
     QTest::newRow("software rendering ranks hardware decoders below software ones")
         << int(VideoDecoderOption::Default) << false << 11 << windowsDecoders

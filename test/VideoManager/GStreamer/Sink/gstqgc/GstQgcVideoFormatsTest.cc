@@ -6,10 +6,8 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "GstQgcFrameMap.h"
 #include "GstScoped.h"
-#include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcGpuBin.h"
+#include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 
 void GstQgcVideoFormatsTest::_testColorimetryPixelFormatMapping()

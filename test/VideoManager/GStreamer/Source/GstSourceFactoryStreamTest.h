@@ -14,6 +14,9 @@ private slots:
     void _testSourceFactoryDropsRtpUntilParameterSets();
     void _testStatsCountPacketsDroppedOnLatency();
     void _testMpegTsStreamObjectCarriesParsedCaps();
+    void _testMpegTsFrameLeavesBeforeTheNextArrives_data();
+    void _testMpegTsFrameLeavesBeforeTheNextArrives();
+    void _testMpegTsPacketWithinFrameEndsAlignment();
     void _testUdpSourceRefusesPortInUse();
     void _testUdpSourceStopsRightAfterPlaying();
 };

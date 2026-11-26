@@ -1,4 +1,4 @@
-#include "GstHwImportPreflight.h"
+#include "GstHwFrameTexturesBase.h"
 
 #include <private/qvideotexturehelper_p.h>
 

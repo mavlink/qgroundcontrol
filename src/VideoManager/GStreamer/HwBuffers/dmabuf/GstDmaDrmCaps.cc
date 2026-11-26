@@ -13,7 +13,6 @@
 #include "GstQtDmaBufImport.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
-#include "gstqgc/GstQgcFrameMap.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -45,10 +44,11 @@ bool modifierImportable(guint64 modifier) noexcept
     }
 }
 
-// The DRM fourcc the importer samples plane @p plane of @p format through; 0 when it imports no such plane.
-guint32 planeImportFourcc(GstVideoFormat format, guint plane)
+// The DRM fourcc the importer samples plane @p plane of a @p pixelFormat frame through; 0 when it imports no such
+// plane.
+guint32 planeImportFourcc(QVideoFrameFormat::PixelFormat pixelFormat, guint plane)
 {
-    const GstQtDmaBufImport::PlaneFourccs fourccs = GstQtDmaBufImport::planeFourccs(toQtPixelFormat(format));
+    const GstQtDmaBufImport::PlaneFourccs fourccs = GstQtDmaBufImport::planeFourccs(pixelFormat);
     return (plane < static_cast<guint>(fourccs.count)) ? fourccs.fourcc[plane] : 0;
 }
 
@@ -125,9 +125,10 @@ private:
 
 }  // namespace
 
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, void* display)
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, QtPixelFormatOf pixelFormatOf,
+                                     void* display)
 {
-    if (formats.empty()) {
+    if (formats.empty() || !pixelFormatOf) {
         return std::string();
     }
 
@@ -168,7 +169,7 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, vo
         for (const EGLuint64KHR mod : modifiers.all(fourcc)) {
             bool importable = modifierImportable(mod);
             for (guint plane = 0; importable && (plane < planes); ++plane) {
-                const guint32 planeFourcc = planeImportFourcc(format, plane);
+                const guint32 planeFourcc = planeImportFourcc(pixelFormatOf(format), plane);
                 importable = (planeFourcc != 0) && std::ranges::any_of(modifiers.sampleable(planeFourcc),
                                                                        [mod](EGLuint64KHR m) { return m == mod; });
             }
@@ -188,10 +189,14 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, vo
     return "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format={ " + entries + " }; ";
 }
 
-std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoFormat> formats)
+std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoFormat> formats,
+                                  [[maybe_unused]] QtPixelFormatOf pixelFormatOf)
 {
     std::string entries;
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    if (!pixelFormatOf) {
+        return std::string();
+    }
     for (const GstVideoFormat format : formats) {
         const guint32 fourcc = gst_video_dma_drm_fourcc_from_format(format);
         const guint planes = GST_VIDEO_FORMAT_INFO_N_PLANES(gst_video_format_get_info(format));
@@ -199,11 +204,12 @@ std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoForma
             continue;
         }
         // The modifiers the first plane imports with, kept when every other plane imports with them too.
-        for (const quint64 modifier : GstDmaBufVulkan::importableModifiers(planeImportFourcc(format, 0))) {
+        const QVideoFrameFormat::PixelFormat pixelFormat = pixelFormatOf(format);
+        for (const quint64 modifier : GstDmaBufVulkan::importableModifiers(planeImportFourcc(pixelFormat, 0))) {
             bool importable = modifierImportable(modifier);
             for (guint plane = 1; importable && (plane < planes); ++plane) {
                 const std::vector<quint64> planeModifiers =
-                    GstDmaBufVulkan::importableModifiers(planeImportFourcc(format, plane));
+                    GstDmaBufVulkan::importableModifiers(planeImportFourcc(pixelFormat, plane));
                 importable = std::ranges::find(planeModifiers, modifier) != planeModifiers.end();
             }
             if (importable) {

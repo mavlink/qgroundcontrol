@@ -2,7 +2,7 @@
 
 #include "GstDmaBufVulkanImport.h"
 #include "GstEglHelpers.h"
-#include "GstHwImportPreflight.h"
+#include "GstHwFrameTexturesBase.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -36,7 +36,6 @@
 #include <memory>
 #include <poll.h>
 #include <span>
-#include <sys/vfs.h>
 #include <unistd.h>
 
 // Producer dma-buf fence export: optional. The header exists on Ubuntu 22.04 but predates the
@@ -457,16 +456,6 @@ GstDmaBufVideoBuffer::GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo
 EGLDisplay GstDmaBufVideoBuffer::eglDisplayFor(const HwVideoBufferContext& context)
 {
     return (context.dmaBufImporter == QGCRhiCapture::qtEglDisplay()) ? context.dmaBufImporter : EGL_NO_DISPLAY;
-}
-
-bool GstDmaBufVideoBuffer::isDmaBufFd(int fd) noexcept
-{
-    // DMA_BUF_MAGIC of <linux/magic.h>: dma-bufs are files of a filesystem of their own since Linux 5.3. An older
-    // kernel has them on the anonymous-inode filesystem, among other fds, and none is recognized.
-    constexpr quint32 kDmaBufFsMagic = 0x444d4142;
-    struct statfs filesystem = {};
-    return (fd >= 0) && (::fstatfs(fd, &filesystem) == 0) &&
-           (static_cast<quint32>(filesystem.f_type) == kDmaBufFsMagic);
 }
 
 bool GstDmaBufVideoBuffer::isTiled() const noexcept

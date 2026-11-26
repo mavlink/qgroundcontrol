@@ -19,6 +19,8 @@ target_sources(
         Recording/TelemetryBarValues.h
         Recording/VideoRecordingService.cc
         Recording/VideoRecordingService.h
+        Streams/VehicleVideoStreams.cc
+        Streams/VehicleVideoStreams.h
         Streams/VideoStreamController.cc
         Streams/VideoStreamController.h
         Streams/VideoStreamResolver.cc

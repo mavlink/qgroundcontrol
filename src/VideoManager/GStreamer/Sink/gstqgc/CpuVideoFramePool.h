@@ -3,7 +3,6 @@
 #include <array>
 #include <atomic>
 #include <gst/gst.h>
-#include <gst/video/video-frame.h>
 #include <gst/video/video-info.h>
 #include <memory>
 
@@ -50,36 +49,6 @@ public:
 
     /// Destination plane layout mirroring @p info (strides/offsets from the decoder). planeCount==0 means unsupported.
     static PlaneLayout computeLayout(const GstVideoInfo& info);
-
-    /// Qt map data for a frame mapped with gst_video_frame_map, each plane sized by its own row count.
-    static QAbstractVideoBuffer::MapData mapDataFor(const GstVideoFrame& frame);
-
-    /// A buffer's gst_video_frame_map, held until unmap() or destruction: the CPU view behind a buffer's
-    /// QAbstractVideoBuffer::map(), or any other scoped frame map.
-    class FrameMapping
-    {
-    public:
-        FrameMapping() = default;
-
-        ~FrameMapping() { unmap(); }
-
-        FrameMapping(const FrameMapping&) = delete;
-        FrameMapping& operator=(const FrameMapping&) = delete;
-
-        /// Maps @p buffer with @p flags on the first call; false when that fails.
-        bool mapFrame(GstBuffer* buffer, const GstVideoInfo& info, GstMapFlags flags = GST_MAP_READ);
-
-        /// The mapped frame; valid while mapFrame() succeeded and unmap() hasn't run.
-        const GstVideoFrame& frame() const { return _frame; }
-
-        /// mapFrame() for reading, as Qt map data; empty when the map fails.
-        QAbstractVideoBuffer::MapData map(GstBuffer* buffer, const GstVideoInfo& info);
-        void unmap() noexcept;
-
-    private:
-        GstVideoFrame _frame = {};
-        bool _mapped = false;
-    };
 
     /// Copy @p buffer's planes into a pool-allocated QVideoFrame of @p format's frame size, laid out as gst-video lays
     /// out @p videoInfo's format: the top-left part of a buffer whose GstVideoMeta is larger. Invalid on stride

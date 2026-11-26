@@ -36,7 +36,8 @@ struct Config
 
 /// Build a source bin for `uri`: `source` [+ `tsdemux`] + `parsebin`, or for RTP over UDP
 /// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser, which also take the place of an RTSP bin's
-/// `parsebin` once `rtspsrc` tells that its stream is H.264 or H.265. Supported schemes: rtsp/rtspt,
+/// `parsebin` once `rtspsrc` tells that its stream is H.264 or H.265, as the parser alone does of an MPEG-TS bin's
+/// once `tsdemux` tells so. Supported schemes: rtsp/rtspt,
 /// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with
 /// port 0 listens on a free port, and one without a host on every IPv4 address.
 ///
@@ -64,22 +65,5 @@ int udpReceiveBufferSize();
 /// "drop-msg" element message: those it drops to stay within its latency ("drop-on-latency") are in none of its
 /// "stats", so PipelineStatsProbe counts them from the bus.
 void reportDroppedPackets(GstElement* jitterBuffer);
-
-// The H.264/H.265 setup create() gives the depayloaders and parsers it builds or parsebin plugs
-// (GstH26xParameterSetGate.cc).
-
-/// When @p element is h264parse or h265parse, repeats the codec parameter sets at every IDR, so a recording started
-/// mid-stream can build its codec_data.
-void configureH26xParser(GstElement* element);
-
-/// When @p element is rtph264depay or rtph265depay, gates its output on the parameter sets (gateOnParameterSets()) and,
-/// if @p requestKeyframes (the source has a return channel, RTSP's RTCP, that carries a keyframe request upstream),
-/// asks for a keyframe after packet loss.
-void configureH26xRtpDepayloader(GstElement* element, bool requestKeyframes);
-
-/// Holds an RTP H.264/H.265 depayloader's byte-stream output back until a full parameter set (SPS and PPS, plus VPS
-/// for H.265) has arrived, then emits the parameter sets together with the first slice and removes itself. create()
-/// applies it to every depayloader it builds or parsebin plugs; length-prefixed output is left alone.
-void gateOnParameterSets(GstPad* depayloaderSrc, bool h265);
 
 }  // namespace GStreamer::SourceFactory

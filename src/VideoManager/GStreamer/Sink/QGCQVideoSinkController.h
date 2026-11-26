@@ -2,6 +2,7 @@
 
 #include <gst/gst.h>
 
+#include <QtCore/QByteArray>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -66,3 +67,15 @@ private:
     QPointer<QQuickItem> _videoOutput;
     QMetaObject::Connection _visibilityConnection;
 };
+
+namespace GStreamer {
+
+/// A new sink bin (GstQgc::makeSinkBin()) with the settings of a VideoReceiver::DisplayConfig, which are fixed once it
+/// is built, returned as an owned, non-floating reference (adopt it), or nullptr.
+GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio, bool gpuZeroCopy);
+
+/// Binds the qgcqvideosink inside @p sinkBin, a new bin as createVideoSink() returns it, to @p videoSink through a new
+/// QGCQVideoSinkController, a child of @p controllerParent. Returns the controller, or nullptr on failure.
+QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
+
+}  // namespace GStreamer

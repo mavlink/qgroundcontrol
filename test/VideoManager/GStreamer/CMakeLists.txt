@@ -41,6 +41,8 @@ target_sources(
         Source/GstSourceFactoryStreamTest.h
         Source/GstSourceFactoryTest.cc
         Source/GstSourceFactoryTest.h
+        Source/RtpPacketCounterTest.cc
+        Source/RtpPacketCounterTest.h
         Sink/GstQgcSinkControllerTest.cc
         Sink/GstQgcSinkControllerTest.h
         Sink/gstqgc/GstQgcSinkPipelineTest.cc
@@ -53,7 +55,8 @@ target_sources(
         Sink/gstqgc/GstQgcVideoFormatsTest.h
 )
 
-# Sink, so that "gstqgc/GstQgcTestSupport.h" resolves as the sink's headers do in the sources ("gstqgc/GstQgcCaps.h").
+# Sink, so that "gstqgc/GstQgcTestSupport.h" resolves as the sink's headers do in the sources
+# ("gstqgc/GstQgcSinkPolicy.h").
 target_include_directories(
     QGCUnitTests
     PRIVATE
@@ -84,6 +87,7 @@ add_qgc_test(GstQgcSinkTest LABELS Unit)
 add_qgc_test(GstQgcVideoFormatsTest LABELS Unit)
 add_qgc_test(GstSourceFactoryTest LABELS Unit)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
+add_qgc_test(RtpPacketCounterTest LABELS Unit)
 add_qgc_test(GStreamerHelpersTest LABELS Integration)
 add_qgc_test(GstHwBuffersGlTest LABELS Integration GPU)
 add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
@@ -118,7 +122,6 @@ _qgc_gst_test_has(_qgc_test_glmemory QGC_HAS_GST_GLMEMORY_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_iosurface QGC_HAS_GST_IOSURFACE_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_d3d11 QGC_HAS_GST_D3D11_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_d3d12 QGC_HAS_GST_D3D12_GPU_PATH)
-_qgc_gst_test_has(_qgc_test_gst_vulkan QGC_HAS_GST_VULKAN_GPU_PATH)
 
 # moc reads these definitions in the test headers, and the classes built follow them, but nothing runs moc again when
 # they change in a build directory that exists: its command depends on the files it read alone. Without its timestamp it
@@ -192,7 +195,7 @@ if(LINUX AND (_qgc_test_dmabuf OR _qgc_test_glmemory))
     )
 endif()
 
-if(_qgc_test_dmabuf_vulkan OR _qgc_test_gst_vulkan)
+if(_qgc_test_dmabuf_vulkan)
     target_sources(
         QGCUnitTests
         PRIVATE

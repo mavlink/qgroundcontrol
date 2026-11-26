@@ -1,9 +1,8 @@
 #include "GstGlVideoBuffer.h"
 
-#include "CpuVideoFramePool.h"
 #include "GstGlContextBridge.h"
+#include "GstHwFrameMapping.h"
 #include "GstHwFrameTexturesBase.h"
-#include "GstHwImportPreflight.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
@@ -158,7 +157,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
         return GstHwPathTelemetry::fail(HwVideoBufferPath::GlMemory);
     }
 
-    CpuVideoFramePool::FrameMapping mapping;
+    GstHw::FrameMapping mapping;
     // GST_MAP_GL (a gst-gl extension flag) OR'd with GST_MAP_READ triggers GstGLMemory upload.
     if (!mapping.mapFrame(buffer, _videoInfo, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL))) {
         qCWarning(GstGlBufLog) << "gst_video_frame_map(GST_MAP_READ | GST_MAP_GL) failed";

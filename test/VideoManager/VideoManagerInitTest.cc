@@ -2,11 +2,13 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QPointer>
+#include <QtCore/QPromise>
 #include <QtCore/QRegularExpression>
 
 #include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
+#include "VideoBackendInit.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -26,6 +28,28 @@ auto countingFactory(int& count)
         return new FakeVideoReceiver(parent);
     };
 }
+
+/// A backend initialization the test finishes itself: the manager's stays pending until then.
+class PendingBackendInit
+{
+public:
+    explicit PendingBackendInit(VideoBackendInit* backendInit)
+    {
+        _initialization.start();
+        backendInit->start(_initialization.future());
+    }
+
+    void finish(bool ready)
+    {
+        _initialization.addResult(ready);
+        _initialization.finish();
+        // The manager is told from the event loop.
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    }
+
+private:
+    QPromise<bool> _initialization;
+};
 
 }  // namespace
 
@@ -54,25 +78,21 @@ void VideoManagerInitTest::_testReceiversNeedBackendAndWindow()
     VideoManager videoManager;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
-    videoManager._initState = VideoManager::InitState::Pending;
+    PendingBackendInit backendInit(videoManager._backendInit);
 
     if (windowFirst) {
         videoManager._onMainWindowReady();
         QCOMPARE(receiverCount, 0);
-        videoManager._onBackendInitComplete(true);
+        backendInit.finish(true);
     } else {
-        videoManager._onBackendInitComplete(true);
+        backendInit.finish(true);
         QCOMPARE(receiverCount, 0);
         videoManager._onMainWindowReady();
     }
-    QCOMPARE(videoManager._initState, VideoManager::InitState::Ready);
+    QCOMPARE(videoManager._backendInit->state(), VideoBackendInit::State::Ready);
     QCOMPARE(receiverCount, 2);
     QVERIFY(videoManager.primaryStream()->receiver());
     QVERIFY(videoManager.thermalStream()->receiver());
-
-    // A late second completion (the queued continuation after waitForVideoBackendReady()) changes nothing.
-    videoManager._onBackendInitComplete(true);
-    QCOMPARE(receiverCount, 2);
 }
 
 void VideoManagerInitTest::_testBackendInitFailure_data()
@@ -94,7 +114,7 @@ void VideoManagerInitTest::_testBackendInitFailure()
     VideoManager videoManager;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
-    videoManager._initState = VideoManager::InitState::Pending;
+    PendingBackendInit backendInit(videoManager._backendInit);
     if (windowFirst) {
         videoManager._onMainWindowReady();
     }
@@ -102,11 +122,11 @@ void VideoManagerInitTest::_testBackendInitFailure()
     expectLogMessage("Video.VideoManager", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("video initialization failed")));
     expectAppMessage(QRegularExpression(QStringLiteral("failed to initialize")));
-    videoManager._onBackendInitComplete(false);
+    backendInit.finish(false);
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 
-    QCOMPARE(videoManager._initState, VideoManager::InitState::Failed);
+    QCOMPARE(videoManager._backendInit->state(), VideoBackendInit::State::Failed);
     QVERIFY(!videoManager.waitForVideoBackendReady());
 
     // The streams still get receivers, which the backend makes without its initialization.
@@ -132,13 +152,13 @@ void VideoManagerInitTest::_testNothingStartsAfterCleanup()
     VideoManager videoManager;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
-    videoManager._initState = VideoManager::InitState::Pending;
+    PendingBackendInit backendInit(videoManager._backendInit);
     videoManager._onMainWindowReady();
 
     // The application exits while the backend still initializes: neither its completion nor a setting that replaces
     // the receivers creates one afterwards.
     videoManager.cleanup();
-    videoManager._onBackendInitComplete(true);
+    backendInit.finish(true);
     QCOMPARE(receiverCount, 0);
     restorer.set(backend, VideoSettings::VideoBackendQtMultimedia);
     QCOMPARE(receiverCount, 0);
@@ -158,12 +178,11 @@ void VideoManagerInitTest::_testWaitForBackendReady()
     VideoManager videoManager;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
-    videoManager._initState = VideoManager::InitState::Pending;
+    videoManager._backendInit->start(QtConcurrent::run([] { return true; }));
     videoManager._onMainWindowReady();
-    videoManager._watchBackendInit(QtConcurrent::run([] { return true; }));
 
     QVERIFY(videoManager.waitForVideoBackendReady());
-    QCOMPARE(videoManager._initState, VideoManager::InitState::Ready);
+    QCOMPARE(videoManager._backendInit->state(), VideoBackendInit::State::Ready);
     QCOMPARE(receiverCount, 2);
 
     // The continuation queued for the GUI thread finds the init complete.
@@ -186,9 +205,9 @@ void VideoManagerInitTest::_testBackendSettingReplacesReceivers()
 
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
-    videoManager._initState = VideoManager::InitState::Pending;
+    PendingBackendInit backendInit(videoManager._backendInit);
     videoManager._onMainWindowReady();
-    videoManager._onBackendInitComplete(true);
+    backendInit.finish(true);
     QCOMPARE(receiverCount, 2);
     const QPointer<VideoReceiver> primary = videoManager.primaryStream()->receiver();
     const QPointer<VideoReceiver> thermal = videoManager.thermalStream()->receiver();

@@ -11,7 +11,7 @@
 #include "BranchContext.h"
 #include "ExponentialBackoff.h"
 #include "GstScoped.h"
-#include "HwBuffers/common/GstHwPathTelemetry.h"
+#include "HwBuffers/HwBuffers.h"
 #include "TeeBranchHead.h"
 
 namespace GstQgc {

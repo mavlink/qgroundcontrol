@@ -13,7 +13,7 @@
 
 #include "CpuVideoFramePool.h"
 #include "GStreamerTestHelpers.h"
-#include "GstHwVideoBufferFactory.h"
+#include "GstHwPathRegistry.h"
 #include "HwBuffers/GstHwImageReadback.h"
 
 void GstHwBuffersIOSurfaceTest::_testIOSurfaceFrameToImage()

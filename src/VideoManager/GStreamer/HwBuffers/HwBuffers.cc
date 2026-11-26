@@ -23,10 +23,6 @@
 #include "GstDmaBufVideoBuffer.h"
 #include "GstDmaBufVulkanImport.h"
 #endif
-#if defined(QGC_UNITTEST_BUILD) && (defined(QGC_HAS_GST_DMABUF_GPU_PATH) || \
-                                    (defined(QGC_HAS_GST_D3D11_GPU_PATH) && defined(QGC_HAS_GST_D3D12_GPU_PATH)))
-#include "gstqgc/GstQgcCaps.h"
-#endif
 
 namespace HwBuffers {
 
@@ -191,14 +187,6 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
 void* dmaBufImportDisplay() noexcept
 {
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    if (GstDmaBufVideoBuffer::importDisabled()) {
-        return nullptr;
-    }
-#ifdef QGC_UNITTEST_BUILD
-    if (const std::optional<GstQgc::SinkEnvironment> environment = GstQgc::sinkEnvironmentForTest()) {
-        return environment->dmaBufDisplay;
-    }
-#endif
     // Qt can have an EGLDisplay under Vulkan too (its global share context), which imports nothing for a Vulkan QRhi.
     if (QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire) == static_cast<int>(QRhi::Vulkan)) {
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
@@ -210,6 +198,15 @@ void* dmaBufImportDisplay() noexcept
     return QGCRhiCapture::qtEglDisplay();
 #else
     return nullptr;
+#endif
+}
+
+bool dmaBufImportDisabled() noexcept
+{
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    return GstDmaBufVideoBuffer::importDisabled();
+#else
+    return false;
 #endif
 }
 
@@ -232,11 +229,6 @@ void setGraphicsDevicePublishedHandler([[maybe_unused]] void (*handler)()) noexc
 bool d3d11OpensD3D12() noexcept
 {
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#ifdef QGC_UNITTEST_BUILD
-    if (const std::optional<GstQgc::SinkEnvironment> environment = GstQgc::sinkEnvironmentForTest()) {
-        return environment->d3d11OpensD3D12;
-    }
-#endif
     return QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire);
 #else
     return false;

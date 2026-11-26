@@ -1,9 +1,13 @@
 #pragma once
 
+#include <gst/gst.h>
 #include <gst/video/video-format.h>
+#include <gst/video/video-info.h>
+#include <gst/video/video.h>
 #include <string>
 #include <vector>
 
+#include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
 namespace GstQgc {
@@ -16,8 +20,8 @@ inline constexpr unsigned kOfferGlUpload = 1u << 0;
 inline constexpr unsigned kOfferDmaDrm = 1u << 1;
 
 /// Single source of truth linking a GStreamer video format to its Qt pixel format and (optionally) its
-/// negotiation caps token. Every advertised caps format list (GstQgcCaps) and toQtPixelFormat()
-/// (GstQgcFrameMap) derive from this table, so a format can never be advertised without a Qt mapping,
+/// negotiation caps token. Every advertised caps format list (GstQgcSinkPolicy) and toQtPixelFormat()
+/// derive from this table, so a format can never be advertised without a Qt mapping,
 /// nor mapped-and-renderable without being offered.
 struct VideoFormatEntry
 {
@@ -88,3 +92,18 @@ inline std::string advertisedFormatList(unsigned requiredOffers = 0)
 }
 
 }  // namespace GstQgc
+
+QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix);
+QVideoFrameFormat::ColorTransfer toQtColorTransfer(GstVideoTransferFunction transfer);
+QVideoFrameFormat::PixelFormat toQtPixelFormat(GstVideoFormat fmt);
+QVideoFrameFormat::ColorRange toQtColorRange(GstVideoColorRange range);
+
+/// Apply rotation + mirror flags derived from GstVideoOrientationMethod.
+void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod method);
+
+/// The stream's orientation + PTS/duration timing; @p streamOrientation is GstVideoOrientationMethod cast to int.
+void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int streamOrientation);
+
+/// Set color-space/transfer/range from gst-video colorimetry + HDR (MaxCLL preferred);
+/// infers BT.601/709 from height when caps omit it.
+void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCaps* caps);

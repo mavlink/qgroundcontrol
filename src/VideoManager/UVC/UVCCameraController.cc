@@ -154,7 +154,7 @@ void UVCCameraController::onVideoOutputChanged()
     _connectVideoOutput();
 }
 
-void UVCCameraController::onStartRecording(const QString& file, FileFormat format)
+void UVCCameraController::onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding)
 {
     if (_recorder->active()) {
         qCWarning(UVCCameraControllerLog) << "Not recording the camera to" << file << "- recording already";
@@ -166,7 +166,7 @@ void UVCCameraController::onStartRecording(const QString& file, FileFormat forma
         emit recordingFinished(file, tr("The USB camera isn't running"));
         return;
     }
-    _recorder->start(file, QtVideoRecorder::container(format), recordingEncoding().codec, recordingEncoding().quality);
+    _recorder->start(file, QtVideoRecorder::container(format), encoding.codec, encoding.quality);
 }
 
 void UVCCameraController::onStopRecording()
@@ -416,6 +416,8 @@ void UVCCameraController::_sample()
     stats.codec = UVCDevices::pixelFormatName(_frameCounters.pixelFormat);
     stats.gpuPath = _frameCounters.gpu ? QStringLiteral("GPU") : QStringLiteral("CPU");
     stats.uptimeMs = nowMs - *_streamingSinceMs;
+    stats.recordingMs = _recorder->recordedMs();
+    stats.recordingBytes = _recorder->recordedBytes();
     VideoStreamStatsMeter::Counters counters;
     counters.framesDisplayed = _frameCounters.frames;
     if (!_meter.update(counters, stats)) {

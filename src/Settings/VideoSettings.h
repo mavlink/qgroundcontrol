@@ -29,7 +29,6 @@ public:
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
     DEFINE_SETTINGFACT(showTelemetryOverlay)
-    DEFINE_SETTINGFACT(showRecControl)
     DEFINE_SETTINGFACT(recordingFormat)
     DEFINE_SETTINGFACT(maxVideoSize)
     DEFINE_SETTINGFACT(enableStorageLimit)

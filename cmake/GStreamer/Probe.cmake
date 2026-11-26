@@ -31,7 +31,6 @@ function(qgc_gst_check_header)
     # cmake-lint: disable=C0103
     cmake_push_check_state(RESET)
     set(CMAKE_REQUIRED_LIBRARIES ${ARG_TARGET})
-    # INCLUDES: extra dirs for headers that pull SDK deps not on the default path (e.g. gst/cuda/gstcuda.h -> cuda.h).
     set(CMAKE_REQUIRED_INCLUDES ${ARG_INCLUDES})
     set(CMAKE_REQUIRED_QUIET TRUE)
     check_cxx_source_compiles(
@@ -49,23 +48,22 @@ function(qgc_gst_check_header)
 endfunction()
 
 # qgc_gst_probe_library(<name> HAS_VAR <cache_var> HEADER <header> SYMBOL <symbol>
-#                    [PC_MODULE <module>] [LIBNAMES <names>... LIB_VAR <var>] [INCLUDES <dirs>...])
+#                    [PC_MODULE <module>] [LIBNAMES <names>... LIB_VAR <var>])
 # Probes one optional GStreamer library:
 #   1. pkg-config <module> into PkgConfig::PC_GStreamer_<name>. A GStreamer module found outside the SDK is another
 #      GStreamer's and leaves the library not found (_qgc_gst_foreign_module_dir).
-#   2. <header>/<symbol> compile test cached as <HAS_VAR>, with <INCLUDES> plus the module's include dirs.
+#   2. <header>/<symbol> compile test cached as <HAS_VAR>, with the module's include dirs.
 #   3. With LIBNAMES, find_library (uncached, set in <LIB_VAR>) in the module's library dirs and the SDK's and link only
-#      that library: the macOS framework's gstreamer-vulkan-1.0.pc names a library the framework does not ship, which
-#      leaves the probe unusable instead of failing the link. Without LIBNAMES the module's imported target is linked,
-#      and the module itself is required.
-# Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (<INCLUDES> plus the module's),
-# <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
+#      that library: a module whose .pc file names a library the SDK does not ship leaves the probe unusable instead
+#      of failing the link. Without LIBNAMES the module's imported target is linked, and the module itself is required.
+# Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (the module's), <name>_LIBRARY_DIRS and,
+# when not found, <name>_REASON.
 function(qgc_gst_probe_library name)
     # One probe's steps in order, each with its own way out.
     # cmake-lint: disable=R0915
     qgc_gst_layout_get(LIB_PATH _gst_lib_path)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
-    _qgc_gst_check_args(qgc_gst_probe_library HAS_VAR HEADER SYMBOL ALLOW_EMPTY PC_MODULE LIB_VAR LIBNAMES INCLUDES)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES")
+    _qgc_gst_check_args(qgc_gst_probe_library HAS_VAR HEADER SYMBOL ALLOW_EMPTY PC_MODULE LIB_VAR LIBNAMES)
     if(ARG_LIBNAMES AND NOT ARG_LIB_VAR)
         message(FATAL_ERROR "qgc_gst_probe_library(${name}): LIBNAMES requires LIB_VAR")
     endif()
@@ -89,8 +87,8 @@ function(qgc_gst_probe_library name)
     endif()
 
     set(_check_args VAR ${ARG_HAS_VAR} HEADER ${ARG_HEADER} SYMBOL ${ARG_SYMBOL})
-    if(ARG_INCLUDES OR ${_pc}_INCLUDE_DIRS)
-        list(APPEND _check_args INCLUDES ${ARG_INCLUDES} ${${_pc}_INCLUDE_DIRS})
+    if(${_pc}_INCLUDE_DIRS)
+        list(APPEND _check_args INCLUDES ${${_pc}_INCLUDE_DIRS})
     endif()
     qgc_gst_check_header(${_check_args})
     if(NOT ${ARG_HAS_VAR})
@@ -144,10 +142,8 @@ function(qgc_gst_probe_library name)
         "${_libraries}"
         PARENT_SCOPE
     )
-    # <INCLUDES> too: the headers may need them (gst/cuda/gstcuda.h pulls <cuda.h>), not just the probe.
-    set(_include_dirs ${ARG_INCLUDES} ${${_pc}_INCLUDE_DIRS})
     set(${name}_INCLUDE_DIRS
-        "${_include_dirs}"
+        "${${_pc}_INCLUDE_DIRS}"
         PARENT_SCOPE
     )
     set(${name}_LIBRARY_DIRS

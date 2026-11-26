@@ -32,6 +32,8 @@ private slots:
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactoryMpegTsLatency_data();
     void _testSourceFactoryMpegTsLatency();
+    void _testStartsAccessUnit_data();
+    void _testStartsAccessUnit();
     void _testTransportFor_data();
     void _testTransportFor();
     void _testSourceFactoryNegativeLatencyClamped();
