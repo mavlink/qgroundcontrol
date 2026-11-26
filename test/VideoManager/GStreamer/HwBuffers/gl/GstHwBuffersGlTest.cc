@@ -18,12 +18,12 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch_data()
     QTest::addColumn<int>("mode");
 
     // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context, and the direct-DMABuf bin offers none.
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     QTest::newRow("glupload bin") << int(GstQgc::GpuBinMode::GlUpload);
 #else
     QTest::newRow("passthrough bin") << int(GstQgc::GpuBinMode::Passthrough);
 #endif
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QTest::newRow("DMABuf-or-glupload bin") << int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
 #endif
 }
@@ -104,7 +104,7 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch()
              qPrintable(QStringLiteral("qgcqvideosink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
 }
 
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 void GstHwBuffersGlTest::_testGlUploadBinTakesSoftwareFrames_data()
 {
     QTest::addColumn<int>("mode");
@@ -117,7 +117,7 @@ void GstHwBuffersGlTest::_testGlUploadBinTakesSoftwareFrames_data()
     QTest::newRow("Y444") << glUpload << QStringLiteral("Y444") << QStringLiteral("1/1");
     // The converter scales them to square pixels ahead of the upload: the bin has nothing that scales GLMemory.
     QTest::newRow("non-square pixels") << glUpload << QStringLiteral("BGRA") << QStringLiteral("12/11");
-#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     // Its switchbin sends system memory through the same glupload chain.
     const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
     QTest::newRow("Y444, DMABuf-or-glupload bin")

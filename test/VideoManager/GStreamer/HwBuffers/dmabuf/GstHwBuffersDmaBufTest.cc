@@ -300,7 +300,7 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufDispatch()
                        .arg(negotiatedStr)));
 }
 
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 void GstHwBuffersDmaBufPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
 {
     if (!GstQgcTest::hasMemorySwitch()) {

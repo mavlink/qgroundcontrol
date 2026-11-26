@@ -120,7 +120,7 @@ const char* toString(RenderBackend backend) noexcept
 
 GpuBinPreference parseGpuBinPreference(QByteArrayView value)
 {
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const QByteArray choice = value.trimmed().toByteArray().toLower();
     if (choice == "dmabuf") {
         return {.mode = GpuBinMode::DirectDmaBuf, .explicitChoice = true};
@@ -135,9 +135,9 @@ GpuBinPreference parseGpuBinPreference(QByteArrayView value)
     return {.mode = GpuBinMode::DmaBufOrGlUpload};
 #else
     Q_UNUSED(value);
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     return {.mode = GpuBinMode::GlUpload};
-#elif defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#elif defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     return {.mode = GpuBinMode::DirectDmaBuf};
 #else
     return {};

@@ -49,7 +49,7 @@ private slots:
     void _testAllocationQueryHwMemoryPoolHint();
     void _testAllocationQueryOffersCropMeta_data();
     void _testAllocationQueryOffersCropMeta();
-#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
 #endif
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
@@ -58,7 +58,7 @@ private slots:
     void _testAdapterFlushDropsInFlightSamples();
     void _testFrameDeliveryKeepsTheLatestFrame();
     void _testPathSessionFailurePolicy();
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     void _testGpuBinPreferenceParse_data();
     void _testGpuBinPreferenceParse();
 #endif

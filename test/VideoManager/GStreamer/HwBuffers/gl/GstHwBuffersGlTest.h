@@ -11,7 +11,7 @@ class GstHwBuffersGlTest : public GStreamerTestBase
 private slots:
     void _testGlMemoryDispatch_data();
     void _testGlMemoryDispatch();
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     void _testGlUploadBinTakesSoftwareFrames_data();
     void _testGlUploadBinTakesSoftwareFrames();
 #endif

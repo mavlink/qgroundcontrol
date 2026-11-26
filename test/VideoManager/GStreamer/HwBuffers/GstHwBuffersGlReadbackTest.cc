@@ -472,7 +472,7 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack_data()
 
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     QTest::newRow("RGBA, glupload bin") << glUpload << QStringLiteral("RGBA");
-#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     // The glupload ahead of its switchbin stands for a decoder with GL output, which needs Qt's context as it starts.
     const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
     QTest::newRow("RGBA, DMABuf-or-glupload bin") << dmaBufOrGlUpload << QStringLiteral("RGBA");

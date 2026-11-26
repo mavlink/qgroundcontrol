@@ -46,7 +46,7 @@ class GstHwBuffersDmaBufPipelineTest : public GStreamerTestBase
 
 private slots:
     void _testDmaBufDispatch();
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     void _testDmaBufOrGlUploadBinRoutesByMemory();
 #endif
 };

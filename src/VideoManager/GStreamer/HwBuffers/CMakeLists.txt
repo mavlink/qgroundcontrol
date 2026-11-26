@@ -254,12 +254,6 @@ endif()
 # amcvideodec needs for Surface output); gst-gl imports both LINEAR and vendor-tiled dmabuf to GLMemory. Direct DMABuf
 # feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both route each stream by the
 # memory its decoder negotiates (DMABuf direct, the rest through glupload) unless QGC_GST_GPU_BIN forces one.
-if(_qgc_gpu_GLMemory)
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_GLUPLOAD=1)
-endif()
-if(LINUX AND _qgc_gpu_DMABuf)
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_DIRECT_DMABUF=1)
-endif()
 if(LINUX
    AND _qgc_gpu_GLMemory
    AND _qgc_gpu_DMABuf

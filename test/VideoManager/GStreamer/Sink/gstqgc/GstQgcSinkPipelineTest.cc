@@ -56,7 +56,7 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback_data()
     // glupload bin): in a format the sink takes, and in one only the converter reads.
     for (const QString& format : {QStringLiteral("BGRA"), QStringLiteral("Y444")}) {
         const QByteArray tag = format.toLatin1();
-#if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
         QTest::addRow("direct-dmabuf-%s", tag.constData())
             << int(GstQgc::GpuBinMode::DirectDmaBuf) << int(GstQgc::RenderBackend::OpenGL) << format;
 #endif
