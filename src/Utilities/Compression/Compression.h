@@ -1,6 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
@@ -68,7 +71,7 @@ namespace Compression {
 // Single-File Decompression
 // ============================================================================
 
-// Rules for the three functions that decompress a single stream from a file or from memory:
+// Rules for the functions that decompress a single stream from a file or from memory:
 // - Input that is not compressed is not an error. It is copied or returned unchanged, within the size limit, and
 //   Outcome::filterName is "none". This handles a file that has the name of a compressed file but was already
 //   decompressed in transit, such as a download whose content encoding the HTTP client removed. Empty input is
@@ -77,9 +80,10 @@ namespace Compression {
 //   empty data.
 // - Compressed input that is truncated or corrupt fails. So does a legacy lzma, Zstandard, bzip2 or LZ4 stream in
 //   a build without that decoder (Error::UnsupportedFormat), also one inside a gzip or xz stream (data.lzma.gz),
-//   which a build with the decoder decodes. After a failure nothing is written and no data is returned.
-//   That includes a gzip stream whose data does not match the checksum and the length it ends with, which
-//   libarchive does not compare: the module checks them itself.
+//   which a build with the decoder decodes. That includes a gzip stream whose data does not match the checksum and
+//   the length it ends with, which libarchive does not compare: the module checks them itself. After a failure
+//   nothing is written and no data is returned, but by readFileChunks(), whose caller must discard the chunks it
+//   was given.
 // - Input that starts with the signature of a stream format is compressed. A signature is the whole magic number:
 //   1F 8B (gzip), FD 37 7A 58 5A 00 (xz), 28 B5 2F FD (Zstandard), 04 22 4D 18 or 02 21 4C 18 (LZ4), 50 to 5F
 //   2A 4D 18 (a skippable frame of Zstandard or LZ4), "BZh" and a digit from 1 to 9 (bzip2). If no decoder takes
@@ -111,6 +115,17 @@ Outcome decompressFile(const QString& inputPath, const QString& outputPath = QSt
 /// A truncated or corrupt compressed file gives no data, not the part that could be read.
 /// @param data Receives the content
 Outcome readFile(const QString& filePath, QByteArray& data, qint64 maxDecompressedBytes);
+
+/// Read the content of a file, decompressed if it is compressed, in chunks, so that the caller need not hold all of it
+/// It reads what readFile() reads, by the same rules and within the same limit, and gives it to @a sink a chunk at a
+/// time, in order, on the calling thread. A failure can be found only after chunks were given: a stream that is
+/// truncated or corrupt, a gzip checksum that does not match, the size limit, a stream inside a stream that the
+/// build cannot decode. Whatever the caller built from the chunks must then be discarded: only a success says that
+/// they were all of the content, and sound.
+/// @param sink Takes the next chunk, which is valid only during the call. Returning false cancels the read, which
+///        then fails with Error::Cancelled
+Outcome readFileChunks(const QString& filePath, qint64 maxDecompressedBytes,
+                       const std::function<bool(QByteArrayView chunk)>& sink);
 
 /// Decompress data in memory
 /// Data that is not compressed is returned shared with @a data, not copied, if that array owns its bytes. Those of

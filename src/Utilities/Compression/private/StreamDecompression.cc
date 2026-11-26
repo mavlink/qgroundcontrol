@@ -83,6 +83,26 @@ Result decompressToFile(const QString& inputPath, const QString& outputPath, con
     return read;
 }
 
+Result decompressToSink(const QString& inputPath, qint64 maxBytes, const std::function<bool(QByteArrayView)>& sink)
+{
+    ArchiveReader reader;
+    Result read = reader.open(inputPath, Input::Stream);
+    bool hasData = false;
+    if (read) {
+        read = readStreamHeader(reader, hasData);
+    }
+    if (read && hasData) {
+        DataTransfer transfer{.maxBytes = maxBytes};
+        read = copyStreamData(reader, transfer, [&sink](const char* chunk, qint64 size) {
+            return sink(QByteArrayView(chunk, static_cast<qsizetype>(size))) ? Result{} : failure(Error::Cancelled);
+        });
+    } else if (read) {
+        read = reader.verifyInput();
+    }
+    read.filterName = reader.filterName();
+    return read;
+}
+
 template <typename Source>
 Result decompressToMemory(const Source& source, qint64 maxBytes, QByteArray& data)
 {

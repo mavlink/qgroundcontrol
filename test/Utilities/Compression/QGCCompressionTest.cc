@@ -30,6 +30,9 @@
 namespace {
 /// Limit of the reads whose limit is not what a test checks: that of data held in memory
 constexpr qint64 kMemoryLimit = qint64{256} * 1024 * 1024;
+
+/// The entry points that decompress a single stream, as _call() names them
+constexpr const char* kStreamEntryPoints[] = {"decompressFile", "decompressData", "readFile", "readFileChunks"};
 }  // namespace
 
 Compression::Outcome QGCCompressionTest::_call(const QString& api, const Inputs& inputs, Results* results)
@@ -58,6 +61,17 @@ Compression::Outcome QGCCompressionTest::_call(const QString& api, const Inputs&
     if (api == "readFile") {
         out.data = "to be replaced";
         return readFile(inputs.path, out.data, kMemoryLimit);
+    }
+    if (api == "readFileChunks") {
+        out.data = "to be replaced";
+        QByteArray chunks;
+        const Outcome outcome = readFileChunks(inputs.path, kMemoryLimit, [&chunks](QByteArrayView chunk) {
+            chunks.append(chunk);
+            return true;
+        });
+        // As its caller must: what the chunks gave is discarded after a failure
+        out.data = outcome ? chunks : QByteArray();
+        return outcome;
     }
     QTest::qFail(qPrintable(QStringLiteral("No entry point is called %1").arg(api)), __FILE__, __LINE__);
     return {.error = Error::InternalError};
@@ -265,7 +279,7 @@ void QGCCompressionTest::_testDecompressEveryFormat_data()
     extensions.append(QStringLiteral("lz4"));
 #endif
     for (const QString& extension : std::as_const(extensions)) {
-        for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+        for (const char* api : kStreamEntryPoints) {
             QTest::addRow("%s %s", qPrintable(extension), api)
                 << api << (QStringLiteral(":/unittest/manifest.json.") + extension);
         }
@@ -318,7 +332,7 @@ void QGCCompressionTest::_testDecompressEmptyStream_data()
 #endif
     };
     for (const EmptyStream& stream : streams) {
-        for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+        for (const char* api : kStreamEntryPoints) {
             QTest::addRow("%s %s", stream.filterName, api)
                 << api << stream.extension << stream.filterName << QByteArray::fromHex(stream.hex);
         }
@@ -358,7 +372,7 @@ void QGCCompressionTest::_testDecompressRejectsCutEmptyStream()
     const QString inputPath = tempDir.filePath("nothing.gz");
     QVERIFY(TestFixtures::writeFile(inputPath, QByteArray::fromHex("1f8b08000000000000030300")));
 
-    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+    for (const char* api : kStreamEntryPoints) {
         Results results;
         const Compression::Outcome outcome =
             _call(api, {.path = inputPath, .output = tempDir.filePath("nothing")}, &results);
@@ -376,7 +390,7 @@ void QGCCompressionTest::_testDecompressPlainInput_data()
     QTest::addColumn<QString>("api");
     QTest::addColumn<QByteArray>("content");
 
-    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+    for (const char* api : kStreamEntryPoints) {
         QTest::addRow("%s, text", api) << api << QByteArray("{\"name\": \"not compressed\"}\n");
         // Shorter than the signature of a stream, or with a byte of it changed: data, not a stream
         QTest::addRow("%s, first byte of the gzip signature", api) << api << QByteArray("\x1F", 1);
@@ -899,7 +913,7 @@ void QGCCompressionTest::_testNoExternalDecompressors()
     const QString bzip2Path = tempDir.filePath("stream.bz2");
     QVERIFY(TestFixtures::writeFile(bzip2Path, bzip2Stream));
 
-    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+    for (const char* api : kStreamEntryPoints) {
         Results results;
         const Compression::Outcome outcome =
             _call(api, {.path = bzip2Path, .output = tempDir.filePath("stream")}, &results);
@@ -959,7 +973,7 @@ void QGCCompressionTest::_testLegacyLzmaStream_data()
     const QByteArray streams[] = {QByteArray::fromHex("5d00008000ffffffffffffffff") + data,
                                   QByteArray::fromHex("5d00003000ffffffffffffffff") + data};
     for (const QByteArray& stream : streams) {
-        for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+        for (const char* api : kStreamEntryPoints) {
             const int dictionaryKiB = static_cast<int>(qFromLittleEndian<quint32>(stream.constData() + 1) / 1024);
             QTest::addRow("%s, dictionary of %d KiB", api, dictionaryKiB) << api << stream;
         }
@@ -1086,7 +1100,7 @@ void QGCCompressionTest::_testStreamInsideStream_data()
     for (const Inner& inner : inners) {
         for (const auto& [outerName, wrap] : outers) {
             const bool decoded = (inner.filterName != nullptr) && (*inner.refusal == '\0');
-            for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+            for (const char* api : kStreamEntryPoints) {
                 QTest::addRow("%s in %s, %s", inner.label, outerName, api)
                     << api << wrap(inner.stream) << inner.content
                     << QString::fromLatin1(decoded ? inner.filterName : outerName)
@@ -1129,7 +1143,7 @@ void QGCCompressionTest::_testTruncatedStream_data()
 {
     QTest::addColumn<QString>("api");
 
-    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+    for (const char* api : kStreamEntryPoints) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
@@ -1254,7 +1268,7 @@ void QGCCompressionTest::_testEveryPrefixOfAStream_data()
         {"lz4", QByteArray::fromHex("04224d18604082100000807b226e616d65223a20226c7a34227d0a00000000"), 4, lz4},
     };
     for (const Sample& sample : samples) {
-        for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+        for (const char* api : kStreamEntryPoints) {
             QTest::addRow("%s, %s", sample.label, api)
                 << QString::fromLatin1(api) << sample.stream << sample.signatureSize << sample.decoded
                 << sample.firstSize << sample.firstContent;
@@ -1345,7 +1359,7 @@ void QGCCompressionTest::_testDamagedStreamHeader()
     QVERIFY(TestFixtures::writeFile(inputPath, stream));
 
     const QString outputPath = tempDir.filePath("damaged");
-    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+    for (const char* api : kStreamEntryPoints) {
         Results results;
         const Compression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
         // Not the damaged bytes as if they were not compressed, nor what came before the damage
@@ -1409,7 +1423,7 @@ void QGCCompressionTest::_testGzipChecksums()
     QVERIFY(TestFixtures::writeFile(inputPath, stream));
 
     const QString outputPath = tempDir.filePath("stream");
-    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+    for (const char* api : kStreamEntryPoints) {
         Results results;
         const Compression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
         (void) QFile::remove(outputPath);
@@ -1422,6 +1436,70 @@ void QGCCompressionTest::_testGzipChecksums()
             QVERIFY2(results.isEmpty(), api);
         }
     }
+}
+
+void QGCCompressionTest::_testReadFileChunks()
+{
+    using Compression::Error;
+
+    // Four gzip members of 64 KiB of zeros each, which arrive in several chunks
+    QTemporaryDir tempDir;
+    const QString wholePath = tempDir.filePath("whole.gz");
+    QVERIFY(ArchiveFixtures::writeGzipOfZeros(wholePath, 4));
+    const QByteArray whole = TestFixtures::readFile(wholePath);
+    const QByteArray content(4 * 64 * 1024, '\0');
+
+    struct Read
+    {
+        Compression::Outcome outcome;
+        int chunks = 0;
+        QByteArray data;
+    };
+
+    const auto read = [](const QString& path, qint64 limit, int cancelAt = -1) {
+        Read result;
+        result.outcome = Compression::readFileChunks(path, limit, [&result, cancelAt](QByteArrayView chunk) {
+            result.data.append(chunk);
+            return ++result.chunks != cancelAt;
+        });
+        return result;
+    };
+
+    const Read sound = read(wholePath, kMemoryLimit);
+    QVERIFY2(sound.outcome, qPrintable(sound.outcome.description()));
+    QCOMPARE(sound.outcome.filterName, QStringLiteral("gzip"));
+    QCOMPARE_GT(sound.chunks, 1);
+    QCOMPARE(sound.data, content);
+
+    // Damage that is found after chunks were given fails all the same: the caller has to discard them
+    const QString cutPath = tempDir.filePath("cut.gz");
+    QVERIFY(TestFixtures::writeFile(cutPath, whole.left(whole.size() * 5 / 8)));
+    const Read cut = read(cutPath, kMemoryLimit);
+    QCOMPARE(cut.outcome.error, Error::InvalidArchive);
+    QCOMPARE_GT(cut.data.size(), 64 * 1024);
+
+    QByteArray changed = whole;
+    changed[changed.size() - 8] = static_cast<char>(changed.at(changed.size() - 8) ^ 0x01);
+    const QString changedPath = tempDir.filePath("changed.gz");
+    QVERIFY(TestFixtures::writeFile(changedPath, changed));
+    const Read damaged = read(changedPath, kMemoryLimit);
+    QCOMPARE(damaged.outcome.error, Error::InvalidArchive);
+    QCOMPARE(damaged.outcome.detail, QStringLiteral("The gzip data does not match its checksum"));
+    QCOMPARE(damaged.data, content);
+
+    const Read limited = read(wholePath, 100 * 1024);
+    QCOMPARE(limited.outcome.error, Error::SizeLimitExceeded);
+    QCOMPARE_GT(limited.chunks, 0);
+    QCOMPARE_LE(limited.data.size(), 100 * 1024);
+
+    // The sink cancels the read: no chunk follows
+    const Read cancelled = read(wholePath, kMemoryLimit, 1);
+    QCOMPARE(cancelled.outcome.error, Error::Cancelled);
+    QCOMPARE(cancelled.chunks, 1);
+
+    const Read missing = read(tempDir.filePath("missing.gz"), kMemoryLimit);
+    QCOMPARE(missing.outcome.error, Error::FileNotFound);
+    QCOMPARE(missing.chunks, 0);
 }
 
 void QGCCompressionTest::_testPlainDataIsShared()

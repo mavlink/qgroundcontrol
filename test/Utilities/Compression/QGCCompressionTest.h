@@ -45,6 +45,7 @@ private slots:
     void _testDecompressDataInPlace();
     void _testPlainDataIsShared();
     void _testReadFile();
+    void _testReadFileChunks();
     UT_PARAMETERIZED_TEST(_testUnwritableOutput);
     UT_PARAMETERIZED_TEST(_testOutputIsTheInput);
     UT_PARAMETERIZED_TEST(_testInputWithoutPermission);
@@ -75,7 +76,7 @@ private:
     };
 
     /// Calls the entry point of Compression that a row of test data names: extractArchive, decompressFile,
-    /// decompressData or readFile. decompressFile needs Inputs::output
+    /// decompressData, readFile or readFileChunks. decompressFile needs Inputs::output
     /// @param results If not null, receives what the entry point returned. Output parameters are filled before the
     ///        call, so that a failure must empty them
     /// @return What the entry point returned

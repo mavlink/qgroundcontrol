@@ -152,6 +152,16 @@ Outcome readFile(const QString& filePath, QByteArray& data, qint64 maxDecompress
                             QCoreApplication::translate("Compression", "Failed to read: %1").arg(filePath));
 }
 
+Outcome readFileChunks(const QString& filePath, qint64 maxDecompressedBytes,
+                       const std::function<bool(QByteArrayView chunk)>& sink)
+{
+    if (Outcome refused = validateFileInput(filePath); !refused) {
+        return refused;
+    }
+    return operationOutcome(LibArchive::decompressToSink(filePath, maxDecompressedBytes, sink),
+                            QCoreApplication::translate("Compression", "Failed to read: %1").arg(filePath));
+}
+
 Outcome decompressData(const QByteArray& data, QByteArray& decompressed, qint64 maxDecompressedBytes)
 {
     return operationOutcome(LibArchive::decompressToMemory(data, maxDecompressedBytes, decompressed),
