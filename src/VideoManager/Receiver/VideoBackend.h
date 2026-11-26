@@ -36,7 +36,7 @@ public:
 
     static VideoBackend& instance();
 
-    /// True when the backend is skipped under unit tests (opt back in with QGC_TEST_ENABLE_GSTREAMER).
+    /// True when the backend is skipped under unit tests.
     static bool disabledForUnitTests();
 
     /// The persisted gstDebugLevel setting, read before the settings system exists; nullopt when it was never set.
@@ -96,12 +96,6 @@ public:
     virtual void setDebugLevel([[maybe_unused]] int level) {}
 
     virtual void onMainWindowReady([[maybe_unused]] QQuickWindow* window) {}
-
-    /// Android: hands the backend the JavaVM, application context and class loader (jobject, or null) its plugins
-    /// look up through JNI.
-    virtual void setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
-                                    [[maybe_unused]] void* classLoader)
-    {}
 
 protected:
     VideoBackend() = default;

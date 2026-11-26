@@ -224,19 +224,17 @@ void QtVideoRecorder::stop()
 
 void QtVideoRecorder::stopAndWait(std::chrono::milliseconds timeout)
 {
-    if (!_recording) {
-        stop();
-        return;
-    }
     QEventLoop loop;
     QTimer::singleShot(timeout, &loop, &QEventLoop::quit);
-    (void) connect(this, &QtVideoRecorder::recordingChanged, &loop, [&loop](bool recording) {
-        if (!recording) {
-            loop.quit();
-        }
-    });
+    // After _onRecorderStateChanged(), connected first: the recording is reported, or its empty file removed, by then.
+    (void) connect(_recorder, &QMediaRecorder::recorderStateChanged, &loop,
+                   [&loop](QMediaRecorder::RecorderState state) {
+                       if (state == QMediaRecorder::StoppedState) {
+                           loop.quit();
+                       }
+                   });
     stop();
-    if (_recording) {
+    if (active()) {
         (void) loop.exec();
     }
 }

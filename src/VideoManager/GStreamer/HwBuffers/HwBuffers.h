@@ -33,10 +33,6 @@ inline constexpr char kGraphicsDeviceLostMessage[] = "qgc-graphics-device-lost";
 /// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
 
-/// Pipeline-restart hook; clears exhausted prime-retry latches (GL, Vulkan) so a restart can prime on the next
-/// NEED_CONTEXT. Never drops shared GPU objects: other streams may still be using them.
-void onPipelineRestart();
-
 /// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
 /// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources();
@@ -50,10 +46,9 @@ void onGraphicsDeviceRemoved();
 bool graphicsDeviceLost() noexcept;
 
 /// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. On
-/// desktop Linux it pins the scene graph to OpenGL, unless @p softwareRendering (--swrast) or QSG_RHI_BACKEND chose
-/// one, and Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts, and with the DMABuf
-/// import under Vulkan it asks for the device extensions that takes, should Qt Quick render with Vulkan. No-op
-/// otherwise.
+/// desktop Linux it sets Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts, and
+/// with the DMABuf import under Vulkan it asks for the device extensions that takes, should Qt Quick render with
+/// Vulkan. No-op otherwise.
 void configureQtGraphics(bool softwareRendering);
 
 /// What configureQtGraphics() was told: the user asked for software rendering (--swrast). Safe off the GUI thread.

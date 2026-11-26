@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/gst.h>
 
@@ -171,5 +169,3 @@ void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
                             .arg(frameSize.height())));
 #endif
 }
-
-#endif

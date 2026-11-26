@@ -159,6 +159,7 @@ target_sources(
         Pipeline/GstBusPump.cc
         Pipeline/GstBusPump.h
         Pipeline/GstReceiverRequest.h
+        Pipeline/GstReceiverTimings.h
         Pipeline/GstReceiverWorker.cc
         Pipeline/GstReceiverWorker.h
         Pipeline/GstVideoReceiver.cc

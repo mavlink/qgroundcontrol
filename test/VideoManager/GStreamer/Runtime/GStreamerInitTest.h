@@ -11,7 +11,6 @@ class GStreamerInitTest : public UnitTest
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     // First: GStreamer initializes once in a process.
     void _testInitializeLogsFromItsFirstLine();
     void _testNativeDebugLogRequested_data();
@@ -35,14 +34,6 @@ private slots:
     void _testPlanRanks_data();
     void _testPlanRanks();
     void _testScopedDecoderOptionRestoresThePreviousOption();
-    void _testSetCodecPrioritiesDefault();
-    void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
     void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();
-    void _testSetCodecPrioritiesSoftware();
     void _testSetCodecPrioritiesReplacesThePreviousOption();
-    void _testSetCodecPrioritiesFamilyOutranksOtherDecoders();
-    void _testSetCodecPrioritiesHardware();
-#else
-    void _testGStreamerDisabled();
-#endif
 };

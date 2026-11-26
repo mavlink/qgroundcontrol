@@ -1,7 +1,5 @@
 #include "GStreamerEnvironmentTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <vector>
 
@@ -39,8 +37,6 @@ public:
             "GST_PLUGIN_SCANNER_1_0",
             "GST_PLUGIN_SYSTEM_PATH",
             "GST_PLUGIN_SYSTEM_PATH_1_0",
-            "GST_PTP_HELPER",
-            "GST_PTP_HELPER_1_0",
             "GST_REGISTRY",
             "GST_REGISTRY_1_0",
             "GST_REGISTRY_FORK",
@@ -279,13 +275,6 @@ void GStreamerEnvironmentTest::_testBundleLayouts()
     QCOMPARE(layout.pluginDirs, pluginDirs);
     QCOMPARE(layout.gioModuleDirs, gioModuleDirs);
     QCOMPARE(layout.scannerCandidates, scanners);
-    // The PTP helper lives next to the scanner.
-    QStringList ptpHelpers;
-    for (const QString& scanner : std::as_const(scanners)) {
-        ptpHelpers.append(
-            QString(scanner).replace(QStringLiteral("gst-plugin-scanner"), QStringLiteral("gst-ptp-helper")));
-    }
-    QCOMPARE(layout.ptpCandidates, ptpHelpers);
 }
 
 void GStreamerEnvironmentTest::_testMacOSFrameworkVersionDir()
@@ -420,14 +409,5 @@ void GStreamerEnvironmentTest::_testWriteIfChanged()
     QVERIFY(GStreamer::Environment::writeIfChanged(path, "other bundle"));
     QCOMPARE(content(), QByteArrayLiteral("other bundle"));
 }
-
-#else
-
-void GStreamerEnvironmentTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif
 
 UT_REGISTER_TEST(GStreamerEnvironmentTest, TestLabel::Unit)

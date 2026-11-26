@@ -1,6 +1,7 @@
 #include "UVCCameraController.h"
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 #include <QtConcurrent/QtConcurrentRun>
@@ -17,9 +18,10 @@
 #include <QtQuick/QQuickItem>
 
 #include "AppMessages.h"
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
+#include "QtVideoRecorder.h"
 #include "UVCDevices.h"
-#include "UVCStreamMonitor.h"
 #include "VideoScreenshot.h"
 
 QGC_LOGGING_CATEGORY(UVCCameraControllerLog, "Video.UVCCameraController")
@@ -44,6 +46,8 @@ constexpr bool kExposureAndFocusControls = false;
 constexpr bool kExposureAndFocusControls = true;
 #endif
 
+constexpr std::chrono::milliseconds kSampleInterval{1000};
+
 constexpr QCamera::WhiteBalanceMode kWhiteBalancePresets[] = {
     QCamera::WhiteBalanceSunlight, QCamera::WhiteBalanceCloudy,      QCamera::WhiteBalanceShade,
     QCamera::WhiteBalanceTungsten, QCamera::WhiteBalanceFluorescent, QCamera::WhiteBalanceFlash,
@@ -52,9 +56,11 @@ constexpr QCamera::WhiteBalanceMode kWhiteBalancePresets[] = {
 
 }  // namespace
 
-UVCCameraController::UVCCameraController(QObject* parent)
+UVCCameraController::UVCCameraController(QObject* parent, VideoStreamStatsMeter::Clock clock)
     : VideoReceiver(parent)
-    , _monitor(new UVCStreamMonitor(this))
+    , _clock(clock ? std::move(clock) : VideoStreamStatsMeter::Clock(MonotonicClock::nowMs))
+    , _meter(_clock)
+    , _sampleTimer(new QTimer(this))
     , _mediaDevices(new QMediaDevices(this))
     , _retryTimer(new QTimer(this))
     , _imageCapture(new QImageCapture(this))
@@ -70,13 +76,8 @@ UVCCameraController::UVCCameraController(QObject* parent)
     _retryTimer->setSingleShot(true);
     _retryTimer->setInterval(kRetryInterval);
     (void) connect(_retryTimer, &QTimer::timeout, this, &UVCCameraController::_recreateCamera);
-    (void) connect(_monitor, &UVCStreamMonitor::statsChanged, this, [this] {
-        setStats(_monitor->stats());
-        // Frames flowing again end a run of retries.
-        if (_monitor->stats().valid) {
-            _retries = 0;
-        }
-    });
+    _sampleTimer->setInterval(kSampleInterval);
+    (void) connect(_sampleTimer, &QTimer::timeout, this, &UVCCameraController::_sample);
 }
 
 UVCCameraController::~UVCCameraController()
@@ -346,6 +347,7 @@ void UVCCameraController::_createCamera()
     (void) connect(_camera, &QCamera::minimumZoomFactorChanged, this, &UVCCameraController::controlsChanged);
     (void) connect(_camera, &QCamera::maximumZoomFactorChanged, this, &UVCCameraController::controlsChanged);
     (void) connect(_camera, &QCamera::activeChanged, this, [this](bool active) {
+        _restartStats();
         if (active) {
             _applyControls();
             emit controlsChanged();
@@ -366,7 +368,8 @@ void UVCCameraController::_releaseCamera()
     for (const PendingPhoto& photo : std::exchange(_photoFiles, {})) {
         _savePhotoOnDisplay(photo);
     }
-    _monitor->detach();
+    _sampleTimer->stop();
+    _restartStats();
     delete _captureSession;
     _captureSession = nullptr;
     delete _camera;
@@ -396,15 +399,69 @@ void UVCCameraController::_connectVideoOutput()
     if (_captureSession) {
         _captureSession->setVideoSink(sink);
     }
+    _restartStats();
     if (_camera && sink) {
-        _monitor->attach(_camera, sink);
+        _sampleTimer->start();
     } else {
-        _monitor->detach();
+        _sampleTimer->stop();
     }
     if (_camera) {
         _camera->setActive(sink != nullptr);
     }
     _updateState();
+}
+
+void UVCCameraController::FrameCounters::count(const QVideoFrame& frame)
+{
+    const QVideoFrameFormat format = frame.surfaceFormat();
+    ++frames;
+    pixelFormat = format.pixelFormat();
+    streamFrameRate = format.streamFrameRate();
+    gpu = (frame.handleType() != QVideoFrame::NoHandle);
+}
+
+void UVCCameraController::_sample()
+{
+    // Rates from before the first frame would only measure the camera's startup.
+    if (_frameCounters.frames == 0) {
+        return;
+    }
+    const qint64 nowMs = _clock();
+    if (!_streamingSinceMs) {
+        _streamingSinceMs = nowMs;
+    }
+
+    VideoStreamStats stats = this->stats();
+    stats.codec = UVCDevices::pixelFormatName(_frameCounters.pixelFormat);
+    stats.gpuPath = _frameCounters.gpu ? QStringLiteral("GPU") : QStringLiteral("CPU");
+    stats.uptimeMs = nowMs - *_streamingSinceMs;
+    VideoStreamStatsMeter::Counters counters;
+    counters.framesDisplayed = _frameCounters.frames;
+    if (!_meter.update(counters, stats)) {
+        return;
+    }
+    // Before the stats, whose readers compare them with it.
+    _setCameraFrameRate(_frameCounters.streamFrameRate);
+    setStats(stats);
+    // Frames flowing again end a run of retries.
+    _retries = 0;
+}
+
+void UVCCameraController::_restartStats()
+{
+    _frameCounters = FrameCounters();
+    _meter.reset();
+    _streamingSinceMs.reset();
+    setStats(VideoStreamStats());
+    _setCameraFrameRate(0.0);
+}
+
+void UVCCameraController::_setCameraFrameRate(double frameRate)
+{
+    if (frameRate != _cameraFrameRate) {
+        _cameraFrameRate = frameRate;
+        emit cameraFrameRateChanged();
+    }
 }
 
 void UVCCameraController::_onVideoFrame(const QVideoFrame& frame)
@@ -413,6 +470,7 @@ void UVCCameraController::_onVideoFrame(const QVideoFrame& frame)
     if (!_camera || !frame.isValid()) {
         return;
     }
+    _frameCounters.count(frame);
     setVideoSize(presentedSize(frame));
     if (!_framesArriving) {
         _framesArriving = true;

@@ -1,7 +1,5 @@
 #include "GstQgcVideoFormatsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
@@ -194,7 +192,5 @@ void GstQgcVideoFormatsTest::_testApplyOrientationToFrameMapping()
         QCOMPARE(frame.mirrored(), c.expectedMirrored);
     }
 }
-
-#endif
 
 UT_REGISTER_TEST(GstQgcVideoFormatsTest, TestLabel::Unit)

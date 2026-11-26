@@ -1,7 +1,5 @@
 #include "HwBuffers/GstHwBuffersTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
@@ -341,14 +339,6 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     HwBuffers::resetCachedGpuResources();
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
-
-    // A (re)starting pipeline must leave shared bridge objects and caches alone: another stream may be using them.
-    QVERIFY(testBridgeA().prime());
-    HwBuffers::onPipelineRestart();
-    QCOMPARE(testBridgeA().clears, 1);
-    QCOMPARE(s_testCacheResets, 1);
-    QVERIFY(testBridgeA().prime());
-    QCOMPARE(testBridgeA().primes, 2);
 #endif
 }
 
@@ -428,10 +418,15 @@ void GstHwBuffersTest::_testGpuBinSelection_data()
     const int passthrough = int(GpuBinMode::Passthrough);
     const int openGl = int(RenderBackend::OpenGL);
     const int vulkan = int(RenderBackend::Vulkan);
-    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect.
+    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect. WGL and CGL contexts aren't
+    // wrapped, so there it is no GPU bin.
+#if defined(Q_OS_LINUX)
+    const int withoutEgl = dmaBufOrGlUpload;
+#else
+    const int withoutEgl = passthrough;
+#endif
     QTest::newRow("dmabuf-or-glupload-opengl-egl") << dmaBufOrGlUpload << false << openGl << true << dmaBufOrGlUpload;
-    QTest::newRow("dmabuf-or-glupload-opengl-not-egl")
-        << dmaBufOrGlUpload << false << openGl << false << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-opengl-not-egl") << dmaBufOrGlUpload << false << openGl << false << withoutEgl;
     QTest::newRow("dmabuf-or-glupload-vulkan") << dmaBufOrGlUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
     QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
@@ -977,16 +972,11 @@ void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::CpuWaits);
     GstHwPathTelemetry::record(path, Counter::GpuWaits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(path, Counter::ImageCacheMisses);
     const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
     const auto delta = [&](Counter counter) { return after.count(path, counter) - before.count(path, counter); };
     QCOMPARE(delta(Counter::CpuWaits), quint64(2));
     QCOMPARE(delta(Counter::GpuWaits), quint64(1));
-    QCOMPARE(delta(Counter::ImageCacheHits), quint64(2));
-    QCOMPARE(delta(Counter::ImageCacheMisses), quint64(1));
 }
 
 void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
@@ -1021,22 +1011,15 @@ void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
 
     const QString first = HwBuffers::extraPathStatsSince(before);
     QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
 
     const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
     QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
     QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
-    QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));
 #endif
 }
-
-#endif
 
 UT_REGISTER_TEST(GstHwBuffersTest, TestLabel::Unit)

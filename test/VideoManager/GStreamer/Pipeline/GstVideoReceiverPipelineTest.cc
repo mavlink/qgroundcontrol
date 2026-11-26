@@ -1,7 +1,5 @@
 #include "GstVideoReceiverPipelineTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <algorithm>
 #include <atomic>
 #include <gst/base/gstbasesink.h>
@@ -41,67 +39,7 @@ using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
-
-constexpr const char* kStubDecoderName = "qgcreceiverstubh264dec";
-
-/// An H.264 "hardware" decoder that takes the stream and gives nothing back: no frame, and no message either. When
-/// set to fail, it posts an error for the first frame instead, as a hardware decoder may in a VM.
-struct ReceiverStubDecoder
-{
-    GstElement parent;
-};
-
-struct ReceiverStubDecoderClass
-{
-    GstElementClass parentClass;
-};
-
-GstStaticPadTemplate s_receiverStubDecoderSink =
-    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-h264"));
-GstStaticPadTemplate s_receiverStubDecoderSrc =
-    GST_STATIC_PAD_TEMPLATE("src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw"));
-
-G_DEFINE_TYPE(ReceiverStubDecoder, receiver_stub_decoder, GST_TYPE_ELEMENT)
-
-std::atomic<bool> s_receiverStubDecoderFails = false;
-
-GstFlowReturn receiverStubDecoderChain(GstPad* /*pad*/, GstObject* parent, GstBuffer* buffer)
-{
-    gst_buffer_unref(buffer);
-    if (!s_receiverStubDecoderFails.load()) {
-        return GST_FLOW_OK;
-    }
-    GST_ELEMENT_ERROR(GST_ELEMENT(parent), STREAM, DECODE, ("Simulated hardware decoder failure"), (nullptr));
-    return GST_FLOW_ERROR;
-}
-
-gboolean receiverStubDecoderEvent(GstPad* pad, GstObject* parent, GstEvent* event)
-{
-    // Takes the stream's caps without passing them on: nothing ever leaves the decoder.
-    if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
-        gst_event_unref(event);
-        return TRUE;
-    }
-    return gst_pad_event_default(pad, parent, event);
-}
-
-void receiver_stub_decoder_class_init(ReceiverStubDecoderClass* klass)
-{
-    GstElementClass* const elementClass = GST_ELEMENT_CLASS(klass);
-    gst_element_class_add_static_pad_template(elementClass, &s_receiverStubDecoderSink);
-    gst_element_class_add_static_pad_template(elementClass, &s_receiverStubDecoderSrc);
-    gst_element_class_set_static_metadata(elementClass, "QGC receiver test decoder", "Codec/Decoder/Video/Hardware",
-                                          "Decodes nothing", "QGroundControl");
-}
-
-void receiver_stub_decoder_init(ReceiverStubDecoder* self)
-{
-    GstPad* const sink = gst_pad_new_from_static_template(&s_receiverStubDecoderSink, "sink");
-    gst_pad_set_chain_function(sink, receiverStubDecoderChain);
-    gst_pad_set_event_function(sink, receiverStubDecoderEvent);
-    (void) gst_element_add_pad(GST_ELEMENT(self), sink);
-    (void) gst_element_add_pad(GST_ELEMENT(self), gst_pad_new_from_static_template(&s_receiverStubDecoderSrc, "src"));
-}
+using GstTest::kStubDecoderName;
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 Q_LOGGING_CATEGORY(LostDeviceBridgeLog, "Video.GStreamer.Test.LostDeviceBridge")
@@ -129,24 +67,20 @@ private:
 };
 #endif
 
-/// Has decodebin3 plug the stub decoder before any other, until destroyed. The factory stays registered, unranked:
-/// the element class points at it for good. Ranked through the rank applier, so that NONE is the rank a later decoder
-/// option restores.
+/// Has decodebin3 plug the stub decoder before any other, until destroyed. Ranked through the rank applier, so that
+/// NONE is the rank a later decoder option restores.
 class StubDecoderRegistration
 {
 public:
     explicit StubDecoderRegistration(bool fails = false)
-        : _registered(
-              gst_element_register(nullptr, kStubDecoderName, GST_RANK_NONE, receiver_stub_decoder_get_type()) &&
-              GStreamer::changeFeatureRank(gst_registry_get(), kStubDecoderName, GST_RANK_PRIMARY + 100))
-    {
-        s_receiverStubDecoderFails.store(fails);
-    }
+        : _registered(GstTest::registerStubDecoder(fails) &&
+                      GStreamer::DecoderRankApplier::instance().setRank(gst_registry_get(), kStubDecoderName,
+                                                                        GST_RANK_PRIMARY + 100))
+    {}
 
     ~StubDecoderRegistration()
     {
-        (void) GStreamer::changeFeatureRank(gst_registry_get(), kStubDecoderName, GST_RANK_NONE);
-        s_receiverStubDecoderFails.store(false);
+        (void) GStreamer::DecoderRankApplier::instance().setRank(gst_registry_get(), kStubDecoderName, GST_RANK_NONE);
     }
 
     StubDecoderRegistration(const StubDecoderRegistration&) = delete;
@@ -365,7 +299,8 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
                          QRegularExpression(QStringLiteral("poll\\(2\\) failed due to: Bad file descriptor")));
     }
 
-    Receiver stream(uri);
+    // The frame rate below is measured over a fifth of a second rather than a whole one.
+    Receiver stream(GstReceiverTimings{.watchdogInterval = std::chrono::milliseconds(200)}, uri);
     stream.receiver->setActive(true);
     if (receiverListens) {
         // Connecting lasts until the server sends. A server that already does can take the receiver on to
@@ -376,7 +311,7 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
     QVERIFY(stream.waitForState(State::Streaming));
     QVERIFY(stream.display());
     // Shown at the stream's 30 frames a second, not merely decoded: a sink that takes every frame for late shows one
-    // a second.
+    // a second, which reads as 5 a second in the measurement that frame falls into.
     QVERIFY(UnitTest::waitForCondition(
         [&stream] {
             const VideoStreamStats stats = stream.receiver->stats();
@@ -1135,7 +1070,5 @@ void GstVideoReceiverPipelineTest::_testSilentFlowErrorStaysInItsBranch()
     QVERIFY2(stream.stateSpy.isEmpty(), "A branch's flow error restarted the stream");
     QVERIFY(stream.errorSpy.isEmpty());
 }
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverPipelineTest, TestLabel::Integration)

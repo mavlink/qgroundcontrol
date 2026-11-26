@@ -8,7 +8,6 @@ class GstVideoReceiverPipelineTest : public GstVideoReceiverTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testStreamingStatesAndDisplay();
     void _testStaticSourcePadWaitsForData();
     void _testDecodesMockLinkStreams_data();
@@ -40,5 +39,4 @@ private slots:
     void _testMissingDecoderIsNamed();
     void _testSilentFlowErrorStaysInItsBranch_data();
     void _testSilentFlowErrorStaysInItsBranch();
-#endif
 };

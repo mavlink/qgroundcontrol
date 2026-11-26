@@ -1,7 +1,5 @@
 #include "GstVideoReceiverComponentsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
@@ -313,7 +311,7 @@ void GstVideoReceiverComponentsTest::_testBusPump()
     QStringList synced;
     QStringList handled;
     GstBusPump pump;
-    QVERIFY(pump.attach(
+    pump.attach(
         pipeline.get(),
         [&synced](GstMessage* message) {
             const QString name = messageName(message);
@@ -324,7 +322,7 @@ void GstVideoReceiverComponentsTest::_testBusPump()
             }
             return GST_BUS_PASS;
         },
-        [&handled](GstMessage* message) { handled.append(messageName(message)); }));
+        [&handled](GstMessage* message) { handled.append(messageName(message)); });
 
     // The sync handler sees every message as it is posted; one it takes is never queued.
     postApplication(pipeline.get(), "taken");
@@ -746,14 +744,5 @@ void GstVideoReceiverComponentsTest::_testRecordingNamesCodecNoContainerHolds()
     QCOMPARE(listener.formatsAsked, 0);
     QVERIFY(!QFile::exists(file));
 }
-
-#else
-
-void GstVideoReceiverComponentsTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverComponentsTest, TestLabel::Unit)

@@ -40,7 +40,6 @@ public:
     QList<VideoDecoderOption> availableDecoderFamilies() override;
     void setDebugLevel(int level) override;
     void onMainWindowReady(QQuickWindow* window) override;
-    void setAndroidJniState(void* javaVm, void* appContext, void* classLoader) override;
 
 private:
     std::atomic<State> _state{State::Unprepared};

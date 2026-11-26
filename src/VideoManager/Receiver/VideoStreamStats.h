@@ -5,8 +5,7 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// One video stream's health, as its VideoReceiver (UVCStreamMonitor for a USB camera) measured it last: about once a
-/// second while it streams.
+/// One video stream's health, as its VideoReceiver measured it last: about once a second while it streams.
 ///
 /// A field that doesn't apply to the stream is -1, which tells it apart from a measured zero: the RTP fields for a
 /// stream whose RTP packets nothing counts (MPEG-TS, Qt Multimedia), those only an RTP jitter buffer measures (late,

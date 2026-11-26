@@ -9,7 +9,6 @@
 #include <QtCore/QSocketNotifier>
 #endif
 
-#include "GstVideoReceiver.h"
 
 GstBusPump::GstBusPump(QObject* parent)
     : QObject(parent)
@@ -20,14 +19,10 @@ GstBusPump::~GstBusPump()
     detach();
 }
 
-bool GstBusPump::attach(GstElement* pipeline, SyncHandler syncHandler, Handler handler)
+void GstBusPump::attach(GstElement* pipeline, SyncHandler syncHandler, Handler handler)
 {
     detach();
     _bus = GStreamer::adoptBus(gst_pipeline_get_bus(GST_PIPELINE(pipeline)));
-    if (!_bus) {
-        qCCritical(GstVideoReceiverLog) << "gst_pipeline_get_bus() failed";
-        return false;
-    }
     _syncHandler = std::move(syncHandler);
     _handler = std::move(handler);
 
@@ -46,7 +41,6 @@ bool GstBusPump::attach(GstElement* pipeline, SyncHandler syncHandler, Handler h
     (void) connect(notifier, &QSocketNotifier::activated, this, &GstBusPump::drain);
 #endif
     _notifier = notifier;
-    return true;
 }
 
 void GstBusPump::detach()

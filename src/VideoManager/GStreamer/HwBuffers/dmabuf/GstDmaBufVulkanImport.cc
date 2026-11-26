@@ -105,8 +105,6 @@ ImportDevice s_device;
 std::atomic<void*> s_importDevice{nullptr};
 const char s_deviceCleanupKey = 0;
 
-GstHw::MapDiagnostics s_diag;
-std::atomic<bool> s_loggedImportFailed{false};
 
 /// True when @p physicalDevice has every extension of kRequiredDeviceExtensions and Qt was asked to enable them: QRhi
 /// enables exactly the extensions QT_VULKAN_DEVICE_EXTENSIONS names that the device has, and Vulkan can't tell which
@@ -418,7 +416,7 @@ std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkP
 
     if (const VkResult result = fns.createImage(dev, &imageInfo, nullptr, &image); result != VK_SUCCESS) {
         image = VK_NULL_HANDLE;
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
                          "vkCreateImage failed (VkResult=" << result << "format=" << format << "modifier=" << Qt::hex
                                                            << modifierInfo.drmFormatModifier << Qt::dec << ")");
         return ImportFailure::Rejected;
@@ -428,10 +426,9 @@ std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkP
     const int fd = ::fcntl(plane.fd, F_DUPFD_CLOEXEC, 0);
     if (fd < 0) {
         const int dupError = errno;
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
-                         "duplicating a plane's dma-buf fd failed: errno" << dupError
-                                                                          << qUtf8Printable(qt_error_string(dupError))
-                                                                          << "(the driver refused nothing)");
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, "duplicating a plane's dma-buf fd failed: errno"
+                                                 << dupError << qUtf8Printable(qt_error_string(dupError))
+                                                 << "(the driver refused nothing)");
         return ImportFailure::FdDupFailed;
     }
     VkMemoryFdPropertiesKHR fdProperties = {};
@@ -471,13 +468,12 @@ std::optional<ImportFailure> importPlane(const DeviceFns& fns, VkDevice dev, VkP
     if (allocated != VK_SUCCESS) {
         memory = VK_NULL_HANDLE;
         ::close(fd);
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog,
                          "importing a dma-buf as image memory failed (VkResult=" << allocated << ")");
         return ImportFailure::Rejected;
     }
     if (const VkResult bound = fns.bindImageMemory(dev, image, memory, 0); bound != VK_SUCCESS) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
-                         "vkBindImageMemory failed (VkResult=" << bound << ")");
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, "vkBindImageMemory failed (VkResult=" << bound << ")");
         return ImportFailure::Rejected;
     }
     return std::nullopt;
@@ -579,8 +575,6 @@ std::vector<quint64> importableModifiers(quint32 planeFourcc)
 
 void resetCachedState() noexcept
 {
-    s_diag.reset();
-    s_loggedImportFailed.store(false, std::memory_order_relaxed);
     s_deviceFnsGeneration.fetch_add(1, std::memory_order_acq_rel);
 }
 
@@ -637,7 +631,6 @@ QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVid
                             .frameSize = frameSize,
                             .pixelFormat = pixelFormat,
                             .log = &GstDmaBufVulkanLog(),
-                            .diag = &s_diag,
                             .preflight = false,
                             .successTag = "DMABuf->Vulkan"};
     bool adopted = false;

@@ -8,6 +8,7 @@
 #include <QtCore/QString>
 
 #include "GstReceiverRequest.h"
+#include "GstReceiverTimings.h"
 #include "GstScoped.h"
 #include "VideoReceiver.h"
 
@@ -44,7 +45,7 @@ public:
     // Above the worker's longest waits in a row: a recording's end (3 s), RTSP TEARDOWN (1 s), a TCP connect (3 s).
     static constexpr std::chrono::seconds kHeartbeatInterval{10};
 
-    explicit GstVideoReceiver(QObject* parent = nullptr);
+    explicit GstVideoReceiver(QObject* parent = nullptr, const GstReceiverTimings& timings = {});
     /// Finalizes a recording and stops the pipeline, waiting at most a few seconds for the worker.
     ~GstVideoReceiver() override;
 

@@ -127,13 +127,6 @@ function(_qgc_add_gpu_path name)
     endif()
 endfunction()
 
-# Every path needs Qt's private multimedia/RHI headers. They ship with the root's REQUIRED Multimedia/Gui finds, so this
-# only trips on a broken Qt install.
-if(NOT TARGET Qt6::MultimediaPrivate OR NOT TARGET Qt6::GuiPrivate)
-    message(STATUS "QGCGStreamer: Qt MultimediaPrivate/GuiPrivate missing — all zero-copy GPU paths disabled")
-    return()
-endif()
-
 if(LINUX OR ANDROID)
     find_package(OpenGL QUIET COMPONENTS EGL)
 endif()
@@ -155,23 +148,6 @@ if(LINUX
         NAMES cuda.h
         HINTS ${_qgc_cuda_hints}
     )
-endif()
-
-# Android's SDK ships libgstvulkan only as an archive, which the Vulkan row links into the app (not into
-# libgstreamer_android.so), leaving gst-vulkan's own loader calls unresolved. Link the loader explicitly or Android
-# arm64 fails with ld.lld "undefined symbol: vkDestroyPipeline". find_library, not find_package(Vulkan): only the
-# loader is needed (NDK sysroot included). Searched only with QGC_GST_ENABLE_VULKAN, the row's switch.
-set(_qgc_vulkan_requires QT_FEATURE_vulkan)
-set(_qgc_vulkan_loader_libs "")
-if(ANDROID AND QGC_GST_ENABLE_VULKAN)
-    if(DEFINED QGC_GST_VULKAN_LOADER_LIB AND (QGC_GST_VULKAN_LOADER_LIB MATCHES "NOTFOUND$"
-                                              OR NOT EXISTS "${QGC_GST_VULKAN_LOADER_LIB}")
-    )
-        unset(QGC_GST_VULKAN_LOADER_LIB CACHE)
-    endif()
-    find_library(QGC_GST_VULKAN_LOADER_LIB NAMES vulkan vulkan-1)
-    list(APPEND _qgc_vulkan_requires QGC_GST_VULKAN_LOADER_LIB)
-    set(_qgc_vulkan_loader_libs "${QGC_GST_VULKAN_LOADER_LIB}")
 endif()
 
 # The DMABuf import under Vulkan calls Vulkan through Qt and only needs the headers Qt found for its own Vulkan support.
@@ -261,12 +237,12 @@ set(_qgc_gpu_row_AHardwareBuffer
 # frame (vulkan/GstVulkanVideoBuffer.h). The impl TUs also gate on QT_CONFIG(vulkan) but callsites gate on the define
 # alone, so the define must imply Qt Vulkan support (macOS Qt ships none while GStreamer.framework carries
 # libgstvulkan-1.0). The framework also ships the .pc and headers without the library, hence the link-path check.
+# Not on Android, whose SDK has libgstvulkan only as an archive that would need the Vulkan loader linked beside it.
 set(_qgc_gpu_row_Vulkan
-    PLATFORMS LINUX WIN32 MACOS ANDROID
-    REQUIRES ${_qgc_vulkan_requires}
+    PLATFORMS LINUX WIN32 MACOS
+    REQUIRES QT_FEATURE_vulkan
     PROBE HAS_VAR QGC_GST_HAS_VULKAN HEADER gst/vulkan/vulkan.h SYMBOL gst_is_vulkan_image_memory
           PC_MODULE gstreamer-vulkan-1.0 LIBNAMES gstvulkan-1.0 gstvulkan LIB_VAR QGC_GST_VULKAN_LIB
-    LIBS ${_qgc_vulkan_loader_libs}
     DEFINE QGC_HAS_GST_VULKAN_GPU_PATH
     SOURCES vulkan/GstVulkanVideoBuffer.cc vulkan/GstVulkanVideoBuffer.h vulkan/GstVulkanContextBridge.cc
             vulkan/GstVulkanContextBridge.h)
@@ -359,7 +335,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc

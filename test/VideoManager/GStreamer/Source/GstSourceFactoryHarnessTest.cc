@@ -29,7 +29,91 @@ QList<GstBuffer*> payload(GstHarness* harness, const QList<GstTest::AccessUnit>&
     return packets;
 }
 
+/// An identity element whose src pad stands in for a depayloader's: gated, with @p caps sent.
+class GatedStream
+{
+public:
+    explicit GatedStream(const char* caps)
+        : _harness(gst_harness_new("identity"))
+    {
+        gst_harness_set_src_caps_str(_harness, caps);
+        const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(_harness->element, "src"));
+        GStreamer::SourceFactory::gateOnParameterSets(src.get(), false);
+    }
+
+    ~GatedStream() { gst_harness_teardown(_harness); }
+
+    GatedStream(const GatedStream&) = delete;
+    GatedStream& operator=(const GatedStream&) = delete;
+
+    GstFlowReturn push(const QByteArray& bytes, GstClockTime pts) const
+    {
+        GstBuffer* const buffer = gst_buffer_new_memdup(bytes.constData(), static_cast<gsize>(bytes.size()));
+        GST_BUFFER_PTS(buffer) = pts;
+        return gst_harness_push(_harness, buffer);
+    }
+
+    guint passed() const { return gst_harness_buffers_received(_harness); }
+
+    /// The bytes of the next buffer that passed the gate, and its PTS in @p pts; null when none did.
+    QByteArray pull(GstClockTime* pts = nullptr) const
+    {
+        GstBuffer* const buffer = gst_harness_try_pull(_harness);
+        if (!buffer) {
+            return {};
+        }
+        QByteArray bytes(static_cast<qsizetype>(gst_buffer_get_size(buffer)), Qt::Uninitialized);
+        (void) gst_buffer_extract(buffer, 0, bytes.data(), static_cast<gsize>(bytes.size()));
+        if (pts) {
+            *pts = GST_BUFFER_PTS(buffer);
+        }
+        gst_buffer_unref(buffer);
+        return bytes;
+    }
+
+private:
+    GstHarness* const _harness;
+};
+
 }  // namespace
+
+void GstSourceFactoryHarnessTest::_testParameterSetGateHoldsUntilCompleteSet()
+{
+    const QByteArray aud = QByteArray::fromHex("0000000109f0");
+    const QByteArray sps = QByteArray::fromHex("0000000167640014acd9");
+    const QByteArray pps = QByteArray::fromHex("0000000168ebe3cb");
+    const QByteArray idr = QByteArray::fromHex("0000000165888400");
+    const QByteArray delta = QByteArray::fromHex("00000001419a2400");
+
+    const GatedStream stream("video/x-h264, stream-format=(string)byte-stream, alignment=(string)nal");
+
+    // A late join whose first keyframe lost its PPS (and IDR): nothing may pass on an SPS alone.
+    for (const QByteArray& nal : {aud, sps, delta, delta, aud, sps}) {
+        QCOMPARE(stream.push(nal, GST_SECOND), GST_FLOW_OK);
+    }
+    QCOMPARE(stream.passed(), 0U);
+
+    QCOMPARE(stream.push(pps, 2 * GST_SECOND), GST_FLOW_OK);
+    QCOMPARE(stream.passed(), 0U);
+    QCOMPARE(stream.push(idr, 3 * GST_SECOND), GST_FLOW_OK);
+    QCOMPARE(stream.push(delta, 4 * GST_SECOND), GST_FLOW_OK);
+
+    QCOMPARE(stream.passed(), 2U);
+    GstClockTime firstPts = GST_CLOCK_TIME_NONE;
+    QCOMPARE(stream.pull(&firstPts), sps + pps + idr);
+    QCOMPARE(firstPts, 3 * GST_SECOND);
+    QCOMPARE(stream.pull(), delta);
+}
+
+void GstSourceFactoryHarnessTest::_testParameterSetGatePassesLengthPrefixedOutput()
+{
+    const GatedStream stream("video/x-h264, stream-format=(string)avc, alignment=(string)au");
+
+    // avc carries its parameter sets in codec_data, so its first slice passes as is.
+    const QByteArray lengthPrefixedSlice = QByteArray::fromHex("000000044188a5f0");
+    QCOMPARE(stream.push(lengthPrefixedSlice, 0), GST_FLOW_OK);
+    QCOMPARE(stream.pull(), lengthPrefixedSlice);
+}
 
 void GstSourceFactoryHarnessTest::_testParameterSetGateOnDepayloadedStream_data()
 {

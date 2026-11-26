@@ -214,10 +214,7 @@ bool DecodingBranch::build()
     // "overrun" announces a leak; the gate's probe sees whether one followed.
     _head.onOverrun(G_CALLBACK(_onQueueOverrun), this);
     const GStreamer::GstPadPtr queueSrc = GStreamer::adoptPad(gst_element_get_static_pad(queue, "src"));
-    if (!queueSrc || !_keyframeGate.add(queueSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _gateProbe, this)) {
-        qCCritical(GstVideoReceiverLog) << "Failed to add the display keyframe gate";
-        return false;
-    }
+    (void) _keyframeGate.add(queueSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _gateProbe, this);
     return true;
 }
 

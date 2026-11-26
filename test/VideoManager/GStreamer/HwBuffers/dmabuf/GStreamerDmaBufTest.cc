@@ -1,8 +1,3 @@
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
-#include "HwBuffers/GstHwBuffersTest.h"
-
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <cerrno>
 #include <gst/gst.h>
@@ -32,6 +27,8 @@
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/GstHwBuffersTest.h"
 #include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
@@ -1029,5 +1026,3 @@ void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
     QCOMPARE(releases, 1);
 #endif
 }
-
-#endif

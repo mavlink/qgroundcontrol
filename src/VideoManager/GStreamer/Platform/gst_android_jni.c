@@ -5,7 +5,7 @@
  * androidmedia looks gst_android_get_java_vm() and gst_android_get_application_class_loader() up with
  * g_module_symbol(), which on Android is dlsym(RTLD_DEFAULT) from this library: that searches this library's load group
  * but not the app, which Qt's loader loads after it. So the state lives here, and the app sets it with
- * qgc_gst_android_set_jni_state() (src/Android/AndroidInit.cc).
+ * qgc_gst_android_set_jni_state() (GStreamerEnvironment.cc).
  */
 
 #include <jni.h>

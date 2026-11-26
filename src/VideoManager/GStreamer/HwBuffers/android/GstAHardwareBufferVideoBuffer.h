@@ -27,8 +27,6 @@ public:
     /// External-OES texcoord transform consumed by qvideotexturehelper for Format_SamplerExternalOES.
     QMatrix4x4 externalTextureMatrix() const override;
 
-    static void resetImageCache();
-
 private:
     EGLDisplay _eglDisplay = EGL_NO_DISPLAY;
 };

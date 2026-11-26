@@ -177,7 +177,8 @@ step leaves it out.
   without network access.
 - GStreamer SDKs have separate immutable caches, excluded from CPM archives. macOS, Windows, Android,
   and iOS jobs use them (desktop Linux uses the system GStreamer), keyed on the `gstreamer`
-  section of `build-config.json` (fingerprinted in `cpm_helper.py`), `cmake/GStreamer/Packages.cmake`,
+  section of `build-config.json` without its plugin allowlist, which changes no extracted tree
+  (fingerprinted in `cpm_helper.py`), `cmake/GStreamer/Packages.cmake`,
   `cmake/GStreamer/Acquire.cmake` and `cmake/GStreamer/acquire/`. They hold the extracted SDK trees
   without the downloaded archives; configure uses a tree stamped with the pinned checksums as is.
   The macOS tree is the SDK root merged from the runtime and devel packages, without their expanded

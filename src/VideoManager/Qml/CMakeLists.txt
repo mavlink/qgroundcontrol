@@ -15,9 +15,7 @@ qt_add_qml_module(
         NoVideoPlaceholder.qml
         TelemetryOverlayText.qml
         ThermalVideoOverlay.qml
-        UVCCameraFormatComboBox.qml
         UVCControlSlider.qml
-        UVCRecordingCodecComboBox.qml
         UVCStatsGroup.qml
         UVCVideoOutput.qml
         VideoDecodingSettingsGroup.qml

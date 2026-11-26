@@ -1,7 +1,5 @@
 #include "GstVideoReceiverStatsTest.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <memory>
 
 #include <QtCore/QScopeGuard>
@@ -180,7 +178,5 @@ void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
     QVERIFY2(stats.lossPercent < 100, qPrintable(QString::number(stats.lossPercent)));
     QVERIFY(receiving.errorSpy.isEmpty());
 }
-
-#endif
 
 UT_REGISTER_TEST(GstVideoReceiverStatsTest, TestLabel::Integration)

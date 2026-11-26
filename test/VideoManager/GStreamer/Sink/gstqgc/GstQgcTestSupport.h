@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef QGC_GST_STREAMING
-
 #include <gst/gst.h>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <gst/allocators/gstfdmemory.h>
@@ -209,5 +207,3 @@ inline SinkBin makeSinkBin()
 }
 
 }  // namespace GstQgcTest
-
-#endif

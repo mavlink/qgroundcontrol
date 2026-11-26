@@ -270,33 +270,12 @@ std::vector<GStreamer::GstElementPtr> GstContextBridgeBase::reset()
     clearLocked();
     _primed = false;
     _primeAttempted = false;
-    _failedPrimes = 0;
     qCDebug(category()) << _apiName << "bridge reset";
     return served;
-}
-
-void GstContextBridgeBase::rearm()
-{
-    QMutexLocker lock(&_mutex);
-    if (!_primed && _primeAttempted && (_failedPrimes > kMaxPrimeRetries)) {
-        _primeAttempted = false;
-        _failedPrimes = 0;
-        qCDebug(category()) << _apiName << "bridge rearmed after exhausting its prime retries";
-    }
 }
 
 bool GstContextBridgeBase::retryLater() noexcept
 {
     _primeAttempted = false;
-    return false;
-}
-
-bool GstContextBridgeBase::retryWithinBudget() noexcept
-{
-    ++_failedPrimes;
-    if (_failedPrimes <= kMaxPrimeRetries) {
-        _primeAttempted = false;
-        return true;
-    }
     return false;
 }

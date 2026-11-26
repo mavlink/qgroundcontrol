@@ -30,8 +30,8 @@
                     "showWhen": "isStreamSource && tilesShown"
                 },
                 {
-                    "control": "component",
-                    "component": "UVCCameraFormatComboBox",
+                    "setting": "videoSettings.uvcCameraFormat",
+                    "control": "combobox",
                     "showWhen": "usbCamera"
                 },
                 {
@@ -163,8 +163,8 @@
                     "setting": "videoSettings.recordingFormat"
                 },
                 {
-                    "control": "component",
-                    "component": "UVCRecordingCodecComboBox",
+                    "setting": "videoSettings.uvcRecordingCodec",
+                    "control": "combobox",
                     "showWhen": "recordingEncoded"
                 },
                 {

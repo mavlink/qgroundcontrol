@@ -1,7 +1,5 @@
 #include "gstqgc/GstQgcTestSupport.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <memory>
 
 #include <QtGui/QImage>
@@ -73,5 +71,3 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char
 }
 
 }  // namespace GstQgcTest
-
-#endif

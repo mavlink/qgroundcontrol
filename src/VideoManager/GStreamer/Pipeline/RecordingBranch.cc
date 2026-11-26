@@ -31,7 +31,7 @@ constexpr std::chrono::seconds kRecordingWatchInterval{1};
 // (an Android SD card, a network share) reports a full disk only to a sync: a recording there would lose everything
 // without an error. A sync as often as the MP4's also bounds what a power loss takes.
 constexpr gint64 kRecordingSyncPeriodUs = static_cast<gint64>(kRecordingMoovUpdatePeriodNs / GST_USECOND);
-static_assert(std::chrono::nanoseconds(RecordingBranch::kHeaderEstimateDelay).count() >=
+static_assert(std::chrono::nanoseconds(GstReceiverTimings{}.recordingHeaderEstimateDelay).count() >=
                   static_cast<qint64>(2 * kRecordingMoovUpdatePeriodNs),
               "The muxer's estimate of its header space counts from its second header update");
 static_assert((2 * std::chrono::nanoseconds(RecordingPlan::kMaxPartDuration).count()) <=
@@ -210,10 +210,6 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     }
 
     GStreamer::GstElementPtr bin = GStreamer::adoptFloating(gst_bin_new("sinkbin"));
-    if (!bin) {
-        qCWarning(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
-        return nullptr;
-    }
 
     GstElement* parser = nullptr;
     if (const RecordingParser* const recorderParser = recordingParser(inputCaps)) {
@@ -237,12 +233,10 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     }
 
     // Tagged with the time it starts and the application, as a USB camera's recordings are (UVCCameraController).
-    if (GST_IS_TAG_SETTER(muxerOwner.get())) {
-        GstDateTime* const started = gst_date_time_new_from_g_date_time(g_date_time_new_now_utc());
-        gst_tag_setter_add_tags(GST_TAG_SETTER(muxerOwner.get()), GST_TAG_MERGE_REPLACE, GST_TAG_DATE_TIME, started,
-                                GST_TAG_COMMENT, VideoReceiver::recordingComment().toUtf8().constData(), nullptr);
-        gst_date_time_unref(started);
-    }
+    GstDateTime* const started = gst_date_time_new_from_g_date_time(g_date_time_new_now_utc());
+    gst_tag_setter_add_tags(GST_TAG_SETTER(muxerOwner.get()), GST_TAG_MERGE_REPLACE, GST_TAG_DATE_TIME, started,
+                            GST_TAG_COMMENT, VideoReceiver::recordingComment().toUtf8().constData(), nullptr);
+    gst_date_time_unref(started);
     // faststart stays off: it would spool the recording to a temp file and write the real file only at EOS.
     if ((format == VideoReceiver::FileFormat::Mp4) || (format == VideoReceiver::FileFormat::Mov)) {
         g_object_set(muxerOwner.get(), "reserved-max-duration", kRecordingReservedMaxDurationNs,
@@ -276,10 +270,6 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     if (parser) {
         const GStreamer::GstPadPtr parserSrcPad = GStreamer::adoptPad(gst_element_get_static_pad(parser, "src"));
         parserSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(parser, "sink"));
-        if (!parserSrcPad || !parserSinkPad) {
-            qCCritical(GstVideoReceiverLog) << "gst_element_get_static_pad(parser) failed";
-            return nullptr;
-        }
 
         const GstPadLinkReturn linkResult = gst_pad_link(parserSrcPad.get(), muxerPad.get());
         if (linkResult != GST_PAD_LINK_OK) {
@@ -295,11 +285,8 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
         }
     }
 
-    GstPad* const ghostpad = gst_ghost_pad_new("sink", parserSinkPad ? parserSinkPad.get() : muxerPad.get());
-    if (!ghostpad || !gst_element_add_pad(bin.get(), ghostpad)) {
-        qCWarning(GstVideoReceiverLog) << "Failed to add the recording sink's ghost pad";
-        return nullptr;
-    }
+    (void) gst_element_add_pad(bin.get(),
+                               gst_ghost_pad_new("sink", parserSinkPad ? parserSinkPad.get() : muxerPad.get()));
 
     return bin;
 }
@@ -506,15 +493,10 @@ void RecordingBranch::_start(Request request)
         return new RecordingWatch{.branch = this, .recording = _recording.load(std::memory_order_relaxed)};
     };
     const GDestroyNotify deleteWatch = [](gpointer watch) { delete static_cast<RecordingWatch*>(watch); };
-    if (!_keyframeWatch.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _keyframeProbe, this) ||
-        !_startWatch.add(parserSrc ? parserSrc.get() : valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _startProbe,
-                         newWatch(), deleteWatch) ||
-        !_capsWatch.add(valveSink.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _capsProbe, newWatch(), deleteWatch)) {
-        qCCritical(GstVideoReceiverLog) << "Failed to add the recording's probes" << _context.redactedUri;
-        _failure = QCoreApplication::translate("RecordingBranch", "Unable to start recording.");
-        _finish(QString());
-        return;
-    }
+    (void) _keyframeWatch.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _keyframeProbe, this);
+    (void) _startWatch.add(parserSrc ? parserSrc.get() : valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _startProbe,
+                           newWatch(), deleteWatch);
+    (void) _capsWatch.add(valveSink.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _capsProbe, newWatch(), deleteWatch);
 
     if (_switching || (_capsHold.load(std::memory_order_acquire) != 0)) {
         // The switch asked for the keyframe this file starts with, and holds it or still waits for it; the one that
@@ -533,14 +515,10 @@ void RecordingBranch::_switchAtKeyframe()
         return;
     }
     const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
-    if (!_switchHold.add(valveSrc.get(),
-                         static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
-                         _switchProbe, new SwitchWatch{.branch = this, .hold = ++_switchHoldId},
-                         [](gpointer watch) { delete static_cast<SwitchWatch*>(watch); })) {
-        qCWarning(GstVideoReceiverLog) << "Unable to hold the next keyframe; frames up to it are not recorded";
-        _end();
-        return;
-    }
+    (void) _switchHold.add(valveSrc.get(),
+                           static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
+                           _switchProbe, new SwitchWatch{.branch = this, .hold = ++_switchHoldId},
+                           [](gpointer watch) { delete static_cast<SwitchWatch*>(watch); });
     _switching = true;
     // Not left to the stream: with a long GOP, or a camera that sends keyframes on request only, the current file
     // would go on growing meanwhile.
@@ -577,14 +555,9 @@ void RecordingBranch::_drain()
 
     const quint64 recording = _recording.load(std::memory_order_relaxed);
     const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "sink"));
-    if (!_drainWatch.add(valveSink.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _drainProbe,
-                         new RecordingWatch{.branch = this, .recording = recording},
-                         [](gpointer watch) { delete static_cast<RecordingWatch*>(watch); })) {
-        qCWarning(GstVideoReceiverLog) << "Unable to mark the recording's end;"
-                                       << "the frames still queued are not recorded";
-        _end();
-        return;
-    }
+    (void) _drainWatch.add(valveSink.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _drainProbe,
+                           new RecordingWatch{.branch = this, .recording = recording},
+                           [](gpointer watch) { delete static_cast<RecordingWatch*>(watch); });
     // Closing the valve now would drop the backlog the queue holds for slow storage. The mark is serialized with the
     // frames, so sending it waits for the tee's streaming thread: not sent from here.
     const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
@@ -826,12 +799,12 @@ void RecordingBranch::_checkStarted()
         return;
     }
     const gint64 fedAt = _fedAt.load(std::memory_order_relaxed);
-    if ((fedAt == 0) || ((g_get_monotonic_time() - fedAt) < std::chrono::microseconds(kStartTimeout).count())) {
+    const std::chrono::milliseconds timeout = _context.timings.recordingStartTimeout;
+    if ((fedAt == 0) || ((g_get_monotonic_time() - fedAt) < std::chrono::microseconds(timeout).count())) {
         return;
     }
-    qCWarning(GstVideoReceiverLog) << "No keyframe to start the recording with within"
-                                   << std::chrono::seconds(kStartTimeout).count()
-                                   << "s of the stream's first one, as when keyframes come without their parameter"
+    qCWarning(GstVideoReceiverLog) << "No keyframe to start the recording with within" << timeout.count()
+                                   << "ms of the stream's first one, as when keyframes come without their parameter"
                                    << "sets; ending the recording" << _current.file;
     _end(
         QCoreApplication::translate("RecordingBranch", "The video stream has no keyframe a recording can start from."));
@@ -842,7 +815,7 @@ void RecordingBranch::_checkHeaderSpace()
     // A switch under way leaves the file soon enough. Until its second header update the muxer has its estimate from
     // the file's first frame alone: seconds, when that frame and the next arrived together.
     if ((_state != State::Recording) || _switching || !_fileSink || !_openedReported ||
-        !_openedFor.hasExpired(std::chrono::milliseconds(kHeaderEstimateDelay).count())) {
+        !_openedFor.hasExpired(_context.timings.recordingHeaderEstimateDelay.count())) {
         return;
     }
     const GStreamer::GstElementPtr muxer =

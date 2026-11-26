@@ -232,13 +232,11 @@ function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
     # beside the bundled libproxy, through the executable's rpath.
     file(GLOB _gst_libproxy_backends "${_gst_lib_path}/libproxy/*.dylib")
     _qgc_gst_install_files("${_mac_fw_dest}/libproxy" ${_gst_libproxy_backends})
-    # Libexec helpers are installed before the rpath fixup below, which patches the installed copies.
+    # The plugin scanner is installed before the rpath fixup below, which patches the installed copy.
     set(_gst_helpers "")
-    foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        if(EXISTS "${_gst_scanner_path}/${_helper}")
-            list(APPEND _gst_helpers "${_gst_scanner_path}/${_helper}")
-        endif()
-    endforeach()
+    if(EXISTS "${_gst_scanner_path}/gst-plugin-scanner")
+        list(APPEND _gst_helpers "${_gst_scanner_path}/gst-plugin-scanner")
+    endif()
     _qgc_gst_install_files("${_mac_libexec_dest}" PROGRAMS ${_gst_helpers})
     _qgc_gst_install_runtime_closure("${_mac_fw_dest}")
 

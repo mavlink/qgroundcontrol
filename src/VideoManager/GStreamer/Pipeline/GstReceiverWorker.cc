@@ -14,19 +14,19 @@
 
 namespace {
 
-constexpr std::chrono::milliseconds kWatchdogInterval{1000};
 // The live GPU path counters are logged every this many watchdog ticks.
 constexpr int kHwStatsLogIntervalTicks = 10;
 
 }  // namespace
 
-GstReceiverWorker::GstReceiverWorker(QObject* parent)
+GstReceiverWorker::GstReceiverWorker(const GstReceiverTimings& timings, QObject* parent)
     : QObject(parent)
+    , _timings(timings)
     , _watchdogTimer(new QTimer(this))
     , _supervisor(new StreamSupervisor(this))
     , _statsSampler(*_supervisor)
 {
-    _watchdogTimer->setInterval(kWatchdogInterval);
+    _watchdogTimer->setInterval(_timings.watchdogInterval);
     (void) connect(_watchdogTimer, &QTimer::timeout, this, [this]() { _onWatchdogTick(); });
     (void) connect(_supervisor, &StreamSupervisor::stateChanged, this,
                    [this](VideoReceiver::State state) { _updateStatus(&Status::state, state); });
@@ -126,7 +126,7 @@ void GstReceiverWorker::_startRecording(const RecordingRequest& request)
         return;
     }
 
-    _recording.emplace(request.file, request.format, _maxRecordingPartDuration);
+    _recording.emplace(request.file, request.format, _timings.recordingPartDuration);
     _updateStatus(&Status::recording, true);
     if (_session) {
         _session->setRecording(_recordingRequest());
@@ -181,6 +181,7 @@ void GstReceiverWorker::_startSession()
         .lowLatency = _requested.config.lowLatency,
         .rtpJitterLatencyMs = _requested.config.rtpJitterLatencyMs,
         .softwareDecoderThreads = _requested.config.softwareDecoderThreads,
+        .timings = _timings,
     };
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
     _watchdog.start(_requested.config.timeout, GStreamer::SourceFactory::connectGracePeriod(_requested.config.uri));

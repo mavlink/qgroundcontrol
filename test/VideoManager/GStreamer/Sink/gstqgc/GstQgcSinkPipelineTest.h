@@ -8,7 +8,6 @@ class GstQgcSinkPipelineTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testFrameDelivery();
     void _testPtsAndColorimetry();
     void _testGpuZeroCopyFallback_data();
@@ -18,5 +17,4 @@ private slots:
     void _testTeardownUnderLoad();
     void _testInactiveQgcQVideoSinkDropsAndCounts();
     void _testLateFramesAreShown();
-#endif
 };

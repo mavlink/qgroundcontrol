@@ -1,7 +1,5 @@
 #include "GStreamerTestHelpers.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <atomic>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
@@ -19,13 +17,71 @@
 #include "GStreamerEnvironment.h"
 #include "GstSourceFactory.h"
 
+namespace {
+
+struct GstTestStubDecoder
+{
+    GstElement parent;
+};
+
+struct GstTestStubDecoderClass
+{
+    GstElementClass parentClass;
+};
+
+GstStaticPadTemplate s_stubDecoderSink =
+    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-h264"));
+GstStaticPadTemplate s_stubDecoderSrc =
+    GST_STATIC_PAD_TEMPLATE("src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw"));
+
+G_DEFINE_TYPE(GstTestStubDecoder, gst_test_stub_decoder, GST_TYPE_ELEMENT)
+
+std::atomic<bool> s_stubDecoderFails = false;
+
+GstFlowReturn stubDecoderChain([[maybe_unused]] GstPad* pad, GstObject* parent, GstBuffer* buffer)
+{
+    gst_buffer_unref(buffer);
+    if (!s_stubDecoderFails.load()) {
+        return GST_FLOW_OK;
+    }
+    GST_ELEMENT_ERROR(GST_ELEMENT(parent), STREAM, DECODE, ("Simulated hardware decoder failure"), (nullptr));
+    return GST_FLOW_ERROR;
+}
+
+gboolean stubDecoderEvent(GstPad* pad, GstObject* parent, GstEvent* event)
+{
+    // Takes the stream's caps without passing them on: nothing ever leaves the decoder.
+    if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
+        gst_event_unref(event);
+        return TRUE;
+    }
+    return gst_pad_event_default(pad, parent, event);
+}
+
+void gst_test_stub_decoder_class_init(GstTestStubDecoderClass* klass)
+{
+    GstElementClass* const elementClass = GST_ELEMENT_CLASS(klass);
+    gst_element_class_add_static_pad_template(elementClass, &s_stubDecoderSink);
+    gst_element_class_add_static_pad_template(elementClass, &s_stubDecoderSrc);
+    gst_element_class_set_static_metadata(elementClass, "QGC test decoder", "Codec/Decoder/Video/Hardware",
+                                          "Decodes nothing", "QGroundControl");
+}
+
+void gst_test_stub_decoder_init(GstTestStubDecoder* self)
+{
+    GstPad* const sink = gst_pad_new_from_static_template(&s_stubDecoderSink, "sink");
+    gst_pad_set_chain_function(sink, stubDecoderChain);
+    gst_pad_set_event_function(sink, stubDecoderEvent);
+    (void) gst_element_add_pad(GST_ELEMENT(self), sink);
+    (void) gst_element_add_pad(GST_ELEMENT(self), gst_pad_new_from_static_template(&s_stubDecoderSrc, "src"));
+}
+
+}  // namespace
+
 namespace GstTest {
 
 QString initGStreamer()
 {
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    return QStringLiteral("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
-#else
     if (gst_is_initialized()) {
         return {};
     }
@@ -38,7 +94,6 @@ QString initGStreamer()
             .arg(owned ? QString::fromUtf8(owned->message) : QStringLiteral("unknown error"));
     }
     return {};
-#endif
 }
 
 QString firstMissingFactory(std::initializer_list<const char*> names)
@@ -489,6 +544,15 @@ QHash<QByteArray, guint> videoDecoderRanks(std::optional<bool> hardware)
     return ranks;
 }
 
+GStreamer::GstFeaturePtr registerStubDecoder(bool fails)
+{
+    s_stubDecoderFails.store(fails);
+    if (!gst_element_register(nullptr, kStubDecoderName, GST_RANK_NONE, gst_test_stub_decoder_get_type())) {
+        return nullptr;
+    }
+    return GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
+}
+
 FakeRtspServer::FakeRtspServer(const QByteArray& sdp)
     : _sdp(sdp)
 {
@@ -545,5 +609,3 @@ void FakeRtspServer::_serve(QTcpSocket* socket)
 }
 
 }  // namespace GstTest
-
-#endif

@@ -292,10 +292,6 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
         return nullptr;
     }
 
-    // Clear the GL/Vulkan bridges' exhausted-retry latches so a restart after Qt's RHI appears can
-    // prime on the next NEED_CONTEXT.
-    HwBuffers::onPipelineRestart();
-
     // Accessor returns a transfer-full ref; the guard releases it once the controller has taken
     // its own ref for deferred QObject teardown.
     const GstObjectPtr element(GST_OBJECT(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin))));

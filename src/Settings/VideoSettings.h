@@ -100,6 +100,9 @@ public:
     /// initialized (the registry is empty until then).
     void pruneUnavailableDecoders();
 
+    /// Lists what uvcCameraFormat offers: Auto, which lets Qt choose, then @p formats, the ones the USB camera offers.
+    void offerCameraFormats(const QStringList& formats);
+
     static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
     static constexpr const char* videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
     static constexpr const char* videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
@@ -115,16 +118,23 @@ public:
     static constexpr const char* videoSourceHerelinkHotspot   = QT_TRANSLATE_NOOP("VideoSettings", "Herelink Hotspot");
 
 private:
-    void _setForceVideoDecodeList();
     /// Lists what videoSource offers: no video, the stream sources, the attached cameras and, when it is none of those,
     /// the selected source. That one is a camera that isn't attached: it stays selected, so that it plays once it is
     /// plugged in. Lists what uvcTileCamera offers the same way: no camera, then the cameras.
     void _updateVideoSources();
-    /// Gives @p fact, or its @p metaData until it exists, the choices @p values labelled @p labels, then the attached
-    /// @p cameras, then the selected value when it is none of those.
+    /// _offerChoices() with the attached @p cameras after @p values.
     void _offerCameras(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
                        const QStringList& cameras);
+    void _updateCameraFormats();
+    /// Lists what uvcRecordingCodec offers: Auto, which leaves the choice to the recorder, then the codecs Qt can
+    /// encode on this computer.
+    void _updateRecordingCodecs();
+    /// Gives @p fact, or its @p metaData until it exists, the choices @p values labelled @p labels, then the selected
+    /// value when it is none of those, labelled @p absentLabel with the value for its %1: it stays selected.
+    void _offerChoices(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
+                       const QString& absentLabel);
 
     /// Stands in for UVCDevices::deviceNames() in tests.
     std::function<QStringList()> _cameraNames;
+    QStringList _cameraFormats;
 };

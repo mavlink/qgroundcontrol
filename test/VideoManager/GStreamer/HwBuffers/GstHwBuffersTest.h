@@ -9,7 +9,6 @@ class GstHwBuffersTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void _testDmaDrmModifierPolicy_data();
     void _testDmaDrmModifierPolicy();
     void _testDmaDrmPlaneFourccsMatchQtImporter();
@@ -29,12 +28,6 @@ private slots:
     void _testHwFrameTexturesFinishMapReusesAcceptedBundle();
     void _testHwFrameTexturesFinishMapRejectsIncompleteBundle();
     void _testHwFrameTexturesKeepResourcesUntilDestroyed();
-    void _testHwImportCacheEvictsLeastRecentlyUsed();
-    void _testHwImportCacheReplaceDestroysPrevious();
-    void _testHwImportCacheEraseIfDestroysMatches();
-    void _testHwImportCachePinnedEntriesOutliveRemoval();
-    void _testHwImportCacheRejectsInsertWhenAllPinned();
-    void _testHwImportCacheDefersDestroyToOwnerThread();
     void _testHwPathRegistrySelection_data();
     void _testHwPathRegistrySelection();
     void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
@@ -76,5 +69,4 @@ private slots:
     void _testTelemetrySyncWaitSplit();
     void _testTelemetryMapFailuresReportedInExtraStats();
     void _testTelemetryDmaBufExtraStats();
-#endif
 };

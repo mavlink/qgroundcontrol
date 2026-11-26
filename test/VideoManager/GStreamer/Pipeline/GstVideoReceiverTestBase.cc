@@ -1,7 +1,5 @@
 #include "GstVideoReceiverTestBase.h"
 
-#ifdef QGC_GST_STREAMING
-
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QSemaphore>
 #include <QtTest/QTest>
@@ -54,12 +52,6 @@ GstElement* GstVideoReceiverTestBase::displaySink(const GstVideoReceiver* receiv
     return receiver->_displaySink.get();
 }
 
-void GstVideoReceiverTestBase::setMaxRecordingPartDuration(GstVideoReceiver* receiver,
-                                                           std::chrono::milliseconds duration)
-{
-    receiver->_postToWorker([duration](GstReceiverWorker& worker) { worker.setMaxRecordingPartDuration(duration); });
-}
-
 void GstVideoReceiverTestBase::holdWorker(GstVideoReceiver* receiver,
                                           const std::shared_ptr<GstReceiverTest::Gate>& gate)
 {
@@ -77,5 +69,3 @@ void GstVideoReceiverTestBase::initTestCase()
         GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtmux", "qtdemux");
     }
 }
-
-#endif

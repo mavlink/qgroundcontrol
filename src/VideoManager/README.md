@@ -29,7 +29,7 @@ and also says how the sources and tiles of `VideoManager` behave.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
   `QMediaRecorder` that it and the USB camera record with, and `SharedVideoFrame`.
-- `UVC/`: the USB camera: `UVCCameraController` (a `QCamera` as a receiver), `UVCDevices` and `UVCStreamMonitor`.
+- `UVC/`: the USB camera: `UVCCameraController` (a `QCamera` as a receiver) and `UVCDevices`.
 - `Qml/`: the `QGroundControl.VideoManager` QML module: `VideoView`, the tiles, the video outputs, and the statistics
   and settings groups. `src/FlyView`, `src/FlightMap/Widgets`, `src/Toolbar` and the video settings page import it.
 
@@ -85,7 +85,8 @@ The other receivers take fewer steps. `QtMultimedia/QtMultimediaVideoReceiver` h
 `QVideoSink`. `UVC/UVCCameraController` puts a `QCamera` in a capture session, which `Qml/UVCVideoOutput.qml` shows.
 
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
-`GStreamer/Sink/gstqgc/GstQgcSinkCounters`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`, `UVC/UVCStreamMonitor`),
+`GStreamer/Sink/gstqgc/GstQgcSinkCounters`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
+`UVC/UVCCameraController`),
 and `Receiver/VideoStreamStatsMeter` and `Receiver/VideoStreamStatsSampler` make the `VideoStreamStats` of the
 counters that `Qml/VideoStreamStatsGroup.qml` shows.
 
@@ -131,3 +132,10 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 `GStreamer/Source/` in `test/VideoManager/GStreamer/Source/`. `Qml/` has no folder there: `VideoManagerTest` tests the
 QML module. [GStreamer/README.md](GStreamer/README.md#automated-tests) lists the GStreamer classes and says how to
 run them.
+
+`VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common. Each of
+its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream: a port nobody sends
+to yet, a stream lost with and without auto-reconnect, a restart, and a recording ended by stopping the stream. What a
+backend does on its own stays in its tests. The Qt Multimedia receiver's are `QtMultimediaVideoReceiverTest`, which
+needs neither a stream nor GStreamer, and `QtMultimediaVideoReceiverStreamTest`, which plays the streams of
+`MockVideoStreamServer`. That class and the contract test are built only with GStreamer, which sends their streams.
