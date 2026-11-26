@@ -22,6 +22,11 @@ public:
 
     static SignalHandler* current() { return s_current.load(std::memory_order_acquire); }
 
+signals:
+    /// The process was told to terminate (SIGTERM). Nobody may be there to answer a question, so whoever takes this
+    /// closes the application without one. Unconnected, the application is asked to quit as for an interrupt.
+    void terminateRequested();
+
 #ifdef Q_OS_WIN
     static int consoleCtrlHandler(unsigned long evt);
 #else

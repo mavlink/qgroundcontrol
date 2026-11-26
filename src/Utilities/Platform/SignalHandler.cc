@@ -1,6 +1,7 @@
 #include "SignalHandler.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QMetaMethod>
 #ifdef Q_OS_WIN
 #include <QtCore/QWinEventNotifier>
 #else
@@ -207,7 +208,11 @@ void SignalHandler::_onSigTerm()
     [[maybe_unused]] const ssize_t n = ::read(_sigTermFd[0], &b, 1); // single-byte drain
 
     qCDebug(SignalHandlerLog) << "Caught SIGTERM—shutting down gracefully";
-    QCoreApplication::quit();
+    if (isSignalConnected(QMetaMethod::fromSignal(&SignalHandler::terminateRequested))) {
+        emit terminateRequested();
+    } else {
+        QCoreApplication::quit();
+    }
 }
 
 void SignalHandler::_intSignalHandler(int signum)

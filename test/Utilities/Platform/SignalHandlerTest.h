@@ -16,4 +16,6 @@ private slots:
 
     // Multiple handlers
     void _testCurrentUpdatesWithNewHandler();
+
+    void _testTerminateIsSignalled();
 };
