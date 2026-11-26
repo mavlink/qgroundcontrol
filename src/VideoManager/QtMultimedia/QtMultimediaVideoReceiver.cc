@@ -1,7 +1,6 @@
 #include "QtMultimediaVideoReceiver.h"
 
 #include <algorithm>
-#include <optional>
 
 #include <QtCore/QBuffer>
 #include <QtCore/QUrl>
@@ -14,7 +13,6 @@
 #include <QtMultimedia/QVideoSink>
 
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include "QtVideoRecorder.h"
 #include "SharedVideoFrame.h"
 #include "VideoStreamStats.h"
@@ -24,10 +22,6 @@ QGC_LOGGING_CATEGORY(QtMultimediaVideoReceiverLog, "Video.QtMultimediaVideoRecei
 
 namespace {
 
-constexpr int kSampleIntervalMs = 1000;
-/// Before a session's first frame, on top of the timeout: FFmpeg probes a stream for up to 5 s (its default
-/// analyzeduration) before it decodes, and then waits for a keyframe.
-constexpr std::chrono::milliseconds kFirstFrameGrace{5000};
 /// The encoder's time base for a recording without a fixed frame rate is as coarse as a millisecond.
 constexpr qint64 kMinFrameStepUs = 1000;
 /// A larger step in the stream's times is a jump, as after a reconnect.
@@ -72,12 +66,9 @@ void setRtspTransport(bool overTcp)
 }  // namespace
 
 QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
-    : VideoReceiver(parent)
-    , _supervisor(new StreamSupervisor(this))
-    , _statsSampler(*_supervisor)
+    : SessionVideoReceiver(QtMultimediaVideoReceiverLog, PacketsNoted::No, parent)
     , _recorder(new QtVideoRecorder(this))
 {
-    (void) connect(_supervisor, &StreamSupervisor::stateChanged, this, &QtMultimediaVideoReceiver::setState);
     (void) connect(_recorder, &QtVideoRecorder::recordingChanged, this, &QtMultimediaVideoReceiver::setRecording);
     (void) connect(_recorder, &QtVideoRecorder::recordingStarted, this, &QtMultimediaVideoReceiver::recordingStarted);
     (void) connect(_recorder, &QtVideoRecorder::recordingFinished, this, &QtMultimediaVideoReceiver::recordingFinished);
@@ -90,9 +81,6 @@ QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
                            _lastStreamUs = -1;
                        }
                    });
-    (void) connect(_supervisor, &StreamSupervisor::reconnectDue, this, &QtMultimediaVideoReceiver::_start);
-    _sampleTimer.setInterval(kSampleIntervalMs);
-    (void) connect(&_sampleTimer, &QTimer::timeout, this, &QtMultimediaVideoReceiver::_sample);
 }
 
 QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
@@ -101,47 +89,10 @@ QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
     _sampleTimer.stop();
     // Qt writes the file on a thread of its own, which the application's exit would cut short.
     _recorder->stopAndWait();
-    // As _stopSession(): unloaded first, so that its destruction doesn't wait out a network read.
+    // As closeSession(): unloaded first, so that its destruction doesn't wait out a network read.
     if (_player) {
         _player->setSource(QUrl());
     }
-}
-
-void QtMultimediaVideoReceiver::onConfigChanged()
-{
-    // autoReconnect alone applies at once: a reconnect it no longer allows is dropped.
-    if ((_player || _supervisor->reconnectPending()) && config().sameStreamAs(_sessionConfig)) {
-        if (_supervisor->autoReconnectChanged(config().autoReconnect) ==
-            StreamSupervisor::AutoReconnectChange::Halted) {
-            _onHalted(_supervisor->lastFailure());
-        }
-        return;
-    }
-    _startOver();
-}
-
-void QtMultimediaVideoReceiver::onActiveChanged()
-{
-    if (!active()) {
-        _recorder->stop();
-    }
-    _startOver();
-}
-
-void QtMultimediaVideoReceiver::onRestartRequested()
-{
-    _startOver();
-}
-
-void QtMultimediaVideoReceiver::onReconnectRequested()
-{
-    _supervisor->reconnectNow();
-}
-
-void QtMultimediaVideoReceiver::_startOver()
-{
-    _supervisor->startOver();
-    _start();
 }
 
 void QtMultimediaVideoReceiver::onVideoOutputChanged()
@@ -149,20 +100,16 @@ void QtMultimediaVideoReceiver::onVideoOutputChanged()
     // Taking its output from a playing player waits out its network read on this thread, as stopping it would (Qt
     // joins the demuxer's thread uncancelled): the session starts over without one instead.
     if (_player && _player->videoSink() && !videoSink()) {
-        _startOver();
+        startOver();
     }
     _bindVideoSink();
     // No frame reached an output while there was none.
     _watchdog.excuseSinkSilence(StreamWatchdog::now());
 }
 
-void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format,
-                                                 const RecordingEncoding& encoding)
+void QtMultimediaVideoReceiver::beginRecording(const QString& file, FileFormat format,
+                                               const RecordingEncoding& encoding)
 {
-    if (_supervisor->halted()) {
-        emit errorOccurred(tr("Unable to record video: the video stream has stopped."));
-        return;
-    }
     if (_recorder->active()) {
         qCWarning(QtMultimediaVideoReceiverLog) << "Not recording" << name() << "to" << file << "- recording already";
         emit recordingFinished(file, tr("A recording is in progress already"));
@@ -178,83 +125,64 @@ void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat
     _recorder->start(file, QtVideoRecorder::container(format), encoding.codec, encoding.quality);
 }
 
-void QtMultimediaVideoReceiver::onStopRecording()
+void QtMultimediaVideoReceiver::endRecording()
 {
     _recorder->stop();
 }
 
-void QtMultimediaVideoReceiver::_start()
+void QtMultimediaVideoReceiver::openWhenReady()
 {
-    _stopSession();
-    if (!active() || config().uri.isEmpty()) {
-        _supervisor->stop();
-        return;
-    }
-    if (!VideoStreamUri::ffmpegSource(config().uri)) {
-        qCWarning(QtMultimediaVideoReceiverLog) << name() << "can't play" << _redactedUri();
-        const QString message = tr("Unable to play the video stream %1.").arg(_redactedUri());
-        (void) _supervisor->sessionFailed(message, StreamSupervisor::Failure::Permanent, config().autoReconnect);
-        _onHalted(message);
-        return;
-    }
-    _supervisor->sessionStarted();
-    // Queued after the replaced player's unloading (_stopSession()): Windows doesn't let the new player bind a UDP port
+    // Queued after the replaced player's unloading (closeSession()): Windows doesn't let the new player bind a UDP port
     // the old one still holds.
-    if (!_openPending) {
-        _openPending = true;
-        QMetaObject::invokeMethod(this, &QtMultimediaVideoReceiver::_open, Qt::QueuedConnection);
+    if (_openPending) {
+        return;
     }
+    _openPending = true;
+    QMetaObject::invokeMethod(
+        this,
+        [this] {
+            _openPending = false;
+            if (!_closing) {
+                open();
+            }
+        },
+        Qt::QueuedConnection);
 }
 
-void QtMultimediaVideoReceiver::_open()
+void QtMultimediaVideoReceiver::openSession(const VideoStreamUri::FFmpegSource& source)
 {
-    _openPending = false;
-    // Stopped or restarted meanwhile: that _start() reported or opens it.
-    const std::optional<VideoStreamUri::FFmpegSource> source = VideoStreamUri::ffmpegSource(config().uri);
-    if (_player || !active() || !source || _closing) {
-        return;
-    }
-
-    _sessionConfig = config();
-    // Before the player opens its sockets, so its own timeout can't run out sooner than this one.
-    _sinceOpened.start();
     _player = new QMediaPlayer(this);
     QPlaybackOptions options;
-    options.setNetworkTimeout(config().timeout);
-    if (config().lowLatency) {
+    options.setNetworkTimeout(_sessionConfig.timeout);
+    if (_sessionConfig.lowLatency) {
         options.setPlaybackIntent(QPlaybackOptions::PlaybackIntent::LowLatencyStreaming);
     }
-    if (kShortProbe && source->streamsDescribed()) {
+    if (kShortProbe && source.streamsDescribed()) {
         options.setProbeSize(kDescribedStreamProbeBytes);
     }
     _player->setPlaybackOptions(options);
     (void) connect(_player, &QMediaPlayer::mediaStatusChanged, this, &QtMultimediaVideoReceiver::_onMediaStatusChanged);
     (void) connect(_player, &QMediaPlayer::errorOccurred, this,
-                   [this](QMediaPlayer::Error, const QString& errorString) { _fail(errorString); });
+                   [this](QMediaPlayer::Error, const QString& errorString) { fail(errorString); });
     _bindVideoSink();
-    if (source->url.scheme().compare(QStringLiteral("rtsp"), Qt::CaseInsensitive) == 0) {
-        setRtspTransport(source->rtspOverTcp);
+    if (source.url.scheme().compare(QStringLiteral("rtsp"), Qt::CaseInsensitive) == 0) {
+        setRtspTransport(source.rtspOverTcp);
     }
-    if (source->sdp.isEmpty()) {
-        _player->setSource(source->url);
+    if (source.sdp.isEmpty()) {
+        _player->setSource(source.url);
     } else {
         auto* const sdp = new QBuffer(_player);
-        sdp->setData(source->sdp);
+        sdp->setData(source.sdp);
         (void) sdp->open(QIODevice::ReadOnly);
-        _player->setSourceDevice(sdp, source->url);
+        _player->setSourceDevice(sdp, source.url);
     }
-    qCDebug(QtMultimediaVideoReceiverLog) << name() << "playing" << _redactedUri();
-    _watchdog.start(_sessionConfig.timeout, std::nullopt, {.timeouts = 1, .firstFrameGrace = kFirstFrameGrace});
-    _watchdog.startSinkClock(StreamWatchdog::now());
-    _sampleTimer.start();
     _player->play();
 }
 
-void QtMultimediaVideoReceiver::_stopSession()
+void QtMultimediaVideoReceiver::closeSession()
 {
-    _sampleTimer.stop();
-    // Until _open() binds the sink again: the player keeps playing until the event loop unloads it, and a frame it
-    // emits meanwhile would arrive after the next session opened and count as that session's.
+    // Until openSession() binds the sink again: the player keeps playing until the event loop unloads it, and a frame
+    // it emits meanwhile would arrive after the next session opened and count as that session's.
     (void) disconnect(_frameConnection);
     if (_player) {
         QMediaPlayer* const player = std::exchange(_player, nullptr);
@@ -270,55 +198,13 @@ void QtMultimediaVideoReceiver::_stopSession()
             },
             Qt::QueuedConnection);
     }
-    (void) _statsSampler.reset();
     _frames = 0;
     _gpuFrames = false;
-    setDecoding(false);
-    setStats(_statsSampler.stats());
 }
 
-QString QtMultimediaVideoReceiver::_redactedUri() const
+bool QtMultimediaVideoReceiver::pictureDue() const
 {
-    return QGCNetworkHelper::redactedUrlForLogging(config().uri);
-}
-
-bool QtMultimediaVideoReceiver::_awaitingSender() const
-{
-    const std::optional<VideoStreamUri::Transport> transport = VideoStreamUri::transportFor(QUrl(_sessionConfig.uri));
-    // A session that ends sooner than its timeout didn't run out of patience: its port is taken, or it can't play.
-    return transport && VideoStreamUri::listens(*transport) &&
-           (_supervisor->phase() == StreamSupervisor::Phase::Connecting) &&
-           (_sinceOpened.durationElapsed() >= _sessionConfig.timeout);
-}
-
-void QtMultimediaVideoReceiver::_fail(const QString& reason)
-{
-    if (!_player) {
-        return;
-    }
-    if (_awaitingSender()) {
-        // FFmpeg gives up on a silent port; a backoff would leave it unbound when the stream starts.
-        qCDebug(QtMultimediaVideoReceiverLog) << name() << "no stream yet, listening on:" << reason;
-        _start();
-        return;
-    }
-    _stopSession();
-    const QString message = tr("Video stream failed: %1").arg(reason);
-    const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(message, StreamSupervisor::Failure::Transient, config().autoReconnect);
-    if (outcome.halted) {
-        qCDebug(QtMultimediaVideoReceiverLog) << name() << "failed:" << reason;
-        _onHalted(message);
-    } else {
-        qCDebug(QtMultimediaVideoReceiverLog)
-            << name() << "failed, reconnecting in" << outcome.reconnectDelay << ":" << reason;
-    }
-}
-
-void QtMultimediaVideoReceiver::_onHalted(const QString& message)
-{
-    _recorder->stop();
-    emit errorOccurred(message);
+    return videoSink() != nullptr;
 }
 
 void QtMultimediaVideoReceiver::_bindVideoSink()
@@ -344,10 +230,10 @@ void QtMultimediaVideoReceiver::_onMediaStatusChanged(QMediaPlayer::MediaStatus 
             _supervisor->sessionStreaming();
             break;
         case QMediaPlayer::EndOfMedia:
-            _fail(tr("the stream ended"));
+            fail(tr("the stream ended"));
             break;
         case QMediaPlayer::InvalidMedia:
-            _fail(_player ? _player->errorString() : QString());
+            fail(_player ? _player->errorString() : QString());
             break;
         default:
             break;
@@ -403,16 +289,8 @@ qint64 QtMultimediaVideoReceiver::recordingTimeUs(qint64 lastRecordedUs, qint64 
     return std::max(timeUs, lastRecordedUs + kMinFrameStepUs);
 }
 
-void QtMultimediaVideoReceiver::_sample()
+void QtMultimediaVideoReceiver::sampleSession()
 {
-    if (!_player) {
-        return;
-    }
-    const StreamWatchdog::Result stalled = _watchdog.check(StreamWatchdog::now(), videoSink() != nullptr);
-    if (stalled.stall != StreamWatchdog::Stall::None) {
-        _fail(tr("no video for %1 s").arg(stalled.silentMs / 1000));
-        return;
-    }
     if (_frames == 0) {
         return;
     }

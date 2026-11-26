@@ -29,8 +29,9 @@ the guide to the GStreamer backend.
 - `Receiver/`: the receiver contract and what its implementations share: `VideoReceiver`, `VideoBackend` and the
   run of its initialization (`VideoBackendInit`), the reconnect policy (`StreamSupervisor`), the watchdog that tells
   when a stream has stalled (`StreamWatchdog`), the files of a recording (`RecordingPlan`), screenshots, stream
-  statistics, and the URI schemes with what FFmpeg opens for each (`VideoStreamUri`). No receiver that plays
-  anything is here: those are in the next four folders.
+  statistics, and the URI schemes with what FFmpeg opens for each (`VideoStreamUri`). `SessionVideoReceiver` is the
+  base class of the Qt Multimedia and FFmpeg receivers: when a session starts, fails, reconnects and stops. No
+  receiver that plays anything is here: those are in the next four folders.
 - `GStreamer/`: the GStreamer backend, whose folders [its README](GStreamer/README.md#source-code-architecture)
   lists.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by

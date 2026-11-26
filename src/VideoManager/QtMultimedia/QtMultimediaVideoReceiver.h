@@ -1,13 +1,9 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QTimer>
 #include <QtMultimedia/QMediaPlayer>
 
-#include "StreamSupervisor.h"
-#include "StreamWatchdog.h"
-#include "VideoReceiver.h"
-#include "VideoStreamStatsSampler.h"
+#include "SessionVideoReceiver.h"
 
 class QMediaCaptureSession;
 class QtVideoRecorder;
@@ -21,10 +17,9 @@ class QVideoFrameInput;
 ///
 /// Streaming once the player has buffered the stream or its first frame arrives; decoding while frames reach the
 /// output. A stream that errors, ends, or shows no frame for the config's timeout while displaying (5 s more for the
-/// first, while FFmpeg probes the stream) has failed: its StreamSupervisor reconnects it after 1 s, doubling up to
-/// 30 s, while autoReconnect is on, and it stops with errorOccurred() otherwise. A UDP port nobody sends to yet hasn't
-/// failed: once FFmpeg gives up on it, the receiver listens again at once, for as long as it takes.
-class QtMultimediaVideoReceiver : public VideoReceiver
+/// first, while FFmpeg probes the stream) has failed, and SessionVideoReceiver reconnects or stops it. The player
+/// doesn't tell when its stream arrives, so the frames at the output are all its watchdog is told.
+class QtMultimediaVideoReceiver : public SessionVideoReceiver
 {
     Q_OBJECT
 
@@ -37,40 +32,25 @@ public:
     bool encodesRecordings() const override { return true; }
 
 protected:
-    void onConfigChanged() override;
-    void onActiveChanged() override;
-    void onRestartRequested() override;
-    void onReconnectRequested() override;
     void onVideoOutputChanged() override;
+
+    bool hasSession() const override { return _player != nullptr; }
+
+    /// Queued, after the event loop has unloaded the replaced player.
+    void openWhenReady() override;
+    void openSession(const VideoStreamUri::FFmpegSource& source) override;
+    void closeSession() override;
+    bool pictureDue() const override;
+    void sampleSession() override;
     /// A start while a recording is in progress, or awaits its first frame, is refused: reported as
     /// recordingFinished() for @p file with the reason, while that recording goes on.
-    void onStartRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
-    void onStopRecording() override;
+    void beginRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding) override;
+    void endRecording() override;
 
 private:
-    /// A user start, stop or restart, a new config, or the output going: the backoff and the reconnect count start
-    /// over.
-    void _startOver();
-    /// Starts a new session when the stream should run; stops it otherwise.
-    void _start();
-    /// Opens the session _start() started, once the event loop has unloaded the replaced player.
-    void _open();
-    /// Ends the session: no player, frame or stats.
-    void _stopSession();
-    /// The URI without its credentials, for logs and messages.
-    QString _redactedUri() const;
-    /// The session listens on a UDP port, for at least its timeout, and no stream has arrived.
-    bool _awaitingSender() const;
-    /// The session failed for @p reason: reconnects with backoff, or stops and reports it. One still awaiting its
-    /// sender starts anew instead.
-    void _fail(const QString& reason);
-    /// The stream has stopped for good, until it is started over: ends its recording and reports @p message.
-    void _onHalted(const QString& message);
     void _bindVideoSink();
     void _onMediaStatusChanged(QMediaPlayer::MediaStatus status);
     void _onVideoFrame(const QVideoFrame& frame);
-    /// Once a second while a session runs: the stats, and the frame watchdog.
-    void _sample();
     /// Hands @p frame, on display, to the recording.
     void _recordFrame(const QVideoFrame& frame);
     /// The time in the recording, in µs, of a frame of stream time @p streamUs that arrived @p arrivalUs after the
@@ -83,16 +63,7 @@ private:
     bool _openPending = false;
     /// Set by the destructor: no session opens while it waits for a recording's file to be finished.
     bool _closing = false;
-    /// The config the session started with.
-    Config _sessionConfig;
     QMetaObject::Connection _frameConnection;
-    StreamSupervisor* const _supervisor;
-    QTimer _sampleTimer;
-    /// Since the session's player was created.
-    QElapsedTimer _sinceOpened;
-    /// Of the current session's frames at the output, the sink's: the player doesn't tell when its stream arrives.
-    StreamWatchdog _watchdog;
-    VideoStreamStatsSampler _statsSampler;
     quint64 _frames = 0;
     bool _gpuFrames = false;
     QtVideoRecorder* const _recorder;

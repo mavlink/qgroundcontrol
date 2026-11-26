@@ -42,9 +42,10 @@ decoder threads and the RTP jitter latency for it as for GStreamer, in a build w
 
 ## Files
 
-- `FFmpegVideoReceiver`: the `VideoReceiver`. GUI thread: states and reconnects (`StreamSupervisor`), the watchdog
-  (`StreamWatchdog`), the statistics, the recording's `RecordingPlan`, and the hand-off of each frame to the output's
-  `QVideoSink`.
+- `FFmpegVideoReceiver`: the `VideoReceiver`. GUI thread: the statistics, the recording's `RecordingPlan`, and the
+  hand-off of each frame to the output's `QVideoSink`. Its base class `../Receiver/SessionVideoReceiver`, shared with
+  the Qt Multimedia receiver, starts and ends the sessions: states and reconnects (`StreamSupervisor`) and the
+  watchdog (`StreamWatchdog`).
 - `FFmpegStreamSession`: one connection, on a thread of its own: opens the stream with libavformat, reads it, decodes
   it with libavcodec while an output displays it, and hands over each frame as it is decoded. A stop interrupts a
   blocking open or read through FFmpeg's interrupt callback.

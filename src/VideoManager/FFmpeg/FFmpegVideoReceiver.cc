@@ -1,41 +1,22 @@
 #include "FFmpegVideoReceiver.h"
 
-#include <chrono>
 #include <utility>
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QMutexLocker>
-#include <QtCore/QUrl>
 #include <QtMultimedia/QVideoSink>
 
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include "VideoStreamStats.h"
 #include "VideoStreamStatsMeter.h"
 #include "VideoStreamUri.h"
 
 QGC_LOGGING_CATEGORY(FFmpegVideoReceiverLog, "Video.FFmpegVideoReceiver")
 
-namespace {
-
-constexpr int kFFmpegSampleIntervalMs = 1000;
-/// On top of the timeout, for a server's first packet, and for a session's first frame: decoding starts at the stream's
-/// next keyframe, which a camera may send seconds apart.
-constexpr std::chrono::milliseconds kFFmpegFirstFrameGrace{5000};
-
-}  // namespace
-
 FFmpegVideoReceiver::FFmpegVideoReceiver(QObject* parent)
-    : VideoReceiver(parent)
-    , _supervisor(new StreamSupervisor(this))
+    : SessionVideoReceiver(FFmpegVideoReceiverLog, PacketsNoted::Yes, parent)
     , _recorder(std::make_unique<FFmpegStreamRecorder>(static_cast<FFmpegStreamRecorder::Listener&>(*this)))
-    , _statsSampler(*_supervisor)
-{
-    (void) connect(_supervisor, &StreamSupervisor::stateChanged, this, &FFmpegVideoReceiver::setState);
-    (void) connect(_supervisor, &StreamSupervisor::reconnectDue, this, &FFmpegVideoReceiver::_start);
-    _sampleTimer.setInterval(kFFmpegSampleIntervalMs);
-    (void) connect(&_sampleTimer, &QTimer::timeout, this, &FFmpegVideoReceiver::_sample);
-}
+{}
 
 FFmpegVideoReceiver::~FFmpegVideoReceiver()
 {
@@ -51,37 +32,6 @@ FFmpegVideoReceiver::~FFmpegVideoReceiver()
     _endingSessions.clear();
     // Finishes the open file, which the application's exit would cut short.
     _recorder.reset();
-}
-
-void FFmpegVideoReceiver::onConfigChanged()
-{
-    // autoReconnect alone applies at once: a reconnect it no longer allows is dropped.
-    if ((_session || _supervisor->reconnectPending()) && config().sameStreamAs(_sessionConfig)) {
-        if (_supervisor->autoReconnectChanged(config().autoReconnect) ==
-            StreamSupervisor::AutoReconnectChange::Halted) {
-            _onHalted(_supervisor->lastFailure());
-        }
-        return;
-    }
-    _startOver();
-}
-
-void FFmpegVideoReceiver::onActiveChanged()
-{
-    if (!active()) {
-        _endRecording();
-    }
-    _startOver();
-}
-
-void FFmpegVideoReceiver::onRestartRequested()
-{
-    _startOver();
-}
-
-void FFmpegVideoReceiver::onReconnectRequested()
-{
-    _supervisor->reconnectNow();
 }
 
 void FFmpegVideoReceiver::onVideoOutputChanged()
@@ -102,22 +52,13 @@ void FFmpegVideoReceiver::onVideoOutputChanged()
     _watchdog.excuseSinkSilence(StreamWatchdog::now());
 }
 
-void FFmpegVideoReceiver::onStartRecording(const QString& file, FileFormat format,
-                                           [[maybe_unused]] const RecordingEncoding& encoding)
+void FFmpegVideoReceiver::beginRecording(const QString& file, FileFormat format,
+                                         [[maybe_unused]] const RecordingEncoding& encoding)
 {
-    if (_supervisor->halted()) {
-        emit errorOccurred(tr("Unable to record video: the video stream has stopped."));
-        return;
-    }
     qCDebug(FFmpegVideoReceiverLog) << name() << "recording to" << file;
     _recording.emplace(file, format);
     setRecording(true);
     _updateRecorder();
-}
-
-void FFmpegVideoReceiver::onStopRecording()
-{
-    _endRecording();
 }
 
 void FFmpegVideoReceiver::_updateRecorder()
@@ -127,7 +68,7 @@ void FFmpegVideoReceiver::_updateRecorder()
     }
 }
 
-void FFmpegVideoReceiver::_endRecording()
+void FFmpegVideoReceiver::endRecording()
 {
     if (!_recording) {
         return;
@@ -137,47 +78,25 @@ void FFmpegVideoReceiver::_endRecording()
     setRecording(false);
 }
 
-void FFmpegVideoReceiver::_startOver()
+void FFmpegVideoReceiver::startOver()
 {
-    _supervisor->startOver();
     _decoderFailureReported = false;
-    _start();
+    SessionVideoReceiver::startOver();
 }
 
-void FFmpegVideoReceiver::_start()
+void FFmpegVideoReceiver::openWhenReady()
 {
-    _stopSession();
-    _openPending = false;
-    if (!active() || config().uri.isEmpty()) {
-        _supervisor->stop();
-        return;
-    }
-    if (!VideoStreamUri::ffmpegSource(config().uri)) {
-        qCWarning(FFmpegVideoReceiverLog) << name() << "can't play" << _redactedUri();
-        const QString message = tr("Unable to play the video stream %1.").arg(_redactedUri());
-        (void) _supervisor->sessionFailed(message, StreamSupervisor::Failure::Permanent, config().autoReconnect);
-        _onHalted(message);
-        return;
-    }
-    _supervisor->sessionStarted();
-    _openPending = true;
-    if (_endingSessions.empty()) {
-        _open();
+    _openPending = !_endingSessions.empty();
+    if (!_openPending) {
+        open();
     }
 }
 
-void FFmpegVideoReceiver::_open()
+void FFmpegVideoReceiver::openSession(const VideoStreamUri::FFmpegSource& source)
 {
-    _openPending = false;
-    const std::optional<VideoStreamUri::FFmpegSource> source = VideoStreamUri::ffmpegSource(config().uri);
-    if (_session || !active() || !source) {
-        return;
-    }
-
-    _sessionConfig = config();
     const FFmpegStreamSession::Settings settings{
-        .source = *source,
-        .redactedUri = _redactedUri(),
+        .source = source,
+        .redactedUri = redactedUri(),
         .networkTimeout = _sessionConfig.timeout,
         .lowLatency = _sessionConfig.lowLatency,
         .rtpJitterLatencyMs = _sessionConfig.rtpJitterLatencyMs,
@@ -187,26 +106,14 @@ void FFmpegVideoReceiver::_open()
         .squarePixels = !displayConfig().disablePixelAspectRatio,
     };
     FFmpegStreamSession::Listener& listener = *this;
-    // A UDP port waits for its sender for as long as it takes; a server that sends nothing has failed.
-    const bool listens = source->transport && VideoStreamUri::listens(*source->transport);
-    _watchdog.start(_sessionConfig.timeout, listens ? std::nullopt : std::optional(kFFmpegFirstFrameGrace),
-                    {.timeouts = 1, .firstFrameGrace = kFFmpegFirstFrameGrace});
-    const qint64 now = StreamWatchdog::now();
-    _watchdog.startSinkClock(now);
-    // Starts the clock of the first packet now, rather than with the first sample.
-    (void) _watchdog.check(now, false);
     _session = std::make_unique<FFmpegStreamSession>(++_lastSessionId, settings, listener, *_recorder, _watchdog);
     _session->setDecoding(videoSink() != nullptr);
     _updateRecorder();
-    qCDebug(FFmpegVideoReceiverLog) << name() << "playing" << _redactedUri();
-    _sinceOpened.start();
-    _sampleTimer.start();
     _session->start();
 }
 
-void FFmpegVideoReceiver::_stopSession()
+void FFmpegVideoReceiver::closeSession()
 {
-    _sampleTimer.stop();
     if (_session) {
         _session->requestStop();
         _endingSessions.push_back(std::move(_session));
@@ -222,57 +129,16 @@ void FFmpegVideoReceiver::_stopSession()
         dropped = std::exchange(_pendingFrame, QVideoFrame());
         _framesDropped = 0;
     }
-    (void) _statsSampler.reset();
     _framesShown = 0;
     _decoderInfo = {};
     _codec.clear();
     _sessionUndecodable = false;
-    setDecoding(false);
-    setStats(_statsSampler.stats());
 }
 
-QString FFmpegVideoReceiver::_redactedUri() const
+bool FFmpegVideoReceiver::pictureDue() const
 {
-    return QGCNetworkHelper::redactedUrlForLogging(config().uri);
-}
-
-bool FFmpegVideoReceiver::_awaitingSender() const
-{
-    const std::optional<VideoStreamUri::Transport> transport = VideoStreamUri::transportFor(QUrl(_sessionConfig.uri));
-    // A session that ends sooner than its timeout didn't run out of patience: its port is taken, or it can't play.
-    return transport && VideoStreamUri::listens(*transport) &&
-           (_supervisor->phase() == StreamSupervisor::Phase::Connecting) &&
-           (_sinceOpened.durationElapsed() >= _sessionConfig.timeout);
-}
-
-void FFmpegVideoReceiver::_fail(const QString& reason, bool permanent)
-{
-    if (!_session) {
-        return;
-    }
-    if (!permanent && _awaitingSender()) {
-        qCDebug(FFmpegVideoReceiverLog) << name() << "no stream yet, listening on:" << reason;
-        _start();
-        return;
-    }
-    _stopSession();
-    const QString message = tr("Video stream failed: %1").arg(reason);
-    const StreamSupervisor::FailureOutcome outcome = _supervisor->sessionFailed(
-        message, permanent ? StreamSupervisor::Failure::Permanent : StreamSupervisor::Failure::Transient,
-        config().autoReconnect);
-    if (outcome.halted) {
-        qCDebug(FFmpegVideoReceiverLog) << name() << "failed:" << reason;
-        _onHalted(message);
-    } else {
-        qCDebug(FFmpegVideoReceiverLog) << name() << "failed, reconnecting in" << outcome.reconnectDelay << ":"
-                                        << reason;
-    }
-}
-
-void FFmpegVideoReceiver::_onHalted(const QString& message)
-{
-    _endRecording();
-    emit errorOccurred(message);
+    // Once the stream arrives, unless it can't be decoded.
+    return videoSink() && !_sessionUndecodable && _session && (_session->counters().packets > 0);
 }
 
 void FFmpegVideoReceiver::_showFrame()
@@ -296,25 +162,9 @@ void FFmpegVideoReceiver::_showFrame()
     setDecoding(true);
 }
 
-void FFmpegVideoReceiver::_sample()
+void FFmpegVideoReceiver::sampleSession()
 {
-    if (!_session) {
-        return;
-    }
     const FFmpegStreamSession::Counters counters = _session->counters();
-    // A picture is due once the stream arrives, unless it can't be decoded.
-    const bool pictureDue = videoSink() && !_sessionUndecodable && (counters.packets > 0);
-    const StreamWatchdog::Result stalled = _watchdog.check(StreamWatchdog::now(), pictureDue);
-    switch (stalled.stall) {
-        case StreamWatchdog::Stall::None:
-            break;
-        case StreamWatchdog::Stall::Source:
-            _fail(tr("no video received for %1 s").arg(stalled.silentMs / 1000));
-            return;
-        case StreamWatchdog::Stall::Decoder:
-            _fail(tr("no picture for %1 s").arg(stalled.silentMs / 1000));
-            return;
-    }
     if (counters.packets == 0) {
         return;
     }
@@ -352,7 +202,7 @@ void FFmpegVideoReceiver::_sample()
 void FFmpegVideoReceiver::_onSessionEnded(quint64 id, const std::optional<FFmpegStreamSession::Failure>& failure)
 {
     if (_isCurrent(id)) {
-        _fail(failure ? failure->message : tr("the stream ended"), failure && failure->permanent);
+        fail(failure ? failure->message : tr("the stream ended"), failure && failure->permanent);
     }
     for (auto it = _endingSessions.begin(); it != _endingSessions.end(); ++it) {
         if ((*it)->id() == id) {
@@ -362,7 +212,8 @@ void FFmpegVideoReceiver::_onSessionEnded(quint64 id, const std::optional<FFmpeg
         }
     }
     if (_openPending && _endingSessions.empty()) {
-        _open();
+        _openPending = false;
+        open();
     }
 }
 
@@ -455,7 +306,7 @@ void FFmpegVideoReceiver::onRecordingFileClosed(const QString& file, const QStri
                 _recording->onFileClosed(file);
                 // A file that failed as it was written ends the recording, as one that can't be opened does.
                 if (!error.isEmpty() && (file == _recording->currentFile())) {
-                    _endRecording();
+                    endRecording();
                 }
             }
             emit recordingFinished(file, error);
@@ -485,7 +336,7 @@ void FFmpegVideoReceiver::onRecordingFailed(const QString& file, const QString& 
         this,
         [this, file, error] {
             if (_recording && (file == _recording->currentFile())) {
-                _endRecording();
+                endRecording();
             }
             emit errorOccurred(tr("Video recording failed: %1").arg(error));
         },

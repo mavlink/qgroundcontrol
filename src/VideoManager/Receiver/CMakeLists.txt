@@ -11,6 +11,8 @@ target_sources(
         KeyframeIntervalMeter.h
         RecordingPlan.cc
         RecordingPlan.h
+        SessionVideoReceiver.cc
+        SessionVideoReceiver.h
         StreamSupervisor.cc
         StreamSupervisor.h
         StreamWatchdog.cc
