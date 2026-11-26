@@ -10,12 +10,15 @@ import pytest
 from ci.security.generate_cpm_sbom import (
     generate_sbom,
     generate_spdx,
+    git_exact_tag,
     gstreamer_component,
     main,
     make_purl,
     normalize_git_url,
 )
 from common.cmake import read_cache_dict
+
+from .._helpers import git
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -73,20 +76,101 @@ def test_gstreamer_component_names_the_bundled_sdk_and_its_packages() -> None:
         ("https://example.invalid/runtime.pkg", "0a1b"),
         ("https://example.invalid/devel.pkg", "2c3d"),
     ]
+    assert component["cpe"] == "cpe:2.3:a:gstreamer:gstreamer:1.28.4:*:*:*:*:*:*:*"
     # A system or user-provided GStreamer has no packages; its source location remains.
     system = gstreamer_component({**cache, "QGC_GST_RESOLVED_PACKAGES": ""})
     assert system is not None
     assert [r["type"] for r in system["externalReferences"]] == ["vcs", "website"]
+    # NVD's version ranges do not know the fixes a distribution backports into its GStreamer.
+    assert "cpe" not in system
     assert gstreamer_component({**cache, "QGC_ENABLE_GST_VIDEOSTREAMING": "OFF"}) is None
 
 
 def test_gstreamer_component_links_a_nano_version_to_its_release() -> None:
-    cache = {"QGC_ENABLE_GST_VIDEOSTREAMING": "ON", "QGC_GST_RESOLVED_SDK_VERSION": "1.28.8.1"}
+    cache = {
+        "QGC_ENABLE_GST_VIDEOSTREAMING": "ON",
+        "QGC_GST_RESOLVED_SDK_VERSION": "1.28.8.1",
+        "QGC_GST_RESOLVED_PACKAGES": "https://example.invalid/runtime.pkg|0a1b",
+    }
     component = gstreamer_component(cache)
     assert component is not None
     assert component["version"] == "1.28.8.1"
     (vcs,) = [r for r in component["externalReferences"] if r["type"] == "vcs"]
     assert vcs["url"] == "https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/1.28.8"
+    assert component["cpe"] == "cpe:2.3:a:gstreamer:gstreamer:1.28.8:*:*:*:*:*:*:*"
+
+
+DECODER_CACHE = """\
+CPM_PACKAGES:INTERNAL=ZLIB;LibLZMA;LibArchive;zstd;lz4;BZip2;mavlink
+CPM_PACKAGE_ZLIB_VERSION:INTERNAL=1.2.11
+CPM_PACKAGE_LibLZMA_VERSION:INTERNAL=5.6.0
+CPM_PACKAGE_LibArchive_VERSION:INTERNAL=3.7.2
+CPM_PACKAGE_zstd_VERSION:INTERNAL=1.4.8
+CPM_PACKAGE_lz4_VERSION:INTERNAL=1.9.2
+CPM_PACKAGE_BZip2_VERSION:INTERNAL=1.0.6
+CPM_PACKAGE_mavlink_VERSION:INTERNAL=0
+CPM_PACKAGE_mavlink_SOURCE_DIR:PATH=/src/mavlink
+"""
+
+
+def test_components_name_the_nvd_product_scanners_match(tmp_path: Path) -> None:
+    (tmp_path / "CMakeCache.txt").write_text(DECODER_CACHE)
+    with patch("ci.security.generate_cpm_sbom.git_info", side_effect=_mock_git_info):
+        components = {c["name"]: c for c in generate_sbom(tmp_path)["components"]}
+    assert {name: c.get("cpe") for name, c in components.items()} == {
+        "ZLIB": "cpe:2.3:a:zlib:zlib:1.2.11:*:*:*:*:*:*:*",
+        # NVD files liblzma under xz: a CPE made from the CPM name misses CVE-2024-3094.
+        "LibLZMA": "cpe:2.3:a:tukaani:xz:5.6.0:*:*:*:*:*:*:*",
+        "LibArchive": "cpe:2.3:a:libarchive:libarchive:3.7.2:*:*:*:*:*:*:*",
+        "zstd": "cpe:2.3:a:facebook:zstandard:1.4.8:*:*:*:*:*:*:*",
+        "lz4": "cpe:2.3:a:lz4_project:lz4:1.9.2:*:*:*:*:*:*:*",
+        "BZip2": "cpe:2.3:a:bzip:bzip2:1.0.6:*:*:*:*:*:*:*",
+        # A commit is no version NVD lists.
+        "mavlink": None,
+    }
+    assert components["mavlink"]["version"] == "b1fb5a1a32c4"
+
+
+def test_spdx_carries_the_cpe_as_a_security_reference(tmp_path: Path) -> None:
+    (tmp_path / "CMakeCache.txt").write_text(DECODER_CACHE)
+    with patch("ci.security.generate_cpm_sbom.git_info", side_effect=_mock_git_info):
+        packages = {p["name"]: p for p in generate_spdx(tmp_path)["packages"]}
+    assert packages["LibLZMA"]["externalRefs"][1:] == [
+        {
+            "referenceCategory": "SECURITY",
+            "referenceType": "cpe23Type",
+            "referenceLocator": "cpe:2.3:a:tukaani:xz:5.6.0:*:*:*:*:*:*:*",
+        }
+    ]
+    assert [r["referenceCategory"] for r in packages["mavlink"]["externalRefs"]] == [
+        "PACKAGE_MANAGER"
+    ]
+
+
+def test_a_tag_gives_the_version_cpm_does_not_record(git_repo: Path) -> None:
+    git(git_repo, "commit", "-q", "--allow-empty", "-m", "release")
+    git(git_repo, "tag", "R_2_7_5")
+    assert git_exact_tag(git_repo) == "R_2_7_5"
+    (git_repo / "CMakeCache.txt").write_text(
+        "CPM_PACKAGES:INTERNAL=EXPAT\n"
+        f"CPM_PACKAGE_EXPAT_VERSION:INTERNAL=\nCPM_PACKAGE_EXPAT_SOURCE_DIR:PATH={git_repo}\n"
+    )
+    (expat,) = generate_sbom(git_repo)["components"]
+    assert expat["version"] == "2.7.5"
+    assert expat["cpe"] == "cpe:2.3:a:libexpat_project:libexpat:2.7.5:*:*:*:*:*:*:*"
+
+
+def test_a_checkout_at_a_commit_gets_no_cpe_whatever_its_version(git_repo: Path) -> None:
+    git(git_repo, "commit", "-q", "--allow-empty", "-m", "after 1.0.8")
+    assert git_exact_tag(git_repo) == ""
+    # bzip2 is pinned to a commit after 1.0.8, and its CPMAddPackage() states VERSION 1.0.8.
+    (git_repo / "CMakeCache.txt").write_text(
+        "CPM_PACKAGES:INTERNAL=BZip2\n"
+        f"CPM_PACKAGE_BZip2_VERSION:INTERNAL=1.0.8\nCPM_PACKAGE_BZip2_SOURCE_DIR:PATH={git_repo}\n"
+    )
+    (bzip2,) = generate_sbom(git_repo)["components"]
+    assert bzip2["version"] == "1.0.8"
+    assert "cpe" not in bzip2
 
 
 def test_spdx_declares_the_gstreamer_license(tmp_path: Path) -> None:

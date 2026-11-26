@@ -306,10 +306,14 @@ How CI runs, retries, and reports the application tests is described in
   smoke-tests, and always uninstalls the package. `attest_helper.py checksum` requires and
   verifies CPack's `.deb`/`.rpm` checksum sidecar and writes Arch's.
 - Pushes and manual runs generate CycloneDX SBOMs for CPM dependencies and the builder image and
-  scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. CPM metadata is read
-  inside the builder, with the build tree mounted where it was built, so container-local
-  dependency paths resolve. Master pushes submit the Ubuntu builder's CPM SPDX snapshot to the
-  dependency graph.
+  scan them with Grype (SARIF to code scanning); PRs skip SBOMs and scans. Grype matches a CPM
+  library only by the CPE that `generate_cpm_sbom.py` writes from its `NVD_PRODUCTS` table (NVD's
+  vendor and product, such as `tukaani:xz` for liblzma), and only for a release version, not a
+  commit, and for GStreamer only when the build downloaded the official SDK: NVD's version ranges
+  do not know the fixes a distribution backports, which the builder image scan covers. CPM
+  metadata is read inside the builder, with the build tree mounted where it was built, so
+  container-local dependency paths resolve. Master pushes submit the Ubuntu builder's CPM SPDX
+  snapshot to the dependency graph.
 - The planner gives every leg the builder image's push target (`resolve_push_target()` in
   `qgc_tools/docker_variants.py`): upstream pushes publish master and `Stable*` builds to GHCR and
   release tags to Docker Hub; pull requests, forks, and manual runs push nothing. The build,
