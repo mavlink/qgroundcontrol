@@ -56,8 +56,25 @@ these headers, except its tests.
 
 `CompressionLibraries.cmake` fetches libarchive, zlib, liblzma and the decoders of the options below
 with CPM and builds them as static libraries, without tools, encoders or features QGC does not use.
-With `QGC_USE_SYSTEM_LIBS` it uses installed copies where it finds them. Renovate proposes updates of
-the version pins, except of bzip2, which is pinned to a commit.
+Renovate proposes updates of the version pins, except of bzip2, which is pinned to a commit. The application carries
+the licence of each bundled library beside GStreamer's (`qgc_install_license()` in `cmake/Helpers.cmake`): in
+`share/licenses/<library>` of the install tree, which the AppImage, the `.deb`, `.rpm` and Windows packages hold, in
+`Contents/Resources/licenses` of the macOS bundle, `licenses` of the iOS bundle and `assets/licenses` of the APK.
+
+With `QGC_USE_SYSTEM_LIBS` it uses each installed library that is at least as new as the module needs, and
+downloads the others; `QGC_SYSTEM_LIBS_ONLY` fails the configure instead. The configure prints which copy of each
+library the build uses. The minimums are the oldest releases with what the module and libarchive call: zlib 1.2.1,
+liblzma 5.0.0 (5.6.0 and 5.6.1, the releases with the backdoor, fail the configure), libarchive 3.7.5 built with
+zlib and liblzma, Zstandard 1.0.0, LZ4 1.7.0 and bzip2 1.0.0. Zstandard and LZ4 are found by the CMake packages they
+install, which not every distribution ships. The distribution keeps an installed copy free of known vulnerabilities,
+often without a new version number, and its Zstandard may also read the legacy formats the bundled one leaves out.
+`BidAgreement` compares the module's rules with those of the libarchive in use, so it can fail with an older one.
+
+On Linux and Android every binary that links the module keeps the symbols of these static libraries to itself
+(`--exclude-libs`): Qt and the other libraries in the process use the system's zlib, never a mix of both, and the
+Android app library does not export them. A check after the link of the application fails if it exports them
+again (`cmake/BundledDecoderExports.cmake`). Windows exports only what is marked for export, and macOS and iOS bind
+each library's symbols to the library it was linked with, so they need neither.
 
 | Option | Default | Adds |
 | ------ | ------- | ---- |

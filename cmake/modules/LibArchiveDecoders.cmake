@@ -5,7 +5,8 @@ include_guard(GLOBAL)
 # and xz, which every build reads, with an external program, which QGCCompression never registers. Only a probe that was
 # built and ran can tell. One that cannot be built or run here, as in a cross build, gives a warning instead. Nothing is
 # cached, so that a configure after the library is replaced checks it again. <library>... are linked with the probe if
-# they are targets, for a static libarchive whose target does not name the decoder libraries.
+# they are imported targets, for a static libarchive whose target does not name the decoder libraries; the probe cannot
+# link a library this project builds, such as a bundled zlib beside a system libarchive.
 function(qgc_check_libarchive_decoders libarchive)
     set(_cannot_check "QGC: cannot check that the libarchive found reads gzip and xz itself")
     if(CMAKE_CROSSCOMPILING)
@@ -16,7 +17,10 @@ function(qgc_check_libarchive_decoders libarchive)
     set(_libraries ${libarchive})
     foreach(_library IN LISTS ARGN)
         if(TARGET ${_library})
-            list(APPEND _libraries ${_library})
+            get_target_property(_imported ${_library} IMPORTED)
+            if(_imported)
+                list(APPEND _libraries ${_library})
+            endif()
         endif()
     endforeach()
     try_run(
