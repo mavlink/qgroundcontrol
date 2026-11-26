@@ -19,9 +19,8 @@ class MockLink;
 ///
 /// MockConfiguration::CameraThermalStream makes one of the streams a thermal one:
 /// camera 1's second stream, or the only stream of camera 2, with camera 1 left
-/// one stream as well. Either is advertised at udp://127.0.0.1:5601 (H.264 RTP)
-/// and is transmitted only once it is asked for. Nothing is sent to that port
-/// but the served visible-light stream when it is RTP/UDP H.265.
+/// one stream as well. Either is advertised at udp://127.0.0.1:5602 (H.264 RTP),
+/// where nothing is sent, and is transmitted only once it is asked for.
 ///
 /// Supported MAVLink commands:
 ///   MAV_CMD_REQUEST_MESSAGE (CAMERA_INFORMATION, CAMERA_SETTINGS,

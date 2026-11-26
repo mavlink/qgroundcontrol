@@ -820,10 +820,11 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
         break;
     }
     if (thermal) {
-        // The stream server serves the visible-light stream only, to this port as well when it is H.265
+        // The stream server serves the visible-light stream only: the thermal one has an address of its own, a port
+        // the server sends none of its stream types to.
         streamType = VIDEO_STREAM_TYPE_RTPUDP;
         encoding = VIDEO_STREAM_ENCODING_H264;
-        uri = QStringLiteral("udp://127.0.0.1:5601");
+        uri = QStringLiteral("udp://127.0.0.1:5602");
         flags = _thermalStreamFlags();
     }
 

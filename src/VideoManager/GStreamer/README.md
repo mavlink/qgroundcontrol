@@ -75,7 +75,7 @@ its asynchronous state change, an abort in GStreamer 1.24 on a buffer after an e
 waiting when a file fails to open. It also holds every group of pictures until the next keyframe before it writes it,
 and recordings in parts that span reconnects need `RecordingPlan` regardless.
 
-MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead. `MockConfiguration::CameraThermalStream` has MockLink's cameras advertise a thermal stream as well, as the second stream of a camera or as the only stream of a camera of its own, the way mavlink-camera-manager does; nothing is sent at its address, `udp://127.0.0.1:5601`.
+MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead. `MockConfiguration::CameraThermalStream` has MockLink's cameras advertise a thermal stream as well, as the second stream of a camera or as the only stream of a camera of its own, the way mavlink-camera-manager does; nothing is sent at its address, `udp://127.0.0.1:5602`.
 
 ### Threading
 

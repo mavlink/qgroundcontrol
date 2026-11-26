@@ -413,7 +413,7 @@ void VideoManagerVehicleTest::_testThermalStreamOfAnyCameraIsShown()
     settle();
     QVERIFY(thermalReceiver->videoOutput());
     QVERIFY(thermalReceiver->active());
-    QCOMPARE(thermalReceiver->config().uri, QStringLiteral("udp://127.0.0.1:5601"));
+    QCOMPARE(thermalReceiver->config().uri, QStringLiteral("udp://127.0.0.1:5602"));
     QVERIFY_TRUE_WAIT(transmitted(), TestTimeout::mediumMs());
     primaryReceiver->setDecoding(true);
     QVERIFY(overlay->isVisible());
@@ -459,7 +459,7 @@ void VideoManagerVehicleTest::_testThermalCameraIsMainPictureWhileCurrent()
     camera->setThermalMode(MavlinkCameraControlInterface::THERMAL_BLEND);
 
     const QString visibleUri = QStringLiteral("udp://127.0.0.1:5600");
-    const QString thermalUri = QStringLiteral("udp://127.0.0.1:5601");
+    const QString thermalUri = QStringLiteral("udp://127.0.0.1:5602");
     // Also what a deleted output still has to tell its source.
     const auto settle = [] {
         QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
