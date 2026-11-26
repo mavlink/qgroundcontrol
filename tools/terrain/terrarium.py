@@ -17,6 +17,9 @@ if TYPE_CHECKING:
 
 _OFFSET = 32768.0
 _MAX_CODE = (1 << 24) - 1
+# zlib's default. Pillow's optimize=True took 6 times as long per tile for files 4% smaller,
+# measured on Graviton3: 86 of a land job's 91 CPU-seconds went to encoding its tiles.
+PNG_COMPRESS_LEVEL = 6
 
 
 def encode(heights: np.ndarray) -> np.ndarray:
@@ -60,7 +63,7 @@ def _quantized_tile(heights: np.ndarray) -> np.ndarray:
 
 def _encode_png(quantized: np.ndarray) -> bytes:
     buffer = io.BytesIO()
-    Image.fromarray(encode(quantized)).save(buffer, format="PNG", optimize=True)
+    Image.fromarray(encode(quantized)).save(buffer, format="PNG", compress_level=PNG_COMPRESS_LEVEL)
     return buffer.getvalue()
 
 

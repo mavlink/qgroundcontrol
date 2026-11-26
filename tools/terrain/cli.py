@@ -264,6 +264,7 @@ def _cmd_upload(args: argparse.Namespace) -> int:
             mirror=args.mirror,
             profile=args.profile,
             dryrun=args.dryrun,
+            workers=args.workers,
         )
     except (ValueError, RuntimeError) as error:
         raise SystemExit(str(error)) from None
@@ -372,6 +373,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--mirror",
         action="store_true",
         help="Delete remote tiles missing locally (test prefixes only)",
+    )
+    upload.add_argument(
+        "--workers",
+        type=_positive_int,
+        default=min(16, os.cpu_count() or 1),
+        help="aws s3 sync processes at once, each uploading its own tile directory",
     )
     upload.add_argument("--profile", help="AWS CLI profile")
     upload.add_argument("--dryrun", action="store_true")

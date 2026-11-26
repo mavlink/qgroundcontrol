@@ -919,7 +919,8 @@ def test_decode_tile_accepts_a_valid_tile() -> None:
 
 def _rgb_png(rgb) -> bytes:
     buffer = io.BytesIO()
-    Image.fromarray(rgb).save(buffer, format="PNG")
+    # Not the generator's compression level, so a sea tile from here is not the shared one.
+    Image.fromarray(rgb).save(buffer, format="PNG", compress_level=1)
     return buffer.getvalue()
 
 
@@ -1085,7 +1086,7 @@ def test_size_report_counts_only_true_sea_tiles(tmp_path: Path) -> None:
     sea_size = len(terrarium.sea_png_bytes())
     _plant(tmp_path, TileKey(z13, 0, 0), np.zeros((TILE_SIZE, TILE_SIZE), np.float32))
     # A flattened lake can compress to exactly the sea tile's size.
-    lake = np.full((TILE_SIZE, TILE_SIZE), 130.0, np.float32)
+    lake = np.full((TILE_SIZE, TILE_SIZE), 256.0, np.float32)
     _plant(tmp_path, TileKey(z13, 1, 0), lake)
     assert jobs.tile_path(tmp_path, TileKey(z13, 1, 0)).stat().st_size == sea_size
     _plant(tmp_path, TileKey(z13, 2, 0), ramp_tile())

@@ -269,7 +269,7 @@ def test_upload_publishes_metadata_only_after_invalidation_completes(
     invalidation_returncode: int,
     expected: list[str],
 ) -> None:
-    (tmp_path / "terrarium").mkdir()
+    (tmp_path / "terrarium" / "0" / "0").mkdir(parents=True)
     files = [
         metadata.MetadataFile(tmp_path / "ATTRIBUTION.txt", "text/plain; charset=utf-8"),
         metadata.MetadataFile(tmp_path / "tilejson.json", "application/json"),
@@ -333,26 +333,120 @@ def test_a_dry_run_lists_every_tile_it_would_transfer(
     assert ran[0][-1] == "--dryrun"
 
 
-def test_tile_sync_prints_a_count_instead_of_a_line_per_tile(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+def tile_tree(out: Path, *directories: str) -> Path:
+    for directory in directories:
+        (out / "terrarium" / directory).mkdir(parents=True)
+    return out
+
+
+def synced_directories(commands: list[list[str]], out: Path) -> list[str]:
+    return sorted(
+        Path(command[3]).relative_to(out / "terrarium").as_posix() for command in commands
+    )
+
+
+def test_tile_sync_runs_one_process_per_tile_directory_and_prints_a_count(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    out = tile_tree(tmp_path, "0/0", "1/0", "1/1")
     lines = [
-        "upload: out/terrarium/0/0/0.png to s3://qgc-terrain-assets/terrarium/0/0/0.png\n",
-        "upload: out/terrarium/1/0/0.png to s3://qgc-terrain-assets/terrarium/1/0/0.png\n",
-        "delete: s3://qgc-terrain-assets/terrarium/1/1/1.png\n",
+        "upload: a.png to s3://qgc-terrain-assets/a.png\n",
+        "delete: s3://qgc-terrain-assets/b.png\n",
         "Anything else the sync prints\n",
     ]
-    monkeypatch.setattr(upload.subprocess, "Popen", lambda *_args, **_kwargs: _FakeSync(lines, 1))
-    assert upload._run_sync(["aws", "s3", "sync"]) == 1
+    commands: list[list[str]] = []
+
+    def popen(command: list[str], **_kwargs: object) -> _FakeSync:
+        commands.append(command)
+        return _FakeSync(lines)
+
+    monkeypatch.setattr(upload.subprocess, "Popen", popen)
+    assert upload._sync_tiles(out, "validation", mirror=False, profile=None, workers=2) == 0
+    assert synced_directories(commands, out) == ["0/0", "1/0", "1/1"]
+    assert {command[4] for command in commands} == {
+        f"s3://qgc-terrain-assets/validation/terrarium/{directory}"
+        for directory in ("0/0", "1/0", "1/1")
+    }
     printed = capsys.readouterr().out.splitlines()
-    assert printed[0] == "aws s3 sync"
-    assert printed[1] == lines[3].rstrip()
-    assert printed[2].startswith("[summary] 3 tiles in ")
-    assert len(printed) == 3
+    assert printed[0] == "aws s3 sync of 3 tile directories, 2 at a time"
+    assert printed[1] == f"The first: {' '.join(min(commands, key=lambda command: command[4]))}"
+    assert printed[2:-1] == [lines[2].rstrip()] * 3
+    assert printed[-1].startswith("[summary] 6 tiles in ")
+
+
+@pytest.mark.parametrize(
+    ("failing", "synced", "message"),
+    [
+        # One bad directory: the others still upload, and the failure is listed for a rerun.
+        (["1/0"], ["0/0", "1/0", "1/1"], "1 of 3 sync(s) failed; rerun upload to retry: 1/0\n"),
+        # Nothing works (credentials, the bucket): the rest are not started.
+        (
+            ["0/0", "1/0", "1/1"],
+            ["0/0"],
+            "Every sync of the first batch failed; not starting the rest\n",
+        ),
+    ],
+)
+def test_a_failed_tile_sync_withholds_the_invalidation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    failing: list[str],
+    synced: list[str],
+    message: str,
+) -> None:
+    out = tile_tree(tmp_path, "0/0", "1/0", "1/1")
+    monkeypatch.setattr(upload, "write_metadata", lambda *_args: [])
+    commands: list[list[str]] = []
+
+    def popen(command: list[str], **_kwargs: object) -> _FakeSync:
+        commands.append(command)
+        return _FakeSync([], 3 if synced_directories([command], out)[0] in failing else 0)
+
+    def run(command: list[str], **_kwargs: object) -> None:
+        raise AssertionError(f"ran {command[1:3]} after a failed tile sync")
+
+    monkeypatch.setattr(upload.subprocess, "Popen", popen)
+    monkeypatch.setattr(upload.subprocess, "run", run)
+    returncode = upload.upload(
+        out,
+        "validation",
+        data_version="0.1.0",
+        notice=None,
+        mirror=False,
+        profile=None,
+        dryrun=False,
+        workers=1,
+    )
+    assert returncode == 3
+    assert synced_directories(commands, out) == synced
+    printed = capsys.readouterr().out
+    assert f"aws s3 sync of {failing[0]} exited with 3\n" in printed
+    assert message in printed
+
+
+def test_a_mirror_syncs_the_whole_tree_in_one_process(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    out = tile_tree(tmp_path, "0/0", "1/0")
+    commands: list[list[str]] = []
+
+    def popen(command: list[str], **_kwargs: object) -> _FakeSync:
+        commands.append(command)
+        return _FakeSync([])
+
+    monkeypatch.setattr(upload.subprocess, "Popen", popen)
+    assert upload._sync_tiles(out, "validation", mirror=True, profile=None, workers=4) == 0
+    # Per-directory syncs would leave remote directories that no longer exist locally.
+    assert [command[3:5] for command in commands] == [
+        [str(out / "terrarium"), "s3://qgc-terrain-assets/validation/terrarium"]
+    ]
+    assert "--delete" in commands[0]
+    assert capsys.readouterr().out.splitlines()[0] == " ".join(commands[0])
 
 
 def test_tile_sync_reports_progress_while_aws_prints_nothing(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     progressed = threading.Event()
     print_line = jobs.print_line
@@ -372,10 +466,11 @@ def test_tile_sync_reports_progress_while_aws_prints_nothing(
         "Popen",
         lambda *_args, **_kwargs: _FakeSync(silent_until_progress_was_reported()),
     )
-    assert upload._run_sync(["aws", "s3", "sync"]) == 0
+    out = tile_tree(tmp_path, "0/0")
+    assert upload._sync_tiles(out, None, mirror=False, profile=None, workers=1) == 0
     printed = capsys.readouterr().out.splitlines()
-    assert printed[1].startswith("[progress] 0 tiles in ")
-    assert printed[1].endswith("; 0 tiles/s")
+    assert printed[2].startswith("[progress] 0 tiles in ")
+    assert printed[2].endswith("; 0 tiles/s")
     assert printed[-1].startswith("[summary] 1 tiles in ")
 
 
@@ -580,6 +675,7 @@ def test_notice_severity_needs_notice_text(tmp_path: Path) -> None:
         (["generate", "--area", "alps", "--workers"], "workers"),
         (["check", "--workers"], "workers"),
         (["diff", "--against", "old", "--workers"], "workers"),
+        (["upload", "--prefix", "validation", "--data-version", "0.1.0", "--workers"], "workers"),
     ],
 )
 @pytest.mark.parametrize(("value", "accepted"), [("1", True), ("0", False), ("-1", False)])
