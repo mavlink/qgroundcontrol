@@ -13,10 +13,10 @@
 #include <QtGui/qopenglcontext_platform.h>
 #define QGC_RHI_CAPTURE_PROBES_EGL 1
 #endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
 #include <rhi/qrhi_platform.h>
 #endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 #include <d3d11.h>
 #include <d3d11_4.h>  // ID3D11Multithread
 
@@ -26,7 +26,7 @@
 #include <array>
 #include <atomic>
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 QGC_LOGGING_CATEGORY(QGCRhiCaptureLog, "Video.GStreamer.HwBuffers.RhiCapture")
 #endif
 
@@ -65,7 +65,7 @@ void clearSnapshot()
     s_snapshot.d3d11OpensD3D12.store(false, std::memory_order_release);
 }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 // QRhi creates its D3D11 device without multithread protection (qrhid3d11.cpp), but GStreamer's D3D11 elements share
 // its immediate context from their streaming threads. Turned on here, on the render thread, before the device is
 // published to them: switching it while another thread is inside the context isn't safe. Idempotent. Returns whether
@@ -95,7 +95,7 @@ void populateSnapshot(QRhi* rhi)
     void* d3d11 = nullptr;
     qint64 luid = 0;
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     if (rhi->backend() == QRhi::D3D11) {
         if (auto* h = static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles())) {
             if (protectImmediateContext(static_cast<ID3D11DeviceContext*>(h->context))) {
@@ -109,8 +109,6 @@ void populateSnapshot(QRhi* rhi)
                    (static_cast<qint64>(h->adapterLuidLow) & 0xFFFFFFFFLL);
         }
     }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     if (rhi->backend() == QRhi::D3D12) {
         if (auto* h = static_cast<const QRhiD3D12NativeHandles*>(rhi->nativeHandles())) {
             luid = (static_cast<qint64>(h->adapterLuidHigh) << 32) |

@@ -13,11 +13,8 @@ constexpr const HwPathDescriptor* kCompiledPaths[] = {
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     &GstHwPaths::kGlMemory,
 #endif
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    &GstHwPaths::kD3D11,
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    &GstHwPaths::kD3D12,
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
+    &GstHwPaths::kD3D11,           &GstHwPaths::kD3D12,
 #endif
 #if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
     &GstHwPaths::kIOSurface,

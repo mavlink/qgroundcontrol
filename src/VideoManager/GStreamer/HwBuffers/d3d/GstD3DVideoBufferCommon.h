@@ -2,7 +2,7 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <algorithm>
 #include <array>
@@ -269,4 +269,4 @@ private:
 
 }  // namespace GstD3DVideoBufferCommon
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

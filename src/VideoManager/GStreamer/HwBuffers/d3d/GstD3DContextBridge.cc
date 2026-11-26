@@ -1,6 +1,6 @@
 #include "GstD3DContextBridge.h"
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <glib-object.h>
 
@@ -107,4 +107,4 @@ void GstD3DContextBridge::logAdapterMatch(gint64 expectedLuid, gpointer gstDevic
                                  << QString::asprintf("0x%llx", static_cast<long long>(expectedLuid));
 }
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

@@ -37,15 +37,18 @@ target_sources(
 )
 
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
-#                   [REQUIRES <vars>...] [PROBE <qgc_gst_probe_library args>...] [EGL REQUIRED|OPTIONAL]
-#                   [LIBS <libs>...] [UNSTABLE_API])
+#                   [REQUIRES <vars>...] [PROBE <qgc_gst_probe_library args>...] [PROBE_ALSO <args>...]
+#                   [EGL REQUIRED|OPTIONAL] [LIBS <libs>...] [UNSTABLE_API])
 # One row of the GPU path table. On a matching platform with QGC_GST_ENABLE_<NAME> on, every REQUIRES variable truthy
-# and the probe found, adds the sources and libraries to QGCGStreamer and defines <macro>=1. Sets _qgc_gpu_<name> and
+# and the probed libraries found (PROBE_ALSO is a second one the path needs), adds the sources and libraries to
+# QGCGStreamer and defines <macro>=1. Sets _qgc_gpu_<name> and
 # _qgc_any_gpu_path TRUE in the caller's scope; UNSTABLE_API rows set _qgc_gpu_unstable_api.
 function(_qgc_add_gpu_path name)
     # A row's whole decision (platform, switch, requirements, probe, EGL) and its registration, in one scope.
     # cmake-lint: disable=R0912,R0915
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "UNSTABLE_API" "DEFINE;EGL" "PLATFORMS;REQUIRES;PROBE;SOURCES;LIBS")
+    cmake_parse_arguments(
+        PARSE_ARGV 1 ARG "UNSTABLE_API" "DEFINE;EGL" "PLATFORMS;REQUIRES;PROBE;PROBE_ALSO;SOURCES;LIBS"
+    )
     if(ARG_UNPARSED_ARGUMENTS
        OR NOT ARG_PLATFORMS
        OR NOT ARG_DEFINE
@@ -93,6 +96,12 @@ function(_qgc_add_gpu_path name)
             set(_reason "${${name}_REASON}")
         endif()
     endif()
+    if(NOT _reason AND ARG_PROBE_ALSO)
+        qgc_gst_probe_library(${name}_also ${ARG_PROBE_ALSO})
+        if(NOT ${name}_also_FOUND)
+            set(_reason "${${name}_also_REASON}")
+        endif()
+    endif()
     if(NOT _reason
        AND ARG_EGL STREQUAL "REQUIRED"
        AND NOT TARGET OpenGL::EGL
@@ -110,9 +119,19 @@ function(_qgc_add_gpu_path name)
         PRIVATE
             ${ARG_SOURCES}
     )
-    target_include_directories(QGCGStreamer PRIVATE ${${name}_INCLUDE_DIRS})
-    target_link_directories(QGCGStreamer PRIVATE ${${name}_LIBRARY_DIRS})
-    set(_libs ${${name}_LIBRARIES} ${ARG_LIBS})
+    target_include_directories(
+        QGCGStreamer
+        PRIVATE
+            ${${name}_INCLUDE_DIRS}
+            ${${name}_also_INCLUDE_DIRS}
+    )
+    target_link_directories(
+        QGCGStreamer
+        PRIVATE
+            ${${name}_LIBRARY_DIRS}
+            ${${name}_also_LIBRARY_DIRS}
+    )
+    set(_libs ${${name}_LIBRARIES} ${${name}_also_LIBRARIES} ${ARG_LIBS})
     if(ARG_EGL
        AND TARGET OpenGL::EGL
        AND (LINUX OR ANDROID)
@@ -197,19 +216,21 @@ set(_qgc_gpu_row_IOSurface
     LIBS "-framework CoreVideo" "-framework IOSurface" "-framework Metal"
     DEFINE QGC_HAS_GST_IOSURFACE_GPU_PATH
     SOURCES apple/GstIOSurfaceVideoBuffer.mm apple/GstIOSurfaceVideoBuffer.h)
-# Windows D3D11/D3D12 (gst-plugins-bad d3d{11,12}h264dec / vp9dec).
-set(_qgc_d3d11_extra_sources d3d/GstD3D11PictureCopy.cc d3d/GstD3D11PictureCopy.h)
-foreach(_ver IN ITEMS 11 12)
-    set(_qgc_gpu_row_D3D${_ver}
-        PLATFORMS WIN32
-        PROBE HAS_VAR QGC_GST_HAS_D3D${_ver} HEADER gst/d3d${_ver}/gstd3d${_ver}.h SYMBOL gst_is_d3d${_ver}_memory
-              PC_MODULE gstreamer-d3d${_ver}-1.0 LIBNAMES gstd3d${_ver}-1.0 gstd3d${_ver} LIB_VAR GST_D3D${_ver}_LIB
-        LIBS d3d${_ver}
-        UNSTABLE_API
-        DEFINE QGC_HAS_GST_D3D${_ver}_GPU_PATH
-        SOURCES d3d/GstD3D${_ver}VideoBuffer.cc d3d/GstD3D${_ver}ContextBridge.cc d3d/GstD3D${_ver}ContextBridge.h
-                d3d/GstD3DVideoBufferCommon.h ${_qgc_d3d${_ver}_extra_sources})
-endforeach()
+# Windows Direct3D (gst-plugins-bad d3d{11,12}h264dec / vp9dec), one path of both: the SDK has the two libraries, and a
+# Direct3D 12 decoder's frames reach a Direct3D 11 QRhi through the Direct3D 11 code.
+set(_qgc_gpu_row_D3D
+    PLATFORMS WIN32
+    PROBE HAS_VAR QGC_GST_HAS_D3D11 HEADER gst/d3d11/gstd3d11.h SYMBOL gst_is_d3d11_memory
+          PC_MODULE gstreamer-d3d11-1.0 LIBNAMES gstd3d11-1.0 gstd3d11 LIB_VAR GST_D3D11_LIB
+    PROBE_ALSO HAS_VAR QGC_GST_HAS_D3D12 HEADER gst/d3d12/gstd3d12.h SYMBOL gst_is_d3d12_memory
+               PC_MODULE gstreamer-d3d12-1.0 LIBNAMES gstd3d12-1.0 gstd3d12 LIB_VAR GST_D3D12_LIB
+    LIBS d3d11 d3d12
+    UNSTABLE_API
+    DEFINE QGC_HAS_GST_D3D_GPU_PATH
+    SOURCES d3d/GstD3D11VideoBuffer.cc d3d/GstD3D11ContextBridge.cc d3d/GstD3D11ContextBridge.h
+            d3d/GstD3D11PictureCopy.cc d3d/GstD3D11PictureCopy.h d3d/GstD3D12VideoBuffer.cc
+            d3d/GstD3D12ContextBridge.cc d3d/GstD3D12ContextBridge.h d3d/GstD3DContextBridge.cc
+            d3d/GstD3DContextBridge.h d3d/GstD3DVideoBufferCommon.h)
 # Android AHardwareBuffer memory. The probe finds its header in no GStreamer SDK: gst/android/gstandroid.h is in no
 # release, and the AHardwareBuffer memory of GStreamer 1.30 (gst/allocators/gstahardwarebuffer.h) is another API, so
 # the row compiles only against an SDK that adds this one. GLMemory is Android's path.
@@ -224,30 +245,13 @@ set(_qgc_gpu_row_AHardwareBuffer
 # No bin offers this memory, so it is compiled only on request.
 set(_qgc_gpu_opt_in_rows AHardwareBuffer)
 # In this order: DMABuf_Vulkan requires the DMABuf path (_qgc_gpu_DMABuf).
-set(_qgc_gpu_rows
-    DMABuf
-    DMABuf_Vulkan
-    GLMemory
-    IOSurface
-    D3D11
-    D3D12
-    AHardwareBuffer
-)
+set(_qgc_gpu_rows DMABuf DMABuf_Vulkan GLMemory IOSurface D3D AHardwareBuffer)
 foreach(_row IN LISTS _qgc_gpu_rows)
     _qgc_add_gpu_path(${_row} ${_qgc_gpu_row_${_row}})
 endforeach()
 
 if(_qgc_gpu_unstable_api)
     target_compile_definitions(QGCGStreamer PRIVATE GST_USE_UNSTABLE_API)
-endif()
-
-if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
-    target_sources(
-        QGCGStreamer
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.h
-    )
 endif()
 
 # GPU bin variants; GstQgc::selectGpuBin() picks one at runtime. glupload is Android's only bin (GstGLContext handshake

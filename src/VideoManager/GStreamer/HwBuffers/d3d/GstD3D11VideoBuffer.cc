@@ -1,6 +1,6 @@
 #include "GstD3DVideoBufferCommon.h"
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <algorithm>
 #include <array>
@@ -234,4 +234,4 @@ constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .bridge = &GstD3D11ContextBridge::instance,
 };
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

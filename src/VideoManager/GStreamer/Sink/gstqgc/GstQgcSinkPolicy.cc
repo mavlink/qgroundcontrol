@@ -166,7 +166,7 @@ SinkEnvironment currentSinkEnvironment()
 
 GpuBinMode selectGpuBin(GpuBinPreference preference, const RenderTarget& target) noexcept
 {
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     if (target.backend == RenderBackend::Direct3D12) {
         return GpuBinMode::D3D12Convert;
     }
@@ -243,7 +243,7 @@ constexpr const char* kGlMemory2D = "video/x-raw(memory:GLMemory), texture-targe
 constexpr const char* kD3D12Memory = "video/x-raw(memory:D3D12Memory)";
 // What the D3D12Convert bin's d3d12convert outputs: single-plane formats, the only ones Qt's D3D12 QRhi can sample.
 constexpr const char* kD3D12ConvertFormats = "(string){ RGBA, BGRA }";
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 // What decoders output as D3D12Memory, each one resource a Direct3D 11 device opens as a texture with both planes.
 constexpr const char* kD3D12DecoderFormats = "(string){ NV12, P010_10LE }";
 #endif
@@ -297,13 +297,11 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
 #endif
             break;
         case RenderBackend::Direct3D11:
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
             // First: its decoder works on a device of its own, a D3D11Memory one on the device Qt renders with.
             if (policy.d3d11OpensD3D12) {
                 caps += std::string(kD3D12Memory) + ", format=" + kD3D12DecoderFormats + "; ";
             }
-#endif
             offer("video/x-raw(memory:D3D11Memory)");
 #endif
             break;

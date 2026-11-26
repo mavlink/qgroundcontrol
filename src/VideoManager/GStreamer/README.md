@@ -634,7 +634,7 @@ Each class has a line here; the comment on the class in its header says more.
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on. |
 | `GstHwBuffersGlTest` | Integration, GPU | gst-gl pipelines into the sink: GLMemory, and software frames through the glupload bin. |
 | `GstHwBuffersDmaBufPipelineTest` | Integration, GPU | The DMABuf path fed by pipelines. Built with the path. |
-| `GstHwBuffersD3DTest` | Integration, GPU | The Direct3D 11 and 12 paths fed by pipelines. Built on Windows with either path. |
+| `GstHwBuffersD3DTest` | Integration, GPU | The Direct3D 11 and 12 paths fed by pipelines. Built on Windows with the Direct3D path. |
 | `GstHwBuffersIOSurfaceTest` | Integration, GPU | The IOSurface path fed by VideoToolbox. Built on macOS with the path. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | GPU frames imported into a GL QRhi and read back (xcb with `xcb_egl`). Built on Linux with the DMABuf or the GLMemory path. |
 | `GstHwBuffersRhiCaptureTest` | Integration | `QGCRhiCapture` under a real scene graph (OpenGL, threaded render loop): the device is published again when the scene graph is initialised anew, and the decoders wait for it while the scene graph is down. Built on Linux with a GPU path. |

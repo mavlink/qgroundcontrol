@@ -208,11 +208,9 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
 #endif
 #if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QStringList direct3D11Features;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     // Offered where Qt's Direct3D 11 device opens it, as this test's environment says it does.
     direct3D11Features << QStringLiteral("memory:D3D12Memory");
-#endif
     direct3D11Features << QStringLiteral("memory:D3D11Memory");
 #endif
     QTest::newRow("passthrough-d3d11") << int(GstQgc::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Direct3D11)
@@ -900,7 +898,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkGpuPathSelection_data()
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QTest::newRow("gpu-caps-system-buffers")
         << true << QStringLiteral("memory:DMABuf") << openGl << false << qint64(3) << quint64(1);
-#elif defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#elif defined(QGC_HAS_GST_D3D_GPU_PATH)
     QTest::newRow("gpu-caps-system-buffers")
         << true << QStringLiteral("memory:D3D11Memory") << int(GstQgc::RenderBackend::Direct3D11) << false << qint64(3)
         << quint64(1);
@@ -982,7 +980,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget_data()
 #endif
     // No D3D12Memory: Qt's device isn't known to open it here.
     QStringList direct3D11;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     direct3D11 << QStringLiteral("memory:D3D11Memory");
 #endif
 
@@ -1151,7 +1149,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError_data()
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QTest::newRow("gpu caps") << QStringLiteral("memory:DMABuf") << int(GstQgc::RenderBackend::OpenGL)
                               << QStringLiteral("CPU fallback from a GPU path");
-#elif defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#elif defined(QGC_HAS_GST_D3D_GPU_PATH)
     QTest::newRow("gpu caps") << QStringLiteral("memory:D3D11Memory") << int(GstQgc::RenderBackend::Direct3D11)
                               << QStringLiteral("CPU fallback from a GPU path");
 #endif
@@ -1366,7 +1364,7 @@ void GstQgcSinkTest::_testGpuBinSelection_data()
     QTest::newRow("dmabuf-opengl-not-egl-explicit") << directDmaBuf << true << openGl << false << directDmaBuf;
     QTest::newRow("passthrough-vulkan") << passthrough << false << vulkan << false << passthrough;
     const int direct3D12 = int(RenderBackend::Direct3D12);
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     // Direct3D12 has one GPU variant, whatever was asked for.
     const int d3d12Convert = int(GpuBinMode::D3D12Convert);
     QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << d3d12Convert;

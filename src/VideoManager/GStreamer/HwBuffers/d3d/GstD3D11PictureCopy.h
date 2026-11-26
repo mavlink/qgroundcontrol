@@ -2,7 +2,7 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <d3d11.h>
 #include <private/qhwvideobuffer_p.h>
@@ -28,4 +28,4 @@ ID3D11Texture2D* copy(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11
 
 }  // namespace GstD3D11PictureCopy
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

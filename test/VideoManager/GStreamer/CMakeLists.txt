@@ -128,8 +128,7 @@ _qgc_gst_test_has(_qgc_test_dmabuf QGC_HAS_GST_DMABUF_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_dmabuf_vulkan QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
 _qgc_gst_test_has(_qgc_test_glmemory QGC_HAS_GST_GLMEMORY_GPU_PATH)
 _qgc_gst_test_has(_qgc_test_iosurface QGC_HAS_GST_IOSURFACE_GPU_PATH)
-_qgc_gst_test_has(_qgc_test_d3d11 QGC_HAS_GST_D3D11_GPU_PATH)
-_qgc_gst_test_has(_qgc_test_d3d12 QGC_HAS_GST_D3D12_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_d3d QGC_HAS_GST_D3D_GPU_PATH)
 
 # moc reads these definitions in the test headers, and the classes built follow them, but AUTOMOC reruns moc in an
 # existing build directory only when the files it read change. Removing its timestamp when the definitions change makes
@@ -167,7 +166,7 @@ if(_qgc_test_dmabuf)
     add_qgc_test(GstHwBuffersDmaBufPipelineTest LABELS Integration GPU)
 endif()
 
-if(WIN32 AND (_qgc_test_d3d11 OR _qgc_test_d3d12))
+if(_qgc_test_d3d)
     target_sources(
         QGCUnitTests
         PRIVATE

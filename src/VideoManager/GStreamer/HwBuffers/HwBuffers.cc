@@ -303,7 +303,7 @@ bool dmaBufImportDisabled() noexcept
 
 qint64 graphicsAdapterLuid() noexcept
 {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     return QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire);
 #else
     return 0;
@@ -328,7 +328,7 @@ void setGraphicsDevicePublishedHandler([[maybe_unused]] void (*handler)()) noexc
 
 bool d3d11OpensD3D12() noexcept
 {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
     return QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire);
 #else
     return false;

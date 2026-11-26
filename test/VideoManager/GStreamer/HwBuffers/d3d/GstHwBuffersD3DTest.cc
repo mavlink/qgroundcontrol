@@ -16,19 +16,14 @@
 #include "GStreamer.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
+#include "GstD3D11ContextBridge.h"
+#include "GstD3D12ContextBridge.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwVideoBuffer.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "QGCRhiCapture.h"
 #include "gstqgc/GstQgcFrameMap.h"
 #include "gstqgc/GstQgcTestSupport.h"
-
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11ContextBridge.h"
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-#include "GstD3D12ContextBridge.h"
-#endif
 
 namespace {
 
@@ -53,20 +48,16 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
 {
     std::unique_ptr<QRhi> rhi;
     switch (api) {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         case QRhi::D3D11: {
             QRhiD3D11InitParams params;
             rhi.reset(createD3DRhi(QRhi::D3D11, &params));
             break;
         }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
         case QRhi::D3D12: {
             QRhiD3D12InitParams params;
             rhi.reset(createD3DRhi(QRhi::D3D12, &params));
             break;
         }
-#endif
         default:
             break;
     }
@@ -112,16 +103,12 @@ GStreamer::GstObjectPtr bridgeDevice(HwVideoBufferPath path)
 {
     GstObject* device = nullptr;
     switch (path) {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         case HwVideoBufferPath::D3D11:
             device = GST_OBJECT_CAST(GstD3D11ContextBridge::currentDevice());
             break;
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
         case HwVideoBufferPath::D3D12:
             device = GST_OBJECT_CAST(GstD3D12ContextBridge::currentDevice());
             break;
-#endif
         default:
             break;
     }
@@ -143,19 +130,15 @@ struct D3DSample
     }
 };
 
-/// @p path's context bridge; null when the path isn't compiled in.
+/// @p path's context bridge; null for a path that isn't a Direct3D one.
 GstContextBridgeBase* d3dContextBridge(HwVideoBufferPath path)
 {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     if (path == HwVideoBufferPath::D3D11) {
         return &GstD3D11ContextBridge::instance();
     }
-#endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     if (path == HwVideoBufferPath::D3D12) {
         return &GstD3D12ContextBridge::instance();
     }
-#endif
     return nullptr;
 }
 
@@ -302,19 +285,15 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
 
 }  // namespace
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 void GstHwBuffersD3DTest::_testD3D11MemoryDispatch()
 {
     testD3DMemoryDispatch("d3d11upload", "video/x-raw(memory:D3D11Memory)", HwVideoBufferPath::D3D11);
 }
-#endif
 
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
 void GstHwBuffersD3DTest::_testD3D12MemoryDispatch()
 {
     testD3DMemoryDispatch("d3d12upload", "video/x-raw(memory:D3D12Memory)", HwVideoBufferPath::D3D12);
 }
-#endif
 
 void GstHwBuffersD3DTest::_testD3DMapTexturesWithQRhi_data()
 {
@@ -353,9 +332,7 @@ void GstHwBuffersD3DTest::_testD3DMapTexturesWithQRhi()
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
     const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
     GstContextBridgeBase* const bridge = d3dContextBridge(hwPath);
-    if (!bridge) {
-        QSKIP("This D3D GPU path is not compiled in this build");
-    }
+    QVERIFY(bridge);
 
     const SnapshotGuard snapshotGuard;
     // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
@@ -399,9 +376,7 @@ void GstHwBuffersD3DTest::_testD3DFrameToImage()
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
     const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
     GstContextBridgeBase* const bridge = d3dContextBridge(hwPath);
-    if (!bridge) {
-        QSKIP("This D3D GPU path is not compiled in this build");
-    }
+    QVERIFY(bridge);
 
     const SnapshotGuard snapshotGuard;
     // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
@@ -455,9 +430,7 @@ void GstHwBuffersD3DTest::_testD3DBridgeDropsRemovedDevice()
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
     const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
     GstContextBridgeBase* const bridge = d3dContextBridge(hwPath);
-    if (!bridge) {
-        QSKIP("This D3D GPU path is not compiled in this build");
-    }
+    QVERIFY(bridge);
 
     const SnapshotGuard snapshotGuard;
     // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
@@ -484,7 +457,6 @@ void GstHwBuffersD3DTest::_testD3DBridgeDropsRemovedDevice()
                               TestTimeout::mediumMs());
 }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 void GstHwBuffersD3DTest::_testWindowsGpuSinkPreservesSoftwarePixels()
 {
     GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
@@ -525,6 +497,5 @@ void GstHwBuffersD3DTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
     QVERIFY(result.frameCount > 0);
     QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_NV12);
 }
-#endif
 
 UT_REGISTER_TEST(GstHwBuffersD3DTest, TestLabel::Integration)

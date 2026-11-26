@@ -2,7 +2,7 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <gst/gst.h>
 
@@ -63,4 +63,4 @@ private:
     bool _warnedWrongBackend = false;
 };
 
-#endif  // QGC_HAS_GST_D3D11_GPU_PATH || QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH

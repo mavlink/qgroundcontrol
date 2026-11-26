@@ -1,26 +1,22 @@
 #include "GstD3DVideoBufferCommon.h"
 
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D_GPU_PATH)
 
 #include <array>
 #include <atomic>
+#include <d3d11_4.h>  // ID3D11Device5, ID3D11DeviceContext4, ID3D11Fence
 #include <d3d12.h>
 #include <gst/d3d12/gstd3d12.h>
 #include <rhi/qrhi_platform.h>
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include <d3d11_4.h>  // ID3D11Device5, ID3D11DeviceContext4, ID3D11Fence
 
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
-#endif
 
+#include "GstD3D11PictureCopy.h"
 #include "GstD3D12ContextBridge.h"
 #include "GstHwPathRegistry.h"
 #include "QGCLoggingCategory.h"
 #include "QGCRhiCapture.h"
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include "GstD3D11PictureCopy.h"
-#endif
 
 QGC_LOGGING_CATEGORY(GstD3D12Log, "Video.GStreamer.HwBuffers.GstD3D12Buf")
 
@@ -40,7 +36,6 @@ bool d3d12RhiSamples(QVideoFrameFormat::PixelFormat pixelFormat)
     return description && (description->nplanes == 1);
 }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 /// True when @p device says it opens a Direct3D 12 device's resources as textures, NV12 with both planes: what
 /// gst-d3d11 asks of a device before its own interop (gst_d3d11_device_d3d12_import_supported()). WARP says so too
 /// and then opens NV12 without its chroma plane, but no decoder shares its adapter.
@@ -56,7 +51,6 @@ bool d3d11OpensD3D12(ID3D11Device* device)
            SUCCEEDED(device->CheckFeatureSupport(D3D11_FEATURE_D3D11_OPTIONS4, &options4, sizeof(options4))) &&
            options4.ExtendedNV12SharedTextureSupported;
 }
-#endif
 
 /// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes().
 class D3D12PlaneResolver
@@ -130,7 +124,6 @@ bool onDevice(ID3D12Resource* resource, void* qrhiDevice)
     return same;
 }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 /// A fence the Direct3D 11 context of Qt's device signals and a Direct3D 12 device waits on. The two devices order
 /// nothing between them, so this is what tells that Direct3D 11 is done reading a resource of the other.
 class InteropFence
@@ -232,7 +225,6 @@ std::shared_ptr<InteropFence> interopFence(ID3D11Device* device11, ID3D12Device*
     }
     return s_interopFence->isValid() ? s_interopFence : nullptr;
 }
-#endif
 
 /// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard and the decoder sync run in the
 /// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so importTextures() on the
@@ -256,7 +248,6 @@ public:
         (void) resolve(resolver);
     }
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     ~D3D12VideoBuffer() override
     {
         // The decoder writes its next frame into this resource once the sample goes: not before Direct3D 11 copied it.
@@ -264,15 +255,12 @@ public:
             _readFence->wait(_readValue);
         }
     }
-#endif
 
-    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, [[maybe_unused]] QVideoFrameTexturesUPtr& old) override
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         if (rhi.backend() == QRhi::D3D11) {
             return mapOnD3D11(rhi, old);
         }
-#endif
         if (!beginMap(rhi, QRhi::D3D12)) {
             return {};
         }
@@ -292,7 +280,6 @@ public:
     }
 
 private:
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     /// importTextures() for a Direct3D 11 QRhi.
     QVideoFrameTexturesUPtr mapOnD3D11(QRhi& rhi, QVideoFrameTexturesUPtr& old)
     {
@@ -334,10 +321,8 @@ private:
     /// What mapOnD3D11() signalled last, for the destructor to wait on.
     std::shared_ptr<InteropFence> _readFence;
     quint64 _readValue = 0;
-#endif
 };
 
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 /// HwPathDescriptor::probeDevice: whether the Direct3D 11 device Qt Quick renders with takes this path's frames, for
 /// the sink to offer their memory.
 void probeDevice(QRhi& rhi)
@@ -347,16 +332,13 @@ void probeDevice(QRhi& rhi)
     auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
     QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.store(device && d3d11OpensD3D12(device), std::memory_order_release);
 }
-#endif
 
 void resetCachedState() noexcept
 {
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     {
         const QMutexLocker lock(&s_interopFenceMutex);
         s_interopFence.reset();
     }
-#endif
 }
 
 }  // namespace
@@ -365,11 +347,9 @@ constinit const HwPathDescriptor GstHwPaths::kD3D12 = {
     .path = HwVideoBufferPath::D3D12,
     .matches = [](GstMemory* mem) -> bool { return gst_is_d3d12_memory(mem); },
     .construct = &GstHwPaths::construct<D3D12VideoBuffer>,
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     .probeDevice = &probeDevice,
-#endif
     .resetCaches = &resetCachedState,
     .bridge = &GstD3D12ContextBridge::instance,
 };
 
-#endif  // QGC_HAS_GST_D3D12_GPU_PATH
+#endif  // QGC_HAS_GST_D3D_GPU_PATH
