@@ -521,10 +521,13 @@ cmake --preset Linux-debug -B build-tsan -DQGC_ENABLE_TSAN=ON
 cmake --build build-tsan && ctest --test-dir build-tsan -L "Unit|Integration" -LE "Flaky|Network|NoSanitizer"
 ```
 
-Most of its reports are false with the Qt, GLib and GStreamer binaries QGC builds against. None of them is built with
-ThreadSanitizer, which therefore sees neither their locks nor an event or a buffer passing from one thread to another:
-it reports a race between an object's allocation on one thread and its use on the next, also where an atomic or a
-mutex guards it. Every test reports some as it shuts down, and a GStreamer test class hundreds.
+Many of its reports are false with the Qt, GLib and GStreamer binaries QGC builds against, none of which is built
+with ThreadSanitizer. It intercepts pthread mutexes in every library, instrumented or not, but on Linux `QMutex` and
+GLib's `GMutex` lock with atomics and futexes of their own, which it sees only in instrumented code, and it doesn't see
+an event or a buffer handed from one thread to another inside those libraries. It then reports a race between an
+object's allocation on one thread and its use on the next where such a lock or an atomic guards it: every test reports
+some as it shuts down, and a GStreamer test class hundreds. That makes no single report false. Before suppressing one,
+check that what orders its two accesses is something the tool can't see.
 
 `cmake/QGCTest.cmake` sets the enabled sanitizers' `*SAN_OPTIONS` (each with `halt_on_error=1`, plus the
 suppression files generated in the build directory) on every CTest test, replacing any value in your shell. Run the
