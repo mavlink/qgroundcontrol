@@ -7,11 +7,15 @@ import math
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .copernicus import load_cells
 from .jobs import completed_jobs, parse_job, select_jobs
 from .metadata import NOTICE_SEVERITIES
 from .tilemath import JOB_ZOOM, MAX_ZOOM, TileKey, all_tiles, tiles_in_bbox
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Small validation areas: high relief, coastlines, flat plains, each hemisphere, every
 # Copernicus longitude-spacing band, a band boundary (60N), GLO-90 gap filling, and the
@@ -41,11 +45,17 @@ def _source_cache(out: Path) -> Path:
     return out / "_source"
 
 
-def _positive_int(text: str) -> int:
-    value = int(text)
-    if value < 1:
-        raise argparse.ArgumentTypeError(f"must be at least 1, got {value}")
-    return value
+def _int_at_least(minimum: int) -> Callable[[str], int]:
+    def integer(text: str) -> int:
+        value = int(text)
+        if value < minimum:
+            raise argparse.ArgumentTypeError(f"must be at least {minimum}, got {value}")
+        return value
+
+    return integer
+
+
+_positive_int = _int_at_least(1)
 
 
 def _meters(value: float, width: int) -> str:
@@ -68,7 +78,7 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     jobs = _selected_jobs(args)
     cells = load_cells(_source_cache(args.out))
     print(f"{len(jobs)} z{JOB_ZOOM} jobs, {args.workers} workers -> {args.out}", flush=True)
-    failures = generate(args.out, jobs, cells, args.workers, args.force)
+    failures = generate(args.out, jobs, cells, args.workers, args.force, retries=args.retries)
     if failures:
         print(f"{failures} job(s) failed; rerun to retry them")
     return 1 if failures else 0
@@ -279,6 +289,14 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--all", action="store_true", help=f"Every z{JOB_ZOOM} job (full globe)")
     generate.add_argument("--workers", type=_positive_int, default=os.cpu_count() or 1)
     generate.add_argument("--force", action="store_true", help="Regenerate completed jobs")
+    generate.add_argument(
+        "--retries",
+        type=_int_at_least(0),
+        default=0,
+        metavar="N",
+        help="Rerun failed jobs, and those a crashed worker left unrun, up to N more times, "
+        "each after a short pause",
+    )
 
     overviews = add_command(
         "overviews", f"Build z{JOB_ZOOM - 1}..z0 from existing z{JOB_ZOOM} tiles", _cmd_overviews
