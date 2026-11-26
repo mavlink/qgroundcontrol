@@ -68,6 +68,7 @@ private slots:
 
     // Button action tests
     void _buttonActionAssignmentTest();
+    void _buttonAssignmentEditorTest();
     void _buttonActionUnknownActionPreservedTest();
     void _buttonActionUnknownActionSaveRoundTripTest();
     void _buttonActionAvailableListRebuildTest();

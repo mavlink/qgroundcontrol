@@ -9,98 +9,168 @@ import QGroundControl.VehicleSetup
 import QGroundControl.FactControls
 
 ColumnLayout {
-    spacing: ScreenTools.defaultFontPixelHeight / 2
+    id: root
 
     required property var joystick
     required property var controller
 
     property int _maxButtons: 64
 
+    property var _draft: null
+    property bool _justSaved: false
+    readonly property int _button: buttonIndexCombo.currentIndex
+    readonly property var _actions: joystick?.assignableActionTitles ?? []
+    readonly property var _assignments: joystick ? joystick.buttonActions.map((action, button) => ({
+            button: button,
+            action: action,
+            repeat: action !== joystick.buttonActionNone && joystick.getButtonRepeat(button)
+        })) : []
+    readonly property var _saved: _assignments[_button]
+    readonly property string _action: _draft?.action ?? _saved?.action ?? joystick?.buttonActionNone ?? ""
+    readonly property bool _repeat: _draft?.repeat ?? _saved?.repeat ?? false
+    readonly property var _assignedButtons: _assignments.filter(binding => binding.action !== joystick?.buttonActionNone)
+
+    function _edit(action, repeat) {
+        _justSaved = false
+        _draft = action === _saved?.action && repeat === _saved?.repeat ? null : { action: action, repeat: repeat }
+    }
+
+    function _save() {
+        const button = _button
+        const draft = _draft
+        if (!_saved || !draft) {
+            return
+        }
+        _draft = null
+        if (draft.action !== _saved.action) {
+            joystick.setButtonAction(button, draft.action)
+        }
+        if (draft.action !== joystick.buttonActionNone && draft.repeat !== joystick.getButtonRepeat(button)) {
+            joystick.setButtonRepeat(button, draft.repeat)
+        }
+        _justSaved = true
+    }
+
+    on_ButtonChanged: _resetEditor()
+    onJoystickChanged: _resetEditor()
+
+    function _resetEditor() {
+        _draft = null
+        _justSaved = false
+    }
+
+    spacing: ScreenTools.defaultFontPixelHeight / 2
+
     QGCLabel {
-        Layout.preferredWidth: parent.width
+        Layout.fillWidth: true
         wrapMode: Text.WordWrap
         text: qsTr("Multiple buttons that have the same action must be pressed simultaneously to invoke the action.")
     }
 
     RowLayout {
-        id: buttonAssignmentRow
-        spacing: ScreenTools.defaultFontPixelWidth
+        Layout.fillWidth: true
+        visible: buttonIndexCombo.count > 0
 
-        property int selectedButtonIndex: 0
-        property var _assignedButtonModel: assignedButtonModel
-
-        function _rebuildAssignedButtonModel() {
-            assignedButtonModel.clear()
-            let buttonActions = joystick.buttonActions
-            for (let i = 0; i < joystick.buttonCount; i++) {
-                if (buttonActions[i] !== joystick.buttonActionNone) {
-                    assignedButtonModel.append( { "buttonIndex": i, "buttonAction": buttonActions[i], "repeat": joystick.getButtonRepeat(i) } )
-                }
-            }
-        }
-
-        Component.onCompleted: _rebuildAssignedButtonModel()
-        Connections { target: joystick; function onButtonActionsChanged() { buttonAssignmentRow._rebuildAssignedButtonModel() } }
-
-        ListModel {
-            id: assignedButtonModel
-        }
+        QGCLabel { text: qsTr("Button") }
 
         QGCComboBox {
             id: buttonIndexCombo
-            model: joystick.buttonCount
-
-            onActivated: (index) => { buttonAssignmentRow.selectedButtonIndex = index }
+            objectName: "joystickButtonNumber"
+            model: root.joystick?.buttonCount ?? 0
+            enabled: !root._draft
+            Accessible.name: qsTr("Button number")
         }
 
         QGCComboBox {
             id: buttonActionCombo
-            model: joystick.assignableActionTitles
+            objectName: "joystickButtonAction"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            model: root._actions
             sizeToContents: true
+            Accessible.name: qsTr("Button action")
+            currentIndex: root._actions.indexOf(root._action)
+            alternateText: currentIndex < 0 ? root._action : ""
 
-            onActivated: (index) => { joystick.setButtonAction(buttonAssignmentRow.selectedButtonIndex, textAt(index)) }
-
-            function _findCurrentButtonAction() {
-                let buttonActionIndex = find(joystick.buttonActions[buttonAssignmentRow.selectedButtonIndex])
-                if (buttonActionIndex < 0) {
-                    buttonActionIndex = 0
-                }
-                currentIndex = buttonActionIndex
-            }
-
-            Component.onCompleted: _findCurrentButtonAction()
-            Connections { target: buttonAssignmentRow; function onSelectedButtonIndexChanged() { buttonActionCombo._findCurrentButtonAction() } }
-        }
-
-        QGCCheckBox {
-            text: qsTr("Repeat")
-            checked: joystick.getButtonRepeat(buttonAssignmentRow.selectedButtonIndex)
-            enabled: buttonActionCombo.currentIndex === -1 ? false : (joystick.assignableActions.get(buttonActionCombo.currentIndex) ? joystick.assignableActions.get(buttonActionCombo.currentIndex).canRepeat : false)
-
-            onClicked: {
-                joystick.setButtonRepeat(buttonAssignmentRow.selectedButtonIndex, checked)
-                buttonAssignmentRow._rebuildAssignedButtonModel()
+            onActivated: index => {
+                const repeatable = !!root.joystick.assignableActions.get(index)?.canRepeat
+                root._edit(textAt(index), repeatable && root._repeat)
             }
         }
     }
 
-    GridLayout {
-        rows: buttonAssignmentRow._assignedButtonModel.count
-        columnSpacing: ScreenTools.defaultFontPixelWidth
-        rowSpacing: 0
-        flow: GridLayout.TopToBottom
+    QGCCheckBox {
+        objectName: "joystickButtonRepeat"
+        text: qsTr("Repeat")
+        visible: root._button >= 0
+        checked: root._repeat
+        enabled: buttonActionCombo.currentIndex >= 0 &&
+                 !!root.joystick.assignableActions.get(buttonActionCombo.currentIndex)?.canRepeat
+        onClicked: root._edit(root._action, checked)
+    }
 
-        Repeater {
-            model: buttonAssignmentRow._assignedButtonModel
-            QGCLabel { text: buttonIndex }
+    RowLayout {
+        visible: root._button >= 0
+
+        QGCButton {
+            objectName: "joystickButtonSave"
+            text: qsTr("Save")
+            primary: enabled
+            enabled: !!root._saved && !!root._draft && buttonActionCombo.currentIndex >= 0
+            onClicked: root._save()
         }
-        Repeater {
-            model: buttonAssignmentRow._assignedButtonModel
-            QGCLabel { text: buttonAction }
+
+        QGCButton {
+            objectName: "joystickButtonCancel"
+            text: qsTr("Cancel")
+            enabled: !!root._draft
+            onClicked: root._draft = null
         }
-        Repeater {
-            model: buttonAssignmentRow._assignedButtonModel
-            QGCLabel { text: repeat ? "Repeat" : "" }
+
+        QGCButton {
+            objectName: "joystickButtonRemove"
+            text: qsTr("Remove")
+            Accessible.name: qsTr("Remove button assignment")
+            enabled: !!root._saved && root._action !== root.joystick.buttonActionNone
+            onClicked: root._edit(root.joystick.buttonActionNone, false)
+        }
+    }
+
+    QGCLabel {
+        objectName: "joystickButtonSaveStatus"
+        visible: !!root._draft || root._justSaved
+        text: root._draft ? qsTr("Unsaved changes") : qsTr("Saved")
+    }
+
+    QGCLabel {
+        visible: root._assignedButtons.length > 0
+        text: qsTr("Saved assignments")
+        font.bold: true
+    }
+
+    Repeater {
+        model: root._assignedButtons
+
+        RowLayout {
+            required property var modelData
+            Layout.fillWidth: true
+
+            QGCLabel { text: qsTr("Button %1").arg(modelData.button) }
+            QGCLabel {
+                Layout.fillWidth: true
+                text: modelData.repeat ? qsTr("%1 (repeat)").arg(modelData.action) : modelData.action
+                elide: Text.ElideRight
+            }
+            QGCButton {
+                objectName: "joystickButtonEdit" + modelData.button
+                text: qsTr("Edit")
+                Accessible.name: qsTr("Edit button %1").arg(modelData.button)
+                enabled: !root._draft
+                onClicked: {
+                    buttonIndexCombo.currentIndex = modelData.button
+                    buttonActionCombo.forceActiveFocus()
+                }
+            }
         }
     }
 
