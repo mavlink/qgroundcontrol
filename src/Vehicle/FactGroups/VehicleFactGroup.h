@@ -84,7 +84,7 @@ protected:
     void _handleAltitude(const mavlink_message_t &message);
     void _handleVfrHud(const mavlink_message_t &message);
     void _handleRawImuTemp(const mavlink_message_t &message);
-    void _handleNavControllerOutput(const mavlink_message_t &message);
+    void _handleNavControllerOutput(Vehicle* vehicle, const mavlink_message_t& message);
     void _handleRangefinder(const mavlink_message_t &message);
 
     Fact _rollFact = Fact(0, QStringLiteral("roll"), FactMetaData::valueTypeDouble);
