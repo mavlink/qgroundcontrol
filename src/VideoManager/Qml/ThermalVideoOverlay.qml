@@ -21,7 +21,10 @@ Item {
     // behind another view the stream keeps decoding, so that coming back doesn't wait for a keyframe.
     readonly property bool _shown: root.videoManager.hasThermal && !!root.camera
                                    && root.camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
-    readonly property real _aspectRatio: root.videoManager.thermalAspectRatio
+    // The ratio of the thermal picture as its output shows it, as for the main picture. Until its first frame, the one
+    // the stream tells of, which keeps the overlay and what is placed beside it in shape.
+    readonly property real _aspectRatio: (outputLoader.item && outputLoader.item.aspectRatio > 0)
+                                         ? outputLoader.item.aspectRatio : root.videoManager.thermalStream.aspectRatio
     // Size of the thermal video blended over the main one, relative to the view.
     readonly property real _blendSizeFactor: 0.85
     // The view the overlay is placed in: none while it is created, and again while it is destroyed.
@@ -57,6 +60,7 @@ Item {
 
     // The stream decodes while it has an output: none while the overlay isn't shown.
     Loader {
+        id:                 outputLoader
         anchors.fill:       parent
         active:             root._shown
         opacity:            !root.camera ? 0

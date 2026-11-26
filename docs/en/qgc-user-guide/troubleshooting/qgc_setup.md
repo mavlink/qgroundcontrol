@@ -57,3 +57,8 @@ its dropdown shows the bitrate, decoder, display path and packet loss of each st
 These settings are described in [Application Settings > Video](../settings_view/video.md#settings). When you report a
 video problem, attach the [application log](console_logging.md), with the logging categories
 `Video.GStreamer.GstVideoReceiver` and `Video.VideoManager` turned on.
+
+When a stream played with GStreamer fails or stalls, _QGroundControl_ also saves a graph of its video pipeline as a
+`.dot` file in the `qgc-pipeline-dot` folder of its cache directory (on Linux, under `~/.cache/QGroundControl/`). It
+keeps the 10 newest files, and the log names each file it saves. Attach the newest one as well: it shows the pipeline's
+elements and formats but not their settings, so it holds no stream address or password.

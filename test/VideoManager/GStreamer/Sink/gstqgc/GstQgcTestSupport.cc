@@ -19,12 +19,12 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char
     const auto owner = std::make_unique<QObject>();
     // Declared after the binding's owner, so the pipeline stops first.
     GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(
-            QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3 ! qgcvideosinkbin name=sink gpu-zerocopy=%4")
-                .arg(QString::fromUtf8(sourceProperties))
-                .arg(numBuffers)
-                .arg(QString::fromUtf8(capsLine))
-                .arg(gpuZerocopy ? "true" : "false"))) {
+    if (!launchIntoSinkBin(pipeline,
+                           QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3")
+                               .arg(QString::fromUtf8(sourceProperties))
+                               .arg(numBuffers)
+                               .arg(QString::fromUtf8(capsLine)),
+                           {.gpuZeroCopy = gpuZerocopy})) {
         r.errorMessage = pipeline.error();
         return r;
     }

@@ -54,9 +54,12 @@ VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSett
     , _videoSettings(videoSettings)
     , _idle(role == Role::Thermal)
 {
-    // The setting stands in for the primary stream's ratio, which a stream in a tile may become.
-    (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this,
-                   &VideoStreamController::aspectRatioChanged);
+    _updateForcedAspectRatio();
+    (void) connect(_videoSettings->forcedAspectRatio(), &Fact::rawValueChanged, this, [this] {
+        _updateForcedAspectRatio();
+        // The sink of a stretched picture is built without the scaling to square pixels.
+        scheduleApply();
+    });
     _idleTimer.setSingleShot(true);
     _idleTimer.setInterval(kIdleGrace);
     (void) connect(&_idleTimer, &QTimer::timeout, this, &VideoStreamController::_onIdleTimeout);
@@ -75,7 +78,7 @@ void VideoStreamController::setRole(Role role)
     }
     _role = role;
     emit roleChanged();
-    emit aspectRatioChanged();
+    _updateForcedAspectRatio();
     scheduleApply();
 }
 
@@ -238,7 +241,22 @@ void VideoStreamController::_onStreamInfoChanged()
         emit videoSizeChanged();
     }
     emit aspectRatioChanged();
+    _updateForcedAspectRatio();
     scheduleApply();
+}
+
+void VideoStreamController::setTransform(int rotation, bool mirrored)
+{
+    if (rotation != _rotation) {
+        _rotation = rotation;
+        emit rotationChanged();
+        emit videoSizeChanged();
+        emit aspectRatioChanged();
+    }
+    if (mirrored != _mirrored) {
+        _mirrored = mirrored;
+        emit mirroredChanged();
+    }
 }
 
 void VideoStreamController::setCamera(const QString& camera)
@@ -272,7 +290,17 @@ std::optional<VideoReceiver::Config> VideoStreamController::_resolvedConfig() co
 
 VideoReceiver::DisplayConfig VideoStreamController::_resolvedDisplayConfig() const
 {
-    return VideoStreamResolver::displayConfig(VideoStreamResolver::snapshot(_videoSettings));
+    return VideoStreamResolver::displayConfig(VideoStreamResolver::snapshot(_videoSettings), _streamInfo, _role);
+}
+
+void VideoStreamController::_updateForcedAspectRatio()
+{
+    const double ratio =
+        VideoStreamResolver::forcedAspectRatio(VideoStreamResolver::snapshot(_videoSettings), _streamInfo, _role);
+    if (!qFuzzyCompare(ratio + 1.0, _forcedAspectRatio + 1.0)) {
+        _forcedAspectRatio = ratio;
+        emit forcedAspectRatioChanged();
+    }
 }
 
 void VideoStreamController::scheduleApply()
@@ -297,6 +325,11 @@ void VideoStreamController::_apply()
         return;
     }
 
+    // The sink's settings depend on what the source plays, and are fixed once its pipeline is built.
+    const VideoReceiver::DisplayConfig display = _resolvedDisplayConfig();
+    const bool displayChanged = (display != _receiver->displayConfig());
+    _receiver->setDisplayConfig(display);
+
     const bool wanted = _enabled && config.has_value();
     if (!wanted && _recordingRequested) {
         // The receiver ends its recording, one it has yet to begin too, as it stops.
@@ -314,6 +347,10 @@ void VideoStreamController::_apply()
     if (active) {
         _receiver->setConfig(*config);
         _receiver->setActive(true);
+        if (displayChanged) {
+            // Unlike a changed config, that alone rebuilds nothing.
+            _receiver->restart();
+        }
     } else {
         _receiver->setActive(false);
         if (config) {
@@ -359,8 +396,9 @@ void VideoStreamController::_forgetDecoded()
 
 void VideoStreamController::_updateReconnecting()
 {
-    const bool reconnecting =
-        _decoded && _receiver && !_receiver->decoding() && (_receiver->state() != VideoReceiver::State::Stopped);
+    // A camera that stops ends its stream with an empty frame: one that failed has none to keep up while it is retried.
+    const bool reconnecting = (_role != Role::Camera) && _decoded && _receiver && !_receiver->decoding() &&
+                              (_receiver->state() != VideoReceiver::State::Stopped);
     if (reconnecting != _reconnecting) {
         _reconnecting = reconnecting;
         qCDebug(VideoStreamControllerLog) << name() << "reconnecting" << reconnecting;
@@ -541,12 +579,11 @@ double VideoStreamController::aspectRatio() const
     if (!size.isEmpty()) {
         return static_cast<double>(size.width()) / size.height();
     }
-    // A camera that advertises no resolution leaves the ratio to the setting.
     if (_streamInfo && !_streamInfo->resolution().isEmpty()) {
         const double advertised = _streamInfo->aspectRatio();
         return ((_rotation % 180) != 0) ? (1.0 / advertised) : advertised;
     }
-    return (_role == Role::Primary) ? _videoSettings->aspectRatio()->rawValue().toDouble() : 1.0;
+    return 1.0;
 }
 
 VideoStreamStats VideoStreamController::stats() const

@@ -80,12 +80,38 @@ function(_qgc_gst_android_sdk_pkg_config root host out_var)
     )
 endfunction()
 
+# _qgc_gst_android_abi_root(<root> <abi> <out_root>)
+# Sets <out_root> to the SDK tree for <abi> at or under <root>: <root> itself when it is one ABI's tree, else its
+# directory for <abi> (_qgc_gst_android_abi_info), as a universal SDK has one per ABI: the official tarball unpacked,
+# or a universal build of tools/setup/build_gstreamer.py. Fails configure when <root> holds neither.
+function(_qgc_gst_android_abi_root root abi out_root)
+    set(_pc "lib/pkgconfig/gstreamer-1.0.pc")
+    string(REGEX REPLACE "/+$" "" _root "${root}")
+    if(NOT EXISTS "${_root}/${_pc}")
+        _qgc_gst_android_abi_info("${abi}" _abi)
+        if(NOT EXISTS "${_root}/${_abi_DIR}/${_pc}")
+            message(
+                FATAL_ERROR "GStreamer: GStreamer_ROOT_DIR '${root}' is neither an Android SDK tree (no ${_pc}) nor a "
+                            "universal SDK with an ${_abi_DIR}/ tree for ${abi}."
+            )
+        endif()
+        string(APPEND _root "/${_abi_DIR}")
+    endif()
+    set(${out_root}
+        "${_root}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # _qgc_gst_discover_android_sdk()
-# Uses the SDK under GStreamer_ROOT_DIR, else extracts the CMAKE_ANDROID_ARCH_ABI tree of the downloaded universal SDK.
+# Uses the SDK at GStreamer_ROOT_DIR, or its tree for CMAKE_ANDROID_ARCH_ABI (_qgc_gst_android_abi_root), else extracts
+# that tree of the downloaded universal SDK.
 # Windows and macOS hosts use the pkg-config the SDK bundles for them (_qgc_gst_android_sdk_pkg_config).
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_android_sdk)
-    if(NOT GStreamer_ROOT_DIR)
+    if(GStreamer_ROOT_DIR)
+        _qgc_gst_android_abi_root("${GStreamer_ROOT_DIR}" "${CMAKE_ANDROID_ARCH_ABI}" GStreamer_ROOT_DIR)
+    else()
         _qgc_gst_android_abi_info("${CMAKE_ANDROID_ARCH_ABI}" _gst_android_abi)
         _qgc_gst_space_free_download_cache()
         _qgc_gst_acquire_android_sdk(${_gst_android_abi_DIR} GStreamer_ROOT_DIR)

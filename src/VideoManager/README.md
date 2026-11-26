@@ -52,12 +52,15 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 
 ## The rules the folders keep
 
-- `VideoSettings` is read by `VideoManager.cc`, `Streams/` and `Recording/VideoRecordingService.cc` only, and the
-  vehicle and its cameras are known to this folder, `Streams/` and `Recording/TelemetryBarValues.cc` only. A receiver
-  gets a `VideoReceiver::Config` and a `VideoReceiver::DisplayConfig`.
+- `VideoSettings` is read by `VideoManager.cc`, `Streams/`, `Recording/VideoRecordingService.cc` and
+  `Receiver/VideoBackend.cc` (the backend setting) only, and the vehicle and its cameras are known to this folder,
+  `Streams/` and `Recording/TelemetryBarValues.cc` only. A receiver gets a `VideoReceiver::Config` and a
+  `VideoReceiver::DisplayConfig`.
 - `Receiver/` names a backend in one place, `VideoBackend::instance()`.
-- The backends include each other in two places: `GStreamerVideoBackend` makes `QtMultimediaVideoReceiver`s once
-  GStreamer failed to start, and `UVC/` records with `QtMultimedia/QtVideoRecorder`.
+- A stream's receiver is chosen in one place, `VideoBackend::createReceiver()`: GStreamer's where the build has it,
+  it started and the backend setting asks for it, else Qt Multimedia's. `VideoManager` reaches it through
+  `QGCCorePlugin::createVideoReceiver()`, which a custom build overrides to supply its own.
+- The backends include each other in one place: `UVC/` records with `QtMultimedia/QtVideoRecorder`.
 - Inside `GStreamer/` the includes point one way: `GStreamerVideoBackend` and `SelfTest/`, then `Pipeline/`, then
   `Source/`, then `Runtime/`.
 - `HwBuffers/` and `Sink/gstqgc/` are the static library `QGCGStreamer`, which is not a unity build. Of the folders
@@ -82,7 +85,8 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 8. `Qml/VideoStreamOutput.qml` shows it, inside `VideoView.qml` or `VideoTile.qml`.
 
 The other receivers take fewer steps. `QtMultimedia/QtMultimediaVideoReceiver` has a `QMediaPlayer` play into the
-`QVideoSink`. `UVC/UVCCameraController` puts a `QCamera` in a capture session, which `Qml/UVCVideoOutput.qml` shows.
+`QVideoSink`. `UVC/UVCCameraController` puts a `QCamera` in a capture session, which plays into it. Every source's
+output is a `Qml/VideoStreamOutput.qml`, registered with the source's `VideoStreamController`.
 
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
 `GStreamer/Sink/gstqgc/GstQgcSinkCounters`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
@@ -109,8 +113,11 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 
 - The video source, its URLs, the latency and reconnect settings, and which tiles there are: the sources resolve their
   config again, and a receiver restarts for a changed config.
-- `videoConversionElement`, `disablePixelAspectRatio`, `forceCpuVideoPath`: the sources restart, which rebuilds the
-  display sink.
+- `videoConversionElement`, `forceCpuVideoPath`: the sources restart, which rebuilds the display sink.
+- `forcedAspectRatio`: each `VideoStreamController` follows it. The manually configured stream's outputs
+  (`Qml/VideoStreamOutput.qml`) stretch its picture to the ratio, and a screenshot with it; its display sink is then
+  built without the scaling to square pixels, so the stream restarts when the setting changes between Auto and a
+  ratio.
 - `forceVideoDecoder`: the decoder ranks are applied again, and the sources restart.
 - `videoBackend`: each stream gets a new receiver.
 - The USB camera's settings (`uvcCameraFormat`, `uvcZoom` and the like) go to `UVCCameraController`. The recording

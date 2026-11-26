@@ -15,11 +15,6 @@ DEFAULT_EXPORT_KEYS = [
     "qt.version",
     "qt.minimum_version",
     "qt.modules",
-    "gstreamer.version.minimum",
-    "gstreamer.version.macos",
-    "gstreamer.version.ios",
-    "gstreamer.version.android",
-    "gstreamer.version.windows",
     "apple.xcode_version",
     "apple.xcode_ios_version",
     "apple.macos_deployment_target",
@@ -164,15 +159,6 @@ def derive_ios_qt_modules(qt_modules: str) -> str:
     return " ".join(modules)
 
 
-_GSTREAMER_VERSION_ENV_NAMES: dict[str, str] = {
-    "gstreamer.version.minimum": "GSTREAMER_MINIMUM_VERSION",
-    "gstreamer.version.android": "GSTREAMER_ANDROID_VERSION",
-    "gstreamer.version.ios": "GSTREAMER_IOS_VERSION",
-    "gstreamer.version.macos": "GSTREAMER_MACOS_VERSION",
-    "gstreamer.version.windows": "GSTREAMER_WINDOWS_VERSION",
-}
-
-
 def export_build_config_values(
     config: dict[str, Any],
     *,
@@ -183,8 +169,7 @@ def export_build_config_values(
     for key in keys or DEFAULT_EXPORT_KEYS:
         value = lookup_dotted(config, key, None)
         if value is not None:
-            primary = _GSTREAMER_VERSION_ENV_NAMES.get(key, key.replace(".", "_").upper())
-            exported[primary] = str(value)
+            exported[key.replace(".", "_").upper()] = str(value)
     return exported
 
 

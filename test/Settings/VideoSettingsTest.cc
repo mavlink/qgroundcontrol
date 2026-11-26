@@ -39,6 +39,26 @@ void VideoSettingsTest::_videoFitEnumMatchesMetaData()
     QCOMPARE(values.at(3).toInt(), static_cast<int>(VideoSettings::VideoFitNoCrop));
 }
 
+void VideoSettingsTest::_forcedAspectRatioLabelsAreTheirRatios()
+{
+    VideoSettings videoSettings;
+    const Fact* const forcedAspectRatio = videoSettings.forcedAspectRatio();
+    const QStringList labels = forcedAspectRatio->enumStrings();
+    const QVariantList values = forcedAspectRatio->enumValues();
+    QCOMPARE(labels.size(), values.size());
+    QVERIFY(labels.size() > 1);
+    QCOMPARE(labels.first(), QStringLiteral("Auto"));
+    QCOMPARE(values.first().toInt(), static_cast<int>(VideoSettings::AspectRatioAuto));
+    QCOMPARE(VideoSettings::aspectRatioOf(values.first().toInt()), 0.0);
+
+    // Every other choice is labelled with the ratio it stretches the video to, as "16:9".
+    for (qsizetype i = 1; i < labels.size(); ++i) {
+        const QStringList terms = labels.at(i).split(QLatin1Char(':'));
+        QCOMPARE(terms.size(), 2);
+        QCOMPARE(VideoSettings::aspectRatioOf(values.at(i).toInt()), terms.at(0).toDouble() / terms.at(1).toDouble());
+    }
+}
+
 void VideoSettingsTest::_videoSourcesFollowCameras()
 {
     // The test's cameras stand in for this computer's. _updateVideoSources() is what a camera plugged in or unplugged

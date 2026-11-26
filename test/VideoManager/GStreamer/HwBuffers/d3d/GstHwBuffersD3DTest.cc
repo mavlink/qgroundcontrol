@@ -1,31 +1,28 @@
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/d3d/GstHwBuffersD3DTest.h"
 
+#include <algorithm>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
 #include <memory>
 #include <rhi/qrhi.h>
+#include <rhi/qrhi_platform.h>
+#include <thread>
 
 #include <QtCore/QScopeGuard>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
+#include "CpuVideoFramePool.h"
 #include "GStreamer.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
+#include "GstHwFrameTexturesBase.h"
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
-#include "gstqgc/GstQgcTestSupport.h"
-
-#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
-#include <algorithm>
-#include <rhi/qrhi_platform.h>
-#include <thread>
-
-#include "CpuVideoFramePool.h"
-#include "GstHwFrameTexturesBase.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "QGCRhiCapture.h"
+#include "gstqgc/GstQgcTestSupport.h"
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 #include "GstD3D11ContextBridge.h"
@@ -316,28 +313,23 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 }
 
-} // namespace
-#endif
+}  // namespace
 
-void GstHwBuffersPipelineTest::_testD3D11MemoryDispatch()
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+void GstHwBuffersD3DTest::_testD3D11MemoryDispatch()
 {
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
     testD3DMemoryDispatch("d3d11upload", "video/x-raw(memory:D3D11Memory)", HwVideoBufferPath::D3D11);
-#else
-    QSKIP("D3D11 GPU path not compiled in this build");
-#endif
 }
+#endif
 
-void GstHwBuffersPipelineTest::_testD3D12MemoryDispatch()
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+void GstHwBuffersD3DTest::_testD3D12MemoryDispatch()
 {
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
     testD3DMemoryDispatch("d3d12upload", "video/x-raw(memory:D3D12Memory)", HwVideoBufferPath::D3D12);
-#else
-    QSKIP("D3D12 GPU path not compiled in this build");
-#endif
 }
+#endif
 
-void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
+void GstHwBuffersD3DTest::_testD3DMapTexturesWithQRhi_data()
 {
     QTest::addColumn<int>("path");
     QTest::addColumn<int>("rhiApi");            ///< What Qt renders with.
@@ -362,11 +354,8 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
     QTest::newRow("d3d12-nv12-on-d3d11") << d3d12 << int(QRhi::D3D11) << nv12 << nv12 << nv12Frame << 2;
 }
 
-void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
+void GstHwBuffersD3DTest::_testD3DMapTexturesWithQRhi()
 {
-#if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
-    QSKIP("D3D GPU paths not compiled in this build");
-#else
     QFETCH(int, path);
     QFETCH(int, rhiApi);
     QFETCH(QString, format);
@@ -405,19 +394,15 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
     const QByteArray memoryCaps = d3dMemoryCaps(api, format, outputFormat);
     testD3DMapTextures(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), planes, hwPath);
-#endif
 }
 
-void GstHwBuffersPipelineTest::_testD3DFrameToImage_data()
+void GstHwBuffersD3DTest::_testD3DFrameToImage_data()
 {
     _testD3DMapTexturesWithQRhi_data();
 }
 
-void GstHwBuffersPipelineTest::_testD3DFrameToImage()
+void GstHwBuffersD3DTest::_testD3DFrameToImage()
 {
-#if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
-    QSKIP("D3D GPU paths not compiled in this build");
-#else
     QFETCH(int, path);
     QFETCH(int, rhiApi);
     QFETCH(QString, format);
@@ -466,10 +451,9 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
         *rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
         converted ? "videoconvert" : "identity", converted ? cpuCaps.constData() : inputCaps.constData(),
         static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), (format == QStringLiteral("NV12")), hwPath);
-#endif
 }
 
-void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice_data()
+void GstHwBuffersD3DTest::_testD3DBridgeDropsRemovedDevice_data()
 {
     QTest::addColumn<int>("path");
 
@@ -477,11 +461,8 @@ void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice_data()
     QTest::newRow("d3d12") << int(HwVideoBufferPath::D3D12);
 }
 
-void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice()
+void GstHwBuffersD3DTest::_testD3DBridgeDropsRemovedDevice()
 {
-#if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
-    QSKIP("D3D GPU paths not compiled in this build");
-#else
     QFETCH(int, path);
 
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
@@ -514,12 +495,12 @@ void GstHwBuffersPipelineTest::_testD3DBridgeDropsRemovedDevice()
     std::thread([&device] { g_object_notify(G_OBJECT(device.get()), "device-removed-reason"); }).join();
     QTRY_VERIFY2_WITH_TIMEOUT(!bridgeDevice(hwPath), "The bridge still shares the device GStreamer reported removed",
                               TestTimeout::mediumMs());
-#endif
 }
 
-void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesSoftwarePixels()
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+void GstHwBuffersD3DTest::_testWindowsGpuSinkPreservesSoftwarePixels()
 {
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     // Mapping the center pixel converts on the CPU when Qt Multimedia finds no RHI for this thread, and says so.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     QVideoSink videoSink;
@@ -537,15 +518,11 @@ void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesSoftwarePixels()
                                 .arg(result.centerPixel.red())
                                 .arg(result.centerPixel.green())
                                 .arg(result.centerPixel.blue())));
-#else
-    QSKIP("Windows D3D11 GPU sink path is unavailable in this build");
-#endif
 }
 
-void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
+void GstHwBuffersD3DTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
 {
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    GSTTEST_SKIP_UNLESS_FACTORIES("d3d11upload");
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "d3d11upload");
 
     QVideoSink videoSink;
     auto result = GstQgcTest::runPipelineThroughQVideoSink(
@@ -560,7 +537,7 @@ void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
     QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("D3D11 pipeline: %1").arg(result.errorMessage)));
     QVERIFY(result.frameCount > 0);
     QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_NV12);
-#else
-    QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
-#endif
 }
+#endif
+
+UT_REGISTER_TEST(GstHwBuffersD3DTest, TestLabel::Integration)

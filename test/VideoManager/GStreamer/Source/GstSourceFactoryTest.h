@@ -11,8 +11,8 @@ class GstSourceFactoryTest : public GStreamerTestBase
 private slots:
     void _testIsValidRtspUri();
     void _testSourceFactoryUdpRtpJitterBuffer();
-    void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data();
-    void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer();
+    void _testSourceFactoryCountsRtpPacketsOverUdp_data();
+    void _testSourceFactoryCountsRtpPacketsOverUdp();
     void _testSourceFactoryRtspJitterBufferPolicy_data();
     void _testSourceFactoryRtspJitterBufferPolicy();
     void _testSourceFactoryRtspUdpBufferSize();

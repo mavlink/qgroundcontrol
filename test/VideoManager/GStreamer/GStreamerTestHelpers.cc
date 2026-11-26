@@ -314,6 +314,41 @@ bool TestPipeline::launch(const QString& description)
     return true;
 }
 
+bool TestPipeline::launchInto(const QString& description, GstElement* sink)
+{
+    const GStreamer::GstElementPtr sinkOwner =
+        sink ? GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(sink))) : GStreamer::GstElementPtr();
+    if (!sinkOwner) {
+        _error = QStringLiteral("no sink to launch into");
+        return false;
+    }
+    const QString separator = QStringLiteral(" ! ");
+    const qsizetype lastLink = description.lastIndexOf(separator);
+    const QString lastItem = description.mid((lastLink < 0) ? 0 : (lastLink + separator.size())).trimmed();
+    const bool filtered = (lastLink >= 0) && lastItem.startsWith(QLatin1String("video/x-raw"));
+    const GStreamer::GstCapsPtr filter =
+        filtered ? GStreamer::adoptCaps(gst_caps_from_string(lastItem.toUtf8().constData())) : GStreamer::GstCapsPtr();
+
+    GError* rawError = nullptr;
+    GstElement* const upstream = gst_parse_bin_from_description(
+        (filtered ? description.left(lastLink) : description).toUtf8().constData(), TRUE, &rawError);
+    const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
+    if (error || !upstream || (filtered && !filter)) {
+        _error = error ? QString::fromUtf8(error->message) : QStringLiteral("gst_parse_bin_from_description failed");
+        if (upstream) {
+            gst_object_unref(gst_object_ref_sink(upstream));
+        }
+        return false;
+    }
+    _pipeline = GStreamer::adoptFloating(gst_pipeline_new(nullptr));
+    gst_bin_add_many(bin(), upstream, sink, nullptr);
+    if (!gst_element_link_filtered(upstream, sink, filter.get())) {
+        _error = QStringLiteral("the pipeline doesn't link to its sink");
+        return false;
+    }
+    return true;
+}
+
 GStreamer::GstElementPtr TestPipeline::element(const char* name) const
 {
     return GStreamer::adoptElement(gst_bin_get_by_name(bin(), name));
@@ -429,12 +464,13 @@ bool FixtureRtpSender::start(quint16 port)
     const char* const codec = _h265 ? "h265" : "h264";
     _pipeline = std::make_unique<TestPipeline>();
     // max-bytes keeps one unit queued, so switchTo() and holdKeyframes() apply to the next frame sent.
-    if (!_pipeline->launch(
-            QStringLiteral("appsrc name=src is-live=true format=time max-bytes=1 "
-                           "caps=video/x-%1,stream-format=byte-stream,alignment=au ! "
-                           "rtp%1pay config-interval=-1 pt=96 ! udpsink host=127.0.0.1 port=%2 sync=true async=false")
-                .arg(QLatin1String(codec))
-                .arg(port))) {
+    if (!_pipeline->launch(QStringLiteral("appsrc name=src is-live=true format=time max-bytes=1 "
+                                          "caps=video/x-%1,stream-format=byte-stream,alignment=au ! "
+                                          "rtp%1pay name=pay config-interval=-1 pt=96 %3 ! "
+                                          "udpsink host=127.0.0.1 port=%2 sync=true async=false")
+                               .arg(QLatin1String(codec))
+                               .arg(port)
+                               .arg(_firstPacket))) {
         _error = _pipeline->error();
         return false;
     }
@@ -459,6 +495,26 @@ bool FixtureRtpSender::start(quint16 port)
 void FixtureRtpSender::stop()
 {
     _pipeline.reset();
+}
+
+bool FixtureRtpSender::restartAfterSkipping(quint16 port, quint16 skipped)
+{
+    const GStreamer::GstElementPtr payloader = _pipeline ? _pipeline->element("pay") : GStreamer::GstElementPtr();
+    if (!payloader) {
+        return false;
+    }
+    // Later than the last one by less than the restart takes: timestamps ahead of the time that passed would have a
+    // jitter buffer hold the packets back, and drop those beyond its latency.
+    constexpr guint kTimestampStep = 90;
+    guint lastSequenceNumber = 0;
+    guint lastTimestamp = 0;
+    g_object_get(payloader.get(), "seqnum", &lastSequenceNumber, "timestamp", &lastTimestamp, nullptr);
+    _firstPacket = QStringLiteral("seqnum-offset=%1 timestamp-offset=%2")
+                       .arg(static_cast<quint16>(lastSequenceNumber + skipped + 1))
+                       .arg(lastTimestamp + kTimestampStep);
+    const bool started = start(port);
+    _firstPacket.clear();
+    return started;
 }
 
 bool FixtureRtpSender::switchTo(const QString& resource)

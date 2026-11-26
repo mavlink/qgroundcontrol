@@ -124,10 +124,10 @@ dropdown shows, about once a second:
   that [Software decoder threads](../settings_view/video.md#settings) above 1 hold).
 - **Packet loss** and **Jitter** (RTP streams only: UDP h.264/h.265 and RTSP): the share of packets lost over the last
   second (with the number lost since the stream started), and the variation in packet arrival times.
-  Lost are the packets that never arrived, and those dropped on arrival because more came at once than the
-  **RTP jitter latency** holds, as after a link stalls.
-  They are not shown for MPEG-TS streams. A UDP stream in **Low Latency Mode** has no jitter buffer to wait for packets:
-  one that arrives out of order counts as lost until it arrives.
+  Lost are the packets that never arrived, and those dropped on arrival: too late for the **RTP jitter latency**, or
+  because more came at once than it holds, as after a link stalls.
+  They are not shown for MPEG-TS streams. A UDP stream's packets are counted as they arrive, so one that arrives out of
+  order counts as lost until it arrives; in **Low Latency Mode** there is also no jitter buffer to wait for it.
 - **Late / duplicate packets** (RTP streams only): packets that arrived after their playout time, and packets that
   arrived twice. They are not shown for UDP streams in **Low Latency Mode**, which has no jitter buffer to tell them.
 - **Retransmissions** (RTSP): lost packets QGroundControl asked the camera to send again, and how many arrived in time.
@@ -163,8 +163,8 @@ of a network stream (under **Video Stream**), the **Video Backend**, **Decoder P
 (under **Decoding**; changing any restarts the video) and the **Grid Lines**,
 [Telemetry Overlay](video_overlay.md#live-overlay) and **Display Fit** of the video (under **Video Display**).
 **Restart Video** reconnects the streams, and **All Video Settings** opens
-[Application Settings > Video](../settings_view/video.md). For a USB camera, only the **Video Display** settings and
-**All Video Settings** apply.
+[Application Settings > Video](../settings_view/video.md). For a USB camera with no network stream beside it, only the
+**Video Display** settings and **All Video Settings** are shown.
 
 ## Record Video
 

@@ -93,7 +93,7 @@ The components, in the order of their folders: `Pipeline/`, `Source/`, `Sink/`, 
 | `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock. |
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Builds the source bin for the transport the stream URI's scheme selects, with its RTP jitter-buffer policy. |
-| `GstRtpPacketProbe` | Counts the RTP packets a pad pushes, for a source that has no jitter buffer to count them. |
+| `GstRtpPacketProbe` | Counts the RTP packets a pad pushes: those `udpsrc` receives, for RTP over UDP. |
 | `RtpPacketCounter` | The packets received and lost in one RTP stream, as RFC 3550 counts them, and its interarrival jitter. No GStreamer types. |
 | `GstRtspSource` | The `rtspsrc` the source factory builds: URI check, transports, timeouts, retransmission, video-only stream selection and TEARDOWN. |
 | `GstH26xParameterSetGate` | H.264/H.265 setup for depayloaders and parsers: parameter sets repeated at every IDR, keyframe requests after loss, and output held until a full parameter set arrives. Declared in `GstSourceFactory.h`. |
@@ -170,7 +170,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 - **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
   (`kVideoFormatTable`):
   - System memory always.
-  - Every entry asks for `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set. The converter scales system
+  - Every entry asks for `pixel-aspect-ratio=1/1` unless the bin is built with `disablePar`, as it is for a stream whose
+    picture the output stretches to a forced ratio (`VideoSettings::forcedAspectRatio`). The converter scales system
     memory to square pixels; nothing in the bin scales GPU memory (d3d12convert aside), so a decoder whose pixels
     aren't square negotiates system memory.
   - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import. Under OpenGL: DMA_DRM
@@ -193,10 +194,11 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   The renderer is the backend of the scene graph's `QRhi` (`QGCRhiCapture`), or, until the scene graph runs, the
   graphics API Qt Quick was asked for. When it changes mid-stream, or the DMABuf import starts or stops working, the
   sink asks upstream to renegotiate.
-- **`qgcvideosinkbin`** — `converter ! qgcqvideosink`, with `glupload ! glcolorconvert` in between for the glupload
-  variant and `d3d12upload ! d3d12convert` for the d3d12convert variant. The converter is the `conversion-element`
-  override, else `imxvideoconvert_g2d` or `nvvidconv` when present, else `videoconvertscale`
-  (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
+- **The sink bin** (`GstQgc::makeSinkBin()`, a plain `GstBin` named `qgcvideosinkbin<n>`) —
+  `converter ! qgcqvideosink`, with `glupload ! glcolorconvert` in between for the glupload variant and
+  `d3d12upload ! d3d12convert` for the d3d12convert variant. The converter is the configured conversion element, else
+  `imxvideoconvert_g2d` or `nvvidconv` when present, else `videoconvertscale` (`videoconvert ! videoscale` before
+  GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
   sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through. When Qt renders with
   Direct3D 11, an override that names a filter of GStreamer's `d3d11` plugin other than `d3d11upload` and
   `d3d11download` (such as `d3d11convert` or `d3d11deinterlace`) is ignored: a pipeline's d3d11 elements share the
@@ -263,7 +265,7 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   the path takes none: such a frame would go to the CPU.
 - **D3D12 frames under Direct3D 11**: a Direct3D 11 QRhi samples a D3D12Memory frame without GStreamer using Qt's
   device. The frame's resource opens as a texture of that device (`gst_d3d12_memory_get_d3d11_texture`, which asks
-  for a shared heap and a render-target binding: the pool the sink proposes has both), the render thread copies the
+  for a shared heap and a render-target binding: gst-d3d12's pools have both), the render thread copies the
   picture out of it as it does for a d3d11 decoder, and signals a fence the two devices share; the frame's buffer
   goes back to its pool once Direct3D 11 has read it. The sink offers that memory only where Qt's device reports the
   sharing gst-d3d11 asks of a device for its own interop (`D3D11_SHARED_RESOURCE_TIER_2`, extended resource sharing
@@ -294,7 +296,7 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
 - **Opt-in paths**: the CUDA, AHardwareBuffer and Vulkan paths are compiled only with `QGC_GST_ENABLE_<PATH>=ON`,
   because no stream reaches them: no bin advertises CUDAMemory or VulkanImage caps, and Android's glupload bin offers
   only GLMemory. Configure lists the compiled paths that the sink can't reach at runtime. CI compiles the Vulkan and
-  CUDA ones, and runs neither (the `gpu-opt-in` job of `linux.yml`). None of them is a zero-copy path that works
+  CUDA ones, and runs neither (the `gpu-variants` job of `linux.yml`). None of them is a zero-copy path that works
   today:
   - **Vulkan** (`vulkan/`, gst-vulkan's VulkanImage memory): gst-vulkan creates its own `VkDevice` and has no way to
     wrap Qt's (`gst_vulkan_device_new()` takes a physical device; so in 1.24, 1.28 and on `main`), and QRhi can't
@@ -345,10 +347,10 @@ everything else is read on the worker.
 | `fps` | Frames the display sink delivered to the `QVideoSink` (its `frame-stats` counts per path) less those it superseded, per second over the last `VideoStreamStatsMeter::kRateWindowIntervals` samples. |
 | `bitrateKbps` | The compressed elementary stream reaching the tee, after the depayloader or demuxer and the parser, counted by the tee's buffer probe, over the same window as `fps`. |
 | `framesDropped`, `droppedFps` | Since the stream started, and per second over the last interval: buffers the display queue leaked (its `overrun`s, counted once the buffer after them comes out marked `DISCONT`, which tells that the queue did leak), delta frames its keyframe gate dropped, and superseded frames. A frame that arrives too late for its time is not among them: the display sink shows it at once (it is decoded and uploaded by then, so dropping it would not help a decoder that fell behind to catch up). |
-| `packetsLost`, `lossPercent`, `jitterMs` | The `stats` of every `rtpjitterbuffer` in the source bin, `rtspsrc`'s internal ones included: `num-lost` since the stream started, `num-lost` against `num-pushed` over the last second, and `avg-jitter`. Lost are also the packets a jitter buffer drops on arrival to stay within its latency (`drop-on-latency`), as after a burst: they are in none of its `stats`, so the source factory has it post a `drop-msg` element message for each (`post-drop-messages`), whose `num-drop-on-latency` `PipelineStatsProbe` adds up from the bus. UDP RTP in low-latency mode has no jitter buffer: the source bin's `GstRtpPacketProbe` counts the packets `udpsrc` receives instead (below). -1 for MPEG-TS, which carries no RTP. |
+| `packetsLost`, `lossPercent`, `jitterMs` | RTSP: the `stats` of every `rtpjitterbuffer` in the source bin, which are `rtspsrc`'s internal ones: `num-lost` since the stream started, `num-lost` against `num-pushed` over the last second, and `avg-jitter`. Lost are also the packets a jitter buffer drops on arrival to stay within its latency (`drop-on-latency`), as after a burst: they are in none of its `stats`, so the source factory has it post a `drop-msg` element message for each (`post-drop-messages`), whose `num-drop-on-latency` `PipelineStatsProbe` adds up from the bus. RTP over UDP: the source bin's `GstRtpPacketProbe` counts the packets `udpsrc` receives (below), in both modes. Its jitter buffer's `num-lost` is not used: when a sender starts over, it counts the sequence numbers the sender skipped, up to its `max-dropout-time` of packets, as lost (`rtpbin`, which `rtspsrc` uses, has a jitter buffer for each sender). The jitter buffer adds the packets it dropped, `num-late` and those dropped on latency, and its `num-pushed` is the packets that got through; without one, in low-latency mode, the jitter is the counter's too. -1 for MPEG-TS, which carries no RTP. |
 | `latencyMs` | The minimum latency of a latency query on the pipeline, as logged when it reaches PLAYING. 0 in low-latency mode, whose display sink doesn't sync, so the frames a decoder's frame threads hold back are not in it. |
 | `decoder`, `hardwareDecoder` | The decoder factory decodebin3 plugged last, and `GStreamer::isHardwareDecoderFactory()`. Empty and false while no decoder is inserted: without a video output, and while a decoder is being replaced. |
-| `gpuPath` | The delivery path most frames took since the previous sample, as `GstHw::toString()` names it: `CPU`, `DMABuf`, `GL`, `D3D11`, `D3D12`, `IOSurface`, `AHWBuf` or `Vulkan`. Empty for a display sink other than `qgcvideosinkbin`. |
+| `gpuPath` | The delivery path most frames took since the previous sample, as `GstHw::toString()` names it: `CPU`, `DMABuf`, `GL`, `D3D11`, `D3D12`, `IOSurface`, `AHWBuf` or `Vulkan`. Empty for a display sink other than the sink bin. |
 | `codec` | The caps on the tee: `H.264`, `H.265`, `AV1`, `VP8`, `VP9`, `MJPEG`, `MPEG-2`, ... |
 | `packetsLate`, `packetsDuplicate`, `rtxRequested`, `rtxRecovered` | The same jitter buffers' `num-late`, `num-duplicates`, `rtx-count` and `rtx-success-count`, since the stream started. -1 without a jitter buffer, which alone tells them: MPEG-TS, and UDP RTP in low-latency mode. |
 | `keyframeIntervalMs` | The tee's buffer probe (`PipelineStatsProbe`): the average time between the timestamps (PTS, else DTS) of the last five buffers without `DELTA_UNIT`, so the arrival times a stream without a jitter buffer is stamped with don't swing it. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
@@ -357,7 +359,7 @@ everything else is read on the worker.
 | `uptimeMs`, `reconnects` | The worker's `StreamSupervisor`: the time since the session reported its first frame, and the sessions that streamed since the stream was started or restarted, less one. |
 | `recordingMs`, `recordingBytes` | The worker's `RecordingPlan`, while recording: the time since the first part got its first frame, and the sizes of the parts' files. -1 otherwise. |
 
-Without a jitter buffer, `RtpPacketCounter` counts as RFC 3550 (appendix A.1) has a receiver do. Lost packets are the
+For RTP over UDP, `RtpPacketCounter` counts as RFC 3550 (appendix A.1) has a receiver do. Lost packets are the
 sequence numbers missing between the first packet and the highest one, across the 16-bit wraparounds, so a loss shows
 with the next packet that arrives, where a jitter buffer first waits out its latency. A packet that arrives late, fewer
 than 1024 packets behind, is no longer lost, and a duplicate counts once. `PipelineStatsProbe` gives the meter a lost
@@ -399,7 +401,7 @@ This project has reported none of these to Qt. As of November 2026:
   through `QtMultimediaVideoReceiver` and can't be recorded.
 - **Versions, checksums and plugins**: `gstreamer.version.<platform>`, `gstreamer.checksums`, `gstreamer.plugins` and the iOS CA-bundle pin live in [`.github/build-config.json`](../../../.github/build-config.json), read through `qgc_config_read` ([`cmake/modules/BuildConfigReader.cmake`](../../../cmake/modules/BuildConfigReader.cmake)). The packages are data there too: `gstreamer.packages` holds each one's path under `gstreamer.package_url`, with `{version}` for the release, and `gstreamer.package_mirror_url` names the QGC S3 mirror that is the fallback. [`cmake/GStreamer/Packages.cmake`](../../../cmake/GStreamer/Packages.cmake) and the tools (`tools/common/gstreamer.py`) read that one table; a package is verified against its checksum pinned in `gstreamer.checksums` whichever host serves it, and configure fails for a version without one; `just update-gstreamer <version>` pins a release's versions and checksums. Each download attempt may take 1200 s, or `QGC_DOWNLOAD_TIMEOUT` seconds when that is longer (the packages are up to 1.2 GB and a failed attempt starts over, so raise it on a link slower than about 8 Mbit/s); the inactivity timeout and retries are the shared `QGC_DOWNLOAD_INACTIVITY_TIMEOUT` and `QGC_DOWNLOAD_RETRIES`. [`mirror-gstreamer.yml`](../../../.github/workflows/mirror-gstreamer.yml) fills the mirror whenever a master push changes `build-config.json`. Linux uses the system GStreamer and treats `gstreamer.version.minimum` as its floor; every other platform downloads the official SDK of its `gstreamer.version.<platform>`, or accepts one at least that new in `GStreamer_ROOT_DIR`.
 - **Configure options**:
-  - `GStreamer_ROOT_DIR`: the SDK to use (on Linux, a prefix whose `lib*/pkgconfig` or `lib/<multiarch>/pkgconfig` holds `gstreamer-1.0.pc`). Configure never writes it; the SDK it selected is recorded as `QGC_GST_RESOLVED_ROOT` in `CMakeCache.txt`. pkg-config prints paths unquoted, so an SDK path with spaces fails configure, except on iOS, which reads its SDK without pkg-config. SDKs are downloaded to `CPM_SOURCE_CACHE`, which defaults to `.cache/CPM` in the source tree: when its path has spaces, a Windows host downloads through its 8.3 short path, and configure fails on other hosts, or where the volume has no short names, until `CPM_SOURCE_CACHE` is set to a path without spaces.
+  - `GStreamer_ROOT_DIR`: the SDK to use (on Linux, a prefix whose `lib*/pkgconfig` or `lib/<multiarch>/pkgconfig` holds `gstreamer-1.0.pc`). On Linux the system's pkg-config files stay visible beside that prefix, for GLib and the like, but its GStreamer is another one: a GStreamer library found only there (`gstreamer-rtsp-server-1.0`, say) is not used, with a warning, and configure fails if it is a mandatory one. Configure never writes it; the SDK it selected is recorded as `QGC_GST_RESOLVED_ROOT` in `CMakeCache.txt`. pkg-config prints paths unquoted, so an SDK path with spaces fails configure, except on iOS, which reads its SDK without pkg-config. SDKs are downloaded to `CPM_SOURCE_CACHE`, which defaults to `.cache/CPM` in the source tree: when its path has spaces, a Windows host downloads through its 8.3 short path, and configure fails on other hosts, or where the volume has no short names, until `CPM_SOURCE_CACHE` is set to a path without spaces.
   - `QGC_GST_BUNDLE_PLUGINS` (Linux, default `ON`): installs and AppImages bundle the system's plugins, plugin scanner and GIO modules (see [Linux](#linux)), and the app points GStreamer at them. Distribution packages set it `OFF`: the install then carries nothing of GStreamer, the app uses the system's plugins as they are, and the package must depend on the distribution's plugin packages. The Arch package then adds `gst-plugins-good`, `gst-plugins-bad-libs` and `gst-libav`; the DEB and RPM dependency scans do not see plugins, so their packagers list them. `OFF` requires `QGC_CREATE_APPIMAGE=OFF`.
   - `QGC_GST_CUDA_STUB_DIR` (Linux): a directory with a `cuda.h`, such as gst-plugins-bad's `gst-libs/gst/cuda/stub`, for building the CUDA GPU path without the CUDA Toolkit.
 - **Plugin allowlist**: `gstreamer.plugins` (`common` plus the platform's key) decides what is registered and bundled. Android links the requested plugins that have a static archive into `libgstreamer_android.so`; iOS registers only the requested plugins found in its merged archive, so the archive's other plugins (some GPL) stay out of the app; desktop installs bundle the allowlisted plugins found in the SDK and check after install that those and the bundle-required ones arrived. The plugin policy is `gstreamer_plugin_policy` in `.github/build-config.json` (`bundle_required`, `optional_decoders`, `mock_server_debug`, `gpl_denylist`, `alternates`, each described by the file's schema), outside the `gstreamer` section that keys CI's SDK caches; `PluginPolicy.cmake` reads it. Debug mobile builds add its `mock_server_debug` plugins (`videotestsrc`, `mpegtsmux`) for MockLink's test stream, which `MockVideoStreamServer` encodes with `openh264enc` (H.265 only where a desktop GStreamer has `x265enc`).
@@ -439,7 +441,7 @@ Unless `QGC_GST_BUNDLE_PLUGINS` is `OFF`, installs and AppImages bundle the syst
 
 #### GPU bin selection
 
-With `gpu-zerocopy`, `qgcvideosinkbin` picks one of five variants when it is built:
+With GPU zero-copy, the sink bin picks one of five variants when it is built:
 
 - DMABuf-or-glupload (the default on Linux with gst-gl and DMABuf): the converter feeds a `switchbin`, which routes
   each stream by the memory its decoder negotiates. DMABuf and DMA_DRM go straight to Qt's DMABuf importer, as in
@@ -546,13 +548,13 @@ neither gst-vulkan nor a link to the Vulkan loader.
 
 `GstHwBuffersVulkanReadbackTest` imports VA-API frames (a decoder's NV12, and I420, P010, RGBA and BGRA from the
 postprocessor, in whichever of the offered layouts the driver picks) into a Vulkan QRhi and compares
-`QVideoFrame::toImage()` with the system-memory frame; it also plays a VA stream into `qgcvideosinkbin` under a
+`QVideoFrame::toImage()` with the system-memory frame; it also plays a VA stream into the sink bin under a
 Vulkan render target. CTest runs it on xcb; it skips without a Vulkan device that imports dma-bufs, as Mesa's lavapipe
 doesn't. Verified on Intel (Mesa ANV with the iHD VA driver, LINEAR and Tile4 layouts) only.
 
 ### macOS / Windows / iOS
 
-GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR` (on iOS, a `GStreamer.xcframework` or a directory containing one). Configure fails when that SDK is older than the requested version (`gstreamer.version.<platform>`) or, on Windows, incomplete. An SDK installed on the machine is not looked up: name it with `GStreamer_ROOT_DIR` to use it.
+GStreamer SDKs are auto-downloaded during CMake configure. To use a local installation instead, set `GStreamer_ROOT_DIR` (on iOS, a `GStreamer.xcframework` or a directory containing one, such as the prefix of an iOS build of [`tools/setup/build_gstreamer.py`](../../../tools/README.md#setup-scripts)). Configure fails when that SDK is older than the requested version (`gstreamer.version.<platform>`) or, on Windows, incomplete. An SDK installed on the machine is not looked up: name it with `GStreamer_ROOT_DIR` to use it.
 
 On macOS, configure uses the SDK in `GStreamer_ROOT_DIR` when that is set, and otherwise the one it downloads; CI's macOS jobs build, test and package with the download. A `GStreamer.framework` installed in `/Library/Frameworks` is not used. Homebrew's GStreamer is refused as `GStreamer_ROOT_DIR`: its libraries and plugins load each other by absolute paths under its prefix, so an app bundle made from them would not carry its own GStreamer.
 
@@ -562,7 +564,7 @@ On iOS only the `GStreamerMobile` framework links the SDK's merged static archiv
 
 ### Android
 
-Auto-downloaded during CMake configure. No manual setup required. Each ABI build extracts only its own tree from the universal SDK tarball. Windows and macOS hosts query it with the pkg-config the SDK bundles for them (`share/gst-android/ndk-build/tools/<host>/`); Linux hosts use their own.
+Auto-downloaded during CMake configure. No manual setup required. Each ABI build extracts only its own tree from the universal SDK tarball. `GStreamer_ROOT_DIR` names another SDK: one ABI's tree (the directory with `lib/pkgconfig/gstreamer-1.0.pc`), or a universal SDK, which has a directory per ABI (`arm64`, `armv7`, `x86`, `x86_64`), as the official tarball unpacks to and as a universal build of [`tools/setup/build_gstreamer.py`](../../../tools/README.md#setup-scripts) leaves; configure then uses the tree of the build's ABI. Windows and macOS hosts query it with the pkg-config the SDK bundles for them (`share/gst-android/ndk-build/tools/<host>/`); Linux hosts use their own.
 
 As on iOS, and as the SDK's own `FindGStreamerMobile.cmake` does, the app does not link the SDK's static archives: `GStreamer::mobile` is a shared `libgstreamer_android.so` (`platform/Android.cmake`) holding GStreamer, the allowlisted plugins, the OpenSSL GIO module and the generated `gst_init_static_plugins()`. It exports GStreamer's and GLib's API and hides the third-party libraries inside it (FFmpeg, OpenSSL, ...); `QGC_GST_APP_CORE_SYMBOLS` and the post-build `SingleCoreCheck.cmake` work as on iOS. The library links no Qt target, so on the 64-bit ABIs it sets the 16 KB segment alignment (`-z max-page-size=16384`) Qt gives Qt-linked targets for its `android_16kb_pages` feature: devices with 16 KB pages cannot load a library aligned for 4 KB, and Google Play rejects it. CI's [`android_apk_check.py`](../../../tools/ci/android/android_apk_check.py) checks every library in the APK for that alignment and for dependencies the APK or the NDK does not provide. Qt's deployment packages the library into the APK and loads it before the app. GStreamer's `androidmedia` plugin finds the Java VM and the app's class loader through `gst_android_get_java_vm()` and `gst_android_get_application_class_loader()` in that library, which return the JNI state `src/Android/AndroidInit.cc` hands it with `qgc_gst_android_set_jni_state()` at `JNI_OnLoad` and when the activity starts (`Platform/gst_android_jni.c`), so the SDK's `GStreamer.java` and `GStreamer.init()` are not used.
 
@@ -620,9 +622,9 @@ A test is in `test/VideoManager` at the path its source has in `src/VideoManager
 `test/VideoManager/GStreamer/Pipeline/`, those of `Sink/gstqgc/` in `test/VideoManager/GStreamer/Sink/gstqgc/`. Code
 in a `common` folder is tested from its parent's folder. Support that several folders share is in their nearest common
 parent: `GStreamerTestBase` and `GStreamerTestHelpers` in `test/VideoManager/GStreamer/`, `VideoTestHelpers.h` in
-`test/VideoManager/`. The cases of `GstHwBuffersTest` and `GstHwBuffersPipelineTest` are spread over part files that
-define no class of their own, the cases of one GPU path in that path's folder
-(`HwBuffers/dmabuf/GStreamerDmaBufTest.cc`).
+`test/VideoManager/`. A GPU path's tests are in that path's folder (`HwBuffers/dmabuf/GstHwBuffersDmaBufTest.cc`), in
+a class that is built only where the path is compiled: a test that skips tells of the host, not of the build. Where a
+class tests several paths, the slots of one are under that path's definition in its header.
 
 Each class has a line here; the comment on the class in its header says more.
 
@@ -631,22 +633,27 @@ Each class has a line here; the comment on the class in its header says more.
 | `GStreamerEnvironmentTest` | Unit | The environment `prepareEnvironment()` sets, and the bundled runtime's private plugin registry. |
 | `GStreamerInitTest` | Unit | Init policy: log routing, missing elements, decoder ranks, and the boot self-test's verdict on the plugin scanner and a bundle's plugins. |
 | `GStreamerTest` | Unit | The `GStreamer` facade without a running pipeline: decoder classification, recording sinks, init and the `VideoBackend` that forwards to it. |
-| `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements, without a pipeline. |
+| `GstQgcSinkTest` | Unit | `qgcqvideosink` and the sink bin as elements, without a pipeline. |
 | `GstQgcSinkControllerTest` | Unit | `QGCQVideoSinkController` binding `qgcqvideosink` to a `QVideoSink`. |
 | `GstQgcVideoFormatsTest` | Unit | The sink's format tables. |
 | `GstSourceFactoryTest` | Unit | The source bin built for each URI, without a stream. |
-| `GstHwBuffersTest` | Unit | The `HwBuffers` paths without a pipeline or a GPU. |
-| `GstQgcSinkHarnessTest` | Unit | `qgcvideosinkbin` under GstHarness, bound to a `QVideoSink`. |
+| `GstHwBuffersTest` | Unit | What the `HwBuffers` paths share, without a pipeline or a GPU. |
+| `GstHwFrameTexturesTest` | Unit | The frame-texture bundles a GPU path hands Qt, on the Null QRhi. Built with any GPU path. |
+| `GstHwBuffersDmaBufTest` | Unit | The DMABuf path without a pipeline or a GPU. Built with the path. |
+| `GstQgcSinkHarnessTest` | Unit | The sink bin under GstHarness, bound to a `QVideoSink`. |
 | `GstSourceFactoryHarnessTest` | Unit | The parameter-set gate under GstHarness: on NAL units pushed by hand, and on a real H.264/H.265 depayloader. |
 | `GstVideoReceiverComponentsTest` | Unit | The receiver's components on their own, without a running pipeline. |
-| `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into `qgcvideosinkbin` bound to a `QVideoSink`. |
+| `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into the sink bin bound to a `QVideoSink`. |
 | `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback. |
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines, with each file played back. |
 | `GStreamerHelpersTest` | Integration | The pipeline helpers, and the `TeeBranchHead` every tee branch starts with. |
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on. |
-| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory; each test skips without the device. |
-| `GstHwBuffersGlReadbackTest` | Integration, GPU | GPU frames imported into a GL QRhi and read back (xcb with `xcb_egl`). |
-| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | DMABuf frames imported into a Vulkan QRhi (xcb), and the gst-vulkan bridge with `QGC_GST_ENABLE_VULKAN`. |
+| `GstHwBuffersGlTest` | Integration, GPU | gst-gl pipelines into the sink: GLMemory, and software frames through the glupload bin. |
+| `GstHwBuffersDmaBufPipelineTest` | Integration, GPU | The DMABuf path fed by pipelines. Built with the path. |
+| `GstHwBuffersD3DTest` | Integration, GPU | The Direct3D 11 and 12 paths fed by pipelines. Built on Windows with either path. |
+| `GstHwBuffersIOSurfaceTest` | Integration, GPU | The IOSurface path fed by VideoToolbox. Built on macOS with the path. |
+| `GstHwBuffersGlReadbackTest` | Integration, GPU | GPU frames imported into a GL QRhi and read back (xcb with `xcb_egl`). Built on Linux with the DMABuf or the GLMemory path. |
+| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | DMABuf frames imported into a Vulkan QRhi (xcb), and the gst-vulkan bridge with `QGC_GST_ENABLE_VULKAN`. Built with either. |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end: states, display, restarts, decoders and screenshots. |
 | `GstVideoReceiverReconnectTest` | Integration | How `GstVideoReceiver` gives up on, or reconnects to, a stream that fails or stops, and what it reports of a stuck worker. |
 | `GstVideoReceiverRecordingTest` | Integration | `GstVideoReceiver`'s recordings: playable files across errors, reconnects, slow or hung storage and teardown. |
@@ -741,7 +748,7 @@ export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots
 dot -Tpng /tmp/qgc-pipeline-dots/receiver-videoContent-pipeline-started.dot -o pipeline.png
 ```
 
-When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a source or decoder watchdog timeout, keeping the 10 newest, so field-bug-report bundles include the topology automatically.
+When the env var is **unset**, QGC instead writes a snapshot to `<CacheLocation>/qgc-pipeline-dot/receiver-<stream>-<tag>-<UTC timestamp>.dot` on a pipeline `ERROR` and on a source or decoder watchdog timeout, keeping the 10 newest, so a bug report can include the topology without a second run (the user guide's [video troubleshooting](../../../docs/en/qgc-user-guide/troubleshooting/qgc_setup.md#video_troubleshooting) section asks for the file).
 
 Every dump shows topology, caps, media types and states, but leaves out element properties, which can hold stream credentials (such as `rtspsrc`'s `user-id` and `user-pw`).
 

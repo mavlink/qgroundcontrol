@@ -18,20 +18,11 @@ target_sources(
         GStreamerTestHelpers.h
         SelfTest/GstSelfTestPipelineTest.cc
         SelfTest/GstSelfTestPipelineTest.h
-        HwBuffers/GStreamerHwFrameTexturesTest.cc
-        HwBuffers/GstHwBuffersGlReadbackTest.cc
-        HwBuffers/GstHwBuffersGlReadbackTest.h
-        HwBuffers/GstHwBuffersPipelineTest.cc
-        HwBuffers/GstHwBuffersPipelineTest.h
         HwBuffers/GstHwBuffersTest.cc
         HwBuffers/GstHwBuffersTest.h
-        HwBuffers/GstHwBuffersVulkanReadbackTest.cc
-        HwBuffers/GstHwBuffersVulkanReadbackTest.h
         HwBuffers/GstHwImageReadback.h
-        HwBuffers/apple/GStreamerIOSurfaceTest.cc
-        HwBuffers/d3d/GStreamerD3DTest.cc
-        HwBuffers/dmabuf/GStreamerDmaBufTest.cc
-        HwBuffers/gl/GStreamerGlTest.cc
+        HwBuffers/gl/GstHwBuffersGlTest.cc
+        HwBuffers/gl/GstHwBuffersGlTest.h
         Pipeline/GstRecordingSinkTest.cc
         Pipeline/GstRecordingSinkTest.h
         Pipeline/GstVideoReceiverComponentsTest.cc
@@ -94,7 +85,7 @@ add_qgc_test(GstQgcVideoFormatsTest LABELS Unit)
 add_qgc_test(GstSourceFactoryTest LABELS Unit)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
 add_qgc_test(GStreamerHelpersTest LABELS Integration)
-add_qgc_test(GstHwBuffersPipelineTest LABELS Integration GPU)
+add_qgc_test(GstHwBuffersGlTest LABELS Integration GPU)
 add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
 add_qgc_test(GstRecordingSinkTest LABELS Integration)
 add_qgc_test(GstSelfTestPipelineTest LABELS Integration)
@@ -103,14 +94,116 @@ add_qgc_test(GstVideoReceiverPipelineTest LABELS Integration)
 add_qgc_test(GstVideoReceiverReconnectTest LABELS Integration)
 add_qgc_test(GstVideoReceiverRecordingTest LABELS Integration SHARDS 2)
 add_qgc_test(GstVideoReceiverStatsTest LABELS Integration)
-# Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping) without an
-# X display.
-set(_qgc_gl_readback_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb" "QT_XCB_GL_INTEGRATION=set:xcb_egl")
-add_qgc_test(GstHwBuffersGlReadbackTest LABELS Integration GPU ${_qgc_gl_readback_env})
-# Needs a platform plugin with Vulkan support, which the offscreen QPA lacks too.
-add_qgc_test(
-    GstHwBuffersVulkanReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
-)
+
+# A GPU path's tests are built only where the GStreamer layer compiled the path
+# (src/VideoManager/GStreamer/HwBuffers/CMakeLists.txt): a test that skips then tells of the host, not of the build.
+function(_qgc_gst_test_has result definition)
+    get_target_property(_definitions QGCGStreamer INTERFACE_COMPILE_DEFINITIONS)
+    if("${definition}=1" IN_LIST _definitions)
+        set(${result}
+            TRUE
+            PARENT_SCOPE
+        )
+    else()
+        set(${result}
+            FALSE
+            PARENT_SCOPE
+        )
+    endif()
+endfunction()
+_qgc_gst_test_has(_qgc_test_any_gpu_path QGC_HAS_ANY_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_dmabuf QGC_HAS_GST_DMABUF_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_dmabuf_vulkan QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+_qgc_gst_test_has(_qgc_test_glmemory QGC_HAS_GST_GLMEMORY_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_iosurface QGC_HAS_GST_IOSURFACE_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_d3d11 QGC_HAS_GST_D3D11_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_d3d12 QGC_HAS_GST_D3D12_GPU_PATH)
+_qgc_gst_test_has(_qgc_test_gst_vulkan QGC_HAS_GST_VULKAN_GPU_PATH)
+
+# moc reads these definitions in the test headers, and the classes built follow them, but nothing runs moc again when
+# they change in a build directory that exists: its command depends on the files it read alone. Without its timestamp it
+# runs.
+get_target_property(_qgc_gst_definitions QGCGStreamer INTERFACE_COMPILE_DEFINITIONS)
+set(_qgc_gst_definitions_file "${CMAKE_CURRENT_BINARY_DIR}/gst-definitions.txt")
+set(_qgc_gst_previous_definitions "")
+if(EXISTS "${_qgc_gst_definitions_file}")
+    file(READ "${_qgc_gst_definitions_file}" _qgc_gst_previous_definitions)
+endif()
+if(NOT _qgc_gst_previous_definitions STREQUAL "${_qgc_gst_definitions}")
+    file(WRITE "${_qgc_gst_definitions_file}" "${_qgc_gst_definitions}")
+    get_target_property(_qgc_unit_tests_dir QGCUnitTests BINARY_DIR)
+    file(REMOVE "${_qgc_unit_tests_dir}/QGCUnitTests_autogen/timestamp")
+endif()
+
+if(_qgc_test_any_gpu_path)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwFrameTexturesTest.cc
+            HwBuffers/GstHwFrameTexturesTest.h
+    )
+    add_qgc_test(GstHwFrameTexturesTest LABELS Unit)
+endif()
+
+if(_qgc_test_dmabuf)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/dmabuf/GstHwBuffersDmaBufTest.cc
+            HwBuffers/dmabuf/GstHwBuffersDmaBufTest.h
+    )
+    add_qgc_test(GstHwBuffersDmaBufTest LABELS Unit)
+    add_qgc_test(GstHwBuffersDmaBufPipelineTest LABELS Integration GPU)
+endif()
+
+if(WIN32 AND (_qgc_test_d3d11 OR _qgc_test_d3d12))
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/d3d/GstHwBuffersD3DTest.cc
+            HwBuffers/d3d/GstHwBuffersD3DTest.h
+    )
+    add_qgc_test(GstHwBuffersD3DTest LABELS Integration GPU)
+endif()
+
+# The path is iOS's too; the test decodes with VideoToolbox's desktop decoder.
+if(MACOS AND _qgc_test_iosurface)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/apple/GstHwBuffersIOSurfaceTest.cc
+            HwBuffers/apple/GstHwBuffersIOSurfaceTest.h
+    )
+    add_qgc_test(GstHwBuffersIOSurfaceTest LABELS Integration GPU)
+endif()
+
+if(LINUX AND (_qgc_test_dmabuf OR _qgc_test_glmemory))
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwBuffersGlReadbackTest.cc
+            HwBuffers/GstHwBuffersGlReadbackTest.h
+    )
+    # Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping)
+    # without an X display.
+    add_qgc_test(
+        GstHwBuffersGlReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
+                                                                           "QT_XCB_GL_INTEGRATION=set:xcb_egl"
+    )
+endif()
+
+if(_qgc_test_dmabuf_vulkan OR _qgc_test_gst_vulkan)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            HwBuffers/GstHwBuffersVulkanReadbackTest.cc
+            HwBuffers/GstHwBuffersVulkanReadbackTest.h
+    )
+    # Needs a platform plugin with Vulkan support, which the offscreen QPA lacks too.
+    add_qgc_test(
+        GstHwBuffersVulkanReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
+    )
+endif()
 
 # The GstHarness tests need gst-check, which the GStreamer layer finds only for test builds and only where the SDK or
 # distribution ships it (src/VideoManager/GStreamer/CMakeLists.txt).

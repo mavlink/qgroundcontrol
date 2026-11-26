@@ -6,6 +6,7 @@
 #include <gst/video/video.h>
 #include <memory>
 #include <rhi/qrhi.h>
+#include <rhi/qrhi_platform.h>
 #include <string>
 
 #include <QtCore/QByteArray>
@@ -13,20 +14,14 @@
 #include <QtCore/QScopeGuard>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QImage>
+#include <QtGui/private/qvulkandefaultinstance_p.h>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
-
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) || defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-#include <rhi/qrhi_platform.h>
-
-#include <QtGui/private/qvulkandefaultinstance_p.h>
-
 #include "QGCRhiCapture.h"
-#endif
 
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 #include <QtMultimedia/private/qhwvideobuffer_p.h>
@@ -61,7 +56,6 @@
 #include "gstqgc/GstQgcTestSupport.h"
 #endif
 
-#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) || defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 namespace {
 
 /// A Vulkan QRhi on the instance Qt Quick renders with, on the software device when @p software; null with the
@@ -86,7 +80,6 @@ std::unique_ptr<QRhi> createGstVulkanTestRhi(bool software, QString& unavailable
 }
 
 }  // namespace
-#endif
 
 GstHwBuffersVulkanReadbackTest::GstHwBuffersVulkanReadbackTest() = default;
 GstHwBuffersVulkanReadbackTest::~GstHwBuffersVulkanReadbackTest() = default;
@@ -224,7 +217,6 @@ QString vulkanImportMismatch(std::unique_ptr<GstDmaBufVideoBuffer> frame, QRhi& 
 }
 
 }  // namespace
-#endif
 
 void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage_data()
 {
@@ -252,8 +244,8 @@ void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage_data()
 
 void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) || !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMABuf DMA_DRM import under Vulkan not compiled in this build");
+#if !GST_CHECK_VERSION(1, 24, 0)
+    QSKIP("DMA_DRM caps need GStreamer 1.24");
 #else
     QFETCH(int, gstFormat);
     QFETCH(int, qtFormat);
@@ -299,8 +291,8 @@ void GstHwBuffersVulkanReadbackTest::_testVaFrameToImage()
 
 void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT) || !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMABuf DMA_DRM import under Vulkan not compiled in this build");
+#if !GST_CHECK_VERSION(1, 24, 0)
+    QSKIP("DMA_DRM caps need GStreamer 1.24");
 #else
     QRhi* rhi = _vulkanRhi();
     if (!rhi) {
@@ -322,10 +314,11 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
         }
     });
     GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "
-                                        "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
-                                        "vah264enc ! h264parse ! vah264dec ! "
-                                        "qgcvideosinkbin name=sink gpu-zerocopy=true"))) {
+    if (!GstQgcTest::launchIntoSinkBin(pipeline,
+                                       QStringLiteral("videotestsrc num-buffers=10 ! "
+                                                      "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
+                                                      "vah264enc ! h264parse ! vah264dec"),
+                                       {.gpuZeroCopy = true})) {
         QSKIP(qPrintable(QStringLiteral("VA pipeline parse skipped: %1").arg(pipeline.error())));
     }
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
@@ -357,7 +350,9 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
     QVERIFY2(textures, qPrintable(QStringLiteral("the delivered frame did not import (%1)").arg(negotiated)));
 #endif
 }
+#endif
 
+#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice_data()
 {
     QTest::addColumn<bool>("software");
@@ -369,9 +364,6 @@ void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice_
 
 void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice()
 {
-#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QSKIP("gst-vulkan path not compiled in this build (QGC_GST_ENABLE_VULKAN)");
-#else
     QFETCH(bool, software);
 
     QString unavailable;
@@ -392,14 +384,10 @@ void GstHwBuffersVulkanReadbackTest::_testGstVulkanBridgeSharesQtPhysicalDevice(
     g_object_get(physicalDevice, "name", &name, nullptr);
     const GStreamer::GCharPtr nameOwner(name);
     QCOMPARE(QByteArray(name), rhi->driverInfo().deviceName);
-#endif
 }
 
 void GstHwBuffersVulkanReadbackTest::_testGstVulkanInstanceCreatesBridgeDevice()
 {
-#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QSKIP("gst-vulkan path not compiled in this build (QGC_GST_ENABLE_VULKAN)");
-#else
     QString unavailable;
     const std::unique_ptr<QRhi> rhi = createGstVulkanTestRhi(/*software=*/false, unavailable);
     if (!rhi) {
@@ -419,7 +407,6 @@ void GstHwBuffersVulkanReadbackTest::_testGstVulkanInstanceCreatesBridgeDevice()
     g_clear_error(&error);
     QVERIFY2(created, failure.constData());
     QCOMPARE(created.get(), device.get());
-#endif
 }
 
 void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal_data()
@@ -439,9 +426,6 @@ void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal
 
 void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal()
 {
-#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QSKIP("gst-vulkan path not compiled in this build (QGC_GST_ENABLE_VULKAN)");
-#else
     QFETCH(QByteArray, typeName);
     QFETCH(quint64, parameter);
     QFETCH(bool, served);
@@ -482,14 +466,10 @@ void GstHwBuffersVulkanReadbackTest::_testGstVulkanCreateDeviceHandlerFitsSignal
         g_signal_handler_disconnect(source, handler);
         QCOMPARE(GST_OBJECT_REFCOUNT_VALUE(device.get()), refsBefore + 1);
     }
-#endif
 }
 
 void GstHwBuffersVulkanReadbackTest::_testVulkanImageFrameIsNotImported()
 {
-#if !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QSKIP("gst-vulkan path not compiled in this build (QGC_GST_ENABLE_VULKAN)");
-#else
     QString unavailable;
     const std::unique_ptr<QRhi> rhi = createGstVulkanTestRhi(/*software=*/false, unavailable);
     if (!rhi) {
@@ -531,8 +511,8 @@ void GstHwBuffersVulkanReadbackTest::_testVulkanImageFrameIsNotImported()
              refusedBefore + 1);
     // Nor has the frame a CPU map for Qt to show it from: gst-vulkan maps host-visible memory only.
     QCOMPARE(frame.map(QVideoFrame::ReadOnly).planeCount, 0);
-#endif
 }
+#endif
 
 void GstHwBuffersVulkanReadbackTest::_withdrawPublishedRhi()
 {

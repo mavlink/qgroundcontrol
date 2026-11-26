@@ -170,10 +170,12 @@ endif()
 # ---- GPU path table (row order matters: DMABuf_Vulkan and CUDA build on DMABuf) ----
 # cmake-format: off
 # Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
-# cmake/GStreamer/Orchestrator.cmake.
+# cmake/GStreamer/Orchestrator.cmake. The sources read libdrm's drm_fourcc.h: a distribution's gstreamer-allocators-1.0
+# requires libdrm and so names its include directory, one built without the DRM allocator does not.
 set(_qgc_gpu_row_DMABuf
     PLATFORMS LINUX
     REQUIRES QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
+    PROBE HAS_VAR QGC_GST_HAS_DRM_FOURCC HEADER drm_fourcc.h SYMBOL DRM_FORMAT_MOD_LINEAR PC_MODULE libdrm
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
     SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstDmaDrmCaps.cc

@@ -47,9 +47,11 @@ private slots:
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testScreenshotFailuresReachUser_data();
     void _testScreenshotFailuresReachUser();
-    void _testAspectRatioWithoutAdvertisedResolution();
+    void _testForcedAspectRatioAppliesToConfiguredStream();
+    void _testScreenshotFollowsForcedAspectRatio();
     void _testAdvertisedRotationTurnsVideo_data();
     void _testAdvertisedRotationTurnsVideo();
+    void _testCameraTransformTurnsItsPicture();
     void _testSourceErrorsReachUser();
     void _testReceiverSetWhileOldOneGoes();
     void _testReconnectingFollowsLostStream();
@@ -58,6 +60,7 @@ private slots:
     void _testUvcControlsReachCamera();
     void _testRecordingEncodingReachesEverySource();
     void _testStreamStatsReachQml();
+    void _testStatsGroupShowsCamera();
     void _testIndicatorReportsMeasuredSource();
     void _testSourceFallingShortDegradesVideo_data();
     void _testSourceFallingShortDegradesVideo();
@@ -72,6 +75,7 @@ private slots:
     void _testTilesOutlastViewOnItsWayToFullSize();
     void _testFlyViewLeavesTapsOnTilesToThem();
     void _testThermalDecodesOnlyWhileShown();
+    void _testThermalOverlayHasThePicturesShape();
     void _testThermalPlaysOnlyWhileInUse();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();

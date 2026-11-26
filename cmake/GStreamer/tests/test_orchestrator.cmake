@@ -297,6 +297,31 @@ elseif(SCENARIO STREQUAL "missing-gl")
     qgc_test_assert_matches(
         "optional components summary" "optional components not found: Gl, GlPrototypes( |$)" "${_qgc_output}"
     )
+elseif(SCENARIO STREQUAL "system-beside-root")
+    # Linux keeps the system's .pc files visible beside GStreamer_ROOT_DIR, for GLib and the like. A GStreamer module
+    # the root lacks must not come from the system's GStreamer, another version: an optional one is left out, a
+    # mandatory one fails configure.
+    set(_system "${WORK_DIR}/system")
+    _qgc_write_fake_sdk("${_system}" 1.24.0)
+    _qgc_write_fake_probe_lib("${_system}" 1.24.0)
+    set(ENV{PKG_CONFIG_PATH} "${_system}/lib/pkgconfig")
+
+    _qgc_write_fake_sdk("${_sdk_a}" 1.28.0 OMIT gstreamer-gl-1.0 gstreamer-gl-prototypes-1.0)
+    _qgc_expect(_expect "${_sdk_a}" 1.28.0 OFF)
+    _qgc_configure_ok(
+        "root without gst-gl beside a system GStreamer" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_expect}
+        -DEXPECT_GL=OFF
+        "-DEXPECT_PROBE_REASON=gstreamer-qgcprobe-1.0 is in ${_system}/lib/pkgconfig, outside GStreamer_ROOT_DIR"
+    )
+    qgc_test_assert_matches(
+        "the system's module is named" "gstreamer-gl-1\\.0 is missing from GStreamer_ROOT_DIR" "${_qgc_output}"
+    )
+
+    _qgc_write_fake_sdk("${_sdk_a}" 1.28.0 OMIT gstreamer-rtsp-1.0)
+    _qgc_configure_fails(
+        "root without a mandatory module beside a system GStreamer"
+        "mandatory pkg-config modules not found .*: gstreamer-rtsp-1.0" --fresh "-DGStreamer_ROOT_DIR=${_sdk_a}"
+    )
 elseif(SCENARIO STREQUAL "plugin-allowlist")
     # A misspelled allowlist name warns; a missing hardware-specific decoder only shows in a status line.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)

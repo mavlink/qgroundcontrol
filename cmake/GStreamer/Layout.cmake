@@ -1,7 +1,8 @@
 # The GStreamer layout store: what the Orchestrator and discovery resolved, as GLOBAL properties
 # QGC_GST_LAYOUT_<KEY> that every directory, the install rules and script-mode tests read through qgc_gst_layout_get.
 # Discovery records the SDK it resolved (_qgc_gst_return_discovery): ROOT_DIR, AUTO_DOWNLOADED, LIB_PATH, PLUGIN_PATH,
-# INCLUDE_PATH, PLUGIN_SCANNER_PATH, GIO_MODULE_PATH, XCFRAMEWORK_LIB and IOS_CA_BUNDLE. Orchestrator.cmake adds
+# INCLUDE_PATH, PLUGIN_SCANNER_PATH, GIO_MODULE_PATH, XCFRAMEWORK_LIB and IOS_CA_BUNDLE. Linux discovery adds
+# PKGCONFIG_DIRS for a GStreamer_ROOT_DIR: the directories of its .pc files. Orchestrator.cmake adds
 # NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and BUNDLED_PLUGINS (the requested ones among
 # them, which the build ships). The Orchestrator copies the discovery keys into the GStreamer_*/GSTREAMER_* variables of
 # its directory for compatibility (qgc_gst_layout_export).

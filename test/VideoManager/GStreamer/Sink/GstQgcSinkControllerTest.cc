@@ -48,7 +48,7 @@ void GstQgcSinkControllerTest::_testQVideoSinkControllerReleasesElement()
     QFETCH(int, release);
 
     const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin();
-    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    QVERIFY2(sink.bin && sink.qvideosink, "the sink bin or its qvideosink accessor failed");
     GstElement* const qvideosink = sink.qvideosink.get();
 
     auto videoSink = std::make_unique<QVideoSink>();
@@ -84,7 +84,7 @@ void GstQgcSinkControllerTest::_testQVideoSinkControllerReleasesElement()
 void GstQgcSinkControllerTest::_testQVideoSinkControllerNoWindowStartsInactive()
 {
     const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin();
-    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    QVERIFY2(sink.bin && sink.qvideosink, "the sink bin or its qvideosink accessor failed");
     GstElement* const qvideosink = sink.qvideosink.get();
 
     QObject controllerOwner;
@@ -115,7 +115,7 @@ void GstQgcSinkControllerTest::_testQVideoSinkControllerRebindRestoresActive()
     QFETCH(bool, askedWhileUnbound);
 
     const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin();
-    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    QVERIFY2(sink.bin && sink.qvideosink, "the sink bin or its qvideosink accessor failed");
     const auto elementActive = [&sink]() { return sinkBinding(sink.qvideosink.get()).second; };
 
     QVideoSink videoSink;

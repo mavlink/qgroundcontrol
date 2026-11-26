@@ -501,18 +501,20 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
-  # The gst-vulkan and CUDA rows of the GPU path table are off by default (QGC_GST_ENABLE_VULKAN,
-  # QGC_GST_ENABLE_CUDA), so no other job compiles their code. This one compiles the GStreamer module
-  # with both on and runs nothing: no runner has the hardware. The AHardwareBuffer row stays
-  # uncompiled, as its header is in no GStreamer SDK.
-  gpu-opt-in:
-    name: Opt-in GPU paths (compile)
+  # No other job compiles the two ends of the GPU path table: the gst-vulkan and CUDA rows, which
+  # are off by default (QGC_GST_ENABLE_VULKAN, QGC_GST_ENABLE_CUDA), and the build with no GPU path
+  # at all, which is what configure produces where it finds the GStreamer pieces of none. This one
+  # compiles the GStreamer module, the application's GStreamer sources and the GStreamer tests both
+  # ways and runs nothing: no runner has the hardware. The AHardwareBuffer row stays uncompiled, as
+  # its header is in no GStreamer SDK.
+  gpu-variants:
+    name: GPU path variants (compile)
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        format('runs-on={0}-gpu-opt-in-{1}-{2}/runner=linux-x64-tester',
+        format('runs-on={0}-gpu-variants-{1}-{2}/runner=linux-x64-tester',
           github.run_id, github.run_attempt, strategy.job-index) ||
         'ubuntu-24.04'
       }}
@@ -570,12 +572,12 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
-          cache-variant: gpu-opt-in
+          cache-variant: gpu-variants
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Configure
+      - name: Configure with the opt-in paths
         uses: ./.github/actions/cmake-configure
         with:
           preset: Linux-debug
@@ -591,10 +593,47 @@ jobs:
             grep -x -- "-- QGCGStreamer: ${path} zero-copy GPU path enabled" "${RUNNER_TEMP}/build/cmake-configure.log"
           done
 
-      - name: Build
+      - name: Build with the opt-in paths
         uses: ./.github/actions/cmake-build
         with:
           target: QGCGStreamer
+
+      # The module's definitions are PUBLIC: the application's GStreamer sources and the GStreamer
+      # tests compile with them too. Those belong to the application and the test target, which
+      # are not built here: their object files are.
+      - name: Compile the application's GStreamer sources and tests with the opt-in paths
+        uses: ./.github/actions/cmake-build
+        with:
+          objects-under: src/VideoManager/GStreamer test/VideoManager/GStreamer
+
+      # The same build directory: the changed definitions compile the module again.
+      - name: Configure without GPU paths
+        uses: ./.github/actions/cmake-configure
+        with:
+          preset: Linux-debug
+          extra-args: >-
+            -DQGC_GST_ENABLE_DMABUF=OFF
+            -DQGC_GST_ENABLE_GLMEMORY=OFF
+            -DQGC_GST_ENABLE_VULKAN=OFF
+            -DQGC_GST_ENABLE_CUDA=OFF
+
+      # A row added to the table is on by default: it must be turned off above as well.
+      - name: Require no GPU path in the build
+        run: |
+          if grep -- "-- QGCGStreamer: .* zero-copy GPU path enabled" "${RUNNER_TEMP}/build/cmake-configure.log"; then
+            echo "::error::A GPU path is still enabled in the build without GPU paths"
+            exit 1
+          fi
+
+      - name: Build without GPU paths
+        uses: ./.github/actions/cmake-build
+        with:
+          target: QGCGStreamer
+
+      - name: Compile the application's GStreamer sources and tests without GPU paths
+        uses: ./.github/actions/cmake-build
+        with:
+          objects-under: src/VideoManager/GStreamer test/VideoManager/GStreamer
 
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
@@ -606,7 +645,7 @@ jobs:
   linux-ok:
     name: Linux
     if: always()
-    needs: [changes, build, appimage-distros, debug-validation, custom-plugin, gpu-opt-in]
+    needs: [changes, build, appimage-distros, debug-validation, custom-plugin, gpu-variants]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -619,5 +658,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
-          allowed-skips: build, appimage-distros, debug-validation, custom-plugin, gpu-opt-in
+          allowed-skips: build, appimage-distros, debug-validation, custom-plugin, gpu-variants
           jobs: ${{ toJSON(needs) }}

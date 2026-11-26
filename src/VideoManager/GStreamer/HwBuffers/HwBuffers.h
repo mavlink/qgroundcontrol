@@ -86,9 +86,8 @@ bool d3d11OpensD3D12() noexcept;
 /// @p sink, the element the query reached, names the pipeline that gets the device this way.
 bool answerSinkBinContextQuery(GstQuery* query, GstElement* sink = nullptr) noexcept;
 
-/// Add a buffer pool on Qt's D3D11/D3D12 device to an ALLOCATION query for caps in that memory, so the decoder
-/// allocates on the device the importer samples from. False for any other memory, or before the device bridge is
-/// primed.
+/// Add a buffer pool on Qt's D3D11 device to an ALLOCATION query for caps in that memory, so the decoder allocates on
+/// the device the importer samples from. False for any other memory, or before the device bridge is primed.
 bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size,
                             guint minBuffers) noexcept;
 

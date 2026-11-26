@@ -104,7 +104,8 @@
                     "control": "combobox"
                 },
                 {
-                    "setting": "videoSettings.aspectRatio",
+                    "setting": "videoSettings.forcedAspectRatio",
+                    "control": "combobox",
                     "showWhen": "!autoStreamConfig"
                 },
                 {

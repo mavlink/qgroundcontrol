@@ -106,33 +106,38 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libvulkan-dev",
         "libpipewire-0.3-dev",
     ],
-    # GStreamer source builds (build_gstreamer.py): the toolchain plus the X11,
-    # Wayland, GL, VA and audio headers its Linux Meson options enable. Excluded from the aggregate
-    # (desktop) set by get_packages.
+    # GStreamer source builds (build_gstreamer.py): the toolchain, and the libraries its Linux Meson
+    # options link, which it takes from the system. Configure fails without any one of them.
+    # Excluded from the aggregate (desktop) set by get_packages.
     "gstreamer_build": [
         "build-essential",
         "pkg-config",
         "git",
+        "flex",
+        "bison",
+        "nasm",
+        "glslc",
+        "libglib2.0-dev",
         "libx11-dev",
-        "libxext-dev",
-        "libxv-dev",
+        "libx11-xcb-dev",
         "libwayland-dev",
         "wayland-protocols",
         "libegl1-mesa-dev",
         "libgles2-mesa-dev",
         "libgl1-mesa-dev",
         "libdrm-dev",
-        "libgbm-dev",
-        "libasound2-dev",
-        "libpulse-dev",
         "libva-dev",
-        "nasm",
-        "yasm",
+        "libvulkan-dev",
+        "libjpeg-dev",
+        "libvpx-dev",
+        "libopenh264-dev",
     ],
     # Cerbero's Android GStreamer builds (build_gstreamer.py --platform android);
-    # Cerbero bootstraps the NDK and target toolchain itself. Excluded from the aggregate set too.
+    # Cerbero bootstraps the NDK and target toolchain itself, and installs more packages with apt
+    # as it does. It does not start without the distro module. Excluded from the aggregate set too.
     "gstreamer_build_android": [
         "python3-venv",
+        "python3-distro",
         "git",
         "autoconf",
         "automake",

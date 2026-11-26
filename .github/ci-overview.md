@@ -58,7 +58,7 @@ Packages = files that `publish.yml` publishes.
 
 | Workflow | Triggers | Purpose | Publishes |
 | --- | --- | --- | --- |
-| `linux.yml` | all | AppImages, coverage and sanitizer test legs, custom plugin, compile check of the opt-in GPU video paths, translation extraction check | Packages; coverage to Codecov |
+| `linux.yml` | all | AppImages, coverage and sanitizer test legs, custom plugin, compile check of the GPU video path variants, translation extraction check | Packages; coverage to Codecov |
 | `windows.yml` | all | Installers, portable and GStreamer tests | Packages |
 | `macos.yml` | all | Universal DMG (signed and notarized outside PRs), Debug test leg | Packages |
 | `android.yml` | all | APKs, emulator boot test, Android Lint, Java unit tests | Packages; Play Store: beta on `master`, 20% production rollout on tags |
@@ -115,7 +115,7 @@ Rules CI relies on, each with the test that fails when it breaks. Tests are in
 | `build-results.yml` triggers on every workflow that runs on pull requests, except those `REFRESHED_BY` pairs with a trigger that runs on every pull request | `test_platform_workflow_names.py::test_build_results_triggers_on_every_pull_request_workflow` |
 | Every workflow a release tag starts checks that a `Stable*` branch contains the tag, in a job its other jobs need | `test_workflow_triggers.py::test_release_tag_workflows_check_the_stable_branch_before_their_other_jobs` |
 | The PR title check and the `commit-msg` hook agree | `test_workflow_security_policy.py::test_pr_title_check_agrees_with_the_commit_message_hook` |
-| Renovate tracks the CMake, Ninja, OpenSSL, `tools`, and AppImage pins in `build-config.json`; those with hand-updated digests wait for approval | `test_build_tools_contract.py::test_schema_requires_the_pins_and_renovate_tracks_them` |
+| Renovate tracks the CMake, Ninja, OpenSSL, `tools`, AppImage, and iOS CA bundle pins in `build-config.json`; those with hand-updated digests wait for approval | `test_build_tools_contract.py::test_schema_requires_the_pins_and_renovate_tracks_them` |
 | Renovate tracks every GitHub package CMake fetches, or the test lists it as exempt | `test_renovate_cpm_pins.py::test_every_github_cpm_package_is_tracked_by_renovate_or_exempt` |
 | The locked local CMake has the major version CI pins | `test_cmake_version_alignment.py::test_the_locked_cmake_has_the_major_version_ci_pins` |
 | `just test-python` and CI install the same dependency groups | `test_ci_scripts_workflow.py::test_just_test_python_installs_the_dependency_groups_ci_does` |

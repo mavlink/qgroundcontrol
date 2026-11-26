@@ -1,5 +1,9 @@
+#include "HwBuffers/dmabuf/GstHwBuffersDmaBufTest.h"
+
 #include <atomic>
 #include <cerrno>
+#include <gst/allocators/gstdmabuf.h>
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 #include <limits>
 #include <memory>
@@ -7,12 +11,8 @@
 #include <rhi/qrhi.h>
 #include <span>
 #include <thread>
-#include <vector>
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include <gst/allocators/gstdmabuf.h>
-#include <gst/app/gstappsrc.h>
 #include <unistd.h>
-#endif
+#include <vector>
 
 #include <QtCore/QMutex>
 #include <QtCore/QRegularExpression>
@@ -24,28 +24,21 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
+#include "GstDmaBufVideoBuffer.h"
+#include "GstDmaBufVulkanImport.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
-#include "HwBuffers/GstHwBuffersTest.h"
+#include "GstQtDmaBufImport.h"
 #include "HwBuffers/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "QGCRhiCapture.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include "GstDmaBufVideoBuffer.h"
-#include "GstDmaBufVulkanImport.h"
-#include "GstQtDmaBufImport.h"
-#endif
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include "QGCRhiCapture.h"
-#endif
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 namespace {
 
 // Single-memory 64x64 DMABuf sample backed by a memfd: enough for the streaming-thread gates and CPU map. @p capsString
@@ -82,7 +75,6 @@ enum class ImportedBetween
 };
 
 }  // namespace
-#endif
 
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
 namespace {
@@ -154,11 +146,8 @@ GstDmaBufVulkan::DeviceFns standInVulkanDeviceFns()
 }  // namespace
 #endif
 
-void GstHwBuffersPipelineTest::_testDmaBufDispatch()
+void GstHwBuffersDmaBufPipelineTest::_testDmaBufDispatch()
 {
-#if !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    QSKIP("Direct-DMABuf bin not compiled in this build");
-#else
     // The DMABuf path and its DMA_DRM caps both need the EGLDisplay Qt renders with.
     if (!QGCRhiCapture::qtEglDisplay()) {
         QSKIP("Qt renders without EGL here (offscreen QPA, GLX)");
@@ -217,11 +206,12 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
 
     QVideoSink videoSink;
     GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "
-                                        "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
-                                        "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
-                                        "capsfilter name=qgccaps ! "
-                                        "qgcvideosinkbin name=sink gpu-zerocopy=true"))) {
+    if (!GstQgcTest::launchIntoSinkBin(pipeline,
+                                       QStringLiteral("videotestsrc num-buffers=10 ! "
+                                                      "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
+                                                      "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
+                                                      "capsfilter name=qgccaps"),
+                                       {.gpuZeroCopy = true})) {
         QSKIP(qPrintable(QStringLiteral("DMABuf pipeline parse skipped: %1").arg(pipeline.error())));
     }
     g_object_set(pipeline.element("qgccaps").get(), "caps", qgcDmaBufCaps.get(), nullptr);
@@ -305,14 +295,11 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         qPrintable(QStringLiteral("DMABuf negotiated but the sink delivered no DmaBuf frames. Buffers: %1, caps: %2")
                        .arg(bufferCount)
                        .arg(negotiatedStr)));
-#endif
 }
 
-void GstHwBuffersPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+void GstHwBuffersDmaBufPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
 {
-#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    QSKIP("The DMABuf-or-glupload bin needs both GPU bins compiled");
-#else
     if (!GstQgcTest::hasMemorySwitch()) {
         QSKIP("No switchbin of GStreamer 1.24 or later: the bin is the glupload variant");
     }
@@ -326,7 +313,7 @@ void GstHwBuffersPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
 
     GstTest::TestPipeline pipeline;
     QVERIFY2(
-        pipeline.launch(QStringLiteral("appsrc name=src format=time ! qgcvideosinkbin name=sink gpu-zerocopy=true")),
+        GstQgcTest::launchIntoSinkBin(pipeline, QStringLiteral("appsrc name=src format=time"), {.gpuZeroCopy = true}),
         qPrintable(pipeline.error()));
     const GStreamer::GstElementPtr source = pipeline.element("src");
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
@@ -404,10 +391,10 @@ void GstHwBuffersPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
         }
         QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
     }
-#endif
 }
+#endif
 
-void GstHwBuffersTest::_testDmaDrmModifierPolicy_data()
+void GstHwBuffersDmaBufTest::_testDmaDrmModifierPolicy_data()
 {
     QTest::addColumn<quint64>("modifier");
     QTest::addColumn<bool>("importable");
@@ -429,47 +416,39 @@ void GstHwBuffersTest::_testDmaDrmModifierPolicy_data()
     QTest::newRow("invalid") << quint64(0x00ffffffffffffffULL) << false;
 }
 
-void GstHwBuffersTest::_testDmaDrmModifierPolicy()
+void GstHwBuffersDmaBufTest::_testDmaDrmModifierPolicy()
 {
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
+#if GST_CHECK_VERSION(1, 24, 0)
     QFETCH(quint64, modifier);
     QFETCH(bool, importable);
 
     // Qt imports each plane as its own EGLImage: compression and auxiliary (CCS/DCC) planes can't survive that.
     QCOMPARE(GstHw::dmaDrmModifierImportableForTest(modifier), importable);
 #else
-    QSKIP("DMABuf DMA_DRM caps unavailable in this build");
+    QSKIP("DMA_DRM caps need GStreamer 1.24");
 #endif
 }
 
-void GstHwBuffersTest::_testDmaDrmPlaneFourccsMatchQtImporter()
+void GstHwBuffersDmaBufTest::_testDmaBufImportsEveryPlaneOfOfferedFormats()
 {
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && GST_CHECK_VERSION(1, 24, 0)
-    // The caps only offer a modifier every plane can be sampled with, as the importer will sample it.
+    // The DMA_DRM caps offer a modifier only when every plane can be sampled with it, so every plane needs a fourcc.
     for (const GstQgc::VideoFormatEntry& entry : GstQgc::kVideoFormatTable) {
         if (!entry.capsToken || !(entry.offers & GstQgc::kOfferDmaDrm)) {
             continue;
         }
         const GstQtDmaBufImport::PlaneFourccs imported = GstQtDmaBufImport::planeFourccs(entry.qt);
-        const guint planes = GST_VIDEO_FORMAT_INFO_N_PLANES(gst_video_format_get_info(entry.gst));
-        QCOMPARE(imported.count, int(planes));
-        for (guint plane = 0; plane < planes; ++plane) {
-            QCOMPARE(GstHw::dmaDrmPlaneImportFourccForTest(entry.gst, plane), imported.fourcc[plane]);
+        QCOMPARE(imported.count, int(GST_VIDEO_FORMAT_INFO_N_PLANES(gst_video_format_get_info(entry.gst))));
+        for (int plane = 0; plane < imported.count; ++plane) {
+            QVERIFY2(imported.fourcc[std::size_t(plane)] != 0, entry.capsToken);
         }
     }
     // BGRA's bytes are B,G,R,A: DRM ARGB8888, which samples red as red.
     QCOMPARE(GstQtDmaBufImport::planeFourccs(QVideoFrameFormat::Format_BGRA8888).fourcc[0],
              quint32(GST_MAKE_FOURCC('A', 'R', '2', '4')));
-#else
-    QSKIP("DMABuf DMA_DRM caps unavailable in this build");
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
+void GstHwBuffersDmaBufTest::_testDmaBufPathNeedsQtEglDisplay()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     if (QGCRhiCapture::qtEglDisplay()) {
         QSKIP("Qt renders with EGL on this platform");
     }
@@ -487,14 +466,10 @@ void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
                           QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12), context, path, nullptr);
     QVERIFY(!hwBuffer);
     QCOMPARE(path, HwVideoBufferPath::None);
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufPathResumesOnceDisplayIsKnown()
+void GstHwBuffersDmaBufTest::_testDmaBufPathResumesOnceDisplayIsKnown()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     GstDmaBufVideoBuffer::resetCachedState();
     GstVideoInfo info;
     const GstTest::SamplePtr sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
@@ -514,14 +489,10 @@ void GstHwBuffersTest::_testDmaBufPathResumesOnceDisplayIsKnown()
     QCOMPARE(pathTaken(context), HwVideoBufferPath::None);
     context.dmaBufImporter = reinterpret_cast<EGLDisplay>(quintptr(1));
     QCOMPARE(pathTaken(context), HwVideoBufferPath::DmaBuf);
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
+void GstHwBuffersDmaBufTest::_testDmaBufMapTexturesRejectsForeignRhi()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
     GstVideoInfo info;
@@ -545,14 +516,10 @@ void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
     }
     QCOMPARE(GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
              failuresBefore + 4);
-#endif
 }
 
-void GstHwBuffersTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
+void GstHwBuffersDmaBufTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     GstVideoInfo info;
     gst_video_info_init(&info);
     gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 4, 4);
@@ -579,13 +546,12 @@ void GstHwBuffersTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
     QVERIFY2(!hwBuffer, "Cached DMABuf path must reject a system-memory buffer and fall back to CPU mapping");
     QCOMPARE(path, HwVideoBufferPath::None);
     QVERIFY(!cache.validated);
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufTiledFrameRefusesCpuMap()
+void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameRefusesCpuMap()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMABuf DMA_DRM import not compiled in this build");
+#if !GST_CHECK_VERSION(1, 24, 0)
+    QSKIP("DMA_DRM caps need GStreamer 1.24");
 #else
     GstDmaBufVideoBuffer::resetCachedState();
     const QVideoFrameFormat format(QSize(64, 64), QVideoFrameFormat::Format_NV12);
@@ -615,7 +581,7 @@ void GstHwBuffersTest::_testDmaBufTiledFrameRefusesCpuMap()
 #endif
 }
 
-void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport_data()
+void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport_data()
 {
     QTest::addColumn<QString>("drmFormat");
     QTest::addColumn<bool>("qtDisplay");
@@ -629,10 +595,10 @@ void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport_data()
     QTest::newRow("linear, no EGL display") << QStringLiteral("NV12") << false << false << true;
 }
 
-void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport()
+void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !GST_CHECK_VERSION(1, 24, 0)
-    QSKIP("DMABuf DMA_DRM import not compiled in this build");
+#if !GST_CHECK_VERSION(1, 24, 0)
+    QSKIP("DMA_DRM caps need GStreamer 1.24");
 #else
     QFETCH(QString, drmFormat);
     QFETCH(bool, qtDisplay);
@@ -671,7 +637,7 @@ void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport()
 #endif
 }
 
-void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
+void GstHwBuffersDmaBufTest::_testDmaBufImportFailureLatch_data()
 {
     QTest::addColumn<int>("outcome");
     QTest::addColumn<bool>("tiled");
@@ -679,7 +645,6 @@ void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
     QTest::addColumn<int>("failuresToDisable");
     QTest::addColumn<QString>("warning");
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     using Outcome = GstDmaBufVideoBuffer::ImportOutcome;
     const int limit = GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures;
     const int never = 0;
@@ -706,14 +671,10 @@ void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
         << int(Outcome::FdDupFailed) << true << int(ImportedBetween::Nothing) << limit
         << QStringLiteral("could not be duplicated");
 #endif
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufImportFailureLatch()
+void GstHwBuffersDmaBufTest::_testDmaBufImportFailureLatch()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     QFETCH(int, outcome);
     QFETCH(bool, tiled);
     QFETCH(int, importedBetween);
@@ -762,10 +723,9 @@ void GstHwBuffersTest::_testDmaBufImportFailureLatch()
     if (failuresToDisable > 0) {
         QVERIFY2(!frame.validatePlaneHandles(), "A disabled importer must send frames to the CPU path");
     }
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences_data()
+void GstHwBuffersDmaBufTest::_testDmaBufProducerWaitNeedsSignalledFences_data()
 {
     QTest::addColumn<bool>("hungUp");
 
@@ -774,11 +734,8 @@ void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences_data()
     QTest::newRow("hung-up fd") << true;
 }
 
-void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences()
+void GstHwBuffersDmaBufTest::_testDmaBufProducerWaitNeedsSignalledFences()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     QFETCH(bool, hungUp);
 
     // What poll() reports for a dma-buf whose write fences signalled, and for one in error: a memfd is always
@@ -808,14 +765,10 @@ void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences()
     if (hungUp) {
         verifyExpectedLogMessage();
     }
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufFdCheckRejectsOtherFds()
+void GstHwBuffersDmaBufTest::_testDmaBufFdCheckRejectsOtherFds()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
     // GStreamer's dmabuf allocator calls any fd a dma-buf, as the memfd-backed samples of these tests rely on.
     GstVideoInfo info;
     const GstTest::SamplePtr sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
@@ -825,10 +778,26 @@ void GstHwBuffersTest::_testDmaBufFdCheckRejectsOtherFds()
 
     QVERIFY(!GstDmaBufVideoBuffer::isDmaBufFd(gst_dmabuf_memory_get_fd(memory)));
     QVERIFY(!GstDmaBufVideoBuffer::isDmaBufFd(-1));
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice_data()
+void GstHwBuffersDmaBufTest::_testTelemetryDmaBufExtraStats()
+{
+    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
+
+    const QString first = HwBuffers::extraPathStatsSince(before);
+    QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
+    QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
+
+    const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
+    QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
+    QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
+}
+
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanImportNeedsProbedDevice_data()
 {
     QTest::addColumn<int>("rhiBackend");
     QTest::addColumn<bool>("expectAccepted");
@@ -838,11 +807,8 @@ void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice_data()
     QTest::newRow("OpenGL") << int(QRhi::OpenGLES2) << true;
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice()
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanImportNeedsProbedDevice()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QSKIP("DMABuf import under Vulkan not compiled in this build");
-#else
     QFETCH(int, rhiBackend);
     QFETCH(bool, expectAccepted);
 
@@ -862,10 +828,9 @@ void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice()
     if (rhiBackend == int(QRhi::Vulkan)) {
         QVERIFY2(!HwBuffers::dmaBufImportDisplay(), "the sink must not offer DMABuf to a device that can't import it");
     }
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions_data()
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanRequestsDeviceExtensions_data()
 {
     QTest::addColumn<QByteArray>("before");
     QTest::addColumn<QByteArray>("after");
@@ -881,11 +846,8 @@ void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions_data()
                                             "VK_KHR_external_memory_fd;VK_EXT_image_drm_format_modifier");
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions()
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanRequestsDeviceExtensions()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QSKIP("DMABuf import under Vulkan not compiled in this build");
-#else
     QFETCH(QByteArray, before);
     QFETCH(QByteArray, after);
 
@@ -900,14 +862,10 @@ void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions()
 
     GstDmaBufVulkan::requestDeviceExtensions();
     QCOMPARE(qgetenv(kVariable), after);
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QSKIP("DMABuf import under Vulkan not compiled in this build");
-#else
     using GstDmaBufVulkan::ImportFailure;
     const auto resetGuard = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
     const GstDmaBufVulkan::DeviceFns fns = standInVulkanDeviceFns();
@@ -944,10 +902,9 @@ void GstHwBuffersTest::_testDmaBufVulkanFdDupFailureIsNotARefusal()
     frame.noteImportOutcomeForTest(GstDmaBufVideoBuffer::ImportOutcome::FdDupFailed);
     const QString stats = HwBuffers::extraPathStatsSince(before);
     QVERIFY2(stats.contains(QStringLiteral("DMABuf-fallback[fd-dup-failed=1]")), qPrintable(stats));
-#endif
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data()
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data()
 {
     QTest::addColumn<bool>("rhiDestroyedFirst");
 
@@ -955,11 +912,8 @@ void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data()
     QTest::newRow("the QRhi is destroyed before the GPU finishes") << true;
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame()
+void GstHwBuffersDmaBufTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QSKIP("DMABuf import under Vulkan not compiled in this build");
-#else
     QFETCH(bool, rhiDestroyedFirst);
 
     std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
@@ -995,14 +949,10 @@ void GstHwBuffersTest::_testDmaBufVulkanRetiredBufferNeedsNoLaterFrame()
     QCOMPARE(device.memoriesFreed.load(), 1);
     QCOMPARE(device.fencesDestroyed.load(), 1);
     QCOMPARE(device.imageDestroyedOn.load(), QThread::currentThreadId());
-#endif
 }
 
-void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
+void GstHwBuffersDmaBufTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 {
-#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
-    QSKIP("DMABuf->Vulkan frame bundles not compiled in this build");
-#else
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
@@ -1024,5 +974,8 @@ void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 
     bundle.reset();
     QCOMPARE(releases, 1);
-#endif
 }
+#endif
+
+UT_REGISTER_TEST(GstHwBuffersDmaBufTest, TestLabel::Unit)
+UT_REGISTER_TEST(GstHwBuffersDmaBufPipelineTest, TestLabel::Integration)

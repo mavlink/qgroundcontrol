@@ -156,15 +156,25 @@ void GstVideoReceiverStatsTest::_testStatsCountFramesTheDisplayQueueLeaks()
     QVERIFY(receiving.errorSpy.isEmpty());
 }
 
-void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
+void GstVideoReceiverStatsTest::_testStatsCountLostPackets_data()
 {
+    QTest::addColumn<bool>("lowLatency");
+
+    // RTP over UDP is counted where it arrives, with a jitter buffer behind that or without.
+    QTest::newRow("jitter buffer") << false;
+    QTest::newRow("low latency") << true;
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountLostPackets()
+{
+    QFETCH(bool, lowLatency);
     // One buffer or buffer list of RTP packets in seven never arrives.
     constexpr int kDropOneIn = 7;
 
     Receiver receiving;
     QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
     VideoReceiver::Config config = receiving.receiver->config();
-    config.lowLatency = true;
+    config.lowLatency = lowLatency;
     receiving.receiver->setConfig(config);
 
     QVERIFY(receiving.startStreaming());
@@ -176,6 +186,42 @@ void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
     QVERIFY(stats.valid);
     QVERIFY(stats.packetsLost > 0);
     QVERIFY2(stats.lossPercent < 100, qPrintable(QString::number(stats.lossPercent)));
+    QVERIFY(receiving.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountNoLossWhenTheSenderStartsOver_data()
+{
+    _testStatsCountLostPackets_data();
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountNoLossWhenTheSenderStartsOver()
+{
+    QFETCH(bool, lowLatency);
+    // Few enough for a jitter buffer to count them as packets lost on the way.
+    constexpr quint16 kSequenceNumbersSkipped = 300;
+
+    Receiver receiving;
+    QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
+    VideoReceiver::Config config = receiving.receiver->config();
+    config.lowLatency = lowLatency;
+    receiving.receiver->setConfig(config);
+
+    QVERIFY(receiving.startStreaming());
+    QVERIFY_TRUE_WAIT(receiving.receiver->stats().hasRtpStats(), TestTimeout::mediumMs());
+
+    // A camera whose encoder starts over, as for another resolution, soon enough for the receiver to keep listening.
+    QVERIFY(receiving.sender.restartAfterSkipping(receiving.udpPort(), kSequenceNumbersSkipped));
+    QVERIFY(receiving.framesSent(GstReceiverTest::kFrameRate));
+    // Two samples from here, the new sender's packets are in the statistics.
+    QSignalSpy statsSpy(receiving.receiver.get(), &VideoReceiver::statsChanged);
+    QVERIFY_TRUE_WAIT(statsSpy.count() >= 2, TestTimeout::mediumMs());
+
+    const VideoStreamStats stats = receiving.receiver->stats();
+    QVERIFY(stats.valid);
+    QCOMPARE(stats.reconnects, 0);
+    // None of the sequence numbers skipped. On a busy host the sender can fall behind and catch up in a burst, of
+    // which a jitter buffer drops what its latency doesn't hold.
+    QVERIFY2(stats.packetsLost < (kSequenceNumbersSkipped / 2), qPrintable(QString::number(stats.packetsLost)));
     QVERIFY(receiving.errorSpy.isEmpty());
 }
 

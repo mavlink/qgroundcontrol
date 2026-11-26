@@ -17,6 +17,7 @@
 
 void GstQgcSinkPipelineTest::_testFrameDelivery()
 {
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "videoconvert");
     QVideoSink videoSink;
     const auto r =
         GstQgcTest::runPipelineThroughQVideoSink(videoSink,
@@ -31,6 +32,7 @@ void GstQgcSinkPipelineTest::_testFrameDelivery()
 
 void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
 {
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     QVideoSink videoSink;
     const auto r = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1,colorimetry=(string)bt709",
@@ -50,7 +52,7 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback_data()
     QTest::addColumn<int>("backend");
     QTest::addColumn<QString>("format");
 
-    // Software-decoded frames reach the GPU variants that need no GPU for them (GstHwBuffersPipelineTest covers the
+    // Software-decoded frames reach the GPU variants that need no GPU for them (GstHwBuffersGlTest covers the
     // glupload bin): in a format the sink takes, and in one only the converter reads.
     for (const QString& format : {QStringLiteral("BGRA"), QStringLiteral("Y444")}) {
         const QByteArray tag = format.toLatin1();
@@ -65,6 +67,7 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback_data()
 
 void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback()
 {
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     QFETCH(int, mode);
     QFETCH(int, backend);
     QFETCH(QString, format);
@@ -107,6 +110,7 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels_data()
 
 void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
 {
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     QFETCH(bool, gpuZeroCopy);
     QFETCH(bool, disablePar);
     // Software frames take the GPU bin's system-memory caps too.
@@ -123,13 +127,13 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
                      [&lastSize](const QVideoFrame& frame) { lastSize = frame.size(); });
     QObject owner;
     GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=3 ! "
-                                            "video/x-raw,format=I420,width=%1,height=%2,pixel-aspect-ratio=12/11,"
-                                            "framerate=30/1 ! qgcvideosinkbin name=sink gpu-zerocopy=%3 disable-par=%4")
-                                 .arg(kWidth)
-                                 .arg(kHeight)
-                                 .arg(gpuZeroCopy ? "true" : "false")
-                                 .arg(disablePar ? "true" : "false")),
+    QVERIFY2(GstQgcTest::launchIntoSinkBin(
+                 pipeline,
+                 QStringLiteral("videotestsrc num-buffers=3 ! "
+                                "video/x-raw,format=I420,width=%1,height=%2,pixel-aspect-ratio=12/11,framerate=30/1")
+                     .arg(kWidth)
+                     .arg(kHeight),
+                 {.gpuZeroCopy = gpuZeroCopy, .disablePar = disablePar}),
              qPrintable(pipeline.error()));
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(sinkBin);
@@ -153,14 +157,15 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
 
 void GstQgcSinkPipelineTest::_testTeardownUnderLoad()
 {
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     QVideoSink videoSink;
 
     {
         QObject controllerOwner;
         GstTest::TestPipeline pipeline;
-        QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc is-live=true ! "
-                                                "video/x-raw,format=BGRA,width=160,height=120,framerate=60/1 ! "
-                                                "qgcvideosinkbin name=sink")),
+        QVERIFY2(GstQgcTest::launchIntoSinkBin(
+                     pipeline, QStringLiteral("videotestsrc is-live=true ! "
+                                              "video/x-raw,format=BGRA,width=160,height=120,framerate=60/1")),
                  qPrintable(pipeline.error()));
         const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
         QVERIFY(sinkBin);
@@ -181,13 +186,14 @@ void GstQgcSinkPipelineTest::_testTeardownUnderLoad()
 
 void GstQgcSinkPipelineTest::_testInactiveQgcQVideoSinkDropsAndCounts()
 {
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     QVideoSink videoSink;
     QObject controllerOwner;
     QSignalSpy frameSpy(&videoSink, &QVideoSink::videoFrameChanged);
     GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc is-live=false num-buffers=12 ! "
-                                            "video/x-raw,format=BGRA,width=96,height=64,framerate=30/1 ! "
-                                            "qgcvideosinkbin name=sink")),
+    QVERIFY2(GstQgcTest::launchIntoSinkBin(pipeline,
+                                           QStringLiteral("videotestsrc is-live=false num-buffers=12 ! "
+                                                          "video/x-raw,format=BGRA,width=96,height=64,framerate=30/1")),
              qPrintable(pipeline.error()));
 
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
@@ -221,15 +227,16 @@ void GstQgcSinkPipelineTest::_testLateFramesAreShown()
     GSTTEST_SKIP_UNLESS_FACTORIES("appsrc");
     // A live source and a sink that syncs to the clock, as the receiver sets it for a live stream.
     GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src is-live=true format=time "
-                                            "caps=video/x-raw,format=BGRA,width=4,height=4,framerate=30/1 ! "
-                                            "qgcvideosinkbin name=sink sync=true")),
+    QVERIFY2(GstQgcTest::launchIntoSinkBin(
+                 pipeline, QStringLiteral("appsrc name=src is-live=true format=time "
+                                          "caps=video/x-raw,format=BGRA,width=4,height=4,framerate=30/1")),
              qPrintable(pipeline.error()));
     const GStreamer::GstElementPtr source = pipeline.element("src");
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(source && sinkBin);
     const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY(qvideosink);
+    g_object_set(qvideosink.get(), "sync", TRUE, nullptr);
 
     // The pipeline's time starts at ten seconds, so frames stamped from zero are that late: a decoder that fell
     // behind. A GstVideoSink drops a frame that ends more than 5 ms before the time it arrives at.

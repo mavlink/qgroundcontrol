@@ -123,7 +123,8 @@ public:
     /// Allows the plugin to override the creation of the root (native) window.
     virtual void createRootWindow(QQmlApplicationEngine *qmlEngine);
 
-    /// Allows the plugin to override the creation of VideoReceiver.
+    /// Creates the receiver of every network video stream; USB cameras don't use it. The default follows the Video
+    /// backend setting (VideoBackend::createReceiver()). An override is asked whatever that setting.
     virtual VideoReceiver *createVideoReceiver(QObject *parent);
 
     /// Allows the plugin to see all mavlink traffic to a vehicle

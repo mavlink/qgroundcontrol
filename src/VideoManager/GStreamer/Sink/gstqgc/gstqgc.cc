@@ -16,8 +16,6 @@ void qgc_element_init(GstPlugin* plugin)
 
 static gboolean plugin_init(GstPlugin* plugin)
 {
-    if (!GST_ELEMENT_REGISTER(qgcvideosinkbin, plugin))
-        return FALSE;
     if (!GST_ELEMENT_REGISTER(qgcqvideosink, plugin))
         return FALSE;
     return TRUE;

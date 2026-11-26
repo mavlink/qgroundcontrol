@@ -4,8 +4,8 @@
 
 #include <QtCore/QByteArray>
 
+#include "GstQgcSinkBin.h"
 #include "gstqgcqvideosink.h"
-#include "gstqgcvideosinkbin.h"
 
 namespace GstQgc {
 
@@ -25,8 +25,8 @@ const char* sinkFramesField(HwVideoBufferPath path)
 GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin)
 {
     GStreamer::GstElementPtr inner;
-    if (sinkOrBin && GST_IS_QGC_VIDEO_SINK_BIN(sinkOrBin)) {
-        inner = GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkOrBin)));
+    if (sinkOrBin && GST_IS_BIN(sinkOrBin)) {
+        inner = GStreamer::adoptElement(GstQgc::sinkBinVideoSink(sinkOrBin));
         sinkOrBin = inner.get();
     }
     if (!sinkOrBin || !GST_IS_QGC_Q_VIDEO_SINK(sinkOrBin)) {

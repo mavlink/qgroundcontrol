@@ -327,13 +327,6 @@ parse:
         AVAILABLE: '*'
         SHIPPED: '*'
 
-    qgc_gst_create_layout_target:
-      pargs: {nargs: '*'}
-      kwargs:
-        SDK_ROOT: '?'
-        LIB_PATH: '?'
-        FRAMEWORK_BUNDLE: '?'
-
     qgc_gst_generate_static_init:
       pargs: {nargs: '*'}
       kwargs:

@@ -24,6 +24,7 @@ set(_qgc_gst_tests
     test_ios_sdk_extract
     test_macos_sdk_extract
     test_android_pkg_config
+    test_android_abi_root
     test_static_init
     test_ios_static_plugins
     test_single_core
@@ -55,6 +56,7 @@ set_tests_properties(
 # with TEST_CASE when given, and must fail with that diagnostic (qgc_add_expected_failure_test).
 set(_qgc_gst_failure_cases
     "test_android_abi_info|||Unsupported Android ABI: mips"
+    "test_android_abi_root|NoTree|no-tree|nor a universal SDK with an armv7/ tree for armeabi-v7a"
     "test_download|Unpinned|unpinned|no checksum is pinned for the android 9.1.2 package"
     "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
@@ -100,6 +102,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
             sdk-too-old
             missing-mandatory
             missing-gl
+            system-beside-root
             plugin-allowlist
             install
             install-macos

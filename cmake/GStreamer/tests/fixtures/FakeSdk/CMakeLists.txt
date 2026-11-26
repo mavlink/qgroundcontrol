@@ -77,6 +77,19 @@ if(EXPECT_PROBE_ROOT)
     qgc_test_assert_streq("probe library" "${EXPECT_PROBE_ROOT}/lib/libgstqgcprobe-1.0.so" "${QGCProbe_LIBRARIES}")
 endif()
 
+# EXPECT_PROBE_REASON: the optional library is one the SDK lacks, so the probe finds none and says this.
+if(EXPECT_PROBE_REASON)
+    qgc_gst_probe_library(
+        QGCProbe
+        HAS_VAR QGC_GST_HAS_TEST_PROBE
+        HEADER gst/qgcprobe.h
+        SYMBOL qgc_probe
+        PC_MODULE gstreamer-qgcprobe-1.0
+    )
+    qgc_test_assert_streq("probe found" FALSE "${QGCProbe_FOUND}")
+    qgc_test_assert_streq("probe reason" "${EXPECT_PROBE_REASON}" "${QGCProbe_REASON}")
+endif()
+
 # Discovery state stays out of the cache and the global search paths; the derived pkg-config flags
 # remain visible to the rest of the GStreamer directory and the environment is restored afterwards.
 if(NOT DEFINED EXPECT_CACHED_PKG_CONFIG_ARGN)

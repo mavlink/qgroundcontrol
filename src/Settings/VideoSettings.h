@@ -24,7 +24,8 @@ public:
     DEFINE_SETTINGFACT(udpUrl)
     DEFINE_SETTINGFACT(tcpUrl)
     DEFINE_SETTINGFACT(rtspUrl)
-    DEFINE_SETTINGFACT(aspectRatio)
+    /// The ratio the configured video source is stretched to (aspectRatioOf()), or Auto for the video's own.
+    DEFINE_SETTINGFACT(forcedAspectRatio)
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
     DEFINE_SETTINGFACT(showTelemetryOverlay)
@@ -44,7 +45,6 @@ public:
     DEFINE_SETTINGFACT(softwareDecoderThreads)
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
-    DEFINE_SETTINGFACT(disablePixelAspectRatio)
     /// How many other video sources the video view shows in tiles beside the main video; 0 for none.
     DEFINE_SETTINGFACT(maxVideoTiles)
     /// The USB camera to show in a tile while the video source is a stream; empty for none.
@@ -72,6 +72,21 @@ public:
         VideoFitNoCrop = 3,
     };
     Q_ENUM(VideoFit)
+
+    /// forcedAspectRatio's values (Video.SettingsGroup.json).
+    enum ForcedAspectRatio
+    {
+        AspectRatioAuto = 0,
+        AspectRatio16x9 = 1,
+        AspectRatio4x3 = 2,
+        AspectRatio5x4 = 3,
+        AspectRatio3x2 = 4,
+        AspectRatio1x1 = 5,
+    };
+    Q_ENUM(ForcedAspectRatio)
+
+    /// Width over height for a forcedAspectRatio value; 0 for Auto, and for a value that is none of them.
+    static double aspectRatioOf(int forcedAspectRatio);
 
     /// videoBackend's values (Video.SettingsGroup.json).
     enum VideoBackendChoice

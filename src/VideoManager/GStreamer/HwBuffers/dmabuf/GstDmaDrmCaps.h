@@ -24,8 +24,6 @@ std::string buildVulkanDmaDrmCaps(std::span<const GstVideoFormat> formats);
 #ifdef QGC_UNITTEST_BUILD
 /// True when @p modifier carries no compression or auxiliary plane, so its planes can be imported one by one.
 bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept;
-/// DRM fourcc plane @p plane of @p format is imported through; 0 when there is none.
-guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexcept;
 #endif
 
 }  // namespace GstHw

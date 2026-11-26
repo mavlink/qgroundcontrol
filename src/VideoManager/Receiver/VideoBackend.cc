@@ -7,6 +7,8 @@
 #include "AppSettings.h"
 #include "QGCApplication.h"
 #include "QtMultimediaVideoReceiver.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
 
 #ifdef QGC_GST_STREAMING
 #include "GStreamerVideoBackend.h"
@@ -19,8 +21,6 @@ class QtMultimediaVideoBackend final : public VideoBackend
 {
 public:
     Capabilities capabilities() const override { return {.streaming = true}; }
-
-    VideoReceiver* createReceiver(QObject* parent) override { return new QtMultimediaVideoReceiver(parent); }
 };
 
 }  // namespace
@@ -33,6 +33,17 @@ VideoBackend& VideoBackend::instance()
     static QtMultimediaVideoBackend backend;
 #endif
     return backend;
+}
+
+VideoReceiver* VideoBackend::createReceiver(QObject* parent)
+{
+    const Fact* const chosen = SettingsManager::instance()->videoSettings()->videoBackend();
+    if (chosen->rawValue().toInt() != VideoSettings::VideoBackendQtMultimedia) {
+        if (VideoReceiver* const receiver = createOwnReceiver(parent)) {
+            return receiver;
+        }
+    }
+    return new QtMultimediaVideoReceiver(parent);
 }
 
 bool VideoBackend::disabledForUnitTests()

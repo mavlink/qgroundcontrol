@@ -9,7 +9,6 @@
 #include "GstVideoReceiver.h"
 #include "HwBuffers/HwBuffers.h"
 #include "QGCLoggingCategory.h"
-#include "QtMultimediaVideoReceiver.h"
 
 QGC_LOGGING_CATEGORY(GStreamerVideoBackendLog, "Video.GStreamer.VideoBackend")
 
@@ -28,11 +27,11 @@ VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
     return {.streaming = true, .pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
 }
 
-VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
+VideoReceiver* GStreamerVideoBackend::createOwnReceiver(QObject* parent)
 {
     // GStreamer's setup isn't retried, so nothing plays through it in this process any more.
     if (state() == State::Failed) {
-        return new QtMultimediaVideoReceiver(parent);
+        return nullptr;
     }
     return new GstVideoReceiver(parent);
 }

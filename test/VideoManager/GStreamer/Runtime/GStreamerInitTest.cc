@@ -238,7 +238,7 @@ void GStreamerInitTest::_testMissingPluginFeatures_data()
     QTest::newRow("no rtsp or tcp") << QStringList{"rtspsrc", "tcpclientsrc"} << QStringList{"rtspsrc", "tcpclientsrc"}
                                     << 2 << false << false;
     QTest::newRow("qgc elements stripped")
-        << QStringList{"qgcvideosinkbin"} << QStringList{"qgcvideosinkbin"} << 1 << true << true;
+        << QStringList{"qgcqvideosink"} << QStringList{"qgcqvideosink"} << 1 << true << true;
 }
 
 void GStreamerInitTest::_testMissingPluginFeatures()

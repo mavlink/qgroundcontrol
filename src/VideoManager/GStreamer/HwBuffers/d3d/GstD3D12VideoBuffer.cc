@@ -59,7 +59,7 @@ bool d3d11OpensD3D12(ID3D11Device* device)
 }
 #endif
 
-/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool().
+/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes().
 class D3D12PlaneResolver
 {
 public:
@@ -68,7 +68,6 @@ public:
     using Device = GstD3D12Device;
 
     static constexpr const char* kMemoryName = "GstD3D12Memory";
-    static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY;
 
     static const QLoggingCategory& log() { return GstD3D12Log(); }
 
@@ -111,33 +110,6 @@ public:
         QGC_HW_WARN_ONCE(GstD3D12Log,
                          "resolve: plane" << plane << "is slice" << subIdx << "of a texture array — CPU fallback");
         return nullptr;
-    }
-
-    static GstBufferPool* newPool(Device* device) { return gst_d3d12_buffer_pool_new(device); }
-
-    // gst_d3d12_memory_get_d3d11_texture() opens a resource on a Direct3D 11 device only from a shared heap, and with
-    // a render-target binding. A decoder that copies its frames into the downstream pool allocates them as that pool
-    // says.
-    static void setAllocationParams(GstStructure* config, Device* device, const GstVideoInfo* vinfo)
-    {
-        D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE;
-        D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-        if (!qtRendersWithD3D12()) {
-            resourceFlags = D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
-            heapFlags = D3D12_HEAP_FLAG_SHARED;
-            GstD3D12Format deviceFormat = {};
-            if (gst_d3d12_device_get_format(device, GST_VIDEO_INFO_FORMAT(vinfo), &deviceFormat) &&
-                ((deviceFormat.support1 & D3D12_FORMAT_SUPPORT1_RENDER_TARGET) != 0)) {
-                resourceFlags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-            }
-        }
-#endif
-        if (GstD3D12AllocationParams* params = gst_d3d12_allocation_params_new(
-                device, vinfo, GST_D3D12_ALLOCATION_FLAG_DEFAULT, resourceFlags, heapFlags)) {
-            gst_buffer_pool_config_set_d3d12_allocation_params(config, params);
-            gst_d3d12_allocation_params_free(params);
-        }
     }
 };
 
@@ -404,7 +376,6 @@ constinit const HwPathDescriptor GstHwPaths::kD3D12 = {
     .probeDevice = &probeDevice,
 #endif
     .resetCaches = &resetCachedState,
-    .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D12PlaneResolver>,
     .bridge = &GstD3D12ContextBridge::instance,
 };
 

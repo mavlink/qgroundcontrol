@@ -12,5 +12,8 @@ private slots:
     void _testStatsMeasureStream();
     void _testFramesLateForTheClockAreDisplayed();
     void _testStatsCountFramesTheDisplayQueueLeaks();
-    void _testStatsCountLostPacketsWithoutJitterBuffer();
+    void _testStatsCountLostPackets_data();
+    void _testStatsCountLostPackets();
+    void _testStatsCountNoLossWhenTheSenderStartsOver_data();
+    void _testStatsCountNoLossWhenTheSenderStartsOver();
 };

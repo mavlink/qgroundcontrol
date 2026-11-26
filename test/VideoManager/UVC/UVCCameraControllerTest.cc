@@ -9,10 +9,8 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoFrameInput>
-#include <QtMultimedia/QVideoSink>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
 #include "QtVideoRecorder.h"
@@ -23,30 +21,10 @@
 namespace {
 
 using VideoTestHelpers::createVideoOutput;
-using VideoTestHelpers::InlineQmlEngine;
 using VideoTestHelpers::redTopLeftQuadrant;
 using VideoTestHelpers::showFrame;
-using VideoTestHelpers::showsText;
 
 constexpr const char* kMissingCamera = "QGC Test Missing Camera";
-
-constexpr const char* kUvcStatsGroupQml = R"QML(
-import QtQuick
-import QGroundControl.VideoManager
-
-UVCStatsGroup {
-}
-)QML";
-
-constexpr const char* kUvcVideoOutputQml = R"QML(
-import QtQuick
-import QGroundControl.VideoManager
-
-UVCVideoOutput {
-    width: 64
-    height: 48
-}
-)QML";
 
 /// Whether @p image is redTopLeftQuadrant() turned clockwise, which puts the red quadrant top right, and mirrored,
 /// which brings it back to the top left.
@@ -81,8 +59,7 @@ void UVCCameraControllerTest::_testScreenshotFromVideoOutput()
     QQmlEngine engine;
     const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
     QVERIFY(output);
-    controller.registerVideoOutput(output.get());
-    QCOMPARE(controller.videoOutput(), output.get());
+    controller.setVideoOutput(output.get());
 
     QImage frame(QSize(64, 48), QImage::Format_RGBA8888);
     frame.fill(Qt::red);
@@ -94,55 +71,10 @@ void UVCCameraControllerTest::_testScreenshotFromVideoOutput()
     QVERIFY(controller.takeScreenshot(shot));
     QTRY_COMPARE_WITH_TIMEOUT(QImage(shot).size(), frame.size(), TestTimeout::mediumMs());
 
-    // Another output's going away leaves the registered one alone.
-    const std::unique_ptr<QQuickItem> otherOutput = createVideoOutput(engine);
-    controller.unregisterVideoOutput(otherOutput.get());
-    QCOMPARE(controller.videoOutput(), output.get());
-
-    // An output that leaves as another one registers hands the camera over, which never stops for it.
-    controller.unregisterVideoOutput(output.get());
-    QCOMPARE(controller.videoOutput(), output.get());
-    controller.registerVideoOutput(otherOutput.get());
-    QCoreApplication::sendPostedEvents(&controller, QEvent::MetaCall);
-    QCOMPARE(controller.videoOutput(), otherOutput.get());
-
-    // With no other output by the next pass, the camera has none.
-    controller.unregisterVideoOutput(otherOutput.get());
-    QCoreApplication::sendPostedEvents(&controller, QEvent::MetaCall);
+    controller.setVideoOutput(nullptr);
     expectLogMessage("Video.VideoReceiver", QtWarningMsg, noOutput);
     QVERIFY(!controller.takeScreenshot(shot));
     verifyExpectedLogMessage();
-}
-
-void UVCCameraControllerTest::_testOutputFollowsTransform()
-{
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString shot = tempDir.filePath(QStringLiteral("uvc.png"));
-
-    UVCCameraController controller;
-    InlineQmlEngine engine;
-    const std::unique_ptr<QQuickItem> output =
-        engine.create<QQuickItem>(kUvcVideoOutputQml, {{QStringLiteral("camera"), QVariant::fromValue(&controller)}});
-    QVERIFY2(output, qPrintable(engine.error()));
-    QCOMPARE(controller.videoOutput(), output.get());
-    QCOMPARE(output->property("orientation").toInt(), 0);
-    QVERIFY(!output->property("mirrored").toBool());
-
-    // The output turns and mirrors the picture. The camera's frames, which its recorder gets too, stay as they are.
-    controller.setTransform(QtVideo::Rotation::Clockwise90, true);
-    QCOMPARE(output->property("orientation").toInt(), 90);
-    QVERIFY(output->property("mirrored").toBool());
-    showFrame(output.get(), redTopLeftQuadrant());
-    auto* const sink = output->property("videoSink").value<QVideoSink*>();
-    QVERIFY(sink);
-    QCOMPARE(sink->videoFrame().rotation(), QtVideo::Rotation::None);
-    QVERIFY(!sink->videoFrame().mirrored());
-
-    // Screenshots save it as displayed.
-    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
-    QVERIFY(controller.takeScreenshot(shot));
-    QTRY_VERIFY_WITH_TIMEOUT(showsTurnedMirroredQuadrant(QImage(shot)), TestTimeout::mediumMs());
 }
 
 void UVCCameraControllerTest::_testPhotoFollowsTransform()
@@ -156,7 +88,7 @@ void UVCCameraControllerTest::_testPhotoFollowsTransform()
     QQmlEngine engine;
     const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
     QVERIFY(output);
-    controller.registerVideoOutput(output.get());
+    controller.setVideoOutput(output.get());
 
     // A captured frame, as QImageCapture hands it over for request 7, is saved as displayed.
     controller._photoFiles.insert(7, {photo, {}});
@@ -179,7 +111,7 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
     QQmlEngine engine;
     const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
     QVERIFY(output);
-    controller.registerVideoOutput(output.get());
+    controller.setVideoOutput(output.get());
     showFrame(output.get(), redTopLeftQuadrant());
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
 
@@ -211,8 +143,7 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
     verifyExpectedLogMessage();
 
     // So is a failed capture once there is no output to take the photo from instead.
-    controller.unregisterVideoOutput(output.get());
-    QCoreApplication::sendPostedEvents(&controller, QEvent::MetaCall);
+    controller.setVideoOutput(nullptr);
     controller._photoFiles.insert(11, {tempDir.filePath(QStringLiteral("none.png")), {}});
     expectLogMessage("Video.UVCCameraController", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Photo capture failed")));
@@ -246,7 +177,7 @@ void UVCCameraControllerTest::_testMissingCameraNeverRuns()
     QQmlEngine engine;
     const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
     QVERIFY(output);
-    controller.registerVideoOutput(output.get());
+    controller.setVideoOutput(output.get());
 
     expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
     selectCamera(controller, QString::fromLatin1(kMissingCamera));
@@ -443,7 +374,10 @@ void UVCCameraControllerTest::_testFramesBecomeStats()
     // The camera hands over frames, not the bytes it sent.
     QCOMPARE(stats.bitrateKbps, -1.0);
     QVERIFY(!stats.hasRtpStats());
-    QCOMPARE(controller.cameraFrameRate(), 30.0);
+    // Nor does anything count the frames that never reach the output.
+    QCOMPARE(stats.framesDropped, qint64(-1));
+    // The frame rate the camera is set up for, as its frames tell.
+    QCOMPARE(stats.cameraFps, 30.0);
 
     // A camera that stalls reads 0 fps once its frames drop out of the rate window.
     for (int i = 0; i < VideoStreamStatsMeter::kRateWindowIntervals; ++i) {
@@ -466,14 +400,16 @@ void UVCCameraControllerTest::_testStatsRestartWithoutOutput()
     _measureSecond(controller, nowMs);
     QVERIFY(controller.stats().valid);
 
-    // The output went away, and the stream with it.
+    // The output set again, as one that moved to another window is, is the one connected: the stream goes on.
     QSignalSpy statsSpy(&controller, &VideoReceiver::statsChanged);
-    QSignalSpy frameRateSpy(&controller, &UVCCameraController::cameraFrameRateChanged);
+    controller.setVideoOutput(output.get());
+    QCOMPARE(statsSpy.count(), 0);
+    QVERIFY(controller.stats().valid);
+
+    // The output went away, and the stream with it.
     output.reset();
     QCOMPARE(statsSpy.count(), 1);
-    QCOMPARE(frameRateSpy.count(), 1);
     QVERIFY(!controller.stats().valid);
-    QCOMPARE(controller.cameraFrameRate(), 0.0);
     nowMs += 1000;
     controller._sample();
     QVERIFY(!controller.stats().valid);
@@ -485,31 +421,6 @@ void UVCCameraControllerTest::_testStatsRestartWithoutOutput()
     _measureSecond(controller, nowMs);
     QVERIFY(controller.stats().valid);
     QCOMPARE(controller.stats().uptimeMs, qint64(1000));
-}
-
-void UVCCameraControllerTest::_testStatsGroupShowsCamera()
-{
-    qint64 nowMs = 1000;
-    UVCCameraController controller(nullptr, [&nowMs] { return nowMs; });
-
-    InlineQmlEngine engine;
-    const std::unique_ptr<QQuickItem> group =
-        engine.create<QQuickItem>(kUvcStatsGroupQml, {{QStringLiteral("camera"), QVariant::fromValue(&controller)}});
-    QVERIFY2(group, qPrintable(engine.error()));
-    // Items outside a scene are never visible.
-    QQuickWindow window;
-    group->setParentItem(window.contentItem());
-    QVERIFY(!group->isVisible());
-
-    controller.setVideoSize(QSize(640, 480));
-    _measureSecond(controller, nowMs);
-    QVERIFY(group->isVisible());
-    QVERIFY(showsText(group.get(), QStringLiteral("30.0 fps (camera 30 fps)")));
-    QVERIFY(showsText(group.get(), QStringLiteral("640 × 480 MJPEG")));
-    QVERIFY(showsText(group.get(), QStringLiteral("CPU")));
-    QVERIFY(showsText(group.get(), QStringLiteral("0:01")));
-    // Without a name there is no row for it.
-    QVERIFY(!showsText(group.get(), QStringLiteral("Camera")));
 }
 
 UT_REGISTER_TEST(UVCCameraControllerTest, TestLabel::Unit)

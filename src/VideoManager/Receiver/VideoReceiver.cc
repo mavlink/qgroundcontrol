@@ -159,14 +159,16 @@ bool VideoReceiver::onTakeScreenshot(const QString& file, const VideoScreenshot:
     const int orientation = _videoOutput->property("orientation").toInt() % 360;
     const auto outputRotation = static_cast<QtVideo::Rotation>((orientation < 0) ? (orientation + 360) : orientation);
     const bool outputMirrored = _videoOutput->property("mirrored").toBool();
+    // The ratio a VideoStreamOutput stretches the picture to; 0 for any other output, and for the video's own.
+    const double forcedAspectRatio = _videoOutput->property("forcedAspectRatio").toDouble();
     // Converted on this thread, which a frame in GPU memory requires; encoding and writing would stall the UI.
     const QImage image = VideoScreenshot::displayedImage(videoSink()->videoFrame(), outputRotation, outputMirrored);
     if (image.isNull()) {
         qCWarning(VideoReceiverLog) << "No video frame to take a screenshot from" << _name;
         return false;
     }
-    (void) QtConcurrent::run([image, file, exif] {
-        return VideoScreenshot::saveImage(image, file, exif);
+    (void) QtConcurrent::run([image, file, exif, forcedAspectRatio] {
+        return VideoScreenshot::saveImage(VideoScreenshot::stretched(image, forcedAspectRatio), file, exif);
     }).then(this, [this, file](bool saved) {
         if (!saved) {
             emit errorOccurred(tr("Unable to save the photo %1.").arg(QFileInfo(file).fileName()));

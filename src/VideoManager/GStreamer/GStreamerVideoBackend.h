@@ -27,7 +27,6 @@ public:
 
     Capabilities capabilities() const override;
 
-    VideoReceiver* createReceiver(QObject* parent) override;
     void configureQtGraphics(bool softwareRendering) override;
     /// Points GStreamer at its plugins, scanner and registry (GStreamer::Environment::prepareEnvironment()).
     EnvPrepResult prepareEnvironment() override;
@@ -42,5 +41,7 @@ public:
     void onMainWindowReady(QQuickWindow* window) override;
 
 private:
+    VideoReceiver* createOwnReceiver(QObject* parent) override;
+
     std::atomic<State> _state{State::Unprepared};
 };

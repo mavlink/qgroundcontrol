@@ -134,7 +134,6 @@ void VideoSettings::_offerChoices(FactMetaData* metaData, Fact* fact, QVariantLi
     }
 }
 
-DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
 DECLARE_SETTINGSFACT(VideoSettings, videoFit)
 DECLARE_SETTINGSFACT(VideoSettings, gridLines)
 DECLARE_SETTINGSFACT(VideoSettings, showTelemetryOverlay)
@@ -198,15 +197,33 @@ DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasPipelineSettings())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspAutoReconnect, hasStreaming())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceCpuVideoPath, VideoBackend::instance().capabilities().gpuVideoPath)
 
-// videoConversionElement / disablePixelAspectRatio reach the receivers' display sinks as construct-only properties
-// (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when they
-// change.
+// videoConversionElement reaches the receivers' display sinks as a construct-only property
+// (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when it
+// changes.
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoConversionElement, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(disablePixelAspectRatio, hasPipelineSettings())
+DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forcedAspectRatio, hasStreaming())
 
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspTimeout, hasStreaming())
 
 #undef DECLARE_VIDEO_SETTINGSFACT_VISIBLE
+
+double VideoSettings::aspectRatioOf(int forcedAspectRatio)
+{
+    switch (forcedAspectRatio) {
+        case AspectRatio16x9:
+            return 16.0 / 9.0;
+        case AspectRatio4x3:
+            return 4.0 / 3.0;
+        case AspectRatio5x4:
+            return 5.0 / 4.0;
+        case AspectRatio3x2:
+            return 3.0 / 2.0;
+        case AspectRatio1x1:
+            return 1.0;
+        default:
+            return 0.0;
+    }
+}
 
 void VideoSettings::pruneUnavailableDecoders()
 {

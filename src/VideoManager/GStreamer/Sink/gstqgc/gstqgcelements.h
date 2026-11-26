@@ -9,7 +9,6 @@ extern GstDebugCategory* gst_qgc_debug;
 
 void qgc_element_init(GstPlugin* plugin);
 
-GST_ELEMENT_REGISTER_DECLARE(qgcvideosinkbin);
 GST_ELEMENT_REGISTER_DECLARE(qgcqvideosink);
 
 G_END_DECLS

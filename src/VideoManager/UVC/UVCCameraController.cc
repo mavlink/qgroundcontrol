@@ -6,7 +6,6 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QFileInfo>
-#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
@@ -144,32 +143,13 @@ void UVCCameraController::watchCameras()
                    Qt::UniqueConnection);
 }
 
-void UVCCameraController::registerVideoOutput(QQuickItem* videoOutput)
-{
-    // Not for the output already set: the camera has nothing to bind anew, and its measurements would start over.
-    if (videoOutput && (videoOutput != this->videoOutput())) {
-        setVideoOutput(videoOutput);
-    }
-}
-
-void UVCCameraController::unregisterVideoOutput(QQuickItem* videoOutput)
-{
-    if (!videoOutput || (videoOutput != this->videoOutput())) {
-        return;
-    }
-    // Queued: the output that takes this one's place, in the main picture or in a tile, registers in the same pass.
-    (void) QMetaObject::invokeMethod(
-        this,
-        [this, output = QPointer<QQuickItem>(videoOutput)] {
-            if (output == this->videoOutput()) {
-                setVideoOutput(nullptr);
-            }
-        },
-        Qt::QueuedConnection);
-}
-
 void UVCCameraController::onVideoOutputChanged()
 {
+    // An output set again, as one that moved to another window is: the camera has nothing to bind anew, and its
+    // measurements would start over.
+    if (QVideoSink* const sink = videoSink(); sink && (sink == _connectedSink)) {
+        return;
+    }
     qCDebug(UVCCameraControllerLog) << "video output" << videoOutput();
     _connectVideoOutput();
 }
@@ -206,7 +186,6 @@ void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored
     }
     _rotation = rotation;
     _mirrored = mirrored;
-    emit transformChanged();
 }
 
 void UVCCameraController::setControls(const Controls& controls)
@@ -390,6 +369,7 @@ void UVCCameraController::_recreateCamera()
 void UVCCameraController::_connectVideoOutput()
 {
     QVideoSink* const sink = videoSink();
+    _connectedSink = sink;
     (void) disconnect(_frameConnection);
     if (sink) {
         _frameConnection = connect(sink, &QVideoSink::videoFrameChanged, this, &UVCCameraController::_onVideoFrame);
@@ -432,6 +412,7 @@ void UVCCameraController::_sample()
     }
 
     VideoStreamStats stats = this->stats();
+    stats.cameraFps = _frameCounters.streamFrameRate;
     stats.codec = UVCDevices::pixelFormatName(_frameCounters.pixelFormat);
     stats.gpuPath = _frameCounters.gpu ? QStringLiteral("GPU") : QStringLiteral("CPU");
     stats.uptimeMs = nowMs - *_streamingSinceMs;
@@ -440,8 +421,7 @@ void UVCCameraController::_sample()
     if (!_meter.update(counters, stats)) {
         return;
     }
-    // Before the stats, whose readers compare them with it.
-    _setCameraFrameRate(_frameCounters.streamFrameRate);
+    stats.framesDropped = -1;
     setStats(stats);
     // Frames flowing again end a run of retries.
     _retries = 0;
@@ -453,15 +433,6 @@ void UVCCameraController::_restartStats()
     _meter.reset();
     _streamingSinceMs.reset();
     setStats(VideoStreamStats());
-    _setCameraFrameRate(0.0);
-}
-
-void UVCCameraController::_setCameraFrameRate(double frameRate)
-{
-    if (frameRate != _cameraFrameRate) {
-        _cameraFrameRate = frameRate;
-        emit cameraFrameRateChanged();
-    }
 }
 
 void UVCCameraController::_onVideoFrame(const QVideoFrame& frame)

@@ -10,17 +10,18 @@
 
 #include "GStreamer.h"
 #include "GstScoped.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 namespace {
 
-/// A GstHarness feeding a qgcvideosinkbin bound to a QVideoSink. The bin's sink doesn't sync, so frames go through on
+/// A GstHarness feeding a sink bin bound to a QVideoSink. The bin's sink doesn't sync, so frames go through on
 /// push(); the QVideoSink gets them only when deliver() runs the calls queued to this thread.
 class SinkBinHarness
 {
 public:
     explicit SinkBinHarness(QVideoSink* videoSink)
     {
-        _bin = GStreamer::makeElement("qgcvideosinkbin");
+        _bin = GStreamer::adoptFloating(GstQgc::makeSinkBin({}));
         if (_bin && GStreamer::setupQVideoSinkElement(_bin.get(), videoSink, &_owner)) {
             _harness = gst_harness_new_with_element(_bin.get(), "sink", nullptr);
         }

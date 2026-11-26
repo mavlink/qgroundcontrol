@@ -9,8 +9,6 @@
 #include <atomic>
 #include <cstddef>
 #include <gst/gst.h>
-// Not <gst/video/gstvideopool.h>. GStreamer defect, seen in GStreamer 1.28: it must not be the first video header
-// (include cycle).
 #include <gst/video/video.h>
 #include <memory>
 #include <private/qhwvideobuffer_p.h>
@@ -32,19 +30,6 @@
 namespace GstD3DVideoBufferCommon {
 
 using GstHw::kMaxPlanes;
-
-inline bool canAliasSingleResourceAcrossPlanes(QVideoFrameFormat::PixelFormat pixelFormat) noexcept
-{
-    switch (pixelFormat) {
-        case QVideoFrameFormat::Format_NV12:
-        case QVideoFrameFormat::Format_NV21:
-        case QVideoFrameFormat::Format_P010:
-        case QVideoFrameFormat::Format_P016:
-            return true;
-        default:
-            return false;
-    }
-}
 
 /// Scope guard for the native handles a resolvePlanes() loop builds up: releases every owned handle on scope
 /// exit unless commit() transfers ownership on the success path.
@@ -82,8 +67,6 @@ struct PlaneResourceGuard
 ///   sameDevice(Device*, Device*), resource(Memory*), subresource(Memory*, int plane), isArraySlice(Handle*, guint);
 ///   members prepare(Memory*, int plane) (decoder sync), copySlice(Handle*, guint subresource, int plane) (returns the
 ///   slice's own resource, AddRef'd, when the API copies it later, or null when it can't take a slice).
-/// proposePool() needs static kCapsFeature, newPool(Device*) and setAllocationParams(GstStructure* config, Device*,
-///   const GstVideoInfo*).
 template <class Api>
 int resolvePlanes(GstBuffer* buffer, Api& api, PlaneResourceGuard<typename Api::Handle>& guard)
 {
@@ -197,10 +180,13 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
     }
 
     if (resolvedCount < textureCount) {
-        if (resolvedCount != 1 || !handles[0] || !canAliasSingleResourceAcrossPlanes(tail.pixelFormat)) {
+        // D3D NV12/P010 output is one texture, which Qt samples the chroma of through a two-channel view.
+        using Description = QVideoTextureHelper::TextureDescription;
+        const bool chromaIsTwoChannel =
+            (desc->textureFormat[1] == Description::RG_8) || (desc->textureFormat[1] == Description::RG_16);
+        if (resolvedCount != 1 || !handles[0] || !chromaIsTwoChannel) {
             return GstHwPathTelemetry::fail(tail.path);
         }
-        // D3D NV12/P010 output can expose one texture with multiple shader-resource planes.
         for (int i = resolvedCount; i < textureCount; ++i) {
             handles[i] = handles[0];
         }
@@ -308,40 +294,6 @@ protected:
 private:
     const HwVideoBufferPath _path;
 };
-
-/// HwPathDescriptor::proposePool for @p Api's memory: adds a pool on the bridge's device (Qt's) to an ALLOCATION query
-/// whose caps carry that memory, so the decoder allocates on the device QRhi samples from.
-template <class Api>
-bool proposePool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
-{
-    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
-    if (!features || !gst_caps_features_contains(features, Api::kCapsFeature)) {
-        return false;
-    }
-    typename Api::Device* device = Api::bridgeDevice();
-    if (!device) {
-        return false;
-    }
-    bool proposed = false;
-    if (GstBufferPool* pool = Api::newPool(device)) {
-        GstStructure* config = gst_buffer_pool_get_config(pool);
-        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
-        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-        Api::setAllocationParams(config, device, vinfo);
-        if (gst_buffer_pool_set_config(pool, config)) {
-            // The pool may grow the buffer size to the allocated texture's pitch; re-read it.
-            GstStructure* updated = gst_buffer_pool_get_config(pool);
-            guint poolSize = static_cast<guint>(size);
-            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
-            gst_structure_free(updated);
-            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
-            proposed = true;
-        }
-        gst_object_unref(pool);
-    }
-    gst_object_unref(device);  // bridgeDevice() returns a transfer-full ref.
-    return proposed;
-}
 
 }  // namespace GstD3DVideoBufferCommon
 

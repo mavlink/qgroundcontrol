@@ -2,7 +2,7 @@
 
 #include "GStreamerTestBase.h"
 
-/// videotestsrc pipelines played to EOS into qgcvideosinkbin bound to a QVideoSink, as the receiver binds it.
+/// videotestsrc pipelines played to EOS into the sink bin bound to a QVideoSink, as the receiver binds it.
 class GstQgcSinkPipelineTest : public GStreamerTestBase
 {
     Q_OBJECT

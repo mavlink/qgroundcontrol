@@ -18,37 +18,19 @@ ColumnLayout {
     Repeater {
         model: root.videoManager.sources
 
-        Loader {
-            id: groupLoader
+        // Shown while its source is measured.
+        VideoStreamStatsGroup {
+            id: group
 
             required property VideoStreamController modelData
 
-            // The loader of a group that hides itself would still take a row.
-            visible:            groupLoader.modelData.stats.valid
-            sourceComponent:    groupLoader.modelData.role === VideoSourceRole.Camera ? cameraGroupComponent
-                                                                                      : streamGroupComponent
+            // A stream in a tile goes by its name.
+            heading:            group.modelData.role === VideoSourceRole.Camera ? qsTr("USB Camera")
+                                : (group.modelData.tile ? group.modelData.displayName
+                                   : (group.modelData.role === VideoSourceRole.Thermal ? qsTr("Thermal")
+                                                                                       : qsTr("Video")))
+            stream:             group.modelData
             Layout.fillWidth:   true
-
-            Component {
-                id: streamGroupComponent
-
-                VideoStreamStatsGroup {
-                    // A stream in a tile goes by its name.
-                    heading:    groupLoader.modelData.tile ? groupLoader.modelData.displayName
-                                : (groupLoader.modelData.role === VideoSourceRole.Thermal ? qsTr("Thermal")
-                                                                                          : qsTr("Video"))
-                    stream:     groupLoader.modelData
-                }
-            }
-
-            Component {
-                id: cameraGroupComponent
-
-                UVCStatsGroup {
-                    camera:     root.videoManager.uvcCamera
-                    cameraName: groupLoader.modelData.displayName
-                }
-            }
         }
     }
 

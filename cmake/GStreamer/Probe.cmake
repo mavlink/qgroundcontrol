@@ -6,6 +6,7 @@
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/PkgConfig.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
@@ -50,7 +51,8 @@ endfunction()
 # qgc_gst_probe_library(<name> HAS_VAR <cache_var> HEADER <header> SYMBOL <symbol>
 #                    [PC_MODULE <module>] [LIBNAMES <names>... LIB_VAR <var>] [INCLUDES <dirs>...])
 # Probes one optional GStreamer library:
-#   1. pkg-config <module> into PkgConfig::PC_GStreamer_<name>.
+#   1. pkg-config <module> into PkgConfig::PC_GStreamer_<name>. A GStreamer module found outside the SDK is another
+#      GStreamer's and leaves the library not found (_qgc_gst_foreign_module_dir).
 #   2. <header>/<symbol> compile test cached as <HAS_VAR>, with <INCLUDES> plus the module's include dirs.
 #   3. With LIBNAMES, find_library (uncached, set in <LIB_VAR>) in the module's library dirs and the SDK's and link only
 #      that library: the macOS framework's gstreamer-vulkan-1.0.pc names a library the framework does not ship, which
@@ -59,6 +61,8 @@ endfunction()
 # Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (<INCLUDES> plus the module's),
 # <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
 function(qgc_gst_probe_library name)
+    # One probe's steps in order, each with its own way out.
+    # cmake-lint: disable=R0915
     qgc_gst_layout_get(LIB_PATH _gst_lib_path)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
     _qgc_gst_check_args(qgc_gst_probe_library HAS_VAR HEADER SYMBOL ALLOW_EMPTY PC_MODULE LIB_VAR LIBNAMES INCLUDES)
@@ -74,6 +78,14 @@ function(qgc_gst_probe_library name)
     set(_pc PC_GStreamer_${name})
     if(ARG_PC_MODULE AND PkgConfig_FOUND)
         pkg_check_modules(${_pc} QUIET IMPORTED_TARGET GLOBAL ${ARG_PC_MODULE})
+        _qgc_gst_foreign_module_dir("${ARG_PC_MODULE}" _foreign_dir)
+        if(_foreign_dir)
+            set(${name}_REASON
+                "${ARG_PC_MODULE} is in ${_foreign_dir}, outside GStreamer_ROOT_DIR"
+                PARENT_SCOPE
+            )
+            return()
+        endif()
     endif()
 
     set(_check_args VAR ${ARG_HAS_VAR} HEADER ${ARG_HEADER} SYMBOL ${ARG_SYMBOL})

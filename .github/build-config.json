@@ -107,8 +107,8 @@
         "windows_msvc_arm64": "53cc68ab3cd2b19af93acd0d197790ee1fd5a9f5e200afa2a48ca40fa4ae029a"
       }
     },
-    "ca_bundle_url": "https://curl.se/ca/cacert-2026-08-13.pem",
-    "ca_bundle_sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
+    "ca_bundle_url": "https://curl.se/ca/cacert-2026-11-05.pem",
+    "ca_bundle_sha256": "427c064216761a1e72a8b30f0d954d08cb6e4435a82091fb865afd20c8497285"
   },
   "gstreamer_plugin_policy": {
     "alternates": [

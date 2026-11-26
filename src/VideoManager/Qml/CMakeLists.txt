@@ -16,8 +16,6 @@ qt_add_qml_module(
         TelemetryOverlayText.qml
         ThermalVideoOverlay.qml
         UVCControlSlider.qml
-        UVCStatsGroup.qml
-        UVCVideoOutput.qml
         VideoDecodingSettingsGroup.qml
         VideoDisplaySettingsGroup.qml
         VideoGridLines.qml

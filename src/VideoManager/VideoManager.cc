@@ -22,7 +22,6 @@
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
 #include "QmlObjectListModel.h"
-#include "QtMultimediaVideoReceiver.h"
 #include "QtVideoRecorder.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
@@ -93,12 +92,7 @@ VideoManager::VideoManager(QObject* parent)
     , _measuredSource(_primaryStream)
     , _recordingService(new VideoRecordingService(_sources, this))
     , _telemetryOverlay(new VideoTelemetryOverlay(_videoSettings->showTelemetryOverlay(), this))
-    , _receiverFactory([this](QObject* owner) -> VideoReceiver* {
-        if (_videoSettings->videoBackend()->rawValue().toInt() == VideoSettings::VideoBackendQtMultimedia) {
-            return new QtMultimediaVideoReceiver(owner);
-        }
-        return QGCCorePlugin::instance()->createVideoReceiver(owner);
-    })
+    , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
     , _cameraAttached(&UVCDevices::deviceExists)
 {
     qCDebug(VideoManagerLog) << this;
@@ -112,8 +106,6 @@ VideoManager::VideoManager(QObject* parent)
         _updateState();
         _cameraSource->scheduleApply();
     });
-    // The frame rate the camera is set up for may change without its figures.
-    (void) connect(_uvcCamera, &UVCCameraController::cameraFrameRateChanged, this, &VideoManager::_updateSourceSummary);
     (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
                    &VideoManager::telemetryOverlayTextChanged);
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -163,7 +155,6 @@ void VideoManager::_connectSource(VideoStreamController* source)
             emit decodingChanged();
         }
     });
-    (void) connect(source, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(source, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
     // The thermal stream's camera is asked for it only while it is in use.
     (void) connect(source, &VideoStreamController::idleChanged, this, &VideoManager::_updateState);
@@ -197,9 +188,7 @@ void VideoManager::_updateSourceSummary()
         // A stream that isn't decoded, as the thermal stream while its view is off, shows no frames to compare with
         // the frame rate its camera advertises.
         const QGCVideoStreamInfo* const streamInfo = source->decoding() ? source->streamInfo() : nullptr;
-        const double cameraFps =
-            (source == _cameraSource) ? _uvcCamera->cameraFrameRate() : (streamInfo ? streamInfo->framerate() : 0.0);
-        degraded = degraded || stats.degraded(cameraFps);
+        degraded = degraded || stats.degraded(streamInfo ? streamInfo->framerate() : 0.0);
     }
     if (!measured) {
         measured = measuredInTile ? measuredInTile : _primaryStream;
@@ -226,8 +215,8 @@ void VideoManager::_connectSettings()
     (void) connect(_videoSettings->uvcTileCamera(), &Fact::rawValueChanged, this,
                    [this] { _videoSettings->uvcTileCameraAsMainPicture()->setRawValue(false); });
 
-    // How a change to a video setting reaches the sources. Not listed: aspectRatio, read by
-    // VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read by QML; showTelemetryOverlay,
+    // How a change to a video setting reaches the sources. Not listed: forcedAspectRatio, which each
+    // VideoStreamController follows itself; videoFit, gridLines and showRecControl, read by QML; showTelemetryOverlay,
     // read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording
     // starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance, uvcZoom, uvcExposureCompensation
     // and uvcFocusMode, which go to the USB camera, and uvcRecordingCodec and uvcRecordingQuality, which go to every
@@ -252,8 +241,7 @@ void VideoManager::_connectSettings()
     }
 
     // Construct-only properties of the display sink: the sources restart, which rebuilds a stream's sink.
-    for (Fact* const fact : {_videoSettings->videoConversionElement(), _videoSettings->disablePixelAspectRatio(),
-                             _videoSettings->forceCpuVideoPath()}) {
+    for (Fact* const fact : {_videoSettings->videoConversionElement(), _videoSettings->forceCpuVideoPath()}) {
         (void) connect(fact, &Fact::rawValueChanged, this, &VideoManager::_restartSources);
     }
 
@@ -294,10 +282,11 @@ void VideoManager::_connectSettings()
     (void) connect(_uvcCamera, &UVCCameraController::formatsChanged, this, offerUvcCameraFormats);
 
     const auto applyUvcTransform = [this] {
-        // uvcCameraRotation's values are degrees, as QtVideo::Rotation's are.
-        _uvcCamera->setTransform(
-            static_cast<QtVideo::Rotation>(_videoSettings->uvcCameraRotation()->rawValue().toInt()),
-            _videoSettings->uvcCameraMirror()->rawValue().toBool());
+        const int rotation = _videoSettings->uvcCameraRotation()->rawValue().toInt();
+        const bool mirrored = _videoSettings->uvcCameraMirror()->rawValue().toBool();
+        // On display, and in the camera's photos. uvcCameraRotation's values are degrees, as QtVideo::Rotation's are.
+        _cameraSource->setTransform(rotation, mirrored);
+        _uvcCamera->setTransform(static_cast<QtVideo::Rotation>(rotation), mirrored);
     };
     applyUvcTransform();
     (void) connect(_videoSettings->uvcCameraRotation(), &Fact::rawValueChanged, this, applyUvcTransform);
@@ -565,16 +554,6 @@ bool VideoManager::recording() const
     return _recordingService->recording();
 }
 
-double VideoManager::aspectRatio() const
-{
-    return _primaryStream->aspectRatio();
-}
-
-double VideoManager::thermalAspectRatio() const
-{
-    return _thermalStream->aspectRatio();
-}
-
 void VideoManager::setFullScreen(bool on)
 {
     if (on && (!_hasVideo || !_activeVehicle || _activeVehicle->vehicleLinkManager()->communicationLost())) {
@@ -724,9 +703,13 @@ void VideoManager::_updateStateNow()
     }
     if (uvcVideoSourceID != _uvcVideoSourceID) {
         qCDebug(VideoManagerLog) << "UVC changed from [" << _uvcVideoSourceID << "] to [" << uvcVideoSourceID << "]";
+        const bool wasUvc = isUvc();
         _uvcVideoSourceID = uvcVideoSourceID;
         emit uvcVideoSourceIDChanged();
         emit isUvcChanged();
+        if (isUvc() != wasUvc) {
+            emit mainSourceChanged();
+        }
     }
     if (hasVideo != _hasVideo) {
         _hasVideo = hasVideo;
@@ -993,8 +976,10 @@ void VideoManager::_setAdvertisedStreams(const AdvertisedStream& current, QGCVid
         former->setRole(VideoStreamController::Role::Tile);
         playing->setRole(VideoStreamController::Role::Primary);
         emit primaryStreamChanged();
+        if (!isUvc()) {
+            emit mainSourceChanged();
+        }
         emit decodingChanged();
-        emit aspectRatioChanged();
     } else {
         _primaryStream->setStreamInfo(current.streamInfo);
     }

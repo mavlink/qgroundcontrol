@@ -24,7 +24,6 @@
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 #include "gstqgcelements.h"
-#include "gstqgcvideosinkbin.h"
 
 QGC_LOGGING_CATEGORY(GstQgcQVideoSinkLog, "Video.GStreamer.QgcQVideoSink")
 
@@ -42,7 +41,7 @@ struct PrivState
     std::atomic<bool> active{true};
     // start() derives hw_context from it.
     bool gpu_zerocopy = false;
-    // Set by qgcvideosinkbin before linking (configureSinkCaps); with gpu_zerocopy, they decide what get_caps offers.
+    // Set by the sink bin before linking (configureSinkCaps); with gpu_zerocopy, they decide what get_caps offers.
     GstQgc::GpuBinMode gpu_bin = GstQgc::GpuBinMode::Passthrough;
     bool square_pixels = true;
     // What get_caps last offered, and for which policy; under GST_OBJECT_LOCK. Rebuilt when the policy changes, e.g.

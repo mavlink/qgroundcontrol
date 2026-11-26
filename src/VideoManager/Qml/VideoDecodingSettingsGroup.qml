@@ -6,8 +6,8 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 // Which backend and decoder the video streams use and whether their frames reach the display through the CPU; the
-// decoder and CPU path are GStreamer's. A change restarts the streams. Hidden while a USB camera, which they don't apply
-// to, is the video source.
+// decoder and CPU path are GStreamer's. A change restarts the streams. Shown only for a network stream, whether it is
+// the main picture or in a tile beside a USB camera: they don't apply to the camera.
 QGCGroupBox {
     id: root
 
@@ -15,7 +15,7 @@ QGCGroupBox {
     readonly property bool _gstreamer: root._videoSettings.videoBackend.rawValue === VideoSettings.VideoBackendGStreamer
 
     heading:    qsTr("Decoding")
-    visible:    !QGroundControl.videoManager.isUvc
+    visible:    QGroundControl.videoManager.isStreamSource
                 && (root._videoSettings.videoBackend.userVisible || root._videoSettings.forceVideoDecoder.userVisible
                     || root._videoSettings.forceCpuVideoPath.userVisible)
 

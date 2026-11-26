@@ -1,4 +1,4 @@
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/gl/GstHwBuffersGlTest.h"
 
 #include <atomic>
 #include <gst/gst.h>
@@ -13,7 +13,7 @@
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
-void GstHwBuffersPipelineTest::_testGlMemoryDispatch_data()
+void GstHwBuffersGlTest::_testGlMemoryDispatch_data()
 {
     QTest::addColumn<int>("mode");
 
@@ -28,7 +28,7 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch_data()
 #endif
 }
 
-void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
+void GstHwBuffersGlTest::_testGlMemoryDispatch()
 {
     QFETCH(int, mode);
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
@@ -47,11 +47,12 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
     GSTTEST_SKIP_UNLESS_FACTORIES("glupload");
 
     GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "
-                                        "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
-                                        "glupload ! "
-                                        "video/x-raw(memory:GLMemory) ! "
-                                        "qgcvideosinkbin name=sink gpu-zerocopy=true"))) {
+    if (!GstQgcTest::launchIntoSinkBin(pipeline,
+                                       QStringLiteral("videotestsrc num-buffers=10 ! "
+                                                      "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
+                                                      "glupload ! "
+                                                      "video/x-raw(memory:GLMemory)"),
+                                       {.gpuZeroCopy = true})) {
         QSKIP(qPrintable(QStringLiteral("GLMemory pipeline parse skipped: %1").arg(pipeline.error())));
     }
 
@@ -106,7 +107,8 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
              qPrintable(QStringLiteral("qgcqvideosink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
 }
 
-void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames_data()
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+void GstHwBuffersGlTest::_testGlUploadBinTakesSoftwareFrames_data()
 {
     QTest::addColumn<int>("mode");
     QTest::addColumn<QString>("format");
@@ -128,11 +130,9 @@ void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames_data()
 #endif
 }
 
-void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
+void GstHwBuffersGlTest::_testGlUploadBinTakesSoftwareFrames()
 {
-#if !defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    QSKIP("glupload bin not compiled in this build");
-#else
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
     QFETCH(int, mode);
     QFETCH(QString, format);
     QFETCH(QString, pixelAspectRatio);
@@ -167,5 +167,7 @@ void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
              qPrintable(QStringLiteral("frame %1x%2 doesn't have the source's display aspect ratio")
                             .arg(frameSize.width())
                             .arg(frameSize.height())));
-#endif
 }
+#endif
+
+UT_REGISTER_TEST(GstHwBuffersGlTest, TestLabel::Integration)

@@ -735,11 +735,9 @@ void GstVideoReceiverPipelineTest::_testLostGraphicsDeviceRestartsTheStream()
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
+#if defined(QGC_HAS_ANY_GPU_PATH)
 void GstVideoReceiverPipelineTest::_testDecoderFailingOnALostGraphicsDeviceKeepsItsRank()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
     const GstTest::DecoderRankSnapshot decoderRanks;
     GStreamer::setCodecPriorities(VideoDecoderOption::Software);
@@ -777,8 +775,8 @@ void GstVideoReceiverPipelineTest::_testDecoderFailingOnALostGraphicsDeviceKeeps
         GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
     QVERIFY(stub);
     QCOMPARE(gst_plugin_feature_get_rank(stub.get()), guint(GST_RANK_PRIMARY + 100));
-#endif
 }
+#endif
 
 void GstVideoReceiverPipelineTest::_testOverrunWithoutLeakLeavesKeyframeGateOpen()
 {

@@ -14,9 +14,9 @@ struct VideoStreamStats;
 /// \brief What PipelineSession measures of its stream for VideoStreamStats, apart from its branches.
 ///
 /// The tee's probe notes every buffer that reaches the tee: its size, and a keyframe's timestamp. sample() adds what
-/// the pipeline tells when asked: the RTP counters of the source's jitter buffers, with the packets their messages
-/// told they dropped, or those the source counted itself when it has none (GStreamer::rtpPacketCounts()), the latency
-/// and the codec.
+/// the pipeline tells when asked: the RTP packets the source counted itself (GStreamer::rtpPacketCounts(), RTP over
+/// UDP) with those its jitter buffer dropped, or else the counters of the source's jitter buffers (RTSP), with the
+/// packets their messages told they dropped; the latency and the codec.
 class PipelineStatsProbe
 {
 public:

@@ -482,6 +482,13 @@ bool linkDepayToParser(GstElement* depay, GstElement* parser, const RtpCodec& co
 bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement* depay, GstElement* parser,
                                 const RtpCodec& codec, const Config& config, guint latencyMs)
 {
+    // The bin counts the packets itself, where they arrive, with a jitter buffer too: the jitter buffer's own count
+    // takes the sequence numbers a sender skips when it starts over for packets lost.
+    const GstPadPtr sourcePad = adoptPad(gst_element_get_static_pad(source, "src"));
+    if (!sourcePad || !countRtpPackets(bin, sourcePad.get(), kRtpVideoClockRate)) {
+        qCWarning(GstSourceFactoryLog) << "Unable to count the RTP packets where they arrive";
+    }
+
     GstElement* upstream = source;
     if (config.jitterBuffer != JitterBuffer::None) {
         GstElement* const buffer = addJitterBuffer(bin, latencyMs);
@@ -493,13 +500,6 @@ bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement*
             return false;
         }
         upstream = buffer;
-    } else {
-        // A jitter buffer counts the packets it is given, lost ones included. Without one the bin counts them itself,
-        // where they arrive, so the stream's statistics tell packet loss in this mode too.
-        const GstPadPtr sourcePad = adoptPad(gst_element_get_static_pad(source, "src"));
-        if (!sourcePad || !countRtpPackets(bin, sourcePad.get(), kRtpVideoClockRate)) {
-            qCWarning(GstSourceFactoryLog) << "Unable to count the RTP packets: no packet loss statistics";
-        }
     }
 
     if (!gst_element_link(upstream, depay)) {

@@ -21,8 +21,11 @@ struct JitterBufferTotals
 {
     bool found = false;
     quint64 packetsPushed = 0;
-    /// Never arrived ("num-lost"), or dropped on arrival to stay within the latency.
+    /// Never arrived, by the jitter buffer's count ("num-lost"): those that came too late as well, and the sequence
+    /// numbers a sender skipped when it started over.
     quint64 packetsLost = 0;
+    /// Dropped on arrival to stay within the latency.
+    quint64 packetsDroppedOnLatency = 0;
     quint64 packetsLate = 0;
     quint64 packetsDuplicate = 0;
     quint64 rtxRequested = 0;
@@ -49,8 +52,8 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
         auto* const sum = static_cast<JitterBufferTotals*>(data);
         sum->found = true;
         sum->packetsPushed += field("num-pushed");
-        sum->packetsLost +=
-            field("num-lost") + GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(element), kDroppedOnLatencyKey));
+        sum->packetsLost += field("num-lost");
+        sum->packetsDroppedOnLatency += GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(element), kDroppedOnLatencyKey));
         sum->packetsLate += field("num-late");
         sum->packetsDuplicate += field("num-duplicates");
         sum->rtxRequested += field("rtx-count");
@@ -155,20 +158,30 @@ void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstEle
     stats.rtxRecovered = -1;
     const JitterBufferTotals jitterBuffers = jitterBufferTotals(source);
     if (jitterBuffers.found) {
-        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = jitterBuffers.packetsPushed,
-                                                          .packetsLost = jitterBuffers.packetsLost};
         stats.jitterMs = static_cast<double>(jitterBuffers.maxJitterNs) / GST_MSECOND;
         stats.packetsLate = static_cast<qint64>(jitterBuffers.packetsLate);
         stats.packetsDuplicate = static_cast<qint64>(jitterBuffers.packetsDuplicate);
         stats.rtxRequested = static_cast<qint64>(jitterBuffers.rtxRequested);
         stats.rtxRecovered = static_cast<qint64>(jitterBuffers.rtxRecovered);
-    } else if (const std::optional<GStreamer::RtpPacketCounts> packets = GStreamer::rtpPacketCounts(source)) {
-        // A packet that arrives late is no longer lost, but the meter takes a counter that shrank for one that started
-        // again from zero: the count it is given only grows, and the next packets lost make up for the late one.
-        _rtpPacketsLost = std::max(_rtpPacketsLost, packets->packetsLost);
-        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = packets->packetsReceived,
-                                                          .packetsLost = _rtpPacketsLost};
-        stats.jitterMs = packets->jitterMs;
+    }
+    if (const std::optional<GStreamer::RtpPacketCounts> packets = GStreamer::rtpPacketCounts(source)) {
+        // The source's own count of the packets that never arrived, and those a jitter buffer had no use for: too late
+        // for it, or dropped to stay within its latency. A packet that arrives late is no longer lost, but the meter
+        // takes a counter that shrank for one that started again from zero: the count it is given only grows, and the
+        // next packets lost make up for the late one.
+        _rtpPacketsLost = std::max(
+            _rtpPacketsLost, packets->packetsLost + jitterBuffers.packetsLate + jitterBuffers.packetsDroppedOnLatency);
+        // Of those that arrived, a jitter buffer passes on what it did not drop.
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{
+            .packetsReceived = jitterBuffers.found ? jitterBuffers.packetsPushed : packets->packetsReceived,
+            .packetsLost = _rtpPacketsLost};
+        if (!jitterBuffers.found) {
+            stats.jitterMs = packets->jitterMs;
+        }
+    } else if (jitterBuffers.found) {
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{
+            .packetsReceived = jitterBuffers.packetsPushed,
+            .packetsLost = jitterBuffers.packetsLost + jitterBuffers.packetsDroppedOnLatency};
     }
 
     const GstClockTime keyframeInterval = _keyframeInterval.load(std::memory_order_relaxed);

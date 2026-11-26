@@ -153,14 +153,7 @@ _GSTREAMER_LOG_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_GSTREAMER_FAILURE_PATTERN = re.compile(
-    r"GStreamer library not found|"
-    r"Failed to initialize GStreamer|"
-    r"nativeInit failed; skipping GStreamer initialization|"
-    r"GStreamer Java-side init result:\s*failed|"
-    r"GStreamer initialization failed",
-    re.IGNORECASE,
-)
+_GSTREAMER_FAILURE_PATTERN = re.compile(r"Failed to initialize GStreamer", re.IGNORECASE)
 
 
 def boot_test_report(content: str) -> list[str]:

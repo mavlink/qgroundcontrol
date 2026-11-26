@@ -6,7 +6,9 @@ Subcommands:
     build       Run cmake --build with CI-friendly output and timing, teeing it to a log, then
                 write the job summary's Build section: result, duration, toolchain, compiler and
                 moc cache hit rates, the slowest build steps and, after a failure, the failed
-                targets and first errors, which also become error annotations
+                targets and first errors, which also become error annotations. --objects-under
+                builds, in place of a target, the object files of the sources below directories
+                of the source tree, whichever targets compile them
     configure   Run the shared configure library with CI defaults, teeing CMake's output to the
                 build directory, then write the job summary's Configure section: result,
                 duration, preset, generator, configure-check reuse and, after a failure, the
@@ -21,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import secrets
@@ -118,18 +121,44 @@ class BuildRun:
     failure: BuildFailure | None = None
 
 
+def object_files_under(build_dir: Path, directories: list[str]) -> list[str]:
+    """Return the object files, relative to *build_dir*, compiled from the sources below *directories*.
+
+    *directories* are relative to the source tree. compile_commands.json tells the objects, so a
+    source that several targets compile has one for each. Raises ValueError for a directory with
+    no compiled source: one that was renamed, or a unity build, which compiles sources in batches.
+    """
+    source_dir = read_cache_dict(build_dir / "CMakeCache.txt").get("CMAKE_HOME_DIRECTORY")
+    if not source_dir:
+        raise ValueError(f"{build_dir} has no configured build")
+    commands = json.loads((build_dir / "compile_commands.json").read_text(encoding="utf-8"))
+    objects: list[str] = []
+    for directory in directories:
+        root = Path(source_dir, directory).resolve()
+        found = {
+            Path(os.path.relpath(Path(entry["directory"], entry["output"]), build_dir)).as_posix()
+            for entry in commands
+            if Path(entry["directory"], entry["file"]).resolve().is_relative_to(root)
+        }
+        if not found:
+            raise ValueError(f"the build compiles no source below {directory}")
+        objects += sorted(found)
+    return objects
+
+
 def cmd_build(args: argparse.Namespace) -> int:
     """Run cmake --build, then write the Build section even when the build fails.
 
     A cancelled job (KeyboardInterrupt) writes no section.
     """
     run = BuildRun()
+    built = f"objects of {', '.join(args.objects_under)}" if args.objects_under else args.target
     try:
         exit_code = _build(args, run)
     except Exception:
-        write_build_summary(Path.cwd(), args.target, "failed", run)
+        write_build_summary(Path.cwd(), built, "failed", run)
         raise
-    write_build_summary(Path.cwd(), args.target, "passed" if exit_code == 0 else "failed", run)
+    write_build_summary(Path.cwd(), built, "passed" if exit_code == 0 else "failed", run)
     return exit_code
 
 
@@ -137,7 +166,13 @@ def _build(args: argparse.Namespace, run: BuildRun) -> int:
     """Run cmake --build with CI-friendly output, recording its duration and Ninja timings."""
     cmd = ["cmake", "--build", "."]
 
-    if args.target:
+    if args.objects_under:
+        try:
+            cmd += ["--target", *object_files_under(Path.cwd(), args.objects_under)]
+        except (OSError, KeyError, ValueError) as error:
+            gh_error(f"Cannot tell the object files to build: {error}")
+            return 1
+    elif args.target:
         cmd += ["--target", args.target]
     if build_type := args.build_type or multi_config_build_type():
         cmd += ["--config", build_type]
@@ -731,6 +766,13 @@ def main(argv: list[str] | None = None) -> int:
     # Defaults come from the composite actions' INPUT_* step environment.
     p_build = sub.add_parser("build")
     p_build.add_argument("--target", default=env_default("INPUT_TARGET"))
+    p_build.add_argument(
+        "--objects-under",
+        nargs="*",
+        default=env_default("INPUT_OBJECTS_UNDER").split(),
+        metavar="DIRECTORY",
+        help="Build the object files of the sources below these source directories, not --target",
+    )
     p_build.add_argument(
         "--build-type", default="", help="Default: a multi-config tree's CMAKE_BUILD_TYPE"
     )

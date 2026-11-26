@@ -14,7 +14,7 @@ namespace GstQgc {
 struct SinkCapsPolicy
 {
     bool gpuZeroCopy = false;
-    /// qgcvideosinkbin's GPU variant in front of the sink; value-initialized, Passthrough (a standalone sink).
+    /// The sink bin's GPU variant in front of the sink; value-initialized, Passthrough (a standalone sink).
     GpuBinMode gpuBin{};
     RenderTarget target;
     /// What the DMABuf path imports with now (HwBuffers::dmaBufImportDisplay()): Qt's EGLDisplay, or its Vulkan
@@ -42,7 +42,7 @@ struct SinkCapsPolicy
 std::string buildSinkCaps(const SinkCapsPolicy& policy);
 
 #ifdef QGC_UNITTEST_BUILD
-/// What qgcqvideosink and qgcvideosinkbin read from the process.
+/// What qgcqvideosink and its sink bin read from the process.
 struct SinkEnvironment
 {
     RenderTarget target{};      ///< For currentRenderTarget().

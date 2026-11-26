@@ -6,7 +6,7 @@ namespace GstQgc {
 
 struct RenderTarget;
 
-/// Head of qgcvideosinkbin's GPU branch. Linux builds with both gst-gl and DMABuf compile GlUpload, DirectDmaBuf and
+/// Head of the sink bin's GPU branch. Linux builds with both gst-gl and DMABuf compile GlUpload, DirectDmaBuf and
 /// DmaBufOrGlUpload; every other build compiles exactly one.
 enum class GpuBinMode
 {

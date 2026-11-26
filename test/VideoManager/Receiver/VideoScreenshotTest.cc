@@ -134,6 +134,28 @@ void VideoScreenshotTest::_testDisplayedImageAsQtPresentsIt()
     }
 }
 
+void VideoScreenshotTest::_testStretchedLosesNoPixel_data()
+{
+    // What a picture of 64 × 48 becomes: widened or heightened to the ratio, never shrunk.
+    QTest::addColumn<double>("aspectRatio");
+    QTest::addColumn<QSize>("size");
+
+    QTest::newRow("no ratio") << 0.0 << QSize(64, 48);
+    QTest::newRow("its own ratio") << (4.0 / 3.0) << QSize(64, 48);
+    QTest::newRow("wider") << (16.0 / 9.0) << QSize(85, 48);
+    QTest::newRow("narrower") << 1.0 << QSize(64, 64);
+}
+
+void VideoScreenshotTest::_testStretchedLosesNoPixel()
+{
+    QFETCH(double, aspectRatio);
+    QFETCH(QSize, size);
+
+    QImage image(QSize(64, 48), QImage::Format_RGBA8888);
+    image.fill(Qt::blue);
+    QCOMPARE(VideoScreenshot::stretched(image, aspectRatio).size(), size);
+}
+
 void VideoScreenshotTest::_testNoExifWithoutValues()
 {
     QTemporaryDir tempDir;

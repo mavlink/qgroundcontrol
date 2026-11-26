@@ -22,8 +22,9 @@ endfunction()
 
 # _qgc_gst_discover_linux_sdk()
 # Uses the GStreamer pkg-config finds: the system's, or one under GStreamer_ROOT_DIR, whose pkgconfig directories go
-# ahead of the system's. Its layout comes from gstreamer-1.0.pc (prefix, libdir, includedir, pluginsdir and
-# pluginscannerdir) and gio-2.0.pc (giomoduledir).
+# ahead of the system's. Those are recorded as the layout's PKGCONFIG_DIRS: the system's stay visible for GLib and the
+# like, and a GStreamer module found only there is not used (_qgc_gst_foreign_module_dir). Its layout comes from
+# gstreamer-1.0.pc (prefix, libdir, includedir, pluginsdir and pluginscannerdir) and gio-2.0.pc (giomoduledir).
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_linux_sdk)
     find_package(PkgConfig REQUIRED QUIET)
@@ -41,6 +42,7 @@ function(_qgc_gst_discover_linux_sdk)
         endif()
         list(TRANSFORM _pc_files REPLACE "/gstreamer-1\\.0\\.pc$" "")
         qgc_gst_apply_pkgconfig_env(MODE SYSTEM_AUGMENT LIBDIR ${_pc_files})
+        qgc_gst_layout_set(PKGCONFIG_DIRS "${_pc_files}")
     endif()
 
     # <layout key>|<module>|<variable>|REQUIRED or OPTIONAL; an OPTIONAL one left empty takes the SDK-layout default.

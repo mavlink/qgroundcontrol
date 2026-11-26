@@ -13,8 +13,8 @@
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
+#include "gstqgc/GstQgcSinkBin.h"
 #include "gstqgc/GstQgcSinkStats.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
 
 class QVideoSink;
 
@@ -33,14 +33,14 @@ struct PipelineRunResult
     QString errorMessage;
 };
 
-/// Plays "videotestsrc @p sourceProperties ! @p capsLine ! qgcvideosinkbin" to EOS with the bin bound to @p videoSink,
+/// Plays "videotestsrc @p sourceProperties ! @p capsLine" into a sink bin to EOS with the bin bound to @p videoSink,
 /// as VideoManager binds it, and records the frames that reach the QVideoSink.
 PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers = 5,
                                                bool gpuZerocopy = false, const char* sourceProperties = "",
                                                bool captureCenterPixel = false);
 
-/// Whether qgcvideosinkbin builds its DMABuf-or-glupload variant here: without switchbin of GStreamer 1.24 or later it
-/// builds the glupload variant instead.
+/// Whether the sink bin is built as its DMABuf-or-glupload variant here: without switchbin of GStreamer 1.24 or later
+/// it is the glupload variant instead.
 inline bool hasMemorySwitch()
 {
     guint major = 0;
@@ -51,10 +51,21 @@ inline bool hasMemorySwitch()
     return ((major > 1) || (minor >= 24)) && GstTest::firstMissingFactory({"switchbin"}).isEmpty();
 }
 
-/// The qgcqvideosink inside the qgcvideosinkbin @p sinkBin.
+/// The qgcqvideosink inside the sink bin @p sinkBin.
 inline GStreamer::GstElementPtr qvideosink(GstElement* sinkBin)
 {
-    return GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin)));
+    return GStreamer::adoptElement(GstQgc::sinkBinVideoSink(sinkBin));
+}
+
+/// Launches @p upstream (GstTest::TestPipeline::launchInto()) into a new sink bin named "sink", built with @p config.
+inline bool launchIntoSinkBin(GstTest::TestPipeline& pipeline, const QString& upstream,
+                              const GstQgc::SinkBinConfig& config = {})
+{
+    GstElement* const sinkBin = GstQgc::makeSinkBin(config);
+    if (sinkBin) {
+        gst_object_set_name(GST_OBJECT(sinkBin), "sink");
+    }
+    return pipeline.launchInto(upstream, sinkBin);
 }
 
 inline guint64 framesDelivered(GstElement* qvideosink)
@@ -190,16 +201,16 @@ private:
     bool _ready = false;
 };
 
-/// A qgcvideosinkbin and its qgcqvideosink.
+/// A sink bin and its qgcqvideosink.
 struct SinkBin
 {
     GStreamer::GstElementPtr bin;
     GStreamer::GstElementPtr qvideosink;
 };
 
-inline SinkBin makeSinkBin()
+inline SinkBin makeSinkBin(const GstQgc::SinkBinConfig& config = {})
 {
-    SinkBin made{GStreamer::makeElement("qgcvideosinkbin"), nullptr};
+    SinkBin made{GStreamer::adoptFloating(GstQgc::makeSinkBin(config)), nullptr};
     if (made.bin) {
         made.qvideosink = GstQgcTest::qvideosink(made.bin.get());
     }

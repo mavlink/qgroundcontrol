@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtMultimedia
 
 import QGroundControl
 import QGroundControl.Controls
@@ -59,33 +58,24 @@ Item {
 
     readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    readonly property VideoStreamController _primaryStream: root.videoManager.primaryStream
-    // The primary stream is in a tile while the USB camera, selected in its own, is the main picture.
-    readonly property bool _streamIsMainPicture: !root._primaryStream.tile
+    readonly property VideoStreamController _mainSource: root.videoManager.mainSource
     // A lost stream's last frame stays up, under a notice, while it reconnects.
-    readonly property bool _streamLost: root._streamIsMainPicture && root._primaryStream.reconnecting
-    readonly property bool _showStreamLoader: root._streamIsMainPicture
-                                              && (root.videoManager.decoding || root._streamLost)
-    readonly property bool _showUvcLoader: root.videoManager.isUvc
-    // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
-    // view.
-    readonly property real _ar: root._showUvcLoader
-                                ? ((cameraLoader.status === Loader.Ready && cameraLoader.item.implicitHeight > 0)
-                                   ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight : 0)
-                                : root.videoManager.aspectRatio
+    readonly property bool _streamLost: root._mainSource.reconnecting
+    readonly property bool _hasPicture: root._mainSource.decoding || root._streamLost
+    // The ratio of the picture shown: the one forced for the stream, else the video's own, known once its first frame
+    // sets the output's implicit size. Until then the video fills the view.
+    readonly property real _ar: mainOutput.aspectRatio
     readonly property int _fitMode: root._videoSettings.videoFit.rawValue
     readonly property bool _isModeFitWidth: root._fitMode === VideoSettings.VideoFitWidth
     readonly property bool _isModeFitHeight: root._fitMode === VideoSettings.VideoFitHeight
     readonly property bool _isModeFill: root._fitMode === VideoSettings.VideoFitFill
     readonly property bool _isModeNoCrop: root._fitMode === VideoSettings.VideoFitNoCrop
-    // The outputs fill the view, and crop the video to it where the fitted video is larger.
+    // The output fills the view, and crops the video to it where the fitted video is larger.
     readonly property real _viewAr: root.width / root.height
     readonly property bool _cropsVideo: root._isModeFill
                                         || ((root._ar > 0)
                                             && ((root._isModeFitWidth && (root._viewAr > root._ar))
                                                 || (root._isModeFitHeight && (root._viewAr < root._ar))))
-    readonly property int _outputFillMode: root._cropsVideo ? VideoOutput.PreserveAspectCrop
-                                                            : VideoOutput.PreserveAspectFit
     readonly property real _tilesMargin: ScreenTools.defaultFontPixelHeight * 0.5
     readonly property bool _thermalPipShown: thermalOverlay.visible && !!root.camera
                                              && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
@@ -102,46 +92,20 @@ Item {
         anchors.fill:   parent
         useSmallFont:   root.useSmallFont
         videoManager:   root.videoManager
-        visible:        !root._showStreamLoader && !root._showUvcLoader
+        visible:        !root._hasPicture
     }
 
     Rectangle {
         anchors.fill:   parent
         color:          "black"
-        visible:        root._showStreamLoader || root._showUvcLoader
+        visible:        root._hasPicture
 
-        Loader {
-            anchors.fill:       parent
-            visible:            root._showStreamLoader
-            active:             root._streamIsMainPicture
-            sourceComponent:    videoOutputComponent
-        }
-
-        Component {
-            id: videoOutputComponent
-
-            VideoStreamOutput {
-                stream:     root._primaryStream
-                fillMode:   root._outputFillMode
-            }
-        }
-
-        //-- UVC Video (USB Camera or Video Device)
-        Loader {
-            id:                 cameraLoader
-            anchors.fill:       parent
-            visible:            root._showUvcLoader
-            active:             root._showUvcLoader
-            sourceComponent:    uvcVideoOutputComponent
-        }
-
-        Component {
-            id: uvcVideoOutputComponent
-
-            UVCVideoOutput {
-                camera:     root.videoManager.uvcCamera
-                fillMode:   root._outputFillMode
-            }
+        VideoStreamOutput {
+            id:             mainOutput
+            objectName:     "videoViewOutput"
+            anchors.fill:   parent
+            stream:         root._mainSource
+            crop:           root._cropsVideo
         }
 
         Item {

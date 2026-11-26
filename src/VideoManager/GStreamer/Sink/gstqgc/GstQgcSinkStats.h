@@ -27,7 +27,7 @@ inline constexpr const char* kStreamDemotionsField = "stream-demotions";
 /// their tiled DMA_DRM layout.
 inline constexpr const char* kTiledDropsField = "tiled-drops";
 
-/// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the qgcvideosinkbin around one; null for other elements.
+/// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the sink bin around one; null for other elements.
 GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
 
 /// The guint64 @p field of @p stats, a "frame-stats" or any other structure; 0 without the structure or the field.

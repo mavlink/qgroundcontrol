@@ -19,6 +19,7 @@
 #include "SettingsManager.h"
 #include "VideoBackend.h"
 #include "VideoSettings.h"
+#include "VideoTestHelpers.h"
 
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
@@ -189,7 +190,7 @@ void GStreamerTest::_testCompleteInit()
     QVERIFY2(qgcPlugin, "Static plugin 'qgc' not registered after completeInit()");
     gst_clear_object(&qgcPlugin);
 
-    for (const char* const name : {"appsink", "qgcvideosinkbin"}) {
+    for (const char* const name : {"appsink", "qgcqvideosink"}) {
         QVERIFY2(GStreamer::hasElementFactory(name),
                  qPrintable(QStringLiteral("Factory '%1' not found after completeInit()").arg(QLatin1String(name))));
     }
@@ -244,6 +245,13 @@ void GStreamerTest::_testVideoBackendForwards()
 
     const std::unique_ptr<VideoReceiver> receiver(backend.createReceiver(nullptr));
     QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
+    {
+        VideoTestHelpers::FactRestorer restorer;
+        restorer.set(SettingsManager::instance()->videoSettings()->videoBackend(),
+                     VideoSettings::VideoBackendQtMultimedia);
+        const std::unique_ptr<VideoReceiver> chosen(backend.createReceiver(nullptr));
+        QVERIFY(qobject_cast<QtMultimediaVideoReceiver*>(chosen.get()));
+    }
     QCOMPARE(backend.availableDecoderFamilies(), GStreamer::availableDecoderFamilies());
 
     // The default decoder priorities and debug threshold change nothing a test sees.

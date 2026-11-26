@@ -65,7 +65,13 @@ Connection settings vary by source type:
   apply to it, so they are hidden. Changing it restarts the video stream. Builds without GStreamer always
   use Qt Multimedia and don't show the setting. When GStreamer fails to start, QGroundControl says so in a message and
   plays the streams with Qt Multimedia, whatever this setting.
-- **Aspect Ratio** — aspect ratio for scaling video in the display widget (default: 16:9; set to 0.0 to disable scaling)
+- **Aspect Ratio** — the shape the video is shown with: **Auto** (default), 16:9, 4:3, 5:4, 3:2 or 1:1. Auto shows
+  the video with the ratio of its frames. Choose a ratio for a camera whose video looks squeezed or stretched, as that
+  of an analog camera behind a digital encoder may: the video is then stretched to that ratio, in the main view and
+  in its [tile](../fly_view/video.md#video-tiles), and so are the photos taken of it; recordings keep the stream as
+  it arrives. It applies to the video source set on this page, not to the streams a vehicle's camera announces, to
+  a thermal stream or to a USB camera, and is hidden while a camera's stream plays. Changing between Auto and a
+  ratio restarts the video stream.
 - **Video Tiles** — how many other video sources are shown in [tiles](../fly_view/video.md#video-tiles) beside the main
   video: 0 to 4 (default: 3). 0 shows none. A video too narrow for that many shows as many as fit. Each tile takes a
   network connection and a video decoder, of which tablets have few, and its stream takes bandwidth on the vehicle's
@@ -100,6 +106,13 @@ Connection settings vary by source type:
   core: two threads decode about 1.7 times as fast, four about three times. Each thread delays the video by a frame:
   by 67 ms with 2 threads at 30 frames per second, and by one frame less in **Low Latency Mode**. Hardware decoders
   don't use this setting. Changing it restarts the video stream.
+- `videoConversionElement` — the GStreamer element that converts and scales decoded frames before they are shown. Like
+  `rtspTimeout` it has no control on this page: a
+  [settings override file](../../qgc-dev-guide/file_formats/settings_override.md) or a custom build sets it. Left
+  empty (the default), QGroundControl uses the board's own converter where one is installed (`imxvideoconvert_g2d` on
+  NXP i.MX, `nvvidconv` on NVIDIA Jetson) and GStreamer's software converter (`videoconvertscale`) elsewhere. Name
+  another element, such as `videoconvertscale`, when the board's converter shows the video wrongly; a name that isn't
+  installed is ignored. It applies to the GStreamer backend only, and changing it restarts the video stream.
 
 ## Video Display
 

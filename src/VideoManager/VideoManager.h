@@ -25,9 +25,8 @@ class VideoTelemetryOverlay;
 /// QML facade of the video sources, each a VideoStreamController: the primary stream, the thermal stream, the USB
 /// camera, whose receiver is uvcCamera, and the streams shown in tiles. One of the primary stream and the camera is
 /// the main picture: the camera while the video source setting names one and no vehicle camera advertises a stream.
-/// decoding and aspectRatio forward to the primary stream, thermalAspectRatio to the thermal stream, and recording
-/// covers the main picture and the thermal stream. The other properties, such as hasVideo and isUvc, are the manager's
-/// own state.
+/// decoding forwards to the primary stream, and recording covers the main picture and the thermal stream. The other
+/// properties, such as hasVideo and isUvc, are the manager's own state.
 ///
 /// The tiles show what else there is to see, up to VideoSettings::maxVideoTiles of them, and no more than the row of
 /// tiles has room for (tileRoom): the USB camera VideoSettings::uvcTileCamera names, while a stream is the video
@@ -56,6 +55,8 @@ class VideoManager : public QObject
     /// The source of the vehicle's current stream, or of the stream the settings configure. Never null.
     Q_PROPERTY(VideoStreamController* primaryStream READ primaryStream NOTIFY primaryStreamChanged FINAL)
     Q_PROPERTY(VideoStreamController* thermalStream READ thermalStream CONSTANT FINAL)
+    /// The source of the main picture: the USB camera while isUvc, else the primary stream. Never null.
+    Q_PROPERTY(VideoStreamController* mainSource READ mainSource NOTIFY mainSourceChanged FINAL)
     Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT FINAL)
     Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged FINAL)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
@@ -83,8 +84,6 @@ class VideoManager : public QObject
     Q_PROPERTY(int tileRoom READ tileRoom WRITE setTileRoom NOTIFY tileRoomChanged FINAL)
     /// VideoStreamController::kIdleGrace in milliseconds, for the row of tiles.
     Q_PROPERTY(int idleSourceGraceMs READ idleSourceGraceMs CONSTANT FINAL)
-    Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged FINAL)
-    Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged FINAL)
     Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged FINAL)
     /// The telemetry VideoView shows over the primary stream or the USB camera: empty while
     /// VideoSettings::showTelemetryOverlay is off.
@@ -145,6 +144,8 @@ public:
 
     VideoStreamController* thermalStream() const { return _thermalStream; }
 
+    VideoStreamController* mainSource() const { return isUvc() ? _cameraSource : _primaryStream; }
+
     UVCCameraController* uvcCamera() const { return _uvcCamera; }
 
     bool autoStreamConfigured() const { return _autoStreamConfigured; }
@@ -177,9 +178,6 @@ public:
 
     int idleSourceGraceMs() const;
 
-    double aspectRatio() const;
-    double thermalAspectRatio() const;
-
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
 
     QString telemetryOverlayText() const;
@@ -192,7 +190,7 @@ public:
 signals:
     void sourcesChanged();
     void primaryStreamChanged();
-    void aspectRatioChanged();
+    void mainSourceChanged();
     void autoStreamConfiguredChanged();
     void decodingChanged();
     void degradedChanged();

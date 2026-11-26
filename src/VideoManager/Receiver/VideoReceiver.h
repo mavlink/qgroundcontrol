@@ -81,6 +81,8 @@ public:
     struct DisplayConfig
     {
         QByteArray conversionElement;  ///< Converter element factory; empty for the backend's default.
+        /// Frames keep non-square pixels instead of being scaled to square ones: for a picture its output stretches
+        /// to a forced ratio.
         bool disablePixelAspectRatio = false;
         bool gpuZeroCopy = true;       ///< Off when the CPU video path or a software decoder is forced.
 
@@ -180,8 +182,9 @@ public:
     void stopRecording();
 
     /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored as the
-    /// frame and then the VideoOutput (its orientation and mirrored properties) say, with @p exif for a JPEG. The frame
-    /// is converted here; it is encoded and written on the thread pool. Returns false, with a warning logged, when
+    /// frame and then the VideoOutput (its orientation and mirrored properties) say, and stretched to the ratio the
+    /// output forces (its forcedAspectRatio property), with @p exif for a JPEG. The frame is converted here; it is
+    /// stretched, encoded and written on the thread pool. Returns false, with a warning logged, when
     /// there is no output or no frame. A file that can't be written is reported later, through errorOccurred().
     /// A receiver that takes photos saves one instead: see onTakeScreenshot().
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {});

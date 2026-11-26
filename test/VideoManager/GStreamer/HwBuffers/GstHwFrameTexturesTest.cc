@@ -1,6 +1,4 @@
-#include "GstHwBuffersTest.h"
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
+#include "HwBuffers/GstHwFrameTexturesTest.h"
 
 #include <array>
 #include <limits>
@@ -102,7 +100,7 @@ struct TailFixture
 
 }  // namespace
 
-void GstHwBuffersTest::_testHwFrameTexturesRejectsForeignOldTextures()
+void GstHwFrameTexturesTest::_testHwFrameTexturesRejectsForeignOldTextures()
 {
     QVideoFrameTexturesUPtr foreign = std::make_unique<ForeignFrameTextures>();
     QVERIFY(!GstHwFrameTexturesBase::reusableBundle<OwnFrameTextures>(foreign));
@@ -113,7 +111,7 @@ void GstHwBuffersTest::_testHwFrameTexturesRejectsForeignOldTextures()
     QVERIFY(own);
 }
 
-void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data()
+void GstHwFrameTexturesTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data()
 {
     QTest::addColumn<quint64>("lumaHandle");
     QTest::addColumn<quint64>("chromaHandle");
@@ -124,7 +122,7 @@ void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data()
     QTest::newRow("chroma handle 0") << quint64(11) << quint64(0) << false;
 }
 
-void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
+void GstHwFrameTexturesTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
 {
     QFETCH(quint64, lumaHandle);
     QFETCH(quint64, chromaHandle);
@@ -138,7 +136,7 @@ void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
     QCOMPARE(textures.allPlanesValid(), allPlanesValid);
 }
 
-void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data()
+void GstHwFrameTexturesTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data()
 {
     QTest::addColumn<bool>("reuse");
 
@@ -146,7 +144,7 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data()
     QTest::newRow("reuse rejected") << false;
 }
 
-void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
+void GstHwFrameTexturesTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
 {
     QFETCH(bool, reuse);
 
@@ -180,7 +178,7 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
     QVERIFY(nextSampleReleased);
 }
 
-void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
+void GstHwFrameTexturesTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
 {
     TailFixture fixture;
     QVERIFY(fixture.sample && fixture.rhi);
@@ -214,7 +212,7 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
     verifyExpectedLogMessage();
 }
 
-void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
+void GstHwFrameTexturesTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 {
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
@@ -244,35 +242,4 @@ void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
     QVERIFY2(sampleReleased, "Destroying the bundle must release the source sample");
 }
 
-#else
-
-void GstHwBuffersTest::_testHwFrameTexturesRejectsForeignOldTextures()
-{
-    QSKIP("No GPU path compiled in this build");
-}
-
-void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle_data() {}
-
-void GstHwBuffersTest::_testHwFrameTexturesZeroHandleInvalidatesBundle()
-{
-    QSKIP("No GPU path compiled in this build");
-}
-
-void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle_data() {}
-
-void GstHwBuffersTest::_testHwFrameTexturesFinishMapReusesAcceptedBundle()
-{
-    QSKIP("No GPU path compiled in this build");
-}
-
-void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
-{
-    QSKIP("No GPU path compiled in this build");
-}
-
-void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
-{
-    QSKIP("No GPU path compiled in this build");
-}
-
-#endif
+UT_REGISTER_TEST(GstHwFrameTexturesTest, TestLabel::Unit)

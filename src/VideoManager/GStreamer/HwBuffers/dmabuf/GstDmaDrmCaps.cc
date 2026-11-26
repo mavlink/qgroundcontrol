@@ -10,8 +10,10 @@
 
 #include "GstDmaBufVulkanImport.h"
 #include "GstEglHelpers.h"
+#include "GstQtDmaBufImport.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
+#include "gstqgc/GstQgcFrameMap.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -43,28 +45,11 @@ bool modifierImportable(guint64 modifier) noexcept
     }
 }
 
-// What GstQtDmaBufImport::planeFourccs() picks for the Qt counterpart of @p format: one R8/GR88 (8-bit) or
-// R16/GR1616 (16-bit) image per plane of a multi-plane format, the format's own fourcc for a single-plane one.
-guint32 planeImportFourcc(GstVideoFormat format, guint plane) noexcept
+// The DRM fourcc the importer samples plane @p plane of @p format through; 0 when it imports no such plane.
+guint32 planeImportFourcc(GstVideoFormat format, guint plane)
 {
-    const GstVideoFormatInfo* finfo = gst_video_format_get_info(format);
-    if (!finfo || (plane >= GST_VIDEO_FORMAT_INFO_N_PLANES(finfo))) {
-        return 0;
-    }
-    if (GST_VIDEO_FORMAT_INFO_N_PLANES(finfo) == 1) {
-        return gst_video_dma_drm_fourcc_from_format(format);
-    }
-    gint components[GST_VIDEO_MAX_COMPONENTS];
-    gst_video_format_info_component(finfo, plane, components);
-    const int count = static_cast<int>(std::ranges::count_if(components, [](gint c) { return c >= 0; }));
-    const int pixelStride = (components[0] >= 0) ? GST_VIDEO_FORMAT_INFO_PSTRIDE(finfo, components[0]) : 0;
-    if (count == 1) {
-        return (pixelStride == 1) ? DRM_FORMAT_R8 : (pixelStride == 2) ? DRM_FORMAT_R16 : 0;
-    }
-    if (count == 2) {
-        return (pixelStride == 2) ? DRM_FORMAT_GR88 : (pixelStride == 4) ? DRM_FORMAT_GR1616 : 0;
-    }
-    return 0;
+    const GstQtDmaBufImport::PlaneFourccs fourccs = GstQtDmaBufImport::planeFourccs(toQtPixelFormat(format));
+    return (plane < static_cast<guint>(fourccs.count)) ? fourccs.fourcc[plane] : 0;
 }
 
 /// Appends the drm-format entry for (@p fourcc, @p modifier) to the comma-separated @p entries; false when GStreamer
@@ -237,11 +222,6 @@ std::string buildVulkanDmaDrmCaps([[maybe_unused]] std::span<const GstVideoForma
 bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept
 {
     return modifierImportable(modifier);
-}
-
-guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexcept
-{
-    return planeImportFourcc(format, plane);
 }
 #endif
 

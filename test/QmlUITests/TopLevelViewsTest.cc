@@ -492,12 +492,18 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
     QTRY_VERIFY((tileCameraControl = findVisibleFactControl(sourceGroup, videoSettings->uvcTileCamera())));
     QVERIFY(tileCameraControl->isEnabled());
     QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsGroup_Connection"), 0));
-    QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsTextField_aspectRatio"), 0));
+    // A camera says what its stream is: there is no ratio to force on it.
+    QTRY_VERIFY(!findVisibleFactControl(videoPage, videoSettings->forcedAspectRatio()));
 
     QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_disableWhenDisarmed"), 0));
     QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_lowLatencyMode"), 0));
     QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsTextField_rtpJitterLatencyMs"), 0));
     QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_rtspAutoReconnect"), 0));
+
+    // A stream configured here can be stretched to one.
+    setVideoSource(VideoSettings::videoSourceRTSP);
+    QVERIFY(videoPage->setProperty("autoStreamConfig", false));
+    QTRY_VERIFY(findVisibleFactControl(videoPage, videoSettings->forcedAspectRatio()));
 
     stopUI();
 #endif
@@ -697,6 +703,55 @@ void TopLevelViewsTest::_testVideoIndicatorShownWithoutStream()
     QVERIFY(clickButton(restartName));
     QVERIFY(verifyText(stateName, QStringLiteral("Waiting"), QStringLiteral("video enabled again")));
     QTRY_VERIFY(receiver->active());
+
+    stopUI();
+}
+
+void TopLevelViewsTest::_testVideoDrawerKeepsStreamControlsBesideMainCamera()
+{
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceUDPH264);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    VideoManager* const videoManager = VideoManager::instance();
+    VideoStreamController* const stream = videoManager->primaryStream();
+    const auto restoreVideo =
+        qScopeGuard([videoSettings, videoManager, stream, tileCamera = videoSettings->uvcTileCamera()->rawValue(),
+                     mainPicture = videoSettings->uvcTileCameraAsMainPicture()->rawValue()] {
+            videoManager->_cameraAttached = &UVCDevices::deviceExists;
+            videoSettings->uvcTileCameraAsMainPicture()->setRawValue(mainPicture);
+            videoSettings->uvcTileCamera()->setRawValue(tileCamera);
+            stream->setReceiver(nullptr);
+        });
+    stream->setReceiver(new FakeVideoReceiver);
+    // A main window that closed, as an earlier test's, left the video stopped.
+    videoManager->startVideo();
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    const QString indicatorName = QStringLiteral("toolbar_videoStreamIndicator");
+    QQuickItem* indicator = nullptr;
+    QTRY_VERIFY((indicator = findVisibleItem(_rootItem, indicatorName, 0)));
+    QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+    QVERIFY(clickButton(QStringLiteral("indicatorDrawerExpandButton")));
+    const QString restartName = QStringLiteral("videoStreamRestartButton");
+    const QString cpuPathName = QStringLiteral("videoForceCpuPath");
+    QVERIFY(findVisibleItem(_rootItem, restartName, TestTimeout::mediumMs()));
+    // Which decoding settings there are to show depends on the build.
+    const bool decodingShown = findVisibleItem(_rootItem, cpuPathName, 0);
+
+    // The camera the test attaches isn't one Qt knows.
+    ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    videoManager->_cameraAttached = [](const QString&) { return true; };
+    videoSettings->uvcTileCamera()->setRawValue(QStringLiteral("QGC Test Camera"));
+    videoSettings->uvcTileCameraAsMainPicture()->setRawValue(true);
+    QTRY_VERIFY(videoManager->isUvc());
+    QVERIFY(stream->tile());
+
+    // The stream plays on in a tile: its decoding settings and a restart still apply to it.
+    QVERIFY(findVisibleItem(_rootItem, restartName, 0));
+    QCOMPARE(findVisibleItem(_rootItem, cpuPathName, 0) != nullptr, decodingShown);
 
     stopUI();
 }

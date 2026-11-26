@@ -33,6 +33,8 @@ target_sources(
         Recording/VideoRecordingServiceTest.h
         Receiver/VideoScreenshotTest.cc
         Receiver/VideoScreenshotTest.h
+        VideoStreamOutputRenderTest.cc
+        VideoStreamOutputRenderTest.h
         Streams/VideoStreamResolverTest.cc
         Streams/VideoStreamResolverTest.h
         Receiver/VideoStreamStatsMeterTest.cc
@@ -57,6 +59,14 @@ add_qgc_test(VideoManagerTest LABELS Unit)
 add_qgc_test(VideoManagerVehicleTest LABELS Integration Vehicle)
 add_qgc_test(VideoRecordingServiceTest LABELS Unit)
 add_qgc_test(VideoScreenshotTest LABELS Unit)
+# Reads back what Qt Quick draws, and its software backend draws no video. On Linux the offscreen platform has OpenGL
+# through GLX (Mesa llvmpipe, see cmake/QGCTest.cmake), which Qt Quick takes only when asked for "rhi": the platform
+# tells Qt not to try otherwise. Elsewhere the test skips.
+set(_video_render_env_mod "")
+if(LINUX)
+    set(_video_render_env_mod ENV_MODIFICATION "QT_QUICK_BACKEND=set:rhi" "QSG_RHI_BACKEND=set:opengl")
+endif()
+add_qgc_test(VideoStreamOutputRenderTest LABELS Integration NoSanitizer ${_video_render_env_mod})
 add_qgc_test(VideoStreamResolverTest LABELS Unit)
 add_qgc_test(VideoStreamStatsMeterTest LABELS Unit)
 add_qgc_test(VideoTelemetryOverlayTest LABELS Integration Vehicle)

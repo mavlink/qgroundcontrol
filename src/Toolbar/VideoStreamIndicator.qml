@@ -35,8 +35,7 @@ Item {
         case VideoManager.NoVideoReason.Stopped:
             return qsTr("Stopped")
         default:
-            return (!root._primaryStream.tile && root._primaryStream.reconnecting) ? qsTr("Reconnecting")
-                                                                                    : qsTr("Waiting")
+            return root.videoManager.mainSource.reconnecting ? qsTr("Reconnecting") : qsTr("Waiting")
         }
     }
 
@@ -123,7 +122,7 @@ Item {
                         QGCButton {
                             objectName: "videoStreamRestartButton"
                             text:       qsTr("Restart Video")
-                            visible:    !root.videoManager.isUvc
+                            visible:    root.videoManager.isStreamSource
                             onClicked:  root.videoManager.startVideo()
                         }
 

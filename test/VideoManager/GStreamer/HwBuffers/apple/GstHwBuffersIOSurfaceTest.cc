@@ -1,6 +1,5 @@
-#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/apple/GstHwBuffersIOSurfaceTest.h"
 
-#if defined(Q_OS_MACOS) && defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
@@ -16,13 +15,9 @@
 #include "GStreamerTestHelpers.h"
 #include "GstHwVideoBufferFactory.h"
 #include "HwBuffers/GstHwImageReadback.h"
-#endif
 
-void GstHwBuffersPipelineTest::_testIOSurfaceFrameToImage()
+void GstHwBuffersIOSurfaceTest::_testIOSurfaceFrameToImage()
 {
-#if !defined(Q_OS_MACOS) || !defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-    QSKIP("IOSurface GPU path not compiled in this build");
-#else
     GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "vtdec", "appsink");
     QRhiMetalInitParams params;
     const std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Metal, &params));
@@ -76,5 +71,6 @@ void GstHwBuffersPipelineTest::_testIOSurfaceFrameToImage()
         GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(sample), info, format));
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
-#endif
 }
+
+UT_REGISTER_TEST(GstHwBuffersIOSurfaceTest, TestLabel::Integration)

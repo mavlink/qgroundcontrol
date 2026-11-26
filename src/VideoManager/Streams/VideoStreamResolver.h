@@ -44,7 +44,8 @@ struct Settings
     int softwareDecoderThreads = 1;
     bool autoReconnect = true;
     QByteArray conversionElement;
-    bool disablePixelAspectRatio = false;
+    /// Width over height the configured source is stretched to; 0 for the video's own.
+    double forcedAspectRatio = 0;
     bool forceCpuVideoPath = false;
     VideoDecoderOption forceVideoDecoder = VideoDecoderOption::Default;
 };
@@ -56,8 +57,13 @@ Settings snapshot(VideoSettings* videoSettings);
 /// arguments: a camera's stream never changes the user's settings.
 std::optional<VideoReceiver::Config> resolve(const Settings& settings, const QGCVideoStreamInfo* streamInfo, Role role);
 
-/// The display sink settings: GPU zero-copy unless the CPU path or a software decoder is forced.
-VideoReceiver::DisplayConfig displayConfig(const Settings& settings);
+/// Width over height the picture of the source of @p role is stretched to; 0 for the video's own. Only the manually
+/// configured stream has one: a camera says what its streams are.
+double forcedAspectRatio(const Settings& settings, const QGCVideoStreamInfo* streamInfo, Role role);
+
+/// The display sink settings of the source of @p role: GPU zero-copy unless the CPU path or a software decoder is
+/// forced, and no scaling to square pixels for a picture that is stretched to a forced ratio anyway.
+VideoReceiver::DisplayConfig displayConfig(const Settings& settings, const QGCVideoStreamInfo* streamInfo, Role role);
 
 /// True when @p streamInfo advertises a URI, which then takes precedence over the manual settings.
 bool isAutoStream(const QGCVideoStreamInfo* streamInfo);

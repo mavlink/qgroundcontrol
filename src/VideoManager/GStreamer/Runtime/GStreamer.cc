@@ -23,7 +23,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcRenderTarget.h"
-#include "gstqgc/gstqgcvideosinkbin.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
@@ -69,7 +69,7 @@ struct PluginFeature
 constexpr PluginFeature kPluginFeatures[] = {
     // The qgc plugin is linked in and registered by completeInit(), so plugin_init succeeded; a missing element means
     // its GST_ELEMENT_REGISTER side effect was stripped at link time.
-    {"QGC video sink", true, "qgcqvideosink qgcvideosinkbin",
+    {"QGC video sink", true, "qgcqvideosink",
      "the qgc plugin registered without exposing its elements; link-time symbol stripping (iOS LTO / Android R8) "
      "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgc.cc to a -force_load / keep rule"},
     {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
@@ -258,26 +258,15 @@ bool initialize(const VideoBackend::InitParams& params)
 GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio,
                             [[maybe_unused]] bool gpuZeroCopy)
 {
-    const gboolean disablePar = disablePixelAspectRatio ? TRUE : FALSE;
-    const char* const conversion = conversionElement.isEmpty() ? nullptr : conversionElement.constData();
-
-    const GstFactoryPtr factory = adoptFactory(gst_element_factory_find("qgcvideosinkbin"));
-    if (!factory) {
-        // completeInit verified this factory at startup; absence here means the registry changed underfoot.
-        qCCritical(GStreamerLog) << "qgcvideosinkbin factory not found";
-        return nullptr;
-    }
-
+    GstQgc::SinkBinConfig config{.conversionElement = conversionElement, .disablePar = disablePixelAspectRatio};
 #if defined(QGC_HAS_ANY_GPU_PATH)
-    GstElement* videoSinkBin =
-        gst_element_factory_create_full(factory.get(), "gpu-zerocopy", gpuZeroCopy ? TRUE : FALSE, "conversion-element",
-                                        conversion, "disable-par", disablePar, NULL);
-#else
-    GstElement* videoSinkBin = gst_element_factory_create_full(factory.get(), "conversion-element", conversion,
-                                                               "disable-par", disablePar, NULL);
+    config.gpuZeroCopy = gpuZeroCopy;
 #endif
+    GstElement* const videoSinkBin = GstQgc::makeSinkBin(config);
     if (!videoSinkBin) {
-        qCCritical(GStreamerLog) << "qgcvideosinkbin element creation failed";
+        // completeInit() found the sink's elements at startup: the registry changed underfoot, or the chain doesn't
+        // link here.
+        qCCritical(GStreamerLog) << "the video sink bin could not be built";
         return nullptr;
     }
     // Sink the floating ref so adding the sink to a bin never consumes the caller's reference.
@@ -294,7 +283,7 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
 
     // Accessor returns a transfer-full ref; the guard releases it once the controller has taken
     // its own ref for deferred QObject teardown.
-    const GstObjectPtr element(GST_OBJECT(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin))));
+    const GstObjectPtr element(GST_OBJECT(GstQgc::sinkBinVideoSink(sinkBin)));
     if (!element) {
         qCCritical(GStreamerLog) << "bin has no qgcqvideosink child";
         return nullptr;

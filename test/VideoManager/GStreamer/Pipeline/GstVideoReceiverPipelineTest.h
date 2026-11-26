@@ -27,7 +27,9 @@ private slots:
     void _testLateGraphicsDeviceReplacesHardwareDecoder_data();
     void _testLateGraphicsDeviceReplacesHardwareDecoder();
     void _testLostGraphicsDeviceRestartsTheStream();
+#if defined(QGC_HAS_ANY_GPU_PATH)
     void _testDecoderFailingOnALostGraphicsDeviceKeepsItsRank();
+#endif
     void _testOverrunWithoutLeakLeavesKeyframeGateOpen();
     void _testKeyframeGateOpensWithoutKeyframe();
     void _testDecoderInsertionFailureKeepsStream_data();

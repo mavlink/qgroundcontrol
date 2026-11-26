@@ -68,8 +68,9 @@ public:
 
     virtual Capabilities capabilities() const = 0;
 
-    /// A receiver that can play: once initialize() has failed, one that needs no initialization.
-    virtual VideoReceiver* createReceiver(QObject* parent) = 0;
+    /// The receiver for a network stream, chosen here and nowhere else: the backend's own, or Qt Multimedia's player
+    /// when the user chose it (VideoSettings::videoBackend) or the backend has none to give.
+    VideoReceiver* createReceiver(QObject* parent);
 
     // The rest is setup and tuning a backend that needs none leaves alone.
 
@@ -99,4 +100,7 @@ public:
 
 protected:
     VideoBackend() = default;
+
+    /// The backend's own receiver; null when it has none, as once initialize() has failed.
+    virtual VideoReceiver* createOwnReceiver([[maybe_unused]] QObject* parent) { return nullptr; }
 };

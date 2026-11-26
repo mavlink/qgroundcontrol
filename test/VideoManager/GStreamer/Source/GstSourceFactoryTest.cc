@@ -166,7 +166,7 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
     QCOMPARE(retrievesSenderAddress, FALSE);
 }
 
-void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data()
+void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsOverUdp_data()
 {
     QTest::addColumn<QString>("uri");
     QTest::addColumn<QByteArray>("optionalFactory");
@@ -175,8 +175,8 @@ void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer
     QTest::addColumn<bool>("countsPackets");
 
     const QByteArray none;
-    // RTP over UDP is counted by its jitter buffer, or without one by the bin itself: never by both.
-    QTest::newRow("udp") << QStringLiteral("udp://127.0.0.1:5600") << none << false << true << false;
+    // The bin counts RTP over UDP itself, where it arrives, with a jitter buffer behind that or without.
+    QTest::newRow("udp") << QStringLiteral("udp://127.0.0.1:5600") << none << false << true << true;
     QTest::newRow("udp, low latency") << QStringLiteral("udp://127.0.0.1:5600") << none << true << false << true;
     QTest::newRow("udp265, low latency") << QStringLiteral("udp265://127.0.0.1:5600") << none << true << false << true;
     // MPEG-TS carries no RTP, and rtspsrc brings jitter buffers of its own once it streams.
@@ -186,7 +186,7 @@ void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer
                                        << false << false;
 }
 
-void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer()
+void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsOverUdp()
 {
     QFETCH(QString, uri);
     QFETCH(QByteArray, optionalFactory);

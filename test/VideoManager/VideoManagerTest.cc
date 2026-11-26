@@ -3,6 +3,7 @@
 #include <array>
 #include <functional>
 
+#include <QtCore/QLineF>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
@@ -169,6 +170,7 @@ Item {
 
     ThermalVideoOverlay {
         id: overlay
+        objectName: "overlay"
         camera: root.camera
     }
 }
@@ -393,7 +395,6 @@ void VideoManagerTest::_testRestartingSettingsRestartStreams_data()
 
     QTest::newRow("videoConversionElement")
         << "videoConversionElement" << QVariant(QStringLiteral("videoconvertscale"));
-    QTest::newRow("disablePixelAspectRatio") << "disablePixelAspectRatio" << QVariant(true);
     QTest::newRow("forceCpuVideoPath") << "forceCpuVideoPath" << QVariant(true);
     QTest::newRow("forceVideoDecoder") << "forceVideoDecoder"
                                        << QVariant(static_cast<int>(VideoDecoderOption::Software));
@@ -690,10 +691,13 @@ void VideoManagerTest::_testStreamInTileBecomesPrimaryAsItIs()
     // The vehicle's current stream becomes the second one, as when its tile is selected: its source becomes the
     // primary stream and the first stream's takes its tile.
     QSignalSpy primarySpy(_videoManager.get(), &VideoManager::primaryStreamChanged);
+    QSignalSpy mainSourceSpy(_videoManager.get(), &VideoManager::mainSourceChanged);
     _videoManager->_setAdvertisedStreams(secondStream, nullptr, {firstStream, thirdStream});
     _settle();
     QCOMPARE(primarySpy.count(), 1);
     QCOMPARE(_videoManager->primaryStream(), secondSource);
+    QCOMPARE(mainSourceSpy.count(), 1);
+    QCOMPARE(_videoManager->mainSource(), secondSource);
     QCOMPARE(secondSource->role(), VideoStreamController::Role::Primary);
     QVERIFY(!secondSource->tile());
     QCOMPARE(firstSource->role(), VideoStreamController::Role::Tile);
@@ -835,6 +839,7 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
     // isUvc says that the camera is the main picture, which it isn't from a tile.
     const bool mainPicture = !camera.isEmpty() && !tile;
     QCOMPARE(_videoManager->isUvc(), mainPicture);
+    QCOMPARE(_videoManager->mainSource(), mainPicture ? _videoManager->_cameraSource : _videoManager->primaryStream());
     QCOMPARE(_videoManager->uvcVideoSourceID(), mainPicture ? camera : QString());
     QCOMPARE(_videoManager->isStreamSource(), videoSource == QString(VideoSettings::videoSourceUDPH264));
 }
@@ -875,10 +880,13 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     // Selected, the camera is the main picture: the primary stream plays on in the camera's tile, and its thermal
     // stream stops.
     QSignalSpy isUvcSpy(_videoManager.get(), &VideoManager::isUvcChanged);
+    QSignalSpy mainSourceSpy(_videoManager.get(), &VideoManager::mainSourceChanged);
     _videoManager->selectSource(cameraSource);
     _settle();
     QCOMPARE(isUvcSpy.count(), 1);
     QVERIFY(_videoManager->isUvc());
+    QCOMPARE(mainSourceSpy.count(), 1);
+    QCOMPARE(_videoManager->mainSource(), cameraSource);
     QVERIFY(_videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool());
     QCOMPARE(_videoManager->uvcVideoSourceID(), camera);
     QVERIFY(!cameraSource->tile());
@@ -910,6 +918,8 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     _videoManager->selectSource(primaryStream);
     _settle();
     QVERIFY(!_videoManager->isUvc());
+    QCOMPARE(mainSourceSpy.count(), 2);
+    QCOMPARE(_videoManager->mainSource(), primaryStream);
     QVERIFY(!_videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool());
     QVERIFY(cameraSource->tile());
     QVERIFY(!primaryStream->tile());
@@ -1286,17 +1296,57 @@ void VideoManagerTest::_testScreenshotFailuresReachUser()
     verifyExpectedLogMessage();
 }
 
-void VideoManagerTest::_testAspectRatioWithoutAdvertisedResolution()
+void VideoManagerTest::_testForcedAspectRatioAppliesToConfiguredStream()
 {
-    _facts->set(_videoSettings->aspectRatio(), 2.0);
     VideoStreamController* const stream = _videoManager->primaryStream();
+    QSignalSpy forcedSpy(stream, &VideoStreamController::forcedAspectRatioChanged);
+    QCOMPARE(stream->forcedAspectRatio(), 0.0);
+
+    // A stretched picture takes a sink that leaves non-square pixels as they are: the stream restarts.
+    _facts->set(_videoSettings->forcedAspectRatio(), static_cast<int>(VideoSettings::AspectRatio4x3));
+    QCOMPARE(stream->forcedAspectRatio(), 4.0 / 3.0);
+    QCOMPARE(forcedSpy.count(), 1);
+    _settle();
+    QVERIFY(_primary->displayConfig().disablePixelAspectRatio);
+    QCOMPARE(_primary->restarts, 1);
+    QCOMPARE(_primary->configChanges, 0);
+
+    // Another ratio takes no other sink.
+    _facts->set(_videoSettings->forcedAspectRatio(), static_cast<int>(VideoSettings::AspectRatio16x9));
+    QCOMPARE(stream->forcedAspectRatio(), 16.0 / 9.0);
+    _settle();
+    QCOMPARE(_primary->restarts, 1);
+    QCOMPARE(_videoManager->thermalStream()->forcedAspectRatio(), 0.0);
+    QVERIFY(!_thermal->displayConfig().disablePixelAspectRatio);
+
+    // A camera says what its stream is: its picture isn't stretched, and its sink scales to square pixels again.
     const auto info = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
     stream->setStreamInfo(info.get());
-    QCOMPARE(stream->aspectRatio(), 1280.0 / 720.0);
+    QCOMPARE(stream->forcedAspectRatio(), 0.0);
+    _settle();
+    QVERIFY(!_primary->displayConfig().disablePixelAspectRatio);
+}
 
-    // A camera that reports no resolution leaves the ratio to the setting.
-    QVERIFY(info->update(mavlink_video_stream_status_t{}));
-    QCOMPARE(stream->aspectRatio(), 2.0);
+void VideoManagerTest::_testScreenshotFollowsForcedAspectRatio()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    _facts->set(_videoSettings->forcedAspectRatio(), static_cast<int>(VideoSettings::AspectRatio16x9));
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> root = engine.create<QQuickItem>(
+        kStreamOutputQml, {{QStringLiteral("stream"), QVariant::fromValue(_videoManager->primaryStream())}});
+    QVERIFY2(root, qPrintable(engine.error()));
+    auto* const output = root->findChild<QQuickItem*>(QStringLiteral("output"));
+    QVERIFY(output);
+
+    // A frame of 64 × 48 is saved as wide as the output shows it, with every row it has.
+    showFrame(output, VideoTestHelpers::redTopLeftQuadrant());
+    _primary->setState(VideoReceiver::State::Streaming);
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    const QString shot = tempDir.filePath(QStringLiteral("shot.png"));
+    _videoManager->grabImage(shot);
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(shot).size(), QSize(85, 48), TestTimeout::mediumMs());
+    QCOMPARE(VideoTestHelpers::redCorner(QImage(shot)), std::optional<Qt::Corner>(Qt::TopLeftCorner));
 }
 
 void VideoManagerTest::_testAdvertisedRotationTurnsVideo_data()
@@ -1347,10 +1397,12 @@ void VideoManagerTest::_testAdvertisedRotationTurnsVideo()
     QCOMPARE(stream->aspectRatio(), sideways ? (720.0 / 1280.0) : (1280.0 / 720.0));
     _primary->setVideoSize(QSize(64, 48));
     QCOMPARE(stream->videoSize(), videoSize);
-    QCOMPARE(_videoManager->aspectRatio(), static_cast<double>(videoSize.width()) / videoSize.height());
+    QCOMPARE(stream->aspectRatio(), static_cast<double>(videoSize.width()) / videoSize.height());
 
-    // A screenshot shows the video as the output does.
+    // The output tells the ratio of the picture as it shows it, turned, and a screenshot shows the same.
     showFrame(output, VideoTestHelpers::redTopLeftQuadrant());
+    QTRY_COMPARE_WITH_TIMEOUT(output->property("aspectRatio").toReal(),
+                              static_cast<qreal>(videoSize.width()) / videoSize.height(), TestTimeout::shortMs());
     _primary->setState(VideoReceiver::State::Streaming);
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     const QString shot = tempDir.filePath(QStringLiteral("shot.png"));
@@ -1363,6 +1415,49 @@ void VideoManagerTest::_testAdvertisedRotationTurnsVideo()
     QCOMPARE(stream->rotation(), 0);
     QCOMPARE(output->property("orientation").toInt(), 0);
     QCOMPARE(stream->videoSize(), QSize(64, 48));
+}
+
+void VideoManagerTest::_testCameraTransformTurnsItsPicture()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString shot = tempDir.filePath(QStringLiteral("uvc.png"));
+    VideoStreamController* const cameraSource = _videoManager->_cameraSource;
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> root =
+        engine.create<QQuickItem>(kStreamOutputQml, {{QStringLiteral("stream"), QVariant::fromValue(cameraSource)}});
+    QVERIFY2(root, qPrintable(engine.error()));
+    auto* const output = root->findChild<QQuickItem*>(QStringLiteral("output"));
+    QVERIFY(output);
+    // The camera's output registers with the camera's source, which hands it to the camera.
+    QCOMPARE(cameraSource->videoOutput(), output);
+    QCOMPARE(camera->videoOutput(), output);
+    QCOMPARE(output->property("orientation").toInt(), 0);
+    QVERIFY(!output->property("mirrored").toBool());
+
+    // The output turns and mirrors the picture. The camera's frames, which its recorder gets too, stay as they are.
+    _facts->set(_videoSettings->uvcCameraRotation(), 90);
+    _facts->set(_videoSettings->uvcCameraMirror(), true);
+    QCOMPARE(cameraSource->rotation(), 90);
+    QVERIFY(cameraSource->mirrored());
+    QCOMPARE(output->property("orientation").toInt(), 90);
+    QVERIFY(output->property("mirrored").toBool());
+    showFrame(output, VideoTestHelpers::redTopLeftQuadrant());
+    auto* const sink = output->property("videoSink").value<QVideoSink*>();
+    QVERIFY(sink);
+    QCOMPARE(sink->videoFrame().rotation(), QtVideo::Rotation::None);
+    QVERIFY(!sink->videoFrame().mirrored());
+    // The size it is shown at is the turned one.
+    camera->setVideoSize(QSize(64, 48));
+    QCOMPARE(cameraSource->videoSize(), QSize(48, 64));
+
+    // Screenshots save it as displayed: turned clockwise, which puts the red quadrant top right, and mirrored, which
+    // brings it back to the top left.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    QVERIFY(camera->takeScreenshot(shot));
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(shot).size(), QSize(48, 64), TestTimeout::mediumMs());
+    QCOMPARE(VideoTestHelpers::redCorner(QImage(shot)), std::optional<Qt::Corner>(Qt::TopLeftCorner));
 }
 
 void VideoManagerTest::_testSourceErrorsReachUser()
@@ -1649,6 +1744,56 @@ void VideoManagerTest::_testStreamStatsReachQml()
     QVERIFY(!group->isVisible());
 }
 
+void VideoManagerTest::_testStatsGroupShowsCamera()
+{
+    const QString name = QStringLiteral("QGC Test Camera");
+    VideoStreamController* const cameraSource = _videoManager->_cameraSource;
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> group =
+        engine.create<QQuickItem>(kStatsGroupQml, {{QStringLiteral("stream"), QVariant::fromValue(cameraSource)}});
+    QVERIFY2(group, qPrintable(engine.error()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    group->setParentItem(window.contentItem());
+    QVERIFY(!group->isVisible());
+
+    // What a camera measures: its frames, and the frame rate it is set up for.
+    VideoStreamStats stats;
+    stats.valid = true;
+    stats.fps = 30.0;
+    stats.cameraFps = 30.0;
+    stats.bitrateKbps = -1.0;
+    stats.framesDropped = -1;
+    stats.codec = QStringLiteral("MJPEG");
+    stats.gpuPath = QStringLiteral("CPU");
+    stats.uptimeMs = 1000;
+    camera->setVideoSize(QSize(640, 480));
+    camera->setDecoding(true);
+    camera->setStats(stats);
+    QVERIFY(group->isVisible());
+    QVERIFY(showsText(group.get(), QStringLiteral("30.0 fps (camera 30 fps)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("640 × 480 MJPEG")));
+    QVERIFY(showsText(group.get(), QStringLiteral("CPU")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0:01")));
+    // Nothing of what only a stream tells, nor what a camera doesn't count.
+    for (const char* const row : {"Source", "URL", "Dropped", "Bitrate", "Decoder", "Latency"}) {
+        QVERIFY2(!showsText(group.get(), QString::fromLatin1(row)), row);
+    }
+    // Without a camera selected there is no row for its name.
+    QVERIFY(!showsText(group.get(), QStringLiteral("Camera")));
+
+    _videoManager->_cameraAttached = [name](const QString& camera) { return camera == name; };
+    _facts->set(_videoSettings->videoSource(), name);
+    // The camera the test attached isn't one Qt knows.
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    _settle();
+    verifyExpectedLogMessage();
+    camera->setStats(stats);
+    QVERIFY(showsText(group.get(), QStringLiteral("Camera")));
+    QVERIFY(showsText(group.get(), name));
+}
+
 void VideoManagerTest::_testIndicatorReportsMeasuredSource()
 {
     InlineQmlEngine engine;
@@ -1769,7 +1914,7 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
     QSignalSpy degradedSpy(_videoManager.get(), &VideoManager::degradedChanged);
 
     if (usbCamera) {
-        camera->_setCameraFrameRate(cameraFps);
+        stats.cameraFps = cameraFps;
         camera->setStats(stats);
     } else {
         if (cameraFps > 0) {
@@ -1783,7 +1928,6 @@ void VideoManagerTest::_testSourceFallingShortDegradesVideo()
 
     // A source that is no longer measured doesn't fall short.
     camera->setStats({});
-    camera->_setCameraFrameRate(0.0);
     _primary->setStats({});
     QVERIFY(!_videoManager->degraded());
     _videoManager->primaryStream()->setStreamInfo(nullptr);
@@ -1801,21 +1945,26 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
     sourceStats->setParentItem(window.contentItem());
     QVERIFY(showsText(sourceStats.get(), QStringLiteral("No video stream")));
 
-    // Each source has a group of its kind, in a loader.
-    QList<QQuickItem*> loaders;
-    for (QQuickItem* const child : sourceStats->childItems()) {
-        if (child->property("sourceComponent").isValid()) {
-            loaders.append(child);
+    // Each source has a group.
+    const auto sourceGroups = [&sourceStats] {
+        QList<QQuickItem*> groups;
+        for (QQuickItem* const child : sourceStats->childItems()) {
+            if (child->property("stream").isValid()) {
+                groups.append(child);
+            }
         }
-    }
-    QCOMPARE(loaders.size(), 3);
-    const auto group = [&loaders](int index) { return loaders.at(index)->property("item").value<QObject*>(); };
+        return groups;
+    };
+    QList<QQuickItem*> groups = sourceGroups();
+    QCOMPARE(groups.size(), 3);
+    const auto group = [&groups](int index) { return groups.at(index); };
     QCOMPARE(group(0)->property("stream").value<VideoStreamController*>(), _videoManager->primaryStream());
     QCOMPARE(group(0)->property("heading").toString(), QStringLiteral("Video"));
     QCOMPARE(group(1)->property("stream").value<VideoStreamController*>(), _videoManager->thermalStream());
     QCOMPARE(group(1)->property("heading").toString(), QStringLiteral("Thermal"));
     UVCCameraController* const camera = _videoManager->uvcCamera();
-    QCOMPARE(group(2)->property("camera").value<UVCCameraController*>(), camera);
+    QCOMPARE(group(2)->property("stream").value<VideoStreamController*>(), _videoManager->_cameraSource);
+    QCOMPARE(group(2)->property("heading").toString(), QStringLiteral("USB Camera"));
 
     // A group shows while its source is measured.
     const std::array<std::function<void(const VideoStreamStats&)>, 3> setStats{
@@ -1829,7 +1978,7 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
         setStats.at(shown)(measured);
         QVERIFY(!showsText(sourceStats.get(), QStringLiteral("No video stream")));
         for (size_t index = 0; index < setStats.size(); ++index) {
-            QCOMPARE(loaders.at(index)->isVisible(), index == shown);
+            QCOMPARE(groups.at(index)->isVisible(), index == shown);
         }
         setStats.at(shown)({});
     }
@@ -1840,13 +1989,8 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
     const auto other = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
     _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
                                          {{other.get(), nullptr, QStringLiteral("Gimbal: Wide")}});
-    loaders.clear();
-    for (QQuickItem* const child : sourceStats->childItems()) {
-        if (child->property("sourceComponent").isValid()) {
-            loaders.append(child);
-        }
-    }
-    QCOMPARE(loaders.size(), 4);
+    groups = sourceGroups();
+    QCOMPARE(groups.size(), 4);
     QCOMPARE(group(3)->property("stream").value<VideoStreamController*>(), _videoManager->_sources.last());
     QCOMPARE(group(3)->property("heading").toString(), QStringLiteral("Gimbal: Wide"));
     QCOMPARE(group(0)->property("heading").toString(), QStringLiteral("Video"));
@@ -1854,36 +1998,71 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
 
 void VideoManagerTest::_testVideoViewFitsVideo_data()
 {
-    // Whether the fitted video takes its width from the view's height, and its height from the view's width, for a
-    // video wider than the square view, and whether the outputs crop it to the view.
+    // For a stream of 64 × 48 frames in a square view: the ratio its picture is forced to, whether the fitted video
+    // takes its width from the view's height, and its height from the view's width, and whether it is cropped to the
+    // view.
     QTest::addColumn<int>("fitMode");
+    QTest::addColumn<int>("forced");
     QTest::addColumn<bool>("widthFromHeight");
     QTest::addColumn<bool>("heightFromWidth");
     QTest::addColumn<bool>("crops");
 
-    QTest::newRow("fit width") << int(VideoSettings::VideoFitWidth) << false << true << false;
-    QTest::newRow("fit height") << int(VideoSettings::VideoFitHeight) << true << false << true;
-    QTest::newRow("fill") << int(VideoSettings::VideoFitFill) << true << false << true;
-    QTest::newRow("no crop") << int(VideoSettings::VideoFitNoCrop) << false << true << false;
+    const int own = VideoSettings::AspectRatioAuto;
+    QTest::newRow("fit width") << int(VideoSettings::VideoFitWidth) << own << false << true << false;
+    QTest::newRow("fit height") << int(VideoSettings::VideoFitHeight) << own << true << false << true;
+    QTest::newRow("fill") << int(VideoSettings::VideoFitFill) << own << true << false << true;
+    QTest::newRow("no crop") << int(VideoSettings::VideoFitNoCrop) << own << false << true << false;
+    const int forced = VideoSettings::AspectRatio16x9;
+    QTest::newRow("forced, no crop") << int(VideoSettings::VideoFitNoCrop) << forced << false << true << false;
+    QTest::newRow("forced, fill") << int(VideoSettings::VideoFitFill) << forced << true << false << true;
 }
 
 void VideoManagerTest::_testVideoViewFitsVideo()
 {
     QFETCH(int, fitMode);
+    QFETCH(int, forced);
     QFETCH(bool, widthFromHeight);
     QFETCH(bool, heightFromWidth);
     QFETCH(bool, crops);
 
     _facts->set(_videoSettings->videoFit(), fitMode);
+    _facts->set(_videoSettings->forcedAspectRatio(), forced);
     InlineQmlEngine engine;
-    const std::unique_ptr<QObject> view = engine.create(kVideoViewQml);
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kVideoViewQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
     QVERIFY2(view, qPrintable(engine.error()));
+    auto* const output = view->findChild<QQuickItem*>(QStringLiteral("videoViewOutput"));
+    QVERIFY(output);
 
-    const qreal aspectRatio = view->property("_ar").toReal();
-    QVERIFY(aspectRatio > 1.0);
-    QCOMPARE(view->property("videoWidth").toReal(), widthFromHeight ? (400 * aspectRatio) : 400);
-    QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
-    QCOMPARE(view->property("_cropsVideo").toBool(), crops);
+    // The video's own ratio is its frames', which the first one tells; until then the video fills the view.
+    const bool isForced = forced != VideoSettings::AspectRatioAuto;
+    const qreal aspectRatio = isForced ? VideoSettings::aspectRatioOf(forced) : (64.0 / 48.0);
+    if (!isForced) {
+        QCOMPARE(view->property("videoWidth").toReal(), 400.0);
+        QCOMPARE(view->property("videoHeight").toReal(), 400.0);
+    }
+    showFrame(output, VideoTestHelpers::redTopLeftQuadrant());
+    QTRY_COMPARE_WITH_TIMEOUT(output->property("implicitHeight").toReal(), 48.0, TestTimeout::shortMs());
+    QCOMPARE(view->property("_ar").toReal(), aspectRatio);
+
+    const QSizeF fitted(widthFromHeight ? (400 * aspectRatio) : 400, heightFromWidth ? (400 / aspectRatio) : 400);
+    QCOMPARE(view->property("videoWidth").toReal(), fitted.width());
+    QCOMPARE(view->property("videoHeight").toReal(), fitted.height());
+
+    // Where the output draws. The video's own picture is fitted by the output, which fills the view; a forced one
+    // is the whole video, stretched over the fitted rectangle.
+    const QRectF drawn = output->mapRectToItem(view.get(), QRectF(0, 0, output->width(), output->height()));
+    if (isForced) {
+        QCOMPARE(output->property("fillMode").toInt(), static_cast<int>(Qt::IgnoreAspectRatio));
+        // To the precision of the item's transform, which is single.
+        QVERIFY2(qAbs(drawn.width() - fitted.width()) < 0.01, qPrintable(QString::number(drawn.width())));
+        QVERIFY2(qAbs(drawn.height() - fitted.height()) < 0.01, qPrintable(QString::number(drawn.height())));
+        QVERIFY(QLineF(drawn.center(), QPointF(200, 200)).length() < 0.01);
+    } else {
+        QCOMPARE(output->property("fillMode").toInt(),
+                 static_cast<int>(crops ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio));
+        QCOMPARE(drawn, QRectF(0, 0, 400, 400));
+    }
 }
 
 void VideoManagerTest::_testTelemetryOverlayFollowsTelemetry()
@@ -2163,8 +2342,9 @@ void VideoManagerTest::_testTappedTileBecomesMainPicture()
     QVERIFY(_primary->videoOutput() != streamOutput);
     QCOMPARE(_primary->videoOutputChanges, 1);
     QCOMPARE(_primary->activeChanges, 0);
-    QVERIFY(uvcCamera->videoOutput());
-    QVERIFY(uvcCamera->videoOutput() != cameraOutput);
+    // The camera plays into the main picture's output, which the stream left.
+    QVERIFY(streamOutput);
+    QCOMPARE(uvcCamera->videoOutput(), streamOutput.data());
 
     // A tap on the stream's tile gives it the main picture back.
     QVERIFY(tapTile());
@@ -2172,6 +2352,9 @@ void VideoManagerTest::_testTappedTileBecomesMainPicture()
     _settle();
     QCOMPARE(shownTiles(tiles).first()->property("source").value<VideoStreamController*>(),
              _videoManager->_cameraSource);
+    QCOMPARE(_primary->videoOutput(), streamOutput.data());
+    QVERIFY(uvcCamera->videoOutput());
+    QVERIFY(uvcCamera->videoOutput() != streamOutput);
     QCOMPARE(_primary->videoOutputChanges, 2);
     QCOMPARE(_primary->activeChanges, 0);
 }
@@ -2269,6 +2452,29 @@ void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
     QVERIFY(!_videoManager->hasThermal());
     _settle();
     QCOMPARE(_thermal->videoOutput(), nullptr);
+}
+
+void VideoManagerTest::_testThermalOverlayHasThePicturesShape()
+{
+    const auto thermalInfo =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    _videoManager->thermalStream()->setStreamInfo(thermalInfo.get());
+
+    InlineQmlEngine engine;
+    const std::unique_ptr<QQuickItem> view = engine.create<QQuickItem>(
+        kThermalOverlayQml, {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}});
+    QVERIFY2(view, qPrintable(engine.error()));
+    const auto* const overlay = view->findChild<QQuickItem*>(QStringLiteral("overlay"));
+    QVERIFY(overlay);
+    const auto shape = [overlay] { return overlay->width() / overlay->height(); };
+
+    // Until a frame arrives, the advertised resolution (1280 × 720) shapes the overlay.
+    QCOMPARE(shape(), 1280.0 / 720.0);
+
+    // Then the picture its output shows does, as for the main picture: here of another shape than the stream tells.
+    QVERIFY(_thermal->videoOutput());
+    showFrame(_thermal->videoOutput(), VideoTestHelpers::redTopLeftQuadrant());
+    QTRY_COMPARE_WITH_TIMEOUT(shape(), 64.0 / 48.0, TestTimeout::shortMs());
 }
 
 void VideoManagerTest::_testThermalPlaysOnlyWhileInUse()

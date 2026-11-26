@@ -24,8 +24,8 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-/// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool(). A texture-array slice is only recorded
-/// here: D3D11VideoBuffer copies it on the render thread.
+/// D3D11 pieces of GstD3DVideoBufferCommon's resolvePlanes(). A texture-array slice is only recorded here:
+/// D3D11VideoBuffer copies it on the render thread.
 class D3D11PlaneResolver
 {
 public:
@@ -34,7 +34,6 @@ public:
     using Device = GstD3D11Device;
 
     static constexpr const char* kMemoryName = "GstD3D11Memory";
-    static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY;
 
     static const QLoggingCategory& log() { return GstD3D11Log(); }
 
@@ -86,18 +85,6 @@ public:
     const std::array<guint, kMaxPlanes>& slices() const noexcept { return _slices; }
 
     const std::array<bool, kMaxPlanes>& copied() const noexcept { return _copied; }
-
-    static GstBufferPool* newPool(Device* device) { return gst_d3d11_buffer_pool_new(device); }
-
-    // SHADER_RESOURCE matches the importer's sampled texture.
-    static void setAllocationParams(GstStructure* config, Device* device, const GstVideoInfo* vinfo)
-    {
-        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
-                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
-            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
-            gst_d3d11_allocation_params_free(params);
-        }
-    }
 
 private:
     std::array<guint, kMaxPlanes> _slices{};
@@ -200,13 +187,51 @@ private:
     std::array<bool, kMaxPlanes> _copied{};
 };
 
+/// HwPathDescriptor::proposePool: adds a pool on the bridge's device (Qt's) to an ALLOCATION query whose caps carry
+/// D3D11Memory, so the decoder allocates on the device QRhi samples from.
+bool proposePool(GstQuery* query, GstCaps* caps, const GstVideoInfo* vinfo, gsize size, guint minBuffers)
+{
+    GstCapsFeatures* features = gst_caps_get_features(caps, 0);
+    if (!features || !gst_caps_features_contains(features, GST_CAPS_FEATURE_MEMORY_D3D11_MEMORY)) {
+        return false;
+    }
+    GstD3D11Device* device = GstD3D11ContextBridge::currentDevice();
+    if (!device) {
+        return false;
+    }
+    bool proposed = false;
+    if (GstBufferPool* pool = gst_d3d11_buffer_pool_new(device)) {
+        GstStructure* config = gst_buffer_pool_get_config(pool);
+        gst_buffer_pool_config_set_params(config, caps, size, minBuffers, 0);
+        gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+        // SHADER_RESOURCE matches the importer's sampled texture.
+        if (GstD3D11AllocationParams* params = gst_d3d11_allocation_params_new(
+                device, vinfo, GST_D3D11_ALLOCATION_FLAG_DEFAULT, D3D11_BIND_SHADER_RESOURCE, 0)) {
+            gst_buffer_pool_config_set_d3d11_allocation_params(config, params);
+            gst_d3d11_allocation_params_free(params);
+        }
+        if (gst_buffer_pool_set_config(pool, config)) {
+            // The pool may grow the buffer size to the allocated texture's pitch; re-read it.
+            GstStructure* updated = gst_buffer_pool_get_config(pool);
+            guint poolSize = static_cast<guint>(size);
+            gst_buffer_pool_config_get_params(updated, nullptr, &poolSize, nullptr, nullptr);
+            gst_structure_free(updated);
+            gst_query_add_allocation_pool(query, pool, poolSize, minBuffers, 0);
+            proposed = true;
+        }
+        gst_object_unref(pool);
+    }
+    gst_object_unref(device);  // currentDevice() returns a transfer-full ref.
+    return proposed;
+}
+
 }  // namespace
 
 constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .path = HwVideoBufferPath::D3D11,
     .matches = [](GstMemory* mem) -> bool { return gst_is_d3d11_memory(mem); },
     .construct = &GstHwPaths::construct<D3D11VideoBuffer>,
-    .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D11PlaneResolver>,
+    .proposePool = &proposePool,
     .bridge = &GstD3D11ContextBridge::instance,
 };
 

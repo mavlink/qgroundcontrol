@@ -51,7 +51,11 @@ class VideoStreamController : public QObject
     Q_PROPERTY(bool encodesRecordings READ encodesRecordings NOTIFY encodesRecordingsChanged FINAL)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged FINAL)
     Q_PROPERTY(int rotation READ rotation NOTIFY rotationChanged FINAL)
+    Q_PROPERTY(bool mirrored READ mirrored NOTIFY mirroredChanged FINAL)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged FINAL)
+    /// Width over height the stream's outputs stretch its picture to (VideoSettings::forcedAspectRatio); 0 for the
+    /// video's own, which any stream but the manually configured one keeps.
+    Q_PROPERTY(double forcedAspectRatio READ forcedAspectRatio NOTIFY forcedAspectRatioChanged FINAL)
     Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged FINAL)
     Q_PROPERTY(QGCVideoStreamInfo* streamInfo READ streamInfo NOTIFY streamInfoChanged FINAL)
     Q_PROPERTY(QString uri READ uri NOTIFY uriChanged FINAL)
@@ -165,21 +169,31 @@ public:
     bool decoding() const;
 
     /// True while the stream, lost after it was decoded, is being recovered: its last frame is still worth showing.
-    /// False again once it decodes, when the receiver gives up, and after a stop or a change of URI.
+    /// False again once it decodes, when the receiver gives up, and after a stop or a change of URI. Never for the
+    /// local camera, whose picture goes with it.
     bool reconnecting() const { return _reconnecting; }
 
     bool recording() const;
 
     /// The clockwise rotation, in degrees, the camera reports for the stream (VIDEO_STREAM_INFORMATION.rotation), which
     /// the outputs showing it add to the frames' own: 0, 90, 180 or 270, and 0 for any other angle or without a
-    /// camera's stream.
+    /// camera's stream. The local camera's is the one setTransform() gave.
     int rotation() const { return _rotation; }
+
+    /// Whether the outputs mirror the picture after turning it: the local camera's, as setTransform() said.
+    bool mirrored() const { return _mirrored; }
+
+    /// Has the local camera's outputs turn its picture clockwise by @p rotation, a multiple of 90 degrees, and then
+    /// mirror it when @p mirrored.
+    void setTransform(int rotation, bool mirrored);
 
     /// The size the stream is shown at: the receiver's video size, turned by rotation().
     QSize videoSize() const;
-    /// Of the stream as shown: from the decoded frames, else the camera's advertised resolution, else the aspect ratio
-    /// setting (primary) or 1.
+    /// Of the video's own picture, turned by rotation(): from the decoded frames, else the camera's advertised
+    /// resolution, else 1.
     double aspectRatio() const;
+
+    double forcedAspectRatio() const { return _forcedAspectRatio; }
     /// The receiver's VideoReceiver::stats(); invalid without a receiver.
     VideoStreamStats stats() const;
     /// The URI the receiver plays, without user info or query values, for display, or the local camera's description;
@@ -199,7 +213,9 @@ signals:
     void encodesRecordingsChanged();
     void videoSizeChanged();
     void rotationChanged();
+    void mirroredChanged();
     void aspectRatioChanged();
+    void forcedAspectRatioChanged();
     void statsChanged();
     void streamInfoChanged();
     void uriChanged();
@@ -213,6 +229,7 @@ private:
     /// What the receiver is (or will be) configured with; nullopt when there is no stream to play.
     std::optional<VideoReceiver::Config> _resolvedConfig() const;
     VideoReceiver::DisplayConfig _resolvedDisplayConfig() const;
+    void _updateForcedAspectRatio();
     void _apply();
     void _onStreamInfoChanged();
     /// Takes the receiver's output away once no output is registered.
@@ -252,4 +269,6 @@ private:
     bool _decoded = false;
     bool _reconnecting = false;
     int _rotation = 0;
+    bool _mirrored = false;
+    double _forcedAspectRatio = 0;
 };

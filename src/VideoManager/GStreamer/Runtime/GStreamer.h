@@ -33,8 +33,8 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
 /// @p debugLevel: the debug threshold to start with (none when unset), unless GST_DEBUG is set.
 bool completeInit(std::optional<int> debugLevel = std::nullopt);
 void setDebugLevel(int level);
-/// A new qgcvideosinkbin with the construct-only settings of a VideoReceiver::DisplayConfig, returned as an owned,
-/// non-floating reference (adopt it), or nullptr.
+/// A new sink bin (GstQgc::makeSinkBin()) with the settings of a VideoReceiver::DisplayConfig, which are fixed once it
+/// is built, returned as an owned, non-floating reference (adopt it), or nullptr.
 GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio, bool gpuZeroCopy);
 
 /// Binds the qgcqvideosink inside @p sinkBin, a new bin as createVideoSink() returns it, to @p videoSink through a new

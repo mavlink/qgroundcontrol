@@ -153,14 +153,9 @@ GstElement* addIdentityTo(GstElement* bin)
 }
 
 }  // namespace
-#endif
 
 void GstHwBuffersTest::_testContextBridgeRegistry()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
-
     testBridgeA().restart();
     testBridgeB().restart();
     const auto bridgeGuard = qScopeGuard([] {
@@ -204,14 +199,10 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
     GstQuery* unknownQuery = gst_query_new_context("qgc.test.context-unknown");
     QVERIFY(!HwBuffers::answerSinkBinContextQuery(unknownQuery));
     gst_query_unref(unknownQuery);
-#endif
 }
 
 void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
@@ -236,14 +227,10 @@ void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
 
     // Served when it asked, the pipeline holds nothing on another device: its owner has nothing to replace.
     QVERIFY(!servedLate(pipeline.get()));
-#endif
 }
 
 void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     testBridgeA().restart();
     testBridgeA().deviceKnown = false;
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
@@ -279,14 +266,10 @@ void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
     GstElement* const later = addIdentityTo(pipeline.get());
     QVERIFY(later);
     QVERIFY2(holdsTestBridgeContext(later), "an element added after the bridge primed got the device of another");
-#endif
 }
 
 void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
@@ -322,14 +305,10 @@ void GstHwBuffersTest::_testRemovedDeviceIsToldToThePipelinesThatGotIt()
     QVERIFY(HwBuffers::graphicsDeviceLost());
     QVERIFY(testBridgeA().prime());
     QVERIFY(!HwBuffers::graphicsDeviceLost());
-#endif
 }
 
 void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("HwBuffers not compiled in this build (no GPU path enabled)");
-#else
     testBridgeA().restart();
     const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
     s_testCacheResets = 0;
@@ -339,14 +318,10 @@ void GstHwBuffersTest::_testHwBufferLifecycleResetsNativeCaches()
     HwBuffers::resetCachedGpuResources();
     QCOMPARE(testBridgeA().clears, 1);
     QCOMPARE(s_testCacheResets, 1);
-#endif
 }
 
 void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("QGCRhiCapture not compiled in this build (no GPU path enabled)");
-#else
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
@@ -360,9 +335,10 @@ void GstHwBuffersTest::_testQGCRhiCaptureCacheLifecycle()
     // Destroying the window must withdraw the device (no dangling handles).
     delete window;
     QCOMPARE(QGCRhiCapture::deviceSnapshot().backend.load(), -1);
-#endif
 }
+#endif
 
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
 void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
 {
     QTest::addColumn<QByteArray>("value");
@@ -381,9 +357,6 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
 
 void GstHwBuffersTest::_testGpuBinPreferenceParse()
 {
-#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    QSKIP("QGC_GST_GPU_BIN only selects a bin when both GPU bins are compiled");
-#else
     QFETCH(QByteArray, value);
     QFETCH(int, expectedMode);
     QFETCH(bool, explicitChoice);
@@ -399,8 +372,8 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse()
     if (warns) {
         verifyExpectedLogMessage();
     }
-#endif
 }
+#endif
 
 void GstHwBuffersTest::_testGpuBinSelection_data()
 {
@@ -601,9 +574,9 @@ void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer()
     QCOMPARE(QByteArray(guard, guardBytes), QByteArray(guardBytes, kGuardByte));
 }
 
+#if defined(QGC_HAS_ANY_GPU_PATH)
 namespace {
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
 // Concrete subclass for unit-testing GstHwVideoBuffer's protected/base behavior.
 class TestableHwVideoBuffer : public GstHwVideoBuffer
 {
@@ -627,13 +600,6 @@ public:
         _format = std::move(advertised);
     }
 };
-
-#endif
-
-}  // namespace
-
-#if defined(QGC_HAS_ANY_GPU_PATH)
-namespace {
 
 /// Behaviour of one test path in _testHwPathRegistrySelection, plus what the factory did with it.
 struct TestPathState
@@ -670,7 +636,6 @@ const HwPathDescriptor kTestSelectPathB = {
 };
 
 }  // namespace
-#endif
 
 void GstHwBuffersTest::_testHwPathRegistrySelection_data()
 {
@@ -694,9 +659,6 @@ void GstHwBuffersTest::_testHwPathRegistrySelection_data()
 
 void GstHwBuffersTest::_testHwPathRegistrySelection()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GPU path registry not compiled in this build (no GPU path enabled)");
-#else
     QFETCH(bool, aMatches);
     QFETCH(bool, aAdmits);
     QFETCH(bool, aConstructs);
@@ -734,14 +696,10 @@ void GstHwBuffersTest::_testHwPathRegistrySelection()
     QCOMPARE(bool(buffer), expectedPath != int(HwVideoBufferPath::None));
     QCOMPARE(cache.validated, expectedPath != int(HwVideoBufferPath::None));
     QCOMPARE(s_testPathB.constructed, expectedBConstructed);
-#endif
 }
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     GstVideoInfo info;
     GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 4, 2, &info));
     QVERIFY(sample);
@@ -772,7 +730,6 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapFallback()
     QCOMPARE(frame.planeCount(), 1);
     QCOMPARE(frame.bytesPerLine(0), GST_VIDEO_INFO_PLANE_STRIDE(&info, 0));
     QCOMPARE(QByteArray(reinterpret_cast<const char*>(frame.bits(0)), frame.mappedBytes(0)), pixels);
-#endif
 }
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
@@ -792,9 +749,6 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     QFETCH(int, memoryFormat);
     QFETCH(int, advertisedFormat);
     QFETCH(bool, expectMapped);
@@ -809,14 +763,10 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
     QCOMPARE(mapped.planeCount > 0, expectMapped);
     hw.unmap();
-#endif
 }
 
 void GstHwBuffersTest::_testWithPixelFormatKeepsOtherProperties()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     // Every property QVideoFrameFormat has a setter for (Qt 6.12), each away from its default.
     QVideoFrameFormat format(QSize(64, 48), QVideoFrameFormat::Format_YUYV);
     format.setViewport(QRect(2, 4, 60, 40));
@@ -841,7 +791,6 @@ void GstHwBuffersTest::_testWithPixelFormatKeepsOtherProperties()
     QCOMPARE(rgba.isMirrored(), format.isMirrored());
     QCOMPARE(rgba.rotation(), format.rotation());
     QCOMPARE(rgba.maxLuminance(), format.maxLuminance());
-#endif
 }
 
 void GstHwBuffersTest::_testTexturePadsPicture_data()
@@ -865,17 +814,14 @@ void GstHwBuffersTest::_testTexturePadsPicture_data()
 
 void GstHwBuffersTest::_testTexturePadsPicture()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
-#else
     QFETCH(QSize, textureSize);
     QFETCH(QSize, picture);
     QFETCH(bool, evenSizes);
     QFETCH(bool, pads);
 
     QCOMPARE(GstHw::texturePadsPicture(textureSize, picture, evenSizes), pads);
-#endif
 }
+#endif
 
 void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas_data()
 {
@@ -979,11 +925,9 @@ void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
     QCOMPARE(delta(Counter::GpuWaits), quint64(1));
 }
 
+#if defined(QGC_HAS_ANY_GPU_PATH)
 void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
 {
-#if !defined(QGC_HAS_ANY_GPU_PATH)
-    QSKIP("No GPU path compiled in this build");
-#else
     // Any compiled path: those are the ones HwBuffers::extraPathStatsSince() reports.
     const HwVideoBufferPath path = GstHwPathRegistry::paths().front()->path;
 
@@ -999,27 +943,30 @@ void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
     }
     const QString sinceLater = HwBuffers::extraPathStatsSince(laterBaseline);
     QVERIFY2(!sinceLater.contains(QStringLiteral("-failures:")), qPrintable(sinceLater));
-#endif
 }
 
-void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
+void GstHwBuffersTest::_testHwBufferFactoryDispatchSystemMemory()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("DMABuf GPU path not compiled in this build");
-#else
-    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
-    GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
+    // A frame in system memory, as a software decoder sends it: no GPU path should match.
+    GstVideoInfo info;
+    const GstTest::SamplePtr sample(GstTest::makeVideoSample(GST_VIDEO_FORMAT_BGRA, 64, 64, &info));
+    QVERIFY(sample);
+    GstCaps* caps = gst_sample_get_caps(sample.get());
 
-    const QString first = HwBuffers::extraPathStatsSince(before);
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
-    QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
+    QVideoFrameFormat fmt(QSize(64, 64), QVideoFrameFormat::Format_BGRA8888);
+    HwVideoBufferPath path = HwVideoBufferPath::None;
 
-    const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
-    QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
-    QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
-#endif
+    HwVideoBufferContext ctxGpu;
+    ctxGpu.gpuEnabled = true;
+    auto buf = makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), caps, info, fmt, ctxGpu, path);
+    QVERIFY(!buf);
+    QCOMPARE(path, HwVideoBufferPath::None);
+
+    HwVideoBufferContext ctxCpu;
+    ctxCpu.gpuEnabled = false;
+    auto buf2 = makeHwVideoBuffer(gst_sample_get_buffer(sample.get()), caps, info, fmt, ctxCpu, path);
+    QVERIFY(!buf2);
 }
+#endif
 
 UT_REGISTER_TEST(GstHwBuffersTest, TestLabel::Unit)

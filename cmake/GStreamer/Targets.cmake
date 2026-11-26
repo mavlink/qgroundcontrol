@@ -12,9 +12,12 @@
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/PkgConfig.cmake")
 
 # _qgc_gst_pkg_target(<name> <module> [REQUIRED|QUIET])
-# Creates GStreamer::<name>, linking PkgConfig::PC_GStreamer_<name> from pkg-config <module>, when the module is found.
+# Creates GStreamer::<name>, linking PkgConfig::PC_GStreamer_<name> from pkg-config <module>, when the module is found
+# in the SDK. Beside a Linux GStreamer_ROOT_DIR pkg-config also finds the system's modules: one of those is another
+# GStreamer's, with its own headers and libgstreamer, so it is reported and not used.
 function(_qgc_gst_pkg_target name module)
     qgc_gst_layout_get(ROOT_DIR _gst_root)
     if(TARGET GStreamer::${name})
@@ -23,6 +26,15 @@ function(_qgc_gst_pkg_target name module)
     pkg_check_modules(PC_GStreamer_${name} ${ARGN} IMPORTED_TARGET GLOBAL "${module}")
     set(_imported PkgConfig::PC_GStreamer_${name})
     if(NOT TARGET ${_imported})
+        return()
+    endif()
+    _qgc_gst_foreign_module_dir("${module}" _foreign_dir)
+    if(_foreign_dir)
+        message(
+            WARNING
+                "GStreamer: ${module} is missing from GStreamer_ROOT_DIR (${_gst_root}). The one in ${_foreign_dir} "
+                "belongs to another GStreamer and is not used."
+        )
         return()
     endif()
     get_target_property(_libraries ${_imported} INTERFACE_LINK_LIBRARIES)

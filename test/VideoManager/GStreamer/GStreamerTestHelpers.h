@@ -122,6 +122,10 @@ public:
 
     /// Builds the pipeline from a gst-launch @p description; false, with error() set, when it doesn't parse.
     bool launch(const QString& description);
+    /// Builds the pipeline from a gst-launch @p description that leaves one source pad unlinked, and links it to
+    /// @p sink, which the pipeline takes over, floating or not. Raw video caps as the description's last item filter
+    /// that link, as they would in front of a sink the description named. False, with error() set, on failure.
+    bool launchInto(const QString& description, GstElement* sink);
 
     const QString& error() const { return _error; }
 
@@ -183,6 +187,10 @@ public:
     bool start(quint16 port);
     /// Stops sending, as a camera losing its link.
     void stop();
+    /// Stops, and sends to @p port again as an encoder that started over: from the stream's first frame, under another
+    /// SSRC, with sequence numbers that go on @p skipped after the last one sent and timestamps that go on from it. A
+    /// jitter buffer takes that for a stream that lost @p skipped packets.
+    bool restartAfterSkipping(quint16 port, quint16 skipped);
 
     /// Units sent since construction.
     int frames() const { return _frames.load(std::memory_order_relaxed); }
@@ -211,6 +219,9 @@ private:
     bool _keyframesHeld = false;
     std::atomic<int> _frames{0};
     std::atomic<int> _dropOneIn{0};
+    /// Payloader properties for the sequence number and timestamp of the next start()'s first packet; empty to have
+    /// the payloader choose them, at random.
+    QString _firstPacket;
     // Only the sender's streaming thread uses it.
     int _rtpPushes = 0;
     // Declared last, so the pipeline stops before the state its callback and probe use goes away.
