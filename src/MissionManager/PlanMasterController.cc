@@ -352,19 +352,18 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 
     QFileInfo fileInfo(filename);
-    QFile file(filename);
-
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = file.errorString() + QStringLiteral(" ") + filename;
-        QGC::showAppMessage(errorMessage.arg(errorString));
-        return;
-    }
 
     bool success = false;
     if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
+        QFile file(filename);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            errorString = file.errorString() + QStringLiteral(" ") + filename;
+            QGC::showAppMessage(errorMessage.arg(errorString));
+            return;
+        }
         success = _missionController.loadTextFile(file, errorString);
     } else {
-        success = _loadPlanJson(file.readAll(), errorString);
+        success = _loadPlanJson(filename, errorString);
     }
     if (!success) {
         QGC::showAppMessage(errorMessage.arg(errorString));
@@ -379,17 +378,10 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 }
 
-namespace {
-
-/// Largest size of a plan file, decompressed. A plan of ten thousand mission items is a few MiB
-constexpr qint64 kMaxPlanFileBytes = 64LL * 1024 * 1024;
-
-}  // namespace
-
-bool PlanMasterController::_loadPlanJson(const QByteArray& bytes, QString& errorString)
+bool PlanMasterController::_loadPlanJson(const QString& filename, QString& errorString)
 {
     QJsonDocument jsonDoc;
-    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString, kMaxPlanFileBytes)) {
+    if (!JsonParsing::readJsonFile(filename, jsonDoc, errorString, kMaxPlanFileBytes)) {
         return false;
     }
 

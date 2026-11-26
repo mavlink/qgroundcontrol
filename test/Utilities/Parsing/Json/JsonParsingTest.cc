@@ -3,17 +3,22 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/qnumeric.h>
 
 #include "Compression.h"
+#include "FileFixtures.h"
 #include "JsonParsing.h"
-#include "QGCFileHelper.h"
 
 namespace {
 
 /// Limit of the content these tests parse, which is a few bytes
 constexpr qint64 kJsonParsingTestMaxBytes = 1024;
+
+/// A JSON file with the header of QGC's own JSON files
+const QByteArray kInternalJsonFile =
+    QByteArrayLiteral(R"({"fileType": "JsonParsingTest", "version": 1, "items": [1, 2]})");
 
 }  // namespace
 
@@ -97,41 +102,100 @@ void JsonParsingTest::_testPossibleNaNJsonValue()
     QCOMPARE(JsonParsing::possibleNaNJsonValue(QJsonValue(42.75)), 42.75);
 }
 
-void JsonParsingTest::_testIsJsonFileBytes()
+void JsonParsingTest::_testParseJson()
 {
     const QByteArray data = QByteArrayLiteral("{\"version\":1,\"items\":[1,2,3]}");
     QJsonDocument document;
     QString errorString;
 
-    QVERIFY(JsonParsing::isJsonFile(data, document, errorString, kJsonParsingTestMaxBytes));
+    QVERIFY(JsonParsing::parseJson(data, document, errorString));
     QVERIFY(document.isObject());
     QCOMPARE(document.object().value(QStringLiteral("version")).toInt(), 1);
 }
 
-void JsonParsingTest::_testIsJsonFileCompressedResourceBytes()
+void JsonParsingTest::_testPlainReadersRefuseCompressed_data()
 {
-    QString fileError;
-    const QByteArray data = QGCFileHelper::readFile(QStringLiteral(":/unittest/manifest.json.gz"), &fileError);
-    QVERIFY(fileError.isEmpty());
-    QVERIFY(!data.isEmpty());
+    QTest::addColumn<QByteArray>("content");
+
+    QTest::newRow("gzip") << TestFixtures::gzipMember(kInternalJsonFile);
+    QTest::newRow("xz") << QByteArray(
+                               "\xfd"
+                               "7zXZ\0\0\x04",
+                               8) +
+                               kInternalJsonFile;
+}
+
+void JsonParsingTest::_testPlainReadersRefuseCompressed()
+{
+    QFETCH(QByteArray, content);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString path = tempDir.filePath(QStringLiteral("compressed.json"));
+    QVERIFY(TestFixtures::writeFile(path, content));
 
     QJsonDocument document;
     QString errorString;
-    QVERIFY(JsonParsing::isJsonFile(data, document, errorString, kJsonParsingTestMaxBytes));
+    QVERIFY(!JsonParsing::parseJson(content, document, errorString));
+    QVERIFY2(errorString.contains(QStringLiteral("compressed")), qPrintable(errorString));
+
+    errorString.clear();
+    QVERIFY(!JsonParsing::readJsonFile(path, document, errorString, kJsonParsingTestMaxBytes));
+    QVERIFY(document.isNull());
+    QVERIFY2(errorString.contains(QStringLiteral("compressed")), qPrintable(errorString));
+
+    // QGC's own JSON files and the MAVLink actions file
+    int version = 0;
+    errorString.clear();
+    QVERIFY(JsonParsing::openInternalQGCJsonFile(path, QStringLiteral("JsonParsingTest"), 1, 1, version, errorString)
+                .isEmpty());
+    QVERIFY2(errorString.contains(QStringLiteral("compressed")), qPrintable(errorString));
+}
+
+void JsonParsingTest::_testPlainReadersReadPlainFile()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString path = tempDir.filePath(QStringLiteral("plain.json"));
+    QVERIFY(TestFixtures::writeFile(path, kInternalJsonFile));
+
+    QJsonDocument document;
+    QString errorString;
+    QVERIFY2(JsonParsing::readJsonFile(path, document, errorString, kJsonParsingTestMaxBytes), qPrintable(errorString));
     QVERIFY(document.isObject());
 
-    // The limit is on the decompressed content, as for a file
-    QByteArray content;
-    QVERIFY(Compression::decompressData(data, content, kJsonParsingTestMaxBytes));
-    QVERIFY(JsonParsing::isJsonFile(data, document, errorString, content.size()));
-    QVERIFY(!JsonParsing::isJsonFile(data, document, errorString, content.size() - 1));
-    QVERIFY2(errorString.contains(QStringLiteral("size limit exceeded")), qPrintable(errorString));
+    int version = 0;
+    const QJsonObject object =
+        JsonParsing::openInternalQGCJsonFile(path, QStringLiteral("JsonParsingTest"), 1, 1, version, errorString);
+    QVERIFY2(!object.isEmpty(), qPrintable(errorString));
+    QCOMPARE(version, 1);
+}
 
-    // Damaged compression is reported as that, not as a syntax error in bytes that are no text
-    QVERIFY(!JsonParsing::isJsonFile(data.first(data.size() / 2), document, errorString, kJsonParsingTestMaxBytes));
+void JsonParsingTest::_testReadJsonFileSizeLimit()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    // A marker in the name must stay as it is in the message
+    const QString path = tempDir.filePath(QStringLiteral("limit%2.json"));
+    const QByteArray content = QByteArrayLiteral("{\"items\":[1,2,3]}");
+    QVERIFY(TestFixtures::writeFile(path, content));
+
+    QJsonDocument document;
+    QString errorString;
+    QVERIFY(JsonParsing::readJsonFile(path, document, errorString, content.size()));
+    QVERIFY(document.isObject());
+
+    QByteArray text;
+    QVERIFY(JsonParsing::readJsonText(path, text, errorString, content.size()));
+    QCOMPARE(text, content);
+
+    // The size of the file decides before it is read: the message gives the size that the file system reports
+    QVERIFY(!JsonParsing::readJsonFile(path, document, errorString, content.size() - 1));
     QVERIFY(document.isNull());
-    QVERIFY2(errorString.startsWith("Failed to decompress data"), qPrintable(errorString));
-    QVERIFY2(errorString.contains("truncated"), qPrintable(errorString));
+    QVERIFY2(errorString.contains(QStringLiteral("has %1 bytes").arg(content.size())), qPrintable(errorString));
+    QVERIFY2(errorString.contains(path), qPrintable(errorString));
+    QVERIFY(!JsonParsing::readJsonText(path, text, errorString, content.size() - 1));
+    QVERIFY(text.isEmpty());
 }
 
 void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
@@ -150,35 +214,56 @@ void JsonParsingTest::_testIsJsonFileCompressedResourcePath()
     QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, content.size() - 1));
     QVERIFY(document.isNull());
     QVERIFY2(errorString.contains(QStringLiteral("size limit exceeded")), qPrintable(errorString));
+
+    // Damaged compression is reported as that, not as a syntax error in bytes that are no text
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QByteArray compressed = TestFixtures::readFile(path);
+    const QString truncatedPath = tempDir.filePath(QStringLiteral("truncated.json.gz"));
+    QVERIFY(TestFixtures::writeFile(truncatedPath, compressed.first(compressed.size() / 2)));
+    QVERIFY(!JsonParsing::isJsonFile(truncatedPath, document, errorString, kJsonParsingTestMaxBytes));
+    QVERIFY(document.isNull());
+    QVERIFY2(errorString.contains("truncated"), qPrintable(errorString));
+
+    // Plain content is read too
+    const QString plainPath = tempDir.filePath(QStringLiteral("plain.json"));
+    QVERIFY(TestFixtures::writeFile(plainPath, content));
+    QVERIFY2(JsonParsing::isJsonFile(plainPath, document, errorString, content.size()), qPrintable(errorString));
+    QVERIFY(document.isObject());
 }
 
-void JsonParsingTest::_testIsJsonFileMissingPath()
+void JsonParsingTest::_testReadersMissingPath()
 {
     QJsonDocument document;
     QString errorString;
 
-    QVERIFY(!JsonParsing::isJsonFile(QStringLiteral("/definitely/missing/file.json"), document, errorString,
-                                     kJsonParsingTestMaxBytes));
+    const QString path = QStringLiteral("/definitely/missing/file.json");
+    QVERIFY(!JsonParsing::isJsonFile(path, document, errorString, kJsonParsingTestMaxBytes));
     QVERIFY(!errorString.isEmpty());
+
+    errorString.clear();
+    QVERIFY(!JsonParsing::readJsonFile(path, document, errorString, kJsonParsingTestMaxBytes));
+    QVERIFY2(errorString.contains(path), qPrintable(errorString));
 }
 
-void JsonParsingTest::_testIsJsonFileReplacesStaleError_data()
+void JsonParsingTest::_testReadersReplaceStaleError_data()
 {
     QTest::addColumn<QByteArray>("content");
-    QTest::addColumn<bool>("fromFile");
+    QTest::addColumn<QString>("reader");
     QTest::addColumn<bool>("isJson");
 
-    QTest::newRow("valid-bytes") << QByteArrayLiteral("{}") << false << true;
-    QTest::newRow("valid-file") << QByteArrayLiteral("{}") << true << true;
-    QTest::newRow("invalid-bytes") << QByteArrayLiteral("{") << false << false;
-    QTest::newRow("invalid-file") << QByteArrayLiteral("{") << true << false;
-    QTest::newRow("empty-file") << QByteArray() << true << false;
+    for (const QString& reader :
+         {QStringLiteral("parseJson"), QStringLiteral("readJsonFile"), QStringLiteral("isJsonFile")}) {
+        QTest::addRow("valid-%s", qPrintable(reader)) << QByteArrayLiteral("{}") << reader << true;
+        QTest::addRow("invalid-%s", qPrintable(reader)) << QByteArrayLiteral("{") << reader << false;
+        QTest::addRow("empty-%s", qPrintable(reader)) << QByteArray() << reader << false;
+    }
 }
 
-void JsonParsingTest::_testIsJsonFileReplacesStaleError()
+void JsonParsingTest::_testReadersReplaceStaleError()
 {
     QFETCH(QByteArray, content);
-    QFETCH(bool, fromFile);
+    QFETCH(QString, reader);
     QFETCH(bool, isJson);
 
     QTemporaryFile file;
@@ -188,8 +273,13 @@ void JsonParsingTest::_testIsJsonFileReplacesStaleError()
 
     const auto parse = [&](QString& errorString) {
         QJsonDocument document;
-        return fromFile ? JsonParsing::isJsonFile(file.fileName(), document, errorString, kJsonParsingTestMaxBytes)
-                        : JsonParsing::isJsonFile(content, document, errorString, kJsonParsingTestMaxBytes);
+        if (reader == QStringLiteral("parseJson")) {
+            return JsonParsing::parseJson(content, document, errorString);
+        }
+        if (reader == QStringLiteral("readJsonFile")) {
+            return JsonParsing::readJsonFile(file.fileName(), document, errorString, kJsonParsingTestMaxBytes);
+        }
+        return JsonParsing::isJsonFile(file.fileName(), document, errorString, kJsonParsingTestMaxBytes);
     };
 
     QString freshError;

@@ -5,7 +5,6 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
 
-#include "Compression.h"
 #include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
@@ -39,7 +38,7 @@ void ParameterMetaData::loadParameterFactMetaDataFile(const QString &metaDataFil
 
     QJsonDocument doc;
     QString errorString;
-    if (!JsonParsing::isJsonFile(metaDataFile, doc, errorString, kMaxMetaDataFileBytes)) {
+    if (!JsonParsing::readJsonFile(metaDataFile, doc, errorString, kMaxMetaDataFileBytes)) {
         qCWarning(ParameterMetaDataLog) << "Unable to open parameter meta data file:" << metaDataFile << errorString;
         return;
     }
@@ -82,7 +81,7 @@ QVersionNumber ParameterMetaData::versionFromJsonData(const QByteArray &jsonData
 {
     QJsonDocument doc;
     QString errorString;
-    const bool parsed = JsonParsing::isJsonFile(jsonData, doc, errorString, kMaxMetaDataFileBytes);
+    const bool parsed = JsonParsing::parseJson(jsonData, doc, errorString);
 
     if (validJson) {
         *validJson = parsed;
@@ -111,10 +110,9 @@ QVersionNumber ParameterMetaData::versionFromJsonData(const QByteArray &jsonData
 QVersionNumber ParameterMetaData::versionFromMetaDataFile(const QString &metaDataFile)
 {
     QByteArray data;
-    const Compression::Outcome read = Compression::readFile(metaDataFile, data, kMaxMetaDataFileBytes);
-    if (data.isEmpty()) {
-        qCWarning(ParameterMetaDataLog) << "Failed to read parameter meta data file:" << metaDataFile
-                                        << read.description();
+    QString errorString;
+    if (!JsonParsing::readJsonText(metaDataFile, data, errorString, kMaxMetaDataFileBytes)) {
+        qCWarning(ParameterMetaDataLog) << "Failed to read parameter meta data file:" << metaDataFile << errorString;
         return {};
     }
 

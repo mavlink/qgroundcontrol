@@ -10,6 +10,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "FileFixtures.h"
 #include "GeoFenceController.h"
 #include "MissionController.h"
 #include "MissionManager.h"
@@ -406,6 +407,49 @@ void PlanMasterControllerTest::_testFailedLoadClearsFileAssociation()
         QVERIFY2(_masterController->currentPlanFile().isEmpty(), qPrintable(context));
         QVERIFY2(_masterController->currentPlanFileName().isEmpty(), qPrintable(context));
     }
+}
+
+void PlanMasterControllerTest::_testPlanFileReadAsIs_data()
+{
+    QTest::addColumn<QByteArray>("content");
+    QTest::addColumn<bool>("overLimit");
+    QTest::addColumn<QString>("refusal");
+
+    const QByteArray plan = TestFixtures::readFile(QStringLiteral(":/unittest/SectionTest.plan"));
+    QTest::newRow("plain") << plan << false << QString();
+    QTest::newRow("gzip") << TestFixtures::gzipMember(plan) << false << QStringLiteral("compressed");
+    QTest::newRow("over-limit") << plan << true
+                                << QStringLiteral("has %1 bytes").arg(PlanMasterController::kMaxPlanFileBytes + 1);
+}
+
+void PlanMasterControllerTest::_testPlanFileReadAsIs()
+{
+    QFETCH(QByteArray, content);
+    QFETCH(bool, overLimit);
+    QFETCH(QString, refusal);
+
+    QVERIFY(!content.isEmpty());
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString planPath = tempDir.filePath(QStringLiteral("ReadAsIs.plan"));
+    QVERIFY(TestFixtures::writeFile(planPath, content));
+    // Sparse where the file system allows it: the plan is refused for its size, before it is read
+    if (overLimit) {
+        QVERIFY(QFile::resize(planPath, PlanMasterController::kMaxPlanFileBytes + 1));
+    }
+
+    if (refusal.isEmpty()) {
+        _masterController->loadFromFile(planPath);
+        QCOMPARE(_masterController->currentPlanFile(), planPath);
+        return;
+    }
+
+    expectLogMessage(
+        "API.QGCApplication.AppMessage", QtDebugMsg,
+        QRegularExpression(QStringLiteral("Error loading Plan file.*") + QRegularExpression::escape(refusal)));
+    _masterController->loadFromFile(planPath);
+    verifyExpectedLogMessage();
+    QVERIFY(_masterController->currentPlanFile().isEmpty());
 }
 
 void PlanMasterControllerTest::_testDownloadClearsFileAssociation()

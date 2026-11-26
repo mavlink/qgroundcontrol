@@ -1,10 +1,15 @@
 #include "SettingsManagerTest.h"
 
-#include "SettingsManager.h"
-#include "Viewer3DSettings.h"
-
+#include <QtCore/QDir>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QTemporaryDir>
+
+#include "AppSettings.h"
+#include "FileFixtures.h"
+#include "SettingsManager.h"
+#include "Viewer3DSettings.h"
 
 UT_REGISTER_TEST(SettingsManagerTest, TestLabel::Unit)
 
@@ -99,4 +104,42 @@ void SettingsManagerTest::_registerRejectsInvalidQmlIdentifier()
         QVERIFY2(!settingsManager.contains(accessor), qPrintable(accessor));
         QVERIFY2(group.isNull(), qPrintable(accessor)); // Rejected group is deleted
     }
+}
+
+void SettingsManagerTest::_settingsFilesReadAsIs()
+{
+    const auto settingsFile = [](const char* groupName) {
+        return QStringLiteral(
+                   R"({"version": 1, "fileType": "Settings", "groups": {"%1": {"setting": {"visible": false}}}})")
+            .arg(QLatin1String(groupName))
+            .toUtf8();
+    };
+
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    QVERIFY(appSettings);
+    QTemporaryDir saveDir;
+    QVERIFY(saveDir.isValid());
+    const QVariant savePath = appSettings->savePath()->rawValue();
+    const auto restoreSavePath =
+        qScopeGuard([appSettings, savePath] { appSettings->savePath()->setRawValue(savePath); });
+    appSettings->savePath()->setRawValue(saveDir.path());
+
+    const QDir settingsDir(appSettings->settingsSavePath());
+    QVERIFY(settingsDir.exists());
+    QVERIFY(
+        TestFixtures::writeFile(settingsDir.filePath(QStringLiteral("plain.settings")), settingsFile("plainGroup")));
+    QVERIFY(TestFixtures::writeFile(settingsDir.filePath(QStringLiteral("compressed.settings")),
+                                    TestFixtures::gzipMember(settingsFile("compressedGroup"))));
+
+    SettingsManager settingsManager;
+    settingsManager._appSettings = appSettings;
+    expectLogMessage(
+        "Utilities.SettingsManager", QtWarningMsg,
+        QRegularExpression(QStringLiteral("Failed to load settings file:.*compressed\\.settings.*compressed")));
+    settingsManager._loadSettingsFiles();
+    verifyExpectedLogMessage();
+    settingsManager._appSettings = nullptr;
+
+    QVERIFY(settingsManager._settingsFileOverrides.contains(QStringLiteral("plainGroup")));
+    QVERIFY(!settingsManager._settingsFileOverrides.contains(QStringLiteral("compressedGroup")));
 }

@@ -4,10 +4,11 @@
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonValue>
+#include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "FileFixtures.h"
 #include "GeoJsonHelper.h"
-#include <QtCore/QTemporaryDir>
 
 namespace {
 
@@ -210,6 +211,18 @@ void GeoJsonHelperTest::_determineShapeTypeInvalidJson_test()
     const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
     QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Error);
     QVERIFY(!error.isEmpty());
+}
+
+void GeoJsonHelperTest::_determineShapeTypeCompressedFile_test()
+{
+    QTemporaryDir tempDir;
+    const QString filePath =
+        _writeGeoJsonFile(tempDir.path(), "polygon.geojson", TestFixtures::gzipMember(kPolygonGeoJson));
+    QString error;
+
+    const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
+    QCOMPARE(shapeType, ShapeFileHelper::ShapeType::Error);
+    QVERIFY2(error.contains("compressed"), qPrintable(error));
 }
 
 void GeoJsonHelperTest::_loadPolygonFromFile_test()

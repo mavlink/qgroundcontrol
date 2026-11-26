@@ -149,7 +149,7 @@ Viewer3DSettings *SettingsManager::viewer3DSettings() const { return _viewer3DSe
 
 namespace {
 
-/// Largest size of a settings file, decompressed. It holds values of settings, a few KiB
+/// Largest size of a settings file. It holds values of settings, a few KiB
 constexpr qint64 kMaxSettingsFileBytes = 16LL * 1024 * 1024;
 
 }  // namespace
@@ -191,7 +191,7 @@ void SettingsManager::_loadSettingsFiles()
 
         QJsonDocument jsonDoc;
         QString errorString;
-        if (!JsonParsing::isJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString, kMaxSettingsFileBytes)) {
+        if (!JsonParsing::readJsonFile(fileInfo.absoluteFilePath(), jsonDoc, errorString, kMaxSettingsFileBytes)) {
             qCWarning(SettingsManagerLog) << "Failed to load settings file:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }

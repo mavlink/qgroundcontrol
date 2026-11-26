@@ -13,4 +13,5 @@ private slots:
     void _registerSamePointerTwiceKeepsGroupAlive();
     void _registerRejectsInvalidArguments();
     void _registerRejectsInvalidQmlIdentifier();
+    void _settingsFilesReadAsIs();
 };

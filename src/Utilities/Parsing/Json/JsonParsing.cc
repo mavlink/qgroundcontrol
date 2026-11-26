@@ -3,6 +3,7 @@
 #include <limits>
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonParseError>
@@ -20,8 +21,19 @@ namespace JsonParsing {
 /// few hundred KiB
 static constexpr qint64 kMaxQGCJsonFileBytes = 16LL * 1024 * 1024;
 
-/// Parse JSON text, which is what bytes or a file that can be compressed have been decompressed to
-static bool parseJsonText(const QByteArray& json, QJsonDocument& jsonDoc, QString& errorString)
+/// Bytes read at once from a JSON file, so that a read never takes much more memory than the file
+static constexpr qint64 kReadChunkBytes = 64LL * 1024;
+
+/// Whether data starts like a gzip or an xz stream, the compressions that QGC is sent
+static bool looksCompressed(const QByteArray& data)
+{
+    static constexpr char gzipMagic[] = {'\x1f', '\x8b'};
+    static constexpr char xzMagic[] = {'\xfd', '7', 'z', 'X', 'Z', '\0'};
+    return data.startsWith(QByteArrayView(gzipMagic, sizeof(gzipMagic))) ||
+           data.startsWith(QByteArrayView(xzMagic, sizeof(xzMagic)));
+}
+
+bool parseJson(const QByteArray& json, QJsonDocument& jsonDoc, QString& errorString)
 {
     QJsonParseError parseError;
     jsonDoc = QJsonDocument::fromJson(json, &parseError);
@@ -32,6 +44,11 @@ static bool parseJsonText(const QByteArray& json, QJsonDocument& jsonDoc, QStrin
         return true;
     }
 
+    if (looksCompressed(json)) {
+        errorString = QObject::tr("The content is compressed. Only uncompressed JSON can be read");
+        return false;
+    }
+
     const int startPos = qMax(0, parseError.offset - 100);
     qCDebug(JsonParsingLog) << "Json read error" << json.mid(startPos, 200).constData();
     errorString = QStringLiteral("%1 (offset %2)").arg(parseError.errorString()).arg(parseError.offset);
@@ -39,16 +56,58 @@ static bool parseJsonText(const QByteArray& json, QJsonDocument& jsonDoc, QStrin
     return false;
 }
 
-bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes)
+bool readJsonText(const QString& fileName, QByteArray& text, QString& errorString, qint64 maxBytes)
 {
-    QByteArray json;
-    if (const Compression::Outcome read = Compression::decompressData(bytes, json, maxBytes); !read) {
-        jsonDoc = {};
-        errorString = read.description();
+    text.clear();
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly)) {
+        errorString = QObject::tr("Failed to read %1: %2").arg(fileName, file.errorString());
         return false;
     }
 
-    return parseJsonText(json, jsonDoc, errorString);
+    if (!file.isSequential()) {
+        if (file.size() > maxBytes) {
+            errorString = QObject::tr("Failed to read %1: it has %2 bytes, more than the limit of %3 bytes")
+                              .arg(fileName, QString::number(file.size()), QString::number(maxBytes));
+            return false;
+        }
+        text.reserve(file.size());
+    }
+
+    // One byte beyond the limit is enough to refuse a file that grows while it is read, or has no size
+    while (text.size() <= maxBytes) {
+        const QByteArray chunk = file.read(qMin(kReadChunkBytes, maxBytes + 1 - text.size()));
+        if (chunk.isEmpty()) {
+            break;
+        }
+        text.append(chunk);
+    }
+
+    if (file.error() != QFileDevice::NoError) {
+        text.clear();
+        errorString = QObject::tr("Failed to read %1: %2").arg(fileName, file.errorString());
+        return false;
+    }
+    if (text.size() > maxBytes) {
+        text.clear();
+        errorString = QObject::tr("Failed to read %1: it has more than the limit of %2 bytes")
+                          .arg(fileName, QString::number(maxBytes));
+        return false;
+    }
+
+    return true;
+}
+
+bool readJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes)
+{
+    QByteArray json;
+    if (!readJsonText(fileName, json, errorString, maxBytes)) {
+        jsonDoc = {};
+        return false;
+    }
+
+    return parseJson(json, jsonDoc, errorString);
 }
 
 bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString, qint64 maxBytes)
@@ -60,7 +119,7 @@ bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorS
         return false;
     }
 
-    return parseJsonText(json, jsonDoc, errorString);
+    return parseJson(json, jsonDoc, errorString);
 }
 
 double possibleNaNJsonValue(const QJsonValue& value)
@@ -235,7 +294,7 @@ QJsonObject openInternalQGCJsonFile(const QString &jsonFilename, const QString &
                                     const QStringList &defaultArrayIDKeys)
 {
     QJsonDocument doc;
-    if (!isJsonFile(jsonFilename, doc, errorString, kMaxQGCJsonFileBytes)) {
+    if (!readJsonFile(jsonFilename, doc, errorString, kMaxQGCJsonFileBytes)) {
         errorString = QObject::tr("Unable to parse json file: %1 error: %2").arg(jsonFilename, errorString);
         return {};
     }

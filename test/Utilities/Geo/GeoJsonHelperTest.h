@@ -13,6 +13,7 @@ private slots:
     void _determineShapeTypeMissingFile_test();
     void _determineShapeTypeUnsupportedGeometry_test();
     void _determineShapeTypeInvalidJson_test();
+    void _determineShapeTypeCompressedFile_test();
     void _loadPolygonFromFile_test();
     void _loadPolylineFromFile_test();
     void _loadPolygonFromNestedGeometryCollection_test();

@@ -10,8 +10,8 @@
 #include "AppMessages.h"
 #include "AutoPilotPlugin.h"
 #include "Autotune.h"
-#include "Compression.h"
 #include "GenericAutoPilotPlugin.h"
+#include "JsonParsing.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterMetaData.h"
@@ -634,11 +634,11 @@ void FirmwarePlugin::cacheParameterMetaDataFile(const QString &metaDataFile)
     }
 
     QByteArray data;
-    const Compression::Outcome read =
-        Compression::readFile(metaDataFile, data, ParameterMetaData::kMaxMetaDataFileBytes);
-    if (data.isEmpty()) {
+    QString errorString;
+    if (!JsonParsing::readJsonText(metaDataFile, data, errorString, ParameterMetaData::kMaxMetaDataFileBytes) ||
+        data.isEmpty()) {
         qCWarning(FirmwarePluginLog) << "Cannot cache parameter metadata: failed to read" << metaDataFile
-                                     << read.description();
+                                     << errorString;
         return;
     }
 

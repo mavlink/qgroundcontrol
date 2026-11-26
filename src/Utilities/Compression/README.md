@@ -6,13 +6,16 @@ only decompresses: QGC does not create compressed files.
 
 The application uses it for:
 
-- files and data that may be compressed, which are decompressed where they are read: parameter
-  metadata, terrain tiles, and any JSON that `JsonParsing::isJsonFile()` reads. The component metadata of a
-  vehicle, its translations and its events metadata are downloaded and cached as they are sent, and read so. A
-  camera definition is downloaded as it is sent, and cached decompressed once it has loaded;
+- the files that a vehicle sends or points to, which may be compressed and are decompressed where they are read.
+  Its component metadata, their translations and its events metadata are downloaded and cached as they are sent,
+  and read so (`JsonParsing::isJsonFile()` reads the JSON among them). A camera definition is downloaded as it is
+  sent, and cached decompressed once it has loaded;
 - the ArduPilot firmware list, 92 MiB decompressed, which `readFileChunks()` gives to its reader a chunk at a time,
   so that it is never held whole;
 - offline map tile sets imported from an archive (`QGCMapEngineManager`).
+
+Everything else is read as it is. Settings, plans, parameter metadata, QGC's own JSON files and terrain tiles never
+arrive compressed, and `JsonParsing::readJsonFile()` refuses a file that is.
 
 QGC decompresses a file where it reads it, and keeps no decompressed copy of a download but the camera definitions
 it caches. `QGCFileDownload` can also decompress a download into a file (`autoDecompress`, also through
@@ -38,8 +41,7 @@ runs. Read them before you use it; this file does not repeat them.
 The functions block, and QGC calls them by one rule. A file that a vehicle sends or points to, and the ArduPilot
 firmware list, are read on a worker thread (`QGC::runOnWorker()`): their size is not QGC's to choose. Work that can
 take minutes, or that the user follows and can cancel, such as the import of a tile set, runs as a `CompressionJob`.
-A small local file (also parameter metadata that QGC cached), a Qt resource or a small block of data in memory is
-read in place.
+Nothing in QGC decompresses or extracts on the GUI thread.
 
 ## Layout
 

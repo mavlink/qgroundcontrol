@@ -25,8 +25,7 @@ public:
 
     static const FactMetaData::DefineMap_t kEmptyDefines;
 
-    /// Largest size of a parameter metadata file, decompressed. That of PX4 or of an ArduPilot vehicle is a few MiB.
-    /// It is the limit of a file that a vehicle sends, as the file may come from the vehicle
+    /// Largest size of a parameter metadata file. That of PX4 or of an ArduPilot vehicle is a few MiB
     static constexpr qint64 kMaxMetaDataFileBytes = 64LL * 1024 * 1024;
 
 protected:
