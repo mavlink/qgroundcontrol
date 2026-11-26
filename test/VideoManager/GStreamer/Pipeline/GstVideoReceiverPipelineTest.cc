@@ -7,6 +7,7 @@
 #include <memory>
 #include <utility>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
@@ -298,6 +299,8 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
 
     // The frame rate below is measured over a fifth of a second rather than a whole one.
     Receiver stream(GstReceiverTimings{.watchdogInterval = std::chrono::milliseconds(200)}, uri);
+    QElapsedTimer elapsed;
+    elapsed.start();
     stream.receiver->setActive(true);
     if (receiverListens) {
         // Connecting lasts until the server sends. A server that already does can take the receiver on to
@@ -306,15 +309,36 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
         QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), stream.udpPort()));
     }
     QVERIFY(stream.waitForState(State::Streaming));
+    const qint64 streamingMs = elapsed.elapsed();
     QVERIFY(stream.display());
+    const qint64 decodingMs = elapsed.elapsed();
     // Shown at the stream's 30 frames a second, not merely decoded: a sink that takes every frame for late shows one
     // a second, which reads as 5 a second in the measurement that frame falls into.
-    QVERIFY(UnitTest::waitForCondition(
+    const bool shown = UnitTest::waitForCondition(
         [&stream] {
             const VideoStreamStats stats = stream.receiver->stats();
             return stats.valid && (stats.fps > 10.0);
         },
-        TestTimeout::longDuration(), u"frame rate"));
+        TestTimeout::longDuration(), u"frame rate");
+    // What the row measured, told with any failure of it: one that cleanup() raises for a warning as well.
+    const VideoStreamStats stats = stream.receiver->stats();
+    const QString measured =
+        QStringLiteral(
+            "%1: streaming after %2 ms, decoding after %3 ms, measured after %4 ms: %5 frames a second, "
+            "%6 dropped, %7 kbit/s, a keyframe every %8 ms, latency %9 ms, decoder %10 restarted %11 times")
+            .arg(QLatin1StringView(QTest::currentDataTag()))
+            .arg(streamingMs)
+            .arg(decodingMs)
+            .arg(elapsed.elapsed())
+            .arg(stats.fps)
+            .arg(stats.framesDropped)
+            .arg(stats.bitrateKbps)
+            .arg(stats.keyframeIntervalMs)
+            .arg(stats.latencyMs)
+            .arg(stats.decoder)
+            .arg(stats.decoderRestarts);
+    TEST_DEBUG(measured);
+    QVERIFY2(shown, qPrintable(measured));
 }
 
 void GstVideoReceiverPipelineTest::_testConfigChangeRestarts()
