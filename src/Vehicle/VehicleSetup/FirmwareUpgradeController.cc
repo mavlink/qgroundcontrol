@@ -1,20 +1,22 @@
 ﻿#include "FirmwareUpgradeController.h"
-#include "PX4FirmwareUpgradeThread.h"
+
+#include <QtCore/QDir>
+
 #include "Bootloader.h"
-#include "QGCFileDownload.h"
-#include "QGCOptions.h"
-#include "QGCCorePlugin.h"
+#include "Fact.h"
+#include "FirmwareImage.h"
 #include "FirmwarePluginManager.h"
 #include "FirmwareUpgradeSettings.h"
-#include "SettingsManager.h"
 #include "JsonParsing.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
-#include "FirmwareImage.h"
-#include "Fact.h"
+#include "PX4FirmwareUpgradeThread.h"
+#include "QGCCorePlugin.h"
+#include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtCore/QDir>
+#include "QGCOptions.h"
+#include "SettingsManager.h"
+#include "WorkerJob.h"
 
 QGC_LOGGING_CATEGORY(FirmwareUpgradeControllerLog, "Vehicle.VehicleSetup.FirmwareUpgradeController")
 #include <QtCore/QStandardPaths>
@@ -723,99 +725,120 @@ void FirmwareUpgradeController::_downloadArduPilotManifest(void)
     }
 }
 
+namespace {
+
+/// Largest size of the ArduPilot firmware manifest, decompressed. It was 92 MiB in 2026, and grows with every board
+/// and release: the limit leaves room for years of that, and keeps a damaged file from taking all memory
+constexpr qint64 kMaxArduPilotManifestBytes = 512LL * 1024 * 1024;
+
+}  // namespace
+
 void FirmwareUpgradeController::_ardupilotManifestDownloadComplete(bool success, const QString &localFile, const QString &errorMsg)
 {
-    const auto clearDownloadState = [this]() {
-        if (_downloadingFirmwareList) {
-            _downloadingFirmwareList = false;
-            emit downloadingFirmwareListChanged(false);
-        }
-    };
-
     if (success) {
         qCDebug(FirmwareUpgradeControllerLog) << "_ardupilotManifestDownloadFinished" << localFile;
 
-        // Compressed with gzip: isJsonFile() decompresses it
-        QString         errorString;
-        QJsonDocument   doc;
-        if (!JsonParsing::isJsonFile(localFile, doc, errorString)) {
-            qCWarning(FirmwareUpgradeControllerLog) << "Json file read failed" << errorString;
-            clearDownloadState();
-            return;
-        }
-
-        QJsonObject json =          doc.object();
-        QJsonArray  rgFirmware =    json[_manifestFirmwareJsonKey].toArray();
-
-        for (int i=0; i<rgFirmware.count(); i++) {
-            const QJsonObject& firmwareJson = rgFirmware[i].toObject();
-
-            FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_manifestMavTypeJsonKey].toString());
-            FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_manifestMavFirmwareVersionTypeJsonKey].toString());
-            QString                 format =                firmwareJson[_manifestFormatJsonKey].toString();
-            QString                 platform =              firmwareJson[_manifestPlatformKey].toString();
-
-            if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware && (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
-                if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
-                    continue;
-                }
-
-                _rgManifestFirmwareInfo.append(ManifestFirmwareInfo_t());
-                ManifestFirmwareInfo_t& firmwareInfo = _rgManifestFirmwareInfo.last();
-
-                firmwareInfo.boardId =              static_cast<uint32_t>(firmwareJson[_manifestBoardIdJsonKey].toInt());
-                firmwareInfo.firmwareBuildType =    firmwareBuildType;
-                firmwareInfo.vehicleType =          firmwareVehicleType;
-                firmwareInfo.url =                  firmwareJson[_manifestUrlJsonKey].toString();
-                firmwareInfo.version =              firmwareJson[_manifestMavFirmwareVersionJsonKey].toString();
-                firmwareInfo.chibios =              format == QStringLiteral("apj");                firmwareInfo.fmuv2 =                platform.contains(QStringLiteral("fmuv2"));
-
-                QJsonArray bootloaderArray = firmwareJson[_manifestBootloaderStrJsonKey].toArray();
-                for (int j=0; j<bootloaderArray.count(); j++) {
-                    firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
-                }
-
-                QJsonArray usbidArray = firmwareJson[_manifestUSBIDJsonKey].toArray();
-                for (int j=0; j<usbidArray.count(); j++) {
-                    QStringList vidpid = usbidArray[j].toString().split('/');
-                    QString vid = vidpid[0];
-                    QString pid = vidpid[1];
-
-                    bool ok;
-                    firmwareInfo.rgVID.append(vid.right(vid.length() - 2).toInt(&ok, 16));
-                    firmwareInfo.rgPID.append(pid.right(pid.length() - 2).toInt(&ok, 16));
-                }
-
-                QString brandName = firmwareJson[_manifestBrandNameKey].toString();
-                firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
-            }
-        }
-
-        if (_bootloaderFound) {
-            _buildAPMFirmwareNames();
-        }
-
-        clearDownloadState();
+        // The manifest is far too large to read and parse on the GUI thread. A result that is no longer wanted, of an
+        // earlier download, is dropped
+        delete _manifestJob.data();
+        const auto parse = [localFile, buildTypes = _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap,
+                            vehicleTypes = _manifestMavTypeToFirmwareVehicleTypeMap]() {
+            return _parseArduPilotManifest(localFile, buildTypes, vehicleTypes);
+        };
+        _manifestJob = QGC::runOnWorker(
+            this, parse, [this](const ArduPilotManifest& manifest) { _ardupilotManifestParsed(manifest); });
     } else if (!errorMsg.isEmpty()) {
         qCWarning(FirmwareUpgradeControllerLog) << "ArduPilot Manifest download failed" << errorMsg;
-        clearDownloadState();
+        _clearDownloadingFirmwareList();
     }
 }
 
-FirmwareUpgradeController::FirmwareBuildType_t FirmwareUpgradeController::_manifestMavFirmwareVersionTypeToFirmwareBuildType(const QString& manifestMavFirmwareVersionType)
+void FirmwareUpgradeController::_ardupilotManifestParsed(const ArduPilotManifest& manifest)
 {
-    if (_manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap.contains(manifestMavFirmwareVersionType)) {
-        return _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap[manifestMavFirmwareVersionType];
-    } else {
-        return CustomFirmware;
+    if (!manifest.errorString.isEmpty()) {
+        qCWarning(FirmwareUpgradeControllerLog) << "Json file read failed" << manifest.errorString;
+        _clearDownloadingFirmwareList();
+        return;
+    }
+
+    _rgManifestFirmwareInfo = manifest.firmware;
+    if (_bootloaderFound) {
+        _buildAPMFirmwareNames();
+    }
+    _clearDownloadingFirmwareList();
+}
+
+void FirmwareUpgradeController::_clearDownloadingFirmwareList()
+{
+    if (_downloadingFirmwareList) {
+        _downloadingFirmwareList = false;
+        emit downloadingFirmwareListChanged(false);
     }
 }
 
-FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::_manifestMavTypeToFirmwareVehicleType(const QString& manifestMavType)
+FirmwareUpgradeController::ArduPilotManifest FirmwareUpgradeController::_parseArduPilotManifest(
+    const QString& localFile, const QMap<QString, FirmwareBuildType_t>& buildTypes,
+    const QMap<QString, FirmwareVehicleType_t>& vehicleTypes)
 {
-    if (_manifestMavTypeToFirmwareVehicleTypeMap.contains(manifestMavType)) {
-        return _manifestMavTypeToFirmwareVehicleTypeMap[manifestMavType];
-    } else {
-        return DefaultVehicleFirmware;
+    ArduPilotManifest manifest;
+
+    // Compressed with gzip: isJsonFile() decompresses it
+    QJsonDocument doc;
+    if (!JsonParsing::isJsonFile(localFile, doc, manifest.errorString, kMaxArduPilotManifestBytes)) {
+        return manifest;
     }
+
+    QJsonObject json = doc.object();
+    QJsonArray rgFirmware = json[_manifestFirmwareJsonKey].toArray();
+
+    for (int i = 0; i < rgFirmware.count(); i++) {
+        const QJsonObject& firmwareJson = rgFirmware[i].toObject();
+
+        FirmwareVehicleType_t firmwareVehicleType =
+            vehicleTypes.value(firmwareJson[_manifestMavTypeJsonKey].toString(), DefaultVehicleFirmware);
+        FirmwareBuildType_t firmwareBuildType =
+            buildTypes.value(firmwareJson[_manifestMavFirmwareVersionTypeJsonKey].toString(), CustomFirmware);
+        QString format = firmwareJson[_manifestFormatJsonKey].toString();
+        QString platform = firmwareJson[_manifestPlatformKey].toString();
+
+        if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware &&
+            (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
+            if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
+                continue;
+            }
+
+            manifest.firmware.append(ManifestFirmwareInfo_t());
+            ManifestFirmwareInfo_t& firmwareInfo = manifest.firmware.last();
+
+            firmwareInfo.boardId = static_cast<uint32_t>(firmwareJson[_manifestBoardIdJsonKey].toInt());
+            firmwareInfo.firmwareBuildType = firmwareBuildType;
+            firmwareInfo.vehicleType = firmwareVehicleType;
+            firmwareInfo.url = firmwareJson[_manifestUrlJsonKey].toString();
+            firmwareInfo.version = firmwareJson[_manifestMavFirmwareVersionJsonKey].toString();
+            firmwareInfo.chibios = format == QStringLiteral("apj");
+            firmwareInfo.fmuv2 = platform.contains(QStringLiteral("fmuv2"));
+
+            QJsonArray bootloaderArray = firmwareJson[_manifestBootloaderStrJsonKey].toArray();
+            for (int j = 0; j < bootloaderArray.count(); j++) {
+                firmwareInfo.rgBootloaderPortString.append(bootloaderArray[j].toString());
+            }
+
+            QJsonArray usbidArray = firmwareJson[_manifestUSBIDJsonKey].toArray();
+            for (int j = 0; j < usbidArray.count(); j++) {
+                QStringList vidpid = usbidArray[j].toString().split('/');
+                QString vid = vidpid[0];
+                QString pid = vidpid[1];
+
+                bool ok;
+                firmwareInfo.rgVID.append(vid.right(vid.length() - 2).toInt(&ok, 16));
+                firmwareInfo.rgPID.append(pid.right(pid.length() - 2).toInt(&ok, 16));
+            }
+
+            QString brandName = firmwareJson[_manifestBrandNameKey].toString();
+            firmwareInfo.friendlyName =
+                QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
+        }
+    }
+
+    return manifest;
 }

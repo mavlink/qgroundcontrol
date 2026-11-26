@@ -291,8 +291,22 @@ private:
     QPointer<QGCFileDownload>               _activeDownloader;          ///< in-flight firmware download, aborted on cancel
     bool                                    _flashCancelled = false;    ///< cancel was issued; ignore late download completions
 
-    FirmwareBuildType_t     _manifestMavFirmwareVersionTypeToFirmwareBuildType  (const QString& manifestMavFirmwareVersionType);
-    FirmwareVehicleType_t   _manifestMavTypeToFirmwareVehicleType               (const QString& manifestMavType);
+    /// The ArduPilot firmware manifest, as a worker reads it
+    struct ArduPilotManifest
+    {
+        QList<ManifestFirmwareInfo_t> firmware;
+        QString errorString;  ///< Why the manifest could not be read, empty if it was read
+    };
+
+    /// Reads, parses and filters the ArduPilot firmware manifest. It uses nothing but its arguments, so that it can
+    /// run on a worker thread
+    static ArduPilotManifest _parseArduPilotManifest(const QString& localFile,
+                                                     const QMap<QString, FirmwareBuildType_t>& buildTypes,
+                                                     const QMap<QString, FirmwareVehicleType_t>& vehicleTypes);
+    void _ardupilotManifestParsed(const ArduPilotManifest& manifest);
+    void _clearDownloadingFirmwareList();
+
+    QPointer<QObject> _manifestJob;  ///< Reads the ArduPilot firmware manifest on a worker
 };
 
 // global hashing function

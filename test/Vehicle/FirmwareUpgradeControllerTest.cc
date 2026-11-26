@@ -1,12 +1,53 @@
 #include "FirmwareUpgradeControllerTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
+#include <QtCore/QThreadPool>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "FirmwareImage.h"
 #include "FirmwareUpgradeController.h"
+#include "QGCFileDownload.h"
+
+namespace {
+
+/// An ArduPilot firmware manifest with one firmware, for the board @a boardId
+QByteArray arduPilotManifest(int boardId)
+{
+    return QStringLiteral(R"({
+  "firmware": [
+    {
+      "board_id": %1,
+      "mav-type": "Copter",
+      "format": "apj",
+      "url": "https://example.com/fw.apj",
+      "mav-firmware-version-type": "OFFICIAL",
+      "USBID": ["0x1209/0x5740"],
+      "mav-firmware-version": "4.5.0",
+      "bootloader_str": ["BL42"],
+      "platform": "fmuv3",
+      "brand_name": "TestBrand"
+    }
+  ]
+}
+)")
+        .arg(boardId)
+        .toUtf8();
+}
+
+/// Stops the download of the manifest that the controller starts, so that only the test hands it one
+void stopManifestDownload(FirmwareUpgradeController& controller)
+{
+    for (QGCFileDownload* const download : controller.findChildren<QGCFileDownload*>()) {
+        (void) QObject::disconnect(download, nullptr, &controller, nullptr);
+        delete download;
+    }
+}
+
+}  // namespace
 
 void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState()
 {
@@ -33,12 +74,13 @@ void FirmwareUpgradeControllerTest::_manifestCompleteBadJsonClearsDownloadingSta
 
     const QString missingFile = tempDir.filePath(QStringLiteral("missing_manifest.json"));
 
+    stopManifestDownload(controller);
     controller._downloadingFirmwareList = true;
     expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("Json file read failed"));
     controller._ardupilotManifestDownloadComplete(true, missingFile, QString());
+    QTRY_VERIFY_WITH_TIMEOUT(!controller._downloadingFirmwareList, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
 
-    QVERIFY(!controller._downloadingFirmwareList);
     QVERIFY(!spy.isEmpty());
     QCOMPARE(spy.last().at(0).toBool(), false);
 }
@@ -51,34 +93,17 @@ void FirmwareUpgradeControllerTest::_manifestCompleteValidJsonPopulatesManifestI
     QVERIFY(spy.isValid());
 
     const QString manifestPath = tempDir.filePath(QStringLiteral("manifest.json"));
+    QVERIFY(TestFixtures::writeFile(manifestPath, arduPilotManifest(42)));
 
-    QFile manifestFile(manifestPath);
-    QVERIFY(manifestFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
-    QTextStream out(&manifestFile);
-    out << "{\n";
-    out << "  \"firmware\": [\n";
-    out << "    {\n";
-    out << "      \"board_id\": 42,\n";
-    out << "      \"mav-type\": \"Copter\",\n";
-    out << "      \"format\": \"apj\",\n";
-    out << "      \"url\": \"https://example.com/fw.apj\",\n";
-    out << "      \"mav-firmware-version-type\": \"OFFICIAL\",\n";
-    out << "      \"USBID\": [\"0x1209/0x5740\"],\n";
-    out << "      \"mav-firmware-version\": \"4.5.0\",\n";
-    out << "      \"bootloader_str\": [\"BL42\"],\n";
-    out << "      \"platform\": \"fmuv3\",\n";
-    out << "      \"brand_name\": \"TestBrand\"\n";
-    out << "    }\n";
-    out << "  ]\n";
-    out << "}\n";
-    manifestFile.close();
-
+    stopManifestDownload(controller);
     controller._bootloaderFound = false;
     controller._rgManifestFirmwareInfo.clear();
     controller._downloadingFirmwareList = true;
     controller._ardupilotManifestDownloadComplete(true, manifestPath, QString());
 
-    QVERIFY(!controller._downloadingFirmwareList);
+    // The manifest is read on a worker, not on the thread that handles the download
+    QVERIFY(controller._downloadingFirmwareList);
+    QTRY_VERIFY_WITH_TIMEOUT(!controller._downloadingFirmwareList, TestTimeout::mediumMs());
     QVERIFY(!spy.isEmpty());
     QCOMPARE(spy.last().at(0).toBool(), false);
 
@@ -98,6 +123,34 @@ void FirmwareUpgradeControllerTest::_manifestCompleteValidJsonPopulatesManifestI
     QCOMPARE(info.rgVID.first(), 0x1209);
     QCOMPARE(info.rgPID.first(), 0x5740);
     QVERIFY(info.friendlyName.contains(QStringLiteral("TestBrand")));
+}
+
+void FirmwareUpgradeControllerTest::_manifestReadAgainReplacesEarlierResult()
+{
+    // A manifest that takes longer to read than the next one: its result, which comes last, is no longer wanted
+    QTemporaryDir tempDir;
+    const QString earlierPath = tempDir.filePath(QStringLiteral("earlier.json"));
+    QByteArray earlier = arduPilotManifest(41);
+    earlier.append(QByteArray(32 * 1024 * 1024, ' '));
+    QVERIFY(TestFixtures::writeFile(earlierPath, earlier));
+    const QString laterPath = tempDir.filePath(QStringLiteral("later.json"));
+    QVERIFY(TestFixtures::writeFile(laterPath, arduPilotManifest(43)));
+
+    FirmwareUpgradeController controller;
+    stopManifestDownload(controller);
+    controller._rgManifestFirmwareInfo.clear();
+    controller._downloadingFirmwareList = true;
+    controller._ardupilotManifestDownloadComplete(true, earlierPath, QString());
+    controller._ardupilotManifestDownloadComplete(true, laterPath, QString());
+    QTRY_VERIFY_WITH_TIMEOUT(!controller._downloadingFirmwareList, TestTimeout::mediumMs());
+
+    QCOMPARE(controller._rgManifestFirmwareInfo.size(), 1);
+    QCOMPARE(controller._rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(43));
+
+    // The earlier read ends later, and its result is not taken
+    QVERIFY(QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs()));
+    QCoreApplication::processEvents();
+    QCOMPARE(controller._rgManifestFirmwareInfo.first().boardId, static_cast<uint32_t>(43));
 }
 
 void FirmwareUpgradeControllerTest::_px4ReleasesCompleteParsesStableAndBeta()
