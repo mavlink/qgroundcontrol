@@ -9,7 +9,27 @@
 #include "ArchiveFixtures.h"
 #include "FileFixtures.h"
 #include "QGCMapEngineManager.h"
+#include "QGCTileCacheDatabase.h"
+#include "QGCWorkDirectory.h"
+#include "QGeoFileTileCacheQGC.h"
 #include "UnitTest.h"
+
+namespace {
+
+/// The directory of the tile database, which an archive is unpacked into
+QDir tileDatabaseDirectory()
+{
+    QGeoFileTileCacheQGC::ensureInitialized();
+    return QFileInfo(QGeoFileTileCacheQGC::getDatabaseFilePath()).absoluteDir();
+}
+
+/// The directories archives are being unpacked into
+QStringList unpackDirectories()
+{
+    return tileDatabaseDirectory().entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs);
+}
+
+}  // namespace
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRejectsInvalidInput()
 {
@@ -89,8 +109,7 @@ void QGCMapEngineManagerArchiveTest::_importArchiveFindsExportedFile()
     QVERIFY(TestFixtures::writeFile(
         archivePath, ArchiveFixtures::makeZip({{.name = "sets/export.qgctiledb", .data = "not a database"}})));
 
-    const QDir temporary(QDir::tempPath());
-    const QStringList unpackedBefore = temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs);
+    const QStringList unpackedBefore = unpackDirectories();
 
     QGCMapEngineManager manager;
     expectLogMessage("QtLocationPlugin.QGCMapEngineManager", QtWarningMsg, QRegularExpression("Error in task"));
@@ -99,22 +118,22 @@ void QGCMapEngineManagerArchiveTest::_importArchiveFindsExportedFile()
     verifyExpectedLogMessage();
 
     // What was unpacked for the import is removed again, and the import has ended: the page lets the user go on
-    QTRY_COMPARE_WITH_TIMEOUT(temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs), unpackedBefore,
-                              TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(unpackDirectories(), unpackedBefore, TestTimeout::mediumMs());
     QCOMPARE(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone);
 }
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRejectsSeveralTileSets()
 {
-    // Which of the two files is meant cannot be told, so neither is imported
+    // Which of the two files is meant cannot be told, so neither is imported. The second is not unpacked: it
+    // declares more than any disk holds
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath(QStringLiteral("two.zip"));
-    QVERIFY(TestFixtures::writeFile(archivePath,
-                                    ArchiveFixtures::makeZip({{.name = "export.qgctiledb", .data = "not a database"},
-                                                              {.name = "other.db", .data = "not a database"}})));
+    QVERIFY(TestFixtures::writeFile(
+        archivePath, ArchiveFixtures::makeZip(
+                         {{.name = "export.qgctiledb", .data = "not a database"},
+                          {.name = "other.db", .data = QByteArray(512, 'x'), .declaredSize = Q_INT64_C(1) << 50}})));
 
-    const QDir temporary(QDir::tempPath());
-    const QStringList unpackedBefore = temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs);
+    const QStringList unpackedBefore = unpackDirectories();
 
     QGCMapEngineManager manager;
     QVERIFY(manager.importArchive(archivePath));
@@ -122,7 +141,25 @@ void QGCMapEngineManagerArchiveTest::_importArchiveRejectsSeveralTileSets()
                               TestTimeout::mediumMs());
     QVERIFY2(manager.errorMessage().contains(QStringLiteral("more than one tile set file")),
              qPrintable(manager.errorMessage()));
-    QCOMPARE(temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs), unpackedBefore);
+    QCOMPARE(unpackDirectories(), unpackedBefore);
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveStopsAtSizeLimit()
+{
+    // A tile set of zeros, 128 MiB in an archive of a few hundred KiB: far more than a tile set grows by
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(QStringLiteral("zeros.zip"));
+    QVERIFY(ArchiveFixtures::writeZipOfZeros(archivePath, "zeros.qgctiledb", Q_INT64_C(128) * 1024 * 1024));
+
+    const QStringList unpackedBefore = unpackDirectories();
+
+    QGCMapEngineManager manager;
+    QVERIFY(manager.importArchive(archivePath));
+    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                              TestTimeout::longMs());
+    QVERIFY2(manager.errorMessage().contains(QStringLiteral("size limit exceeded"), Qt::CaseInsensitive),
+             qPrintable(manager.errorMessage()));
+    QCOMPARE(unpackDirectories(), unpackedBefore);
 }
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRemovedWithManager()
@@ -132,15 +169,14 @@ void QGCMapEngineManagerArchiveTest::_importArchiveRemovedWithManager()
     QVERIFY(TestFixtures::writeFile(
         archivePath, ArchiveFixtures::makeZip({{.name = "export.qgctiledb", .data = QByteArray(200000, 't')}})));
 
-    const QDir temporary(QDir::tempPath());
-    const QStringList unpackedBefore = temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs);
+    const QStringList unpackedBefore = unpackDirectories();
 
-    // A manager that is destroyed while it unpacks an archive stops, and leaves nothing in the temporary directory
+    // A manager that is destroyed while it unpacks an archive stops, and leaves nothing beside the tile database
     {
         QGCMapEngineManager manager;
         QVERIFY(manager.importArchive(archivePath));
     }
-    QCOMPARE(temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs), unpackedBefore);
+    QCOMPARE(unpackDirectories(), unpackedBefore);
 }
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRejectsWhenAlreadyImporting()
@@ -174,8 +210,7 @@ void QGCMapEngineManagerArchiveTest::_importArchiveOfFormatNotInThisBuild()
     QVERIFY(TestFixtures::writeFile(archivePath, QByteArray::fromHex("377abcaf271c0004") + QByteArray(56, '\x01')));
 #endif
 
-    const QDir temporary(QDir::tempPath());
-    const QStringList unpackedBefore = temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs);
+    const QStringList unpackedBefore = unpackDirectories();
 
     QGCMapEngineManager manager;
     QVERIFY(manager.importSets(archivePath));
@@ -187,7 +222,7 @@ void QGCMapEngineManagerArchiveTest::_importArchiveOfFormatNotInThisBuild()
              qPrintable(manager.errorMessage()));
     QVERIFY2(manager.errorMessage().contains(QStringLiteral("Unrecognized archive format")),
              qPrintable(manager.errorMessage()));
-    QCOMPARE(temporary.entryList({QStringLiteral("qgc_tiles_*")}, QDir::Dirs), unpackedBefore);
+    QCOMPARE(unpackDirectories(), unpackedBefore);
 #endif
 }
 
@@ -217,6 +252,83 @@ void QGCMapEngineManagerArchiveTest::_importArchivePatterns()
     QStringList patterns = manager.property("importArchivePatterns").toStringList();
     patterns.sort();
     QCOMPARE(patterns, expected);
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveRemovesStaleDirectories()
+{
+    // Left behind by an import that crashed: a directory without a lock, with a tile set file in it
+    const QDir databaseDirectory = tileDatabaseDirectory();
+    const QString stale = QStringLiteral("qgc_tiles_stale");
+    QVERIFY(databaseDirectory.mkdir(stale));
+    QVERIFY(TestFixtures::writeFile(databaseDirectory.filePath(stale + QStringLiteral("/left.qgctiledb")), "left"));
+    // The directory of an import that another QGC runs
+    const QGCWorkDirectory running(databaseDirectory.path(), QStringLiteral("qgc_tiles_"));
+    QVERIFY(running.isValid());
+
+    QGCMapEngineManager manager;
+    QVERIFY(manager.importArchive(QStringLiteral(":/unittest/manifest.json.zip")));
+    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                              TestTimeout::mediumMs());
+
+    QCOMPARE(unpackDirectories(), QStringList{QFileInfo(running.path()).fileName()});
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveRoomToUnpack_data()
+{
+    QTest::addColumn<qint64>("bytesAvailable");
+    QTest::addColumn<bool>("refused");
+
+    // The archive has 1000 bytes. Free space that is not known, as QStorageInfo reports it, never refuses
+    QTest::newRow("not known") << qint64{-1} << false;
+    QTest::newRow("less") << qint64{999} << true;
+    QTest::newRow("as much") << qint64{1000} << false;
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveRoomToUnpack()
+{
+    QFETCH(qint64, bytesAvailable);
+    QFETCH(bool, refused);
+
+    QCOMPARE(QGCMapEngineManager::lacksRoomToUnpack(bytesAvailable, 1000), refused);
+}
+
+void QGCMapEngineManagerArchiveTest::_importArchiveReplacesFromBesideDatabase()
+{
+    // A tile set with one tile, exported as the Offline Maps page exports it
+    QTemporaryDir tempDir;
+    const QString exportPath = tempDir.filePath(QStringLiteral("export.qgctiledb"));
+    {
+        QGCTileCacheDatabase source(tempDir.filePath(QStringLiteral("source.db")));
+        QVERIFY(source.init());
+        QVERIFY(source.connectDB());
+        QVERIFY(source.saveTile(QStringLiteral("archived_tile"), QStringLiteral("png"), QByteArray(50, 'T'),
+                                QStringLiteral("Bing Road"), QGCTileCacheDatabase::kInvalidTileSet));
+        QList<TileSetRecord> sets = source.getTileSets();
+        QCOMPARE(sets.size(), 1);
+        sets[0].numTiles = 1;
+        QVERIFY(source.exportSets(sets, exportPath, nullptr).success);
+    }
+    QFile exported(exportPath);
+    QVERIFY(exported.open(QIODevice::ReadOnly));
+    const QString archivePath = tempDir.filePath(QStringLiteral("tiles.zip"));
+    QVERIFY(TestFixtures::writeFile(
+        archivePath, ArchiveFixtures::makeZip({{.name = "sets/export.qgctiledb", .data = exported.readAll()}})));
+
+    const QStringList unpackedBefore = unpackDirectories();
+
+    QGCMapEngineManager manager;
+    manager.setProperty("importReplace", true);
+    // The tile set is unpacked beside the tile database, where it is while the extraction reports its progress
+    bool unpackedBesideDatabase = false;
+    (void) connect(&manager, &QGCMapEngineManager::actionProgressChanged, &manager, [&]() {
+        unpackedBesideDatabase = unpackedBesideDatabase || (unpackDirectories() != unpackedBefore);
+    });
+    QVERIFY(manager.importArchive(archivePath));
+    QTRY_COMPARE_WITH_TIMEOUT(manager.importAction(), QGCMapEngineManager::ImportAction::ActionDone,
+                              TestTimeout::mediumMs());
+    QVERIFY2(manager.errorMessage().isEmpty(), qPrintable(manager.errorMessage()));
+    QVERIFY(unpackedBesideDatabase);
+    QCOMPARE(unpackDirectories(), unpackedBefore);
 }
 
 UT_REGISTER_TEST(QGCMapEngineManagerArchiveTest, TestLabel::Unit)

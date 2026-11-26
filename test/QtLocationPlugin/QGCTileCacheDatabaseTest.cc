@@ -334,8 +334,18 @@ void QGCTileCacheDatabaseTest::_testUpdateTileDownloadState()
     }
 }
 
+void QGCTileCacheDatabaseTest::_testExportImportReplace_data()
+{
+    QTest::addColumn<bool>("movable");
+
+    QTest::newRow("copied") << false;
+    QTest::newRow("moved") << true;
+}
+
 void QGCTileCacheDatabaseTest::_testExportImportReplace()
 {
+    QFETCH(bool, movable);
+
     QTemporaryDir tempDir;
     auto db = _createInitializedDB(tempDir);
 
@@ -367,9 +377,11 @@ void QGCTileCacheDatabaseTest::_testExportImportReplace()
 
     QVERIFY(!db2->findTile(QStringLiteral("exp1")).has_value());
 
-    const DatabaseResult importResult = db2->importSetsReplace(exportPath, nullptr);
+    const DatabaseResult importResult = db2->importSetsReplace(exportPath, nullptr, movable);
     QVERIFY(importResult.success);
     QVERIFY(db2->isValid());
+    // A file the import may move is moved into place, and one it may not is copied
+    QCOMPARE(QFile::exists(exportPath), !movable);
 
     QVERIFY(db2->findTile(QStringLiteral("exp1")).has_value());
     QVERIFY(db2->findTile(QStringLiteral("exp2")).has_value());

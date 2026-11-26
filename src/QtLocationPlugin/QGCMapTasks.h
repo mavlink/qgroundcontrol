@@ -304,16 +304,21 @@ class QGCImportTileTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    QGCImportTileTask(const QString &path, bool replace, QObject *parent = nullptr)
+    /// @param movable Whether the file is the import's own, which a replace import may move into place instead of
+    ///        copying it. A file the user picked is copied
+    QGCImportTileTask(const QString& path, bool replace, bool movable = false, QObject* parent = nullptr)
         : QGCMapTask(TaskType::taskImport, parent)
         , m_path(path)
         , m_replace(replace)
+        , m_movable(movable)
     {}
     ~QGCImportTileTask() = default;
 
     QString path() const { return m_path; }
     bool replace() const { return m_replace; }
     int progress() const { return m_progress; }
+
+    bool movable() const { return m_movable; }
 
     void setImportCompleted()
     {
@@ -333,6 +338,7 @@ signals:
 private:
     const QString m_path;
     const bool m_replace = false;
+    const bool m_movable = false;
     int m_progress = 0;
 };
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -7,6 +9,7 @@
 #include "QGCTileSet.h"
 
 class CompressionJob;
+class QGCWorkDirectory;
 class QGCCachedTileSet;
 
 namespace Compression {
@@ -58,9 +61,12 @@ public:
 
     /// Import tile sets from an archive file (.zip, and .7z, .tar.gz, ... in a build that extracts them), which
     /// importSets() calls for one. An archive of a format that the build does not extract fails the import
-    /// The tile set file in the archive is unpacked into a temporary directory and imported from there. It is
-    /// told by its name: the extension exportSets() gives its files, .db or .sqlite. An archive that holds none, or
-    /// more than one, fails the import. The temporary directory is removed when the import ends, also when it fails.
+    /// The tile set file in the archive is unpacked into a new directory beside the tile database, on its disk, and
+    /// imported from there: a replace import moves it into place. It is told by its name: the extension
+    /// exportSets() gives its files, .db or .sqlite. Only the first such file is unpacked: an archive that holds
+    /// none, or more than one, fails the import. What is unpacked is limited to a multiple of the size of the
+    /// archive. The directory is removed when the import ends, also when it fails, and with the manager. One that an
+    /// import which crashed or was killed left behind is removed when the next import starts.
     /// @param archivePath Path to the archive file
     /// @return true if the extraction started
     Q_INVOKABLE bool importArchive(const QString &archivePath);
@@ -97,6 +103,9 @@ public:
     static QStringList elevationProviderList();
     /// Name patterns of the archives that importArchive() takes in this build ("*.zip", ...), for a file dialog
     static QStringList importArchivePatterns();
+    /// Whether a disk with @a bytesAvailable free (-1 = not known) is known to have no room for the tile set of an
+    /// archive of @a archiveSize bytes. Free space that is not known never refuses an import
+    static bool lacksRoomToUnpack(qint64 bytesAvailable, qint64 archiveSize);
 
 signals:
     void actionProgressChanged();
@@ -126,7 +135,8 @@ private slots:
     void _removeExtractionOutput();
 
 private:
-    void _handleExtractionFinished(const Compression::Outcome& outcome);
+    /// @param tileSetEntries How many entries of the archive have the name of a tile set file
+    void _handleExtractionFinished(const Compression::Outcome& outcome, int tileSetEntries);
 
     QmlObjectListModel *_tileSets = nullptr;
     QGCTileSet _imageSet;
@@ -144,7 +154,8 @@ private:
     bool _fetchElevation = true;
     bool _importReplace = false;
     QPointer<CompressionJob> _extractionJob;
-    QString _extractionOutputDir;
+    /// Directory an archive is unpacked into for its import, beside the tile database
+    std::unique_ptr<QGCWorkDirectory> _extractionDirectory;
 
     static constexpr const char *kQmlOfflineMapKeyName = "QGCOfflineMap";
 };

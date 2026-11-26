@@ -1,14 +1,16 @@
 #include "QGCMapEngineManager.h"
 
 #include <algorithm>
+#include <atomic>
+#include <memory>
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtCore/QStorageInfo>
-#include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlEngine>
 
 #include "AppSettings.h"
@@ -22,6 +24,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCWorkDirectory.h"
 #include "QGeoFileTileCacheQGC.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -379,6 +382,17 @@ int QGCMapEngineManager::selectedCount() const
 
 namespace {
 
+/// Largest size the tile set of an archive may unpack to, as a multiple of the size of the archive. Map tiles are
+/// PNG or JPEG images, which hardly compress, so a real tile set is little larger than its archive. A
+/// decompression bomb (deflate reaches about 1000:1) stops at this limit
+constexpr qint64 kMaxTileSetExpansion = 20;
+
+/// Least that limit is, for a small archive, which may hold a database of mostly empty pages
+constexpr qint64 kMinTileSetLimitBytes = 64LL * 1024 * 1024;
+
+/// Start of the name of a directory that an archive is unpacked into
+constexpr QLatin1StringView kUnpackDirectoryPrefix("qgc_tiles_");
+
 /// Whether a file has the name of a tile set file: one exportSets() wrote, or a database
 bool isTileSetFileName(const QString& fileName)
 {
@@ -533,6 +547,11 @@ QStringList QGCMapEngineManager::importArchivePatterns()
     return Compression::archiveNamePatterns();
 }
 
+bool QGCMapEngineManager::lacksRoomToUnpack(qint64 bytesAvailable, qint64 archiveSize)
+{
+    return (bytesAvailable >= 0) && (bytesAvailable < archiveSize);
+}
+
 bool QGCMapEngineManager::importArchive(const QString &archivePath)
 {
     if (archivePath.isEmpty()) {
@@ -555,24 +574,59 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
         return false;
     }
 
-    // A directory of this import alone: a name that could be told beforehand would let another user of the
-    // temporary directory put files where the tile set file is looked for
-    QTemporaryDir tempDir(QDir::temp().filePath(QStringLiteral("qgc_tiles_XXXXXX")));
-    if (!tempDir.isValid()) {
-        setErrorMessage(tr("Could not create temporary directory"));
+    // The tile set is unpacked beside the tile database, on its disk: a replace import then moves it into place
+    // instead of copying it, and the free space that counts is that of this disk. The temporary directory of the
+    // system may be in memory, or on a small disk
+    QGeoFileTileCacheQGC::ensureInitialized();
+    const QString databasePath = QGeoFileTileCacheQGC::getDatabaseFilePath();
+    if (databasePath.isEmpty()) {
+        setErrorMessage(tr("No tile cache directory to unpack the archive into"));
         return false;
     }
-    tempDir.setAutoRemove(false);
-    _extractionOutputDir = tempDir.path();
+    const QString cacheDirectory = QFileInfo(databasePath).absolutePath();
+
+    // What an import that crashed or was killed left behind goes first, also so that its space counts as free. One
+    // that another QGC runs stays
+    (void) QGCWorkDirectory::removeStale(cacheDirectory, kUnpackDirectoryPrefix);
+
+    // Map tiles are images that do not compress further, so the tile set is about as large as the archive
+    const qint64 archiveSize = QFileInfo(archivePath).size();
+    const QStorageInfo storage(cacheDirectory);
+    // A valid volume that is not ready, or whose free space the system cannot tell, reports -1
+    const qint64 bytesAvailable = (storage.isValid() && storage.isReady()) ? storage.bytesAvailable() : -1;
+    if (lacksRoomToUnpack(bytesAvailable, archiveSize)) {
+        setErrorMessage(tr("Not enough disk space to unpack the archive: %1 needed, %2 free")
+                            .arg(QGC::bigSizeToString(static_cast<quint64>(archiveSize)),
+                                 QGC::bigSizeToString(static_cast<quint64>(bytesAvailable))));
+        return false;
+    }
+
+    // A directory of this import alone: a name that could be told beforehand would let another user of the
+    // directory put files where the tile set file is looked for. The archive is unpacked into a new directory in it,
+    // beside the lock file that keeps it while the import runs
+    auto extractionDirectory = std::make_unique<QGCWorkDirectory>(cacheDirectory, kUnpackDirectoryPrefix);
+    if (!extractionDirectory->isValid()) {
+        setErrorMessage(tr("Could not create temporary directory: %1").arg(extractionDirectory->errorString()));
+        return false;
+    }
+    _extractionDirectory = std::move(extractionDirectory);
 
     setImportAction(ImportAction::ActionImporting);
     setActionProgress(0);
 
-    // Only the tile set files are unpacked, whatever else the archive holds
+    // Only the first tile set file is unpacked, whatever else the archive holds. A later one is skipped but counted,
+    // and fails the import once the extraction has ended: which one is meant cannot be told. The filter runs on the
+    // worker, and the count is read in the callback, which comes after the worker has ended
+    const auto tileSetEntries = std::make_shared<std::atomic_int>(0);
     _extractionJob = CompressionJob::startExtraction(
-        this, archivePath, _extractionOutputDir, 0,
-        [](const Compression::ArchiveEntry& entry) { return !entry.isDirectory && isTileSetFileName(entry.name); },
-        [this](const Compression::Outcome& outcome) { _handleExtractionFinished(outcome); });
+        this, archivePath, QDir(_extractionDirectory->path()).filePath(QStringLiteral("unpacked")),
+        std::max(archiveSize * kMaxTileSetExpansion, kMinTileSetLimitBytes),
+        [tileSetEntries](const Compression::ArchiveEntry& entry) {
+            return !entry.isDirectory && isTileSetFileName(entry.name) && (tileSetEntries->fetch_add(1) == 0);
+        },
+        [this, tileSetEntries](const Compression::Outcome& outcome) {
+            _handleExtractionFinished(outcome, tileSetEntries->load());
+        });
     (void) connect(_extractionJob, &CompressionJob::progressChanged, this,
                    &QGCMapEngineManager::_handleExtractionProgress);
     return true;
@@ -580,11 +634,7 @@ bool QGCMapEngineManager::importArchive(const QString &archivePath)
 
 void QGCMapEngineManager::_removeExtractionOutput()
 {
-    // An empty path is the working directory to QDir
-    if (!_extractionOutputDir.isEmpty()) {
-        QDir(_extractionOutputDir).removeRecursively();
-        _extractionOutputDir.clear();
-    }
+    _extractionDirectory.reset();
 }
 
 void QGCMapEngineManager::_handleExtractionProgress(qreal progress)
@@ -592,7 +642,7 @@ void QGCMapEngineManager::_handleExtractionProgress(qreal progress)
     setActionProgress(static_cast<int>(progress * 50.0));
 }
 
-void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& outcome)
+void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& outcome, int tileSetEntries)
 {
     if (!outcome) {
         setErrorMessage(outcome.description());
@@ -601,8 +651,16 @@ void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& 
         return;
     }
 
+    // An import that replaces the tiles must not take the wrong one
+    if (tileSetEntries > 1) {
+        setErrorMessage(tr("The archive holds more than one tile set file"));
+        setImportAction(ImportAction::ActionDone);
+        _removeExtractionOutput();
+        return;
+    }
+
     QStringList tileSetFiles;
-    QDirIterator it(_extractionOutputDir, QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(_extractionDirectory->path(), QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         const QString filePath = it.next();
         if (isTileSetFileName(filePath)) {
@@ -610,11 +668,8 @@ void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& 
         }
     }
 
-    // With several files, which one is meant cannot be told, and an import that replaces the tiles must not
-    // take the wrong one
-    if (tileSetFiles.size() != 1) {
-        setErrorMessage(tileSetFiles.isEmpty() ? tr("No tile database found in archive")
-                                               : tr("The archive holds more than one tile set file"));
+    if (tileSetFiles.isEmpty()) {
+        setErrorMessage(tr("No tile database found in archive"));
         setImportAction(ImportAction::ActionDone);
         _removeExtractionOutput();
         return;
@@ -623,7 +678,8 @@ void QGCMapEngineManager::_handleExtractionFinished(const Compression::Outcome& 
 
     qCDebug(QGCMapEngineManagerLog) << "Found tile database:" << dbPath;
 
-    QGCImportTileTask *task = new QGCImportTileTask(dbPath, _importReplace);
+    // The unpacked file is the import's own, so a replace import may move it into place
+    QGCImportTileTask* task = new QGCImportTileTask(dbPath, _importReplace, true);
     (void) connect(task, &QGCImportTileTask::actionCompleted, this, [this]() {
         _actionCompleted();
         _removeExtractionOutput();

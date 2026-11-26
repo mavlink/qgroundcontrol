@@ -59,7 +59,9 @@ public:
     SetTotalsResult computeSetTotals(quint64 setID, bool isDefault, quint32 totalTileCount, const QString &type);
 
     // Import/Export
-    DatabaseResult importSetsReplace(const QString &path, ProgressCallback progressCb);
+    /// @param movable Whether @a path may be moved into place: a file of the caller's own, on the disk of the database.
+    ///        It is copied if it cannot be moved
+    DatabaseResult importSetsReplace(const QString& path, ProgressCallback progressCb, bool movable = false);
     DatabaseResult importSetsMerge(const QString &path, ProgressCallback progressCb);
     DatabaseResult exportSets(const QList<TileSetRecord> &sets, const QString &path, ProgressCallback progressCb);
 

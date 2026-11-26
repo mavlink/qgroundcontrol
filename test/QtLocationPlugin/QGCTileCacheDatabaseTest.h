@@ -27,7 +27,7 @@ private slots:
     void _testComputeSetTotalsDefault();
     void _testPruneCache();
     void _testUpdateTileDownloadState();
-    void _testExportImportReplace();
+    UT_PARAMETERIZED_TEST(_testExportImportReplace);
     void _testGetTileDownloadList();
     void _testImportSetsMerge();
     void _testComputeSetTotalsNonDefault();

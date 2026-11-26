@@ -878,7 +878,7 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
     return result;
 }
 
-DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString &path, ProgressCallback progressCb)
+DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, ProgressCallback progressCb, bool movable)
 {
     DatabaseResult result;
     if (QFileInfo(path).canonicalFilePath() == QFileInfo(_databasePath).canonicalFilePath()) {
@@ -893,7 +893,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString &path, Prog
     if (!hasBackup) {
         (void) QFile::remove(_databasePath);
     }
-    if (!QFile::copy(path, _databasePath)) {
+    if (!(movable && QFile::rename(path, _databasePath)) && !QFile::copy(path, _databasePath)) {
         if (hasBackup) {
             (void) QFile::rename(backupPath, _databasePath);
         }
