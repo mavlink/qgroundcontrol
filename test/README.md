@@ -481,7 +481,8 @@ has its own checksum, and an xz stream whose block header, behind its CRC, decla
 archive of a thousand central records that name one entry is a seed too: the fuzzer reaches none of these by itself.
 
 With Clang, `-DQGC_COMPRESSION_LIBFUZZER=ON` adds the `qgc_compression_stream_fuzzer` and
-`qgc_compression_extraction_fuzzer` targets. It builds `QGCCompression` with ASan, UBSan and the fuzzer's
+`qgc_compression_extraction_fuzzer` targets. It builds `QGCCompression` and `QGCFileSystem` (whose
+`QGCFileHelper::fileNameIssue()` decides which entry names an extraction writes) with ASan, UBSan and the fuzzer's
 instrumentation, and the bundled libarchive and decoders with ASan and the fuzzer's instrumentation. In such a build
 directory, build only these targets and the smoke test, which writes the seed corpus. Add the options of the optional
 formats to fuzz their decoders and the agreement of the bid rules too. Each fuzzer adds the inputs it finds to the

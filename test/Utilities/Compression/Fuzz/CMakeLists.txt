@@ -3,7 +3,8 @@
 # A smoke test that runs the fuzzer's seeds through both fuzz targets in the QGC test build and checks what some of
 # them give, and the two libFuzzer harnesses, which QGC_COMPRESSION_LIBFUZZER adds: qgc_compression_stream_fuzzer reads
 # its input in memory only, qgc_compression_extraction_fuzzer writes it as files and extracts it. It builds
-# QGCCompression with ASan and UBSan, and the bundled libarchive and decoders with ASan.
+# QGCCompression and QGCFileSystem, which holds the rule for file names an extraction writes, with ASan and UBSan, and
+# the bundled libarchive and decoders with ASan.
 # ============================================================================
 
 option(
@@ -40,6 +41,11 @@ if(QGC_COMPRESSION_LIBFUZZER)
         -fno-omit-frame-pointer
     )
     target_link_options(QGCCompression INTERFACE -fsanitize=address,undefined)
+    target_compile_options(
+        QGCFileSystem PRIVATE
+        -fsanitize=fuzzer-no-link,address,undefined
+        -fno-omit-frame-pointer
+    )
     # The bundled libraries, if the build has them. With QGC_USE_SYSTEM_LIBS the system's are not instrumented
     foreach(target archive_static zlibstatic liblzma libzstd_static lz4_static bz2_static)
         if(TARGET ${target})

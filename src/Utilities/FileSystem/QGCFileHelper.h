@@ -55,13 +55,34 @@ QString joinPath(const QString &dir, const QString &name);
 /// @param path Absolute and clean
 bool isInDirectory(const QString& directoryPath, const QString& path);
 
+/// Longest file name, in bytes of UTF-8, that every system writes
+constexpr qsizetype kMaxFileNameBytes = 255;
+
+/// What keeps some system from writing a file of a name as it is
+enum class FileNameIssue
+{
+    None,                ///< Every system writes it as it is
+    Empty,
+    ForbiddenCharacter,  ///< A control character (below U+0020), one of < > : " | ? *, which Windows does not allow,
+                         ///< or a separator, / or backslash
+    TrailingDotOrSpace,  ///< Which Windows drops. Also "." and ".."
+    DeviceName,          ///< A device name of Windows, which opens the device: CON, PRN, AUX, NUL, COM0 to COM9, LPT0
+                         ///< to LPT9 (also with a superscript 1, 2 or 3), CONIN$, CONOUT$, in any case, also with an
+                         ///< extension and with spaces before it ("nul.txt", "aux .log")
+    TooLong              ///< More than kMaxFileNameBytes bytes in UTF-8
+};
+
+/// What keeps some system from writing a file named @a name, one component of a path, as it is, or
+/// FileNameIssue::None. The first issue in the order of FileNameIssue is given. A name that starts with a dot or a
+/// space, or holds U+007F, is written as it is everywhere. The one rule for the names of files that QGC writes from
+/// names that another system gives: localFileName() and the extraction of an archive apply it
+FileNameIssue fileNameIssue(QStringView name);
+
 /// The name under which a file that another system names, such as a vehicle or a URL, is written into a directory:
 /// the last component of @a name after a slash or a backslash, on every system. Give a URL's name decoded, as
 /// QUrl::fileName() does: an encoded separator is then a separator.
-/// @return The name, or an empty string if every system would not write it as a file of that name: it is empty,
-///         holds a control character or one of < > : " | ? *, ends with a dot (also "." and "..") or a space, is
-///         longer than 255 bytes in UTF-8, or is a device name of Windows (CON, PRN, AUX, NUL, COM0 to COM9, LPT0 to
-///         LPT9, CONIN$, CONOUT$), also with an extension
+/// @return The name, or an empty string if it has a fileNameIssue(): every system would not write it as a file of
+///         that name
 QString localFileName(QStringView name);
 
 /// Ensure directory exists, creating it if necessary

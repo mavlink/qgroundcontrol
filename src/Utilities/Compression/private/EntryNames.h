@@ -17,10 +17,8 @@ constexpr qsizetype kMaxEntryNameBytes = 4096;
 
 /// What in an entry name would be written differently, or not at all, on some system, such as "a device name of
 /// Windows", or an empty string if the name is portable. The name, whose separator is the slash, must be at most
-/// kMaxEntryNameBytes long in UTF-8. Each component of it must be at most 255 bytes in UTF-8, must not end with a dot
-/// or a space, must not hold a control character or one of < > : " | ? * \, and must not be a device name of Windows
-/// (CON, PRN, AUX, NUL, COM0 to COM9, LPT0 to LPT9, CONIN$, CONOUT$), also with an extension. Empty components and
-/// "." and ".." are left to the check that the entry stays inside the output directory.
+/// kMaxEntryNameBytes long in UTF-8, and each component of it a file name without a QGCFileHelper::fileNameIssue().
+/// Empty components and "." and ".." are left to the check that the entry stays inside the output directory.
 QString nonPortableNameReason(QStringView name);
 
 /// The key under which two names are the same on a file system that ignores case or Unicode normalisation, as

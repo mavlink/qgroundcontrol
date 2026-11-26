@@ -131,21 +131,34 @@ bool isWindowsDeviceFileName(QStringView name)
 
 }  // namespace
 
+FileNameIssue fileNameIssue(QStringView name)
+{
+    if (name.isEmpty()) {
+        return FileNameIssue::Empty;
+    }
+    for (const QChar character : name) {
+        if ((character.unicode() < 0x20) || QStringView(u"<>:\"|?*/\\").contains(character)) {
+            return FileNameIssue::ForbiddenCharacter;
+        }
+    }
+    if (name.endsWith(QLatin1Char('.')) || name.endsWith(QLatin1Char(' '))) {
+        return FileNameIssue::TrailingDotOrSpace;
+    }
+    if (isWindowsDeviceFileName(name)) {
+        return FileNameIssue::DeviceName;
+    }
+    // UTF-8 takes at least one byte for each UTF-16 unit
+    if ((name.size() > kMaxFileNameBytes) || (name.toUtf8().size() > kMaxFileNameBytes)) {
+        return FileNameIssue::TooLong;
+    }
+    return FileNameIssue::None;
+}
+
 QString localFileName(QStringView name)
 {
     const QStringView fileName =
         name.sliced(qMax(name.lastIndexOf(QLatin1Char('/')), name.lastIndexOf(QLatin1Char('\\'))) + 1);
-    constexpr qsizetype kMaxFileNameBytes = 255;
-    if (fileName.isEmpty() || fileName.endsWith(QLatin1Char('.')) || fileName.endsWith(QLatin1Char(' ')) ||
-        isWindowsDeviceFileName(fileName) || (fileName.toUtf8().size() > kMaxFileNameBytes)) {
-        return {};
-    }
-    for (const QChar character : fileName) {
-        if ((character.unicode() < 0x20) || QStringView(u"<>:\"|?*").contains(character)) {
-            return {};
-        }
-    }
-    return fileName.toString();
+    return (fileNameIssue(fileName) == FileNameIssue::None) ? fileName.toString() : QString();
 }
 
 bool ensureDirectoryExists(const QString &path)

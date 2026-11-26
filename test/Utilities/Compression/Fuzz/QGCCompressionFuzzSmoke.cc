@@ -101,6 +101,12 @@ QList<Seed> seeds(const QDir& resourceDirectory, bool& resourcesRead)
         {"zip-names", ArchiveFixtures::makeZip({{.name = "../escape.txt", .data = "escape"},
                                                 {.name = "/tmp/qgc-fuzz-absolute.txt", .data = "absolute"},
                                                 {.name = "folder/../../escape.txt", .data = "escape"}})},
+        // Names that some system would write otherwise, as a file and as a directory, which an extraction skips
+        {"zip-names-not-portable", ArchiveFixtures::makeZip({{.name = "COM1.db", .data = "device"},
+                                                             {.name = "prn/inner.txt", .data = "device"},
+                                                             {.name = "file.txt:stream", .data = "stream"},
+                                                             {.name = "trailing.", .data = "dot"},
+                                                             {.name = "portable.txt", .data = "portable"}})},
         {"zip-links",
          ArchiveFixtures::makeZip({{.name = "inside", .data = ".", .unixMode = 0120777, .deflated = false},
                                    {.name = "climb", .data = "inside/..", .unixMode = 0120777, .deflated = false},

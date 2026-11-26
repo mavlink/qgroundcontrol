@@ -1047,24 +1047,16 @@ void QGCArchiveExtractionTest::_testExtractSkipsNamesThatAreNotPortable_data()
     // What the warning says is in the name, or empty for a name that is extracted
     QTest::addColumn<QString>("reason");
 
+    // One name of each issue: QGCFileHelperTest checks every case of the rule. Here the extraction applies it to each
+    // part of a name
     const QString device = QStringLiteral("a device name of Windows");
     const QString character = QStringLiteral("a character that Windows does not allow");
     const QString ending = QStringLiteral("a part that ends with a dot or a space");
-    QTest::newRow("device") << QByteArray("CON") << device;
-    QTest::newRow("device in lower case, with an extension") << QByteArray("nul.txt") << device;
     QTest::newRow("serial port, with the extension of a tile set") << QByteArray("COM1.db") << device;
-    QTest::newRow("serial port with a superscript digit") << QByteArray("lpt\xC2\xB9") << device;
-    QTest::newRow("console input") << QByteArray("CONIN$") << device;
-    QTest::newRow("device before a space and an extension") << QByteArray("aux .log") << device;
     QTest::newRow("device as a directory") << QByteArray("prn/inner.txt") << device;
     QTest::newRow("alternate data stream") << QByteArray("file.txt:stream") << character;
-    QTest::newRow("drive-relative") << QByteArray("C:file.txt") << character;
-    QTest::newRow("wildcard") << QByteArray("what?.txt") << character;
-    QTest::newRow("control character") << QByteArray("bell\x07.txt") << character;
     QTest::newRow("trailing dot") << QByteArray("file.") << ending;
-    QTest::newRow("trailing space") << QByteArray("file ") << ending;
     QTest::newRow("three dots") << QByteArray("dir/.../file.txt") << ending;
-    QTest::newRow("dots and a space") << QByteArray("dir/.. /file.txt") << ending;
     // Longer than any system takes, also as a path below the output directory, but each part within the limit
     QByteArray overlong;
     while (overlong.size() <= 4096) {
@@ -1072,12 +1064,12 @@ void QGCArchiveExtractionTest::_testExtractSkipsNamesThatAreNotPortable_data()
     }
     QTest::newRow("name of more than 4096 bytes") << (overlong + "file.txt") << QStringLiteral("more than 4096 bytes");
     QTest::newRow("part of 256 bytes") << QByteArray(256, 'a') << QStringLiteral("a part longer than 255 bytes");
-    QTest::newRow("part of 258 bytes in UTF-8")
-        << QString(86, QChar(0x65E5)).toUtf8() << QStringLiteral("a part longer than 255 bytes");
 
+    // Names that every system writes as they are, which Windows and macOS check in the portable suite
     QTest::newRow("device name inside a word") << QByteArray("console.txt") << QString();
     QTest::newRow("serial port of two digits") << QByteArray("COM10") << QString();
     QTest::newRow("hidden file") << QByteArray(".hidden") << QString();
+    QTest::newRow("delete character") << QByteArray("del\x7F.txt") << QString();
     QTest::newRow("part of 255 bytes in UTF-8") << QString(85, QChar(0x65E5)).toUtf8() << QString();
 }
 

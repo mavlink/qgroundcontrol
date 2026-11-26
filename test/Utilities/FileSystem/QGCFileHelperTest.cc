@@ -85,8 +85,112 @@ void QGCFileHelperTest::_testIsInDirectory()
 }
 
 // ============================================================================
-// localFileName() tests
+// fileNameIssue() and localFileName() tests
 // ============================================================================
+namespace {
+
+QString issueName(QGCFileHelper::FileNameIssue issue)
+{
+    switch (issue) {
+        case QGCFileHelper::FileNameIssue::None:
+            return QStringLiteral("none");
+        case QGCFileHelper::FileNameIssue::Empty:
+            return QStringLiteral("empty");
+        case QGCFileHelper::FileNameIssue::ForbiddenCharacter:
+            return QStringLiteral("character");
+        case QGCFileHelper::FileNameIssue::TrailingDotOrSpace:
+            return QStringLiteral("ending");
+        case QGCFileHelper::FileNameIssue::DeviceName:
+            return QStringLiteral("device");
+        case QGCFileHelper::FileNameIssue::TooLong:
+            return QStringLiteral("length");
+    }
+    return QStringLiteral("unknown");
+}
+
+}  // namespace
+
+void QGCFileHelperTest::_testFileNameIssue_data()
+{
+    QTest::addColumn<QString>("name");
+    QTest::addColumn<QString>("issue");
+
+    const auto row = [](const char* tag, const QString& name, const char* issue) {
+        QTest::newRow(tag) << name << QString::fromLatin1(issue);
+    };
+
+    row("a name", QStringLiteral("parameters.json.xz"), "none");
+    row("empty", QString(), "empty");
+
+    // Windows does not allow these characters, and a separator ends a name everywhere
+    row("an alternate data stream", QStringLiteral("evil.json:stream"), "character");
+    row("relative to a drive", QStringLiteral("C:evil.json"), "character");
+    for (const char* const character : {"<", ">", "\"", "|", "?", "*", "/", "\\"}) {
+        row(qPrintable(QStringLiteral("the character %1").arg(QLatin1String(character))),
+            QStringLiteral("a%1b").arg(QLatin1String(character)), "character");
+    }
+    row("a line feed", QStringLiteral("evil\n.json"), "character");
+    row("a bell", QStringLiteral("bell\a.txt"), "character");
+    row("U+0000", QStringLiteral("a") + QChar(0) + QStringLiteral("b"), "character");
+    row("U+001F", QStringLiteral("a") + QChar(0x1F) + QStringLiteral("b"), "character");
+    // Not a control character for Windows, which forbids 1 to 31 only
+    row("U+007F", QStringLiteral("a") + QChar(0x7F) + QStringLiteral("b"), "none");
+
+    // Windows drops a trailing dot or space
+    row("a trailing dot", QStringLiteral("evil.json."), "ending");
+    row("a trailing space", QStringLiteral("evil.json "), "ending");
+    row("dot", QStringLiteral("."), "ending");
+    row("dot dot", QStringLiteral(".."), "ending");
+    row("three dots", QStringLiteral("..."), "ending");
+    row("dots and a space", QStringLiteral(".. "), "ending");
+    row("a leading dot", QStringLiteral(".hidden"), "none");
+    row("a leading space", QStringLiteral(" leading"), "none");
+
+    // Device names of Windows, in any case, also with an extension and with spaces before it
+    for (const char* const device : {"CON", "PRN", "AUX", "NUL", "COM0", "COM1", "COM9", "LPT0", "LPT1", "LPT9",
+                                     "CONIN$", "CONOUT$", "con", "Nul", "conout$"}) {
+        row(qPrintable(QStringLiteral("the device %1").arg(QLatin1String(device))), QLatin1String(device), "device");
+    }
+    row("a device with an extension", QStringLiteral("com1.json"), "device");
+    row("a device with the extension of a tile set", QStringLiteral("COM1.db"), "device");
+    row("a device with two extensions", QStringLiteral("NUL.tar.gz"), "device");
+    row("console input with an extension", QStringLiteral("conin$.txt"), "device");
+    row("a device with a space before the extension", QStringLiteral("CON .json"), "device");
+    row("a device with spaces before the extension", QStringLiteral("aux  .log"), "device");
+    row("a serial port with a superscript 1", QStringLiteral("COM\u00B9"), "device");
+    row("a printer port with a superscript 2", QStringLiteral("lpt\u00B2.txt"), "device");
+    row("a printer port with a superscript 3", QStringLiteral("LPT\u00B3"), "device");
+    // The first issue counts
+    row("a device with a trailing dot", QStringLiteral("CON."), "ending");
+    row("a device with a colon", QStringLiteral("CON:"), "character");
+    // Names that only start like a device
+    row("a serial port of two digits", QStringLiteral("COM10.json"), "none");
+    row("a serial port with a superscript 4", QStringLiteral("COM\u2074"), "none");
+    row("a serial port without a digit", QStringLiteral("COM"), "none");
+    row("a device name inside a word", QStringLiteral("console.txt"), "none");
+    row("a device name before a hyphen", QStringLiteral("nul-device.txt"), "none");
+    row("a device name after a dot", QStringLiteral(".CON"), "none");
+
+    // At most 255 bytes in UTF-8, whatever the number of characters
+    row("255 bytes", QString(255, QLatin1Char('a')), "none");
+    row("256 bytes", QString(256, QLatin1Char('a')), "length");
+    row("255 bytes of UTF-8", QString(127, QChar(0x00E9)) + QLatin1Char('a'), "none");
+    row("256 bytes of UTF-8", QString(128, QChar(0x00E9)), "length");
+    row("255 bytes of three-byte characters", QString(85, QChar(0x65E5)), "none");
+    row("258 bytes of three-byte characters", QString(86, QChar(0x65E5)), "length");
+    row("255 bytes with four-byte characters", QString::fromUcs4(U"\U0001F600").repeated(63) + QStringLiteral("abc"),
+        "none");
+    row("256 bytes of four-byte characters", QString::fromUcs4(U"\U0001F600").repeated(64), "length");
+}
+
+void QGCFileHelperTest::_testFileNameIssue()
+{
+    QFETCH(QString, name);
+    QFETCH(QString, issue);
+
+    QCOMPARE(issueName(QGCFileHelper::fileNameIssue(name)), issue);
+}
+
 void QGCFileHelperTest::_testLocalFileName_data()
 {
     QTest::addColumn<QString>("name");
@@ -105,18 +209,10 @@ void QGCFileHelperTest::_testLocalFileName_data()
     QTest::newRow("dot dot") << "a\\.." << "";
     QTest::newRow("a trailing slash") << "dir/" << "";
     QTest::newRow("a trailing backslash") << "dir\\" << "";
-    QTest::newRow("a trailing dot") << "evil.json." << "";
-    QTest::newRow("a trailing space") << "evil.json " << "";
-    QTest::newRow("relative to a drive") << "C:evil.json" << "";
-    QTest::newRow("an alternate data stream") << "evil.json:stream" << "";
-    QTest::newRow("a wildcard") << "evil*.json" << "";
-    QTest::newRow("a control character") << "evil\n.json" << "";
+    // The last component has to pass fileNameIssue(), whose cases _testFileNameIssue checks
     QTest::newRow("a device") << "dir/NUL" << "";
-    QTest::newRow("a device with an extension") << "com1.json" << "";
-    QTest::newRow("a device with a space before the extension") << "CON .json" << "";
-    QTest::newRow("a device with a superscript digit") << QStringLiteral("LPT\u00B9.json") << "";
+    QTest::newRow("an alternate data stream") << "evil.json:stream" << "";
     QTest::newRow("a device name and more") << "COM10.json" << "COM10.json";
-    QTest::newRow("255 bytes") << QString(255, QLatin1Char('a')) << QString(255, QLatin1Char('a'));
     QTest::newRow("256 bytes of UTF-8") << QString(128, QChar(0x00E9)) << "";
 }
 
