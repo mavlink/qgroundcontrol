@@ -3,7 +3,8 @@
 #include "GStreamerTestBase.h"
 
 /// What every VideoReceiver does with a stream, whichever backend plays it. Each case runs against the GStreamer and
-/// the Qt Multimedia receiver, with the same H.264 RTP stream sent to a UDP port on loopback.
+/// the Qt Multimedia receiver, and the FFmpeg receiver where it is built, with the same H.264 RTP stream sent to a UDP
+/// port on loopback.
 class VideoReceiverContractTest : public GStreamerTestBase
 {
     Q_OBJECT

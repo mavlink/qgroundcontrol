@@ -195,10 +195,11 @@ the counters that `Qml/VideoStreamStatsGroup.qml` shows.
 manager and its sources; it and `VideoQmlTest` share their fixture, `VideoManagerTestBase`.
 [GStreamer/README.md](GStreamer/README.md#automated-tests) lists the GStreamer classes and says how to run them.
 
-`VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common: each of
-its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream. What a backend does
+`VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds the receivers to what they have in common: each of
+its cases runs against the GStreamer and the Qt Multimedia receiver, and the experimental FFmpeg receiver where it is
+built, with the same H.264 RTP stream. What a backend does
 on its own stays in its tests. The Qt Multimedia receiver's are `QtMultimediaVideoReceiverTest`, which needs neither a
 stream nor GStreamer, and `QtMultimediaVideoReceiverStreamTest`, which plays the streams of `MockVideoStreamServer`.
 That class and the contract test are built only with GStreamer, which sends their streams. So are the classes in
 `test/VideoManager/FFmpeg/`, which are built with `QGC_ENABLE_FFMPEG_VIDEO` as well
-([FFmpeg/README.md](FFmpeg/README.md#tests)): the contract test doesn't hold the experimental FFmpeg receiver to it.
+([FFmpeg/README.md](FFmpeg/README.md#tests)).

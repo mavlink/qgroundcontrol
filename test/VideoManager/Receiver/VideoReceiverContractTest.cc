@@ -21,12 +21,20 @@
 #include "VideoStreamStats.h"
 #include "VideoTestHelpers.h"
 
+#ifdef QGC_FFMPEG_VIDEO
+#include "FFmpeg/FFmpegVideoReceiverStreamTest.h"
+#include "FFmpegVideoReceiver.h"
+#endif
+
 namespace {
 
 enum class ContractBackend
 {
     GStreamer,
     QtMultimedia,
+#ifdef QGC_FFMPEG_VIDEO
+    FFmpeg,
+#endif
 };
 
 // The stream GstTest::FixtureRtpSender sends.
@@ -42,6 +50,9 @@ void addBackendRows()
 
     QTest::newRow("GStreamer") << int(ContractBackend::GStreamer);
     QTest::newRow("Qt Multimedia") << int(ContractBackend::QtMultimedia);
+#ifdef QGC_FFMPEG_VIDEO
+    QTest::newRow("FFmpeg") << int(ContractBackend::FFmpeg);
+#endif
 }
 
 std::unique_ptr<VideoReceiver> createContractReceiver(ContractBackend backend)
@@ -51,6 +62,13 @@ std::unique_ptr<VideoReceiver> createContractReceiver(ContractBackend backend)
         QtMultimediaVideoReceiverTest::sampleOften(*receiver);
         return receiver;
     }
+#ifdef QGC_FFMPEG_VIDEO
+    if (backend == ContractBackend::FFmpeg) {
+        auto receiver = std::make_unique<FFmpegVideoReceiver>();
+        FFmpegVideoReceiverStreamTest::sampleOften(*receiver);
+        return receiver;
+    }
+#endif
     // Looks at its stream ten times a second rather than once: the cases wait for its statistics, and for it to
     // notice a stream that stopped.
     auto receiver = std::make_unique<GstVideoReceiver>(
@@ -63,10 +81,20 @@ std::unique_ptr<VideoReceiver> createContractReceiver(ContractBackend backend)
 /// Longer than a receiver that gave up on a port nobody sends to would take to say so. GStreamer: the timeout, counted
 /// from the worker's first look at the stream and checked at the first one after it is over. Qt Multimedia: the
 /// timeout and the five seconds FFmpeg has for a stream's first frame, after which its player gives up and the
-/// receiver listens again.
+/// receiver listens again. FFmpeg: two timeouts and a half, as its watchdog would fail a silent session after one.
 int silentPortWindowMs(ContractBackend backend)
 {
-    return (backend == ContractBackend::QtMultimedia) ? 6500 : 1500;
+    switch (backend) {
+        case ContractBackend::QtMultimedia:
+            return 6500;
+#ifdef QGC_FFMPEG_VIDEO
+        case ContractBackend::FFmpeg:
+            return 2500;
+#endif
+        case ContractBackend::GStreamer:
+            break;
+    }
+    return 1500;
 }
 
 /// A receiver of one backend that listens on a free UDP port of loopback, with spies on its signals, a VideoOutput in
@@ -196,6 +224,10 @@ void VideoReceiverContractTest::_testIncompleteAddressStops_data()
         << int(ContractBackend::QtMultimedia) << QStringLiteral("tcp://127.0.0.1");
     QTest::newRow("Qt Multimedia, UDP without a port")
         << int(ContractBackend::QtMultimedia) << QStringLiteral("mpegts://127.0.0.1");
+#ifdef QGC_FFMPEG_VIDEO
+    QTest::newRow("FFmpeg, TCP without a port") << int(ContractBackend::FFmpeg) << QStringLiteral("tcp://127.0.0.1");
+    QTest::newRow("FFmpeg, UDP without a port") << int(ContractBackend::FFmpeg) << QStringLiteral("mpegts://127.0.0.1");
+#endif
 }
 
 void VideoReceiverContractTest::_testIncompleteAddressStops()
@@ -216,6 +248,10 @@ void VideoReceiverContractTest::_testIncompleteAddressStops()
                          QRegularExpression(QStringLiteral("^Invalid port in")));
         expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("^Video stream stopped:")));
+#ifdef QGC_FFMPEG_VIDEO
+    } else if (contractBackend == ContractBackend::FFmpeg) {
+        expectLogMessage("Video.FFmpegVideoReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("can't play")));
+#endif
     } else {
         expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("can't play")));
@@ -249,6 +285,10 @@ void VideoReceiverContractTest::_testStreamLossRestartPolicy_data()
     QTest::newRow("GStreamer, no auto-reconnect") << int(ContractBackend::GStreamer) << false;
     QTest::newRow("Qt Multimedia, auto-reconnect") << int(ContractBackend::QtMultimedia) << true;
     QTest::newRow("Qt Multimedia, no auto-reconnect") << int(ContractBackend::QtMultimedia) << false;
+#ifdef QGC_FFMPEG_VIDEO
+    QTest::newRow("FFmpeg, auto-reconnect") << int(ContractBackend::FFmpeg) << true;
+    QTest::newRow("FFmpeg, no auto-reconnect") << int(ContractBackend::FFmpeg) << false;
+#endif
 }
 
 void VideoReceiverContractTest::_testStreamLossRestartPolicy()
@@ -261,7 +301,7 @@ void VideoReceiverContractTest::_testStreamLossRestartPolicy()
     ContractStream stream(contractBackend, autoReconnect);
     QVERIFY(stream.startStreaming());
 
-    // The GStreamer receiver logs the failure it stops at; the Qt Multimedia one only reports it.
+    // The GStreamer receiver logs the failure it stops at; the others only report it.
     const bool warnsOfStop = !autoReconnect && (contractBackend == ContractBackend::GStreamer);
     if (warnsOfStop) {
         expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
@@ -350,6 +390,11 @@ void VideoReceiverContractTest::_testDeactivateEndsRecording()
     QVERIFY(stream.waitForState(VideoReceiver::State::Stopped));
     QVERIFY_TRUE_WAIT(!stream.receiver->recording() && !stream.receiver->decoding() && !stream.receiver->stats().valid,
                       TestTimeout::shortMs());
+
+    // Activating again doesn't bring the recording back.
+    QVERIFY(stream.startStreaming());
+    QVERIFY(!stream.receiver->recording());
+    QCOMPARE(stream.recordingStartedSpy.count(), 1);
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
@@ -362,6 +407,10 @@ void VideoReceiverContractTest::_testStreamStoppedForGoodEndsRecording_data()
     QTest::newRow("GStreamer, auto-reconnect turned off") << int(ContractBackend::GStreamer) << true;
     QTest::newRow("Qt Multimedia, stream lost") << int(ContractBackend::QtMultimedia) << false;
     QTest::newRow("Qt Multimedia, auto-reconnect turned off") << int(ContractBackend::QtMultimedia) << true;
+#ifdef QGC_FFMPEG_VIDEO
+    QTest::newRow("FFmpeg, stream lost") << int(ContractBackend::FFmpeg) << false;
+    QTest::newRow("FFmpeg, auto-reconnect turned off") << int(ContractBackend::FFmpeg) << true;
+#endif
 }
 
 void VideoReceiverContractTest::_testStreamStoppedForGoodEndsRecording()

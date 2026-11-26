@@ -30,7 +30,6 @@ private slots:
     void _testFormatChangeContinuesRecordingInNextPart();
     void _testSlowRecordingDoesNotStallDisplay();
     void _testStopRecordsFramesStillQueued();
-    void _testDeactivateFinishesRecording();
     void _testRecordingPlayableWhileInProgress_data();
     void _testRecordingPlayableWhileInProgress();
     void _testSecondRecordingIsNotTruncated();

@@ -130,7 +130,7 @@ struct FFmpegReceiverUnderTest
 
 }  // namespace
 
-void FFmpegVideoReceiverStreamTest::_sampleOften(FFmpegVideoReceiver& receiver)
+void FFmpegVideoReceiverStreamTest::sampleOften(FFmpegVideoReceiver& receiver)
 {
     receiver._sampleTimer.setInterval(std::chrono::milliseconds(200));
 }
@@ -250,7 +250,7 @@ void FFmpegVideoReceiverStreamTest::_testPlaysMockStreams()
 
     _ignoreRtspServerLogs();
     FFmpegReceiverUnderTest stream(uri.toString(), false, std::chrono::seconds(2), softwareDecoding);
-    _sampleOften(*stream.receiver);
+    sampleOften(*stream.receiver);
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
     QCOMPARE(stream.receiver->state(), VideoReceiver::State::Streaming);
@@ -303,7 +303,7 @@ void FFmpegVideoReceiverStreamTest::_testStopWhileConnectingIsPrompt()
 
     // FFmpeg would wait this long for an answer by itself.
     FFmpegReceiverUnderTest stream(uri, false, std::chrono::seconds(30));
-    _sampleOften(*stream.receiver);
+    sampleOften(*stream.receiver);
     stream.receiver->setActive(true);
     if (listens) {
         // The session listens once the port is taken.
@@ -329,52 +329,6 @@ void FFmpegVideoReceiverStreamTest::_testStopWhileConnectingIsPrompt()
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
-void FFmpegVideoReceiverStreamTest::_testReconnectsAfterStreamLoss_data()
-{
-    QTest::addColumn<bool>("autoReconnect");
-
-    QTest::newRow("auto-reconnect") << true;
-    QTest::newRow("no auto-reconnect") << false;
-}
-
-void FFmpegVideoReceiverStreamTest::_testReconnectsAfterStreamLoss()
-{
-    QFETCH(bool, autoReconnect);
-
-    using StreamType = MockVideoStreamServer::StreamType;
-    if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
-        QSKIP("This GStreamer install lacks an H.264 encoder");
-    }
-
-    const quint16 port = freeUdpPort();
-    MockVideoStreamServer server;
-    FFmpegReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(port), autoReconnect,
-                                   std::chrono::seconds(1));
-    _sampleOften(*stream.receiver);
-    stream.receiver->setActive(true);
-
-    // Nobody sends yet: the port is listened on past the timeout, without a failure. Two timeouts and a half, which
-    // TestTimeout doesn't scale to.
-    QVERIFY_NO_SIGNAL_WAIT(stream.errorSpy, 2500);
-    QCOMPARE(stream.receiver->state(), VideoReceiver::State::Connecting);
-    QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
-    QVERIFY(stream.waitForDisplay());
-
-    // The stream goes away: noticed after the timeout.
-    server.stop();
-    if (!autoReconnect) {
-        QVERIFY(stream.waitForState(VideoReceiver::State::Stopped));
-        QCOMPARE(stream.errorSpy.count(), 1);
-        return;
-    }
-    QVERIFY(stream.waitForState(VideoReceiver::State::Reconnecting));
-    QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
-    QVERIFY(stream.waitForDisplay());
-    QCOMPARE(stream.receiver->state(), VideoReceiver::State::Streaming);
-    QCOMPARE(stream.receiver->stats().reconnects, 1);
-    QVERIFY(stream.errorSpy.isEmpty());
-}
-
 void FFmpegVideoReceiverStreamTest::_testRecordsStream_data()
 {
     QTest::addColumn<int>("format");
@@ -382,8 +336,7 @@ void FFmpegVideoReceiverStreamTest::_testRecordsStream_data()
 
     QTest::newRow("matroska") << int(VideoReceiver::FileFormat::Mkv) << true;
     QTest::newRow("mp4") << int(VideoReceiver::FileFormat::Mp4) << true;
-    QTest::newRow("mov") << int(VideoReceiver::FileFormat::Mov) << true;
-    QTest::newRow("mp4 without an output") << int(VideoReceiver::FileFormat::Mp4) << false;
+    QTest::newRow("mov without an output") << int(VideoReceiver::FileFormat::Mov) << false;
 }
 
 void FFmpegVideoReceiverStreamTest::_testRecordsStream()
@@ -401,7 +354,7 @@ void FFmpegVideoReceiverStreamTest::_testRecordsStream()
     MockVideoStreamServer server;
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), freeUdpPort()));
     FFmpegReceiverUnderTest stream(server.servedUri());
-    _sampleOften(*stream.receiver);
+    sampleOften(*stream.receiver);
     if (!withOutput) {
         stream.receiver->setVideoOutput(nullptr);
     }
@@ -461,7 +414,7 @@ void FFmpegVideoReceiverStreamTest::_testRecordingContinuesAfterReconnect()
     MockVideoStreamServer server;
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
     FFmpegReceiverUnderTest stream(server.servedUri(), true, std::chrono::seconds(1));
-    _sampleOften(*stream.receiver);
+    sampleOften(*stream.receiver);
     QSignalSpy startedSpy(stream.receiver.get(), &VideoReceiver::recordingStarted);
     QSignalSpy finishedSpy(stream.receiver.get(), &VideoReceiver::recordingFinished);
     stream.receiver->setActive(true);

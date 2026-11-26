@@ -109,4 +109,5 @@ once the three Qt-internal calls are checked against the new Qt. Until then, set
 `test/VideoManager/FFmpeg/FFmpegVideoReceiverStreamTest` plays the streams of `MockVideoStreamServer`, which GStreamer
 sends: built with `QGC_ENABLE_FFMPEG_VIDEO` and GStreamer only. So is `VideoReceiverDelayTest`, beside it, which
 measures the delay of one stream through the GStreamer, the Qt Multimedia and this receiver; its class comment says
-what it reports.
+what it reports. `test/VideoManager/Receiver/VideoReceiverContractTest`, built with GStreamer, runs each of its
+cases against this receiver as well.

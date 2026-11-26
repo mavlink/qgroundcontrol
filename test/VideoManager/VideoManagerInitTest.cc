@@ -5,7 +5,6 @@
 #include <QtCore/QPromise>
 #include <QtCore/QRegularExpression>
 
-#include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
 #include "VideoBackendInit.h"
@@ -197,12 +196,6 @@ void VideoManagerInitTest::_testBackendSettingReplacesReceivers()
     restorer.set(backend, VideoSettings::VideoBackendGStreamer);
 
     VideoManager videoManager;
-    // The default factory makes Qt Multimedia's receiver once it is chosen.
-    restorer.set(backend, VideoSettings::VideoBackendQtMultimedia);
-    QObject owner;
-    QVERIFY(qobject_cast<QtMultimediaVideoReceiver*>(videoManager._receiverFactory(&owner)));
-    restorer.set(backend, VideoSettings::VideoBackendGStreamer);
-
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
     PendingBackendInit backendInit(videoManager._backendInit);

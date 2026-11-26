@@ -775,30 +775,6 @@ void GstVideoReceiverRecordingTest::_testStopRecordsFramesStillQueued()
     QVERIFY(recorded.load(std::memory_order_relaxed) >= queuedAtStop);
 }
 
-void GstVideoReceiverRecordingTest::_testDeactivateFinishesRecording()
-{
-    Receiver stream;
-    QVERIFY(stream.startStreaming());
-    const QString path = _tempDir->filePath(QStringLiteral("deactivated.mp4"));
-    QVERIFY(stream.record(path));
-    QVERIFY(stream.receiver->recording());
-
-    stream.receiver->setActive(false);
-    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
-    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
-    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
-    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());
-    QVERIFY(stream.waitForState(State::Stopped));
-
-    const QString problem = recordingProblem(path);
-    QVERIFY2(problem.isEmpty(), qPrintable(problem));
-
-    // Activating again doesn't bring the recording back.
-    QVERIFY(stream.startStreaming());
-    QVERIFY(!stream.receiver->recording());
-    QCOMPARE(stream.recordingStartedSpy.count(), 1);
-}
-
 void GstVideoReceiverRecordingTest::_testRecordingPlayableWhileInProgress_data()
 {
     QTest::addColumn<int>("format");
