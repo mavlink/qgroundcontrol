@@ -12,8 +12,9 @@
 namespace CompressionFuzz {
 
 /// The input as a single stream in memory, which touches no file: decompressData() refuses it or gives what it
-/// holds within the limit, input that is not compressed comes back unchanged, and in a build with the optional
-/// decoders the rules that refuse a stream without its decoder agree with libarchive (BidAgreement.h)
+/// holds within the limit, input that is not compressed comes back unchanged, no data it gives starts with the
+/// signature of a stream, a gzip or xz stream gives what zlib or liblzma give for it, and in a build with the
+/// optional decoders the rules that refuse a stream without its decoder agree with libarchive (BidAgreement.h)
 int fuzzStream(const uint8_t* data, size_t size);
 
 /// The input as files: its kind, the input of decompressFile() and readFile(), which give what decompressData()

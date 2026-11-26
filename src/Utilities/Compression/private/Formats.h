@@ -5,6 +5,7 @@
 /// @note Private to QGCCompression
 
 #include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
 #include <QtCore/QFlags>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -71,6 +72,12 @@ constexpr qsizetype kStreamSignatureSize = qsizetype{64} * 1024;
 /// Register on a new libarchive reader that is not yet opened the filters and, for an archive, the archive formats
 /// that this build reads
 void configureReader(struct archive* a, Input input);
+
+/// Format of the single stream whose signature @a start begins with, or an empty string if it begins with none
+/// A signature is the whole magic number of a format: 1F 8B (gzip), FD 37 7A 58 5A 00 (xz), 28 B5 2F FD (Zstandard),
+/// 04 22 4D 18 or 02 21 4C 18 (LZ4), 50 to 5F 2A 4D 18 (a skippable frame, which Zstandard and LZ4 share), and "BZh"
+/// with a block size from 1 to 9 (bzip2). They are known in every build. A legacy lzma stream has none.
+QString streamSignatureFormat(QByteArrayView start);
 
 /// Why this build cannot decode a single compressed stream
 /// The raw format passes data through unchanged when no registered filter recognizes it, so legacy lzma, bzip2,

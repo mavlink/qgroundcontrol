@@ -15,6 +15,13 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/BidAgreement.cmake)
 
 add_executable(qgc_compression_fuzz_smoke BidAgreement.cc QGCCompressionFuzzTargets.cc QGCCompressionFuzzSmoke.cc)
 qgc_add_bid_agreement(qgc_compression_fuzz_smoke)
+# The stream target compares the module with zlib and liblzma
+target_link_libraries(
+    qgc_compression_fuzz_smoke
+    PRIVATE
+        ZLIB::ZLIB
+        LibLZMA::LibLZMA
+)
 add_test(NAME QGCCompressionFuzzSmoke COMMAND qgc_compression_fuzz_smoke "${CMAKE_CURRENT_SOURCE_DIR}/..")
 set_tests_properties(
     QGCCompressionFuzzSmoke
@@ -51,6 +58,12 @@ if(QGC_COMPRESSION_LIBFUZZER)
                                             QGCCompression${_harness}Fuzzer.cc
         )
         qgc_add_bid_agreement(qgc_compression_${_name}_fuzzer)
+        target_link_libraries(
+            qgc_compression_${_name}_fuzzer
+            PRIVATE
+                ZLIB::ZLIB
+                LibLZMA::LibLZMA
+        )
         target_link_options(qgc_compression_${_name}_fuzzer PRIVATE -fsanitize=fuzzer)
     endforeach()
 endif()

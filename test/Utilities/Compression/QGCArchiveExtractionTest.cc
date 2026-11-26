@@ -120,6 +120,110 @@ void QGCArchiveExtractionTest::_testEncryptedArchive()
     QCOMPARE(ArchiveFixtures::entriesBelow(outputDir), QStringList());
 }
 
+void QGCArchiveExtractionTest::_testZipCompressionMethods_data()
+{
+    QTest::addColumn<int>("method");
+    QTest::addColumn<QByteArray>("stored");
+    // Whether the entry filter accepts the entry
+    QTest::addColumn<bool>("accepted");
+    // libarchive's name of the method if the extraction refuses it, or empty if it extracts the entry
+    QTest::addColumn<QString>("refusedMethod");
+
+    const QByteArray content("{\"name\": \"tiles\"}\n");
+    // Data no decoder takes: an entry that is refused is not decoded
+    const QByteArray undecodable(64, 'x');
+
+    QTest::newRow("stored") << 0 << content << true << QString();
+    QTest::newRow("deflated") << 8 << TestFixtures::deflate(content) << true << QString();
+    // An xz entry that libarchive would decode, if the extraction let it
+    QTest::newRow("xz") << 95 << ArchiveFixtures::xzStream(content) << true << QStringLiteral("xz");
+    QTest::newRow("xz, refused by the filter") << 95 << ArchiveFixtures::xzStream(content) << false << QString();
+    QTest::newRow("lzma") << 14 << undecodable << true << QStringLiteral("lzma");
+    QTest::newRow("bzip2") << 12 << undecodable << true << QStringLiteral("bzip");
+    QTest::newRow("zstd") << 93 << undecodable << true << QStringLiteral("zstd");
+    QTest::newRow("ppmd") << 98 << undecodable << true << QStringLiteral("ppmd-1");
+    // Windows Explorer writes it for files larger than about 2 GB
+    QTest::newRow("deflate64") << 9 << undecodable << true << QStringLiteral("deflation-64-bit");
+    QTest::newRow("unknown method") << 200 << undecodable << true << QStringLiteral("an unknown method");
+}
+
+void QGCArchiveExtractionTest::_testZipCompressionMethods()
+{
+    QFETCH(int, method);
+    QFETCH(QByteArray, stored);
+    QFETCH(bool, accepted);
+    QFETCH(QString, refusedMethod);
+
+    // A stored entry before the one of the method: what it wrote is removed when the extraction fails
+    const QByteArray content("{\"name\": \"tiles\"}\n");
+    ArchiveFixtures::ZipWriter writer;
+    writer.add({.name = "first.txt", .deflated = false}, "first", ArchiveFixtures::crc32Of("first"), 5);
+    writer.add({.name = "tiles.db", .method = method}, stored, ArchiveFixtures::crc32Of(content),
+               static_cast<quint64>(content.size()));
+
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("methods.zip");
+    QVERIFY(TestFixtures::writeFile(archivePath, writer.finish()));
+    const QString outputDir = tempDir.filePath("output");
+    const Compression::Outcome outcome = Compression::extractArchive(
+        archivePath, outputDir, {.filter = [accepted](const Compression::ArchiveEntry& entry) {
+            return accepted || (entry.name != QLatin1String("tiles.db"));
+        }});
+
+    if (refusedMethod.isEmpty()) {
+        QVERIFY2(outcome, qPrintable(outcome.description()));
+        QCOMPARE(TestFixtures::readFile(QDir(outputDir).filePath("first.txt")), QByteArray("first"));
+        QCOMPARE(QFileInfo::exists(QDir(outputDir).filePath("tiles.db")), accepted);
+        if (accepted) {
+            QCOMPARE(TestFixtures::readFile(QDir(outputDir).filePath("tiles.db")), content);
+        }
+        return;
+    }
+
+    // The message tells the user why the archive cannot be imported, and the detail which entry and method
+    QCOMPARE(outcome.error, Compression::Error::UnsupportedFormat);
+    QVERIFY2(
+        outcome.message.endsWith(": an entry is compressed with a method other than deflate, which is not extracted"),
+        qPrintable(outcome.message));
+    QCOMPARE(outcome.detail, QStringLiteral("Entry tiles.db is compressed with %1").arg(refusedMethod));
+    QVERIFY(isOutputAsBefore(outputDir, false));
+}
+
+void QGCArchiveExtractionTest::_testZipEntryWithBadCrc_data()
+{
+    QTest::addColumn<bool>("deflated");
+
+    QTest::newRow("stored, a byte of the data changed") << false;
+    QTest::newRow("deflated, the CRC changed") << true;
+}
+
+void QGCArchiveExtractionTest::_testZipEntryWithBadCrc()
+{
+    QFETCH(bool, deflated);
+
+    // libarchive compares the CRC-32 of a ZIP entry with its data, unless told to ignore it: a stored entry whose
+    // data was changed, and a deflated one whose CRC was, are damaged
+    const QByteArray content("{\"name\": \"tiles\"}\n");
+    QByteArray stored = deflated ? TestFixtures::deflate(content) : content;
+    quint32 crc = ArchiveFixtures::crc32Of(content);
+    if (deflated) {
+        crc ^= 1U;
+    } else {
+        stored[2] = 'N';
+    }
+    ArchiveFixtures::ZipWriter writer;
+    writer.add({.name = "tiles.db", .deflated = deflated}, stored, crc, static_cast<quint64>(content.size()));
+
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("crc.zip");
+    QVERIFY(TestFixtures::writeFile(archivePath, writer.finish()));
+    const QString outputDir = tempDir.filePath("output");
+    const Compression::Outcome outcome = Compression::extractArchive(archivePath, outputDir);
+    QCOMPARE(outcome.error, Compression::Error::InvalidArchive);
+    QVERIFY2(outcome.detail.contains(QStringLiteral("ZIP bad CRC")), qPrintable(outcome.detail));
+    QVERIFY(isOutputAsBefore(outputDir, false));
+}
+
 void QGCArchiveExtractionTest::_testExtractArchiveFiltered()
 {
     QTemporaryDir tempDir;
@@ -1013,13 +1117,42 @@ void QGCArchiveExtractionTest::_testExtractSkipsSpellingsThatClash_data()
 {
     QTest::addColumn<QByteArray>("first");
     QTest::addColumn<QByteArray>("second");
-    QTest::addColumn<QString>("clash");  // The spelling the second entry clashes with, or empty if it does not
+    QTest::addColumn<QString>("clash");   // The spelling the second entry clashes with, or empty if it does not
+    QTest::addColumn<bool>("utf8Names");  // Whether the entries declare their names UTF-8
 
-    QTest::newRow("file in another case") << QByteArray("README.txt") << QByteArray("readme.txt") << "README.txt";
-    QTest::newRow("directory in another case") << QByteArray("Data/a.txt") << QByteArray("data/b.txt") << "Data";
-    QTest::newRow("different names") << QByteArray("one.txt") << QByteArray("two.txt") << QString();
+    QTest::newRow("file in another case")
+        << QByteArray("README.txt") << QByteArray("readme.txt") << "README.txt" << true;
+    QTest::newRow("directory in another case")
+        << QByteArray("Data/a.txt") << QByteArray("data/b.txt") << "Data" << true;
+#ifndef Q_OS_WIN
+    // "ü" as one code point (NFC), and as "u" and a combining diaeresis (NFD), as macOS writes names. libarchive
+    // makes a name that is declared UTF-8 NFC itself (NFD on macOS), and so the same name as the other, but not a
+    // name in the charset of the system, which Windows does not read: there libarchive is told to read every name as
+    // UTF-8
+    QTest::newRow("file in another normalisation") << QByteArray(
+                                                          "\xC3\xBC"
+                                                          "bersicht.txt")
+                                                   << QByteArray(
+                                                          "u\xCC\x88"
+                                                          "bersicht.txt")
+                                                   << QString::fromUtf8(
+                                                          "\xC3\xBC"
+                                                          "bersicht.txt")
+                                                   << false;
+    QTest::newRow("directory in another normalisation and case") << QByteArray(
+                                                                        "M\xC3\xBC"
+                                                                        "nchen/a.txt")
+                                                                 << QByteArray(
+                                                                        "MU\xCC\x88"
+                                                                        "NCHEN/b.txt")
+                                                                 << QString::fromUtf8(
+                                                                        "M\xC3\xBC"
+                                                                        "nchen")
+                                                                 << false;
+#endif
+    QTest::newRow("different names") << QByteArray("one.txt") << QByteArray("two.txt") << QString() << true;
     QTest::newRow("file below the same directory")
-        << QByteArray("dir/one.txt") << QByteArray("dir/two.txt") << QString();
+        << QByteArray("dir/one.txt") << QByteArray("dir/two.txt") << QString() << true;
 }
 
 void QGCArchiveExtractionTest::_testExtractSkipsSpellingsThatClash()
@@ -1027,12 +1160,14 @@ void QGCArchiveExtractionTest::_testExtractSkipsSpellingsThatClash()
     QFETCH(QByteArray, first);
     QFETCH(QByteArray, second);
     QFETCH(QString, clash);
+    QFETCH(bool, utf8Names);
 
     QTemporaryDir tempDir;
     const QString archivePath = tempDir.filePath("names.zip");
     const QString outputDir = tempDir.filePath("output");
     QVERIFY(TestFixtures::writeFile(
-        archivePath, ArchiveFixtures::makeZip({{.name = first, .data = "first"}, {.name = second, .data = "second"}})));
+        archivePath, ArchiveFixtures::makeZip({{.name = first, .data = "first", .utf8Name = utf8Names},
+                                               {.name = second, .data = "second", .utf8Name = utf8Names}})));
 
     if (!clash.isEmpty()) {
         expectLogMessage(
@@ -1054,6 +1189,19 @@ void QGCArchiveExtractionTest::_testExtractSkipsSpellingsThatClash()
         QCOMPARE(TestFixtures::readFile(outputDir + QLatin1Char('/') + QString::fromUtf8(second)),
                  QByteArray("second"));
     }
+}
+
+void QGCArchiveExtractionTest::_testSpellingsClashInAnotherNormalisation()
+{
+    // Whatever libarchive makes of the names: NFD after NFC, and NFC after NFD, in a file and in a directory
+    const QString composed = QString::fromUtf8("\xC3\xBC");
+    const QString decomposed = QString::fromUtf8("u\xCC\x88");
+    LibArchive::EntrySpellings spellings;
+    QVERIFY(spellings.claim(composed + QStringLiteral(".db")).isEmpty());
+    QCOMPARE(spellings.claim(decomposed + QStringLiteral(".db")), composed + QStringLiteral(".db"));
+    QVERIFY(spellings.claim(QStringLiteral("dir/") + decomposed + QStringLiteral("/a.db")).isEmpty());
+    QCOMPARE(spellings.claim(QStringLiteral("dir/") + composed + QStringLiteral("/b.db")),
+             QStringLiteral("dir/") + decomposed);
 }
 
 void QGCArchiveExtractionTest::_testSpellingsGrowWithNewComponentsOnly()

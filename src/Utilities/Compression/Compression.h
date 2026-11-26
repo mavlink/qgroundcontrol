@@ -80,6 +80,14 @@ namespace Compression {
 //   which a build with the decoder decodes. After a failure nothing is written and no data is returned.
 //   That includes a gzip stream whose data does not match the checksum and the length it ends with, which
 //   libarchive does not compare: the module checks them itself.
+// - Input that starts with the signature of a stream format is compressed. A signature is the whole magic number:
+//   1F 8B (gzip), FD 37 7A 58 5A 00 (xz), 28 B5 2F FD (Zstandard), 04 22 4D 18 or 02 21 4C 18 (LZ4), 50 to 5F
+//   2A 4D 18 (a skippable frame of Zstandard or LZ4), "BZh" and a digit from 1 to 9 (bzip2). If no decoder takes
+//   such input, because its header is truncated or damaged, it fails with Error::InvalidArchive, or with
+//   Error::UnsupportedFormat as above, and is not taken unchanged. So does decompressed data that starts so, and
+//   data after a gzip member that starts with 1F 8B but is no whole member. Input shorter than a signature, or with
+//   a byte of it changed, is taken as not compressed: a byte or two cannot be told from data, and a changed
+//   signature names no format. A legacy lzma stream has no signature.
 //
 // They ignore the file name: the content decides whether the input is compressed. A compressed archive (.tar.gz)
 // gives the uncompressed archive, also in a build that does not extract TAR, and a ZIP or 7z archive is taken
@@ -141,6 +149,14 @@ Outcome decompressData(const QByteArray& data, QByteArray& decompressed, qint64 
 /// - an entry whose path in the output directory is longer than the system allows (PATH_MAX). A build for Windows
 ///   defines no PATH_MAX and has no such check
 ///
+/// A ZIP entry that the filter accepts is extracted only if it is stored or deflated, as archivers write them. One
+/// compressed with any other method (xz, LZMA, bzip2, Zstandard, PPMd, Deflate64, ...) fails the extraction with
+/// Error::UnsupportedFormat, and the detail names the entry and the method: libarchive decodes those without a memory
+/// limit, and the dictionary of an xz or LZMA entry, up to 4 GiB, takes as much memory as the data written from it.
+/// An entry that the filter refuses is not decoded. A 7z archive is compressed with LZMA or LZMA2 by nature, which
+/// libarchive decodes in the same way, without a memory limit: its decoder can take as much memory as the archive
+/// declares. A TAR archive compressed as a whole is a single stream.
+///
 /// The name of an entry is read as UTF-8 unless the archive declares another charset for it. A backslash in it is
 /// a separator, as archivers on Windows write it, on every system: "Tiles\a.db" is "Tiles/a.db", and "..\a" leads
 /// outside. An entry replaces the file that an earlier entry of the same name wrote.
@@ -155,7 +171,8 @@ Outcome decompressData(const QByteArray& data, QByteArray& decompressed, qint64 
 ///
 /// The size limit counts the sizes of the files written. An entry that declares more than the rest of the limit
 /// fails the extraction before it is written. An entry that declares no size (as in a ZIP archive written to a
-/// stream) is stopped while it is written.
+/// stream) is stopped while it is written. Reading a ZIP archive also takes memory for its central directory, which
+/// libarchive holds whole: up to about 3.4 times the size of an archive that holds nothing but directory records.
 ///
 /// Whatever the limit, an extraction does not fill its disk: it leaves free at least a tenth of what it writes.
 /// This second limit is counted the same way, and exceeding it fails with Error::DiskSpaceExceeded. The archive

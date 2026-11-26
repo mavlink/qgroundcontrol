@@ -61,9 +61,10 @@ qint64 roomIn(const QString& directoryPath)
     return std::max<qint64>(1, available / 11 * 10);
 }
 
-/// Refuses a stream that this build cannot decode inside a stream that it decoded, such as .lzma inside gzip
+/// Refuses a stream that this build cannot decode inside a stream that it decoded, such as .lzma inside gzip, and
+/// one whose header is truncated or damaged
 /// The reader checks only the start of its input. libarchive passes an inner stream that no registered filter
-/// recognizes on as data, so the start of the decompressed data gets the same check.
+/// recognizes on as data, so the start of the decompressed data gets the same checks.
 class DecompressedStreamCheck
 {
 public:
@@ -89,8 +90,14 @@ public:
         }
         _pending = false;
         const QString reason = undecodableStreamReason(_start);
+        const QString damagedFormat = streamSignatureFormat(_start);
         _start.clear();
-        return reason.isEmpty() ? Result{} : failure(Error::UnsupportedFormat, reason);
+        if (!reason.isEmpty()) {
+            return failure(Error::UnsupportedFormat, reason);
+        }
+        return damagedFormat.isEmpty()
+                   ? Result{}
+                   : failure(Error::InvalidArchive, damagedStreamHeader(damagedFormat, "decompressed data"));
     }
 
 private:
@@ -171,6 +178,12 @@ Result copyStreamData(ArchiveReader& reader, DataTransfer& transfer, const DataS
         copied = reader.verifyInput();
     }
     return copied;
+}
+
+QString damagedStreamHeader(const QString& format, const char* what)
+{
+    return QStringLiteral("The %1 starts with the signature of a %2 stream, but its header is truncated or damaged")
+        .arg(QLatin1String(what), format);
 }
 
 Result writeFailure(const QString& path, const QString& detail)

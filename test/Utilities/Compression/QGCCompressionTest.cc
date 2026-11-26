@@ -378,8 +378,11 @@ void QGCCompressionTest::_testDecompressPlainInput_data()
 
     for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
         QTest::addRow("%s, text", api) << api << QByteArray("{\"name\": \"not compressed\"}\n");
-        // Too little to be the header of a compressed stream
-        QTest::addRow("%s, start of a gzip stream", api) << api << QByteArray("\x1F\x8B", 2);
+        // Shorter than the signature of a stream, or with a byte of it changed: data, not a stream
+        QTest::addRow("%s, first byte of the gzip signature", api) << api << QByteArray("\x1F", 1);
+        QTest::addRow("%s, five bytes of the xz signature", api) << api << QByteArray::fromHex("fd377a585a");
+        QTest::addRow("%s, xz signature with its last byte changed", api)
+            << api << QByteArray::fromHex("fd377a585a0100000000");
         QTest::addRow("%s, no bytes", api) << api << QByteArray();
     }
 }
@@ -1177,6 +1180,184 @@ void QGCCompressionTest::_testTruncatedStream()
     // The members before the cut are not returned as data, and nothing of them is kept on disk
     QVERIFY(results.isEmpty());
     QCOMPARE(ArchiveFixtures::entriesBelow(tempDir.path()), QStringList{QStringLiteral("cut.gz")});
+}
+
+namespace {
+
+/// A gzip member as gzip writes it for a file, with the name of the file in its header
+QByteArray gzipMemberWithName(const QByteArray& payload)
+{
+    const QByteArray member = TestFixtures::gzipMember(payload);
+    return QByteArray::fromHex("1f8b0808000000000003") + QByteArray("t.json", 7) + member.mid(10);
+}
+
+/// @a bytes with the byte at @a index set to @a value
+QByteArray withByte(QByteArray bytes, qsizetype index, quint8 value)
+{
+    bytes[index] = static_cast<char>(value);
+    return bytes;
+}
+
+}  // namespace
+
+void QGCCompressionTest::_testEveryPrefixOfAStream_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QByteArray>("stream");
+    QTest::addColumn<int>("signatureSize");
+    // Whether the build has the decoder: without it, a prefix may also be refused as UnsupportedFormat
+    QTest::addColumn<bool>("decoded");
+    // Size of a whole first member that the stream starts with, which a prefix of it and one more byte decodes to
+    // firstContent (0: none)
+    QTest::addColumn<int>("firstSize");
+    QTest::addColumn<QByteArray>("firstContent");
+
+    struct Sample
+    {
+        const char* label;
+        QByteArray stream;
+        int signatureSize;
+        bool decoded = true;
+        int firstSize = 0;
+        QByteArray firstContent = {};
+    };
+
+    const QByteArray content("{\"a\":1}\n");
+    const QByteArray member = TestFixtures::gzipMember(content);
+#ifdef QGC_ENABLE_ZSTD
+    constexpr bool zstd = true;
+#else
+    constexpr bool zstd = false;
+#endif
+#ifdef QGC_ENABLE_BZIP2
+    constexpr bool bzip2 = true;
+#else
+    constexpr bool bzip2 = false;
+#endif
+#ifdef QGC_ENABLE_LZ4
+    constexpr bool lz4 = true;
+#else
+    constexpr bool lz4 = false;
+#endif
+    const Sample samples[] = {
+        {"gzip", member, 2},
+        {"gzip with a file name", gzipMemberWithName(content), 2},
+        {"gzip of two members", member + gzipMemberWithName(content), 2, true, static_cast<int>(member.size()),
+         content},
+        {"xz", ArchiveFixtures::xzStream(content), 6},
+        // The streams of _testStreamInsideStream, which hold {"name": "zstd"} and so on
+        {"zstd", QByteArray::fromHex("28b52ffd00588900007b226e616d65223a20227a737464227d0a"), 4, zstd},
+        {"bzip2",
+         QByteArray::fromHex("425a6839314159265359299378be00000859800010500010103223401a2000229a62341ed50a600009a834a93"
+                             "23ce03fc5dc914e14240a64de2f80"),
+         4, bzip2},
+        {"lz4", QByteArray::fromHex("04224d18604082100000807b226e616d65223a20226c7a34227d0a00000000"), 4, lz4},
+    };
+    for (const Sample& sample : samples) {
+        for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+            QTest::addRow("%s, %s", sample.label, api)
+                << QString::fromLatin1(api) << sample.stream << sample.signatureSize << sample.decoded
+                << sample.firstSize << sample.firstContent;
+        }
+    }
+}
+
+void QGCCompressionTest::_testEveryPrefixOfAStream()
+{
+    QFETCH(QString, api);
+    QFETCH(QByteArray, stream);
+    QFETCH(int, signatureSize);
+    QFETCH(bool, decoded);
+    QFETCH(int, firstSize);
+    QFETCH(QByteArray, firstContent);
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("prefix.gz");
+    const QString outputPath = tempDir.filePath("prefix");
+    for (qsizetype size = 1; size < stream.size(); ++size) {
+        const QByteArray prefix = stream.first(size);
+        QVERIFY(TestFixtures::writeFile(inputPath, prefix));
+        Results results;
+        const Compression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
+        (void) QFile::remove(outputPath);
+        const QByteArray what = QByteArray::number(size) + " bytes: " + outcome.description().toUtf8();
+
+        if (size < signatureSize) {
+            // Too short to be told from data
+            QVERIFY2(outcome && (outcome.filterName == QLatin1String("none")), what.constData());
+            QVERIFY2(results.data == prefix, what.constData());
+        } else if ((firstSize > 0) && ((size == firstSize) || (size == (firstSize + 1)))) {
+            // A whole member, and then nothing or less than a signature
+            QVERIFY2(outcome, what.constData());
+            QVERIFY2(results.data == firstContent, what.constData());
+        } else {
+            // Truncated: not the bytes as if they were not compressed, and not the part before the cut
+            QVERIFY2((outcome.error == Compression::Error::InvalidArchive) ||
+                         (!decoded && (outcome.error == Compression::Error::UnsupportedFormat)),
+                     what.constData());
+            QVERIFY2(results.isEmpty(), what.constData());
+        }
+    }
+}
+
+void QGCCompressionTest::_testDamagedStreamHeader_data()
+{
+    QTest::addColumn<QByteArray>("stream");
+    // What the detail says, if the module and not libarchive finds the damage
+    QTest::addColumn<QString>("detail");
+
+    const QByteArray content("{\"a\":1}\n");
+    const QByteArray member = TestFixtures::gzipMember(content);
+    const QByteArray xz = ArchiveFixtures::xzStream(content);
+    const QString damagedGzip =
+        QStringLiteral("The input starts with the signature of a gzip stream, but its header is truncated or damaged");
+
+    // A gzip member: the method (always 8, deflate), and the flags, whose top three bits are reserved
+    QTest::newRow("gzip, method 7") << withByte(member, 2, 7) << damagedGzip;
+    QTest::newRow("gzip, method 9") << withByte(member, 2, 9) << damagedGzip;
+    for (const quint8 flags : {0x20, 0x40, 0x80, 0xE0}) {
+        QTest::addRow("gzip, flags %02x", flags) << withByte(member, 3, flags) << damagedGzip;
+    }
+    // The same damage to a second member, which libarchive takes for the end of the stream
+    QTest::newRow("gzip, method 9 in the second member") << (member + withByte(member, 2, 9)) << QString();
+    QTest::newRow("gzip, flags e0 in the second member") << (member + withByte(member, 3, 0xE0)) << QString();
+    // An xz stream: its flags, and the checksum of its header
+    QTest::newRow("xz, flags") << withByte(xz, 6, 1) << QString();
+    QTest::newRow("xz, header checksum") << withByte(xz, 8, static_cast<quint8>(xz.at(8) ^ 0x01)) << QString();
+    // An LZ4 frame: the version in its descriptor, which libarchive's bid checks
+    QTest::newRow("lz4, version") << QByteArray::fromHex(
+                                         "04224d18204082100000807b226e616d65223a20226c7a34227d0a00000000")
+                                  << QString();
+    // A stream inside a stream: its header is damaged or cut where the outer stream ends
+    const QString damagedInner = QStringLiteral(
+        "The decompressed data starts with the signature of a gzip stream, but its header is truncated or damaged");
+    QTest::newRow("gzip, method 9, in gzip") << TestFixtures::gzipMember(withByte(member, 2, 9)) << damagedInner;
+    QTest::newRow("gzip signature in xz") << ArchiveFixtures::xzStream(member.first(5)) << damagedInner;
+}
+
+void QGCCompressionTest::_testDamagedStreamHeader()
+{
+    QFETCH(QByteArray, stream);
+    QFETCH(QString, detail);
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("damaged.gz");
+    QVERIFY(TestFixtures::writeFile(inputPath, stream));
+
+    const QString outputPath = tempDir.filePath("damaged");
+    for (const char* api : {"decompressFile", "decompressData", "readFile"}) {
+        Results results;
+        const Compression::Outcome outcome = _call(api, {.path = inputPath, .output = outputPath}, &results);
+        // Not the damaged bytes as if they were not compressed, nor what came before the damage
+        QVERIFY2((outcome.error == Compression::Error::InvalidArchive) ||
+                     (outcome.error == Compression::Error::UnsupportedFormat),
+                 qPrintable(QStringLiteral("%1: %2").arg(QLatin1String(api), outcome.description())));
+        QVERIFY2(results.isEmpty(), api);
+        if (!detail.isEmpty()) {
+            QCOMPARE(outcome.error, Compression::Error::InvalidArchive);
+            QCOMPARE(outcome.detail, detail);
+        }
+    }
 }
 
 void QGCCompressionTest::_testGzipChecksums_data()

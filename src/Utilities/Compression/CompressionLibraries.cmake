@@ -166,6 +166,9 @@ if(LibLZMA_ADDED)
         message(FATAL_ERROR "liblzma target not found")
     endif()
     qgc_compression_publish(LIBLZMA liblzma "${LibLZMA_SOURCE_DIR}/src/liblzma/api" LibLZMA::LibLZMA)
+    # xz gives its target no include directory in the build tree: what includes <lzma.h>
+    # would find no header, or the one of another liblzma that is installed
+    target_include_directories(liblzma SYSTEM INTERFACE "$<BUILD_INTERFACE:${LibLZMA_SOURCE_DIR}/src/liblzma/api>")
     set(LIBLZMA_INCLUDE_DIRS
         "${LibLZMA_SOURCE_DIR}/src/liblzma/api"
         CACHE PATH "" FORCE

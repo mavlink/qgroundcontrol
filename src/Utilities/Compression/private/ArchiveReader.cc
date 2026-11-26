@@ -167,6 +167,7 @@ Result ArchiveReader::_create(Input input, const QByteArray& signature)
         if (const QString reason = undecodableStreamReason(signature); !reason.isEmpty()) {
             return failure(Error::UnsupportedFormat, reason);
         }
+        _streamStart = signature;
     }
 
     _archive.reset(archive_read_new());

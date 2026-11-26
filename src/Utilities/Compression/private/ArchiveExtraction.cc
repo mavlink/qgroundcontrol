@@ -4,6 +4,7 @@
 #include <archive_entry.h>
 #include <climits>
 
+#include <QtCore/QByteArrayView>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -112,6 +113,29 @@ bool skipSpecialEntry(struct archive_entry* entry)
 bool skipSparseEntry(struct archive_entry* entry)
 {
     return (archive_entry_sparse_count(entry) > 0) && logSkipped(entry, "sparse file");
+}
+
+/// libarchive's name of the compression method of the current ZIP entry, if an extraction does not decode it
+/// libarchive gives the decoders of a ZIP entry no memory limit: an xz, LZMA or PPMd entry can make its decoder hold
+/// as much memory as the data it writes. Archivers write entries stored or deflated, whose decoder needs 32 KiB, and
+/// only those are decoded. libarchive tells the method only in the name of the format, which it sets at each local
+/// header ("ZIP 2.0 (deflation)", archive_read_support_format_zip.c): a name that does not show one of the two
+/// refuses the entry.
+/// @return An empty string for an entry that is not of a ZIP archive, or stored, or deflated
+QString undecodedZipMethod(struct archive* a)
+{
+    if ((archive_format(a) & ARCHIVE_FORMAT_BASE_MASK) != ARCHIVE_FORMAT_ZIP) {
+        return {};
+    }
+    const char* const formatName = archive_format_name(a);
+    const QByteArrayView name = (formatName != nullptr) ? QByteArrayView(formatName) : QByteArrayView();
+    if (name.startsWith("ZIP ") && (name.endsWith(" (uncompressed)") || name.endsWith(" (deflation)"))) {
+        return {};
+    }
+    const qsizetype methodStart = name.lastIndexOf('(') + 1;
+    const QByteArrayView method =
+        ((methodStart > 0) && name.endsWith(')')) ? name.sliced(methodStart).chopped(1) : name;
+    return (method.isEmpty() || (method == "??")) ? QStringLiteral("an unknown method") : QString::fromLatin1(method);
 }
 
 // ============================================================================
@@ -261,6 +285,12 @@ Result Extraction::_extractEntry(struct archive_entry* entry)
     }
     if (_options.filter && !_options.filter(toArchiveEntry(entry))) {
         return {};
+    }
+    // An encrypted entry fails when it is read, before any decoder runs: no passphrase is ever given
+    if (const QString method = undecodedZipMethod(_reader.handle());
+        !method.isEmpty() && (archive_entry_is_data_encrypted(entry) == 0)) {
+        return failure(Error::UnsupportedFormat,
+                       QStringLiteral("Entry %1 is compressed with %2").arg(shownName(pathnameOf(entry)), method));
     }
 
     const QString path = _entryPath(entry);

@@ -52,10 +52,17 @@ Result copyEntryData(ArchiveReader& reader, DataTransfer& transfer, const DataSi
 
 /// Copy the data of a single stream, the one entry of its reader, to a sink, then check what libarchive does not
 /// As copyEntryData(). The data that a filter decompressed must not start with a stream that this build cannot
-/// decode, which libarchive passes on as data (UnsupportedFormat, as ArchiveReader::open() refuses such input), and
+/// decode, which libarchive passes on as data (UnsupportedFormat, as ArchiveReader::open() refuses such input), nor
+/// with the signature of a stream that no filter took (InvalidArchive: its header is truncated or damaged), and
 /// the input must match its checksums (ArchiveReader::verifyInput())
-/// @return As copyEntryData(), UnsupportedFormat, or InvalidArchive for input that does not match its checksums
+/// @return As copyEntryData(), UnsupportedFormat, or InvalidArchive for a damaged inner stream or for input that
+///         does not match its checksums
 Result copyStreamData(ArchiveReader& reader, DataTransfer& transfer, const DataSink& sink);
+
+/// Detail of the failure of a stream that starts with the signature of @a format (streamSignatureFormat()), but
+/// that no filter took
+/// @param what What starts so: "input", or "decompressed data" for a stream inside a stream
+QString damagedStreamHeader(const QString& format, const char* what);
 
 /// Failure for a file or a directory that could not be created at @a path: PermissionDenied if writing there is not
 /// permitted, IoError otherwise

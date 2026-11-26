@@ -55,7 +55,11 @@ constexpr std::initializer_list<OptionalReader> kOptionalReaders = {
 #endif
 };
 
-// Bytes that streams start with, which kFormats and LibArchive::undecodableStreamReason() look for
+// Bytes that streams start with, which kFormats, LibArchive::undecodableStreamReason() and
+// LibArchive::streamSignatureFormat() look for
+constexpr QByteArrayView kGzipSignature = "\x1F\x8B";
+// "\xFD7zXZ" and a zero byte. The size is explicit because a view of a literal stops at its first zero
+constexpr QByteArrayView kXzSignature = {"\xFD\x37\x7A\x58\x5A\x00", 6};
 constexpr QByteArrayView kBzip2Signature = "BZh";
 constexpr QByteArrayView kZstdSignature = "\x28\xB5\x2F\xFD";
 constexpr QByteArrayView kLz4Signature = "\x04\x22\x4D\x18";
@@ -82,9 +86,8 @@ constexpr FormatInfo kFormats[] = {
     // ZIP: local file header, empty archive, spanned archive
     {Kind::Archive, {".zip"}, {"PK\x03", "PK\x05", "PK\x07"}},
     {Kind::Archive, {".7z"}, {"7z\xBC\xAF\x27\x1C"}, OptionalFormat::SevenZip},
-    {Kind::Stream, {".gz", ".gzip"}, {"\x1F\x8B"}},
-    // xz: "\xFD7zXZ" and a zero byte. The size is explicit because a view of a literal stops at its first zero
-    {Kind::Stream, {".xz"}, {{"\xFD\x37\x7A\x58\x5A\x00", 6}}},
+    {Kind::Stream, {".gz", ".gzip"}, {kGzipSignature}},
+    {Kind::Stream, {".xz"}, {kXzSignature}},
     // A legacy lzma stream starts with no signature
     {Kind::Stream, {".lzma"}, {}, OptionalFormat::Lzma},
     {Kind::Stream, {".zst", ".zstd"}, {kZstdSignature}, OptionalFormat::Zstd},
@@ -351,6 +354,37 @@ void configureReader(struct archive* a, Input input)
         // The raw format refuses input that is empty once it is decompressed: the empty format reads that
         archive_read_support_format_empty(a);
     }
+}
+
+QString streamSignatureFormat(QByteArrayView start)
+{
+    struct Signature
+    {
+        QByteArrayView bytes;
+        const char* format;
+    };
+
+    constexpr Signature kSignatures[] = {
+        {Compression::kGzipSignature, "gzip"},      {Compression::kXzSignature, "xz"},
+        {Compression::kZstdSignature, "Zstandard"}, {Compression::kLz4Signature, "LZ4"},
+        {Compression::kLz4LegacySignature, "LZ4"},
+    };
+    for (const Signature& signature : kSignatures) {
+        if (start.startsWith(signature.bytes)) {
+            return QString::fromLatin1(signature.format);
+        }
+    }
+    if (start.size() < 4) {
+        return {};
+    }
+    if ((qFromLittleEndian<quint32>(start.data()) & kSkippableMask) == kSkippableMagic) {
+        return QStringLiteral("Zstandard or LZ4");
+    }
+    // "BZh" alone also starts text, and the block size that follows it is a part of the signature
+    if (start.startsWith(Compression::kBzip2Signature) && (start.at(3) >= '1') && (start.at(3) <= '9')) {
+        return QStringLiteral("bzip2");
+    }
+    return {};
 }
 
 QString undecodableStreamReason(const QByteArray& signature, Compression::OptionalFormats decoders)

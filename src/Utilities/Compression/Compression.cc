@@ -187,6 +187,17 @@ Outcome extractArchive(const QString& archivePath, const QString& outputDirector
                                                               "Ends a message that tells what failed"),
                 .detail = extracted.detail};
     }
+    if (extracted.error == Error::UnsupportedFormat) {
+        return {
+            .error = Error::UnsupportedFormat,
+            .message = what + QCoreApplication::translate(
+                                  "Compression",
+                                  ": an entry is compressed with a method other than deflate, which is not extracted",
+                                  "Ends a message that tells what failed"),
+            .detail = extracted.detail,
+            .filterName = extracted.filterName,
+            .skippedEntries = extracted.skippedEntries};
+    }
     return operationOutcome(extracted, what);
 }
 

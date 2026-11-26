@@ -28,7 +28,7 @@ public:
     void feed(const char* bytes, qint64 size);
 
     /// Whether the bytes given so far are whole members that match their checksums, and maybe other data after
-    /// them
+    /// them that does not start with the magic number of a member
     bool isSound() const { return !_damaged && !_inMember; }
 
     /// Whether the bytes given so far end inside a member
@@ -38,7 +38,7 @@ public:
     qint64 inflatedSize() const { return _inflatedSize; }
 
 private:
-    static constexpr qsizetype kMemberStartSize = 4;
+    static constexpr qsizetype kMemberStartSize = 2;  ///< The magic number
 
     bool _begin();
 

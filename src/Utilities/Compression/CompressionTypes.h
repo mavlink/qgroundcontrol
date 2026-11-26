@@ -24,7 +24,8 @@ enum class Error
     InvalidArchive,     ///< Archive or compressed stream cannot be read or is damaged
     UnsupportedFormat,  ///< Input in a format that the build does not enable: a single stream of legacy lzma,
                         ///< Zstandard, bzip2 or LZ4, or an archive whose name or signature shows that it is 7z or
-                        ///< TAR, or a TAR compressed with Zstandard, bzip2 or LZ4
+                        ///< TAR, or a TAR compressed with Zstandard, bzip2 or LZ4. Also a ZIP entry to extract that
+                        ///< is compressed with another method than deflate, which no build extracts
     SizeLimitExceeded,  ///< Decompressed size exceeds the limit
     Cancelled,          ///< Operation cancelled by progress callback
     IoError,            ///< Output cannot be written, or is the input file

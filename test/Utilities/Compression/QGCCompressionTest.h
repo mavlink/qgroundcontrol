@@ -39,6 +39,8 @@ private slots:
     UT_PARAMETERIZED_TEST(_testStreamInsideStream);
     void _testRefusalRulesAgreeWithLibarchive();
     UT_PARAMETERIZED_TEST(_testTruncatedStream);
+    UT_PARAMETERIZED_TEST(_testEveryPrefixOfAStream);
+    UT_PARAMETERIZED_TEST(_testDamagedStreamHeader);
     UT_PARAMETERIZED_TEST(_testGzipChecksums);
     void _testDecompressDataInPlace();
     void _testPlainDataIsShared();

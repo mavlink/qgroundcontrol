@@ -8,13 +8,14 @@ The application uses it for:
 
 - files and data that may be compressed, which are decompressed where they are read: parameter
   metadata, terrain tiles, and any JSON that `JsonParsing::isJsonFile()` reads. The component metadata of a
-  vehicle, its translations, its events metadata and camera definitions are downloaded as they are sent, also
-  into the caches, and read so;
+  vehicle, its translations and its events metadata are downloaded and cached as they are sent, and read so. A
+  camera definition is downloaded as it is sent, and cached decompressed once it has loaded;
 - offline map tile sets imported from an archive (`QGCMapEngineManager`).
 
-QGC decompresses a file where it reads it, and keeps a download as it was sent. `QGCFileDownload` can also
-decompress a download into a file (`autoDecompress`, also through `QGCCachedFileDownload`) for a caller that needs
-the decompressed file on disk. It is off by default, and nothing in QGC turns it on.
+QGC decompresses a file where it reads it, and keeps no decompressed copy of a download but the camera definitions
+it caches. `QGCFileDownload` can also decompress a download into a file (`autoDecompress`, also through
+`QGCCachedFileDownload`) for a caller that needs the decompressed file on disk. It is off by default, and nothing in
+QGC turns it on.
 
 ## What it reads
 
@@ -31,6 +32,12 @@ ZIP archives; the other formats are kept for later use.
 `Compression.h` is the one header to include, and with `CompressionTypes.h` and `CompressionJob.h` the contract of
 the module: what each function reads and writes, its limits, what it leaves after a failure, and on which thread it
 runs. Read them before you use it; this file does not repeat them.
+
+The functions block, and QGC calls them by one rule. A file that a vehicle sends or points to, and the ArduPilot
+firmware list, are read on a worker thread (`QGC::runOnWorker()`): their size is not QGC's to choose. Work that can
+take minutes, or that the user follows and can cancel, such as the import of a tile set, runs as a `CompressionJob`.
+A small local file (also parameter metadata that QGC cached), a Qt resource or a small block of data in memory is
+read in place.
 
 ## Layout
 

@@ -18,6 +18,8 @@ namespace {
 /// recognizes, which it passes through unchanged. It has no entry for input that is empty once decompressed. The
 /// reader reads that with libarchive's empty format, whose first header is the end of the archive. This covers
 /// the stream a compressor writes for an empty file, and a file without any bytes.
+/// A filter takes a stream only once its header is whole and sound. Input that starts with the signature of a stream
+/// that no filter took is a damaged stream, not data, and fails.
 /// @param hasData Set if the input is one entry, whose data can now be read
 Result readStreamHeader(ArchiveReader& reader, bool& hasData)
 {
@@ -30,6 +32,9 @@ Result readStreamHeader(ArchiveReader& reader, bool& hasData)
 
     reader.captureFilter();
     if (archive_filter_count(a) <= 1) {
+        if (const QString format = streamSignatureFormat(reader.streamStart()); !format.isEmpty()) {
+            return failure(Error::InvalidArchive, damagedStreamHeader(format, "input"));
+        }
         qCDebug(LibArchiveLog) << "Input is not compressed: it is taken as it is";
     }
     hasData = (header == ARCHIVE_OK);

@@ -153,6 +153,12 @@ if(NOT TARGET qgc_compression_fuzz_smoke)
         ../Utilities/Compression/Fuzz/QGCCompressionFuzzSmoke.cc
     )
     qgc_add_bid_agreement(qgc_compression_fuzz_smoke)
+    target_link_libraries(
+        qgc_compression_fuzz_smoke
+        PRIVATE
+            ZLIB::ZLIB
+            LibLZMA::LibLZMA
+    )
 endif()
 add_dependencies(portable-tests qgc_compression_fuzz_smoke)
 add_test(

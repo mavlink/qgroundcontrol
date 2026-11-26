@@ -13,6 +13,7 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QtEndian>
 
 #include "../ArchiveFixtures.h"
 #include "Compression.h"
@@ -24,6 +25,29 @@ struct Seed
     QString name;
     QByteArray bytes;
 };
+
+/// A ZIP archive of one entry whose data is stored as @a stored, and extracts to @a content
+QByteArray zipOfOneEntry(const ArchiveFixtures::ZipEntry& entry, const QByteArray& stored, const QByteArray& content)
+{
+    ArchiveFixtures::ZipWriter writer;
+    writer.add(entry, stored, ArchiveFixtures::crc32Of(content), static_cast<quint64>(content.size()));
+    return writer.finish();
+}
+
+/// @a zip, an archive of one entry, with the record of the central directory repeated @a count times
+QByteArray withCentralRecordRepeated(const QByteArray& zip, quint16 count)
+{
+    // The record that ends the archive: 22 bytes, with the count of records at 8 and 10, the size of the central
+    // directory at 12 and its offset at 16
+    constexpr qsizetype kEndRecordSize = 22;
+    const qsizetype directoryOffset = qFromLittleEndian<quint32>(zip.constData() + zip.size() - 6);
+    const QByteArray record = zip.mid(directoryOffset, zip.size() - kEndRecordSize - directoryOffset);
+    QByteArray end = zip.last(kEndRecordSize);
+    qToLittleEndian<quint16>(count, end.data() + 8);
+    qToLittleEndian<quint16>(count, end.data() + 10);
+    qToLittleEndian<quint32>(static_cast<quint32>(record.size() * count), end.data() + 12);
+    return zip.first(directoryOffset) + record.repeated(count) + end;
+}
 
 /// The seeds of the fuzzer: the compressed files and archives of the Compression tests and damaged copies of them,
 /// the start of each format, streams of several parts, and archives whose entries an extraction must refuse or that
@@ -44,7 +68,24 @@ QList<Seed> seeds(const QDir& resourceDirectory, bool& resourcesRead)
         {"gzip-stored", QByteArray::fromHex("1f8b0800000000000003010700f8ff73746f7265640ae29c53a507000000")},
         {"gzip-changed-checksum", QByteArray::fromHex("1f8b08000000000000034bcb2c2a2ee102007fb34ac706000000")},
         {"gzip-data-after", QByteArray::fromHex("1f8b08000000000000034bcb2c2a2ee102002ab34ac706000000") + "trailing"},
+        // Headers that libarchive's gzip filter does not take, so that it would pass the bytes on as data: cut after
+        // the method, with method 9, with reserved flags, and a second member cut after its method
+        {"gzip-header-cut", QByteArray::fromHex("1f8b080000")},
+        {"gzip-method-9", QByteArray::fromHex("1f8b09000000000000034bcb2c2a2ee102002ab34ac706000000")},
+        {"gzip-reserved-flags", QByteArray::fromHex("1f8b08e00000000000034bcb2c2a2ee102002ab34ac706000000")},
+        {"gzip-second-member-cut", QByteArray::fromHex("1f8b08000000000000034bcb2c2a2ee102002ab34ac706000000"
+                                                       "1f8b08")},
+        // A header with its checksum (FHCRC), which zlib checks and libarchive skips, right and wrong
+        {"gzip-header-crc", QByteArray::fromHex("1f8b08020000000000ff90c94bcb2c2a2ee102002ab34ac706000000")},
+        {"gzip-header-crc-wrong", QByteArray::fromHex("1f8b08020000000000ff91c94bcb2c2a2ee102002ab34ac706000000")},
         {"xz-signature", QByteArray::fromHex("fd377a585a00") + QByteArray(32, 'x')},
+        // A block header behind its CRC-32, which mutation does not reach: it declares a dictionary of 1.5 GiB, which
+        // liblzma allocates and fills only as far as data is decoded. More than libarchive lets a legacy lzma stream
+        // declare, and less than the 2 GiB that libFuzzer lets one allocation take
+        {"xz-large-dictionary",
+         QByteArray::fromHex(
+             "fd377a585a0000016922de3602002101250000003b787b4101001c7b226e616d65223a20226c61726765206469"
+             "6374696f6e617279227d0a000000004b333dbb0001311d40dedd859042990d010000000001595a")},
         {"zstd-signature", QByteArray::fromHex("28b52ffd") + QByteArray(32, 'x')},
         // A skippable frame, which Zstandard and LZ4 share, alone and before a frame of each that holds "hi\n"
         {"skippable-only", QByteArray::fromHex("502a4d1804000000") + "skip"},
@@ -80,6 +121,14 @@ QList<Seed> seeds(const QDir& resourceDirectory, bool& resourcesRead)
         {"zip-overstated",
          ArchiveFixtures::makeZip(
              {{.name = "manifest.json", .data = QByteArray(512, 'x'), .deflated = false, .declaredSize = 1 << 30}})},
+        // A thousand records of the central directory, which libarchive holds in memory, that all name one entry
+        {"zip-many-records", withCentralRecordRepeated(ArchiveFixtures::makeZip({{.name = "a", .data = "{}"}}), 1000)},
+        // An entry compressed with xz, which an extraction refuses without decoding it
+        {"zip-xz-entry",
+         zipOfOneEntry({.name = "manifest.json", .method = 95},
+                       QByteArray::fromHex("fd377a585a000000ff12d9410200210116000000742fe5a30100017b7d00000000011202d4"
+                                           "a47cb606729e7a010000000000595a"),
+                       "{}")},
         {"tar", ArchiveFixtures::makeTar({{.name = "manifest.json", .data = "{}"}, {.name = "folder/", .type = '5'}})},
         {"tar-names", ArchiveFixtures::makeTar({{.name = "../escape.txt", .data = "escape"},
                                                 {.name = "/tmp/qgc-fuzz-absolute.txt", .data = "absolute"},
@@ -192,6 +241,18 @@ bool refusesInputAsOutput(const QByteArray& stream)
            (readFile(path) == stream);
 }
 
+/// Whether an extraction of @a archive fails as one of an entry whose compression method is not extracted, and
+/// leaves nothing
+bool refusesCompressionMethod(const QByteArray& archive)
+{
+    const QTemporaryDir directory;
+    const QString archivePath = directory.filePath(QStringLiteral("archive"));
+    const QString outputPath = directory.filePath(QStringLiteral("output"));
+    return writeFile(archivePath, archive) &&
+           (Compression::extractArchive(archivePath, outputPath).error == Compression::Error::UnsupportedFormat) &&
+           !QFileInfo::exists(outputPath);
+}
+
 /// Whether decompressing @a stream gives @a content, or fails and gives nothing if @a content is null
 bool decompressesTo(const QByteArray& stream, const char* content)
 {
@@ -262,16 +323,29 @@ int main(int argc, char* argv[])
             return 1;
         }
     }
+    if (!refusesCompressionMethod(seedBytes("zip-xz-entry"))) {
+        std::fputs("zip-xz-entry: the entry compressed with xz was not refused\n", stderr);
+        return 1;
+    }
     if (!refusesInputAsOutput(seedBytes("gzip-stored"))) {
         std::fputs("gzip-stored: a decompression onto the input file was not refused, or changed the file\n", stderr);
         return 1;
     }
-    // What each gzip seed decompresses to: nothing for the one whose checksum does not match
-    const std::pair<const char*, const char*> gzipSeeds[] = {{"gzip-two-members", "first\nsecond\n"},
-                                                             {"gzip-stored", "stored\n"},
-                                                             {"gzip-changed-checksum", nullptr},
-                                                             {"gzip-data-after", "first\n"}};
-    for (const auto& [name, content] : gzipSeeds) {
+    // What each gzip or xz seed decompresses to: nothing for those whose checksum does not match or whose header is
+    // damaged
+    const std::pair<const char*, const char*> streamSeeds[] = {
+        {"gzip-two-members", "first\nsecond\n"},
+        {"gzip-stored", "stored\n"},
+        {"gzip-changed-checksum", nullptr},
+        {"gzip-data-after", "first\n"},
+        {"gzip-header-cut", nullptr},
+        {"gzip-method-9", nullptr},
+        {"gzip-reserved-flags", nullptr},
+        {"gzip-second-member-cut", nullptr},
+        {"gzip-header-crc", "first\n"},
+        {"gzip-header-crc-wrong", nullptr},
+        {"xz-large-dictionary", "{\"name\": \"large dictionary\"}\n"}};
+    for (const auto& [name, content] : streamSeeds) {
         if (!decompressesTo(seedBytes(name), content)) {
             std::fprintf(stderr, "%s: decompression did not give what the stream holds\n", name);
             return 1;

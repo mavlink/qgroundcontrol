@@ -54,6 +54,9 @@ struct ZipEntry
     bool utf8Name = true;      ///< makeZip(): whether the flag that declares the name UTF-8 is set
     qint64 declaredSize = -1;  ///< makeZip(): size the headers give the extracted data (-1 = the size of the data)
     qint64 modified = 0;       ///< makeZip(): modification time in seconds since the epoch, in UTC (0 = none)
+    /// ZipWriter::add(): compression method the headers give, for data that is already compressed with it (-1 = 8,
+    /// deflate, or 0, stored, as deflated says)
+    int method = -1;
 };
 
 /// Header block of a tar entry that declares @a dataSize bytes of data, which need not be the size of its data
@@ -169,7 +172,7 @@ public:
         QByteArray shared;
         append<quint16>(shared, version);
         append<quint16>(shared, entry.utf8Name ? 0x0800 : 0x0000);
-        append<quint16>(shared, entry.deflated ? 8 : 0);
+        append<quint16>(shared, static_cast<quint16>((entry.method >= 0) ? entry.method : (entry.deflated ? 8 : 0)));
         append<quint16>(shared, 0x0000);  // Time and date: 1 January 1980, 00:00
         append<quint16>(shared, 0x0021);
         append<quint32>(shared, crc);

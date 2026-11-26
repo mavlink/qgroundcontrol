@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
 #include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
@@ -120,6 +121,10 @@ public:
     /// @return Success, or InvalidArchive if the data does not match its checksums
     Result verifyInput();
 
+    /// Start of the input of a single stream: its first kStreamSignatureSize bytes, or all of a shorter input. Empty
+    /// for an archive
+    QByteArrayView streamStart() const { return _streamStart; }
+
     /// Detected compression filter: "gzip", "xz", "zstd", ... or "none"
     /// Empty if no header has been read
     QString filterName() const { return _filterName; }
@@ -136,6 +141,7 @@ private:
 
     // Declared before _archive, which reads from them, so that _archive is destroyed first
     QByteArray _memoryData;            // The bytes given to open()
+    QByteArray _streamStart;           // See streamStart()
     QFile _file;                       // The file of a path given to open()
     FileSource _source;                // What the read callbacks are given of the file
     std::unique_ptr<GzipCheck> _gzip;  // Checks the bytes read from the file
@@ -160,7 +166,8 @@ QString libarchiveError(struct archive* a);
 // its input with a reader of its own, and returns the filter it detected in Result::filterName and an error that is
 // one of:
 //   None               Everything requested was read to its end, and written if it was to be written
-//   UnsupportedFormat  Single stream only: this build cannot decode the compression of the input. An archive
+//   UnsupportedFormat  Single stream: this build cannot decode the compression of the input. Extraction: an entry
+//                      of a ZIP archive is compressed with another method than store or deflate. An archive
 //                      whose format this build lacks fails with InvalidArchive, and Result::unrecognized set
 //   IoError            The output directory or a file in it could not be written
 //   PermissionDenied   As IoError, because writing to the output is not permitted

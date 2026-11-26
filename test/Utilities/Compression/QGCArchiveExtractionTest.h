@@ -12,6 +12,8 @@ private slots:
     UT_PARAMETERIZED_TEST(_testExtractFromResource);
     UT_PARAMETERIZED_TEST(_testArchiveOfManyEntries);
     UT_PARAMETERIZED_TEST(_testEncryptedArchive);
+    UT_PARAMETERIZED_TEST(_testZipCompressionMethods);
+    UT_PARAMETERIZED_TEST(_testZipEntryWithBadCrc);
     void _testExtractArchiveFiltered();
     void _testProgressCallbackExtract();
     UT_PARAMETERIZED_TEST(_testTruncatedArchive);
@@ -32,6 +34,7 @@ private slots:
     UT_PARAMETERIZED_TEST(_testExtractRejectsEscapingNames);
     UT_PARAMETERIZED_TEST(_testExtractSkipsNamesThatAreNotPortable);
     UT_PARAMETERIZED_TEST(_testExtractSkipsSpellingsThatClash);
+    void _testSpellingsClashInAnotherNormalisation();
     void _testSpellingsGrowWithNewComponentsOnly();
     UT_PARAMETERIZED_TEST(_testExtractTakesBackslashForSeparator);
     void _testExtractCountsSkippedEntries();

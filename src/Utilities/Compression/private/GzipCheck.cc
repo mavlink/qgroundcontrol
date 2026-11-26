@@ -27,9 +27,10 @@ void GzipCheck::feed(const char* bytes, qint64 size)
             continue;
         }
 
-        // A member starts with a magic number, the method, which is always deflate, and flags of which the
-        // top three are not used. Anything else is not gzip data, and ends the stream as it does for
-        // libarchive
+        // A member starts with the magic number. Data after a member that does not is not gzip data, and ends the
+        // stream as it does for libarchive. Data that does is a member, which must be whole and sound, also where
+        // libarchive takes its header, truncated or with another method or reserved flags, for the end of the
+        // stream: zlib refuses such a header
         const qint64 wanted = std::min<qint64>(size, kMemberStartSize - _start.size());
         _start.append(bytes, static_cast<qsizetype>(wanted));
         bytes += wanted;
@@ -38,8 +39,7 @@ void GzipCheck::feed(const char* bytes, qint64 size)
             return;
         }
         const QByteArray start = std::exchange(_start, {});
-        const bool isMember = (start.at(0) == '\x1F') && (start.at(1) == '\x8B') && (start.at(2) == '\x08') &&
-                              ((static_cast<quint8>(start.at(3)) & 0xE0) == 0);
+        const bool isMember = (start.at(0) == '\x1F') && (start.at(1) == '\x8B');
         if (!isMember || !_begin()) {
             _ended = true;
             return;
