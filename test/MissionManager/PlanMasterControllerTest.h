@@ -27,6 +27,7 @@ private slots:
     void _testFileAssociationClearedOnRemoveAllFromVehicle();
     void _testSaveUpdatesFileName();
     void _testFailedLoadClearsFileAssociation();
+    void _testLoadErrorNamesFile();
     UT_PARAMETERIZED_TEST(_testPlanFileReadAsIs);
     void _testDownloadClearsFileAssociation();
     void _testBackgroundSyncPreservesFileAssociation();

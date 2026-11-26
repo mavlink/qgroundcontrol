@@ -573,7 +573,8 @@ void FTPManager::_createFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
         _advanceStateMachine();
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         qCDebug(FTPManagerLog) << "_createFileAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
-        _uploadComplete(tr("Upload failed for: %1 - error: %2").arg(_uploadState.fullPathOnVehicle).arg(_errorMsgFromNak(ackOrNak)));
+        _uploadComplete(
+            tr("Upload failed for: %1 - error: %2").arg(_uploadState.fullPathOnVehicle, _errorMsgFromNak(ackOrNak)));
     }
 }
 
@@ -683,7 +684,8 @@ void FTPManager::_writeFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
         }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         qCDebug(FTPManagerLog) << "_writeFileAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
-        _uploadComplete(tr("Upload failed for: %1 - error: %2").arg(_uploadState.fullPathOnVehicle).arg(_errorMsgFromNak(ackOrNak)));
+        _uploadComplete(
+            tr("Upload failed for: %1 - error: %2").arg(_uploadState.fullPathOnVehicle, _errorMsgFromNak(ackOrNak)));
     }
 }
 

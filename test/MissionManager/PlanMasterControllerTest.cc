@@ -452,6 +452,21 @@ void PlanMasterControllerTest::_testPlanFileReadAsIs()
     QVERIFY(_masterController->currentPlanFile().isEmpty());
 }
 
+void PlanMasterControllerTest::_testLoadErrorNamesFile()
+{
+    // A file name may hold what looks like a placeholder of the message
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString planPath = tempDir.filePath(QStringLiteral("Bad%1%2.plan"));
+    QVERIFY(TestFixtures::writeFile(planPath, QByteArrayLiteral("{ not valid json")));
+
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Error loading Plan file \\(") +
+                                        QRegularExpression::escape(planPath) + QStringLiteral("\\)\\. [^%]")));
+    _masterController->loadFromFile(planPath);
+    verifyExpectedLogMessage();
+}
+
 void PlanMasterControllerTest::_testDownloadClearsFileAssociation()
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");

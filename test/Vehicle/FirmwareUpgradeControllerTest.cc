@@ -368,6 +368,25 @@ QString FirmwareUpgradeControllerTest::_difference(const FirmwareList& actual, c
     return {};
 }
 
+void FirmwareUpgradeControllerTest::_manifestFriendlyNameKeepsBrandName()
+{
+    // A brand name from the manifest may hold what looks like a placeholder
+    QJsonObject entry = QJsonDocument::fromJson(arduPilotManifest(42))
+                            .object()[QStringLiteral("firmware")]
+                            .toArray()
+                            .first()
+                            .toObject();
+    entry[QStringLiteral("brand_name")] = QStringLiteral("Brand %1%2");
+
+    FirmwareUpgradeController controller;
+    stopManifestDownload(controller);
+    const auto info = FirmwareUpgradeController::_manifestFirmwareInfo(
+        entry, controller._manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap,
+        controller._manifestMavTypeToFirmwareVehicleTypeMap);
+    QVERIFY(info.has_value());
+    QCOMPARE(info->friendlyName, QStringLiteral("Brand %1%2 - 4.5.0"));
+}
+
 void FirmwareUpgradeControllerTest::_manifestEntriesAreThoseOfTheWholeManifest()
 {
     // The list is the one QGC built when it parsed the whole manifest, from the compressed file as it is downloaded

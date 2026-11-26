@@ -28,6 +28,7 @@ private slots:
     void _testListDirectoryBadSequence();
     void _testListDirectoryCancel();
     void _testUpload();
+    void _testUploadNakNamesPath();
     void _testFailedDownloadResetsSession();
     void _testDownloadClearsStaleSession();
     void _testDownloadProceedsWhenResetUnanswered();

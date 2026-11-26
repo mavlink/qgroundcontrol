@@ -29,6 +29,7 @@ private slots:
     void _px4ReleasesCompleteNonArrayJsonKeepsPreviousVersions();
     void _px4ReleasesCompleteOnlyStableKeepsBetaEmpty();
     void _binImageSizeMustBeMultipleOf4();
+    void _manifestFriendlyNameKeepsBrandName();
 
 private:
     using FirmwareList = QList<FirmwareUpgradeController::ManifestFirmwareInfo_t>;

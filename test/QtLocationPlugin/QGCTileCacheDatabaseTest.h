@@ -47,6 +47,7 @@ private slots:
     void _testPruneCacheCleansSetTiles();
     void _testDeleteTileSetCleansTiles();
     void _testImportSetsMergeDeduplicatesName();
+    void _testDeduplicatedNameKeepsMarkers();
     void _testGetTileDownloadListBatch();
     void _testSaveTileLinksToDifferentSet();
     void _testExportImportNoLingeringConnections();

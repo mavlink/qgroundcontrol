@@ -915,6 +915,26 @@ void FTPManagerTest::_testUpload()
     _disconnectMockLink();
 }
 
+void FTPManagerTest::_testUploadNakNamesPath()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNakResponse);
+    // A path on the vehicle may hold what looks like a placeholder of the message
+    const QString remotePath(QStringLiteral("/mock/upload/a%1b%2.bin"));
+    QTemporaryFile tempFile;
+    QVERIFY(tempFile.open());
+    QCOMPARE(tempFile.write("data"), 4);
+    tempFile.close();
+    QObject owner;
+    Result result;
+    QVERIFY(_vehicle->ftpManager()->upload(&owner, MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName(),
+                                           _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QVERIFY2(result.error.startsWith(QStringLiteral("Upload failed for: %1 - error: ").arg(remotePath)),
+             qPrintable(result.error));
+    _disconnectMockLink();
+}
+
 FTPRequest* FTPManagerTest::_queueSizeFile(QObject* owner, int fileSize, Result& result, QStringList* order,
                                            const QString& name)
 {

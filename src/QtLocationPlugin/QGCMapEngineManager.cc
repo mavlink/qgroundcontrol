@@ -249,7 +249,7 @@ void QGCMapEngineManager::renameTileSet(QGCCachedTileSet *tileSet, const QString
     int idx = 1;
     QString name = newName;
     while (findName(name)) {
-        name = QString("%1 (%2)").arg(newName).arg(idx++);
+        name = QString("%1 (%2)").arg(newName, QString::number(idx++));
     }
 
     qCDebug(QGCMapEngineManagerLog) << "Renaming tile set" << tileSet->name() << "to" << name;

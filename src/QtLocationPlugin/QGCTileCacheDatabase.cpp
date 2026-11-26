@@ -1637,7 +1637,7 @@ QString QGCTileCacheDatabase::_deduplicateSetName(const QString &name)
     }
 
     for (int i = 1; i <= 9999; i++) {
-        const QString candidate = QStringLiteral("%1 %2").arg(name).arg(i, 4, 10, QChar('0'));
+        const QString candidate = QStringLiteral("%1 %2").arg(name, QStringLiteral("%1").arg(i, 4, 10, QChar('0')));
         if (!existing.contains(candidate)) {
             return candidate;
         }

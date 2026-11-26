@@ -1119,6 +1119,41 @@ void QGCTileCacheDatabaseTest::_testImportSetsMergeDeduplicatesName()
     QVERIFY(foundDeduped);
 }
 
+void QGCTileCacheDatabaseTest::_testDeduplicatedNameKeepsMarkers()
+{
+    // A name the user gave may hold what looks like a placeholder
+    const QString name = QStringLiteral("Area %1%2");
+    QTemporaryDir tempDir;
+    const QString exportPath = tempDir.filePath(QStringLiteral("marker_export.db"));
+    {
+        auto source = _createInitializedDB(tempDir);
+        QVERIFY(source);
+        quint64 setID = 0;
+        _insertTileSet(source.get(), name, setID);
+        QVERIFY(source->saveTile(QStringLiteral("marker_tile"), QStringLiteral("png"), QByteArray(30, 'M'),
+                                 kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet));
+        const auto tileID = source->findTile(QStringLiteral("marker_tile"));
+        QVERIFY(tileID.has_value());
+        _linkTileToSet(source.get(), tileID.value(), setID);
+        TileSetRecord record;
+        for (const TileSetRecord& set : source->getTileSets()) {
+            if (set.name == name) {
+                record = set;
+            }
+        }
+        record.numTiles = 1;
+        QVERIFY(source->exportSets({record}, exportPath, nullptr).success);
+    }
+
+    QGCTileCacheDatabase target(tempDir.filePath(QStringLiteral("marker_target.db")));
+    QVERIFY(target.init());
+    QVERIFY(target.connectDB());
+    quint64 existingID = 0;
+    _insertTileSet(&target, name, existingID);
+    QVERIFY(target.importSetsMerge(exportPath, nullptr).success);
+    QVERIFY(target.findTileSetID(name + QStringLiteral(" 0001")).has_value());
+}
+
 void QGCTileCacheDatabaseTest::_testGetTileDownloadListBatch()
 {
     QTemporaryDir tempDir;

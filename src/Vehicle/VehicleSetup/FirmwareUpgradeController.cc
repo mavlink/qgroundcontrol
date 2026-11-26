@@ -1201,6 +1201,6 @@ std::optional<FirmwareUpgradeController::ManifestFirmwareInfo_t> FirmwareUpgrade
 
     QString brandName = firmwareJson[_manifestBrandNameKey].toString();
     firmwareInfo.friendlyName =
-        QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
+        QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName, firmwareInfo.version);
     return firmwareInfo;
 }
