@@ -506,14 +506,11 @@ QGC with.
   the prefix and merges their libraries, plugins and programs into it with `lipo`; headers and
   other files are the arm64 build's.
 
-The Linux build was run, for GStreamer 1.28.9 on x86_64 in an Ubuntu 24.04 container that had only
-the `gstreamer_build` packages. Its `libav` plugin decodes H.264, H.265, MPEG-2, MPEG-4 and H.263
-samples and its `va` plugin lists the host's VA decoders. A Debug QGC configures and builds against
-the prefix and loads every GStreamer library from it, and its 37 video test classes pass. What
-they skip for lack of something in the build is the three tests of an H.265 stream, which
-MockLink's server encodes with the GPL `x265enc`, and four table rows naming a decoder it has not
-(`avdec_wnv1`, `avdec_dsicinvideo`, `vaapih264dec`, `vulkanh264dec`). The macOS and Windows builds
-were not run.
+Only the Linux build has been run (GStreamer 1.28.9, x86_64, Ubuntu 24.04 with only the
+`gstreamer_build` packages). A Debug QGC built against its prefix loads every GStreamer library from
+it, and its video tests skip only what the build leaves out: the H.265 streams MockLink's server
+encodes with the GPL `x265enc`, and the decoder table rows of decoders the build doesn't have. The
+macOS and Windows builds have not been run.
 
 `build_gstreamer.py --platform android` and `--platform ios` build the SDK that the official package
 holds, with [Cerbero](https://gitlab.freedesktop.org/gstreamer/cerbero) at the tag of the GStreamer
@@ -534,11 +531,9 @@ version, for a debug or patched SDK. Cerbero leaves package files, which the scr
   system packages with `sudo`, and runs only on the Linux distributions it knows: not on Linux Mint
   22.3, for one.
 
-No Cerbero build has been run through the script. What it does with Cerbero's packages is checked
-with the official Android package, which Cerbero makes with the same command: QGC builds for
-Android against that package as the script unpacks it. Its command lines are checked against
-Cerbero 1.28.9's parser. The iOS steps were not run: the official iOS package has the name and
-layout of what Cerbero's `xcframework` command writes.
+No Cerbero build has been run through the script. Its unpacking has been run on the official
+Android package, which Cerbero makes with the same command, and QGC builds for Android against the
+result; its iOS steps have not been run.
 
 ```bash
 # Linux: Install all dependencies

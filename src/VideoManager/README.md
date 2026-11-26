@@ -5,8 +5,8 @@ interface, `VideoReceiver`: GStreamer's (`GstVideoReceiver`), Qt Multimedia's (`
 camera's (`UVCCameraController`). A build with `QGC_ENABLE_FFMPEG_VIDEO` has a fourth, experimental one on FFmpeg
 (`FFmpegVideoReceiver`, [FFmpeg/README.md](FFmpeg/README.md)).
 
-This page is a map of the folders. [GStreamer/README.md](GStreamer/README.md) is the guide to the GStreamer backend,
-and also says how the sources and tiles of `VideoManager` behave.
+This page is a map of the folders and the rules of the application layer. [GStreamer/README.md](GStreamer/README.md) is
+the guide to the GStreamer backend.
 
 ## Where to start reading
 
@@ -30,7 +30,8 @@ and also says how the sources and tiles of `VideoManager` behave.
   run of its initialization (`VideoBackendInit`), the reconnect policy (`StreamSupervisor`), the files of a recording
   (`RecordingPlan`), screenshots, stream statistics and URI schemes. No receiver that plays anything is here: those
   are in the next four folders.
-- `GStreamer/`: the GStreamer backend, listed below.
+- `GStreamer/`: the GStreamer backend, whose folders [its README](GStreamer/README.md#source-code-architecture)
+  lists.
 - `QtMultimedia/`: `QtMultimediaVideoReceiver`, a stream played by `QMediaPlayer`: in builds without GStreamer, by
   choice (`VideoSettings::videoBackend`), or once GStreamer failed to start. Also `QtVideoRecorder`, the
   `QMediaRecorder` that it and the USB camera record with, and `SharedVideoFrame`.
@@ -43,19 +44,6 @@ and also says how the sources and tiles of `VideoManager` behave.
   controller (`OnScreenCameraTrackingController`), and the statistics and settings groups. `src/FlyView`,
   `src/FlightMap/Widgets`, `src/Toolbar` and the video settings page import it.
 
-Inside `GStreamer/`:
-
-- `GStreamerVideoBackend`: the `VideoBackend`, the only way the app reaches GStreamer.
-- `Runtime/`: what must be up before a pipeline runs (initialization, environment, logging, decoder ranks), and the
-  helpers the other folders use.
-- `Source/`: the source bins, from a stream's URI to its parsed stream (`GstSourceFactory`).
-- `Pipeline/`: the receiver, its worker, and a `PipelineSession` with a `DecodingBranch` and a `RecordingBranch`.
-- `Sink/`: the display sink: `QGCQVideoSinkController` and QGC's video sink with its bin (`Sink/gstqgc/`).
-- `HwBuffers/`: how a decoded frame becomes a `QVideoFrame` without a copy: the `HwBuffers` facade, a folder for each
-  GPU path, and `common/`, which the paths share.
-- `SelfTest/`: the boot self-test and the encoded samples it decodes and records (`Media/`).
-- `Platform/`: two C files for Android and iOS.
-
 Video code outside this folder: `src/Settings/VideoSettings`, `src/Camera/QGCVideoStreamInfo` (a stream a camera
 advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) and
 `src/Comms/MockLink/MockVideoStreamServer` (MockLink's test stream).
@@ -65,19 +53,62 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 - `VideoSettings` is read by `VideoManager.cc`, `Streams/`, `Recording/VideoRecordingService.cc` and
   `Receiver/VideoBackend.cc` (the backend setting) only, and the vehicle and its cameras are known to `Telemetry/`
   and `Streams/` only. A receiver gets a `VideoReceiver::Config` and a `VideoReceiver::DisplayConfig`.
-- `Receiver/` names a backend in one place, `VideoBackend::instance()`.
-- A stream's receiver is chosen in one place, `VideoBackend::createReceiver()`: GStreamer's where the build has it,
-  it started and the backend setting asks for it, FFmpeg's where the build has it and the setting asks for it, else
-  Qt Multimedia's. `VideoManager` reaches it through `QGCCorePlugin::createVideoReceiver()`, which a custom build
-  overrides to supply its own.
+- `Receiver/` names the backends in one file, `VideoBackend.cc`: `VideoBackend::instance()` is GStreamer's backend
+  where the build has it, and `VideoBackend::createReceiver()` chooses a stream's receiver: GStreamer's where the build
+  has it, it hasn't failed to start and the backend setting asks for it, FFmpeg's where the build has it and the
+  setting asks for it, else Qt Multimedia's. `VideoManager` reaches it through `QGCCorePlugin::createVideoReceiver()`,
+  which a custom build overrides to supply its own.
 - The backends include each other in one place: `UVC/` records with `QtMultimedia/QtVideoRecorder`.
-- Inside `GStreamer/` the includes point one way: `GStreamerVideoBackend` and `SelfTest/`, then `Pipeline/`, then
-  `Source/` and `Sink/QGCQVideoSinkController`, then `Runtime/`.
-- `HwBuffers/` and `Sink/gstqgc/` are the static library `QGCGStreamer`, which is not a unity build. Of the folders
-  above they include one header, `Runtime/GstScoped.h`. Everything else is compiled into the application, which CI
-  builds as unity units: a file-local name must not repeat in another `.cc` of the application.
 - With `QGC_ENABLE_GST_VIDEOSTREAMING` off, nothing of `GStreamer/` is built, and streams play through `QtMultimedia/`.
 - With `QGC_ENABLE_FFMPEG_VIDEO` off, which is the default, nothing of `FFmpeg/` is built.
+- Inside `GStreamer/`, [its README](GStreamer/README.md#source-code-architecture) says which way the includes point.
+
+## Sources and tiles
+
+`VideoManager` is the QML facade of the video sources, each a `VideoStreamController` with a receiver of its own: the
+primary stream, the thermal stream, the USB camera, and one for each other stream shown in a tile beside the main
+picture (`Qml/VideoTiles.qml`, `Qml/VideoTile.qml`). Its class comment says which streams take the tiles.
+
+- There are no tiles, and so none of their sources, until a row of tiles that is shown tells its room
+  (`VideoManager::tileRoom`): the Fly View shows the row only while the video is its main view, not in the
+  picture-in-picture. A row that is no longer shown tells that it has no room once it has been out of view for 15 s
+  (`VideoStreamController::kIdleGrace`), so a video that changes places with the map and back within that time finds
+  the tiles' streams playing.
+- A stream at an address (its URI, or the UDP port it is listened for on) that a stream on display already has gets no
+  source: a camera sends such streams one at a time.
+- When the vehicle's current stream becomes one that plays in a tile, as after `VideoManager::selectSource()`, that
+  tile's source becomes the primary stream and the former primary stream takes the tile: both keep their receivers,
+  and neither stream restarts. A stream that plays in no tile is played by the primary stream, whose receiver connects
+  to it.
+- A QML `VideoOutput` registers with the source it shows (`Qml/VideoStreamOutput.qml`). One that registers as another
+  one leaves takes the source over, so a source moves between the main picture and a tile without its receiver being
+  without an output, which would take the decoder out of its pipeline. A tile's source has an output only while the
+  tile is shown: hidden, its stream is received but not decoded, until its row tells that it has no room.
+- The thermal stream is the active vehicle's: its current camera's (`thermalStreamInstance()`) or, when that camera
+  has none, that of the first of its other cameras that has one. That is how mavlink-camera-manager sends it, which
+  makes a camera component of each stream, with stream id 1, and flags the thermal one `THERMAL` and not `RUNNING`. A
+  current camera that advertises thermal streams only has no current stream: the primary stream then plays its
+  thermal stream, in place of the video source of the settings, and there is no thermal stream
+  (`VehicleVideoStreams::_readStreams()`).
+- The thermal stream plays only while it is in use: while its view is on, which gives it an output, and from
+  `startRecording()` until its recording has ended. Out of use for `kIdleGrace` its receiver is deactivated, and
+  activated again with the next use: its picture then waits for the stream to connect and send a keyframe.
+- On Android and iOS no source has an output while the app is in the background (`Qt::ApplicationHidden` or
+  `Qt::ApplicationSuspended`): nothing is decoded there. The streams are still received and recorded, for as long as
+  the system lets them arrive: on Android, a foreground service keeps the app's network up while a recording runs
+  (`AndroidInterface::setBackgroundWork()`).
+- The vehicle's cameras are told which of their streams play besides their current one
+  (`MavlinkCameraControlInterface::setExtraStreams()`): those in tiles, and a camera's thermal stream while the source
+  that plays it wants it (`VideoStreamController::wantsStream()`), which the thermal stream out of use doesn't.
+  `VehicleCameraControl` asks the camera to transmit them (`MAV_CMD_VIDEO_START_STREAMING`) and to stop those that left
+  (`MAV_CMD_VIDEO_STOP_STREAMING`), and neither stops nor starts a stream that stays on display when the current stream
+  changes.
+- While the video is off, stopped (`VideoManager::stopVideo()`) or disabled for a disarmed vehicle
+  (`VideoSettings::disableWhenDisarmed`), the vehicle's current camera is told to stop transmitting its stream
+  (`stopStream()`), and none of its streams is named as an extra one: a stream pushed to a UDP port would otherwise
+  cross the vehicle's link with nobody receiving it. The camera is told to resume (`resumeStream()`) once the video
+  plays again.
+- Recordings and photos are of the main picture and its thermal stream, not of the tiles.
 
 ## A frame, from the network to the screen
 
@@ -103,25 +134,25 @@ of its own, Qt's `QFFmpegVideoBuffer` makes a `QVideoFrame` of each frame (`FFmp
 with the source's `VideoStreamController`.
 
 Each layer counts for itself (`GStreamer/Pipeline/PipelineStatsProbe`, `GStreamer/Source/GstRtpPacketProbe`,
-`GStreamer/Sink/gstqgc/GstQgcSinkStats`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`,
-`UVC/UVCCameraController`),
-and `Receiver/VideoStreamStatsMeter` and `Receiver/VideoStreamStatsSampler` make the `VideoStreamStats` of the
-counters that `Qml/VideoStreamStatsGroup.qml` shows.
+`GStreamer/Sink/gstqgc/GstQgcSinkStats`, `GStreamer/HwBuffers/common/GstHwPathTelemetry`, and the other receivers
+themselves), and `Receiver/VideoStreamStatsMeter` and `Receiver/VideoStreamStatsSampler` make the `VideoStreamStats` of
+the counters that `Qml/VideoStreamStatsGroup.qml` shows.
 
 ## A recording
 
 1. `VideoManager::startRecording()` calls `Recording/VideoRecordingService`, which picks the file name, applies the
    storage limit and calls `VideoStreamController::startRecording()` for the main picture and the thermal stream,
-   which connects for it if its view is off. While a recording runs the service refuses another start. It refuses one
-   as well, and stops a recording that runs, while less than `VideoRecordingService::kFreeSpaceFloor` (256 MiB) is free
-   on the volume of the video save directory: it looks at a start and every 10 s while recording, and a start short
-   of space first waits for the storage limit's pruning, which runs on the thread pool. Free space that isn't known
-   stops nothing.
+   which connects for it if its view is off, so that its file starts a moment after the main picture's. While a
+   recording runs the service refuses another start, with a warning logged. It refuses one as well, and stops a
+   recording that runs, while less than `VideoRecordingService::kFreeSpaceFloor` (256 MiB) is free on the volume of the
+   video save directory: it looks at a start and every 10 s while recording, and a start short of space first waits
+   for the storage limit's pruning, which runs on the thread pool. Free space that isn't known stops nothing.
 2. GStreamer: `GstReceiverWorker` follows a `Receiver/RecordingPlan`, which names the parts a recording continues in,
    and `GStreamer/Pipeline/RecordingBranch` writes each file (parser, muxer, file sink): in Matroska, as `<base>.mkv`,
    when the format asked for can't hold the stream's codec.
 3. Qt Multimedia and the USB camera: `QtMultimedia/QtVideoRecorder` encodes the stream's decoded frames, or the
-   camera's capture session.
+   camera's capture session. A start they refuse, their recorder being in use, comes back as `recordingFinished()`
+   with the reason.
 4. FFmpeg: `FFmpeg/FFmpegVideoReceiver` follows a `Receiver/RecordingPlan` too, and `FFmpeg/FFmpegStreamRecorder`
    copies the stream's packets into each file with libavformat's muxers, on a thread of its own.
 5. `recordingStarted(file)` starts `Recording/SubtitleWriter` for that file, and `recordingFinished()` stops it.
@@ -141,13 +172,13 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 - `forceVideoDecoder`: the decoder ranks are applied again, and the sources restart.
 - `videoBackend`: each stream gets a new receiver.
 - The USB camera's settings (`uvcCameraFormat`, `uvcZoom` and the like) go to `UVCCameraController`. The recording
-  format and the storage limit are read when a recording starts.
+  settings are read when a recording starts, the storage limit also each minute while one runs.
 
 ## What is platform-specific
 
 - `GStreamer/HwBuffers/`: `d3d/` is for Windows, `apple/` for macOS and iOS, `dmabuf/` for Linux, `gl/` for Linux and
-  Android; `android/` is built only on request. `GStreamer/HwBuffers/CMakeLists.txt`
-  has the table of the paths with their conditions.
+  Android; `android/` is built only on request. `GStreamer/HwBuffers/CMakeLists.txt` has the table of the paths with
+  their conditions.
 - `GStreamer/Platform/`, which `cmake/GStreamer/platform/Android.cmake` and `cmake/platform/Apple.cmake` compile.
 - `cmake/GStreamer/`: how each platform's GStreamer SDK is found, downloaded and installed.
 - `#if` blocks in `GStreamer/Runtime/GStreamerEnvironment.cc` (the layout of each platform's install) and
@@ -163,13 +194,10 @@ counters that `Qml/VideoStreamStatsGroup.qml` shows.
 manager and its sources; it and `VideoQmlTest` share their fixture, `VideoManagerTestBase`.
 [GStreamer/README.md](GStreamer/README.md#automated-tests) lists the GStreamer classes and says how to run them.
 
-`VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common. Each of
-its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream: a port nobody sends
-to yet, a stream lost with and without auto-reconnect, a restart, a recording ended by stopping the stream, and one
-asked for before the stream's first frame. What a backend does on its own stays in its tests. The Qt Multimedia
-receiver's are `QtMultimediaVideoReceiverTest`, which needs neither a stream nor GStreamer, and
-`QtMultimediaVideoReceiverStreamTest`, which plays the streams of `MockVideoStreamServer`. That class and the contract
-test are built only with GStreamer, which sends their streams. So are the classes in `test/VideoManager/FFmpeg/`, which
-are built with `QGC_ENABLE_FFMPEG_VIDEO` as well: `FFmpegVideoReceiverStreamTest`, the experimental FFmpeg receiver's
-(the contract test doesn't hold that receiver to it), and `VideoReceiverDelayTest`, which measures the delay of one
-stream through each of the three network receivers.
+`VideoReceiverContractTest` (`test/VideoManager/Receiver/`) holds both receivers to what they have in common: each of
+its cases runs against the GStreamer and the Qt Multimedia receiver with the same H.264 RTP stream. What a backend does
+on its own stays in its tests. The Qt Multimedia receiver's are `QtMultimediaVideoReceiverTest`, which needs neither a
+stream nor GStreamer, and `QtMultimediaVideoReceiverStreamTest`, which plays the streams of `MockVideoStreamServer`.
+That class and the contract test are built only with GStreamer, which sends their streams. So are the classes in
+`test/VideoManager/FFmpeg/`, which are built with `QGC_ENABLE_FFMPEG_VIDEO` as well
+([FFmpeg/README.md](FFmpeg/README.md#tests)): the contract test doesn't hold the experimental FFmpeg receiver to it.

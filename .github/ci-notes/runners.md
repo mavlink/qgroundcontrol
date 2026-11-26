@@ -82,8 +82,8 @@ runner debugging. The [CI overview](../ci-overview.md) has the contributor-facin
 
 ## Build Timelines and Runner Debugging
 
-- The build and test jobs of Linux (Release, coverage and sanitizers, custom plugin, opt-in GPU
-  paths), Windows, macOS, Android, iOS, and Docker register `Kesin11/actions-timeline` before
+- The build and test jobs of Linux (Release, coverage and sanitizers, custom plugin, video without
+  GPU paths), Windows, macOS, Android, iOS, and Docker register `Kesin11/actions-timeline` before
   checkout, adding runner queueing and step timing to the job summary. Windows's
   `gstreamer-tests` and Linux's `appimage-distros` jobs register none. Each timeline is a snapshot
   at that job's completion; matrix siblings may still be running, and nested composite steps stay

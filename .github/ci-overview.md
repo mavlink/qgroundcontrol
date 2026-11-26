@@ -58,7 +58,7 @@ Packages = files that `publish.yml` publishes.
 
 | Workflow | Triggers | Purpose | Publishes |
 | --- | --- | --- | --- |
-| `linux.yml` | all | AppImages, coverage and sanitizer test legs, custom plugin, compile check of the GPU video path variants, translation extraction check | Packages; coverage to Codecov |
+| `linux.yml` | all | AppImages, coverage and sanitizer test legs, custom plugin, compile check of the video build without GPU paths, translation extraction check | Packages; coverage to Codecov |
 | `windows.yml` | all | Installers, portable and GStreamer tests | Packages |
 | `macos.yml` | all | Universal DMG (signed and notarized outside PRs), Debug test leg | Packages |
 | `android.yml` | all | APKs, emulator boot test, Android Lint, Java unit tests | Packages; Play Store: beta on `master`, 20% production rollout on tags |

@@ -48,8 +48,9 @@ Video settings page; the streams restart with the new receiver.
 - Reconnects as the Qt Multimedia receiver does: a stream that fails, or sends nothing, or shows no picture, for the
   config's timeout. A UDP port nobody sends to yet is listened on for as long as it takes.
 - Records the stream as it arrives, without re-encoding (`encodesRecordings()` is false), from the next keyframe, also
-  with no output. MP4 and MOV are fragmented at each keyframe (`movflags frag_keyframe+empty_moov`), so a crash loses
-  the last fragment only. A reconnect, and each hour, continue the recording in the next part.
+  with no output. MP4 and MOV are fragmented at each keyframe
+  (`movflags +frag_keyframe+empty_moov+default_base_moof`), so a crash loses the last fragment only. A reconnect, and
+  each hour, continue the recording in the next part.
 - Statistics: frame rate, bitrate from the packets, frames dropped, codec, decoder, whether frames are in GPU memory,
   keyframe interval, uptime and reconnects, recording time and size.
 
