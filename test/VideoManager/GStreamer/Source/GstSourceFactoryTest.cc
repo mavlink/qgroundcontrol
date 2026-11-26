@@ -138,11 +138,23 @@ void GstSourceFactoryTest::_testIsValidRtspUri()
     QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("rtsp://"));
 }
 
+void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer_data()
+{
+    QTest::addColumn<int>("latencyMs");
+    QTest::addColumn<guint>("expectedLatency");
+
+    QTest::newRow("latency") << 80 << 80u;
+    QTest::newRow("negative-latency-clamped") << -100 << 0u;
+}
+
 void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
 {
+    QFETCH(int, latencyMs);
+    QFETCH(guint, expectedLatency);
+
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
-    config.latencyMs = 80;
+    config.latencyMs = latencyMs;
     config.doRetransmission = true;
 
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
@@ -151,11 +163,11 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
     const GStreamer::GstElementPtr jb = GstTest::findByFactory(bin.get(), "rtpjitterbuffer");
     QVERIFY2(jb, "static UDP-RTP path must insert an rtpjitterbuffer at NULL state");
 
-    guint latency = 0;
+    guint latency = 99999;
     gboolean doLost = TRUE, doRtx = TRUE, dropOnLatency = FALSE;
     g_object_get(jb.get(), "latency", &latency, "do-lost", &doLost, "do-retransmission", &doRtx, "drop-on-latency",
                  &dropOnLatency, nullptr);
-    QCOMPARE(latency, 80u);
+    QCOMPARE(latency, expectedLatency);
     QVERIFY2(!doLost, "as in rtspsrc's jitter buffers: nothing downstream acts on the events about lost packets");
     QVERIFY2(!doRtx, "plain UDP has no RTCP back-channel, so retransmission requests could never reach the sender");
     QCOMPARE(dropOnLatency, TRUE);
@@ -457,16 +469,31 @@ void GstSourceFactoryTest::_testSourceFactoryRtspCredentials()
     QVERIFY(!noUser || (noUser[0] == '\0'));
 }
 
+void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("warning");
+
+    QTest::newRow("empty") << QString() << QStringLiteral("URI is not specified");
+    QTest::newRow("unsupported-scheme") << QStringLiteral("ftp://127.0.0.1/x")
+                                        << QStringLiteral("Unsupported URI scheme");
+    QTest::newRow("udp-without-port") << QStringLiteral("udp://127.0.0.1") << QStringLiteral("Invalid port in");
+    QTest::newRow("udp-port-out-of-range")
+        << QStringLiteral("udp://127.0.0.1:99999") << QStringLiteral("Invalid port in");
+    QTest::newRow("tcp-without-port") << QStringLiteral("tcp://192.168.1.50") << QStringLiteral("Invalid port in");
+    QTest::newRow("tcp-without-host") << QStringLiteral("tcp://:5600") << QStringLiteral("Missing host in");
+    QTest::newRow("tcp-port-zero") << QStringLiteral("tcp://192.168.1.50:0") << QStringLiteral("Invalid port in");
+    QTest::newRow("rtsp-without-host") << QStringLiteral("rtsp://") << QStringLiteral("Invalid RTSP URI");
+}
+
 void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri()
 {
-    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("URI is not specified|Unsupported URI scheme|Invalid port in")));
+    QFETCH(QString, uri);
+    QFETCH(QString, warning);
 
-    GStreamer::SourceFactory::Config config;
-    QVERIFY(!GstTest::createSource(QString(), config));
-    QVERIFY(!GstTest::createSource(QStringLiteral("ftp://127.0.0.1/x"), config));
-    QVERIFY(!GstTest::createSource(QStringLiteral("udp://127.0.0.1"), config));
-    QVERIFY(!GstTest::createSource(QStringLiteral("udp://127.0.0.1:99999"), config));
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg, QRegularExpression(warning));
+
+    QVERIFY(!GstTest::createSource(uri, GStreamer::SourceFactory::Config{}));
 }
 
 void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
@@ -492,19 +519,6 @@ void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
 
     QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
     QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
-}
-
-void GstSourceFactoryTest::_testSourceFactoryRejectsBadTcpUri()
-{
-    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Invalid port in|Missing host in")));
-
-    GStreamer::SourceFactory::Config config;
-    QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://192.168.1.50"), config),
-             "tcp:// without a port must be rejected");
-    QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://:5600"), config), "tcp:// without a host must be rejected");
-    QVERIFY2(!GstTest::createSource(QStringLiteral("tcp://192.168.1.50:0"), config),
-             "tcp:// with port 0 must be rejected");
 }
 
 void GstSourceFactoryTest::_testSourceFactoryUdpRtp_data()
@@ -652,20 +666,6 @@ void GstSourceFactoryTest::_testSourceFactoryMpegTsLatency()
     QCOMPARE(latency, demuxLatencyMs);
 }
 
-void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
-{
-    GStreamer::SourceFactory::Config config;
-    config.latencyMs = -100;
-    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
-    QVERIFY(bin);
-
-    const GStreamer::GstElementPtr jb = GstTest::findByFactory(bin.get(), "rtpjitterbuffer");
-    QVERIFY(jb);
-    guint latency = 99999;
-    g_object_get(jb.get(), "latency", &latency, nullptr);
-    QCOMPARE(latency, 0u);
-}
-
 void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
 {
     GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
@@ -690,35 +690,21 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
     QVERIFY2(gst_pad_is_linked(source.parserSink.get()), "the video RTP pad that follows must still reach the parser");
 }
 
-void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes_data()
+void GstSourceFactoryTest::_testSourceFactoryMpegTsRtpDepayloaderRequestsNoKeyframes()
 {
-    QTest::addColumn<QString>("uri");
-    QTest::addColumn<QString>("sourceFactory");
-    QTest::addColumn<bool>("expectedRequestKeyframe");
-
-    // RTSP has RTCP to carry the request back to the camera; a plain UDP source has nothing to send it over.
-    QTest::newRow("rtsp") << QStringLiteral("rtsp://127.0.0.1:8554/test") << QStringLiteral("rtspsrc") << true;
-    QTest::newRow("mpegts-rtp") << QStringLiteral("mpegts://127.0.0.1:5600") << QStringLiteral("tsdemux") << false;
-}
-
-void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
-{
-    QFETCH(QString, uri);
-    QFETCH(QString, sourceFactory);
-    QFETCH(bool, expectedRequestKeyframe);
-
-    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc", "tsdemux");
+    // Unlike RTSP's RTCP, MPEG-TS over UDP has no back channel to carry a keyframe request to the camera.
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
 
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
-    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
     QVERIFY(bin);
-    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), qPrintable(sourceFactory));
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "tsdemux");
     const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin.get(), "parsebin");
     QVERIFY(source && parser);
 
-    // The source stays in NULL, so nothing connects: its RTP pad is added by hand, as it adds one after SETUP. The
-    // pad's encoding has the RTSP bin plug the depayloader; for the other source the stream caps make parsebin do it.
+    // The source stays in NULL, so nothing connects: its RTP pad is added by hand, and the stream caps make parsebin
+    // plug the depayloader.
     GstPad* const pad = gst_pad_new_from_static_template(&sH264RtpPadTemplate, "recv_rtp_src_0");
     QVERIFY(gst_element_add_pad(source.get(), pad));
     QVERIFY(gst_pad_is_linked(pad));
@@ -731,9 +717,9 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
 
     const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(bin.get(), "rtph264depay");
     QVERIFY2(depayloader, "parsebin did not plug rtph264depay for H.264 RTP caps");
-    gboolean requestKeyframe = !expectedRequestKeyframe;
+    gboolean requestKeyframe = TRUE;
     g_object_get(depayloader.get(), "request-keyframe", &requestKeyframe, nullptr);
-    QCOMPARE(bool(requestKeyframe), expectedRequestKeyframe);
+    QCOMPARE(requestKeyframe, FALSE);
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec_data()

@@ -28,6 +28,5 @@ private slots:
     void _testHwBufferFactoryDispatchSystemMemory();
 #endif
     void _testTelemetryMapDurationEwma();
-    void _testTelemetryFallbackReasonMatrix();
-    void _testTelemetrySyncWaitSplit();
+    void _testTelemetryCountsPerPathAndKind();
 };

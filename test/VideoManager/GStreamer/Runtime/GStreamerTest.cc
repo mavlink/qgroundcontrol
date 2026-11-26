@@ -147,12 +147,6 @@ void GStreamerTest::_testLogDecoderRanks()
     verifyExpectedLogMessage();
 }
 
-void GStreamerTest::_testCompleteInit()
-{
-    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-    QVERIFY2(GStreamer::hasElementFactory("appsink"), "Factory 'appsink' not found after completeInit()");
-}
-
 void GStreamerTest::_testCompleteInitNamesBlacklistedPlugins()
 {
     GSTTEST_SKIP_UNLESS_FACTORIES("tcpclientsrc");

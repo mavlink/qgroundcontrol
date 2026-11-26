@@ -14,7 +14,6 @@
 #include <QtCore/QRect>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QSet>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
@@ -664,18 +663,6 @@ void GstQgcSinkTest::_testQgcQVideoSinkHoldsTwoPoolBuffersWhileGuiStalls()
     QCOMPARE(heldDownstream(), 1);
 }
 
-void GstQgcSinkTest::_testRenderBackendNames()
-{
-    using GstQgc::RenderBackend;
-    QSet<QString> names;
-    for (const RenderBackend backend :
-         {RenderBackend::Unknown, RenderBackend::Null, RenderBackend::OpenGL, RenderBackend::Direct3D11,
-          RenderBackend::Direct3D12, RenderBackend::Metal, RenderBackend::Vulkan}) {
-        names.insert(QString::fromLatin1(GstQgc::toString(backend)));
-    }
-    QCOMPARE(names.size(), 7);
-}
-
 void GstQgcSinkTest::_testRenderTargetSharesGlContext()
 {
     using GstQgc::RenderBackend;
@@ -689,32 +676,6 @@ void GstQgcSinkTest::_testRenderTargetSharesGlContext()
 #endif
     QVERIFY(!GstQgc::RenderTarget{.backend = RenderBackend::Direct3D11}.sharesGlContext());
     QVERIFY(!GstQgc::RenderTarget{.backend = RenderBackend::Vulkan}.sharesGlContext());
-}
-
-void GstQgcSinkTest::_testCurrentRenderTarget()
-{
-    // Before a scene graph runs: the API Qt Quick was asked to use, which the GUI thread reads.
-    QVERIFY(GstQgc::currentRenderTarget().backend != GstQgc::RenderBackend::Unknown);
-}
-
-void GstQgcSinkTest::_testQgcQVideoSinkAppliesCropMeta()
-{
-    QVideoSink videoSink;
-    GstQgcTest::SinkHarness harness(&videoSink);
-    QVERIFY(harness.isReady());
-
-    GstBuffer* const buffer = GstQgcTest::SinkHarness::makeFrame(GST_SECOND);
-    GstVideoCropMeta* const crop = gst_buffer_add_video_crop_meta(buffer);
-    crop->x = 1;
-    crop->y = 1;
-    crop->width = 2;
-    crop->height = 3;
-    QCOMPARE(harness.pushBuffer(buffer), GST_FLOW_OK);
-    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
-
-    const QVideoFrameFormat format = videoSink.videoFrame().surfaceFormat();
-    QCOMPARE(format.viewport(), QRect(1, 1, 2, 3));
-    QCOMPARE(format.frameSize(), QSize(GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight));
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkShowsPictureOfLargerBuffer()

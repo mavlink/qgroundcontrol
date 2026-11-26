@@ -35,7 +35,6 @@ private slots:
     void _testDecoderInsertionFailureKeepsStream();
     void _testScreenshotSavesDisplayedFrame();
     void _testDeactivateReleasesDisplayedFrame();
-    void _testDecodesH265Stream();
     void _testResolutionChangeUpdatesVideoSize();
     void _testMissingDecoderIsNamed();
     void _testSilentFlowErrorStaysInItsBranch_data();

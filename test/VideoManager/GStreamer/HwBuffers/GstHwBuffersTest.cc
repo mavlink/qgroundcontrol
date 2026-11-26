@@ -524,37 +524,27 @@ void GstHwBuffersTest::_testTelemetryMapDurationEwma()
     QCOMPARE(GstHwPathTelemetry::peekMapDurationUsEwma(path), expected);
 }
 
-void GstHwBuffersTest::_testTelemetryFallbackReasonMatrix()
+void GstHwBuffersTest::_testTelemetryCountsPerPathAndKind()
 {
+    using GstHwPathTelemetry::Counter;
     using GstHwPathTelemetry::HwFallbackReason;
 
     const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch);
+    GstHwPathTelemetry::record(HwVideoBufferPath::IOSurface, Counter::CpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::IOSurface, Counter::CpuWaits);
+    GstHwPathTelemetry::record(HwVideoBufferPath::IOSurface, Counter::GpuWaits);
     const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
 
-    const auto delta = [&](HwVideoBufferPath path, HwFallbackReason reason) {
-        return after.count(path, reason) - before.count(path, reason);
+    const auto delta = [&](HwVideoBufferPath path, auto kind) {
+        return after.count(path, kind) - before.count(path, kind);
     };
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::EglBadMatch), quint64(2));
     QCOMPARE(delta(HwVideoBufferPath::D3D11, HwFallbackReason::MapFailed), quint64(0));
     QCOMPARE(delta(HwVideoBufferPath::D3D12, HwFallbackReason::EglBadMatch), quint64(0));
-}
-
-void GstHwBuffersTest::_testTelemetrySyncWaitSplit()
-{
-    const HwVideoBufferPath path = HwVideoBufferPath::IOSurface;
-
-    using GstHwPathTelemetry::Counter;
-    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
-    GstHwPathTelemetry::record(path, Counter::CpuWaits);
-    GstHwPathTelemetry::record(path, Counter::CpuWaits);
-    GstHwPathTelemetry::record(path, Counter::GpuWaits);
-    const GstHwPathTelemetry::Snapshot after = GstHwPathTelemetry::snapshot();
-
-    const auto delta = [&](Counter counter) { return after.count(path, counter) - before.count(path, counter); };
-    QCOMPARE(delta(Counter::CpuWaits), quint64(2));
-    QCOMPARE(delta(Counter::GpuWaits), quint64(1));
+    QCOMPARE(delta(HwVideoBufferPath::IOSurface, Counter::CpuWaits), quint64(2));
+    QCOMPARE(delta(HwVideoBufferPath::IOSurface, Counter::GpuWaits), quint64(1));
 }
 
 #if defined(QGC_HAS_ANY_GPU_PATH)

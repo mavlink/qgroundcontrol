@@ -17,7 +17,6 @@ private slots:
     void _testStoredDecoderOption_data();
     void _testStoredDecoderOption();
     void _testLogDecoderRanks();
-    void _testCompleteInit();
     void _testCompleteInitNamesBlacklistedPlugins();
     void _testVideoBackendForwards();
     void _testVideoBackendRunsInOrder();

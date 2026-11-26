@@ -15,21 +15,6 @@
 #include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
-void GstQgcSinkPipelineTest::_testFrameDelivery()
-{
-    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "videoconvert");
-    QVideoSink videoSink;
-    const auto r =
-        GstQgcTest::runPipelineThroughQVideoSink(videoSink,
-                                                 "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-                                                 "videoconvert ! video/x-raw,format=BGRA",
-                                                 /*numBuffers=*/10);
-    QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
-    QVERIFY(r.frameCount > 0);
-    QCOMPARE(r.lastFormat.frameSize(), QSize(320, 240));
-    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
-}
-
 void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
 {
     GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc");
@@ -39,6 +24,7 @@ void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
         /*numBuffers=*/5, /*config=*/{}, "do-timestamp=true");
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
+    QCOMPARE(r.lastFormat.frameSize(), QSize(64, 48));
     // The bin leaves YUV to Qt's shaders instead of converting it to RGB.
     QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_YUV420P);
     QVERIFY2(r.lastStartTime >= 0, "GstBuffer PTS not forwarded to QVideoFrame::startTime");

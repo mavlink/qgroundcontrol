@@ -10,6 +10,7 @@ class GstSourceFactoryTest : public GStreamerTestBase
 
 private slots:
     void _testIsValidRtspUri();
+    void _testSourceFactoryUdpRtpJitterBuffer_data();
     void _testSourceFactoryUdpRtpJitterBuffer();
     void _testSourceFactoryCountsRtpPacketsOverUdp_data();
     void _testSourceFactoryCountsRtpPacketsOverUdp();
@@ -22,9 +23,9 @@ private slots:
     void _testSourceFactoryRtspAdvertisesKeyframeRequests_data();
     void _testSourceFactoryRtspAdvertisesKeyframeRequests();
     void _testSourceFactoryRtspCredentials();
+    void _testSourceFactoryRejectsBadUri_data();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
-    void _testSourceFactoryRejectsBadTcpUri();
     void _testSourceFactoryUdpRtp_data();
     void _testSourceFactoryUdpRtp();
     void _testSourceFactoryUdpListener_data();
@@ -36,10 +37,8 @@ private slots:
     void _testStartsAccessUnit();
     void _testTransportFor_data();
     void _testTransportFor();
-    void _testSourceFactoryNegativeLatencyClamped();
     void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();
-    void _testSourceFactoryRtspDepayloaderRequestsKeyframes_data();
-    void _testSourceFactoryRtspDepayloaderRequestsKeyframes();
+    void _testSourceFactoryMpegTsRtpDepayloaderRequestsNoKeyframes();
     void _testSourceFactoryRtspPlugsCodec_data();
     void _testSourceFactoryRtspPlugsCodec();
     void _testSourceFactoryRtspPadAddedLeavesBinStateLock();

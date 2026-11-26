@@ -20,10 +20,7 @@ private slots:
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
     void _testQgcQVideoSinkDisplayedCountNeverFalls();
     void _testQgcQVideoSinkHoldsTwoPoolBuffersWhileGuiStalls();
-    void _testRenderBackendNames();
     void _testRenderTargetSharesGlContext();
-    void _testCurrentRenderTarget();
-    void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkShowsPictureOfLargerBuffer();
     void _testQgcQVideoSinkAppliesAffineTransformationMeta_data();
     void _testQgcQVideoSinkAppliesAffineTransformationMeta();

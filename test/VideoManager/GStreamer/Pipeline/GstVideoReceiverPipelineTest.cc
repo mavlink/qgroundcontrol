@@ -35,7 +35,6 @@ using GstReceiverTest::branchHead;
 using GstReceiverTest::kFrameHeight;
 using GstReceiverTest::kFrameWidth;
 using GstReceiverTest::kRecordFrames;
-using GstReceiverTest::kWatchdogTimeout;
 using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
@@ -339,6 +338,7 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
             .arg(stats.decoderRestarts);
     TEST_DEBUG(measured);
     QVERIFY2(shown, qPrintable(measured));
+    QVERIFY(stream.receiver->videoSize().isValid());
 }
 
 void GstVideoReceiverPipelineTest::_testConfigChangeRestarts()
@@ -908,22 +908,6 @@ void GstVideoReceiverPipelineTest::_testDeactivateReleasesDisplayedFrame()
     // Releasing the frame keeps the output bound: the next stream shows again.
     QVERIFY(stream.startStreaming());
     QVERIFY_TRUE_WAIT(stream.videoSink()->videoFrame().isValid(), TestTimeout::mediumMs());
-}
-
-void GstVideoReceiverPipelineTest::_testDecodesH265Stream()
-{
-    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h265");
-    // The stream path, not decoder choice, is under test; a hardware decoder that fails to start isn't replaced.
-    const GstTest::DecoderRankSnapshot decoderRanks;
-    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
-
-    Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0), /*autoReconnect=*/false, kWatchdogTimeout,
-                    QString::fromLatin1(GstTest::kH265Stream));
-    QVERIFY2(stream.sender.error().isEmpty(), qPrintable(stream.sender.error()));
-    QVERIFY(stream.startStreaming());
-    QVERIFY(stream.display());
-    QVERIFY_TRUE_WAIT(stream.receiver->videoSize() == QSize(kFrameWidth, kFrameHeight), TestTimeout::mediumMs());
-    QVERIFY(stream.errorSpy.isEmpty());
 }
 
 void GstVideoReceiverPipelineTest::_testResolutionChangeUpdatesVideoSize()

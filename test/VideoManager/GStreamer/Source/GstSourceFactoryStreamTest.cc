@@ -13,6 +13,7 @@
 #include <QtNetwork/QUdpSocket>
 
 #include "GStreamerTestHelpers.h"
+#include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
 #include "PipelineStatsProbe.h"
@@ -547,6 +548,10 @@ void GstSourceFactoryStreamTest::_testUdpSourceRefusesPortInUse()
 
 void GstSourceFactoryStreamTest::_testUdpSourceStopsRightAfterPlaying()
 {
+    if (!GStreamer::udpSrcUnlockSerialized()) {
+        QSKIP("This udpsrc needs no workaround: the cycles would only test GStreamer itself");
+    }
+
     // An unfixed udpsrc corrupts the heap in most runs of a few thousand cycles; each takes well under a millisecond.
     constexpr int kImmediateStopCycles = 10000;
 

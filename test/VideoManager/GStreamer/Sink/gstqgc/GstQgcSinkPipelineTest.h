@@ -8,7 +8,6 @@ class GstQgcSinkPipelineTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-    void _testFrameDelivery();
     void _testPtsAndColorimetry();
     void _testGpuZeroCopyFallback_data();
     void _testGpuZeroCopyFallback();
