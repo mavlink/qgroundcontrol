@@ -41,6 +41,7 @@ struct Settings
     uint32_t rtspTimeoutSec = 8;
     bool lowLatency = false;
     int rtpJitterLatencyMs = 80;
+    int softwareDecoderThreads = 1;
     bool autoReconnect = true;
     QByteArray conversionElement;
     bool disablePixelAspectRatio = false;

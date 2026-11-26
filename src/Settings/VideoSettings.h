@@ -41,6 +41,7 @@ public:
     DEFINE_SETTINGFACT(rtspAutoReconnect)
     DEFINE_SETTINGFACT(videoBackend)
     DEFINE_SETTINGFACT(forceVideoDecoder)
+    DEFINE_SETTINGFACT(softwareDecoderThreads)
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
     DEFINE_SETTINGFACT(disablePixelAspectRatio)

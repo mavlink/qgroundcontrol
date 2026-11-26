@@ -49,6 +49,10 @@ static_assert(sizeof(MapDiagnostics) == 6 * sizeof(std::atomic<bool>), "MapDiagn
 /// even sizes, so an odd picture dimension rounded up is no padding.
 bool texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes);
 
+/// @p format with @p pixelFormat in place of its own and every other property kept. QVideoFrameFormat has no
+/// pixel-format setter, so a path that advertises another format than its memory's builds a new one around it.
+QVideoFrameFormat withPixelFormat(const QVideoFrameFormat& format, QVideoFrameFormat::PixelFormat pixelFormat);
+
 }  // namespace GstHw
 
 namespace GstHwPathTelemetry {

@@ -341,6 +341,8 @@ void VideoManagerTest::_testSettingReachesReceiver_data()
     QTest::newRow("lowLatencyMode") << "lowLatencyMode" << QVariant(true) << "lowLatency" << QVariant(true);
     QTest::newRow("rtpJitterLatencyMs") << "rtpJitterLatencyMs" << QVariant(300) << "rtpJitterLatencyMs"
                                         << QVariant(300);
+    QTest::newRow("softwareDecoderThreads")
+        << "softwareDecoderThreads" << QVariant(2) << "softwareDecoderThreads" << QVariant(2);
     QTest::newRow("rtspAutoReconnect") << "rtspAutoReconnect" << QVariant(false) << "autoReconnect" << QVariant(false);
     QTest::newRow("udpUrl") << "udpUrl" << QVariant(QStringLiteral("0.0.0.0:5700")) << "uri"
                             << QVariant(QStringLiteral("udp://0.0.0.0:5700"));
@@ -363,8 +365,10 @@ void VideoManagerTest::_testSettingReachesReceiver()
     const VideoReceiver::Config& config = _primary->config();
     const QVariant actual = (field == QLatin1String("lowLatency"))           ? QVariant(config.lowLatency)
                             : (field == QLatin1String("rtpJitterLatencyMs")) ? QVariant(config.rtpJitterLatencyMs)
-                            : (field == QLatin1String("autoReconnect"))      ? QVariant(config.autoReconnect)
-                                                                             : QVariant(config.uri);
+                            : (field == QLatin1String("softwareDecoderThreads"))
+                                ? QVariant(config.softwareDecoderThreads)
+                            : (field == QLatin1String("autoReconnect")) ? QVariant(config.autoReconnect)
+                                                                        : QVariant(config.uri);
     QCOMPARE(actual, expected);
 }
 

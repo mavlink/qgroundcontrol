@@ -325,6 +325,7 @@ QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline)
         {GstHwPathTelemetry::HwFallbackReason::MapFailed, "map-failed"},
         {GstHwPathTelemetry::HwFallbackReason::VulkanNoSync, "vulkan-no-sync"},
         {GstHwPathTelemetry::HwFallbackReason::ImportUnsupported, "import-unsupported"},
+        {GstHwPathTelemetry::HwFallbackReason::FdDupFailed, "fd-dup-failed"},
     };
     forEachCompiledPath([&out, &delta](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));

@@ -93,6 +93,12 @@ Connection settings vary by source type:
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
   restarts the video stream.
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Only the families of the installed decoders are listed, and Vulkan only in builds with the Vulkan GPU path (`QGC_GST_ENABLE_VULKAN`). Changing it restarts the video stream.
+- **Software decoder threads** — how many frames a software decoder decodes at once, each on a CPU core of its own:
+  1 to 4 (default: 1). A software decoder decodes one frame at a time, on one core unless the camera sends its frames
+  in slices. Raise it when the video stutters because the computer is too slow or too busy to decode the stream on one
+  core: two threads decode about 1.7 times as fast, four about three times. Each thread delays the video by a frame:
+  by 67 ms with 2 threads at 30 frames per second, and by one frame less in **Low Latency Mode**. Hardware decoders
+  don't use this setting. Changing it restarts the video stream.
 
 ## Video Display
 

@@ -382,10 +382,11 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
 
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     const int directDmaBuf = int(GstQgc::GpuBinMode::DirectDmaBuf);
-    QTest::newRow("unset") << QByteArray() << glUpload << false << false;
+    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+    QTest::newRow("unset") << QByteArray() << dmaBufOrGlUpload << false << false;
     QTest::newRow("glupload") << QByteArray("glupload") << glUpload << true << false;
     QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << true << false;
-    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << false << true;
+    QTest::newRow("unknown") << QByteArray("vulkan") << dmaBufOrGlUpload << false << true;
 }
 
 void GstHwBuffersTest::_testGpuBinPreferenceParse()
@@ -400,7 +401,7 @@ void GstHwBuffersTest::_testGpuBinPreferenceParse()
 
     if (warns) {
         expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default glupload bin")));
+                         QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default bin")));
     }
     const GstQgc::GpuBinPreference preference = GstQgc::parseGpuBinPreference(value);
     QCOMPARE(int(preference.mode), expectedMode);
@@ -423,9 +424,15 @@ void GstHwBuffersTest::_testGpuBinSelection_data()
     using GstQgc::RenderBackend;
     const int glUpload = int(GpuBinMode::GlUpload);
     const int directDmaBuf = int(GpuBinMode::DirectDmaBuf);
+    const int dmaBufOrGlUpload = int(GpuBinMode::DmaBufOrGlUpload);
     const int passthrough = int(GpuBinMode::Passthrough);
     const int openGl = int(RenderBackend::OpenGL);
     const int vulkan = int(RenderBackend::Vulkan);
+    // Its sink offers DMABuf only on EGL, so under GLX it is the glupload bin in effect.
+    QTest::newRow("dmabuf-or-glupload-opengl-egl") << dmaBufOrGlUpload << false << openGl << true << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-opengl-not-egl")
+        << dmaBufOrGlUpload << false << openGl << false << dmaBufOrGlUpload;
+    QTest::newRow("dmabuf-or-glupload-vulkan") << dmaBufOrGlUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
     QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
     QTest::newRow("glupload-vulkan-explicit") << glUpload << true << vulkan << false << glUpload;
@@ -807,6 +814,38 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
     QCOMPARE(mapped.planeCount > 0, expectMapped);
     hw.unmap();
+#endif
+}
+
+void GstHwBuffersTest::_testWithPixelFormatKeepsOtherProperties()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("GstHwVideoBuffer not compiled in this build (no GPU path enabled)");
+#else
+    // Every property QVideoFrameFormat has a setter for (Qt 6.12), each away from its default.
+    QVideoFrameFormat format(QSize(64, 48), QVideoFrameFormat::Format_YUYV);
+    format.setViewport(QRect(2, 4, 60, 40));
+    format.setScanLineDirection(QVideoFrameFormat::BottomToTop);
+    format.setStreamFrameRate(25.0);
+    format.setColorSpace(QVideoFrameFormat::ColorSpace_BT2020);
+    format.setColorTransfer(QVideoFrameFormat::ColorTransfer_ST2084);
+    format.setColorRange(QVideoFrameFormat::ColorRange_Full);
+    format.setMirrored(true);
+    format.setRotation(QtVideo::Rotation::Clockwise90);
+    format.setMaxLuminance(1000.0f);
+
+    const QVideoFrameFormat rgba = GstHw::withPixelFormat(format, QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
+    QCOMPARE(rgba.frameSize(), format.frameSize());
+    QCOMPARE(rgba.viewport(), format.viewport());
+    QCOMPARE(rgba.scanLineDirection(), format.scanLineDirection());
+    QCOMPARE(rgba.streamFrameRate(), format.streamFrameRate());
+    QCOMPARE(rgba.colorSpace(), format.colorSpace());
+    QCOMPARE(rgba.colorTransfer(), format.colorTransfer());
+    QCOMPARE(rgba.colorRange(), format.colorRange());
+    QCOMPARE(rgba.isMirrored(), format.isMirrored());
+    QCOMPARE(rgba.rotation(), format.rotation());
+    QCOMPARE(rgba.maxLuminance(), format.maxLuminance());
 #endif
 }
 

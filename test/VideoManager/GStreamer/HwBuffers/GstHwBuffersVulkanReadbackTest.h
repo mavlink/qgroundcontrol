@@ -30,6 +30,9 @@ private slots:
     void _testVaStreamTakesDmaBufPath();
     void _testGstVulkanBridgeSharesQtPhysicalDevice_data();
     void _testGstVulkanBridgeSharesQtPhysicalDevice();
+    void _testGstVulkanInstanceCreatesBridgeDevice();
+    void _testGstVulkanCreateDeviceHandlerFitsSignal_data();
+    void _testGstVulkanCreateDeviceHandlerFitsSignal();
     void _testVulkanImageFrameIsNotImported();
 #endif
 

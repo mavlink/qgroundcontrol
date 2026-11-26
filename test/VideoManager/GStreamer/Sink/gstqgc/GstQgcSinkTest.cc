@@ -213,6 +213,21 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
     QTest::newRow("direct-dmabuf") << int(GstQgc::GpuBinMode::DirectDmaBuf) << openGl << true << passthroughChildren
                                    << QStringList{QStringLiteral("memory:DMABuf"), systemMemory} << false;
 #endif
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    const int dmaBufOrGlUpload = int(GstQgc::GpuBinMode::DmaBufOrGlUpload);
+    // Without switchbin the variant is the glupload one.
+    const bool memorySwitch = GstQgcTest::hasMemorySwitch();
+    const QStringList switchChildren =
+        memorySwitch ? withConverter({QStringLiteral("qgcqvideosink"), QStringLiteral("switchbin")}) : gluploadChildren;
+    // System memory stays out: the switchbin sends it through glupload, and DMABuf straight to the sink.
+    QTest::newRow("dmabuf-or-glupload") << dmaBufOrGlUpload << openGl << true << switchChildren
+                                        << (memorySwitch ? QStringList{QStringLiteral("memory:DMABuf")} + glMemory
+                                                         : glMemory)
+                                        << true;
+    // GLX has no EGLImages to import DMABuf with.
+    QTest::newRow("dmabuf-or-glupload-egl-unknown")
+        << dmaBufOrGlUpload << openGl << false << switchChildren << glMemory << true;
+#endif
 #if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     QStringList direct3D11Features;
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -265,6 +280,9 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
         return;
     }
     for (guint i = 0; i < gst_caps_get_size(caps.get()); ++i) {
+        if (!gst_caps_features_contains(gst_caps_get_features(caps.get(), i), "memory:GLMemory")) {
+            continue;
+        }
         const GstStructure* structure = gst_caps_get_structure(caps.get(), i);
         QCOMPARE(QString::fromUtf8(gst_structure_get_string(structure, "texture-target")), QStringLiteral("2D"));
         const GValue* formats = gst_structure_get_value(structure, "format");

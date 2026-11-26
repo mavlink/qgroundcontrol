@@ -303,9 +303,9 @@ if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
 endif()
 
 # GPU bin variants; GstQgc::selectGpuBin() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
-# amcvideodec needs for Surface output) and Linux's default (gst-gl imports both LINEAR and vendor-tiled dmabuf to
-# GLMemory). Direct DMABuf feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both
-# pick one via QGC_GST_GPU_BIN.
+# amcvideodec needs for Surface output); gst-gl imports both LINEAR and vendor-tiled dmabuf to GLMemory. Direct DMABuf
+# feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both route each stream by the
+# memory its decoder negotiates (DMABuf direct, the rest through glupload) unless QGC_GST_GPU_BIN forces one.
 set(_qgc_unreachable_paths "")
 if(_qgc_gpu_GLMemory)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_GLUPLOAD=1)
@@ -317,7 +317,10 @@ if(LINUX
    AND _qgc_gpu_GLMemory
    AND _qgc_gpu_DMABuf
 )
-    message(STATUS "QGCGStreamer: GPU bins compiled: glupload (default) and direct DMABuf; QGC_GST_GPU_BIN selects one")
+    message(
+        STATUS
+            "QGCGStreamer: GPU bins compiled: glupload and direct DMABuf, picked per stream; QGC_GST_GPU_BIN forces one"
+    )
 elseif(_qgc_gpu_GLMemory)
     message(STATUS "QGCGStreamer: GPU bin routes through glupload (gst-gl EGLImage import)")
 elseif(LINUX AND _qgc_gpu_DMABuf)

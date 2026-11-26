@@ -50,6 +50,9 @@ private slots:
     void _testDmaBufVulkanImportNeedsProbedDevice();
     void _testDmaBufVulkanRequestsDeviceExtensions_data();
     void _testDmaBufVulkanRequestsDeviceExtensions();
+    void _testDmaBufVulkanFdDupFailureIsNotARefusal();
+    void _testDmaBufVulkanRetiredBufferNeedsNoLaterFrame_data();
+    void _testDmaBufVulkanRetiredBufferNeedsNoLaterFrame();
     void _testCpuLayoutSizesPlanesByComponent();
     void _testCpuCopyOddDimensions_data();
     void _testCpuCopyOddDimensions();
@@ -67,6 +70,7 @@ private slots:
     void _testHwVideoBufferCpuMapFallback();
     void _testHwVideoBufferCpuMapRefusesForeignLayout_data();
     void _testHwVideoBufferCpuMapRefusesForeignLayout();
+    void _testWithPixelFormatKeepsOtherProperties();
     void _testTelemetryMapDurationEwma();
     void _testTelemetryFallbackReasonMatrix();
     void _testTelemetrySyncWaitSplit();

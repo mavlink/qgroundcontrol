@@ -120,7 +120,8 @@ dropdown shows, about once a second:
   takes over. It gets its turn again when the decoder setting changes or QGroundControl restarts.
 - **Display path**: how decoded frames reach the screen: `CPU`, or the zero-copy GPU path (for example `DMABuf`, `GL`
   or `D3D11`). **GPU fallbacks** counts frames the GPU path couldn't import, which took the CPU path instead.
-- **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).
+- **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer, and the frames
+  that [Software decoder threads](../settings_view/video.md#settings) above 1 hold).
 - **Packet loss** and **Jitter** (RTP streams only: UDP h.264/h.265 and RTSP): the share of packets lost over the last
   second (with the number lost since the stream started), and the variation in packet arrival times.
   Lost are the packets that never arrived, and those dropped on arrival because more came at once than the

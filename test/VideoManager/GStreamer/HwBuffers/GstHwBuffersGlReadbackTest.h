@@ -29,6 +29,7 @@ private slots:
     void _testNv12PlanesReadBack();
     void _testVaDecodedFrameReadBack();
     void _testDmaBufBufferReturnsAfterGpuReads();
+    void _testGlMemoryFrameReadsBack_data();
     void _testGlMemoryFrameReadsBack();
     void _testGlMemoryFrameToImage_data();
     void _testGlMemoryFrameToImage();

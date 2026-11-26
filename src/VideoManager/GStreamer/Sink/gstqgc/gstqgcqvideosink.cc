@@ -248,6 +248,9 @@ static void gst_qgc_q_video_sink_init(GstQgcQVideoSink* self)
     // stall on live RTSP. async=FALSE skips preroll wait so caps changes don't stall.
     gst_base_sink_set_sync(GST_BASE_SINK(self), FALSE);
     gst_base_sink_set_async_enabled(GST_BASE_SINK(self), FALSE);
+    // A frame that comes late for the clock is shown at once. GstVideoSink would drop it instead, when it is already
+    // decoded and uploaded: a computer that falls behind would decode every frame and show one a second.
+    gst_base_sink_set_max_lateness(GST_BASE_SINK(self), -1);
     // Don't retain the last buffer: it would pin an upstream pool slot for the stream's lifetime.
     gst_base_sink_set_last_sample_enabled(GST_BASE_SINK(self), FALSE);
 }

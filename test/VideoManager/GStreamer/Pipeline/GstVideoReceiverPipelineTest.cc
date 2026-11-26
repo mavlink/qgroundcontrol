@@ -521,22 +521,29 @@ void GstVideoReceiverPipelineTest::_testDecoderDecodesVideoStreamsOnly()
     QCOMPARE(audio, 0);
 }
 
-void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness_data()
+void GstVideoReceiverPipelineTest::_testDecoderThreads_data()
 {
     QTest::addColumn<int>("streamType");
+    QTest::addColumn<int>("softwareDecoderThreads");
     QTest::addColumn<QString>("threadType");
+    QTest::addColumn<int>("maxThreads");
 
     using StreamType = MockVideoStreamServer::StreamType;
     // Behind a live source libav picks slice threads by itself, so its setting is left alone.
-    QTest::newRow("mpeg-ts udp is live") << int(StreamType::MpegTsUdp) << QStringLiteral("auto");
+    QTest::newRow("mpeg-ts udp is live") << int(StreamType::MpegTsUdp) << 1 << QStringLiteral("auto") << 0;
     // tcpclientsrc isn't live: left alone, libav would add frame threads, each of which holds a frame back.
-    QTest::newRow("mpeg-ts tcp is not live") << int(StreamType::MpegTsTcp) << QStringLiteral("slice");
+    QTest::newRow("mpeg-ts tcp is not live") << int(StreamType::MpegTsTcp) << 1 << QStringLiteral("slice") << 0;
+    // Frame threads are the user's to ask for, behind either source, and four at most.
+    QTest::newRow("two frame threads") << int(StreamType::MpegTsUdp) << 2 << QStringLiteral("frame") << 2;
+    QTest::newRow("frame threads capped at four") << int(StreamType::MpegTsTcp) << 9 << QStringLiteral("frame") << 4;
 }
 
-void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
+void GstVideoReceiverPipelineTest::_testDecoderThreads()
 {
     QFETCH(int, streamType);
+    QFETCH(int, softwareDecoderThreads);
     QFETCH(QString, threadType);
+    QFETCH(int, maxThreads);
 
     const auto type = static_cast<MockVideoStreamServer::StreamType>(streamType);
     if (!MockVideoStreamServer::isStreamTypeAvailable(type)) {
@@ -553,6 +560,9 @@ void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
         QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), 0));
     }
     Receiver stream(receiverListens ? loopbackUri(QLatin1StringView("mpegts"), 0) : server.servedUri());
+    VideoReceiver::Config config = stream.receiver->config();
+    config.softwareDecoderThreads = softwareDecoderThreads;
+    stream.receiver->setConfig(config);
     stream.receiver->setActive(true);
     if (receiverListens) {
         QVERIFY(stream.waitForState(State::Connecting));
@@ -563,7 +573,8 @@ void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
     QCOMPARE(stream.receiver->decoderName(), QStringLiteral("avdec_h264"));
 
     QString decoderThreadType;
-    QVERIFY(runOnPipeline(stream.receiver.get(), [&decoderThreadType](GstElement* pipeline) {
+    int decoderMaxThreads = -1;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&decoderThreadType, &decoderMaxThreads](GstElement* pipeline) {
         const GStreamer::GstElementPtr decoder = GstTest::findByFactory(pipeline, "avdec_h264");
         GParamSpec* const spec =
             decoder ? g_object_class_find_property(G_OBJECT_GET_CLASS(decoder.get()), "thread-type") : nullptr;
@@ -571,12 +582,13 @@ void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
             return;
         }
         guint flags = 0;
-        g_object_get(decoder.get(), "thread-type", &flags, nullptr);
+        g_object_get(decoder.get(), "thread-type", &flags, "max-threads", &decoderMaxThreads, nullptr);
         if (const GFlagsValue* const value = g_flags_get_first_value(G_PARAM_SPEC_FLAGS(spec)->flags_class, flags)) {
             decoderThreadType = QString::fromLatin1(value->value_nick);
         }
     }));
     QCOMPARE(decoderThreadType, threadType);
+    QCOMPARE(decoderMaxThreads, maxThreads);
 }
 
 void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()

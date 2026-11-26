@@ -11,7 +11,7 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testStatsMeasureStream_data();
     void _testStatsMeasureStream();
-    void _testStatsCountFramesTooLateToDisplay();
+    void _testFramesLateForTheClockAreDisplayed();
     void _testStatsCountFramesTheDisplayQueueLeaks();
     void _testStatsCountLostPacketsWithoutJitterBuffer();
 #endif

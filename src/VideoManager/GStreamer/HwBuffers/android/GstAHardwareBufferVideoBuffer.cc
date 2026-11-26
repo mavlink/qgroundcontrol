@@ -402,21 +402,10 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
 
 namespace {
 
-// GL_TEXTURE_EXTERNAL_OES needs the SamplerExternalOES pixel format for Qt's shader path. QVideoFrameFormat has no
-// pixel-format setter, so rebuild the format around it.
+// GL_TEXTURE_EXTERNAL_OES needs the SamplerExternalOES pixel format for Qt's shader path.
 QVideoFrameFormat externalOesFormat(const QVideoFrameFormat& format)
 {
-    QVideoFrameFormat external(format.frameSize(), QVideoFrameFormat::Format_SamplerExternalOES);
-    external.setViewport(format.viewport());
-    external.setScanLineDirection(format.scanLineDirection());
-    external.setStreamFrameRate(format.streamFrameRate());
-    external.setColorSpace(format.colorSpace());
-    external.setColorTransfer(format.colorTransfer());
-    external.setColorRange(format.colorRange());
-    external.setMirrored(format.isMirrored());
-    external.setRotation(format.rotation());
-    external.setMaxLuminance(format.maxLuminance());
-    return external;
+    return GstHw::withPixelFormat(format, QVideoFrameFormat::Format_SamplerExternalOES);
 }
 
 void prepareAhbContext(HwVideoBufferContext& context)

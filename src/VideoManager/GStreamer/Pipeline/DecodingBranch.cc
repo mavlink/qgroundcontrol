@@ -1,5 +1,6 @@
 #include "DecodingBranch.h"
 
+#include <algorithm>
 #include <chrono>
 #include <gst/gst.h>
 #include <utility>
@@ -24,6 +25,9 @@ constexpr guint kDisplayQueueMaxBuffers = 2;
 // keyframe interval. A stream without keyframes (intra refresh), or one whose sender takes no requests, would
 // otherwise freeze for good, or for a whole GOP, after a dropped frame.
 constexpr qint64 kMaxGateMs = 2000;
+
+// The most frames a software decoder is asked to decode at once: the setting's range. Each delays the picture.
+constexpr int kMaxFrameThreads = 4;
 
 /// decodebin3's "select-stream": only video is decoded, so that no audio decoder is built. decodebin3 asks on the
 /// streaming thread that brings the stream. A SELECT_STREAMS event can't be sent from there: sending it takes the
@@ -55,42 +59,6 @@ void setSinkSync(GstElement* sink, bool sync)
         },
         GINT_TO_POINTER(sync ? TRUE : FALSE));
     gst_iterator_free(sinks);
-}
-
-/// The frames the base sink @p element dropped because they came too late for their time, from its "stats"
-/// (GStreamer 1.18); 0 without them.
-guint64 lateFramesDroppedBy(GstElement* element)
-{
-    GParamSpec* const spec = g_object_class_find_property(G_OBJECT_GET_CLASS(element), "stats");
-    if (!spec || (G_PARAM_SPEC_VALUE_TYPE(spec) != GST_TYPE_STRUCTURE)) {
-        return 0;
-    }
-    GstStructure* rawStats = nullptr;
-    g_object_get(element, "stats", &rawStats, nullptr);
-    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-    return GstQgc::frameStatsField(stats.get(), "dropped");
-}
-
-/// The frames @p sink, or the sinks inside it when it is a bin, dropped as late. A sink starts its count over when it
-/// flushes or leaves PLAYING.
-quint64 sinkLateFramesDropped(GstElement* sink)
-{
-    if (!sink) {
-        return 0;
-    }
-    if (!GST_IS_BIN(sink)) {
-        return lateFramesDroppedBy(sink);
-    }
-    guint64 dropped = 0;
-    GstIterator* const sinks = gst_bin_iterate_sinks(GST_BIN(sink));
-    (void) gst_iterator_foreach(
-        sinks,
-        [](const GValue* item, gpointer data) {
-            *static_cast<guint64*>(data) += lateFramesDroppedBy(GST_ELEMENT(g_value_get_object(item)));
-        },
-        &dropped);
-    gst_iterator_free(sinks);
-    return dropped;
 }
 
 /// Whether decodebin3 @p decodebin has plugged a hardware decoder. Read from its elements rather than from what the
@@ -137,6 +105,23 @@ void decodeWithoutDelay(GstElement* decoder)
     // The stateless H.264 decoders (va, d3d11, d3d12, v4l2sl, nv; GStreamer 1.20): a frame leaves the picture buffer
     // once its place in the output order is known, not when the buffer is full.
     gst_util_set_object_arg(object, "compliance", "normal");
+}
+
+/// Has @p decoder, where it is a libav one, decode @p threads frames at once, each on a thread of its own. By itself
+/// it decodes a live stream on slice threads only, which leave a stream whose frames have one slice on one core. On
+/// frame threads it holds back a frame less than it has threads, and reports a frame of latency for each thread: a
+/// sink that syncs to the clock shows the picture that much later. Returns the threads it set, 0 for none.
+int decodeOnFrameThreads(GstElement* decoder, int threads)
+{
+    GObjectClass* const decoderClass = G_OBJECT_GET_CLASS(decoder);
+    if ((threads <= 1) || !g_object_class_find_property(decoderClass, "thread-type") ||
+        !g_object_class_find_property(decoderClass, "max-threads")) {
+        return 0;
+    }
+    threads = std::min(threads, kMaxFrameThreads);
+    gst_util_set_object_arg(G_OBJECT(decoder), "thread-type", "frame");
+    g_object_set(decoder, "max-threads", threads, nullptr);
+    return threads;
 }
 
 /// Whether the stream @p caps describe is compressed video that none of the decoders decodebin3 plugs, those ranked
@@ -188,10 +173,12 @@ SinkFrameCounts sinkFrameCountsSince(const GstStructure* stats, const GstStructu
 
 }  // namespace
 
-DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency)
+DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency,
+                               int softwareDecoderThreads)
     : _context(context)
     , _listener(listener)
     , _lowLatency(lowLatency)
+    , _softwareDecoderThreads(softwareDecoderThreads)
     , _retryBackoff(StreamSupervisor::kDefaultBackoff)
 {
     _retryTimer.setSingleShot(true);
@@ -373,12 +360,10 @@ DecodingBranch::StatsSample DecodingBranch::sampleStats()
         }
         _pathFramesAtSample[i] = frames;
     }
-    _countLateFrames();
-
     return {
         .framesDisplayed = _retiredFramesDisplayed + sinkCounts.displayed,
-        .framesDropped = _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded +
-                         sinkCounts.superseded + _lateFramesDropped,
+        .framesDropped =
+            _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded + sinkCounts.superseded,
         .displayPath = _displayPath,
         .gpuFallbacks = _retiredGpuFallbacks + sinkCounts.gpuFallbacks,
         .decoderRestarts = _decoderRestarts,
@@ -395,14 +380,6 @@ void DecodingBranch::_retireSinkCounts()
     _retiredFramesDisplayed += counts.displayed;
     _retiredFramesSuperseded += counts.superseded;
     _retiredGpuFallbacks += counts.gpuFallbacks;
-}
-
-void DecodingBranch::_countLateFrames()
-{
-    const quint64 dropped = sinkLateFramesDropped(_sink.get());
-    // A count below the last one started over.
-    _lateFramesDropped += (dropped >= _sinkLateFramesSeen) ? (dropped - _sinkLateFramesSeen) : dropped;
-    _sinkLateFramesSeen = dropped;
 }
 
 void DecodingBranch::_insertDecoder()
@@ -465,7 +442,7 @@ bool DecodingBranch::_tryInsertDecoder()
         return false;
     }
     // The clock paces frames stamped as they arrived. Behind a source that isn't live (tcp://) they are stamped from
-    // zero, while the pipeline's time has run since it started: each would be late for the clock, and dropped.
+    // zero, while the pipeline's time has run since it started: each would be late for the clock, which paces none.
     setSinkSync(_sink.get(), !_lowLatency && fedByLiveSource(_decoder.get()));
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-decoder");
 
@@ -486,10 +463,7 @@ void DecodingBranch::_removeDecoder()
     _head.close();
     // The sink first: going NULL releases a decoder thread waiting inside it, so the decoder can stop.
     if (_sink) {
-        // Leaving PLAYING starts the sink's count of late frames over.
-        _countLateFrames();
         GStreamer::disposeChild(_sink.get());
-        _sinkLateFramesSeen = 0;
     }
     if (_decoder) {
         _decoderPadAdded.disconnect();
@@ -671,15 +645,19 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
         decodeWithoutDelay(element);
     }
     const bool singleThread = GStreamer::avoidHevcWavefrontDeadlock(element);
+    auto* const self = static_cast<DecodingBranch*>(data);
+    // After decodeWithoutDelay(), whose slice threads the user's frame threads replace. Not for a decoder kept on one
+    // thread.
+    const int frameThreads = singleThread ? 0 : decodeOnFrameThreads(element, self->_softwareDecoderThreads);
 
     qCDebug(GstVideoReceiverLog).noquote()
         << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled"
-        << (live ? "" : "- set to decode without delay, as the source isn't live")
-        << (singleThread ? "- on one thread, as this FFmpeg's HEVC slice threads can deadlock" : "");
+        << ((live || (frameThreads > 0)) ? "" : "- set to decode without delay, as the source isn't live")
+        << (singleThread ? "- on one thread, as this FFmpeg's HEVC slice threads can deadlock" : "")
+        << ((frameThreads > 0) ? QStringLiteral("- on %1 frame threads").arg(frameThreads) : QString());
     const QString name = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
     const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 
-    auto* const self = static_cast<DecodingBranch*>(data);
     self->_context.post([self, name, hardware, decoder = GStreamer::shareObject(GST_ELEMENT(decodebin)),
                          plugged = GStreamer::shareObject(element)]() {
         // A decodebin3 taken out meanwhile has no decoder left to name.

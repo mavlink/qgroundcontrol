@@ -22,6 +22,7 @@ enum class HwFallbackReason
     MapFailed,
     VulkanNoSync,
     ImportUnsupported,
+    FdDupFailed,  ///< A frame's dma-buf fd could not be duplicated for the import: no fault of the driver's.
     Count,
 };
 
