@@ -85,16 +85,14 @@ bool isPluginFile(const QString& fileName)
 #endif
 }
 
-QStringList pluginFilesIn(const QStringList& dirs)
+QStringList pluginFilesIn(const QString& dir)
 {
     QStringList files;
-    for (const QString& dir : dirs) {
-        QDirIterator it(dir, QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            const QString file = it.next();
-            if (isPluginFile(file)) {
-                files.append(file);
-            }
+    QDirIterator it(dir, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString file = it.next();
+        if (isPluginFile(file)) {
+            files.append(file);
         }
     }
     return files;
@@ -196,7 +194,7 @@ bool Checker::run()
     QElapsedTimer elapsed;
     elapsed.start();
 
-    const bool bundled = !_runtime.pluginDirs.isEmpty();
+    const bool bundled = !_runtime.pluginDir.isEmpty();
     if (bundled) {
         _checkBundledPlugins();
         _checkPluginScanner();
@@ -269,8 +267,8 @@ void Checker::_checkBundledPlugins()
                            .blacklisted = GST_OBJECT_FLAG_IS_SET(plugin, GST_PLUGIN_FLAG_BLACKLISTED) != 0});
     });
 
-    const QStringList files = pluginFilesIn(_runtime.pluginDirs);
-    const QStringList issues = bundledPluginIssues(registered, _runtime.pluginDirs, files);
+    const QStringList files = pluginFilesIn(_runtime.pluginDir);
+    const QStringList issues = bundledPluginIssues(registered, _runtime.pluginDir, files);
     for (const QString& issue : issues) {
         _fail(issue);
     }
@@ -307,10 +305,9 @@ void Checker::_checkFeatures()
     // platform.
     const QList<MissingPluginFeature> missing = missingPluginFeatures(hasElementFactory);
     for (const MissingPluginFeature& feature : missing) {
-        _fail(QStringLiteral("%1 unavailable: GStreamer elements %2 not found; %3")
-                  .arg(feature.feature, feature.factories.join(QStringLiteral(", ")),
-                       feature.hint.isEmpty() ? QStringLiteral("their plugin is missing or failed to load")
-                                              : feature.hint));
+        _fail(
+            QStringLiteral("%1 unavailable: GStreamer elements %2 not found; their plugin is missing or failed to load")
+                .arg(feature.feature, feature.factories.join(QStringLiteral(", "))));
     }
 }
 
@@ -433,16 +430,10 @@ void Checker::_checkRecordings(const QByteArray& h264)
 
 }  // namespace
 
-QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const QStringList& pluginDirs,
+QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const QString& pluginDir,
                                 const QStringList& pluginFiles)
 {
-    QStringList dirs;
-    for (const QString& dir : pluginDirs) {
-        dirs.append(normalizedPath(dir) + QLatin1Char('/'));
-    }
-    const auto inBundle = [&dirs](const QString& file) {
-        return std::ranges::any_of(dirs, [&file](const QString& dir) { return file.startsWith(dir, kPathCase); });
-    };
+    const QString bundleDir = normalizedPath(pluginDir) + QLatin1Char('/');
 
     QSet<QString> shipped;
     for (const QString& file : pluginFiles) {
@@ -457,10 +448,10 @@ QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const
         }
         const QString file = normalizedPath(plugin.filename);
         registeredFiles.insert(pathKey(file));
-        if (!inBundle(file)) {
+        if (!file.startsWith(bundleDir, kPathCase)) {
             issues.append(QStringLiteral("Plugin %1 was loaded from %2, outside the bundled plugin directory %3: a "
                                          "GStreamer installed outside the app leaks into it")
-                              .arg(plugin.name, file, pluginDirs.join(QStringLiteral(", "))));
+                              .arg(plugin.name, file, pluginDir));
         } else if (!shipped.contains(pathKey(file))) {
             issues.append(QStringLiteral("Plugin %1 is registered from %2, which the bundle does not ship: the plugin "
                                          "registry is stale")

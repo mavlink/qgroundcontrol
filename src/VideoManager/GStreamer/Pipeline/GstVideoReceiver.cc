@@ -13,6 +13,7 @@
 #include "GstReceiverWorker.h"
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GStreamer.GstVideoReceiver")
 
@@ -148,10 +149,7 @@ void GstVideoReceiver::_postRequest()
     _request.active = active();
     _request.name = name();
     _request.config = config();
-    GstElement* const displaySink = videoSink() ? _displaySink.get() : nullptr;
-    if (displaySink != _request.videoSink.get()) {
-        _request.videoSink = GStreamer::shareObject(displaySink);
-    }
+    _request.videoSink = videoSink() ? _displaySink : nullptr;
     _postToWorker([request = _request](GstReceiverWorker& worker) { worker.apply(request); });
 }
 
@@ -264,10 +262,10 @@ void GstVideoReceiver::_releaseDisplaySink()
 bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
 {
     const DisplayConfig& display = displayConfig();
-    GStreamer::GstElementPtr sink = GStreamer::adoptElement(
-        GStreamer::createVideoSink(display.conversionElement, display.disablePixelAspectRatio, display.gpuZeroCopy));
+    std::shared_ptr<const GstQgc::SinkBin> sink =
+        GStreamer::createVideoSink(display.conversionElement, display.disablePixelAspectRatio, display.gpuZeroCopy);
     QGCQVideoSinkController* const controller =
-        sink ? GStreamer::setupQVideoSinkElement(sink.get(), videoSink, this) : nullptr;
+        sink ? GStreamer::setupQVideoSinkElement(sink->qvideosink.get(), videoSink, this) : nullptr;
     if (!controller) {
         qCWarning(GstVideoReceiverLog) << "Unable to create the video sink for" << name();
         emit errorOccurred(tr("Unable to display video: the video sink could not be created."));

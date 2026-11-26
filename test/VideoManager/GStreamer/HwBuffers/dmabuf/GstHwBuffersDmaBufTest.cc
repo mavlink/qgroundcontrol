@@ -65,6 +65,13 @@ GstTest::SamplePtr makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& in
     return sample;
 }
 
+/// The bundle Qt's texture pool hands mapTextures() as the one it replaces.
+class ReplacedFrameTextures final : public QVideoFrameTextures
+{
+public:
+    QRhiTexture* texture(uint) const override { return nullptr; }
+};
+
 /// What _testDmaBufImportFailureLatch imports between a stream's failed imports.
 enum class ImportedBetween
 {
@@ -205,28 +212,26 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufDispatch()
 
     QVideoSink videoSink;
     GstTest::TestPipeline pipeline;
-    if (!GstQgcTest::launchIntoSinkBin(pipeline,
-                                       QStringLiteral("videotestsrc num-buffers=10 ! "
-                                                      "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
-                                                      "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
-                                                      "capsfilter name=qgccaps"),
-                                       {.gpuZeroCopy = true, .environment = environment})) {
+    const GstQgc::SinkBin sinkBin =
+        GstQgcTest::launchIntoSinkBin(pipeline,
+                                      QStringLiteral("videotestsrc num-buffers=10 ! "
+                                                     "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
+                                                     "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
+                                                     "capsfilter name=qgccaps"),
+                                      {.gpuZeroCopy = true, .environment = environment});
+    if (!sinkBin) {
         QSKIP(qPrintable(QStringLiteral("DMABuf pipeline parse skipped: %1").arg(pipeline.error())));
     }
     g_object_set(pipeline.element("qgccaps").get(), "caps", qgcDmaBufCaps.get(), nullptr);
 
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    QVERIFY2(sinkBin, "Could not find 'sink' element");
-
-    // Without a real QVideoSink, makeAdapterContext(true) never sets gpuEnabled / resolves the
-    // EGLDisplay, so show_frame's HwVideoBufferContext stays CPU-only and the DmaBuf counter never moves.
+    // Without a real QVideoSink, show_frame drops every frame before path selection, so the DmaBuf counter never
+    // moves.
     auto owner = std::make_unique<QObject>();
-    if (!GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, owner.get())) {
+    if (!GStreamer::setupQVideoSinkElement(sinkBin.qvideosink.get(), &videoSink, owner.get())) {
         QSKIP("setupQVideoSinkElement() failed (no GPU context for DMABuf)");
     }
 
-    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
-    QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
+    const GStreamer::GstElementPtr& qvideosink = sinkBin.qvideosink;
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");
 
@@ -277,8 +282,7 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufDispatch()
     }
 
     const auto dmaBufFrames = [&qvideosink] {
-        return GstQgc::frameStatsField(GstQgc::frameStats(qvideosink.get()).get(),
-                                       GstQgc::sinkFramesField(HwVideoBufferPath::DmaBuf));
+        return GstQgc::sinkStats(qvideosink.get()).frames(HwVideoBufferPath::DmaBuf);
     };
     const int bufferCount = probe.bufferCount.load();
     const int dmaBufCount = probe.dmaBufCount.load();
@@ -310,14 +314,12 @@ void GstHwBuffersDmaBufPipelineTest::_testDmaBufOrGlUploadBinRoutesByMemory()
                                               .dmaBufDisplay = reinterpret_cast<void*>(quintptr(1))};
 
     GstTest::TestPipeline pipeline;
-    QVERIFY2(GstQgcTest::launchIntoSinkBin(pipeline, QStringLiteral("appsrc name=src format=time"),
-                                           {.gpuZeroCopy = true, .environment = environment}),
-             qPrintable(pipeline.error()));
+    const GstQgc::SinkBin sinkBin = GstQgcTest::launchIntoSinkBin(
+        pipeline, QStringLiteral("appsrc name=src format=time"), {.gpuZeroCopy = true, .environment = environment});
+    QVERIFY2(sinkBin, qPrintable(pipeline.error()));
     const GStreamer::GstElementPtr source = pipeline.element("src");
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    QVERIFY(source && sinkBin);
-    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
-    QVERIFY(qvideosink);
+    QVERIFY(source);
+    const GStreamer::GstElementPtr& qvideosink = sinkBin.qvideosink;
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY(sinkPad);
 
@@ -450,8 +452,7 @@ void GstHwBuffersDmaBufTest::_testDmaBufPathNeedsQtEglDisplay()
     if (QGCRhiCapture::qtEglDisplay()) {
         QSKIP("Qt renders with EGL on this platform");
     }
-    HwVideoBufferContext context = HwBuffers::makeAdapterContext(true);
-    context.dmaBufImporter = HwBuffers::dmaBufImportDisplay();
+    const HwVideoBufferContext context{.gpuEnabled = true, .dmaBufImporter = HwBuffers::dmaBufImportDisplay()};
     QVERIFY(!context.dmaBufImporter);
 
     // Without Qt's EGLDisplay no import can succeed: DMABuf memory must take the CPU path before any import attempt.
@@ -625,13 +626,61 @@ void GstHwBuffersDmaBufTest::_testDmaBufTiledFrameDroppedWithoutImport()
     context.gpuEnabled = true;
     // Never reaches EGL: the disabled importer refuses the frame first.
     context.dmaBufImporter = qtDisplay ? reinterpret_cast<EGLDisplay>(quintptr(1)) : EGL_NO_DISPLAY;
-    const MappedFrame mapped = mapSampleToFrame(gst_sample_get_buffer(sample.get()), gst_sample_get_caps(sample.get()),
-                                                info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
-                                                context, std::make_shared<std::atomic<int>>(0));
+    const MappedFrame mapped =
+        mapSampleToFrame(gst_sample_get_buffer(sample.get()), gst_sample_get_caps(sample.get()), info,
+                         QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12), context);
 
     QCOMPARE(mapped.gpuPath, HwVideoBufferPath::None);
     QCOMPARE(mapped.frame.isValid(), cpuFrame);
     QVERIFY2(mapped.noCpuLayout != cpuFrame, "a tiled frame must be dropped rather than read as linear rows");
+#endif
+}
+
+void GstHwBuffersDmaBufTest::_testDmaBufFailedImportKeepsShownTextures_data()
+{
+    QTest::addColumn<QString>("drmFormat");
+    QTest::addColumn<int>("mappedRows");  // The memory holds 64.
+    QTest::addColumn<bool>("handedBack");
+
+    // Qt uploads the CPU map instead.
+    QTest::newRow("linear") << QStringLiteral("NV12") << 64 << false;
+    // Nothing to upload: Qt's video material would go on sampling the bundle Qt deletes at the end of the frame.
+    QTest::newRow("tiled") << QStringLiteral("NV12:0x0100000000000002") << 64 << true;
+    QTest::newRow("linear, memory that doesn't map") << QStringLiteral("NV12") << 128 << true;
+}
+
+void GstHwBuffersDmaBufTest::_testDmaBufFailedImportKeepsShownTextures()
+{
+#if !GST_CHECK_VERSION(1, 24, 0)
+    QSKIP("DMA_DRM caps need GStreamer 1.24");
+#else
+    QFETCH(QString, drmFormat);
+    QFETCH(int, mappedRows);
+    QFETCH(bool, handedBack);
+
+    GstDmaBufVideoBuffer::resetCachedState();
+    const auto resetLatch = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
+    GstVideoInfo info;
+    const QByteArray caps = QStringLiteral("video/x-raw(memory:DMABuf),format=DMA_DRM,drm-format=%1,width=64,height=64")
+                                .arg(drmFormat)
+                                .toLatin1();
+    GstTest::SamplePtr sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info, caps.constData());
+    QVERIFY(sample);
+    QVERIFY(gst_video_info_set_format(&info, GST_VIDEO_FORMAT_NV12, 64, static_cast<guint>(mappedRows)));
+    GstDmaBufVideoBuffer frame(sample.get(), info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
+                               EGL_NO_DISPLAY);
+    sample.reset();
+
+    // The import fails, as under any renderer but OpenGL and Vulkan.
+    ignoreLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("QRhi backend is")));
+    QVideoFrameTexturesUPtr replaced = std::make_unique<ReplacedFrameTextures>();
+    QVideoFrameTextures* const shown = replaced.get();
+    const QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, replaced);
+    QCOMPARE(textures.get(), handedBack ? shown : nullptr);
+    QCOMPARE(replaced.get(), handedBack ? nullptr : shown);
 #endif
 }
 

@@ -1,7 +1,6 @@
 #include "VideoBackendInit.h"
 
 #include <QtConcurrent/QtConcurrentRun>
-#include <QtCore/QCoreApplication>
 
 #include "VideoBackend.h"
 
@@ -22,8 +21,7 @@ void VideoBackendInit::start()
     }
 
     _state = State::Pending;
-    const VideoBackend::InitParams params{.arguments = QCoreApplication::arguments(),
-                                          .environment = backend.prepareEnvironment(),
+    const VideoBackend::InitParams params{.environment = backend.prepareEnvironment(),
                                           .debugLevel = VideoBackend::persistedDebugLevel()};
     start(QtConcurrent::run([&backend, params] { return backend.initialize(params); }));
 }

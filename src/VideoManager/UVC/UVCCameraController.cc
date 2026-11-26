@@ -65,6 +65,8 @@ UVCCameraController::UVCCameraController(QObject* parent, VideoStreamStatsMeter:
     , _imageCapture(new QImageCapture(this))
     , _recorder(new QtVideoRecorder(this))
 {
+    (void) connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this,
+                   &UVCCameraController::_onVideoInputsChanged);
     (void) connect(_recorder, &QtVideoRecorder::recordingChanged, this, &UVCCameraController::setRecording);
     (void) connect(_recorder, &QtVideoRecorder::recordingStarted, this, &UVCCameraController::recordingStarted);
     (void) connect(_recorder, &QtVideoRecorder::recordingFinished, this, &UVCCameraController::recordingFinished);
@@ -135,12 +137,6 @@ void UVCCameraController::setFormat(const QString& name)
     if (_camera) {
         _recreateCamera();
     }
-}
-
-void UVCCameraController::watchCameras()
-{
-    (void) connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, &UVCCameraController::_onVideoInputsChanged,
-                   Qt::UniqueConnection);
 }
 
 void UVCCameraController::onVideoOutputChanged()

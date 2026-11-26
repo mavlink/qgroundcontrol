@@ -39,10 +39,6 @@ struct HwPathDescriptor
                                                    QVideoFrameFormat format,
                                                    const HwVideoBufferContext& context) = nullptr;
 
-    /// Optional. Runs for each GPU-enabled HwVideoBufferContext a sink builds at start: fills this path's fields, or
-    /// only logs once whether the path can import (DMABuf, whose display the sink sets per frame).
-    void (*prepareContext)(HwVideoBufferContext& context) = nullptr;
-
     /// Optional. Runs on the render thread when the scene graph's QRhi is published, before the streaming threads
     /// see its backend: learns what its device imports.
     void (*probeDevice)(QRhi& rhi) = nullptr;

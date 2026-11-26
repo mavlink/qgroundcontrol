@@ -83,10 +83,6 @@ if(ANDROID OR IOS)
     qgc_gst_mobile_keep_symbols(gst_is_missing_plugin_message gst_missing_plugin_message_get_description)
 endif()
 
-if(LINUX AND GStreamer_VERSION VERSION_LESS "1.28.0")
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER=1)
-endif()
-
 target_include_directories(
     QGCGStreamer
     PUBLIC
@@ -177,7 +173,7 @@ target_sources(
         Pipeline/StreamWatchdog.h
         Pipeline/TeeBranchHead.cc
         Pipeline/TeeBranchHead.h
-        # Sink: the Qt side of qgcqvideosink (the gstqgc plugin is in QGCGStreamer).
+        # Sink: the Qt side of qgcqvideosink (Sink/gstqgc is in QGCGStreamer).
         Sink/QGCQVideoSinkController.cc
         Sink/QGCQVideoSinkController.h
         # SelfTest: the boot self-test and its media pipelines.
@@ -302,19 +298,6 @@ if(MACOS AND _qgc_gst_lib_path)
         APPEND
         PROPERTY BUILD_RPATH "${_qgc_gst_lib_path}"
     )
-endif()
-
-# QGC_GST_BUNDLE_PLUGINS=OFF: the install carries no plugins (Install.cmake), so the app keeps the system plugin path.
-# An AppImage cannot rely on the host's plugins: its bundled GStreamer core and GLib would load them.
-if(LINUX AND NOT QGC_GST_BUNDLE_PLUGINS)
-    if(QGC_CREATE_APPIMAGE)
-        message(
-            FATAL_ERROR "QGC_GST_BUNDLE_PLUGINS=OFF is for distribution packages, whose GStreamer plugins come from "
-                        "the system; an AppImage must bundle them. Set QGC_CREATE_APPIMAGE=OFF."
-        )
-    endif()
-    # Public, so the environment tests know the build bundles no runtime.
-    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_SYSTEM_PLUGINS)
 endif()
 
 # Native packages install only the Runtime component. Keep this assignment

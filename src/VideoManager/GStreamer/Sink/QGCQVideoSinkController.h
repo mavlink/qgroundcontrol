@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gst/gst.h>
+#include <memory>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaObject>
@@ -12,6 +13,10 @@
 #include "GstScoped.h"
 
 class QVideoSink;
+
+namespace GstQgc {
+struct SinkBin;
+}
 
 /// GUI-thread companion for the GstQgcQVideoSink element: binds it to the QVideoSink it delivers to, and lets it
 /// deliver only while that output's window is visible. Ownership: parent owns the controller; the controller owns one
@@ -27,8 +32,8 @@ public:
     QGCQVideoSinkController(GstElement* element, QObject* parent = nullptr);
     ~QGCQVideoSinkController() override;
 
-    // setActive(false) drops frames at the element; setVideoSink swaps the destination under
-    // GST_OBJECT_LOCK. QPointer so a caller-thread destruction race is caught here, not in GObject.
+    // setActive(false) drops frames at the element; setVideoSink swaps the destination (GstQgc::setSinkTarget()).
+    // QPointer so a caller-thread destruction race is caught here, not in GObject.
     // Releasing a binding (swap, null, prepareForRelease, destruction) also clears the released QVideoSink's
     // current frame so it stops pinning a GstSample/decoder buffer.
     // Without a QVideoSink the element is inactive whatever was asked for; binding one again goes on with what
@@ -71,11 +76,13 @@ private:
 namespace GStreamer {
 
 /// A new sink bin (GstQgc::makeSinkBin()) with the settings of a VideoReceiver::DisplayConfig, which are fixed once it
-/// is built, returned as an owned, non-floating reference (adopt it), or nullptr.
-GstElement* createVideoSink(const QByteArray& conversionElement, bool disablePixelAspectRatio, bool gpuZeroCopy);
+/// is built, or nullptr. Shared: the receiver and its worker's pipeline each hold it.
+std::shared_ptr<const GstQgc::SinkBin> createVideoSink(const QByteArray& conversionElement,
+                                                       bool disablePixelAspectRatio, bool gpuZeroCopy);
 
-/// Binds the qgcqvideosink inside @p sinkBin, a new bin as createVideoSink() returns it, to @p videoSink through a new
-/// QGCQVideoSinkController, a child of @p controllerParent. Returns the controller, or nullptr on failure.
-QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
+/// Binds @p qvideosink, the qgcqvideosink of a sink bin, to @p videoSink through a new QGCQVideoSinkController, a child
+/// of @p controllerParent. Returns the controller, or nullptr on failure.
+QGCQVideoSinkController* setupQVideoSinkElement(GstElement* qvideosink, QVideoSink* videoSink,
+                                                QObject* controllerParent);
 
 }  // namespace GStreamer

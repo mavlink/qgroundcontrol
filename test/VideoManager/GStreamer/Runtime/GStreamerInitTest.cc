@@ -57,19 +57,18 @@ void GStreamerInitTest::_testInitializeLogsFromItsFirstLine()
         ignoreLogMessage("Video.GStreamer.GStreamerAPI", type, anything);
         ignoreLogMessage("Video.GStreamer.GStreamerLogging", type, anything);
     }
-    // GStreamer's first log line, which it writes before it reads its options: at the persisted level.
+    // GStreamer's first log line: at the persisted level.
     expectLogMessage("Video.GStreamer.GStreamerAPI", QtInfoMsg,
                      QRegularExpression(QStringLiteral("Initializing GStreamer Core Library")));
     const VideoBackend::InitParams params{
-        .arguments = {QStringLiteral("QGroundControl"), QStringLiteral("--gst-debug-level=3")},
         .environment = GStreamer::Environment::prepareEnvironment(),
         .debugLevel = static_cast<int>(GST_LEVEL_INFO),
     };
     QVERIFY(GStreamer::initialize(params));
     verifyExpectedLogMessage();
 
-    // The level GStreamer's own option set among the arguments is not replaced by the persisted one.
-    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_FIXME);
+    // And the threshold once GStreamer runs.
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_INFO);
 }
 
 void GStreamerInitTest::_testNativeDebugLogRequested_data()
@@ -224,21 +223,17 @@ void GStreamerInitTest::_testMissingPluginFeatures_data()
     QTest::addColumn<QStringList>("missingFactories");
     QTest::addColumn<int>("missingFeatures");
     QTest::addColumn<bool>("videoUnavailable");
-    QTest::addColumn<bool>("hinted");
 
-    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false << false;
+    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false;
     QTest::newRow("videoconvert stands in for videoconvertscale")
-        << QStringList{"videoconvertscale"} << QStringList() << 0 << false << false;
+        << QStringList{"videoconvertscale"} << QStringList() << 0 << false;
     QTest::newRow("no converter") << QStringList{"videoconvertscale", "videoconvert"}
-                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true << false;
-    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true << false;
-    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false << false;
-    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false
-                               << false;
+                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true;
+    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true;
+    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false;
+    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false;
     QTest::newRow("no rtsp or tcp") << QStringList{"rtspsrc", "tcpclientsrc"} << QStringList{"rtspsrc", "tcpclientsrc"}
-                                    << 2 << false << false;
-    QTest::newRow("qgc elements stripped")
-        << QStringList{"qgcqvideosink"} << QStringList{"qgcqvideosink"} << 1 << true << true;
+                                    << 2 << false;
 }
 
 void GStreamerInitTest::_testMissingPluginFeatures()
@@ -247,24 +242,20 @@ void GStreamerInitTest::_testMissingPluginFeatures()
     QFETCH(QStringList, missingFactories);
     QFETCH(int, missingFeatures);
     QFETCH(bool, videoUnavailable);
-    QFETCH(bool, hinted);
 
     const QList<GStreamer::MissingPluginFeature> missing = GStreamer::missingPluginFeatures(
         [&absent](const char* factoryName) { return !absent.contains(QLatin1String(factoryName)); });
 
     QStringList factories;
     bool required = false;
-    bool hint = false;
     for (const GStreamer::MissingPluginFeature& feature : missing) {
         QVERIFY(!feature.feature.isEmpty());
         factories << feature.factories;
         required = required || feature.required;
-        hint = hint || !feature.hint.isEmpty();
     }
     QCOMPARE(missing.size(), missingFeatures);
     QCOMPARE(factories, missingFactories);
     QCOMPARE(required, videoUnavailable);
-    QCOMPARE(hint, hinted);
 }
 
 void GStreamerInitTest::_testUdpSrcUnlockSerializedBefore1_24_10()
@@ -346,15 +337,15 @@ void GStreamerInitTest::_testBundledPluginIssues()
     QFETCH(QStringList, blacklisted);
     QFETCH(QStringList, issues);
 
-    // A static plugin has no file, so it is never blamed on the bundle.
+    // A static plugin, as every plugin of a mobile build is, has no file, so it is never blamed on the bundle.
     QList<GStreamer::SelfTest::RegisteredPlugin> plugins{
-        {.name = QStringLiteral("qgc"), .filename = QString(), .blacklisted = false}};
+        {.name = QStringLiteral("coreelements"), .filename = QString(), .blacklisted = false}};
     for (const QString& file : registered) {
         plugins.append(
             {.name = QFileInfo(file).fileName(), .filename = file, .blacklisted = blacklisted.contains(file)});
     }
 
-    const QStringList found = GStreamer::SelfTest::bundledPluginIssues(plugins, {pluginDir}, shipped);
+    const QStringList found = GStreamer::SelfTest::bundledPluginIssues(plugins, pluginDir, shipped);
     QVERIFY2(found.size() == issues.size(), qPrintable(found.join(QLatin1Char('\n'))));
     for (qsizetype i = 0; i < issues.size(); ++i) {
         QVERIFY2(found.at(i).contains(QRegularExpression(issues.at(i))), qPrintable(found.at(i)));

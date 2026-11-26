@@ -19,6 +19,8 @@ private slots:
     void _testDmaBufTiledFrameRefusesCpuMap();
     void _testDmaBufTiledFrameDroppedWithoutImport_data();
     void _testDmaBufTiledFrameDroppedWithoutImport();
+    void _testDmaBufFailedImportKeepsShownTextures_data();
+    void _testDmaBufFailedImportKeepsShownTextures();
     void _testDmaBufImportFailureLatch_data();
     void _testDmaBufImportFailureLatch();
     void _testDmaBufProducerWaitNeedsSignalledFences_data();

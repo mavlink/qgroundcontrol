@@ -245,23 +245,6 @@ if(SCENARIO STREQUAL "reconfigure")
     _qgc_write_fake_sdk("${_sdk_b}" 1.26.0)
     _qgc_expect(_expect "${_sdk_b}" 1.26.0 OFF)
     _qgc_configure_ok("switched to SDK B" "-DGStreamer_ROOT_DIR=${_sdk_b}" ${_expect})
-elseif(SCENARIO STREQUAL "legacy-pkg-config-args")
-    # Older configures FORCE-cached the derived flags; a stale prefix would point pkg-config at the
-    # wrong SDK, so only the user's own flags may survive.
-    _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
-    _qgc_expect(_expect "${_sdk_a}" 1.24.0 OFF)
-    file(WRITE "${WORK_DIR}/legacy-cache.cmake"
-         "set(PKG_CONFIG_ARGN \"--short-errors;--static;--define-variable=prefix=${_sdk_b}\" CACHE STRING \"\")\n"
-    )
-    _qgc_configure_ok(
-        "legacy cached flags"
-        --fresh
-        -C
-        "${WORK_DIR}/legacy-cache.cmake"
-        "-DGStreamer_ROOT_DIR=${_sdk_a}"
-        -DEXPECT_CACHED_PKG_CONFIG_ARGN=--short-errors
-        ${_expect}
-    )
 elseif(SCENARIO STREQUAL "reuse-auto-root")
     # Linux never downloads, so stand in for a previous configure that auto-downloaded SDK A.
     _qgc_write_fake_sdk("${_sdk_a}" 1.24.0)
@@ -714,20 +697,6 @@ elseif(SCENARIO STREQUAL "install")
         "GPL plugin" "ships GPL-licensed GStreamer files.* [^ ]*/lib/gstreamer-1\\.0/libgstx264\\.so" "${_qgc_output}"
     )
     file(REMOVE "${_sdk_a}/lib/gstreamer-1.0/libgstx264.so")
-
-    # A distribution package (QGC_GST_BUNDLE_PLUGINS=OFF) installs nothing of GStreamer and verifies nothing.
-    _qgc_configure_ok("install rules without bundled plugins" ${_plugins} -DQGC_GST_BUNDLE_PLUGINS=OFF)
-    qgc_test_assert_matches(
-        "system plugins" "QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins" "${_qgc_output}"
-    )
-    _qgc_install()
-    if(NOT _qgc_result EQUAL 0 OR _qgc_output MATCHES "install verification")
-        message(FATAL_ERROR "ASSERT [system plugins]: install failed or verified plugins\n${_qgc_output}")
-    endif()
-    if(EXISTS "${WORK_DIR}/stage")
-        file(GLOB_RECURSE _staged "${WORK_DIR}/stage/*")
-        qgc_test_assert_streq("nothing installed" "" "${_staged}")
-    endif()
 else()
     message(FATAL_ERROR "Unknown SCENARIO: ${SCENARIO}")
 endif()

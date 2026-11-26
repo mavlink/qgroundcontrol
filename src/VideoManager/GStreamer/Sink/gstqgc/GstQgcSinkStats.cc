@@ -1,66 +1,57 @@
 #include "GstQgcSinkStats.h"
 
-#include <array>
+#include <numeric>
 #include <utility>
 
-#include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMutexLocker>
 
 #include "GstQgcFrameMap.h"
-#include "GstQgcSinkBin.h"
-#include "gstqgcqvideosink.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GstQgcQVideoSinkLog)
 
 namespace GstQgc {
 
-const char* sinkFramesField(HwVideoBufferPath path)
+quint64 SinkStats::displayed() const
 {
-    static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
-        std::array<QByteArray, GstHw::kPathCount> fields;
-        for (std::size_t i = 0; i < fields.size(); ++i) {
-            fields[i] = QByteArray("frames-") + QByteArray(GstHw::toString(HwVideoBufferPath(i))).toLower();
-        }
-        return fields;
-    }();
-    const auto index = static_cast<std::size_t>(path);
-    return (index < s_fields.size()) ? s_fields[index].constData() : nullptr;
+    const quint64 frames = std::accumulate(pathFrames.begin(), pathFrames.end(), quint64(0));
+    return (frames > superseded) ? (frames - superseded) : 0;
 }
 
-GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin)
+SinkStats SinkStats::operator-(const SinkStats& since) const
 {
-    GStreamer::GstElementPtr inner;
-    if (sinkOrBin && GST_IS_BIN(sinkOrBin)) {
-        inner = GStreamer::adoptElement(GstQgc::sinkBinVideoSink(sinkOrBin));
-        sinkOrBin = inner.get();
+    const auto grown = [](quint64 now, quint64 before) -> quint64 { return (now > before) ? (now - before) : 0; };
+    SinkStats growth{.input = grown(input, since.input),
+                     .dropped = grown(dropped, since.dropped),
+                     .delivered = grown(delivered, since.delivered),
+                     .gpuFallbacks = grown(gpuFallbacks, since.gpuFallbacks),
+                     .streamDemotions = grown(streamDemotions, since.streamDemotions),
+                     .tiledDrops = grown(tiledDrops, since.tiledDrops),
+                     .superseded = grown(superseded, since.superseded)};
+    for (std::size_t i = 0; i < pathFrames.size(); ++i) {
+        growth.pathFrames[i] = grown(pathFrames[i], since.pathFrames[i]);
     }
-    if (!sinkOrBin || !GST_IS_QGC_Q_VIDEO_SINK(sinkOrBin)) {
-        return {};
-    }
-    GstStructure* stats = nullptr;
-    g_object_get(sinkOrBin, "frame-stats", &stats, nullptr);
-    return GStreamer::adoptStructure(stats);
+    return growth;
 }
 
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since)
+PathStats formatSinkStats(const SinkStats& stats)
 {
     PathStats out;
-    if (!stats) {
-        return out;
-    }
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
         const auto path = HwVideoBufferPath(i);
-        if (const quint64 frames = frameStatsGrowth(stats, since, sinkFramesField(path)); frames > 0) {
+        if (const quint64 frames = stats.frames(path); frames > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
             if (path != HwVideoBufferPath::None) {
                 out.totalDelivered += frames;
             }
         }
     }
-    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
-        if (const quint64 count = frameStatsGrowth(stats, since, field); count > 0) {
-            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
+    const std::pair<const char*, quint64> counts[] = {{"gpu-fallbacks", stats.gpuFallbacks},
+                                                      {"stream-demotions", stats.streamDemotions},
+                                                      {"tiled-drops", stats.tiledDrops}};
+    for (const auto& [name, count] : counts) {
+        if (count > 0) {
+            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(name)).arg(count);
         }
     }
     return out;
@@ -86,23 +77,19 @@ void SinkCounters::noteGpuFallback(bool firstOfEpoch)
     }
 }
 
-GstStructure* SinkCounters::frameStats() const
+SinkStats SinkCounters::snapshot() const
 {
-    GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
-    gst_structure_set(stats, kGpuFallbacksField, G_TYPE_UINT64,
-                      static_cast<guint64>(_gpuFallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
-                      G_TYPE_UINT64, static_cast<guint64>(_streamDemotions.load(std::memory_order_relaxed)), nullptr);
-    gst_structure_set(stats, kTiledDropsField, G_TYPE_UINT64,
-                      static_cast<guint64>(_tiledDrops.load(std::memory_order_relaxed)), nullptr);
-    {
-        const QMutexLocker locker(&_deliveryMutex);
-        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-            gst_structure_set(stats, sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
-                              static_cast<guint64>(_pathFrames[i].load(std::memory_order_relaxed)), nullptr);
-        }
-        gst_structure_set(stats, kSupersededFramesField, G_TYPE_UINT64,
-                          static_cast<guint64>(_superseded.load(std::memory_order_relaxed)), nullptr);
+    SinkStats stats{.input = input(),
+                    .dropped = dropped(),
+                    .delivered = delivered(),
+                    .gpuFallbacks = _gpuFallbacks.load(std::memory_order_relaxed),
+                    .streamDemotions = _streamDemotions.load(std::memory_order_relaxed),
+                    .tiledDrops = _tiledDrops.load(std::memory_order_relaxed)};
+    const QMutexLocker locker(&_deliveryMutex);
+    for (std::size_t i = 0; i < stats.pathFrames.size(); ++i) {
+        stats.pathFrames[i] = _pathFrames[i].load(std::memory_order_relaxed);
     }
+    stats.superseded = _superseded.load(std::memory_order_relaxed);
     return stats;
 }
 

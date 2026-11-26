@@ -133,8 +133,8 @@ void RecordingBranch::reset()
     _drainWatch.remove();
     _releaseSwitchHold();
     if (_fileSink) {
-        GStreamer::flushAndDisposeChild(_fileSink.get());
-        _fileSink.reset();
+        GStreamer::flushAndDisposeChild(_fileSink.bin.get());
+        _fileSink = {};
     }
     _state = State::Idle;
     _head.reset();
@@ -228,20 +228,20 @@ void RecordingBranch::_start(Request request)
         _finish(QString());
         return;
     }
-    TeeBranchHead::absorbFlowErrors(_fileSink.get());
+    TeeBranchHead::absorbFlowErrors(_fileSink.bin.get());
 
     gst_util_set_object_arg(G_OBJECT(_head.queue()), "leaky", "no");
-    if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.get()) ||
-        !gst_element_link(_head.valve(), _fileSink.get())) {
+    if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.bin.get()) ||
+        !gst_element_link(_head.valve(), _fileSink.bin.get())) {
         qCWarning(GstVideoReceiverLog) << "Failed to add the recording sink" << _context.redactedUri;
         _failure = QCoreApplication::translate("RecordingBranch", "Unable to add the recording sink.");
         _finish(QString());
         return;
     }
 
-    if (!gst_element_sync_state_with_parent(_fileSink.get())) {
+    if (!gst_element_sync_state_with_parent(_fileSink.bin.get())) {
         // The sink posted why (usually a file that can't be opened); that ERROR ends the recording.
-        GStreamer::flushAndDisposeChild(_fileSink.get());
+        GStreamer::flushAndDisposeChild(_fileSink.bin.get());
         _failure = QCoreApplication::translate("RecordingBranch", "Unable to start recording to %1.").arg(request.file);
         _state = State::Finalizing;
         _finalizeTimer.start();
@@ -251,10 +251,8 @@ void RecordingBranch::_start(Request request)
     // The file starts with a keyframe at t=0, so playback can decode from its first frame. The stream's first keyframe
     // lets it into the recorder, whose parser passes on nothing before a keyframe that comes with its parameter sets:
     // the first frame the file can hold.
-    const GStreamer::GstElementPtr parser =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(_fileSink.get()), "parser"));
     const GStreamer::GstPadPtr parserSrc =
-        GStreamer::adoptPad(parser ? gst_element_get_static_pad(parser.get(), "src") : nullptr);
+        GStreamer::adoptPad(_fileSink.parser ? gst_element_get_static_pad(_fileSink.parser.get(), "src") : nullptr);
     const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "sink"));
     const auto newWatch = [this]() {
         return new RecordingWatch{.branch = this, .recording = _recording.load(std::memory_order_relaxed)};
@@ -391,11 +389,11 @@ void RecordingBranch::_finish(const QString& error, bool fileClosed)
         // Removed before going NULL, so nothing it posts while stopping reaches the bus. Flushed unless it closed its
         // file: going NULL would otherwise wait for a streaming thread stuck inside it.
         if (fileClosed) {
-            GStreamer::disposeChild(_fileSink.get());
+            GStreamer::disposeChild(_fileSink.bin.get());
         } else {
-            GStreamer::flushAndDisposeChild(_fileSink.get());
+            GStreamer::flushAndDisposeChild(_fileSink.bin.get());
         }
-        _fileSink.reset();
+        _fileSink = {};
     }
     _state = State::Idle;
     _context.dotDumper->dump(_context.pipeline, "pipeline-recording-stopped");
@@ -469,7 +467,7 @@ void RecordingBranch::completeTeardown()
 
 bool RecordingBranch::_fromRecorder(GstObject* source) const
 {
-    return _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink.get()));
+    return _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink.bin.get()));
 }
 
 void RecordingBranch::onBusError(GstMessage* message, const GError* error, const QString& text, const char* debug)
@@ -585,14 +583,13 @@ void RecordingBranch::_checkHeaderSpace()
         !_openedFor.hasExpired(_context.timings.recordingHeaderEstimateDelay.count())) {
         return;
     }
-    const GStreamer::GstElementPtr muxer =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(_fileSink.get()), "muxer"));
-    if (!muxer || !g_object_class_find_property(G_OBJECT_GET_CLASS(muxer.get()), "reserved-duration-remaining")) {
+    GstElement* const muxer = _fileSink.muxer.get();
+    if (!g_object_class_find_property(G_OBJECT_GET_CLASS(muxer), "reserved-duration-remaining")) {
         return;
     }
     // The muxer's estimate from the space the recording used so far.
     guint64 remainingNs = 0;
-    g_object_get(muxer.get(), "reserved-duration-remaining", &remainingNs, nullptr);
+    g_object_get(muxer, "reserved-duration-remaining", &remainingNs, nullptr);
     if (remainingNs >= static_cast<guint64>(std::chrono::nanoseconds(kHeaderSpaceMargin).count())) {
         return;
     }

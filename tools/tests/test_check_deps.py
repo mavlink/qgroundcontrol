@@ -90,7 +90,7 @@ def test_fetch_latest_common_gstreamer_patch_uses_all_platform_indexes() -> None
 )
 def test_gstreamer_check_compares_versions_numerically(latest: str, message: str, capsys) -> None:
     with (
-        patch.object(check_deps, "newest_gstreamer_sdk_version", return_value="1.28.9"),
+        patch.object(check_deps, "get_build_config_value", return_value="1.28.9"),
         patch.object(check_deps, "fetch_latest_common_gstreamer_patch", return_value=latest),
         patch.object(check_deps, "probe_version", return_value=None),
     ):

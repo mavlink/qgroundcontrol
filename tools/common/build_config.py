@@ -110,7 +110,7 @@ def get_build_config_value(
 ) -> str:
     """Return a string value from the build config or *default*.
 
-    Dotted keys (e.g. "gstreamer.version.macos") walk nested objects.
+    Dotted keys (e.g. "gstreamer.version.sdk") walk nested objects.
 
     File-missing / unreadable → silent default (callers may run outside the repo).
     Parse / schema errors → raise: an existing-but-corrupted config silently
@@ -122,35 +122,6 @@ def get_build_config_value(
         return default
     value = lookup_dotted(config, key, default)
     return str(value) if value is not None else default
-
-
-_GSTREAMER_SDK_PLATFORMS = ("android", "ios", "macos", "windows")
-
-
-def newest_gstreamer_sdk_version(**kwargs: Any) -> str:
-    """Return the newest gstreamer.version.<platform> of the platforms with an official SDK, else "".
-
-    Keyword arguments are passed to get_build_config_value.
-    """
-    versions = [
-        get_build_config_value(f"gstreamer.version.{platform}", **kwargs)
-        for platform in _GSTREAMER_SDK_PLATFORMS
-    ]
-    return max(
-        filter(None, versions),
-        key=lambda version: tuple(int(part) for part in version.split(".")),
-        default="",
-    )
-
-
-def get_gstreamer_version(platform: str, **kwargs: Any) -> str:
-    """Return gstreamer.version.<platform>, else the newest SDK version (Linux has no entry).
-
-    Keyword arguments are passed to get_build_config_value.
-    """
-    return get_build_config_value(
-        f"gstreamer.version.{platform}", **kwargs
-    ) or newest_gstreamer_sdk_version(**kwargs)
 
 
 def derive_ios_qt_modules(qt_modules: str) -> str:

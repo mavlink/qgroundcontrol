@@ -47,7 +47,6 @@ class VideoStreamController : public QObject
     Q_PROPERTY(QString displayName READ displayName NOTIFY displayNameChanged FINAL)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged FINAL)
-    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
     Q_PROPERTY(bool encodesRecordings READ encodesRecordings NOTIFY encodesRecordingsChanged FINAL)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged FINAL)
     Q_PROPERTY(int rotation READ rotation NOTIFY rotationChanged FINAL)

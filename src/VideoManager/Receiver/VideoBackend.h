@@ -4,7 +4,6 @@
 
 #include <QtCore/QList>
 #include <QtCore/QString>
-#include <QtCore/QStringList>
 #include <QtCore/qcontainerfwd.h>
 
 #include "VideoDecoderOptions.h"
@@ -45,8 +44,6 @@ public:
     /// What the backend offers.
     struct Capabilities
     {
-        /// Plays network video streams; their settings are shown only then.
-        bool streaming = false;
         /// GStreamer: the decoder, RTP jitter-buffer and display-sink settings apply, and Qt Multimedia's player is the
         /// alternative VideoSettings::videoBackend offers.
         bool pipelineSettings = false;
@@ -58,8 +55,6 @@ public:
 
     struct InitParams
     {
-        /// QCoreApplication::arguments(), snapshotted on the GUI thread.
-        QStringList arguments;
         /// What prepareEnvironment() did.
         EnvPrepResult environment;
         /// The persisted debug threshold to start with (persistedDebugLevel()).

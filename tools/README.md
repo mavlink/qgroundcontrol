@@ -381,11 +381,11 @@ python tools/check_deps.py --gstreamer  # Find latest patch common to all SDK pl
 
 ### update_gstreamer.py
 
-Pins a GStreamer SDK release: `just update-gstreamer 1.28.9` sets `gstreamer.version.<platform>` of the four SDK
-platforms in `.github/build-config.json` and replaces `gstreamer.checksums` with the SHA-256 of the release's six
-packages, read from the `.sha256sum` file upstream publishes beside each. It writes nothing unless upstream has
-every package. Review the diff like any other pin: configure then holds each SDK download to these checksums, and
-`mirror-gstreamer.yml` copies the packages to the S3 mirror once the change reaches `master`.
+Pins a GStreamer SDK release: `just update-gstreamer 1.28.9` sets `gstreamer.version.sdk` in
+`.github/build-config.json` and replaces `gstreamer.checksums` with the SHA-256 of the release's six packages, read
+from the `.sha256sum` file upstream publishes beside each. It writes nothing unless upstream has every package. Review
+the diff like any other pin: configure then holds each SDK download to these checksums, and `mirror-gstreamer.yml`
+copies the packages to the S3 mirror once the change reaches `master`.
 
 ### API documentation (Doxygen)
 

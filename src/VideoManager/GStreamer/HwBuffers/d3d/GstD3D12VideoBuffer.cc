@@ -267,7 +267,7 @@ public:
     }
 #endif
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         if (rhi.backend() == QRhi::D3D11) {

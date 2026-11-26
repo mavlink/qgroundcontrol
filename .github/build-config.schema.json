@@ -206,31 +206,18 @@
           "type": "object",
           "required": [
             "minimum",
-            "android",
-            "ios",
-            "macos",
-            "windows"
+            "sdk"
           ],
           "additionalProperties": false,
           "properties": {
             "minimum": {
               "type": "string",
+              "description": "Oldest GStreamer QGC builds against: the floor of the system GStreamer on Linux",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             },
-            "android": {
+            "sdk": {
               "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
-            "ios": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
-            "macos": {
-              "type": "string",
-              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-            },
-            "windows": {
-              "type": "string",
+              "description": "Release of the official SDK packages that Android, iOS, macOS and Windows builds download",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             }
           }
@@ -247,7 +234,7 @@
         },
         "packages": {
           "type": "object",
-          "description": "Path of each SDK package under package_url, by its key in checksums. {version} stands for the release; the first directory is the platform, whose gstreamer.version entry is that release",
+          "description": "Path of each SDK package under package_url, by its key in checksums. {version} stands for the release (version.sdk); the first directory is the platform",
           "required": [
             "android",
             "ios",

@@ -12,7 +12,6 @@
 #include <atomic>
 #include <cstddef>
 #include <gst/video/video.h>
-#include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
 #include <span>
 
@@ -148,7 +147,7 @@ void GstIOSurfaceVideoBuffer::resetTextureCache() noexcept
     s_cache = MetalTextureCache{};
 }
 
-QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     // *** UNTESTED on macOS hardware. CI compiles this path; runtime validation TBD. ***
     // Pulls a CVPixelBufferRef from the GstBuffer (gst-vt path), grabs its

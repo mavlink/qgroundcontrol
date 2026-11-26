@@ -2,13 +2,11 @@
 
 #include <array>
 #include <atomic>
-#include <gst/gst.h>
 
 #include <QtCore/QMutex>
 #include <QtCore/QString>
 #include <QtCore/QtTypes>
 
-#include "GstScoped.h"
 #include "HwBuffers/common/GstHwPathRegistry.h"
 #include "HwBuffers/common/GstHwTypes.h"
 
@@ -16,44 +14,34 @@ struct MappedFrame;
 
 namespace GstQgc {
 
-/// guint64 "frame-stats" field holding the frames @p path delivered: "frames-" plus the lower-cased
-/// GstHw::toString(path).
-const char* sinkFramesField(HwVideoBufferPath path);
-
-/// guint64 "frame-stats" field holding the delivered frames a newer frame replaced before the QVideoSink took them,
-/// which were never shown.
-inline constexpr const char* kSupersededFramesField = "superseded-frames";
-
-/// guint64 "frame-stats" field holding the frames a GPU path was tried for but the CPU delivered.
-inline constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
-
-/// guint64 "frame-stats" field holding the caps epochs that started on a GPU path and fell back to the CPU.
-inline constexpr const char* kStreamDemotionsField = "stream-demotions";
-
-/// guint64 "frame-stats" field holding the frames dropped because no GPU path imported them and the CPU can't read
-/// their tiled DMA_DRM layout.
-inline constexpr const char* kTiledDropsField = "tiled-drops";
-
-/// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the sink bin around one; null for other elements.
-GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
-
-/// The guint64 @p field of @p stats, a "frame-stats" or any other structure; 0 without the structure or the field.
-inline quint64 frameStatsField(const GstStructure* stats, const char* field) noexcept
+/// One qgcqvideosink's frame accounting (sinkStats()), or how far it grew between two of them (operator-()).
+struct SinkStats
 {
-    guint64 value = 0;
-    if (stats) {
-        (void) gst_structure_get_uint64(stats, field, &value);
-    }
-    return value;
-}
+    /// Buffers show_frame saw, dropped ones included.
+    quint64 input = 0;
+    /// Buffers show_frame dropped: the sink was inactive or had no QVideoSink, or the frame didn't map.
+    quint64 dropped = 0;
+    /// Frames handed to the QVideoSink, superseded ones included.
+    quint64 delivered = 0;
+    /// The frames each path delivered, by HwVideoBufferPath (None: the CPU).
+    std::array<quint64, GstHw::kPathCount> pathFrames{};
+    /// Frames a GPU path was tried for but the CPU delivered.
+    quint64 gpuFallbacks = 0;
+    /// Caps epochs that started on a GPU path and fell back to the CPU.
+    quint64 streamDemotions = 0;
+    /// Frames dropped because no GPU path imported them and the CPU can't read their tiled DMA_DRM layout.
+    quint64 tiledDrops = 0;
+    /// Delivered frames a newer one replaced before the QVideoSink took them, which were never shown.
+    quint64 superseded = 0;
 
-/// How far the guint64 @p field grew from @p since to @p stats, two "frame-stats" values of the same sink.
-inline quint64 frameStatsGrowth(const GstStructure* stats, const GstStructure* since, const char* field) noexcept
-{
-    const quint64 now = frameStatsField(stats, field);
-    const quint64 before = frameStatsField(since, field);
-    return (now > before) ? (now - before) : 0;
-}
+    quint64 frames(HwVideoBufferPath path) const { return pathFrames[static_cast<std::size_t>(path)]; }
+
+    /// The delivered frames the QVideoSink took: those of every path less the superseded ones.
+    quint64 displayed() const;
+
+    /// How far each count grew since @p since, an earlier value of the same sink.
+    SinkStats operator-(const SinkStats& since) const;
+};
 
 /// Formatted per-path frame counts + the total delivered through GPU paths.
 struct PathStats
@@ -62,13 +50,11 @@ struct PathStats
     quint64 totalDelivered = 0;
 };
 
-/// One qgcqvideosink's frame accounting, from its "frame-stats" structure: the per-path counts it has delivered, plus
-/// its GPU fallbacks and demotions. With @p since (an earlier "frame-stats" value of the same sink), only what changed
-/// since.
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since = nullptr);
+/// @p stats formatted: the per-path counts, then the GPU fallbacks, stream demotions and tiled drops, each where it
+/// isn't 0.
+PathStats formatSinkStats(const SinkStats& stats);
 
-/// \brief qgcqvideosink's frame accounting: what its frames-input, frames-dropped and frames-delivered properties
-/// report, and the "frame-stats" structure the functions above read. Thread-safe.
+/// \brief qgcqvideosink's frame accounting, counted on its streaming thread and read as a SinkStats. Thread-safe.
 class SinkCounters
 {
 public:
@@ -96,8 +82,7 @@ public:
         return _pathFrames[static_cast<std::size_t>(path)].load(std::memory_order_relaxed);
     }
 
-    /// The "frame-stats" property value (transfer-full).
-    GstStructure* frameStats() const;
+    SinkStats snapshot() const;
 
 private:
     std::atomic<quint64> _input{0};
@@ -109,7 +94,7 @@ private:
     std::atomic<quint64> _streamDemotions{0};
     std::atomic<quint64> _tiledDrops{0};
     std::atomic<quint64> _superseded{0};
-    // Held while a delivery and the frame it superseded are counted, and while frameStats() reads them: its readers
+    // Held while a delivery and the frame it superseded are counted, and while snapshot() reads them: its readers
     // count the frames displayed as those delivered less those superseded, which a snapshot seeing one count without
     // the other would make fall.
     mutable QMutex _deliveryMutex;

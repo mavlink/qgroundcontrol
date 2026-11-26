@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Pin a GStreamer SDK release in .github/build-config.json.
 
-Sets ``gstreamer.version.<platform>`` of every SDK platform to the release and replaces
-``gstreamer.checksums`` with the SHA-256 of its packages, read from the ``.sha256sum`` file upstream
-publishes beside each one. Nothing is written unless upstream has every package of the release;
-``check_deps.py --gstreamer`` names the latest release it has for every platform.
+Sets ``gstreamer.version.sdk`` to the release and replaces ``gstreamer.checksums`` with the
+SHA-256 of its packages, read from the ``.sha256sum`` file upstream publishes beside each one.
+Nothing is written unless upstream has every package of the release; ``check_deps.py --gstreamer``
+names the latest release it has for every platform.
 
 The checksums come from the server that serves the packages, so they record what upstream published
 when the pin was made: review them like any other pin. From then on configure and the S3 mirror
@@ -36,9 +36,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("version", type=_release_version, help="GStreamer release, e.g. 1.28.9")
     version = parser.parse_args(argv).version
 
-    platforms = platform_packages()
     checksums: dict[str, str] = {}
-    for packages in platforms.values():
+    for packages in platform_packages().values():
         for package in packages:
             try:
                 checksums[package] = upstream_checksum(package, version)
@@ -48,8 +47,7 @@ def main(argv: list[str] | None = None) -> int:
 
     config_file = find_build_config()
     config = read_json(config_file)
-    for platform in platforms:
-        config["gstreamer"]["version"][platform] = version
+    config["gstreamer"]["version"]["sdk"] = version
     config["gstreamer"]["checksums"] = {version: checksums}
     write_json(config_file, config)
     log_ok(f"Pinned GStreamer {version} in {config_file}")

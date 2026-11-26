@@ -98,7 +98,6 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         ITEMS
             reconfigure
             reuse-auto-root
-            legacy-pkg-config-args
             sdk-too-old
             missing-mandatory
             missing-gl

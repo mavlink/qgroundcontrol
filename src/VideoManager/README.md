@@ -42,7 +42,7 @@ Inside `GStreamer/`:
   helpers the other folders use.
 - `Source/`: the source bins, from a stream's URI to its parsed stream (`GstSourceFactory`).
 - `Pipeline/`: the receiver, its worker, and a `PipelineSession` with a `DecodingBranch` and a `RecordingBranch`.
-- `Sink/`: the display sink: `QGCQVideoSinkController` and the `gstqgc` GStreamer plugin (`Sink/gstqgc/`).
+- `Sink/`: the display sink: `QGCQVideoSinkController` and QGC's video sink with its bin (`Sink/gstqgc/`).
 - `HwBuffers/`: how a decoded frame becomes a `QVideoFrame` without a copy: the `HwBuffers` facade, a folder for each
   GPU path, and `common/`, which the paths share.
 - `SelfTest/`: the boot self-test and the encoded samples it decodes and records (`Media/`).
@@ -81,7 +81,7 @@ advertises), `src/AnalyzeView/VideoRecordings` (the page that plays recordings) 
 5. `GStreamer/Pipeline/DecodingBranch` decodes with `decodebin3`, which plugs the decoder that
    `GStreamer/Runtime/GStreamerDecoderRanks` ranked first.
 6. `GStreamer/Sink/gstqgc/gstqgcqvideosink` makes a `QVideoFrame` of the decoded frame (`GstQgcFrameMap`): through a
-   GPU path of `GStreamer/HwBuffers/`, or on the CPU (`Sink/gstqgc/CpuVideoFramePool`).
+   GPU path of `GStreamer/HwBuffers/`, or on the CPU, mapped in place.
 7. `GStreamer/Sink/gstqgc/GstQgcFrameDelivery` gives the latest frame to the `QVideoSink` that
    `GStreamer/Sink/QGCQVideoSinkController` bound.
 8. `Qml/VideoStreamOutput.qml` shows it, inside `VideoView.qml` or `VideoTile.qml`.

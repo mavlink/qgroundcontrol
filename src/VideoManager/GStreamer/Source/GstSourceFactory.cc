@@ -48,44 +48,6 @@ void configureAutopluggedElement([[maybe_unused]] GstBin* bin, [[maybe_unused]] 
     SourceFactory::configureH26xRtpDepayloader(element, data != nullptr);
 }
 
-// Older Linux/system GStreamer needs an autoplug-query caps filter to keep parsebin on byte-stream output.
-#if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
-gboolean filterParserCaps([[maybe_unused]] GstElement* bin, [[maybe_unused]] GstPad* pad,
-                          [[maybe_unused]] GstElement* element, GstQuery* query, [[maybe_unused]] gpointer data)
-{
-    if (GST_QUERY_TYPE(query) != GST_QUERY_CAPS) {
-        return FALSE;
-    }
-
-    GstCaps* srcCaps;
-    gst_query_parse_caps(query, &srcCaps);
-    if (!srcCaps || gst_caps_is_any(srcCaps)) {
-        return FALSE;
-    }
-
-    GstCapsPtr sinkCaps;
-    GstStructure* structure = gst_caps_get_structure(srcCaps, 0);
-    if (gst_structure_has_name(structure, "video/x-h265")) {
-        const GstCapsPtr filter = adoptCaps(gst_caps_from_string("video/x-h265"));
-        if (gst_caps_can_intersect(srcCaps, filter.get())) {
-            sinkCaps = adoptCaps(gst_caps_from_string("video/x-h265,stream-format=hvc1"));
-        }
-    } else if (gst_structure_has_name(structure, "video/x-h264")) {
-        const GstCapsPtr filter = adoptCaps(gst_caps_from_string("video/x-h264"));
-        if (gst_caps_can_intersect(srcCaps, filter.get())) {
-            sinkCaps = adoptCaps(gst_caps_from_string("video/x-h264,stream-format=avc"));
-        }
-    }
-
-    if (sinkCaps) {
-        gst_query_set_caps_result(query, sinkCaps.get());
-        return TRUE;
-    }
-
-    return FALSE;
-}
-#endif
-
 /// Exposes @p pad of @p element on the bin that holds the element. False when the bin didn't get the pad.
 bool addGhostPad(GstElement* element, GstPad* pad)
 {
@@ -369,11 +331,6 @@ ParserStage buildParserStage(const H26xCodec* rtpCodec, bool isRtsp)
     (void) g_signal_connect(stage.parser.get(), "deep-element-added", G_CALLBACK(configureAutopluggedElement),
                             isRtsp ? GINT_TO_POINTER(TRUE) : nullptr);
 
-    // Older Linux/system GStreamer misnegotiates parser->decoder caps; force avc/hvc1 there only.
-    // Bundled 1.28+ SDKs do not need it, and the forced caps break byte-stream HW decoders.
-#if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
-    (void) g_signal_connect(stage.parser.get(), "autoplug-query", G_CALLBACK(filterParserCaps), nullptr);
-#endif
     return stage;
 }
 

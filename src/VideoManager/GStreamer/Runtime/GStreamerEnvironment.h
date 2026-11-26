@@ -13,16 +13,16 @@ namespace GStreamer::Environment {
 /// The desktop GStreamer runtime bundled with the app that prepareEnvironment() pointed GStreamer at.
 struct BundledRuntime
 {
-    QStringList pluginDirs;  ///< Empty when GStreamer uses the system's plugins, or Android's and iOS's static ones.
-    QString gioModuleDir;    ///< Empty when the bundle has no GIO modules.
+    QString pluginDir;     ///< Empty when GStreamer uses the system's plugins, or Android's and iOS's static ones.
+    QString gioModuleDir;  ///< Empty when the bundle has no GIO modules.
 };
 
-/// Where a desktop install keeps its GStreamer runtime, as candidate paths in priority order.
+/// Where a desktop install keeps its GStreamer runtime.
 struct BundleLayout
 {
-    QStringList pluginDirs;         ///< Every existing entry is searched.
-    QStringList gioModuleDirs;      ///< The first existing entry wins.
-    QStringList scannerCandidates;  ///< The first existing entry wins.
+    QString pluginDir;
+    QString gioModuleDir;
+    QStringList scannerCandidates;  ///< In priority order: the first existing entry wins.
 };
 
 /// The desktop installs prepareEnvironment() knows how to point GStreamer into.

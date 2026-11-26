@@ -2,14 +2,15 @@
 
 #include <algorithm>
 #include <gst/gst.h>
+#ifdef QGC_GST_STATIC_BUILD
 #include <mutex>
+#endif
 #include <utility>
 
 #include <QtCore/QByteArrayList>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QList>
 #include <QtCore/QStringList>
-#include <QtCore/QVarLengthArray>
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerEnvironment.h"
@@ -23,51 +24,39 @@
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
-G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
+G_BEGIN_DECLS
 // Generated from cmake/GStreamer/gst_static_plugins.c.in by qgc_gst_generate_static_init (Mobile.cmake):
 // registers every configured plugin and loads the static GIO modules (gioopenssl + the bundled CA bundle on mobile).
 extern void gst_init_static_plugins(void);
-#endif
-
-GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
+#endif
 
 namespace GStreamer {
 
 namespace {
 
+#ifdef QGC_GST_STATIC_BUILD
 void _registerPlugins()
 {
-    // GST_PLUGIN_STATIC_REGISTER / gst_init_static_plugins() are not idempotent: a second pass
-    // re-registers GTypes ("cannot register existing type 'GstBaseQTMux'") and aborts, so run once.
+    // gst_init_static_plugins() is not idempotent: a second pass re-registers GTypes ("cannot register existing type
+    // 'GstBaseQTMux'") and aborts, so run once. The generated shim's registrations are registry-guarded: gst_init()
+    // may already have run it (see cmake/GStreamer/gst_static_plugins.c.in).
     static std::once_flag s_pluginsRegistered;
-    std::call_once(s_pluginsRegistered, [] {
-#ifdef QGC_GST_STATIC_BUILD
-        // The generated shim's registrations are registry-guarded: gst_init() may already have run it
-        // (see cmake/GStreamer/gst_static_plugins.c.in).
-        gst_init_static_plugins();
-#endif
-        GST_PLUGIN_STATIC_REGISTER(qgc);
-    });
+    std::call_once(s_pluginsRegistered, [] { gst_init_static_plugins(); });
 }
+#endif
 
 struct PluginFeature
 {
     const char* name;
     bool required;
-    const char* factories;       // space-separated; "a|b" is satisfied by either factory
-    const char* hint = nullptr;  // the likely cause when the factories are missing, if not a missing plugin
+    const char* factories;  // space-separated; "a|b" is satisfied by either factory
 };
 
 // Checked per element, as Qt's qGstErrorMessageIfElementsNotAvailable does, so a missing optional plugin disables only
 // its feature. Only the display core is required.
 constexpr PluginFeature kPluginFeatures[] = {
-    // The qgc plugin is linked in and registered by completeInit(), so plugin_init succeeded; a missing element means
-    // its GST_ELEMENT_REGISTER side effect was stripped at link time.
-    {"QGC video sink", true, "qgcqvideosink",
-     "the qgc plugin registered without exposing its elements; link-time symbol stripping (iOS LTO / Android R8) "
-     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgc.cc to a -force_load / keep rule"},
     {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
     {"RTP/UDP video", true, "udpsrc rtpjitterbuffer parsebin rtph264depay h264parse rtph265depay h265parse"},
     {"RTSP video", false, "rtspsrc"},
@@ -94,10 +83,8 @@ bool _verifyPluginFeatures()
 
     bool displayAvailable = true;
     for (const MissingPluginFeature& feature : missing) {
-        const QString message =
-            QStringLiteral("%1 unavailable, GStreamer elements not found: %2%3")
-                .arg(feature.feature, feature.factories.join(QStringLiteral(", ")),
-                     feature.hint.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(feature.hint));
+        const QString message = QStringLiteral("%1 unavailable, GStreamer elements not found: %2")
+                                    .arg(feature.feature, feature.factories.join(QStringLiteral(", ")));
         if (feature.required) {
             qCCritical(GStreamerLog).noquote() << message;
             displayAvailable = false;
@@ -140,10 +127,8 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
             }
         }
         if (!absent.isEmpty()) {
-            missing.append({.feature = QString::fromLatin1(feature.name),
-                            .factories = absent,
-                            .required = feature.required,
-                            .hint = QString::fromLatin1(feature.hint)});
+            missing.append(
+                {.feature = QString::fromLatin1(feature.name), .factories = absent, .required = feature.required});
         }
     }
     return missing;
@@ -151,31 +136,16 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
 
 namespace {
 
-bool _initGstRuntime(const QStringList& args, const VideoBackend::EnvPrepResult& env)
+bool _initGstRuntime(const VideoBackend::EnvPrepResult& env)
 {
     if (!env.ok) {
         qCCritical(GStreamerLog) << "Invalid GStreamer environment configuration:" << env.error;
         return false;
     }
 
-    // args is snapshotted on the GUI thread: QCoreApplication::arguments() is not thread-safe
-    // and initialize() runs on a QtConcurrent pool thread.
-    QByteArrayList argStorage;
-    argStorage.reserve(args.size());
-    for (const QString& arg : args) {
-        argStorage.append(arg.toUtf8());
-    }
-
-    QVarLengthArray<char*, 16> argv;
-    for (QByteArray& arg : argStorage) {
-        argv.append(arg.data());
-    }
-
-    int argc = argv.size();
-    char** argvPtr = argv.data();
+    // No command line: QGC's option parser rejects GStreamer's options, so none could reach it.
     GError* error = nullptr;
-
-    if (!gst_init_check(&argc, &argvPtr, &error)) {
+    if (!gst_init_check(nullptr, nullptr, &error)) {
         qCCritical(GStreamerLog) << "Failed to initialize GStreamer:" << (error ? error->message : "unknown error");
         g_clear_error(&error);
         return false;
@@ -212,7 +182,9 @@ bool completeInit(std::optional<int> debugLevel)
                                 << GST_VERSION_MAJOR << "." << GST_VERSION_MINOR << "QGC was built against";
     }
 
+#ifdef QGC_GST_STATIC_BUILD
     _registerPlugins();
+#endif
 
     if (!_verifyPluginFeatures()) {
         return false;
@@ -235,7 +207,7 @@ bool initialize(const VideoBackend::InitParams& params)
     // own output, which gst_init_check() would otherwise keep; its raw ANSI codes corrupt the terminal on macOS.
     GStreamer::configureDebugLogging(params.debugLevel);
 
-    if (!_initGstRuntime(params.arguments, params.environment)) {
+    if (!_initGstRuntime(params.environment)) {
         return false;
     }
 
@@ -244,9 +216,7 @@ bool initialize(const VideoBackend::InitParams& params)
         qAddPostRoutine(_deinitGStreamer);
     }
 
-    // The threshold in effect: the persisted level, unless a GStreamer option among the arguments (--gst-debug-level)
-    // replaced it during gst_init_check(), which then stays.
-    return completeInit(static_cast<int>(gst_debug_get_default_threshold()));
+    return completeInit(params.debugLevel);
 }
 
 void onMainWindowReady(QQuickWindow* window)

@@ -161,7 +161,7 @@ QString recordSample(const QString& file, VideoReceiver::FileFormat format, cons
     const GstElementPtr pipeline = adoptFloating(gst_pipeline_new("selftest-record"));
     const GstCapsPtr caps = byteStreamCaps(kH264Sample);
     GstElementPtr sourceOwner = makeElement("appsrc");
-    GstElementPtr fileSinkOwner = RecordingSink::create(file, format, caps.get());
+    GstElementPtr fileSinkOwner = RecordingSink::create(file, format, caps.get()).bin;
     if (!pipeline || !sourceOwner || !fileSinkOwner) {
         return QStringLiteral("cannot create appsrc or the recording sink");
     }

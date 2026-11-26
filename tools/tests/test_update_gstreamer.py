@@ -59,7 +59,7 @@ def _serve(monkeypatch: pytest.MonkeyPatch, overrides: dict[str, str | None]) ->
 
 def test_pins_the_release_for_every_platform(config: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     expected = json.loads(config.read_text(encoding="utf-8"))
-    expected["gstreamer"]["version"].update(dict.fromkeys(PLATFORMS, VERSION))
+    expected["gstreamer"]["version"]["sdk"] = VERSION
     expected["gstreamer"]["checksums"] = {
         VERSION: {package: _digest(package) for package in PACKAGES}
     }

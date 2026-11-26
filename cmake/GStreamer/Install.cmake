@@ -279,16 +279,6 @@ function(qgc_gst_install_platform_sdk app_name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "REQUIRED_PLUGINS")
     _qgc_gst_check_args(qgc_gst_install_platform_sdk)
     qgc_gst_platform(_gips_platform)
-    # QGC_GST_BUNDLE_PLUGINS=OFF (unset means ON): a Linux distribution package depends on the system's plugins, which
-    # the app then uses as they are (GStreamerEnvironment.cc, QGC_GST_SYSTEM_PLUGINS).
-    if(_gips_platform STREQUAL "linux"
-       AND DEFINED QGC_GST_BUNDLE_PLUGINS
-       AND NOT QGC_GST_BUNDLE_PLUGINS
-    )
-        message(STATUS "GStreamer: QGC_GST_BUNDLE_PLUGINS is OFF; the install uses the system's plugins")
-        return()
-    endif()
-
     if(NOT ARG_REQUIRED_PLUGINS)
         list(APPEND ARG_REQUIRED_PLUGINS ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     endif()

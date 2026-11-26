@@ -18,7 +18,6 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
-#include "CpuVideoFramePool.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
@@ -97,18 +96,16 @@ QString firstStructureWithoutSquarePixels(const GstCaps* caps)
 void GstQgcSinkTest::_testSinkBinConfigReachesSink()
 {
     {
-        const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin();
+        const GstQgc::SinkBin sink = GstQgc::makeSinkBin({});
         QVERIFY2(sink.bin && sink.qvideosink, "Failed to build the sink bin (CPU branch)");
 
-        gboolean gpuZeroCopy = TRUE;
-        g_object_get(sink.qvideosink.get(), "gpu-zerocopy", &gpuZeroCopy, NULL);
-        QCOMPARE(gpuZeroCopy, FALSE);
+        QVERIFY(!GstQgc::sinkGpuZeroCopy(sink.qvideosink.get()));
 
         // The bin leaves the deadline as the sink has it by itself (GstVideoSink's 15 ms): a live pipeline that syncs
         // to the clock adds it to its latency.
         guint64 sinkDeadline = 0;
         {
-            const GStreamer::GstElementPtr standalone = GStreamer::makeElement("qgcqvideosink");
+            const GStreamer::GstElementPtr standalone = GstQgcTest::makeVideoSink();
             QVERIFY(standalone);
             g_object_get(standalone.get(), "processing-deadline", &sinkDeadline, NULL);
         }
@@ -125,13 +122,14 @@ void GstQgcSinkTest::_testSinkBinConfigReachesSink()
         QCOMPARE(processingDeadline, sinkDeadline);
 
         // The converter and qgcqvideosink, whose caps ask for square pixels.
-        QCOMPARE(GstTest::childFactoryNames(GST_BIN(sink.bin.get())), withConverter({QStringLiteral("qgcqvideosink")}));
+        QCOMPARE(GstTest::childFactoryNames(GST_BIN(sink.bin.get())),
+                 withConverter({QStringLiteral("GstQgcQVideoSink")}));
         const GStreamer::GstCapsPtr caps = sinkPadCaps(sink.qvideosink.get());
         QVERIFY(caps && !gst_caps_is_empty(caps.get()));
         QCOMPARE(firstStructureWithoutSquarePixels(caps.get()), QString());
 
         // Two bins can share a pipeline: each has a name of its own.
-        const GstQgcTest::SinkBin other = GstQgcTest::makeSinkBin();
+        const GstQgc::SinkBin other = GstQgc::makeSinkBin({});
         QVERIFY(other.bin);
         const GStreamer::GCharPtr name = GStreamer::adoptGChar(gst_element_get_name(sink.bin.get()));
         const GStreamer::GCharPtr otherName = GStreamer::adoptGChar(gst_element_get_name(other.bin.get()));
@@ -140,7 +138,7 @@ void GstQgcSinkTest::_testSinkBinConfigReachesSink()
 
     {
         // disablePar lets the sink take any pixel aspect ratio.
-        const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin({.disablePar = true});
+        const GstQgc::SinkBin sink = GstQgc::makeSinkBin({.disablePar = true});
         QVERIFY2(sink.bin && sink.qvideosink, "Failed to build the sink bin (CPU branch, non-square pixels)");
         const GStreamer::GstCapsPtr caps = sinkPadCaps(sink.qvideosink.get());
         QVERIFY(caps && !gst_caps_is_empty(caps.get()));
@@ -151,19 +149,12 @@ void GstQgcSinkTest::_testSinkBinConfigReachesSink()
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
     {
-        const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin({.gpuZeroCopy = true});
+        const GstQgc::SinkBin sink = GstQgc::makeSinkBin({.gpuZeroCopy = true});
         QVERIFY2(sink.bin && sink.qvideosink, "Failed to build the sink bin (GPU branch)");
 
-        gboolean gpuZeroCopy = FALSE;
-        g_object_get(sink.qvideosink.get(), "gpu-zerocopy", &gpuZeroCopy, NULL);
-        QCOMPARE(gpuZeroCopy, TRUE);
+        QVERIFY(GstQgc::sinkGpuZeroCopy(sink.qvideosink.get()));
     }
 #endif
-
-    // Anything else has no sink to hand out.
-    QVERIFY(!GstQgc::sinkBinVideoSink(nullptr));
-    const GStreamer::GstElementPtr emptyBin = GStreamer::adoptFloating(gst_bin_new(nullptr));
-    QVERIFY(!GstQgc::sinkBinVideoSink(emptyBin.get()));
 }
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -177,14 +168,14 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
     QTest::addColumn<bool>("singlePlaneRgb2D");
 
     const QString systemMemory = QStringLiteral("memory:SystemMemory");
-    const QStringList passthroughChildren = withConverter({QStringLiteral("qgcqvideosink")});
+    const QStringList passthroughChildren = withConverter({QStringLiteral("GstQgcQVideoSink")});
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD) || defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     const int openGl = int(GstQgc::RenderBackend::OpenGL);
 #endif
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
-    const QStringList gluploadChildren =
-        withConverter({QStringLiteral("glcolorconvert"), QStringLiteral("glupload"), QStringLiteral("qgcqvideosink")});
+    const QStringList gluploadChildren = withConverter(
+        {QStringLiteral("glcolorconvert"), QStringLiteral("glupload"), QStringLiteral("GstQgcQVideoSink")});
     const QStringList glMemory{QStringLiteral("memory:GLMemory")};
     // glcolorconvert turns external-OES into texture-target=2D; Qt samples multi-plane GLMemory as green frames.
     QTest::newRow("glupload") << glUpload << openGl << true << gluploadChildren << glMemory << true;
@@ -204,7 +195,8 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
     // Without switchbin the variant is the glupload one.
     const bool memorySwitch = GstQgcTest::hasMemorySwitch();
     const QStringList switchChildren =
-        memorySwitch ? withConverter({QStringLiteral("qgcqvideosink"), QStringLiteral("switchbin")}) : gluploadChildren;
+        memorySwitch ? withConverter({QStringLiteral("GstQgcQVideoSink"), QStringLiteral("switchbin")})
+                     : gluploadChildren;
     // System memory stays out: the switchbin sends it through glupload, and DMABuf straight to the sink.
     QTest::newRow("dmabuf-or-glupload") << dmaBufOrGlUpload << openGl << true << switchChildren
                                         << (memorySwitch ? QStringList{QStringLiteral("memory:DMABuf")} + glMemory
@@ -246,14 +238,11 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
         .dmaBufDisplay = kFakeQtEglDisplay,
         .d3d11OpensD3D12 = true};
 
-    const GStreamer::GstElementPtr bin =
-        GStreamer::adoptFloating(GstQgc::makeSinkBin({.gpuZeroCopy = true, .environment = environment}));
-    QVERIFY2(bin, "Failed to build the sink bin (GPU branch)");
-    QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), children);
+    const GstQgc::SinkBin sinkBin = GstQgc::makeSinkBin({.gpuZeroCopy = true, .environment = environment});
+    QVERIFY2(sinkBin, "Failed to build the sink bin (GPU branch)");
+    QCOMPARE(GstTest::childFactoryNames(GST_BIN(sinkBin.bin.get())), children);
 
-    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(bin.get());
-    QVERIFY(qvideosink);
-    const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
+    const GStreamer::GstCapsPtr caps = sinkPadCaps(sinkBin.qvideosink.get());
     QVERIFY2(caps, "qgcqvideosink returned no caps");
     QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
     // No element of the bin scales GPU memory, and the VideoOutput shows a frame's pixels as square.
@@ -310,14 +299,19 @@ void GstQgcSinkTest::_testQgcVideoSinkBinRefusesDrawingD3D11Converter()
     const GstQgc::RenderTarget target{.backend = static_cast<GstQgc::RenderBackend>(backend)};
     QCOMPARE(GstQgc::converterSuitsRenderTarget(plugin.constData(), converter.constData(), target), suits);
 
-    // Where GStreamer has the element, the bin converts with its default instead.
+    // Where GStreamer has the element, the bin converts with its default instead, and says why.
     if (suits || !GstTest::firstMissingFactory({converter.constData()}).isEmpty()) {
         return;
     }
-    const GStreamer::GstElementPtr bin = GStreamer::adoptFloating(GstQgc::makeSinkBin(
-        {.conversionElement = converter, .environment = GstQgc::SinkEnvironment{.target = target}}));
+    expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^conversion element %1 would draw on the device Qt renders")
+                                            .arg(QString::fromLatin1(converter))));
+    const GStreamer::GstElementPtr bin =
+        GstQgc::makeSinkBin({.conversionElement = converter, .environment = GstQgc::SinkEnvironment{.target = target}})
+            .bin;
+    verifyExpectedLogMessage();
     QVERIFY2(bin, "Failed to build the sink bin");
-    QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), withConverter({QStringLiteral("qgcqvideosink")}));
+    QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), withConverter({QStringLiteral("GstQgcQVideoSink")}));
 }
 
 void GstQgcSinkTest::_testCpuZeroCopyFrameRejectsWritableMap()
@@ -336,10 +330,7 @@ void GstQgcSinkTest::_testCpuZeroCopyFrameRejectsWritableMap()
     gst_buffer_unmap(buffer, &mapInfo);
 
     QVideoFrameFormat format(QSize(4, 4), QVideoFrameFormat::Format_BGRA8888);
-    auto wrapped = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, std::make_shared<std::atomic<int>>(0));
-    QVERIFY(wrapped);
-
-    QVideoFrame frame(std::move(wrapped));
+    QVideoFrame frame = mapCpuFrame(buffer, info, format);
     QVERIFY(frame.isValid());
 
     QVERIFY(frame.map(QVideoFrame::ReadOnly));
@@ -349,40 +340,13 @@ void GstQgcSinkTest::_testCpuZeroCopyFrameRejectsWritableMap()
     QVERIFY(!frame.map(QVideoFrame::ReadWrite));
 }
 
-void GstQgcSinkTest::_testCpuZeroCopyPinnedFramesCappedPerSink()
-{
-    GstVideoInfo info;
-    gst_video_info_init(&info);
-    gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, 4, 4);
-    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    QVERIFY(buffer);
-    auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    const QVideoFrameFormat format(QSize(4, 4), QVideoFrameFormat::Format_BGRA8888);
-
-    const auto sinkA = std::make_shared<std::atomic<int>>(0);
-    const auto sinkB = std::make_shared<std::atomic<int>>(0);
-    std::vector<std::unique_ptr<QAbstractVideoBuffer>> pinned;
-    for (int i = 0; i < CpuVideoFramePool::kMaxPinnedFrames; ++i) {
-        pinned.push_back(CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkA));
-        QVERIFY(pinned.back());
-    }
-
-    // At the cap the caller must copy instead; another sink's budget is independent.
-    QVERIFY(!CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkA));
-    QVERIFY(CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkB));
-
-    // Releasing a frame (Qt dropping it) frees its slot.
-    pinned.pop_back();
-    QVERIFY(CpuVideoFramePool::wrapZeroCopy(buffer, info, format, sinkA));
-}
-
 void GstQgcSinkTest::_testAllocationQueryHwMemoryPoolHint_data()
 {
     QTest::addColumn<QByteArray>("minBuffersEnv");
     QTest::addColumn<int>("expectedMinBuffers");
 
     // Default: a buffer beyond those the sink and Qt hold.
-    const int kDefault = CpuVideoFramePool::kMaxPinnedFrames + 1;
+    constexpr int kDefault = 5;
     QTest::newRow("default") << QByteArray() << kDefault;
     QTest::newRow("env-override") << QByteArrayLiteral("3") << 3;
     QTest::newRow("env-invalid") << QByteArrayLiteral("0") << kDefault;
@@ -455,8 +419,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
                                               .gpuBin = {.mode = GstQgc::GpuBinMode::DirectDmaBuf},
                                               .dmaBufDisplay = kFakeQtEglDisplay};
 
-    const GStreamer::GstElementPtr bin =
-        GStreamer::adoptFloating(GstQgc::makeSinkBin({.gpuZeroCopy = true, .environment = environment}));
+    const GStreamer::GstElementPtr bin = GstQgc::makeSinkBin({.gpuZeroCopy = true, .environment = environment}).bin;
     QVERIFY2(bin, "Failed to build the sink bin");
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(bin.get(), "sink"));
     QVERIFY2(sinkPad, "the sink bin has no sink pad");
@@ -507,8 +470,8 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation()
 {
     QFETCH(bool, needPool);
 
-    const GStreamer::GstElementPtr sink = GStreamer::makeElement("qgcqvideosink");
-    QVERIFY2(sink, "qgcqvideosink factory not found");
+    const GStreamer::GstElementPtr sink = GstQgcTest::makeVideoSink();
+    QVERIFY(sink);
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
     QVERIFY(sinkPad);
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
@@ -522,7 +485,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation()
     guint minBuffers = 0;
     gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, nullptr, &minBuffers, nullptr);
     const GStreamer::GstObjectPtr ownedPool = GStreamer::adoptObject(pool ? GST_OBJECT(pool) : nullptr);
-    QCOMPARE(int(minBuffers), CpuVideoFramePool::kMaxPinnedFrames + 1);
+    QCOMPARE(int(minBuffers), 5);
     QCOMPARE(pool != nullptr, needPool);
     if (needPool) {
         QVERIFY2(gst_buffer_pool_has_option(pool, GST_BUFFER_POOL_OPTION_VIDEO_META),
@@ -537,8 +500,8 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation()
 
 void GstQgcSinkTest::_testQgcQVideoSinkAllocationNeedsCaps()
 {
-    const GStreamer::GstElementPtr sink = GStreamer::makeElement("qgcqvideosink");
-    QVERIFY2(sink, "qgcqvideosink factory not found");
+    const GStreamer::GstElementPtr sink = GstQgcTest::makeVideoSink();
+    QVERIFY(sink);
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
     QVERIFY(sinkPad);
 
@@ -552,11 +515,8 @@ void GstQgcSinkTest::_testAdapterFlushDropsInFlightSamples()
 {
     // Counts come from the element: latest-frame-only delivery coalesces videoFrameChanged emissions.
     const auto counts = [](GstElement* sink) {
-        guint64 input = 0;
-        guint64 delivered = 0;
-        guint64 dropped = 0;
-        g_object_get(sink, "frames-input", &input, "frames-delivered", &delivered, "frames-dropped", &dropped, nullptr);
-        return std::array<guint64, 3>{input, delivered, dropped};
+        const GstQgc::SinkStats stats = GstQgc::sinkStats(sink);
+        return std::array<quint64, 3>{stats.input, stats.delivered, stats.dropped};
     };
 
     QVideoSink videoSink;
@@ -575,7 +535,7 @@ void GstQgcSinkTest::_testAdapterFlushDropsInFlightSamples()
     QVERIFY(harness.pushSegment());
     QCOMPARE(harness.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
     const auto [input, delivered, dropped] = counts(harness.element());
-    QCOMPARE(input, guint64(2));
+    QCOMPARE(input, quint64(2));
     QCOMPARE(delivered + dropped, input);
 }
 
@@ -596,22 +556,20 @@ void GstQgcSinkTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     for (int i = 1; i <= 3; ++i) {
         QCOMPARE(harness.pushFrame(i * GST_SECOND), GST_FLOW_OK);
     }
-    guint64 input = 0;
-    g_object_get(harness.element(), "frames-input", &input, nullptr);
-    QCOMPARE(input, guint64(3));
+    QCOMPARE(GstQgc::sinkStats(harness.element()).input, quint64(3));
     QCOMPARE(harness.delivered(), guint64(3));
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 1);
     QCOMPARE(lastStartUs, qint64(3 * GST_SECOND / GST_USECOND));
     // The two frames never shown are counted as superseded.
-    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
+    QCOMPARE(GstQgc::sinkStats(harness.element()).superseded, quint64(2));
 
     // Delivery re-arms once the GUI side has taken the frame.
     QCOMPARE(harness.pushFrame(4 * GST_SECOND), GST_FLOW_OK);
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 2);
     QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
-    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
+    QCOMPARE(GstQgc::sinkStats(harness.element()).superseded, quint64(2));
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkDisplayedCountNeverFalls()
@@ -620,20 +578,16 @@ void GstQgcSinkTest::_testQgcQVideoSinkDisplayedCountNeverFalls()
     GstQgcTest::SinkHarness harness(&videoSink);
     QVERIFY(harness.isReady());
 
-    // Readers of "frame-stats" count the frames displayed as those delivered less those superseded, so no snapshot may
-    // see a delivery without the frame it superseded, or the other way round. With the GUI thread taking none, each
-    // frame a streaming thread pushes supersedes the one before it.
+    // Readers count the frames displayed as those delivered less those superseded (SinkStats::displayed()), so no
+    // snapshot may see a delivery without the frame it superseded, or the other way round. With the GUI thread taking
+    // none, each frame a streaming thread pushes supersedes the one before it.
     const auto displayed = [&harness] {
-        const GStreamer::GstStructurePtr stats = GstQgc::frameStats(harness.element());
-        guint64 delivered = 0;
-        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-            guint64 frames = 0;
-            (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)), &frames);
+        const GstQgc::SinkStats stats = GstQgc::sinkStats(harness.element());
+        quint64 delivered = 0;
+        for (const quint64 frames : stats.pathFrames) {
             delivered += frames;
         }
-        guint64 superseded = 0;
-        (void) gst_structure_get_uint64(stats.get(), GstQgc::kSupersededFramesField, &superseded);
-        return static_cast<qint64>(delivered) - static_cast<qint64>(superseded);
+        return static_cast<qint64>(delivered) - static_cast<qint64>(stats.superseded);
     };
     QCOMPARE(harness.pushFrame(GST_MSECOND), GST_FLOW_OK);
     QCOMPARE(displayed(), qint64(1));
@@ -656,6 +610,65 @@ void GstQgcSinkTest::_testQgcQVideoSinkDisplayedCountNeverFalls()
     QVERIFY(snapshots > 0);
     QCOMPARE(wrong, 0);
     QCOMPARE(displayed(), qint64(1));
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkHoldsTwoPoolBuffersWhileGuiStalls()
+{
+    // A decoder's pool of a fixed size: a producer that acquires from it once every buffer is out waits for one back.
+    constexpr int kPoolBuffers = 6;
+    const std::unique_ptr<GstBufferPool, GStreamer::GstObjectDeleter> pool{gst_video_buffer_pool_new()};
+    QVERIFY(pool);
+    GstVideoInfo info;
+    QVERIFY(gst_video_info_set_format(&info, GST_VIDEO_FORMAT_BGRA, GstQgcTest::SinkHarness::kWidth,
+                                      GstQgcTest::SinkHarness::kHeight));
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_video_info_to_caps(&info));
+    GstStructure* const config = gst_buffer_pool_get_config(pool.get());
+    gst_buffer_pool_config_set_params(config, caps.get(), static_cast<guint>(GST_VIDEO_INFO_SIZE(&info)), kPoolBuffers,
+                                      kPoolBuffers);
+    QVERIFY(gst_buffer_pool_set_config(pool.get(), config));
+    QVERIFY(gst_buffer_pool_set_active(pool.get(), TRUE));
+    const auto deactivate = qScopeGuard([&pool] { (void) gst_buffer_pool_set_active(pool.get(), FALSE); });
+    // Null where a producer would wait.
+    const auto acquire = [&pool](GstClockTime pts) -> GstBuffer* {
+        GstBufferPoolAcquireParams params = {};
+        params.flags = GST_BUFFER_POOL_ACQUIRE_FLAG_DONTWAIT;
+        GstBuffer* buffer = nullptr;
+        if (gst_buffer_pool_acquire_buffer(pool.get(), &buffer, &params) != GST_FLOW_OK) {
+            return nullptr;
+        }
+        GST_BUFFER_PTS(buffer) = pts;
+        return buffer;
+    };
+    const auto heldDownstream = [&acquire] {
+        std::vector<GstBuffer*> available;
+        while (GstBuffer* const buffer = acquire(GST_CLOCK_TIME_NONE)) {
+            available.push_back(buffer);
+        }
+        for (GstBuffer* const buffer : available) {
+            gst_buffer_unref(buffer);
+        }
+        return kPoolBuffers - static_cast<int>(available.size());
+    };
+
+    QVideoSink videoSink;
+    GstQgcTest::SinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    QCOMPARE(harness.pushBuffer(acquire(GST_MSECOND)), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QVERIFY(videoSink.videoFrame().isValid());
+
+    // The GUI thread stalls while the decoder goes on: every frame maps in place and pins its buffer, yet the pool
+    // never runs dry, as each frame lets the one it supersedes go.
+    for (int i = 2; i <= 2000; ++i) {
+        GstBuffer* const buffer = acquire(i * GST_MSECOND);
+        QVERIFY2(buffer, "the pool ran dry: a decoder would wait for a buffer here");
+        QCOMPARE(harness.pushBuffer(buffer), GST_FLOW_OK);
+    }
+    // The frame Qt shows and the one waiting for the GUI thread.
+    QCOMPARE(heldDownstream(), 2);
+
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+    QCOMPARE(heldDownstream(), 1);
 }
 
 void GstQgcSinkTest::_testRenderBackendNames()
@@ -823,10 +836,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkAppliesAffineTransformationMeta()
     QCOMPARE(int(frame.rotation()), rotation);
     QCOMPARE(frame.mirrored(), mirrored);
     // What the viewport leaves out is the padding squeezed into the texture with the picture, which keeps its size.
-    gint pictureWidth = 0;
-    gint pictureHeight = 0;
-    g_object_get(harness.element(), "picture-width", &pictureWidth, "picture-height", &pictureHeight, nullptr);
-    QCOMPARE(QSize(pictureWidth, pictureHeight),
+    QCOMPARE(GstQgc::sinkPictureSize(harness.element()),
              QSize(GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight));
 }
 
@@ -842,32 +852,27 @@ void GstQgcSinkTest::_testQgcQVideoSinkStatsArePerSink()
     QCOMPARE(harnessA.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
     QCOMPARE(harnessB.pushFrame(GST_SECOND), GST_FLOW_OK);
 
-    const char* const cpuField = GstQgc::sinkFramesField(HwVideoBufferPath::None);
-    QCOMPARE(GstQgcTest::sinkStat(harnessA.element(), cpuField), qint64(2));
-    QCOMPARE(GstQgcTest::sinkStat(harnessB.element(), cpuField), qint64(1));
+    QCOMPARE(GstQgc::sinkStats(harnessA.element()).frames(HwVideoBufferPath::None), quint64(2));
+    QCOMPARE(GstQgc::sinkStats(harnessB.element()).frames(HwVideoBufferPath::None), quint64(1));
     QCOMPARE(GstQgcTest::framesDelivered(harnessB.element()), guint64(1));
 
-    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(harnessA.element());
-    QVERIFY(stats);
-    const GstQgc::PathStats formatted = GstQgc::formatSinkStats(stats.get());
+    const GstQgc::SinkStats stats = GstQgc::sinkStats(harnessA.element());
+    const GstQgc::PathStats formatted = GstQgc::formatSinkStats(stats);
     QCOMPARE(formatted.line, QStringLiteral(" CPU:2"));
     QCOMPARE(formatted.totalDelivered, quint64(0));
 
     // A receiver reuses its sink across sessions and reports each session from its start.
     QCOMPARE(harnessA.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
-    const GStreamer::GstStructurePtr later = GstQgc::frameStats(harnessA.element());
-    QVERIFY(later);
-    QCOMPARE(GstQgc::formatSinkStats(later.get(), stats.get()).line, QStringLiteral(" CPU:1"));
+    const GstQgc::SinkStats later = GstQgc::sinkStats(harnessA.element());
+    QCOMPARE(GstQgc::formatSinkStats(later - stats).line, QStringLiteral(" CPU:1"));
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkKeepsBaseSinkStats()
 {
-    const GStreamer::GstElementPtr sink = GStreamer::makeElement("qgcqvideosink");
+    const GStreamer::GstElementPtr sink = GstQgcTest::makeVideoSink();
     QVERIFY(sink);
 
-    // Generic tools read GstBaseSink's "stats"; the sink's own accounting lives beside it in "frame-stats".
-    QVERIFY(g_object_class_find_property(G_OBJECT_GET_CLASS(sink.get()), "frame-stats"));
-
+    // Generic tools read GstBaseSink's "stats"; the sink keeps its own accounting apart (GstQgc::sinkStats()).
     GstStructure* rawStats = nullptr;
     g_object_get(sink.get(), "stats", &rawStats, nullptr);
     const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
@@ -944,9 +949,10 @@ void GstQgcSinkTest::_testQgcQVideoSinkGpuPathSelection()
     const quint64 noPathAfter =
         GstHwPathTelemetry::snapshot().count(HwVideoBufferPath::None, HwFallbackReason::UnknownMemType);
 
-    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::sinkFramesField(HwVideoBufferPath::None)), qint64(3));
-    QCOMPARE(GstQgcTest::sinkStat(harness.element(), "gpu-fallbacks"), expectedGpuFallbacks);
-    QCOMPARE(GstQgcTest::sinkStat(harness.element(), "stream-demotions"), qint64(expectedGpuFallbacks > 0 ? 1 : 0));
+    const GstQgc::SinkStats stats = GstQgc::sinkStats(harness.element());
+    QCOMPARE(stats.frames(HwVideoBufferPath::None), quint64(3));
+    QCOMPARE(qint64(stats.gpuFallbacks), expectedGpuFallbacks);
+    QCOMPARE(qint64(stats.streamDemotions), qint64(expectedGpuFallbacks > 0 ? 1 : 0));
     QCOMPARE(noPathAfter - noPathBefore, expectedNoPathVerdicts);
 }
 #endif
@@ -1000,9 +1006,8 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
     QFETCH(bool, egl);
     QFETCH(QStringList, memoryFeatures);
 
-    GstElement* const element = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
-    QVERIFY(element);
-    const GStreamer::GstElementPtr sink = GStreamer::adoptFloating(element);
+    const GStreamer::GstElementPtr sink = GstQgcTest::makeVideoSink(gpuZeroCopy);
+    QVERIFY(sink);
     GstQgc::setSinkEnvironment(sink.get(),
                                {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl},
                                 .dmaBufDisplay = kFakeQtEglDisplay});
@@ -1138,7 +1143,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkForwardsTimestamps()
 
 void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError_data()
 {
-    QTest::addColumn<QString>("memoryFeature");  // empty: a sink without gpu-zerocopy, on system memory caps
+    QTest::addColumn<QString>("memoryFeature");  // empty: a sink without gpuZeroCopy, on system memory caps
     QTest::addColumn<int>("backend");
     QTest::addColumn<QString>("stage");
 
@@ -1170,8 +1175,6 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
     QVERIFY(harness.isReady());
 
     // Periodic per-failure warnings are rate-limited by process-global counters, so their count is not fixed.
-    ignoreLogMessage("Video.GStreamer.CpuPool", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("gst_video_frame_map failed")));
     ignoreLogMessage("Video.GStreamer.QgcQVideoSink", QtWarningMsg,
                      QRegularExpression(QStringLiteral("mapping failed")));
     expectLogMessage("Video.GStreamer.QgcQVideoSink", QtWarningMsg,
@@ -1285,10 +1288,12 @@ void GstQgcSinkTest::_testPathSessionFailurePolicy()
     session.onDelivered(MappedFrame{}, counters);
     session.startEpoch();
     session.onDelivered(demoted, counters);
-    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(counters.frameStats());
-    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kGpuFallbacksField), quint64(3));
-    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kStreamDemotionsField), quint64(2));
-    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kTiledDropsField), quint64(3));
+    const GstQgc::SinkStats stats = counters.snapshot();
+    QCOMPARE(stats.gpuFallbacks, quint64(3));
+    QCOMPARE(stats.streamDemotions, quint64(2));
+    QCOMPARE(stats.tiledDrops, quint64(3));
+    // As the receiver's "GPU path" debug lines show them, after the per-path counts.
+    QCOMPARE(GstQgc::formatSinkStats(stats).line, QStringLiteral(" gpu-fallbacks:3 stream-demotions:2 tiled-drops:3"));
 }
 
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
@@ -1384,147 +1389,6 @@ void GstQgcSinkTest::_testGpuBinSelection()
                                               .explicitChoice = explicitChoice};
     const GstQgc::RenderTarget target{.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl};
     QCOMPARE(int(GstQgc::selectGpuBin(preference, target)), expected);
-}
-
-void GstQgcSinkTest::_testCpuLayoutSizesPlanesByComponent()
-{
-    // AV12's third plane holds component 3 (full-height alpha); component 2 is the half-height V in plane 1.
-    // _testCpuCopyOddDimensions covers the formats whose planes and components line up.
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, GST_VIDEO_FORMAT_AV12, 64, 48));
-    const CpuVideoFramePool::PlaneLayout layout = CpuVideoFramePool::computeLayout(info);
-    QCOMPARE(layout.planeCount, 3);
-    QCOMPARE(layout.height[0], 48);
-    QCOMPARE(layout.height[1], 24);
-    QCOMPARE(layout.height[2], 48);
-}
-
-void GstQgcSinkTest::_testCpuCopyOddDimensions_data()
-{
-    QTest::addColumn<int>("gstFormat");
-    QTest::addColumn<int>("qtFormat");
-    QTest::addColumn<QList<int>>("planeRows");
-    QTest::addColumn<QList<int>>("planeRowBytes");
-
-    // 5x3: chroma rounds up to 3x2.
-    QTest::newRow("I420") << int(GST_VIDEO_FORMAT_I420) << int(QVideoFrameFormat::Format_YUV420P) << QList<int>{3, 2, 2}
-                          << QList<int>{5, 3, 3};
-    QTest::newRow("YV12") << int(GST_VIDEO_FORMAT_YV12) << int(QVideoFrameFormat::Format_YV12) << QList<int>{3, 2, 2}
-                          << QList<int>{5, 3, 3};
-    QTest::newRow("NV12") << int(GST_VIDEO_FORMAT_NV12) << int(QVideoFrameFormat::Format_NV12) << QList<int>{3, 2}
-                          << QList<int>{5, 6};
-    // Packed 4:2:2: the last macropixel's chroma ends past the last luma byte (YUY2 V at byte 11, UYVY V at 10).
-    QTest::newRow("YUY2") << int(GST_VIDEO_FORMAT_YUY2) << int(QVideoFrameFormat::Format_YUYV) << QList<int>{3}
-                          << QList<int>{12};
-    QTest::newRow("UYVY") << int(GST_VIDEO_FORMAT_UYVY) << int(QVideoFrameFormat::Format_UYVY) << QList<int>{3}
-                          << QList<int>{11};
-}
-
-void GstQgcSinkTest::_testCpuCopyOddDimensions()
-{
-    QFETCH(int, gstFormat);
-    QFETCH(int, qtFormat);
-    QFETCH(QList<int>, planeRows);
-    QFETCH(QList<int>, planeRowBytes);
-
-    GstVideoInfo info;
-    QVERIFY(gst_video_info_set_format(&info, static_cast<GstVideoFormat>(gstFormat), 5, 3));
-    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&info), nullptr);
-    QVERIFY(buffer);
-    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    GstMapInfo source;
-    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
-    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
-    for (gsize i = 0; i < source.size; ++i) {
-        source.data[i] = static_cast<guint8>((i * 7) + 1);
-    }
-
-    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(
-        buffer, info, QVideoFrameFormat(QSize(5, 3), static_cast<QVideoFrameFormat::PixelFormat>(qtFormat)));
-    QVERIFY(frame.isValid());
-    QVERIFY(frame.map(QVideoFrame::ReadOnly));
-    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
-    QCOMPARE(frame.planeCount(), planeRows.size());
-    for (int plane = 0; plane < frame.planeCount(); ++plane) {
-        const int stride = frame.bytesPerLine(plane);
-        QVERIFY(frame.mappedBytes(plane) >= ((planeRows[plane] - 1) * stride) + planeRowBytes[plane]);
-        const auto* const src = reinterpret_cast<const char*>(source.data + GST_VIDEO_INFO_PLANE_OFFSET(&info, plane));
-        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
-        for (int row = 0; row < planeRows[plane]; ++row) {
-            QCOMPARE(QByteArray(dst + (row * stride), planeRowBytes[plane]),
-                     QByteArray(src + (row * GST_VIDEO_INFO_PLANE_STRIDE(&info, plane)), planeRowBytes[plane]));
-        }
-    }
-}
-
-void GstQgcSinkTest::_testCpuCopyOfPaddedBuffer_data()
-{
-    QTest::addColumn<int>("metaWidth");
-    QTest::addColumn<QSize>("frameSize");
-
-    // A v4l2 stateless decoder's 1080p frame: 1080 rows in the caps, 1088 in the buffer's GstVideoMeta.
-    QTest::newRow("taller") << 32 << QSize(32, 1080);
-    // Padded columns as well, so the source's strides and plane offsets differ from the destination's.
-    QTest::newRow("taller-and-wider") << 48 << QSize(32, 1080);
-    // The buffer's whole frame, as the sink asks for it (frameGeometry()).
-    QTest::newRow("whole-frame") << 48 << QSize(48, 1088);
-}
-
-void GstQgcSinkTest::_testCpuCopyOfPaddedBuffer()
-{
-    QFETCH(int, metaWidth);
-    QFETCH(QSize, frameSize);
-    constexpr int kMetaRows = 1088;
-
-    GstVideoInfo capsInfo;
-    GstVideoInfo metaInfo;
-    GstVideoInfo frameInfo;
-    QVERIFY(gst_video_info_set_format(&capsInfo, GST_VIDEO_FORMAT_NV12, 32, 1080));
-    QVERIFY(gst_video_info_set_format(&metaInfo, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows));
-    QVERIFY(gst_video_info_set_format(&frameInfo, GST_VIDEO_FORMAT_NV12, frameSize.width(), frameSize.height()));
-    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&metaInfo), nullptr);
-    QVERIFY(buffer);
-    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
-    gst_buffer_add_video_meta_full(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows,
-                                   GST_VIDEO_INFO_N_PLANES(&metaInfo), metaInfo.offset, metaInfo.stride);
-    GstMapInfo source;
-    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
-    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
-    for (gsize i = 0; i < source.size; ++i) {
-        source.data[i] = static_cast<guint8>(i % 251);
-    }
-
-    // The copy's destination comes from the pool: hand the pool one with guard bytes behind the frame, which a copy of
-    // the meta's rows would overwrite.
-    const QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
-    constexpr char kGuardByte = char(0xA5);
-    constexpr qsizetype guardBytes = 1024;
-    const auto frameBytes = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&frameInfo));
-    QByteArray backing;
-    backing.reserve(frameBytes + 1 + guardBytes);
-    backing.resize(frameBytes);
-    char* const guard = backing.data() + frameBytes + 1;
-    std::memset(guard, kGuardByte, static_cast<std::size_t>(guardBytes));
-    CpuVideoFramePool::instance().releaseBacking(format.frameSize(), format.pixelFormat(), std::move(backing));
-
-    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(buffer, capsInfo, format);
-    QVERIFY(frame.isValid());
-    QVERIFY(frame.map(QVideoFrame::ReadOnly));
-    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
-    QCOMPARE(reinterpret_cast<const char*>(frame.bits(0)), guard - frameBytes - 1);
-    QCOMPARE(frame.planeCount(), 2);
-    for (int plane = 0; plane < frame.planeCount(); ++plane) {
-        // NV12: both planes hold a byte per column in a row, the chroma plane half the rows.
-        const int rows = (plane == 0) ? frameSize.height() : (frameSize.height() / 2);
-        QCOMPARE(frame.mappedBytes(plane), rows * frame.bytesPerLine(plane));
-        const auto* const src = reinterpret_cast<const char*>(source.data + metaInfo.offset[plane]);
-        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
-        for (int row = 0; row < rows; ++row) {
-            QCOMPARE(QByteArray(dst + (row * frame.bytesPerLine(plane)), frameSize.width()),
-                     QByteArray(src + (row * metaInfo.stride[plane]), frameSize.width()));
-        }
-    }
-    QCOMPARE(QByteArray(guard, guardBytes), QByteArray(guardBytes, kGuardByte));
 }
 
 void GstQgcSinkTest::_testFrameGeometryFollowsBufferMetas_data()

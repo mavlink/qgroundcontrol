@@ -34,7 +34,8 @@ endfunction()
 # qgc_gst_platform(<prefix>)
 # Sets, in the caller's scope, the target platform's profile:
 #   <prefix>                  the target platform: windows, linux, android, macos or ios
-#   <prefix>_VERSION_KEY      gstreamer.version.<key> in build-config.json: the SDK version, or on Linux the floor
+#   <prefix>_VERSION_KEY      gstreamer.version.<key> in build-config.json: sdk, the SDK release, or on Linux minimum,
+#                             the floor of the system GStreamer
 #   <prefix>_PLUGIN_KEY       gstreamer.plugins.<key> list in build-config.json added to the common plugins
 #   <prefix>_STATIC_PLUGINS   TRUE when the app registers static plugins (GSTREAMER_STATIC_PLUGINS) in
 #                             GStreamer::mobile, with the OpenSSL GIO module; FALSE when it loads plugin files
@@ -64,10 +65,10 @@ function(qgc_gst_platform prefix)
     # cmake-format: off
     # platform|version key|plugin key|static plugins|linkage|pkg-config|targets|plugin archives|path label|notice assets
     set(_profiles
-        "android|android|android|TRUE|static|TRUE|_qgc_gst_create_sdk_targets|TRUE|mobile-shared|TRUE"
-        "ios|ios|apple|TRUE|shared|FALSE|_qgc_gst_create_ios_targets|FALSE|merged-static|FALSE"
-        "windows|windows|windows|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
-        "macos|macos|apple|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+        "android|sdk|android|TRUE|static|TRUE|_qgc_gst_create_sdk_targets|TRUE|mobile-shared|TRUE"
+        "ios|sdk|apple|TRUE|shared|FALSE|_qgc_gst_create_ios_targets|FALSE|merged-static|FALSE"
+        "windows|sdk|windows|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+        "macos|sdk|apple|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
         "linux|minimum|linux|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
     )
     # cmake-format: on

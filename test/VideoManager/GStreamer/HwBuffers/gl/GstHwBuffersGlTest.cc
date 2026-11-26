@@ -46,20 +46,19 @@ void GstHwBuffersGlTest::_testGlMemoryDispatch()
     GSTTEST_SKIP_UNLESS_FACTORIES("glupload");
 
     GstTest::TestPipeline pipeline;
-    if (!GstQgcTest::launchIntoSinkBin(pipeline,
-                                       QStringLiteral("videotestsrc num-buffers=10 ! "
-                                                      "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
-                                                      "glupload ! "
-                                                      "video/x-raw(memory:GLMemory)"),
-                                       {.gpuZeroCopy = true, .environment = environment})) {
+    const GstQgc::SinkBin sinkBin =
+        GstQgcTest::launchIntoSinkBin(pipeline,
+                                      QStringLiteral("videotestsrc num-buffers=10 ! "
+                                                     "video/x-raw,format=RGBA,width=320,height=240,framerate=30/1 ! "
+                                                     "glupload ! "
+                                                     "video/x-raw(memory:GLMemory)"),
+                                      {.gpuZeroCopy = true, .environment = environment});
+    if (!sinkBin) {
         QSKIP(qPrintable(QStringLiteral("GLMemory pipeline parse skipped: %1").arg(pipeline.error())));
     }
 
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    QVERIFY2(sinkBin, "Could not find 'sink' element");
-    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
-    QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    const GStreamer::GstPadPtr sinkPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(sinkBin.qvideosink.get(), "sink"));
     QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");
 
     struct ProbeState

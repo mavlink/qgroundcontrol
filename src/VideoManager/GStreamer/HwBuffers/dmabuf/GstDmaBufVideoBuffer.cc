@@ -487,26 +487,11 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 
 namespace {
 
-// Streaming thread (sink start). Only the EGLDisplay Qt itself renders with can import for it, and Qt has none under
-// GLX; under Vulkan its device imports. qgcqvideosink puts the current one (HwBuffers::dmaBufImportDisplay()) into
-// each frame's context. Without one the path admits no frame, so DMABuf frames take the CPU path up front instead of
-// failing every import.
-void prepareDmaBufContext(HwVideoBufferContext&)
-{
-    static std::atomic<bool> s_logged{false};
-    if (!s_logged.exchange(true, std::memory_order_relaxed)) {
-        if (!QGCRhiCapture::qtEglDisplay()) {
-            qCDebug(GstDmaBufLog) << "Qt renders without EGL on" << QGuiApplication::platformName()
-                                  << "— DMABuf frames take the CPU path (xcb: QT_XCB_GL_INTEGRATION=xcb_egl)";
-        } else {
-            qCDebug(GstDmaBufLog) << "DMABuf zero-copy available on" << QGuiApplication::platformName();
-        }
-    }
-}
-
-// The importer comes and goes within a caps epoch (Qt's EGLDisplay or Vulkan device becomes known, an import failure
-// disables the path until the scene graph is recreated), so it is asked for every frame rather than deciding whether
-// the path matches.
+// Only the EGLDisplay Qt itself renders with imports for it, and Qt has none under GLX; under Vulkan its device
+// imports. Without either the path admits no frame, so DMABuf frames take the CPU path up front instead of failing
+// every import. The importer comes and goes within a caps epoch (Qt's EGLDisplay or Vulkan device becomes known, an
+// import failure disables the path until the scene graph is recreated), so it is asked for every frame rather than
+// deciding whether the path matches.
 bool admitDmaBuf(GstMemory*, const HwVideoBufferContext& context)
 {
     if (context.dmaBufImporter) {
@@ -527,7 +512,6 @@ constinit const HwPathDescriptor GstHwPaths::kDmaBuf = {
         return std::make_unique<GstDmaBufVideoBuffer>(sample, info, format,
                                                       GstDmaBufVideoBuffer::eglDisplayFor(context));
     },
-    .prepareContext = &prepareDmaBufContext,
 #if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     .probeDevice = &GstDmaBufVulkan::probeDevice,
 #endif
@@ -592,7 +576,7 @@ QAbstractVideoBuffer::MapData GstDmaBufVideoBuffer::map(QVideoFrame::MapMode mod
     return GstHwVideoBuffer::map(mode);
 }
 
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::DmaBuf);
     if (importDisabled()) {

@@ -7,7 +7,6 @@
 #include <gst/android/gstandroid.h>
 #include <gst/gl/gstglsyncmeta.h>
 #include <gst/video/video.h>
-#include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 #include <span>
@@ -149,7 +148,7 @@ bool GstAHardwareBufferVideoBuffer::validatePlaneHandles() const
     });
 }
 
-QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     GstBuffer* buffer = nullptr;
     if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::OpenGLES2), GstAHWBufLog(), buffer)) {
@@ -264,29 +263,34 @@ QVideoFrameFormat externalOesFormat(const QVideoFrameFormat& format)
     return GstHw::withPixelFormat(format, QVideoFrameFormat::Format_SamplerExternalOES);
 }
 
-void prepareAhbContext(HwVideoBufferContext& context)
+// Android has one EGL display per process, so it is asked for once.
+EGLDisplay ahbEglDisplay()
 {
-    context.ahbEglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (context.ahbEglDisplay == EGL_NO_DISPLAY) {
-        qCWarning(GstAHWBufLog) << "AHardwareBuffer path: EGLDisplay unavailable";
-    }
+    static const EGLDisplay display = [] {
+        const EGLDisplay defaultDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        if (defaultDisplay == EGL_NO_DISPLAY) {
+            qCWarning(GstAHWBufLog) << "AHardwareBuffer path: EGLDisplay unavailable";
+        }
+        return defaultDisplay;
+    }();
+    return display;
 }
 
 // Streaming thread, for every frame. A frame kept off the path goes to the sink's CPU path, which shows it only if
 // its memory maps on the CPU; wrapped, a frame that then fails to import isn't shown at all.
-bool admitAhb(GstMemory*, const HwVideoBufferContext& context)
+bool admitAhb(GstMemory*, const HwVideoBufferContext&)
 {
     using GstHwPathTelemetry::HwFallbackReason;
     // The import binds an external-OES texture in Qt's OpenGL context: nothing to import into under another QRhi.
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
     const bool otherRenderer = (backend >= 0) && (backend != static_cast<int>(QRhi::OpenGLES2));
-    if ((context.ahbEglDisplay != EGL_NO_DISPLAY) && !otherRenderer &&
-        !s_importDisabled.load(std::memory_order_relaxed)) {
+    const EGLDisplay display = ahbEglDisplay();
+    if ((display != EGL_NO_DISPLAY) && !otherRenderer && !s_importDisabled.load(std::memory_order_relaxed)) {
         return true;
     }
     GstHwPathTelemetry::recordFallbackReason(
         HwVideoBufferPath::AHardwareBuffer,
-        (context.ahbEglDisplay == EGL_NO_DISPLAY) ? HwFallbackReason::NoExt : HwFallbackReason::ImportUnsupported);
+        (display == EGL_NO_DISPLAY) ? HwFallbackReason::NoExt : HwFallbackReason::ImportUnsupported);
     return false;
 }
 
@@ -297,11 +301,10 @@ constinit const HwPathDescriptor GstHwPaths::kAHardwareBuffer = {
     .matches = [](GstMemory* mem) -> bool { return gst_is_ahardware_buffer_memory(mem); },
     .admits = &admitAhb,
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
-                    const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
+                    const HwVideoBufferContext&) -> std::unique_ptr<GstHwVideoBuffer> {
         return std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, externalOesFormat(format),
-                                                               context.ahbEglDisplay);
+                                                               ahbEglDisplay());
     },
-    .prepareContext = &prepareAhbContext,
     .resetCaches =
         [] {
             GstEglHelpers::resetExtensionCache();

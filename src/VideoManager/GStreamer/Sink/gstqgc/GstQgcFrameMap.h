@@ -9,7 +9,6 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "CpuVideoFramePool.h"
 #include "HwBuffers/HwBuffers.h"
 
 /// Sample-to-frame helpers for qgcqvideosink's show_frame; pure functions, streaming-thread safe.
@@ -42,6 +41,11 @@ void applyFlips(QVideoFrame& frame, const FrameGeometry& geometry);
 /// @p format for frames of @p geometry: its frame size, with the picture as the viewport.
 QVideoFrameFormat withFrameGeometry(QVideoFrameFormat format, const FrameGeometry& geometry);
 
+/// @p buffer's system memory as a frame of @p format, mapped through gst_video_frame_map() with @p info and not copied,
+/// as Qt's own GStreamer sink maps it: the frame holds a ref on @p buffer, so its decoder doesn't reuse it while Qt
+/// holds the frame. Read-only; invalid when the buffer doesn't map.
+QVideoFrame mapCpuFrame(GstBuffer* buffer, const GstVideoInfo& info, const QVideoFrameFormat& format);
+
 /// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT take the caller's refs on
 /// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU
 /// path takes whose layout the CPU can't read (a tiled DMA_DRM modifier) comes back invalid, with noCpuLayout set.
@@ -55,5 +59,4 @@ struct MappedFrame
 
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, const HwVideoBufferContext& hwContext,
-                             const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              HwResolvedPathCache* pathCache = nullptr);

@@ -53,37 +53,27 @@ inline bool hasMemorySwitch()
     return ((major > 1) || (minor >= 24)) && GstTest::firstMissingFactory({"switchbin"}).isEmpty();
 }
 
-/// The qgcqvideosink inside the sink bin @p sinkBin.
-inline GStreamer::GstElementPtr qvideosink(GstElement* sinkBin)
+/// A new qgcqvideosink (GstQgc::makeVideoSink()).
+inline GStreamer::GstElementPtr makeVideoSink(bool gpuZeroCopy = false)
 {
-    return GStreamer::adoptElement(GstQgc::sinkBinVideoSink(sinkBin));
+    return GStreamer::adoptFloating(GstQgc::makeVideoSink(gpuZeroCopy));
 }
 
-/// Launches @p upstream (GstTest::TestPipeline::launchInto()) into a new sink bin named "sink", built with @p config.
-inline bool launchIntoSinkBin(GstTest::TestPipeline& pipeline, const QString& upstream,
-                              const GstQgc::SinkBinConfig& config = {})
+/// Launches @p upstream (GstTest::TestPipeline::launchInto()) into a new sink bin built with @p config, and returns the
+/// bin; empty, with pipeline.error() saying why, when either fails.
+inline GstQgc::SinkBin launchIntoSinkBin(GstTest::TestPipeline& pipeline, const QString& upstream,
+                                         const GstQgc::SinkBinConfig& config = {})
 {
-    GstElement* const sinkBin = GstQgc::makeSinkBin(config);
-    if (sinkBin) {
-        gst_object_set_name(GST_OBJECT(sinkBin), "sink");
+    GstQgc::SinkBin sinkBin = GstQgc::makeSinkBin(config);
+    if (!pipeline.launchInto(upstream, sinkBin.bin.get())) {
+        return {};
     }
-    return pipeline.launchInto(upstream, sinkBin);
+    return sinkBin;
 }
 
 inline guint64 framesDelivered(GstElement* qvideosink)
 {
-    guint64 delivered = 0;
-    g_object_get(qvideosink, "frames-delivered", &delivered, nullptr);
-    return delivered;
-}
-
-/// A guint64 field of the sink's "frame-stats" structure; -1 if the field is missing.
-inline qint64 sinkStat(GstElement* qvideosink, const char* field)
-{
-    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink);
-    guint64 value = 0;
-    const bool found = stats && gst_structure_get_uint64(stats.get(), field, &value);
-    return found ? static_cast<qint64>(value) : -1;
+    return GstQgc::sinkStats(qvideosink).delivered;
 }
 
 /// Drives a standalone qgcqvideosink from the test thread through a linked source pad. show_frame runs inside
@@ -100,7 +90,7 @@ public:
 
     explicit SinkHarness(QVideoSink* target, bool gpuZeroCopy = false, const char* memoryFeature = nullptr,
                          const std::optional<GstQgc::SinkEnvironment>& environment = std::nullopt)
-        : _sink(sinkElement(gpuZeroCopy))
+        : _sink(makeVideoSink(gpuZeroCopy))
         , _bus(GStreamer::adoptBus(gst_bus_new()))
         , _src(GStreamer::adoptFloating(gst_pad_new("src", GST_PAD_SRC)))
     {
@@ -111,7 +101,7 @@ public:
             GstQgc::setSinkEnvironment(_sink.get(), *environment);
         }
         gst_element_set_bus(_sink.get(), _bus.get());
-        g_object_set(_sink.get(), "qvideosink", static_cast<gpointer>(target), nullptr);
+        GstQgc::setSinkTarget(_sink.get(), target);
         const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_sink.get(), "sink"));
         _ready = sinkPad && (gst_pad_link(_src.get(), sinkPad.get()) == GST_PAD_LINK_OK) &&
                  gst_pad_set_active(_src.get(), TRUE) &&
@@ -196,32 +186,10 @@ private:
         return ok;
     }
 
-    static GStreamer::GstElementPtr sinkElement(bool gpuZeroCopy)
-    {
-        GstElement* const sink = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
-        return GStreamer::adoptFloating(sink);
-    }
-
     GStreamer::GstElementPtr _sink;
     GStreamer::GstBusPtr _bus;
     GStreamer::GstPadPtr _src;
     bool _ready = false;
 };
-
-/// A sink bin and its qgcqvideosink.
-struct SinkBin
-{
-    GStreamer::GstElementPtr bin;
-    GStreamer::GstElementPtr qvideosink;
-};
-
-inline SinkBin makeSinkBin(const GstQgc::SinkBinConfig& config = {})
-{
-    SinkBin made{GStreamer::adoptFloating(GstQgc::makeSinkBin(config)), nullptr};
-    if (made.bin) {
-        made.qvideosink = GstQgcTest::qvideosink(made.bin.get());
-    }
-    return made;
-}
 
 }  // namespace GstQgcTest

@@ -5,6 +5,7 @@
 #include <QtTest/QTest>
 
 #include "GstReceiverWorker.h"
+#include "gstqgc/GstQgcSinkBin.h"
 
 bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement*)>& task)
 {
@@ -49,7 +50,13 @@ bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const s
 
 GstElement* GstVideoReceiverTestBase::displaySink(const GstVideoReceiver* receiver)
 {
-    return receiver->_displaySink.get();
+    return receiver->_displaySink ? receiver->_displaySink->bin.get() : nullptr;
+}
+
+GStreamer::GstElementPtr GstVideoReceiverTestBase::displayVideoSink(const GstVideoReceiver* receiver)
+{
+    GstElement* const qvideosink = receiver->_displaySink ? receiver->_displaySink->qvideosink.get() : nullptr;
+    return GStreamer::adoptElement(qvideosink ? GST_ELEMENT(gst_object_ref(qvideosink)) : nullptr);
 }
 
 void GstVideoReceiverTestBase::holdWorker(GstVideoReceiver* receiver,

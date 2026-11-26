@@ -3,8 +3,8 @@
 #include "GStreamerTestBase.h"
 
 /// qgcqvideosink and the sink bin as elements, without a pipeline: construction, caps, allocation, CPU zero-copy
-/// frames, and frames pushed straight into the sink. And what the sink is made of, on its own: the GPU bin's choice,
-/// the CPU copy of a frame and a frame's geometry.
+/// frames, and frames pushed straight into the sink. And what the sink is made of, on its own: the GPU bin's choice and
+/// a frame's geometry.
 class GstQgcSinkTest : public GStreamerTestBase
 {
     Q_OBJECT
@@ -19,6 +19,7 @@ private slots:
     void _testQgcVideoSinkBinRefusesDrawingD3D11Converter();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
     void _testQgcQVideoSinkDisplayedCountNeverFalls();
+    void _testQgcQVideoSinkHoldsTwoPoolBuffersWhileGuiStalls();
     void _testRenderBackendNames();
     void _testRenderTargetSharesGlContext();
     void _testCurrentRenderTarget();
@@ -44,7 +45,6 @@ private slots:
     void _testQgcQVideoSinkMapFailuresPostElementError_data();
     void _testQgcQVideoSinkMapFailuresPostElementError();
     void _testCpuZeroCopyFrameRejectsWritableMap();
-    void _testCpuZeroCopyPinnedFramesCappedPerSink();
     void _testAllocationQueryHwMemoryPoolHint_data();
     void _testAllocationQueryHwMemoryPoolHint();
     void _testAllocationQueryOffersCropMeta_data();
@@ -64,11 +64,6 @@ private slots:
 #endif
     void _testGpuBinSelection_data();
     void _testGpuBinSelection();
-    void _testCpuLayoutSizesPlanesByComponent();
-    void _testCpuCopyOddDimensions_data();
-    void _testCpuCopyOddDimensions();
-    void _testCpuCopyOfPaddedBuffer_data();
-    void _testCpuCopyOfPaddedBuffer();
     void _testFrameGeometryFollowsBufferMetas_data();
     void _testFrameGeometryFollowsBufferMetas();
 };

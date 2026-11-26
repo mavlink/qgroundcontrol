@@ -149,7 +149,7 @@ def print_log_group(content: str, pattern: re.Pattern[str], max_lines: int = 80)
 
 _GSTREAMER_LOG_PATTERN = re.compile(
     r"gst|GStreamer|gstreamer|gst_init|gst_plugin|GST_PLUGIN|libgst|"
-    r"GstVideoReceiver|videostreaming|qml6glsink|qgcvideosinkbin",
+    r"GstVideoReceiver|videostreaming|qgcvideosinkbin",
     re.IGNORECASE,
 )
 

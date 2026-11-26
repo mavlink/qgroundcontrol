@@ -110,8 +110,6 @@ function(qgc_gst_probe_library name)
         if(DEFINED PKG_CONFIG_USE_CMAKE_PREFIX_PATH AND NOT PKG_CONFIG_USE_CMAKE_PREFIX_PATH)
             set(_prefix_path_args NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH)
         endif()
-        # find_library skips the search while a cache entry (from configures before NO_CACHE) holds the name.
-        unset(${ARG_LIB_VAR} CACHE)
         find_library(
             ${ARG_LIB_VAR}
             NAMES ${ARG_LIBNAMES}

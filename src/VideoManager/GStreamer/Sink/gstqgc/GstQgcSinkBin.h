@@ -6,6 +6,7 @@
 #include <QtCore/QByteArray>
 
 #include "GstQgcSinkPolicy.h"
+#include "GstScoped.h"
 
 namespace GstQgc {
 
@@ -27,12 +28,19 @@ struct SinkBinConfig
     std::optional<SinkEnvironment> environment = {};
 };
 
-/// A new bin, floating, of [converter ! (GPU upload !) qgcqvideosink] behind a "sink" ghost pad. qgcqvideosink's
-/// get_caps decides what negotiates: the formats Qt renders, the GPU memory the render target imports, and square
-/// pixels unless disablePar. Null, with the reason logged, when an element is missing or the chain doesn't link.
-GstElement* makeSinkBin(const SinkBinConfig& config);
+/// A sink bin makeSinkBin() built, and the qgcqvideosink in it: a reference to each, neither floating.
+struct SinkBin
+{
+    GStreamer::GstElementPtr bin;
+    GStreamer::GstElementPtr qvideosink;
 
-/// The qgcqvideosink of @p sinkBin, a bin makeSinkBin() built: a new reference, or null for anything else.
-GstElement* sinkBinVideoSink(GstElement* sinkBin);
+    explicit operator bool() const { return bin != nullptr; }
+};
+
+/// A new bin of [converter ! (GPU upload !) qgcqvideosink] behind a "sink" ghost pad, with its qgcqvideosink.
+/// qgcqvideosink's get_caps decides what negotiates: the formats Qt renders, the GPU memory the render target imports,
+/// and square pixels unless disablePar. Empty, with the reason logged, when an element is missing or the chain doesn't
+/// link.
+SinkBin makeSinkBin(const SinkBinConfig& config);
 
 }  // namespace GstQgc

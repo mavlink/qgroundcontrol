@@ -120,14 +120,9 @@ void GstVideoReceiverStatsTest::_testFramesLateForTheClockAreDisplayed()
 
     // From here on every frame is due a second before it arrives, as from a decoder that fell behind the clock. The
     // sink shows each one all the same: a GstVideoSink would drop them, and show one a second.
-    GStreamer::GstElementPtr sink;
-    QVERIFY(runOnPipeline(receiving.receiver.get(), [&sink](GstElement* pipeline) {
-        sink = GstTest::findByFactory(pipeline, "qgcqvideosink");
-        if (sink) {
-            g_object_set(sink.get(), "ts-offset", -static_cast<gint64>(GST_SECOND), nullptr);
-        }
-    }));
+    const GStreamer::GstElementPtr sink = displayVideoSink(receiving.receiver.get());
     QVERIFY(sink);
+    g_object_set(sink.get(), "ts-offset", -static_cast<gint64>(GST_SECOND), nullptr);
     const guint64 deliveredBefore = GstQgcTest::framesDelivered(sink.get());
     QVERIFY_TRUE_WAIT(GstQgcTest::framesDelivered(sink.get()) >= (deliveredBefore + (2 * GstReceiverTest::kFrameRate)),
                       TestTimeout::mediumMs());

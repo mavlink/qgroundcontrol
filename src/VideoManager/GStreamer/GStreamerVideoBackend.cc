@@ -24,7 +24,7 @@ VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
 #else
     constexpr bool gpuVideoPath = false;
 #endif
-    return {.streaming = true, .pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
+    return {.pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
 }
 
 VideoReceiver* GStreamerVideoBackend::createOwnReceiver(QObject* parent)

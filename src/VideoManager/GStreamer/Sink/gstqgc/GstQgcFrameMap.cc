@@ -6,13 +6,14 @@
 #include <gst/gst.h>
 #include <gst/video/gstvideoaffinetransformationmeta.h>
 #include <gst/video/gstvideometa.h>
+#include <memory>
 #include <utility>
 
 #include <QtCore/QtNumeric>
 #include <QtMultimedia/QAbstractVideoBuffer>
 #include <QtMultimedia/QVideoFrame>
 
-#include "CpuVideoFramePool.h"
+#include "HwBuffers/common/GstHwFrameMapping.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
@@ -23,6 +24,39 @@
 QGC_LOGGING_CATEGORY(GstQgcFrameMapLog, "Video.GStreamer.FrameMap")
 
 namespace {
+
+/// Refs the source GstBuffer and maps its system memory through to Qt. The decoder buffer stays pinned for the frame's
+/// lifetime, as the GPU paths pin theirs by anchoring the sample.
+class MapThroughGstVideoBuffer final : public QAbstractVideoBuffer
+{
+public:
+    MapThroughGstVideoBuffer(GstBuffer* buffer, const GstVideoInfo& info, QVideoFrameFormat format)
+        : _buffer(gst_buffer_ref(buffer))
+        , _info(info)
+        , _format(std::move(format))
+    {}
+
+    ~MapThroughGstVideoBuffer() override
+    {
+        _cpuView.unmap();
+        gst_buffer_unref(_buffer);
+    }
+
+    MapData map(QVideoFrame::MapMode mode) override
+    {
+        return (mode == QVideoFrame::ReadOnly) ? _cpuView.map(_buffer, _info) : MapData{};
+    }
+
+    void unmap() override { _cpuView.unmap(); }
+
+    QVideoFrameFormat format() const override { return _format; }
+
+private:
+    GstBuffer* _buffer;
+    GstVideoInfo _info;
+    QVideoFrameFormat _format;
+    GstHw::FrameMapping _cpuView;
+};
 
 /// Narrows @p geometry's picture to the part @p matrix shows of it, and notes its flips. The matrix moves the picture's
 /// corners, in a unit square with y up (GstVideoAffineTransformationMeta); the texture stays where it is. So the
@@ -118,9 +152,21 @@ QVideoFrameFormat withFrameGeometry(QVideoFrameFormat format, const FrameGeometr
     return format;
 }
 
+QVideoFrame mapCpuFrame(GstBuffer* buffer, const GstVideoInfo& info, const QVideoFrameFormat& format)
+{
+    if (!buffer || !format.isValid()) {
+        return {};
+    }
+    auto cpuBuffer = std::make_unique<MapThroughGstVideoBuffer>(buffer, info, format);
+    // Mapped here, so a buffer no CPU can read is dropped on the streaming thread; Qt's map() reuses the mapping.
+    if (cpuBuffer->map(QVideoFrame::ReadOnly).planeCount <= 0) {
+        return {};
+    }
+    return QVideoFrame(std::move(cpuBuffer));
+}
+
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, [[maybe_unused]] const HwVideoBufferContext& hwContext,
-                             const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              [[maybe_unused]] HwResolvedPathCache* pathCache)
 {
     MappedFrame out;
@@ -141,10 +187,6 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInf
         out.noCpuLayout = true;
         return out;
     }
-    if (auto cpuBuf = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, pinnedCpuFrames)) {
-        out.frame = QVideoFrame(std::move(cpuBuf));
-    } else {
-        out.frame = CpuVideoFramePool::copyFromBuffer(buffer, info, format);
-    }
+    out.frame = mapCpuFrame(buffer, info, format);
     return out;
 }

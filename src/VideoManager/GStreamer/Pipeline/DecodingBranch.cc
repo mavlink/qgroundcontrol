@@ -16,7 +16,8 @@
 #include "PipelineStatsProbe.h"
 #include "StreamSupervisor.h"
 #include "StreamWatchdog.h"
-#include "gstqgc/GstQgcSinkStats.h"
+#include "gstqgc/GstQgcSinkBin.h"
+#include "gstqgc/gstqgcqvideosink.h"
 
 namespace {
 
@@ -36,29 +37,6 @@ gint decodeVideoOnly([[maybe_unused]] GstElement* decodebin, [[maybe_unused]] Gs
                      GstStream* stream, [[maybe_unused]] gpointer data)
 {
     return ((gst_stream_get_stream_type(stream) & GST_STREAM_TYPE_VIDEO) != 0) ? 1 : 0;
-}
-
-/// Sets "sync" on @p sink, or on the sinks inside it when it is a bin without the property.
-void setSinkSync(GstElement* sink, bool sync)
-{
-    if (g_object_class_find_property(G_OBJECT_GET_CLASS(sink), "sync")) {
-        g_object_set(sink, "sync", sync, nullptr);
-        return;
-    }
-    if (!GST_IS_BIN(sink)) {
-        return;
-    }
-    GstIterator* const sinks = gst_bin_iterate_sinks(GST_BIN(sink));
-    (void) gst_iterator_foreach(
-        sinks,
-        [](const GValue* item, gpointer data) {
-            auto* const child = GST_ELEMENT(g_value_get_object(item));
-            if (g_object_class_find_property(G_OBJECT_GET_CLASS(child), "sync")) {
-                g_object_set(child, "sync", GPOINTER_TO_INT(data), nullptr);
-            }
-        },
-        GINT_TO_POINTER(sync ? TRUE : FALSE));
-    gst_iterator_free(sinks);
 }
 
 /// Whether decodebin3 @p decodebin has plugged a hardware decoder. Read from its elements rather than from what the
@@ -149,28 +127,6 @@ bool isInside(GstObject* object, GstElement* element)
     return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
 }
 
-struct SinkFrameCounts
-{
-    quint64 displayed = 0;
-    quint64 superseded = 0;
-    quint64 gpuFallbacks = 0;
-};
-
-/// The frames a sink displayed, superseded and fell back to the CPU for, between its "frame-stats" @p since and
-/// @p stats.
-SinkFrameCounts sinkFrameCountsSince(const GstStructure* stats, const GstStructure* since)
-{
-    const auto growth = [stats, since](const char* field) { return GstQgc::frameStatsGrowth(stats, since, field); };
-    quint64 delivered = 0;
-    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        delivered += growth(GstQgc::sinkFramesField(HwVideoBufferPath(i)));
-    }
-    const quint64 superseded = growth(GstQgc::kSupersededFramesField);
-    return {.displayed = (delivered > superseded) ? (delivered - superseded) : 0,
-            .superseded = superseded,
-            .gpuFallbacks = growth(GstQgc::kGpuFallbacksField)};
-}
-
 }  // namespace
 
 DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency,
@@ -225,14 +181,16 @@ void DecodingBranch::reset()
     _removeDecoder();
     _sinkFrameProbe.remove();
     _sink.reset();
-    _sinkStatsAtStart.reset();
+    _qvideosink.reset();
+    _sinkStatsAtStart = {};
     _setDecoding(false);
     _head.reset();
 }
 
-void DecodingBranch::setVideoSink(GstElement* sink)
+void DecodingBranch::setVideoSink(const GstQgc::SinkBin* sink)
 {
-    if (sink == _sink.get()) {
+    GstElement* const bin = sink ? sink->bin.get() : nullptr;
+    if (bin == _sink.get()) {
         return;
     }
 
@@ -243,24 +201,23 @@ void DecodingBranch::setVideoSink(GstElement* sink)
     _sinkFrameProbe.remove();
     _retireSinkCounts();
     _sink.reset();
-    _sinkStatsAtStart.reset();
+    _qvideosink.reset();
+    _sinkStatsAtStart = {};
     _setDecoding(false);
 
-    if (!sink) {
+    if (!bin || !sink->qvideosink) {
         return;
     }
 
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink, "sink"));
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(bin, "sink"));
     if (!sinkPad) {
         qCCritical(GstVideoReceiverLog) << "The video sink has no sink pad" << _context.redactedUri;
         return;
     }
-    _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink)));
-    _sinkStatsAtStart = GstQgc::frameStats(_sink.get());
-    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        _pathFramesAtSample[i] =
-            GstQgc::frameStatsField(_sinkStatsAtStart.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)));
-    }
+    _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(bin)));
+    _qvideosink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink->qvideosink.get())));
+    _sinkStatsAtStart = GstQgc::sinkStats(_qvideosink.get());
+    _sinkStatsAtSample = _sinkStatsAtStart;
     _gpuCountersAtStart = GstHwPathTelemetry::snapshot();
     GStreamer::markBranch(_sink.get(), GStreamer::PipelineBranch::Decoding);
     (void) _sinkFrameProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
@@ -333,48 +290,44 @@ bool DecodingBranch::isCurrent(GstObject* source) const
 
 GstQgc::PathStats DecodingBranch::sinkPathStats() const
 {
-    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
-    GstQgc::PathStats out = GstQgc::formatSinkStats(stats.get(), _sinkStatsAtStart.get());
-    if (stats) {
-        out.line += HwBuffers::extraPathStatsSince(_gpuCountersAtStart);
+    if (!_qvideosink) {
+        return {};
     }
+    GstQgc::PathStats out = GstQgc::formatSinkStats(GstQgc::sinkStats(_qvideosink.get()) - _sinkStatsAtStart);
+    out.line += HwBuffers::extraPathStatsSince(_gpuCountersAtStart);
     return out;
 }
 
 DecodingBranch::StatsSample DecodingBranch::sampleStats()
 {
-    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
-    const SinkFrameCounts sinkCounts = sinkFrameCountsSince(stats.get(), _sinkStatsAtStart.get());
+    const GstQgc::SinkStats stats = GstQgc::sinkStats(_qvideosink.get());
+    const GstQgc::SinkStats sinceStart = stats - _sinkStatsAtStart;
+    const GstQgc::SinkStats sinceSample = stats - std::exchange(_sinkStatsAtSample, stats);
 
     quint64 busiestPathFrames = 0;
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        const auto path = HwVideoBufferPath(i);
-        const quint64 frames = GstQgc::frameStatsField(stats.get(), GstQgc::sinkFramesField(path));
-        const quint64 sinceSample = (frames > _pathFramesAtSample[i]) ? (frames - _pathFramesAtSample[i]) : 0;
-        if (sinceSample > busiestPathFrames) {
-            busiestPathFrames = sinceSample;
-            _displayPath = QString::fromLatin1(GstHw::toString(path));
+        if (sinceSample.pathFrames[i] > busiestPathFrames) {
+            busiestPathFrames = sinceSample.pathFrames[i];
+            _displayPath = QString::fromLatin1(GstHw::toString(HwVideoBufferPath(i)));
         }
-        _pathFramesAtSample[i] = frames;
     }
     return {
-        .framesDisplayed = _retiredFramesDisplayed + sinkCounts.displayed,
+        .framesDisplayed = _retiredFramesDisplayed + sinceStart.displayed(),
         .framesDropped =
-            _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded + sinkCounts.superseded,
+            _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded + sinceStart.superseded,
         .displayPath = _displayPath,
-        .gpuFallbacks = _retiredGpuFallbacks + sinkCounts.gpuFallbacks,
+        .gpuFallbacks = _retiredGpuFallbacks + sinceStart.gpuFallbacks,
         .decoderRestarts = _decoderRestarts,
     };
 }
 
 void DecodingBranch::_retireSinkCounts()
 {
-    if (!_sink) {
+    if (!_qvideosink) {
         return;
     }
-    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
-    const SinkFrameCounts counts = sinkFrameCountsSince(stats.get(), _sinkStatsAtStart.get());
-    _retiredFramesDisplayed += counts.displayed;
+    const GstQgc::SinkStats counts = GstQgc::sinkStats(_qvideosink.get()) - _sinkStatsAtStart;
+    _retiredFramesDisplayed += counts.displayed();
     _retiredFramesSuperseded += counts.superseded;
     _retiredGpuFallbacks += counts.gpuFallbacks;
 }
@@ -440,7 +393,8 @@ bool DecodingBranch::_tryInsertDecoder()
     }
     // The clock paces frames stamped as they arrived. Behind a source that isn't live (tcp://) they are stamped from
     // zero, while the pipeline's time has run since it started: each would be late for the clock, which paces none.
-    setSinkSync(_sink.get(), !_lowLatency && fedByLiveSource(_decoder.get()));
+    g_object_set(_qvideosink.get(), "sync", static_cast<gboolean>(!_lowLatency && fedByLiveSource(_decoder.get())),
+                 nullptr);
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-decoder");
 
     (void) _insertions.fetch_add(1, std::memory_order_relaxed);

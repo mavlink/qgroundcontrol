@@ -8,8 +8,9 @@ given version, verifies each against its checksum pinned in .github/build-config
 build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
 shared with cmake/GStreamer/Packages.cmake and the installers.
 
-Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; without a version each platform's
-``gstreamer.version.<platform>`` in build-config.json is mirrored, and the work directory falls back to RUNNER_TEMP.
+Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; without a version
+``gstreamer.version.sdk`` in build-config.json is mirrored, and the work directory falls back to
+RUNNER_TEMP.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
-from common.build_config import get_gstreamer_version
+from common.build_config import get_build_config_value
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
 from common.gstreamer import (
     package_platform,
@@ -121,7 +122,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--version",
         default=env_default("MIRROR_VERSION"),
         help="GStreamer version to mirror for every platform, e.g. 1.28.3 "
-        "(default: $MIRROR_VERSION, else each platform's gstreamer.version.<platform> in build-config.json)",
+        "(default: $MIRROR_VERSION, else gstreamer.version.sdk in build-config.json)",
     )
     parser.add_argument(
         "--platforms",
@@ -150,15 +151,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    version = args.version or get_build_config_value("gstreamer.version.sdk")
     try:
-        jobs: list[tuple[Artifact, str]] = []
-        for platform in resolve_platforms(args.platforms):
-            version = args.version or get_gstreamer_version(platform)
-            if not version:
-                raise ValueError(
-                    f"build-config.json has no gstreamer.version.{platform}; pass --version"
-                )
-            jobs.extend((artifact, version) for artifact in artifacts_for(platform, version))
+        if not version:
+            raise ValueError("build-config.json has no gstreamer.version.sdk; pass --version")
+        artifacts = [
+            artifact
+            for platform in resolve_platforms(args.platforms)
+            for artifact in artifacts_for(platform, version)
+        ]
     except ValueError as exc:
         gh_error(str(exc))
         return 1
@@ -167,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[list[str]] = []
-    for artifact, version in jobs:
+    for artifact in artifacts:
         try:
             status = mirror_artifact(
                 artifact,
@@ -179,18 +180,18 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, RuntimeError) as exc:
             gh_error(f"Failed to mirror {artifact.filename}: {exc}")
             return 1
-        rows.append([code_span(artifact.s3_dir), version, code_span(artifact.filename), status])
+        rows.append([code_span(artifact.s3_dir), code_span(artifact.filename), status])
 
     write_step_summary(
         summary_section(
             "GStreamer mirror",
             [
-                ("Version", args.version or "gstreamer.version.<platform> of build-config.json"),
+                ("Version", version),
                 ("Destination", code_span(f"s3://{S3_BUCKET}/dependencies/gstreamer/")),
                 ("Mode", "dry run" if args.dry_run else "upload"),
                 ("Files", len(rows)),
             ],
-            body=md_table(["Platform", "Version", "File", "Status"], rows, markdown=True),
+            body=md_table(["Platform", "File", "Status"], rows, markdown=True),
         )
     )
     return 0

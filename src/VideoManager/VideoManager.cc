@@ -568,10 +568,6 @@ void VideoManager::_updateStateNow()
         !isStreamSource ? videoSource
                         : ((tilesAllowed > 0) ? _videoSettings->uvcTileCamera()->rawValue().toString() : QString());
     const bool cameraWanted = streamWanted && !cameraName.isEmpty();
-    if (cameraWanted) {
-        // A camera plugged in or unplugged changes whether the camera source has one to play.
-        _uvcCamera->watchCameras();
-    }
     const bool hasUvcCamera = cameraWanted && _cameraAttached(cameraName);
     // The tile's camera plays while there is room for its tile. Made the main picture, it needs none to stay it.
     const bool cameraPlays = hasUvcCamera && (!isStreamSource || (maxTiles > 0) || cameraAsMainPicture);

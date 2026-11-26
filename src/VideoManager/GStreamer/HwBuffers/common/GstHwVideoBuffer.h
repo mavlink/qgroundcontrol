@@ -69,10 +69,15 @@ public:
 
     QVideoFrameFormat format() const override { return _format; }
 
+    /// The path's importTextures(). When that fails, Qt uploads map() instead; for a frame map() can't read either,
+    /// @p oldTextures comes back, so the picture shown before stays. Qt's texture pool deletes @p oldTextures at the
+    /// end of the frame, and its video material goes on sampling the last textures it got when a frame yields none
+    /// (QSGVideoMaterial::updateTextures()).
+    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) final;
+
     /// CPU view of the sample through gst_video_frame_map (e.g. GL memory downloads, DMABuf mmaps). Qt's
     /// createTextures() uploads this whenever mapTextures() fails, so a failed GPU import still shows the frame.
-    /// ReadOnly only. Refused when format() advertises another pixel format than the memory holds: Qt would upload it
-    /// in the wrong format or read past it.
+    /// ReadOnly only, and empty without hasCpuLayout().
     MapData map(QVideoFrame::MapMode mode) override;
     void unmap() override;
 
@@ -85,6 +90,15 @@ public:
     GstSample* refSample() noexcept { return _sample ? gst_sample_ref(_sample) : nullptr; }
 
 protected:
+    /// The frame's GPU import into @p rhi, on its thread; null when it fails. @p oldTextures is the bundle Qt's texture
+    /// pool replaces, which the import may reuse.
+    virtual QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) = 0;
+
+    /// False for a frame whose memory can't be read as format() describes it: an external-OES frame (Qt would read it
+    /// as RGBA8), or one whose format() advertises another pixel format than its memory holds (Qt would upload it in
+    /// the wrong format or read past it).
+    virtual bool hasCpuLayout() const;
+
     /// Validate each plane satisfies @p planePred; predicate runs once per plane on the streaming thread.
     template <class PlanePred>
     bool validatePlanes(PlanePred&& planePred) const

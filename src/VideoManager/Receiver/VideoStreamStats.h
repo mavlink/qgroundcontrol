@@ -30,7 +30,6 @@ struct VideoStreamStats
     Q_PROPERTY(bool hardwareDecoder MEMBER hardwareDecoder FINAL)
     Q_PROPERTY(QString gpuPath MEMBER gpuPath FINAL)
     Q_PROPERTY(QString codec MEMBER codec FINAL)
-    Q_PROPERTY(double droppedFps MEMBER droppedFps FINAL)
     Q_PROPERTY(qint64 gpuFallbacks MEMBER gpuFallbacks FINAL)
     Q_PROPERTY(qint64 decoderRestarts MEMBER decoderRestarts FINAL)
     Q_PROPERTY(double keyframeIntervalMs MEMBER keyframeIntervalMs FINAL)

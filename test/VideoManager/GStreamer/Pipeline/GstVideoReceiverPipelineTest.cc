@@ -215,11 +215,10 @@ void GstVideoReceiverPipelineTest::_testStreamingStatesAndDisplay()
     QVERIFY(stream.startStreaming());
     QVERIFY(stream.display());
 
-    // Every state on the way, each once, and streaming exactly while Streaming.
+    // Every state on the way, each once, and streaming while Streaming.
     QCOMPARE(stream.stateSpy.count(), 2);
     QCOMPARE(stream.stateSpy.at(0).constFirst().value<State>(), State::Connecting);
     QCOMPARE(stream.stateSpy.at(1).constFirst().value<State>(), State::Streaming);
-    QCOMPARE(stream.streamingSpy.count(), 1);
     QVERIFY(stream.receiver->streaming());
 
     // The QVideoSink's size, so it is the displayed one.
@@ -245,7 +244,7 @@ void GstVideoReceiverPipelineTest::_testStaticSourcePadWaitsForData()
     Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0));
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForState(State::Connecting));
-    QVERIFY(stream.streamingSpy.isEmpty());
+    QVERIFY(!stream.stateSpy.contains(QVariantList{QVariant::fromValue(State::Streaming)}));
     QVERIFY(!stream.receiver->streaming());
 }
 
@@ -542,13 +541,8 @@ void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()
     // Synced to the clock, the sink shows a frame its latency after the frame's time. With none it would take the
     // first frames, which the jitter buffer alone held for its latency, for late ones and drop them.
     const auto sinkLatencyMs = [&stream] {
-        guint64 latencyMs = 0;
-        (void) runOnPipeline(stream.receiver.get(), [&latencyMs](GstElement* pipeline) {
-            if (const GStreamer::GstElementPtr sink = GstTest::findByFactory(pipeline, "qgcqvideosink")) {
-                latencyMs = GST_TIME_AS_MSECONDS(gst_base_sink_get_latency(GST_BASE_SINK(sink.get())));
-            }
-        });
-        return latencyMs;
+        const GStreamer::GstElementPtr sink = displayVideoSink(stream.receiver.get());
+        return sink ? GST_TIME_AS_MSECONDS(gst_base_sink_get_latency(GST_BASE_SINK(sink.get()))) : guint64(0);
     };
     QVERIFY_TRUE_WAIT(sinkLatencyMs() >= static_cast<guint64>(stream.receiver->config().rtpJitterLatencyMs),
                       TestTimeout::mediumMs());

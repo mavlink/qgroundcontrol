@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <functional>
+#include <memory>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
@@ -9,7 +10,6 @@
 
 #include "GstReceiverRequest.h"
 #include "GstReceiverTimings.h"
-#include "GstScoped.h"
 #include "VideoReceiver.h"
 
 class GstReceiverWorker;
@@ -17,6 +17,10 @@ class GstVideoReceiverTestBase;
 class QGCQVideoSinkController;
 class QThread;
 class QTimer;
+
+namespace GstQgc {
+struct SinkBin;
+}
 
 /// Also logs the receiver's worker, its PipelineSession with the branches, and PipelineDotDumper.
 Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
@@ -90,7 +94,7 @@ private:
     GstReceiverWorker* _worker = nullptr;
     /// What was asked of the worker last.
     GstReceiverRequest _request;
-    GStreamer::GstElementPtr _displaySink;
+    std::shared_ptr<const GstQgc::SinkBin> _displaySink;
     QGCQVideoSinkController* _sinkController = nullptr;
     QMetaObject::Connection _videoSizeConnection;
     QString _decoderName;

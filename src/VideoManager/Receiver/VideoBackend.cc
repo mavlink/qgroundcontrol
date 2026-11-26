@@ -20,7 +20,7 @@ namespace {
 class QtMultimediaVideoBackend final : public VideoBackend
 {
 public:
-    Capabilities capabilities() const override { return {.streaming = true}; }
+    Capabilities capabilities() const override { return {}; }
 };
 
 }  // namespace

@@ -14,7 +14,7 @@ class GstIOSurfaceVideoBuffer final : public GstHwVideoBuffer
 public:
     using GstHwVideoBuffer::GstHwVideoBuffer;
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
     static void resetTextureCache() noexcept;

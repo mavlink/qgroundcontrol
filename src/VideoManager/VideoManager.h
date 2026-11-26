@@ -58,7 +58,6 @@ class VideoManager : public QObject
     Q_PROPERTY(VideoStreamController* mainSource READ mainSource NOTIFY mainSourceChanged FINAL)
     Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT FINAL)
     Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged FINAL)
-    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     /// A source falls short (VideoStreamStats::degraded()) of the frame rate its camera is set up for: the one a
     /// stream's camera advertises, while the stream is decoded, or the USB camera's own.
     Q_PROPERTY(bool degraded READ degraded NOTIFY degradedChanged FINAL)

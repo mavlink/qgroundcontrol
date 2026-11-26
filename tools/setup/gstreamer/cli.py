@@ -17,7 +17,7 @@ Options:
     --arch ARCH           Target architecture (platform-specific, default: native, and universal
                           on macOS, Android and iOS; Windows names x86_64 'x64'). Universal is
                           every ABI on Android, and the device with the simulator on iOS
-    --version VERSION     GStreamer version (default: the platform's in build-config.json)
+    --version VERSION     GStreamer version (default: gstreamer.version.sdk in build-config.json)
     --type TYPE           Build type: release or debug (default: release)
     --prefix DIR          Install prefix (default: <work-dir>/gst-<platform>-<arch>). An Android or
                           iOS build replaces it, so it must be empty or hold an earlier build's SDK
@@ -35,7 +35,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from common.build_config import get_gstreamer_version
+from common.build_config import get_build_config_value
 from common.logging import log_error, log_warn
 from common.proc import MissingToolError
 
@@ -69,8 +69,7 @@ def parse_args() -> argparse.Namespace:
         "--version",
         "-v",
         default="",
-        help="GStreamer version (default: the platform's in build-config.json; on Linux, which has none, "
-        "the newest of them)",
+        help="GStreamer version (default: gstreamer.version.sdk in build-config.json)",
     )
     parser.add_argument(
         "--type",
@@ -117,7 +116,9 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_gstreamer_version(args.platform, start=Path(__file__).resolve())
+    version = args.version or get_build_config_value(
+        "gstreamer.version.sdk", start=Path(__file__).resolve()
+    )
     if not version:
         log_error("GStreamer version is required; pass --version or provide build-config.json")
         return 1

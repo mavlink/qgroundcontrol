@@ -15,8 +15,8 @@ build_tool := "uv run --frozen --project tools --group build"
 ruff := "uv run --frozen --project tools --group lint ruff"
 qt_version := shell(python + " ./tools/setup/read_config.py --get qt.version")
 cmake_min_version := shell(python + " ./tools/setup/read_config.py --get build.cmake_minimum_version")
-# Linux builds against the system GStreamer, from gstreamer.version.minimum on; macOS and Windows download an SDK.
-gstreamer_key := if host_os == "macos" { "macos" } else if host_os == "windows" { "windows" } else { "minimum" }
+# Linux builds against the system GStreamer, from gstreamer.version.minimum on; macOS and Windows download the SDK.
+gstreamer_key := if host_os =~ "^(macos|windows)$" { "sdk" } else { "minimum" }
 gstreamer_version := shell(python + " ./tools/setup/read_config.py --get gstreamer.version." + gstreamer_key)
 gstreamer_note := if gstreamer_key == "minimum" { " or later (system)" } else { " (SDK)" }
 qt_dir := env_var_or_default("QT_DIR", "")

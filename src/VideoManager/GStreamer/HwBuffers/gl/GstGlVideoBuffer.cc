@@ -140,7 +140,7 @@ bool GstGlVideoBuffer::validatePlaneHandles() const
     return validatePlanes([](GstMemory* mem) { return mem && gst_is_gl_memory(mem); });
 }
 
-QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr GstGlVideoBuffer::importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old)
 {
     const GstHwPathTelemetry::ScopedMapTimer mapTimer(HwVideoBufferPath::GlMemory);
     // QRhi::OpenGLES2 covers both desktop GL and GLES — Qt collapses both; there is no separate QRhi::OpenGL.

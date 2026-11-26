@@ -136,12 +136,12 @@ GstPadProbeReturn syncAtEnd(GstPad* pad, GstPadProbeInfo* info, [[maybe_unused]]
 
 }  // namespace
 
-GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, const GstCaps* inputCaps)
+SinkBin create(const QString& file, VideoReceiver::FileFormat format, const GstCaps* inputCaps)
 {
     const char* const muxerName = muxerFactory(format);
     if (!muxerName) {
         qCCritical(GstVideoReceiverLog) << "Unsupported file format" << static_cast<int>(format);
-        return nullptr;
+        return {};
     }
 
     GStreamer::GstElementPtr bin = GStreamer::adoptFloating(gst_bin_new("sinkbin"));
@@ -151,12 +151,12 @@ GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, cons
         GStreamer::GstElementPtr parserOwner = GStreamer::makeElement(recorderParser->factory, "parser");
         if (!parserOwner) {
             qCWarning(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << recorderParser->factory;
-            return nullptr;
+            return {};
         }
         g_object_set(parserOwner.get(), "config-interval", -1, nullptr);
         parser = GStreamer::addToBin(bin.get(), std::move(parserOwner), "parser");
         if (!parser) {
-            return nullptr;
+            return {};
         }
     }
 
@@ -164,7 +164,7 @@ GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, cons
     GStreamer::GstElementPtr fileSinkOwner = GStreamer::makeElement("filesink", "filesink");
     if (!muxerOwner || !fileSinkOwner) {
         qCWarning(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << muxerName << "or filesink";
-        return nullptr;
+        return {};
     }
 
     // Tagged with the time it starts and the application, as a USB camera's recordings are (UVCCameraController).
@@ -184,7 +184,7 @@ GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, cons
     GstElement* const fileSink = GStreamer::addToBin(bin.get(), std::move(fileSinkOwner), "filesink");
     if (!muxer || !fileSink || !gst_element_link(muxer, fileSink)) {
         qCWarning(GstVideoReceiverLog) << "Failed to link the muxer and filesink";
-        return nullptr;
+        return {};
     }
     if (format == VideoReceiver::FileFormat::Mkv) {
         const GStreamer::GstPadPtr fileSinkPad = GStreamer::adoptPad(gst_element_get_static_pad(fileSink, "sink"));
@@ -197,7 +197,7 @@ GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, cons
     const GStreamer::GstPadPtr muxerPad = GStreamer::adoptPad(gst_element_request_pad_simple(muxer, "video_%u"));
     if (!muxerPad) {
         qCWarning(GstVideoReceiverLog) << "gst_element_request_pad_simple(" << muxerName << ", video_%u) failed";
-        return nullptr;
+        return {};
     }
     (void) gst_pad_add_probe(muxerPad.get(), GST_PAD_PROBE_TYPE_BUFFER, timestampForMuxer, nullptr, nullptr);
 
@@ -209,7 +209,7 @@ GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, cons
         const GstPadLinkReturn linkResult = gst_pad_link(parserSrcPad.get(), muxerPad.get());
         if (linkResult != GST_PAD_LINK_OK) {
             qCWarning(GstVideoReceiverLog) << "Failed to link parser and muxer:" << gst_pad_link_get_name(linkResult);
-            return nullptr;
+            return {};
         }
     }
 
@@ -223,7 +223,9 @@ GstElementPtr create(const QString& file, VideoReceiver::FileFormat format, cons
     (void) gst_element_add_pad(bin.get(),
                                gst_ghost_pad_new("sink", parserSinkPad ? parserSinkPad.get() : muxerPad.get()));
 
-    return bin;
+    return {.bin = std::move(bin),
+            .parser = parser ? GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(parser))) : nullptr,
+            .muxer = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(muxer)))};
 }
 
 std::optional<VideoReceiver::FileFormat> containerFor(VideoReceiver::FileFormat format, const GstCaps* inputCaps)

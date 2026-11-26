@@ -13,7 +13,7 @@ from ci.gstreamer.mirror_gstreamer import (
     artifacts_for,
     resolve_platforms,
 )
-from common.build_config import get_gstreamer_version
+from common.build_config import get_build_config_value
 from common.gstreamer import mirror_url, pinned_checksum, platform_packages
 
 from .._helpers import REPO_ROOT, get_step, get_steps, load_workflow
@@ -107,7 +107,7 @@ def test_pinned_checksum_is_authoritative(monkeypatch) -> None:
         raise AssertionError(f"fetched {url}")
 
     monkeypatch.setattr("common.gstreamer.read_url_text", no_sidecar)
-    version = get_gstreamer_version("android")
+    version = get_build_config_value("gstreamer.version.sdk")
     (art,) = artifacts_for("android", version)
     assert _expected_sha(art, version) == pinned_checksum(version, "android")
 
@@ -150,7 +150,7 @@ def test_main_summarizes_each_mirrored_file(
     assert summary.startswith("### GStreamer mirror\n\n| Item | Value |")
     assert "| Mode | dry run |" in summary
     assert "| Files | 1 |" in summary
-    assert "| Platform | Version | File | Status |" in summary
+    assert "| Platform | File | Status |" in summary
     assert "| uploaded |" in summary
 
 
@@ -189,8 +189,7 @@ def test_version_is_required_without_a_build_config_version(
     monkeypatch.delenv("MIRROR_VERSION", raising=False)
     assert mirror_gstreamer.main(["--platforms", "android", "--work-dir", str(tmp_path)]) == 1
     assert (
-        "build-config.json has no gstreamer.version.android; pass --version"
-        in capsys.readouterr().out
+        "build-config.json has no gstreamer.version.sdk; pass --version" in capsys.readouterr().out
     )
 
 
@@ -221,10 +220,10 @@ def test_workflow_mirrors_build_config_changes_on_master() -> None:
     )
 
 
-def test_main_mirrors_each_platforms_own_version(
+def test_main_mirrors_the_sdk_version_of_build_config(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_summary: Path
 ) -> None:
-    _use_versions(monkeypatch, tmp_path, {"android": "1.28.7", "ios": "1.28.8"})
+    _use_versions(monkeypatch, tmp_path, {"minimum": "1.20.0", "sdk": "1.28.7"})
     monkeypatch.delenv("MIRROR_VERSION", raising=False)
     mirrored: list[tuple[str, str]] = []
 
@@ -237,5 +236,5 @@ def test_main_mirrors_each_platforms_own_version(
     assert mirror_gstreamer.main(argv) == 0
     assert mirrored == [
         ("gstreamer-1.0-android-universal-1.28.7.tar.xz", "1.28.7"),
-        ("gstreamer-1.28.8-xcframework.tar.xz", "1.28.8"),
+        ("gstreamer-1.28.7-xcframework.tar.xz", "1.28.7"),
     ]

@@ -1,6 +1,7 @@
 #include "GstHwVideoBuffer.h"
 
 #include <rhi/qrhi.h>
+#include <utility>
 
 #include "GstHwPathTelemetry.h"
 
@@ -67,13 +68,28 @@ GstHwVideoBuffer::~GstHwVideoBuffer()
     }
 }
 
+QVideoFrameTexturesUPtr GstHwVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures)
+{
+    if (QVideoFrameTexturesUPtr textures = importTextures(rhi, oldTextures)) {
+        return textures;
+    }
+    // A mapping of its own: map()'s belongs to the QVideoFrame, which serialises its calls.
+    GstHw::FrameMapping probe;
+    if (hasCpuLayout() && probe.mapFrame(_sample ? gst_sample_get_buffer(_sample) : nullptr, _videoInfo)) {
+        return {};
+    }
+    return std::move(oldTextures);
+}
+
+bool GstHwVideoBuffer::hasCpuLayout() const
+{
+    const QVideoFrameFormat::PixelFormat advertised = _format.pixelFormat();
+    return (advertised != QVideoFrameFormat::Format_SamplerExternalOES) && (advertised == _memoryPixelFormat);
+}
+
 QAbstractVideoBuffer::MapData GstHwVideoBuffer::map(QVideoFrame::MapMode mode)
 {
-    // An external-OES frame has no CPU layout Qt could upload (it would read it as RGBA8), nor does a frame advertising
-    // another format than its memory holds (Qt would read past the end of a narrower layout).
-    const QVideoFrameFormat::PixelFormat advertised = _format.pixelFormat();
-    if ((mode != QVideoFrame::ReadOnly) || (advertised == QVideoFrameFormat::Format_SamplerExternalOES) ||
-        (advertised != _memoryPixelFormat)) {
+    if ((mode != QVideoFrame::ReadOnly) || !hasCpuLayout()) {
         return {};
     }
     return _cpuView.map(_sample ? gst_sample_get_buffer(_sample) : nullptr, _videoInfo);

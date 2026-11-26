@@ -32,10 +32,7 @@
   "gstreamer": {
     "version": {
       "minimum": "1.20.0",
-      "android": "1.28.9",
-      "ios": "1.28.9",
-      "macos": "1.28.9",
-      "windows": "1.28.9"
+      "sdk": "1.28.9"
     },
     "package_url": "https://gstreamer.freedesktop.org/data/pkg",
     "package_mirror_url": "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer",

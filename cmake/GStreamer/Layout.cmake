@@ -4,8 +4,7 @@
 # INCLUDE_PATH, PLUGIN_SCANNER_PATH, GIO_MODULE_PATH, XCFRAMEWORK_LIB and IOS_CA_BUNDLE. Linux discovery adds
 # PKGCONFIG_DIRS for a GStreamer_ROOT_DIR: the directories of its .pc files. Orchestrator.cmake adds
 # NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and BUNDLED_PLUGINS (the requested ones among
-# them, which the build ships). The Orchestrator copies the discovery keys into the GStreamer_*/GSTREAMER_* variables of
-# its directory for compatibility (qgc_gst_layout_export).
+# them, which the build ships).
 
 include_guard(GLOBAL)
 
@@ -76,7 +75,7 @@ function(qgc_gst_layout_set key value)
     set_property(GLOBAL PROPERTY "QGC_GST_LAYOUT_${key}" "${value}")
 endfunction()
 
-# The discovery keys and the variables qgc_gst_layout_export copies them into.
+# The discovery keys and the variables of a discovery function they are recorded from.
 set(_QGC_GST_DISCOVERY_KEYS
     "ROOT_DIR|GStreamer_ROOT_DIR"
     "AUTO_DOWNLOADED|GStreamer_AUTO_DOWNLOADED"
@@ -100,21 +99,6 @@ macro(qgc_gst_layout_record_discovery)
         qgc_gst_layout_set(${_qgc_gst_layout_key} "${${_qgc_gst_layout_var}}")
     endforeach()
 endmacro()
-
-# qgc_gst_layout_export()
-# Sets, in the caller's scope, the GStreamer_*/GSTREAMER_* variable of every discovery key to its recorded value: the
-# compatibility copies the Orchestrator leaves in its directory. The GStreamer modules read the layout instead.
-function(qgc_gst_layout_export)
-    set(_outputs "")
-    foreach(_entry IN LISTS _QGC_GST_DISCOVERY_KEYS)
-        string(REPLACE "|" ";" _entry "${_entry}")
-        list(GET _entry 0 _key)
-        list(GET _entry 1 _var)
-        qgc_gst_layout_get(${_key} ${_var})
-        list(APPEND _outputs ${_var})
-    endforeach()
-    return(PROPAGATE ${_outputs})
-endfunction()
 
 # _qgc_gst_return_discovery()
 # Returns from a discovery function: records its discovery keys (qgc_gst_layout_record_discovery) and sets, in the

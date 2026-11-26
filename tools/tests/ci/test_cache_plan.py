@@ -52,7 +52,7 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (root / "tools/configs").mkdir(parents=True)
     (root / "tools/configs/ccache.conf").write_text("max_size = 5G\n")
     (root / ".github").mkdir()
-    config = {"qt": {"version": "6.10"}, "gstreamer": {"version": {"windows": "1.28.4"}}}
+    config = {"qt": {"version": "6.10"}, "gstreamer": {"version": {"sdk": "1.28.4"}}}
     (root / ".github/build-config.json").write_text(json.dumps(config))
     (root / "CMakeLists.txt").write_text("CPMAddPackage(NAME dependency)\n")
     monkeypatch.setenv("GITHUB_WORKSPACE", str(root))

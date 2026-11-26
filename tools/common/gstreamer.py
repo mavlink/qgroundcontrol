@@ -3,8 +3,8 @@
 ``gstreamer.packages`` in .github/build-config.json holds the path of each package under
 ``gstreamer.package_url``, with ``{version}`` for the release; cmake/GStreamer/Packages.cmake reads
 the same table. A package's key is also its ``gstreamer.checksums.<version>`` entry, and the first
-directory of its path is its platform: the ``gstreamer.version`` entry that names its release and
-its directory on the mirror.
+directory of its path is its platform, its directory on the mirror. Every package is of the release
+``gstreamer.version.sdk``.
 """
 
 from __future__ import annotations

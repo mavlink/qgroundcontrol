@@ -59,11 +59,6 @@ bool softwareRenderingRequested() noexcept;
 /// QRhi. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window);
 
-/// Populate the per-pipeline HwVideoBufferContext (gpu-enabled flag, AHardwareBuffer EGL display) the factory needs;
-/// the sink adds dmaBufImportDisplay() per frame. GPU stays disabled in builds without a GPU path. Safe off the GUI
-/// thread.
-HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
-
 /// What the DMABuf path imports with now, as HwVideoBufferContext::dmaBufImporter stores it: Qt's EGLDisplay
 /// (QGCRhiCapture::qtEglDisplay()), or, once Qt Quick renders with Vulkan, its VkPhysicalDevice when that device
 /// imports dma-bufs. Null when Qt renders without either or that isn't known yet, or no DMABuf path is compiled.

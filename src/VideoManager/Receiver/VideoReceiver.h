@@ -193,7 +193,6 @@ public:
 
 signals:
     void stateChanged(VideoReceiver::State state);
-    void streamingChanged(bool streaming);
     void decodingChanged(bool decoding);
     void recordingChanged(bool recording);
     /// A recording file opened: the first one after startRecording(), or the recording's next part. @p file is the
@@ -223,7 +222,7 @@ protected:
     /// The VideoOutput's QVideoSink, or nullptr.
     QVideoSink* videoSink() const;
 
-    // Each emits its NOTIFY signal (and streamingChanged for setState()) when the value changes.
+    // Each emits its NOTIFY signal when the value changes.
     void setState(State state);
     void setDecoding(bool decoding);
     void setRecording(bool recording);

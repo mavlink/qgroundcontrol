@@ -9,11 +9,8 @@
 #include "GstHwPathRegistry.h"
 #include "HwBuffers.h"
 #if QT_CONFIG(opengl) && QT_CONFIG(egl)
-#include <QtCore/QThread>
-#include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/qopenglcontext_platform.h>
-#include <qpa/qplatformnativeinterface.h>
 #define QGC_RHI_CAPTURE_PROBES_EGL 1
 #endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
@@ -185,13 +182,7 @@ void* qtEglDisplay()
     }
     // Qt Quick's OpenGL shares with the global share context (Qt::AA_ShareOpenGLContexts): it tells EGL from GLX
     // without creating anything, from any thread.
-    if (const QOpenGLContext* const shareContext = QOpenGLContext::globalShareContext()) {
-        display = eglDisplayOf(shareContext);
-    } else if (QThread::isMainThread() && qGuiApp) {
-        if (QPlatformNativeInterface* const native = QGuiApplication::platformNativeInterface()) {
-            display = native->nativeResourceForIntegration(QByteArrayLiteral("egldisplay"));
-        }
-    }
+    display = eglDisplayOf(QOpenGLContext::globalShareContext());
     if (display) {
         s_qtEglDisplay.store(display, std::memory_order_release);
     }

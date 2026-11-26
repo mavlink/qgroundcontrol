@@ -20,6 +20,7 @@ struct VideoStreamStats;
 
 namespace GstQgc {
 struct PathStats;
+struct SinkBin;
 }
 
 /// \brief One receiver pipeline: source ! tee, with the display and recording branches behind the tee.
@@ -82,7 +83,7 @@ public:
     /// Builds the pipeline and sets it PLAYING. Returns why when it can't; shut the session down then.
     [[nodiscard]] std::optional<Failure> start();
 
-    void setVideoSink(GstElement* sink);
+    void setVideoSink(const GstQgc::SinkBin* sink);
     void setRecording(const std::optional<RecordingBranch::Request>& request);
     /// DecodingBranch::restartDecoder().
     void restartDecoder(const char* reason, const QString& cause);

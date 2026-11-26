@@ -13,7 +13,6 @@
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
-#include "CpuVideoFramePool.h"
 #include "GStreamer.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
@@ -22,6 +21,7 @@
 #include "GstHwVideoBuffer.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "QGCRhiCapture.h"
+#include "gstqgc/GstQgcFrameMap.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -305,8 +305,7 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
 
     const QImage actual =
         QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), &rhi)).toImage();
-    const QImage expected =
-        GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpu.sample), cpu.info, format));
+    const QImage expected = GstTest::cpuImage(mapCpuFrame(gst_sample_get_buffer(cpu.sample), cpu.info, format));
     // NV12 carries one chroma sample per 2x2 pixels, which the GPU interpolates up to two pixels into a neighbor bar.
     const int chromaEdgeRadius = subsampledInput ? 2 : 0;
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8, chromaEdgeRadius);

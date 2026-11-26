@@ -36,8 +36,8 @@ def test_gstreamer_fingerprint_follows_only_what_decides_an_sdk_tree(tmp_path):
     config = tmp_path / ".github/build-config.json"
     config.parent.mkdir()
 
-    def fingerprint(qt: str, android: str, plugin: str) -> str:
-        gstreamer = {"version": {"android": android}, "plugins": {"common": [plugin]}}
+    def fingerprint(qt: str, sdk: str, plugin: str) -> str:
+        gstreamer = {"version": {"sdk": sdk}, "plugins": {"common": [plugin]}}
         config.write_text(json.dumps({"qt": {"version": qt}, "gstreamer": gstreamer}))
         return compute_gstreamer_fingerprint(tmp_path)
 

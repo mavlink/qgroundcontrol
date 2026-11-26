@@ -111,10 +111,6 @@ set(GStreamer_ROOT_DIR
     ""
     CACHE PATH "GStreamer SDK to use; empty selects the system SDK or an auto-downloaded one"
 )
-option(
-    QGC_GST_BUNDLE_PLUGINS
-    "Linux: install the system's GStreamer plugins and GIO modules with the app (OFF for distribution packages)" ON
-)
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD

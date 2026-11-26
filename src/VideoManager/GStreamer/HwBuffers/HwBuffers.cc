@@ -9,8 +9,6 @@
 #include <QtCore/QCoreApplication>
 #include <QtQuick/QQuickWindow>
 
-#include "QGCLoggingCategory.h"
-
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
@@ -27,8 +25,6 @@
 namespace HwBuffers {
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
-QGC_LOGGING_CATEGORY(HwBuffersFacadeLog, "Video.GStreamer.HwBuffers.Facade")
-
 namespace {
 
 /// Calls @p fn for every compiled GPU path in HwVideoBufferPath order (the stats order), once per path.
@@ -158,30 +154,6 @@ void connectMainWindow(QQuickWindow* window)
 #else
     Q_UNUSED(window);
 #endif
-}
-
-HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
-{
-    HwVideoBufferContext ctx;
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    ctx.gpuEnabled = gpuEnabled;
-    if (!gpuEnabled) {
-        return ctx;
-    }
-    QString available;
-    forEachCompiledPath(
-        [&available](HwVideoBufferPath path) { available += QLatin1Char(' ') + QLatin1String(GstHw::toString(path)); });
-    qCDebug(HwBuffersFacadeLog).noquote()
-        << "zero-copy paths compiled:" << available.trimmed() << "— actual path chosen at caps negotiation";
-    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
-        if (path->prepareContext) {
-            path->prepareContext(ctx);
-        }
-    }
-#else
-    Q_UNUSED(gpuEnabled);
-#endif
-    return ctx;
 }
 
 void* dmaBufImportDisplay() noexcept

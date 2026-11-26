@@ -158,7 +158,7 @@ QStringList childFactoryNames(GstBin* bin, bool recurse)
     QStringList names;
     for (const GStreamer::GstElementPtr& child : childElements(bin, recurse)) {
         GstElementFactory* const factory = gst_element_get_factory(child.get());
-        names << QString::fromUtf8(factory ? gst_plugin_feature_get_name(factory) : "?");
+        names << QString::fromUtf8(factory ? gst_plugin_feature_get_name(factory) : G_OBJECT_TYPE_NAME(child.get()));
     }
     names.sort();
     return names;

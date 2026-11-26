@@ -552,7 +552,7 @@ void GstVideoReceiverComponentsTest::_testRecordingContainerHoldsCodec()
     QVERIFY(source);
     g_object_set(source.get(), "caps", inputCaps.get(), nullptr);
     const GStreamer::GstElementPtr sink =
-        GStreamer::RecordingSink::create(QStringLiteral("recording-test"), *chosen, inputCaps.get());
+        GStreamer::RecordingSink::create(QStringLiteral("recording-test"), *chosen, inputCaps.get()).bin;
     QVERIFY(sink);
     QVERIFY(gst_element_link(source.get(), sink.get()));
 }

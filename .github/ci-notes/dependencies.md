@@ -163,4 +163,4 @@ and the full list. Each rule's reason is its `description` in `renovate.json`.
   `build-config.json` values (Qt, the Android SDK and NDK, Xcode, the GStreamer versions, the
   analysis toolchain); bump them by hand (`just check-deps` and `just check-gstreamer` report newer
   Qt and GStreamer releases; `just update-gstreamer <version>` writes a GStreamer release's
-  versions and package checksums).
+  version and package checksums).

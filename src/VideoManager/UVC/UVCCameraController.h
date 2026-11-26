@@ -66,9 +66,6 @@ public:
     /// The selected camera's description, the config's URI; empty while none is.
     QString device() const { return config().uri; }
 
-    /// Emits camerasChanged() from now on when a camera is plugged in or unplugged.
-    void watchCameras();
-
     /// The formats the selected camera offers, as UVCDevices::formatNames(); empty without a camera.
     QStringList formats() const { return _formats; }
 

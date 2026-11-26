@@ -19,17 +19,17 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char
     const auto owner = std::make_unique<QObject>();
     // Declared after the binding's owner, so the pipeline stops first.
     GstTest::TestPipeline pipeline;
-    if (!launchIntoSinkBin(pipeline,
-                           QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3")
-                               .arg(QString::fromUtf8(sourceProperties))
-                               .arg(numBuffers)
-                               .arg(QString::fromUtf8(capsLine)),
-                           config)) {
+    const GstQgc::SinkBin sinkBin = launchIntoSinkBin(pipeline,
+                                                      QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3")
+                                                          .arg(QString::fromUtf8(sourceProperties))
+                                                          .arg(numBuffers)
+                                                          .arg(QString::fromUtf8(capsLine)),
+                                                      config);
+    if (!sinkBin) {
         r.errorMessage = pipeline.error();
         return r;
     }
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, owner.get())) {
+    if (!GStreamer::setupQVideoSinkElement(sinkBin.qvideosink.get(), &videoSink, owner.get())) {
         r.errorMessage = QStringLiteral("setupQVideoSinkElement() failed");
         return r;
     }

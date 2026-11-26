@@ -342,7 +342,7 @@ public:
     {}
 
     /// Always fails, like a GPU import the active QRhi rejects.
-    QVideoFrameTexturesUPtr mapTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
+    QVideoFrameTexturesUPtr importTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
 };
 
 /// Advertises @p advertised while its memory holds the format it was built with, as the DMABuf eglfs quirk does.

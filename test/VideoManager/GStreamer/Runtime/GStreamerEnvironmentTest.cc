@@ -218,7 +218,7 @@ void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
     const ManagedEnvGuard guard;
     QVERIFY(GStreamer::Environment::prepareEnvironment().ok);
     QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY"));
-    QVERIFY(GStreamer::Environment::bundledRuntime().pluginDirs.isEmpty());
+    QVERIFY(GStreamer::Environment::bundledRuntime().pluginDir.isEmpty());
 #else
     QSKIP("Only Linux builds use a system GStreamer");
 #endif
@@ -229,21 +229,20 @@ void GStreamerEnvironmentTest::_testBundleLayouts_data()
     using GStreamer::Environment::DesktopInstall;
     QTest::addColumn<int>("install");
     QTest::addColumn<QString>("appDir");
-    QTest::addColumn<QStringList>("pluginDirs");
-    QTest::addColumn<QStringList>("gioModuleDirs");
+    QTest::addColumn<QString>("pluginDir");
+    QTest::addColumn<QString>("gioModuleDir");
     QTest::addColumn<QStringList>("scanners");
 
     QTest::newRow("macOS") << int(DesktopInstall::MacOS) << QStringLiteral("/QGC.app/Contents/MacOS")
-                           << QStringList{QStringLiteral("/QGC.app/Contents/lib/gstreamer-1.0")}
-                           << QStringList{QStringLiteral("/QGC.app/Contents/lib/gio/modules")}
+                           << QStringLiteral("/QGC.app/Contents/lib/gstreamer-1.0")
+                           << QStringLiteral("/QGC.app/Contents/lib/gio/modules")
                            << QStringList{QStringLiteral("/QGC.app/Contents/libexec/gstreamer-1.0/gst-plugin-scanner")};
     QTest::newRow("Windows") << int(DesktopInstall::Windows) << QStringLiteral("/QGC/bin")
-                             << QStringList{QStringLiteral("/QGC/lib/gstreamer-1.0")}
-                             << QStringList{QStringLiteral("/QGC/lib/gio/modules")}
+                             << QStringLiteral("/QGC/lib/gstreamer-1.0") << QStringLiteral("/QGC/lib/gio/modules")
                              << QStringList{QStringLiteral("/QGC/libexec/gstreamer-1.0/gst-plugin-scanner.exe")};
     QTest::newRow("Linux") << int(DesktopInstall::Linux) << QStringLiteral("/opt/QGC/usr/bin")
-                           << QStringList{QStringLiteral("/opt/QGC/usr/lib/gstreamer-1.0")}
-                           << QStringList{QStringLiteral("/opt/QGC/usr/lib/gio/modules")}
+                           << QStringLiteral("/opt/QGC/usr/lib/gstreamer-1.0")
+                           << QStringLiteral("/opt/QGC/usr/lib/gio/modules")
                            << QStringList{
                                   QStringLiteral("/opt/QGC/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"),
                                   QStringLiteral("/opt/QGC/usr/libexec/gstreamer-1.0/gst-plugin-scanner")};
@@ -253,14 +252,14 @@ void GStreamerEnvironmentTest::_testBundleLayouts()
 {
     QFETCH(int, install);
     QFETCH(QString, appDir);
-    QFETCH(QStringList, pluginDirs);
-    QFETCH(QStringList, gioModuleDirs);
+    QFETCH(QString, pluginDir);
+    QFETCH(QString, gioModuleDir);
     QFETCH(QStringList, scanners);
 
     const GStreamer::Environment::BundleLayout layout =
         GStreamer::Environment::bundleLayout(static_cast<GStreamer::Environment::DesktopInstall>(install), appDir);
-    QCOMPARE(layout.pluginDirs, pluginDirs);
-    QCOMPARE(layout.gioModuleDirs, gioModuleDirs);
+    QCOMPARE(layout.pluginDir, pluginDir);
+    QCOMPARE(layout.gioModuleDir, gioModuleDir);
     QCOMPARE(layout.scannerCandidates, scanners);
 }
 
@@ -274,7 +273,7 @@ void GStreamerEnvironmentTest::_testBundledRuntime_data()
 
 void GStreamerEnvironmentTest::_testBundledRuntime()
 {
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(QGC_GST_SYSTEM_PLUGINS)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     QSKIP("This build never uses a bundled GStreamer runtime");
 #else
     QFETCH(bool, gioModules);
@@ -306,7 +305,7 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
 
     QVERIFY(GStreamer::Environment::prepareEnvironment(appDir).ok);
 
-    QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDirs, QStringList{pluginDir});
+    QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDir, pluginDir);
     // GIO loads the bundle's modules: on Linux with GLib 2.76+ in place of the system's, elsewhere besides them. A
     // bundle without modules leaves GIO the system's.
     QCOMPARE(GStreamer::Environment::bundledRuntime().gioModuleDir, gioModuleDir);
@@ -334,7 +333,7 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
     // Preparing again changes nothing: the paths the first call set aren't taken for the user's, which would win.
     const QProcessEnvironment prepared = QProcessEnvironment::systemEnvironment();
     QVERIFY(GStreamer::Environment::prepareEnvironment(appDir).ok);
-    QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDirs, QStringList{pluginDir});
+    QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDir, pluginDir);
     QVERIFY(QProcessEnvironment::systemEnvironment() == prepared);
 #endif
 }

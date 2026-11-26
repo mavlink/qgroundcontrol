@@ -28,7 +28,7 @@ public:
         : GstHwVideoBuffer(sample, info, QVideoFrameFormat(kFrameSize, kPixelFormat))
     {}
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
+    QVideoFrameTexturesUPtr importTextures(QRhi&, QVideoFrameTexturesUPtr&) override { return {}; }
 
     bool holdsSample() const noexcept { return _sample != nullptr; }
 };

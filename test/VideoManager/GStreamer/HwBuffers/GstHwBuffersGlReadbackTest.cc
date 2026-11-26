@@ -49,7 +49,6 @@
 #include <QtMultimedia/private/qhwvideobuffer_p.h>
 #include <QtMultimedia/private/qvideoframe_p.h>
 
-#include "CpuVideoFramePool.h"
 #include "GstGlContextBridge.h"
 #include "GstGlVideoBuffer.h"
 #include "GstHwPathRegistry.h"
@@ -528,13 +527,14 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
         }
     });
     GstTest::TestPipeline pipeline;
-    QVERIFY2(GstQgcTest::launchIntoSinkBin(pipeline,
-                                           QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! glupload ! "
-                                                          "video/x-raw(memory:GLMemory),format=%2")
-                                               .arg(rawCaps, format),
-                                           {.gpuZeroCopy = true, .environment = environment}),
-             qPrintable(pipeline.error()));
-    QVERIFY(GStreamer::setupQVideoSinkElement(pipeline.element("sink").get(), &videoSink, &owner));
+    const GstQgc::SinkBin sinkBin =
+        GstQgcTest::launchIntoSinkBin(pipeline,
+                                      QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! %1 ! glupload ! "
+                                                     "video/x-raw(memory:GLMemory),format=%2")
+                                          .arg(rawCaps, format),
+                                      {.gpuZeroCopy = true, .environment = environment});
+    QVERIFY2(sinkBin, qPrintable(pipeline.error()));
+    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.qvideosink.get(), &videoSink, &owner));
     QVERIFY(pipeline.play());
     const QString failure = pipeline.runToEos();
     QVERIFY2(failure.isEmpty(), qPrintable(failure));
@@ -609,8 +609,9 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
     const QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&info), GST_VIDEO_INFO_HEIGHT(&info)),
                                    QVideoFrameFormat::Format_RGBA8888);
     // The frame as the sink makes it under caps of capsHeight rows.
-    GstVideoInfo capsInfo = info;
-    QVERIFY(GstHw::setFrameSize(capsInfo, GST_VIDEO_INFO_WIDTH(&info), capsHeight));
+    GstVideoInfo capsInfo;
+    QVERIFY(
+        gst_video_info_set_format(&capsInfo, GST_VIDEO_INFO_FORMAT(&info), GST_VIDEO_INFO_WIDTH(&info), capsHeight));
     const QSize capsSize(GST_VIDEO_INFO_WIDTH(&capsInfo), capsHeight);
     const QVideoFrameFormat gpuFormat =
         withFrameGeometry(QVideoFrameFormat(capsSize, QVideoFrameFormat::Format_RGBA8888),
@@ -628,9 +629,8 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
     const QImage actual = QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), rhi))
                               .toImage()
                               .copy(gpuFormat.viewport());
-    const QImage expected = CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpuSample.get()), info, format)
-                                .toImage()
-                                .copy(QRect(QPoint(0, 0), capsSize));
+    const QImage expected =
+        mapCpuFrame(gst_sample_get_buffer(cpuSample.get()), info, format).toImage().copy(QRect(QPoint(0, 0), capsSize));
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/2);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 }
@@ -653,13 +653,13 @@ void GstHwBuffersGlReadbackTest::_testTenBitPlanarFrameToImage()
         }
     });
     GstTest::TestPipeline pipeline;
-    QVERIFY2(GstQgcTest::launchIntoSinkBin(
-                 pipeline, QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! "
-                                          "video/x-raw,format=I420_10LE,width=64,height=48,framerate=30/1 ! "
-                                          "tee name=t t. ! queue ! videoconvert ! video/x-raw,format=BGRA ! "
-                                          "appsink name=reference sync=false t. ! queue")),
-             qPrintable(pipeline.error()));
-    QVERIFY(GStreamer::setupQVideoSinkElement(pipeline.element("sink").get(), &videoSink, &owner));
+    const GstQgc::SinkBin sinkBin = GstQgcTest::launchIntoSinkBin(
+        pipeline, QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! "
+                                 "video/x-raw,format=I420_10LE,width=64,height=48,framerate=30/1 ! "
+                                 "tee name=t t. ! queue ! videoconvert ! video/x-raw,format=BGRA ! "
+                                 "appsink name=reference sync=false t. ! queue"));
+    QVERIFY2(sinkBin, qPrintable(pipeline.error()));
+    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.qvideosink.get(), &videoSink, &owner));
     QVERIFY(pipeline.play());
     const GstTest::SamplePtr reference = pipeline.pullSample("reference");
     QVERIFY2(reference, "the pipeline produced no frame");

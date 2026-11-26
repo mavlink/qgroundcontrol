@@ -68,7 +68,7 @@ GstPadProbeReturn countBuffers(GstPad* pad, GstPadProbeInfo* info, gpointer user
 /// @p bin's children, recursing into child bins when @p recurse.
 std::vector<GStreamer::GstElementPtr> childElements(GstBin* bin, bool recurse = false);
 
-/// Factory names of @p bin's children, sorted.
+/// Factory names of @p bin's children, sorted; the type name for one made without a factory (qgcqvideosink).
 QStringList childFactoryNames(GstBin* bin, bool recurse = false);
 
 /// The first element made by @p factoryName anywhere inside the bin @p bin, or null (also for a null @p bin).

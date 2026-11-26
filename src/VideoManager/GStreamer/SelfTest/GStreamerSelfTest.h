@@ -21,9 +21,9 @@ struct RegisteredPlugin
 };
 
 /// What is wrong with a bundled runtime's plugins, one message each: plugins GStreamer blacklisted (typically because a
-/// library they link is missing), registered plugins from outside @p pluginDirs or whose file the bundle doesn't ship,
-/// and plugin files in @p pluginDirs (@p pluginFiles) that the registry lacks. Static plugins are not checked.
-QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const QStringList& pluginDirs,
+/// library they link is missing), registered plugins from outside @p pluginDir or whose file the bundle doesn't ship,
+/// and plugin files in @p pluginDir (@p pluginFiles) that the registry lacks. Static plugins are not checked.
+QStringList bundledPluginIssues(const QList<RegisteredPlugin>& registered, const QString& pluginDir,
                                 const QStringList& pluginFiles);
 
 #if defined(Q_OS_WIN)

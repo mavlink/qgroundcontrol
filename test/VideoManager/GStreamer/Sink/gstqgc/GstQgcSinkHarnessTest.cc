@@ -21,9 +21,9 @@ class SinkBinHarness
 public:
     explicit SinkBinHarness(QVideoSink* videoSink)
     {
-        _bin = GStreamer::adoptFloating(GstQgc::makeSinkBin({}));
-        if (_bin && GStreamer::setupQVideoSinkElement(_bin.get(), videoSink, &_owner)) {
-            _harness = gst_harness_new_with_element(_bin.get(), "sink", nullptr);
+        _sinkBin = GstQgc::makeSinkBin({});
+        if (_sinkBin && GStreamer::setupQVideoSinkElement(_sinkBin.qvideosink.get(), videoSink, &_owner)) {
+            _harness = gst_harness_new_with_element(_sinkBin.bin.get(), "sink", nullptr);
         }
     }
 
@@ -71,7 +71,7 @@ public:
 
 private:
     QObject _owner;
-    GStreamer::GstElementPtr _bin;
+    GstQgc::SinkBin _sinkBin;
     GstHarness* _harness = nullptr;
     GstVideoInfo _info{};
 };

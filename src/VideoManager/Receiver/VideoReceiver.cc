@@ -187,12 +187,8 @@ void VideoReceiver::setState(State state)
     if (state == _state) {
         return;
     }
-    const bool wasStreaming = streaming();
     _state = state;
     emit stateChanged(_state);
-    if (wasStreaming != streaming()) {
-        emit streamingChanged(streaming());
-    }
 }
 
 void VideoReceiver::setDecoding(bool decoding)

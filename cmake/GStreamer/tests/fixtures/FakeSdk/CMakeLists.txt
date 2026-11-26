@@ -17,8 +17,8 @@ string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
 file(READ "${QGC_MODULE_DIR}/../.github/build-config.json" _qgc_test_real_config)
 string(JSON _qgc_test_policy_json GET "${_qgc_test_real_config}" gstreamer_plugin_policy)
 string(
-    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": "
-           "\"1.20.0\", \"macos\": \"1.22.0\"}, \"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}, "
+    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"sdk\": \"1.22.0\"}, "
+           "\"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}, "
            "\"gstreamer_plugin_policy\": ${_qgc_test_policy_json}}"
 )
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
@@ -92,10 +92,7 @@ endif()
 
 # Discovery state stays out of the cache and the global search paths; the derived pkg-config flags
 # remain visible to the rest of the GStreamer directory and the environment is restored afterwards.
-if(NOT DEFINED EXPECT_CACHED_PKG_CONFIG_ARGN)
-    set(EXPECT_CACHED_PKG_CONFIG_ARGN "")
-endif()
-qgc_test_assert_streq("cached PKG_CONFIG_ARGN" "${EXPECT_CACHED_PKG_CONFIG_ARGN}" "$CACHE{PKG_CONFIG_ARGN}")
+qgc_test_assert_streq("cached PKG_CONFIG_ARGN" "" "$CACHE{PKG_CONFIG_ARGN}")
 if(QGC_TEST_ANDROID_ABI)
     qgc_test_assert_in_list("derived pkg-config flags" --static PKG_CONFIG_ARGN)
 endif()
@@ -142,18 +139,14 @@ foreach(_target IN LISTS _qgc_state_targets)
     endforeach()
 endforeach()
 foreach(
-    _var IN
-    ITEMS
-        GStreamer_VERSION
-        GStreamer_ROOT_DIR
-        GSTREAMER_LIB_PATH
-        GSTREAMER_PLUGIN_PATH
-        GSTREAMER_INCLUDE_PATH
-        GSTREAMER_SELECTED_COMPONENTS
-        GSTREAMER_PLUGINS
-        QGC_GST_HAS_DMABUF
+    _var IN ITEMS GStreamer_VERSION GStreamer_ROOT_DIR GSTREAMER_SELECTED_COMPONENTS GSTREAMER_PLUGINS
+                  QGC_GST_HAS_DMABUF
 )
     string(APPEND _qgc_state "${_var}=${${_var}}\n")
+endforeach()
+foreach(_key IN ITEMS LIB_PATH PLUGIN_PATH INCLUDE_PATH)
+    qgc_gst_layout_get(${_key} _qgc_value)
+    string(APPEND _qgc_state "${_key}=${_qgc_value}\n")
 endforeach()
 foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RESOLVED_AUTO)
     string(APPEND _qgc_state "${_var}=$CACHE{${_var}}\n")
@@ -209,7 +202,8 @@ qgc_test_assert_property(
 if(TARGET GStreamer::plugin_coreelements)
     message(FATAL_ERROR "ASSERT [shared plugins]: GStreamer::plugin_coreelements was created")
 endif()
-qgc_test_assert_streq("plugin dir" "${EXPECT_ROOT}/lib/gstreamer-1.0" "${GSTREAMER_PLUGIN_PATH}")
+qgc_gst_layout_get(PLUGIN_PATH _qgc_plugin_path)
+qgc_test_assert_streq("plugin dir" "${EXPECT_ROOT}/lib/gstreamer-1.0" "${_qgc_plugin_path}")
 qgc_test_assert_streq("recorded version" "${EXPECT_VERSION}" "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}")
 if(NOT DEFINED EXPECT_AUTO)
     set(EXPECT_AUTO FALSE)

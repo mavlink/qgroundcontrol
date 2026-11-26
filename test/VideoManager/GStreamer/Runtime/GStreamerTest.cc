@@ -150,18 +150,7 @@ void GStreamerTest::_testLogDecoderRanks()
 void GStreamerTest::_testCompleteInit()
 {
     QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-
-    GstRegistry* registry = gst_registry_get();
-    QVERIFY(registry);
-
-    GstPlugin* qgcPlugin = gst_registry_find_plugin(registry, "qgc");
-    QVERIFY2(qgcPlugin, "Static plugin 'qgc' not registered after completeInit()");
-    gst_clear_object(&qgcPlugin);
-
-    for (const char* const name : {"appsink", "qgcqvideosink"}) {
-        QVERIFY2(GStreamer::hasElementFactory(name),
-                 qPrintable(QStringLiteral("Factory '%1' not found after completeInit()").arg(QLatin1String(name))));
-    }
+    QVERIFY2(GStreamer::hasElementFactory("appsink"), "Factory 'appsink' not found after completeInit()");
 }
 
 void GStreamerTest::_testCompleteInitNamesBlacklistedPlugins()
@@ -202,7 +191,6 @@ void GStreamerTest::_testVideoBackendForwards()
 {
     GStreamerVideoBackend backend;
     const VideoBackend::Capabilities capabilities = backend.capabilities();
-    QVERIFY(capabilities.streaming);
     QVERIFY(capabilities.pipelineSettings);
     QVERIFY(capabilities.asyncInit);
 #ifdef QGC_HAS_ANY_GPU_PATH

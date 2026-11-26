@@ -245,7 +245,7 @@ std::optional<PipelineSession::Failure> PipelineSession::start()
     return std::nullopt;
 }
 
-void PipelineSession::setVideoSink(GstElement* sink)
+void PipelineSession::setVideoSink(const GstQgc::SinkBin* sink)
 {
     if (_decoding && !_tearingDown()) {
         _decoding->setVideoSink(sink);

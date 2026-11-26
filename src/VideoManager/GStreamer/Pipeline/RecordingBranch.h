@@ -10,6 +10,7 @@
 
 #include "BranchContext.h"
 #include "GstScoped.h"
+#include "RecordingSink.h"
 #include "TeeBranchHead.h"
 #include "VideoReceiver.h"
 
@@ -176,8 +177,8 @@ private:
     Request _current;
     /// Identifies _current, so reports from an earlier recording's probes are ignored.
     std::atomic<quint64> _recording = 0;
-    /// The current recording's sink bin, from its start until _finish().
-    GStreamer::GstElementPtr _fileSink;
+    /// The current recording's sink bin and its parts, from its start until _finish().
+    GStreamer::RecordingSink::SinkBin _fileSink;
     /// On the valve's output: lets the stream into the recorder from its first keyframe on.
     GStreamer::PadProbe _keyframeWatch;
     /// On the output of the recorder's parser, or the valve's without one: starts the file with the first keyframe

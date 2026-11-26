@@ -28,7 +28,7 @@ public:
     bool isDmaBuf() const override { return true; }
 
     MapData map(QVideoFrame::MapMode mode) override;
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
     /// Failed imports of one layout in a row that disable the path: Qt's importer warns on every one.
@@ -75,6 +75,8 @@ private:
     void noteImportOutcome(ImportOutcome outcome) const;
     /// A vendor tiling from DMA_DRM caps: the memory has no CPU-readable layout.
     bool isTiled() const noexcept;
+
+    bool hasCpuLayout() const override { return !isTiled() && GstHwVideoBuffer::hasCpuLayout(); }
 
     EGLDisplay _eglDisplay = EGL_NO_DISPLAY;
     /// From DMA_DRM caps; DRM_FORMAT_MOD_INVALID (implicit, driver-resolved) for legacy DMABuf caps.

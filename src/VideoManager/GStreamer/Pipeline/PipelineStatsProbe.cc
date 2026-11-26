@@ -9,7 +9,6 @@
 #include "GstRtpPacketProbe.h"
 #include "GstScoped.h"
 #include "VideoStreamStats.h"
-#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
 
@@ -48,7 +47,10 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
         GstStructure* rawStats = nullptr;
         g_object_get(element, "stats", &rawStats, nullptr);
         const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
-        const auto field = [&stats](const char* name) -> guint64 { return GstQgc::frameStatsField(stats.get(), name); };
+        const auto field = [&stats](const char* name) {
+            guint64 value = 0;
+            return (stats && gst_structure_get_uint64(stats.get(), name, &value)) ? value : guint64(0);
+        };
         auto* const sum = static_cast<JitterBufferTotals*>(data);
         sum->found = true;
         sum->packetsPushed += field("num-pushed");

@@ -18,7 +18,6 @@
 #include <QtMultimedia/private/qhwvideobuffer_p.h>
 #include <QtMultimedia/private/qvideoframe_p.h>
 
-#include "CpuVideoFramePool.h"
 #include "GStreamerTestHelpers.h"
 #include "GstDmaBufVideoBuffer.h"
 #include "GstDmaBufVulkanImport.h"
@@ -28,6 +27,7 @@
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "QGCQVideoSinkController.h"
 #include "QGCRhiCapture.h"
+#include "gstqgc/GstQgcFrameMap.h"
 #include "gstqgc/GstQgcSinkPolicy.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
@@ -136,8 +136,7 @@ QString vulkanImportMismatch(std::unique_ptr<GstDmaBufVideoBuffer> frame, QRhi& 
         failuresBefore) {
         return QStringLiteral("the frame was converted from its CPU map, not from the imported textures");
     }
-    const QImage expected =
-        GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(reference), referenceInfo, format));
+    const QImage expected = GstTest::cpuImage(mapCpuFrame(gst_sample_get_buffer(reference), referenceInfo, format));
     // Subsampled chroma is interpolated by the GPU up to two pixels into a neighbor bar.
     return GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8, subsampled ? 2 : 0);
 }
@@ -240,17 +239,17 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
         }
     });
     GstTest::TestPipeline pipeline;
-    if (!GstQgcTest::launchIntoSinkBin(pipeline,
-                                       QStringLiteral("videotestsrc num-buffers=10 ! "
-                                                      "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
-                                                      "vah264enc ! h264parse ! vah264dec"),
-                                       {.gpuZeroCopy = true, .environment = environment})) {
+    const GstQgc::SinkBin sinkBin =
+        GstQgcTest::launchIntoSinkBin(pipeline,
+                                      QStringLiteral("videotestsrc num-buffers=10 ! "
+                                                     "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
+                                                     "vah264enc ! h264parse ! vah264dec"),
+                                      {.gpuZeroCopy = true, .environment = environment});
+    if (!sinkBin) {
         QSKIP(qPrintable(QStringLiteral("VA pipeline parse skipped: %1").arg(pipeline.error())));
     }
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &owner));
-    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
-    QVERIFY(qvideosink);
+    const GStreamer::GstElementPtr& qvideosink = sinkBin.qvideosink;
+    QVERIFY(GStreamer::setupQVideoSinkElement(qvideosink.get(), &videoSink, &owner));
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY(sinkPad);
     if (!pipeline.play()) {
@@ -265,8 +264,7 @@ void GstHwBuffersVulkanReadbackTest::_testVaStreamTakesDmaBufPath()
         QSKIP(qPrintable(QStringLiteral("VA driver exports no layout the Vulkan device imports: %1").arg(negotiated)));
     }
 
-    QVERIFY_TRUE_WAIT(GstQgc::frameStatsField(GstQgc::frameStats(qvideosink.get()).get(),
-                                              GstQgc::sinkFramesField(HwVideoBufferPath::DmaBuf)) > 0,
+    QVERIFY_TRUE_WAIT(GstQgc::sinkStats(qvideosink.get()).frames(HwVideoBufferPath::DmaBuf) > 0,
                       TestTimeout::shortMs());
     QVERIFY_TRUE_WAIT(frame.isValid(), TestTimeout::shortMs());
     QHwVideoBuffer* const buffer = QVideoFramePrivate::hwBuffer(frame);

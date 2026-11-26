@@ -120,7 +120,7 @@ void GstVideoReceiverReconnectTest::_testUnresponsiveRtspServer()
         QVERIFY(stream.waitForState(State::Stopped));
         QCOMPARE(server.connections(), 1);
     }
-    QVERIFY(stream.streamingSpy.isEmpty());
+    QVERIFY(!stream.stateSpy.contains(QVariantList{QVariant::fromValue(State::Streaming)}));
 }
 
 void GstVideoReceiverReconnectTest::_testRtspUnauthorizedStops()

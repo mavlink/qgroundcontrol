@@ -11,10 +11,10 @@
 #include <QtCore/QScopeGuard>
 #include <QtMultimedia/QVideoFrameFormat>
 
-#include "CpuVideoFramePool.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathRegistry.h"
 #include "HwBuffers/GstHwImageReadback.h"
+#include "gstqgc/GstQgcFrameMap.h"
 
 void GstHwBuffersIOSurfaceTest::_testIOSurfaceFrameToImage()
 {
@@ -67,8 +67,7 @@ void GstHwBuffersIOSurfaceTest::_testIOSurfaceFrameToImage()
     // The same CVPixelBuffer read through the CPU is the reference.
     const QImage actual =
         QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), rhi.get())).toImage();
-    const QImage expected =
-        GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(sample), info, format));
+    const QImage expected = GstTest::cpuImage(mapCpuFrame(gst_sample_get_buffer(sample), info, format));
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 }

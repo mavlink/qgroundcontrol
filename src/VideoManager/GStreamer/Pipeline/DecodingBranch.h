@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <gst/gst.h>
 #include <memory>
@@ -13,9 +12,10 @@
 #include "GstScoped.h"
 #include "HwBuffers/HwBuffers.h"
 #include "TeeBranchHead.h"
+#include "gstqgc/GstQgcSinkStats.h"
 
 namespace GstQgc {
-struct PathStats;
+struct SinkBin;
 }
 
 /// \brief The display branch behind the session's tee: leaky queue ! valve [! decodebin3 ! video sink].
@@ -88,8 +88,8 @@ public:
     /// Takes the video sink and decoder out of the pipeline, which must be in NULL, and releases the sink.
     void reset();
 
-    /// Decodes into @p sink from now on, or stops decoding for nullptr.
-    void setVideoSink(GstElement* sink);
+    /// Decodes into @p sink's bin from now on, or stops decoding for nullptr.
+    void setVideoSink(const GstQgc::SinkBin* sink);
     /// The first frame reached the tee: inserts the decoder when a video sink is waiting for it.
     void onSourceStreaming();
     /// Replaces the decoder and resets the sink, leaving the rest of the pipeline (and a recording) running. Gives the
@@ -113,8 +113,8 @@ public:
     /// anything else of the branch are left over from a replaced decoder.
     bool isCurrent(GstObject* source) const;
 
-    /// The frames the video sink delivered since setVideoSink(), from qgcqvideosink's "frame-stats", followed by the
-    /// process-wide GPU-path counters since then (HwBuffers::extraPathStatsSince()); empty for other sinks.
+    /// The frames the video sink delivered since setVideoSink(), from GstQgc::sinkStats(), followed by the
+    /// process-wide GPU-path counters since then (HwBuffers::extraPathStatsSince()); empty without a video sink.
     GstQgc::PathStats sinkPathStats() const;
 
     /// Not const: displayPath compares the sink's counts with the previous sample's.
@@ -159,14 +159,16 @@ private:
 
     TeeBranchHead _head;
 
+    // The video sink's bin, which goes in the pipeline, and the qgcqvideosink in it.
     GStreamer::GstElementPtr _sink;
+    GStreamer::GstElementPtr _qvideosink;
     GStreamer::GstElementPtr _decoder;
-    // The sink's "frame-stats" when setVideoSink() took it: the sink outlives sessions and its counters don't restart.
-    GStreamer::GstStructurePtr _sinkStatsAtStart;
+    // The sink's statistics when setVideoSink() took it: the sink outlives sessions and its counters don't restart.
+    GstQgc::SinkStats _sinkStatsAtStart;
     // The process-wide GPU-path counters then, which never restart either.
     GstHwPathTelemetry::Snapshot _gpuCountersAtStart;
-    // The sink's per-path delivered counts at the previous sampleStats(), absolute like its "frame-stats".
-    std::array<quint64, GstHw::kPathCount> _pathFramesAtSample{};
+    // Its statistics at the previous sampleStats(), cumulative like those.
+    GstQgc::SinkStats _sinkStatsAtSample;
     // Displayed, superseded and GPU-fallback frames of the sinks replaced since the branch was built.
     quint64 _retiredFramesDisplayed = 0;
     quint64 _retiredFramesSuperseded = 0;

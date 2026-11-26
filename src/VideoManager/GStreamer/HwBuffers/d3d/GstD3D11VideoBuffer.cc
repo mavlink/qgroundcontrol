@@ -118,7 +118,7 @@ public:
         }
     }
 
-    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
+    QVideoFrameTexturesUPtr importTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
         GstBuffer* const buffer = beginMap(rhi, QRhi::D3D11);
         if (!buffer) {

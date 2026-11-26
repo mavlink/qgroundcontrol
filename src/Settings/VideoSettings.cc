@@ -9,11 +9,6 @@
 
 namespace {
 
-bool hasStreaming()
-{
-    return VideoBackend::instance().capabilities().streaming;
-}
-
 bool hasPipelineSettings()
 {
     return VideoBackend::instance().capabilities().pipelineSettings;
@@ -191,18 +186,18 @@ DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoBackend, hasPipelineSettings())
 
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceVideoDecoder, hasPipelineSettings())
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(softwareDecoderThreads, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(lowLatencyMode, hasStreaming())
+DECLARE_SETTINGSFACT(VideoSettings, lowLatencyMode)
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtpJitterLatencyMs, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspAutoReconnect, hasStreaming())
+DECLARE_SETTINGSFACT(VideoSettings, rtspAutoReconnect)
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forceCpuVideoPath, VideoBackend::instance().capabilities().gpuVideoPath)
 
 // videoConversionElement reaches the receivers' display sinks as a construct-only property
 // (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when it
 // changes.
 DECLARE_VIDEO_SETTINGSFACT_VISIBLE(videoConversionElement, hasPipelineSettings())
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(forcedAspectRatio, hasStreaming())
+DECLARE_SETTINGSFACT(VideoSettings, forcedAspectRatio)
 
-DECLARE_VIDEO_SETTINGSFACT_VISIBLE(rtspTimeout, hasStreaming())
+DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 
 #undef DECLARE_VIDEO_SETTINGSFACT_VISIBLE
 

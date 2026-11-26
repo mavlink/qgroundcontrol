@@ -36,6 +36,8 @@ public:
     /// it, for at most a few seconds: false when the worker didn't get to it.
     static bool runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
     static GstElement* displaySink(const GstVideoReceiver* receiver);
+    /// The qgcqvideosink of @p receiver's display sink; null while it has none.
+    static GStreamer::GstElementPtr displayVideoSink(const GstVideoReceiver* receiver);
     /// Posts @p receiver's worker a task that keeps it busy until @p gate opens.
     static void holdWorker(GstVideoReceiver* receiver, const std::shared_ptr<GstReceiverTest::Gate>& gate);
 
@@ -160,7 +162,6 @@ struct Receiver
         : output(new QQuickVideoOutput(window.contentItem()))
         , receiver(new GstVideoReceiver(nullptr, timings))
         , stateSpy(receiver.get(), &VideoReceiver::stateChanged)
-        , streamingSpy(receiver.get(), &VideoReceiver::streamingChanged)
         , decodingSpy(receiver.get(), &VideoReceiver::decodingChanged)
         , recordingSpy(receiver.get(), &VideoReceiver::recordingChanged)
         , recordingStartedSpy(receiver.get(), &VideoReceiver::recordingStarted)
@@ -310,7 +311,6 @@ struct Receiver
     QQuickVideoOutput* const output;
     std::unique_ptr<GstVideoReceiver> receiver;
     QSignalSpy stateSpy;
-    QSignalSpy streamingSpy;
     QSignalSpy decodingSpy;
     QSignalSpy recordingSpy;
     QSignalSpy recordingStartedSpy;
