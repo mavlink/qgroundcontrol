@@ -1,5 +1,8 @@
 #include "MissionControllerTest.h"
 
+#include <QtCore/QFile>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
@@ -22,6 +25,8 @@
 #include "StructureScanComplexItem.h"
 #include "SurveyComplexItem.h"
 #include "TakeoffMissionItem.h"
+#include "TerrainTest.h"
+#include "TerrainTileCopernicus.h"
 #include "TestFixtures.h"
 #include "UnitTestCoords.h"
 #include "UnitsSettings.h"
@@ -883,6 +888,869 @@ void MissionControllerTest::_testFlightPathSegmentCacheReuse()
     QCOMPARE(quintptr(wp4->simpleFlightPathSegment()), segWp4LandPtr);
     QCOMPARE(wp3->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTerrainFrame);
     QCOMPARE(wp4->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeLand);
+}
+
+void MissionControllerTest::_testSplineWaypointPath()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) wp1(1) spline2(2) spline3(3) wp4(4), zig-zagging so the spline tangents bend the legs
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1));
+    SimpleMissionItem* spline2 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90), 2));
+    SimpleMissionItem* spline3 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(300, 0), 3));
+    SimpleMissionItem* wp4 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(400, 0).atDistanceAndAzimuth(100, 90), 4));
+    QVERIFY(wp1);
+    QVERIFY(spline2);
+    QVERIFY(spline3);
+    QVERIFY(wp4);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    spline3->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    wp1->altitude()->setRawValue(50.0);
+    spline2->altitude()->setRawValue(100.0);
+
+    auto latLon = [](const QGeoCoordinate& coordinate) {
+        return QGeoCoordinate(coordinate.latitude(), coordinate.longitude());
+    };
+
+    QmlObjectListModel* segments = _missionController->simpleFlightPathSegments();
+    QCOMPARE_TRUE_WAIT(segments->count(), 3, TestTimeout::mediumMs());
+    QVERIFY(wp1->simpleFlightPathSegment());
+    QVERIFY(spline2->simpleFlightPathSegment());
+    QVERIFY(spline3->simpleFlightPathSegment());
+
+    // Only legs arriving at a spline waypoint are curved
+    QTRY_VERIFY_WITH_TIMEOUT(!wp1->simpleFlightPathSegment()->splinePath().isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(!spline2->simpleFlightPathSegment()->splinePath().isEmpty());
+    QVERIFY(spline3->simpleFlightPathSegment()->splinePath().isEmpty());
+
+    // Perpendicular distance of a point from the straight chord between the leg's endpoints
+    auto chordDeviation = [](const QGeoCoordinate& from, const QGeoCoordinate& to, const QGeoCoordinate& point) {
+        const double chordAzimuth = qDegreesToRadians(from.azimuthTo(to));
+        const double pointDistance = from.distanceTo(point);
+        const double pointAzimuth = qDegreesToRadians(from.azimuthTo(point));
+        return qAbs(pointDistance * std::sin(pointAzimuth - chordAzimuth));
+    };
+
+    const QVariantList wp1Path = wp1->simpleFlightPathSegment()->splinePath();
+    QVERIFY(wp1Path.count() > 2);
+    QCOMPARE(latLon(wp1Path.first().value<QGeoCoordinate>()), wp1->coordinate());
+    QCOMPARE(latLon(wp1Path.last().value<QGeoCoordinate>()), spline2->coordinate());
+    double maxDeviation = 0;
+    for (const QVariant& point : wp1Path) {
+        maxDeviation =
+            qMax(maxDeviation, chordDeviation(wp1->coordinate(), spline2->coordinate(), point.value<QGeoCoordinate>()));
+    }
+    QVERIFY(maxDeviation > 5.0);
+
+    // The curve is 3D: altitude runs from the origin's AMSL to the destination's and is splined in between
+    const double originAlt = wp1->amslExitAlt();
+    const double destinationAlt = spline2->amslEntryAlt();
+    QVERIFY(destinationAlt > originAlt);
+    QCOMPARE(wp1Path.first().value<QGeoCoordinate>().altitude(), originAlt);
+    QCOMPARE(wp1Path.last().value<QGeoCoordinate>().altitude(), destinationAlt);
+    const double middleAlt = wp1Path[wp1Path.count() / 2].value<QGeoCoordinate>().altitude();
+    QVERIFY(middleAlt > originAlt);
+    QVERIFY(middleAlt < destinationAlt);
+    QCOMPARE(_missionController->splinePathFrom(wp1), wp1Path);
+    QVERIFY(_missionController->splinePathFrom(spline3).isEmpty());
+    QVERIFY(_missionController->splinePathFrom(nullptr).isEmpty());
+
+    // Mission estimates follow the curve: a spline leg counts its arc length, not its chord
+    const double wp1LegLength = wp1->simpleFlightPathSegment()->totalDistance();
+    QVERIFY(wp1LegLength > wp1->coordinate().distanceTo(spline2->coordinate()) + 1.0);
+    QCOMPARE_TRUE_WAIT(spline2->distance(), wp1LegLength, TestTimeout::mediumMs());
+    double expectedTotalDistance = 0;
+    for (int i = 0; i < segments->count(); i++) {
+        expectedTotalDistance += segments->value<FlightPathSegment*>(i)->totalDistance();
+    }
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedTotalDistance, TestTimeout::mediumMs());
+
+    // A hold time stops the vehicle at the waypoint, so the leg no longer carries velocity through it
+    spline2->missionItem().setParam1(5.0);
+    QTRY_VERIFY_WITH_TIMEOUT(wp1->simpleFlightPathSegment()->splinePath() != wp1Path, TestTimeout::mediumMs());
+    QVERIFY(!wp1->simpleFlightPathSegment()->splinePath().isEmpty());
+
+    // Moving an endpoint re-derives the curve
+    const QGeoCoordinate movedCoordinate = home.atDistanceAndAzimuth(300, 0).atDistanceAndAzimuth(50, 270);
+    spline3->setCoordinate(movedCoordinate);
+    QTRY_COMPARE_WITH_TIMEOUT(latLon(spline2->simpleFlightPathSegment()->splinePath().last().value<QGeoCoordinate>()),
+                              spline3->coordinate(), TestTimeout::mediumMs());
+    QCOMPARE(spline3->coordinate(), QGeoCoordinate(movedCoordinate.latitude(), movedCoordinate.longitude()));
+
+    // Turning the spline waypoint back into a plain waypoint straightens the leg
+    spline2->setCommand(MAV_CMD_NAV_WAYPOINT);
+    QTRY_VERIFY_WITH_TIMEOUT(wp1->simpleFlightPathSegment() && wp1->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    QVERIFY(spline2->simpleFlightPathSegment());
+    QVERIFY(!spline2->simpleFlightPathSegment()->splinePath().isEmpty());
+}
+
+void MissionControllerTest::_testSplineWaypointStraightWhenNotFlownAsSpline_data()
+{
+    QTest::addColumn<int>("vehicleType");
+
+    QTest::newRow("ArduPlane") << int(MAV_TYPE_FIXED_WING);
+    QTest::newRow("ArduRover") << int(MAV_TYPE_GROUND_ROVER);
+}
+
+void MissionControllerTest::_testSplineWaypointStraightWhenNotFlownAsSpline()
+{
+    QFETCH(int, vehicleType);
+
+    _initForVehicleType(MAV_AUTOPILOT_ARDUPILOTMEGA, static_cast<MAV_TYPE>(vehicleType));
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1));
+    SimpleMissionItem* spline2 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90), 2));
+    SimpleMissionItem* spline3 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(300, 0), 3));
+    QVERIFY(wp1);
+    QVERIFY(spline2);
+    QVERIFY(spline3);
+    QmlObjectListModel* segments = _missionController->simpleFlightPathSegments();
+    QSignalSpy segmentsResetSpy(segments, &QAbstractItemModel::modelReset);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    spline3->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    QVERIFY(segmentsResetSpy.wait(TestTimeout::mediumMs()));
+
+    // Only ArduCopter flies NAV_SPLINE_WAYPOINT as a curve, so every leg stays on its chord
+    QVERIFY(wp1->simpleFlightPathSegment());
+    QVERIFY(spline2->simpleFlightPathSegment());
+    for (int i = 0; i < segments->count(); i++) {
+        QVERIFY(segments->value<FlightPathSegment*>(i)->splinePath().isEmpty());
+    }
+    QVERIFY(_missionController->splinePathFrom(wp1).isEmpty());
+}
+
+void MissionControllerTest::_testSplineFollowsLoadedPlanVehicleType()
+{
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
+    appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(MAV_AUTOPILOT_ARDUPILOTMEGA));
+    appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassMultiRotor);
+    _masterController = std::make_unique<PlanMasterController>();
+    _startMasterController();
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1));
+    SimpleMissionItem* spline2 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90), 2));
+    QVERIFY(wp1);
+    QVERIFY(spline2);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    QTRY_VERIFY_WITH_TIMEOUT(!_missionController->splinePathFrom(wp1).isEmpty(), TestTimeout::mediumMs());
+
+    // The same route saved as an ArduPlane plan. Loading it sets the firmware type before the vehicle type, so the
+    // offline vehicle keeps the ArduCopter plugin it picked with the old vehicle type.
+    QJsonObject plan = _masterController->saveToJson().object();
+    QJsonObject mission = plan[PlanMasterController::kJsonMissionObjectKey].toObject();
+    mission[QStringLiteral("vehicleType")] = static_cast<int>(MAV_TYPE_FIXED_WING);
+    plan[PlanMasterController::kJsonMissionObjectKey] = mission;
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString filename = tempDir.filePath(QStringLiteral("SplinePlane.plan"));
+    QFile file(filename);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.write(QJsonDocument(plan).toJson()) > 0);
+    file.close();
+
+    _masterController->loadFromFile(filename);
+    QCOMPARE(_masterController->controllerVehicle()->vehicleType(), MAV_TYPE_FIXED_WING);
+    SimpleMissionItem* loadedWp1 = _missionController->visualItems()->value<SimpleMissionItem*>(1);
+    QVERIFY(loadedWp1);
+    QTRY_VERIFY_WITH_TIMEOUT(loadedWp1->simpleFlightPathSegment(), TestTimeout::mediumMs());
+    QVERIFY(_missionController->splinePathFrom(loadedWp1).isEmpty());
+}
+
+void MissionControllerTest::_testSplineAfterLandHasNoIncomingVelocity()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) wp1(1) land2(2) wp3(3) spline4(4): no leg is flown from the land item to wp3, so the spline into
+    // spline4 must not treat land2 -> wp3 as an incoming direction. With no next item either, it is a straight line.
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1));
+    SimpleMissionItem* land2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2));
+    SimpleMissionItem* wp3 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90), 3));
+    SimpleMissionItem* spline4 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(100, 0).atDistanceAndAzimuth(100, 90), 4));
+    QVERIFY(wp1);
+    QVERIFY(land2);
+    QVERIFY(wp3);
+    QVERIFY(spline4);
+    land2->setCommand(MAV_CMD_NAV_LAND);
+    spline4->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+
+    QTRY_VERIFY_WITH_TIMEOUT(wp3->simpleFlightPathSegment() && !wp3->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    const QVariantList path = wp3->simpleFlightPathSegment()->splinePath();
+    QVERIFY(path.count() > 2);
+    double maxDeviation = 0;
+    for (const QVariant& point : path) {
+        const QGeoCoordinate coord = point.value<QGeoCoordinate>();
+        const double chordAzimuth = qDegreesToRadians(wp3->coordinate().azimuthTo(spline4->coordinate()));
+        const double pointAzimuth = qDegreesToRadians(wp3->coordinate().azimuthTo(coord));
+        maxDeviation =
+            qMax(maxDeviation, qAbs(wp3->coordinate().distanceTo(coord) * std::sin(pointAzimuth - chordAzimuth)));
+    }
+    QVERIFY(maxDeviation < 0.1);
+}
+
+void MissionControllerTest::_testDuplicateSplineWaypointCarriesNoVelocity()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) wp1(1) spline2(2) spline3(3) spline4(4) with spline3 on top of spline2: ArduPilot flies the
+    // zero-length leg with no velocity at either end, so nothing is carried into spline4's leg. With no item after
+    // spline4 either, that leg is a straight line.
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1));
+    const QGeoCoordinate corner = home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90);
+    SimpleMissionItem* spline2 =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(corner, 2));
+    SimpleMissionItem* spline3 =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(corner, 3));
+    SimpleMissionItem* spline4 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(100, 0).atDistanceAndAzimuth(100, 90), 4));
+    QVERIFY(wp1);
+    QVERIFY(spline2);
+    QVERIFY(spline3);
+    QVERIFY(spline4);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    spline3->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    spline4->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        spline3->simpleFlightPathSegment() && !spline3->simpleFlightPathSegment()->splinePath().isEmpty(),
+        TestTimeout::mediumMs());
+    QCOMPARE(spline2->simpleFlightPathSegment()->totalDistance(), 0.0);
+    const QVariantList path = spline3->simpleFlightPathSegment()->splinePath();
+    double maxDeviation = 0;
+    for (const QVariant& point : path) {
+        const QGeoCoordinate coord = point.value<QGeoCoordinate>();
+        const double chordAzimuth = qDegreesToRadians(spline3->coordinate().azimuthTo(spline4->coordinate()));
+        const double pointAzimuth = qDegreesToRadians(spline3->coordinate().azimuthTo(coord));
+        maxDeviation =
+            qMax(maxDeviation, qAbs(spline3->coordinate().distanceTo(coord) * std::sin(pointAzimuth - chordAzimuth)));
+    }
+    QVERIFY(maxDeviation < 0.1);
+}
+
+void MissionControllerTest::_testSplineAfterComplexItemFollowsItsLastLeg()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) survey(1) spline: the survey's final waypoint has no hold time, so ArduPilot enters the spline along
+    // the survey's last generated leg rather than from rest, even when the spline sits off to the side of it. With no
+    // turnaround that leg is a whole transect, long enough to visibly steer the spline.
+    SurveyComplexItem* survey = qobject_cast<SurveyComplexItem*>(_missionController->insertComplexMissionItem(
+        SurveyComplexItem::canonicalName, home.atDistanceAndAzimuth(200, 0), -1, false));
+    QVERIFY(survey);
+    survey->turnAroundDistance()->setRawValue(0.0);
+    const QGeoCoordinate corner = home.atDistanceAndAzimuth(100, 0);
+    survey->surveyAreaPolygon()->appendVertex(corner);
+    survey->surveyAreaPolygon()->appendVertex(corner.atDistanceAndAzimuth(200, 90));
+    survey->surveyAreaPolygon()->appendVertex(corner.atDistanceAndAzimuth(200, 90).atDistanceAndAzimuth(200, 0));
+    survey->surveyAreaPolygon()->appendVertex(corner.atDistanceAndAzimuth(200, 0));
+    QTRY_VERIFY_WITH_TIMEOUT(!survey->visualTransectPoints().isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(!survey->isIncomplete());
+
+    QObject missionItemParent;
+    QList<MissionItem*> missionItems;
+    survey->appendMissionItems(missionItems, &missionItemParent);
+    QList<const MissionItem*> waypoints;
+    for (const MissionItem* missionItem : missionItems) {
+        if (missionItem->command() == MAV_CMD_NAV_WAYPOINT) {
+            waypoints.append(missionItem);
+        }
+    }
+    QVERIFY(waypoints.count() >= 2);
+    QCOMPARE(waypoints.last()->param1(), 0.0);
+    const QGeoCoordinate approach(waypoints[waypoints.count() - 2]->param5(),
+                                  waypoints[waypoints.count() - 2]->param6());
+    const QGeoCoordinate exit(waypoints.last()->param5(), waypoints.last()->param6());
+    const double lastLegAzimuth = approach.azimuthTo(exit);
+
+    SimpleMissionItem* spline = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        survey->exitCoordinate().atDistanceAndAzimuth(100, lastLegAzimuth + 90), -1, false));
+    QVERIFY(spline);
+    spline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        survey->simpleFlightPathSegment() && !survey->simpleFlightPathSegment()->splinePath().isEmpty(),
+        TestTimeout::mediumMs());
+    const QVariantList path = survey->simpleFlightPathSegment()->splinePath();
+    QVERIFY(path.count() > 2);
+    const QGeoCoordinate start = path[0].value<QGeoCoordinate>();
+    const double departureAzimuth = start.azimuthTo(path[1].value<QGeoCoordinate>());
+    const double chordAzimuth = start.azimuthTo(spline->coordinate());
+    QVERIFY(qAbs(std::remainder(departureAzimuth - lastLegAzimuth, 360.0)) < 15.0);
+    QVERIFY(qAbs(std::remainder(departureAzimuth - chordAzimuth, 360.0)) > 60.0);
+}
+
+void MissionControllerTest::_testTerrainSplineSamplesJoinEndpoints()
+{
+    // A terrain-frame spline at a constant 50 m above terrain that rises 100 m: its vertical shape is flat in height
+    // above terrain, so the samples must ramp straight between the endpoint AMSL altitudes rather than hold the
+    // origin's altitude and jump at the destination
+    const QGeoCoordinate origin = Coord::zurich();
+    const QList<FlightPathSegment::SplinePoint> points = {
+        {.coord = QGeoCoordinate(origin.latitude(), origin.longitude(), 150.0),
+         .navTarget = true,
+         .terrainFrame = true,
+         .aglAlt = 50.0},
+        {.coord = QGeoCoordinate(origin.atDistanceAndAzimuth(200, 0).latitude(),
+                                 origin.atDistanceAndAzimuth(200, 0).longitude(), 250.0),
+         .spline = true,
+         .navTarget = true,
+         .terrainFrame = true,
+         .aglAlt = 50.0},
+    };
+
+    const QVariantList path = FlightPathSegment::splineSegmentPath(points, 1);
+    QVERIFY(path.count() > 2);
+    for (int i = 0; i < path.count(); i++) {
+        const double rampAlt = 150.0 + ((100.0 * i) / (path.count() - 1));
+        QVERIFY2(qAbs(path[i].value<QGeoCoordinate>().altitude() - rampAlt) < 0.01, qPrintable(QString::number(i)));
+    }
+
+    // The terrain profile looks the leg up by distance. The curve starts and ends at rest, so distance is not
+    // proportional to the curve's parameter: the altitude must be read against the parameter or the constant
+    // clearance shows a false bulge.
+    FlightPathSegment segment(FlightPathSegment::SegmentTypeTerrainFrame, points[0].coord, 150.0, points[1].coord,
+                              250.0, false /* queryTerrainData */, nullptr);
+    segment.setSplinePath(path);
+    QCOMPARE(segment.splineParameterAtDistance(0.0), 0.0);
+    QCOMPARE(segment.splineParameterAtDistance(segment.totalDistance()), 1.0);
+    const double quarterDistance = segment.totalDistance() / 4;
+    const double quarterParameter = segment.splineParameterAtDistance(quarterDistance);
+    QVERIFY(quarterParameter > 0.3);
+    QVERIFY(qAbs(segment.amslAltitudeAtDistance(quarterDistance) - (150.0 + (100.0 * quarterParameter))) < 0.01);
+}
+
+void MissionControllerTest::_testNavigationStopBlocksSplineVelocity_data()
+{
+    QTest::addColumn<bool>("delayAfterSpline");
+
+    // wp1 -> spline -> NAV_DELAY -> wp3: the spline must not aim its exit at wp3
+    QTest::newRow("delay after spline") << true;
+    // wp1 -> NAV_DELAY -> spline: the velocity arriving at wp1 must not carry into the spline
+    QTest::newRow("delay before spline") << false;
+}
+
+void MissionControllerTest::_testNavigationStopBlocksSplineVelocity()
+{
+    QFETCH(bool, delayAfterSpline);
+
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // ArduPilot stops at the waypoint before a navigation command with no location. In each layout the only
+    // velocity that could bend the spline is the one the delay blocks, so the spline must be a straight line:
+    // wp0 -> wp1 runs north, and the spline continues north with wp3 off to the east, or turns east itself.
+    const QGeoCoordinate wp1Coord = home.atDistanceAndAzimuth(100, 0);
+    const QGeoCoordinate splineCoord = wp1Coord.atDistanceAndAzimuth(100, delayAfterSpline ? 0 : 90);
+    int index = 1;
+    QVERIFY(_missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(50, 0), index++));
+    SimpleMissionItem* wp1 =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(wp1Coord, index++));
+    QVERIFY(wp1);
+    SimpleMissionItem* delay = nullptr;
+    if (!delayAfterSpline) {
+        delay = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(wp1Coord, index++));
+    }
+    SimpleMissionItem* spline =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(splineCoord, index++));
+    QVERIFY(spline);
+    spline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    if (delayAfterSpline) {
+        delay = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(splineCoord, index++));
+        QVERIFY(_missionController->insertSimpleMissionItem(splineCoord.atDistanceAndAzimuth(100, 90), index++));
+    }
+    QVERIFY(delay);
+    delay->setCommand(MAV_CMD_NAV_DELAY);
+    QVERIFY(!delay->specifiesCoordinate());
+
+    QCOMPARE_TRUE_WAIT(_missionController->simpleFlightPathSegments()->count(), delayAfterSpline ? 3 : 2,
+                       TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(wp1->simpleFlightPathSegment() && !wp1->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    double maxDeviation = 0;
+    for (const QVariant& point : wp1->simpleFlightPathSegment()->splinePath()) {
+        const QGeoCoordinate coord = point.value<QGeoCoordinate>();
+        const double offAzimuth = qDegreesToRadians(wp1Coord.azimuthTo(coord) - wp1Coord.azimuthTo(splineCoord));
+        maxDeviation = qMax(maxDeviation, qAbs(wp1Coord.distanceTo(coord) * std::sin(offAzimuth)));
+    }
+    QVERIFY(maxDeviation < 0.1);
+}
+
+void MissionControllerTest::_testSplineSampleAltitudeUnknownWithUnknownEndpoint_data()
+{
+    QTest::addColumn<double>("originAlt");
+    QTest::addColumn<double>("destinationAlt");
+
+    QTest::newRow("unknown destination") << 100.0 << qQNaN();
+    QTest::newRow("unknown origin") << qQNaN() << 100.0;
+}
+
+void MissionControllerTest::_testSplineSampleAltitudeUnknownWithUnknownEndpoint()
+{
+    QFETCH(double, originAlt);
+    QFETCH(double, destinationAlt);
+
+    // An endpoint still waiting on its terrain query has no altitude. The samples in between must then be unknown
+    // too, not level at the known endpoint, so the map ramps the leg between the altitudes it displays. The
+    // horizontal curve is unaffected.
+    const QGeoCoordinate origin = Coord::zurich();
+    const QGeoCoordinate destination = origin.atDistanceAndAzimuth(200, 0);
+    const QList<FlightPathSegment::SplinePoint> points = {
+        {.coord = QGeoCoordinate(origin.latitude(), origin.longitude(), originAlt), .navTarget = true},
+        {.coord = QGeoCoordinate(destination.latitude(), destination.longitude(), destinationAlt),
+         .spline = true,
+         .navTarget = true},
+    };
+
+    const QVariantList path = FlightPathSegment::splineSegmentPath(points, 1);
+    QVERIFY(path.count() > 2);
+    for (int i = 1; i < path.count() - 1; i++) {
+        const QGeoCoordinate sample = path[i].value<QGeoCoordinate>();
+        QVERIFY2(qIsNaN(sample.altitude()), qPrintable(QString::number(i)));
+        QVERIFY(sample.isValid());
+    }
+}
+
+void MissionControllerTest::_testTerrainSplineBelowTerrainCollides()
+{
+    // Flat terrain, with a terrain-frame spline between two points 5 m above it. The next waypoint is 100 m up, and
+    // ArduPilot's curve dips before it climbs towards it: to almost 7 m below the terrain at the middle of the leg.
+    // A straight terrain leg keeps its clearance between those of its ends, so only a spline can do this.
+    const QGeoCoordinate center = TerrainTest::flat10Region().center();
+    const double lowAlt = UnitTestTerrainData::Flat10Region::amslElevation + 5.0;
+    const QGeoCoordinate origin(center.latitude(), center.longitude(), lowAlt);
+    const QGeoCoordinate toDestination = center.atDistanceAndAzimuth(200, 0);
+    const QGeoCoordinate destination(toDestination.latitude(), toDestination.longitude(), lowAlt);
+    const QGeoCoordinate toNext = center.atDistanceAndAzimuth(400, 0);
+    auto splinePath = [&](double nextAgl) {
+        const QList<FlightPathSegment::SplinePoint> points = {
+            {.coord = origin, .navTarget = true, .terrainFrame = true, .aglAlt = 5.0},
+            {.coord = destination,
+             .spline = true,
+             .flyThrough = true,
+             .navTarget = true,
+             .terrainFrame = true,
+             .aglAlt = 5.0},
+            {.coord = QGeoCoordinate(toNext.latitude(), toNext.longitude(),
+                                     UnitTestTerrainData::Flat10Region::amslElevation + nextAgl),
+             .navTarget = true,
+             .terrainFrame = true,
+             .aglAlt = nextAgl},
+        };
+        return FlightPathSegment::splineSegmentPath(points, 1);
+    };
+
+    FlightPathSegment segment(FlightPathSegment::SegmentTypeTerrainFrame, origin, lowAlt, destination, lowAlt,
+                              true /* queryTerrainData */, nullptr);
+    segment.setSplinePath(splinePath(100.0));
+    QTRY_VERIFY_WITH_TIMEOUT(segment.terrainCollision(), TestTimeout::longMs());
+
+    // With the next waypoint at the same clearance the curve stays level and clears the terrain again
+    segment.setSplinePath(splinePath(5.0));
+    QTRY_VERIFY_WITH_TIMEOUT(!segment.terrainCollision(), TestTimeout::longMs());
+
+    // A vertical spline has no length to sample terrain along, only its two ends. Arriving in a fast descent to 5 m
+    // and then splining straight up to 25 m, the curve overshoots downwards to about 3 m below the terrain first.
+    const QGeoCoordinate above(center.latitude(), center.longitude(), lowAlt + 20.0);
+    auto verticalSplinePath = [&](double approachAgl) {
+        const QList<FlightPathSegment::SplinePoint> points = {
+            {.coord = QGeoCoordinate(center.latitude(), center.longitude(),
+                                     UnitTestTerrainData::Flat10Region::amslElevation + approachAgl),
+             .navTarget = true,
+             .terrainFrame = true,
+             .aglAlt = approachAgl},
+            {.coord = origin, .flyThrough = true, .navTarget = true, .terrainFrame = true, .aglAlt = 5.0},
+            {.coord = above, .spline = true, .navTarget = true, .terrainFrame = true, .aglAlt = 25.0},
+        };
+        return FlightPathSegment::splineSegmentPath(points, 2);
+    };
+
+    FlightPathSegment verticalSegment(FlightPathSegment::SegmentTypeTerrainFrame, origin, lowAlt, above, lowAlt + 20.0,
+                                      true /* queryTerrainData */, nullptr);
+    verticalSegment.setSplinePath(verticalSplinePath(105.0));
+    QCOMPARE(verticalSegment.totalDistance(), 0.0);
+    QTRY_VERIFY_WITH_TIMEOUT(verticalSegment.terrainCollision(), TestTimeout::longMs());
+
+    // Arriving level, the climb has no overshoot
+    verticalSegment.setSplinePath(verticalSplinePath(5.0));
+    QTRY_VERIFY_WITH_TIMEOUT(!verticalSegment.terrainCollision(), TestTimeout::longMs());
+}
+
+void MissionControllerTest::_testSplineExitIgnoresNextRun()
+{
+    // origin -> spline, then a separate run starting off to the side (after an incomplete survey): no leg joins the
+    // spline to that run, so it must not bend the spline. With no other tangent the spline is a straight line.
+    const QGeoCoordinate origin = Coord::zurich();
+    const QGeoCoordinate splineCoord = origin.atDistanceAndAzimuth(200, 0);
+    const QList<FlightPathSegment::SplinePoint> points = {
+        {.coord = origin, .navTarget = true},
+        {.coord = splineCoord, .spline = true, .flyThrough = true, .navTarget = true},
+        {.coord = splineCoord.atDistanceAndAzimuth(200, 90), .navTarget = true, .runStart = true},
+        {.coord = splineCoord.atDistanceAndAzimuth(400, 90), .navTarget = true},
+    };
+
+    const QVariantList path = FlightPathSegment::splineSegmentPath(points, 1);
+    QVERIFY(path.count() > 2);
+    for (const QVariant& sample : path) {
+        const QGeoCoordinate coord = sample.value<QGeoCoordinate>();
+        const double offAzimuth = qDegreesToRadians(origin.azimuthTo(coord) - origin.azimuthTo(splineCoord));
+        QVERIFY(qAbs(origin.distanceTo(coord) * std::sin(offAzimuth)) < 0.1);
+    }
+}
+
+void MissionControllerTest::_testSplineAfterTakeoffStaysLevel()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) takeoff(1) wp2(2) spline3(3) wp4(4), all legs at the same altitude. A multirotor takeoff
+    // specifies no coordinate, so the first leg runs from home to wp2: it must not pull the spline into
+    // wp3 upwards, since the vehicle climbs vertically at takeoff and then flies level.
+    QVERIFY(_missionController->insertTakeoffItem(home, 1));
+    SimpleMissionItem* wp2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(150, 270), 2));
+    SimpleMissionItem* spline3 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(300, 330), 3));
+    SimpleMissionItem* wp4 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(350, 20), 4));
+    QVERIFY(wp2);
+    QVERIFY(spline3);
+    QVERIFY(wp4);
+    spline3->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+
+    QTRY_VERIFY_WITH_TIMEOUT(wp2->simpleFlightPathSegment() && !wp2->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+
+    const double legAlt = wp2->amslExitAlt();
+    QCOMPARE(spline3->amslEntryAlt(), legAlt);
+    for (const QVariant& point : wp2->simpleFlightPathSegment()->splinePath()) {
+        QCOMPARE(point.value<QGeoCoordinate>().altitude(), legAlt);
+    }
+}
+
+void MissionControllerTest::_testSplineFromHomeStartsAtTakeoffAltitude()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) takeoff(1) spline2(2): the vehicle climbs vertically to the takeoff altitude, then flies the spline
+    // from there up to the waypoint's altitude
+    SimpleMissionItem* takeoffItem = qobject_cast<SimpleMissionItem*>(_missionController->insertTakeoffItem(home, 1));
+    SimpleMissionItem* spline2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2));
+    QVERIFY(takeoffItem);
+    QVERIFY(spline2);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    takeoffItem->altitude()->setRawValue(30.0);
+    spline2->altitude()->setRawValue(80.0);
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        settingsItem->simpleFlightPathSegment() && !settingsItem->simpleFlightPathSegment()->splinePath().isEmpty(),
+        TestTimeout::mediumMs());
+    const QVariantList path = settingsItem->simpleFlightPathSegment()->splinePath();
+    QVERIFY(spline2->amslEntryAlt() > takeoffItem->amslExitAlt());
+    QCOMPARE(path.first().value<QGeoCoordinate>().altitude(), takeoffItem->amslExitAlt());
+    QCOMPARE(path.last().value<QGeoCoordinate>().altitude(), spline2->amslEntryAlt());
+}
+
+void MissionControllerTest::_testLegFromHomeStartsAtTakeoffAltitude_data()
+{
+    QTest::addColumn<int>("vehicleType");
+    QTest::addColumn<bool>("climb");
+
+    QTest::newRow("multirotor") << int(MAV_TYPE_QUADROTOR) << true;
+    QTest::newRow("fixed wing") << int(MAV_TYPE_FIXED_WING) << false;
+}
+
+void MissionControllerTest::_testLegFromHomeStartsAtTakeoffAltitude()
+{
+    QFETCH(int, vehicleType);
+    QFETCH(bool, climb);
+
+    _initForVehicleType(MAV_AUTOPILOT_ARDUPILOTMEGA, static_cast<MAV_TYPE>(vehicleType));
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) takeoff(1) wp2(2): an ArduPilot takeoff has no coordinate, so the straight leg leaving home starts after
+    // the vertical climb rather than on the ground; a fixed wing climbs out along the leg instead
+    SimpleMissionItem* takeoffItem = qobject_cast<SimpleMissionItem*>(_missionController->insertTakeoffItem(home, 1));
+    SimpleMissionItem* wp2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2));
+    QVERIFY(takeoffItem);
+    QVERIFY(wp2);
+    QVERIFY(!takeoffItem->specifiesCoordinate());
+    takeoffItem->altitude()->setRawValue(30.0);
+    wp2->altitude()->setRawValue(80.0);
+
+    QTRY_VERIFY_WITH_TIMEOUT(settingsItem->simpleFlightPathSegment(), TestTimeout::mediumMs());
+    FlightPathSegment* segment = settingsItem->simpleFlightPathSegment();
+    QVERIFY(segment->splinePath().isEmpty());
+    const auto expectedStartAlt = [&] { return climb ? takeoffItem->amslExitAlt() : settingsItem->amslExitAlt(); };
+    QCOMPARE(segment->coord1AMSLAlt(), expectedStartAlt());
+    QCOMPARE(segment->coord2AMSLAlt(), wp2->amslEntryAlt());
+
+    takeoffItem->altitude()->setRawValue(50.0);
+    QTRY_COMPARE_WITH_TIMEOUT(segment->coord1AMSLAlt(), expectedStartAlt(), TestTimeout::mediumMs());
+}
+
+void MissionControllerTest::_testReturnLegStaysLevel_data()
+{
+    QTest::addColumn<int>("vehicleType");
+    QTest::addColumn<bool>("level");
+
+    QTest::newRow("multirotor") << int(MAV_TYPE_QUADROTOR) << true;
+    QTest::newRow("fixed wing") << int(MAV_TYPE_FIXED_WING) << false;
+}
+
+void MissionControllerTest::_testReturnLegStaysLevel()
+{
+    QFETCH(int, vehicleType);
+    QFETCH(bool, level);
+
+    _initForVehicleType(MAV_AUTOPILOT_ARDUPILOTMEGA, static_cast<MAV_TYPE>(vehicleType));
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) takeoff(1) wp2(2) rtl(3): a multirotor flies the return leg at wp2's altitude and descends over home
+    QVERIFY(_missionController->insertTakeoffItem(home, 1));
+    SimpleMissionItem* wp2 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2));
+    SimpleMissionItem* rtl = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(home, 3));
+    QVERIFY(wp2);
+    QVERIFY(rtl);
+    rtl->setCommand(MAV_CMD_NAV_RETURN_TO_LAUNCH);
+    wp2->altitude()->setRawValue(40.0);
+
+    QTRY_VERIFY_WITH_TIMEOUT(wp2->simpleFlightPathSegment(), TestTimeout::mediumMs());
+    FlightPathSegment* returnLeg = wp2->simpleFlightPathSegment();
+    QVERIFY(returnLeg->coordinate2().distanceTo(home) < 0.1);
+    const auto expectedEndAlt = [&] { return level ? wp2->amslExitAlt() : settingsItem->amslEntryAlt(); };
+    QCOMPARE(returnLeg->coord1AMSLAlt(), wp2->amslExitAlt());
+    QCOMPARE(returnLeg->coord2AMSLAlt(), expectedEndAlt());
+
+    wp2->altitude()->setRawValue(60.0);
+    QTRY_COMPARE_WITH_TIMEOUT(returnLeg->coord2AMSLAlt(), expectedEndAlt(), TestTimeout::mediumMs());
+}
+
+void MissionControllerTest::_testSplineSampleCountGrowsWithLength()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // A short and a long spline leg: the long one needs more samples to keep its chords close to the curve
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 0), 1));
+    SimpleMissionItem* shortSpline = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 2));
+    SimpleMissionItem* longSpline = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(10000, 0), 3));
+    QVERIFY(wp1);
+    QVERIFY(shortSpline);
+    QVERIFY(longSpline);
+    shortSpline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    longSpline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        shortSpline->simpleFlightPathSegment() && !shortSpline->simpleFlightPathSegment()->splinePath().isEmpty(),
+        TestTimeout::mediumMs());
+    const int shortCount = wp1->simpleFlightPathSegment()->splinePath().count();
+    const int longCount = shortSpline->simpleFlightPathSegment()->splinePath().count();
+    QVERIFY(shortCount >= 21);
+    QVERIFY(longCount > shortCount);
+    QVERIFY(longCount >= 10000 / 100);
+}
+
+void MissionControllerTest::_testReturnLegIsMeasuredStraight()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) takeoff(1) splineA(2) wpB(3) wpC(4) rtl(5), with wpC on top of splineA: the return leg from wpC
+    // to home must be measured as its own chord, not mistaken for the curved home -> splineA leg that ends at
+    // the same coordinate
+    QVERIFY(_missionController->insertTakeoffItem(home, 1));
+    const QGeoCoordinate cornerA = home.atDistanceAndAzimuth(200, 0);
+    SimpleMissionItem* splineA =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(cornerA, 2));
+    SimpleMissionItem* wpB = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(200, 90), 3));
+    SimpleMissionItem* wpC = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(cornerA, 4));
+    SimpleMissionItem* rtl = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(cornerA, 5));
+    QVERIFY(splineA);
+    QVERIFY(wpB);
+    QVERIFY(wpC);
+    QVERIFY(rtl);
+    splineA->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    rtl->setCommand(MAV_CMD_NAV_RETURN_TO_LAUNCH);
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        settingsItem->simpleFlightPathSegment() && !settingsItem->simpleFlightPathSegment()->splinePath().isEmpty(),
+        TestTimeout::mediumMs());
+    QmlObjectListModel* segments = _missionController->simpleFlightPathSegments();
+    double expectedTotalDistance = 0;
+    for (int i = 0; i < segments->count(); i++) {
+        expectedTotalDistance += segments->value<FlightPathSegment*>(i)->totalDistance();
+    }
+    QVERIFY(wpC->simpleFlightPathSegment());
+    const double returnLegLength = wpC->simpleFlightPathSegment()->totalDistance();
+    QCOMPARE(returnLegLength, cornerA.distanceTo(home));
+    // The mission total covers the legs between items; the return leg only counts towards the flown distance
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedTotalDistance - returnLegLength,
+                       TestTimeout::mediumMs());
+    QCOMPARE_TRUE_WAIT(_missionController->missionHoverDistance() + _missionController->missionCruiseDistance(),
+                       expectedTotalDistance, TestTimeout::mediumMs());
+}
+
+void MissionControllerTest::_testSplineTerrainProfile()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    // Synthetic terrain: constant 10 m AMSL across the whole region
+    const QGeoCoordinate regionCenter = TerrainTest::flat10Region().center();
+    const QGeoCoordinate home(regionCenter.latitude(), regionCenter.longitude(),
+                              UnitTestTerrainData::Flat10Region::amslElevation);
+    settingsItem->setCoordinate(home);
+
+    // home(0) wp1(1) spline2(2) wp3(3): the spline leg doubles back so its curve is much longer than its chord
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 1));
+    SimpleMissionItem* spline2 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90), 2));
+    SimpleMissionItem* wp3 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 90), 3));
+    QVERIFY(wp1);
+    QVERIFY(spline2);
+    QVERIFY(wp3);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    wp1->altitude()->setRawValue(40.0);
+    spline2->altitude()->setRawValue(80.0);
+
+    QCOMPARE_TRUE_WAIT(_missionController->simpleFlightPathSegments()->count(), 2, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(wp1->simpleFlightPathSegment() && !wp1->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    FlightPathSegment* splineLeg = wp1->simpleFlightPathSegment();
+
+    // The leg's length is the curve's arc length, not the chord
+    const double chordLength = wp1->coordinate().distanceTo(spline2->coordinate());
+    const QList<double>& sampleDistances = splineLeg->splineSampleDistances();
+    QCOMPARE(sampleDistances.count(), splineLeg->splinePath().count());
+    QCOMPARE(sampleDistances.first(), 0.0);
+    QCOMPARE(splineLeg->totalDistance(), sampleDistances.last());
+    QVERIFY(splineLeg->totalDistance() > chordLength + 1.0);
+
+    // The flown altitude follows the samples between the endpoint altitudes
+    QCOMPARE(splineLeg->amslAltitudeAtDistance(0.0), splineLeg->coord1AMSLAlt());
+    QCOMPARE(splineLeg->amslAltitudeAtDistance(splineLeg->totalDistance()), splineLeg->coord2AMSLAlt());
+    const int middleSample = sampleDistances.count() / 2;
+    QCOMPARE(splineLeg->amslAltitudeAtDistance(sampleDistances[middleSample]),
+             splineLeg->splinePath()[middleSample].value<QGeoCoordinate>().altitude());
+
+    // Terrain is sampled along the curve: the samples span the arc length at the path query spacing. The segment
+    // first samples its chord when created, so wait for the curve's own sample count rather than any result.
+    const int heightCount = qCeil(splineLeg->totalDistance() / TerrainTileCopernicus::kTileValueSpacingMeters) + 1;
+    QVERIFY(heightCount > qCeil(chordLength / TerrainTileCopernicus::kTileValueSpacingMeters) + 1);
+    QTRY_COMPARE_WITH_TIMEOUT(splineLeg->amslTerrainHeights().count(), heightCount, TestTimeout::longMs());
+    QVERIFY(qAbs((splineLeg->distanceBetween() * (heightCount - 1)) - splineLeg->totalDistance()) < 1.0);
+    for (const QVariant& height : splineLeg->amslTerrainHeights()) {
+        QCOMPARE(height.toDouble(), UnitTestTerrainData::Flat10Region::amslElevation);
+    }
+    QVERIFY(!splineLeg->terrainCollision());
+
+    // The curve is checked along its length, not just between its endpoints: both endpoints sit 5 m above the
+    // terrain, but a steep climb demanded by the next waypoint makes the Hermite curve dip through the ground on
+    // its way in. The straight chord between the endpoints never does.
+    wp1->altitude()->setRawValue(5.0);
+    spline2->altitude()->setRawValue(5.0);
+    wp3->altitude()->setRawValue(5.0);
+    QTRY_COMPARE_WITH_TIMEOUT(splineLeg->splinePath().last().value<QGeoCoordinate>().altitude(),
+                              spline2->amslEntryAlt(), TestTimeout::mediumMs());
+    QVERIFY(splineLeg->coord1AMSLAlt() > UnitTestTerrainData::Flat10Region::amslElevation);
+    QVERIFY(splineLeg->coord2AMSLAlt() > UnitTestTerrainData::Flat10Region::amslElevation);
+    wp3->altitude()->setRawValue(100.0);
+    QTRY_VERIFY_WITH_TIMEOUT(splineLeg->terrainCollision(), TestTimeout::longMs());
+    wp3->altitude()->setRawValue(5.0);
+    QTRY_VERIFY_WITH_TIMEOUT(!splineLeg->terrainCollision(), TestTimeout::longMs());
+
+    // A vertical spline (same position, lower altitude) has no horizontal extent but still descends into terrain.
+    // The waypoint before it holds, so no velocity is carried into the spline to swing it out horizontally.
+    spline2->altitude()->setRawValue(80.0);
+    wp3->missionItem().setParam1(5.0);
+    SimpleMissionItem* verticalSpline =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(wp3->coordinate(), 4));
+    QVERIFY(verticalSpline);
+    verticalSpline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    verticalSpline->altitude()->setRawValue(-20.0);
+    QTRY_VERIFY_WITH_TIMEOUT(wp3->simpleFlightPathSegment() && !wp3->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    FlightPathSegment* verticalLeg = wp3->simpleFlightPathSegment();
+    QCOMPARE(verticalLeg->totalDistance(), 0.0);
+    QTRY_VERIFY_WITH_TIMEOUT(verticalLeg->terrainCollision(), TestTimeout::longMs());
 }
 
 void MissionControllerTest::_testSplitSegmentTracksSegmentRebuild_data()

@@ -35,4 +35,26 @@ void FirmwarePluginTest::_arduSubHasNoRtlFlightMode()
     QVERIFY(!ArduCopterFirmwarePlugin().rtlFlightMode().isEmpty());
 }
 
+void FirmwarePluginTest::_apmSplineWaypointOnlyForMultiRotor_data()
+{
+    QTest::addColumn<QGCMAVLink::VehicleClass_t>("vehicleClass");
+    QTest::addColumn<bool>("expected");
+
+    QTest::newRow("generic") << QGCMAVLink::VehicleClassGeneric << true;
+    QTest::newRow("multirotor") << QGCMAVLink::VehicleClassMultiRotor << true;
+    QTest::newRow("fixed wing") << QGCMAVLink::VehicleClassFixedWing << false;
+    QTest::newRow("vtol") << QGCMAVLink::VehicleClassVTOL << false;
+    QTest::newRow("rover") << QGCMAVLink::VehicleClassRoverBoat << false;
+    QTest::newRow("sub") << QGCMAVLink::VehicleClassSub << false;
+}
+
+void FirmwarePluginTest::_apmSplineWaypointOnlyForMultiRotor()
+{
+    QFETCH(QGCMAVLink::VehicleClass_t, vehicleClass);
+    QFETCH(bool, expected);
+
+    const QList<MAV_CMD> commands = ArduCopterFirmwarePlugin().supportedMissionCommands(vehicleClass);
+    QCOMPARE(commands.contains(MAV_CMD_NAV_SPLINE_WAYPOINT), expected);
+}
+
 UT_REGISTER_TEST(FirmwarePluginTest, TestLabel::Unit, TestLabel::Vehicle)

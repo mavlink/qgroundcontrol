@@ -32,3 +32,26 @@ function coordinateUnderCursor(camera, target, startZ, sceneScale, heightAt) {
     }
     return coordinate
 }
+
+// Height of spline sample `index` above the straight altitude ramp between the first and last samples: the curve's own
+// vertical shape (FlightPathSegment::_hermiteSplinePath), 0 while an altitude is unknown. A terrain-frame spline adds
+// this to its height-above-terrain ramp.
+function splineVerticalShape(samples, index) {
+    const first = samples[0].altitude
+    const last = samples[samples.length - 1].altitude
+    const shape = samples[index].altitude - (first + ((last - first) * index) / (samples.length - 1))
+    return isNaN(shape) ? 0 : shape
+}
+
+// Altitude of terrain-frame spline sample `index` draped over the terrain: the height above terrain ramps between the
+// leg's ends as on a straight terrain leg, with the curve's own vertical shape on top. startAltitude and endAltitude
+// are the altitudes the leg's ends are drawn at, and the terrain heights are those under the two ends and under the
+// sample. The spline starts at its first sample, which is above startAltitude after the vertical climb from home, so
+// the ramp starts there once that altitude is known.
+function drapedSplineAltitude(samples, index, startAltitude, endAltitude, startTerrain, endTerrain, sampleTerrain) {
+    const first = samples[0].altitude
+    const startAgl = (isNaN(first) ? startAltitude : first) - startTerrain
+    const endAgl = endAltitude - endTerrain
+    const fraction = index / (samples.length - 1)
+    return sampleTerrain + startAgl + ((endAgl - startAgl) * fraction) + splineVerticalShape(samples, index)
+}

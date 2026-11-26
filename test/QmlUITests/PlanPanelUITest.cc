@@ -16,6 +16,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -23,6 +24,7 @@
 
 #include "AppSettings.h"
 #include "Fact.h"
+#include "FlightPathGeometry.h"
 #include "GeoFenceController.h"
 #include "GeoMapCamera.h"
 #include "GeoMapItem.h"
@@ -38,6 +40,7 @@
 #include "RallyPoint.h"
 #include "RallyPointController.h"
 #include "SettingsManager.h"
+#include "SimpleMissionItem.h"
 #include "Vehicle.h"
 #include "VisualMissionItem.h"
 
@@ -1568,6 +1571,134 @@ void PlanPanelUITest::_testGeoMapMissionPathReturnsToPlannedHome()
     QVERIFY2(waitForCondition([&] { return routeEnd().isValid() && routeEnd().distanceTo(plannedHome) < 0.5; }, 3000,
                               QStringLiteral("route returns home")),
              "The route of a mission ending in Return does not go back to the planned home");
+
+    // A multirotor flies home level and descends over it
+    QVERIFY(_planMasterController()->controllerVehicle()->multiRotor());
+    const QVariantList points = missionPath->property("_routePoints").toList();
+    QVERIFY(points.count() >= 3);
+    const auto coordinateAt = [&](qsizetype index) {
+        return points[index].toMap().value(QStringLiteral("coordinate")).value<QGeoCoordinate>();
+    };
+    const QGeoCoordinate level = coordinateAt(points.count() - 2);
+    QVERIFY2(level.distanceTo(plannedHome) < 0.5, "The return leg does not end over the planned home");
+    QCOMPARE(level.altitude(), coordinateAt(points.count() - 3).altitude());
+}
+
+void PlanPanelUITest::_testGeoMapMissionPathClimbsOverHome()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    Fact* const firmwareFact = SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass();
+    const QVariant savedFirmwareClass = firmwareFact->rawValue();
+    const auto restoreGuard = qScopeGuard([=] { firmwareFact->setRawValue(savedFirmwareClass); });
+    firmwareFact->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(1);
+    if (QTest::currentTestFailed())
+        return;
+
+    // An ArduPilot takeoff has no coordinate, so the route climbs straight up over home to the takeoff altitude
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    VisualMissionItem* const takeoff = controller->visualItems()->value<VisualMissionItem*>(1);
+    QVERIFY(takeoff);
+    QVERIFY(takeoff->isTakeoffItem());
+    QVERIFY(!takeoff->specifiesCoordinate());
+    const QGeoCoordinate plannedHome = controller->plannedHomePosition();
+    QVERIFY(plannedHome.isValid());
+
+    QQuickItem* const missionPath = findVisibleItem(_rootItem, QStringLiteral("geoMapMissionPath"), 3000);
+    QVERIFY(missionPath);
+    const auto climbsOverHome = [&] {
+        const QVariantList points = missionPath->property("_routePoints").toList();
+        if (points.count() < 3) {
+            return false;
+        }
+        const QGeoCoordinate ground = points[0].toMap().value(QStringLiteral("coordinate")).value<QGeoCoordinate>();
+        const QGeoCoordinate top = points[1].toMap().value(QStringLiteral("coordinate")).value<QGeoCoordinate>();
+        return (ground.distanceTo(plannedHome) < 0.5) && (top.distanceTo(plannedHome) < 0.5) &&
+               (qAbs(top.altitude() - takeoff->amslExitAlt()) < 0.01);
+    };
+    QVERIFY2(waitForCondition(climbsOverHome, 3000, QStringLiteral("climb over home")),
+             "The route does not climb over home to the takeoff altitude");
+}
+
+void PlanPanelUITest::_testGeoMapMissionPathDropsTheCurveOfADeletedSpline()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    Fact* const firmwareFact = SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass();
+    const QVariant savedFirmwareClass = firmwareFact->rawValue();
+    const auto restoreGuard = qScopeGuard([=] { firmwareFact->setRawValue(savedFirmwareClass); });
+    firmwareFact->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(3);
+    if (QTest::currentTestFailed())
+        return;
+
+    // home(0) takeoff(1) wp(2) spline(3) wp(4)
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    VisualMissionItem* const waypoint = controller->visualItems()->value<VisualMissionItem*>(2);
+    auto* const spline = controller->visualItems()->value<SimpleMissionItem*>(3);
+    QVERIFY(waypoint);
+    QVERIFY(spline);
+    spline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+
+    QQuickItem* const missionPath = findVisibleItem(_rootItem, QStringLiteral("geoMapMissionPath"), 3000);
+    QVERIFY(missionPath);
+    auto* const geometry = qobject_cast<FlightPathGeometry*>(missionPath->property("_geometry").value<QObject*>());
+    QVERIFY(geometry);
+    const auto drawnPointCount = [&] { return geometry->property("pointCount").toInt(); };
+    const auto expectedPointCount = [&] {
+        QVariant path;
+        QMetaObject::invokeMethod(missionPath, "_expandedPath", Q_RETURN_ARG(QVariant, path));
+        if (path.metaType() == QMetaType::fromType<QJSValue>()) {
+            path = path.value<QJSValue>().toVariant();
+        }
+        return static_cast<int>(path.toMap().value(QStringLiteral("coordinates")).toList().count());
+    };
+    const auto routePointCount = [&] {
+        return static_cast<int>(missionPath->property("_routePoints").toList().count());
+    };
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     return !controller->splinePathFrom(waypoint).isEmpty() &&
+                            (expectedPointCount() > routePointCount()) && (drawnPointCount() == expectedPointCount());
+                 },
+                 3000, QStringLiteral("curve drawn")),
+             "The spline leg is not drawn as a curve");
+
+    // The path is redrawn before the segments catch up with the deletion: it must not draw the old curve meanwhile
+    int mostDrawnPoints = 0;
+    const QMetaObject::Connection drawnConnection =
+        connect(geometry, &FlightPathGeometry::pointCountChanged, this,
+                [&] { mostDrawnPoints = std::max(mostDrawnPoints, drawnPointCount()); });
+    const auto disconnectGuard = qScopeGuard([=] { disconnect(drawnConnection); });
+
+    // The leg from the waypoint now ends at a plain waypoint, so it is straight
+    controller->removeVisualItem(3);
+    QVERIFY2(waitForCondition([&] { return controller->splinePathFrom(waypoint).isEmpty(); }, 3000,
+                              QStringLiteral("segments rebuilt")),
+             "The leg from the waypoint still has spline samples");
+    QVERIFY2(waitForCondition([&] { return drawnPointCount() == expectedPointCount(); }, 3000,
+                              QStringLiteral("straight leg drawn")),
+             qPrintable(QStringLiteral("The route draws %1 points instead of %2")
+                            .arg(drawnPointCount())
+                            .arg(expectedPointCount())));
+    QCOMPARE(expectedPointCount(), routePointCount());
+    QVERIFY2(mostDrawnPoints <= drawnPointCount(),
+             qPrintable(QStringLiteral("The deleted spline's curve was drawn with %1 points").arg(mostDrawnPoints)));
 }
 
 void PlanPanelUITest::_testFenceTabAddsFenceInsideTheGeoMapViewport_data()

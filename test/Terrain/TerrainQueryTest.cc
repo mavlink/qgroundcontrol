@@ -2,6 +2,7 @@
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 
 #include "TerrainQuery.h"
@@ -71,6 +72,38 @@ void TerrainQueryTest::_testRequestCoordinateHeightsOutsideRegions()
     const QList<double> heights = qvariant_cast<QList<double>>(arguments.at(1));
     QCOMPARE(heights.size(), 1);
     QCOMPARE(heights.at(0), 0.0);
+}
+
+void TerrainQueryTest::_testCoordinateBatchFailureSendsQueuedRequests()
+{
+    TerrainAtCoordinateBatchManager batchManager;
+    // Each lookup must be unambiguous, or the test could end up driving the wrong child
+    const QList<QTimer*> timers = batchManager.findChildren<QTimer*>(QString(), Qt::FindDirectChildrenOnly);
+    const QList<TerrainQueryInterface*> terrainQueries =
+        batchManager.findChildren<TerrainQueryInterface*>(QString(), Qt::FindDirectChildrenOnly);
+    QCOMPARE(timers.count(), 1);
+    QCOMPARE(terrainQueries.count(), 1);
+    QTimer* const batchTimer = timers.first();
+    TerrainQueryInterface* const terrainQuery = terrainQueries.first();
+    // The batch result is injected below rather than coming from the tile pipeline
+    (void) QObject::disconnect(terrainQuery, nullptr, &batchManager, nullptr);
+
+    TerrainAtCoordinateQuery failedQuery(false /* autoDelete */);
+    TerrainAtCoordinateQuery queuedQuery(false /* autoDelete */);
+    QSignalSpy failedSpy(&failedQuery, &TerrainAtCoordinateQuery::terrainDataReceived);
+    QVERIFY(failedSpy.isValid());
+
+    // A batch stops once it holds more than 50 coordinates, leaving the second query queued behind the first
+    batchManager.addQuery(&failedQuery, QList<QGeoCoordinate>(51, flat10Region().center()));
+    batchManager.addQuery(&queuedQuery, {flat10Region().center()});
+    batchTimer->stop();
+    QVERIFY(QMetaObject::invokeMethod(&batchManager, "_sendNextBatch", Qt::DirectConnection));
+
+    QVERIFY(QMetaObject::invokeMethod(&batchManager, "_coordinateHeights", Qt::DirectConnection, Q_ARG(bool, false),
+                                      Q_ARG(QList<double>, QList<double>())));
+    QCOMPARE(failedSpy.count(), 1);
+    QVERIFY(!failedSpy.takeFirst().at(0).toBool());
+    QVERIFY(batchTimer->isActive());
 }
 
 void TerrainQueryTest::_testRequestPathHeights()

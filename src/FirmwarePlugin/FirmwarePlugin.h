@@ -159,6 +159,9 @@ public:
 
     virtual bool supportsSmartRTL() const { return false; }
 
+    /// @return true if the vehicle flies the leg into a MAV_CMD_NAV_SPLINE_WAYPOINT as a curve
+    virtual bool supportsSplineWaypoints(const Vehicle* /*vehicle*/) const { return false; }
+
     /// Returns the flight mode for Land
     virtual QString landFlightMode() const { return QString(); }
 

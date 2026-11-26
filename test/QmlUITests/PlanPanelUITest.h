@@ -36,6 +36,8 @@ private slots:
     void _testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor_data();
     void _testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor();
     void _testGeoMapMissionPathReturnsToPlannedHome();
+    void _testGeoMapMissionPathClimbsOverHome();
+    void _testGeoMapMissionPathDropsTheCurveOfADeletedSpline();
     void _testFenceTabAddsFenceInsideTheGeoMapViewport_data();
     void _testFenceTabAddsFenceInsideTheGeoMapViewport();
     void _testFenceTabAddsFenceInsideTheViewportOverTheDateline_data();
