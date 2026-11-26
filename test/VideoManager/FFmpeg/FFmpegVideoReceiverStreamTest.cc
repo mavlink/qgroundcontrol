@@ -18,6 +18,7 @@
 #include "FFmpegPointers.h"
 #include "FFmpegStreamSession.h"
 #include "FFmpegVideoReceiver.h"
+#include "GStreamerTestHelpers.h"
 #include "MockVideoStreamServer.h"
 #include "SettingsManager.h"
 #include "VideoBackend.h"
@@ -392,6 +393,39 @@ void FFmpegVideoReceiverStreamTest::_testRecordingContinuesAfterReconnect()
         const RecordedVideo video = readRecording(part);
         QVERIFY2(video.readable && (video.frames > 0), qPrintable(part));
     }
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void FFmpegVideoReceiverStreamTest::_testOutputSetAgainWaitsForKeyframe()
+{
+    // Longer than the receiver's timeout, and shorter than that with the first picture's 5 s.
+    constexpr int kKeyframeWaitMs = 2500;
+
+    const quint16 port = freeUdpPort();
+    GstTest::FixtureRtpSender sender;
+    QVERIFY2(sender.error().isEmpty(), qPrintable(sender.error()));
+    FFmpegReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(port), true, std::chrono::seconds(1));
+    sampleOften(*stream.receiver);
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(VideoReceiver::State::Connecting));
+    QVERIFY(sender.start(port));
+    QVERIFY(stream.waitForDisplay());
+
+    // Without an output the stream isn't decoded, so that with one again the picture starts at the next keyframe,
+    // which a long GOP may send later than the timeout: the stream hasn't stalled for that.
+    stream.receiver->setVideoOutput(nullptr);
+    sender.holdKeyframes(true);
+    const int framesSent = sender.frames();
+    QVERIFY(UnitTest::waitForCondition([&sender, framesSent] { return sender.frames() >= (framesSent + 10); },
+                                       TestTimeout::mediumDuration(), u"frames sent without an output"));
+    stream.stateSpy.clear();
+    stream.receiver->setVideoOutput(stream.output.get());
+    QVERIFY_NO_SIGNAL_WAIT(stream.stateSpy, kKeyframeWaitMs);
+    QVERIFY(!stream.receiver->decoding());
+
+    sender.holdKeyframes(false);
+    QVERIFY_TRUE_WAIT(stream.receiver->decoding(), TestTimeout::longMs());
+    QCOMPARE(stream.receiver->stats().reconnects, 0);
     QVERIFY(stream.errorSpy.isEmpty());
 }
 

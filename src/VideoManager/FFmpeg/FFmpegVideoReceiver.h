@@ -25,10 +25,11 @@ Q_DECLARE_LOGGING_CATEGORY(FFmpegVideoReceiverLog)
 /// Each connection is an FFmpegStreamSession, which opens, reads and decodes the stream on a thread of its own and
 /// hands each decoded frame to this receiver; a frame not yet shown when the next one arrives is dropped. Streaming
 /// once the stream's first video packet arrives; decoding while frames reach the output. A session that fails, or gets
-/// no packet, or no frame while displaying, for the config's timeout (5 s more for a server's first packet and for the
-/// first frame) has failed, and SessionVideoReceiver reconnects or stops it. A UDP port nobody sends to yet hasn't
-/// failed: the session listens for as long as it takes. A new session opens once the one it replaces has ended, as a
-/// UDP port can't be bound twice.
+/// no packet, or no frame while displaying, for the config's timeout (5 s more for a server's first packet, and for the
+/// first frame, also the first after an output is set again, which waits for a keyframe as the session's first does)
+/// has failed, and SessionVideoReceiver reconnects or stops it. A UDP port nobody sends to yet hasn't failed: the
+/// session listens for as long as it takes. A new session opens once the one it replaces has ended, as a UDP port
+/// can't be bound twice.
 ///
 /// Records the stream as it arrives, without decoding it (FFmpegStreamRecorder), also with no output: from the next
 /// keyframe, and after a reconnect, and after each hour, in the next part its RecordingPlan names.

@@ -5,9 +5,9 @@
 class FFmpegVideoReceiver;
 
 /// FFmpegVideoReceiver against MockVideoStreamServer's streams, which need GStreamer to serve them: the kinds of stream
-/// it plays, the stop of a stream that is still connecting, and its recordings, also across a reconnect, which the test
-/// reads back with libavformat. Also what it opens for a URI, and that the video backend setting chooses it.
-/// VideoReceiverContractTest holds it to what every receiver does.
+/// it plays, the stop of a stream that is still connecting, its recordings, also across a reconnect, which the test
+/// reads back with libavformat, and an output set again, whose picture waits for a keyframe. Also that the video
+/// backend setting chooses it. VideoReceiverContractTest holds it to what every receiver does.
 class FFmpegVideoReceiverStreamTest : public GStreamerTestBase
 {
     Q_OBJECT
@@ -31,4 +31,5 @@ private slots:
     void _testRecordsStream_data();
     void _testRecordsStream();
     void _testRecordingContinuesAfterReconnect();
+    void _testOutputSetAgainWaitsForKeyframe();
 };

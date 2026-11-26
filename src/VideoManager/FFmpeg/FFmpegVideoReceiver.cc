@@ -40,16 +40,21 @@ void FFmpegVideoReceiver::onVideoOutputChanged()
     if (_session) {
         _session->setDecoding(displaying);
     }
-    if (!displaying) {
-        QVideoFrame dropped;
-        {
-            const QMutexLocker locker(&_frameMutex);
-            dropped = std::exchange(_pendingFrame, QVideoFrame());
-        }
-        setDecoding(false);
+    const qint64 now = StreamWatchdog::now();
+    if (displaying) {
+        // No frame reached an output while there was none.
+        _watchdog.excuseSinkSilence(now);
+        return;
     }
-    // No frame reached an output while there was none.
-    _watchdog.excuseSinkSilence(StreamWatchdog::now());
+    QVideoFrame dropped;
+    {
+        const QMutexLocker locker(&_frameMutex);
+        dropped = std::exchange(_pendingFrame, QVideoFrame());
+    }
+    setDecoding(false);
+    // The session stops decoding, and starts again at the stream's next keyframe: the next picture is a first one,
+    // with a first one's time to arrive.
+    _watchdog.startSinkClock(now);
 }
 
 void FFmpegVideoReceiver::beginRecording(const QString& file, FileFormat format,
