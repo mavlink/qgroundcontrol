@@ -16,6 +16,7 @@ void WaitStateBase::_onEntered()
 {
     _completed = false;
     _waiting = true;
+    _timeoutHeld = false;
     // The machine is not known before the state is entered
     const QStateMachine* const qtMachine = QAbstractState::machine();  // clazy:exclude=skipped-base-method
     if (qtMachine) {
@@ -30,7 +31,7 @@ void WaitStateBase::_onEntered()
 
 void WaitStateBase::_startTimeout()
 {
-    if (_timeoutMsecs <= 0) {
+    if ((_timeoutMsecs <= 0) || _timeoutHeld) {
         return;
     }
 
@@ -94,6 +95,23 @@ void WaitStateBase::waitFailed()
     emit error();
 }
 
+void WaitStateBase::holdTimeout()
+{
+    _timeoutHeld = true;
+    _timeoutTask.reset();
+}
+
+void WaitStateBase::restartTimeout()
+{
+    _timeoutHeld = false;
+    if (!_waiting || _completed) {
+        return;
+    }
+
+    _timeoutTask.reset();
+    _startTimeout();
+}
+
 void WaitStateBase::restartWait()
 {
     if (_completed) {
@@ -102,6 +120,7 @@ void WaitStateBase::restartWait()
 
     // _onTimeout() disconnects wait signals. Retry flows that remain in the same
     // state need an explicit rearm of both wait connections and timeout timer.
+    _timeoutHeld = false;
     disconnectWaitSignal();
     connectWaitSignal();
     onWaitRestarted();

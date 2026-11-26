@@ -22,7 +22,8 @@ instead.
 5. Return to **App Log Viewer** and click **Save**. Keep the saved app log
    unchanged when attaching it to a support request.
 
-The metadata URI can use MAVLink FTP (`mavlinkftp://`) or HTTP. QGroundControl
+The metadata URI can use MAVLink FTP (`mftp://`) or HTTP(S). QGroundControl
+refuses any other URI, such as a local path or a `file://` URL. It
 tries the primary URI first and then the fallback URI advertised by the
 vehicle.
 
@@ -34,7 +35,8 @@ vehicle.
 | `Vehicle.Actuators.PX4AutoPilotPlugin` | `Actuators initialization failed` | Metadata was received but could not be parsed or initialized. |
 | `Vehicle.Actuators.PX4AutoPilotPlugin` | `Condition 'show-ui-if' evaluated to false` | The vehicle's metadata indicated the page should not be shown. This can be intentional for your configuration, or a firmware/metadata mismatch. Attach the saved log to a support request. |
 | `ComponentInformation.RequestMetaDataTypeStateMachine` | `primary failed, requesting metadata (fallback) from ...` | The primary metadata URI failed and QGroundControl is trying the fallback URI. |
-| `ComponentInformation.RequestMetaDataTypeStateMachine` | `FTP download failed` or `HTTP download failed` | The selected transport could not download the metadata. An HTTP status such as `404` identifies a missing or incorrect URL. |
+| `ComponentInformation.RequestMetaDataTypeStateMachine` | `download failed: ...` | The metadata could not be downloaded over MAVLink FTP or HTTP. An HTTP status such as `404` identifies a missing or incorrect URL; `larger than` means the file exceeds the 64 MiB that QGroundControl accepts. |
+| `Vehicle.VehicleFileFetch` | `Cannot fetch ... - only MAVLink FTP and HTTP(S) are fetched` | The URI is not a MAVLink FTP or HTTP(S) URI, so QGroundControl does not download it. This warning is logged without enabling the category. |
 | `ComponentInformation.RequestMetaDataTypeStateMachine` | `failed to load metadata (primary and fallback)` | Both metadata URIs failed, so the Actuators page cannot be initialized. |
 | `Vehicle.FTPManager` | `Download fromCompId`, `Nak - ...`, or timeout messages | Details of the MAVLink FTP request and any vehicle-side error. |
 

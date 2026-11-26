@@ -3,7 +3,8 @@
 # Core vehicle state management and MAVLink communication
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Autotune.cpp
         Autotune.h
@@ -35,6 +36,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         TrajectoryPoints.h
         Vehicle.cc
         Vehicle.h
+        VehicleFileFetch.cc
+        VehicleFileFetch.h
         VehicleLinkManager.cc
         VehicleLinkManager.h
         VehicleObjectAvoidance.cc

@@ -2,8 +2,11 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QLocale>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QSslConfiguration>
+#include <QtNetwork/QSslSocket>
 
 #include "Compression.h"
 #include "CompressionJob.h"
@@ -153,6 +156,11 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
 
     // Create request with configuration
     QNetworkRequest request = QGCNetworkHelper::createRequest(url, config);
+    if (!_verifyPeer) {
+        QSslConfiguration sslConfiguration = request.sslConfiguration();
+        sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
+        request.setSslConfiguration(sslConfiguration);
+    }
 
     qCDebug(QGCFileDownloadLog) << "Starting download:"
                                 << url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment)
@@ -239,6 +247,10 @@ void QGCFileDownload::_onReadyRead()
 
     // Stream data directly to file (memory-efficient)
     const QByteArray data = _currentReply->readAll();
+    if (!_withinMaxBytes(_currentReply, data.size())) {
+        _failForSize();
+        return;
+    }
     if (!_writeReplyData(data)) {
         _failForWriteError(QStringLiteral("readyRead"));
     }
@@ -265,6 +277,10 @@ void QGCFileDownload::_onDownloadFinished()
     if (_outputFile != nullptr) {
         // Write any remaining data
         const QByteArray remaining = reply->readAll();
+        if (!_withinMaxBytes(reply, remaining.size())) {
+            _failForSize();
+            return;
+        }
         if (!_writeReplyData(remaining)) {
             _outputFile->close();
             delete _outputFile;
@@ -454,6 +470,34 @@ bool QGCFileDownload::_failForWriteError(const QString &context)
     _cleanup();
     _emitFinished(false, QString(), error);
     return false;
+}
+
+bool QGCFileDownload::_withinMaxBytes(const QNetworkReply* reply, qint64 incoming) const
+{
+    if (_maxBytes <= 0) {
+        return true;
+    }
+    const qint64 announced = reply->header(QNetworkRequest::ContentLengthHeader).toLongLong();
+    return (announced <= _maxBytes) && (_outputFile->pos() + incoming <= _maxBytes);
+}
+
+void QGCFileDownload::_failForSize()
+{
+    const QString error = tr("File is larger than %1").arg(QLocale().formattedDataSize(_maxBytes));
+    qCWarning(QGCFileDownloadLog) << error << "url:"
+                                  << _url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery |
+                                                          QUrl::RemoveFragment);
+    _setErrorString(error);
+    _setState(State::Failed);
+
+    if (_currentReply != nullptr) {
+        _currentReply->disconnect(this);
+        _currentReply->abort();
+    }
+
+    _cleanup();
+    (void) QFile::remove(_localPath);
+    _emitFinished(false, QString(), error);
 }
 
 QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const

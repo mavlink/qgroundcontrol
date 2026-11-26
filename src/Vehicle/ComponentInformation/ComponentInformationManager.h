@@ -41,6 +41,8 @@ public:
     QString downloadDirectory();
 
     static constexpr int cachedFileMaxAgeSec = 3 * 24 * 3600; ///< 3 days
+    /// Directory of the network disk cache of the files that are downloaded with HTTP
+    static QString httpCacheDirectory();
 
 signals:
     void requestAllComplete();
@@ -63,8 +65,10 @@ private:
 
     static QString _getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation);
 
-    RequestMetaDataTypeStateMachine _requestTypeStateMachine;
+    /// Declared before the request machine, which goes first: its download closes the file it writes into the
+    /// directory, which Windows could not remove otherwise
     std::unique_ptr<QTemporaryDir> _downloadDir;
+    RequestMetaDataTypeStateMachine _requestTypeStateMachine;
     RequestAllCompleteFn            _requestAllCompleteFn       = nullptr;
     void*                           _requestAllCompleteFnData   = nullptr;
     QGCCachedFileDownload*          _cachedFileDownload         = nullptr;

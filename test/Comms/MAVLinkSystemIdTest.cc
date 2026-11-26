@@ -89,12 +89,19 @@ void MAVLinkSystemIdTest::_connectWideVehicle()
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
-    FTPManager* const ftp = _vehicle->ftpManager();
-    QSignalSpy downloaded(ftp, &FTPManager::downloadComplete);
-    QVERIFY(ftp->download(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/general.json"), directory.path()));
-    QTRY_COMPARE_WITH_TIMEOUT(downloaded.count(), 1, TestTimeout::longMs());
-    QVERIFY2(downloaded.at(0).at(1).toString().isEmpty(), qPrintable(downloaded.at(0).at(1).toString()));
-    QVERIFY(QFile::exists(downloaded.at(0).at(0).toString()));
+    int downloads = 0;
+    QString downloadedFile;
+    QString downloadError;
+    QObject owner;
+    QVERIFY(_vehicle->ftpManager()->download(&owner, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/general.json"),
+                                             directory.path(), {}, [&](const QString& file, const QString& errorMsg) {
+                                                 downloads++;
+                                                 downloadedFile = file;
+                                                 downloadError = errorMsg;
+                                             }));
+    QTRY_COMPARE_WITH_TIMEOUT(downloads, 1, TestTimeout::longMs());
+    QVERIFY2(downloadError.isEmpty(), qPrintable(downloadError));
+    QVERIFY(QFile::exists(downloadedFile));
 
     // A gap in the event sequence requests the missing event from the full-width source.
     for (uint16_t sequence : {10, 11}) {

@@ -27,6 +27,13 @@ public:
     /// the state, as RetryTransition makes them.
     void restartWait();
 
+    /// No timeout until restartTimeout(), for an operation that the state asked for and that waits behind others
+    /// before it begins: the time it waits does not count. Call it from the state's entry.
+    void holdTimeout();
+
+    /// Start the full timeout once the operation that holdTimeout() was called for begins
+    void restartTimeout();
+
 signals:
     /// Emitted when the timeout expires before the wait condition is met. A wait that is satisfied emits advance(),
     /// one that fails emits error().
@@ -78,4 +85,5 @@ private:
     std::optional<ScheduledTask> _timeoutTask;
     bool _completed = false;
     bool _waiting = false;
+    bool _timeoutHeld = false;
 };

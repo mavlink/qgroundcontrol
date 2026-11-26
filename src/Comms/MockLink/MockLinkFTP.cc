@@ -1,6 +1,7 @@
 #include "MockLinkFTP.h"
 
 #include <cerrno>
+#include <utility>
 
 #include <QtCore/QDataStream>
 #include <QtCore/QDir>
@@ -195,6 +196,9 @@ void MockLinkFTP::_openCommand(quint32 senderSystemId, uint8_t senderComponentId
 
     // Ardupilot sends constant wrong file size for parameter file due to dynamic on the fly generation
     response.openFileLength = ((path == "@PARAM/param.pck" || path.startsWith("@PARAM/param.pck?")) ? qPow(1024, 2) : _currentFile.size());
+    if (_announcedFileLength) {
+        response.openFileLength = *std::exchange(_announcedFileLength, std::nullopt);
+    }
 
     _openFileROCount++;
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);

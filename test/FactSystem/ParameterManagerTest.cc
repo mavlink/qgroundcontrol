@@ -7,11 +7,14 @@
 #include <memory>
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QStandardPaths>
 #include <QtTest/QSignalSpy>
 
 #include "BulkRefreshJob.h"
+#include "FTPManager.h"
 #include "LogManager.h"
 #include "MAVLinkLib.h"
 #include "MockLinkFTP.h"
@@ -995,6 +998,55 @@ void ParameterManagerTest::_FTPRequestsHeartbeatComponentParams()
     const QList<int> requestListTargets = _mockLink->paramRequestListTargetLog();
     QVERIFY(!requestListTargets.contains(MAV_COMP_ID_AUTOPILOT1));
     QVERIFY(!requestListTargets.contains(MAV_COMP_ID_ALL));
+}
+
+// The param.pck download may wait behind another transfer of the vehicle. A wait longer than the request-list timer
+// is no failed request: the download keeps its one retry over FTP, rather than going on with the parameter stream.
+void ParameterManagerTest::_FTPWaitInQueueKeepsRetry()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+
+    // Queued as the vehicle appears, before the parameter manager asks for param.pck: a large file, slowly
+    MultiVehicleManager* const vehicleMgr = MultiVehicleManager::instance();
+    QObject owner;
+    QPointer<FTPRequest> blocker;
+    (void) connect(vehicleMgr, &MultiVehicleManager::vehicleAdded, &owner, [&owner, &blocker](Vehicle* vehicle) {
+        if (vehicle && !blocker) {
+            blocker = vehicle->ftpManager()->download(
+                &owner, MAV_COMP_ID_AUTOPILOT1,
+                QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(1024 * 1024),
+                QStandardPaths::writableLocation(QStandardPaths::TempLocation), {},
+                [](const QString&, const QString&) {});
+        }
+    });
+    // The mock's blocking burst delay also starves unrelated commands sent to it during the download
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
+
+    // The parameter stream never answers, so a fall back to it would never load the parameters
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone,
+                                                    MockConfiguration::FailParamNoResponseToRequestList);
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setBurstReadDelayMs(50);
+    QVERIFY_TRUE_WAIT(
+        blocker && vehicleMgr->activeVehicle() && (vehicleMgr->activeVehicle()->ftpManager()->requestCount() == 2),
+        TestTimeout::longMs());
+    FTPManager* const ftpManager = vehicleMgr->activeVehicle()->ftpManager();
+
+    // Twice the request-list timer in the queue. A timer that ran while the download waited would have used up the
+    // retry, which needs this many milliseconds to show.
+    QVERIFY_NO_SIGNAL_WAIT(spyParamsReady, 2 * ParameterManager::kTestInitialRequestIntervalMs);
+
+    // The first download of param.pck fails, the retry succeeds
+    mockFtp->setErrorMode(MockLinkFTP::errModeNakResponse);
+    mockFtp->setBurstReadDelayMs(0);
+    blocker->cancel();
+    QVERIFY_TRUE_WAIT(ftpManager->requestCount() == 0, TestTimeout::mediumMs());
+    mockFtp->setErrorMode(MockLinkFTP::errModeNone);
+
+    QVERIFY_SIGNAL_COUNT_WAIT(spyParamsReady, 1, TestTimeout::longMs());
+    QVERIFY(spyParamsReady.first().at(0).toBool());
+    QCOMPARE(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST), 0);
 }
 
 void ParameterManagerTest::_FTPChangeParam()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
@@ -10,6 +11,7 @@
 #include "QGCLoggingCategory.h"
 
 class FTPManager;
+class FTPRequest;
 class Vehicle;
 
 /// \brief QML-facing controller for MAVLink FTP operations.
@@ -66,14 +68,13 @@ signals:
     void uploadComplete(const QString &remotePath, const QString &error);
     void deleteComplete(const QString &remotePath, const QString &error);
 
-private slots:
+private:
     void _handleDownloadComplete(const QString &filePath, const QString &error);
     void _handleUploadComplete(const QString &remotePath, const QString &error);
     void _handleDirectoryComplete(const QStringList &entries, const QString &error);
     void _handleDeleteComplete(const QString &remotePath, const QString &error);
     void _handleCommandProgress(float value);
 
-private:
     enum class Operation {
         None,
         List,
@@ -89,8 +90,9 @@ private:
     void _resetDirectoryState();
     uint8_t _componentIdForRequest(int componentId) const;
 
-    Vehicle *_vehicle = nullptr;
-    FTPManager *_ftpManager = nullptr;
+    /// Gone with its vehicle
+    QPointer<FTPManager> _ftpManager;
+    QPointer<FTPRequest> _request;
     Operation _operation = Operation::None;
     bool _busy = false;
     float _progress = 0.0F;

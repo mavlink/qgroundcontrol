@@ -2,12 +2,13 @@
 
 #include <algorithm>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QSaveFile>
 #include <QtCore/QSettings>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
+#include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlEngine>
 #include <QtXml/QDomDocument>
 #include <QtXml/QDomNodeList>
@@ -15,7 +16,6 @@
 #include "AppMessages.h"
 #include "AppSettings.h"
 #include "Compression.h"
-#include "FTPManager.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
@@ -24,10 +24,10 @@
 #include "QGCCorePlugin.h"
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleFileFetch.h"
 #include "VehicleLinkManager.h"
 #include "VideoManager.h"
 #include "WorkerJob.h"
@@ -260,8 +260,8 @@ VehicleCameraControl::~VehicleCameraControl()
     _cameraSettingsRefreshTimer.stop();
     _storageInfoTimer.stop();
 
-    delete _netManager;
-    _netManager = nullptr;
+    // Before the directory it downloads into goes
+    delete _definitionFetch.data();
 }
 
 void VehicleCameraControl::_initWhenReady()
@@ -299,12 +299,6 @@ void VehicleCameraControl::_initWhenReady()
     connect(this, &VehicleCameraControl::cameraModeChanged, this, &VehicleCameraControl::capturePhotosStateChanged);
 
     emit infoChanged();
-
-    // Not deleted now: this may run in a slot of one of its replies
-    if (_netManager) {
-        _netManager->deleteLater();
-        _netManager = nullptr;
-    }
 }
 
 bool VehicleCameraControl::capturesVideo() const
@@ -1076,14 +1070,13 @@ bool VehicleCameraControl::_loadCameraDefinitionFile(const ParsedDefinition& par
         qCWarning(VehicleCameraControlLog) <<  "Unable to load camera parameters from camera definition";
         return false;
     }
-    //-- If this is new, cache it
-    if(!_cached) {
+    //-- If this is new, cache it. Whole or not at all: another camera of the model may read it at any time.
+    if (!_cached && !_cacheFile.isEmpty() && !_downloadDirectory) {
         qCDebug(VehicleCameraControlLog) << "Saving camera definition file" << _cacheFile;
-        QFile file(_cacheFile);
-        if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
-        } else {
-            file.write(parsed.original);
+        QSaveFile file(_cacheFile);
+        if (!file.open(QIODevice::WriteOnly) || (file.write(parsed.original) != parsed.original.size()) ||
+            !file.commit()) {
+            qCWarning(VehicleCameraControlLog) << "Could not save cache file" << _cacheFile << file.errorString();
         }
     }
     return true;
@@ -2376,30 +2369,9 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
 {
     //-- First check and see if we have it cached
     QFile xmlFile(_cacheFile);
-
-    QString ftpPrefix(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme));
-    if (!xmlFile.exists() && url.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
-        qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt ftp download";
-        // Built from the sanitised token, not from the raw vendor/model strings, so the
-        // vehicle cannot steer FTPManager's toDir.filePath() join out of the cache folder.
-        // Not the cache file: a transfer that is cut off leaves a part of the file, and a definition is cached only
-        // once it has loaded. The download is read, compressed or not, and removed.
-        const QString fileName = _cacheFileToken + QStringLiteral(".xml.download");
-        connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this,
-                &VehicleCameraControl::_ftpDownloadComplete);
-        if (!_vehicle->ftpManager()->download(
-                _compID, url, SettingsManager::instance()->appSettings()->parameterSavePath(), fileName)) {
-            qCWarning(VehicleCameraControlLog) << "Could not start camera definition ftp download:" << url;
-            disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this,
-                       &VehicleCameraControl::_ftpDownloadComplete);
-            emit dataReady(QByteArray());
-        }
-        return;
-    }
-
     if (!xmlFile.exists()) {
-        qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt http download";
-        _httpRequest(url);
+        qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt download";
+        _fetchDefinition(url);
         return;
     }
     const auto read = [cacheFile = _cacheFile, maxBytes = _maxDefinitionBytes]() {
@@ -2416,7 +2388,7 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
             if (QFile::remove(_cacheFile)) {
                 _handleDefinitionFile(url);
             } else {
-                _httpRequest(url);
+                _fetchDefinition(url);
             }
             return;
         }
@@ -2433,89 +2405,57 @@ void VehicleCameraControl::_startDefinitionJob(QObject* job)
     _definitionJob = job;
 }
 
-void VehicleCameraControl::_httpRequest(const QString &url)
+void VehicleCameraControl::_fetchDefinition(const QString& url)
 {
     qCDebug(VehicleCameraControlLog) << "Request camera definition:" << url;
-    if(!_netManager) {
-        _netManager = new QNetworkAccessManager(this);
+
+    // Beside the cache file. When the save directory is unavailable, such as a removed SD card, in a directory of
+    // the camera's own: the definition loads, and is not cached.
+    QString directory = SettingsManager::instance()->appSettings()->parameterSavePath();
+    if (!_downloadDirectory && (directory.isEmpty() || !QFileInfo(directory).isWritable())) {
+        _downloadDirectory = std::make_unique<QTemporaryDir>();
+        qCDebug(VehicleCameraControlLog) << "Save directory unavailable, downloading the camera definition into"
+                                         << _downloadDirectory->path();
     }
-    QGCNetworkHelper::configureProxy(_netManager);
-    QNetworkRequest request(QUrl::fromUserInput(url));
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
-    QNetworkReply* reply = _netManager->get(request);
-    connect(reply, &QNetworkReply::finished,  this, &VehicleCameraControl::_downloadFinished);
-    // The definition is held in memory until it is parsed, so it is held to a size, checked as each part of the body
-    // arrives (downloadProgress() skips some). A body sent with a content encoding counts as decoded.
-    (void) connect(reply, &QNetworkReply::readyRead, this, [this, reply]() {
-        const qint64 announced = reply->header(QNetworkRequest::ContentLengthHeader).toLongLong();
-        if ((reply->bytesAvailable() <= _maxDefinitionBytes) && (announced <= _maxDefinitionBytes)) {
-            return;
-        }
-        qCWarning(VehicleCameraControlLog)
-            << "Camera definition is larger than" << _maxDefinitionBytes << "bytes:" << reply->url().toDisplayString();
-        (void) disconnect(reply, nullptr, this, nullptr);
-        reply->abort();
-        reply->deleteLater();
+    if (_downloadDirectory) {
+        directory = _downloadDirectory->path();
+    }
+
+    // Built from the sanitised token, not from the raw vendor/model strings, so the vehicle cannot steer the file out
+    // of the cache folder. Not the cache file: a transfer that is cut off leaves a part of the file, and a definition
+    // is cached only once it has loaded. The download is read, compressed or not, and removed. Its name is that of
+    // this download only: cameras of the same model, of one vehicle or of several, download at the same time.
+    static quint32 downloadCount = 0;
+    const VehicleFileFetch::Options options{
+        .directory = directory,
+        .fileName = QStringLiteral("%1_%2_%3.xml.download")
+                        .arg(_cacheFileToken)
+                        .arg(QCoreApplication::applicationPid())
+                        .arg(++downloadCount),
+        .maxBytes = _maxDefinitionBytes,
+        .ftpComponentId = static_cast<uint8_t>(_compID),
+        // Cameras that serve their definition over HTTPS often do so with a self-signed certificate, which cannot be
+        // verified. The definition has always been fetched without verifying the certificate, so that they keep
+        // working.
+        .verifyPeer = false,
+    };
+    // Over MAVLink FTP the download waits for the other transfers of the vehicle, which often run as it connects
+    _definitionFetch = VehicleFileFetch::start(
+        this, _vehicle, url, options,
+        [this](const QString& file, const QString& errorMsg) { _definitionDownloaded(file, errorMsg); });
+    if (!_definitionFetch) {
+        qCWarning(VehicleCameraControlLog) << "Could not start the camera definition download:" << url;
         emit dataReady(QByteArray());
-    });
+    }
 }
 
-void VehicleCameraControl::_downloadFinished()
+void VehicleCameraControl::_definitionDownloaded(const QString& fileName, const QString& errorMsg)
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-    if(!reply) {
-        return;
-    }
-    reply->deleteLater();
-    int err = reply->error();
-    int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (err != QNetworkReply::NoError || http_code != 200) {
-        qWarning() << QString("Camera Definition (%1) download error: %2 status: %3").arg(
-            reply->url().toDisplayString(),
-            reply->errorString(),
-            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString()
-        );
-        emit dataReady(QByteArray());
-        return;
-    }
+    qCDebug(VehicleCameraControlLog) << "Camera definition download completed:" << fileName << errorMsg;
 
-    // The definition may be compressed, as over MAVLink FTP. It comes from where the camera points to, so it is
-    // decompressed on a worker thread and held to a size.
-    struct Decompressed
-    {
-        Compression::Outcome outcome;
-        QByteArray definition;
-    };
-
-    const auto decompress = [data = reply->readAll(), maxBytes = _maxDefinitionBytes]() {
-        Decompressed decompressed;
-        decompressed.outcome = Compression::decompressData(data, decompressed.definition, maxBytes);
-        return decompressed;
-    };
-    _startDefinitionJob(QGC::runOnWorker(this, decompress, [this](Decompressed decompressed) {
-        if (!decompressed.outcome) {
-            qCWarning(VehicleCameraControlLog)
-                << "Could not decompress the camera definition:" << decompressed.outcome.description();
-            emit dataReady(QByteArray());
-            return;
-        }
-        decompressed.definition.append("\n");
-        emit dataReady(decompressed.definition);
-    }));
-}
-
-void VehicleCameraControl::_ftpDownloadComplete(const QString& fileName, const QString& errorMsg)
-{
-    qCDebug(VehicleCameraControlLog) << "FTP Download completed: " << fileName << ", " << errorMsg;
-
-    disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
-
-    // Every failure ends as over HTTP: with no definition, so that the camera is initialised without one
+    // Every failure ends the same way: with no definition, so that the camera is initialised without one
     if (!errorMsg.isEmpty()) {
-        qCWarning(VehicleCameraControlLog) << "Camera definition ftp download failed:" << errorMsg;
+        qCWarning(VehicleCameraControlLog) << "Camera definition download failed:" << errorMsg;
         emit dataReady(QByteArray());
         return;
     }

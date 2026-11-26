@@ -5,6 +5,10 @@
 
 #include "UnitTest.h"
 
+namespace TestFixtures {
+class LocalHttpTestServer;
+}
+
 class ComponentInformationTranslationTest : public UnitTest
 {
     Q_OBJECT
@@ -21,6 +25,7 @@ private slots:
     void _onDownloadCompletedMissingTsPropagatesError_test();
     void _summaryIsReadOnWorker_test();
     UT_PARAMETERIZED_TEST(_translationOnWorkerEndsWithItsRequest_test);
+    UT_PARAMETERIZED_TEST(_translationUrlMustBeHttp_test);
 
 private:
     void readJson(const QByteArray& bytes, QJsonDocument& jsonDoc);
@@ -28,4 +33,6 @@ private:
     static bool writeSummary(const QString& path, const QString& locale, const QString& url);
     /// Translated files in the temporary directory
     static QStringList translatedFiles();
+    /// Serves the test translation on @p server @return Its URL
+    static QString serveTranslation(TestFixtures::LocalHttpTestServer& server);
 };

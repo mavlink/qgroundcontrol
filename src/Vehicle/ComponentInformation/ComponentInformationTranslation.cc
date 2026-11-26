@@ -12,6 +12,7 @@
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
+#include "VehicleFileFetch.h"
 #include "WorkerJob.h"
 
 QGC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformation.ComponentInformationTranslation")
@@ -63,10 +64,19 @@ void ComponentInformationTranslation::_downloadTranslation(const SummaryEntry& e
         return;
     }
 
+    // The summary comes from the vehicle, so the URL it names is fetched as the fetch of a vehicle's file would
+    const QUrl url = VehicleFileFetch::httpUrl(entry.url);
+    if (url.isEmpty()) {
+        qCWarning(ComponentInformationTranslationLog)
+            << "Metadata translation not downloaded: only HTTP(S) is fetched -" << entry.url;
+        emit downloadComplete(QString(), QString());
+        return;
+    }
+
     // Download file
     _downloading = true;
     connect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
-    if (!_cachedFileDownload->download(entry.url, maxCacheAgeSec)) {
+    if (!_cachedFileDownload->download(url.toString(), maxCacheAgeSec)) {
         qCWarning(ComponentInformationTranslationLog) << "Metadata translation download failed";
         _stopDownload();
         emit downloadComplete(QString(), QString());

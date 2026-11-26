@@ -13,6 +13,7 @@ class ComponentInformationManager;
 class CompInfo;
 class AsyncFunctionState;
 class CompletionWaitState;
+class VehicleFileFetch;
 class QGCState;
 
 class RequestMetaDataTypeStateMachine : public QGCStateMachine
@@ -72,8 +73,7 @@ private:
     void _requestFile(CompletionWaitState* state, const QString& cacheFileTag, bool crcValid, const QString& uri,
                       QString& outputFileName, bool trackMetadataSource);
     QString _downloadCompleteJsonWorker(const QString& jsonFileName, const QString& cacheFileTag, bool crcValid);
-    void _ftpDownloadProgress(float progress);
-    static bool _uriIsMAVLinkFTP(const QString& uri);
+    void _ftpDownloadProgress(CompletionWaitState* state, float progress);
 
     // What a state that is left gives up, so that nothing of it reaches a later state
     void _cancelMessageRequest();
@@ -96,8 +96,7 @@ private:
     enum class Transfer
     {
         None,
-        Ftp,
-        Http,
+        Download,
         Translation,
     };
 
@@ -111,6 +110,7 @@ private:
     QString _jsonTranslationFileName;
 
     Transfer _transferInFlight = Transfer::None;
+    QPointer<VehicleFileFetch> _fetch;
     QElapsedTimer _downloadStartTime;
     MetadataSource _metadataSource = MetadataSource::None;
     QString _metadataUri;

@@ -1,26 +1,60 @@
 #include "FTPManagerTest.h"
 
+#include <cstring>
+#include <memory>
+
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QPointer>
+#include <QtCore/QRandomGenerator>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
+#include "CompInfoParam.h"
+#include "ComponentInformationManager.h"
 #include "FTPManager.h"
+#include "FileFixtures.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSigningKeys.h"
 #include "MockLink.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
+#include "RequestMetaDataTypeStateMachine.h"
+#include "SettingsManager.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
+#include "VehicleCameraControl.h"
 #include "VehicleSigningController.h"
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {"/general.json"},
 };
+
+FTPManager::FileCallback FTPManagerTest::_record(Result& result, QStringList* order, const QString& name)
+{
+    return [&result, order, name](const QString& path, const QString& errorMsg) {
+        result.calls++;
+        result.path = path;
+        result.error = errorMsg;
+        if (order) {
+            order->append(name);
+        }
+    };
+}
+
+FTPManager::ListCallback FTPManagerTest::_recordList(Result& result)
+{
+    return [&result](const QStringList& entries, const QString& errorMsg) {
+        result.calls++;
+        result.entries = entries;
+        result.error = errorMsg;
+    };
+}
 
 void FTPManagerTest::_testDownloadExplicitFileNameIsBasename()
 {
@@ -28,20 +62,18 @@ void FTPManagerTest::_testDownloadExplicitFileNameIsBasename()
     // QML and passed straight back as the local name. It must not be usable as a path.
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
 
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, tempDir.path(),
-                         QStringLiteral("../../QGC03_escaped.bin"));
-    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
-    QCOMPARE(spyDownloadComplete.count(), 1);
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, tempDir.path(),
+                                 {.fileName = QStringLiteral("../../QGC03_escaped.bin")}, _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
 
-    const QList<QVariant> arguments = spyDownloadComplete.takeFirst();
-    QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
-
-    const QString downloaded = QDir::cleanPath(QFileInfo(arguments[0].toString()).absoluteFilePath());
+    const QString downloaded = QDir::cleanPath(QFileInfo(result.path).absoluteFilePath());
     const QString root = QDir::cleanPath(QDir(tempDir.path()).absolutePath());
     QVERIFY2(downloaded.startsWith(root + QLatin1Char('/')), qPrintable(downloaded));
     QCOMPARE(QFileInfo(downloaded).fileName(), QStringLiteral("QGC03_escaped.bin"));
@@ -55,7 +87,6 @@ void FTPManagerTest::_testDownloadRejectsMissingDestination()
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
@@ -65,12 +96,15 @@ void FTPManagerTest::_testDownloadRejectsMissingDestination()
         {QString(), QStringLiteral("Destination directory is not set")},
         {missingDir, QStringLiteral("Destination directory does not exist")},
     };
+    QObject owner;
+    Result result;
     for (const auto& [toDir, expectedWarning] : refusedDestinations) {
         expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(expectedWarning));
-        QVERIFY(!ftpManager->download(MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, toDir));
+        QVERIFY(
+            !ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, toDir, {}, _record(result)));
         verifyExpectedLogMessage();
     }
-    QCOMPARE(spyDownloadComplete.count(), 0);
+    QCOMPARE(ftpManager->requestCount(), 0);
 
     // A refused download must not leave FTPManager busy.
     QString downloadedPath;
@@ -89,14 +123,12 @@ void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
-    // void downloadComplete   (const QString& file, const QString& errorMsg);
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, testCase.file,
-                         QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
-    QCOMPARE(spyDownloadComplete.count(), 1);
-    QList<QVariant> arguments = spyDownloadComplete.takeFirst();
-    QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, testCase.file,
+                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
     _disconnectMockLink();
 }
 
@@ -132,21 +164,20 @@ void FTPManagerTest::_testDownloadUri()
     FTPManager* ftpManager = _vehicle->ftpManager();
     QTemporaryDir destination;
     QVERIFY(destination.isValid());
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
-    QVERIFY(ftpManager->download(fromCompId, uri, destination.path()));
-    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
-    QCOMPARE(spyDownloadComplete.count(), 1);
-    const QList<QVariant> arguments = spyDownloadComplete.takeFirst();
-    QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->download(&owner, fromCompId, uri, destination.path(), {}, _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QVERIFY2(result.error.isEmpty(), qPrintable(result.error));
 
     if (absolutePath) {
         QFile expectedFile(QStringLiteral(":MockLink/General.MetaData.json"));
         QVERIFY(expectedFile.open(QIODevice::ReadOnly));
-        QFile downloadedFile(arguments[0].toString());
+        QFile downloadedFile(result.path);
         QVERIFY(downloadedFile.open(QIODevice::ReadOnly));
         QCOMPARE(downloadedFile.readAll(), expectedFile.readAll());
     } else {
-        _verifyFileContentsAndDelete(arguments[0].toString(), 239);
+        _verifyFileContentsAndDelete(result.path, 239);
     }
     _disconnectMockLink();
 }
@@ -156,15 +187,13 @@ void FTPManagerTest::_sizeTestCaseWorker(int fileSize)
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                         QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
-    QCOMPARE(spyDownloadComplete.count(), 1);
-    // void downloadComplete   (const QString& file, const QString& errorMsg);
-    QList<QVariant> arguments = spyDownloadComplete.takeFirst();
-    QVERIFY(arguments[1].toString().isEmpty());
-    _verifyFileSizeAndDelete(arguments[0].toString(), fileSize);
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, filename,
+                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QVERIFY(result.error.isEmpty());
+    _verifyFileSizeAndDelete(result.path, fileSize);
     _disconnectMockLink();
 }
 
@@ -213,16 +242,14 @@ void FTPManagerTest::_testLostPackets()
     FTPManager* ftpManager = _vehicle->ftpManager();
     int fileSize = 4 * 1024;
     QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
     _mockLink->mockLinkFTP()->enableRandomDrops(true);
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                         QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
-    QCOMPARE(spyDownloadComplete.count(), 1);
-    // void downloadComplete   (const QString& file, const QString& errorMsg);
-    QList<QVariant> arguments = spyDownloadComplete.takeFirst();
-    QVERIFY(arguments[1].toString().isEmpty());
-    _verifyFileSizeAndDelete(arguments[0].toString(), fileSize);
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, filename,
+                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QVERIFY(result.error.isEmpty());
+    _verifyFileSizeAndDelete(result.path, fileSize);
     _disconnectMockLink();
 }
 
@@ -245,17 +272,75 @@ QString FTPManagerTest::_downloadSizeFile(int fileSize, QString* downloadedPath)
 {
     FTPManager* ftpManager = _vehicle->ftpManager();
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
-    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                         QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-    if (!UnitTest::waitForSignal(spyDownloadComplete, TestTimeout::longMs(), QStringLiteral("downloadComplete"))) {
-        return QStringLiteral("downloadComplete never emitted");
+    QObject owner;
+    Result result;
+    if (!ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, filename,
+                              QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result))) {
+        return QStringLiteral("download refused");
     }
-    const QList<QVariant> arguments = spyDownloadComplete.takeFirst();
+    if (!UnitTest::waitForCondition([&result]() { return result.calls > 0; }, TestTimeout::longMs(),
+                                    QStringLiteral("download result"))) {
+        return QStringLiteral("download never called back");
+    }
     if (downloadedPath) {
-        *downloadedPath = arguments[0].toString();
+        *downloadedPath = result.path;
     }
-    return arguments[1].toString();
+    return result.error;
+}
+
+void FTPManagerTest::_testDownloadSizeLimit_data()
+{
+    QTest::addColumn<qint64>("maxBytes");
+    QTest::addColumn<int>("announcedLength");  // What the vehicle announces, or -1 for the size of the file
+    QTest::addColumn<bool>("refused");
+
+    // The file has 4 KiB
+    QTest::newRow("at the limit") << qint64{4 * 1024} << -1 << false;
+    QTest::newRow("larger than the limit") << qint64{4 * 1024 - 1} << -1 << true;
+    // Refused before any data is read
+    QTest::newRow("announced larger than the limit") << qint64{4 * 1024} << 8 * 1024 << true;
+    QTest::newRow("announced within the limit, larger as it arrives") << qint64{2 * 1024} << 1024 << true;
+}
+
+// A file larger than the limit of its download, as announced or as it arrives, fails the download. No part of it is
+// kept, and the session of the vehicle is free for the next download
+void FTPManagerTest::_testDownloadSizeLimit()
+{
+    QFETCH(qint64, maxBytes);
+    QFETCH(int, announcedLength);
+    QFETCH(bool, refused);
+
+    _connectMockLinkNoInitialConnectSequence();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setSingleSessionEnforced(true);
+    if (announcedLength >= 0) {
+        mockFtp->setAnnouncedFileLength(static_cast<uint32_t>(announcedLength));
+    }
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    QTemporaryDir destination;
+    QVERIFY(destination.isValid());
+
+    constexpr int fileSize = 4 * 1024;
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1,
+                                 QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize),
+                                 destination.path(), {.maxBytes = maxBytes}, _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    const QString error = result.error;
+
+    if (refused) {
+        QVERIFY2(error.startsWith(QStringLiteral("Download failed: the file is larger than ")), qPrintable(error));
+        QVERIFY(QDir(destination.path()).isEmpty());
+    } else {
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        _verifyFileContentsAndDelete(result.path, fileSize);
+    }
+
+    QString downloadedPath;
+    QCOMPARE(_downloadSizeFile(3 * 1024, &downloadedPath), QString());
+    _verifyFileSizeAndDelete(downloadedPath, 3 * 1024);
+    _disconnectMockLink();
 }
 
 // A download that dies mid-burst must release the vehicle-side session, otherwise a single-session server
@@ -279,8 +364,7 @@ void FTPManagerTest::_testFailedDownloadResetsSession()
     _disconnectMockLink();
 }
 
-// A rejected URI must leave no state machine installed, otherwise every later operation is refused as
-// "Already in another operation".
+// A rejected URI must queue nothing, otherwise every later operation waits behind it.
 void FTPManagerTest::_testInvalidUriDoesNotBlockNextOperation()
 {
     _connectMockLinkNoInitialConnectSequence();
@@ -288,8 +372,10 @@ void FTPManagerTest::_testInvalidUriDoesNotBlockNextOperation()
 
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression("Incorrect uri scheme or format"));
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression("_parseURI failed"));
-    QVERIFY(!ftpManager->download(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("http://bogus/file"),
-                                  QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+    QObject owner;
+    Result result;
+    QVERIFY(!ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("http://bogus/file"),
+                                  QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result)));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 
@@ -369,18 +455,23 @@ void FTPManagerTest::_testCancelDownloadIsImmediate()
     QSignalSpy spyReset(mockFtp, &MockLinkFTP::resetCommandReceived);
 
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyProgress(ftpManager, &FTPManager::commandProgress);
-    QSignalSpy spyComplete(ftpManager, &FTPManager::downloadComplete);
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(100 * 1024);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
-    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("commandProgress")));
+    QObject owner;
+    Result result;
+    const QPointer<FTPRequest> request =
+        ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, filename,
+                             QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result));
+    QVERIFY(request);
+    QSignalSpy spyProgress(request, &FTPRequest::progressChanged);
+    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("progressChanged")));
     const int resetsBeforeCancel = spyReset.count();
 
-    ftpManager->cancelDownload();
-    QCOMPARE(spyComplete.count(), 1);
-    QCOMPARE(spyComplete.takeFirst()[1].toString(), QStringLiteral("Aborted"));
+    request->cancel();
+    QCOMPARE(ftpManager->requestCount(), 0);
+    QVERIFY(!QFile::exists(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).filePath(filename)));
     QTRY_VERIFY_WITH_TIMEOUT(spyReset.count() > resetsBeforeCancel, TestTimeout::mediumMs());
+    QVERIFY(request.isNull());
+    QCOMPARE(result.calls, 0);
 
     mockFtp->setBurstReadDelayMs(0);
     _disconnectMockLink();
@@ -396,21 +487,23 @@ void FTPManagerTest::_testCancelDownloadBeforeOpen()
     mockFtp->setIgnoreResetSessions(true);
 
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyComplete(ftpManager, &FTPManager::downloadComplete);
     QSignalSpy spyReset(mockFtp, &MockLinkFTP::resetCommandReceived);
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(3 * 1024);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+    QObject owner;
+    Result result;
+    const QPointer<FTPRequest> request =
+        ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, filename,
+                             QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result));
+    QVERIFY(request);
+    QVERIFY_SIGNAL_COUNT_WAIT(spyReset, 1, TestTimeout::mediumMs());
 
-    ftpManager->cancelDownload();
-    QCOMPARE(spyComplete.count(), 1);
-    QCOMPARE(spyComplete.takeFirst()[1].toString(), QStringLiteral("Aborted"));
+    request->cancel();
     // The clear-stale reset, then the one releasing the abandoned session
     QVERIFY_SIGNAL_COUNT_WAIT(spyReset, 2, TestTimeout::mediumMs());
     // Nothing should proceed past the cancel: a live state machine would resend the unanswered reset every
     // kTestAckTimeoutMs (100 ms)
     QVERIFY_NO_SIGNAL_WAIT(spyReset, 250);
-    QVERIFY(spyComplete.isEmpty());
+    QCOMPARE(result.calls, 0);
     QCOMPARE(mockFtp->openFileROCount(), 0);
 
     mockFtp->setIgnoreResetSessions(false);
@@ -492,13 +585,16 @@ void FTPManagerTest::_testReadChunkSizeShrinksWhenRadioDetectedMidDownload()
     mockFtp->setBurstReadDelayMs(20);
 
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyProgress(ftpManager, &FTPManager::commandProgress);
-    QSignalSpy spyComplete(ftpManager, &FTPManager::downloadComplete);
     const int fileSize = 64 * 1024;
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
-    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("commandProgress")));
+    QObject owner;
+    Result result;
+    FTPRequest* const request =
+        ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, filename,
+                             QStandardPaths::writableLocation(QStandardPaths::TempLocation), {}, _record(result));
+    QVERIFY(request);
+    QSignalSpy spyProgress(request, &FTPRequest::progressChanged);
+    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("progressChanged")));
     QCOMPARE(mockFtp->lastBurstReadRequestSize(), static_cast<int>(FTPManager::kFullReadChunkSize));
 
     mavlink_message_t msg{};
@@ -508,11 +604,10 @@ void FTPManagerTest::_testReadChunkSizeShrinksWhenRadioDetectedMidDownload()
     MAVLinkProtocol::instance()->receiveBytes(_mockLink, QByteArray(reinterpret_cast<const char*>(buffer), len));
     QVERIFY(_mockLink->isRadioLink());
 
-    QVERIFY(UnitTest::waitForSignal(spyComplete, TestTimeout::longMs(), QStringLiteral("downloadComplete")));
-    const QList<QVariant> arguments = spyComplete.takeFirst();
-    QCOMPARE(arguments[1].toString(), QString());
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.error, QString());
     QCOMPARE(mockFtp->lastBurstReadRequestSize(), static_cast<int>(FTPManager::kRadioReadChunkSize));
-    _verifyFileContentsAndDelete(arguments[0].toString(), fileSize);
+    _verifyFileContentsAndDelete(result.path, fileSize);
 
     mockFtp->setBurstReadDelayMs(0);
     _disconnectMockLink();
@@ -541,13 +636,12 @@ void FTPManagerTest::_testListDirectory()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponseAllowRetry);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    TEST_DEBUG(QStringLiteral("listDirectory entries: %1").arg(arguments[0].toStringList().join(',')));
-    QCOMPARE(arguments[0].toStringList().count(), 6);
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    TEST_DEBUG(QStringLiteral("listDirectory entries: %1").arg(result.entries.join(',')));
+    QCOMPARE(result.entries.count(), 6);
     _disconnectMockLink();
 }
 
@@ -555,14 +649,13 @@ void FTPManagerTest::_testListDirectoryWithTime()
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    const QStringList entries = arguments[0].toStringList();
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    const QStringList entries = result.entries;
     QCOMPARE(entries.count(), 6);
-    QVERIFY(arguments[1].toString().isEmpty());
+    QVERIFY(result.error.isEmpty());
 
     // Each entry should carry "F<name>\t<size>\t<modification time>"
     for (int i = 0; i < entries.count(); i++) {
@@ -592,14 +685,13 @@ void FTPManagerTest::_testListDirectoryWithTimeFallback()
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
     _mockLink->mockLinkFTP()->setListDirectoryWithTimeNakError(static_cast<MavlinkFTP::ErrorCode_t>(nakError));
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    const QStringList entries = arguments[0].toStringList();
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    const QStringList entries = result.entries;
     QCOMPARE(entries.count(), 6);
-    QVERIFY(arguments[1].toString().isEmpty());
+    QVERIFY(result.error.isEmpty());
     QVERIFY(ftpManager->listDirectoryWithTimeUnsupported());
 
     // After falling back to kCmdListDirectory the entries carry no modification-time field.
@@ -613,21 +705,22 @@ void FTPManagerTest::_testListDirectoryWithTimeFailAfterSupported()
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
+    QObject owner;
 
     // First listing establishes kCmdListDirectoryWithTime support
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QVERIFY(spyListDirectoryComplete.takeFirst()[1].toString().isEmpty());
+    Result first;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(first)));
+    QVERIFY_TRUE_WAIT(first.calls == 1, TestTimeout::longMs());
+    QVERIFY(first.error.isEmpty());
 
     // Once support is known a kErrFail Nak is a real failure, not a reason to fall back
     _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
     _mockLink->mockLinkFTP()->setListDirectoryWithTimeNakError(MavlinkFTP::kErrFail);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QVERIFY(!arguments[1].toString().isEmpty());
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.entries.count(), 0);
+    QVERIFY(!result.error.isEmpty());
     QVERIFY(!ftpManager->listDirectoryWithTimeUnsupported());
     _disconnectMockLink();
 }
@@ -637,13 +730,12 @@ void FTPManagerTest::_testListDirectoryNoResponse()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QVERIFY(!arguments[1].toString().isEmpty());
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.entries.count(), 0);
+    QVERIFY(!result.error.isEmpty());
     _disconnectMockLink();
 }
 
@@ -652,13 +744,12 @@ void FTPManagerTest::_testListDirectoryNakResponse()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNakResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QVERIFY(!arguments[1].toString().isEmpty());
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.entries.count(), 0);
+    QVERIFY(!result.error.isEmpty());
     _disconnectMockLink();
 }
 
@@ -667,13 +758,12 @@ void FTPManagerTest::_testListDirectoryNoSecondResponse()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QVERIFY(!arguments[1].toString().isEmpty());
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.entries.count(), 0);
+    QVERIFY(!result.error.isEmpty());
     _disconnectMockLink();
 }
 
@@ -682,13 +772,12 @@ void FTPManagerTest::_testListDirectoryNoSecondResponseAllowRetry()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponseAllowRetry);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    TEST_DEBUG(QStringLiteral("listDirectory retry entries: %1").arg(arguments[0].toStringList().join(',')));
-    QCOMPARE(arguments[0].toStringList().count(), 6);
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    TEST_DEBUG(QStringLiteral("listDirectory retry entries: %1").arg(result.entries.join(',')));
+    QCOMPARE(result.entries.count(), 6);
     _disconnectMockLink();
 }
 
@@ -699,13 +788,12 @@ void FTPManagerTest::_testListDirectoryNakSecondResponse()
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     FTPManager* ftpManager = vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNakSecondResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QVERIFY(!arguments[1].toString().isEmpty());
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.entries.count(), 0);
+    QVERIFY(!result.error.isEmpty());
     _disconnectMockLink();
 }
 
@@ -716,13 +804,12 @@ void FTPManagerTest::_testListDirectoryBadSequence()
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     FTPManager* ftpManager = vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeBadSequence);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
-    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QVERIFY(!arguments[1].toString().isEmpty());
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.entries.count(), 0);
+    QVERIFY(!result.error.isEmpty());
     _disconnectMockLink();
 }
 
@@ -732,14 +819,16 @@ void FTPManagerTest::_testListDirectoryCancel()
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     FTPManager* ftpManager = vehicle->ftpManager();
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
-    ftpManager->cancelListDirectory();
-    // listDirectoryComplete is signalled immediately on calling cancelListDirectory so no need to wait
-    QCOMPARE(spyListDirectoryComplete.count(), 1);
-    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
-    QCOMPARE(arguments[0].toStringList().count(), 0);
-    QCOMPARE(arguments[1].toString(), QStringLiteral("Aborted"));
+    QObject owner;
+    Result result;
+    const QPointer<FTPRequest> request =
+        ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, "/", _recordList(result));
+    QVERIFY(request);
+    request->cancel();
+    // Gone from the queue at once, and never calls back
+    QCOMPARE(ftpManager->requestCount(), 0);
+    QTRY_VERIFY_WITH_TIMEOUT(request.isNull(), TestTimeout::shortMs());
+    QCOMPARE(result.calls, 0);
     _disconnectMockLink();
 }
 
@@ -759,18 +848,270 @@ void FTPManagerTest::_testUpload()
     QVERIFY(tempFile.open());
     QCOMPARE(tempFile.write(payload), static_cast<qint64>(payload.size()));
     tempFile.close();
-    QSignalSpy spyUploadComplete(ftpManager, &FTPManager::uploadComplete);
-    QVERIFY(ftpManager->upload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName()));
-    QVERIFY_SIGNAL_WAIT(spyUploadComplete, TestTimeout::longMs());
-    QCOMPARE(spyUploadComplete.count(), 1);
-    QList<QVariant> arguments = spyUploadComplete.takeFirst();
-    QCOMPARE(arguments[0].toString(), remotePath);
-    QVERIFY(arguments[1].toString().isEmpty());
+    QObject owner;
+    Result result;
+    QVERIFY(ftpManager->upload(&owner, MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName(), _record(result)));
+    QVERIFY_TRUE_WAIT(result.calls == 1, TestTimeout::longMs());
+    QCOMPARE(result.path, remotePath);
+    QVERIFY(result.error.isEmpty());
     QVERIFY(_mockLink->mockLinkFTP()->uploadedFiles().contains(remotePath));
     const QByteArray uploadedPayload = _mockLink->mockLinkFTP()->uploadedFileContents(remotePath);
     QCOMPARE(uploadedPayload, payload);
     _mockLink->mockLinkFTP()->clearUploadedFiles();
     _disconnectMockLink();
+}
+
+FTPRequest* FTPManagerTest::_queueSizeFile(QObject* owner, int fileSize, Result& result, QStringList* order,
+                                           const QString& name)
+{
+    const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
+    FTPRequest* const request = _vehicle->ftpManager()->download(
+        owner, MAV_COMP_ID_AUTOPILOT1, filename, QStandardPaths::writableLocation(QStandardPaths::TempLocation), {},
+        _record(result, order, QStringLiteral("done ") + name));
+    if (request && order) {
+        (void) connect(request, &FTPRequest::started, this,
+                       [order, name]() { order->append(QStringLiteral("start ") + name); });
+    }
+    return request;
+}
+
+// Requests made while another runs wait for it and run one after the other, in the order they were made. Each gets
+// its own result.
+void FTPManagerTest::_testQueuedRequestsRunInOrder()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    _mockLink->mockLinkFTP()->setSingleSessionEnforced(true);
+
+    QObject owner;
+    QStringList order;
+    Result first;
+    Result second;
+    QVERIFY(_queueSizeFile(&owner, 3 * 1024, first, &order, QStringLiteral("first")));
+    QVERIFY(_queueSizeFile(&owner, 2 * 1024, second, &order, QStringLiteral("second")));
+    QCOMPARE(_vehicle->ftpManager()->requestCount(), 2);
+
+    QVERIFY_TRUE_WAIT(second.calls == 1, TestTimeout::longMs());
+    QCOMPARE(order, QStringList({QStringLiteral("start first"), QStringLiteral("done first"),
+                                 QStringLiteral("start second"), QStringLiteral("done second")}));
+    QCOMPARE(first.calls, 1);
+    QCOMPARE(first.error, QString());
+    QCOMPARE(second.error, QString());
+    _verifyFileContentsAndDelete(first.path, 3 * 1024);
+    _verifyFileContentsAndDelete(second.path, 2 * 1024);
+    QCOMPARE(_vehicle->ftpManager()->requestCount(), 0);
+}
+
+// A request that fails ends alone: the one after it runs as if nothing had happened, also when it is of another
+// kind.
+void FTPManagerTest::_testFailedRequestDoesNotDisturbNext()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setSingleSessionEnforced(true);
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+
+    QObject owner;
+    QStringList order;
+    Result first;
+    Result missing;
+    Result listing;
+    QVERIFY(_queueSizeFile(&owner, 3 * 1024, first, &order, QStringLiteral("first")));
+    QVERIFY(ftpManager->download(&owner, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/no-such-file"),
+                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation), {},
+                                 _record(missing, &order, QStringLiteral("missing"))));
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"), _recordList(listing)));
+
+    QVERIFY_TRUE_WAIT(listing.calls == 1, TestTimeout::longMs());
+    QCOMPARE(order,
+             QStringList({QStringLiteral("start first"), QStringLiteral("done first"), QStringLiteral("missing")}));
+    QCOMPARE(first.error, QString());
+    _verifyFileContentsAndDelete(first.path, 3 * 1024);
+    QVERIFY2(missing.error.startsWith(QStringLiteral("Download failed")), qPrintable(missing.error));
+    QVERIFY(!QFile::exists(missing.path));
+    QCOMPARE(listing.error, QString());
+    QCOMPARE(listing.entries.count(), 6);
+}
+
+// A request cancelled while it waits leaves the queue without a trace: it never reaches the vehicle and never calls
+// back, and the others run.
+void FTPManagerTest::_testCancelQueuedRequest()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+
+    QObject owner;
+    QStringList order;
+    Result first;
+    Result cancelled;
+    Result last;
+    QVERIFY(_queueSizeFile(&owner, 3 * 1024, first, &order, QStringLiteral("first")));
+    const QPointer<FTPRequest> request =
+        _queueSizeFile(&owner, 2 * 1024, cancelled, &order, QStringLiteral("cancelled"));
+    QVERIFY(request);
+    QVERIFY(_queueSizeFile(&owner, 1024, last, &order, QStringLiteral("last")));
+    QVERIFY_TRUE_WAIT(order.contains(QStringLiteral("start first")), TestTimeout::longMs());
+
+    request->cancel();
+    QCOMPARE(_vehicle->ftpManager()->requestCount(), 2);
+
+    QVERIFY_TRUE_WAIT(last.calls == 1, TestTimeout::longMs());
+    QCOMPARE(order, QStringList({QStringLiteral("start first"), QStringLiteral("done first"),
+                                 QStringLiteral("start last"), QStringLiteral("done last")}));
+    QCOMPARE(cancelled.calls, 0);
+    QVERIFY(request.isNull());
+    QCOMPARE(mockFtp->openFileROCount(), 2);
+    _verifyFileContentsAndDelete(first.path, 3 * 1024);
+    _verifyFileContentsAndDelete(last.path, 1024);
+}
+
+// Cancelling the request that runs ends it on the vehicle, without waiting for it: its session is released, its part
+// of the file is removed, and the next request runs.
+void FTPManagerTest::_testCancelRunningRequest()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setSingleSessionEnforced(true);
+    mockFtp->setBurstReadDelayMs(100);
+    QSignalSpy spyReset(mockFtp, &MockLinkFTP::resetCommandReceived);
+
+    QObject owner;
+    Result cancelled;
+    Result next;
+    const QPointer<FTPRequest> request = _queueSizeFile(&owner, 100 * 1024, cancelled);
+    QVERIFY(request);
+    QSignalSpy spyProgress(request, &FTPRequest::progressChanged);
+    QVERIFY(_queueSizeFile(&owner, 3 * 1024, next));
+    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("progressChanged")));
+    const int resetsBeforeCancel = spyReset.count();
+
+    request->cancel();
+    mockFtp->setBurstReadDelayMs(0);
+    QVERIFY(
+        !QFile::exists(cancelled.path.isEmpty()
+                           ? QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                                 .filePath(QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(100 * 1024))
+                           : cancelled.path));
+    QVERIFY_SIGNAL_COUNT_WAIT(spyReset, resetsBeforeCancel + 1, TestTimeout::mediumMs());
+
+    QVERIFY_TRUE_WAIT(next.calls == 1, TestTimeout::longMs());
+    QCOMPARE(next.error, QString());
+    _verifyFileContentsAndDelete(next.path, 3 * 1024);
+    QCOMPARE(cancelled.calls, 0);
+    QVERIFY(request.isNull());
+}
+
+// The requests of an owner that is destroyed end with it, the one that runs as by cancel(). Those of others run.
+void FTPManagerTest::_testOwnerDestroyedDropsItsRequests()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setSingleSessionEnforced(true);
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+
+    Result running;
+    Result waiting;
+    Result other;
+    QStringList order;
+    auto owner = std::make_unique<QObject>();
+    QObject otherOwner;
+    QVERIFY(_queueSizeFile(owner.get(), 3 * 1024, running, &order, QStringLiteral("running")));
+    QVERIFY(_queueSizeFile(owner.get(), 2 * 1024, waiting, &order, QStringLiteral("waiting")));
+    QVERIFY(_queueSizeFile(&otherOwner, 1024, other, &order, QStringLiteral("other")));
+    QVERIFY_TRUE_WAIT(order.contains(QStringLiteral("start running")), TestTimeout::longMs());
+
+    owner.reset();
+    QCOMPARE(ftpManager->requestCount(), 1);
+
+    QVERIFY_TRUE_WAIT(other.calls == 1, TestTimeout::longMs());
+    QCOMPARE(other.error, QString());
+    _verifyFileContentsAndDelete(other.path, 1024);
+    QCOMPARE(order, QStringList({QStringLiteral("start running"), QStringLiteral("start other"),
+                                 QStringLiteral("done other")}));
+    QCOMPARE(running.calls, 0);
+    QCOMPARE(waiting.calls, 0);
+}
+
+// A vehicle that goes away ends the requests that are left with an error, the one that ran and those that waited,
+// from the event loop. The part of the file that was downloaded is removed.
+void FTPManagerTest::_testVehicleGoneEndsRequests()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(100);
+
+    QObject owner;
+    Result running;
+    Result waiting;
+    FTPRequest* const request = _queueSizeFile(&owner, 100 * 1024, running);
+    QVERIFY(request);
+    QSignalSpy spyProgress(request, &FTPRequest::progressChanged);
+    QVERIFY(_queueSizeFile(&owner, 3 * 1024, waiting));
+    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("progressChanged")));
+    QVERIFY(
+        QFile::exists(running.path.isEmpty()
+                          ? QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                                .filePath(QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(100 * 1024))
+                          : running.path));
+
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+    _disconnectMockLink();
+
+    QVERIFY_TRUE_WAIT((running.calls == 1) && (waiting.calls == 1), TestTimeout::mediumMs());
+    QCOMPARE(running.error, QStringLiteral("Vehicle disconnected"));
+    QCOMPARE(waiting.error, QStringLiteral("Vehicle disconnected"));
+    QVERIFY(!QFile::exists(running.path));
+    QVERIFY(!QFile::exists(waiting.path));
+}
+
+// At connection, the component metadata and the definition of a camera are downloaded over MAVLink FTP at the same
+// time. Both are downloaded, whichever asks first.
+void FTPManagerTest::_testMetadataAndCameraDefinitionTogether()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    QVERIFY(_vehicle);
+    ComponentInformationManager* const compInfoManager = _vehicle->compInfoManager();
+    QVERIFY(compInfoManager);
+    QVERIFY_TRUE_WAIT(!compInfoManager->inProgress(), TestTimeout::mediumMs());
+
+    // The camera definition is cached under the save path: a directory of the test's own
+    QTemporaryDir saveRoot;
+    QVERIFY(saveRoot.isValid());
+    Fact* const savePath = SettingsManager::instance()->appSettings()->savePath();
+    const QVariant originalSavePath = savePath->rawValue();
+    savePath->setRawValue(saveRoot.path());
+    const auto restoreSavePath =
+        qScopeGuard([savePath, originalSavePath]() { savePath->setRawValue(originalSavePath); });
+
+    QTemporaryDir servedDir;
+    QVERIFY(servedDir.isValid());
+    const QString definitionFile = servedDir.filePath(QStringLiteral("camera.xml.gz"));
+    QVERIFY(TestFixtures::writeFile(
+        definitionFile,
+        TestFixtures::gzipMember(R"(<?xml version="1.0" encoding="UTF-8"?>)"
+                                 R"(<mavlinkcamera><definition version="1"><model>Cam</model><vendor>Acme</vendor>)"
+                                 R"(</definition><parameters><parameter name="CAM_FTP" type="uint32" default="0">)"
+                                 R"(<description>Setting</description></parameter></parameters></mavlinkcamera>)")));
+    _mockLink->mockLinkFTP()->setServedFile(QStringLiteral("/camera.xml.gz"), definitionFile);
+
+    CompInfoParam* const param = compInfoManager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    // Random CRC so the file cache cannot satisfy the request
+    param->setUriMetaData(QStringLiteral("mftp://[;comp=1]parameter.json.xz"), QRandomGenerator::global()->generate());
+    RequestMetaDataTypeStateMachine metadataRequest(compInfoManager, this);
+    QSignalSpy metadataComplete(&metadataRequest, &RequestMetaDataTypeStateMachine::requestComplete);
+
+    const QByteArray uri = QByteArrayLiteral("mftp://[;comp=1]/camera.xml.gz");
+    mavlink_camera_information_t info{};
+    memcpy(info.vendor_name, "Acme", 5);
+    memcpy(info.model_name, "Cam", 4);
+    memcpy(info.cam_definition_uri, uri.constData(), static_cast<size_t>(uri.size()));
+
+    metadataRequest.request(param);
+    VehicleCameraControl camera(&info, _vehicle, MAV_COMP_ID_CAMERA6);
+
+    QVERIFY(UnitTest::waitForSignal(metadataComplete, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    QVERIFY_TRUE_WAIT(!camera.isBasic(), TestTimeout::longMs());
+    QCOMPARE(camera.activeSettings(), QStringList{QStringLiteral("CAM_FTP")});
+    // A metadata download that is refused or fails is reported with a warning, which fails the test
 }
 
 UT_REGISTER_TEST(FTPManagerTest, TestLabel::Integration, TestLabel::Vehicle, TestLabel::Serial)

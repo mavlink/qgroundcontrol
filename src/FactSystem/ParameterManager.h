@@ -6,6 +6,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QPair>
+#include <QtCore/QPointer>
 #include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -17,6 +18,7 @@
 
 class QTextStream;
 
+class FTPRequest;
 class ParameterEditorController;
 class Vehicle;
 
@@ -285,7 +287,7 @@ private:
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
     bool _tryftp = false;
-    bool _ftpDownloadInProgress = false;        ///< true: @PARAM/param.pck transfer in flight
+    QPointer<FTPRequest> _ftpRequest;           ///< The @PARAM/param.pck transfer that waits or runs
     bool _ftpParamsLoaded = false;              ///< true: autopilot params came from param.pck
     QSet<int> _heartbeatComponentIds;           ///< Non-autopilot components heard via HEARTBEAT
 };

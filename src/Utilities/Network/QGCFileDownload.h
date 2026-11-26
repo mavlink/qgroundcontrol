@@ -138,7 +138,9 @@ public:
     /// Compression::kDefaultMaxDecompressedFileBytes
     qint64 maxDecompressedBytes() const { return _maxDecompressedBytes; }
 
-    /// Set the largest size a file decompressed by autoDecompress may have. Choose it for what is done with the file
+    /// Set the largest size a file decompressed by autoDecompress may have. Choose it for what is done with the file.
+    /// It is apart from setMaxBytes(), which limits the transfer: a download within that limit can decompress to far
+    /// more, and fails if it decompresses to more than this
     void setMaxDecompressedBytes(qint64 maxBytes) { _maxDecompressedBytes = maxBytes; }
 
     /// Directory of a download without outputPath, which keeps the file name of its URL. By default the temp
@@ -147,6 +149,16 @@ public:
 
     /// Set the directory of a download without outputPath (empty = the default)
     void setOutputDirectory(const QString& directory) { _outputDirectory = directory; }
+
+    /// Set the largest size of a download (0 = unlimited, the default). A download whose announced length is
+    /// larger, or that receives more, fails, and no part of it is kept. A body sent with a content encoding counts as
+    /// decoded. With autoDecompress, this limits the file as it was sent, and setMaxDecompressedBytes() the file it
+    /// decompresses to.
+    void setMaxBytes(qint64 maxBytes) { _maxBytes = maxBytes; }
+
+    /// Set whether the certificate of an HTTPS server is verified (true, the default). Without, any certificate is
+    /// accepted, also a self-signed one or one of another host.
+    void setVerifyPeer(bool verifyPeer) { _verifyPeer = verifyPeer; }
 
     // Property setters
     void setAutoDecompress(bool enabled);
@@ -237,6 +249,9 @@ private:
     void _emitFinished(bool success, const QString &localPath, const QString &errorMessage);
     bool _writeReplyData(const QByteArray &data);
     bool _failForWriteError(const QString &context);
+    /// Whether @a incoming more bytes of @a reply keep the download within its size limit
+    bool _withinMaxBytes(const QNetworkReply* reply, qint64 incoming) const;
+    void _failForSize();
     QString _generateOutputPath(const QString &remoteUrl) const;
     bool _verifyHash();
     void _startDecompression();
@@ -256,7 +271,9 @@ private:
     qreal _progress = 0.0;
     qint64 _totalBytes = -1;
     qint64 _bytesReceived = 0;
+    qint64 _maxBytes = 0;
     qint64 _maxDecompressedBytes = Compression::kDefaultMaxDecompressedFileBytes;
+    bool _verifyPeer = true;
     int _timeoutMs = QGCNetworkHelper::kDefaultTimeoutMs;
 
     State _state = State::Idle;

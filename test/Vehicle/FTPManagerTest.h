@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseClasses/VehicleTestManualConnect.h"
+#include "FTPManager.h"
 
 class FTPManagerTest : public VehicleTestManualConnect
 {
@@ -41,11 +42,35 @@ private slots:
     void _testReadChunkSizeShrinksWhenRadioDetectedMidDownload();
     void _testDownloadExplicitFileNameIsBasename();
     void _testDownloadRejectsMissingDestination();
+    UT_PARAMETERIZED_TEST(_testDownloadSizeLimit);
+    void _testQueuedRequestsRunInOrder();
+    void _testFailedRequestDoesNotDisturbNext();
+    void _testCancelQueuedRequest();
+    void _testCancelRunningRequest();
+    void _testOwnerDestroyedDropsItsRequests();
+    void _testVehicleGoneEndsRequests();
+    void _testMetadataAndCameraDefinitionTogether();
 
     // Overrides from UnitTest
     void cleanup() override;
 
 private:
+    /// What a request called back with
+    struct Result
+    {
+        int calls = 0;
+        QString path;
+        QStringList entries;
+        QString error;
+    };
+
+    /// Records the result in @a result and, if @a order is set, appends @a name to it
+    static FTPManager::FileCallback _record(Result& result, QStringList* order = nullptr, const QString& name = {});
+    static FTPManager::ListCallback _recordList(Result& result);
+    /// Makes a download of the MockLinkFTP size file of @a fileSize into the temporary directory
+    FTPRequest* _queueSizeFile(QObject* owner, int fileSize, Result& result, QStringList* order = nullptr,
+                               const QString& name = {});
+
     struct TestCase_t
     {
         const char* file;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
 
@@ -9,7 +11,8 @@
 #include "QmlObjectListModel.h"
 
 class QGCVideoStreamInfo;
-class QNetworkAccessManager;
+class QTemporaryDir;
+class VehicleFileFetch;
 class QDomDocument;
 class QDomNode;
 class QDomNodeList;
@@ -244,7 +247,6 @@ protected slots:
     virtual void    _requestParamUpdates    ();
     virtual void    _requestCaptureStatus   ();
     virtual void    _requestStorageInfo     ();
-    virtual void    _downloadFinished       ();
     virtual void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
     /// Loads the camera definition in @p data, or the offline one if @p data is empty, then initialises the camera.
     /// The definition is parsed on a worker thread, so the camera is initialised after this returns, unless there is
@@ -283,9 +285,9 @@ private:
     bool    _loadRanges                     (QDomNode option, const QString factName, QString paramValue);
     void    _updateActiveList               ();
     void    _updateRanges                   (Fact* pFact);
-    void    _httpRequest                    (const QString& url);
     void    _handleDefinitionFile           (const QString& url);
-    void    _ftpDownloadComplete            (const QString& fileName, const QString& errorMsg);
+    void _fetchDefinition(const QString& url);
+    void _definitionDownloaded(const QString& fileName, const QString& errorMsg);
     /// Asks the camera to stop the streams it transmits that are neither the current one nor an extra one, then to
     /// start those of them it doesn't transmit: one command at a time, the next once the camera answered the last.
     void _syncStreams();
@@ -297,6 +299,9 @@ private:
 
     /// Reads or parses the camera definition on a worker thread. Deleting it drops its result.
     QPointer<QObject> _definitionJob;
+    QPointer<VehicleFileFetch> _definitionFetch;
+    /// Where the definition is downloaded when the save directory is unavailable; nothing is cached then
+    std::unique_ptr<QTemporaryDir> _downloadDirectory;
 
 protected:
     int                                 _compID             = 0;
@@ -309,7 +314,6 @@ protected:
     uint32_t                            _storageFree        = 0;
     uint32_t                            _storageTotal       = 0;
     int                                 _batteryRemaining   = -1;
-    QNetworkAccessManager*              _netManager         = nullptr;
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;

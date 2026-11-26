@@ -31,6 +31,23 @@ QByteArray httpReasonPhrase(int statusCode)
     default: return QByteArrayLiteral("Status");
     }
 }
+
+QByteArray fixtureHttpResponse(const QByteArray& body, int statusCode, const QByteArray& contentType, int cacheMaxAge)
+{
+    QByteArray header = QStringLiteral(
+                            "HTTP/1.1 %1 %2\r\n"
+                            "Content-Type: %3\r\n"
+                            "Connection: close\r\n")
+                            .arg(statusCode)
+                            .arg(QString::fromLatin1(httpReasonPhrase(statusCode)))
+                            .arg(QString::fromLatin1(contentType))
+                            .toUtf8();
+    if (cacheMaxAge >= 0) {
+        header += QStringLiteral("Cache-Control: max-age=%1\r\n").arg(cacheMaxAge).toUtf8();
+    }
+    header += QByteArrayLiteral("Content-Length: ") + QByteArray::number(body.size()) + QByteArrayLiteral("\r\n\r\n");
+    return header + body;
+}
 } // namespace
 
 LocalHttpTestServer::~LocalHttpTestServer()
@@ -69,30 +86,36 @@ QString LocalHttpTestServer::url(const QString& path) const
 void LocalHttpTestServer::installHttpResponder(const QByteArray& body, int statusCode, const QByteArray& contentType,
                                                int cacheMaxAge)
 {
-    QByteArray header = QStringLiteral("HTTP/1.1 %1 %2\r\n"
-                                       "Content-Type: %3\r\n"
-                                       "Connection: close\r\n")
-                            .arg(statusCode)
-                            .arg(QString::fromLatin1(httpReasonPhrase(statusCode)))
-                            .arg(QString::fromLatin1(contentType))
-                            .toUtf8();
-    if (cacheMaxAge >= 0) {
-        header += QStringLiteral("Cache-Control: max-age=%1\r\n").arg(cacheMaxAge).toUtf8();
-    }
-    header += QByteArrayLiteral("Content-Length: ") + QByteArray::number(body.size()) + QByteArrayLiteral("\r\n\r\n");
-    installRawResponder(header + body);
+    installRawResponder(fixtureHttpResponse(body, statusCode, contentType, cacheMaxAge));
 }
 
 void LocalHttpTestServer::installRawResponder(const QByteArray& rawResponse)
 {
+    _installResponder([rawResponse](const QByteArray&) { return rawResponse; });
+}
+
+void LocalHttpTestServer::installFileResponder(const QHash<QString, QByteArray>& files)
+{
+    _installResponder([files](const QByteArray& request) {
+        // "GET /path HTTP/1.1"
+        const QString path = QString::fromUtf8(request.left(request.indexOf('\r')).split(' ').value(1));
+        const auto file = files.constFind(path);
+        return (file == files.constEnd()) ? fixtureHttpResponse(QByteArrayLiteral("Not found"), 404, "text/plain", -1)
+                                          : fixtureHttpResponse(*file, 200, "application/octet-stream", -1);
+    });
+}
+
+void LocalHttpTestServer::_installResponder(std::function<QByteArray(const QByteArray& request)> respond)
+{
     QObject::disconnect(&_server, &QTcpServer::newConnection, nullptr, nullptr);
-    (void) QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this, rawResponse]() {
+    (void) QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this, respond]() {
         while (_server.hasPendingConnections()) {
             QTcpSocket* const socket = _server.nextPendingConnection();
+            _connectionCount++;
             (void) QObject::connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
 
             const auto state = QSharedPointer<RawResponderState>::create();
-            const auto sendResponseWhenRequestComplete = [socket, rawResponse, state]() {
+            const auto sendResponseWhenRequestComplete = [socket, respond, state]() {
                 if (state->responseSent) {
                     return;
                 }
@@ -107,7 +130,7 @@ void LocalHttpTestServer::installRawResponder(const QByteArray& rawResponse)
                 }
 
                 state->responseSent = true;
-                socket->write(rawResponse);
+                socket->write(respond(state->request));
                 socket->flush();
                 socket->disconnectFromHost();
             };

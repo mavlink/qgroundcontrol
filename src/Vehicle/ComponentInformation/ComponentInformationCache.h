@@ -30,7 +30,8 @@ public:
      * Insert a file into the cache & remove old files if there's too many.
      * @param fileTag
      * @param fileName file to insert, will be moved (or deleted if already exists)
-     * @return cached file name if inserted or already exists, "" on error
+     * @return cached file name if inserted or already exists, "" on error. @a fileName itself, which is then not
+     *         cached, if a leftover file of that tag is in the way and cannot be removed
      */
     QString insert(const QString &fileTag, const QString& fileName);
 

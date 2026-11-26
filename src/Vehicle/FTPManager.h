@@ -1,94 +1,172 @@
 #pragma once
 
-#include "MAVLinkFTP.h"
+#include <functional>
 
-#include <QtCore/QObject>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QList>
+#include <QtCore/QObject>
+#include <QtCore/QStringList>
 #include <QtCore/QTimer>
+
+#include "MAVLinkFTP.h"
+
+class FTPManager;
 class Vehicle;
 
+/// An operation that FTPManager runs for a caller, made by FTPManager::download(), upload(), listDirectory() or
+/// deleteFile().
+///
+/// The request is a child of the context given to it. It waits in the queue of its vehicle until the operations
+/// before it have ended, runs, calls its callback once and deletes itself before it does. cancel(), deleting the
+/// request and deleting the context all end it the same way: the callback is not called. A request that waits is
+/// taken out of the queue; one that runs is ended at once, and the session it may hold on the vehicle is released.
+/// A caller that has moved on needs no check in the callback.
+///
+/// @code
+/// _request = _vehicle->ftpManager()->download(this, MAV_COMP_ID_AUTOPILOT1, uri, directory, {},
+///                                             [this](const QString& file, const QString& errorMsg) { ... });
+/// connect(_request, &FTPRequest::progressChanged, this, &MyClass::_showProgress);
+/// // Later, if the result is no longer wanted. _request is a QPointer: the request deletes itself
+/// if (_request) {
+///     _request->cancel();
+/// }
+/// @endcode
+class FTPRequest : public QObject
+{
+    Q_OBJECT
+    Q_DISABLE_COPY_MOVE(FTPRequest)
+
+public:
+    /// Ends the request without calling back
+    ~FTPRequest() override;
+
+    /// Ends the request without calling back, as deleting it does, and deletes it later
+    void cancel();
+
+signals:
+    /// The operation begins on the vehicle: the operations queued before it have ended
+    void started();
+
+    /// Progress of a download or an upload, from 0.0 to 1.0
+    void progressChanged(float progress);
+
+private:
+    friend class FTPManager;
+
+    enum class Operation
+    {
+        Download,
+        Upload,
+        ListDirectory,
+        DeleteFile,
+    };
+
+    FTPRequest(FTPManager* manager, QObject* context, Operation operation);
+
+    /// Deletes the request, then calls its callback
+    void _complete(const QStringList& entries, const QString& errorMsg);
+
+    FTPManager* _manager = nullptr;  ///< Cleared once the manager is done with the request
+    const Operation _operation;
+    uint8_t _compId = 0;
+    QString _pathOnVehicle;
+    QString _resultPath;  ///< What the callback gets: the local file of a download, else _pathOnVehicle
+    QString _toDir;
+    QString _fileName;
+    bool _checksize = true;
+    qint64 _maxBytes = 0;
+    QString _localFile;
+    std::function<void(const QString&, const QString&)> _fileDone;
+    std::function<void(const QStringList&, const QString&)> _listDone;
+};
+
+/// MAVLink FTP with one vehicle.
+///
+/// The operations of a vehicle run one at a time, in the order they were asked for, whichever component of the
+/// vehicle they address. Each one is an FTPRequest, which reports its own result.
 class FTPManager : public QObject
 {
     Q_OBJECT
 
     friend class Vehicle;
+    friend class FTPRequest;
 
 public:
     FTPManager(Vehicle* vehicle);
+    /// Ends the requests that are left: each calls back later with an error, see FileCallback
+    ~FTPManager() override;
+
+    /// What a download, an upload or a delete calls back with: the local file of a download, the path on the vehicle
+    /// of an upload or a delete, and an error message that is empty on success.
+    /// A request that is left when the vehicle goes away calls back later, from the event loop, with an error.
+    using FileCallback = std::function<void(const QString& path, const QString& errorMsg)>;
+    /// What a directory listing calls back with: the entries, none on error, and an error message that is empty on
+    /// success
+    using ListCallback = std::function<void(const QStringList& entries, const QString& errorMsg)>;
+
+    struct DownloadOptions
+    {
+        /// Local file name, empty for the name of the file on the vehicle. Only its last component is used.
+        QString fileName{};
+        /// If true compare the filesize indicated in the open response with the transmitted filesize. If false the
+        /// transmission is tftp style and the indicated filesize from MAVFTP fileopen response is ignored. This is
+        /// used for the APM parameter download where the filesize is wrong due to a dynamic file creation on the
+        /// vehicle.
+        bool checksize = true;
+        /// Largest size of the file, 0 = unlimited. A file that the vehicle announces larger (with checksize), or
+        /// whose data reaches beyond it, fails the download, and no part of it is kept.
+        qint64 maxBytes = 0;
+    };
 
     /// Downloads the specified file.
+    ///     @param context    Owner of the request, see FTPRequest
     ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL,
     ///                       then MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param fromURI    File to download from component, fully qualified path. May be in the format
     ///                       "mftp://[;comp=<id>]..." where the component id is specified. If component id is not
     ///                       specified, then the id set via fromCompId is used.
-    ///     @param toDir      Local directory to download file to. Must be non-empty and already exist;
-    ///                       otherwise download() returns false without starting.
-    ///     @param filename   (optional)
-    ///     @param checksize  (optional, default true) If true compare the filesize indicated in the open
-    ///                       response with the transmitted filesize. If false the transmission is tftp style
-    ///                       and the indicated filesize from MAVFTP fileopen response is ignored.
-    ///                       This is used for the APM parameter download where the filesize is wrong due to
-    ///                       a dynamic file creation on the vehicle.
-    /// @return true: download has started, false: error, no download and no downloadComplete signal
-    /// Signals downloadComplete, commandProgress
-    bool download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName = "",
-                  bool checksize = true);
+    ///     @param toDir      Local directory to download file to. Must be non-empty and already exist.
+    ///     @param done       Called with the local file and the error message
+    /// @return The request, queued, or nullptr for arguments that cannot be used: nothing is queued and done is not
+    ///         called. Hold it in a QPointer to cancel it.
+    FTPRequest* download(QObject* context, uint8_t fromCompId, const QString& fromURI, const QString& toDir,
+                         const DownloadOptions& options, FileCallback done);
 
     /// Uploads a local file to the specified URI on the vehicle.
-    ///     @param toCompId Component id of the component to upload to. If toCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
-    ///     @param toURI    Destination file path on the vehicle, fully qualified. May include mftp:// scheme and optional component id selector.
-    ///     @param fromFile Local filesystem path of the file to upload.
-    /// @return true: upload started, false: error, no upload
-    /// Signals uploadComplete, commandProgress
-    bool upload(uint8_t toCompId, const QString& toURI, const QString& fromFile);
+    ///     @param toCompId Component id of the component to upload to. If toCompId is MAV_COMP_ID_ALL, then
+    ///     MAV_COMP_ID_AUTOPILOT1 is used.
+    ///     @param toURI    Destination file path on the vehicle, fully qualified. May include mftp:// scheme and
+    ///     optional component id selector.
+    ///     @param fromFile Local filesystem path of the file to upload. It is opened when the upload begins.
+    /// @return See download()
+    FTPRequest* upload(QObject* context, uint8_t toCompId, const QString& toURI, const QString& fromFile,
+                       FileCallback done);
 
-	/// Get the directory listing of the specified directory.
-    ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
-    ///     @param fromURI    Directory path to list from component. May be in the format "mftp://[;comp=<id>]..." where the component id
+    /// Get the directory listing of the specified directory.
+    ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL, then
+    ///     MAV_COMP_ID_AUTOPILOT1 is used.
+    ///     @param fromURI    Directory path to list from component. May be in the format "mftp://[;comp=<id>]..." where
+    ///     the component id
     ///                       is specified. If component id is not specified, then the id set via fromCompId is used.
-    /// @return true: process has started, false: error
-    /// Signals listDirectoryComplete
-    bool listDirectory(uint8_t fromCompId, const QString& fromURI);
+    /// @return See download()
+    FTPRequest* listDirectory(QObject* context, uint8_t fromCompId, const QString& fromURI, ListCallback done);
 
     /// true when the vehicle NAK'ed kCmdListDirectoryWithTime, i.e. directory listings carry no modification times.
     bool listDirectoryWithTimeUnsupported() const { return _listDirWithTimeSupport == WithTimeSupport_t::Unsupported; }
 
     /// Deletes a file on the vehicle.
-    ///     @param fromCompId Component id of the component to delete from. If fromCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
-    ///     @param fromURI    File path to delete on the component. May include mftp:// scheme and optional component id selector.
-    /// @return true: process has started, false: error
-    /// Signals deleteComplete
-    bool deleteFile(uint8_t fromCompId, const QString& fromURI);
+    ///     @param fromCompId Component id of the component to delete from. If fromCompId is MAV_COMP_ID_ALL, then
+    ///     MAV_COMP_ID_AUTOPILOT1 is used.
+    ///     @param fromURI    File path to delete on the component. May include mftp:// scheme and optional component id
+    ///     selector.
+    /// @return See download()
+    FTPRequest* deleteFile(QObject* context, uint8_t fromCompId, const QString& fromURI, FileCallback done);
 
-    /// Cancel the download operation
-    /// This will emit downloadComplete() when done, and if there's currently a download in progress
-    void cancelDownload();
-
-    /// Cancel the list directory operation if running.
-    /// This will emit listDirectoryComplete() with an error string when finished.
-    void cancelListDirectory();
-
-    /// Cancel the delete operation if running.
-    /// This will emit deleteComplete() with an error string when finished.
-    void cancelDelete();
-
-    /// Cancel the upload operation
-    /// This will emit uploadComplete() when done, and if there's currently an upload in progress
-    void cancelUpload();
+    /// Requests that wait or run
+    int requestCount() const { return _queue.size() + (_current ? 1 : 0); }
 
     static constexpr const char* mavlinkFTPScheme = "mftp";
-
-signals:
-    void downloadComplete       (const QString& file, const QString& errorMsg);
-    void uploadComplete         (const QString& file, const QString& errorMsg);
-    void listDirectoryComplete  (const QStringList& dirList, const QString& errorMsg);
-    void deleteComplete         (const QString& file, const QString& errorMsg);
-
-    /// Signalled during a lengthy command to show progress
-    ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
-    void commandProgress(float value);
 
 private slots:
     void _ackOrNakTimeout(void);
@@ -123,9 +201,7 @@ private:
         bool                    checksize;
         int                     sessionReopenCount;     ///< Times the server expired our session and we re-opened
         int                     resumeStateIndex;       ///< State to return to after a session re-open, -1 if not resuming
-        bool                    active = false;         ///< true from download() until _downloadComplete, covers the pre-open phases
-
-        bool inProgress() const { return active; }
+        qint64 maxBytes = 0;                            ///< See DownloadOptions, 0 = unlimited
 
         void reset() {
             sessionId       = 0;
@@ -135,7 +211,7 @@ private:
             fileSize        = 0;
             sessionReopenCount = 0;
             resumeStateIndex = -1;
-            active          = false;
+            maxBytes = 0;
             fullPathOnVehicle.clear();
             fileName.clear();
             rgMissingData.clear();
@@ -150,8 +226,6 @@ private:
         QStringList             rgDirectoryList;
         int                     retryCount;
         MavlinkFTP::OpCode_t    opCode;                 ///< List opcode currently in use (kCmdListDirectoryWithTime or kCmdListDirectory)
-
-        bool inProgress() const { return !fullPathOnVehicle.isEmpty(); }
 
         void reset() {
             sessionId       = 0;
@@ -171,8 +245,6 @@ private:
         QString fullPathOnVehicle;      ///< Fully qualified path to file on vehicle
         int     retryCount = 0;
 
-        bool inProgress() const { return !fullPathOnVehicle.isEmpty(); }
-
         void reset() {
             fullPathOnVehicle.clear();
             retryCount = 0;
@@ -188,9 +260,6 @@ private:
         QString     fullPathOnVehicle;      ///< Fully qualified destination path on vehicle
         QString     localFilePath;          ///< Local file path being uploaded
         int         retryCount;
-        bool        cancelled;
-
-        bool inProgress() const { return file.isOpen(); }
 
         void reset() {
             sessionId       = 0;
@@ -198,13 +267,29 @@ private:
             fileSize        = 0;
             lastChunkSize   = 0;
             retryCount      = 0;
-            cancelled       = false;
             fullPathOnVehicle.clear();
             localFilePath.clear();
             file.close();
         }
     };
 
+    /// @return The request, queued, or nullptr if @a context is not set
+    FTPRequest* _enqueue(QObject* context, FTPRequest::Operation operation, uint8_t compId,
+                         const QString& pathOnVehicle);
+    /// Starts the next request from the event loop, so that a request never begins within the call that makes it
+    void _scheduleNext();
+    void _startNext();
+    void _startDownload();
+    void _startUpload();
+    void _startListDirectory();
+    void _startDeleteFile();
+    /// Takes a request that is ended without a callback out of the queue, or ends it if it runs
+    void _dropRequest(FTPRequest* request);
+    /// Ends the operation that runs, releasing a session it may hold on the vehicle
+    void _abortCurrent();
+    /// Ends the request that runs with its result and starts the next one
+    void _finish(const QStringList& entries, const QString& errorMsg);
+    void _reportProgress(float progress);
     void    _mavlinkMessageReceived     (const mavlink_message_t& message);
     void    _startStateMachine          (void);
     void    _advanceStateMachine        (void);
@@ -235,6 +320,11 @@ private:
     void    _sendRequestExpectAck       (MavlinkFTP::Request* request);
     void    _downloadCompleteNoError    (void) { _downloadComplete(QString()); }
     void    _downloadComplete           (const QString& errorMsg);
+    /// Writes the data of a read ack at its offset, unless it ends beyond the size limit of the download
+    /// @return false if the download has failed
+    bool _writeDownloadData(const MavlinkFTP::Request* ackOrNak);
+    /// Fails the download because the file is larger than its size limit
+    void _downloadTooLarge(void);
     void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
     void    _fillMissingBlocksWorker    (bool firstRequest);
     void    _burstReadFileWorker        (bool firstRequest);
@@ -260,14 +350,15 @@ private:
     void    _writeFileBegin             (void);
     void    _writeFileAckOrNak          (const MavlinkFTP::Request* ackOrNak);
     void    _writeFileTimeout           (void);
-    void    _writeFileWorker            (bool firstRequest);
-    void    _uploadFinalize             (void);
+    void _writeFileWorker(bool firstRequest);
+
+    void _uploadCompleteNoError(void) { _uploadComplete(QString()); }
     void    _uploadComplete             (const QString& errorMsg);
-    void    _terminateUploadSessionBegin(void);
-    void    _terminateUploadSessionAckOrNak(const MavlinkFTP::Request* ackOrNak);
-    void    _terminateUploadSessionTimeout(void);
 
     Vehicle*                _vehicle;
+    QList<FTPRequest*> _queue;       ///< Requests that wait, in order
+    FTPRequest* _current = nullptr;  ///< The request that runs
+    bool _startScheduled = false;
     uint8_t                 _ftpCompId = MAV_COMP_ID_AUTOPILOT1;
     QList<StateFunctions_t> _rgStateMachine;
     DownloadState_t         _downloadState;

@@ -63,10 +63,7 @@ void ComponentInformationCacheTest::_basic_test()
     QVERIFY(QFile(_tmpFiles[0].cachedPath).exists());
     QVERIFY(!QFile(_tmpFiles[0].path).exists());
     QVERIFY(cache.access(_tmpFiles[0].cacheTag) == _tmpFiles[0].cachedPath);
-    QFile f(_tmpFiles[0].cachedPath);
-    QVERIFY(f.open(QFile::ReadOnly | QFile::Text));
-    QTextStream in(&f);
-    QVERIFY(in.readAll() == _tmpFiles[0].content);
+    QCOMPARE(TestFixtures::readFile(_tmpFiles[0].cachedPath), _tmpFiles[0].content.toUtf8());
     _cleanup();
 }
 
@@ -196,6 +193,34 @@ void ComponentInformationCacheTest::_version_test()
     QCOMPARE(newMeta.size(), static_cast<qsizetype>(sizeof(written)));
     std::memcpy(&written, newMeta.constData(), sizeof(written));
     QCOMPARE(written.version, 1U);
+}
+
+void ComponentInformationCacheTest::_incomplete_entry_test_data()
+{
+    QTest::addColumn<QString>("leftover");
+
+    QTest::newRow("data without meta") << QStringLiteral("entry.cache");
+    QTest::newRow("meta without data") << QStringLiteral("entry.meta");
+}
+
+// A file left without its counterpart, as a removal of a file that is still open leaves it on Windows, is not an
+// entry: insert() replaces it rather than keep a file that access() never finds
+void ComponentInformationCacheTest::_incomplete_entry_test()
+{
+    QFETCH(QString, leftover);
+
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    ComponentInformationCache cache(QDir(directory.path()), 10);
+    QVERIFY(TestFixtures::writeFile(directory.filePath(leftover), "stale"));
+    QVERIFY(cache.access(QStringLiteral("entry")).isEmpty());
+
+    const QString downloaded = directory.filePath(QStringLiteral("downloaded.json"));
+    QVERIFY(TestFixtures::writeFile(downloaded, "fresh"));
+    const QString cached = cache.insert(QStringLiteral("entry"), downloaded);
+    QVERIFY(!cached.isEmpty());
+    QCOMPARE(cache.access(QStringLiteral("entry")), cached);
+    QCOMPARE(TestFixtures::readFile(cached), QByteArray("fresh"));
 }
 
 UT_REGISTER_TEST(ComponentInformationCacheTest, TestLabel::Unit, TestLabel::Vehicle)

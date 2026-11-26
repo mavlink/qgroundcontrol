@@ -47,6 +47,9 @@ public:
     /// Serves the local file @p localFileName to OpenFileRO of @p path
     void setServedFile(const QString& path, const QString& localFileName) { _servedFiles.insert(path, localFileName); }
 
+    /// Announces @p length as the size of the next file opened with OpenFileRO, whatever its size is
+    void setAnnouncedFileLength(uint32_t length) { _announcedFileLength = length; }
+
     /// Delays each burst read by delayMs to simulate a slow link. Runs on the
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
@@ -250,6 +253,7 @@ private:
     QList<LogFile> _logFiles;                   ///< Log files served from the @MAV_LOG virtual directory
     QHash<QString, QString> _logFileTempPaths;  ///< Temp files backing @MAV_LOG downloads
     QHash<QString, QString> _servedFiles;       ///< Local files served by setServedFile(), by path
+    std::optional<uint32_t> _announcedFileLength;  ///< Set by setAnnouncedFileLength(), for one OpenFileRO
     uint16_t _lastReplySequence = 0;
 
     static constexpr uint8_t _sessionId = 1;    ///< We only support a single fixed session

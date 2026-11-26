@@ -607,9 +607,11 @@ void OnboardLogFtpDownloadTest::_ftpCancelListNoFallbackTest()
     // Prime FTPManager's cached NAK of kCmdListDirectoryWithTime with a listing which
     // doesn't involve the controller
     FTPManager* const ftpManager = _vehicle->ftpManager();
-    QSignalSpy listSpy(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG")));
-    QVERIFY(listSpy.wait(FTPManager::kTestOperationMaxWaitMs));
+    QObject owner;
+    bool listed = false;
+    QVERIFY(ftpManager->listDirectory(&owner, MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG"),
+                                      [&listed](const QStringList&, const QString&) { listed = true; }));
+    QVERIFY_TRUE_WAIT(listed, FTPManager::kTestOperationMaxWaitMs);
     QVERIFY(ftpManager->listDirectoryWithTimeUnsupported());
 
     OnboardLogController* const controller = new OnboardLogController(this);
@@ -625,11 +627,8 @@ void OnboardLogFtpDownloadTest::_ftpCancelListNoFallbackTest()
     QVERIFY(!controller->_getRequestingList());
     QCOMPARE(controller->transport(), QStringLiteral("ftp"));
 
-    // The synchronous Abort completion must not spawn a replacement root listing:
-    // FTPManager must be idle immediately after cancel
-    QSignalSpy idleCheckSpy(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG")));
-    QVERIFY(idleCheckSpy.wait(FTPManager::kTestOperationMaxWaitMs));
+    // The cancel must not spawn a replacement root listing: FTPManager must be idle immediately after it
+    QCOMPARE(ftpManager->requestCount(), 0);
 }
 
 void OnboardLogFtpDownloadTest::_ftpListFallbackTest()

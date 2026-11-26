@@ -73,11 +73,21 @@ QString ComponentInformationCache::insert(const QString &fileTag, const QString 
     QFile meta(metaFileName(fileTag));
     QFile data(dataFileName(fileTag));
     QFile fileToCache(fileName);
-    if (meta.exists() || data.exists()) {
+    if (meta.exists() && data.exists()) {
         qCDebug(ComponentInformationCacheLog) << "Not inserting, entry already exists" << fileTag;
         fileToCache.remove();
         return data.fileName();
     }
+
+    // A file without its counterpart, e.g. a data file whose removal failed while it was open, is not an entry:
+    // access() never finds it, so it is replaced. If it is still in the way, the new file is used where it is
+    if (data.exists() && !data.remove()) {
+        qCWarning(ComponentInformationCacheLog)
+            << "Failed to remove incomplete entry" << data.fileName() << data.errorString();
+        return fileName;
+    }
+    _numFiles -=
+        static_cast<int>(_cachedFiles.removeIf([&fileTag](const auto& entry) { return entry.value() == fileTag; }));
 
     // move the file to the cache location (fall back to copy+remove for cross-device)
     if (!fileToCache.rename(data.fileName())) {

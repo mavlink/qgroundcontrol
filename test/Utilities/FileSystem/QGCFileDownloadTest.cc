@@ -13,6 +13,7 @@
 #include "Compression.h"
 #include "CompressionJob.h"
 #include "FileFixtures.h"
+#include "LocalHttpTestServer.h"
 #include "ProcessFixtures.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
@@ -194,6 +195,85 @@ void QGCFileDownloadTest::_testFileDownloadCancelSingleCompletion()
     QVERIFY(!args.at(0).toBool());
 }
 
+void QGCFileDownloadTest::_testFileDownloadSizeLimit_data()
+{
+    // A raw HTTP response, or empty to download a local file of the body
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<qint64>("maxBytes");
+
+    const QByteArray body = QByteArray("0123456789abcdef").repeated(256);
+    const auto withLength = [](const QByteArray& content, const QByteArray& extraHeader = {}) {
+        return QByteArray("HTTP/1.1 200 OK\r\nConnection: close\r\n") + extraHeader +
+               "Content-Length: " + QByteArray::number(content.size()) + "\r\n\r\n" + content;
+    };
+    const QByteArray withoutLength = QByteArray("HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n") + body;
+    const qint64 size = body.size();
+
+    QTest::newRow("at the limit") << withLength(body) << body << size;
+    QTest::newRow("of no announced length, at the limit") << withoutLength << body << size;
+    QTest::newRow("larger than the limit") << withLength(body) << body << (size - 1);
+    // Refused by the length it announces: the connection closes before more arrives
+    QTest::newRow("announced larger than the limit")
+        << (QByteArray("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: ") + QByteArray::number(2 * size) +
+            "\r\n\r\n" + body)
+        << body.repeated(2) << size;
+    QTest::newRow("of no announced length, larger than the limit") << withoutLength << body << (size - 1);
+    // The body that counts is the one the network stack has decoded
+    QTest::newRow("larger than the limit once its content encoding is decoded")
+        << withLength(TestFixtures::gzipMember(body), "Content-Encoding: gzip\r\n") << body << (size - 1);
+    QTest::newRow("local file larger than the limit") << QByteArray() << body << (size - 1);
+}
+
+// A download is held to its size limit, by the length it announces and by what it receives. One that is larger fails,
+// and no part of it is kept
+void QGCFileDownloadTest::_testFileDownloadSizeLimit()
+{
+    QFETCH(QByteArray, response);
+    QFETCH(QByteArray, body);
+    QFETCH(qint64, maxBytes);
+    const bool refused = (maxBytes < body.size());
+
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
+    QString url;
+    TestFixtures::LocalHttpTestServer server;
+    if (response.isEmpty()) {
+        url = outputDir.filePath(QStringLiteral("source/data.bin"));
+        QVERIFY(QDir().mkpath(QFileInfo(url).absolutePath()));
+        QVERIFY(TestFixtures::writeFile(url, body));
+    } else {
+        QVERIFY(server.listen());
+        server.installRawResponder(response);
+        url = server.url(QStringLiteral("/data.bin"));
+    }
+
+    QGCFileDownload downloader(this);
+    downloader.setOutputDirectory(outputDir.filePath(QStringLiteral("downloads")));
+    downloader.setMaxBytes(maxBytes);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    if (refused) {
+        expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("File is larger than"));
+    }
+    QVERIFY(downloader.start(url));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QCOMPARE(finishedSpy.count(), 1);
+    const QList<QVariant> args = finishedSpy.first();
+
+    const QDir downloads(outputDir.filePath(QStringLiteral("downloads")));
+    if (refused) {
+        verifyExpectedLogMessage();
+        QVERIFY(!args.at(0).toBool());
+        QVERIFY(args.at(1).toString().isEmpty());
+        QVERIFY2(args.at(2).toString().startsWith(QStringLiteral("File is larger than")),
+                 qPrintable(args.at(2).toString()));
+        QCOMPARE(downloads.entryList(QDir::Files), QStringList());
+    } else {
+        QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+        QCOMPARE(TestFixtures::readFile(args.at(1).toString()), body);
+    }
+}
+
 void QGCFileDownloadTest::_testAutoDecompress_data()
 {
     // The file to download: a resource, or empty for a local file "content.json.gz" of the content
@@ -259,7 +339,8 @@ void QGCFileDownloadTest::_testAutoDecompressFailure_data()
     QTest::newRow("over the limit") << compressed << qint64{1024} << ": size limit exceeded$";
 }
 
-// A download that cannot be decompressed, also one over the limit, fails with the reason and leaves no file
+// A download that cannot be decompressed, also one over the limit, fails with the reason and leaves no file. The
+// limit of the transfer, which the download keeps, does not let a larger file through
 void QGCFileDownloadTest::_testAutoDecompressFailure()
 {
     QFETCH(QByteArray, content);
@@ -276,6 +357,7 @@ void QGCFileDownloadTest::_testAutoDecompressFailure()
     QGCFileDownload downloader(this);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
     downloader.setAutoDecompress(true);
+    downloader.setMaxBytes(content.size());
     downloader.setMaxDecompressedBytes(maxDecompressedBytes);
     downloader.setOutputPath(outputDir.filePath(QStringLiteral("content.gz")));
 

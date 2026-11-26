@@ -17,6 +17,7 @@ private slots:
     void _testFileDownloadNonExistentLocalFile();
     void _testFileDownloadOutputPathIsDirectory();
     void _testFileDownloadCancelSingleCompletion();
+    UT_PARAMETERIZED_TEST(_testFileDownloadSizeLimit);
     UT_PARAMETERIZED_TEST(_testAutoDecompress);
     UT_PARAMETERIZED_TEST(_testAutoDecompressFailure);
     void _testAutoDecompressCancelled();

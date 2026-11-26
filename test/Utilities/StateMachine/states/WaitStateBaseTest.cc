@@ -40,6 +40,31 @@ void WaitStateBaseTest::_testTimeoutRunsOnMachineScheduler()
     QCOMPARE(timedOutSpy.count(), 1);
 }
 
+// The timeout of an operation that waits behind others before it begins counts from when it begins
+void WaitStateBaseTest::_testHeldTimeoutCountsFromRestart()
+{
+    ignoreTimeoutWarnings();
+    ManualScheduler scheduler;
+    QGCStateMachine machine(QStringLiteral("HeldTimeoutTest"), nullptr, nullptr, &scheduler);
+    const int timeoutMs = 200;
+
+    auto* waitState = new TestWaitState(QStringLiteral("Wait"), &machine, timeoutMs);
+    machine.setInitialState(waitState);
+
+    QSignalSpy timedOutSpy(waitState, &WaitStateBase::timedOut);
+    QVERIFY(startAndWaitForEntered(&machine, waitState));
+    waitState->holdTimeout();
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(2 * timeoutMs)));
+    QCOMPARE(timedOutSpy.count(), 0);
+
+    waitState->restartTimeout();
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs - 1)));
+    QCOMPARE(timedOutSpy.count(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(timedOutSpy.count(), 1);
+}
+
 void WaitStateBaseTest::_testCompleteAndFail_data()
 {
     QTest::addColumn<bool>("fail");

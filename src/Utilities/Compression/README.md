@@ -98,10 +98,12 @@ required: a job without one, or with one that names the input file, fails with `
 - **Size limits.** Decompressed data is limited to 256 MiB in memory and 1 GiB in a file unless the caller passes
   another limit.
   The readers of the metadata of a vehicle, its translations, its events metadata and its camera
-  definitions, which parse them whole, pass `kMaxSmallFileBytes` (64 MiB). A Copernicus terrain
+  definitions, which parse them whole, pass `kMaxSmallFileBytes` (64 MiB). Their downloads are held to
+  the same size (`FTPManager::download()`, `QGCFileDownload::setMaxBytes()`). A Copernicus terrain
   tile passes `TerrainTileCopernicus::kMaxResponseBytes` (1 MiB). `QGCFileDownload::setMaxDecompressedBytes()`
-  limits what `autoDecompress` writes. An extraction has no limit by default. An extraction and
-  `decompressFile()` also stop before they fill the disk, with `Error::DiskSpaceExceeded`.
+  limits what `autoDecompress` writes, apart from `setMaxBytes()`, which limits the transfer. An extraction has no
+  limit by default. An extraction and `decompressFile()` also stop before they fill the disk, with
+  `Error::DiskSpaceExceeded`.
 - **An extraction needs a new or empty directory.** A directory with anything in it, or a file in its
   place, is refused with `Error::IoError` before the archive is read, and left as it was.
 - **An extraction writes files and directories only, inside the output directory.** Links, special

@@ -4,10 +4,11 @@
 #include "ComponentInformationCache.h"
 #include "ComponentInformationManager.h"
 #include "ComponentInformationTranslation.h"
-#include "FTPManager.h"
-#include "QGCCachedFileDownload.h"
+#include "CompressionTypes.h"
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleFileFetch.h"
 #include "VehicleLinkManager.h"
 #include "WorkerJob.h"
 
@@ -499,77 +500,54 @@ void RequestMetaDataTypeStateMachine::_requestFile(CompletionWaitState* state, c
 
     qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": downloading json" << uri;
 
-    // The download belongs to the state that waits for it. Its completion is connected through the state, so the
-    // connection ends with the wait, and a download that is still running when the state is left is cancelled
-    // (_cancelTransfer()): one that outlived its state completed whichever state was current by then.
-    // Both downloaders keep the file as it was sent, compressed or not: it is decompressed where it is read. Both
-    // write into the download directory of the manager, so that the files of another vehicle, which often have the
-    // same names, never take their place.
-    const QString downloadDirectory = _compMgr->downloadDirectory();
+    // The download belongs to the state that waits for it. A download that has not ended when the state is left is
+    // cancelled (_cancelTransfer()): one that outlived its state completed whichever state was current by then.
+    // The file is kept as it was sent, compressed or not: it is decompressed where it is read. It is held to the size
+    // its reader takes, and written into the download directory of the manager, so that the files of another
+    // vehicle, which often have the same names, never take their place.
+    const bool ftp = VehicleFileFetch::isMavlinkFtp(uri);
+    if (trackMetadataSource) {
+        _metadataSource = ftp ? MetadataSource::FTP : MetadataSource::HTTP;
+        _metadataUri = uri;
+    }
+    const VehicleFileFetch::Options options{
+        .directory = _compMgr->downloadDirectory(),
+        .maxBytes = Compression::kMaxSmallFileBytes,
+        .httpCacheDirectory = ComponentInformationManager::httpCacheDirectory(),
+        .httpCacheMaxAgeSec = crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec,
+    };
     QString* const output = &outputFileName;
-    if (_uriIsMAVLinkFTP(uri)) {
-        if (trackMetadataSource) {
-            _metadataSource = MetadataSource::FTP;
-            _metadataUri = uri;
-        }
-        FTPManager* const ftpManager = _compInfo->vehicle->ftpManager();
-        state->connectToCompletion(
-            ftpManager, &FTPManager::downloadComplete,
-            [this, state, output, cacheFileTag, crcValid](const QString& fileName, const QString& errorMsg) {
-                qCDebug(RequestMetaDataTypeStateMachineLog)
-                    << "FTP download complete fileName:errorMsg" << fileName << errorMsg;
-                _transferInFlight = Transfer::None;
-                if (errorMsg.isEmpty()) {
-                    *output = _downloadCompleteJsonWorker(fileName, cacheFileTag, crcValid);
-                } else {
-                    qCDebug(RequestMetaDataTypeStateMachineLog)
-                        << typeToString() << ": FTP download failed:" << errorMsg;
-                }
-                state->complete();
-            });
-        _transferInFlight = Transfer::Ftp;
-        if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1, uri, downloadDirectory)) {
-            // Throughput is measured from the first data packet (see _ftpDownloadProgress), not from here: the
-            // leading session reset and open can take several seconds on a lossy link without saying anything
-            // about transfer speed
-            _downloadStartTime.invalidate();
-            state->connectWhileWaiting(ftpManager, &FTPManager::commandProgress,
-                                       [this](float progress) { _ftpDownloadProgress(progress); });
-        } else {
+    _fetch = VehicleFileFetch::start(
+        this, _compInfo->vehicle, uri, options,
+        [this, state, output, cacheFileTag, crcValid](const QString& fileName, const QString& errorMsg) {
+            qCDebug(RequestMetaDataTypeStateMachineLog)
+                << "Download complete fileName:errorMsg" << fileName << errorMsg;
             _transferInFlight = Transfer::None;
-            qCWarning(RequestMetaDataTypeStateMachineLog) << "FTPManager::download returned failure";
+            if (errorMsg.isEmpty()) {
+                *output = _downloadCompleteJsonWorker(fileName, cacheFileTag, crcValid);
+            } else {
+                qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": download failed:" << errorMsg;
+            }
             state->complete();
-        }
-    } else {
-        if (trackMetadataSource) {
-            _metadataSource = MetadataSource::HTTP;
-            _metadataUri = uri;
-        }
-        QGCCachedFileDownload* const cachedFileDownload = _compMgr->_cachedFileDownload;
-        state->connectToCompletion(
-            cachedFileDownload, &QGCCachedFileDownload::finished,
-            [this, state, output, cacheFileTag, crcValid](bool success, const QString& localFile,
-                                                          const QString& errorMsg, bool fromCache) {
-                qCDebug(RequestMetaDataTypeStateMachineLog)
-                    << "HTTP download complete success:localFile:errorMsg:fromCache" << success << localFile << errorMsg
-                    << fromCache;
-                _transferInFlight = Transfer::None;
-                if (success && errorMsg.isEmpty()) {
-                    *output = _downloadCompleteJsonWorker(localFile, cacheFileTag, crcValid);
-                } else {
-                    qCDebug(RequestMetaDataTypeStateMachineLog)
-                        << typeToString() << ": HTTP download failed:" << errorMsg;
-                }
-                state->complete();
-            });
-        _transferInFlight = Transfer::Http;
-        if (cachedFileDownload->download(uri, crcValid ? 0 : ComponentInformationManager::cachedFileMaxAgeSec)) {
-            _downloadStartTime.start();
-        } else {
-            _transferInFlight = Transfer::None;
-            qCWarning(RequestMetaDataTypeStateMachineLog) << "QGCCachedFileDownload::download returned failure";
-            state->complete();
-        }
+        });
+    if (!_fetch) {
+        qCWarning(RequestMetaDataTypeStateMachineLog) << typeToString() << ": the download could not be started";
+        state->complete();
+        return;
+    }
+
+    _transferInFlight = Transfer::Download;
+    // A download over MAVLink FTP may wait behind other transfers of the vehicle. The timeout of the state is for the
+    // download, so it counts from when the download begins.
+    state->holdTimeout();
+    (void) connect(_fetch, &VehicleFileFetch::started, state, [state]() { state->restartTimeout(); });
+    if (ftp) {
+        // Throughput is measured from the first data packet (see _ftpDownloadProgress), not from here: the leading
+        // session reset and open can take several seconds on a lossy link without saying anything about transfer
+        // speed
+        _downloadStartTime.invalidate();
+        (void) connect(_fetch, &VehicleFileFetch::progressChanged, this,
+                       [this, state](float progress) { _ftpDownloadProgress(state, progress); });
     }
 }
 
@@ -590,19 +568,17 @@ void RequestMetaDataTypeStateMachine::_cancelMessageRequest()
 
 void RequestMetaDataTypeStateMachine::_cancelTransfer()
 {
-    // Nothing is left to cancel once the completion has been handled. The two calls report the end of the
-    // download on the signals that the state, which is being left, has stopped listening to.
+    // Nothing is left to cancel once the completion has been handled. A cancelled download calls nothing; the
+    // translation reports its end on the signal that the state, which is being left, has stopped listening to.
     switch (std::exchange(_transferInFlight, Transfer::None)) {
         case Transfer::None:
             break;
-        case Transfer::Ftp:
-            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": state left, cancelling FTP download";
-            // Gives the FTP session of the vehicle back, which a fallback over FTP needs
-            _compInfo->vehicle->ftpManager()->cancelDownload();
-            break;
-        case Transfer::Http:
-            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": state left, cancelling HTTP download";
-            _compMgr->_cachedFileDownload->cancel();
+        case Transfer::Download:
+            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": state left, cancelling download";
+            // Over MAVLink FTP, gives the session of the vehicle back to the transfers that wait for it
+            if (_fetch) {
+                _fetch->cancel();
+            }
             break;
         case Transfer::Translation:
             qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": state left, cancelling translation";
@@ -617,7 +593,7 @@ void RequestMetaDataTypeStateMachine::_cancelLoad()
     delete _loadJob.data();
 }
 
-void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(float progress)
+void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(CompletionWaitState* state, float progress)
 {
     if (!_downloadStartTime.isValid()) {
         _downloadStartTime.start();
@@ -633,11 +609,7 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(float progress)
     const int maxDownloadTimeSec = 40;
     if (elapsedSec > minElapsedSec && progress < 0.5 && totalDownloadTime > maxDownloadTimeSec) {
         qCDebug(RequestMetaDataTypeStateMachineLog) << "Slow download, aborting. Total time (s):" << totalDownloadTime;
-        _compInfo->vehicle->ftpManager()->cancelDownload();
+        _cancelTransfer();
+        state->complete();
     }
-}
-
-bool RequestMetaDataTypeStateMachine::_uriIsMAVLinkFTP(const QString& uri)
-{
-    return uri.startsWith(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme), Qt::CaseInsensitive);
 }
