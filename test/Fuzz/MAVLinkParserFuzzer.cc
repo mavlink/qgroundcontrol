@@ -24,8 +24,16 @@ int main(int argc, char* argv[])
 
 #else
 
+namespace {
+constexpr size_t kMaxFuzzInputSize = 4096;
+}
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    if (size > kMaxFuzzInputSize) {
+        size = kMaxFuzzInputSize;
+    }
+
     mavlink_reset_channel_status(MAVLINK_COMM_0);
 
     mavlink_message_t message{};
