@@ -183,6 +183,10 @@ Item {
                 }
             }
 
+            // An item can be removed while the QML of its visual still loads. The loader would then make the
+            // visual in the context that went with the item, which Qt warns about.
+            Component.onDestruction: active = false
+
             onLoaded: {
                 // Declared by GeoMapWaypointItem and the landing pattern
                 // visuals; wire it up without hardcoding filenames here

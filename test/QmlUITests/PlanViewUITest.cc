@@ -1,9 +1,13 @@
 #include "PlanViewUITest.h"
 
+#include <memory>
+
 #include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -872,4 +876,58 @@ void PlanViewUITest::_testSaveAsMenu()
     if (QTest::currentTestFailed()) return;
 
     stopUI();
+}
+
+// The visual of an item on a map loads its QML asynchronously, and the item can be removed before that is done. The
+// loader then has no context left to make the visual in: Qt warns when it does so nonetheless.
+void PlanViewUITest::_testMapVisualOfItemRemovedWhileItsQmlLoads()
+{
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    QQmlEngine* const engine = qmlEngine(_rootItem);
+    QVERIFY(engine);
+
+    // The visuals of a list of items, as a map shows them, and an item that names the QML of its visual
+    QQmlComponent visuals(engine);
+    visuals.setData(R"(
+        import QtQuick
+        import QGroundControl.PlanView
+
+        Item {
+            property alias items: repeater.model
+            property QtObject item: QtObject {
+                property bool isSimpleItem: false
+                property string mapVisualQML: "StructureScanMapVisual.qml"
+            }
+
+            Repeater {
+                id: repeater
+
+                MissionItemMapVisual { }
+            }
+        }
+    )",
+                    QUrl());
+    QmlObjectListModel items;
+    const std::unique_ptr<QObject> root(visuals.create());
+    QVERIFY2(root, qPrintable(visuals.errorString()));
+    QVERIFY(root->setProperty("items", QVariant::fromValue(&items)));
+
+    // Only QML that nothing has loaded yet is still loading while its item is there. This component asks for it
+    // before the loader of the visual does, so it is told first that the QML is loaded.
+    QQmlComponent visual(engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/PlanView/StructureScanMapVisual.qml")),
+                         QQmlComponent::Asynchronous);
+    QVERIFY2(visual.isLoading(), "The QML of the map visual is loaded already");
+
+    items.append(root->property("item").value<QObject*>());
+    QCOMPARE(items.count(), 1);
+
+    // The item is removed once the QML is loaded and before its loader is told, as a busy application does it that
+    // handles the removal first. What Qt warns of when the loader makes the visual then fails the test.
+    (void) connect(&visual, &QQmlComponent::statusChanged, &items, [&items] { (void) items.removeAt(0); });
+    QTRY_VERIFY_WITH_TIMEOUT(!visual.isLoading(), TestTimeout::mediumMs());
+    QCOMPARE(items.count(), 0);
+    QVERIFY2(visual.isReady(), qPrintable(visual.errorString()));
 }
