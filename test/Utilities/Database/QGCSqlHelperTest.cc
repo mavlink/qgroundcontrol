@@ -1,12 +1,13 @@
 #include "QGCSqlHelperTest.h"
 
+#include <QtCore/QFileInfo>
+#include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtTest/QTest>
 
 #include "QGCSqlHelper.h"
 #include "UnitTestList.h"
-#include <QtCore/QTemporaryDir>
 
 void QGCSqlHelperTest::_escapeLikePattern()
 {
@@ -145,6 +146,32 @@ void QGCSqlHelperTest::_applySqlitePragmas()
     QVERIFY(q.next());
     // NORMAL = 1
     QCOMPARE(q.value(0).toInt(), 1);
+}
+
+// A transaction larger than the limit leaves a log of its size, which SQLite would keep for as long as the database is
+// open: the next write cuts it down
+void QGCSqlHelperTest::_writeAheadLogShrinksAfterLargeTransaction()
+{
+    QTemporaryDir tempDir;
+    const QString dbPath = tempDir.filePath(QStringLiteral("log.db"));
+    const QString logPath = dbPath + QStringLiteral("-wal");
+
+    QGCSqlHelper::ScopedConnection conn(dbPath);
+    QVERIFY(conn.isValid());
+    QSqlQuery q(conn.database());
+    QVERIFY(q.exec(QStringLiteral("CREATE TABLE Blobs (data BLOB)")));
+
+    // 1.5 times the limit, in the transaction of one statement
+    constexpr qint64 kBlobSize = 64 * 1024;
+    const qint64 blobCount = (QGCSqlHelper::kWriteAheadLogSizeLimit * 3) / (kBlobSize * 2);
+    QVERIFY(q.exec(QStringLiteral("WITH RECURSIVE counter(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM counter "
+                                  "WHERE i < %1) INSERT INTO Blobs SELECT randomblob(%2) FROM counter")
+                       .arg(blobCount)
+                       .arg(kBlobSize)));
+    QCOMPARE_GT(QFileInfo(logPath).size(), QGCSqlHelper::kWriteAheadLogSizeLimit);
+
+    QVERIFY(q.exec(QStringLiteral("INSERT INTO Blobs VALUES (x'00')")));
+    QCOMPARE_LE(QFileInfo(logPath).size(), QGCSqlHelper::kWriteAheadLogSizeLimit);
 }
 
 UT_REGISTER_TEST(QGCSqlHelperTest, TestLabel::Unit, TestLabel::Utilities)
