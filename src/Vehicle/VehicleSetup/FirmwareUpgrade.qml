@@ -598,6 +598,15 @@ SetupPage {
                     enabled:    !!globals.activeVehicle
                     onClicked:  globals.activeVehicle.flashBootloader()
                 }
+
+                QGCButton {
+                    text:       qsTr("Reboot to ROM Bootloader")
+                    enabled:    !!globals.activeVehicle && !globals.activeVehicle.armed
+                    onClicked:  QGroundControl.showMessageDialog(firmwarePage, qsTr("Reboot to ROM Bootloader"),
+                                                                 qsTr("The vehicle will reboot into its processor's ROM bootloader (such as STM32 USB DFU), so that vendor tools can rewrite all of its flash.\n\nIt will stay in the ROM bootloader, with no MAVLink connection, until it is power cycled.\n\nSelect Ok to continue."),
+                                                                 Dialog.Cancel | Dialog.Ok,
+                                                                 function() { globals.activeVehicle.rebootVehicleToRomBootloader() })
+                }
             }
 
             TextArea {
