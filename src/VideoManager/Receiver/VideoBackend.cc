@@ -24,7 +24,15 @@ namespace {
 class QtMultimediaVideoBackend final : public VideoBackend
 {
 public:
-    Capabilities capabilities() const override { return {}; }
+    Capabilities capabilities() const override
+    {
+#ifdef QGC_FFMPEG_VIDEO
+        // The FFmpeg receiver, which such a build offers too, decodes in hardware unless the CPU video path is forced.
+        return {.gpuVideoPath = true};
+#else
+        return {};
+#endif
+    }
 };
 
 }  // namespace
