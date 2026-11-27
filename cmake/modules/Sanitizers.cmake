@@ -276,6 +276,11 @@ leak:AirframeComponentAirframes::insert
 leak:PX4AirframeLoader::loadAirframeMetaData
 "
     )
+    # The same without FFmpeg's, for the tests of QGC's own FFmpeg code, whose leaks that one would hide: FFmpeg is
+    # built without frame pointers, so a leak's stack ends inside it whoever asked for the memory.
+    file(READ "${CMAKE_BINARY_DIR}/asan_suppressions.txt" _qgc_lsan_suppressions)
+    string(REPLACE "leak:libavutil\n" "" _qgc_lsan_suppressions "${_qgc_lsan_suppressions}")
+    file(WRITE "${CMAKE_BINARY_DIR}/asan_suppressions_own_ffmpeg.txt" "${_qgc_lsan_suppressions}")
 
     file(
         WRITE "${CMAKE_BINARY_DIR}/tsan_suppressions.txt"

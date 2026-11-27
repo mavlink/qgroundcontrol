@@ -119,6 +119,13 @@ if(_qgc_ffmpeg_video_built AND QGC_ENABLE_GST_VIDEOSTREAMING)
             FFmpeg::avcodec
             FFmpeg::avutil
     )
-    add_qgc_test(FFmpegVideoReceiverStreamTest LABELS Integration)
+    # Its leak check keeps FFmpeg's allocations in: the receiver's, and the test's own, are among them.
+    set(_ffmpeg_receiver_env_mod "")
+    if(QGC_ENABLE_ASAN)
+        set(_ffmpeg_receiver_env_mod
+            ENV_MODIFICATION "LSAN_OPTIONS=set:suppressions=${CMAKE_BINARY_DIR}/asan_suppressions_own_ffmpeg.txt"
+        )
+    endif()
+    add_qgc_test(FFmpegVideoReceiverStreamTest LABELS Integration ${_ffmpeg_receiver_env_mod})
     add_qgc_test(VideoReceiverDelayTest LABELS Integration Slow TIMEOUT 600)
 endif()
