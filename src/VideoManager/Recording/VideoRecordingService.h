@@ -46,10 +46,11 @@ public:
 
     /// Records every source that plays and isn't in a tile into the video save directory as "<baseName>.<ext>", the
     /// thermal stream as "<baseName>.thermalVideo.<ext>": also while its view is off, when it connects for the
-    /// recording. An empty @p baseName picks an unused timestamped name. Refused, with a warning logged, while a
-    /// recording runs: that one goes on as it is. Refused, and the user told, with less than kFreeSpaceFloor free.
-    /// The storage limit, when it is on, makes room first: a start short of space waits until it has, and another
-    /// start is refused meanwhile.
+    /// recording. An empty @p baseName picks a timestamped name that no file has, under any extension; a given one
+    /// replaces the files of that name, in the other container too when the stream needs it. Refused, with a
+    /// warning logged, while a recording runs: that one goes on as it is. Refused, and the user told, with less
+    /// than kFreeSpaceFloor free. The storage limit, when it is on, makes room first: a start short of space waits
+    /// until it has, and another start is refused meanwhile.
     void startRecording(const QString& baseName = QString());
     /// Stops the recordings; the sources finish their files. Gives up a start that waits for the storage limit.
     void stopRecording();

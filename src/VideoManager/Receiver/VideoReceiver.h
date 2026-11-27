@@ -176,7 +176,8 @@ public:
     /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
     /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as @p encoding says, keeps to the
     /// same file. Where @p format's container can't hold the video, the recording goes into another one, in a file
-    /// named for it ("<base>.mkv"): recordingStarted() tells the file recorded.
+    /// named for it ("<base>.mkv"): recordingStarted() tells the file recorded. Each of these files replaces one of
+    /// its name: the caller picks a base name that no file has, under any extension, as VideoRecordingService does.
     void startRecording(const QString& file, FileFormat format, const RecordingEncoding& encoding);
 
     /// With the default encoding.
