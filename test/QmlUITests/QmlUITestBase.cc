@@ -20,6 +20,7 @@
 #include "AppSettings.h"
 #include "ColoredSvgImageProvider.h"
 #include "Fact.h"
+#include "FlyViewSettings.h"
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
@@ -95,6 +96,16 @@ void QmlUITestBase::_restoreUseGeoMapPlanEngine()
     if (_savedUseGeoMapPlanEngine) {
         _setUseGeoMapPlanEngineFact(*_savedUseGeoMapPlanEngine);
         _savedUseGeoMapPlanEngine.reset();
+    }
+}
+
+void QmlUITestBase::_resetFlyViewGeoMapCameraView()
+{
+    // The Fly View map saves these as its camera moves, and settings Facts outlive a test function
+    FlyViewSettings* const flyViewSettings = SettingsManager::instance()->flyViewSettings();
+    for (Fact* const fact : {flyViewSettings->geoMapCameraMode(), flyViewSettings->geoMapCameraHeading(),
+                             flyViewSettings->geoMapCameraTilt()}) {
+        fact->setRawValue(fact->rawDefaultValue());
     }
 }
 

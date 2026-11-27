@@ -146,6 +146,28 @@ Item {
         recenterAnimation.stop()
     }
 
+    // Where each mode settles: 2D is top-down over flat terrain, 3D tilted over displaced terrain
+    function _defaultTiltForMode(mode) {
+        return (mode === GeoMapCamera.Mode3D) ? geoCamera.default3DTilt : 0
+    }
+
+    function _terrainScaleForMode(mode) {
+        return (mode === GeoMapCamera.Mode3D) ? 1 : 0
+    }
+
+    // Applies a saved mode, heading and tilt at once. The mode transition would
+    // replace the saved tilt with the mode's default, so it is cut short here
+    function restoreCameraView(mode, heading, tilt) {
+        const to3D = mode === GeoMapCamera.Mode3D
+        geoCamera.mode = to3D ? GeoMapCamera.Mode3D : GeoMapCamera.Mode2D
+        tiltAnimation.stop()
+        headingAnimation.stop()
+        terrainAnimation.stop()
+        geoCamera.heading = heading
+        geoCamera.tilt = to3D ? tilt : _defaultTiltForMode(geoCamera.mode)
+        geoScene.terrainScale = _terrainScaleForMode(geoCamera.mode)
+    }
+
     // Keep the camera's look-at point riding the terrain data, not the drawn
     // mesh: the pivot feeds LOD selection, so following patch churn would loop.
     // Without this the orbit center stays at z=0 and a close-zoom 2D->3D switch
@@ -647,12 +669,11 @@ Item {
     Connections {
         target: geoCamera
         function onModeChanged() {
-            const to3D = geoCamera.mode === GeoMapCamera.Mode3D
             tiltAnimation.stop()
-            tiltAnimation.to = to3D ? geoCamera.default3DTilt : 0
+            tiltAnimation.to = root._defaultTiltForMode(geoCamera.mode)
             tiltAnimation.start()
             terrainAnimation.stop()
-            terrainAnimation.to = to3D ? 1 : 0
+            terrainAnimation.to = root._terrainScaleForMode(geoCamera.mode)
             terrainAnimation.start()
         }
         function onCenterChanged() {

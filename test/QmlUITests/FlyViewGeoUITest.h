@@ -9,6 +9,7 @@
 /// runtime does NOT swap the engine, and that camera gestures (pan, orbit,
 /// wheel zoom, pinch zoom, two-finger twist) drive the camera correctly. Also
 /// covers the 2D/3D mode toggle and compass, orbit/loiter circle editing, and
+/// restoring the camera mode, heading and tilt at startup and saving them outside PiP,
 /// restoring the map position and zoom at startup and sharing them with Plan view,
 /// including across window resizes and PiP swaps, zooming to a mission
 /// downloaded from the vehicle, and picking among overlapping waypoint markers.
@@ -18,6 +19,10 @@ class FlyViewGeoUITest : public QmlUITestBase
 
 private slots:
     void _testEngineEnabledAtStartup();
+    void _testCameraViewRestoredAtStartup_data();
+    void _testCameraViewRestoredAtStartup();
+    void _testCameraViewSavedOutsidePip();
+    void _testCloseInPipKeepsSavedCameraView();
     void _testFlyViewEngineSwap();
     void _testCameraGestures();
     void _testModeToggleAndCompass();

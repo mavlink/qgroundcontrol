@@ -53,6 +53,7 @@ protected slots:
         _qmlUrlOverrides.clear();
         _restoreUseTabbedPlanPanel();
         _restoreUseGeoMapPlanEngine();
+        _resetFlyViewGeoMapCameraView();
         UnitTest::cleanup();
     }
 
@@ -239,6 +240,7 @@ private:
 
     void _restoreUseTabbedPlanPanel();
     void _restoreUseGeoMapPlanEngine();
+    void _resetFlyViewGeoMapCameraView();
     void _setUseGeoMapPlanEngineFact(bool use);
 
     /// Shared implementation for the verify* helpers: find the visible item,

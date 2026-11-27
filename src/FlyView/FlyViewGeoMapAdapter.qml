@@ -42,11 +42,41 @@ Item {
     // Escape hatch for GeoMap-specific chrome/controls
     readonly property var geoMap: geoMapControl
 
+    /// How long the camera mode, heading and tilt must be unchanged before they are saved. They change
+    /// every frame of a gesture or animation; the delay matches the one for the shared map position and zoom.
+    readonly property int cameraViewSaveDelayMs: 1000
+
     // PiP analog of FlyViewMap._adjustMapZoomForPipMode: pull the camera back
     // 3 zoom levels in the small window for situational context; the swap-back
     // re-applies the shared saved zoom. PiP is also too small for a useful
     // 3D view, so force 2D and restore the previous camera mode with it.
     property int _fullViewCameraMode: GeoMapCamera.Mode2D
+
+    readonly property var _flyViewSettings: QGroundControl.settingsManager.flyViewSettings
+
+    function _saveCameraView() {
+        const camera = geoMapControl.camera
+        _flyViewSettings.geoMapCameraMode.rawValue = camera.mode
+        _flyViewSettings.geoMapCameraHeading.rawValue = camera.heading
+        _flyViewSettings.geoMapCameraTilt.rawValue = camera.tilt
+    }
+
+    function _scheduleCameraViewSave() {
+        // Closing disconnects the vehicles, and a vehicle's video going away swaps the map out of PiP:
+        // not a view the user chose
+        if (!pipMode && !mainWindow._forceClose) {
+            cameraViewSaveTimer.restart()
+        }
+    }
+
+    // Saves a pending change now, at the pose its animations are heading for
+    function _flushCameraViewSave() {
+        if (cameraViewSaveTimer.running) {
+            cameraViewSaveTimer.stop()
+            geoMapControl.completeCameraAnimations()
+            _saveCameraView()
+        }
+    }
 
     onPipModeChanged: {
         const camera = geoMapControl.camera
@@ -54,11 +84,15 @@ Item {
         // of this handler and the sharedZoom binding runs first
         geoMapControl.sharedZoom = !pipMode
         if (pipMode) {
+            // The forced PiP view below is never saved: keep the full view the user is leaving
+            _flushCameraViewSave()
             _fullViewCameraMode = camera.mode
             camera.mode = GeoMapCamera.Mode2D
             camera.distance = camera.distanceForZoomLevel(camera.zoomLevelForDistance(camera.distance) - 3)
         } else {
             camera.mode = _fullViewCameraMode
+            // Covers a heading changed in PiP, which the mode switch alone would not save
+            _scheduleCameraViewSave()
         }
         geoMapControl.sharedZoom = Qt.binding(() => !root.pipMode)
     }
@@ -89,7 +123,7 @@ Item {
 
         sharedZoom: !root.pipMode
         // The PiP window is too small for free camera panning to be useful
-        keepVehicleCentered: root.pipMode || QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
+        keepVehicleCentered: root.pipMode || root._flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
         // Guided-action popup on click (FlyViewMap.onMapClicked parity).
         // Allowed at any tilt: toCoordinate picks the rendered terrain
@@ -161,4 +195,42 @@ Item {
             }
         }
     }
+
+    Timer {
+        id: cameraViewSaveTimer
+        interval: root.cameraViewSaveDelayMs
+        onTriggered: root._saveCameraView()
+    }
+
+    Connections {
+        target: geoMapControl.camera
+
+        function onModeChanged() {
+            root._scheduleCameraViewSave()
+        }
+
+        function onHeadingChanged() {
+            root._scheduleCameraViewSave()
+        }
+
+        function onTiltChanged() {
+            root._scheduleCameraViewSave()
+        }
+    }
+
+    Component.onCompleted: {
+        // An unknown stored mode falls back to 2D, as in restoreCameraView
+        const mode = (_flyViewSettings.geoMapCameraMode.rawValue === GeoMapCamera.Mode3D)
+                     ? GeoMapCamera.Mode3D : GeoMapCamera.Mode2D
+        const heading = _flyViewSettings.geoMapCameraHeading.rawValue
+        if (pipMode) {
+            // Starting in PiP, which shows its own 2D view: the saved mode applies on the swap to the full view
+            _fullViewCameraMode = mode
+            geoMapControl.restoreCameraView(GeoMapCamera.Mode2D, heading, 0)
+        } else {
+            geoMapControl.restoreCameraView(mode, heading, _flyViewSettings.geoMapCameraTilt.rawValue)
+        }
+    }
+
+    Component.onDestruction: _flushCameraViewSave()
 }
