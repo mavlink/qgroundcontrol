@@ -2368,6 +2368,11 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         commandResult = MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
+        emit rebootShutdownCommandReceived(request.param1, request.param2, request.param3, request.param4);
+        if (static_cast<int>(request.param1) == VehicleTypes::kRebootShutdownActionRebootToRomBootloader) {
+            commandResult = _rebootToRomBootloaderResult;
+            break;
+        }
         // Unit test support: accept the reboot command so tests can exercise
         // flows which restart the vehicle (e.g. airframe Apply and Restart).
         // The actual reboot is not simulated.

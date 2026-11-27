@@ -46,6 +46,8 @@ target_sources(
         PX4RepositionTest.h
         PX4TakeoffTest.cc
         PX4TakeoffTest.h
+        RebootToRomBootloaderTest.cc
+        RebootToRomBootloaderTest.h
         RemoteIDManagerTest.cc
         RemoteIDManagerTest.h
         RequestMessageTest.cc
@@ -115,6 +117,7 @@ add_qgc_test(PX4ExternalFlightModesTest LABELS Unit Vehicle)
 add_qgc_test(PX4HasGripperTest LABELS Integration Vehicle)
 add_qgc_test(PX4RepositionTest LABELS Integration Vehicle)
 add_qgc_test(PX4TakeoffTest LABELS Integration Vehicle)
+add_qgc_test(RebootToRomBootloaderTest LABELS Integration Vehicle)
 add_qgc_test(RemoteIDManagerTest LABELS Integration Vehicle)
 add_qgc_test(RequestMessageTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)

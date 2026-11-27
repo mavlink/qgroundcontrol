@@ -248,6 +248,10 @@ public:
 
     void setTakeoffFailureMode(TakeoffFailureMode_t mode) { _takeoffFailureMode = mode; }
 
+    /// Result for MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN with REBOOT_SHUTDOWN_ACTION_REBOOT_TO_ROM_BOOTLOADER. The default,
+    /// MAV_RESULT_UNSUPPORTED, is what firmware without it sends.
+    void setRebootToRomBootloaderResult(MAV_RESULT result) { _rebootToRomBootloaderResult = result; }
+
     /// Change an int32 parameter value directly on MockLink. Used to simulate the
     /// firmware storing calibration results (e.g. CAL_MAG0_ID).
     void setInt32ParamValue(int componentId, const QString &paramName, int32_t value) { _mapParamName2Value[componentId][paramName] = QVariant::fromValue(value); }
@@ -308,6 +312,8 @@ public:
 signals:
     void writeBytesQueuedSignal(const QByteArray &bytes);
     void highLatencyTransmissionEnabledChanged(bool highLatencyTransmissionEnabled);
+    /// Emitted for every MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN received
+    void rebootShutdownCommandReceived(float param1, float param2, float param3, float param4);
 
 private slots:
     /// Called when QGC wants to write bytes to the MAV
@@ -513,6 +519,7 @@ private:
     std::atomic<uint8_t> _prearmCheck = 0;  ///< One atomic so SYS_STATUS never sees half of a setPrearmCheck() update
     std::atomic<bool> _duplicateResponses = false;
     std::atomic<TakeoffFailureMode_t> _takeoffFailureMode = FailTakeoffNone;
+    std::atomic<MAV_RESULT> _rebootToRomBootloaderResult = MAV_RESULT_UNSUPPORTED;
     bool _mavlinkV2Upgraded = false;    ///< True once outgoing traffic has switched from v1 to v2
     bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;

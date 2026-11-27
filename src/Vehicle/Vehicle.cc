@@ -2375,6 +2375,71 @@ void Vehicle::rebootVehicle()
     sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1);
 }
 
+void Vehicle::_rebootToRomBootloaderResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack,
+                                                  MavCmdResultFailureCode_t failureCode)
+{
+    Vehicle* vehicle = static_cast<Vehicle*>(resultHandlerData);
+
+    if ((failureCode == MavCmdResultCommandResultOnly) && (ack.result == MAV_RESULT_UNSUPPORTED) &&
+        vehicle->apmFirmware() && !vehicle->armed()) {
+        // ArduPilot versions without REBOOT_SHUTDOWN_ACTION_REBOOT_TO_ROM_BOOTLOADER only know this magic sequence
+        qCDebug(VehicleLog) << "Reboot to ROM bootloader unsupported, falling back to the ArduPilot DFU sequence";
+        Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+        handlerInfo.resultHandler = _rebootToRomBootloaderFinalResultHandler;
+        handlerInfo.resultHandlerData = vehicle;
+        vehicle->sendMavCommandWithHandler(&handlerInfo, vehicle->defaultComponentId(),
+                                           MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 42, 24, 71, 99);
+        return;
+    }
+
+    _rebootToRomBootloaderFinalResultHandler(resultHandlerData, compId, ack, failureCode);
+}
+
+void Vehicle::_rebootToRomBootloaderFinalResultHandler(void* resultHandlerData, int /*compId*/,
+                                                       const mavlink_command_ack_t& ack,
+                                                       MavCmdResultFailureCode_t failureCode)
+{
+    Vehicle* vehicle = static_cast<Vehicle*>(resultHandlerData);
+
+    switch (failureCode) {
+        case MavCmdResultCommandResultOnly:
+            if (ack.result == MAV_RESULT_ACCEPTED) {
+                // The ack can arrive while the link is still delivering it, and closing the vehicle can release the
+                // link, so close once that is done
+                (void) QMetaObject::invokeMethod(vehicle, &Vehicle::closeVehicle, Qt::QueuedConnection);
+            } else if (ack.result == MAV_RESULT_UNSUPPORTED) {
+                QGC::showAppMessage(tr("Vehicle does not support rebooting into the ROM bootloader."));
+            } else {
+                QGC::showAppMessage(tr("Vehicle refused to reboot into the ROM bootloader (%1). It may be armed or "
+                                       "running secure firmware.")
+                                        .arg(QGCMAVLink::mavResultToString(ack.result)));
+            }
+            break;
+        case MavCmdResultFailureNoResponseToCommand:
+            // The vehicle resets as soon as it accepts the command, so the ack is often lost
+            qCDebug(VehicleLog) << "Reboot to ROM bootloader: no response from vehicle";
+            break;
+        case MavCmdResultFailureDuplicateCommand:
+            qCDebug(VehicleLog) << "Reboot to ROM bootloader: duplicate command";
+            break;
+    }
+}
+
+void Vehicle::rebootVehicleToRomBootloader()
+{
+    if (armed()) {
+        QGC::showAppMessage(tr("Disarm the vehicle before rebooting it into the ROM bootloader."));
+        return;
+    }
+
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+    handlerInfo.resultHandler = _rebootToRomBootloaderResultHandler;
+    handlerInfo.resultHandlerData = this;
+
+    sendMavCommandWithHandler(&handlerInfo, _defaultComponentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+                              kRebootShutdownActionRebootToRomBootloader);
+}
+
 void Vehicle::setRebootRequired()
 {
     if (_rebootRequired) {
