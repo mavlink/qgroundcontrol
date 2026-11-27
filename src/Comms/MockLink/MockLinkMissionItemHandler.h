@@ -73,6 +73,9 @@ public:
     void setSendHomePositionOnEmptyList(bool sendHomePositionOnEmptyList) { _sendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
 
     int requestListCount(MAV_MISSION_TYPE type) const { return _requestListCounts.value(type, 0); }
+
+    /// Test-only: the mission item stored at seq, as written by the GCS
+    mavlink_mission_item_int_t missionItem(uint16_t seq) const { return _missionItems.value(seq); }
     void clearRequestListCounts() { _requestListCounts.clear(); }
 
 private slots:
