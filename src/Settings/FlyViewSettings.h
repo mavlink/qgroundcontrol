@@ -16,6 +16,9 @@ public:
 
     DEFINE_SETTINGFACT(useGeoMapEngine)
     DEFINE_SETTINGFACT(geoMapDebugUI)
+    DEFINE_SETTINGFACT(geoMapCameraMode)
+    DEFINE_SETTINGFACT(geoMapCameraHeading)
+    DEFINE_SETTINGFACT(geoMapCameraTilt)
     DEFINE_SETTINGFACT(guidedMinimumAltitude)
     DEFINE_SETTINGFACT(guidedMaximumAltitude)
     DEFINE_SETTINGFACT(showLogReplayStatusBar)

@@ -20,6 +20,35 @@
             "keywords": "geomap,debug,stats,diagnostics"
         },
         {
+            "name": "geoMapCameraMode",
+            "shortDesc": "2D or 3D mode the GeoMap engine Fly View map was last left in.",
+            "type": "uint32",
+            "enumStrings": "2D,3D",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "GeoMap camera mode"
+        },
+        {
+            "name": "geoMapCameraHeading",
+            "shortDesc": "Heading the GeoMap engine Fly View map was last left at.",
+            "type": "double",
+            "units": "deg",
+            "min": 0,
+            "max": 360,
+            "default": 0,
+            "label": "GeoMap camera heading"
+        },
+        {
+            "name": "geoMapCameraTilt",
+            "shortDesc": "Tilt from top-down the GeoMap engine Fly View map was last left at.",
+            "type": "double",
+            "units": "deg",
+            "min": 0,
+            "max": 85,
+            "default": 0,
+            "label": "GeoMap camera tilt"
+        },
+        {
             "name": "guidedMinimumAltitude",
             "shortDesc": "Minimum altitude allowed for guided mode actions like takeoff and altitude changes.",
             "type": "double",

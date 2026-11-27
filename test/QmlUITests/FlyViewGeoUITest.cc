@@ -199,6 +199,209 @@ void FlyViewGeoUITest::_testEngineEnabledAtStartup()
     stopUI();
 }
 
+void FlyViewGeoUITest::_testCameraViewRestoredAtStartup_data()
+{
+    QTest::addColumn<GeoMapCamera::Mode>("savedMode");
+    QTest::addColumn<double>("expectedTilt");
+    QTest::addColumn<double>("expectedTerrainScale");
+
+    // A tilt other than the mode's default, which the mode transition animation would replace
+    QTest::addRow("3D keeps the saved tilt") << GeoMapCamera::Mode::Mode3D << 30.0 << 1.0;
+    QTest::addRow("2D stays top-down") << GeoMapCamera::Mode::Mode2D << 0.0 << 0.0;
+}
+
+void FlyViewGeoUITest::_testCameraViewRestoredAtStartup()
+{
+    QFETCH(GeoMapCamera::Mode, savedMode);
+    QFETCH(double, expectedTilt);
+    QFETCH(double, expectedTerrainScale);
+
+    FlyViewSettings* const flyViewSettings = SettingsManager::instance()->flyViewSettings();
+    Fact* const geoEngineFact = flyViewSettings->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+
+    constexpr double kSavedHeading = 120.0;
+    flyViewSettings->geoMapCameraMode()->setRawValue(static_cast<int>(savedMode));
+    flyViewSettings->geoMapCameraHeading()->setRawValue(kSavedHeading);
+    flyViewSettings->geoMapCameraTilt()->setRawValue(30.0);
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+    QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+    QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+    QQuickItem* const sceneRoot = viewport->parentItem();
+    auto* const cam = sceneRoot->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(cam, "GeoMapCamera not found");
+
+    // A mode transition left running would land on the mode's default tilt here
+    QVERIFY(QMetaObject::invokeMethod(sceneRoot, "completeCameraAnimations"));
+    QCOMPARE(cam->mode(), savedMode);
+    QCOMPARE(cam->heading(), kSavedHeading);
+    QCOMPARE(cam->tilt(), expectedTilt);
+    QCOMPARE(sceneRoot->property("terrainScale").toDouble(), expectedTerrainScale);
+
+    stopUI();
+}
+
+// Camera changes reach the settings once they settle, on entering PiP and when the UI closes, but not
+// while in PiP, which forces its own 2D top-down view
+void FlyViewGeoUITest::_testCameraViewSavedOutsidePip()
+{
+    FlyViewSettings* const flyViewSettings = SettingsManager::instance()->flyViewSettings();
+    Fact* const geoEngineFact = flyViewSettings->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+    // A configured video stream is what makes the Fly View offer PiP
+    Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
+    const QVariant savedVideoSource = videoSource->rawValue();
+    const auto videoGuard =
+        qScopeGuard([videoSource, savedVideoSource] { videoSource->setRawValue(savedVideoSource); });
+    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoSourceUDPH264));
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+    QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+
+    QQuickItem* const adapter =
+        findVisibleItem(_rootItem, QStringLiteral("flyViewGeoMapAdapter"), kItemAppearTimeoutMs);
+    QVERIFY2(adapter, "GeoMap adapter not visible");
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+    QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+    auto* const cam = viewport->parentItem()->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(cam, "GeoMapCamera not found");
+
+    Fact* const modeFact = flyViewSettings->geoMapCameraMode();
+    Fact* const headingFact = flyViewSettings->geoMapCameraHeading();
+    Fact* const tiltFact = flyViewSettings->geoMapCameraTilt();
+    constexpr int kMode3D = static_cast<int>(GeoMapCamera::Mode::Mode3D);
+    constexpr double kFullViewHeading = 90.0;
+
+    const QString pipName = QStringLiteral("flyViewPipView");
+    QQuickItem* const pipView = findVisibleItem(_rootItem, pipName, kItemAppearTimeoutMs);
+    QVERIFY2(pipView, "PiP view not visible");
+
+    // Entering PiP saves the full view being left as it settles, not the mode transition under way
+    cam->setMode(GeoMapCamera::Mode::Mode3D);
+    cam->setHeading(kFullViewHeading);
+    QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+    QTRY_VERIFY_WITH_TIMEOUT(adapter->property("pipMode").toBool(), kSettleTimeoutMs);
+    QCOMPARE(modeFact->rawValue().toInt(), kMode3D);
+    QCOMPARE(headingFact->rawValue().toDouble(), kFullViewHeading);
+    QCOMPARE(tiltFact->rawValue().toDouble(), GeoMapCamera::kDefault3DTilt);
+
+    QSignalSpy modeSpy(modeFact, &Fact::rawValueChanged);
+    QSignalSpy headingSpy(headingFact, &Fact::rawValueChanged);
+    QSignalSpy tiltSpy(tiltFact, &Fact::rawValueChanged);
+    QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode2D);
+    QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), 0.0, kSettleTimeoutMs);
+    constexpr double kPipHeading = 45.0;
+    cam->setHeading(kPipHeading);
+
+    // A save wrongly scheduled in PiP would fire one save delay after the last camera change
+    const int saveDelayMs = adapter->property("cameraViewSaveDelayMs").toInt();
+    QCOMPARE_GT(saveDelayMs, 0);
+    QVERIFY_NO_SIGNAL_WAIT(modeSpy, saveDelayMs * 2);
+    QCOMPARE(headingSpy.count(), 0);
+    QCOMPARE(tiltSpy.count(), 0);
+
+    // Back in the full view, the heading PiP left behind is saved with the restored mode
+    QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+    QTRY_VERIFY_WITH_TIMEOUT(!adapter->property("pipMode").toBool(), kSettleTimeoutMs);
+    QTRY_COMPARE_WITH_TIMEOUT(headingFact->rawValue().toDouble(), kPipHeading, kSettleTimeoutMs);
+    QCOMPARE(modeFact->rawValue().toInt(), kMode3D);
+    QCOMPARE(tiltFact->rawValue().toDouble(), GeoMapCamera::kDefault3DTilt);
+
+    // A change still waiting to be saved is not lost when the UI closes
+    constexpr double kClosingHeading = 300.0;
+    cam->setHeading(kClosingHeading);
+    stopUI();
+    QCOMPARE(headingFact->rawValue().toDouble(), kClosingHeading);
+}
+
+// Quitting with the map in PiP keeps the saved full view, although the video going away during the close swaps the
+// map back to the full view on the way out
+void FlyViewGeoUITest::_testCloseInPipKeepsSavedCameraView()
+{
+    FlyViewSettings* const flyViewSettings = SettingsManager::instance()->flyViewSettings();
+    Fact* const geoEngineFact = flyViewSettings->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+    // A configured video stream is what makes the Fly View offer PiP
+    Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
+    const QVariant savedVideoSource = videoSource->rawValue();
+    const auto videoGuard =
+        qScopeGuard([videoSource, savedVideoSource] { videoSource->setRawValue(savedVideoSource); });
+    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoSourceUDPH264));
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+    QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+
+    QQuickItem* const adapter =
+        findVisibleItem(_rootItem, QStringLiteral("flyViewGeoMapAdapter"), kItemAppearTimeoutMs);
+    QVERIFY2(adapter, "GeoMap adapter not visible");
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), kItemAppearTimeoutMs);
+    QVERIFY2(viewport, "GeoMap 3D viewport not visible");
+    QQuickItem* const sceneRoot = viewport->parentItem();
+    auto* const cam = sceneRoot->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(cam, "GeoMapCamera not found");
+    const QString pipName = QStringLiteral("flyViewPipView");
+    QQuickItem* const pipView = findVisibleItem(_rootItem, pipName, kItemAppearTimeoutMs);
+    QVERIFY2(pipView, "PiP view not visible");
+
+    Fact* const modeFact = flyViewSettings->geoMapCameraMode();
+    Fact* const headingFact = flyViewSettings->geoMapCameraHeading();
+    Fact* const tiltFact = flyViewSettings->geoMapCameraTilt();
+    constexpr double kFullViewHeading = 90.0;
+    // Not the 3D default, which leaving PiP animates to
+    constexpr double kFullViewTilt = 30.0;
+
+    cam->setMode(GeoMapCamera::Mode::Mode3D);
+    QVERIFY(QMetaObject::invokeMethod(sceneRoot, "completeCameraAnimations"));
+    cam->setTilt(kFullViewTilt);
+    cam->setHeading(kFullViewHeading);
+    QTRY_COMPARE_WITH_TIMEOUT(tiltFact->rawValue().toDouble(), kFullViewTilt, kSettleTimeoutMs);
+
+    QVERIFY(_clickItemAt(pipView, 0.5, 0.5, pipName));
+    QTRY_VERIFY_WITH_TIMEOUT(adapter->property("pipMode").toBool(), kSettleTimeoutMs);
+    cam->setHeading(45);
+
+    QVERIFY(QMetaObject::invokeMethod(_window, "finishCloseProcess"));
+    // Stands in for a vehicle's video going away as the close disconnects it. The UI tests cannot play that:
+    // VideoManager follows the active vehicle only once QGCApplication has initialized it.
+    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoDisabled));
+    QTRY_VERIFY_WITH_TIMEOUT(!adapter->property("pipMode").toBool(), kSettleTimeoutMs);
+    stopUI();
+
+    QCOMPARE(modeFact->rawValue().toInt(), static_cast<int>(GeoMapCamera::Mode::Mode3D));
+    QCOMPARE(headingFact->rawValue().toDouble(), kFullViewHeading);
+    QCOMPARE(tiltFact->rawValue().toDouble(), kFullViewTilt);
+}
+
 void FlyViewGeoUITest::_testFlyViewEngineSwap()
 {
     Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
