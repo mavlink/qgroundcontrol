@@ -27,6 +27,7 @@ The settings are:
   - **Receiver UDP port:** The local port the receiver's output arrives on. The first sender is used until it stops sending.
   - **Serial device:** The receiver's port. The list names each port by its USB description, such as _u-blox GNSS receiver – /dev/ttyACM0_, and marks ports another connection, such as a vehicle link, uses as _(in use)_.
     For a configured base with **Connect automatically** on, _Any RTK receiver on USB_ connects to the first receiver whose USB adapter is a known RTK receiver.
+    On Android, where you allow each USB device separately, it passes over a receiver that you have not allowed while you have allowed another.
   - **Baud rate:** The serial rate. _Auto_ lets a configured base detect the rate; a passive receiver needs the rate it already uses. _Custom_ accepts any other rate.
 - **Base mode** (_Configured base_ only), as the receiver supports it:
   - **Survey-In:** The receiver surveys its own position.

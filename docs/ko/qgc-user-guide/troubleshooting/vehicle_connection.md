@@ -58,6 +58,8 @@ If you establish that link and you don't see your vehicle show up in the QGC UI 
 
 연결했을 때 콘솔 출력에 새 직렬 포트가 표시되지 않으면 OS 수준에서 하드웨어에 문제가 있을 수 있습니다.
 
+On Android, USB serial devices have additional logs: see [Android USB Serial Logging](../troubleshooting/console_logging.md#android-usb-serial-logging).
+
 ## 오류: 기체의 응답이 없음
 
 이는 QGroundControl에서 기체를 네트워크으로 연결할 수 있었지만, 네트워크에서 앞뒤로 이동하는 원격 측정이 없음을 나타냅니다.

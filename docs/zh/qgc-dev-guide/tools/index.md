@@ -13,3 +13,4 @@ _QGroundControl_ 提供了一系列主要面向自动驾驶仪开发者的工具
 - **[重播飞行数据](../../qgc-user-guide/fly_view/replay_flight_data.md)** - 重播一个遥测日志(用户指南)。
 - **[MAVLink Inspector](../../qgc-user-guide/analyze_view/mavlink_inspector.md)** - Display received MAVLink messages/values and plot trends.
 - **[MAVLink Console](../../qgc-user-guide/analyze_view/mavlink_console.md)** (PX4 Only) - Connect to the PX4 nsh shell and send commands.
+- **[Android USB Serial Logging](../../qgc-user-guide/troubleshooting/console_logging.md#android-usb-serial-logging)** - Log USB serial device events and the bytes transferred on Android (User Guide).

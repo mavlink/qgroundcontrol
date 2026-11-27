@@ -15,3 +15,4 @@ Tools include:
 - **[Replay Flight Data](../../qgc-user-guide/fly_view/replay_flight_data.md)** - Replay a telemetry log (User Guide).
 - **[MAVLink Inspector](../../qgc-user-guide/analyze_view/mavlink_inspector.md)** - Display received MAVLink messages/values and plot trends.
 - **[MAVLink Console](../../qgc-user-guide/analyze_view/mavlink_console.md)** (PX4 Only) - Connect to the PX4 nsh shell and send commands.
+- **[Android USB Serial Logging](../../qgc-user-guide/troubleshooting/console_logging.md#android-usb-serial-logging)** - Log USB serial device events and the bytes transferred on Android (User Guide).

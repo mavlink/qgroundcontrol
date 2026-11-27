@@ -17,6 +17,65 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 When a stream is lost, its last picture stays on screen, dimmed, under **VIDEO LOST - RECONNECTING** until the video
 returns. A stream you stop or change is cleared instead.
 
+A video view without a picture says why: **WAITING FOR VIDEO** until the stream arrives, **VIDEO DISABLED WHILE
+DISARMED** when [Disable Video Stream When Disarmed](../settings_view/video.md#settings) has stopped it until the vehicle
+arms, and **VIDEO STOPPED** once the video was stopped.
+
+If a video decoder or a recording stops responding, _QGroundControl_ tells you after about a minute, and a picture
+that froze is taken off the screen. That video works again only once _QGroundControl_ is restarted.
+
+On Android and iOS the video is not decoded while _QGroundControl_ is in the background, which saves battery. Back in
+the app, the view says **WAITING FOR VIDEO** until the stream's next keyframe arrives. A recording goes on for as long
+as the stream arrives.
+
+On Android, _QGroundControl_ shows a notification while a vehicle is connected or a video is being recorded. With it,
+Android keeps the app's network open in the background, where it would otherwise cut it after a few seconds: the stream
+stays connected and a recording goes on in the same file. Tap the notification to return to the app. Android 13 and
+later ask once whether _QGroundControl_ may show notifications; the stream and the recording go on in the background
+without it too. Telemetry is not handled while the app is in the background: the vehicle's messages are handled when
+the app returns, and a recording's telemetry subtitles have a gap for that time.
+
+## Video Tiles
+
+While the video is in the foreground, _QGroundControl_ shows the other video it can play in small tiles along the top
+of the video, each under its name:
+
+1. The USB camera chosen as **USB Camera Tile** in [Application Settings > Video](../settings_view/video.md#video-source),
+   while the video source is a stream.
+2. The other video streams of the vehicle's current camera: those that are neither on display already nor its thermal
+   stream, which is shown with the video as before.
+3. The video streams of the vehicle's other MAVLink cameras, in the order the camera tools list the cameras.
+
+At most three tiles are shown. [Video Tiles](../settings_view/video.md#settings) sets how many, up to four, and 0 turns
+them off. The tiles are filled in that order: a source there is no tile left for isn't shown, connected to or
+decoded. A camera that advertises several streams at one address (the same URL or UDP port) sends one of them at a
+time, so only one of those streams gets a picture.
+
+The tiles share the width of the video, and are never smaller than half their full size. Where the video is too narrow
+for all of them at that size, as on a phone held upright, it shows as many as fit, in the same order, and the sources
+left without a tile aren't connected to. Where not even one tile fits, the stream is the main picture, also when the
+USB camera was made the main picture.
+
+Tap a tile to make it the main picture:
+
+- A camera's stream becomes that camera's current stream, and its camera the current camera, as when you select them in
+  the [camera tools](camera_tools.md)' settings. The camera controls, the thermal view, recordings and photos are then
+  that camera's and that stream's. The stream that was the main picture takes the tile. Both streams keep playing: they
+  aren't connected to again.
+- The USB camera becomes the main picture, and the stream takes the camera's tile. Tap the stream's tile to change them
+  back. This choice is saved: the camera is the main picture again the next time _QGroundControl_ starts, and each time
+  it is plugged back in, until you tap the stream's tile or choose another **USB Camera Tile**.
+
+A tile says **WAITING FOR VIDEO** until its video arrives and **VIDEO LOST - RECONNECTING** while its stream is lost, as
+the main picture does. The tiles are not shown in the video switcher window, and their streams aren't decoded while the
+video is there.
+
+The vehicle is asked to send each stream that has a tile, and to stop it once it has none, so every tile takes some of
+the link's bandwidth, as well as a video decoder on the ground station.
+
+Recordings and photos are of the main picture, with its thermal stream: the tiles aren't recorded. A stream that moves
+to a tile while it is being recorded goes on being recorded until you stop the recording.
+
 ## Video Statistics
 
 While a video stream plays, the [Video indicator](fly_view_toolbar.md#video) in the Fly View toolbar shows its frame
@@ -34,23 +93,32 @@ dropdown shows, about once a second:
 - **Keyframe interval**: the time between the last two keyframes. A long interval makes the picture take longer to
   recover from packet loss.
 - **Decoder**: the video decoder, and whether it decodes in hardware or software. **Decoder restarts** counts the times
-  the decoder was replaced after an error or a stall.
+  the decoder was replaced after an error or a stall. A hardware decoder that shows nothing after it was replaced is
+  left out from then on, and the next decoder takes over. It gets its turn again when the decoder setting changes or
+  QGroundControl restarts.
 - **Display path**: how decoded frames reach the screen: `CPU`, or the zero-copy GPU path (for example `DMABuf`, `GL`
   or `D3D11`). **GPU fallbacks** counts frames the GPU path couldn't import, which took the CPU path instead.
 - **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).
 - **Packet loss** and **Jitter** (RTP streams only: UDP h.264/h.265 and RTSP): the share of packets lost over the last
   second (with the number lost since the stream started), and the variation in packet arrival times.
-  They are not shown for MPEG-TS streams, nor for UDP streams in **Low Latency Mode**, which has no jitter buffer to
-  measure them.
+  Lost are the packets that never arrived, and those dropped on arrival because more came at once than the
+  **RTP jitter latency** holds, as after a link stalls.
+  They are not shown for MPEG-TS streams. A UDP stream in **Low Latency Mode** has no jitter buffer to wait for packets:
+  one that arrives out of order counts as lost until it arrives.
 - **Late / duplicate packets** (RTP streams only): packets that arrived after their playout time, and packets that
-  arrived twice.
+  arrived twice. They are not shown for UDP streams in **Low Latency Mode**, which has no jitter buffer to tell them.
 - **Retransmissions** (RTSP): lost packets QGroundControl asked the camera to send again, and how many arrived in time.
 - **Uptime**: how long the stream has played since it last connected. **Reconnects** counts the times it came back
   after a loss.
 - **Recording**: while recording, how long and how much has been written.
 
 For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
-When a camera also sends a thermal stream, its statistics appear below.
+The indicator's figures are the main picture's. The statistics of each stream in a [tile](#video-tiles) appear below
+those of the main picture, under the stream's name.
+When a camera also sends a thermal stream, its statistics appear below. The thermal stream is decoded only while the
+camera's thermal view is on. With the view off it is still received, and GStreamer still records it with the video (the
+Qt Multimedia backend records only video on display), but it shows no frame rate, and turning the view on shows it from
+its next keyframe.
 
 For a USB camera, the indicator shows the frame rate and the resolution (for example `1080p`), and its dropdown shows
 under **USB Camera**:
@@ -85,7 +153,13 @@ of a network stream (under **Video Stream**), the **Video Backend**, **Decoder P
 
 Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 按下红色圆圈开始录制新视频(每次按下圆圈时创建新视频文件)； 正在录制时，圆圈将会变成红色正方形。
+The file starts with the stream's next keyframe that comes with the stream's parameter sets, as the keyframes of most cameras do.
+If the camera sends keyframes but none that a file can start with, QGroundControl reports five seconds later that the recording failed, rather than record nothing.
+If the storage fills up, the recording ends and QGroundControl reports that the storage is full; the video stays on display.
 If the stream drops out while recording, the recording continues once the stream is back, in a new file named after the first with `_part2`, `_part3` and so on added (for example `2026-10-24_10.15.00_part2.mp4`).
+A recording that runs for longer than an hour continues in a new part the same way, without losing a frame between the parts.
+An MP4 or MOV part ends sooner when the space the file sets aside for its index is about to run out, which a very high frame rate can cause.
+A new part also starts when the camera changes its resolution or encoding profile during a recording, so that each file holds video of one kind.
 With the Qt Multimedia [video backend](../settings_view/video.md#settings) a stream is recorded as a USB camera is (below),
 from the video on display: it continues in the same file once the stream is back.
 Recordings carry the time they started and, as their comment, the _QGroundControl_ version that recorded them.
@@ -93,10 +167,11 @@ Recordings carry the time they started and, as their comment, the _QGroundContro
 A USB camera is recorded the same way, with its telemetry subtitles. QGroundControl encodes it with Qt: as H.264
 where the platform's encoder accepts the camera's frames, otherwise with the next codec that does (H.265, AV1, VP9,
 MPEG-4 Part 2 or MPEG-2). On Linux, Qt encodes H.264 only on the GPU (VA-API or NVENC), so without one a USB camera
-recording is MPEG-4 Part 2. **USB Camera Recording Codec** in
-[Application Settings > Video](../settings_view/video.md#local-video-storage) picks a codec to try first. If Qt can't
-write the recording format's container, another container is used and the file is named for it. A recording ends when
-the USB camera, or its format, changes.
+recording is MPEG-4 Part 2. **Recording Codec** in
+[Application Settings > Video](../settings_view/video.md#local-video-storage) picks a codec to try first, and
+**Recording Quality** how large the file gets; both apply to a stream recorded with the Qt Multimedia video backend as
+well. If Qt can't write the recording format's container, another container is used and the file is named for it. A
+recording ends when the USB camera, or its format, changes.
 
 视频流录制已配置在 [应用程序设置 > 常规](../settings_view/general.md)：
 
