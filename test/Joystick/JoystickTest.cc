@@ -1,13 +1,16 @@
 #include "JoystickTest.h"
 
+#include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QSettings>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
+#include <QtQuick/QQuickItem>
+
 #include "Joystick.h"
 #include "JoystickSDL.h"
 #include "MockJoystick.h"
 #include "SDLJoystick.h"
-
-#include <QtCore/QPointer>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QSettings>
 
 void JoystickTest::initTestCase()
 {
@@ -733,6 +736,78 @@ void JoystickTest::_buttonActionAssignmentTest()
     QVERIFY(js->getButtonRepeat(2));
     js->setButtonRepeat(2, false);
     QVERIFY(!js->getButtonRepeat(2));
+}
+
+void JoystickTest::_buttonAssignmentEditorTest()
+{
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(QStringLiteral("Assignment Editor"), 4, 8, 0));
+    QVERIFY(_mockJoystick->isValid());
+    _pumpEvents();
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL* const joystick = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(joystick);
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine,
+                            QUrl(QStringLiteral("qrc:/qml/QGroundControl/VehicleSetup/JoystickComponentButtons.qml")));
+    const std::unique_ptr<QObject> editor(component.createWithInitialProperties({
+        {QStringLiteral("joystick"), QVariant::fromValue(static_cast<QObject*>(joystick))},
+        {QStringLiteral("controller"), QVariant::fromValue<QObject*>(nullptr)},
+    }));
+    QVERIFY2(editor, qPrintable(component.errorString()));
+
+    auto* const button = editor->findChild<QQuickItem*>(QStringLiteral("joystickButtonNumber"));
+    auto* const action = editor->findChild<QQuickItem*>(QStringLiteral("joystickButtonAction"));
+    auto* const repeat = editor->findChild<QQuickItem*>(QStringLiteral("joystickButtonRepeat"));
+    auto* const save = editor->findChild<QQuickItem*>(QStringLiteral("joystickButtonSave"));
+    auto* const cancel = editor->findChild<QQuickItem*>(QStringLiteral("joystickButtonCancel"));
+    auto* const remove = editor->findChild<QQuickItem*>(QStringLiteral("joystickButtonRemove"));
+    QVERIFY(button && action && repeat && save && cancel && remove);
+
+    constexpr int buttonIndex = 2;
+    const QString zoom = QStringLiteral("Step Zoom In");
+    const int actionIndex = joystick->assignableActionTitles().indexOf(zoom);
+    QVERIFY(actionIndex >= 0);
+    QVERIFY(button->setProperty("currentIndex", buttonIndex));
+    QVERIFY(QMetaObject::invokeMethod(action, "activated", Q_ARG(int, actionIndex)));
+    QTRY_VERIFY_WITH_TIMEOUT(save->isEnabled(), TestTimeout::shortMs());
+    QCOMPARE(joystick->getButtonAction(buttonIndex), joystick->buttonActionNone());
+    QVERIFY(repeat->isEnabled());
+    QVERIFY(QMetaObject::invokeMethod(repeat, "click"));
+    QVERIFY(QMetaObject::invokeMethod(save, "click"));
+    QCOMPARE(joystick->getButtonAction(buttonIndex), zoom);
+    QVERIFY(joystick->getButtonRepeat(buttonIndex));
+    QVERIFY(!save->isEnabled());
+
+    QVERIFY(button->setProperty("currentIndex", 0));
+    auto* const buttonsItem = qobject_cast<QQuickItem*>(editor.get());
+    QVERIFY(buttonsItem);
+    // Repeater delegates are visual children of the layout, outside the QObject hierarchy.
+    const auto children = buttonsItem->childItems();
+    QQuickItem* edit = nullptr;
+    for (auto* child : children) {
+        if (auto* candidate = child->findChild<QQuickItem*>(QStringLiteral("joystickButtonEdit2"))) {
+            edit = candidate;
+            break;
+        }
+    }
+    QVERIFY(edit);
+    QVERIFY(QMetaObject::invokeMethod(edit, "click"));
+    QCOMPARE(button->property("currentIndex").toInt(), buttonIndex);
+    QCOMPARE(action->property("currentIndex").toInt(), actionIndex);
+    QVERIFY(repeat->property("checked").toBool());
+    QVERIFY(QMetaObject::invokeMethod(repeat, "click"));
+    QVERIFY(QMetaObject::invokeMethod(cancel, "click"));
+    QVERIFY(repeat->property("checked").toBool());
+    QVERIFY(joystick->getButtonRepeat(buttonIndex));
+
+    QVERIFY(QMetaObject::invokeMethod(remove, "click"));
+    QCOMPARE(joystick->getButtonAction(buttonIndex), zoom);
+    QVERIFY(save->isEnabled());
+    QVERIFY(QMetaObject::invokeMethod(save, "click"));
+    QCOMPARE(joystick->getButtonAction(buttonIndex), joystick->buttonActionNone());
+    QVERIFY(!joystick->getButtonRepeat(buttonIndex));
 }
 
 //-----------------------------------------------------------------------------

@@ -46,7 +46,9 @@ To configure a joystick:
     :::
 
 1. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
-1. Select the flight modes/vehicle functions activated by each joystick button.
+1. In **Buttons**, select a button number and action, then select **Save**.
+   Use **Edit** beside a saved assignment to change it, or select **Remove** and **Save** to clear it.
+   **Cancel** discards pending changes.
 
 ## Advanced Options
 

@@ -1506,6 +1506,8 @@ void Joystick::setButtonRepeat(int button, bool repeat)
     settings.endGroup();
     settings.endGroup();
     settings.endGroup();
+
+    emit buttonActionsChanged();
 }
 
 bool Joystick::getButtonRepeat(int button)
