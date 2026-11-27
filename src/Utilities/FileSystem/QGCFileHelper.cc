@@ -335,9 +335,16 @@ bool hasSufficientDiskSpace(const QString &path, qint64 requiredBytes, double ma
 // URL/Path Utilities
 // ============================================================================
 
+/// Whether @a text starts with a drive letter ("C:/dir", "c:\\dir", "D:"): a path of Windows, which QUrl would read
+/// as a URL whose scheme is the letter
+static bool startsWithDriveLetter(QStringView text)
+{
+    return (text.size() >= 2) && (text[1] == QLatin1Char(':')) && (text[0].unicode() < 0x80) && text[0].isLetter();
+}
+
 QString toLocalPath(const QString &urlOrPath)
 {
-    if (urlOrPath.isEmpty()) {
+    if (urlOrPath.isEmpty() || startsWithDriveLetter(urlOrPath)) {
         return urlOrPath;
     }
 
@@ -400,7 +407,7 @@ bool isLocalPath(const QString &urlOrPath)
     }
 
     // Qt resource paths are "local" (accessible via QFile)
-    if (isQtResource(urlOrPath)) {
+    if (isQtResource(urlOrPath) || startsWithDriveLetter(urlOrPath)) {
         return true;
     }
 

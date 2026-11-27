@@ -472,6 +472,11 @@ void QGCFileHelperTest::_testToLocalPathPlainPaths()
     QCOMPARE(QGCFileHelper::toLocalPath(""), QString(""));
     // Qt resource paths should pass through
     QCOMPARE(QGCFileHelper::toLocalPath(":/resource/path"), QString(":/resource/path"));
+    // A path with a drive letter is a path, not a URL whose scheme is the letter: it keeps its case and its
+    // characters
+    QCOMPARE(QGCFileHelper::toLocalPath("C:/Users/a b/log#1 100%.ulg"), QString("C:/Users/a b/log#1 100%.ulg"));
+    QCOMPARE(QGCFileHelper::toLocalPath("d:\\logs\\flight.ulg"), QString("d:\\logs\\flight.ulg"));
+    QCOMPARE(QGCFileHelper::toLocalPath("E:"), QString("E:"));
 }
 
 void QGCFileHelperTest::_testToLocalPathFileUrls()
@@ -528,6 +533,8 @@ void QGCFileHelperTest::_testIsLocalPath()
     QVERIFY(QGCFileHelper::isLocalPath(":/resource/path"));
     QVERIFY(QGCFileHelper::isLocalPath("file:///path/to/file"));
     QVERIFY(QGCFileHelper::isLocalPath("qrc:/resource"));
+    QVERIFY(QGCFileHelper::isLocalPath("C:/Users/a b/log#1.ulg"));
+    QVERIFY(QGCFileHelper::isLocalPath("d:\\logs\\flight.ulg"));
     // Empty path
     QVERIFY(!QGCFileHelper::isLocalPath(""));
     // Network URLs (not local)

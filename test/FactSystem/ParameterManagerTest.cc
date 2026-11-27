@@ -147,8 +147,9 @@ void ParameterManagerTest::_noFailureWorker(MockConfiguration::FailureMode_t fai
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
     QVERIFY(spyProgress);
-    // We should get progress bar updates during load
-    QVERIFY_SIGNAL_COUNT_WAIT(*spyProgress, 1, TestTimeout::mediumMs());
+    // We should get progress bar updates during load. The first vehicle of a process takes several times as long
+    // to get there as a later one
+    QVERIFY_SIGNAL_COUNT_WAIT(*spyProgress, 1, TestTimeout::longMs());
     arguments = spyProgress->takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
