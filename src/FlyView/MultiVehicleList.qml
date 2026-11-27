@@ -41,7 +41,10 @@ Item {
     function startAvailable() {
         for (var i = 0; i < selectedVehicles.count; i++) {
             var vehicle = selectedVehicles.get(i)
-            if (vehicle.armed === true && vehicle.flightMode !== vehicle.missionFlightMode){
+            // ArduPilot reports armed vehicles as underway, including on the ground. A separate Arm
+            // therefore disables this button once the vehicle is in Auto, and that arm also times out.
+            var missionAlreadyRunning = vehicle.underway === true && vehicle.flightMode === vehicle.missionFlightMode
+            if (!missionAlreadyRunning) {
                 return true
             }
         }

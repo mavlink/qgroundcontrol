@@ -10,4 +10,6 @@ private slots:
     void _stableFirmwareNotifiedOncePerVersion_data();
     void _stableFirmwareNotifiedOncePerVersion();
     void _arduSubHasNoRtlFlightMode();
+    void _baseAsyncCommandsReportUnsupported();
+    void _asyncNullVehicleReturns();
 };
