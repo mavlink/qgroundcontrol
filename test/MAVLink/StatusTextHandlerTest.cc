@@ -360,6 +360,38 @@ void StatusTextHandlerTest::_testChunkedStatusTextTimeoutAddsEllipsis()
     QVERIFY(text.endsWith(QStringLiteral(" ... ")));
 }
 
+void StatusTextHandlerTest::_testOtherComponentCompletionKeepsChunkTimeout_data()
+{
+    QTest::addColumn<bool>("chunkedCompletion");
+    QTest::newRow("chunked") << true;
+    QTest::newRow("idZero") << false;
+}
+
+void StatusTextHandlerTest::_testOtherComponentCompletionKeepsChunkTimeout()
+{
+    QFETCH(bool, chunkedCompletion);
+
+    StatusTextHandler statusTextHandler;
+    QSignalSpy textSpy(&statusTextHandler, &StatusTextHandler::textMessageReceived);
+    QVERIFY(textSpy.isValid());
+
+    const QByteArray pendingChunk(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN, 'A');
+    statusTextHandler.mavlinkMessageReceived(
+        _makeStatusTextMessage(MAV_COMP_ID_USER1, MAV_SEVERITY_INFO, pendingChunk, 7, 0));
+    QCOMPARE(textSpy.count(), 0);
+
+    statusTextHandler.mavlinkMessageReceived(_makeStatusTextMessage(
+        MAV_COMP_ID_USER2, MAV_SEVERITY_INFO, QByteArrayLiteral("complete"), chunkedCompletion ? 8 : 0, 0));
+    QCOMPARE(textSpy.count(), 1);
+    QCOMPARE(textSpy.at(0).at(0).toInt(), static_cast<int>(MAV_COMP_ID_USER2));
+
+    QTRY_COMPARE_WITH_TIMEOUT(textSpy.count(), 2, 3000);
+    const QList<QVariant> pendingArgs = textSpy.at(1);
+    QCOMPARE(pendingArgs.at(0).toInt(), static_cast<int>(MAV_COMP_ID_USER1));
+    QCOMPARE(pendingArgs.at(2).toString(),
+             QString(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN, 'A') + QStringLiteral(" ... "));
+}
+
 void StatusTextHandlerTest::_testChunkedStatusTextResetsWhenChunkIdChanges()
 {
     StatusTextHandler statusTextHandler;
